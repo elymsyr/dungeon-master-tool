@@ -1,32 +1,152 @@
 import os
 
-# Projenin çalıştığı ana dizini bul
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Dünyaların kaydedileceği klasör
 WORLDS_DIR = os.path.join(BASE_DIR, "worlds")
-
 API_BASE_URL = "https://www.dnd5eapi.co/api"
 
+# --- EPİK TEMA ---
 STYLESHEET = """
-/* ... (Eski stylesheet kodları aynen kalacak) ... */
-QMainWindow { background-color: #1e1e1e; }
-QWidget { font-family: 'Segoe UI', sans-serif; font-size: 14px; color: #e0e0e0; }
-QListWidget { background-color: #252526; border: 1px solid #3e3e42; border-radius: 4px; padding: 5px; }
-QListWidget::item { padding: 8px; border-bottom: 1px solid #333; }
-QListWidget::item:selected { background-color: #37373d; color: #ffffff; border-left: 3px solid #007acc; }
-QLineEdit, QTextEdit, QComboBox { background-color: #3c3c3c; border: 1px solid #555; border-radius: 4px; padding: 5px; color: white; }
-QLineEdit:focus, QTextEdit:focus { border: 1px solid #007acc; }
-QGroupBox { border: 1px solid #555; border-radius: 6px; margin-top: 20px; font-weight: bold; }
-QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 0 5px; color: #007acc; }
-QPushButton { background-color: #3c3c3c; border: 1px solid #555; border-radius: 4px; padding: 6px 12px; font-weight: bold; }
-QPushButton:hover { background-color: #505050; }
-QPushButton#primaryBtn { background-color: #007acc; border: none; color: white; }
-QPushButton#primaryBtn:hover { background-color: #0062a3; }
-QPushButton#dangerBtn { background-color: #ce3838; border: none; color: white; }
-QPushButton#dangerBtn:hover { background-color: #a81010; }
-QPushButton#successBtn { background-color: #2e7d32; border: none; color: white; }
-QPushButton#successBtn:hover { background-color: #1b5e20; }
-QTabWidget::pane { border: 1px solid #3e3e42; top: -1px; }
-QTabBar::tab { background: #2d2d2d; color: #aaa; padding: 8px 20px; border: 1px solid #3e3e42; margin-right: 2px; }
-QTabBar::tab:selected { background: #1e1e1e; color: white; border-top: 2px solid #007acc; }
+/* GENEL AYARLAR */
+QMainWindow, QDialog {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+QWidget {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: #eeeeee;
+}
+
+/* GRUPLAR VE PANELLER */
+QGroupBox {
+    border: 1px solid #333;
+    border-radius: 8px;
+    margin-top: 22px;
+    background-color: #1e1e1e;
+    font-weight: bold;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 5px;
+    color: #ffb74d; /* Altın Sarısı */
+    background-color: #121212;
+}
+
+/* LİSTELER */
+QListWidget {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 6px;
+    outline: none;
+}
+QListWidget::item {
+    padding: 8px;
+    border-bottom: 1px solid #2c2c2c;
+    color: #ccc;
+}
+QListWidget::item:selected {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #311b92, stop:1 #4527a0); /* Mor Gradyan */
+    color: white;
+    border-left: 4px solid #ffb74d;
+}
+QListWidget::item:hover {
+    background-color: #252525;
+}
+
+/* INPUTLAR */
+QLineEdit, QTextEdit, QComboBox {
+    background-color: #252525;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 6px;
+    color: #fff;
+    selection-background-color: #7c4dff;
+}
+QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
+    border: 1px solid #7c4dff; /* Parlak Mor */
+}
+
+/* BUTONLAR - GENEL */
+QPushButton {
+    background-color: #333;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-weight: bold;
+    color: #ddd;
+}
+QPushButton:hover {
+    background-color: #444;
+    border-color: #666;
+}
+QPushButton:pressed {
+    background-color: #222;
+}
+
+/* ÖZEL BUTONLAR */
+QPushButton#primaryBtn {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #1565c0, stop:1 #0d47a1);
+    border: 1px solid #0d47a1;
+    color: white;
+}
+QPushButton#primaryBtn:hover { background: #1976d2; }
+
+QPushButton#dangerBtn {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #c62828, stop:1 #b71c1c);
+    border: 1px solid #b71c1c;
+    color: white;
+}
+QPushButton#dangerBtn:hover { background: #d32f2f; }
+
+QPushButton#successBtn {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #2e7d32, stop:1 #1b5e20);
+    border: 1px solid #1b5e20;
+    color: white;
+}
+QPushButton#successBtn:hover { background: #388e3c; }
+
+/* SEKMELER (TABS) */
+QTabWidget::pane {
+    border: 1px solid #333;
+    background-color: #121212;
+    top: -1px;
+}
+QTabBar::tab {
+    background: #1e1e1e;
+    color: #888;
+    padding: 10px 25px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    margin-right: 2px;
+    font-weight: bold;
+}
+QTabBar::tab:selected {
+    background: #252525;
+    color: #ffb74d;
+    border-top: 3px solid #ffb74d;
+}
+QTabBar::tab:hover {
+    background: #333;
+    color: #ccc;
+}
+
+/* SCROLLBAR (Modern İnce Çubuk) */
+QScrollBar:vertical {
+    border: none;
+    background: #121212;
+    width: 10px;
+    margin: 0px 0px 0px 0px;
+}
+QScrollBar::handle:vertical {
+    background: #444;
+    min-height: 20px;
+    border-radius: 5px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #666;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
 """

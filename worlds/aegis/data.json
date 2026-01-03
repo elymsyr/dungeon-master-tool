@@ -1,6 +1,145 @@
 {
     "world_name": "Aegis",
-    "entities": {},
+    "entities": {
+        "81d8d473-75ad-4e25-8f59-4acb874e2d5c": {
+            "name": "Test",
+            "type": "NPC",
+            "tags": [],
+            "description": "",
+            "image_path": "assets\\1f47af11ee744a9387228e96171703cd_Gemini_Generated_Image_lkciwhlkciwhlkci.png",
+            "stats": {
+                "STR": 10,
+                "DEX": 10,
+                "CON": 10,
+                "INT": 10,
+                "WIS": 10,
+                "CHA": 10
+            },
+            "combat_stats": {
+                "hp": "",
+                "ac": "",
+                "speed": "",
+                "cr": ""
+            },
+            "attributes": {
+                "Irk": "",
+                "Sınıf": "",
+                "Tavır": "Dost",
+                "Konum": ""
+            },
+            "location_id": null,
+            "spells": [],
+            "equipment_ids": [],
+            "traits": [],
+            "actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "inventory": [],
+            "custom_spells": []
+        },
+        "83a41686-6f01-4f5f-a1a5-d70099a8cd11": {
+            "name": "Alter Self",
+            "type": "Büyü (Spell)",
+            "description": "You assume a different form. When you cast the spell, choose one of the following options, the effects of which last for the duration of the spell. While the spell lasts, you can end one option as an action to gain the benefits of a different one.\n***Aquatic Adaptation.*** You adapt your body to an aquatic environment, sprouting gills and growing webbing between your fingers. You can breathe underwater and gain a swimming speed equal to your walking speed.\n***Change Appearance.*** You transform your appearance. You decide what you look like, including your height, weight, facial features, sound of your voice, hair length, coloration, and distinguishing characteristics, if any. You can make yourself appear as a member of another race, though none of your statistics change. You also can't appear as a creature of a different size than you, and your basic shape stays the same; if you're bipedal, you can't use this spell to become quadrupedal, for instance. At any time for the duration of the spell, you can use your action to change your appearance in this way again.\n***Natural Weapons.*** You grow claws, fangs, spines, horns, or a different natural weapon of your choice. Your unarmed strikes deal 1d6 bludgeoning, piercing, or slashing damage, as appropriate to the natural weapon you chose, and you are proficient with your unarmed strikes. Finally, the natural weapon is magic and you have a +1 bonus to the attack and damage rolls you make using it.",
+            "tags": [
+                "Transmutation",
+                "Level 2"
+            ],
+            "attributes": {
+                "Seviye": "2",
+                "Okul (School)": "Transmutation",
+                "Süre (Casting Time)": "1 action",
+                "Menzil (Range)": "Self"
+            }
+        },
+        "59abf490-7a5a-4dbe-b9d3-250aa33c3c21": {
+            "name": "Shatter",
+            "type": "Büyü (Spell)",
+            "description": "A sudden loud ringing noise, painfully intense, erupts from a point of your choice within range. Each creature in a 10-foot-radius sphere centered on that point must make a Constitution saving throw. A creature takes 3d8 thunder damage on a failed save, or half as much damage on a successful one. A creature made of inorganic material such as stone, crystal, or metal has disadvantage on this saving throw.\nA non-magical item that is not worn or carried also suffers damage if it is in the area of the spell.",
+            "tags": [
+                "Evocation",
+                "Level 2"
+            ],
+            "attributes": {
+                "Seviye": "2",
+                "Okul (School)": "Evocation",
+                "Süre (Casting Time)": "1 action",
+                "Menzil (Range)": "60 feet"
+            }
+        },
+        "87de7ad3-b1b3-4b23-92b3-e12e98dade08": {
+            "name": "asd",
+            "type": "Büyü (Spell)",
+            "tags": [],
+            "description": "",
+            "image_path": "",
+            "stats": {
+                "STR": 10,
+                "DEX": 10,
+                "CON": 10,
+                "INT": 10,
+                "WIS": 10,
+                "CHA": 10
+            },
+            "combat_stats": {
+                "hp": "",
+                "ac": "",
+                "speed": "",
+                "cr": ""
+            },
+            "attributes": {
+                "Seviye": "Cantrip",
+                "Okul (School)": "",
+                "Süre (Casting Time)": "",
+                "Menzil (Range)": "",
+                "Süreklilik (Duration)": "",
+                "Bileşenler (Components)": ""
+            },
+            "location_id": null,
+            "spells": [],
+            "equipment_ids": [],
+            "traits": [],
+            "actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "inventory": [],
+            "custom_spells": []
+        },
+        "afef6364-9539-44c6-a6a7-aa35ba16aab1": {
+            "name": "teststs",
+            "type": "Mekan",
+            "tags": [],
+            "description": "",
+            "image_path": "assets\\4fb66e768af74a9c848c7e2624dcf8f7_Gemini_Generated_Image_h588efh588efh588.png",
+            "stats": {
+                "STR": 10,
+                "DEX": 10,
+                "CON": 10,
+                "INT": 10,
+                "WIS": 10,
+                "CHA": 10
+            },
+            "combat_stats": {
+                "hp": "",
+                "ac": "",
+                "speed": "",
+                "cr": ""
+            },
+            "attributes": {
+                "Tehlike Seviyesi": "Güvenli",
+                "Ortam": ""
+            },
+            "location_id": null,
+            "spells": [],
+            "equipment_ids": [],
+            "traits": [],
+            "actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "inventory": [],
+            "custom_spells": []
+        }
+    },
     "map_data": {
         "image_path": "assets\\39944dc3ce0449fd9c87c2ebd4896f5f_Aegis.jpg",
         "pins": []
