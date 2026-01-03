@@ -1,5 +1,7 @@
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel
+from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QStackedWidget, QTextBrowser
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap
+from ui.widgets.image_viewer import ImageViewer
 
 class PlayerWindow(QMainWindow):
     def __init__(self):
@@ -13,24 +15,34 @@ class PlayerWindow(QMainWindow):
         layout = QVBoxLayout(central)
         layout.setContentsMargins(0, 0, 0, 0)
         
-        self.viewer = QLabel()
-        self.viewer.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.viewer.setStyleSheet("background-color: black;")
-        layout.addWidget(self.viewer)
+        # STACKED WIDGET (Sayfalar arası geçiş için)
+        self.stack = QStackedWidget()
         
-        self._current_pixmap = None
+        # SAYFA 1: RESİM GÖRÜNTÜLEYİCİ (Zoom/Pan özellikli)
+        self.image_viewer = ImageViewer()
+        self.stack.addWidget(self.image_viewer)
+        
+        # SAYFA 2: KARAKTER KARTI (HTML Stat Block)
+        self.stat_viewer = QTextBrowser()
+        self.stat_viewer.setStyleSheet("""
+            QTextBrowser {
+                background-color: #1a1a1a;
+                color: #e0e0e0;
+                border: none;
+                padding: 20px;
+                font-family: 'Segoe UI', serif;
+            }
+        """)
+        self.stack.addWidget(self.stat_viewer)
+        
+        layout.addWidget(self.stack)
 
     def show_image(self, pixmap):
-        self._current_pixmap = pixmap
-        self.update_view()
+        """Sadece resmi gösterir"""
+        self.stack.setCurrentIndex(0)
+        self.image_viewer.set_image(pixmap)
 
-    def resizeEvent(self, event):
-        self.update_view()
-        super().resizeEvent(event)
-
-    def update_view(self):
-        if self._current_pixmap and not self._current_pixmap.isNull():
-            scaled = self._current_pixmap.scaled(self.viewer.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-            self.viewer.setPixmap(scaled)
-        else:
-            self.viewer.clear()
+    def show_stat_block(self, html_content):
+        """Karakter kartını (HTML) gösterir"""
+        self.stack.setCurrentIndex(1)
+        self.stat_viewer.setHtml(html_content)
