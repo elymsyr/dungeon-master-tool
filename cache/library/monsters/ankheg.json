@@ -1,0 +1,111 @@
+{
+    "index": "ankheg",
+    "name": "Ankheg",
+    "size": "Large",
+    "type": "monstrosity",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 14
+        },
+        {
+            "type": "condition",
+            "value": 11,
+            "condition": {
+                "index": "prone",
+                "name": "Prone",
+                "url": "/api/2014/conditions/prone"
+            }
+        }
+    ],
+    "hit_points": 39,
+    "hit_dice": "6d10",
+    "hit_points_roll": "6d10+6",
+    "speed": {
+        "walk": "30 ft.",
+        "burrow": "10 ft."
+    },
+    "strength": 17,
+    "dexterity": 11,
+    "constitution": 13,
+    "intelligence": 1,
+    "wisdom": 13,
+    "charisma": 6,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "darkvision": "60 ft.",
+        "tremorsense": "60 ft.",
+        "passive_perception": 11
+    },
+    "languages": "",
+    "challenge_rating": 2,
+    "proficiency_bonus": 2,
+    "xp": 250,
+    "actions": [
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6 + 3) slashing damage plus 3 (1d6) acid damage. If the target is a Large or smaller creature, it is grappled (escape DC 13). Until this grapple ends, the ankheg can bite only the grappled creature and has advantage on attack rolls to do so.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "2d6+3"
+                },
+                {
+                    "damage_type": {
+                        "index": "acid",
+                        "name": "Acid",
+                        "url": "/api/2014/damage-types/acid"
+                    },
+                    "damage_dice": "1d6"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Acid Spray",
+            "desc": "The ankheg spits acid in a line that is 30 ft. long and 5 ft. wide, provided that it has no creature grappled. Each creature in that line must make a DC 13 Dexterity saving throw, taking 10 (3d6) acid damage on a failed save, or half as much damage on a successful one.",
+            "usage": {
+                "type": "recharge on roll",
+                "dice": "1d6",
+                "min_value": 6
+            },
+            "dc": {
+                "dc_type": {
+                    "index": "dex",
+                    "name": "DEX",
+                    "url": "/api/2014/ability-scores/dex"
+                },
+                "dc_value": 13,
+                "success_type": "half"
+            },
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "acid",
+                        "name": "Acid",
+                        "url": "/api/2014/damage-types/acid"
+                    },
+                    "damage_dice": "3d6"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/ankheg.png",
+    "url": "/api/2014/monsters/ankheg",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

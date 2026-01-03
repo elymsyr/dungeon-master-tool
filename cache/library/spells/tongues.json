@@ -1,0 +1,60 @@
+{
+    "higher_level": [],
+    "index": "tongues",
+    "name": "Tongues",
+    "desc": [
+        "This spell grants the creature you touch the ability to understand any spoken language it hears. Moreover, when the target speaks, any creature that knows at least one language and can hear the target understands what it says."
+    ],
+    "range": "Touch",
+    "components": [
+        "V",
+        "M"
+    ],
+    "material": "A small clay model of a ziggurat.",
+    "ritual": false,
+    "duration": "1 hour",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 3,
+    "school": {
+        "index": "divination",
+        "name": "Divination",
+        "url": "/api/2014/magic-schools/divination"
+    },
+    "classes": [
+        {
+            "index": "bard",
+            "name": "Bard",
+            "url": "/api/2014/classes/bard"
+        },
+        {
+            "index": "cleric",
+            "name": "Cleric",
+            "url": "/api/2014/classes/cleric"
+        },
+        {
+            "index": "sorcerer",
+            "name": "Sorcerer",
+            "url": "/api/2014/classes/sorcerer"
+        },
+        {
+            "index": "warlock",
+            "name": "Warlock",
+            "url": "/api/2014/classes/warlock"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        }
+    ],
+    "url": "/api/2014/spells/tongues",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

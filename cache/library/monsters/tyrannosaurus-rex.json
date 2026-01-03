@@ -1,0 +1,105 @@
+{
+    "index": "tyrannosaurus-rex",
+    "name": "Tyrannosaurus Rex",
+    "size": "Huge",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 13
+        }
+    ],
+    "hit_points": 136,
+    "hit_dice": "13d12",
+    "hit_points_roll": "13d12+52",
+    "speed": {
+        "walk": "50 ft."
+    },
+    "strength": 25,
+    "dexterity": 10,
+    "constitution": 19,
+    "intelligence": 2,
+    "wisdom": 12,
+    "charisma": 9,
+    "proficiencies": [
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 14
+    },
+    "languages": "",
+    "challenge_rating": 8,
+    "proficiency_bonus": 3,
+    "xp": 3900,
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The tyrannosaurus makes two attacks: one with its bite and one with its tail. It can't make both attacks against the same target.",
+            "actions": [
+                {
+                    "action_name": "Bite",
+                    "count": "1",
+                    "type": "melee"
+                },
+                {
+                    "action_name": "Tail",
+                    "count": "1",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +10 to hit, reach 10 ft., one target. Hit: 33 (4d12 + 7) piercing damage. If the target is a Medium or smaller creature, it is grappled (escape DC 17). Until this grapple ends, the target is restrained, and the tyrannosaurus can't bite another target.",
+            "attack_bonus": 10,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "4d12+7"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Tail",
+            "desc": "Melee Weapon Attack: +10 to hit, reach 10 ft., one target. Hit: 20 (3d8 + 7) bludgeoning damage.",
+            "attack_bonus": 10,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "3d8+7"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/tyrannosaurus-rex.png",
+    "url": "/api/2014/monsters/tyrannosaurus-rex",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

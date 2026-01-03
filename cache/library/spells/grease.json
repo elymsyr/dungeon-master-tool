@@ -1,0 +1,54 @@
+{
+    "higher_level": [],
+    "index": "grease",
+    "name": "Grease",
+    "desc": [
+        "Slick grease covers the ground in a 10-foot square centered on a point within range and turns it into difficult terrain for the duration.",
+        "When the grease appears, each creature standing in its area must succeed on a dexterity saving throw or fall prone. A creature that enters the area or ends its turn there must also succeed on a dexterity saving throw or fall prone."
+    ],
+    "range": "60 feet",
+    "components": [
+        "V",
+        "S",
+        "M"
+    ],
+    "material": "A bit of pork rind or butter.",
+    "ritual": false,
+    "duration": "1 minute",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 1,
+    "dc": {
+        "dc_type": {
+            "index": "dex",
+            "name": "DEX",
+            "url": "/api/2014/ability-scores/dex"
+        },
+        "dc_success": "none"
+    },
+    "area_of_effect": {
+        "type": "cube",
+        "size": 10
+    },
+    "school": {
+        "index": "conjuration",
+        "name": "Conjuration",
+        "url": "/api/2014/magic-schools/conjuration"
+    },
+    "classes": [
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        }
+    ],
+    "url": "/api/2014/spells/grease",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

@@ -1,0 +1,141 @@
+{
+    "index": "manticore",
+    "name": "Manticore",
+    "size": "Large",
+    "type": "monstrosity",
+    "alignment": "lawful evil",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 14
+        }
+    ],
+    "hit_points": 68,
+    "hit_dice": "8d10",
+    "hit_points_roll": "8d10+24",
+    "speed": {
+        "walk": "30 ft.",
+        "fly": "50 ft."
+    },
+    "strength": 17,
+    "dexterity": 16,
+    "constitution": 17,
+    "intelligence": 7,
+    "wisdom": 12,
+    "charisma": 8,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "darkvision": "60 ft.",
+        "passive_perception": 11
+    },
+    "languages": "",
+    "challenge_rating": 3,
+    "proficiency_bonus": 2,
+    "xp": 700,
+    "special_abilities": [
+        {
+            "name": "Tail Spike Regrowth",
+            "desc": "The manticore has twenty-four tail spikes. Used spikes regrow when the manticore finishes a long rest.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "action_options",
+            "desc": "The manticore makes three attacks: one with its bite and two with its claws or three with its tail spikes.",
+            "action_options": {
+                "choose": 1,
+                "type": "action",
+                "from": {
+                    "option_set_type": "options_array",
+                    "options": [
+                        {
+                            "option_type": "multiple",
+                            "items": [
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Bite",
+                                    "count": 1,
+                                    "type": "melee"
+                                },
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Claw",
+                                    "count": 2,
+                                    "type": "melee"
+                                }
+                            ]
+                        },
+                        {
+                            "option_type": "action",
+                            "action_name": "Tail Spike",
+                            "count": 3,
+                            "type": "ranged"
+                        }
+                    ]
+                }
+            },
+            "actions": []
+        },
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) piercing damage.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d8+3"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Claw",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) slashing damage.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "1d6+3"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Tail Spike",
+            "desc": "Ranged Weapon Attack: +5 to hit, range 100/200 ft., one target. Hit: 7 (1d8 + 3) piercing damage.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d8+3"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/manticore.png",
+    "url": "/api/2014/monsters/manticore",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

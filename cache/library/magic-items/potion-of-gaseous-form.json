@@ -1,0 +1,20 @@
+{
+    "index": "potion-of-gaseous-form",
+    "name": "Potion of Gaseous Form",
+    "equipment_category": {
+        "index": "potion",
+        "name": "Potion",
+        "url": "/api/2014/equipment-categories/potion"
+    },
+    "rarity": {
+        "name": "Rare"
+    },
+    "variants": [],
+    "variant": false,
+    "desc": [
+        "Potion, rare",
+        "When you drink this potion, you gain the effect of the gaseous form spell for 1 hour (no concentration required) or until you end the effect as a bonus action. This potion's container seems to hold fog that moves and pours like water."
+    ],
+    "url": "/api/2014/magic-items/potion-of-gaseous-form",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

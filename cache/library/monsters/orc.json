@@ -1,0 +1,102 @@
+{
+    "index": "orc",
+    "name": "Orc",
+    "size": "Medium",
+    "type": "humanoid",
+    "subtype": "orc",
+    "alignment": "chaotic evil",
+    "armor_class": [
+        {
+            "type": "armor",
+            "value": 13,
+            "armor": [
+                {
+                    "index": "hide-armor",
+                    "name": "Hide Armor",
+                    "url": "/api/2014/equipment/hide-armor"
+                }
+            ]
+        }
+    ],
+    "hit_points": 15,
+    "hit_dice": "2d8",
+    "hit_points_roll": "2d8+6",
+    "speed": {
+        "walk": "30 ft."
+    },
+    "strength": 16,
+    "dexterity": 12,
+    "constitution": 16,
+    "intelligence": 7,
+    "wisdom": 11,
+    "charisma": 10,
+    "proficiencies": [
+        {
+            "value": 2,
+            "proficiency": {
+                "index": "skill-intimidation",
+                "name": "Skill: Intimidation",
+                "url": "/api/2014/proficiencies/skill-intimidation"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "darkvision": "60 ft.",
+        "passive_perception": 10
+    },
+    "languages": "Common, Orc",
+    "challenge_rating": 0.5,
+    "proficiency_bonus": 2,
+    "xp": 100,
+    "special_abilities": [
+        {
+            "name": "Aggressive",
+            "desc": "As a bonus action, the orc can move up to its speed toward a hostile creature that it can see.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Greataxe",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 9 (1d12 + 3) slashing damage.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "1d12+3"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Javelin",
+            "desc": "Melee or Ranged Weapon Attack: +5 to hit, reach 5 ft. or range 30/120 ft., one target. Hit: 6 (1d6 + 3) piercing damage.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d6+3"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/orc.png",
+    "url": "/api/2014/monsters/orc",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

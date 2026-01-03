@@ -1,0 +1,53 @@
+{
+    "higher_level": [],
+    "index": "unseen-servant",
+    "name": "Unseen Servant",
+    "desc": [
+        "This spell creates an invisible, mindless, shapeless force that performs simple tasks at your command until the spell ends. The servant springs into existence in an unoccupied space on the ground within range. It has AC 10, 1 hit point, and a Strength of 2, and it can't attack. If it drops to 0 hit points, the spell ends.",
+        "Once on each of your turns as a bonus action, you can mentally command the servant to move up to 15 feet and interact with an object. The servant can perform simple tasks that a human servant could do, such as fetching things, cleaning, mending, folding clothes, lighting fires, serving food, and pouring wine. Once you give the command, the servant performs the task to the best of its ability until it completes the task, then waits for your next command.",
+        "If you command the servant to perform a task that would move it more than 60 feet away from you, the spell ends."
+    ],
+    "range": "60 feet",
+    "components": [
+        "V",
+        "S",
+        "M"
+    ],
+    "material": "A piece of string and a bit of wood.",
+    "ritual": true,
+    "duration": "1 hour",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 1,
+    "school": {
+        "index": "conjuration",
+        "name": "Conjuration",
+        "url": "/api/2014/magic-schools/conjuration"
+    },
+    "classes": [
+        {
+            "index": "bard",
+            "name": "Bard",
+            "url": "/api/2014/classes/bard"
+        },
+        {
+            "index": "warlock",
+            "name": "Warlock",
+            "url": "/api/2014/classes/warlock"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        }
+    ],
+    "url": "/api/2014/spells/unseen-servant",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

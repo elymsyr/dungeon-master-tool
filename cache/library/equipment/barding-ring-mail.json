@@ -1,0 +1,23 @@
+{
+    "special": [],
+    "index": "barding-ring-mail",
+    "name": "Barding: Ring mail",
+    "equipment_category": {
+        "index": "mounts-and-vehicles",
+        "name": "Mounts and Vehicles",
+        "url": "/api/2014/equipment-categories/mounts-and-vehicles"
+    },
+    "vehicle_category": "Tack, Harness, and Drawn Vehicles",
+    "cost": {
+        "quantity": 12,
+        "unit": "gp"
+    },
+    "weight": 80,
+    "desc": [
+        "Barding is armor designed to protect an animal's head, neck, chest, and body. Any type of armor shown on the Armor table can be purchased as barding. The cost is four times the equivalent armor made for humanoids, and it weighs twice as much."
+    ],
+    "url": "/api/2014/equipment/barding-ring-mail",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

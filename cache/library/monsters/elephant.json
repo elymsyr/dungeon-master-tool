@@ -1,0 +1,84 @@
+{
+    "index": "elephant",
+    "name": "Elephant",
+    "size": "Huge",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 12
+        }
+    ],
+    "hit_points": 76,
+    "hit_dice": "8d12",
+    "hit_points_roll": "8d12+24",
+    "speed": {
+        "walk": "40 ft."
+    },
+    "strength": 22,
+    "dexterity": 9,
+    "constitution": 17,
+    "intelligence": 3,
+    "wisdom": 11,
+    "charisma": 6,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 10
+    },
+    "languages": "",
+    "challenge_rating": 4,
+    "proficiency_bonus": 2,
+    "xp": 1100,
+    "special_abilities": [
+        {
+            "name": "Trampling Charge",
+            "desc": "If the elephant moves at least 20 ft. straight toward a creature and then hits it with a gore attack on the same turn, that target must succeed on a DC 12 Strength saving throw or be knocked prone. If the target is prone, the elephant can make one stomp attack against it as a bonus action.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Gore",
+            "desc": "Melee Weapon Attack: +8 to hit, reach 5 ft., one target. Hit: 19 (3d8 + 6) piercing damage.",
+            "attack_bonus": 8,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "3d8+6"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Stomp",
+            "desc": "Melee Weapon Attack: +8 to hit, reach 5 ft., one prone creature. Hit: 22 (3d10 + 6) bludgeoning damage.",
+            "attack_bonus": 8,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "3d10+6"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/elephant.png",
+    "url": "/api/2014/monsters/elephant",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

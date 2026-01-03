@@ -1,0 +1,23 @@
+{
+    "special": [],
+    "index": "navigators-tools",
+    "name": "Navigator's Tools",
+    "equipment_category": {
+        "index": "tools",
+        "name": "Tools",
+        "url": "/api/2014/equipment-categories/tools"
+    },
+    "tool_category": "Other Tools",
+    "cost": {
+        "quantity": 25,
+        "unit": "gp"
+    },
+    "weight": 2,
+    "desc": [
+        "This set of instruments is used for navigation at sea. Proficiency with navigator's tools lets you chart a ship's course and follow navigation charts. In addition, these tools allow you to add your proficiency bonus to any ability check you make to avoid getting lost at sea."
+    ],
+    "url": "/api/2014/equipment/navigators-tools",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

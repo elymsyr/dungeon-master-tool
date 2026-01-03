@@ -1,0 +1,79 @@
+{
+    "index": "crab",
+    "name": "Crab",
+    "size": "Tiny",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 11
+        }
+    ],
+    "hit_points": 2,
+    "hit_dice": "1d4",
+    "hit_points_roll": "1d4",
+    "speed": {
+        "walk": "20 ft.",
+        "swim": "20 ft."
+    },
+    "strength": 2,
+    "dexterity": 11,
+    "constitution": 10,
+    "intelligence": 1,
+    "wisdom": 8,
+    "charisma": 2,
+    "proficiencies": [
+        {
+            "value": 2,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "blindsight": "30 ft.",
+        "passive_perception": 9
+    },
+    "languages": "",
+    "challenge_rating": 0,
+    "proficiency_bonus": 2,
+    "xp": 10,
+    "special_abilities": [
+        {
+            "name": "Amphibious",
+            "desc": "The crab can breathe air and water.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Claw",
+            "desc": "Melee Weapon Attack: +0 to hit, reach 5 ft., one target. Hit: 1 bludgeoning damage.",
+            "attack_bonus": 0,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "1"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/crab.png",
+    "url": "/api/2014/monsters/crab",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

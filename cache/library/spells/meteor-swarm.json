@@ -1,0 +1,61 @@
+{
+    "higher_level": [],
+    "index": "meteor-swarm",
+    "name": "Meteor Swarm",
+    "desc": [
+        "Blazing orbs of fire plummet to the ground at four different points you can see within range. Each creature in a 40-foot-radius sphere centered on each point you choose must make a dexterity saving throw. The sphere spreads around corners. A creature takes 20d6 fire damage and 20d6 bludgeoning damage on a failed save, or half as much damage on a successful one. A creature in the area of more than one fiery burst is affected only once.",
+        "The spell damages objects in the area and ignites flammable objects that aren't being worn or carried."
+    ],
+    "range": "1 mile",
+    "components": [
+        "V",
+        "S"
+    ],
+    "ritual": false,
+    "duration": "Instantaneous",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 9,
+    "damage": {
+        "damage_type": {
+            "index": "fire",
+            "name": "Fire",
+            "url": "/api/2014/damage-types/fire"
+        },
+        "damage_at_slot_level": {
+            "9": "20d6 + 20d6"
+        }
+    },
+    "dc": {
+        "dc_type": {
+            "index": "dex",
+            "name": "DEX",
+            "url": "/api/2014/ability-scores/dex"
+        },
+        "dc_success": "half"
+    },
+    "area_of_effect": {
+        "type": "sphere",
+        "size": 40
+    },
+    "school": {
+        "index": "evocation",
+        "name": "Evocation",
+        "url": "/api/2014/magic-schools/evocation"
+    },
+    "classes": [
+        {
+            "index": "sorcerer",
+            "name": "Sorcerer",
+            "url": "/api/2014/classes/sorcerer"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [],
+    "url": "/api/2014/spells/meteor-swarm",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

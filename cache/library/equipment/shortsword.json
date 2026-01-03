@@ -1,0 +1,50 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "shortsword",
+    "name": "Shortsword",
+    "equipment_category": {
+        "index": "weapon",
+        "name": "Weapon",
+        "url": "/api/2014/equipment-categories/weapon"
+    },
+    "weapon_category": "Martial",
+    "weapon_range": "Melee",
+    "category_range": "Martial Melee",
+    "cost": {
+        "quantity": 10,
+        "unit": "gp"
+    },
+    "damage": {
+        "damage_dice": "1d6",
+        "damage_type": {
+            "index": "piercing",
+            "name": "Piercing",
+            "url": "/api/2014/damage-types/piercing"
+        }
+    },
+    "range": {
+        "normal": 5
+    },
+    "weight": 2,
+    "properties": [
+        {
+            "index": "finesse",
+            "name": "Finesse",
+            "url": "/api/2014/weapon-properties/finesse"
+        },
+        {
+            "index": "light",
+            "name": "Light",
+            "url": "/api/2014/weapon-properties/light"
+        },
+        {
+            "index": "monk",
+            "name": "Monk",
+            "url": "/api/2014/weapon-properties/monk"
+        }
+    ],
+    "url": "/api/2014/equipment/shortsword",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": []
+}

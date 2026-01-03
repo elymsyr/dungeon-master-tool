@@ -1,0 +1,20 @@
+{
+    "index": "weapon-2",
+    "name": "Weapon, +2",
+    "equipment_category": {
+        "index": "weapon",
+        "name": "Weapon",
+        "url": "/api/2014/equipment-categories/weapon"
+    },
+    "rarity": {
+        "name": "Rare"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Weapon (any), rare",
+        "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+    ],
+    "url": "/api/2014/magic-items/weapon-2",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

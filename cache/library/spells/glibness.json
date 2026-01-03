@@ -1,0 +1,37 @@
+{
+    "higher_level": [],
+    "index": "glibness",
+    "name": "Glibness",
+    "desc": [
+        "Until the spell ends, when you make a Charisma check, you can replace the number you roll with a 15. Additionally, no matter what you say, magic that would determine if you are telling the truth indicates that you are being truthful."
+    ],
+    "range": "Self",
+    "components": [
+        "V"
+    ],
+    "ritual": false,
+    "duration": "1 hour",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 8,
+    "school": {
+        "index": "transmutation",
+        "name": "Transmutation",
+        "url": "/api/2014/magic-schools/transmutation"
+    },
+    "classes": [
+        {
+            "index": "bard",
+            "name": "Bard",
+            "url": "/api/2014/classes/bard"
+        },
+        {
+            "index": "warlock",
+            "name": "Warlock",
+            "url": "/api/2014/classes/warlock"
+        }
+    ],
+    "subclasses": [],
+    "url": "/api/2014/spells/glibness",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

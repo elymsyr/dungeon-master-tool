@@ -1,0 +1,64 @@
+{
+    "index": "commoner",
+    "name": "Commoner",
+    "desc": "Commoners include peasants, serfs, slaves, servants, pilgrims, merchants, artisans, and hermits.",
+    "size": "Medium",
+    "type": "humanoid",
+    "subtype": "any race",
+    "alignment": "any alignment",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 10
+        }
+    ],
+    "hit_points": 4,
+    "hit_dice": "1d8",
+    "hit_points_roll": "1d8",
+    "speed": {
+        "walk": "30 ft."
+    },
+    "strength": 10,
+    "dexterity": 10,
+    "constitution": 10,
+    "intelligence": 10,
+    "wisdom": 10,
+    "charisma": 10,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 10
+    },
+    "languages": "any one language (usually Common)",
+    "challenge_rating": 0,
+    "proficiency_bonus": 2,
+    "xp": 10,
+    "actions": [
+        {
+            "name": "Club",
+            "desc": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 2 (1d4) bludgeoning damage.",
+            "attack_bonus": 2,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "1d4"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/commoner.png",
+    "url": "/api/2014/monsters/commoner",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

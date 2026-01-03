@@ -1,0 +1,100 @@
+{
+    "index": "death-dog",
+    "name": "Death Dog",
+    "desc": "A death dog is an ugly two-headed hound that roams plains, and deserts. Hate burns in a death dog\u2019s heart, and a taste for humanoid flesh drives it to attack travelers and explorers. Death dog saliva carries a foul disease that causes a victim\u2019s flesh to slowly rot off the bone.",
+    "size": "Medium",
+    "type": "monstrosity",
+    "alignment": "neutral evil",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 12
+        }
+    ],
+    "hit_points": 39,
+    "hit_dice": "6d8",
+    "hit_points_roll": "6d8+12",
+    "speed": {
+        "walk": "40 ft."
+    },
+    "strength": 15,
+    "dexterity": 14,
+    "constitution": 14,
+    "intelligence": 3,
+    "wisdom": 13,
+    "charisma": 6,
+    "proficiencies": [
+        {
+            "value": 5,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        },
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "darkvision": "120 ft.",
+        "passive_perception": 15
+    },
+    "languages": "",
+    "challenge_rating": 1,
+    "proficiency_bonus": 2,
+    "xp": 200,
+    "special_abilities": [
+        {
+            "name": "Two-Headed",
+            "desc": "The dog has advantage on Wisdom (Perception) checks and on saving throws against being blinded, charmed, deafened, frightened, stunned, or knocked unconscious.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The dog makes two bite attacks.",
+            "actions": [
+                {
+                    "action_name": "Bite",
+                    "count": "2",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) piercing damage. If the target is a creature, it must succeed on a DC 12 Constitution saving throw against disease or become poisoned until the disease is cured. Every 24 hours that elapse, the creature must repeat the saving throw, reducing its hit point maximum by 5 (1d10) on a failure. This reduction lasts until the disease is cured. The creature dies if the disease reduces its hit point maximum to 0.",
+            "attack_bonus": 4,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "1d6+2"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/death-dog.png",
+    "url": "/api/2014/monsters/death-dog",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

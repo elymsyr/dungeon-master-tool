@@ -1,0 +1,20 @@
+{
+    "index": "potion-of-resistance-poison",
+    "name": "Potion of Poison Resistance",
+    "equipment_category": {
+        "index": "potion",
+        "name": "Potion",
+        "url": "/api/2014/equipment-categories/potion"
+    },
+    "rarity": {
+        "name": "Uncommon"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Potion, uncommon",
+        "When you drink this potion, you gain resistance to poison damage for 1 hour."
+    ],
+    "url": "/api/2014/magic-items/potion-of-resistance-poison",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

@@ -1,0 +1,98 @@
+{
+    "index": "giant-frog",
+    "name": "Giant Frog",
+    "size": "Medium",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 11
+        }
+    ],
+    "hit_points": 18,
+    "hit_dice": "4d8",
+    "hit_points_roll": "4d8",
+    "speed": {
+        "walk": "30 ft.",
+        "swim": "30 ft."
+    },
+    "strength": 12,
+    "dexterity": 13,
+    "constitution": 11,
+    "intelligence": 2,
+    "wisdom": 10,
+    "charisma": 3,
+    "proficiencies": [
+        {
+            "value": 2,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        },
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "darkvision": "30 ft.",
+        "passive_perception": 12
+    },
+    "languages": "",
+    "challenge_rating": 0.25,
+    "proficiency_bonus": 2,
+    "xp": 50,
+    "special_abilities": [
+        {
+            "name": "Amphibious",
+            "desc": "The frog can breathe air and water",
+            "damage": []
+        },
+        {
+            "name": "Standing Leap",
+            "desc": "The frog's long jump is up to 20 ft. and its high jump is up to 10 ft., with or without a running start.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 4 (1d6 + 1) piercing damage, and the target is grappled (escape DC 11). Until this grapple ends, the target is restrained, and the frog can't bite another target.",
+            "attack_bonus": 3,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d6+1"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Swallow",
+            "desc": "The frog makes one bite attack against a Small or smaller target it is grappling. If the attack hits, the target is swallowed, and the grapple ends. The swallowed target is blinded and restrained, it has total cover against attacks and other effects outside the frog, and it takes 5 (2d4) acid damage at the start of each of the frog's turns. The frog can have only one target swallowed at a time. If the frog dies, a swallowed creature is no longer restrained by it and can escape from the corpse using 5 ft. of movement, exiting prone.",
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/giant-frog.png",
+    "url": "/api/2014/monsters/giant-frog",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

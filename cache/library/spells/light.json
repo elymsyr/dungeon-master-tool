@@ -1,0 +1,64 @@
+{
+    "higher_level": [],
+    "index": "light",
+    "name": "Light",
+    "desc": [
+        "You touch one object that is no larger than 10 feet in any dimension. Until the spell ends, the object sheds bright light in a 20-foot radius and dim light for an additional 20 feet. The light can be colored as you like. Completely covering the object with something opaque blocks the light. The spell ends if you cast it again or dismiss it as an action.",
+        "If you target an object held or worn by a hostile creature, that creature must succeed on a dexterity saving throw to avoid the spell."
+    ],
+    "range": "Touch",
+    "components": [
+        "V",
+        "M"
+    ],
+    "material": "A firefly or phosphorescent moss.",
+    "ritual": false,
+    "duration": "1 hour",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 0,
+    "dc": {
+        "dc_type": {
+            "index": "dex",
+            "name": "DEX",
+            "url": "/api/2014/ability-scores/dex"
+        },
+        "dc_success": "none"
+    },
+    "school": {
+        "index": "evocation",
+        "name": "Evocation",
+        "url": "/api/2014/magic-schools/evocation"
+    },
+    "classes": [
+        {
+            "index": "bard",
+            "name": "Bard",
+            "url": "/api/2014/classes/bard"
+        },
+        {
+            "index": "cleric",
+            "name": "Cleric",
+            "url": "/api/2014/classes/cleric"
+        },
+        {
+            "index": "sorcerer",
+            "name": "Sorcerer",
+            "url": "/api/2014/classes/sorcerer"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        }
+    ],
+    "url": "/api/2014/spells/light",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

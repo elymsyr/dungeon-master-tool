@@ -1,0 +1,23 @@
+{
+    "special": [],
+    "index": "thieves-tools",
+    "name": "Thieves' Tools",
+    "equipment_category": {
+        "index": "tools",
+        "name": "Tools",
+        "url": "/api/2014/equipment-categories/tools"
+    },
+    "tool_category": "Other Tools",
+    "cost": {
+        "quantity": 25,
+        "unit": "gp"
+    },
+    "weight": 1,
+    "desc": [
+        "This set of tools includes a small file, a set of lock picks, a small mirror mounted on a metal handle, a set of narrow-bladed scissors, and a pair of pliers. Proficiency with these tools lets you add your proficiency bonus to any ability checks you make to disarm traps or open locks."
+    ],
+    "url": "/api/2014/equipment/thieves-tools",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

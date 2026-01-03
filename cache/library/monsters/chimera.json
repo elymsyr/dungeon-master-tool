@@ -1,0 +1,219 @@
+{
+    "index": "chimera",
+    "name": "Chimera",
+    "size": "Large",
+    "type": "monstrosity",
+    "alignment": "chaotic evil",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 14
+        }
+    ],
+    "hit_points": 114,
+    "hit_dice": "12d10",
+    "hit_points_roll": "12d10+48",
+    "speed": {
+        "walk": "30 ft.",
+        "fly": "60 ft."
+    },
+    "strength": 19,
+    "dexterity": 11,
+    "constitution": 19,
+    "intelligence": 3,
+    "wisdom": 14,
+    "charisma": 10,
+    "proficiencies": [
+        {
+            "value": 8,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "darkvision": "60 ft.",
+        "passive_perception": 18
+    },
+    "languages": "understands Draconic but can't speak",
+    "challenge_rating": 6,
+    "proficiency_bonus": 3,
+    "xp": 2300,
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "action_options",
+            "desc": "The chimera makes three attacks: one with its bite, one with its horns, and one with its claws. When its fire breath is available, it can use the breath in place of its bite or horns.",
+            "action_options": {
+                "choose": 1,
+                "type": "action",
+                "from": {
+                    "option_set_type": "options_array",
+                    "options": [
+                        {
+                            "option_type": "multiple",
+                            "items": [
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Bite",
+                                    "count": 1,
+                                    "type": "melee"
+                                },
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Horns",
+                                    "count": 1,
+                                    "type": "melee"
+                                },
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Claws",
+                                    "count": 1,
+                                    "type": "melee"
+                                }
+                            ]
+                        },
+                        {
+                            "option_type": "multiple",
+                            "items": [
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Fire Breath",
+                                    "count": 1,
+                                    "type": "ability"
+                                },
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Horns",
+                                    "count": 1,
+                                    "type": "melee"
+                                },
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Claws",
+                                    "count": 1,
+                                    "type": "melee"
+                                }
+                            ]
+                        },
+                        {
+                            "option_type": "multiple",
+                            "items": [
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Bite",
+                                    "count": 1,
+                                    "type": "melee"
+                                },
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Fire Breath",
+                                    "count": 1,
+                                    "type": "ability"
+                                },
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Claws",
+                                    "count": 1,
+                                    "type": "melee"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "actions": []
+        },
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) piercing damage.",
+            "attack_bonus": 7,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "2d6+4"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Horns",
+            "desc": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 10 (1d12 + 4) bludgeoning damage.",
+            "attack_bonus": 7,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "1d12+4"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Claws",
+            "desc": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) slashing damage.",
+            "attack_bonus": 7,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "2d6+4"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Fire Breath",
+            "desc": "The dragon head exhales fire in a 15-foot cone. Each creature in that area must make a DC 15 Dexterity saving throw, taking 31 (7d8) fire damage on a failed save, or half as much damage on a successful one.",
+            "usage": {
+                "type": "recharge on roll",
+                "dice": "1d6",
+                "min_value": 5
+            },
+            "dc": {
+                "dc_type": {
+                    "index": "dex",
+                    "name": "DEX",
+                    "url": "/api/2014/ability-scores/dex"
+                },
+                "dc_value": 15,
+                "success_type": "half"
+            },
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "fire",
+                        "name": "Fire",
+                        "url": "/api/2014/damage-types/fire"
+                    },
+                    "damage_dice": "7d8"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/chimera.png",
+    "url": "/api/2014/monsters/chimera",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

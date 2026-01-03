@@ -1,0 +1,27 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "shield",
+    "name": "Shield",
+    "equipment_category": {
+        "index": "armor",
+        "name": "Armor",
+        "url": "/api/2014/equipment-categories/armor"
+    },
+    "armor_category": "Shield",
+    "armor_class": {
+        "base": 2,
+        "dex_bonus": false
+    },
+    "str_minimum": 0,
+    "stealth_disadvantage": false,
+    "weight": 6,
+    "cost": {
+        "quantity": 10,
+        "unit": "gp"
+    },
+    "url": "/api/2014/equipment/shield",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

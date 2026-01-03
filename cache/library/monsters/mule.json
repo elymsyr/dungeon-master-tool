@@ -1,0 +1,73 @@
+{
+    "index": "mule",
+    "name": "Mule",
+    "size": "Medium",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 10
+        }
+    ],
+    "hit_points": 11,
+    "hit_dice": "2d8",
+    "hit_points_roll": "2d8+2",
+    "speed": {
+        "walk": "40 ft."
+    },
+    "strength": 14,
+    "dexterity": 10,
+    "constitution": 13,
+    "intelligence": 2,
+    "wisdom": 10,
+    "charisma": 5,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 10
+    },
+    "languages": "",
+    "challenge_rating": 0.125,
+    "proficiency_bonus": 2,
+    "xp": 25,
+    "special_abilities": [
+        {
+            "name": "Beast of Burden",
+            "desc": "The mule is considered to be a Large animal for the purpose of determining its carrying capacity.",
+            "damage": []
+        },
+        {
+            "name": "Sure-Footed",
+            "desc": "The mule has advantage on Strength and Dexterity saving throws made against effects that would knock it prone.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Hooves",
+            "desc": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 4 (1d4 + 2) bludgeoning damage.",
+            "attack_bonus": 2,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "1d4+2"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/mule.png",
+    "url": "/api/2014/monsters/mule",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

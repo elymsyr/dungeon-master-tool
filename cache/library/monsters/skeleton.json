@@ -1,0 +1,95 @@
+{
+    "index": "skeleton",
+    "name": "Skeleton",
+    "size": "Medium",
+    "type": "undead",
+    "alignment": "lawful evil",
+    "armor_class": [
+        {
+            "type": "armor",
+            "value": 13,
+            "desc": "armor scraps"
+        }
+    ],
+    "hit_points": 13,
+    "hit_dice": "2d8",
+    "hit_points_roll": "2d8+4",
+    "speed": {
+        "walk": "30 ft."
+    },
+    "strength": 10,
+    "dexterity": 14,
+    "constitution": 15,
+    "intelligence": 6,
+    "wisdom": 8,
+    "charisma": 5,
+    "proficiencies": [],
+    "damage_vulnerabilities": [
+        "bludgeoning"
+    ],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "poison"
+    ],
+    "condition_immunities": [
+        {
+            "index": "poisoned",
+            "name": "Poisoned",
+            "url": "/api/2014/conditions/poisoned"
+        },
+        {
+            "index": "exhaustion",
+            "name": "Exhaustion",
+            "url": "/api/2014/conditions/exhaustion"
+        }
+    ],
+    "senses": {
+        "darkvision": "60 ft.",
+        "passive_perception": 9
+    },
+    "languages": "understands all languages it spoke in life but can't speak",
+    "challenge_rating": 0.25,
+    "proficiency_bonus": 2,
+    "xp": 50,
+    "actions": [
+        {
+            "name": "Shortsword",
+            "desc": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+            "attack_bonus": 4,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d6+2"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Shortbow",
+            "desc": "Ranged Weapon Attack: +4 to hit, range 80/320 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+            "attack_bonus": 4,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d6+2"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/skeleton.png",
+    "url": "/api/2014/monsters/skeleton",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

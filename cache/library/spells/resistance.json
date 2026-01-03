@@ -1,0 +1,46 @@
+{
+    "higher_level": [],
+    "index": "resistance",
+    "name": "Resistance",
+    "desc": [
+        "You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice. It can roll the die before or after making the saving throw. The spell then ends."
+    ],
+    "range": "Touch",
+    "components": [
+        "V",
+        "S",
+        "M"
+    ],
+    "material": "A miniature cloak.",
+    "ritual": false,
+    "duration": "Up to 1 minute",
+    "concentration": true,
+    "casting_time": "1 action",
+    "level": 0,
+    "school": {
+        "index": "abjuration",
+        "name": "Abjuration",
+        "url": "/api/2014/magic-schools/abjuration"
+    },
+    "classes": [
+        {
+            "index": "cleric",
+            "name": "Cleric",
+            "url": "/api/2014/classes/cleric"
+        },
+        {
+            "index": "druid",
+            "name": "Druid",
+            "url": "/api/2014/classes/druid"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        }
+    ],
+    "url": "/api/2014/spells/resistance",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

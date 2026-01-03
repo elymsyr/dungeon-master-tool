@@ -1,0 +1,22 @@
+{
+    "index": "carpet-of-flying-3x5",
+    "name": "Carpet of Flying (3 ft. \u00d7 5 ft.)",
+    "equipment_category": {
+        "index": "wondrous-items",
+        "name": "Wondrous Items",
+        "url": "/api/2014/equipment-categories/wondrous-items"
+    },
+    "rarity": {
+        "name": "Very Rare"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Wondrous item, very rare",
+        "You can speak the carpet's command word as an  action to make the carpet hover and fly. It moves according to your spoken directions, provided that you are within 30 feet of it.",
+        "This carpet is 3 feet by 5 feet and has a flying speed of 80 feet. It can carry up to 400 pounds, but its flying speed becomes 40 feet while carrying over 200 pounds."
+    ],
+    "image": "/api/images/magic-items/carpet-of-flying.png",
+    "url": "/api/2014/magic-items/carpet-of-flying-3x5",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

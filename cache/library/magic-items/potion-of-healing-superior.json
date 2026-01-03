@@ -1,0 +1,20 @@
+{
+    "index": "potion-of-healing-superior",
+    "name": "Potion of Superior Healing",
+    "equipment_category": {
+        "index": "potion",
+        "name": "Potion",
+        "url": "/api/2014/equipment-categories/potion"
+    },
+    "rarity": {
+        "name": "Rare"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Potion, rare",
+        "You regain 8d4 + 8 hit points when you drink this potion. The potion's red liquid glimmers when agitated."
+    ],
+    "url": "/api/2014/magic-items/potion-of-healing-superior",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

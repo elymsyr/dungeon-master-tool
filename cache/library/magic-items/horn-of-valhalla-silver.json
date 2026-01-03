@@ -1,0 +1,21 @@
+{
+    "index": "horn-of-valhalla-silver",
+    "name": "Silver Horn of Valhalla",
+    "equipment_category": {
+        "index": "wondrous-items",
+        "name": "Wondrous Items",
+        "url": "/api/2014/equipment-categories/wondrous-items"
+    },
+    "rarity": {
+        "name": "Rare"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Wondrous item, rare",
+        "You can use an action to blow this horn. In response, 2d4 + 2 warrior spirits from the Valhalla appear within 60 feet of you. They use the statistics of a berserker. They return to Valhalla after 1 hour or when they drop to 0 hit points. Once you use the horn, it can't be used again until 7 days have passed.",
+        "The summoned berserkers are friendly to you and your companions and follow your commands."
+    ],
+    "url": "/api/2014/magic-items/horn-of-valhalla-silver",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

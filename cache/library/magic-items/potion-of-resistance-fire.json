@@ -1,0 +1,21 @@
+{
+    "index": "potion-of-resistance-fire",
+    "name": "Potion of Fire Resistance",
+    "equipment_category": {
+        "index": "potion",
+        "name": "Potion",
+        "url": "/api/2014/equipment-categories/potion"
+    },
+    "rarity": {
+        "name": "Uncommon"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Potion, uncommon",
+        "When you drink this potion, you gain resistance to fire damage for 1 hour."
+    ],
+    "image": "/api/2014/magic-items/potion-of-resistance-fire.png",
+    "url": "/api/2014/magic-items/potion-of-resistance-fire",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

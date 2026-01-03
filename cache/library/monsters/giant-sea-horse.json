@@ -1,0 +1,75 @@
+{
+    "index": "giant-sea-horse",
+    "name": "Giant Sea Horse",
+    "desc": "Like their smaller kin, giant sea horses are shy, colorful fish with elongated bodies and curled tails. Aquatic elves train them as mounts.",
+    "size": "Large",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 13
+        }
+    ],
+    "hit_points": 16,
+    "hit_dice": "3d10",
+    "hit_points_roll": "3d10",
+    "speed": {
+        "walk": "0 ft.",
+        "swim": "40 ft."
+    },
+    "strength": 12,
+    "dexterity": 15,
+    "constitution": 11,
+    "intelligence": 2,
+    "wisdom": 12,
+    "charisma": 5,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 11
+    },
+    "languages": "",
+    "challenge_rating": 0.5,
+    "proficiency_bonus": 2,
+    "xp": 100,
+    "special_abilities": [
+        {
+            "name": "Charge",
+            "desc": "If the sea horse moves at least 20 ft. straight toward a target and then hits it with a ram attack on the same turn, the target takes an extra 7 (2d6) bludgeoning damage. If the target is a creature, it must succeed on a DC 11 Strength saving throw or be knocked prone.",
+            "damage": []
+        },
+        {
+            "name": "Water Breathing",
+            "desc": "The sea horse can breathe only underwater.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Ram",
+            "desc": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 4 (1d6 + 1) bludgeoning damage.",
+            "attack_bonus": 3,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "1d6+1"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/giant-sea-horse.png",
+    "url": "/api/2014/monsters/giant-sea-horse",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

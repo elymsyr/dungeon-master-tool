@@ -1,0 +1,20 @@
+{
+    "index": "ring-of-telekinesis",
+    "name": "Ring of Telekinesis",
+    "equipment_category": {
+        "index": "ring",
+        "name": "Ring",
+        "url": "/api/2014/equipment-categories/ring"
+    },
+    "rarity": {
+        "name": "Very Rare"
+    },
+    "variants": [],
+    "variant": false,
+    "desc": [
+        "Ring, very rare (requires attunement)",
+        "While wearing this ring, you can cast the telekinesis spell at will, but you can target only objects that aren't being worn or carried."
+    ],
+    "url": "/api/2014/magic-items/ring-of-telekinesis",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

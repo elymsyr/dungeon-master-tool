@@ -1,0 +1,64 @@
+{
+    "index": "wall-of-thorns",
+    "name": "Wall of Thorns",
+    "desc": [
+        "You create a wall of tough, pliable, tangled brush bristling with needle-sharp thorns. The wall appears within range on a solid surface and lasts for the duration. You choose to make the wall up to 60 feet long, 10 feet high, and 5 feet thick or a circle that has a 20-foot diameter and is up to 20 feet high and 5 feet thick. The wall blocks line of sight.",
+        "When the wall appears, each creature within its area must make a dexterity saving throw. On a failed save, a creature takes 7d8 piercing damage, or half as much damage on a successful save.",
+        "A creature can move through the wall, albeit slowly and painfully. For every 1 foot a creature moves through the wall, it must spend 4 feet of movement. Furthermore, the first time a creature enters the wall on a turn or ends its turn there, the creature must make a dexterity saving throw. It takes 7d8 slashing damage on a failed save, or half as much damage on a successful one."
+    ],
+    "higher_level": [
+        "When you cast this spell using a spell slot of 7th level or higher, both types of damage increase by 1d8 for each slot level above 6th."
+    ],
+    "range": "120 feet",
+    "components": [
+        "V",
+        "S",
+        "M"
+    ],
+    "material": "A handful of thorns.",
+    "ritual": false,
+    "duration": "Up to 10 minutes",
+    "concentration": true,
+    "casting_time": "1 action",
+    "level": 6,
+    "damage": {
+        "damage_type": {
+            "index": "piercing",
+            "name": "Piercing",
+            "url": "/api/2014/damage-types/piercing"
+        },
+        "damage_at_slot_level": {
+            "6": "7d8",
+            "7": "8d8",
+            "8": "9d8",
+            "9": "10d8"
+        }
+    },
+    "dc": {
+        "dc_type": {
+            "index": "dex",
+            "name": "DEX",
+            "url": "/api/2014/ability-scores/dex"
+        },
+        "dc_success": "half"
+    },
+    "area_of_effect": {
+        "type": "line",
+        "size": 60
+    },
+    "school": {
+        "index": "conjuration",
+        "name": "Conjuration",
+        "url": "/api/2014/magic-schools/conjuration"
+    },
+    "classes": [
+        {
+            "index": "druid",
+            "name": "Druid",
+            "url": "/api/2014/classes/druid"
+        }
+    ],
+    "subclasses": [],
+    "url": "/api/2014/spells/wall-of-thorns",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

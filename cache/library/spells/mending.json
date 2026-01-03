@@ -1,0 +1,62 @@
+{
+    "higher_level": [],
+    "index": "mending",
+    "name": "Mending",
+    "desc": [
+        "This spell repairs a single break or tear in an object you touch, such as a broken key, a torn cloak, or a leaking wineskin. As long as the break or tear is no longer than 1 foot in any dimension, you mend it, leaving no trace of the former damage.",
+        "This spell can physically repair a magic item or construct, but the spell can't restore magic to such an object."
+    ],
+    "range": "Touch",
+    "components": [
+        "V",
+        "S",
+        "M"
+    ],
+    "material": "Two lodestones.",
+    "ritual": false,
+    "duration": "Instantaneous",
+    "concentration": false,
+    "casting_time": "1 minute",
+    "level": 0,
+    "school": {
+        "index": "transmutation",
+        "name": "Transmutation",
+        "url": "/api/2014/magic-schools/transmutation"
+    },
+    "classes": [
+        {
+            "index": "cleric",
+            "name": "Cleric",
+            "url": "/api/2014/classes/cleric"
+        },
+        {
+            "index": "bard",
+            "name": "Bard",
+            "url": "/api/2014/classes/bard"
+        },
+        {
+            "index": "druid",
+            "name": "Druid",
+            "url": "/api/2014/classes/druid"
+        },
+        {
+            "index": "sorcerer",
+            "name": "Sorcerer",
+            "url": "/api/2014/classes/sorcerer"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        }
+    ],
+    "url": "/api/2014/spells/mending",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}
