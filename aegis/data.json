@@ -1,0 +1,21 @@
+{
+    "world_name": "aegis",
+    "entities": {
+        "2859ea8e-871c-434d-ad4f-4155b3cf4238": {
+            "name": "Altın Liman",
+            "type": "Mekan",
+            "description": "",
+            "image_path": "assets\\f94332c9696743f28ba49f4ea0605c9c_Aethelgard Altın Nehir Liman Kenti.jpg"
+        }
+    },
+    "map_data": {
+        "image_path": "assets\\0609e71fd0a84e1b9ed803a1461d5971_Aegis.jpg",
+        "pins": [
+            {
+                "x": 204.83681494289542,
+                "y": 1056.9977392441642,
+                "entity_id": "2859ea8e-871c-434d-ad4f-4155b3cf4238"
+            }
+        ]
+    }
+}
