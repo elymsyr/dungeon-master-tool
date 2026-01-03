@@ -20,6 +20,38 @@ class DataManager:
         if not os.path.exists(WORLDS_DIR): os.makedirs(WORLDS_DIR)
         self._load_reference_cache()
 
+        if "sessions" not in self.data:
+            self.data["sessions"] = []
+
+    def create_session(self, name):
+        session_id = str(uuid.uuid4())
+        new_session = {
+            "id": session_id,
+            "name": name,
+            "date": "Bugün", # İstersen datetime ile gerçek tarih koyabilirsin
+            "notes": "",
+            "logs": "",
+            "combatants": [] # {name, hp, max_hp, ac, initiative, entity_id}
+        }
+        self.data["sessions"].append(new_session)
+        self.save_data()
+        return session_id
+
+    def get_session(self, session_id):
+        for s in self.data["sessions"]:
+            if s["id"] == session_id:
+                return s
+        return None
+
+    def save_session_data(self, session_id, notes, logs, combatants):
+        for s in self.data["sessions"]:
+            if s["id"] == session_id:
+                s["notes"] = notes
+                s["logs"] = logs
+                s["combatants"] = combatants
+                self.save_data()
+                break
+
     def _load_reference_cache(self):
         """Global cache dosyasını yükle"""
         if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)

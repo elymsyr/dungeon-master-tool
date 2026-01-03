@@ -1,53 +1,8 @@
 {
-    "world_name": "aegis",
-    "entities": {
-        "ba781017-c51e-4c8f-8f62-24605cccfd15": {
-            "name": "Acid Arrow",
-            "type": "Büyü (Spell)",
-            "description": "A shimmering green arrow streaks toward a target within range and bursts in a spray of acid. Make a ranged spell attack against the target. On a hit, the target takes 4d4 acid damage immediately and 2d4 acid damage at the end of its next turn. On a miss, the arrow splashes the target with acid for half as much of the initial damage and no damage at the end of its next turn.",
-            "tags": [
-                "Evocation",
-                "Level 2"
-            ],
-            "attributes": {
-                "Seviye": "2",
-                "Okul (School)": "Evocation",
-                "Süre (Casting Time)": "1 action",
-                "Menzil (Range)": "90 feet"
-            }
-        },
-        "db13413b-352d-47d7-adcb-2cfdc8662979": {
-            "name": "şşş",
-            "type": "NPC",
-            "tags": [],
-            "description": "",
-            "image_path": "",
-            "stats": {
-                "STR": 10,
-                "DEX": 10,
-                "CON": 10,
-                "INT": 10,
-                "WIS": 10,
-                "CHA": 10
-            },
-            "combat_stats": {
-                "hp": "",
-                "ac": "",
-                "speed": "",
-                "cr": ""
-            },
-            "attributes": {
-                "Irk": "",
-                "Sınıf": "",
-                "Tavır": "Dost",
-                "Konum": ""
-            },
-            "traits": [],
-            "actions": []
-        }
-    },
+    "world_name": "Aegis",
+    "entities": {},
     "map_data": {
-        "image_path": "assets\\2d3b600798f44ceca86aa05a8864a7f8_Aegis.jpg",
+        "image_path": "assets\\39944dc3ce0449fd9c87c2ebd4896f5f_Aegis.jpg",
         "pins": []
     }
 }

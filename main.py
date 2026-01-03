@@ -6,7 +6,8 @@ from config import STYLESHEET
 from core.data_manager import DataManager
 from ui.player_window import PlayerWindow
 from ui.tabs.database_tab import DatabaseTab
-from ui.tabs.map_tab import MapTab # <--- YENİ IMPORT
+from ui.tabs.map_tab import MapTab
+from ui.tabs.session_tab import SessionTab # <--- YENİ EKLENEN IMPORT
 from ui.campaign_selector import CampaignSelector
 
 class MainWindow(QMainWindow):
@@ -26,8 +27,10 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
         main_layout = QVBoxLayout(central)
         
-        # TOOLBAR
+        # --- ÜST BAR (TOOLBAR) ---
         toolbar = QHBoxLayout()
+        
+        # Oyuncu Ekranı Butonu
         self.btn_toggle_player = QPushButton("📺 Oyuncu Ekranını Aç/Kapat")
         self.btn_toggle_player.setCheckable(True)
         self.btn_toggle_player.setStyleSheet("""
@@ -36,29 +39,35 @@ class MainWindow(QMainWindow):
         """)
         self.btn_toggle_player.clicked.connect(self.toggle_player_window)
         
+        # Dünya Bilgisi
         self.lbl_campaign = QLabel(f"Dünya: {self.data_manager.data.get('world_name')}")
         self.lbl_campaign.setStyleSheet("color: #888; font-style: italic; margin-left: 10px;")
 
         toolbar.addWidget(self.btn_toggle_player)
         toolbar.addWidget(self.lbl_campaign)
         toolbar.addStretch()
+        
         main_layout.addLayout(toolbar)
         
-        # TABS
+        # --- SEKMELER (TABS) ---
         self.tabs = QTabWidget()
         
-        # Tab 1: Database
+        # Tab 1: Veritabanı
         self.db_tab = DatabaseTab(self.data_manager, self.player_window)
         self.tabs.addTab(self.db_tab, "Veritabanı & Karakterler")
         
-        # Tab 2: Map (Şimdi ekliyoruz)
-        # self'i de gönderiyoruz ki haritadan veritabanına geçiş yapabilsin
+        # Tab 2: Harita
+        # self'i (MainWindow) gönderiyoruz ki pinlere tıklayınca db_tab'a geçebilsin
         self.map_tab = MapTab(self.data_manager, self.player_window, self) 
         self.tabs.addTab(self.map_tab, "Harita") 
         
+        # Tab 3: Session (Oyun Yönetimi)
+        self.session_tab = SessionTab(self.data_manager)
+        self.tabs.addTab(self.session_tab, "Oyun Yönetimi (Session)")
+        
         main_layout.addWidget(self.tabs)
         
-        # Açılışta haritayı yükle
+        # Başlangıçta haritayı yükle (varsa)
         self.map_tab.render_map()
 
     def toggle_player_window(self):
@@ -72,9 +81,14 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    
+    # 1. Veri Yöneticisi Başlat
     dm = DataManager()
+    
+    # 2. Seçim Ekranı
     selector = CampaignSelector(dm)
     if selector.exec():
+        # 3. Ana Pencere
         window = MainWindow(dm)
         window.show()
         sys.exit(app.exec())

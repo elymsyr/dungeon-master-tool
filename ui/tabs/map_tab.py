@@ -90,9 +90,20 @@ class MapTab(QWidget):
             return
             
         items, ids = [], []
+        
+        # --- FİLTRELEME MANTIĞI ---
+        # Haritaya sadece fiziksel olarak bulunabilen şeyler eklensin
+        allowed_types = ["NPC", "Canavar", "Oyuncu", "Mekan", "Eşya", "Eşya (Equipment)"]
+        
         for eid, data in entities.items():
-            items.append(f"{data['name']} ({data['type']})")
-            ids.append(eid)
+            # Eğer varlığın tipi izin verilenler listesindeyse listeye ekle
+            if data.get("type") in allowed_types:
+                items.append(f"{data['name']} ({data['type']})")
+                ids.append(eid)
+        
+        if not items:
+            QMessageBox.warning(self, "Uyarı", "Haritaya eklenebilecek uygun bir varlık (NPC, Mekan, Eşya) bulunamadı.")
+            return
             
         item, ok = QInputDialog.getItem(self, "Pin Ekle", "Varlık Seç:", items, 0, False)
         if ok and item:
