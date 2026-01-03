@@ -1,0 +1,63 @@
+{
+    "index": "elf",
+    "name": "Elf",
+    "speed": 30,
+    "ability_bonuses": [
+        {
+            "ability_score": {
+                "index": "dex",
+                "name": "DEX",
+                "url": "/api/2014/ability-scores/dex"
+            },
+            "bonus": 2
+        }
+    ],
+    "age": "Although elves reach physical maturity at about the same age as humans, the elven understanding of adulthood goes beyond physical growth to encompass worldly experience. An elf typically claims adulthood and an adult name around the age of 100 and can live to be 750 years old.",
+    "alignment": "Elves love freedom, variety, and self-expression, so they lean strongly toward the gentler aspects of chaos. They value and protect others' freedom as well as their own, and they are more often good than not.",
+    "size": "Medium",
+    "size_description": "Elves range from under 5 to over 6 feet tall and have slender builds. Your size is Medium.",
+    "languages": [
+        {
+            "index": "common",
+            "name": "Common",
+            "url": "/api/2014/languages/common"
+        },
+        {
+            "index": "elvish",
+            "name": "Elvish",
+            "url": "/api/2014/languages/elvish"
+        }
+    ],
+    "language_desc": "You can speak, read, and write Common and Elvish. Elvish is fluid, with subtle intonations and intricate grammar. Elven literature is rich and varied, and their songs and poems are famous among other races. Many bards learn their language so they can add Elvish ballads to their repertoires.",
+    "traits": [
+        {
+            "index": "darkvision",
+            "name": "Darkvision",
+            "url": "/api/2014/traits/darkvision"
+        },
+        {
+            "index": "fey-ancestry",
+            "name": "Fey Ancestry",
+            "url": "/api/2014/traits/fey-ancestry"
+        },
+        {
+            "index": "trance",
+            "name": "Trance",
+            "url": "/api/2014/traits/trance"
+        },
+        {
+            "index": "keen-senses",
+            "name": "Keen Senses",
+            "url": "/api/2014/traits/keen-senses"
+        }
+    ],
+    "subraces": [
+        {
+            "index": "high-elf",
+            "name": "High Elf",
+            "url": "/api/2014/subraces/high-elf"
+        }
+    ],
+    "url": "/api/2014/races/elf",
+    "updated_at": "2025-10-24T20:42:14.212Z"
+}

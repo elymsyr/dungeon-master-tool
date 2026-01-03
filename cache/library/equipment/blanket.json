@@ -1,0 +1,25 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "blanket",
+    "name": "Blanket",
+    "equipment_category": {
+        "index": "adventuring-gear",
+        "name": "Adventuring Gear",
+        "url": "/api/2014/equipment-categories/adventuring-gear"
+    },
+    "gear_category": {
+        "index": "standard-gear",
+        "name": "Standard Gear",
+        "url": "/api/2014/equipment-categories/standard-gear"
+    },
+    "cost": {
+        "quantity": 5,
+        "unit": "sp"
+    },
+    "weight": 3,
+    "url": "/api/2014/equipment/blanket",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

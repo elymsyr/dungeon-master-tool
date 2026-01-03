@@ -50,7 +50,31 @@
                 "Okul (School)": "Transmutation",
                 "Süre (Casting Time)": "1 action",
                 "Menzil (Range)": "Self"
-            }
+            },
+            "image_path": "",
+            "stats": {
+                "STR": 10,
+                "DEX": 10,
+                "CON": 10,
+                "INT": 10,
+                "WIS": 10,
+                "CHA": 10
+            },
+            "combat_stats": {
+                "hp": "",
+                "ac": "",
+                "speed": "",
+                "cr": ""
+            },
+            "traits": [],
+            "actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "spells": [],
+            "custom_spells": [],
+            "equipment_ids": [],
+            "inventory": [],
+            "location_id": null
         },
         "59abf490-7a5a-4dbe-b9d3-250aa33c3c21": {
             "name": "Shatter",
@@ -65,7 +89,31 @@
                 "Okul (School)": "Evocation",
                 "Süre (Casting Time)": "1 action",
                 "Menzil (Range)": "60 feet"
-            }
+            },
+            "image_path": "",
+            "stats": {
+                "STR": 10,
+                "DEX": 10,
+                "CON": 10,
+                "INT": 10,
+                "WIS": 10,
+                "CHA": 10
+            },
+            "combat_stats": {
+                "hp": "",
+                "ac": "",
+                "speed": "",
+                "cr": ""
+            },
+            "traits": [],
+            "actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "spells": [],
+            "custom_spells": [],
+            "equipment_ids": [],
+            "inventory": [],
+            "location_id": null
         },
         "87de7ad3-b1b3-4b23-92b3-e12e98dade08": {
             "name": "asd",
@@ -138,10 +186,101 @@
             "legendary_actions": [],
             "inventory": [],
             "custom_spells": []
+        },
+        "3025c92d-1b65-4cb6-80c9-69ad416ad7a4": {
+            "name": "Alchemasdasdist's Supplies",
+            "type": "Eşya (Equipment)",
+            "tags": [],
+            "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+            "image_path": "",
+            "stats": {
+                "STR": 10,
+                "DEX": 10,
+                "CON": 10,
+                "INT": 10,
+                "WIS": 10,
+                "CHA": 10
+            },
+            "combat_stats": {
+                "hp": "",
+                "ac": "",
+                "speed": "",
+                "cr": ""
+            },
+            "attributes": {
+                "Eşya Tipi": "Tools",
+                "Maliyet": "50",
+                "Ağırlık": "",
+                "Hasar/Zırh": "",
+                "Özellikler": ""
+            },
+            "location_id": null,
+            "spells": [],
+            "equipment_ids": [],
+            "traits": [],
+            "actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "inventory": [],
+            "custom_spells": []
+        },
+        "bf3aa10f-0f46-45c1-a338-0a3e3653c6e1": {
+            "name": "Abacussss",
+            "type": "Eşya (Equipment)",
+            "tags": [],
+            "description": "",
+            "image_path": "",
+            "stats": {
+                "STR": 10,
+                "DEX": 10,
+                "CON": 10,
+                "INT": 10,
+                "WIS": 10,
+                "CHA": 10
+            },
+            "combat_stats": {
+                "hp": "",
+                "ac": "",
+                "speed": "",
+                "cr": ""
+            },
+            "attributes": {
+                "Eşya Tipi": "Adventuring Gear",
+                "Maliyet": "2",
+                "Ağırlık": "",
+                "Hasar/Zırh": "",
+                "Özellikler": ""
+            },
+            "location_id": null,
+            "spells": [],
+            "equipment_ids": [],
+            "traits": [],
+            "actions": [],
+            "reactions": [],
+            "legendary_actions": [],
+            "inventory": [],
+            "custom_spells": []
         }
     },
     "map_data": {
         "image_path": "assets\\39944dc3ce0449fd9c87c2ebd4896f5f_Aegis.jpg",
-        "pins": []
-    }
+        "pins": [
+            {
+                "id": "09fe0126-b157-49e2-9a9c-89b96ace6822",
+                "x": 187.0,
+                "y": 1059.0,
+                "entity_id": "afef6364-9539-44c6-a6a7-aa35ba16aab1"
+            }
+        ]
+    },
+    "sessions": [
+        {
+            "id": "bc2d53f9-358c-4815-8909-b5e2f24ba837",
+            "name": "session 0",
+            "date": "Bugün",
+            "notes": "",
+            "logs": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\nhr { height: 1px; border-width: 0; }\nli.unchecked::marker { content: \"\\2610\"; }\nli.checked::marker { content: \"\\2612\"; }\n</style></head><body style=\" font-family:'Segoe UI','sans-serif'; font-size:14px; font-weight:400; font-style:normal;\">\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] Oturum Başladı: session 0</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] sadasd</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d12: 12</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 17</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 18</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 12</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 5</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 15</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 13</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 9</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 3</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 6</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 8</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 16</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 18</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 16</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 5</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">[19:39] 🎲 Rolled d20: 16</p></body></html>",
+            "combatants": []
+        }
+    ]
 }

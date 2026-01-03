@@ -1,0 +1,20 @@
+{
+    "index": "potion-of-healing-common",
+    "name": "Potion of Healing",
+    "equipment_category": {
+        "index": "potion",
+        "name": "Potion",
+        "url": "/api/2014/equipment-categories/potion"
+    },
+    "rarity": {
+        "name": "Common"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Potion, common",
+        "You regain 2d4 + 2 hit points when you drink this potion. The potion's red liquid glimmers when agitated."
+    ],
+    "url": "/api/2014/magic-items/potion-of-healing-common",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

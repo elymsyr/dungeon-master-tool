@@ -1,0 +1,77 @@
+{
+    "index": "cure-wounds",
+    "name": "Cure Wounds",
+    "desc": [
+        "A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier. This spell has no effect on undead or constructs."
+    ],
+    "higher_level": [
+        "When you cast this spell using a spell slot of 2nd level or higher, the healing increases by 1d8 for each slot level above 1st."
+    ],
+    "range": "Touch",
+    "components": [
+        "V",
+        "S"
+    ],
+    "ritual": false,
+    "duration": "Instantaneous",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 1,
+    "heal_at_slot_level": {
+        "1": "1d8 + MOD",
+        "2": "2d8 + MOD",
+        "3": "3d8 + MOD",
+        "4": "4d8 + MOD",
+        "5": "5d8 + MOD",
+        "6": "6d8 + MOD",
+        "7": "7d8 + MOD",
+        "8": "8d8 + MOD",
+        "9": "9d8 + MOD"
+    },
+    "school": {
+        "index": "evocation",
+        "name": "Evocation",
+        "url": "/api/2014/magic-schools/evocation"
+    },
+    "classes": [
+        {
+            "index": "bard",
+            "name": "Bard",
+            "url": "/api/2014/classes/bard"
+        },
+        {
+            "index": "cleric",
+            "name": "Cleric",
+            "url": "/api/2014/classes/cleric"
+        },
+        {
+            "index": "druid",
+            "name": "Druid",
+            "url": "/api/2014/classes/druid"
+        },
+        {
+            "index": "paladin",
+            "name": "Paladin",
+            "url": "/api/2014/classes/paladin"
+        },
+        {
+            "index": "ranger",
+            "name": "Ranger",
+            "url": "/api/2014/classes/ranger"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        },
+        {
+            "index": "life",
+            "name": "Life",
+            "url": "/api/2014/subclasses/life"
+        }
+    ],
+    "url": "/api/2014/spells/cure-wounds",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

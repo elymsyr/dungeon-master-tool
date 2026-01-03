@@ -1,8 +1,18 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, 
                              QHBoxLayout, QPushButton, QHeaderView, QInputDialog, 
-                             QMenu, QMessageBox)
+                             QMenu, QMessageBox, QFrame)
+from PyQt6.QtGui import QAction, QColor, QBrush, QCursor
 from PyQt6.QtCore import Qt
 import random
+
+# D&D 5e Standart Durumlar
+CONDITIONS = [
+    "Blinded (Kör)", "Charmed (Büyülenmiş)", "Deafened (Sağır)", 
+    "Frightened (Korkmuş)", "Grappled (Tutulmuş)", "Incapacitated (Etkisiz)", 
+    "Invisible (Görünmez)", "Paralyzed (Felç)", "Petrified (Taşlaşmış)", 
+    "Poisoned (Zehirlenmiş)", "Prone (Yatmış)", "Restrained (Bağlı)", 
+    "Stunned (Sersemlemiş)", "Unconscious (Baygın)", "Exhaustion (Yorgunluk)"
+]
 
 class CombatTracker(QWidget):
     def __init__(self, data_manager):
@@ -17,8 +27,21 @@ class CombatTracker(QWidget):
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(["İsim", "Init", "AC", "HP", "Durum"])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        
+        # Sütun ayarları
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch) # İsim geniş
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents) # Init dar
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents) # AC dar
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents) # HP dar
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch) # Durum geniş
+        
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        
+        # Sağ Tık Menüsü Etkinleştirme
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self.open_context_menu)
+        
         layout.addWidget(self.table)
 
         # KONTROLLER
@@ -39,13 +62,68 @@ class CombatTracker(QWidget):
         
         layout.addLayout(btn_layout)
 
+    def open_context_menu(self, position):
+        """Satıra sağ tıklayınca açılan menü"""
+        row = self.table.rowAt(position.y())
+        if row == -1: return # Boşluğa tıkladıysa çık
+
+        menu = QMenu()
+        menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #007acc; }")
+        
+        # Durum Ekleme Alt Menüsü
+        cond_menu = menu.addMenu("🩸 Durum Ekle/Kaldır")
+        
+        # Mevcut durumları al
+        current_cond_text = self.table.item(row, 4).text()
+        current_conditions = [c.strip() for c in current_cond_text.split(",") if c.strip()]
+        
+        for cond in CONDITIONS:
+            action = QAction(cond, self)
+            action.setCheckable(True)
+            # Eğer zaten varsa işaretle
+            if any(cond.split(" ")[0] in c for c in current_conditions): 
+                action.setChecked(True)
+                
+            action.triggered.connect(lambda checked, c=cond, r=row: self.toggle_condition(r, c))
+            cond_menu.addAction(action)
+
+        menu.addSeparator()
+        
+        # Silme Aksiyonu
+        del_action = QAction("❌ Savaştan Çıkar", self)
+        del_action.triggered.connect(lambda: self.table.removeRow(row))
+        menu.addAction(del_action)
+        
+        menu.exec(self.table.viewport().mapToGlobal(position))
+
+    def toggle_condition(self, row, condition):
+        """Durumu ekler veya varsa siler"""
+        item = self.table.item(row, 4)
+        current_text = item.text()
+        current_list = [c.strip() for c in current_text.split(",") if c.strip()]
+        
+        cond_short = condition.split(" ")[0] # Sadece İngilizce ismini kontrol için kullanabiliriz ama tam isim daha iyi
+        
+        # Basit kontrol: Tam metin listede var mı?
+        if condition in current_list:
+            current_list.remove(condition)
+        else:
+            current_list.append(condition)
+            
+        new_text = ", ".join(current_list)
+        item.setText(new_text)
+        
+        # Görsel İpucu: Eğer durum varsa satırı hafif kırmızı yap
+        if new_text:
+            item.setForeground(QBrush(QColor("#ff5252")))
+        else:
+            item.setForeground(QBrush(QColor("#e0e0e0")))
+
     def add_combatant_dialog(self):
-        # Veritabanından varlık seç
         entities = self.dm.data["entities"]
         items = []
         ids = []
         
-        # Sadece canlılar
         for eid, data in entities.items():
             if data.get("type") in ["NPC", "Canavar", "Oyuncu"]:
                 items.append(f"{data['name']} ({data['type']})")
@@ -61,20 +139,18 @@ class CombatTracker(QWidget):
         if not data: return
         
         name = data.get("name", "Bilinmeyen")
-        
-        # Combat statlarını çek (String gelebilir, temizle)
         try:
             hp_str = data.get("combat_stats", {}).get("hp", "10")
-            hp = int(hp_str.split(' ')[0]) # "24 (4d8)" -> 24
-        except: hp = 10
+            hp = hp_str.split(' ')[0] # Sadece sayıyı al
+        except: hp = "10"
+            
+        try: ac = str(data.get("combat_stats", {}).get("ac", "10"))
+        except: ac = "10"
             
         try:
-            ac_str = data.get("combat_stats", {}).get("ac", "10")
-            ac = int(ac_str)
-        except: ac = 10
-            
-        dex_score = int(data.get("stats", {}).get("DEX", 10))
-        init_bonus = (dex_score - 10) // 2
+            dex = int(data.get("stats", {}).get("DEX", 10))
+            init_bonus = (dex - 10) // 2
+        except: init_bonus = 0
         
         self.add_direct_row(name, 0, ac, hp, "", entity_id, init_bonus)
 
@@ -86,32 +162,27 @@ class CombatTracker(QWidget):
         self.table.setItem(row, 1, QTableWidgetItem(str(init)))
         self.table.setItem(row, 2, QTableWidgetItem(str(ac)))
         self.table.setItem(row, 3, QTableWidgetItem(str(hp)))
-        self.table.setItem(row, 4, QTableWidgetItem(condition))
         
-        # Gizli veri olarak bonusu sakla
+        cond_item = QTableWidgetItem(condition)
+        if condition: cond_item.setForeground(QBrush(QColor("#ff5252")))
+        self.table.setItem(row, 4, cond_item)
+        
+        # Gizli veriler
         self.table.item(row, 0).setData(Qt.ItemDataRole.UserRole, init_bonus)
-        self.table.item(row, 1).setData(Qt.ItemDataRole.UserRole, eid) # ID'yi sakla
+        self.table.item(row, 1).setData(Qt.ItemDataRole.UserRole, eid)
 
     def roll_initiatives(self):
         for row in range(self.table.rowCount()):
-            # İnisiyatif hücresi
-            init_item = self.table.item(row, 1)
-            # İsim hücresinde bonus saklı
+            item = self.table.item(row, 1)
             bonus = self.table.item(row, 0).data(Qt.ItemDataRole.UserRole) or 0
-            
             roll = random.randint(1, 20) + bonus
-            init_item.setText(str(roll))
-            
-        self.sort_by_initiative()
-
-    def sort_by_initiative(self):
+            item.setText(str(roll))
         self.table.sortItems(1, Qt.SortOrder.DescendingOrder)
 
     def clear_tracker(self):
         self.table.setRowCount(0)
 
     def get_combat_data(self):
-        """Kaydetmek için verileri JSON formatında döndürür"""
         data = []
         for row in range(self.table.rowCount()):
             data.append({

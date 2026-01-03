@@ -1,0 +1,27 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "chain-mail",
+    "name": "Chain Mail",
+    "equipment_category": {
+        "index": "armor",
+        "name": "Armor",
+        "url": "/api/2014/equipment-categories/armor"
+    },
+    "armor_category": "Heavy",
+    "armor_class": {
+        "base": 16,
+        "dex_bonus": false
+    },
+    "str_minimum": 13,
+    "stealth_disadvantage": true,
+    "weight": 55,
+    "cost": {
+        "quantity": 75,
+        "unit": "gp"
+    },
+    "url": "/api/2014/equipment/chain-mail",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

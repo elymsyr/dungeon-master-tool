@@ -1,0 +1,50 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "pike",
+    "name": "Pike",
+    "equipment_category": {
+        "index": "weapon",
+        "name": "Weapon",
+        "url": "/api/2014/equipment-categories/weapon"
+    },
+    "weapon_category": "Martial",
+    "weapon_range": "Melee",
+    "category_range": "Martial Melee",
+    "cost": {
+        "quantity": 5,
+        "unit": "gp"
+    },
+    "damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+            "index": "piercing",
+            "name": "Piercing",
+            "url": "/api/2014/damage-types/piercing"
+        }
+    },
+    "range": {
+        "normal": 5
+    },
+    "weight": 18,
+    "properties": [
+        {
+            "index": "heavy",
+            "name": "Heavy",
+            "url": "/api/2014/weapon-properties/heavy"
+        },
+        {
+            "index": "reach",
+            "name": "Reach",
+            "url": "/api/2014/weapon-properties/reach"
+        },
+        {
+            "index": "two-handed",
+            "name": "Two-Handed",
+            "url": "/api/2014/weapon-properties/two-handed"
+        }
+    ],
+    "url": "/api/2014/equipment/pike",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": []
+}

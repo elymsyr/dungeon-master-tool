@@ -1,0 +1,227 @@
+{
+    "index": "half-elf",
+    "name": "Half-Elf",
+    "speed": 30,
+    "ability_bonuses": [
+        {
+            "ability_score": {
+                "index": "cha",
+                "name": "CHA",
+                "url": "/api/2014/ability-scores/cha"
+            },
+            "bonus": 2
+        }
+    ],
+    "ability_bonus_options": {
+        "choose": 2,
+        "type": "ability_bonuses",
+        "from": {
+            "option_set_type": "options_array",
+            "options": [
+                {
+                    "option_type": "ability_bonus",
+                    "ability_score": {
+                        "index": "str",
+                        "name": "STR",
+                        "url": "/api/2014/ability-scores/str"
+                    },
+                    "bonus": 1
+                },
+                {
+                    "option_type": "ability_bonus",
+                    "ability_score": {
+                        "index": "dex",
+                        "name": "DEX",
+                        "url": "/api/2014/ability-scores/dex"
+                    },
+                    "bonus": 1
+                },
+                {
+                    "option_type": "ability_bonus",
+                    "ability_score": {
+                        "index": "con",
+                        "name": "CON",
+                        "url": "/api/2014/ability-scores/con"
+                    },
+                    "bonus": 1
+                },
+                {
+                    "option_type": "ability_bonus",
+                    "ability_score": {
+                        "index": "int",
+                        "name": "INT",
+                        "url": "/api/2014/ability-scores/int"
+                    },
+                    "bonus": 1
+                },
+                {
+                    "option_type": "ability_bonus",
+                    "ability_score": {
+                        "index": "wis",
+                        "name": "WIS",
+                        "url": "/api/2014/ability-scores/wis"
+                    },
+                    "bonus": 1
+                }
+            ]
+        }
+    },
+    "alignment": "Half-elves share the chaotic bent of their elven heritage. They value both personal freedom and creative expression, demonstrating neither love of leaders nor desire for followers. They chafe at rules, resent others' demands, and sometimes prove unreliable, or at least unpredictable.",
+    "age": "Half-elves mature at the same rate humans do and reach adulthood around the age of 20. They live much longer than humans, however, often exceeding 180 years.",
+    "size": "Medium",
+    "size_description": "Half-elves are about the same size as humans, ranging from 5 to 6 feet tall. Your size is Medium.",
+    "languages": [
+        {
+            "index": "common",
+            "name": "Common",
+            "url": "/api/2014/languages/common"
+        },
+        {
+            "index": "elvish",
+            "name": "Elvish",
+            "url": "/api/2014/languages/elvish"
+        }
+    ],
+    "language_options": {
+        "choose": 1,
+        "type": "languages",
+        "from": {
+            "option_set_type": "options_array",
+            "options": [
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "dwarvish",
+                        "name": "Dwarvish",
+                        "url": "/api/2014/languages/dwarvish"
+                    }
+                },
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "giant",
+                        "name": "Giant",
+                        "url": "/api/2014/languages/giant"
+                    }
+                },
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "gnomish",
+                        "name": "Gnomish",
+                        "url": "/api/2014/languages/gnomish"
+                    }
+                },
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "goblin",
+                        "name": "Goblin",
+                        "url": "/api/2014/languages/goblin"
+                    }
+                },
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "halfling",
+                        "name": "Halfling",
+                        "url": "/api/2014/languages/halfling"
+                    }
+                },
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "orc",
+                        "name": "Orc",
+                        "url": "/api/2014/languages/orc"
+                    }
+                },
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "abyssal",
+                        "name": "Abyssal",
+                        "url": "/api/2014/languages/abyssal"
+                    }
+                },
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "celestial",
+                        "name": "Celestial",
+                        "url": "/api/2014/languages/celestial"
+                    }
+                },
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "draconic",
+                        "name": "Draconic",
+                        "url": "/api/2014/languages/draconic"
+                    }
+                },
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "deep-speech",
+                        "name": "Deep Speech",
+                        "url": "/api/2014/languages/deep-speech"
+                    }
+                },
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "infernal",
+                        "name": "Infernal",
+                        "url": "/api/2014/languages/infernal"
+                    }
+                },
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "primordial",
+                        "name": "Primordial",
+                        "url": "/api/2014/languages/primordial"
+                    }
+                },
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "sylvan",
+                        "name": "Sylvan",
+                        "url": "/api/2014/languages/sylvan"
+                    }
+                },
+                {
+                    "option_type": "reference",
+                    "item": {
+                        "index": "undercommon",
+                        "name": "Undercommon",
+                        "url": "/api/2014/languages/undercommon"
+                    }
+                }
+            ]
+        }
+    },
+    "language_desc": "You can speak, read, and write Common, Elvish, and one extra language of your choice.",
+    "traits": [
+        {
+            "index": "darkvision",
+            "name": "Darkvision",
+            "url": "/api/2014/traits/darkvision"
+        },
+        {
+            "index": "fey-ancestry",
+            "name": "Fey Ancestry",
+            "url": "/api/2014/traits/fey-ancestry"
+        },
+        {
+            "index": "skill-versatility",
+            "name": "Skill Versatility",
+            "url": "/api/2014/traits/skill-versatility"
+        }
+    ],
+    "subraces": [],
+    "url": "/api/2014/races/half-elf",
+    "updated_at": "2025-10-24T20:42:14.212Z"
+}

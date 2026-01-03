@@ -1,0 +1,49 @@
+{
+    "higher_level": [],
+    "index": "magic-mouth",
+    "name": "Magic Mouth",
+    "desc": [
+        "You plant a message to an object in the range of the spell. The message is verbalized when the trigger conditions are met. Choose an object that you see, and that is not worn or carried by another creature. Then say the message, which should not exceed 25 words but listening can take up to 10 minutes. Finally, establish the circumstances that trigger the spell to deliver your message.",
+        "When these conditions are satisfied, a magical mouth appears on the object and it articulates the message imitating your voice, the same tone used during implantation of the message. If the selected object has a mouth or something that approaches such as the mouth of a statue, the magic mouth come alive at this point, giving the illusion that the words come from the mouth of the object.",
+        "When you cast this spell, you may decide that the spell ends when the message is delivered or it can persist and repeat the message whenever circumstances occur.",
+        "The triggering circumstance can be as general or as detailed as you like, though it must be based on visual or audible conditions that occur within 30 feet of the object. For example, you could instruct the mouth to speak when any creature moves within 30 feet of the object or when a silver bell rings within 30 feet of it."
+    ],
+    "range": "30 feet",
+    "components": [
+        "V",
+        "S",
+        "M"
+    ],
+    "material": "A honeycomb and jade dust of at least 10 inches, the spell consumes.",
+    "ritual": true,
+    "duration": "Until dispelled",
+    "concentration": false,
+    "casting_time": "1 minute",
+    "level": 2,
+    "school": {
+        "index": "illusion",
+        "name": "Illusion",
+        "url": "/api/2014/magic-schools/illusion"
+    },
+    "classes": [
+        {
+            "index": "bard",
+            "name": "Bard",
+            "url": "/api/2014/classes/bard"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        }
+    ],
+    "url": "/api/2014/spells/magic-mouth",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

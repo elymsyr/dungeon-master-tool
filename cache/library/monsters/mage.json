@@ -1,0 +1,217 @@
+{
+    "index": "mage",
+    "name": "Mage",
+    "desc": "Mages spend their lives in the study and practice of magic. Good-aligned mages offer counsel to nobles and others in power, while evil mages dwell in isolated sites to perform unspeakable experiments without interference.",
+    "size": "Medium",
+    "type": "humanoid",
+    "subtype": "any race",
+    "alignment": "any alignment",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 12
+        },
+        {
+            "type": "spell",
+            "value": 15,
+            "spell": {
+                "index": "mage-armor",
+                "name": "Mage Armor",
+                "url": "/api/2014/spells/mage-armor"
+            }
+        }
+    ],
+    "hit_points": 40,
+    "hit_dice": "9d8",
+    "hit_points_roll": "9d8",
+    "speed": {
+        "walk": "30 ft."
+    },
+    "strength": 9,
+    "dexterity": 14,
+    "constitution": 11,
+    "intelligence": 17,
+    "wisdom": 12,
+    "charisma": 11,
+    "proficiencies": [
+        {
+            "value": 6,
+            "proficiency": {
+                "index": "saving-throw-int",
+                "name": "Saving Throw: INT",
+                "url": "/api/2014/proficiencies/saving-throw-int"
+            }
+        },
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "saving-throw-wis",
+                "name": "Saving Throw: WIS",
+                "url": "/api/2014/proficiencies/saving-throw-wis"
+            }
+        },
+        {
+            "value": 6,
+            "proficiency": {
+                "index": "skill-arcana",
+                "name": "Skill: Arcana",
+                "url": "/api/2014/proficiencies/skill-arcana"
+            }
+        },
+        {
+            "value": 6,
+            "proficiency": {
+                "index": "skill-history",
+                "name": "Skill: History",
+                "url": "/api/2014/proficiencies/skill-history"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 11
+    },
+    "languages": "any four languages",
+    "challenge_rating": 6,
+    "proficiency_bonus": 3,
+    "xp": 2300,
+    "special_abilities": [
+        {
+            "name": "Spellcasting",
+            "desc": "The mage is a 9th-level spellcaster. Its spellcasting ability is Intelligence (spell save DC 14, +6 to hit with spell attacks). The mage has the following wizard spells prepared:\n\n- Cantrips (at will): fire bolt, light, mage hand, prestidigitation\n- 1st level (4 slots): detect magic, mage armor, magic missile, shield\n- 2nd level (3 slots): misty step, suggestion\n- 3rd level (3 slots): counterspell, fireball, fly\n- 4th level (3 slots): greater invisibility, ice storm\n- 5th level (1 slot): cone of cold",
+            "spellcasting": {
+                "level": 9,
+                "ability": {
+                    "index": "int",
+                    "name": "INT",
+                    "url": "/api/2014/ability-scores/int"
+                },
+                "dc": 14,
+                "modifier": 6,
+                "components_required": [
+                    "V",
+                    "S",
+                    "M"
+                ],
+                "school": "wizard",
+                "slots": {
+                    "1": 4,
+                    "2": 3,
+                    "3": 3,
+                    "4": 3,
+                    "5": 1
+                },
+                "spells": [
+                    {
+                        "name": "Fire Bolt",
+                        "level": 0,
+                        "url": "/api/2014/spells/fire-bolt"
+                    },
+                    {
+                        "name": "Light",
+                        "level": 0,
+                        "url": "/api/2014/spells/light"
+                    },
+                    {
+                        "name": "Mage Hand",
+                        "level": 0,
+                        "url": "/api/2014/spells/mage-hand"
+                    },
+                    {
+                        "name": "Prestidigitation",
+                        "level": 0,
+                        "url": "/api/2014/spells/prestidigitation"
+                    },
+                    {
+                        "name": "Detect Magic",
+                        "level": 1,
+                        "url": "/api/2014/spells/detect-magic"
+                    },
+                    {
+                        "name": "Mage Armor",
+                        "level": 1,
+                        "url": "/api/2014/spells/mage-armor"
+                    },
+                    {
+                        "name": "Magic Missile",
+                        "level": 1,
+                        "url": "/api/2014/spells/magic-missile"
+                    },
+                    {
+                        "name": "Shield",
+                        "level": 1,
+                        "url": "/api/2014/spells/shield"
+                    },
+                    {
+                        "name": "Misty Step",
+                        "level": 2,
+                        "url": "/api/2014/spells/misty-step"
+                    },
+                    {
+                        "name": "Suggestion",
+                        "level": 2,
+                        "url": "/api/2014/spells/suggestion"
+                    },
+                    {
+                        "name": "Counterspell",
+                        "level": 3,
+                        "url": "/api/2014/spells/counterspell"
+                    },
+                    {
+                        "name": "Fireball",
+                        "level": 3,
+                        "url": "/api/2014/spells/fireball"
+                    },
+                    {
+                        "name": "Fly",
+                        "level": 3,
+                        "url": "/api/2014/spells/fly"
+                    },
+                    {
+                        "name": "Greater Invisibility",
+                        "level": 4,
+                        "url": "/api/2014/spells/greater-invisibility"
+                    },
+                    {
+                        "name": "Ice Storm",
+                        "level": 4,
+                        "url": "/api/2014/spells/ice-storm"
+                    },
+                    {
+                        "name": "Cone of Cold",
+                        "level": 5,
+                        "url": "/api/2014/spells/cone-of-cold"
+                    }
+                ]
+            },
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Dagger",
+            "desc": "Melee or Ranged Weapon Attack: +5 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d4 + 2) piercing damage.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d4+2"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/mage.png",
+    "url": "/api/2014/monsters/mage",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

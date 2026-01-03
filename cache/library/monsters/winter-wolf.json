@@ -1,0 +1,127 @@
+{
+    "index": "winter-wolf",
+    "name": "Winter Wolf",
+    "desc": "The arctic-dwelling winter wolf is as large as a dire wolf but has snow-white fur and pale blue eyes. Frost giants use these evil creatures as guards and hunting companions, putting the wolves\u2019 deadly breath weapon to use against their foes. Winter wolves communicate with one another using growls and barks, but they speak Common and Giant well enough to follow simple conversations.",
+    "size": "Large",
+    "type": "monstrosity",
+    "alignment": "neutral evil",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 13
+        }
+    ],
+    "hit_points": 75,
+    "hit_dice": "10d10",
+    "hit_points_roll": "10d10+20",
+    "speed": {
+        "walk": "50 ft."
+    },
+    "strength": 18,
+    "dexterity": 13,
+    "constitution": 14,
+    "intelligence": 7,
+    "wisdom": 12,
+    "charisma": 8,
+    "proficiencies": [
+        {
+            "value": 5,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        },
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "cold"
+    ],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 15
+    },
+    "languages": "Common, Giant, Winter Wolf",
+    "challenge_rating": 3,
+    "proficiency_bonus": 2,
+    "xp": 700,
+    "special_abilities": [
+        {
+            "name": "Keen Hearing and Smell",
+            "desc": "The wolf has advantage on Wisdom (Perception) checks that rely on hearing or smell.",
+            "damage": []
+        },
+        {
+            "name": "Pack Tactics",
+            "desc": "The wolf has advantage on an attack roll against a creature if at least one of the wolf's allies is within 5 ft. of the creature and the ally isn't incapacitated.",
+            "damage": []
+        },
+        {
+            "name": "Snow Camouflage",
+            "desc": "The wolf has advantage on Dexterity (Stealth) checks made to hide in snowy terrain.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) piercing damage. If the target is a creature, it must succeed on a DC 14 Strength saving throw or be knocked prone.",
+            "attack_bonus": 6,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "2d6+4"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Cold Breath",
+            "desc": "The wolf exhales a blast of freezing wind in a 15-foot cone. Each creature in that area must make a DC 12 Dexterity saving throw, taking 18 (4d8) cold damage on a failed save, or half as much damage on a successful one.",
+            "usage": {
+                "type": "recharge on roll",
+                "dice": "1d6",
+                "min_value": 5
+            },
+            "dc": {
+                "dc_type": {
+                    "index": "dex",
+                    "name": "DEX",
+                    "url": "/api/2014/ability-scores/dex"
+                },
+                "dc_value": 12,
+                "success_type": "none"
+            },
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "cold",
+                        "name": "Cold",
+                        "url": "/api/2014/damage-types/cold"
+                    },
+                    "damage_dice": "4d8"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/winter-wolf.png",
+    "url": "/api/2014/monsters/winter-wolf",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

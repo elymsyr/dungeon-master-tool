@@ -1,0 +1,28 @@
+{
+    "special": [],
+    "index": "amulet",
+    "name": "Amulet",
+    "equipment_category": {
+        "index": "adventuring-gear",
+        "name": "Adventuring Gear",
+        "url": "/api/2014/equipment-categories/adventuring-gear"
+    },
+    "gear_category": {
+        "index": "holy-symbols",
+        "name": "Holy Symbols",
+        "url": "/api/2014/equipment-categories/holy-symbols"
+    },
+    "cost": {
+        "quantity": 5,
+        "unit": "gp"
+    },
+    "weight": 1,
+    "desc": [
+        "A holy symbol is a representation of a god or pantheon. It might be an amulet depicting a symbol representing a deity, the same symbol carefully engraved or inlaid as an emblem on a shield, or a tiny box holding a fragment of a sacred relic.",
+        "Appendix B lists the symbols commonly associated with many gods in the multiverse. A cleric or paladin can use a holy symbol as a spellcasting focus. To use the symbol in this way, the caster must hold it in hand, wear it visibly, or bear it on a shield."
+    ],
+    "url": "/api/2014/equipment/amulet",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

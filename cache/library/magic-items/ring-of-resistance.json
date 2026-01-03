@@ -1,0 +1,83 @@
+{
+    "index": "ring-of-resistance",
+    "name": "Ring of Resistance",
+    "equipment_category": {
+        "index": "ring",
+        "name": "Ring",
+        "url": "/api/2014/equipment-categories/ring"
+    },
+    "rarity": {
+        "name": "Rare"
+    },
+    "variants": [
+        {
+            "index": "ring-of-resistance-acid",
+            "name": "Ring of Acid Resistance",
+            "url": "/api/2014/magic-items/ring-of-resistance-acid"
+        },
+        {
+            "index": "ring-of-resistance-cold",
+            "name": "Ring of Cold Resistance",
+            "url": "/api/2014/magic-items/ring-of-resistance-cold"
+        },
+        {
+            "index": "ring-of-resistance-fire",
+            "name": "Ring of Fire Resistance",
+            "url": "/api/2014/magic-items/ring-of-resistance-fire"
+        },
+        {
+            "index": "ring-of-resistance-force",
+            "name": "Ring of Force Resistance",
+            "url": "/api/2014/magic-items/ring-of-resistance-force"
+        },
+        {
+            "index": "ring-of-resistance-lightning",
+            "name": "Ring of Lightning Resistance",
+            "url": "/api/2014/magic-items/ring-of-resistance-lightning"
+        },
+        {
+            "index": "ring-of-resistance-necrotic",
+            "name": "Ring of Necrotic Resistance",
+            "url": "/api/2014/magic-items/ring-of-resistance-necrotic"
+        },
+        {
+            "index": "ring-of-resistance-poison",
+            "name": "Ring of Poison Resistance",
+            "url": "/api/2014/magic-items/ring-of-resistance-poison"
+        },
+        {
+            "index": "ring-of-resistance-psychic",
+            "name": "Ring of Psychic Resistance",
+            "url": "/api/2014/magic-items/ring-of-resistance-psychic"
+        },
+        {
+            "index": "ring-of-resistance-radiant",
+            "name": "Ring of Radiant Resistance",
+            "url": "/api/2014/magic-items/ring-of-resistance-radiant"
+        },
+        {
+            "index": "ring-of-resistance-thunder",
+            "name": "Ring of Thunder Resistance",
+            "url": "/api/2014/magic-items/ring-of-resistance-thunder"
+        }
+    ],
+    "variant": false,
+    "desc": [
+        "Ring, rare (requires attunement)",
+        "You have resistance to one damage type while wearing this ring. The gem in the ring indicates the type, which the GM chooses or determines randomly.",
+        "| d10 | Damage Type | Gem |",
+        "|---|---|---|",
+        "| 1 | Acid | Pearl |",
+        "| 2 | Cold | Tourmaline |",
+        "| 3 | Fire | Garnet |",
+        "| 4 | Force | Sapphire |",
+        "| 5 | Lightning | Citrine |",
+        "| 6 | Necrotic | Jet |",
+        "| 7 | Poison | Amethyst |",
+        "| 8 | Psychic | Jade |",
+        "| 9 | Radiant | Topaz |",
+        "| 10 | Thunder | Spinel |"
+    ],
+    "url": "/api/2014/magic-items/ring-of-resistance",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

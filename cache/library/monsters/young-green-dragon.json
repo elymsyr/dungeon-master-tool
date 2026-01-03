@@ -1,0 +1,208 @@
+{
+    "index": "young-green-dragon",
+    "name": "Young Green Dragon",
+    "size": "Large",
+    "type": "dragon",
+    "alignment": "lawful evil",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 18
+        }
+    ],
+    "hit_points": 136,
+    "hit_dice": "16d10",
+    "hit_points_roll": "16d10+48",
+    "speed": {
+        "walk": "40 ft.",
+        "fly": "80 ft.",
+        "swim": "40 ft."
+    },
+    "strength": 19,
+    "dexterity": 12,
+    "constitution": 17,
+    "intelligence": 16,
+    "wisdom": 13,
+    "charisma": 15,
+    "proficiencies": [
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "saving-throw-dex",
+                "name": "Saving Throw: DEX",
+                "url": "/api/2014/proficiencies/saving-throw-dex"
+            }
+        },
+        {
+            "value": 6,
+            "proficiency": {
+                "index": "saving-throw-con",
+                "name": "Saving Throw: CON",
+                "url": "/api/2014/proficiencies/saving-throw-con"
+            }
+        },
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "saving-throw-wis",
+                "name": "Saving Throw: WIS",
+                "url": "/api/2014/proficiencies/saving-throw-wis"
+            }
+        },
+        {
+            "value": 5,
+            "proficiency": {
+                "index": "saving-throw-cha",
+                "name": "Saving Throw: CHA",
+                "url": "/api/2014/proficiencies/saving-throw-cha"
+            }
+        },
+        {
+            "value": 5,
+            "proficiency": {
+                "index": "skill-deception",
+                "name": "Skill: Deception",
+                "url": "/api/2014/proficiencies/skill-deception"
+            }
+        },
+        {
+            "value": 7,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        },
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "poison"
+    ],
+    "condition_immunities": [
+        {
+            "index": "poisoned",
+            "name": "Poisoned",
+            "url": "/api/2014/conditions/poisoned"
+        }
+    ],
+    "senses": {
+        "blindsight": "30 ft.",
+        "darkvision": "120 ft.",
+        "passive_perception": 17
+    },
+    "languages": "Common, Draconic",
+    "challenge_rating": 8,
+    "proficiency_bonus": 3,
+    "xp": 3900,
+    "special_abilities": [
+        {
+            "name": "Amphibious",
+            "desc": "The dragon can breathe air and water.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The dragon makes three attacks: one with its bite and two with its claws.",
+            "actions": [
+                {
+                    "action_name": "Bite",
+                    "count": "1",
+                    "type": "melee"
+                },
+                {
+                    "action_name": "Claw",
+                    "count": "2",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +7 to hit, reach 10 ft., one target. Hit: 15 (2d10 + 4) piercing damage plus 7 (2d6) poison damage.",
+            "attack_bonus": 7,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "2d10+4"
+                },
+                {
+                    "damage_type": {
+                        "index": "poison",
+                        "name": "Poison",
+                        "url": "/api/2014/damage-types/poison"
+                    },
+                    "damage_dice": "2d6"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Claw",
+            "desc": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) slashing damage.",
+            "attack_bonus": 7,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "2d6+4"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Poison Breath",
+            "desc": "The dragon exhales poisonous gas in a 30-foot cone. Each creature in that area must make a DC 14 Constitution saving throw, taking 42 (12d6) poison damage on a failed save, or half as much damage on a successful one.",
+            "usage": {
+                "type": "recharge on roll",
+                "dice": "1d6",
+                "min_value": 5
+            },
+            "dc": {
+                "dc_type": {
+                    "index": "con",
+                    "name": "CON",
+                    "url": "/api/2014/ability-scores/con"
+                },
+                "dc_value": 14,
+                "success_type": "half"
+            },
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "poison",
+                        "name": "Poison",
+                        "url": "/api/2014/damage-types/poison"
+                    },
+                    "damage_dice": "12d6"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/young-green-dragon.png",
+    "url": "/api/2014/monsters/young-green-dragon",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

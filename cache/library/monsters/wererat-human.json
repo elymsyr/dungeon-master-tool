@@ -1,0 +1,165 @@
+{
+    "index": "wererat-human",
+    "name": "Wererat, Human Form",
+    "size": "Medium",
+    "type": "humanoid",
+    "subtype": "human",
+    "alignment": "lawful evil",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 12
+        }
+    ],
+    "hit_points": 33,
+    "hit_dice": "6d8",
+    "forms": [
+        {
+            "index": "wererat-hybrid",
+            "name": "Wererat, Hybrid Form",
+            "url": "/api/2014/monsters/wererat-hybrid"
+        },
+        {
+            "index": "wererat-rat",
+            "name": "Wererat, Rat Form",
+            "url": "/api/2014/monsters/wererat-rat"
+        }
+    ],
+    "hit_points_roll": "6d8+6",
+    "speed": {
+        "walk": "30 ft."
+    },
+    "strength": 10,
+    "dexterity": 15,
+    "constitution": 12,
+    "intelligence": 11,
+    "wisdom": 10,
+    "charisma": 8,
+    "proficiencies": [
+        {
+            "value": 2,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        },
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered"
+    ],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 12
+    },
+    "languages": "Common",
+    "challenge_rating": 2,
+    "proficiency_bonus": 2,
+    "xp": 450,
+    "special_abilities": [
+        {
+            "name": "Shapechanger",
+            "desc": "The wererat can use its action to polymorph into a rat-humanoid hybrid or into a giant rat, or back into its true form, which is humanoid. Its statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies.",
+            "damage": []
+        },
+        {
+            "name": "Keen Smell",
+            "desc": "The wererat has advantage on Wisdom (Perception) checks that rely on smell.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "action_options",
+            "desc": "The wererat makes two attacks, only one of which can be a bite.",
+            "action_options": {
+                "choose": 1,
+                "type": "action",
+                "from": {
+                    "option_set_type": "options_array",
+                    "options": [
+                        {
+                            "option_type": "action",
+                            "action_name": "Shortsword",
+                            "count": 2,
+                            "type": "melee"
+                        },
+                        {
+                            "option_type": "action",
+                            "action_name": "Hand Crossbow",
+                            "count": 2,
+                            "type": "ranged"
+                        },
+                        {
+                            "option_type": "multiple",
+                            "items": [
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Shortsword",
+                                    "count": 1,
+                                    "type": "melee"
+                                },
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Hand Crossbow",
+                                    "count": 1,
+                                    "type": "ranged"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "actions": []
+        },
+        {
+            "name": "Shortsword",
+            "desc": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+            "attack_bonus": 4,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d6+2"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Hand Crossbow",
+            "desc": "Ranged Weapon Attack: +4 to hit, range 30/120 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+            "attack_bonus": 4,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d6+2"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/wererat-human.png",
+    "url": "/api/2014/monsters/wererat-human",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "legendary_actions": [],
+    "reactions": []
+}

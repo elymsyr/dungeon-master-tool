@@ -1,0 +1,48 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "battleaxe",
+    "name": "Battleaxe",
+    "equipment_category": {
+        "index": "weapon",
+        "name": "Weapon",
+        "url": "/api/2014/equipment-categories/weapon"
+    },
+    "weapon_category": "Martial",
+    "weapon_range": "Melee",
+    "category_range": "Martial Melee",
+    "cost": {
+        "quantity": 10,
+        "unit": "gp"
+    },
+    "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+            "index": "slashing",
+            "name": "Slashing",
+            "url": "/api/2014/damage-types/slashing"
+        }
+    },
+    "range": {
+        "normal": 5
+    },
+    "weight": 4,
+    "properties": [
+        {
+            "index": "versatile",
+            "name": "Versatile",
+            "url": "/api/2014/weapon-properties/versatile"
+        }
+    ],
+    "two_handed_damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+            "index": "slashing",
+            "name": "Slashing",
+            "url": "/api/2014/damage-types/slashing"
+        }
+    },
+    "url": "/api/2014/equipment/battleaxe",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": []
+}

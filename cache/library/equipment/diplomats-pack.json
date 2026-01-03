@@ -1,0 +1,113 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "diplomats-pack",
+    "name": "Diplomat's Pack",
+    "equipment_category": {
+        "index": "adventuring-gear",
+        "name": "Adventuring Gear",
+        "url": "/api/2014/equipment-categories/adventuring-gear"
+    },
+    "gear_category": {
+        "index": "equipment-packs",
+        "name": "Equipment Packs",
+        "url": "/api/2014/equipment-categories/equipment-packs"
+    },
+    "cost": {
+        "quantity": 39,
+        "unit": "gp"
+    },
+    "contents": [
+        {
+            "item": {
+                "index": "chest",
+                "name": "Chest",
+                "url": "/api/2014/equipment/chest"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "case-map-or-scroll",
+                "name": "Case, map or scroll",
+                "url": "/api/2014/equipment/case-map-or-scroll"
+            },
+            "quantity": 2
+        },
+        {
+            "item": {
+                "index": "clothes-fine",
+                "name": "Clothes, fine",
+                "url": "/api/2014/equipment/clothes-fine"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "ink-1-ounce-bottle",
+                "name": "Ink (1 ounce bottle)",
+                "url": "/api/2014/equipment/ink-1-ounce-bottle"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "ink-pen",
+                "name": "Ink pen",
+                "url": "/api/2014/equipment/ink-pen"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "lamp",
+                "name": "Lamp",
+                "url": "/api/2014/equipment/lamp"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "oil-flask",
+                "name": "Oil (flask)",
+                "url": "/api/2014/equipment/oil-flask"
+            },
+            "quantity": 2
+        },
+        {
+            "item": {
+                "index": "paper-one-sheet",
+                "name": "Paper (one sheet)",
+                "url": "/api/2014/equipment/paper-one-sheet"
+            },
+            "quantity": 5
+        },
+        {
+            "item": {
+                "index": "perfume-vial",
+                "name": "Perfume (vial)",
+                "url": "/api/2014/equipment/perfume-vial"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "sealing-wax",
+                "name": "Sealing wax",
+                "url": "/api/2014/equipment/sealing-wax"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "soap",
+                "name": "Soap",
+                "url": "/api/2014/equipment/soap"
+            },
+            "quantity": 1
+        }
+    ],
+    "url": "/api/2014/equipment/diplomats-pack",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "properties": []
+}

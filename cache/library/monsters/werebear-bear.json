@@ -1,0 +1,126 @@
+{
+    "index": "werebear-bear",
+    "name": "Werebear, Bear Form",
+    "size": "Medium",
+    "type": "humanoid",
+    "subtype": "human",
+    "alignment": "neutral good",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 11
+        }
+    ],
+    "hit_points": 135,
+    "hit_dice": "18d8",
+    "forms": [
+        {
+            "index": "werebear-human",
+            "name": "Werebear, Human Form",
+            "url": "/api/2014/monsters/werebear-human"
+        },
+        {
+            "index": "werebear-hybrid",
+            "name": "Werebear, Hybrid Form",
+            "url": "/api/2014/monsters/werebear-hybrid"
+        }
+    ],
+    "hit_points_roll": "18d8+54",
+    "speed": {
+        "walk": "40 ft.",
+        "climb": "30 ft."
+    },
+    "strength": 19,
+    "dexterity": 10,
+    "constitution": 17,
+    "intelligence": 11,
+    "wisdom": 12,
+    "charisma": 12,
+    "proficiencies": [
+        {
+            "value": 7,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered"
+    ],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 17
+    },
+    "languages": "",
+    "challenge_rating": 5,
+    "proficiency_bonus": 3,
+    "xp": 1800,
+    "special_abilities": [
+        {
+            "name": "Shapechanger",
+            "desc": "The werebear can use its action to polymorph into a Large bear-humanoid hybrid or into a Large bear, or back into its true form, which is humanoid. Its statistics, other than its size and AC, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies.",
+            "damage": []
+        },
+        {
+            "name": "Keen Smell",
+            "desc": "The werebear has advantage on Wisdom (Perception) checks that rely on smell.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "In bear form, the werebear makes two claw attacks. In humanoid form, it makes two greataxe attacks. In hybrid form, it can attack like a bear or a humanoid.",
+            "actions": [
+                {
+                    "action_name": "Claw",
+                    "count": "2",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 15 (2d10 + 4) piercing damage. If the target is a humanoid, it must succeed on a DC 14 Constitution saving throw or be cursed with werebear lycanthropy.",
+            "attack_bonus": 7,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "2d10+4"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Claw",
+            "desc": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.",
+            "attack_bonus": 7,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "2d8+4"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/werebear-bear.png",
+    "url": "/api/2014/monsters/werebear-bear",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "legendary_actions": [],
+    "reactions": []
+}

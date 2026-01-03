@@ -1,0 +1,152 @@
+{
+    "index": "chain-devil",
+    "name": "Chain Devil",
+    "size": "Medium",
+    "type": "fiend",
+    "subtype": "devil",
+    "alignment": "lawful evil",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 16
+        }
+    ],
+    "hit_points": 85,
+    "hit_dice": "10d8",
+    "hit_points_roll": "10d8+40",
+    "speed": {
+        "walk": "30 ft."
+    },
+    "strength": 18,
+    "dexterity": 15,
+    "constitution": 18,
+    "intelligence": 11,
+    "wisdom": 12,
+    "charisma": 14,
+    "proficiencies": [
+        {
+            "value": 7,
+            "proficiency": {
+                "index": "saving-throw-con",
+                "name": "Saving Throw: CON",
+                "url": "/api/2014/proficiencies/saving-throw-con"
+            }
+        },
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "saving-throw-wis",
+                "name": "Saving Throw: WIS",
+                "url": "/api/2014/proficiencies/saving-throw-wis"
+            }
+        },
+        {
+            "value": 5,
+            "proficiency": {
+                "index": "saving-throw-cha",
+                "name": "Saving Throw: CHA",
+                "url": "/api/2014/proficiencies/saving-throw-cha"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [
+        "cold",
+        "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered"
+    ],
+    "damage_immunities": [
+        "fire",
+        "poison"
+    ],
+    "condition_immunities": [
+        {
+            "index": "poisoned",
+            "name": "Poisoned",
+            "url": "/api/2014/conditions/poisoned"
+        }
+    ],
+    "senses": {
+        "darkvision": "120 ft.",
+        "passive_perception": 11
+    },
+    "languages": "Infernal, telepathy 120 ft.",
+    "challenge_rating": 8,
+    "proficiency_bonus": 3,
+    "xp": 3900,
+    "special_abilities": [
+        {
+            "name": "Devil's Sight",
+            "desc": "Magical darkness doesn't impede the devil's darkvision.",
+            "damage": []
+        },
+        {
+            "name": "Magic Resistance",
+            "desc": "The devil has advantage on saving throws against spells and other magical effects.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The devil makes two attacks with its chains.",
+            "actions": [
+                {
+                    "action_name": "Chain",
+                    "count": "2",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Chain",
+            "desc": "Melee Weapon Attack: +8 to hit, reach 10 ft., one target. Hit: 11 (2d6 + 4) slashing damage. The target is grappled (escape DC 14) if the devil isn't already grappling a creature. Until this grapple ends, the target is restrained and takes 7 (2d6) piercing damage at the start of each of its turns.",
+            "attack_bonus": 8,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "2d6+4"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Animate Chains",
+            "desc": "Up to four chains the devil can see within 60 feet of it magically sprout razor-edged barbs and animate under the devil's control, provided that the chains aren't being worn or carried.\nEach animated chain is an object with AC 20, 20 hit points, resistance to piercing damage, and immunity to psychic and thunder damage. When the devil uses Multiattack on its turn, it can use each animated chain to make one additional chain attack. An animated chain can grapple one creature of its own but can't make attacks while grappling. An animated chain reverts to its inanimate state if reduced to 0 hit points or if the devil is incapacitated or dies.",
+            "usage": {
+                "type": "recharge after rest",
+                "rest_types": [
+                    "short",
+                    "long"
+                ]
+            },
+            "actions": []
+        }
+    ],
+    "reactions": [
+        {
+            "name": "Unnerving Mask",
+            "desc": "When a creature the devil can see starts its turn within 30 feet of the devil, the devil can create the illusion that it looks like one of the creature's departed loved ones or bitter enemies. If the creature can see the devil, it must succeed on a DC 14 Wisdom saving throw or be frightened until the end of its turn.",
+            "dc": {
+                "dc_type": {
+                    "index": "wis",
+                    "name": "WIS",
+                    "url": "/api/2014/ability-scores/wis"
+                },
+                "dc_value": 14,
+                "success_type": "none"
+            }
+        }
+    ],
+    "image": "/api/images/monsters/chain-devil.png",
+    "url": "/api/2014/monsters/chain-devil",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": []
+}

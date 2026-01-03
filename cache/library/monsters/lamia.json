@@ -1,0 +1,250 @@
+{
+    "index": "lamia",
+    "name": "Lamia",
+    "size": "Large",
+    "type": "monstrosity",
+    "alignment": "chaotic evil",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 13
+        }
+    ],
+    "hit_points": 97,
+    "hit_dice": "13d10",
+    "hit_points_roll": "13d10+26",
+    "speed": {
+        "walk": "30 ft."
+    },
+    "strength": 16,
+    "dexterity": 13,
+    "constitution": 15,
+    "intelligence": 14,
+    "wisdom": 15,
+    "charisma": 16,
+    "proficiencies": [
+        {
+            "value": 7,
+            "proficiency": {
+                "index": "skill-deception",
+                "name": "Skill: Deception",
+                "url": "/api/2014/proficiencies/skill-deception"
+            }
+        },
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "skill-insight",
+                "name": "Skill: Insight",
+                "url": "/api/2014/proficiencies/skill-insight"
+            }
+        },
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "darkvision": "60 ft.",
+        "passive_perception": 12
+    },
+    "languages": "Abyssal, Common",
+    "challenge_rating": 4,
+    "proficiency_bonus": 2,
+    "xp": 1100,
+    "special_abilities": [
+        {
+            "name": "Innate Spellcasting",
+            "desc": "The lamia's innate spellcasting ability is Charisma (spell save DC 13). It can innately cast the following spells, requiring no material components. At will: disguise self (any humanoid form), major image 3/day each: charm person, mirror image, scrying, suggestion 1/day: geas",
+            "spellcasting": {
+                "ability": {
+                    "index": "cha",
+                    "name": "CHA",
+                    "url": "/api/2014/ability-scores/cha"
+                },
+                "dc": 13,
+                "components_required": [
+                    "V",
+                    "S"
+                ],
+                "spells": [
+                    {
+                        "name": "Disguise Self",
+                        "level": 1,
+                        "url": "/api/2014/spells/disguise-self",
+                        "notes": "Any Humanoid Form",
+                        "usage": {
+                            "type": "at will",
+                            "rest_types": []
+                        }
+                    },
+                    {
+                        "name": "Major Image",
+                        "level": 3,
+                        "url": "/api/2014/spells/major-image",
+                        "usage": {
+                            "type": "at will",
+                            "rest_types": []
+                        }
+                    },
+                    {
+                        "name": "Charm Person",
+                        "level": 1,
+                        "url": "/api/2014/spells/charm-person",
+                        "usage": {
+                            "type": "per day",
+                            "times": 3,
+                            "rest_types": []
+                        }
+                    },
+                    {
+                        "name": "Mirror Image",
+                        "level": 2,
+                        "url": "/api/2014/spells/mirror-image",
+                        "usage": {
+                            "type": "per day",
+                            "times": 3,
+                            "rest_types": []
+                        }
+                    },
+                    {
+                        "name": "Scrying",
+                        "level": 5,
+                        "url": "/api/2014/spells/scrying",
+                        "usage": {
+                            "type": "per day",
+                            "times": 3,
+                            "rest_types": []
+                        }
+                    },
+                    {
+                        "name": "Suggestion",
+                        "level": 2,
+                        "url": "/api/2014/spells/suggestion",
+                        "usage": {
+                            "type": "per day",
+                            "times": 3,
+                            "rest_types": []
+                        }
+                    },
+                    {
+                        "name": "Geas",
+                        "level": 5,
+                        "url": "/api/2014/spells/geas",
+                        "usage": {
+                            "type": "per day",
+                            "times": 1,
+                            "rest_types": []
+                        }
+                    }
+                ]
+            },
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "action_options",
+            "desc": "The lamia makes two attacks: one with its claws and one with its dagger or Intoxicating Touch.",
+            "action_options": {
+                "choose": 1,
+                "type": "action",
+                "from": {
+                    "option_set_type": "options_array",
+                    "options": [
+                        {
+                            "option_type": "multiple",
+                            "items": [
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Claws",
+                                    "count": 1,
+                                    "type": "melee"
+                                },
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Dagger",
+                                    "count": 1,
+                                    "type": "melee"
+                                }
+                            ]
+                        },
+                        {
+                            "option_type": "multiple",
+                            "items": [
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Claws",
+                                    "count": 1,
+                                    "type": "melee"
+                                },
+                                {
+                                    "option_type": "action",
+                                    "action_name": "Intoxicating Touch",
+                                    "count": 1,
+                                    "type": "ability"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "actions": []
+        },
+        {
+            "name": "Claws",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 14 (2d10 + 3) slashing damage.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "2d10+3"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Dagger",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 5 (1d4 + 3) piercing damage.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d4+3"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Intoxicating Touch",
+            "desc": "Melee Spell Attack: +5 to hit, reach 5 ft., one creature. Hit: The target is magically cursed for 1 hour. Until the curse ends, the target has disadvantage on Wisdom saving throws and all ability checks.",
+            "attack_bonus": 5,
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/lamia.png",
+    "url": "/api/2014/monsters/lamia",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

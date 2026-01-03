@@ -1,0 +1,41 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "sling",
+    "name": "Sling",
+    "equipment_category": {
+        "index": "weapon",
+        "name": "Weapon",
+        "url": "/api/2014/equipment-categories/weapon"
+    },
+    "weapon_category": "Simple",
+    "weapon_range": "Ranged",
+    "category_range": "Simple Ranged",
+    "cost": {
+        "quantity": 1,
+        "unit": "sp"
+    },
+    "damage": {
+        "damage_dice": "1d4",
+        "damage_type": {
+            "index": "bludgeoning",
+            "name": "Bludgeoning",
+            "url": "/api/2014/damage-types/bludgeoning"
+        }
+    },
+    "range": {
+        "normal": 30,
+        "long": 120
+    },
+    "weight": 0,
+    "properties": [
+        {
+            "index": "ammunition",
+            "name": "Ammunition",
+            "url": "/api/2014/weapon-properties/ammunition"
+        }
+    ],
+    "url": "/api/2014/equipment/sling",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": []
+}

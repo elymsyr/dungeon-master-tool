@@ -1,0 +1,20 @@
+{
+    "index": "potion-of-water-breathing",
+    "name": "Potion of Water Breathing",
+    "equipment_category": {
+        "index": "potion",
+        "name": "Potion",
+        "url": "/api/2014/equipment-categories/potion"
+    },
+    "rarity": {
+        "name": "Uncommon"
+    },
+    "variants": [],
+    "variant": false,
+    "desc": [
+        "Potion, uncommon",
+        "You can breathe underwater for 1 hour after drinking this potion. Its cloudy green fluid smells of the sea and has a jellyfish-like bubble floating in it."
+    ],
+    "url": "/api/2014/magic-items/potion-of-water-breathing",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

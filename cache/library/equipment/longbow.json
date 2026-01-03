@@ -1,0 +1,51 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "longbow",
+    "name": "Longbow",
+    "equipment_category": {
+        "index": "weapon",
+        "name": "Weapon",
+        "url": "/api/2014/equipment-categories/weapon"
+    },
+    "weapon_category": "Martial",
+    "weapon_range": "Ranged",
+    "category_range": "Martial Ranged",
+    "cost": {
+        "quantity": 50,
+        "unit": "gp"
+    },
+    "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+            "index": "piercing",
+            "name": "Piercing",
+            "url": "/api/2014/damage-types/piercing"
+        }
+    },
+    "range": {
+        "normal": 150,
+        "long": 600
+    },
+    "weight": 2,
+    "properties": [
+        {
+            "index": "ammunition",
+            "name": "Ammunition",
+            "url": "/api/2014/weapon-properties/ammunition"
+        },
+        {
+            "index": "heavy",
+            "name": "Heavy",
+            "url": "/api/2014/weapon-properties/heavy"
+        },
+        {
+            "index": "two-handed",
+            "name": "Two-Handed",
+            "url": "/api/2014/weapon-properties/two-handed"
+        }
+    ],
+    "url": "/api/2014/equipment/longbow",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": []
+}

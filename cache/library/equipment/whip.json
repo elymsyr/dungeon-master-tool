@@ -1,0 +1,45 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "whip",
+    "name": "Whip",
+    "equipment_category": {
+        "index": "weapon",
+        "name": "Weapon",
+        "url": "/api/2014/equipment-categories/weapon"
+    },
+    "weapon_category": "Martial",
+    "weapon_range": "Melee",
+    "category_range": "Martial Melee",
+    "cost": {
+        "quantity": 2,
+        "unit": "gp"
+    },
+    "damage": {
+        "damage_dice": "1d4",
+        "damage_type": {
+            "index": "slashing",
+            "name": "Slashing",
+            "url": "/api/2014/damage-types/slashing"
+        }
+    },
+    "range": {
+        "normal": 5
+    },
+    "weight": 3,
+    "properties": [
+        {
+            "index": "finesse",
+            "name": "Finesse",
+            "url": "/api/2014/weapon-properties/finesse"
+        },
+        {
+            "index": "reach",
+            "name": "Reach",
+            "url": "/api/2014/weapon-properties/reach"
+        }
+    ],
+    "url": "/api/2014/equipment/whip",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": []
+}

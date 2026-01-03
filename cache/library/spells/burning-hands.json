@@ -1,0 +1,82 @@
+{
+    "index": "burning-hands",
+    "name": "Burning Hands",
+    "desc": [
+        "As you hold your hands with thumbs touching and fingers spread, a thin sheet of flames shoots forth from your outstretched fingertips. Each creature in a 15-foot cone must make a dexterity saving throw. A creature takes 3d6 fire damage on a failed save, or half as much damage on a successful one.",
+        "The fire ignites any flammable objects in the area that aren't being worn or carried."
+    ],
+    "higher_level": [
+        "When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d6 for each slot level above 1st."
+    ],
+    "range": "Self",
+    "components": [
+        "V",
+        "S"
+    ],
+    "ritual": false,
+    "duration": "Instantaneous",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 1,
+    "damage": {
+        "damage_type": {
+            "index": "fire",
+            "name": "Fire",
+            "url": "/api/2014/damage-types/fire"
+        },
+        "damage_at_slot_level": {
+            "1": "3d6",
+            "2": "4d6",
+            "3": "5d6",
+            "4": "6d6",
+            "5": "7d6",
+            "6": "8d6",
+            "7": "9d6",
+            "8": "10d6",
+            "9": "11d6"
+        }
+    },
+    "dc": {
+        "dc_type": {
+            "index": "dex",
+            "name": "DEX",
+            "url": "/api/2014/ability-scores/dex"
+        },
+        "dc_success": "half"
+    },
+    "area_of_effect": {
+        "type": "cone",
+        "size": 15
+    },
+    "school": {
+        "index": "evocation",
+        "name": "Evocation",
+        "url": "/api/2014/magic-schools/evocation"
+    },
+    "classes": [
+        {
+            "index": "sorcerer",
+            "name": "Sorcerer",
+            "url": "/api/2014/classes/sorcerer"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        },
+        {
+            "index": "fiend",
+            "name": "Fiend",
+            "url": "/api/2014/subclasses/fiend"
+        }
+    ],
+    "url": "/api/2014/spells/burning-hands",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}
