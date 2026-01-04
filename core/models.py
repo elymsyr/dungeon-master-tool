@@ -44,7 +44,7 @@ def get_default_entity_structure(entity_type="NPC"):
         "tags": [],
         "attributes": {},
         "stats": {"STR": 10, "DEX": 10, "CON": 10, "INT": 10, "WIS": 10, "CHA": 10},
-        "combat_stats": {"hp": "", "ac": "", "speed": "", "cr": ""},
+        "combat_stats": {"hp": "", "max_hp": "", "ac": "", "speed": "", "cr": "", "xp": "", "initiative": ""},
         
         # --- LİSTELER ---
         "traits": [],

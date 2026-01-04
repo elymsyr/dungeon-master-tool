@@ -147,7 +147,19 @@ class ApiBrowser(QDialog):
 
     def import_selected(self):
         if self.selected_data:
-            # Veritabanına kaydet
-            new_id = self.dm.save_entity(None, self.selected_data)
-            QMessageBox.information(self, tr("MSG_SUCCESS"), f"'{self.selected_data['name']}' {tr('MSG_IMPORTED')}")
-            self.accept() # Pencereyi kapat
+            # Kullanıcıya geri bildirim ver
+            self.btn_import.setEnabled(False)
+            self.btn_import.setText("Veriler ve Büyüler İndiriliyor...")
+            QApplication.processEvents() # Arayüzün donmaması için
+            
+            try:
+                # Yeni "dependency-aware" import metodunu çağır
+                # Bu metod detected_spells'i işleyip temizleyecek ve kaydecek
+                new_id = self.dm.import_entity_with_dependencies(self.selected_data)
+                
+                QMessageBox.information(self, tr("MSG_SUCCESS"), f"'{self.selected_data['name']}' başarıyla aktarıldı.\n(Varsa büyüleri de eklendi.)")
+                self.accept()
+            except Exception as e:
+                self.btn_import.setEnabled(True)
+                self.btn_import.setText(tr("BTN_IMPORT"))
+                QMessageBox.critical(self, tr("MSG_ERROR"), f"Hata oluştu: {str(e)}")

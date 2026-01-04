@@ -281,3 +281,68 @@ class DataManager:
                         "is_library": True
                     })
         return results
+
+    def get_entity_name(self, eid):
+        """Verilen ID'ye sahip varlığın ismini döner."""
+        if eid in self.data["entities"]:
+            return self.data["entities"][eid].get("name")
+        return None
+
+    def import_entity_with_dependencies(self, data):
+        """
+        API verisini alır. Eğer içinde '_detected_spell_indices' varsa:
+        1. Önce yerel kütüphaneyi (cache) kontrol eder.
+        2. Yoksa API'den indirir.
+        3. İndirilen/Bulunan büyüleri veritabanına ekler (eğer yoksa).
+        4. Bu büyülerin ID'lerini ana varlığın 'spells' listesine ekler.
+        5. Ana varlığı kaydeder.
+        """
+        # Listeyi al ve datadan sil (DB'ye bu key ile kaydetmemek için)
+        detected_spells = data.pop("_detected_spell_indices", [])
+        linked_spell_ids = []
+
+        if detected_spells:
+            print(f"🔮 {len(detected_spells)} adet bağlı büyü tespit edildi. İşleniyor...")
+            
+            for spell_index in detected_spells:
+                # 1. Büyü zaten bizim aktif "Dünya" veritabanımızda var mı? (İsim tekrarını önle)
+                # Not: Bunu yapabilmek için isme ihtiyacımız var ama elimizde sadece index var.
+                # Bu yüzden önce veriyi (cache veya api'den) çekmemiz lazım.
+
+                # fetch_details_from_api metodu zaten önce LIBRARY/CACHE'e bakar, yoksa API'ye gider.
+                success, spell_data = self.fetch_details_from_api("Büyü (Spell)", spell_index)
+                
+                if success:
+                    spell_name = spell_data.get("name")
+                    
+                    # Aktif dünyadaki varlıkları kontrol et: Bu isimde bir büyü var mı?
+                    existing_id = None
+                    for eid, ent in self.data["entities"].items():
+                        if ent.get("type") == "Büyü (Spell)" and ent.get("name") == spell_name:
+                            existing_id = eid
+                            break
+                    
+                    if existing_id:
+                        # Zaten ekli, ID'sini al
+                        linked_spell_ids.append(existing_id)
+                        # print(f"   -> Mevcut büyü bağlandı: {spell_name}")
+                    else:
+                        # Yok, yeni varlık olarak kaydet
+                        new_id = self.save_entity(None, spell_data)
+                        linked_spell_ids.append(new_id)
+                        print(f"   -> Yeni büyü indirildi ve bağlandı: {spell_name}")
+                else:
+                    print(f"   ⚠️ Uyarı: Büyü verisi alınamadı ({spell_index})")
+
+        # 2. Ana varlığa büyü ID'lerini bağla
+        if linked_spell_ids:
+            if "spells" not in data:
+                data["spells"] = []
+            
+            # Mevcut listeye ekle (duplicate ID olmadan)
+            for sid in linked_spell_ids:
+                if sid not in data["spells"]:
+                    data["spells"].append(sid)
+
+        # 3. Ana varlığı kaydet
+        return self.save_entity(None, data)

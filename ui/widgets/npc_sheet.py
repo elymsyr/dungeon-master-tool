@@ -199,18 +199,37 @@ class NpcSheet(QWidget):
 
     def setup_spells_tab(self):
         layout = QVBoxLayout(self.tab_spells)
-        # Veritabanı
+        
+        # Veritabanı (Linked)
         grp_linked = QGroupBox(tr("GRP_SPELLS"))
         l_linked = QVBoxLayout(grp_linked)
         h = QHBoxLayout()
         self.combo_all_spells = QComboBox(); self.combo_all_spells.setEditable(True); self.combo_all_spells.setPlaceholderText(tr("LBL_SEARCH"))
         self.btn_add_spell = QPushButton(tr("BTN_ADD")); self.btn_add_spell.setObjectName("successBtn")
         h.addWidget(self.combo_all_spells, 3); h.addWidget(self.btn_add_spell, 1)
-        self.list_assigned_spells = QListWidget(); self.list_assigned_spells.setMaximumHeight(120); self.list_assigned_spells.setAlternatingRowColors(True)
+        
+        # ListWidget Ayarları
+        self.list_assigned_spells = QListWidget()
+        self.list_assigned_spells.setAlternatingRowColors(True)
+        # Mouse ile üzerine gelince tüm satırı seçsin
+        self.list_assigned_spells.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
+        self.list_assigned_spells.setSpacing(4) # Satırlar arası boşluk
+        self.list_assigned_spells.setStyleSheet("""
+            QListWidget::item { 
+                border-bottom: 1px solid #333; 
+                padding: 0px; 
+            }
+            QListWidget::item:selected {
+                background-color: #333; /* Widget zaten renkli, arkaplanı sade tutalım */
+                border: 1px solid #7c4dff;
+            }
+        """)
+
         self.btn_remove_spell = QPushButton(tr("BTN_REMOVE"))
         l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_spells); l_linked.addWidget(self.btn_remove_spell)
         layout.addWidget(grp_linked)
-        # Manuel
+        
+        # Manuel (Custom)
         self.custom_spell_container = self._create_section("Manual Spells")
         self.add_btn_to_section(self.custom_spell_container, tr("BTN_ADD"))
         layout.addWidget(self.custom_spell_container); layout.addStretch()
