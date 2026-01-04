@@ -22,7 +22,7 @@ class SessionTab(QWidget):
         left_layout.addWidget(QLabel(tr("TITLE_COMBAT")))
         left_layout.addWidget(self.combat_tracker)
         
-        # Zar Atma Paneli (Alt Sol)
+        # Zar Atma Paneli
         dice_group = QGroupBox(tr("GRP_DICE"))
         dice_layout = QHBoxLayout(dice_group)
         for d in [4, 6, 8, 10, 12, 20, 100]:
@@ -55,8 +55,7 @@ class SessionTab(QWidget):
         self.txt_log = QTextEdit()
         self.txt_log.setPlaceholderText("Olay günlüğü (Otomatik zaman damgası)...")
         
-        # Manuel Log Ekleme
-        # Manuel Log Ekleme
+        # Manuel Log
         log_input_layout = QHBoxLayout()
         self.inp_log_entry = QTextEdit()
         self.inp_log_entry.setMaximumHeight(50)
@@ -99,7 +98,6 @@ class SessionTab(QWidget):
         if ok and name:
             sid = self.dm.create_session(name)
             self.refresh_session_list()
-            # Yeni session'ı seç
             index = self.combo_sessions.findData(sid)
             if index >= 0: self.combo_sessions.setCurrentIndex(index)
             self.current_session_id = sid
@@ -121,11 +119,18 @@ class SessionTab(QWidget):
         session_data = self.dm.get_session(sid)
         if session_data:
             self.current_session_id = sid
-            self.txt_log.setHtml(session_data.get("logs", "")) # HTML formatında tutabiliriz
+            self.txt_log.setHtml(session_data.get("logs", ""))
             self.txt_notes.setText(session_data.get("notes", ""))
             
-            combatants = session_data.get("combatants", [])
-            self.combat_tracker.load_combat_data(combatants)
+            # --- GÜNCELLENDİ: Harita verilerini de yükler ---
+            combatants_data = session_data.get("combatants", [])
+            # Eğer eski formatta liste ise doğrudan, yeni formatta dict ise state olarak yükle
+            if isinstance(combatants_data, dict):
+                 self.combat_tracker.load_session_state(combatants_data)
+            else:
+                 # Eski uyumluluk (Sadece liste varsa)
+                 self.combat_tracker.load_combat_data(combatants_data)
+                 
             self.log_message("Oturum Yüklendi.")
 
     def save_session(self):
@@ -135,7 +140,9 @@ class SessionTab(QWidget):
             
         logs = self.txt_log.toHtml()
         notes = self.txt_notes.toPlainText()
-        combatants = self.combat_tracker.get_combat_data()
         
-        self.dm.save_session_data(self.current_session_id, notes, logs, combatants)
+        # --- GÜNCELLENDİ: Tüm durumu (Map, Size, Coords) al ---
+        combat_state = self.combat_tracker.get_session_state()
+        
+        self.dm.save_session_data(self.current_session_id, notes, logs, combat_state)
         QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_SUCCESS"))
