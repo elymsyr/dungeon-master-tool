@@ -1,8 +1,8 @@
 import os
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QListWidget, 
                              QPushButton, QLineEdit, QComboBox, QSplitter, 
-                             QMessageBox, QListWidgetItem, QCheckBox, QLabel, QStyle)
-from PyQt6.QtGui import QColor, QBrush, QAction, QDesktopServices
+                             QMessageBox, QListWidgetItem, QCheckBox, QLabel, QFileDialog, QStyle)
+from PyQt6.QtGui import QColor, QBrush, QAction, QDesktopServices, QPixmap
 from PyQt6.QtCore import Qt, QUrl
 from ui.widgets.npc_sheet import NpcSheet
 from ui.dialogs.api_browser import ApiBrowser
@@ -11,7 +11,7 @@ from ui.workers import ApiSearchWorker
 from core.models import ENTITY_SCHEMAS
 from core.locales import tr
 
-# --- ÖZEL BÜYÜ LİSTESİ ÖĞESİ ---
+# --- ÖZEL BÜYÜ LİSTESİ ÖĞESİ (Görsel Zenginlik İçin) ---
 class SpellListItemWidget(QWidget):
     """Büyü listesinde görünecek zengin içerikli satır"""
     def __init__(self, name, meta_text, desc):
@@ -32,8 +32,7 @@ class SpellListItemWidget(QWidget):
         top_row.addWidget(lbl_name)
         top_row.addWidget(lbl_meta)
         
-        # Alt Satır: Açıklama (Kırpılmış)
-        # HTML taglerini ve yeni satırları temizleyip kısa önizleme yapalım
+        # Alt Satır: Açıklama (Kırpılmış ve Temizlenmiş)
         clean_desc = desc.replace("\n", " ").replace("<br>", " ")
         short_desc = clean_desc[:95] + "..." if len(clean_desc) > 95 else clean_desc
         
@@ -44,7 +43,7 @@ class SpellListItemWidget(QWidget):
         layout.addLayout(top_row)
         layout.addWidget(lbl_desc)
 
-# --- ANA VERİTABANI SEKRESİ ---
+# --- ANA VERİTABANI SEKMESİ ---
 class DatabaseTab(QWidget):
     def __init__(self, data_manager, player_window):
         super().__init__()
@@ -52,9 +51,9 @@ class DatabaseTab(QWidget):
         self.player_window = player_window
         self.current_entity_id = None
         
-        # --- GEZİNME GEÇMİŞİ ---
-        self.history_back = []    # ID Listesi (LIFO)
-        self.history_forward = [] # ID Listesi (LIFO)
+        # --- GEZİNME GEÇMİŞİ (HISTORY) ---
+        self.history_back = []    # ID Listesi (Geri gitmek için)
+        self.history_forward = [] # ID Listesi (İleri gitmek için)
         self.is_navigating = False # Döngüyü engellemek için bayrak
         
         self.init_ui()
@@ -63,26 +62,31 @@ class DatabaseTab(QWidget):
         layout = QHBoxLayout(self)
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # --- SOL PANEL (LİSTE & FİLTRE) ---
-        left_widget = QWidget(); l_layout = QVBoxLayout(left_widget); l_layout.setContentsMargins(0,0,0,0)
+        # --- SOL PANEL (LİSTE & ARAÇLAR) ---
+        left_widget = QWidget()
+        l_layout = QVBoxLayout(left_widget)
+        l_layout.setContentsMargins(0, 0, 0, 0)
         
         # 1. Navigasyon ve Arama Çubuğu
         nav_search_layout = QHBoxLayout()
         
+        # GERİ BUTONU
         self.btn_back = QPushButton()
         self.btn_back.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack))
         self.btn_back.setFixedSize(30, 30)
-        self.btn_back.setEnabled(False)
+        self.btn_back.setEnabled(False) # Başlangıçta pasif
         self.btn_back.setToolTip("Geri")
         self.btn_back.clicked.connect(self.go_back)
         
+        # İLERİ BUTONU
         self.btn_forward = QPushButton()
         self.btn_forward.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowForward))
         self.btn_forward.setFixedSize(30, 30)
-        self.btn_forward.setEnabled(False)
+        self.btn_forward.setEnabled(False) # Başlangıçta pasif
         self.btn_forward.setToolTip("İleri")
         self.btn_forward.clicked.connect(self.go_forward)
         
+        # ARAMA KUTUSU
         self.inp_search = QLineEdit()
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
         self.inp_search.textChanged.connect(self.refresh_list)
@@ -104,7 +108,7 @@ class DatabaseTab(QWidget):
         filter_layout.addWidget(self.combo_filter)
         filter_layout.addWidget(self.check_show_library)
         
-        # 3. Aksiyon Butonları
+        # 3. Aksiyon Butonları (İndir / API)
         self.btn_download_all = QPushButton(tr("BTN_DOWNLOAD_ALL"))
         self.btn_download_all.clicked.connect(self.open_bulk_downloader)
         self.btn_download_all.setStyleSheet("background-color: #424242; color: #aaa; font-size: 11px;")
@@ -113,14 +117,16 @@ class DatabaseTab(QWidget):
         self.btn_browser.clicked.connect(self.open_api_browser)
         self.btn_browser.setStyleSheet("background-color: #6a1b9a; color: white; font-weight: bold;")
 
-        # 4. Liste
+        # 4. Ana Liste
         self.list_widget = QListWidget()
         self.list_widget.itemClicked.connect(self.on_item_clicked)
         
+        # 5. Yeni Ekle Butonu
         self.btn_add = QPushButton(tr("BTN_NEW_ENTITY"))
         self.btn_add.setObjectName("successBtn")
         self.btn_add.clicked.connect(self.prepare_new)
         
+        # Sol Paneli Birleştir
         l_layout.addLayout(nav_search_layout)
         l_layout.addLayout(filter_layout)
         l_layout.addWidget(self.btn_download_all)
@@ -131,81 +137,95 @@ class DatabaseTab(QWidget):
         # --- SAĞ PANEL (KARAKTER KARTI / NPCSHEET) ---
         self.sheet = NpcSheet()
         
-        # Kayıt / Silme
+        # Buton Bağlantıları
         self.sheet.btn_save.clicked.connect(self.save_entity)
         self.sheet.btn_delete.clicked.connect(self.delete_entity)
         self.sheet.btn_show_player.clicked.connect(self.show_image_to_player)
         
-        # Galeri Sinyalleri
+        # Galeri
         self.sheet.btn_add_img.clicked.connect(self.add_image_to_gallery)
         self.sheet.btn_remove_img.clicked.connect(self.remove_image_from_gallery)
         self.sheet.btn_prev_img.clicked.connect(self.prev_image)
         self.sheet.btn_next_img.clicked.connect(self.next_image)
 
-        # PDF Sinyalleri
+        # PDF
         self.sheet.btn_add_pdf.clicked.connect(self.add_pdf)
         self.sheet.btn_remove_pdf.clicked.connect(self.remove_pdf)
         self.sheet.btn_open_pdf.clicked.connect(self.open_pdf)
         self.sheet.btn_project_pdf.clicked.connect(self.project_pdf_to_player)
         self.sheet.btn_open_pdf_folder.clicked.connect(self.open_pdf_folder)
         
-        # İstatistik Yansıtma Butonu (Sheet içine inject ediyoruz)
+        # İstatistik Yansıtma Butonunu Sheet içine enjekte et
         self.btn_show_stats = QPushButton(tr("BTN_SHOW_STATS"))
         self.btn_show_stats.setObjectName("primaryBtn")
         self.btn_show_stats.clicked.connect(self.show_stats_to_player)
-        # Sheet'in üst kısmındaki layouta ekle
-        self.sheet.content_layout.itemAt(0).layout().itemAt(0).layout().insertWidget(3, self.btn_show_stats)
+        # Sheet'in başlık kısmına ekliyoruz
+        try:
+            self.sheet.content_layout.itemAt(0).layout().itemAt(0).layout().insertWidget(3, self.btn_show_stats)
+        except:
+            pass # Layout yapısı değişirse hata vermesin
 
-        # Büyü Listesi Sinyalleri
+        # Büyü Listesi İşlemleri
         self.sheet.btn_add_spell.clicked.connect(self.add_spell_to_list)
         self.sheet.btn_remove_spell.clicked.connect(self.remove_spell_from_list)
         # ÇİFT TIKLAMA: Büyü detayına git
         self.sheet.list_assigned_spells.itemDoubleClicked.connect(self.view_spell_details)
         
-        # Eşya Linkleme Sinyalleri
+        # Eşya Linkleme
         self.sheet.btn_add_item_link.clicked.connect(self.add_item_to_list)
         self.sheet.btn_remove_item_link.clicked.connect(self.remove_item_from_list)
         self.sheet.list_assigned_items.itemDoubleClicked.connect(self.view_item_details)
 
-        splitter.addWidget(left_widget); splitter.addWidget(self.sheet); splitter.setSizes([350, 950])
+        splitter.addWidget(left_widget)
+        splitter.addWidget(self.sheet)
+        splitter.setSizes([350, 950])
         layout.addWidget(splitter)
+        
         self.refresh_list()
+        self.update_nav_buttons()
 
     # --- GEZİNME (NAVIGATION) MANTIĞI ---
     def update_nav_buttons(self):
+        """Butonların aktif/pasif durumunu güncelle"""
         self.btn_back.setEnabled(len(self.history_back) > 0)
         self.btn_forward.setEnabled(len(self.history_forward) > 0)
 
     def go_back(self):
+        """Geri butonuna basılınca"""
         if not self.history_back: return
         
         # Şu anki sayfayı ileri geçmişine at
         if self.current_entity_id:
             self.history_forward.append(self.current_entity_id)
             
-        # Geri geçmişten çek
+        # Geri geçmişten sonuncuyu al
         prev_id = self.history_back.pop()
-        self.is_navigating = True # History kaydını geçici durdur
+        
+        self.is_navigating = True # History'ye tekrar eklemeyi engelle
         self.load_entity_by_id(prev_id)
         self.is_navigating = False
+        
         self.update_nav_buttons()
 
     def go_forward(self):
+        """İleri butonuna basılınca"""
         if not self.history_forward: return
         
         # Şu anki sayfayı geri geçmişine at
         if self.current_entity_id:
             self.history_back.append(self.current_entity_id)
             
-        # İleri geçmişten çek
+        # İleri geçmişten sonuncuyu al
         next_id = self.history_forward.pop()
+        
         self.is_navigating = True
         self.load_entity_by_id(next_id)
         self.is_navigating = False
+        
         self.update_nav_buttons()
 
     def add_to_history(self, eid):
-        """Yeni bir sayfa açıldığında çağrılır"""
+        """Yeni bir sayfa açıldığında geçmişi günceller"""
         if self.is_navigating: return # Geri/İleri tuşlarıyla geldiysek ekleme
         
         # Eğer aynı sayfaya tıklanmadıysa geçmişe ekle
@@ -263,9 +283,9 @@ class DatabaseTab(QWidget):
         self.sheet.setEnabled(True)
         if success:
             if isinstance(data_or_id, dict):
-                # Yeni veri çekildi (göster ama ID'si yok, kaydederse oluşur)
+                # Yeni veri çekildi (henüz ID'si yok)
                 self.current_entity_id = None 
-                self.add_to_history(None) # Boş ID olarak geçmişe ekle (yeni form)
+                self.add_to_history(None) # Boş ID olarak geçmişe ekle
                 self.load_data_into_sheet(data_or_id)
                 self.sheet.inp_name.setStyleSheet("border: 2px solid #2e7d32;")
             elif isinstance(data_or_id, str):
@@ -287,7 +307,7 @@ class DatabaseTab(QWidget):
         self.sheet.inp_name.setStyleSheet("") 
 
     def load_entity_by_id(self, eid):
-        """ID verilerek yükleme yapılır (Çift tıklama veya Navigasyon için)"""
+        """ID ile doğrudan yükleme (Çift tıklama veya Navigasyon için)"""
         if eid not in self.dm.data["entities"]: return
         
         # Sol listede o öğeyi bul ve seçili yap
@@ -300,10 +320,7 @@ class DatabaseTab(QWidget):
                 found = True
                 break
         
-        if not found and not self.is_navigating:
-            # Filtre yüzünden listede görünmüyor olabilir, yine de yükle
-            pass
-            
+        # Navigasyon sırasında değilsek history'ye ekle
         if not self.is_navigating:
             self.add_to_history(eid)
             
@@ -313,7 +330,7 @@ class DatabaseTab(QWidget):
         self.update_nav_buttons()
 
     def load_data_into_sheet(self, data):
-        """Tüm veriyi forma dağıtır (Yeni özelliklerle güncellendi)"""
+        """Tüm veriyi forma dağıtır"""
         s = self.sheet
         
         # 1. Temel Bilgiler
@@ -324,7 +341,7 @@ class DatabaseTab(QWidget):
         s.inp_tags.setText(", ".join(data.get("tags", [])))
         s.inp_desc.setText(data.get("description", ""))
         
-        # 2. Temel Statlar (STR, DEX...)
+        # 2. Statlar
         stats = data.get("stats", {})
         for k, v in s.stats_inputs.items(): 
             v.setText(str(stats.get(k, 10)))
@@ -337,7 +354,7 @@ class DatabaseTab(QWidget):
         s.inp_speed.setText(str(c.get("speed", "")))
         s.inp_init.setText(str(c.get("initiative", "")))
 
-        # 4. Gelişmiş Statlar (Saves, Skills, Immunities)
+        # 4. Gelişmiş Statlar
         s.inp_saves.setText(data.get("saving_throws", ""))
         s.inp_skills.setText(data.get("skills", ""))
         s.inp_vuln.setText(data.get("damage_vulnerabilities", ""))
@@ -355,7 +372,7 @@ class DatabaseTab(QWidget):
                 ix = w.findText(val); w.setCurrentIndex(ix) if ix>=0 else w.setCurrentText(val)
             else: w.setText(str(val))
 
-        # 6. Kartlar (Traits, Actions...)
+        # 6. Kartlar
         s.clear_all_cards()
         self._fill_cards(s.trait_container, data.get("traits", []))
         self._fill_cards(s.action_container, data.get("actions", []))
@@ -398,7 +415,7 @@ class DatabaseTab(QWidget):
                 level = attrs.get("Seviye", "?")
                 school = attrs.get("Okul", "")
                 
-                # Meta bilgisi oluştur
+                # Meta bilgisi
                 meta = f"Level {level} {school}" if school else f"Level {level}"
                 desc = spell_ent.get("description", "")
                 
@@ -425,7 +442,6 @@ class DatabaseTab(QWidget):
         s = self.sheet
         if not s.inp_name.text(): return
         
-        # Kart verilerini toplayan yardımcı fonksiyon
         def get_cards(container):
             res = []; layout = container.dynamic_area
             for i in range(layout.count()):
@@ -557,11 +573,6 @@ class DatabaseTab(QWidget):
         if not self.current_entity_id: return
 
         data = self.dm.data["entities"].get(self.current_entity_id, {})
-        # ... (Stat kartı oluşturma kodu öncekiyle aynı, uzunluk nedeniyle kısalttım) ...
-        # Bu kısım main_window içindeki gibi HTML oluşturup player_window.show_stat_block(html) çağırır.
-        # Basitlik için NpcSheet'teki mevcut veriyi alıp yollayalım.
-        # Daha detaylı HTML oluşturma kodunu buraya ekleyebilirsiniz.
-        # Şimdilik basit bir placeholder:
         self.player_window.show_stat_block(f"<h1>{data.get('name')}</h1><p>{data.get('description')}</p>")
 
     # --- PDF ---
@@ -607,10 +618,8 @@ class DatabaseTab(QWidget):
     def add_spell_to_list(self):
         sid = self.sheet.combo_all_spells.currentData()
         if sid:
-            # Listeye ekle (Widget ile)
             spell_ent = self.dm.data["entities"].get(sid)
             if spell_ent:
-                # Basit ekleme, kaydettikten sonra refresh ile düzelir ama anlık gösterelim
                 item = QListWidgetItem(self.sheet.list_assigned_spells)
                 item.setData(Qt.ItemDataRole.UserRole, sid)
                 w = SpellListItemWidget(spell_ent.get("name"), "Yeni Eklendi", "")
