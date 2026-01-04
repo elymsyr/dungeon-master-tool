@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, 
                              QHBoxLayout, QPushButton, QHeaderView, QInputDialog, 
-                             QMenu, QMessageBox, QFrame)
+                             QMenu, QMessageBox, QFrame, QLineEdit)
 from PyQt6.QtGui import QAction, QColor, QBrush, QCursor
 from PyQt6.QtCore import Qt
 from core.locales import tr
@@ -19,6 +19,7 @@ class CombatTracker(QWidget):
     def __init__(self, data_manager):
         super().__init__()
         self.dm = data_manager
+        self.current_turn_index = -1 # Sıra kimde
         self.init_ui()
 
     def init_ui(self):
@@ -28,25 +29,34 @@ class CombatTracker(QWidget):
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
-        
-        # Sütun ayarları
-        header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch) # İsim geniş
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents) # Init dar
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents) # AC dar
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents) # HP dar
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch) # Durum geniş
-        
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        
-        # Sağ Tık Menüsü Etkinleştirme
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.open_context_menu)
-        
         layout.addWidget(self.table)
 
-        # KONTROLLER
+        # --- KONTROLLER ---
+        
+        # Hızlı Ekleme Paneli
+        quick_layout = QHBoxLayout()
+        self.inp_quick_name = QLineEdit(); self.inp_quick_name.setPlaceholderText(tr("HEADER_NAME"))
+        self.inp_quick_init = QLineEdit(); self.inp_quick_init.setPlaceholderText(tr("LBL_INIT")); self.inp_quick_init.setMaximumWidth(50)
+        self.inp_quick_hp = QLineEdit(); self.inp_quick_hp.setPlaceholderText(tr("LBL_HP")); self.inp_quick_hp.setMaximumWidth(50)
+        self.btn_quick_add = QPushButton(tr("BTN_QUICK_ADD")); self.btn_quick_add.clicked.connect(self.quick_add)
+        
+        quick_layout.addWidget(self.inp_quick_name, 3)
+        quick_layout.addWidget(self.inp_quick_init, 1)
+        quick_layout.addWidget(self.inp_quick_hp, 1)
+        quick_layout.addWidget(self.btn_quick_add, 1)
+        layout.addLayout(quick_layout)
+
+        # Butonlar
         btn_layout = QHBoxLayout()
+        
+        self.btn_next_turn = QPushButton(tr("BTN_NEXT_TURN"))
+        self.btn_next_turn.setStyleSheet("background-color: #fbc02d; color: black; font-weight: bold;")
+        self.btn_next_turn.clicked.connect(self.next_turn)
         
         self.btn_add = QPushButton(tr("BTN_ADD"))
         self.btn_add.clicked.connect(self.add_combatant_dialog)
@@ -54,9 +64,10 @@ class CombatTracker(QWidget):
         self.btn_roll = QPushButton(tr("BTN_ROLL_INIT"))
         self.btn_roll.clicked.connect(self.roll_initiatives)
         
-        self.btn_clear = QPushButton(tr("BTN_CLEAR"))
+        self.btn_clear = QPushButton(tr("BTN_CLEAR_COMBAT"))
         self.btn_clear.clicked.connect(self.clear_tracker)
         
+        btn_layout.addWidget(self.btn_next_turn)
         btn_layout.addWidget(self.btn_add)
         btn_layout.addWidget(self.btn_roll)
         btn_layout.addWidget(self.btn_clear)
@@ -120,6 +131,47 @@ class CombatTracker(QWidget):
         else:
             item.setForeground(QBrush(QColor("#e0e0e0")))
 
+    def quick_add(self):
+        name = self.inp_quick_name.text().strip()
+        if not name: return
+        
+        init = self.inp_quick_init.text().strip() or str(random.randint(1,20))
+        hp = self.inp_quick_hp.text().strip() or "10"
+        
+        self.add_direct_row(name, init, "10", hp, "", None)
+        self.inp_quick_name.clear(); self.inp_quick_init.clear(); self.inp_quick_hp.clear()
+        self._sort_and_refresh()
+
+    def next_turn(self):
+        count = self.table.rowCount()
+        if count == 0: return
+        
+        self.current_turn_index += 1
+        if self.current_turn_index >= count:
+            self.current_turn_index = 0
+            
+        self.update_highlights()
+
+    def update_highlights(self):
+        for r in range(self.table.rowCount()):
+            # Temizle
+            for c in range(self.table.columnCount()):
+                item = self.table.item(r, c)
+                if item: item.setBackground(QBrush(QColor(0,0,0,0))) # Transparent
+        
+        # Aktif satırı boya
+        if 0 <= self.current_turn_index < self.table.rowCount():
+            for c in range(self.table.columnCount()):
+                item = self.table.item(self.current_turn_index, c)
+                if item: item.setBackground(QBrush(QColor(40, 80, 40))) # Koyu Yeşil
+
+    def _sort_and_refresh(self):
+        # Init'e göre sırala (Text olduğu için int'e çevirip sıralamak lazım ama basitçe şimdilik TableWidget sort kullanalım)
+        # Doğru sıralama için Init sütunu dolu olmalı.
+        self.table.sortItems(1, Qt.SortOrder.DescendingOrder)
+        self.current_turn_index = -1 
+        self.update_highlights()
+
     def add_combatant_dialog(self):
         entities = self.dm.data["entities"]
         items = []
@@ -134,6 +186,7 @@ class CombatTracker(QWidget):
         if ok and item:
             eid = ids[items.index(item)]
             self.add_row_from_entity(eid)
+            self._sort_and_refresh()
 
     def add_row_from_entity(self, entity_id):
         data = self.dm.data["entities"].get(entity_id)
@@ -142,7 +195,7 @@ class CombatTracker(QWidget):
         name = data.get("name", "Bilinmeyen")
         try:
             hp_str = data.get("combat_stats", {}).get("hp", "10")
-            hp = hp_str.split(' ')[0] # Sadece sayıyı al
+            hp = hp_str.split(' ')[0] 
         except: hp = "10"
             
         try: ac = str(data.get("combat_stats", {}).get("ac", "10"))
@@ -150,38 +203,62 @@ class CombatTracker(QWidget):
             
         try:
             dex = int(data.get("stats", {}).get("DEX", 10))
-            init_bonus = (dex - 10) // 2
-        except: init_bonus = 0
+            dex_mod = (dex - 10) // 2
+        except: dex_mod = 0
         
-        self.add_direct_row(name, 0, ac, hp, "", entity_id, init_bonus)
+        # YENİ: Varsa özel initiative bonusunu kullan, yoksa DEX mod kullan
+        custom_init_str = data.get("combat_stats", {}).get("initiative", "")
+        if custom_init_str and (custom_init_str.lstrip("-").isdigit()):
+            init_bonus = int(custom_init_str)
+        else:
+            init_bonus = dex_mod
+        
+        # Otomatik zar at
+        roll = random.randint(1, 20) + init_bonus
+        
+        self.add_direct_row(name, roll, ac, hp, "", entity_id, init_bonus)
 
     def add_direct_row(self, name, init, ac, hp, condition, eid, init_bonus=0):
         row = self.table.rowCount()
         self.table.insertRow(row)
         
-        self.table.setItem(row, 0, QTableWidgetItem(name))
-        self.table.setItem(row, 1, QTableWidgetItem(str(init)))
+        # İsim
+        item_name = QTableWidgetItem(name)
+        item_name.setData(Qt.ItemDataRole.UserRole, init_bonus) # Bonus sakla
+        self.table.setItem(row, 0, item_name)
+        
+        # Init (Sıralama için 0-pad gerekebilir ama şimdilik düz yazı)
+        # Doğru sorting için: setData(DisplayRole, str), setData(EditRole, int) yapılabilir mi?
+        # Basitçe:
+        item_init = QTableWidgetItem()
+        item_init.setData(Qt.ItemDataRole.DisplayRole, str(init))
+        item_init.setData(Qt.ItemDataRole.EditRole, int(init) if str(init).isdigit() else 0)
+        item_init.setData(Qt.ItemDataRole.UserRole, eid) # EID sakla
+        self.table.setItem(row, 1, item_init)
+        
         self.table.setItem(row, 2, QTableWidgetItem(str(ac)))
         self.table.setItem(row, 3, QTableWidgetItem(str(hp)))
         
         cond_item = QTableWidgetItem(condition)
         if condition: cond_item.setForeground(QBrush(QColor("#ff5252")))
         self.table.setItem(row, 4, cond_item)
-        
-        # Gizli veriler
-        self.table.item(row, 0).setData(Qt.ItemDataRole.UserRole, init_bonus)
-        self.table.item(row, 1).setData(Qt.ItemDataRole.UserRole, eid)
 
     def roll_initiatives(self):
         for row in range(self.table.rowCount()):
             item = self.table.item(row, 1)
+            # Bonus'u isim satırından alıyorduk
             bonus = self.table.item(row, 0).data(Qt.ItemDataRole.UserRole) or 0
+            
             roll = random.randint(1, 20) + bonus
-            item.setText(str(roll))
-        self.table.sortItems(1, Qt.SortOrder.DescendingOrder)
+            
+            item.setData(Qt.ItemDataRole.DisplayRole, str(roll))
+            item.setData(Qt.ItemDataRole.EditRole, roll)
+            
+        self._sort_and_refresh()
 
     def clear_tracker(self):
         self.table.setRowCount(0)
+        self.current_turn_index = -1
 
     def get_combat_data(self):
         data = []
@@ -201,3 +278,4 @@ class CombatTracker(QWidget):
         self.table.setRowCount(0)
         for c in combat_list:
             self.add_direct_row(c["name"], c["init"], c["ac"], c["hp"], c["cond"], c.get("eid"), c.get("bonus", 0))
+        self._sort_and_refresh()

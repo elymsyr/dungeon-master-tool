@@ -2,14 +2,12 @@ ENTITY_SCHEMAS = {
     "NPC": [
         ("Irk", "text", None),
         ("Sınıf", "text", None),
+        ("Seviye", "text", None), 
         ("Tavır", "combo", ["Dost", "Nötr", "Düşman"]),
         ("Konum", "text", None)
     ],
     "Canavar": [
         ("Challenge Rating (CR)", "text", None),
-        ("HP", "text", None),
-        ("AC", "text", None),
-        ("Hız", "text", None),
         ("Saldırı Tipi", "text", None)
     ],
     # ... Diğer şemalar aynı kalsın ...
@@ -63,5 +61,15 @@ def get_default_entity_structure(entity_type="NPC"):
         "inventory": [],          # Manuel Kartlar (Mevcut yapı)
         
         "pdfs": [],               # PDF Dosyaları
-        "location_id": None
+        "location_id": None,
+
+        # --- Gelişmiş Statlar (NPC/Canavar için) ---
+        "saving_throws": "",
+        "damage_vulnerabilities": "",
+        "damage_resistances": "",
+        "damage_immunities": "",
+        "condition_immunities": "",
+        "proficiency_bonus": "",
+        "passive_perception": "",
+        "skills": ""
     }

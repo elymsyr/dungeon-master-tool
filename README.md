@@ -9,21 +9,28 @@
 ### 📚 Database & Campaign Management
 - **Offline Storage**: Create and manage multiple names worlds/campaigns.
 - **Entity Management**: Create NPCs, Monsters, Locations, and Quest items.
+- **Lore & Docs**: Dedicated "Lore" category for world-building, with exclusive support for attaching and viewing **PDF** files.
 - **D&D 5e API Integration**: Browse and import Spells, Monsters, and Equipment directly from the official SRD API.
 - **Multi-Language Support**: Fully localized in **English** and **Turkish**. Switch languages instantly.
-- **Customizable Sheets**: Track HP, AC, CR, stats, traits, actions, and inventory for every entity.
+- **Customizable Sheets**: Track HP, AC, detailed stats, traits, actions, and inventory for every entity.
+- **Extended Stats**: Support for Saving Throws, Resistances, Immunities, Vulnerabilities, Proficiency Bonus, and Passive Perception.
 - **Multiple Images**: Upload and view multiple reference images for characters and locations.
 - **Export**: Export your entire entity database to a readable `.txt` file for backup or printing.
 
 ### ⚔️ Combat Tracker & Tools
-- **Initiative Tracker**: Add combatants, roll initiative automatically (with DEX bonuses), and track turn order.
-- **Condition Manager**: Easily apply and track conditions (Blinded, Stunned, etc.) with visual indicators.
+- **Advanced Combat Tracker**: 
+    - **Quick Add**: Rapidly add ad-hoc combatants (like "Goblin #3").
+    - **Turn Management**: Highlight current turn, cycle through combatants next/previous.
+    - **Initiative System**: Auto-roll initiative using DEX modifiers or a **custom Initiative Bonus**. 
+    - **Condition Manager**: Easily apply and track conditions (Blinded, Stunned, etc.) with visual indicators.
 - **Dice Roller**: Quick access to standard dice (d4, d6, d8... d100).
 
 ### 📺 Player Facing View
 - **Second Screen Support**: Open a dedicated "Player Window" on a secondary monitor/projector.
 - **Fog of War Map**: Share maps with adjustable fog of war (pins and locations).
+- **PDF Projection**: Project PDF documents (rules, handouts, letters) directly to the player screen.
 - **Image Sharing**: Instantly project character art or location visuals to your players with a single click.
+- **Simplified Player Sheet**: Player entities show only essential info (Class, Race, Level) and attached PDFs.
 
 ### 🗺️ Map System
 - **Interactive Maps**: Import world maps and add "Pins" to link directly to locations or NPCs in your database.
@@ -42,7 +49,7 @@ This tool is fully portable.
 1. Download or locate `DungeonMasterTool.exe`.
 2. Place it on your PC or a **USB Drive**.
 3. Run it!
-   - **Data Storage**: All your worlds, images, and logs are saved in the **same directory** (or parent directory) of the executable.
+   - **Data Storage**: All your worlds, images, PDFs, and logs are saved in the **same directory** (or parent directory) of the executable.
    - *Example*: If you run it from `E:\DM_Tools\`, your data will be in `E:\DM_Tools\worlds`.
 
 ### Option 2: Running from Source
@@ -58,7 +65,7 @@ If you are a developer, you can run the Python source directly.
    ```bash
    pip install -r requirements.txt
    ```
-   *Dependencies: `PyQt6`, `requests`*
+   *Dependencies: `PyQt6`, `requests`, `PyQt6-WebEngine`*
 
 3. **Run the App**:
    ```bash
@@ -80,8 +87,11 @@ On first launch, select "Yeni Dünya Oluştur" (Create New World) and give it a 
 ### 2. Adding Entities
 - Go to the **Veritabanı** (Database) tab.
 - Click **"Yeni Varlık"** (New Entity).
-- Select a Type (NPC, Monster, Location, etc.).
-- Fill in the details, upload images, and click **"Kaydet"** (Save).
+- Select a Type (NPC, Monster, Location, Lore, etc.).
+- Fill in the details. 
+    - For **Lore** entities, use the "Docs & PDFs" tab to attach PDF files.
+    - For **Monsters**, fill in Combat Stats like HP, AC, and extended stats like Resistances.
+- Click **"Kaydet"** (Save).
 
 ### 3. Using the API
 - Click **"API Tarayıcı"** (API Browser).
@@ -92,13 +102,16 @@ On first launch, select "Yeni Dünya Oluştur" (Create New World) and give it a 
 ### 4. Running a Session
 - Switch to the **Oturum** (Session) tab.
 - Create a new session log.
-- Use the **Combat Tracker** on the left to manage encounters.
+- Use the **Combat Tracker** on the left to manage encounters. 
+    - Add entities from your database or use **Quick Add**.
+    - Roll Initiatives.
+    - Track HP and Conditions.
 - Note down events in the log on the right.
 
 ### 5. Player Screen
 - Click **"📺 Oyuncu Ekranını Aç/Kapat"** in the top toolbar.
 - Drag the new window to your second monitor.
-- Use **"👁️ Oyuncuya Göster"** buttons on images or maps to send them to the player screen.
+- Use **"👁️ Oyuncuya Göster"** buttons on images, maps, or PDFs to send them to the player screen.
 
 ---
 
