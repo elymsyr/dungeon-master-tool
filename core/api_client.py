@@ -35,7 +35,7 @@ class DndApiClient:
     def _fetch_all(self, endpoint):
         url = f"{API_BASE_URL}/{endpoint}"
         try:
-            response = self.session.get(url)
+            response = self.session.get(url, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 return data.get("results", [])
@@ -53,14 +53,14 @@ class DndApiClient:
         url = f"{API_BASE_URL}/{endpoint}/{formatted_query}"
         
         try:
-            response = self.session.get(url)
+            response = self.session.get(url, timeout=10)
             if response.status_code == 200:
                 return self.parse_dispatcher(category, response.json()), "Başarılı"
             
             # Eşya ise Magic Item da dene
             if category == "Eşya (Equipment)":
                 url2 = f"{API_BASE_URL}/magic-items/{formatted_query}"
-                resp2 = self.session.get(url2)
+                resp2 = self.session.get(url2, timeout=10)
                 if resp2.status_code == 200:
                     return self.parse_equipment(resp2.json()), "Magic Item bulundu."
 

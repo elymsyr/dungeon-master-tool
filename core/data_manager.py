@@ -2,13 +2,12 @@ import os
 import json
 import shutil
 import uuid
-from config import WORLDS_DIR, BASE_DIR
+from config import WORLDS_DIR, BASE_DIR, CACHE_DIR
 from core.models import get_default_entity_structure
 from core.api_client import DndApiClient
-LIBRARY_DIR = os.path.join(BASE_DIR, "cache", "library")
+LIBRARY_DIR = os.path.join(CACHE_DIR, "library")
 
 # Cache ayarları
-CACHE_DIR = os.path.join(BASE_DIR, "cache")
 CACHE_FILE = os.path.join(CACHE_DIR, "reference_indexes.json")
 
 class DataManager:

@@ -7,6 +7,7 @@ from PyQt6.QtCore import Qt
 from ui.widgets.npc_sheet import NpcSheet
 from ui.dialogs.api_browser import ApiBrowser
 from ui.dialogs.bulk_downloader import BulkDownloadDialog
+from ui.workers import ApiSearchWorker
 from core.models import ENTITY_SCHEMAS
 
 class DatabaseTab(QWidget):
@@ -121,19 +122,33 @@ class DatabaseTab(QWidget):
             cat = parts[1]
             idx = parts[2]
             
-            # Kütüphaneden detayları çek
-            success, data = self.dm.fetch_details_from_api(cat, idx)
-            if success:
-                self.current_entity_id = None # Henüz dünyada değil, ID'si yok
-                self.load_data_into_sheet(data)
-                # Kullanıcıya bilgi ver
-                self.sheet.inp_name.setStyleSheet("border: 2px solid #2e7d32;") # Yeşil çerçeve: "İçe aktarılabilir"
-            else:
-                QMessageBox.warning(self, "Hata", "Öğe detayları yüklenemedi.")
+            # Yükleniyor...
+            self.sheet.inp_name.setText("Yükleniyor...")
+            self.sheet.setEnabled(False)
+            
+            # Kütüphaneden detayları arkada çek
+            # Kategori ismini düzeltmek gerekebilir, ancak fetch_details_from_api zaten harita kullanıyor
+            # Fakat burada cat direkt "Canavar", "Büyü (Spell)" gibi ham string
+            
+            self.worker = ApiSearchWorker(self.dm, cat, idx)
+            self.worker.finished.connect(self.on_api_search_finished)
+            self.worker.start()
+
         else:
             # Normal yerel varlık
             self.sheet.inp_name.setStyleSheet("") 
             self.load_entity(item)
+
+    def on_api_search_finished(self, success, data_or_id, msg):
+        self.sheet.setEnabled(True)
+        if success:
+            # data_or_id burada 'data' (parsed dict) döner çünkü detay çekiyoruz
+            self.current_entity_id = None # Henüz dünyada değil
+            self.load_data_into_sheet(data_or_id)
+            # Kullanıcıya bilgi ver
+            self.sheet.inp_name.setStyleSheet("border: 2px solid #2e7d32;") # Yeşil çerçeve
+        else:
+            QMessageBox.warning(self, "Hata", f"Öğe detayları yüklenemedi: {msg}")
 
     def load_entity(self, item):
         eid = item.data(Qt.ItemDataRole.UserRole)
