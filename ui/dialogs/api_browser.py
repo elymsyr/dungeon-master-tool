@@ -1,7 +1,8 @@
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget, 
                              QLineEdit, QPushButton, QLabel, QTextEdit, 
-                             QMessageBox, QListWidgetItem, QSplitter, QWidget, QApplication) # <--- EKLENDİ
+                             QMessageBox, QListWidgetItem, QSplitter, QWidget, QApplication)
 from PyQt6.QtCore import Qt
+from ui.workers import ApiListWorker, ApiSearchWorker
 
 class ApiBrowser(QDialog):
     def __init__(self, data_manager, category, parent=None):
@@ -73,7 +74,18 @@ class ApiBrowser(QDialog):
 
     def load_list(self):
         self.list_widget.clear()
-        self.full_list = self.dm.get_api_index(self.category)
+        self.lbl_name.setText("Liste Yükleniyor...")
+        self.setEnabled(False)
+        
+        # Worker ile listeyi çek
+        self.list_worker = ApiListWorker(self.dm.api_client, self.category)
+        self.list_worker.finished.connect(self.on_list_loaded)
+        self.list_worker.start()
+
+    def on_list_loaded(self, data):
+        self.setEnabled(True)
+        self.lbl_name.setText("Seçim Yok")
+        self.full_list = data
         
         if not self.full_list:
             QMessageBox.information(self, "Bilgi", "Liste boş veya API'ye erişilemedi.")
@@ -82,7 +94,7 @@ class ApiBrowser(QDialog):
         # Listeyi doldur
         for item in self.full_list:
             list_item = QListWidgetItem(item["name"])
-            list_item.setData(Qt.ItemDataRole.UserRole, item["index"]) # API slug'ını sakla
+            list_item.setData(Qt.ItemDataRole.UserRole, item["index"])
             self.list_widget.addItem(list_item)
 
     def filter_list(self):
@@ -101,12 +113,18 @@ class ApiBrowser(QDialog):
         self.lbl_name.setText(item.text() + " (Yükleniyor...)")
         self.txt_desc.clear()
         self.btn_import.setEnabled(False)
-        QApplication.processEvents() # UI donmasın diye araya işlem aldık
+        self.list_widget.setEnabled(False)
         
-        # Detayları çek
-        success, data = self.dm.fetch_details_from_api(self.category, index_name)
+        # Worker ile detayları çek
+        self.detail_worker = ApiSearchWorker(self.dm, self.category, index_name)
+        self.detail_worker.finished.connect(self.on_details_loaded)
+        self.detail_worker.start()
+
+    def on_details_loaded(self, success, data_or_id, msg):
+        self.list_widget.setEnabled(True)
         
         if success:
+            data = data_or_id
             self.selected_data = data
             self.lbl_name.setText(data.get("name"))
             
@@ -124,7 +142,7 @@ class ApiBrowser(QDialog):
             self.btn_import.setEnabled(True)
         else:
             self.lbl_name.setText("Hata")
-            self.txt_desc.setText(str(data)) # Hata mesajı
+            self.txt_desc.setText(msg)
 
     def import_selected(self):
         if self.selected_data:
