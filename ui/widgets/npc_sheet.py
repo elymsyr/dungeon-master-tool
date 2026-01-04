@@ -8,7 +8,9 @@ from core.models import ENTITY_SCHEMAS
 class NpcSheet(QWidget):
     def __init__(self):
         super().__init__()
-        self.dynamic_inputs = {} 
+        self.dynamic_inputs = {}
+        self.image_list = [] # YENİ: Resim yolları
+        self.current_img_index = 0
         self.init_ui()
 
     def init_ui(self):
@@ -27,10 +29,32 @@ class NpcSheet(QWidget):
         img_layout = QVBoxLayout()
         self.lbl_image = AspectRatioLabel()
         self.lbl_image.setFixedSize(200, 200)
-        self.btn_select_img = QPushButton("Resim Seç")
+        
+        # Galeri Kontrolleri
+        gallery_controls = QHBoxLayout()
+        self.btn_prev_img = QPushButton("◀"); self.btn_prev_img.setMaximumWidth(30)
+        self.btn_next_img = QPushButton("▶"); self.btn_next_img.setMaximumWidth(30)
+        self.lbl_img_counter = QLabel("0/0"); self.lbl_img_counter.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        gallery_controls.addWidget(self.btn_prev_img)
+        gallery_controls.addWidget(self.lbl_img_counter)
+        gallery_controls.addWidget(self.btn_next_img)
+        
+        btn_img_actions = QHBoxLayout()
+        self.btn_add_img = QPushButton("➕"); self.btn_add_img.setObjectName("successBtn"); self.btn_add_img.setToolTip("Resim Ekle")
+        self.btn_remove_img = QPushButton("🗑️"); self.btn_remove_img.setObjectName("dangerBtn"); self.btn_remove_img.setToolTip("Şu anki resmi sil")
+        
+        btn_img_actions.addWidget(self.btn_add_img)
+        btn_img_actions.addWidget(self.btn_remove_img)
+
         self.btn_show_player = QPushButton("👁️ Oyuncuya Göster")
         self.btn_show_player.setObjectName("primaryBtn")
-        img_layout.addWidget(self.lbl_image); img_layout.addWidget(self.btn_select_img); img_layout.addWidget(self.btn_show_player); img_layout.addStretch()
+        
+        img_layout.addWidget(self.lbl_image)
+        img_layout.addLayout(gallery_controls)
+        img_layout.addLayout(btn_img_actions)
+        img_layout.addWidget(self.btn_show_player)
+        img_layout.addStretch()
 
         info_layout = QFormLayout()
         self.inp_name = QLineEdit()
@@ -207,6 +231,7 @@ class NpcSheet(QWidget):
 
     def prepare_new_entity(self):
         self.inp_name.clear(); self.inp_desc.clear(); self.inp_tags.clear(); self.lbl_image.setPixmap(None)
+        self.image_list = []; self.current_img_index = 0; self.lbl_img_counter.setText("0/0") # SIFIRLA
         self.clear_all_cards(); self.inp_type.setCurrentIndex(0)
         for i in self.stats_inputs.values(): i.setText("10")
         self.inp_hp.clear(); self.inp_ac.clear(); self.list_assigned_spells.clear(); self.list_assigned_items.clear()

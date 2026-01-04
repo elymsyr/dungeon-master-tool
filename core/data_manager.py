@@ -88,6 +88,11 @@ class DataManager:
                 default = get_default_entity_structure(ent.get("type", "NPC"))
                 for key, val in default.items():
                     if key not in ent: ent[key] = val
+                
+                # --- Resim Migration ---
+                # Eğer 'images' listesi boşsa ama 'image_path' doluysa, onu listeye at
+                if not ent.get("images") and ent.get("image_path"):
+                    ent["images"] = [ent["image_path"]]
             # ----------------------------------------
 
             self.current_campaign_path = folder

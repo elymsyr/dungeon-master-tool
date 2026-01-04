@@ -40,7 +40,8 @@ def get_default_entity_structure(entity_type="NPC"):
         "name": "Yeni Kayıt",
         "type": entity_type,
         "description": "",
-        "image_path": "",
+        "images": [], # YENİ: Çoklu resim desteği
+        "image_path": "", # Geriye dönük uyumluluk için (varsa ilk resim buraya da yazılır)
         "tags": [],
         "attributes": {},
         "stats": {"STR": 10, "DEX": 10, "CON": 10, "INT": 10, "WIS": 10, "CHA": 10},
