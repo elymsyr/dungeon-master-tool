@@ -10,6 +10,7 @@
 - **Offline Storage**: Create and manage multiple names worlds/campaigns.
 - **Entity Management**: Create NPCs, Monsters, Locations, and Quest items.
 - **D&D 5e API Integration**: Browse and import Spells, Monsters, and Equipment directly from the official SRD API.
+- **Multi-Language Support**: Fully localized in **English** and **Turkish**. Switch languages instantly.
 - **Customizable Sheets**: Track HP, AC, CR, stats, traits, actions, and inventory for every entity.
 - **Multiple Images**: Upload and view multiple reference images for characters and locations.
 - **Export**: Export your entire entity database to a readable `.txt` file for backup or printing.

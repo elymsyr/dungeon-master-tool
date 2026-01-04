@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QTextEdit,
                              QLabel, QPushButton, QGroupBox, QInputDialog, 
                              QComboBox, QMessageBox)
 from PyQt6.QtCore import QDateTime
+from core.locales import tr
 from ui.widgets.combat_tracker import CombatTracker
 import random
 
@@ -18,11 +19,11 @@ class SessionTab(QWidget):
         # --- SOL: SAVAŞ TAKİPÇİSİ ---
         left_layout = QVBoxLayout()
         self.combat_tracker = CombatTracker(self.dm)
-        left_layout.addWidget(QLabel("⚔️ Savaş & İnisiyatif"))
+        left_layout.addWidget(QLabel(tr("TITLE_COMBAT")))
         left_layout.addWidget(self.combat_tracker)
         
         # Zar Atma Paneli (Alt Sol)
-        dice_group = QGroupBox("Zar At")
+        dice_group = QGroupBox(tr("GRP_DICE"))
         dice_layout = QHBoxLayout(dice_group)
         for d in [4, 6, 8, 10, 12, 20, 100]:
             btn = QPushButton(f"d{d}")
@@ -37,16 +38,16 @@ class SessionTab(QWidget):
         session_control = QHBoxLayout()
         self.combo_sessions = QComboBox()
         self.refresh_session_list()
-        self.btn_new_session = QPushButton("📝 Yeni Oturum")
+        self.btn_new_session = QPushButton(tr("BTN_NEW_SESSION"))
         self.btn_new_session.clicked.connect(self.new_session)
-        self.btn_save_session = QPushButton("💾 Kaydet")
+        self.btn_save_session = QPushButton(tr("BTN_SAVE"))
         self.btn_save_session.clicked.connect(self.save_session)
         
         session_control.addWidget(self.combo_sessions, 2)
         session_control.addWidget(self.btn_new_session, 1)
         session_control.addWidget(self.btn_save_session, 1)
         
-        self.btn_load_session = QPushButton("Yükle")
+        self.btn_load_session = QPushButton(tr("BTN_LOAD_SESSION"))
         self.btn_load_session.clicked.connect(self.load_session)
         session_control.addWidget(self.btn_load_session)
 
@@ -55,24 +56,25 @@ class SessionTab(QWidget):
         self.txt_log.setPlaceholderText("Olay günlüğü (Otomatik zaman damgası)...")
         
         # Manuel Log Ekleme
+        # Manuel Log Ekleme
         log_input_layout = QHBoxLayout()
         self.inp_log_entry = QTextEdit()
         self.inp_log_entry.setMaximumHeight(50)
-        self.inp_log_entry.setPlaceholderText("Buraya yazıp Enter'a bas...")
-        self.btn_add_log = QPushButton("Log Ekle")
+        self.inp_log_entry.setPlaceholderText("...")
+        self.btn_add_log = QPushButton(tr("BTN_ADD_LOG"))
         self.btn_add_log.clicked.connect(self.add_log)
         log_input_layout.addWidget(self.inp_log_entry)
         log_input_layout.addWidget(self.btn_add_log)
 
         # DM Notları
         self.txt_notes = QTextEdit()
-        self.txt_notes.setPlaceholderText("DM Notları (Gizli)...")
+        self.txt_notes.setPlaceholderText(tr("LBL_NOTES"))
 
         right_layout.addLayout(session_control)
-        right_layout.addWidget(QLabel("📜 Olay Günlüğü"))
+        right_layout.addWidget(QLabel(tr("LBL_LOG")))
         right_layout.addWidget(self.txt_log)
         right_layout.addLayout(log_input_layout)
-        right_layout.addWidget(QLabel("🕵️ Gizli Notlar"))
+        right_layout.addWidget(QLabel(tr("LBL_NOTES")))
         right_layout.addWidget(self.txt_notes)
 
         layout.addLayout(left_layout, 1)
@@ -136,4 +138,4 @@ class SessionTab(QWidget):
         combatants = self.combat_tracker.get_combat_data()
         
         self.dm.save_session_data(self.current_session_id, notes, logs, combatants)
-        QMessageBox.information(self, "Bilgi", "Oturum Kaydedildi.")
+        QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_SUCCESS"))

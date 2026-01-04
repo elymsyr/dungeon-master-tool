@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetIte
                              QMenu, QMessageBox, QFrame)
 from PyQt6.QtGui import QAction, QColor, QBrush, QCursor
 from PyQt6.QtCore import Qt
+from core.locales import tr
 import random
 
 # D&D 5e Standart Durumlar
@@ -26,7 +27,7 @@ class CombatTracker(QWidget):
         # TABLO
         self.table = QTableWidget()
         self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["İsim", "Init", "AC", "HP", "Durum"])
+        self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
         
         # Sütun ayarları
         header = self.table.horizontalHeader()
@@ -47,13 +48,13 @@ class CombatTracker(QWidget):
         # KONTROLLER
         btn_layout = QHBoxLayout()
         
-        self.btn_add = QPushButton("➕ Ekle")
+        self.btn_add = QPushButton(tr("BTN_ADD"))
         self.btn_add.clicked.connect(self.add_combatant_dialog)
         
-        self.btn_roll = QPushButton("🎲 İnisiyatif At")
+        self.btn_roll = QPushButton(tr("BTN_ROLL_INIT"))
         self.btn_roll.clicked.connect(self.roll_initiatives)
         
-        self.btn_clear = QPushButton("🗑️ Temizle")
+        self.btn_clear = QPushButton(tr("BTN_CLEAR"))
         self.btn_clear.clicked.connect(self.clear_tracker)
         
         btn_layout.addWidget(self.btn_add)
@@ -71,7 +72,7 @@ class CombatTracker(QWidget):
         menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #007acc; }")
         
         # Durum Ekleme Alt Menüsü
-        cond_menu = menu.addMenu("🩸 Durum Ekle/Kaldır")
+        cond_menu = menu.addMenu(tr("MENU_ADD_COND"))
         
         # Mevcut durumları al
         current_cond_text = self.table.item(row, 4).text()
@@ -90,7 +91,7 @@ class CombatTracker(QWidget):
         menu.addSeparator()
         
         # Silme Aksiyonu
-        del_action = QAction("❌ Savaştan Çıkar", self)
+        del_action = QAction(tr("MENU_REMOVE_COMBAT"), self)
         del_action.triggered.connect(lambda: self.table.removeRow(row))
         menu.addAction(del_action)
         
@@ -129,7 +130,7 @@ class CombatTracker(QWidget):
                 items.append(f"{data['name']} ({data['type']})")
                 ids.append(eid)
         
-        item, ok = QInputDialog.getItem(self, "Savaşa Ekle", "Varlık Seç:", items, 0, False)
+        item, ok = QInputDialog.getItem(self, tr("BTN_ADD"), tr("LBL_NAME"), items, 0, False)
         if ok and item:
             eid = ids[items.index(item)]
             self.add_row_from_entity(eid)

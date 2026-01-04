@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QProgressBar,
                              QPushButton, QTextEdit, QMessageBox)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from config import BASE_DIR, API_BASE_URL
+from core.locales import tr
 
 # Kütüphane deposu
 LIBRARY_DIR = os.path.join(BASE_DIR, "cache", "library")
@@ -149,7 +150,7 @@ class DownloadWorker(QThread):
 class BulkDownloadDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Offline Kütüphane İndirici")
+        self.setWindowTitle(tr("TITLE_DOWNLOADER"))
         self.setFixedSize(500, 400)
         self.setStyleSheet("background-color: #1e1e1e; color: white;")
         
@@ -159,7 +160,7 @@ class BulkDownloadDialog(QDialog):
     def init_ui(self):
         layout = QVBoxLayout(self)
         
-        lbl_info = QLabel("Bu işlem D&D 5e API üzerindeki TÜM verileri (Canavarlar, Büyüler, Eşyalar vb.) bilgisayarınıza indirecektir.\n\nBu işlem internet hızınıza göre 2-5 dakika sürebilir.")
+        lbl_info = QLabel(f"{tr('TITLE_DOWNLOADER')}: {tr('MSG_WARNING')} (2-5 min)") # Basit bir mesaj
         lbl_info.setWordWrap(True)
         lbl_info.setStyleSheet("color: #ccc; font-size: 14px; margin-bottom: 10px;")
         layout.addWidget(lbl_info)
@@ -177,14 +178,14 @@ class BulkDownloadDialog(QDialog):
         self.txt_log.setStyleSheet("background-color: #111; border: 1px solid #333; font-family: Consolas;")
         layout.addWidget(self.txt_log)
         
-        self.btn_start = QPushButton("⬇️ İndirmeyi Başlat")
+        self.btn_start = QPushButton(tr("BTN_START_DOWNLOAD"))
         self.btn_start.setStyleSheet("background-color: #2e7d32; color: white; padding: 10px; font-weight: bold;")
         self.btn_start.clicked.connect(self.start_download)
         layout.addWidget(self.btn_start)
 
     def start_download(self):
         self.btn_start.setEnabled(False)
-        self.btn_start.setText("İndiriliyor... (Lütfen Bekleyin)")
+        self.btn_start.setText(f"{tr('MSG_LOADING')}...")
         self.txt_log.clear()
         
         self.worker = DownloadWorker()
@@ -200,6 +201,6 @@ class BulkDownloadDialog(QDialog):
         self.txt_log.append(text)
 
     def on_finished(self):
-        self.btn_start.setText("✅ Tamamlandı")
+        self.btn_start.setText(tr("MSG_SUCCESS"))
         self.btn_start.setEnabled(True)
-        QMessageBox.information(self, "Bilgi", "Tüm kütüphane başarıyla indirildi!\nArtık internetsiz çalışabilirsiniz.")
+        QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_DOWNLOAD_COMPLETE"))
