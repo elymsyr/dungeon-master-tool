@@ -1,7 +1,7 @@
 import os
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QListWidget, 
                              QPushButton, QLineEdit, QComboBox, QSplitter, 
-                             QMessageBox, QListWidgetItem, QCheckBox, QLabel)
+                             QMessageBox, QListWidgetItem, QCheckBox, QLabel, QStyle)
 from PyQt6.QtGui import QColor, QBrush, QAction, QDesktopServices
 from PyQt6.QtCore import Qt, QUrl
 from ui.widgets.npc_sheet import NpcSheet
@@ -69,13 +69,15 @@ class DatabaseTab(QWidget):
         # 1. Navigasyon ve Arama Çubuğu
         nav_search_layout = QHBoxLayout()
         
-        self.btn_back = QPushButton("◀")
+        self.btn_back = QPushButton()
+        self.btn_back.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack))
         self.btn_back.setFixedSize(30, 30)
         self.btn_back.setEnabled(False)
         self.btn_back.setToolTip("Geri")
         self.btn_back.clicked.connect(self.go_back)
         
-        self.btn_forward = QPushButton("▶")
+        self.btn_forward = QPushButton()
+        self.btn_forward.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowForward))
         self.btn_forward.setFixedSize(30, 30)
         self.btn_forward.setEnabled(False)
         self.btn_forward.setToolTip("İleri")
