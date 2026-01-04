@@ -68,7 +68,12 @@ class DatabaseTab(QWidget):
         self.sheet = NpcSheet()
         self.sheet.btn_save.clicked.connect(self.save_entity)
         self.sheet.btn_delete.clicked.connect(self.delete_entity)
-        self.sheet.btn_select_img.clicked.connect(self.select_image)
+        # Galeri Bağlantıları
+        self.sheet.btn_add_img.clicked.connect(self.add_image)
+        self.sheet.btn_remove_img.clicked.connect(self.remove_image)
+        self.sheet.btn_prev_img.clicked.connect(self.prev_image)
+        self.sheet.btn_next_img.clicked.connect(self.next_image)
+        
         self.sheet.btn_show_player.clicked.connect(self.show_image_to_player)
         self.btn_show_stats = QPushButton("📄 Kartı Yansıt")
         self.btn_show_stats.setObjectName("primaryBtn")
@@ -190,9 +195,13 @@ class DatabaseTab(QWidget):
         self._fill_cards(s.custom_spell_container, data.get("custom_spells", []))
 
         # Resim
-        img_rel = data.get("image_path", "")
-        p = self.dm.get_full_path(img_rel)
-        s.lbl_image.setPixmap(QPixmap(p) if p and os.path.exists(p) else None)
+        # Resimler (Galeri)
+        s.image_list = data.get("images", [])
+        if not s.image_list and data.get("image_path"): # Migration fallback
+            s.image_list = [data.get("image_path")]
+        
+        s.current_img_index = 0
+        self.update_sheet_image()
 
     # --- DİĞER METODLAR (Save, Delete, API, Spell vb. önceki kodun aynısı) ---
     def save_entity(self):
@@ -208,8 +217,11 @@ class DatabaseTab(QWidget):
         data = {
             "name": s.inp_name.text(), "type": s.inp_type.currentText(),
             "tags": [t.strip() for t in s.inp_tags.text().split(",") if t.strip()],
+            "tags": [t.strip() for t in s.inp_tags.text().split(",") if t.strip()],
             "description": s.inp_desc.toPlainText(),
-            "image_path": current_data.get("image_path", ""),
+            "images": s.image_list, # YENİ: Liste olarak kaydet
+            # "image_path" artık kullanılmıyor ama uyumluluk için ilk resmi tutabiliriz
+            "image_path": s.image_list[0] if s.image_list else "",
             "stats": {k: int(v.text() or 10) for k, v in s.stats_inputs.items()},
             "combat_stats": {"hp": s.inp_hp.text(), "ac": s.inp_ac.text(), "speed": s.inp_speed.text(), "cr": s.inp_cr.text()},
             "attributes": {l: (w.currentText() if isinstance(w, QComboBox) else w.text()) for l, w in s.dynamic_inputs.items()},
@@ -230,12 +242,57 @@ class DatabaseTab(QWidget):
     def prepare_new(self): self.current_entity_id = None; self.sheet.prepare_new_entity()
     def delete_entity(self): 
         if self.current_entity_id: self.dm.delete_entity(self.current_entity_id); self.refresh_list(); self.prepare_new()
-    def select_image(self):
-        fname, _ = QFileDialog.getOpenFileName(self, "Resim", "", "Images (*.png *.jpg)")
+    def delete_entity(self): 
+        if self.current_entity_id: self.dm.delete_entity(self.current_entity_id); self.refresh_list(); self.prepare_new()
+
+    # --- GALERİ YÖNETİMİ ---
+    def add_image(self):
+        fname, _ = QFileDialog.getOpenFileName(self, "Resim Seç", "", "Images (*.png *.jpg *.jpeg *.bmp)")
         if fname:
             rel = self.dm.import_image(fname)
-            if self.current_entity_id: self.dm.save_entity(self.current_entity_id, {"image_path": rel}); self.sheet.lbl_image.setPixmap(QPixmap(self.dm.get_full_path(rel)))
-            else: QMessageBox.information(self, "Bilgi", "Önce kaydedin.")
+            if self.current_entity_id:
+                # Hemen kaydet (Opsiyonel, kullanıcı kaydet'e basana kadar beklemek daha iyi olabilir ama
+                # resim kopyalandığı için path elimizde)
+                self.sheet.image_list.append(rel)
+                self.sheet.current_img_index = len(self.sheet.image_list) - 1
+                self.update_sheet_image()
+            else:
+                QMessageBox.information(self, "Bilgi", "Önce varlığı oluşturun.")
+
+    def remove_image(self):
+        if not self.sheet.image_list: return
+        del self.sheet.image_list[self.sheet.current_img_index]
+        if self.sheet.current_img_index >= len(self.sheet.image_list):
+            self.sheet.current_img_index = max(0, len(self.sheet.image_list) - 1)
+        self.update_sheet_image()
+
+    def prev_image(self):
+        if not self.sheet.image_list: return
+        self.sheet.current_img_index = (self.sheet.current_img_index - 1) % len(self.sheet.image_list)
+        self.update_sheet_image()
+
+    def next_image(self):
+        if not self.sheet.image_list: return
+        self.sheet.current_img_index = (self.sheet.current_img_index + 1) % len(self.sheet.image_list)
+        self.update_sheet_image()
+
+    def update_sheet_image(self):
+        s = self.sheet
+        if not s.image_list:
+            s.lbl_image.setPixmap(None)
+            s.lbl_img_counter.setText("0/0")
+            return
+        
+        # Sınır kontrol
+        if s.current_img_index < 0: s.current_img_index = 0
+        if s.current_img_index >= len(s.image_list): s.current_img_index = len(s.image_list) - 1
+        
+        rel = s.image_list[s.current_img_index]
+        p = self.dm.get_full_path(rel)
+        s.lbl_image.setPixmap(QPixmap(p) if p and os.path.exists(p) else None)
+        s.lbl_img_counter.setText(f"{s.current_img_index + 1}/{len(s.image_list)}")
+
+    def select_image(self): pass # Eski metod (artık kullanılmıyor)
     def open_api_browser(self):
         cat = self.combo_filter.currentText()
         if cat == "Tümü": return QMessageBox.warning(self, "Uyarı", "Kategori seç.")
@@ -259,9 +316,10 @@ class DatabaseTab(QWidget):
                 self.list_widget.setCurrentRow(i); self.load_entity(self.list_widget.item(i)); return
     def show_image_to_player(self):
         if not self.player_window.isVisible(): return
-        if self.current_entity_id:
-            d = self.dm.data["entities"].get(self.current_entity_id, {})
-            p = self.dm.get_full_path(d.get("image_path", ""))
+        # Şu an ekranda görünen resmi göster
+        if self.sheet.image_list:
+            rel = self.sheet.image_list[self.sheet.current_img_index]
+            p = self.dm.get_full_path(rel)
             self.player_window.show_image(QPixmap(p) if p and os.path.exists(p) else None)
 
     def show_stats_to_player(self):
