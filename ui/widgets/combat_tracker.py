@@ -60,17 +60,26 @@ class CombatTracker(QWidget):
         
         self.btn_add = QPushButton(tr("BTN_ADD"))
         self.btn_add.clicked.connect(self.add_combatant_dialog)
+
+        self.btn_add_players = QPushButton(tr("BTN_ADD_PLAYERS"))
+        self.btn_add_players.clicked.connect(self.add_all_players)
         
         self.btn_roll = QPushButton(tr("BTN_ROLL_INIT"))
         self.btn_roll.clicked.connect(self.roll_initiatives)
         
-        self.btn_clear = QPushButton(tr("BTN_CLEAR_COMBAT"))
-        self.btn_clear.clicked.connect(self.clear_tracker)
+        self.btn_clear_npcs = QPushButton(tr("BTN_CLEAR_NPCS"))
+        self.btn_clear_npcs.clicked.connect(self.clear_non_players)
+
+        self.btn_clear_all = QPushButton(tr("BTN_CLEAR_ALL"))
+        self.btn_clear_all.clicked.connect(self.clear_tracker)
+        self.btn_clear_all.setStyleSheet("color: #ff5252;")
         
         btn_layout.addWidget(self.btn_next_turn)
         btn_layout.addWidget(self.btn_add)
+        btn_layout.addWidget(self.btn_add_players)
         btn_layout.addWidget(self.btn_roll)
-        btn_layout.addWidget(self.btn_clear)
+        btn_layout.addWidget(self.btn_clear_npcs)
+        btn_layout.addWidget(self.btn_clear_all)
         
         layout.addLayout(btn_layout)
 
@@ -195,7 +204,21 @@ class CombatTracker(QWidget):
         name = data.get("name", "Bilinmeyen")
         try:
             hp_str = data.get("combat_stats", {}).get("hp", "10")
-            hp = hp_str.split(' ')[0] 
+            max_hp_str = data.get("combat_stats", {}).get("max_hp", "")
+            
+            # Eğer Max HP varsa ve HP boşsa veya daha düşükse, Max HP'yi baz alabiliriz
+            # Ancak genel kural: HP alanı o anki HP'dir. 
+            # Kullanıcı "Max HP" isteğini muhtemelen karakterin can sınırını görmek için istedi.
+            # Combat Tracker'a eklerken: Eğer HP tanımlıysa onu al, yoksa Max HP al.
+            
+            final_hp = hp_str
+            if not final_hp and max_hp_str:
+                final_hp = max_hp_str
+            elif max_hp_str and hp_str:
+                 # Belki format "Current/Max" olabilir? Şimdilik sadece sayı alıyoruz.
+                 pass
+                 
+            hp = final_hp.split(' ')[0] 
         except: hp = "10"
             
         try: ac = str(data.get("combat_stats", {}).get("ac", "10"))
@@ -254,7 +277,49 @@ class CombatTracker(QWidget):
             item.setData(Qt.ItemDataRole.DisplayRole, str(roll))
             item.setData(Qt.ItemDataRole.EditRole, roll)
             
+            
         self._sort_and_refresh()
+
+    def add_all_players(self):
+        """Tüm oyuncuları ekler"""
+        entities = self.dm.data["entities"]
+        
+        # Mevcut oyuncuları bul (Eid listesi)
+        existing_eids = []
+        for row in range(self.table.rowCount()):
+            eid = self.table.item(row, 1).data(Qt.ItemDataRole.UserRole)
+            if eid: existing_eids.append(eid)
+            
+        added_count = 0
+        for eid, data in entities.items():
+            if data.get("type") == "Oyuncu" and eid not in existing_eids:
+                self.add_row_from_entity(eid)
+                added_count += 1
+                
+        if added_count > 0:
+            self._sort_and_refresh()
+
+    def clear_non_players(self):
+        """Sadece NPC ve Canavarları siler (ve manuel eklenenleri)"""
+        # Tersten gitmek lazım silerken index kaymasın diye
+        for row in range(self.table.rowCount() - 1, -1, -1):
+            eid = self.table.item(row, 1).data(Qt.ItemDataRole.UserRole)
+            
+            # Eğer EID yoksa (manuel ekleme) veya EID var ama tipi Oyuncu değilse sil
+            is_player = False
+            if eid:
+                entity = self.dm.data["entities"].get(eid)
+                if entity and entity.get("type") == "Oyuncu":
+                    is_player = True
+            
+            if not is_player:
+                self.table.removeRow(row)
+                
+        # Eğer aktif sıra silinen birindeyse sıfırla
+        if self.current_turn_index >= self.table.rowCount():
+            self.current_turn_index = 0
+            
+        self.update_highlights()
 
     def clear_tracker(self):
         self.table.setRowCount(0)

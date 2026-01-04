@@ -194,8 +194,12 @@ class DatabaseTab(QWidget):
         # Statlar
         stats = data.get("stats", {})
         for k, v in s.stats_inputs.items(): v.setText(str(stats.get(k, 10)))
+        for k, v in s.stats_inputs.items(): v.setText(str(stats.get(k, 10)))
         c = data.get("combat_stats", {})
-        s.inp_hp.setText(str(c.get("hp", ""))); s.inp_ac.setText(str(c.get("ac", ""))); s.inp_speed.setText(str(c.get("speed", "")))
+        s.inp_hp.setText(str(c.get("hp", "")))
+        s.inp_max_hp.setText(str(c.get("max_hp", ""))) # YENİ
+        s.inp_ac.setText(str(c.get("ac", ""))) 
+        s.inp_speed.setText(str(c.get("speed", "")))
         s.inp_init.setText(str(c.get("initiative", "")))
         
         # Dinamik
@@ -280,7 +284,14 @@ class DatabaseTab(QWidget):
             # "image_path" artık kullanılmıyor ama uyumluluk için ilk resmi tutabiliriz
             "image_path": s.image_list[0] if s.image_list else "",
             "stats": {k: int(v.text() or 10) for k, v in s.stats_inputs.items()},
-            "combat_stats": {"hp": s.inp_hp.text(), "ac": s.inp_ac.text(), "speed": s.inp_speed.text(), "initiative": s.inp_init.text()},
+            "stats": {k: int(v.text() or 10) for k, v in s.stats_inputs.items()},
+            "combat_stats": {
+                "hp": s.inp_hp.text(),
+                "max_hp": s.inp_max_hp.text(), # YENİ
+                "ac": s.inp_ac.text(),
+                "speed": s.inp_speed.text(),
+                "initiative": s.inp_init.text()
+            },
             "attributes": {l: (w.currentText() if isinstance(w, QComboBox) else w.text()) for l, w in s.dynamic_inputs.items()},
             "location_id": s.combo_location.currentData() if s.combo_location.isVisible() else None,
             "spells": [self.sheet.list_assigned_spells.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.sheet.list_assigned_spells.count())],
