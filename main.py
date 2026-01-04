@@ -39,11 +39,17 @@ class MainWindow(QMainWindow):
         """)
         self.btn_toggle_player.clicked.connect(self.toggle_player_window)
         
+        # Dışa Aktar Butonu
+        self.btn_export_txt = QPushButton("📄 Dışa Aktar (TXT)")
+        self.btn_export_txt.setStyleSheet("background-color: #00796b; color: white; font-weight: bold; padding: 8px;")
+        self.btn_export_txt.clicked.connect(self.export_entities_to_txt)
+        
         # Dünya Bilgisi
         self.lbl_campaign = QLabel(f"Dünya: {self.data_manager.data.get('world_name')}")
         self.lbl_campaign.setStyleSheet("color: #888; font-style: italic; margin-left: 10px;")
 
         toolbar.addWidget(self.btn_toggle_player)
+        toolbar.addWidget(self.btn_export_txt)
         toolbar.addWidget(self.lbl_campaign)
         toolbar.addStretch()
         
@@ -77,6 +83,50 @@ class MainWindow(QMainWindow):
         else:
             self.player_window.show()
             self.btn_toggle_player.setChecked(True)
+
+    def export_entities_to_txt(self):
+        # Kayıt yeri sor
+        path, _ = QFileDialog.getSaveFileName(self, "Listeyi Kaydet", "export.txt", "Text Files (*.txt)")
+        if not path: return
+        
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(f"ZINDAN EFENDISI - VARLIK LISTESI\n")
+                f.write(f"Dünya: {self.data_manager.data.get('world_name')}\n")
+                f.write("="*50 + "\n\n")
+                
+                entities = self.data_manager.data.get("entities", {})
+                if not entities:
+                    f.write("Henüz kaydedilmiş varlık yok.\n")
+                
+                # Sıralayarak yazalım
+                sorted_keys = sorted(entities.keys(), key=lambda k: entities[k].get("name", ""))
+                
+                for i, eid in enumerate(sorted_keys, 1):
+                    ent = entities[eid]
+                    name = ent.get("name", "İsimsiz")
+                    type_ = ent.get("type", "Bilinmiyor")
+                    tags = ", ".join(ent.get("tags", []))
+                    desc = ent.get("description", "").replace("\n", " ")
+                    if len(desc) > 100: desc = desc[:97] + "..."
+                    
+                    f.write(f"{i}. {name} ({type_})\n")
+                    if tags: f.write(f"   Etiketler: {tags}\n")
+                    f.write(f"   Açıklama: {desc}\n")
+                    
+                    # Statları da ekleyelim (Opsiyonel)
+                    c = ent.get("combat_stats", {})
+                    if c:
+                        hp = c.get("hp", "-")
+                        ac = c.get("ac", "-")
+                        cr = c.get("cr", "-")
+                        f.write(f"   HP: {hp} | AC: {ac} | CR: {cr}\n")
+                        
+                    f.write("-" * 30 + "\n")
+            
+            QMessageBox.information(self, "Başarılı", "Liste başarıyla dışa aktarıldı.")
+        except Exception as e:
+            QMessageBox.critical(self, "Hata", f"Dosya yazılamadı:\n{e}")
 
 
 if __name__ == "__main__":
