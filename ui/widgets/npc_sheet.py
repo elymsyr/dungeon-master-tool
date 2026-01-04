@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout,
 from PyQt6.QtCore import Qt
 from ui.widgets.aspect_ratio_label import AspectRatioLabel
 from core.models import ENTITY_SCHEMAS
+from core.locales import tr
 
 class NpcSheet(QWidget):
     def __init__(self):
@@ -47,7 +48,7 @@ class NpcSheet(QWidget):
         btn_img_actions.addWidget(self.btn_add_img)
         btn_img_actions.addWidget(self.btn_remove_img)
 
-        self.btn_show_player = QPushButton("👁️ Oyuncuya Göster")
+        self.btn_show_player = QPushButton(tr("BTN_SHOW_PLAYER"))
         self.btn_show_player.setObjectName("primaryBtn")
         
         img_layout.addWidget(self.lbl_image)
@@ -64,17 +65,17 @@ class NpcSheet(QWidget):
         self.inp_tags = QLineEdit(); self.inp_tags.setPlaceholderText("boss, ölü, tüccar...")
         
         self.combo_location = QComboBox()
-        self.lbl_location = QLabel("Konum:")
+        self.lbl_location = QLabel(tr("LBL_LOCATION"))
         self.list_residents = QListWidget(); self.list_residents.setMaximumHeight(80)
-        self.lbl_residents = QLabel("Sakinler:")
-        self.inp_desc = QTextEdit(); self.inp_desc.setMaximumHeight(60); self.inp_desc.setPlaceholderText("Kısa notlar...")
+        self.lbl_residents = QLabel(tr("LBL_RESIDENTS"))
+        self.inp_desc = QTextEdit(); self.inp_desc.setMaximumHeight(60); self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
 
-        info_layout.addRow("İsim:", self.inp_name)
-        info_layout.addRow("Tip:", self.inp_type)
-        info_layout.addRow("Tagler:", self.inp_tags)
+        info_layout.addRow(tr("LBL_NAME"), self.inp_name)
+        info_layout.addRow(tr("LBL_TYPE"), self.inp_type)
+        info_layout.addRow(tr("LBL_TAGS"), self.inp_tags)
         info_layout.addRow(self.lbl_location, self.combo_location)
         info_layout.addRow(self.lbl_residents, self.list_residents)
-        info_layout.addRow("Not:", self.inp_desc)
+        info_layout.addRow(tr("LBL_DESC"), self.inp_desc)
 
         top_layout.addLayout(img_layout); top_layout.addLayout(info_layout)
         self.content_layout.addLayout(top_layout)
@@ -86,10 +87,10 @@ class NpcSheet(QWidget):
 
         # --- SEKMELER ---
         self.tabs = QTabWidget()
-        self.tab_stats = QWidget(); self.setup_stats_tab(); self.tabs.addTab(self.tab_stats, "📊 Statlar")
-        self.tab_spells = QWidget(); self.setup_spells_tab(); self.tabs.addTab(self.tab_spells, "✨ Büyüler")
-        self.tab_features = QWidget(); self.setup_features_tab(); self.tabs.addTab(self.tab_features, "⚔️ Aksiyonlar")
-        self.tab_inventory = QWidget(); self.setup_inventory_tab(); self.tabs.addTab(self.tab_inventory, "🎒 Envanter") # GÜNCELLENDİ
+        self.tab_stats = QWidget(); self.setup_stats_tab(); self.tabs.addTab(self.tab_stats, tr("TAB_STATS"))
+        self.tab_spells = QWidget(); self.setup_spells_tab(); self.tabs.addTab(self.tab_spells, tr("TAB_SPELLS"))
+        self.tab_features = QWidget(); self.setup_features_tab(); self.tabs.addTab(self.tab_features, tr("TAB_ACTIONS"))
+        self.tab_inventory = QWidget(); self.setup_inventory_tab(); self.tabs.addTab(self.tab_inventory, tr("TAB_INV"))
 
         self.content_layout.addWidget(self.tabs)
         scroll.setWidget(self.content_widget)
@@ -97,8 +98,8 @@ class NpcSheet(QWidget):
 
         # --- BUTONLAR ---
         btn_layout = QHBoxLayout(); btn_layout.setContentsMargins(10, 10, 10, 10)
-        self.btn_delete = QPushButton("Sil"); self.btn_delete.setObjectName("dangerBtn")
-        self.btn_save = QPushButton("Kaydet"); self.btn_save.setObjectName("primaryBtn")
+        self.btn_delete = QPushButton(tr("BTN_DELETE")); self.btn_delete.setObjectName("dangerBtn")
+        self.btn_save = QPushButton(tr("BTN_SAVE")); self.btn_save.setObjectName("primaryBtn")
         btn_layout.addStretch(); btn_layout.addWidget(self.btn_delete); btn_layout.addWidget(self.btn_save)
         main_layout.addLayout(btn_layout)
         
@@ -107,13 +108,13 @@ class NpcSheet(QWidget):
     # --- TAB KURULUMLARI ---
     def setup_stats_tab(self):
         layout = QVBoxLayout(self.tab_stats)
-        grp = QGroupBox("Ability Scores"); l = QHBoxLayout(grp)
+        grp = QGroupBox(tr("GRP_STATS")); l = QHBoxLayout(grp)
         self.stats_inputs = {}
         for s in ["STR", "DEX", "CON", "INT", "WIS", "CHA"]:
             v = QVBoxLayout(); inp = QLineEdit("10"); inp.setAlignment(Qt.AlignmentFlag.AlignCenter); inp.setMaximumWidth(50)
             self.stats_inputs[s] = inp; v.addWidget(QLabel(s)); v.addWidget(inp); l.addLayout(v)
         layout.addWidget(grp)
-        grp2 = QGroupBox("Savaş"); l2 = QHBoxLayout(grp2)
+        grp2 = QGroupBox("Combat"); l2 = QHBoxLayout(grp2) # "Combat" or create key
         self.inp_hp = QLineEdit(); self.inp_ac = QLineEdit(); self.inp_speed = QLineEdit(); self.inp_cr = QLineEdit()
         for t, w in [("HP", self.inp_hp), ("AC", self.inp_ac), ("Hız", self.inp_speed), ("CR", self.inp_cr)]:
             v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); l2.addLayout(v)
@@ -122,27 +123,27 @@ class NpcSheet(QWidget):
     def setup_spells_tab(self):
         layout = QVBoxLayout(self.tab_spells)
         # Veritabanı
-        grp_linked = QGroupBox("Veritabanı Büyüleri")
+        grp_linked = QGroupBox(tr("GRP_SPELLS"))
         l_linked = QVBoxLayout(grp_linked)
         h = QHBoxLayout()
-        self.combo_all_spells = QComboBox(); self.combo_all_spells.setEditable(True); self.combo_all_spells.setPlaceholderText("Ara...")
-        self.btn_add_spell = QPushButton("Ekle"); self.btn_add_spell.setObjectName("successBtn")
+        self.combo_all_spells = QComboBox(); self.combo_all_spells.setEditable(True); self.combo_all_spells.setPlaceholderText(tr("LBL_SEARCH"))
+        self.btn_add_spell = QPushButton(tr("BTN_ADD")); self.btn_add_spell.setObjectName("successBtn")
         h.addWidget(self.combo_all_spells, 3); h.addWidget(self.btn_add_spell, 1)
         self.list_assigned_spells = QListWidget(); self.list_assigned_spells.setMaximumHeight(120); self.list_assigned_spells.setAlternatingRowColors(True)
-        self.btn_remove_spell = QPushButton("Seçiliyi Kaldır")
+        self.btn_remove_spell = QPushButton(tr("BTN_REMOVE"))
         l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_spells); l_linked.addWidget(self.btn_remove_spell)
         layout.addWidget(grp_linked)
         # Manuel
-        self.custom_spell_container = self._create_section("Manuel Büyüler")
-        self.add_btn_to_section(self.custom_spell_container, "➕ Manuel Büyü Ekle")
+        self.custom_spell_container = self._create_section("Manual Spells")
+        self.add_btn_to_section(self.custom_spell_container, tr("BTN_ADD"))
         layout.addWidget(self.custom_spell_container); layout.addStretch()
 
     def setup_features_tab(self):
         layout = QVBoxLayout(self.tab_features)
-        self.trait_container = self._create_section("Traits"); self.add_btn_to_section(self.trait_container, "➕ Trait Ekle")
-        self.action_container = self._create_section("Actions"); self.add_btn_to_section(self.action_container, "➕ Action Ekle")
-        self.reaction_container = self._create_section("Reactions"); self.add_btn_to_section(self.reaction_container, "➕ Reaction Ekle")
-        self.legendary_container = self._create_section("Legendary Actions"); self.add_btn_to_section(self.legendary_container, "➕ Legendary Ekle")
+        self.trait_container = self._create_section("Traits"); self.add_btn_to_section(self.trait_container, tr("BTN_ADD"))
+        self.action_container = self._create_section("Actions"); self.add_btn_to_section(self.action_container, tr("BTN_ADD"))
+        self.reaction_container = self._create_section("Reactions"); self.add_btn_to_section(self.reaction_container, tr("BTN_ADD"))
+        self.legendary_container = self._create_section("Legendary Actions"); self.add_btn_to_section(self.legendary_container, tr("BTN_ADD"))
         layout.addWidget(self.trait_container); layout.addWidget(self.action_container)
         layout.addWidget(self.reaction_container); layout.addWidget(self.legendary_container); layout.addStretch()
 
@@ -159,7 +160,7 @@ class NpcSheet(QWidget):
         self.combo_all_items.setEditable(True)
         self.combo_all_items.setPlaceholderText("Veritabanından eşya seç...")
         
-        self.btn_add_item_link = QPushButton("Ekle")
+        self.btn_add_item_link = QPushButton(tr("BTN_ADD"))
         self.btn_add_item_link.setObjectName("successBtn")
         
         h.addWidget(self.combo_all_items, 3)
@@ -169,7 +170,7 @@ class NpcSheet(QWidget):
         self.list_assigned_items.setMaximumHeight(120)
         self.list_assigned_items.setAlternatingRowColors(True)
         
-        self.btn_remove_item_link = QPushButton("Seçili Eşyayı Kaldır")
+        self.btn_remove_item_link = QPushButton(tr("BTN_REMOVE"))
         
         l_linked.addLayout(h)
         l_linked.addWidget(self.list_assigned_items)
@@ -178,8 +179,8 @@ class NpcSheet(QWidget):
         layout.addWidget(grp_linked)
         
         # Kısım 2: Manuel Eşyalar (Custom Inventory)
-        self.inventory_container = self._create_section("Manuel / Diğer Eşyalar")
-        self.add_btn_to_section(self.inventory_container, "➕ Elle Eşya Ekle")
+        self.inventory_container = self._create_section(tr("GRP_INVENTORY"))
+        self.add_btn_to_section(self.inventory_container, tr("BTN_ADD"))
         
         layout.addWidget(self.inventory_container)
         layout.addStretch()

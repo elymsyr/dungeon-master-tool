@@ -9,6 +9,7 @@ from ui.dialogs.api_browser import ApiBrowser
 from ui.dialogs.bulk_downloader import BulkDownloadDialog
 from ui.workers import ApiSearchWorker
 from core.models import ENTITY_SCHEMAS
+from core.locales import tr
 
 class DatabaseTab(QWidget):
     def __init__(self, data_manager, player_window):
@@ -27,33 +28,34 @@ class DatabaseTab(QWidget):
         
         search_layout = QHBoxLayout()
         self.inp_search = QLineEdit()
-        self.inp_search.setPlaceholderText("🔍 Ara (İsim/Tag/Kütüphane)...")
+        self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
         self.inp_search.textChanged.connect(self.refresh_list)
         
         self.combo_filter = QComboBox()
-        self.combo_filter.addItems(["Tümü"] + list(ENTITY_SCHEMAS.keys()))
+        self.combo_filter.addItems([tr("CAT_ALL")] + list(ENTITY_SCHEMAS.keys()))
         self.combo_filter.currentTextChanged.connect(self.refresh_list)
         
         search_layout.addWidget(self.inp_search)
         search_layout.addWidget(self.combo_filter)
 
         # Seçenek: Kütüphane sonuçlarını göster/gizle
-        self.check_show_library = QCheckBox("Kütüphane sonuçlarını dahil et")
+        # Seçenek: Kütüphane sonuçlarını göster/gizle
+        self.check_show_library = QCheckBox(tr("LBL_CHECK_LIBRARY"))
         self.check_show_library.setChecked(True)
         self.check_show_library.stateChanged.connect(self.refresh_list)
         
-        self.btn_download_all = QPushButton("⬇️ Tüm Veritabanını İndir (Offline)")
+        self.btn_download_all = QPushButton(tr("BTN_DOWNLOAD_ALL"))
         self.btn_download_all.clicked.connect(self.open_bulk_downloader)
         self.btn_download_all.setStyleSheet("background-color: #424242; color: #aaa; font-size: 11px;")
 
-        self.btn_browser = QPushButton("📚 Kütüphaneyi Tara (Detaylı)")
+        self.btn_browser = QPushButton(tr("BTN_API_BROWSER"))
         self.btn_browser.clicked.connect(self.open_api_browser)
         self.btn_browser.setStyleSheet("background-color: #6a1b9a; color: white; font-weight: bold;")
 
         self.list_widget = QListWidget()
-        self.list_widget.itemClicked.connect(self.on_item_clicked) # Değişti
+        self.list_widget.itemClicked.connect(self.on_item_clicked)
         
-        self.btn_add = QPushButton("+ Yeni Varlık")
+        self.btn_add = QPushButton(tr("BTN_NEW_ENTITY"))
         self.btn_add.setObjectName("successBtn")
         self.btn_add.clicked.connect(self.prepare_new)
         
@@ -75,7 +77,7 @@ class DatabaseTab(QWidget):
         self.sheet.btn_next_img.clicked.connect(self.next_image)
         
         self.sheet.btn_show_player.clicked.connect(self.show_image_to_player)
-        self.btn_show_stats = QPushButton("📄 Kartı Yansıt")
+        self.btn_show_stats = QPushButton(tr("BTN_SHOW_STATS"))
         self.btn_show_stats.setObjectName("primaryBtn")
         self.btn_show_stats.clicked.connect(self.show_stats_to_player)
         self.sheet.content_layout.itemAt(0).layout().itemAt(0).layout().insertWidget(3, self.btn_show_stats)
@@ -101,7 +103,7 @@ class DatabaseTab(QWidget):
         for eid, data in self.dm.data["entities"].items():
             name = data.get("name", "").lower()
             etype = data.get("type", "")
-            if flt != "Tümü" and etype != flt: continue
+            if flt != tr("CAT_ALL") and etype != flt: continue
             
             if text in name or any(text in t.lower() for t in data.get("tags", [])):
                 item = QListWidgetItem(f"👤 {data['name']} ({etype})")
@@ -128,7 +130,7 @@ class DatabaseTab(QWidget):
             idx = parts[2]
             
             # Yükleniyor...
-            self.sheet.inp_name.setText("Yükleniyor...")
+            self.sheet.inp_name.setText(tr("MSG_LOADING"))
             self.sheet.setEnabled(False)
             
             # Kütüphaneden detayları arkada çek
@@ -146,14 +148,14 @@ class DatabaseTab(QWidget):
 
     def on_api_search_finished(self, success, data_or_id, msg):
         self.sheet.setEnabled(True)
-        if success:
+        if success and isinstance(data_or_id, dict):
             # data_or_id burada 'data' (parsed dict) döner çünkü detay çekiyoruz
             self.current_entity_id = None # Henüz dünyada değil
             self.load_data_into_sheet(data_or_id)
             # Kullanıcıya bilgi ver
             self.sheet.inp_name.setStyleSheet("border: 2px solid #2e7d32;") # Yeşil çerçeve
         else:
-            QMessageBox.warning(self, "Hata", f"Öğe detayları yüklenemedi: {msg}")
+            QMessageBox.warning(self, tr("MSG_ERROR"), f"{tr('MSG_ERROR')}: {msg}")
 
     def load_entity(self, item):
         eid = item.data(Qt.ItemDataRole.UserRole)
@@ -235,7 +237,7 @@ class DatabaseTab(QWidget):
         new_id = self.dm.save_entity(self.current_entity_id, data)
         self.current_entity_id = new_id; self.refresh_list()
         s.inp_name.setStyleSheet("") # Normal hale getir
-        QMessageBox.information(self, "Bilgi", "Kaydedildi ve Dünyaya Eklendi.")
+        QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_SUCCESS"))
 
     def _fill_cards(self, container, data_list):
         for item in data_list: self.sheet.add_feature_card(container, item.get("name"), item.get("desc"))
@@ -257,7 +259,7 @@ class DatabaseTab(QWidget):
                 self.sheet.current_img_index = len(self.sheet.image_list) - 1
                 self.update_sheet_image()
             else:
-                QMessageBox.information(self, "Bilgi", "Önce varlığı oluşturun.")
+                QMessageBox.information(self, tr("MSG_WARNING"), tr("BTN_NEW_ENTITY"))
 
     def remove_image(self):
         if not self.sheet.image_list: return

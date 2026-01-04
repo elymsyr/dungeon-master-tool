@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QMessageBox, QListWidgetItem, QSplitter, QWidget, QApplication)
 from PyQt6.QtCore import Qt
 from ui.workers import ApiListWorker, ApiSearchWorker
+from core.locales import tr
 
 class ApiBrowser(QDialog):
     def __init__(self, data_manager, category, parent=None):
@@ -11,7 +12,7 @@ class ApiBrowser(QDialog):
         self.category = category
         self.selected_data = None
         
-        self.setWindowTitle(f"D&D Kütüphanesi: {category}")
+        self.setWindowTitle(f"{tr('TITLE_API')}: {category}")
         self.resize(900, 600)
         self.setStyleSheet("""
             QDialog { background-color: #1e1e1e; color: white; }
@@ -35,7 +36,7 @@ class ApiBrowser(QDialog):
         
         # Üst: Arama
         self.inp_filter = QLineEdit()
-        self.inp_filter.setPlaceholderText(f"{self.category} içinde ara...")
+        self.inp_filter.setPlaceholderText(f"{tr('LBL_SEARCH_API')} ({self.category})")
         self.inp_filter.textChanged.connect(self.filter_list)
         main_layout.addWidget(self.inp_filter)
         
@@ -58,7 +59,7 @@ class ApiBrowser(QDialog):
         self.txt_desc = QTextEdit()
         self.txt_desc.setReadOnly(True)
         
-        self.btn_import = QPushButton("⬇️ Kütüphaneye Ekle")
+        self.btn_import = QPushButton(tr("BTN_IMPORT"))
         self.btn_import.setObjectName("importBtn")
         self.btn_import.setEnabled(False)
         self.btn_import.clicked.connect(self.import_selected)
@@ -74,7 +75,7 @@ class ApiBrowser(QDialog):
 
     def load_list(self):
         self.list_widget.clear()
-        self.lbl_name.setText("Liste Yükleniyor...")
+        self.lbl_name.setText(tr("MSG_LOADING"))
         self.setEnabled(False)
         
         # Worker ile listeyi çek
@@ -141,12 +142,12 @@ class ApiBrowser(QDialog):
             self.txt_desc.setText(desc)
             self.btn_import.setEnabled(True)
         else:
-            self.lbl_name.setText("Hata")
+            self.lbl_name.setText(tr("MSG_ERROR"))
             self.txt_desc.setText(msg)
 
     def import_selected(self):
         if self.selected_data:
             # Veritabanına kaydet
             new_id = self.dm.save_entity(None, self.selected_data)
-            QMessageBox.information(self, "Başarılı", f"'{self.selected_data['name']}' veritabanına eklendi.")
+            QMessageBox.information(self, tr("MSG_SUCCESS"), f"'{self.selected_data['name']}' {tr('MSG_IMPORTED')}")
             self.accept() # Pencereyi kapat

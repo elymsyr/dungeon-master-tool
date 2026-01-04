@@ -17,7 +17,11 @@ class ApiSearchWorker(QThread):
             # Bizim sinyalimiz: (Success, Data/ID, Msg)
             self.finished.emit(success, eid, msg)
         except Exception as e:
-            self.finished.emit(False, None, str(e))
+            self.finished.emit(False, str(e), str(e)) # data yerine str(e) vermek güvenli, çünkü success=False iken 2. argümanın önemi yok ama None olması daha temiz.
+            # Düzeltme: 
+            # self.finished.emit(False, {}, str(e)) şeklinde yapalım ki AttributeError yemesin
+            # Ama asıl sorun, alıcı taraftaki 'data_or_id'nin tipini kontrol etmemek.
+            # Yine de burada None dönelim.
 
 class ApiListWorker(QThread):
     finished = pyqtSignal(list)

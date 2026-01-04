@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QFileDialog, QFrame, QMessageBox, QInputDialog)
 from PyQt6.QtGui import QPixmap
 from ui.widgets.map_viewer import MapViewer, MapPinItem
+from core.locales import tr
 
 class MapTab(QWidget):
     def __init__(self, data_manager, player_window, main_window_ref):
@@ -18,10 +19,10 @@ class MapTab(QWidget):
         
         # --- Toolbar (Butonlar Burada) ---
         toolbar = QHBoxLayout()
-        self.btn_load_map = QPushButton("🖼️ Harita Yükle")
+        self.btn_load_map = QPushButton(tr("BTN_LOAD_MAP"))
         self.btn_load_map.clicked.connect(self.upload_map_image)
         
-        self.btn_show_map_pl = QPushButton("🌍 Haritayı Yansıt")
+        self.btn_show_map_pl = QPushButton(tr("BTN_PROJECT_MAP"))
         self.btn_show_map_pl.setObjectName("primaryBtn")
         self.btn_show_map_pl.clicked.connect(self.push_map_to_player)
         
@@ -46,7 +47,7 @@ class MapTab(QWidget):
         layout.addWidget(viewer_frame)
 
     def upload_map_image(self):
-        fname, _ = QFileDialog.getOpenFileName(self, "Harita Seç", "", "Images (*.png *.jpg *.jpeg)")
+        fname, _ = QFileDialog.getOpenFileName(self, tr("MSG_SELECT_MAP"), "", "Images (*.png *.jpg *.jpeg)")
         if fname:
             rel = self.dm.import_image(fname)
             self.dm.set_map_image(rel)
@@ -81,7 +82,7 @@ class MapTab(QWidget):
             path = self.dm.get_full_path(self.dm.data["map_data"].get("image_path"))
             self.player_window.show_image(QPixmap(path) if path else None)
         else:
-            QMessageBox.warning(self, "Uyarı", "Önce Oyuncu Ekranını açın.")
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_PLAYER_SCREEN"))
 
     def handle_new_pin(self, x, y):
         entities = self.dm.data["entities"]
@@ -102,10 +103,10 @@ class MapTab(QWidget):
                 ids.append(eid)
         
         if not items:
-            QMessageBox.warning(self, "Uyarı", "Haritaya eklenebilecek uygun bir varlık (NPC, Mekan, Eşya) bulunamadı.")
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_ENTITY_FOR_PIN"))
             return
             
-        item, ok = QInputDialog.getItem(self, "Pin Ekle", "Varlık Seç:", items, 0, False)
+        item, ok = QInputDialog.getItem(self, tr("MSG_ADD_PIN"), tr("MSG_SELECT_ENTITY"), items, 0, False)
         if ok and item:
             self.dm.add_pin(x, y, ids[items.index(item)])
             self.render_map()
@@ -123,7 +124,7 @@ class MapTab(QWidget):
             self.map_viewer.start_move_mode(pin_obj.pin_id)
             
         elif action_type == "delete":
-            if QMessageBox.question(self, "Sil", "Bu pini kaldırmak istiyor musun?") == QMessageBox.StandardButton.Yes:
+            if QMessageBox.question(self, tr("BTN_DELETE"), tr("MSG_DELETE_PIN")) == QMessageBox.StandardButton.Yes:
                 self.dm.remove_specific_pin(pin_obj.pin_id)
                 self.render_map()
 

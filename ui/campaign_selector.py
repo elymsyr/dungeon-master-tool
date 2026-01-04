@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QListWidget, QPushButton, 
-                             QLineEdit, QHBoxLayout, QLabel, QMessageBox, QWidget)
+                             QLineEdit, QHBoxLayout, QLabel, QMessageBox, QWidget, QComboBox) # QComboBox eklendi
+from core.locales import tr, set_language
 from PyQt6.QtCore import Qt
 
 class CampaignSelector(QDialog):
@@ -8,7 +9,9 @@ class CampaignSelector(QDialog):
         self.dm = data_manager
         self.selected_campaign = None
         
-        self.setWindowTitle("Dünya Seçimi")
+        self.selected_campaign = None
+        
+        self.setWindowTitle("Select World")
         self.setFixedSize(400, 500)
         self.setStyleSheet("""
             QDialog { background-color: #1e1e1e; color: white; }
@@ -29,10 +32,11 @@ class CampaignSelector(QDialog):
         layout = QVBoxLayout(self)
         
         # Başlık
-        lbl_title = QLabel("🔮 Maceraya Başla")
-        lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl_title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #ffa500;")
-        layout.addWidget(lbl_title)
+        # Başlık
+        self.lbl_title = QLabel("🔮 Select World")
+        self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #ffa500;")
+        layout.addWidget(self.lbl_title)
         
         # Liste
         self.list_widget = QListWidget()
@@ -40,7 +44,8 @@ class CampaignSelector(QDialog):
         layout.addWidget(self.list_widget)
         
         # Yükle Butonu
-        self.btn_load = QPushButton("Seçili Dünyayı Yükle")
+        # Yükle Butonu
+        self.btn_load = QPushButton("Load")
         self.btn_load.setObjectName("loadBtn")
         self.btn_load.clicked.connect(self.load_campaign)
         layout.addWidget(self.btn_load)
@@ -52,7 +57,7 @@ class CampaignSelector(QDialog):
         self.inp_new_name = QLineEdit()
         self.inp_new_name.setPlaceholderText("Yeni Dünya Adı...")
         
-        self.btn_create = QPushButton("Oluştur")
+        self.btn_create = QPushButton("Create")
         self.btn_create.setObjectName("createBtn")
         self.btn_create.clicked.connect(self.create_campaign)
         
@@ -60,6 +65,38 @@ class CampaignSelector(QDialog):
         create_layout.addWidget(self.btn_create)
         
         layout.addLayout(create_layout)
+
+        # Dil Seçimi (Alt Kısım)
+        lang_layout = QHBoxLayout()
+        self.lbl_lang = QLabel(tr("LBL_LANGUAGE")) # "Language / Dil:"
+        self.combo_lang = QComboBox()
+        self.combo_lang.addItems(["English", "Türkçe"])
+        
+        # Mevcut dili seç
+        current_lang = self.dm.settings.get("language", "EN")
+        self.combo_lang.setCurrentIndex(1 if current_lang == "TR" else 0)
+        
+        self.combo_lang.currentIndexChanged.connect(self.change_language)
+        
+        lang_layout.addStretch()
+        lang_layout.addWidget(self.lbl_lang)
+        lang_layout.addWidget(self.combo_lang)
+        layout.addLayout(lang_layout)
+
+        self.update_texts()
+
+    def change_language(self, index):
+        code = "TR" if index == 1 else "EN"
+        self.dm.save_settings({"language": code})
+        self.update_texts()
+
+    def update_texts(self):
+        self.setWindowTitle(tr("TITLE_SELECT_WORLD"))
+        self.lbl_title.setText(tr("TITLE_SELECT_WORLD"))
+        self.btn_load.setText(tr("BTN_LOAD_SESSION")) # "Load" / "Yükle"
+        self.inp_new_name.setPlaceholderText(tr("MSG_ENTER_WORLD_NAME"))
+        self.btn_create.setText(tr("BTN_CREATE_WORLD"))
+        self.lbl_lang.setText(tr("LBL_LANGUAGE"))
 
     def refresh_list(self):
         self.list_widget.clear()

@@ -9,6 +9,7 @@ from ui.tabs.database_tab import DatabaseTab
 from ui.tabs.map_tab import MapTab
 from ui.tabs.session_tab import SessionTab # <--- YENİ EKLENEN IMPORT
 from ui.campaign_selector import CampaignSelector
+from core.locales import tr
 
 class MainWindow(QMainWindow):
     def __init__(self, data_manager):
@@ -30,8 +31,9 @@ class MainWindow(QMainWindow):
         # --- ÜST BAR (TOOLBAR) ---
         toolbar = QHBoxLayout()
         
+        
         # Oyuncu Ekranı Butonu
-        self.btn_toggle_player = QPushButton("📺 Oyuncu Ekranını Aç/Kapat")
+        self.btn_toggle_player = QPushButton(tr("BTN_PLAYER_SCREEN"))
         self.btn_toggle_player.setCheckable(True)
         self.btn_toggle_player.setStyleSheet("""
             QPushButton { background-color: #6a1b9a; color: white; font-weight: bold; padding: 8px; }
@@ -40,12 +42,12 @@ class MainWindow(QMainWindow):
         self.btn_toggle_player.clicked.connect(self.toggle_player_window)
         
         # Dışa Aktar Butonu
-        self.btn_export_txt = QPushButton("📄 Dışa Aktar (TXT)")
+        self.btn_export_txt = QPushButton(tr("BTN_EXPORT"))
         self.btn_export_txt.setStyleSheet("background-color: #00796b; color: white; font-weight: bold; padding: 8px;")
         self.btn_export_txt.clicked.connect(self.export_entities_to_txt)
         
         # Dünya Bilgisi
-        self.lbl_campaign = QLabel(f"Dünya: {self.data_manager.data.get('world_name')}")
+        self.lbl_campaign = QLabel(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
         self.lbl_campaign.setStyleSheet("color: #888; font-style: italic; margin-left: 10px;")
 
         toolbar.addWidget(self.btn_toggle_player)
@@ -60,16 +62,16 @@ class MainWindow(QMainWindow):
         
         # Tab 1: Veritabanı
         self.db_tab = DatabaseTab(self.data_manager, self.player_window)
-        self.tabs.addTab(self.db_tab, "Veritabanı & Karakterler")
+        self.tabs.addTab(self.db_tab, tr("TAB_DB"))
         
         # Tab 2: Harita
         # self'i (MainWindow) gönderiyoruz ki pinlere tıklayınca db_tab'a geçebilsin
         self.map_tab = MapTab(self.data_manager, self.player_window, self) 
-        self.tabs.addTab(self.map_tab, "Harita") 
+        self.tabs.addTab(self.map_tab, tr("TAB_MAP")) 
         
         # Tab 3: Session (Oyun Yönetimi)
         self.session_tab = SessionTab(self.data_manager)
-        self.tabs.addTab(self.session_tab, "Oyun Yönetimi (Session)")
+        self.tabs.addTab(self.session_tab, tr("TAB_SESSION"))
         
         main_layout.addWidget(self.tabs)
         

@@ -10,8 +10,13 @@ LIBRARY_DIR = os.path.join(CACHE_DIR, "library")
 # Cache ayarları
 CACHE_FILE = os.path.join(CACHE_DIR, "reference_indexes.json")
 
+from core.locales import set_language
+
 class DataManager:
     def __init__(self):
+        self.settings = self.load_settings()
+        set_language(self.settings.get("language", "EN")) # Varsayılan: EN
+        
         self.current_campaign_path = None
         # Varsayılan boş yapı
         self.data = {
@@ -37,6 +42,22 @@ class DataManager:
     def _save_reference_cache(self):
         if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
         with open(CACHE_FILE, "w", encoding="utf-8") as f: json.dump(self.reference_cache, f, indent=4)
+
+    # --- AYARLAR (SETTINGS) ---
+    def load_settings(self):
+        path = os.path.join(CACHE_DIR, "settings.json")
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f: return json.load(f)
+            except: pass
+        return {"language": "EN"}
+
+    def save_settings(self, settings):
+        path = os.path.join(CACHE_DIR, "settings.json")
+        if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
+        with open(path, "w", encoding="utf-8") as f: json.dump(settings, f, indent=4)
+        self.settings = settings
+        set_language(settings.get("language", "EN"))
 
     def get_api_index(self, category):
         if category in self.reference_cache: return self.reference_cache[category]
