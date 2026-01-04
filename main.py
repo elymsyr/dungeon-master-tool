@@ -114,9 +114,10 @@ class MainWindow(QMainWindow):
                     if tags: f.write(f"   Etiketler: {tags}\n")
                     f.write(f"   Açıklama: {desc}\n")
                     
-                    # Statları da ekleyelim (Opsiyonel)
+                    # Statları da ekleyelim (Sadece savaşçı varlıklar için)
                     c = ent.get("combat_stats", {})
-                    if c:
+                    # Sadece belirli tiplerde statları gösterelim
+                    if type_ in ["NPC", "Canavar", "Oyuncu"] and c:
                         hp = c.get("hp", "-")
                         ac = c.get("ac", "-")
                         cr = c.get("cr", "-")
