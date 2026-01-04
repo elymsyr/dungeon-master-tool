@@ -110,17 +110,76 @@ class NpcSheet(QWidget):
     # --- TAB KURULUMLARI ---
     def setup_stats_tab(self):
         layout = QVBoxLayout(self.tab_stats)
+        
+        # Temel Statlar (STR, DEX...)
         grp = QGroupBox(tr("GRP_STATS")); l = QHBoxLayout(grp)
         self.stats_inputs = {}
+        self.stats_modifiers = {} # Label'ları tutacağız
+        
         for s in ["STR", "DEX", "CON", "INT", "WIS", "CHA"]:
-            v = QVBoxLayout(); inp = QLineEdit("10"); inp.setAlignment(Qt.AlignmentFlag.AlignCenter); inp.setMaximumWidth(50)
-            self.stats_inputs[s] = inp; v.addWidget(QLabel(s)); v.addWidget(inp); l.addLayout(v)
+            v = QVBoxLayout()
+            lbl_title = QLabel(s); lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter); lbl_title.setStyleSheet("font-weight: bold;")
+            
+            inp = QLineEdit("10"); inp.setAlignment(Qt.AlignmentFlag.AlignCenter); inp.setMaximumWidth(50)
+            inp.textChanged.connect(lambda text, key=s: self._update_modifier(key, text))
+            
+            lbl_mod = QLabel("+0"); lbl_mod.setAlignment(Qt.AlignmentFlag.AlignCenter); lbl_mod.setStyleSheet("color: #aaa; font-size: 11px;")
+            
+            self.stats_inputs[s] = inp
+            self.stats_modifiers[s] = lbl_mod
+            
+            v.addWidget(lbl_title); v.addWidget(inp); v.addWidget(lbl_mod)
+            l.addLayout(v)
         layout.addWidget(grp)
-        grp2 = QGroupBox("Combat"); l2 = QHBoxLayout(grp2) # "Combat" or create key
-        self.inp_hp = QLineEdit(); self.inp_ac = QLineEdit(); self.inp_speed = QLineEdit(); self.inp_cr = QLineEdit()
-        for t, w in [("HP", self.inp_hp), ("AC", self.inp_ac), ("Hız", self.inp_speed), ("CR", self.inp_cr)]:
-            v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); l2.addLayout(v)
-        layout.addWidget(grp2); layout.addStretch()
+        
+        # Combat Stats (HP, AC...)
+        grp2 = QGroupBox(tr("GRP_COMBAT")); l2 = QHBoxLayout(grp2) 
+        self.inp_hp = QLineEdit(); self.inp_ac = QLineEdit(); self.inp_speed = QLineEdit()
+        self.inp_prof = QLineEdit(); self.inp_pp = QLineEdit(); self.inp_init = QLineEdit()
+        
+        # Üst sıra: HP, AC, Speed
+        row1 = QHBoxLayout()
+        for t, w in [("HP", self.inp_hp), ("AC", self.inp_ac), ("Hız", self.inp_speed)]:
+             v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); row1.addLayout(v)
+        
+        # Alt sıra: Proficiency, Passive Perception, Initiative
+        row2 = QHBoxLayout()
+        for t, w in [(tr("LBL_PROF_BONUS"), self.inp_prof), (tr("LBL_PASSIVE_PERC"), self.inp_pp), (tr("LBL_INIT_BONUS"), self.inp_init)]:
+             v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); row2.addLayout(v)
+             
+        v_comb = QVBoxLayout(); v_comb.addLayout(row1); v_comb.addLayout(row2)
+        l2.addLayout(v_comb)
+        
+        layout.addWidget(grp2)
+
+        # Gelişmiş Statlar (Saves, Immunities...)
+        grp3 = QGroupBox(tr("GRP_DEFENSE")); form3 = QFormLayout(grp3)
+        self.inp_saves = QLineEdit()
+        self.inp_skills = QLineEdit() # YENİ
+        self.inp_vuln = QLineEdit()
+        self.inp_resist = QLineEdit()
+        self.inp_dmg_immune = QLineEdit()
+        self.inp_cond_immune = QLineEdit()
+        
+        form3.addRow(tr("LBL_SAVES"), self.inp_saves)
+        form3.addRow(tr("LBL_SKILLS"), self.inp_skills)
+        form3.addRow(tr("LBL_VULN"), self.inp_vuln)
+        form3.addRow(tr("LBL_RESIST"), self.inp_resist)
+        form3.addRow(tr("LBL_DMG_IMMUNE"), self.inp_dmg_immune)
+        form3.addRow(tr("LBL_COND_IMMUNE"), self.inp_cond_immune)
+        
+        layout.addWidget(grp3)
+        layout.addStretch()
+        
+    def _update_modifier(self, stat_key, text_value):
+        try:
+            val = int(text_value)
+            mod = (val - 10) // 2
+            sign = "+" if mod >= 0 else ""
+            self.stats_modifiers[stat_key].setText(f"{sign}{mod}")
+            self.stats_modifiers[stat_key].setStyleSheet(f"color: {'#4caf50' if mod > 0 else '#aaa'}; font-size: 11px; font-weight: bold;")
+        except ValueError:
+            self.stats_modifiers[stat_key].setText("-")
 
     def setup_spells_tab(self):
         layout = QVBoxLayout(self.tab_spells)
@@ -262,26 +321,37 @@ class NpcSheet(QWidget):
 
     def update_ui_by_type(self, category_name):
         self.build_dynamic_form(category_name)
-        is_npc = category_name in ["NPC", "Canavar", "Oyuncu"]
+        is_npc_like = category_name in ["NPC", "Canavar"]
+        is_player = category_name == "Oyuncu"
         is_lore = category_name == "Lore"
         
-        self.lbl_location.setVisible(is_npc); self.combo_location.setVisible(is_npc)
+        # Lokasyon sadece NPC/Canavar/Oyuncu için
+        self.lbl_location.setVisible(is_npc_like or is_player); self.combo_location.setVisible(is_npc_like or is_player)
         self.lbl_residents.setVisible(category_name == "Mekan"); self.list_residents.setVisible(category_name == "Mekan")
         
-        # Sekme görünürlükleri
+        # Sekme Görünürlükleri
         # 0:Stats, 1:Spells, 2:Actions, 3:Inv, 4:Docs
-        self.tabs.setTabVisible(0, is_npc) # Stats
-        self.tabs.setTabVisible(1, is_npc) # Spells
-        self.tabs.setTabVisible(2, is_npc) # Actions
-        self.tabs.setTabVisible(3, is_npc) # Inv
-        self.tabs.setTabVisible(4, is_lore) # Docs (Sadece Lore için)
+        
+        # Stats: NPC, Canavar için tam. Oyuncu için gizleyebiliriz ama verileri görmek isteyebilir?
+        # Kullanıcı "Sadece Notlar, Sınıf, Irk, Level" dedi. Bu 'Dynamic Inputs'da var.
+        # Yani 'Stats' sekmesini Oyuncu için gizleyelim mi? Evet.
+        
+        self.tabs.setTabVisible(0, is_npc_like) # Stats (STR/DEX vs)
+        self.tabs.setTabVisible(1, is_npc_like) # Spells
+        self.tabs.setTabVisible(2, is_npc_like) # Actions
+        self.tabs.setTabVisible(3, is_npc_like) # Inv
+        
+        # Docs: Lore ve Oyuncu için aktif
+        self.tabs.setTabVisible(4, is_lore or is_player)
 
     def _add_form_vbox(self, pl, lt, w): v=QVBoxLayout(); v.addWidget(QLabel(lt)); v.addWidget(w); pl.addLayout(v)
 
     def prepare_new_entity(self):
         self.inp_name.clear(); self.inp_desc.clear(); self.inp_tags.clear(); self.lbl_image.setPixmap(None)
-        self.image_list = []; self.current_img_index = 0; self.lbl_img_counter.setText("0/0") # SIFIRLA
+        self.image_list = []; self.current_img_index = 0; self.lbl_img_counter.setText("0/0") 
         self.clear_all_cards(); self.inp_type.setCurrentIndex(0)
         for i in self.stats_inputs.values(): i.setText("10")
         self.inp_hp.clear(); self.inp_ac.clear(); self.list_assigned_spells.clear(); self.list_assigned_items.clear()
+        self.inp_prof.clear(); self.inp_pp.clear(); self.inp_skills.clear(); self.inp_init.clear()
+        self.inp_saves.clear(); self.inp_vuln.clear(); self.inp_resist.clear(); self.inp_dmg_immune.clear(); self.inp_cond_immune.clear()
         self.combo_location.clear(); self.list_residents.clear(); self.list_pdfs.clear()

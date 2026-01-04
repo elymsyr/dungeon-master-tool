@@ -13,7 +13,7 @@ params = [
     '--onefile',
     '--noconsole',
     '--clean',
-    '--icon=assets/icon.ico', # Added icon parameter
+    # '--icon=assets/icon.ico', # Icon dosyası varsa açın
     # Gerekli importlar (bazen otomatik algılamaz)
     '--hidden-import=PyQt6',
     '--hidden-import=requests',
