@@ -175,11 +175,14 @@ class DataManager:
     def fetch_from_api(self, category, query):
         for eid, ent in self.data["entities"].items():
             if ent["name"].lower() == query.lower() and ent["type"] == category:
+                # Veritabanında varsa ID dönerim
                 return True, "Veritabanında zaten var.", eid
+        
         parsed_data, msg = self.api_client.search(category, query)
         if not parsed_data: return False, msg, None
-        new_id = self.save_entity(None, parsed_data)
-        return True, "Kaydedildi.", new_id
+        
+        # ARTIK KAYDETMIYORUZ, SADECE DATA DÖNÜYORUZ
+        return True, "API'den çekildi (Kaydedilmedi).", parsed_data
 
     def fetch_details_from_api(self, category, index_name):
         """
@@ -227,6 +230,15 @@ class DataManager:
     def import_image(self, src):
         if not self.current_campaign_path: return None
         fname = f"{uuid.uuid4().hex}_{os.path.basename(src)}"
+        dest = os.path.join(self.current_campaign_path, "assets", fname)
+        shutil.copy2(src, dest)
+        return os.path.join("assets", fname)
+
+    def import_pdf(self, src):
+        if not self.current_campaign_path: return None
+        fname = f"{uuid.uuid4().hex}_{os.path.basename(src)}"
+        # PDF'leri de assets klasörüne koyabiliriz, karışıklık olmasın diye prefix eklenebilir ama şart değil.
+        # Basitlik için assets altında tutalım.
         dest = os.path.join(self.current_campaign_path, "assets", fname)
         shutil.copy2(src, dest)
         return os.path.join("assets", fname)

@@ -70,13 +70,22 @@ class DatabaseTab(QWidget):
         self.sheet = NpcSheet()
         self.sheet.btn_save.clicked.connect(self.save_entity)
         self.sheet.btn_delete.clicked.connect(self.delete_entity)
-        # Galeri Bağlantıları
-        self.sheet.btn_add_img.clicked.connect(self.add_image)
-        self.sheet.btn_remove_img.clicked.connect(self.remove_image)
+        self.sheet.btn_show_player.clicked.connect(self.show_image_to_player)
+        
+        # Galeri Sinyalleri
+        self.sheet.btn_add_img.clicked.connect(self.add_image_to_gallery)
+        self.sheet.btn_remove_img.clicked.connect(self.remove_image_from_gallery)
         self.sheet.btn_prev_img.clicked.connect(self.prev_image)
         self.sheet.btn_next_img.clicked.connect(self.next_image)
+
+        # PDF Sinyalleri
+        self.sheet.btn_add_pdf.clicked.connect(self.add_pdf)
+        self.sheet.btn_remove_pdf.clicked.connect(self.remove_pdf)
+        self.sheet.btn_open_pdf.clicked.connect(self.open_pdf)
+        self.sheet.btn_project_pdf.clicked.connect(self.project_pdf_to_player)
+        self.sheet.btn_open_pdf_folder.clicked.connect(self.open_pdf_folder)
         
-        self.sheet.btn_show_player.clicked.connect(self.show_image_to_player)
+        # Eşya Linkleme Sinyalleri
         self.btn_show_stats = QPushButton(tr("BTN_SHOW_STATS"))
         self.btn_show_stats.setObjectName("primaryBtn")
         self.btn_show_stats.clicked.connect(self.show_stats_to_player)
@@ -148,12 +157,20 @@ class DatabaseTab(QWidget):
 
     def on_api_search_finished(self, success, data_or_id, msg):
         self.sheet.setEnabled(True)
-        if success and isinstance(data_or_id, dict):
-            # data_or_id burada 'data' (parsed dict) döner çünkü detay çekiyoruz
-            self.current_entity_id = None # Henüz dünyada değil
-            self.load_data_into_sheet(data_or_id)
-            # Kullanıcıya bilgi ver
-            self.sheet.inp_name.setStyleSheet("border: 2px solid #2e7d32;") # Yeşil çerçeve
+        if success:
+            if isinstance(data_or_id, dict):
+                # data_or_id burada 'data' (parsed dict)
+                self.current_entity_id = None 
+                self.load_data_into_sheet(data_or_id)
+                self.sheet.inp_name.setStyleSheet("border: 2px solid #2e7d32;")
+            elif isinstance(data_or_id, str):
+                # data_or_id bir ID (saved to disk)
+                eid = data_or_id
+                data = self.dm.data["entities"].get(eid)
+                if data:
+                    self.current_entity_id = eid
+                    self.load_data_into_sheet(data)
+                    self.sheet.inp_name.setStyleSheet("border: 2px solid #2e7d32;")
         else:
             QMessageBox.warning(self, tr("MSG_ERROR"), f"{tr('MSG_ERROR')}: {msg}")
 
@@ -205,6 +222,44 @@ class DatabaseTab(QWidget):
         s.current_img_index = 0
         self.update_sheet_image()
 
+        # PDFler
+        pdfs = data.get("pdfs", [])
+        s.list_pdfs.clear()
+        for pdf in pdfs:
+             s.list_pdfs.addItem(os.path.basename(pdf))
+             # Full pathi user role olarak sakla
+             # Not: pdf listede sadece dosya ismi olarak görünüyor,
+             # ama aslında 'assets/xxx.pdf' gibi relative path
+             full = self.dm.get_full_path(pdf)
+             item = s.list_pdfs.item(s.list_pdfs.count()-1)
+             item.setData(Qt.ItemDataRole.UserRole, pdf) # Relative pathi sakla
+             item.setToolTip(full if full else pdf)
+
+        # Location verisi
+        loc_id = data.get("location_id")
+        if loc_id:
+            idx = s.combo_location.findData(loc_id)
+            if idx >= 0: s.combo_location.setCurrentIndex(idx)
+        else:
+            s.combo_location.setCurrentIndex(0) # "Yok" veya ilk öğe
+
+        # Büyüler ve Eşyalar
+        s.list_assigned_spells.clear()
+        for spell_id in data.get("spells", []):
+            spell_name = self.dm.get_entity_name(spell_id)
+            if spell_name:
+                item = QListWidgetItem(spell_name)
+                item.setData(Qt.ItemDataRole.UserRole, spell_id)
+                s.list_assigned_spells.addItem(item)
+        
+        s.list_assigned_items.clear()
+        for item_id in data.get("equipment_ids", []):
+            item_name = self.dm.get_entity_name(item_id)
+            if item_name:
+                item = QListWidgetItem(item_name)
+                item.setData(Qt.ItemDataRole.UserRole, item_id)
+                s.list_assigned_items.addItem(item)
+
     # --- DİĞER METODLAR (Save, Delete, API, Spell vb. önceki kodun aynısı) ---
     def save_entity(self):
         s = self.sheet
@@ -219,7 +274,6 @@ class DatabaseTab(QWidget):
         data = {
             "name": s.inp_name.text(), "type": s.inp_type.currentText(),
             "tags": [t.strip() for t in s.inp_tags.text().split(",") if t.strip()],
-            "tags": [t.strip() for t in s.inp_tags.text().split(",") if t.strip()],
             "description": s.inp_desc.toPlainText(),
             "images": s.image_list, # YENİ: Liste olarak kaydet
             # "image_path" artık kullanılmıyor ama uyumluluk için ilk resmi tutabiliriz
@@ -228,8 +282,12 @@ class DatabaseTab(QWidget):
             "combat_stats": {"hp": s.inp_hp.text(), "ac": s.inp_ac.text(), "speed": s.inp_speed.text(), "cr": s.inp_cr.text()},
             "attributes": {l: (w.currentText() if isinstance(w, QComboBox) else w.text()) for l, w in s.dynamic_inputs.items()},
             "location_id": s.combo_location.currentData() if s.combo_location.isVisible() else None,
-            "spells": [s.list_assigned_spells.item(i).data(Qt.ItemDataRole.UserRole) for i in range(s.list_assigned_spells.count())],
-            "equipment_ids": [s.list_assigned_items.item(i).data(Qt.ItemDataRole.UserRole) for i in range(s.list_assigned_items.count())],
+            "spells": [self.sheet.list_assigned_spells.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.sheet.list_assigned_spells.count())],
+            
+            # PDFler
+            "pdfs": [self.sheet.list_pdfs.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.sheet.list_pdfs.count())],
+            
+            "equipment_ids": [self.sheet.list_assigned_items.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.sheet.list_assigned_items.count())],
             "traits": get_cards(s.trait_container), "actions": get_cards(s.action_container),
             "reactions": get_cards(s.reaction_container), "legendary_actions": get_cards(s.legendary_container),
             "inventory": get_cards(s.inventory_container), "custom_spells": get_cards(s.custom_spell_container)
@@ -244,24 +302,20 @@ class DatabaseTab(QWidget):
     def prepare_new(self): self.current_entity_id = None; self.sheet.prepare_new_entity()
     def delete_entity(self): 
         if self.current_entity_id: self.dm.delete_entity(self.current_entity_id); self.refresh_list(); self.prepare_new()
-    def delete_entity(self): 
-        if self.current_entity_id: self.dm.delete_entity(self.current_entity_id); self.refresh_list(); self.prepare_new()
 
     # --- GALERİ YÖNETİMİ ---
-    def add_image(self):
+    def add_image_to_gallery(self):
         fname, _ = QFileDialog.getOpenFileName(self, "Resim Seç", "", "Images (*.png *.jpg *.jpeg *.bmp)")
         if fname:
             rel = self.dm.import_image(fname)
             if self.current_entity_id:
-                # Hemen kaydet (Opsiyonel, kullanıcı kaydet'e basana kadar beklemek daha iyi olabilir ama
-                # resim kopyalandığı için path elimizde)
                 self.sheet.image_list.append(rel)
                 self.sheet.current_img_index = len(self.sheet.image_list) - 1
                 self.update_sheet_image()
             else:
                 QMessageBox.information(self, tr("MSG_WARNING"), tr("BTN_NEW_ENTITY"))
 
-    def remove_image(self):
+    def remove_image_from_gallery(self):
         if not self.sheet.image_list: return
         del self.sheet.image_list[self.sheet.current_img_index]
         if self.sheet.current_img_index >= len(self.sheet.image_list):
@@ -406,3 +460,64 @@ class DatabaseTab(QWidget):
         html += "</div>"
         
         self.player_window.show_stat_block(html)
+
+        self.player_window.show_stat_block(html)
+
+    # --- PDF YÖNETİMİ ---
+    def add_pdf(self):
+        fname, _ = QFileDialog.getOpenFileName(self, tr("MSG_SELECT_PDF"), "", "PDF Files (*.pdf)")
+        if fname:
+            rel_path = self.dm.import_pdf(fname)
+            if rel_path:
+                # Listeye ekle
+                s = self.sheet
+                s.list_pdfs.addItem(os.path.basename(rel_path))
+                item = s.list_pdfs.item(s.list_pdfs.count()-1)
+                item.setData(Qt.ItemDataRole.UserRole, rel_path) # Relative path
+                item.setToolTip(self.dm.get_full_path(rel_path))
+
+    def remove_pdf(self):
+        s = self.sheet
+        row = s.list_pdfs.currentRow()
+        if row < 0: return
+        
+        reply = QMessageBox.question(self, tr("BTN_DELETE"), tr("MSG_CONFIRM_DELETE_PDF"), 
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
+            s.list_pdfs.takeItem(row)
+
+    def open_pdf(self):
+        item = self.sheet.list_pdfs.currentItem()
+        if not item: return
+        
+        rel_path = item.data(Qt.ItemDataRole.UserRole)
+        full_path = self.dm.get_full_path(rel_path)
+        
+        if full_path and os.path.exists(full_path):
+            try:
+                os.startfile(full_path)
+            except Exception as e:
+                QDesktopServices.openUrl(QUrl.fromLocalFile(full_path))
+        else:
+            QMessageBox.warning(self, tr("MSG_ERROR"), "Dosya bulunamadı!")
+
+    def project_pdf_to_player(self):
+        item = self.sheet.list_pdfs.currentItem()
+        if not item: return
+        
+        if not self.player_window.isVisible():
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_PLAYER_SCREEN"))
+            return
+
+        rel_path = item.data(Qt.ItemDataRole.UserRole)
+        full_path = self.dm.get_full_path(rel_path)
+        
+        if full_path and os.path.exists(full_path):
+            self.player_window.show_pdf(full_path)
+        else:
+            QMessageBox.warning(self, tr("MSG_ERROR"), "Dosya bulunamadı!")
+
+    def open_pdf_folder(self):
+        if self.dm.current_campaign_path:
+             path = os.path.join(self.dm.current_campaign_path, "assets")
+             QDesktopServices.openUrl(QUrl.fromLocalFile(path))

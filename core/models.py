@@ -32,7 +32,8 @@ ENTITY_SCHEMAS = {
     "Irk (Race)": [("Hız", "text", None), ("Boyut", "combo", ["Small", "Medium", "Large"]), ("Hizalanma Eğilimi", "text", None), ("Dil", "text", None)],
     "Mekan": [("Tehlike Seviyesi", "combo", ["Güvenli", "Düşük", "Orta", "Yüksek"]), ("Ortam", "text", None)],
     "Oyuncu": [("Sınıf", "text", None), ("Irk", "text", None), ("Seviye", "text", None)],
-    "Görev": [("Durum", "combo", ["Başlamadı", "Aktif", "Tamamlandı"]), ("Görevi Veren", "text", None), ("Ödül", "text", None)]
+    "Görev": [("Durum", "combo", ["Başlamadı", "Aktif", "Tamamlandı"]), ("Görevi Veren", "text", None), ("Ödül", "text", None)],
+    "Lore": [("Kategori", "combo", ["Tarih", "Coğrafya", "Din", "Kültür", "Diğer"]), ("Gizli Bilgi", "text", None)]
 }
 
 def get_default_entity_structure(entity_type="NPC"):
@@ -61,5 +62,6 @@ def get_default_entity_structure(entity_type="NPC"):
         "equipment_ids": [],      # YENİ: ID Listesi (Linked Items)
         "inventory": [],          # Manuel Kartlar (Mevcut yapı)
         
+        "pdfs": [],               # PDF Dosyaları
         "location_id": None
     }

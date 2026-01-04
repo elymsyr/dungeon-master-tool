@@ -13,9 +13,11 @@ params = [
     '--onefile',
     '--noconsole',
     '--clean',
+    '--icon=assets/icon.ico', # Added icon parameter
     # Gerekli importlar (bazen otomatik algılamaz)
     '--hidden-import=PyQt6',
     '--hidden-import=requests',
+    '--hidden-import=PyQt6.QtWebEngineWidgets', # PDF Projection support
     
     # Data dosyaları: (src, dest)
     # config.py, core vs kodun içine gömülür.
