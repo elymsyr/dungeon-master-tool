@@ -132,25 +132,13 @@ class NpcSheet(QWidget):
             l.addLayout(v)
         layout.addWidget(grp)
         
-        # Combat Stats (HP, AC...)
-        grp2 = QGroupBox(tr("GRP_COMBAT")); l2 = QHBoxLayout(grp2) 
-        self.inp_hp = QLineEdit(); self.inp_ac = QLineEdit(); self.inp_speed = QLineEdit()
-        self.inp_prof = QLineEdit(); self.inp_pp = QLineEdit(); self.inp_init = QLineEdit()
+        layout.addWidget(grp)
         
-        # Üst sıra: HP, AC, Speed
-        row1 = QHBoxLayout()
-        for t, w in [("HP", self.inp_hp), ("AC", self.inp_ac), ("Hız", self.inp_speed)]:
-             v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); row1.addLayout(v)
-        
-        # Alt sıra: Proficiency, Passive Perception, Initiative
-        row2 = QHBoxLayout()
-        for t, w in [(tr("LBL_PROF_BONUS"), self.inp_prof), (tr("LBL_PASSIVE_PERC"), self.inp_pp), (tr("LBL_INIT_BONUS"), self.inp_init)]:
-             v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); row2.addLayout(v)
-             
-        v_comb = QVBoxLayout(); v_comb.addLayout(row1); v_comb.addLayout(row2)
-        l2.addLayout(v_comb)
-        
-        layout.addWidget(grp2)
+        # Combat Stats Group (Refactored)
+        self.grp_combat_stats = self._create_combat_stats_group()
+        layout.addWidget(self.grp_combat_stats)
+
+
 
         # Gelişmiş Statlar (Saves, Immunities...)
         grp3 = QGroupBox(tr("GRP_DEFENSE")); form3 = QFormLayout(grp3)
@@ -171,6 +159,34 @@ class NpcSheet(QWidget):
         layout.addWidget(grp3)
         layout.addStretch()
         
+    def _create_combat_stats_group(self):
+        """Combat Stats grubunu oluşturur (HP, Max HP, AC, Speed, Init)"""
+        grp = QGroupBox(tr("GRP_COMBAT"))
+        v_comb = QVBoxLayout(grp)
+        
+        self.inp_hp = QLineEdit(); self.inp_hp.setPlaceholderText(tr("LBL_HP"))
+        self.inp_max_hp = QLineEdit(); self.inp_max_hp.setPlaceholderText("Max HP") # YENİ
+        self.inp_ac = QLineEdit(); self.inp_ac.setPlaceholderText(tr("HEADER_AC"))
+        self.inp_speed = QLineEdit()
+        self.inp_prof = QLineEdit() 
+        self.inp_pp = QLineEdit()
+        self.inp_init = QLineEdit(); self.inp_init.setPlaceholderText(tr("LBL_INIT"))
+        
+        # Üst sıra: HP, Max HP, AC, Speed
+        row1 = QHBoxLayout()
+        # Max HP en başa veya HP yanına
+        for t, w in [("Max HP", self.inp_max_hp), (tr("LBL_HP"), self.inp_hp), (tr("HEADER_AC"), self.inp_ac), ("Hız (ft)", self.inp_speed)]:
+             v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); row1.addLayout(v)
+        
+        # Alt sıra: Proficiency, Passive Perception, Initiative
+        row2 = QHBoxLayout()
+        for t, w in [(tr("LBL_PROF_BONUS"), self.inp_prof), (tr("LBL_PASSIVE_PERC"), self.inp_pp), (tr("LBL_INIT_BONUS"), self.inp_init)]:
+             v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); row2.addLayout(v)
+             
+        v_comb.addLayout(row1)
+        v_comb.addLayout(row2)
+        return grp
+
     def _update_modifier(self, stat_key, text_value):
         try:
             val = int(text_value)
@@ -341,6 +357,27 @@ class NpcSheet(QWidget):
         self.tabs.setTabVisible(2, is_npc_like) # Actions
         self.tabs.setTabVisible(3, is_npc_like) # Inv
         
+        # --- PLAYER İÇİN COMBAT STATS GÖSTERİMİ ---
+        if is_player:
+            # Stats tab'ındaysa oradan al, content_layout'a taşı
+            if self.grp_combat_stats.parent() == self.tab_stats:
+                # Layout'tan çıkarılması gerekebilir ama parent değiştirmek genelde yeterli
+                # Fakat layout item'ı olarak duruyor olabilir.
+                self.tab_stats.layout().removeWidget(self.grp_combat_stats)
+                # Tabların hemen üstüne ekle (Dinamik alanın üstüne)
+                # Index bulmak zor olabilir, content_layout'da tabs indexi belli
+                idx = self.content_layout.indexOf(self.tabs)
+                self.content_layout.insertWidget(idx, self.grp_combat_stats)
+                self.grp_combat_stats.setVisible(True)
+        else:
+            # Normal haline (Stats tabına) döndür
+            if self.grp_combat_stats.parent() != self.tab_stats:
+                self.content_layout.removeWidget(self.grp_combat_stats)
+                self.tab_stats.layout().insertWidget(1, self.grp_combat_stats) # 0: Base stats, 1: Combat stats
+            
+            # Eğer mekan/lore ise gizle, NPC/Canavar ise göster
+            self.grp_combat_stats.setVisible(is_npc_like)
+        
         # Docs: Lore ve Oyuncu için aktif
         self.tabs.setTabVisible(4, is_lore or is_player)
 
@@ -351,7 +388,7 @@ class NpcSheet(QWidget):
         self.image_list = []; self.current_img_index = 0; self.lbl_img_counter.setText("0/0") 
         self.clear_all_cards(); self.inp_type.setCurrentIndex(0)
         for i in self.stats_inputs.values(): i.setText("10")
-        self.inp_hp.clear(); self.inp_ac.clear(); self.list_assigned_spells.clear(); self.list_assigned_items.clear()
+        self.inp_hp.clear(); self.inp_max_hp.clear(); self.inp_ac.clear(); self.list_assigned_spells.clear(); self.list_assigned_items.clear()
         self.inp_prof.clear(); self.inp_pp.clear(); self.inp_skills.clear(); self.inp_init.clear()
         self.inp_saves.clear(); self.inp_vuln.clear(); self.inp_resist.clear(); self.inp_dmg_immune.clear(); self.inp_cond_immune.clear()
         self.combo_location.clear(); self.list_residents.clear(); self.list_pdfs.clear()
