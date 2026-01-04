@@ -1,0 +1,29 @@
+{
+    "special": [],
+    "index": "alchemists-fire-flask",
+    "name": "Alchemist's fire (flask)",
+    "equipment_category": {
+        "index": "adventuring-gear",
+        "name": "Adventuring Gear",
+        "url": "/api/2014/equipment-categories/adventuring-gear"
+    },
+    "gear_category": {
+        "index": "standard-gear",
+        "name": "Standard Gear",
+        "url": "/api/2014/equipment-categories/standard-gear"
+    },
+    "cost": {
+        "quantity": 50,
+        "unit": "gp"
+    },
+    "desc": [
+        "This sticky, adhesive fluid ignites when exposed to air.",
+        "As an action, you can throw this flask up to 20 feet, shattering it on impact. Make a ranged attack against a creature or object, treating the alchemist's fire as an improvised weapon.",
+        "On a hit, the target takes 1d4 fire damage at the start of each of its turns. A creature can end this damage by using its action to make a DC 10 Dexterity check to extinguish the flames."
+    ],
+    "weight": 1,
+    "url": "/api/2014/equipment/alchemists-fire-flask",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

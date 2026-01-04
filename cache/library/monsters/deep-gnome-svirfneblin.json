@@ -1,0 +1,182 @@
+{
+    "index": "deep-gnome-svirfneblin",
+    "name": "Deep Gnome (Svirfneblin)",
+    "size": "Small",
+    "type": "humanoid",
+    "subtype": "gnome",
+    "alignment": "neutral good",
+    "armor_class": [
+        {
+            "type": "armor",
+            "value": 15,
+            "armor": [
+                {
+                    "index": "chain-shirt",
+                    "name": "Chain Shirt",
+                    "url": "/api/2014/equipment/chain-shirt"
+                }
+            ]
+        }
+    ],
+    "hit_points": 16,
+    "hit_dice": "3d6",
+    "hit_points_roll": "3d6+6",
+    "speed": {
+        "walk": "20 ft."
+    },
+    "strength": 15,
+    "dexterity": 14,
+    "constitution": 14,
+    "intelligence": 12,
+    "wisdom": 10,
+    "charisma": 9,
+    "proficiencies": [
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "skill-investigation",
+                "name": "Skill: Investigation",
+                "url": "/api/2014/proficiencies/skill-investigation"
+            }
+        },
+        {
+            "value": 2,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        },
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "darkvision": "120 ft.",
+        "passive_perception": 12
+    },
+    "languages": "Gnomish, Terran, Undercommon",
+    "challenge_rating": 0.5,
+    "proficiency_bonus": 2,
+    "xp": 50,
+    "special_abilities": [
+        {
+            "name": "Stone Camouflage",
+            "desc": "The gnome has advantage on Dexterity (Stealth) checks made to hide in rocky terrain.",
+            "damage": []
+        },
+        {
+            "name": "Gnome Cunning",
+            "desc": "The gnome has advantage on Intelligence, Wisdom, and Charisma saving throws against magic.",
+            "damage": []
+        },
+        {
+            "name": "Innate Spellcasting",
+            "desc": "The gnome's innate spellcasting ability is Intelligence (spell save DC 11). It can innately cast the following spells, requiring no material components:\nAt will: nondetection (self only)\n1/day each: blindness/deafness, blur, disguise self",
+            "spellcasting": {
+                "ability": {
+                    "index": "int",
+                    "name": "INT",
+                    "url": "/api/2014/ability-scores/int"
+                },
+                "dc": 11,
+                "components_required": [
+                    "V",
+                    "S"
+                ],
+                "spells": [
+                    {
+                        "name": "Nondetection",
+                        "level": 3,
+                        "notes": "Self only",
+                        "url": "/api/2014/spells/nondetection",
+                        "usage": {
+                            "type": "at will",
+                            "rest_types": []
+                        }
+                    },
+                    {
+                        "name": "Blindness/Deafness",
+                        "level": 2,
+                        "url": "/api/2014/spells/blindness-deafness",
+                        "usage": {
+                            "type": "per day",
+                            "times": 1,
+                            "rest_types": []
+                        }
+                    },
+                    {
+                        "name": "Blur",
+                        "level": 2,
+                        "url": "/api/2014/spells/blur",
+                        "usage": {
+                            "type": "per day",
+                            "times": 1,
+                            "rest_types": []
+                        }
+                    },
+                    {
+                        "name": "Disguise Self",
+                        "level": 1,
+                        "url": "/api/2014/spells/disguise-self",
+                        "usage": {
+                            "type": "per day",
+                            "times": 1,
+                            "rest_types": []
+                        }
+                    }
+                ]
+            },
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "War Pick",
+            "desc": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8 + 2) piercing damage.",
+            "attack_bonus": 4,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d8+2"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Poisoned Dart",
+            "desc": "Ranged Weapon Attack: +4 to hit, range 30/120 ft., one creature. Hit: 4 (1d4 + 2) piercing damage, and the target must succeed on a DC 12 Constitution saving throw or be poisoned for 1 minute. The target can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success",
+            "attack_bonus": 4,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d4+2"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/deep-gnome-svirfneblin.png",
+    "url": "/api/2014/monsters/deep-gnome-svirfneblin",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

@@ -1,0 +1,65 @@
+{
+    "index": "half-orc",
+    "name": "Half-Orc",
+    "speed": 30,
+    "ability_bonuses": [
+        {
+            "ability_score": {
+                "index": "str",
+                "name": "STR",
+                "url": "/api/2014/ability-scores/str"
+            },
+            "bonus": 2
+        },
+        {
+            "ability_score": {
+                "index": "con",
+                "name": "CON",
+                "url": "/api/2014/ability-scores/con"
+            },
+            "bonus": 1
+        }
+    ],
+    "alignment": "Half-orcs inherit a tendency toward chaos from their orc parents and are not strongly inclined toward good. Half-orcs raised among orcs and willing to live out their lives among them are usually evil.",
+    "age": "Half-orcs mature a little faster than humans, reaching adulthood around age 14. They age noticeably faster and rarely live longer than 75 years.",
+    "size": "Medium",
+    "size_description": "Half-orcs are somewhat larger and bulkier than humans, and they range from 5 to well over 6 feet tall. Your size is Medium.",
+    "languages": [
+        {
+            "index": "common",
+            "name": "Common",
+            "url": "/api/2014/languages/common"
+        },
+        {
+            "index": "orc",
+            "name": "Orc",
+            "url": "/api/2014/languages/orc"
+        }
+    ],
+    "language_desc": "You can speak, read, and write Common and Orc. Orc is a harsh, grating language with hard consonants. It has no script of its own but is written in the Dwarvish script.",
+    "traits": [
+        {
+            "index": "darkvision",
+            "name": "Darkvision",
+            "url": "/api/2014/traits/darkvision"
+        },
+        {
+            "index": "savage-attacks",
+            "name": "Savage Attacks",
+            "url": "/api/2014/traits/savage-attacks"
+        },
+        {
+            "index": "relentless-endurance",
+            "name": "Relentless Endurance",
+            "url": "/api/2014/traits/relentless-endurance"
+        },
+        {
+            "index": "menacing",
+            "name": "Menacing",
+            "url": "/api/2014/traits/menacing"
+        }
+    ],
+    "subraces": [],
+    "url": "/api/2014/races/half-orc",
+    "updated_at": "2025-10-24T20:42:14.212Z"
+}

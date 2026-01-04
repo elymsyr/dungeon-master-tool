@@ -1,0 +1,159 @@
+{
+    "index": "veteran",
+    "name": "Veteran",
+    "desc": "Veterans are professional fighters that take up arms for pay or to protect something they believe in or value. Their ranks include soldiers retired from long service and warriors who never served anyone but themselves.",
+    "size": "Medium",
+    "type": "humanoid",
+    "subtype": "any race",
+    "alignment": "any alignment",
+    "armor_class": [
+        {
+            "type": "armor",
+            "value": 17,
+            "armor": [
+                {
+                    "index": "splint-armor",
+                    "name": "Splint Armor",
+                    "url": "/api/2014/equipment/splint-armor"
+                }
+            ]
+        }
+    ],
+    "hit_points": 58,
+    "hit_dice": "9d8",
+    "hit_points_roll": "9d8+18",
+    "speed": {
+        "walk": "30 ft."
+    },
+    "strength": 16,
+    "dexterity": 13,
+    "constitution": 14,
+    "intelligence": 10,
+    "wisdom": 11,
+    "charisma": 10,
+    "proficiencies": [
+        {
+            "value": 5,
+            "proficiency": {
+                "index": "skill-athletics",
+                "name": "Skill: Athletics",
+                "url": "/api/2014/proficiencies/skill-athletics"
+            }
+        },
+        {
+            "value": 2,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 12
+    },
+    "languages": "any one language (usually Common)",
+    "challenge_rating": 3,
+    "proficiency_bonus": 2,
+    "xp": 700,
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The veteran makes two longsword attacks. If it has a shortsword drawn, it can also make a shortsword attack.",
+            "actions": [
+                {
+                    "action_name": "Longsword",
+                    "count": "2",
+                    "type": "melee"
+                },
+                {
+                    "action_name": "Shortsword",
+                    "count": "2",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Longsword",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) slashing damage, or 8 (1d10 + 3) slashing damage if used with two hands.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "choose": 1,
+                    "type": "damage",
+                    "from": {
+                        "option_set_type": "options_array",
+                        "options": [
+                            {
+                                "option_type": "damage",
+                                "notes": "One handed",
+                                "damage_type": {
+                                    "index": "slashing",
+                                    "name": "Slashing",
+                                    "url": "/api/2014/damage-types/slashing"
+                                },
+                                "damage_dice": "1d8+3"
+                            },
+                            {
+                                "option_type": "damage",
+                                "notes": "Two handed",
+                                "damage_type": {
+                                    "index": "slashing",
+                                    "name": "Slashing",
+                                    "url": "/api/2014/damage-types/slashing"
+                                },
+                                "damage_dice": "1d10+3"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Shortsword",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) piercing damage.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d6+3"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Heavy Crossbow",
+            "desc": "Ranged Weapon Attack: +3 to hit, range 100/400 ft., one target. Hit: 6 (1d10 + 1) piercing damage.",
+            "attack_bonus": 3,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d10+1"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/veteran.png",
+    "url": "/api/2014/monsters/veteran",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

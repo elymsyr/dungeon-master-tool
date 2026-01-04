@@ -1,0 +1,195 @@
+{
+    "index": "young-white-dragon",
+    "name": "Young White Dragon",
+    "size": "Large",
+    "type": "dragon",
+    "alignment": "chaotic evil",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 17
+        }
+    ],
+    "hit_points": 133,
+    "hit_dice": "14d10",
+    "hit_points_roll": "14d10+56",
+    "speed": {
+        "walk": "40 ft.",
+        "burrow": "20 ft.",
+        "fly": "80 ft.",
+        "swim": "40 ft."
+    },
+    "strength": 18,
+    "dexterity": 10,
+    "constitution": 18,
+    "intelligence": 6,
+    "wisdom": 11,
+    "charisma": 12,
+    "proficiencies": [
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "saving-throw-dex",
+                "name": "Saving Throw: DEX",
+                "url": "/api/2014/proficiencies/saving-throw-dex"
+            }
+        },
+        {
+            "value": 7,
+            "proficiency": {
+                "index": "saving-throw-con",
+                "name": "Saving Throw: CON",
+                "url": "/api/2014/proficiencies/saving-throw-con"
+            }
+        },
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "saving-throw-wis",
+                "name": "Saving Throw: WIS",
+                "url": "/api/2014/proficiencies/saving-throw-wis"
+            }
+        },
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "saving-throw-cha",
+                "name": "Saving Throw: CHA",
+                "url": "/api/2014/proficiencies/saving-throw-cha"
+            }
+        },
+        {
+            "value": 6,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        },
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "cold"
+    ],
+    "condition_immunities": [],
+    "senses": {
+        "blindsight": "30 ft.",
+        "darkvision": "120 ft.",
+        "passive_perception": 16
+    },
+    "languages": "Common, Draconic",
+    "challenge_rating": 6,
+    "proficiency_bonus": 3,
+    "xp": 2300,
+    "special_abilities": [
+        {
+            "name": "Ice Walk",
+            "desc": "The dragon can move across and climb icy surfaces without needing to make an ability check. Additionally, difficult terrain composed of ice or snow doesn't cost it extra moment.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The dragon makes three attacks: one with its bite and two with its claws.",
+            "actions": [
+                {
+                    "action_name": "Bite",
+                    "count": "1",
+                    "type": "melee"
+                },
+                {
+                    "action_name": "Claw",
+                    "count": "2",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +7 to hit, reach 10 ft., one target. Hit: 15 (2d10 + 4) piercing damage plus 4 (1d8) cold damage.",
+            "attack_bonus": 7,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "2d10+4"
+                },
+                {
+                    "damage_type": {
+                        "index": "cold",
+                        "name": "Cold",
+                        "url": "/api/2014/damage-types/cold"
+                    },
+                    "damage_dice": "1d8"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Claw",
+            "desc": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) slashing damage.",
+            "attack_bonus": 7,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "2d6+4"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Cold Breath",
+            "desc": "The dragon exhales an icy blast in a 30-foot cone. Each creature in that area must make a DC 15 Constitution saving throw, taking 45 (10d8) cold damage on a failed save, or half as much damage on a successful one.",
+            "usage": {
+                "type": "recharge on roll",
+                "dice": "1d6",
+                "min_value": 5
+            },
+            "dc": {
+                "dc_type": {
+                    "index": "con",
+                    "name": "CON",
+                    "url": "/api/2014/ability-scores/con"
+                },
+                "dc_value": 15,
+                "success_type": "half"
+            },
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "cold",
+                        "name": "Cold",
+                        "url": "/api/2014/damage-types/cold"
+                    },
+                    "damage_dice": "10d8"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/young-white-dragon.png",
+    "url": "/api/2014/monsters/young-white-dragon",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

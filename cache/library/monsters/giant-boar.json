@@ -1,0 +1,80 @@
+{
+    "index": "giant-boar",
+    "name": "Giant Boar",
+    "size": "Large",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 12
+        }
+    ],
+    "hit_points": 42,
+    "hit_dice": "5d10",
+    "hit_points_roll": "5d10+15",
+    "speed": {
+        "walk": "40 ft."
+    },
+    "strength": 17,
+    "dexterity": 10,
+    "constitution": 16,
+    "intelligence": 2,
+    "wisdom": 7,
+    "charisma": 5,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 8
+    },
+    "languages": "",
+    "challenge_rating": 2,
+    "proficiency_bonus": 2,
+    "xp": 450,
+    "special_abilities": [
+        {
+            "name": "Charge",
+            "desc": "If the boar moves at least 20 ft. straight toward a target and then hits it with a tusk attack on the same turn, the target takes an extra 7 (2d6) slashing damage. If the target is a creature, it must succeed on a DC 13 Strength saving throw or be knocked prone.",
+            "damage": []
+        },
+        {
+            "name": "Relentless",
+            "desc": "If the boar takes 10 damage or less that would reduce it to 0 hit points, it is reduced to 1 hit point instead.",
+            "usage": {
+                "type": "recharge after rest",
+                "rest_types": [
+                    "short",
+                    "long"
+                ]
+            },
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Tusk",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6 + 3) slashing damage.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "2d6+3"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/giant-boar.png",
+    "url": "/api/2014/monsters/giant-boar",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

@@ -1,0 +1,25 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "whetstone",
+    "name": "Whetstone",
+    "equipment_category": {
+        "index": "adventuring-gear",
+        "name": "Adventuring Gear",
+        "url": "/api/2014/equipment-categories/adventuring-gear"
+    },
+    "gear_category": {
+        "index": "standard-gear",
+        "name": "Standard Gear",
+        "url": "/api/2014/equipment-categories/standard-gear"
+    },
+    "cost": {
+        "quantity": 1,
+        "unit": "cp"
+    },
+    "weight": 1,
+    "url": "/api/2014/equipment/whetstone",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

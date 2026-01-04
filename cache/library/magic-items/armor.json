@@ -1,0 +1,37 @@
+{
+    "index": "armor",
+    "name": "Armor, +1, +2, or +3",
+    "equipment_category": {
+        "index": "armor",
+        "name": "Armor",
+        "url": "/api/2014/equipment-categories/armor"
+    },
+    "rarity": {
+        "name": "Varies"
+    },
+    "variants": [
+        {
+            "index": "armor-1",
+            "name": "Armor, +1",
+            "url": "/api/2014/magic-items/armor-1"
+        },
+        {
+            "index": "armor-2",
+            "name": "Armor, +2",
+            "url": "/api/2014/magic-items/armor-2"
+        },
+        {
+            "index": "armor-3",
+            "name": "Armor, +3",
+            "url": "/api/2014/magic-items/armor-3"
+        }
+    ],
+    "variant": false,
+    "desc": [
+        "Armor (light, medium, or heavy), rare (+1), very rare (+2), or legendary (+3)",
+        "You have a bonus to AC while wearing this armor. The bonus is determined by its rarity."
+    ],
+    "image": "/api/images/magic-items/armor.png",
+    "url": "/api/2014/magic-items/armor",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

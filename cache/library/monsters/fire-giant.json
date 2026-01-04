@@ -1,0 +1,141 @@
+{
+    "index": "fire-giant",
+    "name": "Fire Giant",
+    "size": "Huge",
+    "type": "giant",
+    "alignment": "lawful evil",
+    "armor_class": [
+        {
+            "type": "armor",
+            "value": 18,
+            "armor": [
+                {
+                    "index": "plate-armor",
+                    "name": "Plate Armor",
+                    "url": "/api/2014/equipment/plate-armor"
+                }
+            ]
+        }
+    ],
+    "hit_points": 162,
+    "hit_dice": "13d12",
+    "hit_points_roll": "13d12+78",
+    "speed": {
+        "walk": "30 ft."
+    },
+    "strength": 25,
+    "dexterity": 9,
+    "constitution": 23,
+    "intelligence": 10,
+    "wisdom": 14,
+    "charisma": 13,
+    "proficiencies": [
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "saving-throw-dex",
+                "name": "Saving Throw: DEX",
+                "url": "/api/2014/proficiencies/saving-throw-dex"
+            }
+        },
+        {
+            "value": 10,
+            "proficiency": {
+                "index": "saving-throw-con",
+                "name": "Saving Throw: CON",
+                "url": "/api/2014/proficiencies/saving-throw-con"
+            }
+        },
+        {
+            "value": 5,
+            "proficiency": {
+                "index": "saving-throw-cha",
+                "name": "Saving Throw: CHA",
+                "url": "/api/2014/proficiencies/saving-throw-cha"
+            }
+        },
+        {
+            "value": 11,
+            "proficiency": {
+                "index": "skill-athletics",
+                "name": "Skill: Athletics",
+                "url": "/api/2014/proficiencies/skill-athletics"
+            }
+        },
+        {
+            "value": 6,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "fire"
+    ],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 16
+    },
+    "languages": "Giant",
+    "challenge_rating": 9,
+    "proficiency_bonus": 4,
+    "xp": 5000,
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The giant makes two greatsword attacks.",
+            "actions": [
+                {
+                    "action_name": "Greatsword",
+                    "count": "2",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Greatsword",
+            "desc": "Melee Weapon Attack: +11 to hit, reach 10 ft., one target. Hit: 28 (6d6 + 7) slashing damage.",
+            "attack_bonus": 11,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "6d6+7"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Rock",
+            "desc": "Ranged Weapon Attack: +11 to hit, range 60/240 ft., one target. Hit: 29 (4d10 + 7) bludgeoning damage.",
+            "attack_bonus": 11,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "4d10+7"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/fire-giant.png",
+    "url": "/api/2014/monsters/fire-giant",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

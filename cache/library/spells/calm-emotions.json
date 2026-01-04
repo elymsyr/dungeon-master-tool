@@ -1,0 +1,57 @@
+{
+    "higher_level": [],
+    "index": "calm-emotions",
+    "name": "Calm Emotions",
+    "desc": [
+        "You attempt to suppress strong emotions in a group of people. Each humanoid in a 20-foot-radius sphere centered on a point you choose within range must make a charisma saving throw; a creature can choose to fail this saving throw if it wishes. If a creature fails its saving throw, choose one of the following two effects. You can suppress any effect causing a target to be charmed or frightened. When this spell ends, any suppressed effect resumes, provided that its duration has not expired in the meantime.",
+        "Alternatively, you can make a target indifferent about creatures of your choice that it is hostile toward. This indifference ends if the target is attacked or harmed by a spell or if it witnesses any of its friends being harmed. When the spell ends, the creature becomes hostile again, unless the GM rules otherwise."
+    ],
+    "range": "60 feet",
+    "components": [
+        "V",
+        "S"
+    ],
+    "ritual": false,
+    "duration": "Up to 1 minute",
+    "concentration": true,
+    "casting_time": "1 action",
+    "level": 2,
+    "dc": {
+        "dc_type": {
+            "index": "cha",
+            "name": "CHA",
+            "url": "/api/2014/ability-scores/cha"
+        },
+        "dc_success": "none"
+    },
+    "area_of_effect": {
+        "type": "sphere",
+        "size": 20
+    },
+    "school": {
+        "index": "enchantment",
+        "name": "Enchantment",
+        "url": "/api/2014/magic-schools/enchantment"
+    },
+    "classes": [
+        {
+            "index": "bard",
+            "name": "Bard",
+            "url": "/api/2014/classes/bard"
+        },
+        {
+            "index": "cleric",
+            "name": "Cleric",
+            "url": "/api/2014/classes/cleric"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        }
+    ],
+    "url": "/api/2014/spells/calm-emotions",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

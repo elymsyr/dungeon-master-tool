@@ -1,0 +1,20 @@
+{
+    "index": "ring-of-resistance-thunder",
+    "name": "Ring of Thunder Resistance",
+    "equipment_category": {
+        "index": "ring",
+        "name": "Ring",
+        "url": "/api/2014/equipment-categories/ring"
+    },
+    "rarity": {
+        "name": "Rare"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Ring, rare (requires attunement)",
+        "You have resistance to thunder damage while wearing this spinel ring."
+    ],
+    "url": "/api/2014/magic-items/ring-of-resistance-thunder",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

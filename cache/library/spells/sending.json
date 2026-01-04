@@ -1,0 +1,52 @@
+{
+    "higher_level": [],
+    "index": "sending",
+    "name": "Sending",
+    "desc": [
+        "You send a short message of twenty-five words or less to a creature with which you are familiar. The creature hears the message in its mind, recognizes you as the sender if it knows you, and can answer in a like manner immediately. The spell enables creatures with Intelligence scores of at least 1 to understand the meaning of your message.",
+        "You can send the message across any distance and even to other planes of existence, but if the target is on a different plane than you, there is a 5 percent chance that the message doesn't arrive."
+    ],
+    "range": "Unlimited",
+    "components": [
+        "V",
+        "S",
+        "M"
+    ],
+    "material": "A short piece of fine copper wire.",
+    "ritual": false,
+    "duration": "1 round",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 3,
+    "school": {
+        "index": "evocation",
+        "name": "Evocation",
+        "url": "/api/2014/magic-schools/evocation"
+    },
+    "classes": [
+        {
+            "index": "bard",
+            "name": "Bard",
+            "url": "/api/2014/classes/bard"
+        },
+        {
+            "index": "cleric",
+            "name": "Cleric",
+            "url": "/api/2014/classes/cleric"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        }
+    ],
+    "url": "/api/2014/spells/sending",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

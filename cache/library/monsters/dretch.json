@@ -1,0 +1,129 @@
+{
+    "index": "dretch",
+    "name": "Dretch",
+    "size": "Small",
+    "type": "fiend",
+    "subtype": "demon",
+    "alignment": "chaotic evil",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 11
+        }
+    ],
+    "hit_points": 18,
+    "hit_dice": "4d6",
+    "hit_points_roll": "4d6+4",
+    "speed": {
+        "walk": "20 ft."
+    },
+    "strength": 11,
+    "dexterity": 11,
+    "constitution": 12,
+    "intelligence": 5,
+    "wisdom": 8,
+    "charisma": 3,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [
+        "cold",
+        "fire",
+        "lightning"
+    ],
+    "damage_immunities": [
+        "poison"
+    ],
+    "condition_immunities": [
+        {
+            "index": "poisoned",
+            "name": "Poisoned",
+            "url": "/api/2014/conditions/poisoned"
+        }
+    ],
+    "senses": {
+        "darkvision": "60 ft.",
+        "passive_perception": 9
+    },
+    "languages": "Abyssal, telepathy 60 ft. (works only with creatures that understand Abyssal)",
+    "challenge_rating": 0.25,
+    "proficiency_bonus": 2,
+    "xp": 25,
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The dretch makes two attacks: one with its bite and one with its claws.",
+            "actions": [
+                {
+                    "action_name": "Bite",
+                    "count": "1",
+                    "type": "melee"
+                },
+                {
+                    "action_name": "Claws",
+                    "count": "1",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 3 (1d6) piercing damage.",
+            "attack_bonus": 2,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d6"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Claws",
+            "desc": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 5 (2d4) slashing damage.",
+            "attack_bonus": 2,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "2d4"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Fetid Cloud",
+            "desc": "A 10-foot radius of disgusting green gas extends out from the dretch. The gas spreads around corners, and its area is lightly obscured. It lasts for 1 minute or until a strong wind disperses it. Any creature that starts its turn in that area must succeed on a DC 11 Constitution saving throw or be poisoned until the start of its next turn. While poisoned in this way, the target can take either an action or a bonus action on its turn, not both, and can't take reactions.",
+            "usage": {
+                "type": "per day",
+                "times": 1
+            },
+            "dc": {
+                "dc_type": {
+                    "index": "con",
+                    "name": "CON",
+                    "url": "/api/2014/ability-scores/con"
+                },
+                "dc_value": 11,
+                "success_type": "none"
+            },
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/dretch.png",
+    "url": "/api/2014/monsters/dretch",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

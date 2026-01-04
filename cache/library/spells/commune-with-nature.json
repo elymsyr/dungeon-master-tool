@@ -1,0 +1,51 @@
+{
+    "higher_level": [],
+    "index": "commune-with-nature",
+    "name": "Commune With Nature",
+    "desc": [
+        "You briefly become one with nature and gain knowledge of the surrounding territory. In the outdoors, the spell gives you knowledge of the land within 3 miles of you. In caves and other natural underground settings, the radius is limited to 300 feet. The spell doesn't function where nature has been replaced by construction, such as in dungeons and towns.",
+        "You instantly gain knowledge of up to three facts of your choice about any of the following subjects as they relate to the area:",
+        "- terrain and bodies of water",
+        "- prevalent plants, minerals, animals, or peoples",
+        "- powerful celestials, fey, fiends, elementals, or undead",
+        "- influence from other planes of existence",
+        "- buildings",
+        "For example, you could determine the location of powerful undead in the area, the location of major sources of safe drinking water, and the location of any nearby towns."
+    ],
+    "range": "Self",
+    "components": [
+        "V",
+        "S"
+    ],
+    "ritual": true,
+    "duration": "Instantaneous",
+    "concentration": false,
+    "casting_time": "1 minute",
+    "level": 5,
+    "school": {
+        "index": "divination",
+        "name": "Divination",
+        "url": "/api/2014/magic-schools/divination"
+    },
+    "classes": [
+        {
+            "index": "druid",
+            "name": "Druid",
+            "url": "/api/2014/classes/druid"
+        },
+        {
+            "index": "ranger",
+            "name": "Ranger",
+            "url": "/api/2014/classes/ranger"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "land",
+            "name": "Land",
+            "url": "/api/2014/subclasses/land"
+        }
+    ],
+    "url": "/api/2014/spells/commune-with-nature",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

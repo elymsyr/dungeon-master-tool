@@ -1,0 +1,52 @@
+{
+    "higher_level": [],
+    "index": "haste",
+    "name": "Haste",
+    "desc": [
+        "Choose a willing creature that you can see within range. Until the spell ends, the target's speed is doubled, it gains a +2 bonus to AC, it has advantage on dexterity saving throws, and it gains an additional action on each of its turns. That action can be used only to take the Attack (one weapon attack only), Dash, Disengage, Hide, or Use an Object action.",
+        "When the spell ends, the target can't move or take actions until after its next turn, as a wave of lethargy sweeps over it."
+    ],
+    "range": "30 feet",
+    "components": [
+        "V",
+        "S",
+        "M"
+    ],
+    "material": "A shaving of licorice root.",
+    "ritual": false,
+    "duration": "Up to 1 minute",
+    "concentration": true,
+    "casting_time": "1 action",
+    "level": 3,
+    "school": {
+        "index": "transmutation",
+        "name": "Transmutation",
+        "url": "/api/2014/magic-schools/transmutation"
+    },
+    "classes": [
+        {
+            "index": "sorcerer",
+            "name": "Sorcerer",
+            "url": "/api/2014/classes/sorcerer"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        },
+        {
+            "index": "land",
+            "name": "Land",
+            "url": "/api/2014/subclasses/land"
+        }
+    ],
+    "url": "/api/2014/spells/haste",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

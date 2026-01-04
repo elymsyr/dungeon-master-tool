@@ -1,0 +1,22 @@
+{
+    "index": "staff-of-fire",
+    "name": "Staff of Fire",
+    "equipment_category": {
+        "index": "staff",
+        "name": "Staff",
+        "url": "/api/2014/equipment-categories/staff"
+    },
+    "rarity": {
+        "name": "Very Rare"
+    },
+    "variants": [],
+    "variant": false,
+    "desc": [
+        "Staff, very rare (requires attunement by a druid, sorcerer, warlock, or wizard)",
+        "You have resistance to fire damage while you hold this staff.",
+        "The staff has 10 charges. While holding it, you can use an action to expend 1 or more of its charges to cast one of the following spells from it, using your spell save DC: burning hands (1 charge), fireball (3 charges), or wall of fire (4 charges).",
+        "The staff regains 1d6 + 4 expended charges daily at dawn. If you expend the last charge, roll a d20. On a 1, the staff blackens, crumbles into cinders, and is destroyed."
+    ],
+    "url": "/api/2014/magic-items/staff-of-fire",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

@@ -1,0 +1,76 @@
+{
+    "index": "dispel-magic",
+    "name": "Dispel Magic",
+    "desc": [
+        "Choose one creature, object, or magical effect within range. Any spell of 3rd level or lower on the target ends. For each spell of 4th level or higher on the target, make an ability check using your spellcasting ability. The DC equals 10 + the spell's level. On a successful check, the spell ends."
+    ],
+    "higher_level": [
+        "When you cast this spell using a spell slot of 4th level or higher, you automatically end the effects of a spell on the target if the spell's level is equal to or less than the level of the spell slot you used."
+    ],
+    "range": "120 feet",
+    "components": [
+        "V",
+        "S"
+    ],
+    "ritual": false,
+    "duration": "Instantaneous",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 3,
+    "school": {
+        "index": "abjuration",
+        "name": "Abjuration",
+        "url": "/api/2014/magic-schools/abjuration"
+    },
+    "classes": [
+        {
+            "index": "bard",
+            "name": "Bard",
+            "url": "/api/2014/classes/bard"
+        },
+        {
+            "index": "cleric",
+            "name": "Cleric",
+            "url": "/api/2014/classes/cleric"
+        },
+        {
+            "index": "druid",
+            "name": "Druid",
+            "url": "/api/2014/classes/druid"
+        },
+        {
+            "index": "paladin",
+            "name": "Paladin",
+            "url": "/api/2014/classes/paladin"
+        },
+        {
+            "index": "sorcerer",
+            "name": "Sorcerer",
+            "url": "/api/2014/classes/sorcerer"
+        },
+        {
+            "index": "warlock",
+            "name": "Warlock",
+            "url": "/api/2014/classes/warlock"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        },
+        {
+            "index": "devotion",
+            "name": "Devotion",
+            "url": "/api/2014/subclasses/devotion"
+        }
+    ],
+    "url": "/api/2014/spells/dispel-magic",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

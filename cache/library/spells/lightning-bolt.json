@@ -1,0 +1,82 @@
+{
+    "index": "lightning-bolt",
+    "name": "Lightning Bolt",
+    "desc": [
+        "A stroke of lightning forming a line 100 feet long and 5 feet wide blasts out from you in a direction you choose. Each creature in the line must make a dexterity saving throw. A creature takes 8d6 lightning damage on a failed save, or half as much damage on a successful one.",
+        "The lightning ignites flammable objects in the area that aren't being worn or carried."
+    ],
+    "higher_level": [
+        "When you cast this spell using a spell slot of 4th level or higher, the damage increases by 1d6 for each slot level above 3rd."
+    ],
+    "range": "Self",
+    "components": [
+        "V",
+        "S",
+        "M"
+    ],
+    "material": "A bit of fur and a rod of amber, crystal, or glass.",
+    "ritual": false,
+    "duration": "Instantaneous",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 3,
+    "damage": {
+        "damage_type": {
+            "index": "lightning",
+            "name": "Lightning",
+            "url": "/api/2014/damage-types/lightning"
+        },
+        "damage_at_slot_level": {
+            "3": "8d6",
+            "4": "9d6",
+            "5": "10d6",
+            "6": "11d6",
+            "7": "12d6",
+            "8": "13d6",
+            "9": "14d6"
+        }
+    },
+    "dc": {
+        "dc_type": {
+            "index": "dex",
+            "name": "DEX",
+            "url": "/api/2014/ability-scores/dex"
+        },
+        "dc_success": "half"
+    },
+    "area_of_effect": {
+        "type": "line",
+        "size": 100
+    },
+    "school": {
+        "index": "evocation",
+        "name": "Evocation",
+        "url": "/api/2014/magic-schools/evocation"
+    },
+    "classes": [
+        {
+            "index": "sorcerer",
+            "name": "Sorcerer",
+            "url": "/api/2014/classes/sorcerer"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        },
+        {
+            "index": "land",
+            "name": "Land",
+            "url": "/api/2014/subclasses/land"
+        }
+    ],
+    "url": "/api/2014/spells/lightning-bolt",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

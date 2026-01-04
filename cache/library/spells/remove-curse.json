@@ -1,0 +1,54 @@
+{
+    "higher_level": [],
+    "index": "remove-curse",
+    "name": "Remove Curse",
+    "desc": [
+        "At your touch, all curses affecting one creature or object end. If the object is a cursed magic item, its curse remains, but the spell breaks its owner's attunement to the object so it can be removed or discarded."
+    ],
+    "range": "Touch",
+    "components": [
+        "V",
+        "S"
+    ],
+    "ritual": false,
+    "duration": "Instantaneous",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 3,
+    "school": {
+        "index": "abjuration",
+        "name": "Abjuration",
+        "url": "/api/2014/magic-schools/abjuration"
+    },
+    "classes": [
+        {
+            "index": "cleric",
+            "name": "Cleric",
+            "url": "/api/2014/classes/cleric"
+        },
+        {
+            "index": "paladin",
+            "name": "Paladin",
+            "url": "/api/2014/classes/paladin"
+        },
+        {
+            "index": "warlock",
+            "name": "Warlock",
+            "url": "/api/2014/classes/warlock"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        }
+    ],
+    "url": "/api/2014/spells/remove-curse",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

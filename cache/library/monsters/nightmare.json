@@ -1,0 +1,90 @@
+{
+    "index": "nightmare",
+    "name": "Nightmare",
+    "size": "Large",
+    "type": "fiend",
+    "alignment": "neutral evil",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 13
+        }
+    ],
+    "hit_points": 68,
+    "hit_dice": "8d10",
+    "hit_points_roll": "8d10+24",
+    "speed": {
+        "walk": "60 ft.",
+        "fly": "90 ft."
+    },
+    "strength": 18,
+    "dexterity": 15,
+    "constitution": 16,
+    "intelligence": 10,
+    "wisdom": 13,
+    "charisma": 15,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "fire"
+    ],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 11
+    },
+    "languages": "understands Abyssal, Common, and Infernal but can't speak",
+    "challenge_rating": 3,
+    "proficiency_bonus": 2,
+    "xp": 700,
+    "special_abilities": [
+        {
+            "name": "Confer Fire Resistance",
+            "desc": "The nightmare can grant resistance to fire damage to anyone riding it.",
+            "damage": []
+        },
+        {
+            "name": "Illumination",
+            "desc": "The nightmare sheds bright light in a 10-foot radius and dim light for an additional 10 feet.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Hooves",
+            "desc": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) bludgeoning damage plus 7 (2d6) fire damage.",
+            "attack_bonus": 6,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "2d8+4"
+                },
+                {
+                    "damage_type": {
+                        "index": "fire",
+                        "name": "Fire",
+                        "url": "/api/2014/damage-types/fire"
+                    },
+                    "damage_dice": "2d6"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Ethereal Stride",
+            "desc": "The nightmare and up to three willing creatures within 5 feet of it magically enter the Ethereal Plane from the Material Plane, or vice versa.",
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/nightmare.png",
+    "url": "/api/2014/monsters/nightmare",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

@@ -1,0 +1,208 @@
+{
+    "index": "night-hag",
+    "name": "Night Hag",
+    "size": "Medium",
+    "type": "fiend",
+    "alignment": "neutral evil",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 17
+        }
+    ],
+    "hit_points": 112,
+    "hit_dice": "15d8",
+    "hit_points_roll": "15d8+45",
+    "speed": {
+        "walk": "30 ft."
+    },
+    "strength": 18,
+    "dexterity": 15,
+    "constitution": 16,
+    "intelligence": 16,
+    "wisdom": 14,
+    "charisma": 16,
+    "proficiencies": [
+        {
+            "value": 7,
+            "proficiency": {
+                "index": "skill-deception",
+                "name": "Skill: Deception",
+                "url": "/api/2014/proficiencies/skill-deception"
+            }
+        },
+        {
+            "value": 6,
+            "proficiency": {
+                "index": "skill-insight",
+                "name": "Skill: Insight",
+                "url": "/api/2014/proficiencies/skill-insight"
+            }
+        },
+        {
+            "value": 6,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        },
+        {
+            "value": 6,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [
+        "cold",
+        "fire",
+        "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered"
+    ],
+    "damage_immunities": [],
+    "condition_immunities": [
+        {
+            "index": "charmed",
+            "name": "Charmed",
+            "url": "/api/2014/conditions/charmed"
+        }
+    ],
+    "senses": {
+        "darkvision": "120 ft.",
+        "passive_perception": 16
+    },
+    "languages": "Abyssal, Common, Infernal, Primordial",
+    "challenge_rating": 5,
+    "proficiency_bonus": 3,
+    "xp": 1800,
+    "special_abilities": [
+        {
+            "name": "Innate Spellcasting",
+            "desc": "The hag's innate spellcasting ability is Charisma (spell save DC 14, +6 to hit with spell attacks). She can innately cast the following spells, requiring no material components:\n\nAt will: detect magic, magic missile\n2/day each: plane shift (self only), ray of enfeeblement, sleep",
+            "spellcasting": {
+                "ability": {
+                    "index": "cha",
+                    "name": "CHA",
+                    "url": "/api/2014/ability-scores/cha"
+                },
+                "dc": 14,
+                "modifier": 6,
+                "components_required": [
+                    "V",
+                    "S"
+                ],
+                "spells": [
+                    {
+                        "name": "Detect Magic",
+                        "level": 1,
+                        "url": "/api/2014/spells/detect-magic",
+                        "usage": {
+                            "type": "at will",
+                            "rest_types": []
+                        }
+                    },
+                    {
+                        "name": "Magic Missile",
+                        "level": 1,
+                        "url": "/api/2014/spells/magic-missile",
+                        "usage": {
+                            "type": "at will",
+                            "rest_types": []
+                        }
+                    },
+                    {
+                        "name": "Plane Shift",
+                        "level": 7,
+                        "notes": "Self Only",
+                        "url": "/api/2014/spells/plane-shift",
+                        "usage": {
+                            "type": "per day",
+                            "times": 2,
+                            "rest_types": []
+                        }
+                    },
+                    {
+                        "name": "Ray of Enfeeblement",
+                        "level": 2,
+                        "url": "/api/2014/spells/ray-of-enfeeblement",
+                        "usage": {
+                            "type": "per day",
+                            "times": 2,
+                            "rest_types": []
+                        }
+                    },
+                    {
+                        "name": "Sleep",
+                        "level": 1,
+                        "url": "/api/2014/spells/sleep",
+                        "usage": {
+                            "type": "per day",
+                            "times": 2,
+                            "rest_types": []
+                        }
+                    }
+                ]
+            },
+            "damage": []
+        },
+        {
+            "name": "Magic Resistance",
+            "desc": "The hag has advantage on saving throws against spells and other magical effects.",
+            "damage": []
+        },
+        {
+            "name": "Night Hag Items",
+            "desc": "A night hag carries two very rare magic items that she must craft for herself If either object is lost, the night hag will go to great lengths to retrieve it, as creating a new tool takes time and effort.\nHeartstone: This lustrous black gem allows a night hag to become ethereal while it is in her possession. The touch of a heartstone also cures any disease. Crafting a heartstone takes 30 days.\nSoul Bag: When an evil humanoid dies as a result of a night hag's Nightmare Haunting, the hag catches the soul in this black sack made of stitched flesh. A soul bag can hold only one evil soul at a time, and only the night hag who crafted the bag can catch a soul with it. Crafting a soul bag takes 7 days and a humanoid sacrifice (whose flesh is used to make the bag).",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Claws (Hag Form Only)",
+            "desc": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.",
+            "attack_bonus": 7,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "2d8+4"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Change Shape",
+            "desc": "The hag magically polymorphs into a Small or Medium female humanoid, or back into her true form. Her statistics are the same in each form. Any equipment she is wearing or carrying isn't transformed. She reverts to her true form if she dies.",
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Etherealness",
+            "desc": "The hag magically enters the Ethereal Plane from the Material Plane, or vice versa. To do so, the hag must have a heartstone in her possession.",
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Nightmare Haunting",
+            "desc": "While on the Ethereal Plane, the hag magically touches a sleeping humanoid on the Material Plane. A protection from evil and good spell cast on the target prevents this contact, as does a magic circle. As long as the contact persists, the target has dreadful visions. If these visions last for at least 1 hour, the target gains no benefit from its rest, and its hit point maximum is reduced by 5 (1d10). If this effect reduces the target's hit point maximum to 0, the target dies, and if the target was evil, its soul is trapped in the hag's soul bag. The reduction to the target's hit point maximum lasts until removed by the greater restoration spell or similar magic.",
+            "usage": {
+                "type": "per day",
+                "times": 1
+            },
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/night-hag.png",
+    "url": "/api/2014/monsters/night-hag",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

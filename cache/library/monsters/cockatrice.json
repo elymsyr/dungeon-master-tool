@@ -1,0 +1,64 @@
+{
+    "index": "cockatrice",
+    "name": "Cockatrice",
+    "size": "Small",
+    "type": "monstrosity",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 11
+        }
+    ],
+    "hit_points": 27,
+    "hit_dice": "6d6",
+    "hit_points_roll": "6d6+6",
+    "speed": {
+        "walk": "20 ft.",
+        "fly": "40 ft."
+    },
+    "strength": 6,
+    "dexterity": 12,
+    "constitution": 12,
+    "intelligence": 2,
+    "wisdom": 13,
+    "charisma": 5,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "darkvision": "60 ft.",
+        "passive_perception": 11
+    },
+    "languages": "",
+    "challenge_rating": 0.5,
+    "proficiency_bonus": 2,
+    "xp": 100,
+    "actions": [
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +3 to hit, reach 5 ft., one creature. Hit: 3 (1d4 + 1) piercing damage, and the target must succeed on a DC 11 Constitution saving throw against being magically petrified. On a failed save, the creature begins to turn to stone and is restrained. It must repeat the saving throw at the end of its next turn. On a success, the effect ends. On a failure, the creature is petrified for 24 hours.",
+            "attack_bonus": 3,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d4+1"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/cockatrice.png",
+    "url": "/api/2014/monsters/cockatrice",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

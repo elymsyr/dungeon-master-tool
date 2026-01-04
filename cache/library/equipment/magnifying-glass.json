@@ -1,0 +1,28 @@
+{
+    "special": [],
+    "index": "magnifying-glass",
+    "name": "Magnifying glass",
+    "equipment_category": {
+        "index": "adventuring-gear",
+        "name": "Adventuring Gear",
+        "url": "/api/2014/equipment-categories/adventuring-gear"
+    },
+    "gear_category": {
+        "index": "standard-gear",
+        "name": "Standard Gear",
+        "url": "/api/2014/equipment-categories/standard-gear"
+    },
+    "cost": {
+        "quantity": 100,
+        "unit": "gp"
+    },
+    "weight": 0,
+    "desc": [
+        "This lens allows a closer look at small objects. It is also useful as a substitute for flint and steel when starting fires. Lighting a fire with a magnifying glass requires light as bright as sunlight to focus, tinder to ignite, and about 5 minutes for the fire to ignite.",
+        "A magnifying glass grants advantage on any ability check made to appraise or inspect an item that is small or highly detailed."
+    ],
+    "url": "/api/2014/equipment/magnifying-glass",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

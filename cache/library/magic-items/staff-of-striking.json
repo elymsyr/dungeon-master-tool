@@ -1,0 +1,21 @@
+{
+    "index": "staff-of-striking",
+    "name": "Staff of Striking",
+    "equipment_category": {
+        "index": "staff",
+        "name": "Staff",
+        "url": "/api/2014/equipment-categories/staff"
+    },
+    "rarity": {
+        "name": "Very Rare"
+    },
+    "variants": [],
+    "variant": false,
+    "desc": [
+        "Staff, very rare (requires attunement)",
+        "This staff can be wielded as a magic quarterstaff that grants a +3 bonus to attack and damage rolls made with it.",
+        "The staff has 10 charges. When you hit with a melee attack using it, you can expend up to 3 of its charges. For each charge you expend, the target takes an extra 1d6 force damage. The staff regains 1d6 + 4 expended charges daily at dawn. If you expend the last charge, roll a d20. On a 1, the staff becomes a nonmagical quarterstaff."
+    ],
+    "url": "/api/2014/magic-items/staff-of-striking",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

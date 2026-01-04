@@ -1,0 +1,73 @@
+{
+    "index": "goat",
+    "name": "Goat",
+    "size": "Medium",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 10
+        }
+    ],
+    "hit_points": 4,
+    "hit_dice": "1d8",
+    "hit_points_roll": "1d8",
+    "speed": {
+        "walk": "40 ft."
+    },
+    "strength": 12,
+    "dexterity": 10,
+    "constitution": 11,
+    "intelligence": 2,
+    "wisdom": 10,
+    "charisma": 5,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 10
+    },
+    "languages": "",
+    "challenge_rating": 0,
+    "proficiency_bonus": 2,
+    "xp": 10,
+    "special_abilities": [
+        {
+            "name": "Charge",
+            "desc": "If the goat moves at least 20 ft. straight toward a target and then hits it with a ram attack on the same turn, the target takes an extra 2 (1d4) bludgeoning damage. If the target is a creature, it must succeed on a DC 10 Strength saving throw or be knocked prone.",
+            "damage": []
+        },
+        {
+            "name": "Sure-Footed",
+            "desc": "The goat has advantage on Strength and Dexterity saving throws made against effects that would knock it prone.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Ram",
+            "desc": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 3 (1d4 + 1) bludgeoning damage.",
+            "attack_bonus": 3,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "1d4+1"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/goat.png",
+    "url": "/api/2014/monsters/goat",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

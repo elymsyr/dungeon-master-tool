@@ -1,0 +1,78 @@
+{
+    "index": "eagle",
+    "name": "Eagle",
+    "size": "Small",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 12
+        }
+    ],
+    "hit_points": 3,
+    "hit_dice": "1d6",
+    "hit_points_roll": "1d6",
+    "speed": {
+        "walk": "10 ft.",
+        "fly": "60 ft."
+    },
+    "strength": 6,
+    "dexterity": 15,
+    "constitution": 10,
+    "intelligence": 2,
+    "wisdom": 14,
+    "charisma": 7,
+    "proficiencies": [
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 14
+    },
+    "languages": "",
+    "challenge_rating": 0,
+    "proficiency_bonus": 2,
+    "xp": 10,
+    "special_abilities": [
+        {
+            "name": "Keen Sight",
+            "desc": "The eagle has advantage on Wisdom (Perception) checks that rely on sight.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Talons",
+            "desc": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 4 (1d4 + 2) slashing damage.",
+            "attack_bonus": 4,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "1d4+2"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/eagle.png",
+    "url": "/api/2014/monsters/eagle",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

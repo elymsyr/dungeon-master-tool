@@ -1,0 +1,53 @@
+{
+    "index": "gnome",
+    "name": "Gnome",
+    "speed": 25,
+    "ability_bonuses": [
+        {
+            "ability_score": {
+                "index": "int",
+                "name": "INT",
+                "url": "/api/2014/ability-scores/int"
+            },
+            "bonus": 2
+        }
+    ],
+    "alignment": "Gnomes are most often good. Those who tend toward law are sages, engineers, researchers, scholars, investigators, or inventors. Those who tend toward chaos are minstrels, tricksters, wanderers, or fanciful jewelers. Gnomes are good-hearted, and even the tricksters among them are more playful than vicious.",
+    "age": "Gnomes mature at the same rate humans do, and most are expected to settle down into an adult life by around age 40. They can live 350 to almost 500 years.",
+    "size": "Small",
+    "size_description": "Gnomes are between 3 and 4 feet tall and average about 40 pounds. Your size is Small.",
+    "languages": [
+        {
+            "index": "common",
+            "name": "Common",
+            "url": "/api/2014/languages/common"
+        },
+        {
+            "index": "gnomish",
+            "name": "Gnomish",
+            "url": "/api/2014/languages/gnomish"
+        }
+    ],
+    "language_desc": "You can speak, read, and write Common and Gnomish. The Gnomish language, which uses the Dwarvish script, is renowned for its technical treatises and its catalogs of knowledge about the natural world.",
+    "traits": [
+        {
+            "index": "darkvision",
+            "name": "Darkvision",
+            "url": "/api/2014/traits/darkvision"
+        },
+        {
+            "index": "gnome-cunning",
+            "name": "Gnome Cunning",
+            "url": "/api/2014/traits/gnome-cunning"
+        }
+    ],
+    "subraces": [
+        {
+            "index": "rock-gnome",
+            "name": "Rock Gnome",
+            "url": "/api/2014/subraces/rock-gnome"
+        }
+    ],
+    "url": "/api/2014/races/gnome",
+    "updated_at": "2025-10-24T20:42:14.212Z"
+}

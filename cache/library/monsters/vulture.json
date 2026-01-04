@@ -1,0 +1,83 @@
+{
+    "index": "vulture",
+    "name": "Vulture",
+    "size": "Medium",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 10
+        }
+    ],
+    "hit_points": 5,
+    "hit_dice": "1d8",
+    "hit_points_roll": "1d8+1",
+    "speed": {
+        "walk": "10 ft.",
+        "fly": "50 ft."
+    },
+    "strength": 7,
+    "dexterity": 10,
+    "constitution": 13,
+    "intelligence": 2,
+    "wisdom": 12,
+    "charisma": 4,
+    "proficiencies": [
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 13
+    },
+    "languages": "",
+    "challenge_rating": 0,
+    "proficiency_bonus": 2,
+    "xp": 10,
+    "special_abilities": [
+        {
+            "name": "Keen Sight and Smell",
+            "desc": "The vulture has advantage on Wisdom (Perception) checks that rely on sight or smell.",
+            "damage": []
+        },
+        {
+            "name": "Pack Tactics",
+            "desc": "The vulture has advantage on an attack roll against a creature if at least one of the vulture's allies is within 5 ft. of the creature and the ally isn't incapacitated.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Beak",
+            "desc": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 2 (1d4) piercing damage.",
+            "attack_bonus": 2,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d4"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/vulture.png",
+    "url": "/api/2014/monsters/vulture",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

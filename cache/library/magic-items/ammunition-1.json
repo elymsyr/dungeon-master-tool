@@ -1,0 +1,21 @@
+{
+    "index": "ammunition-1",
+    "name": "Ammunition, +1",
+    "equipment_category": {
+        "index": "ammunition",
+        "name": "Ammunition",
+        "url": "/api/2014/equipment-categories/ammunition"
+    },
+    "rarity": {
+        "name": "Uncommon"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Weapon (any ammunition), uncommon",
+        "You have a +1 bonus to attack and damage rolls made with this piece of magic ammunition. Once it hits a target, the ammunition is no longer magical."
+    ],
+    "image": "/api/images/magic-items/ammunition.png",
+    "url": "/api/2014/magic-items/ammunition-1",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

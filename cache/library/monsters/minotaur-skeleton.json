@@ -1,0 +1,100 @@
+{
+    "index": "minotaur-skeleton",
+    "name": "Minotaur Skeleton",
+    "size": "Large",
+    "type": "undead",
+    "alignment": "lawful evil",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 12
+        }
+    ],
+    "hit_points": 67,
+    "hit_dice": "9d10",
+    "hit_points_roll": "9d10+18",
+    "speed": {
+        "walk": "40 ft."
+    },
+    "strength": 18,
+    "dexterity": 11,
+    "constitution": 15,
+    "intelligence": 6,
+    "wisdom": 8,
+    "charisma": 5,
+    "proficiencies": [],
+    "damage_vulnerabilities": [
+        "bludgeoning"
+    ],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "poison"
+    ],
+    "condition_immunities": [
+        {
+            "index": "exhaustion",
+            "name": "Exhaustion",
+            "url": "/api/2014/conditions/exhaustion"
+        },
+        {
+            "index": "poisoned",
+            "name": "Poisoned",
+            "url": "/api/2014/conditions/poisoned"
+        }
+    ],
+    "senses": {
+        "darkvision": "60 ft.",
+        "passive_perception": 9
+    },
+    "languages": "understands Abyssal but can't speak",
+    "challenge_rating": 2,
+    "proficiency_bonus": 2,
+    "xp": 450,
+    "special_abilities": [
+        {
+            "name": "Charge",
+            "desc": "If the skeleton moves at least 10 feet straight toward a target and then hits it with a gore attack on the same turn, the target takes an extra 9 (2d8) piercing damage. If the target is a creature, it must succeed on a DC 14 Strength saving throw or be pushed up to 10 feet away and knocked prone.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Greataxe",
+            "desc": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 17 (2d12 + 4) slashing damage.",
+            "attack_bonus": 6,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "2d12+4"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Gore",
+            "desc": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) piercing damage.",
+            "attack_bonus": 6,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "2d8+4"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/minotaur-skeleton.png",
+    "url": "/api/2014/monsters/minotaur-skeleton",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

@@ -1,0 +1,20 @@
+{
+    "index": "potion-of-resistance-acid",
+    "name": "Potion of Acid Resistance",
+    "equipment_category": {
+        "index": "potion",
+        "name": "Potion",
+        "url": "/api/2014/equipment-categories/potion"
+    },
+    "rarity": {
+        "name": "Uncommon"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Potion, uncommon",
+        "When you drink this potion, you gain resistance to acid damage for 1 hour."
+    ],
+    "url": "/api/2014/magic-items/potion-of-resistance-acid",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

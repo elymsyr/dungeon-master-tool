@@ -1,0 +1,48 @@
+{
+    "index": "elemental-gem",
+    "name": "Elemental Gem",
+    "equipment_category": {
+        "index": "wondrous-items",
+        "name": "Wondrous Items",
+        "url": "/api/2014/equipment-categories/wondrous-items"
+    },
+    "rarity": {
+        "name": "Uncommon"
+    },
+    "variants": [
+        {
+            "index": "elemental-gem-air",
+            "name": "Air Elemental Gem",
+            "url": "/api/2014/magic-items/elemental-gem-air"
+        },
+        {
+            "index": "elemental-gem-earth",
+            "name": "Earth Elemental Gem",
+            "url": "/api/2014/magic-items/elemental-gem-earth"
+        },
+        {
+            "index": "elemental-gem-fire",
+            "name": "Fire Elemental Gem",
+            "url": "/api/2014/magic-items/elemental-gem-fire"
+        },
+        {
+            "index": "elemental-gem-water",
+            "name": "Water Elemental Gem",
+            "url": "/api/2014/magic-items/elemental-gem-water"
+        }
+    ],
+    "variant": false,
+    "desc": [
+        "Wondrous item, uncommon",
+        "This gem contains a mote of elemental energy. When you use an action to break the gem, an elemental is summoned as if you had cast the conjure elemental spell, and the gem's magic is lost. The type of gem determines the elemental summoned by the spell.",
+        "| Gem | Summoned Elemental |",
+        "|---|---|",
+        "| Blue sapphire | Air elemental |",
+        "| Yellow diamond | Earth elemental |",
+        "| Red corundum | Fire elemental |",
+        "| Emerald | Water elemental |"
+    ],
+    "image": "/api/images/magic-items/elemental-gem.png",
+    "url": "/api/2014/magic-items/elemental-gem",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

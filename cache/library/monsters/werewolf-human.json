@@ -1,0 +1,130 @@
+{
+    "index": "werewolf-human",
+    "name": "Werewolf, Human Form",
+    "size": "Medium",
+    "type": "humanoid",
+    "subtype": "human",
+    "alignment": "chaotic evil",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 11
+        }
+    ],
+    "hit_points": 58,
+    "hit_dice": "9d8",
+    "forms": [
+        {
+            "index": "werewolf-hybrid",
+            "name": "Werewolf, Hybrid Form",
+            "url": "/api/2014/monsters/werewolf-hybrid"
+        },
+        {
+            "index": "werewolf-wolf",
+            "name": "Werewolf, Wolf Form",
+            "url": "/api/2014/monsters/werewolf-wolf"
+        }
+    ],
+    "hit_points_roll": "9d8+18",
+    "speed": {
+        "walk": "30 ft."
+    },
+    "strength": 15,
+    "dexterity": 13,
+    "constitution": 14,
+    "intelligence": 10,
+    "wisdom": 11,
+    "charisma": 10,
+    "proficiencies": [
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "bludgeoning, piercing, and slashing from nonmagical weapons that aren't silvered"
+    ],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 14
+    },
+    "languages": "Common",
+    "challenge_rating": 3,
+    "proficiency_bonus": 2,
+    "xp": 700,
+    "special_abilities": [
+        {
+            "name": "Shapechanger",
+            "desc": "The werewolf can use its action to polymorph into a wolf-humanoid hybrid or into a wolf, or back into its true form, which is humanoid. Its statistics, other than its AC, are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies.",
+            "damage": []
+        },
+        {
+            "name": "Keen Hearing and Smell",
+            "desc": "The werewolf has advantage on Wisdom (Perception) checks that rely on hearing or smell.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The werewolf makes two attacks: two with its spear (humanoid form) or one with its bite and one with its claws (hybrid form).",
+            "actions": [
+                {
+                    "action_name": "Spear",
+                    "count": "2",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Spear",
+            "desc": "Melee or Ranged Weapon Attack: +4 to hit, reach 5 ft. or range 20/60 ft., one creature. Hit: 5 (1d6 + 2) piercing damage, or 6 (1d8 + 2) piercing damage if used with two hands to make a melee attack.",
+            "attack_bonus": 4,
+            "damage": [
+                {
+                    "choose": 1,
+                    "type": "damage",
+                    "from": {
+                        "option_set_type": "options_array",
+                        "options": [
+                            {
+                                "option_type": "damage",
+                                "notes": "One handed",
+                                "damage_type": {
+                                    "index": "piercing",
+                                    "name": "Piercing",
+                                    "url": "/api/2014/damage-types/piercing"
+                                },
+                                "damage_dice": "1d6+2"
+                            },
+                            {
+                                "option_type": "damage",
+                                "notes": "Two handed",
+                                "damage_type": {
+                                    "index": "piercing",
+                                    "name": "Piercing",
+                                    "url": "/api/2014/damage-types/piercing"
+                                },
+                                "damage_dice": "1d8+2"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/werewolf-human.png",
+    "url": "/api/2014/monsters/werewolf-human",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "legendary_actions": [],
+    "reactions": []
+}

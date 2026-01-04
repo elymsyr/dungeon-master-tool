@@ -1,0 +1,137 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "burglars-pack",
+    "name": "Burglar's Pack",
+    "equipment_category": {
+        "index": "adventuring-gear",
+        "name": "Adventuring Gear",
+        "url": "/api/2014/equipment-categories/adventuring-gear"
+    },
+    "gear_category": {
+        "index": "equipment-packs",
+        "name": "Equipment Packs",
+        "url": "/api/2014/equipment-categories/equipment-packs"
+    },
+    "cost": {
+        "quantity": 16,
+        "unit": "gp"
+    },
+    "contents": [
+        {
+            "item": {
+                "index": "backpack",
+                "name": "Backpack",
+                "url": "/api/2014/equipment/backpack"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "ball-bearings-bag-of-1000",
+                "name": "Ball bearings (bag of 1,000)",
+                "url": "/api/2014/equipment/ball-bearings-bag-of-1000"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "string-10-feet",
+                "name": "String (10 feet)",
+                "url": "/api/2014/equipment/string-10-feet"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "bell",
+                "name": "Bell",
+                "url": "/api/2014/equipment/bell"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "candle",
+                "name": "Candle",
+                "url": "/api/2014/equipment/candle"
+            },
+            "quantity": 5
+        },
+        {
+            "item": {
+                "index": "crowbar",
+                "name": "Crowbar",
+                "url": "/api/2014/equipment/crowbar"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "hammer",
+                "name": "Hammer",
+                "url": "/api/2014/equipment/hammer"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "piton",
+                "name": "Piton",
+                "url": "/api/2014/equipment/piton"
+            },
+            "quantity": 10
+        },
+        {
+            "item": {
+                "index": "lantern-hooded",
+                "name": "Lantern, hooded",
+                "url": "/api/2014/equipment/lantern-hooded"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "oil-flask",
+                "name": "Oil (flask)",
+                "url": "/api/2014/equipment/oil-flask"
+            },
+            "quantity": 2
+        },
+        {
+            "item": {
+                "index": "rations-1-day",
+                "name": "Rations (1 day)",
+                "url": "/api/2014/equipment/rations-1-day"
+            },
+            "quantity": 5
+        },
+        {
+            "item": {
+                "index": "tinderbox",
+                "name": "Tinderbox",
+                "url": "/api/2014/equipment/tinderbox"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "waterskin",
+                "name": "Waterskin",
+                "url": "/api/2014/equipment/waterskin"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "rope-hempen-50-feet",
+                "name": "Rope, hempen (50 feet)",
+                "url": "/api/2014/equipment/rope-hempen-50-feet"
+            },
+            "quantity": 1
+        }
+    ],
+    "url": "/api/2014/equipment/burglars-pack",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "properties": []
+}

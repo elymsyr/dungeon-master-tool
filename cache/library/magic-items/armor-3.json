@@ -1,0 +1,21 @@
+{
+    "index": "armor-3",
+    "name": "Armor, +3",
+    "equipment_category": {
+        "index": "armor",
+        "name": "Armor",
+        "url": "/api/2014/equipment-categories/armor"
+    },
+    "rarity": {
+        "name": "Legendary"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Armor (light, medium, or heavy), legendary",
+        "You have a +3 bonus to AC while wearing this armor."
+    ],
+    "image": "/api/images/magic-items/armor-3.png",
+    "url": "/api/2014/magic-items/armor-3",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

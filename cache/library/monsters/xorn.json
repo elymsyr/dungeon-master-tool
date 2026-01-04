@@ -1,0 +1,134 @@
+{
+    "index": "xorn",
+    "name": "Xorn",
+    "size": "Medium",
+    "type": "elemental",
+    "alignment": "neutral",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 19
+        }
+    ],
+    "hit_points": 73,
+    "hit_dice": "7d8",
+    "hit_points_roll": "7d8+42",
+    "speed": {
+        "walk": "20 ft.",
+        "burrow": "20 ft."
+    },
+    "strength": 17,
+    "dexterity": 10,
+    "constitution": 22,
+    "intelligence": 11,
+    "wisdom": 10,
+    "charisma": 11,
+    "proficiencies": [
+        {
+            "value": 6,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        },
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [
+        "piercing and slashing from nonmagical weapons that aren't adamantine"
+    ],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "darkvision": "60 ft.",
+        "tremorsense": "60 ft.",
+        "passive_perception": 16
+    },
+    "languages": "Terran",
+    "challenge_rating": 5,
+    "proficiency_bonus": 3,
+    "xp": 1800,
+    "special_abilities": [
+        {
+            "name": "Earth Glide",
+            "desc": "The xorn can burrow through nonmagical, unworked earth and stone. While doing so, the xorn doesn't disturb the material it moves through.",
+            "damage": []
+        },
+        {
+            "name": "Stone Camouflage",
+            "desc": "The xorn has advantage on Dexterity (Stealth) checks made to hide in rocky terrain.",
+            "damage": []
+        },
+        {
+            "name": "Treasure Sense",
+            "desc": "The xorn can pinpoint, by scent, the location of precious metals and stones, such as coins and gems, within 60 ft. of it.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The xorn makes three claw attacks and one bite attack.",
+            "actions": [
+                {
+                    "action_name": "Claw",
+                    "count": "3",
+                    "type": "melee"
+                },
+                {
+                    "action_name": "Bite",
+                    "count": "1",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 13 (3d6 + 3) piercing damage.",
+            "attack_bonus": 6,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "3d6+3"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Claw",
+            "desc": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) slashing damage.",
+            "attack_bonus": 6,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "1d6+3"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/xorn.png",
+    "url": "/api/2014/monsters/xorn",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

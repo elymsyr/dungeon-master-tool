@@ -1,0 +1,173 @@
+{
+    "index": "brass-dragon-wyrmling",
+    "name": "Brass Dragon Wyrmling",
+    "size": "Medium",
+    "type": "dragon",
+    "alignment": "chaotic good",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 16
+        }
+    ],
+    "hit_points": 16,
+    "hit_dice": "3d8",
+    "hit_points_roll": "3d8+3",
+    "speed": {
+        "walk": "30 ft.",
+        "burrow": "15 ft.",
+        "fly": "60 ft."
+    },
+    "strength": 15,
+    "dexterity": 10,
+    "constitution": 13,
+    "intelligence": 10,
+    "wisdom": 11,
+    "charisma": 13,
+    "proficiencies": [
+        {
+            "value": 2,
+            "proficiency": {
+                "index": "saving-throw-dex",
+                "name": "Saving Throw: DEX",
+                "url": "/api/2014/proficiencies/saving-throw-dex"
+            }
+        },
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "saving-throw-con",
+                "name": "Saving Throw: CON",
+                "url": "/api/2014/proficiencies/saving-throw-con"
+            }
+        },
+        {
+            "value": 2,
+            "proficiency": {
+                "index": "saving-throw-wis",
+                "name": "Saving Throw: WIS",
+                "url": "/api/2014/proficiencies/saving-throw-wis"
+            }
+        },
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "saving-throw-cha",
+                "name": "Saving Throw: CHA",
+                "url": "/api/2014/proficiencies/saving-throw-cha"
+            }
+        },
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        },
+        {
+            "value": 2,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "fire"
+    ],
+    "condition_immunities": [],
+    "senses": {
+        "blindsight": "10 ft.",
+        "darkvision": "60 ft.",
+        "passive_perception": 14
+    },
+    "languages": "Draconic",
+    "challenge_rating": 1,
+    "proficiency_bonus": 2,
+    "xp": 100,
+    "actions": [
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 7 (1d10 + 2) piercing damage.",
+            "attack_bonus": 4,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d10+2"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Breath Weapons",
+            "desc": "The dragon uses one of the following breath weapons.\nFire Breath. The dragon exhales fire in an 20-foot line that is 5 feet wide. Each creature in that line must make a DC 11 Dexterity saving throw, taking 14 (4d6) fire damage on a failed save, or half as much damage on a successful one.\nSleep Breath. The dragon exhales sleep gas in a 15-foot cone. Each creature in that area must succeed on a DC 11 Constitution saving throw or fall unconscious for 1 minute. This effect ends for a creature if the creature takes damage or someone uses an action to wake it.",
+            "usage": {
+                "type": "recharge on roll",
+                "dice": "1d6",
+                "min_value": 5
+            },
+            "options": {
+                "choose": 1,
+                "type": "attack",
+                "from": {
+                    "option_set_type": "options_array",
+                    "options": [
+                        {
+                            "option_type": "breath",
+                            "name": "Fire Breath",
+                            "dc": {
+                                "dc_type": {
+                                    "index": "dex",
+                                    "name": "DEX",
+                                    "url": "/api/2014/ability-scores/dex"
+                                },
+                                "dc_value": 11,
+                                "success_type": "half"
+                            },
+                            "damage": [
+                                {
+                                    "damage_type": {
+                                        "index": "fire",
+                                        "name": "Fire",
+                                        "url": "/api/2014/damage-types/fire"
+                                    },
+                                    "damage_dice": "4d6"
+                                }
+                            ]
+                        },
+                        {
+                            "option_type": "breath",
+                            "name": "Sleep Breath",
+                            "dc": {
+                                "dc_type": {
+                                    "index": "con",
+                                    "name": "CON",
+                                    "url": "/api/2014/ability-scores/con"
+                                },
+                                "dc_value": 11,
+                                "success_type": "none"
+                            }
+                        }
+                    ]
+                }
+            },
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/brass-dragon-wyrmling.png",
+    "url": "/api/2014/monsters/brass-dragon-wyrmling",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

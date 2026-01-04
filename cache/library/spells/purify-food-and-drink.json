@@ -1,0 +1,49 @@
+{
+    "higher_level": [],
+    "index": "purify-food-and-drink",
+    "name": "Purify Food and Drink",
+    "desc": [
+        "All nonmagical food and drink within a 5-foot radius sphere centered on a point of your choice within range is purified and rendered free of poison and disease."
+    ],
+    "range": "10 feet",
+    "components": [
+        "V",
+        "S"
+    ],
+    "ritual": true,
+    "duration": "Instantaneous",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 1,
+    "school": {
+        "index": "transmutation",
+        "name": "Transmutation",
+        "url": "/api/2014/magic-schools/transmutation"
+    },
+    "classes": [
+        {
+            "index": "cleric",
+            "name": "Cleric",
+            "url": "/api/2014/classes/cleric"
+        },
+        {
+            "index": "druid",
+            "name": "Druid",
+            "url": "/api/2014/classes/druid"
+        },
+        {
+            "index": "paladin",
+            "name": "Paladin",
+            "url": "/api/2014/classes/paladin"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        }
+    ],
+    "url": "/api/2014/spells/purify-food-and-drink",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

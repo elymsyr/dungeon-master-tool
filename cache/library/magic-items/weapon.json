@@ -1,0 +1,36 @@
+{
+    "index": "weapon",
+    "name": "Weapon, +1, +2, or +3",
+    "equipment_category": {
+        "index": "weapon",
+        "name": "Weapon",
+        "url": "/api/2014/equipment-categories/weapon"
+    },
+    "rarity": {
+        "name": "Varies"
+    },
+    "variants": [
+        {
+            "index": "weapon-1",
+            "name": "Weapon, +1",
+            "url": "/api/2014/magic-items/weapon-1"
+        },
+        {
+            "index": "weapon-2",
+            "name": "Weapon, +2",
+            "url": "/api/2014/magic-items/weapon-2"
+        },
+        {
+            "index": "weapon-3",
+            "name": "Weapon, +3",
+            "url": "/api/2014/magic-items/weapon-3"
+        }
+    ],
+    "variant": false,
+    "desc": [
+        "Weapon (any), uncommon (+1), rare (+2), or very rare (+3)",
+        "You have a bonus to attack and damage rolls made with this magic weapon. The bonus is determined by the weapon's rarity."
+    ],
+    "url": "/api/2014/magic-items/weapon",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

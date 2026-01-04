@@ -1,0 +1,163 @@
+{
+    "index": "steam-mephit",
+    "name": "Steam Mephit",
+    "size": "Small",
+    "type": "elemental",
+    "alignment": "neutral evil",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 10
+        }
+    ],
+    "hit_points": 21,
+    "hit_dice": "6d6",
+    "hit_points_roll": "6d6",
+    "speed": {
+        "walk": "30 ft.",
+        "fly": "30 ft."
+    },
+    "strength": 5,
+    "dexterity": 11,
+    "constitution": 10,
+    "intelligence": 11,
+    "wisdom": 10,
+    "charisma": 12,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "fire",
+        "poison"
+    ],
+    "condition_immunities": [
+        {
+            "index": "poisoned",
+            "name": "Poisoned",
+            "url": "/api/2014/conditions/poisoned"
+        }
+    ],
+    "senses": {
+        "darkvision": "60 ft.",
+        "passive_perception": 10
+    },
+    "languages": "Aquan, Ignan",
+    "challenge_rating": 0.25,
+    "proficiency_bonus": 2,
+    "xp": 50,
+    "special_abilities": [
+        {
+            "name": "Death Burst",
+            "desc": "When the mephit dies, it explodes in a cloud of steam. Each creature within 5 ft. of the mephit must succeed on a DC 10 Dexterity saving throw or take 4 (1d8) fire damage.",
+            "dc": {
+                "dc_type": {
+                    "index": "dex",
+                    "name": "DEX",
+                    "url": "/api/2014/ability-scores/dex"
+                },
+                "dc_value": 10,
+                "success_type": "none"
+            },
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "fire",
+                        "name": "Fire",
+                        "url": "/api/2014/damage-types/fire"
+                    },
+                    "damage_dice": "1d8"
+                }
+            ]
+        },
+        {
+            "name": "Innate Spellcasting",
+            "desc": "The mephit can innately cast blur, requiring no material components. Its innate spellcasting ability is Charisma.",
+            "spellcasting": {
+                "ability": {
+                    "index": "cha",
+                    "name": "CHA",
+                    "url": "/api/2014/ability-scores/cha"
+                },
+                "dc": 11,
+                "components_required": [
+                    "V",
+                    "S"
+                ],
+                "spells": [
+                    {
+                        "name": "Blur",
+                        "level": 2,
+                        "url": "/api/2014/spells/blur",
+                        "usage": {
+                            "type": "per day",
+                            "times": 1,
+                            "rest_types": []
+                        }
+                    }
+                ]
+            },
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Claws",
+            "desc": "Melee Weapon Attack: +2 to hit, reach 5 ft., one creature. Hit: 2 (1d4) slashing damage plus 2 (1d4) fire damage.",
+            "attack_bonus": 2,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "1d4"
+                },
+                {
+                    "damage_type": {
+                        "index": "fire",
+                        "name": "Fire",
+                        "url": "/api/2014/damage-types/fire"
+                    },
+                    "damage_dice": "1d4"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Steam Breath",
+            "desc": "The mephit exhales a 15-foot cone of scalding steam. Each creature in that area must succeed on a DC 10 Dexterity saving throw, taking 4 (1d8) fire damage on a failed save, or half as much damage on a successful one.",
+            "usage": {
+                "type": "recharge on roll",
+                "dice": "1d6",
+                "min_value": 6
+            },
+            "dc": {
+                "dc_type": {
+                    "index": "dex",
+                    "name": "DEX",
+                    "url": "/api/2014/ability-scores/dex"
+                },
+                "dc_value": 10,
+                "success_type": "half"
+            },
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "fire",
+                        "name": "Fire",
+                        "url": "/api/2014/damage-types/fire"
+                    },
+                    "damage_dice": "1d8"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/steam-mephit.png",
+    "url": "/api/2014/monsters/steam-mephit",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

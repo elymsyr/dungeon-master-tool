@@ -1,0 +1,96 @@
+{
+    "index": "lemure",
+    "name": "Lemure",
+    "size": "Medium",
+    "type": "fiend",
+    "subtype": "devil",
+    "alignment": "lawful evil",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 7
+        }
+    ],
+    "hit_points": 13,
+    "hit_dice": "3d8",
+    "hit_points_roll": "3d8",
+    "speed": {
+        "walk": "15 ft."
+    },
+    "strength": 10,
+    "dexterity": 5,
+    "constitution": 11,
+    "intelligence": 1,
+    "wisdom": 11,
+    "charisma": 3,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [
+        "cold"
+    ],
+    "damage_immunities": [
+        "fire",
+        "poison"
+    ],
+    "condition_immunities": [
+        {
+            "index": "charmed",
+            "name": "Charmed",
+            "url": "/api/2014/conditions/charmed"
+        },
+        {
+            "index": "frightened",
+            "name": "Frightened",
+            "url": "/api/2014/conditions/frightened"
+        },
+        {
+            "index": "poisoned",
+            "name": "Poisoned",
+            "url": "/api/2014/conditions/poisoned"
+        }
+    ],
+    "senses": {
+        "darkvision": "120 ft.",
+        "passive_perception": 10
+    },
+    "languages": "understands infernal but can't speak",
+    "challenge_rating": 0,
+    "proficiency_bonus": 2,
+    "xp": 10,
+    "special_abilities": [
+        {
+            "name": "Devil's Sight",
+            "desc": "Magical darkness doesn't impede the lemure's darkvision.",
+            "damage": []
+        },
+        {
+            "name": "Hellish Rejuvenation",
+            "desc": "A lemure that dies in the Nine Hells comes back to life with all its hit points in 1d10 days unless it is killed by a good-aligned creature with a bless spell cast on that creature or its remains are sprinkled with holy water.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Fist",
+            "desc": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 2 (1d4) bludgeoning damage.",
+            "attack_bonus": 3,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "1d4"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/lemure.png",
+    "url": "/api/2014/monsters/lemure",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}
