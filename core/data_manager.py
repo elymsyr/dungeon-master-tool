@@ -5,17 +5,15 @@ import uuid
 from config import WORLDS_DIR, BASE_DIR, CACHE_DIR
 from core.models import get_default_entity_structure
 from core.api_client import DndApiClient
-LIBRARY_DIR = os.path.join(CACHE_DIR, "library")
-
-# Cache ayarları
-CACHE_FILE = os.path.join(CACHE_DIR, "reference_indexes.json")
-
 from core.locales import set_language
+
+LIBRARY_DIR = os.path.join(CACHE_DIR, "library")
+CACHE_FILE = os.path.join(CACHE_DIR, "reference_indexes.json")
 
 class DataManager:
     def __init__(self):
         self.settings = self.load_settings()
-        set_language(self.settings.get("language", "EN")) # Varsayılan: EN
+        set_language(self.settings.get("language", "EN"))
         
         self.current_campaign_path = None
         # Varsayılan boş yapı
@@ -23,7 +21,8 @@ class DataManager:
             "world_name": "", 
             "entities": {}, 
             "map_data": {"image_path": "", "pins": []},
-            "sessions": [] # Varsayılan olarak ekli
+            "sessions": [],
+            "last_active_session_id": None # Son oturumu hatırlamak için
         }
         self.api_client = DndApiClient()
         self.reference_cache = {}
@@ -43,7 +42,7 @@ class DataManager:
         if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
         with open(CACHE_FILE, "w", encoding="utf-8") as f: json.dump(self.reference_cache, f, indent=4)
 
-    # --- AYARLAR (SETTINGS) ---
+    # --- AYARLAR ---
     def load_settings(self):
         path = os.path.join(CACHE_DIR, "settings.json")
         if os.path.exists(path):
@@ -83,7 +82,8 @@ class DataManager:
                 "world_name": world_name, 
                 "entities": {}, 
                 "map_data": {"image_path": "", "pins": []},
-                "sessions": []
+                "sessions": [],
+                "last_active_session_id": None
             }
             self.current_campaign_path = folder
             self.save_data()
@@ -99,22 +99,18 @@ class DataManager:
         try:
             with open(path, "r", encoding="utf-8") as f: self.data = json.load(f)
             
-            # --- MIGRATION (HATA DÜZELTME KISMI) ---
-            # Eski kayıtlarda olmayan alanları tamamla
+            # Migration
             if "sessions" not in self.data: self.data["sessions"] = []
             if "entities" not in self.data: self.data["entities"] = {}
             if "map_data" not in self.data: self.data["map_data"] = {"image_path": "", "pins": []}
+            if "last_active_session_id" not in self.data: self.data["last_active_session_id"] = None
             
             for eid, ent in self.data["entities"].items():
                 default = get_default_entity_structure(ent.get("type", "NPC"))
                 for key, val in default.items():
                     if key not in ent: ent[key] = val
-                
-                # --- Resim Migration ---
-                # Eğer 'images' listesi boşsa ama 'image_path' doluysa, onu listeye at
                 if not ent.get("images") and ent.get("image_path"):
                     ent["images"] = [ent["image_path"]]
-            # ----------------------------------------
 
             self.current_campaign_path = folder
             return True, "Yüklendi"
@@ -134,12 +130,11 @@ class DataManager:
             "date": "Bugün",
             "notes": "",
             "logs": "",
-            "combatants": []
+            "combatants": [] # Yeni yapıda burası dict (state) olabilir
         }
-        # Hata olmaması için tekrar kontrol
         if "sessions" not in self.data: self.data["sessions"] = []
-        
         self.data["sessions"].append(new_session)
+        self.set_active_session(session_id)
         self.save_data()
         return session_id
 
@@ -155,11 +150,20 @@ class DataManager:
             if s["id"] == session_id:
                 s["notes"] = notes
                 s["logs"] = logs
-                s["combatants"] = combatants
+                s["combatants"] = combatants # Artık state dict'i de olabilir
+                self.set_active_session(session_id)
                 self.save_data()
                 break
 
-    # --- VARLIK & API ---
+    def set_active_session(self, session_id):
+        self.data["last_active_session_id"] = session_id
+        # save_data burada çağrılmaz, genellikle save_session_data içinde kaydedilir zaten
+        # ama anlık değişim için çağrılabilir.
+        
+    def get_last_active_session_id(self):
+        return self.data.get("last_active_session_id")
+
+    # --- VARLIK YÖNETİMİ ---
     def save_entity(self, eid, data):
         if not eid: eid = str(uuid.uuid4())
         if eid in self.data["entities"]: self.data["entities"][eid].update(data)
@@ -172,59 +176,73 @@ class DataManager:
             del self.data["entities"][eid]
             self.save_data()
 
+    def get_entity_name(self, eid):
+        if eid in self.data["entities"]:
+            return self.data["entities"][eid].get("name")
+        return None
+
     def fetch_from_api(self, category, query):
         for eid, ent in self.data["entities"].items():
             if ent["name"].lower() == query.lower() and ent["type"] == category:
-                # Veritabanında varsa ID dönerim
                 return True, "Veritabanında zaten var.", eid
         
         parsed_data, msg = self.api_client.search(category, query)
         if not parsed_data: return False, msg, None
-        
-        # ARTIK KAYDETMIYORUZ, SADECE DATA DÖNÜYORUZ
-        return True, "API'den çekildi (Kaydedilmedi).", parsed_data
+        return True, "API'den çekildi.", parsed_data
 
     def fetch_details_from_api(self, category, index_name):
-        """
-        Önce yerel kütüphaneye (cache/library) bakar, yoksa API'ye sorar.
-        """
-        # Endpoint haritası (Kategori Adı -> Klasör Adı)
         folder_map = {
-            "Canavar": "monsters",
-            "Büyü (Spell)": "spells",
-            "Eşya (Equipment)": "equipment", # Magic item ise aşağıda kontrol edeceğiz
-            "Sınıf (Class)": "classes",
-            "Irk (Race)": "races"
+            "Canavar": "monsters", "Büyü (Spell)": "spells", "Eşya (Equipment)": "equipment",
+            "Sınıf (Class)": "classes", "Irk (Race)": "races"
         }
-        
         folder = folder_map.get(category)
         
-        # 1. OFFLINE KONTROL
+        # 1. Cache Kontrol
         if folder:
-            # Eşya için özel durum: Hem 'equipment' hem 'magic-items' klasörüne bak
+            paths = [os.path.join(LIBRARY_DIR, folder, f"{index_name}.json")]
             if category == "Eşya (Equipment)":
-                paths = [
-                    os.path.join(LIBRARY_DIR, "equipment", f"{index_name}.json"),
-                    os.path.join(LIBRARY_DIR, "magic-items", f"{index_name}.json")
-                ]
-            else:
-                paths = [os.path.join(LIBRARY_DIR, folder, f"{index_name}.json")]
+                paths.append(os.path.join(LIBRARY_DIR, "magic-items", f"{index_name}.json"))
             
             for local_path in paths:
                 if os.path.exists(local_path):
                     try:
                         with open(local_path, "r", encoding="utf-8") as f:
-                            raw_data = json.load(f)
-                            # Raw datayı parse et (api_client parserlarını kullanıyoruz)
-                            parsed = self.api_client.parse_dispatcher(category, raw_data)
-                            return True, parsed
-                    except Exception as e:
-                        print(f"Cache okuma hatası: {e}")
+                            raw = json.load(f)
+                            return True, self.api_client.parse_dispatcher(category, raw)
+                    except: pass
 
-        # 2. ONLINE ÇEKİM (Eğer dosyada yoksa)
+        # 2. API Çekim
         parsed_data, msg = self.api_client.search(category, index_name)
         if parsed_data: return True, parsed_data
         return False, msg
+
+    def import_entity_with_dependencies(self, data):
+        """API verisindeki bağlı büyüleri indirip kaydeder."""
+        detected_spells = data.pop("_detected_spell_indices", [])
+        linked_spell_ids = []
+
+        if detected_spells:
+            print(f"🔮 {len(detected_spells)} bağlı büyü indiriliyor...")
+            for spell_index in detected_spells:
+                success, spell_data = self.fetch_details_from_api("Büyü (Spell)", spell_index)
+                if success:
+                    spell_name = spell_data.get("name")
+                    existing_id = None
+                    for eid, ent in self.data["entities"].items():
+                        if ent.get("type") == "Büyü (Spell)" and ent.get("name") == spell_name:
+                            existing_id = eid; break
+                    
+                    if existing_id: linked_spell_ids.append(existing_id)
+                    else:
+                        new_id = self.save_entity(None, spell_data)
+                        linked_spell_ids.append(new_id)
+
+        if linked_spell_ids:
+            if "spells" not in data: data["spells"] = []
+            for sid in linked_spell_ids:
+                if sid not in data["spells"]: data["spells"].append(sid)
+
+        return self.save_entity(None, data)
 
     # --- HARİTA & RESİM ---
     def import_image(self, src):
@@ -237,8 +255,6 @@ class DataManager:
     def import_pdf(self, src):
         if not self.current_campaign_path: return None
         fname = f"{uuid.uuid4().hex}_{os.path.basename(src)}"
-        # PDF'leri de assets klasörüne koyabiliriz, karışıklık olmasın diye prefix eklenebilir ama şart değil.
-        # Basitlik için assets altında tutalım.
         dest = os.path.join(self.current_campaign_path, "assets", fname)
         shutil.copy2(src, dest)
         return os.path.join("assets", fname)
@@ -257,92 +273,11 @@ class DataManager:
         self.save_data()
 
     def search_in_library(self, category, search_text):
-        """
-        İndirilen kütüphane (index) içinde arama yapar.
-        """
         results = []
         search_text = search_text.lower()
-        
-        # Hangi kategorilere bakacağız?
-        categories_to_check = []
-        if category == "Tümü":
-            categories_to_check = list(self.reference_cache.keys())
-        elif category in self.reference_cache:
-            categories_to_check = [category]
-            
-        for cat in categories_to_check:
-            for item in self.reference_cache.get(cat, []):
+        cats = [category] if category in self.reference_cache else list(self.reference_cache.keys())
+        for c in cats:
+            for item in self.reference_cache.get(c, []):
                 if search_text in item["name"].lower():
-                    # Kütüphane öğesi olduğunu belirtmek için başına 'lib_' ekliyoruz
-                    results.append({
-                        "id": f"lib_{cat}_{item['index']}",
-                        "name": item["name"],
-                        "type": cat,
-                        "is_library": True
-                    })
+                    results.append({"id": f"lib_{c}_{item['index']}", "name": item["name"], "type": c, "is_library": True})
         return results
-
-    def get_entity_name(self, eid):
-        """Verilen ID'ye sahip varlığın ismini döner."""
-        if eid in self.data["entities"]:
-            return self.data["entities"][eid].get("name")
-        return None
-
-    def import_entity_with_dependencies(self, data):
-        """
-        API verisini alır. Eğer içinde '_detected_spell_indices' varsa:
-        1. Önce yerel kütüphaneyi (cache) kontrol eder.
-        2. Yoksa API'den indirir.
-        3. İndirilen/Bulunan büyüleri veritabanına ekler (eğer yoksa).
-        4. Bu büyülerin ID'lerini ana varlığın 'spells' listesine ekler.
-        5. Ana varlığı kaydeder.
-        """
-        # Listeyi al ve datadan sil (DB'ye bu key ile kaydetmemek için)
-        detected_spells = data.pop("_detected_spell_indices", [])
-        linked_spell_ids = []
-
-        if detected_spells:
-            print(f"🔮 {len(detected_spells)} adet bağlı büyü tespit edildi. İşleniyor...")
-            
-            for spell_index in detected_spells:
-                # 1. Büyü zaten bizim aktif "Dünya" veritabanımızda var mı? (İsim tekrarını önle)
-                # Not: Bunu yapabilmek için isme ihtiyacımız var ama elimizde sadece index var.
-                # Bu yüzden önce veriyi (cache veya api'den) çekmemiz lazım.
-
-                # fetch_details_from_api metodu zaten önce LIBRARY/CACHE'e bakar, yoksa API'ye gider.
-                success, spell_data = self.fetch_details_from_api("Büyü (Spell)", spell_index)
-                
-                if success:
-                    spell_name = spell_data.get("name")
-                    
-                    # Aktif dünyadaki varlıkları kontrol et: Bu isimde bir büyü var mı?
-                    existing_id = None
-                    for eid, ent in self.data["entities"].items():
-                        if ent.get("type") == "Büyü (Spell)" and ent.get("name") == spell_name:
-                            existing_id = eid
-                            break
-                    
-                    if existing_id:
-                        # Zaten ekli, ID'sini al
-                        linked_spell_ids.append(existing_id)
-                        # print(f"   -> Mevcut büyü bağlandı: {spell_name}")
-                    else:
-                        # Yok, yeni varlık olarak kaydet
-                        new_id = self.save_entity(None, spell_data)
-                        linked_spell_ids.append(new_id)
-                        print(f"   -> Yeni büyü indirildi ve bağlandı: {spell_name}")
-                else:
-                    print(f"   ⚠️ Uyarı: Büyü verisi alınamadı ({spell_index})")
-
-        # 2. Ana varlığa büyü ID'lerini bağla
-        if linked_spell_ids:
-            if "spells" not in data:
-                data["spells"] = []
-            
-            # Mevcut listeye ekle (duplicate ID olmadan)
-            for sid in linked_spell_ids:
-                if sid not in data["spells"]:
-                    data["spells"].append(sid)
-
-        # 3. Ana varlığı kaydet
-        return self.save_entity(None, data)
