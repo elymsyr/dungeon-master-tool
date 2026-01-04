@@ -11,17 +11,12 @@ class ApiSearchWorker(QThread):
 
     def run(self):
         try:
-            # DataManager'ın existing fetch metodunu kullanacağız ama artık thread içinde
-            success, msg, eid = self.data_manager.fetch_from_api(self.category, self.query)
-            # fetch_from_api -> (Success, Msg, ID) döner
-            # Bizim sinyalimiz: (Success, Data/ID, Msg)
-            self.finished.emit(success, eid, msg)
+            # fetch_from_api artık ya (True, msg, ID) dönüyor (zaten varsa)
+            # ya da (True, msg, DATA_DICT) dönüyor (yeni çekildiyse)
+            success, msg, result = self.data_manager.fetch_from_api(self.category, self.query)
+            self.finished.emit(success, result, msg)
         except Exception as e:
-            self.finished.emit(False, str(e), str(e)) # data yerine str(e) vermek güvenli, çünkü success=False iken 2. argümanın önemi yok ama None olması daha temiz.
-            # Düzeltme: 
-            # self.finished.emit(False, {}, str(e)) şeklinde yapalım ki AttributeError yemesin
-            # Ama asıl sorun, alıcı taraftaki 'data_or_id'nin tipini kontrol etmemek.
-            # Yine de burada None dönelim.
+            self.finished.emit(False, {}, str(e))
 
 class ApiListWorker(QThread):
     finished = pyqtSignal(list)

@@ -100,6 +100,15 @@ TRANSLATIONS = {
         "TAB_SPELLS": "✨ Spells",
         "TAB_ACTIONS": "⚔️ Actions",
         "TAB_INV": "🎒 Inventory",
+        "TAB_DOCS": "📂 Docs & PDFs",
+        "Lore": "Lore",
+        
+        # Dialogs
+        "GRP_PDF": "Attached PDF Files",
+        "BTN_OPEN_PDF": "Open PDF",
+        "BTN_PROJECT_PDF": "👁️ Project PDF",
+        "MSG_SELECT_PDF": "Select PDF File",
+        "MSG_CONFIRM_DELETE_PDF": "Remove this PDF file?",
         
         # Session & Combat
         "TITLE_COMBAT": "⚔️ Combat & Initiative",
@@ -206,7 +215,15 @@ TRANSLATIONS = {
         "TAB_STATS": "📊 İstatistikler",
         "TAB_SPELLS": "✨ Büyüler",
         "TAB_ACTIONS": "⚔️ Eylemler",
+        "TAB_ACTIONS": "⚔️ Eylemler",
         "TAB_INV": "🎒 Envanter",
+        "TAB_DOCS": "📂 Belgeler & PDF",
+        
+        "GRP_PDF": "Ekli PDF Dosyaları",
+        "BTN_OPEN_PDF": "PDF Aç",
+        "BTN_PROJECT_PDF": "👁️ PDF Yansıt",
+        "MSG_SELECT_PDF": "PDF Dosyası Seç",
+        "MSG_CONFIRM_DELETE_PDF": "Bu PDF dosyasını silmek istiyor musun?",
         
         # Session & Combat
         "TITLE_COMBAT": "⚔️ Savaş & İnisiyatif",

@@ -1,7 +1,8 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, 
                              QLineEdit, QTextEdit, QComboBox, QTabWidget, 
-                             QLabel, QGroupBox, QPushButton, QScrollArea, QFrame, QListWidget)
-from PyQt6.QtCore import Qt
+                             QLabel, QGroupBox, QPushButton, QScrollArea, QFrame, QListWidget, QFileDialog, QMessageBox)
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QDesktopServices
 from ui.widgets.aspect_ratio_label import AspectRatioLabel
 from core.models import ENTITY_SCHEMAS
 from core.locales import tr
@@ -91,6 +92,7 @@ class NpcSheet(QWidget):
         self.tab_spells = QWidget(); self.setup_spells_tab(); self.tabs.addTab(self.tab_spells, tr("TAB_SPELLS"))
         self.tab_features = QWidget(); self.setup_features_tab(); self.tabs.addTab(self.tab_features, tr("TAB_ACTIONS"))
         self.tab_inventory = QWidget(); self.setup_inventory_tab(); self.tabs.addTab(self.tab_inventory, tr("TAB_INV"))
+        self.tab_docs = QWidget(); self.setup_docs_tab(); self.tabs.addTab(self.tab_docs, tr("TAB_DOCS"))
 
         self.content_layout.addWidget(self.tabs)
         scroll.setWidget(self.content_widget)
@@ -183,6 +185,43 @@ class NpcSheet(QWidget):
         self.add_btn_to_section(self.inventory_container, tr("BTN_ADD"))
         
         layout.addWidget(self.inventory_container)
+        layout.addWidget(self.inventory_container)
+        layout.addStretch()
+
+    def setup_docs_tab(self):
+        layout = QVBoxLayout(self.tab_docs)
+        grp = QGroupBox(tr("GRP_PDF"))
+        v_layout = QVBoxLayout(grp)
+        
+        # Üst butonlar
+        h_btn = QHBoxLayout()
+        self.btn_add_pdf = QPushButton(tr("BTN_ADD"))
+        self.btn_add_pdf.setObjectName("successBtn")
+        self.btn_open_pdf_folder = QPushButton("📂") # Ekstra: Klasöre gitmek için
+        h_btn.addWidget(self.btn_add_pdf, 3)
+        h_btn.addWidget(self.btn_open_pdf_folder, 1)
+        
+        v_layout.addLayout(h_btn)
+        
+        # PDF Listesi
+        self.list_pdfs = QListWidget()
+        self.list_pdfs.setAlternatingRowColors(True)
+        v_layout.addWidget(self.list_pdfs)
+        
+        # Alt butonlar (Aç / Sil)
+        h_action = QHBoxLayout()
+        self.btn_open_pdf = QPushButton(tr("BTN_OPEN_PDF"))
+        self.btn_open_pdf.setObjectName("primaryBtn")
+        self.btn_project_pdf = QPushButton(tr("BTN_PROJECT_PDF"))
+        self.btn_project_pdf.setStyleSheet("background-color: #6a1b9a; color: white;") # Mor buton
+        self.btn_remove_pdf = QPushButton(tr("BTN_REMOVE"))
+        
+        h_action.addWidget(self.btn_open_pdf)
+        h_action.addWidget(self.btn_project_pdf)
+        h_action.addWidget(self.btn_remove_pdf)
+        v_layout.addLayout(h_action)
+        
+        layout.addWidget(grp)
         layout.addStretch()
 
     # --- YARDIMCILAR ---
@@ -224,9 +263,18 @@ class NpcSheet(QWidget):
     def update_ui_by_type(self, category_name):
         self.build_dynamic_form(category_name)
         is_npc = category_name in ["NPC", "Canavar", "Oyuncu"]
+        is_lore = category_name == "Lore"
+        
         self.lbl_location.setVisible(is_npc); self.combo_location.setVisible(is_npc)
         self.lbl_residents.setVisible(category_name == "Mekan"); self.list_residents.setVisible(category_name == "Mekan")
-        for i in range(self.tabs.count()): self.tabs.setTabVisible(i, is_npc)
+        
+        # Sekme görünürlükleri
+        # 0:Stats, 1:Spells, 2:Actions, 3:Inv, 4:Docs
+        self.tabs.setTabVisible(0, is_npc) # Stats
+        self.tabs.setTabVisible(1, is_npc) # Spells
+        self.tabs.setTabVisible(2, is_npc) # Actions
+        self.tabs.setTabVisible(3, is_npc) # Inv
+        self.tabs.setTabVisible(4, is_lore) # Docs (Sadece Lore için)
 
     def _add_form_vbox(self, pl, lt, w): v=QVBoxLayout(); v.addWidget(QLabel(lt)); v.addWidget(w); pl.addLayout(v)
 
@@ -236,4 +284,4 @@ class NpcSheet(QWidget):
         self.clear_all_cards(); self.inp_type.setCurrentIndex(0)
         for i in self.stats_inputs.values(): i.setText("10")
         self.inp_hp.clear(); self.inp_ac.clear(); self.list_assigned_spells.clear(); self.list_assigned_items.clear()
-        self.combo_location.clear(); self.list_residents.clear()
+        self.combo_location.clear(); self.list_residents.clear(); self.list_pdfs.clear()
