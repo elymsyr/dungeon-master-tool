@@ -1,0 +1,23 @@
+{
+    "special": [],
+    "index": "cooks-utensils",
+    "name": "Cook's utensils",
+    "equipment_category": {
+        "index": "tools",
+        "name": "Tools",
+        "url": "/api/2014/equipment-categories/tools"
+    },
+    "tool_category": "Artisan's Tools",
+    "cost": {
+        "quantity": 1,
+        "unit": "gp"
+    },
+    "weight": 8,
+    "desc": [
+        "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    ],
+    "url": "/api/2014/equipment/cooks-utensils",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

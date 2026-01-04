@@ -1,0 +1,77 @@
+{
+    "index": "giant-hyena",
+    "name": "Giant Hyena",
+    "size": "Large",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 12
+        }
+    ],
+    "hit_points": 45,
+    "hit_dice": "6d10",
+    "hit_points_roll": "6d10+12",
+    "speed": {
+        "walk": "50 ft."
+    },
+    "strength": 16,
+    "dexterity": 14,
+    "constitution": 14,
+    "intelligence": 2,
+    "wisdom": 12,
+    "charisma": 7,
+    "proficiencies": [
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 13
+    },
+    "languages": "",
+    "challenge_rating": 1,
+    "proficiency_bonus": 2,
+    "xp": 200,
+    "special_abilities": [
+        {
+            "name": "Rampage",
+            "desc": "When the hyena reduces a creature to 0 hit points with a melee attack on its turn, the hyena can take a bonus action to move up to half its speed and make a bite attack.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6 + 3) piercing damage.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "2d6+3"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/giant-hyena.png",
+    "url": "/api/2014/monsters/giant-hyena",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

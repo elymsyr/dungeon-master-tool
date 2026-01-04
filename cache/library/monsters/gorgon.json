@@ -1,0 +1,120 @@
+{
+    "index": "gorgon",
+    "name": "Gorgon",
+    "size": "Large",
+    "type": "monstrosity",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 19
+        }
+    ],
+    "hit_points": 114,
+    "hit_dice": "12d10",
+    "hit_points_roll": "12d10+48",
+    "speed": {
+        "walk": "40 ft."
+    },
+    "strength": 20,
+    "dexterity": 11,
+    "constitution": 18,
+    "intelligence": 2,
+    "wisdom": 12,
+    "charisma": 7,
+    "proficiencies": [
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [
+        {
+            "index": "petrified",
+            "name": "Petrified",
+            "url": "/api/2014/conditions/petrified"
+        }
+    ],
+    "senses": {
+        "darkvision": "60 ft.",
+        "passive_perception": 14
+    },
+    "languages": "",
+    "challenge_rating": 5,
+    "proficiency_bonus": 3,
+    "xp": 1800,
+    "special_abilities": [
+        {
+            "name": "Trampling Charge",
+            "desc": "If the gorgon moves at least 20 feet straight toward a creature and then hits it with a gore attack on the same turn, that target must succeed on a DC 16 Strength saving throw or be knocked prone. If the target is prone, the gorgon can make one attack with its hooves against it as a bonus action.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Gore",
+            "desc": "Melee Weapon Attack: +8 to hit, reach 5 ft., one target. Hit: 18 (2d12 + 5) piercing damage.",
+            "attack_bonus": 8,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "2d12+5"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Hooves",
+            "desc": "Melee Weapon Attack: +8 to hit, reach 5 ft., one target. Hit: 16 (2d10 + 5) bludgeoning damage.",
+            "attack_bonus": 8,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "2d10+5"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Petrifying Breath",
+            "desc": "The gorgon exhales petrifying gas in a 30-foot cone. Each creature in that area must succeed on a DC 13 Constitution saving throw. On a failed save, a target begins to turn to stone and is restrained. The restrained target must repeat the saving throw at the end of its next turn. On a success, the effect ends on the target. On a failure, the target is petrified until freed by the greater restoration spell or other magic.",
+            "usage": {
+                "type": "recharge on roll",
+                "dice": "1d6",
+                "min_value": 5
+            },
+            "dc": {
+                "dc_type": {
+                    "index": "con",
+                    "name": "CON",
+                    "url": "/api/2014/ability-scores/con"
+                },
+                "dc_value": 13,
+                "success_type": "none"
+            },
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/gorgon.png",
+    "url": "/api/2014/monsters/gorgon",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

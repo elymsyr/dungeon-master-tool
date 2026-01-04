@@ -1,0 +1,20 @@
+{
+    "index": "headband-of-intellect",
+    "name": "Headband of Intellect",
+    "equipment_category": {
+        "index": "wondrous-items",
+        "name": "Wondrous Items",
+        "url": "/api/2014/equipment-categories/wondrous-items"
+    },
+    "rarity": {
+        "name": "Uncommon"
+    },
+    "variants": [],
+    "variant": false,
+    "desc": [
+        "Wondrous item, uncommon (requires attunement)",
+        "Your Intelligence score is 19 while you wear this headband. It has no effect on you if your Intelligence is already 19 or higher."
+    ],
+    "url": "/api/2014/magic-items/headband-of-intellect",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

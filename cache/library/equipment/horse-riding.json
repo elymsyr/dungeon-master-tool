@@ -1,0 +1,25 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "horse-riding",
+    "name": "Horse, riding",
+    "equipment_category": {
+        "index": "mounts-and-vehicles",
+        "name": "Mounts and Vehicles",
+        "url": "/api/2014/equipment-categories/mounts-and-vehicles"
+    },
+    "vehicle_category": "Mounts and Other Animals",
+    "cost": {
+        "quantity": 75,
+        "unit": "gp"
+    },
+    "speed": {
+        "quantity": 60,
+        "unit": "ft/round"
+    },
+    "capacity": "480 lb.",
+    "url": "/api/2014/equipment/horse-riding",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

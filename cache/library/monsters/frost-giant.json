@@ -1,0 +1,135 @@
+{
+    "index": "frost-giant",
+    "name": "Frost Giant",
+    "size": "Huge",
+    "type": "giant",
+    "alignment": "neutral evil",
+    "armor_class": [
+        {
+            "type": "armor",
+            "value": 15,
+            "desc": "patchwork armor"
+        }
+    ],
+    "hit_points": 138,
+    "hit_dice": "12d12",
+    "hit_points_roll": "12d12+60",
+    "speed": {
+        "walk": "40 ft."
+    },
+    "strength": 23,
+    "dexterity": 9,
+    "constitution": 21,
+    "intelligence": 9,
+    "wisdom": 10,
+    "charisma": 12,
+    "proficiencies": [
+        {
+            "value": 8,
+            "proficiency": {
+                "index": "saving-throw-con",
+                "name": "Saving Throw: CON",
+                "url": "/api/2014/proficiencies/saving-throw-con"
+            }
+        },
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "saving-throw-wis",
+                "name": "Saving Throw: WIS",
+                "url": "/api/2014/proficiencies/saving-throw-wis"
+            }
+        },
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "saving-throw-cha",
+                "name": "Saving Throw: CHA",
+                "url": "/api/2014/proficiencies/saving-throw-cha"
+            }
+        },
+        {
+            "value": 9,
+            "proficiency": {
+                "index": "skill-athletics",
+                "name": "Skill: Athletics",
+                "url": "/api/2014/proficiencies/skill-athletics"
+            }
+        },
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "cold"
+    ],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 13
+    },
+    "languages": "Giant",
+    "challenge_rating": 8,
+    "proficiency_bonus": 3,
+    "xp": 3900,
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The giant makes two greataxe attacks.",
+            "actions": [
+                {
+                    "action_name": "Greataxe",
+                    "count": "2",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Greataxe",
+            "desc": "Melee Weapon Attack: +9 to hit, reach 10 ft., one target. Hit: 25 (3d12 + 6) slashing damage.",
+            "attack_bonus": 9,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "3d12+6"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Rock",
+            "desc": "Ranged Weapon Attack: +9 to hit, range 60/240 ft., one target. Hit: 28 (4d10 + 6) bludgeoning damage.",
+            "attack_bonus": 9,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "4d10+6"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/frost-giant.png",
+    "url": "/api/2014/monsters/frost-giant",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

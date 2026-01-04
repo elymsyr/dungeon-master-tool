@@ -1,0 +1,59 @@
+{
+    "higher_level": [],
+    "index": "zone-of-truth",
+    "name": "Zone of Truth",
+    "desc": [
+        "You create a magical zone that guards against deception in a 15-foot-radius sphere centered on a point of your choice within range. Until the spell ends, a creature that enters the spell's area for the first time on a turn or starts its turn there must make a Charisma saving throw. On a failed save, a creature can't speak a deliberate lie while in the radius. You know whether each creature succeeds or fails on its saving throw.",
+        "An affected creature is aware of the spell and can thus avoid answering questions to which it would normally respond with a lie. Such a creature can remain evasive in its answers as long as it remains within the boundaries of the truth."
+    ],
+    "range": "60 feet",
+    "components": [
+        "V",
+        "S"
+    ],
+    "ritual": false,
+    "duration": "10 minutes",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 2,
+    "area_of_effect": {
+        "type": "sphere",
+        "size": 15
+    },
+    "school": {
+        "index": "enchantment",
+        "name": "Enchantment",
+        "url": "/api/2014/magic-schools/enchantment"
+    },
+    "classes": [
+        {
+            "index": "bard",
+            "name": "Bard",
+            "url": "/api/2014/classes/bard"
+        },
+        {
+            "index": "cleric",
+            "name": "Cleric",
+            "url": "/api/2014/classes/cleric"
+        },
+        {
+            "index": "paladin",
+            "name": "Paladin",
+            "url": "/api/2014/classes/paladin"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        },
+        {
+            "index": "devotion",
+            "name": "Devotion",
+            "url": "/api/2014/subclasses/devotion"
+        }
+    ],
+    "url": "/api/2014/spells/zone-of-truth",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

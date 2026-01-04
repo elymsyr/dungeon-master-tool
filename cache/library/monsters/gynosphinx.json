@@ -1,0 +1,256 @@
+{
+    "index": "gynosphinx",
+    "name": "Gynosphinx",
+    "size": "Large",
+    "type": "monstrosity",
+    "alignment": "lawful neutral",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 17
+        }
+    ],
+    "hit_points": 136,
+    "hit_dice": "16d10",
+    "hit_points_roll": "16d10+48",
+    "speed": {
+        "walk": "40 ft.",
+        "fly": "60 ft."
+    },
+    "strength": 18,
+    "dexterity": 15,
+    "constitution": 16,
+    "intelligence": 18,
+    "wisdom": 18,
+    "charisma": 18,
+    "proficiencies": [
+        {
+            "value": 12,
+            "proficiency": {
+                "index": "skill-arcana",
+                "name": "Skill: Arcana",
+                "url": "/api/2014/proficiencies/skill-arcana"
+            }
+        },
+        {
+            "value": 12,
+            "proficiency": {
+                "index": "skill-history",
+                "name": "Skill: History",
+                "url": "/api/2014/proficiencies/skill-history"
+            }
+        },
+        {
+            "value": 8,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        },
+        {
+            "value": 8,
+            "proficiency": {
+                "index": "skill-religion",
+                "name": "Skill: Religion",
+                "url": "/api/2014/proficiencies/skill-religion"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [
+        "bludgeoning, piercing, and slashing from nonmagical weapons"
+    ],
+    "damage_immunities": [
+        "psychic"
+    ],
+    "condition_immunities": [
+        {
+            "index": "charmed",
+            "name": "Charmed",
+            "url": "/api/2014/conditions/charmed"
+        },
+        {
+            "index": "frightened",
+            "name": "Frightened",
+            "url": "/api/2014/conditions/frightened"
+        }
+    ],
+    "senses": {
+        "truesight": "120 ft.",
+        "passive_perception": 18
+    },
+    "languages": "Common, Sphinx",
+    "challenge_rating": 11,
+    "proficiency_bonus": 4,
+    "xp": 7200,
+    "special_abilities": [
+        {
+            "name": "Inscrutable",
+            "desc": "The sphinx is immune to any effect that would sense its emotions or read its thoughts, as well as any divination spell that it refuses. Wisdom (Insight) checks made to ascertain the sphinx's intentions or sincerity have disadvantage.",
+            "damage": []
+        },
+        {
+            "name": "Magic Weapons",
+            "desc": "The sphinx's weapon attacks are magical.",
+            "damage": []
+        },
+        {
+            "name": "Spellcasting",
+            "desc": "The sphinx is a 9th-level spellcaster. Its spellcasting ability is Intelligence (spell save DC 16, +8 to hit with spell attacks). It requires no material components to cast its spells. The sphinx has the following wizard spells prepared:\n\n- Cantrips (at will): mage hand, minor illusion, prestidigitation\n- 1st level (4 slots): detect magic, identify, shield\n- 2nd level (3 slots): darkness, locate object, suggestion\n- 3rd level (3 slots): dispel magic, remove curse, tongues\n- 4th level (3 slots): banishment, greater invisibility\n- 5th level (1 slot): legend lore",
+            "spellcasting": {
+                "level": 9,
+                "ability": {
+                    "index": "int",
+                    "name": "INT",
+                    "url": "/api/2014/ability-scores/int"
+                },
+                "dc": 16,
+                "modifier": 8,
+                "components_required": [
+                    "V",
+                    "S"
+                ],
+                "school": "wizard",
+                "slots": {
+                    "1": 4,
+                    "2": 3,
+                    "3": 3,
+                    "4": 3,
+                    "5": 1
+                },
+                "spells": [
+                    {
+                        "name": "Mage Hand",
+                        "level": 0,
+                        "url": "/api/2014/spells/mage-hand"
+                    },
+                    {
+                        "name": "Minor Illusion",
+                        "level": 0,
+                        "url": "/api/2014/spells/minor-illusion"
+                    },
+                    {
+                        "name": "Prestidigitation",
+                        "level": 0,
+                        "url": "/api/2014/spells/prestidigitation"
+                    },
+                    {
+                        "name": "Detect Magic",
+                        "level": 1,
+                        "url": "/api/2014/spells/detect-magic"
+                    },
+                    {
+                        "name": "Identify",
+                        "level": 1,
+                        "url": "/api/2014/spells/identify"
+                    },
+                    {
+                        "name": "Shield",
+                        "level": 1,
+                        "url": "/api/2014/spells/shield"
+                    },
+                    {
+                        "name": "Darkness",
+                        "level": 2,
+                        "url": "/api/2014/spells/darkness"
+                    },
+                    {
+                        "name": "Locate Object",
+                        "level": 2,
+                        "url": "/api/2014/spells/locate-object"
+                    },
+                    {
+                        "name": "Suggestion",
+                        "level": 2,
+                        "url": "/api/2014/spells/suggestion"
+                    },
+                    {
+                        "name": "Dispel Magic",
+                        "level": 3,
+                        "url": "/api/2014/spells/dispel-magic"
+                    },
+                    {
+                        "name": "Remove Curse",
+                        "level": 3,
+                        "url": "/api/2014/spells/remove-curse"
+                    },
+                    {
+                        "name": "Tongues",
+                        "level": 3,
+                        "url": "/api/2014/spells/tongues"
+                    },
+                    {
+                        "name": "Banishment",
+                        "level": 4,
+                        "url": "/api/2014/spells/banishment"
+                    },
+                    {
+                        "name": "Greater Invisibility",
+                        "level": 4,
+                        "url": "/api/2014/spells/greater-invisibility"
+                    },
+                    {
+                        "name": "Legend Lore",
+                        "level": 5,
+                        "url": "/api/2014/spells/legend-lore"
+                    }
+                ]
+            },
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The sphinx makes two claw attacks.",
+            "actions": [
+                {
+                    "action_name": "Claw",
+                    "count": "2",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Claw",
+            "desc": "Melee Weapon Attack: +9 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.",
+            "attack_bonus": 9,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "2d8+4"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "legendary_actions": [
+        {
+            "name": "Claw Attack",
+            "desc": "The sphinx makes one claw attack.",
+            "damage": []
+        },
+        {
+            "name": "Teleport (Costs 2 Actions)",
+            "desc": "The sphinx magically teleports, along with any equipment it is wearing or carrying, up to 120 feet to an unoccupied space it can see.",
+            "damage": []
+        },
+        {
+            "name": "Cast a Spell (Costs 3 Actions)",
+            "desc": "The sphinx casts a spell from its list of prepared spells, using a spell slot as normal.",
+            "damage": []
+        }
+    ],
+    "image": "/api/images/monsters/gynosphinx.png",
+    "url": "/api/2014/monsters/gynosphinx",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "reactions": []
+}

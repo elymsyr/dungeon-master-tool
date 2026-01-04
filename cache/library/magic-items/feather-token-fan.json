@@ -1,0 +1,21 @@
+{
+    "index": "feather-token-fan",
+    "name": "Fan Feather Token",
+    "equipment_category": {
+        "index": "wondrous-items",
+        "name": "Wondrous Items",
+        "url": "/api/2014/equipment-categories/wondrous-items"
+    },
+    "rarity": {
+        "name": "Rare"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Wondrous item, rare",
+        "This tiny object looks like a feather.",
+        "If you are on a boat or ship, you can use an action to toss the token up to 10 feet in the air. The token disappears, and a giant flapping fan takes its place. The fan floats and creates a wind strong enough to fill the sails of one ship, increasing its speed by 5 miles per hour for 8 hours. You can dismiss the fan as an action."
+    ],
+    "url": "/api/2014/magic-items/feather-token-fan",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

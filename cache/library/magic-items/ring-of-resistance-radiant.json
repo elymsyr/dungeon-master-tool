@@ -1,0 +1,20 @@
+{
+    "index": "ring-of-resistance-radiant",
+    "name": "Ring of Radiant Resistance",
+    "equipment_category": {
+        "index": "ring",
+        "name": "Ring",
+        "url": "/api/2014/equipment-categories/ring"
+    },
+    "rarity": {
+        "name": "Rare"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Ring, rare (requires attunement)",
+        "You have resistance to radiant damage while wearing this topaz ring."
+    ],
+    "url": "/api/2014/magic-items/ring-of-resistance-radiant",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

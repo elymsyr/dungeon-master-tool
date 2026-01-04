@@ -1,0 +1,126 @@
+{
+    "index": "mimic",
+    "name": "Mimic",
+    "size": "Medium",
+    "type": "monstrosity",
+    "subtype": "shapechanger",
+    "alignment": "neutral",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 12
+        }
+    ],
+    "hit_points": 58,
+    "hit_dice": "9d8",
+    "hit_points_roll": "9d8+18",
+    "speed": {
+        "walk": "15 ft."
+    },
+    "strength": 17,
+    "dexterity": 12,
+    "constitution": 15,
+    "intelligence": 5,
+    "wisdom": 13,
+    "charisma": 8,
+    "proficiencies": [
+        {
+            "value": 5,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "acid"
+    ],
+    "condition_immunities": [
+        {
+            "index": "prone",
+            "name": "Prone",
+            "url": "/api/2014/conditions/prone"
+        }
+    ],
+    "senses": {
+        "darkvision": "60 ft.",
+        "passive_perception": 11
+    },
+    "languages": "",
+    "challenge_rating": 2,
+    "proficiency_bonus": 2,
+    "xp": 450,
+    "special_abilities": [
+        {
+            "name": "Shapechanger",
+            "desc": "The mimic can use its action to polymorph into an object or back into its true, amorphous form. Its statistics are the same in each form. Any equipment it is wearing or carrying isn 't transformed. It reverts to its true form if it dies.",
+            "damage": []
+        },
+        {
+            "name": "Adhesive (Object Form Only)",
+            "desc": "The mimic adheres to anything that touches it. A Huge or smaller creature adhered to the mimic is also grappled by it (escape DC 13). Ability checks made to escape this grapple have disadvantage.",
+            "damage": []
+        },
+        {
+            "name": "False Appearance (Object Form Only)",
+            "desc": "While the mimic remains motionless, it is indistinguishable from an ordinary object.",
+            "damage": []
+        },
+        {
+            "name": "Grappler",
+            "desc": "The mimic has advantage on attack rolls against any creature grappled by it.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Pseudopod",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) bludgeoning damage. If the mimic is in object form, the target is subjected to its Adhesive trait.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "1d8+3"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) piercing damage plus 4 (1d8) acid damage.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d8+3"
+                },
+                {
+                    "damage_type": {
+                        "index": "acid",
+                        "name": "Acid",
+                        "url": "/api/2014/damage-types/acid"
+                    },
+                    "damage_dice": "1d8"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/mimic.png",
+    "url": "/api/2014/monsters/mimic",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

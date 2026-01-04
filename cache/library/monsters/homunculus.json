@@ -1,0 +1,83 @@
+{
+    "index": "homunculus",
+    "name": "Homunculus",
+    "size": "Tiny",
+    "type": "construct",
+    "alignment": "neutral",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 13
+        }
+    ],
+    "hit_points": 5,
+    "hit_dice": "2d4",
+    "hit_points_roll": "2d4",
+    "speed": {
+        "walk": "20 ft.",
+        "fly": "40 ft."
+    },
+    "strength": 4,
+    "dexterity": 15,
+    "constitution": 11,
+    "intelligence": 10,
+    "wisdom": 10,
+    "charisma": 7,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [
+        "poison"
+    ],
+    "condition_immunities": [
+        {
+            "index": "charmed",
+            "name": "Charmed",
+            "url": "/api/2014/conditions/charmed"
+        },
+        {
+            "index": "poisoned",
+            "name": "Poisoned",
+            "url": "/api/2014/conditions/poisoned"
+        }
+    ],
+    "senses": {
+        "darkvision": "60 ft.",
+        "passive_perception": 10
+    },
+    "languages": "understands the languages of its creator but can't speak",
+    "challenge_rating": 0,
+    "proficiency_bonus": 2,
+    "xp": 10,
+    "special_abilities": [
+        {
+            "name": "Telepathic Bond",
+            "desc": "While the homunculus is on the same plane of existence as its master, it can magically convey what it senses to its master, and the two can communicate telepathically.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +4 to hit, reach 5 ft., one creature. Hit: 1 piercing damage, and the target must succeed on a DC 10 Constitution saving throw or be poisoned for 1 minute. If the saving throw fails by 5 or more, the target is instead poisoned for 5 (1d10) minutes and unconscious while poisoned in this way.",
+            "attack_bonus": 4,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/homunculus.png",
+    "url": "/api/2014/monsters/homunculus",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

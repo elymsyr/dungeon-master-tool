@@ -1,0 +1,174 @@
+{
+    "index": "half-red-dragon-veteran",
+    "name": "Half-Red Dragon Veteran",
+    "size": "Medium",
+    "type": "humanoid",
+    "subtype": "human",
+    "alignment": "any alignment",
+    "armor_class": [
+        {
+            "type": "armor",
+            "value": 18,
+            "armor": [
+                {
+                    "index": "plate-armor",
+                    "name": "Plate Armor",
+                    "url": "/api/2014/equipment/plate-armor"
+                }
+            ]
+        }
+    ],
+    "hit_points": 65,
+    "hit_dice": "10d8",
+    "hit_points_roll": "10d8+20",
+    "speed": {
+        "walk": "30 ft."
+    },
+    "strength": 16,
+    "dexterity": 13,
+    "constitution": 14,
+    "intelligence": 10,
+    "wisdom": 11,
+    "charisma": 10,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [
+        "fire"
+    ],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "blindsight": "10 ft.",
+        "darkvision": "60 ft.",
+        "passive_perception": 12
+    },
+    "languages": "Common, Draconic",
+    "challenge_rating": 5,
+    "proficiency_bonus": 3,
+    "xp": 1800,
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The veteran makes two longsword attacks. If it has a shortsword drawn, it can also make a shortsword attack.",
+            "actions": [
+                {
+                    "action_name": "Longsword",
+                    "count": "2",
+                    "type": "melee"
+                },
+                {
+                    "action_name": "Shortsword",
+                    "count": "1",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Longsword",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) slashing damage, or 8 (1d10 + 3) slashing damage if used with two hands.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "choose": 1,
+                    "type": "damage",
+                    "from": {
+                        "option_set_type": "options_array",
+                        "options": [
+                            {
+                                "option_type": "damage",
+                                "notes": "One handed",
+                                "damage_type": {
+                                    "index": "slashing",
+                                    "name": "Slashing",
+                                    "url": "/api/2014/damage-types/slashing"
+                                },
+                                "damage_dice": "1d8+3"
+                            },
+                            {
+                                "option_type": "damage",
+                                "notes": "Two handed",
+                                "damage_type": {
+                                    "index": "slashing",
+                                    "name": "Slashing",
+                                    "url": "/api/2014/damage-types/slashing"
+                                },
+                                "damage_dice": "1d10+3"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Shortsword",
+            "desc": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) piercing damage.",
+            "attack_bonus": 5,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d6+3"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Heavy Crossbow",
+            "desc": "Ranged Weapon Attack: +3 to hit, range 100/400 ft., one target. Hit: 6 (1d10 + 1) piercing damage.",
+            "attack_bonus": 3,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d10+1"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Fire Breath",
+            "desc": "The veteran exhales fire in a 15-foot cone. Each creature in that area must make a DC 15 Dexterity saving throw, taking 24 (7d6) fire damage on a failed save, or half as much damage on a successful one.",
+            "usage": {
+                "type": "recharge on roll",
+                "dice": "1d6",
+                "min_value": 5
+            },
+            "dc": {
+                "dc_type": {
+                    "index": "dex",
+                    "name": "DEX",
+                    "url": "/api/2014/ability-scores/dex"
+                },
+                "dc_value": 15,
+                "success_type": "half"
+            },
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "fire",
+                        "name": "Fire",
+                        "url": "/api/2014/damage-types/fire"
+                    },
+                    "damage_dice": "7d6"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/half-red-dragon-veteran.png",
+    "url": "/api/2014/monsters/half-red-dragon-veteran",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

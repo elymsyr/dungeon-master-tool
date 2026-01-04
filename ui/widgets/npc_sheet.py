@@ -197,6 +197,8 @@ class NpcSheet(QWidget):
         
         self.list_assigned_spells = QListWidget()
         self.list_assigned_spells.setAlternatingRowColors(True)
+        self.list_assigned_spells.setMinimumHeight(300)
+        self.list_assigned_spells.setAlternatingRowColors(True)
         self.list_assigned_spells.setStyleSheet("QListWidget::item { border-bottom: 1px solid #333; padding: 2px; } QListWidget::item:selected { border: 1px solid #7c4dff; }")
 
         self.btn_remove_spell = QPushButton(tr("BTN_REMOVE"))
@@ -289,7 +291,7 @@ class NpcSheet(QWidget):
         d = QTextEdit(desc)
         d.setPlaceholderText(ph_desc)
         d.setMinimumHeight(80)  # Min 80px (yaklaşık 4 satır)
-        d.setMaximumHeight(200) # Esneme payı
+        d.setMaximumHeight(300) # Esneme payı
         d.setStyleSheet("border:none; color: #ccc;")
         l.addWidget(d)
         

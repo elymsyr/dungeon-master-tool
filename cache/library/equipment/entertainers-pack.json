@@ -1,0 +1,81 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "entertainers-pack",
+    "name": "Entertainer's Pack",
+    "equipment_category": {
+        "index": "adventuring-gear",
+        "name": "Adventuring Gear",
+        "url": "/api/2014/equipment-categories/adventuring-gear"
+    },
+    "gear_category": {
+        "index": "equipment-packs",
+        "name": "Equipment Packs",
+        "url": "/api/2014/equipment-categories/equipment-packs"
+    },
+    "cost": {
+        "quantity": 40,
+        "unit": "gp"
+    },
+    "contents": [
+        {
+            "item": {
+                "index": "backpack",
+                "name": "Backpack",
+                "url": "/api/2014/equipment/backpack"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "bedroll",
+                "name": "Bedroll",
+                "url": "/api/2014/equipment/bedroll"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "clothes-costume",
+                "name": "Clothes, costume",
+                "url": "/api/2014/equipment/clothes-costume"
+            },
+            "quantity": 2
+        },
+        {
+            "item": {
+                "index": "candle",
+                "name": "Candle",
+                "url": "/api/2014/equipment/candle"
+            },
+            "quantity": 5
+        },
+        {
+            "item": {
+                "index": "rations-1-day",
+                "name": "Rations (1 day)",
+                "url": "/api/2014/equipment/rations-1-day"
+            },
+            "quantity": 5
+        },
+        {
+            "item": {
+                "index": "waterskin",
+                "name": "Waterskin",
+                "url": "/api/2014/equipment/waterskin"
+            },
+            "quantity": 1
+        },
+        {
+            "item": {
+                "index": "disguise-kit",
+                "name": "Disguise Kit",
+                "url": "/api/2014/equipment/disguise-kit"
+            },
+            "quantity": 1
+        }
+    ],
+    "url": "/api/2014/equipment/entertainers-pack",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "properties": []
+}

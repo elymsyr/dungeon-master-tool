@@ -1,0 +1,57 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "crossbow-heavy",
+    "name": "Crossbow, heavy",
+    "equipment_category": {
+        "index": "weapon",
+        "name": "Weapon",
+        "url": "/api/2014/equipment-categories/weapon"
+    },
+    "weapon_category": "Martial",
+    "weapon_range": "Ranged",
+    "category_range": "Martial Ranged",
+    "cost": {
+        "quantity": 50,
+        "unit": "gp"
+    },
+    "damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+            "index": "piercing",
+            "name": "Piercing",
+            "url": "/api/2014/damage-types/piercing"
+        }
+    },
+    "range": {
+        "normal": 100,
+        "long": 400
+    },
+    "weight": 18,
+    "properties": [
+        {
+            "index": "ammunition",
+            "name": "Ammunition",
+            "url": "/api/2014/weapon-properties/ammunition"
+        },
+        {
+            "index": "heavy",
+            "name": "Heavy",
+            "url": "/api/2014/weapon-properties/heavy"
+        },
+        {
+            "index": "loading",
+            "name": "Loading",
+            "url": "/api/2014/weapon-properties/loading"
+        },
+        {
+            "index": "two-handed",
+            "name": "Two-Handed",
+            "url": "/api/2014/weapon-properties/two-handed"
+        }
+    ],
+    "image": "/api/images/equipment/crossbow-heavy.png",
+    "url": "/api/2014/equipment/crossbow-heavy",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": []
+}

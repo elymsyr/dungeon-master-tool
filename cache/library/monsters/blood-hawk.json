@@ -1,0 +1,84 @@
+{
+    "index": "blood-hawk",
+    "name": "Blood Hawk",
+    "desc": "Taking its name from its crimson feathers and aggressive nature, the blood hawk fearlessly attacks almost any animal, stabbing it with its daggerlike beak. Blood hawks flock together in large numbers, attacking as a pack to take down prey.",
+    "size": "Small",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 12
+        }
+    ],
+    "hit_points": 7,
+    "hit_dice": "2d6",
+    "hit_points_roll": "2d6",
+    "speed": {
+        "walk": "10 ft.",
+        "fly": "60 ft."
+    },
+    "strength": 6,
+    "dexterity": 14,
+    "constitution": 10,
+    "intelligence": 3,
+    "wisdom": 14,
+    "charisma": 5,
+    "proficiencies": [
+        {
+            "value": 4,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 14
+    },
+    "languages": "",
+    "challenge_rating": 0.125,
+    "proficiency_bonus": 2,
+    "xp": 25,
+    "special_abilities": [
+        {
+            "name": "Keen Sight",
+            "desc": "The hawk has advantage on Wisdom (Perception) checks that rely on sight.",
+            "damage": []
+        },
+        {
+            "name": "Pack Tactics",
+            "desc": "The hawk has advantage on an attack roll against a creature if at least one of the hawk's allies is within 5 ft. of the creature and the ally isn't incapacitated.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Beak",
+            "desc": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 4 (1d4 + 2) piercing damage.",
+            "attack_bonus": 4,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d4+2"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/blood-hawk.png",
+    "url": "/api/2014/monsters/blood-hawk",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

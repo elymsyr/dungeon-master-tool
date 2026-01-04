@@ -1,0 +1,80 @@
+{
+    "index": "flying-snake",
+    "name": "Flying Snake",
+    "desc": "A flying snake is a brightly colored, winged serpent found in remote jungles. Tribespeople and cultists sometimes domesticate flying snakes to serve as messengers that deliver scrolls wrapped in their coils.",
+    "size": "Tiny",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 14
+        }
+    ],
+    "hit_points": 5,
+    "hit_dice": "2d4",
+    "hit_points_roll": "2d4",
+    "speed": {
+        "walk": "30 ft.",
+        "fly": "60 ft.",
+        "swim": "30 ft."
+    },
+    "strength": 4,
+    "dexterity": 18,
+    "constitution": 11,
+    "intelligence": 2,
+    "wisdom": 12,
+    "charisma": 5,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "blindsight": "10 ft.",
+        "passive_perception": 11
+    },
+    "languages": "",
+    "challenge_rating": 0.125,
+    "proficiency_bonus": 2,
+    "xp": 25,
+    "special_abilities": [
+        {
+            "name": "Flyby",
+            "desc": "The snake doesn't provoke opportunity attacks when it flies out of an enemy's reach.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 1 piercing damage plus 7 (3d4) poison damage.",
+            "attack_bonus": 6,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "1"
+                },
+                {
+                    "damage_type": {
+                        "index": "poison",
+                        "name": "Poison",
+                        "url": "/api/2014/damage-types/poison"
+                    },
+                    "damage_dice": "3d4"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/flying-snake.png",
+    "url": "/api/2014/monsters/flying-snake",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

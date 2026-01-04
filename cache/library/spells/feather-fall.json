@@ -1,0 +1,50 @@
+{
+    "higher_level": [],
+    "index": "feather-fall",
+    "name": "Feather Fall",
+    "desc": [
+        "Choose up to five falling creatures within range. A falling creature's rate of descent slows to 60 feet per round until the spell ends. If the creature lands before the spell ends, it takes no falling damage and can land on its feet, and the spell ends for that creature."
+    ],
+    "range": "60 feet",
+    "components": [
+        "V",
+        "M"
+    ],
+    "material": "A small feather or a piece of down.",
+    "ritual": false,
+    "duration": "1 minute",
+    "concentration": false,
+    "casting_time": "1 reaction",
+    "level": 1,
+    "school": {
+        "index": "transmutation",
+        "name": "Transmutation",
+        "url": "/api/2014/magic-schools/transmutation"
+    },
+    "classes": [
+        {
+            "index": "bard",
+            "name": "Bard",
+            "url": "/api/2014/classes/bard"
+        },
+        {
+            "index": "sorcerer",
+            "name": "Sorcerer",
+            "url": "/api/2014/classes/sorcerer"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "lore",
+            "name": "Lore",
+            "url": "/api/2014/subclasses/lore"
+        }
+    ],
+    "url": "/api/2014/spells/feather-fall",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

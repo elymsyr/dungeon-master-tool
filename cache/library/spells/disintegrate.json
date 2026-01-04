@@ -1,0 +1,67 @@
+{
+    "index": "disintegrate",
+    "name": "Disintegrate",
+    "desc": [
+        "A thin green ray springs from your pointing finger to a target that you can see within range. The target can be a creature, an object, or a creation of magical force, such as the wall created by wall of force.",
+        "A creature targeted by this spell must make a dexterity saving throw. On a failed save, the target takes 10d6 + 40 force damage. If this damage reduces the target to 0 hit points, it is disintegrated.",
+        "A disintegrated creature and everything it is wearing and carrying, except magic items, are reduced to a pile of fine gray dust. The creature can be restored to life only by means of a true resurrection or a wish spell.",
+        "This spell automatically disintegrates a Large or smaller nonmagical object or a creation of magical force. If the target is a Huge or larger object or creation of force, this spell disintegrates a 10-foot-cube portion of it. A magic item is unaffected by this spell."
+    ],
+    "higher_level": [
+        "When you cast this spell using a spell slot of 7th level or higher, the damage increases by 3d6 for each slot level above 6th."
+    ],
+    "range": "60 feet",
+    "components": [
+        "V",
+        "S",
+        "M"
+    ],
+    "material": "A lodestone and a pinch of dust.",
+    "ritual": false,
+    "duration": "Instantaneous",
+    "concentration": false,
+    "casting_time": "1 action",
+    "level": 6,
+    "damage": {
+        "damage_type": {
+            "index": "force",
+            "name": "Force",
+            "url": "/api/2014/damage-types/force"
+        },
+        "damage_at_slot_level": {
+            "6": "10d6 + 40"
+        }
+    },
+    "dc": {
+        "dc_type": {
+            "index": "dex",
+            "name": "DEX",
+            "url": "/api/2014/ability-scores/dex"
+        },
+        "dc_success": "none"
+    },
+    "area_of_effect": {
+        "type": "cube",
+        "size": 10
+    },
+    "school": {
+        "index": "transmutation",
+        "name": "Transmutation",
+        "url": "/api/2014/magic-schools/transmutation"
+    },
+    "classes": [
+        {
+            "index": "sorcerer",
+            "name": "Sorcerer",
+            "url": "/api/2014/classes/sorcerer"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [],
+    "url": "/api/2014/spells/disintegrate",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

@@ -1,0 +1,20 @@
+{
+    "index": "periapt-of-health",
+    "name": "Periapt of Health",
+    "equipment_category": {
+        "index": "wondrous-items",
+        "name": "Wondrous Items",
+        "url": "/api/2014/equipment-categories/wondrous-items"
+    },
+    "rarity": {
+        "name": "Uncommon"
+    },
+    "variants": [],
+    "variant": false,
+    "desc": [
+        "Wondrous item, uncommon",
+        "You are immune to contracting any disease while you wear this pendant. If you are already infected with a disease, the effects of the disease are suppressed you while you wear the pendant."
+    ],
+    "url": "/api/2014/magic-items/periapt-of-health",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

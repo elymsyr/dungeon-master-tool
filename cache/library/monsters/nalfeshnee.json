@@ -1,0 +1,182 @@
+{
+    "index": "nalfeshnee",
+    "name": "Nalfeshnee",
+    "size": "Large",
+    "type": "fiend",
+    "subtype": "demon",
+    "alignment": "chaotic evil",
+    "armor_class": [
+        {
+            "type": "natural",
+            "value": 18
+        }
+    ],
+    "hit_points": 184,
+    "hit_dice": "16d10",
+    "hit_points_roll": "16d10+96",
+    "speed": {
+        "walk": "20 ft.",
+        "fly": "30 ft."
+    },
+    "strength": 21,
+    "dexterity": 10,
+    "constitution": 22,
+    "intelligence": 19,
+    "wisdom": 12,
+    "charisma": 15,
+    "proficiencies": [
+        {
+            "value": 11,
+            "proficiency": {
+                "index": "saving-throw-con",
+                "name": "Saving Throw: CON",
+                "url": "/api/2014/proficiencies/saving-throw-con"
+            }
+        },
+        {
+            "value": 9,
+            "proficiency": {
+                "index": "saving-throw-int",
+                "name": "Saving Throw: INT",
+                "url": "/api/2014/proficiencies/saving-throw-int"
+            }
+        },
+        {
+            "value": 6,
+            "proficiency": {
+                "index": "saving-throw-wis",
+                "name": "Saving Throw: WIS",
+                "url": "/api/2014/proficiencies/saving-throw-wis"
+            }
+        },
+        {
+            "value": 7,
+            "proficiency": {
+                "index": "saving-throw-cha",
+                "name": "Saving Throw: CHA",
+                "url": "/api/2014/proficiencies/saving-throw-cha"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [
+        "cold",
+        "fire",
+        "lightning",
+        "bludgeoning, piercing, and slashing from nonmagical weapons"
+    ],
+    "damage_immunities": [
+        "poison"
+    ],
+    "condition_immunities": [
+        {
+            "index": "poisoned",
+            "name": "Poisoned",
+            "url": "/api/2014/conditions/poisoned"
+        }
+    ],
+    "senses": {
+        "truesight": "120 ft.",
+        "passive_perception": 11
+    },
+    "languages": "Abyssal, telepathy 120 ft.",
+    "challenge_rating": 13,
+    "proficiency_bonus": 5,
+    "xp": 10000,
+    "special_abilities": [
+        {
+            "name": "Magic Resistance",
+            "desc": "The nalfeshnee has advantage on saving throws against spells and other magical effects.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "damage": [],
+            "name": "Multiattack",
+            "multiattack_type": "actions",
+            "desc": "The nalfeshnee uses Horror Nimbus if it can. It then makes three attacks: one with its bite and two with its claws.",
+            "actions": [
+                {
+                    "action_name": "Horror Nimbus",
+                    "count": "1",
+                    "type": "ability"
+                },
+                {
+                    "action_name": "Bite",
+                    "count": "1",
+                    "type": "melee"
+                },
+                {
+                    "action_name": "Claw",
+                    "count": "2",
+                    "type": "melee"
+                }
+            ]
+        },
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +10 to hit, reach 5 ft., one target. Hit: 32 (5d10 + 5) piercing damage.",
+            "attack_bonus": 10,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "5d10+5"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Claw",
+            "desc": "Melee Weapon Attack: +10 to hit, reach 10 ft., one target. Hit: 15 (3d6 + 5) slashing damage.",
+            "attack_bonus": 10,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "3d6+5"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Horror Nimbus",
+            "desc": "The nalfeshnee magically emits scintillating, multicolored light. Each creature within 15 feet of the nalfeshnee that can see the light must succeed on a DC 15 Wisdom saving throw or be frightened for 1 minute. A creature can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success. If a creature's saving throw is successful or the effect ends for it, the creature is immune to the nalfeshnee's Horror Nimbus for the next 24 hours.",
+            "usage": {
+                "type": "recharge on roll",
+                "dice": "1d6",
+                "min_value": 5
+            },
+            "dc": {
+                "dc_type": {
+                    "index": "wis",
+                    "name": "WIS",
+                    "url": "/api/2014/ability-scores/wis"
+                },
+                "dc_value": 15,
+                "success_type": "none"
+            },
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Teleport",
+            "desc": "The nalfeshnee magically teleports, along with any equipment it is wearing or carrying, up to 120 feet to an unoccupied space it can see.",
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/nalfeshnee.png",
+    "url": "/api/2014/monsters/nalfeshnee",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

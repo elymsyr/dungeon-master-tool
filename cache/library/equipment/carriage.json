@@ -1,0 +1,21 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "carriage",
+    "name": "Carriage",
+    "equipment_category": {
+        "index": "mounts-and-vehicles",
+        "name": "Mounts and Vehicles",
+        "url": "/api/2014/equipment-categories/mounts-and-vehicles"
+    },
+    "vehicle_category": "Tack, Harness, and Drawn Vehicles",
+    "cost": {
+        "quantity": 100,
+        "unit": "gp"
+    },
+    "weight": 600,
+    "url": "/api/2014/equipment/carriage",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

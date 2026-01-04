@@ -1,0 +1,22 @@
+{
+    "index": "dragon-slayer",
+    "name": "Dragon Slayer",
+    "equipment_category": {
+        "index": "weapon",
+        "name": "Weapon",
+        "url": "/api/2014/equipment-categories/weapon"
+    },
+    "rarity": {
+        "name": "Rare"
+    },
+    "variants": [],
+    "variant": false,
+    "desc": [
+        "Weapon (any sword), rare",
+        "You gain a +1 bonus to attack and damage rolls made with this magic weapon.",
+        "When you hit a dragon with this weapon, the dragon takes an extra 3d6 damage of the weapon's type. For the purpose of this weapon, \"dragon\" refers to any creature with the dragon type, including dragon turtles and wyverns."
+    ],
+    "image": "/api/images/magic-items/dragon-slayer.png",
+    "url": "/api/2014/magic-items/dragon-slayer",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

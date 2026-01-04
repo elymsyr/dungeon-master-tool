@@ -1,0 +1,124 @@
+{
+    "index": "sprite",
+    "name": "Sprite",
+    "size": "Tiny",
+    "type": "fey",
+    "alignment": "neutral good",
+    "armor_class": [
+        {
+            "type": "armor",
+            "value": 15,
+            "armor": [
+                {
+                    "index": "leather-armor",
+                    "name": "Leather Armor",
+                    "url": "/api/2014/equipment/leather-armor"
+                }
+            ]
+        }
+    ],
+    "hit_points": 2,
+    "hit_dice": "1d4",
+    "hit_points_roll": "1d4",
+    "speed": {
+        "walk": "10 ft.",
+        "fly": "40 ft."
+    },
+    "strength": 3,
+    "dexterity": 18,
+    "constitution": 10,
+    "intelligence": 14,
+    "wisdom": 13,
+    "charisma": 11,
+    "proficiencies": [
+        {
+            "value": 3,
+            "proficiency": {
+                "index": "skill-perception",
+                "name": "Skill: Perception",
+                "url": "/api/2014/proficiencies/skill-perception"
+            }
+        },
+        {
+            "value": 8,
+            "proficiency": {
+                "index": "skill-stealth",
+                "name": "Skill: Stealth",
+                "url": "/api/2014/proficiencies/skill-stealth"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 13
+    },
+    "languages": "Common, Elvish, Sylvan",
+    "challenge_rating": 0.25,
+    "proficiency_bonus": 2,
+    "xp": 50,
+    "actions": [
+        {
+            "name": "Longsword",
+            "desc": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 1 slashing damage.",
+            "attack_bonus": 2,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "1"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Shortbow",
+            "desc": "Ranged Weapon Attack: +6 to hit, range 40/160 ft., one target. Hit: 1 piercing damage, and the target must succeed on a DC 10 Constitution saving throw or become poisoned for 1 minute. If its saving throw result is 5 or lower, the poisoned target falls unconscious for the same duration, or until it takes damage or another creature takes an action to shake it awake.",
+            "attack_bonus": 6,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Heart Sight",
+            "desc": "The sprite touches a creature and magically knows the creature's current emotional state. If the target fails a DC 10 Charisma saving throw, the sprite also knows the creature's alignment. Celestials, fiends, and undead automatically fail the saving throw.",
+            "dc": {
+                "dc_type": {
+                    "index": "cha",
+                    "name": "CHA",
+                    "url": "/api/2014/ability-scores/cha"
+                },
+                "dc_value": 10,
+                "success_type": "none"
+            },
+            "actions": []
+        },
+        {
+            "damage": [],
+            "name": "Invisibility",
+            "desc": "The sprite magically turns invisible until it attacks or casts a spell, or until its concentration ends (as if concentrating on a spell). Any equipment the sprite wears or carries is invisible with it.",
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/sprite.png",
+    "url": "/api/2014/monsters/sprite",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

@@ -1,0 +1,80 @@
+{
+    "index": "insect-plague",
+    "name": "Insect Plague",
+    "desc": [
+        "Swarming, biting locusts fill a 20-foot-radius sphere centered on a point you choose within range. The sphere spreads around corners. The sphere remains for the duration, and its area is lightly obscured. The sphere's area is difficult terrain.",
+        "When the area appears, each creature in it must make a constitution saving throw. A creature takes 4d10 piercing damage on a failed save, or half as much damage on a successful one. A creature must also make this saving throw when it enters the spell's area for the first time on a turn or ends its turn there."
+    ],
+    "higher_level": [
+        "When you cast this spell using a spell slot of 6th level or higher, the damage increases by 1d10 for each slot level above 5th."
+    ],
+    "range": "300 feet",
+    "components": [
+        "V",
+        "S",
+        "M"
+    ],
+    "material": "A few grains of sugar, some kernels of grain, and a smear of fat.",
+    "ritual": false,
+    "duration": "Up to 10 minutes",
+    "concentration": true,
+    "casting_time": "1 action",
+    "level": 5,
+    "damage": {
+        "damage_type": {
+            "index": "piercing",
+            "name": "Piercing",
+            "url": "/api/2014/damage-types/piercing"
+        },
+        "damage_at_slot_level": {
+            "5": "4d10",
+            "6": "5d10",
+            "7": "6d10",
+            "8": "7d10",
+            "9": "8d10"
+        }
+    },
+    "dc": {
+        "dc_type": {
+            "index": "con",
+            "name": "CON",
+            "url": "/api/2014/ability-scores/con"
+        },
+        "dc_success": "half"
+    },
+    "area_of_effect": {
+        "type": "sphere",
+        "size": 20
+    },
+    "school": {
+        "index": "conjuration",
+        "name": "Conjuration",
+        "url": "/api/2014/magic-schools/conjuration"
+    },
+    "classes": [
+        {
+            "index": "cleric",
+            "name": "Cleric",
+            "url": "/api/2014/classes/cleric"
+        },
+        {
+            "index": "druid",
+            "name": "Druid",
+            "url": "/api/2014/classes/druid"
+        },
+        {
+            "index": "sorcerer",
+            "name": "Sorcerer",
+            "url": "/api/2014/classes/sorcerer"
+        }
+    ],
+    "subclasses": [
+        {
+            "index": "land",
+            "name": "Land",
+            "url": "/api/2014/subclasses/land"
+        }
+    ],
+    "url": "/api/2014/spells/insect-plague",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

@@ -1,0 +1,51 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "crossbow-light",
+    "name": "Crossbow, light",
+    "equipment_category": {
+        "index": "weapon",
+        "name": "Weapon",
+        "url": "/api/2014/equipment-categories/weapon"
+    },
+    "weapon_category": "Simple",
+    "weapon_range": "Ranged",
+    "category_range": "Simple Ranged",
+    "cost": {
+        "quantity": 25,
+        "unit": "gp"
+    },
+    "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+            "index": "piercing",
+            "name": "Piercing",
+            "url": "/api/2014/damage-types/piercing"
+        }
+    },
+    "range": {
+        "normal": 80,
+        "long": 320
+    },
+    "weight": 5,
+    "properties": [
+        {
+            "index": "ammunition",
+            "name": "Ammunition",
+            "url": "/api/2014/weapon-properties/ammunition"
+        },
+        {
+            "index": "loading",
+            "name": "Loading",
+            "url": "/api/2014/weapon-properties/loading"
+        },
+        {
+            "index": "two-handed",
+            "name": "Two-Handed",
+            "url": "/api/2014/weapon-properties/two-handed"
+        }
+    ],
+    "url": "/api/2014/equipment/crossbow-light",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": []
+}

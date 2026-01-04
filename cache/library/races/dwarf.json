@@ -1,0 +1,68 @@
+{
+    "index": "dwarf",
+    "name": "Dwarf",
+    "speed": 25,
+    "ability_bonuses": [
+        {
+            "ability_score": {
+                "index": "con",
+                "name": "CON",
+                "url": "/api/2014/ability-scores/con"
+            },
+            "bonus": 2
+        }
+    ],
+    "alignment": "Most dwarves are lawful, believing firmly in the benefits of a well-ordered society. They tend toward good as well, with a strong sense of fair play and a belief that everyone deserves to share in the benefits of a just order.",
+    "age": "Dwarves mature at the same rate as humans, but they're considered young until they reach the age of 50. On average, they live about 350 years.",
+    "size": "Medium",
+    "size_description": "Dwarves stand between 4 and 5 feet tall and average about 150 pounds. Your size is Medium.",
+    "languages": [
+        {
+            "index": "common",
+            "name": "Common",
+            "url": "/api/2014/languages/common"
+        },
+        {
+            "index": "dwarvish",
+            "name": "Dwarvish",
+            "url": "/api/2014/languages/dwarvish"
+        }
+    ],
+    "language_desc": "You can speak, read, and write Common and Dwarvish. Dwarvish is full of hard consonants and guttural sounds, and those characteristics spill over into whatever other language a dwarf might speak.",
+    "traits": [
+        {
+            "index": "darkvision",
+            "name": "Darkvision",
+            "url": "/api/2014/traits/darkvision"
+        },
+        {
+            "index": "dwarven-resilience",
+            "name": "Dwarven Resilience",
+            "url": "/api/2014/traits/dwarven-resilience"
+        },
+        {
+            "index": "stonecunning",
+            "name": "Stonecunning",
+            "url": "/api/2014/traits/stonecunning"
+        },
+        {
+            "index": "dwarven-combat-training",
+            "name": "Dwarven Combat Training",
+            "url": "/api/2014/traits/dwarven-combat-training"
+        },
+        {
+            "index": "tool-proficiency",
+            "name": "Tool Proficiency",
+            "url": "/api/2014/traits/tool-proficiency"
+        }
+    ],
+    "subraces": [
+        {
+            "index": "hill-dwarf",
+            "name": "Hill Dwarf",
+            "url": "/api/2014/subraces/hill-dwarf"
+        }
+    ],
+    "url": "/api/2014/races/dwarf",
+    "updated_at": "2025-10-24T20:42:14.212Z"
+}

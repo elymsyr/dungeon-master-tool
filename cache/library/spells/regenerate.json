@@ -1,0 +1,49 @@
+{
+    "higher_level": [],
+    "index": "regenerate",
+    "name": "Regenerate",
+    "desc": [
+        "You touch a creature and stimulate its natural healing ability. The target regains 4d8 + 15 hit points. For the duration of the spell, the target regains 1 hit point at the start of each of its turns (10 hit points each minute).",
+        "The target's severed body members (fingers, legs, tails, and so on), if any, are restored after 2 minutes. If you have the severed part and hold it to the stump, the spell instantaneously causes the limb to knit to the stump."
+    ],
+    "range": "Touch",
+    "components": [
+        "V",
+        "S",
+        "M"
+    ],
+    "material": "A prayer wheel and holy water.",
+    "ritual": false,
+    "duration": "1 hour",
+    "concentration": false,
+    "casting_time": "1 minute",
+    "level": 7,
+    "heal_at_slot_level": {
+        "7": "4d8 + 15"
+    },
+    "school": {
+        "index": "transmutation",
+        "name": "Transmutation",
+        "url": "/api/2014/magic-schools/transmutation"
+    },
+    "classes": [
+        {
+            "index": "bard",
+            "name": "Bard",
+            "url": "/api/2014/classes/bard"
+        },
+        {
+            "index": "cleric",
+            "name": "Cleric",
+            "url": "/api/2014/classes/cleric"
+        },
+        {
+            "index": "druid",
+            "name": "Druid",
+            "url": "/api/2014/classes/druid"
+        }
+    ],
+    "subclasses": [],
+    "url": "/api/2014/spells/regenerate",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

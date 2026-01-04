@@ -1,0 +1,20 @@
+{
+    "index": "potion-of-mind-reading",
+    "name": "Potion of Mind Reading",
+    "equipment_category": {
+        "index": "potion",
+        "name": "Potion",
+        "url": "/api/2014/equipment-categories/potion"
+    },
+    "rarity": {
+        "name": "Rare"
+    },
+    "variants": [],
+    "variant": false,
+    "desc": [
+        "Potion, rare",
+        "When you drink this potion, you gain the effect of the detect thoughts spell (save DC 13). The potion's dense, purple liquid has an ovoid cloud of pink floating in it."
+    ],
+    "url": "/api/2014/magic-items/potion-of-mind-reading",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

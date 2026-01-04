@@ -1,0 +1,69 @@
+{
+    "index": "baboon",
+    "name": "Baboon",
+    "size": "Small",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 12
+        }
+    ],
+    "hit_points": 3,
+    "hit_dice": "1d6",
+    "hit_points_roll": "1d6",
+    "speed": {
+        "walk": "30 ft.",
+        "climb": "30 ft."
+    },
+    "strength": 8,
+    "dexterity": 14,
+    "constitution": 11,
+    "intelligence": 4,
+    "wisdom": 12,
+    "charisma": 6,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 11
+    },
+    "languages": "",
+    "challenge_rating": 0,
+    "proficiency_bonus": 2,
+    "xp": 10,
+    "special_abilities": [
+        {
+            "name": "Pack Tactics",
+            "desc": "The baboon has advantage on an attack roll against a creature if at least one of the baboon's allies is within 5 ft. of the creature and the ally isn't incapacitated.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +1 to hit, reach 5 ft., one target. Hit: 1 (1d4 - 1) piercing damage.",
+            "attack_bonus": 1,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d4-1"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/baboon.png",
+    "url": "/api/2014/monsters/baboon",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

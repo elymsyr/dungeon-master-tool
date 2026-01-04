@@ -1,0 +1,21 @@
+{
+    "index": "armor-2",
+    "name": "Armor, +2",
+    "equipment_category": {
+        "index": "armor",
+        "name": "Armor",
+        "url": "/api/2014/equipment-categories/armor"
+    },
+    "rarity": {
+        "name": "Very Rare"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Armor (light, medium, or heavy), very rare",
+        "You have a +2 bonus to AC while wearing this armor."
+    ],
+    "image": "/api/images/magic-items/armor-2.png",
+    "url": "/api/2014/magic-items/armor-2",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

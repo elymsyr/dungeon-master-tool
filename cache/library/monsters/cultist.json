@@ -1,0 +1,94 @@
+{
+    "index": "cultist",
+    "name": "Cultist",
+    "desc": "Cultists swear allegiance to dark powers such as elemental princes, demon lords, or archdevils. Most conceal their loyalties to avoid being ostracized, imprisoned, or executed for their beliefs. Unlike evil acolytes, cultists often show signs of insanity in their beliefs and practices.",
+    "size": "Medium",
+    "type": "humanoid",
+    "subtype": "any race",
+    "alignment": "any non-good alignment",
+    "armor_class": [
+        {
+            "type": "armor",
+            "value": 12,
+            "armor": [
+                {
+                    "index": "leather-armor",
+                    "name": "Leather Armor",
+                    "url": "/api/2014/equipment/leather-armor"
+                }
+            ]
+        }
+    ],
+    "hit_points": 9,
+    "hit_dice": "2d8",
+    "hit_points_roll": "2d8",
+    "speed": {
+        "walk": "30 ft."
+    },
+    "strength": 11,
+    "dexterity": 12,
+    "constitution": 10,
+    "intelligence": 10,
+    "wisdom": 11,
+    "charisma": 10,
+    "proficiencies": [
+        {
+            "value": 2,
+            "proficiency": {
+                "index": "skill-deception",
+                "name": "Skill: Deception",
+                "url": "/api/2014/proficiencies/skill-deception"
+            }
+        },
+        {
+            "value": 2,
+            "proficiency": {
+                "index": "skill-religion",
+                "name": "Skill: Religion",
+                "url": "/api/2014/proficiencies/skill-religion"
+            }
+        }
+    ],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 10
+    },
+    "languages": "any one language (usually Common)",
+    "challenge_rating": 0.125,
+    "proficiency_bonus": 2,
+    "xp": 25,
+    "special_abilities": [
+        {
+            "name": "Dark Devotion",
+            "desc": "The cultist has advantage on saving throws against being charmed or frightened.",
+            "damage": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "Scimitar",
+            "desc": "Melee Weapon Attack: +3 to hit, reach 5 ft., one creature. Hit: 4 (1d6 + 1) slashing damage.",
+            "attack_bonus": 3,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "slashing",
+                        "name": "Slashing",
+                        "url": "/api/2014/damage-types/slashing"
+                    },
+                    "damage_dice": "1d6+1"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/cultist.png",
+    "url": "/api/2014/monsters/cultist",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": []
+}

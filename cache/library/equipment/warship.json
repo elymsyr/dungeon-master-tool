@@ -1,0 +1,24 @@
+{
+    "desc": [],
+    "special": [],
+    "index": "warship",
+    "name": "Warship",
+    "equipment_category": {
+        "index": "mounts-and-vehicles",
+        "name": "Mounts and Vehicles",
+        "url": "/api/2014/equipment-categories/mounts-and-vehicles"
+    },
+    "vehicle_category": "Waterborne Vehicles",
+    "cost": {
+        "quantity": 25000,
+        "unit": "gp"
+    },
+    "speed": {
+        "quantity": 2.5,
+        "unit": "mph"
+    },
+    "url": "/api/2014/equipment/warship",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

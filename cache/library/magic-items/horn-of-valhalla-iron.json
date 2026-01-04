@@ -1,0 +1,21 @@
+{
+    "index": "horn-of-valhalla-iron",
+    "name": "Iron Horn of Valhalla",
+    "equipment_category": {
+        "index": "wondrous-items",
+        "name": "Wondrous Items",
+        "url": "/api/2014/equipment-categories/wondrous-items"
+    },
+    "rarity": {
+        "name": "Legendary"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Wondrous item, legendary",
+        "You can use an action to blow this horn. In response, 5d4 + 5 warrior spirits from the Valhalla appear within 60 feet of you. They use the statistics of a berserker. They return to Valhalla after 1 hour or when they drop to 0 hit points. Once you use the horn, it can't be used again until 7 days have passed.",
+        "If you blow the horn without having proficiency with all martial weapons, the summoned berserkers attack you. If you meet the requirement, they are friendly to you and your companions and follow your commands."
+    ],
+    "url": "/api/2014/magic-items/horn-of-valhalla-iron",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

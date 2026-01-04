@@ -1,0 +1,33 @@
+{
+    "index": "armor-of-resistance",
+    "name": "Armor of Resistance",
+    "equipment_category": {
+        "index": "armor",
+        "name": "Armor",
+        "url": "/api/2014/equipment-categories/armor"
+    },
+    "rarity": {
+        "name": "Rare"
+    },
+    "variants": [],
+    "variant": false,
+    "desc": [
+        "Armor (light, medium, or heavy), rare (requires attunement)",
+        "You have resistance to one type of damage while you wear this armor. The GM chooses the type or determines it randomly from the options below.",
+        "| d10 | Damage Type |",
+        "|---|---|",
+        "| 1 | Acid |",
+        "| 2 | Cold |",
+        "| 3 | Fire |",
+        "| 4 | Force |",
+        "| 5 | Lightning |",
+        "| 6 | Necrotic |",
+        "| 7 | Poison |",
+        "| 8 | Psychic |",
+        "| 9 | Radiant |",
+        "| 10 | Thunder |"
+    ],
+    "image": "/api/images/magic-items/armor-of-resistance.png",
+    "url": "/api/2014/magic-items/armor-of-resistance",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

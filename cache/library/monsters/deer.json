@@ -1,0 +1,62 @@
+{
+    "index": "deer",
+    "name": "Deer",
+    "size": "Medium",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+        {
+            "type": "dex",
+            "value": 13
+        }
+    ],
+    "hit_points": 4,
+    "hit_dice": "1d8",
+    "hit_points_roll": "1d8",
+    "speed": {
+        "walk": "50 ft."
+    },
+    "strength": 11,
+    "dexterity": 16,
+    "constitution": 11,
+    "intelligence": 2,
+    "wisdom": 14,
+    "charisma": 5,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "passive_perception": 12
+    },
+    "languages": "",
+    "challenge_rating": 0,
+    "proficiency_bonus": 2,
+    "xp": 10,
+    "actions": [
+        {
+            "name": "Bite",
+            "desc": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 2 (1d4) piercing damage.",
+            "attack_bonus": 2,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "1d4"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/deer.png",
+    "url": "/api/2014/monsters/deer",
+    "updated_at": "2025-10-24T20:42:13.741Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

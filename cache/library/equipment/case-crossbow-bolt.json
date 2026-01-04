@@ -1,0 +1,27 @@
+{
+    "special": [],
+    "index": "case-crossbow-bolt",
+    "name": "Case, crossbow bolt",
+    "equipment_category": {
+        "index": "adventuring-gear",
+        "name": "Adventuring Gear",
+        "url": "/api/2014/equipment-categories/adventuring-gear"
+    },
+    "gear_category": {
+        "index": "standard-gear",
+        "name": "Standard Gear",
+        "url": "/api/2014/equipment-categories/standard-gear"
+    },
+    "cost": {
+        "quantity": 1,
+        "unit": "gp"
+    },
+    "weight": 1,
+    "desc": [
+        "This wooden case can hold up to twenty crossbow bolts."
+    ],
+    "url": "/api/2014/equipment/case-crossbow-bolt",
+    "updated_at": "2025-10-24T20:42:12.926Z",
+    "contents": [],
+    "properties": []
+}

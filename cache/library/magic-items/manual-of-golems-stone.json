@@ -1,0 +1,22 @@
+{
+    "index": "manual-of-golems-stone",
+    "name": "Manual of Stone Golems",
+    "equipment_category": {
+        "index": "wondrous-items",
+        "name": "Wondrous Items",
+        "url": "/api/2014/equipment-categories/wondrous-items"
+    },
+    "rarity": {
+        "name": "Very Rare"
+    },
+    "variants": [],
+    "variant": true,
+    "desc": [
+        "Wondrous item, very rare",
+        "This tome contains information and incantations necessary to make a stone golem. To decipher and use the manual, you must be a spellcaster with at least two 5th-level spell slots. A creature that can't use a manual of golems and attempts to read it takes 6d6 psychic damage.",
+        "To create a golem, you must spend 90 days, working without interruption with the manual at hand and resting no more than 8 hours per day. You must also pay 80,000 gp to purchase supplies.",
+        "Once you finish creating the golem, the book is consumed in eldritch flames. The golem becomes animate when the ashes of the manual are sprinkled on it. It is under your control, and it understands and obeys your spoken commands."
+    ],
+    "url": "/api/2014/magic-items/manual-of-golems-stone",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}

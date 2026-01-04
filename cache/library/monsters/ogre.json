@@ -1,0 +1,86 @@
+{
+    "index": "ogre",
+    "name": "Ogre",
+    "size": "Large",
+    "type": "giant",
+    "alignment": "chaotic evil",
+    "armor_class": [
+        {
+            "type": "armor",
+            "value": 11,
+            "armor": [
+                {
+                    "index": "hide-armor",
+                    "name": "Hide Armor",
+                    "url": "/api/2014/equipment/hide-armor"
+                }
+            ]
+        }
+    ],
+    "hit_points": 59,
+    "hit_dice": "7d10",
+    "hit_points_roll": "7d10+21",
+    "speed": {
+        "walk": "40 ft."
+    },
+    "strength": 19,
+    "dexterity": 8,
+    "constitution": 16,
+    "intelligence": 5,
+    "wisdom": 7,
+    "charisma": 7,
+    "proficiencies": [],
+    "damage_vulnerabilities": [],
+    "damage_resistances": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+        "darkvision": "60 ft.",
+        "passive_perception": 8
+    },
+    "languages": "Common, Giant",
+    "challenge_rating": 2,
+    "proficiency_bonus": 2,
+    "xp": 450,
+    "actions": [
+        {
+            "name": "Greatclub",
+            "desc": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) bludgeoning damage.",
+            "attack_bonus": 6,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "bludgeoning",
+                        "name": "Bludgeoning",
+                        "url": "/api/2014/damage-types/bludgeoning"
+                    },
+                    "damage_dice": "2d8+4"
+                }
+            ],
+            "actions": []
+        },
+        {
+            "name": "Javelin",
+            "desc": "Melee or Ranged Weapon Attack: +6 to hit, reach 5 ft. or range 30/120 ft., one target. Hit: 11 (2d6 + 4) piercing damage.",
+            "attack_bonus": 6,
+            "damage": [
+                {
+                    "damage_type": {
+                        "index": "piercing",
+                        "name": "Piercing",
+                        "url": "/api/2014/damage-types/piercing"
+                    },
+                    "damage_dice": "2d6+4"
+                }
+            ],
+            "actions": []
+        }
+    ],
+    "image": "/api/images/monsters/ogre.png",
+    "url": "/api/2014/monsters/ogre",
+    "updated_at": "2025-10-24T20:42:13.742Z",
+    "forms": [],
+    "legendary_actions": [],
+    "reactions": [],
+    "special_abilities": []
+}

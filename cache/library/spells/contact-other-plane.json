@@ -1,0 +1,47 @@
+{
+    "higher_level": [],
+    "index": "contact-other-plane",
+    "name": "Contact Other Plane",
+    "desc": [
+        "You mentally contact a demigod, the spirit of a long-dead sage, or some other mysterious entity from another plane. Contacting this extraplanar intelligence can strain or even break your mind. When you cast this spell, make a DC 15 intelligence saving throw. On a failure, you take 6d6 psychic damage and are insane until you finish a long rest. While insane, you can't take actions, can't understand what other creatures say, can't read, and speak only in gibberish. A greater restoration spell cast on you ends this effect.",
+        "On a successful save, you can ask the entity up to five questions. You must ask your questions before the spell ends. The GM answers each question with one word, such as \"yes,\" \"no,\" \"maybe,\" \"never,\" \"irrelevant,\" or \"unclear\" (if the entity doesn't know the answer to the question). If a one-word answer would be misleading, the GM might instead offer a short phrase as an answer."
+    ],
+    "range": "Self",
+    "components": [
+        "V"
+    ],
+    "ritual": true,
+    "duration": "1 minute",
+    "concentration": false,
+    "casting_time": "1 minute",
+    "level": 5,
+    "dc": {
+        "dc_type": {
+            "index": "int",
+            "name": "INT",
+            "url": "/api/2014/ability-scores/int"
+        },
+        "dc_success": "other",
+        "desc": "On a failure, you take 6d6 psychic damage and are insane until you finish a long rest."
+    },
+    "school": {
+        "index": "divination",
+        "name": "Divination",
+        "url": "/api/2014/magic-schools/divination"
+    },
+    "classes": [
+        {
+            "index": "warlock",
+            "name": "Warlock",
+            "url": "/api/2014/classes/warlock"
+        },
+        {
+            "index": "wizard",
+            "name": "Wizard",
+            "url": "/api/2014/classes/wizard"
+        }
+    ],
+    "subclasses": [],
+    "url": "/api/2014/spells/contact-other-plane",
+    "updated_at": "2025-10-24T20:42:14.619Z"
+}

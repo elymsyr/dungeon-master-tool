@@ -1,0 +1,20 @@
+{
+    "index": "ring-of-protection",
+    "name": "Ring of Protection",
+    "equipment_category": {
+        "index": "ring",
+        "name": "Ring",
+        "url": "/api/2014/equipment-categories/ring"
+    },
+    "rarity": {
+        "name": "Rare"
+    },
+    "variants": [],
+    "variant": false,
+    "desc": [
+        "Ring, rare (requires attunement)",
+        "You gain a +1 bonus to AC and saving throws while wearing this ring."
+    ],
+    "url": "/api/2014/magic-items/ring-of-protection",
+    "updated_at": "2025-10-24T20:42:13.517Z"
+}
