@@ -1,33 +1,37 @@
-/* Epic Fantasy DM Tool - Dark Theme */
+/* Epic Fantasy DM Tool - Gray Dark Theme */
 QMainWindow {
-    background-color: #121212;
+    background-color: #2b2b2b;
     color: #e0e0e0;
 }
 
 QWidget {
-    background-color: #121212;
+    background-color: #2b2b2b;
     color: #e0e0e0;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 QTabWidget::pane {
-    border: 1px solid #333;
-    background: #1e1e1e;
+    border: 1px solid #444;
+    background: #333333;
+    border-radius: 4px;
 }
 
 QTabBar::tab {
-    background: #252525;
+    background: #3c3f41;
     padding: 10px 20px;
-    border: 1px solid #333;
+    border: 1px solid #444;
+    border-bottom: none;
+    margin-right: 2px;
 }
 
 QTabBar::tab:selected {
-    background: #7c4dff;
-    color: white;
+    background: #4e5254;
+    color: #ffd54f;
+    font-weight: bold;
 }
 
 QPushButton {
-    background-color: #333;
+    background-color: #4b4b4b;
     border: 1px solid #555;
     padding: 8px 15px;
     border-radius: 4px;
@@ -35,41 +39,66 @@ QPushButton {
 }
 
 QPushButton:hover {
-    background-color: #444;
+    background-color: #5a5a5a;
 }
 
 QPushButton#successBtn {
-    background-color: #2e7d32;
+    background-color: #388e3c;
     font-weight: bold;
 }
 
 QPushButton#dangerBtn {
-    background-color: #c62828;
+    background-color: #d32f2f;
 }
 
 QPushButton#primaryBtn {
-    background-color: #7c4dff;
+    background-color: #1976d2;
 }
 
 QLineEdit, QTextEdit, QComboBox, QListWidget {
-    background-color: #1e1e1e;
-    border: 1px solid #333;
-    padding: 5px;
+    background-color: #3c3f41;
+    border: 1px solid #555;
+    padding: 6px;
     border-radius: 3px;
     color: #fff;
 }
 
+QHeaderView::section {
+    background-color: #3c3f41;
+    color: white;
+    padding: 5px;
+    border: 1px solid #555;
+}
+
+QTableWidget {
+    gridline-color: #555;
+    background-color: #2b2b2b;
+    alternate-background-color: #333;
+}
+
 QGroupBox {
-    border: 2px solid #333;
+    border: 2px solid #555;
     border-radius: 8px;
     margin-top: 15px;
-    padding-top: 10px;
+    padding-top: 15px;
     font-weight: bold;
-    color: #7c4dff;
+    color: #ffd54f;
 }
 
 QGroupBox::title {
     subcontrol-origin: margin;
     left: 10px;
     padding: 0 5px;
+}
+
+QScrollBar:vertical {
+    border: none;
+    background: #2b2b2b;
+    width: 10px;
+}
+
+QScrollBar::handle:vertical {
+    background: #555;
+    min-height: 20px;
+    border-radius: 5px;
 }
