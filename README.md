@@ -1,7 +1,5 @@
 # Dungeon Master Tool
 
-check runnables
-
 ### Developer Note
 
 Hi, I'm a D&D player and decided to become a Dungeon Master. I created this application to help me during sessions. While doing this, my priority was to meet these requirements:
@@ -16,6 +14,15 @@ If these situations are suitable for you as well, I think you will enjoy this ap
 
 ---
 
+### 🛠️ Packaging & Distribution (Developer Info)
+
+To facilitate cross-platform distribution, the project includes specialized build scripts and a CI/CD pipeline:
+
+- **`build_linux.py` & `build_windows.py`**: Python scripts using `pyinstaller` to create standalone binaries. They automatically bundle `locales/` and `themes/` into the executable while keeping `worlds/` and `cache/` external for data persistence.
+- **GitHub Actions (`package.yml`)**: Every push to the `main` branch triggers an automated build for both Linux and Windows. The resulting binaries are uploaded as **Artifacts** on the GitHub Actions page, allowing Linux developers to provide Windows `.exe` files effortlessly.
+
+---
+
 ### Geliştirici Notu
 
 Selam, bir dnd oyuncusuyum ve dungeon master olmaya karar verdim. Bu uygulamayı bana sessionlarda yardımcı olması için hazırladım. Bunu yaparken önceliğim şu gereksinimlerimi karşılamaktı:
@@ -27,6 +34,13 @@ Selam, bir dnd oyuncusuyum ve dungeon master olmaya karar verdim. Bu uygulamayı
 5. Dünyamı bir USB Flash Disk ile yanımda taşıyabilmeliyim... Bundan çok emin değilim tabi.
 
 Evet, bu tarz durumlar sizin için de uygunsa, bu uygulamadan keyif alacağınızı düşünüyorum. Ayrıca ileride getirmeyi planladığım yeni özellikler de var. Şuan uygulama çok da iyi görünmüyor biliyorum :) Zaman bulursam AI yerine kendim de geliştirmeye bakacağım. Uygulamadan keyif alırsanız, repoya yıldız bırakmanız harika olur.
+
+### 🛠️ Paketleme ve Dağıtım (Geliştirici Notu)
+
+Projenin farklı platformlarda kolayca dağıtılabilmesi için özel derleme sistemleri eklenmiştir:
+
+- **`build_linux.py` ve `build_windows.py`**: `pyinstaller` kullanarak tek bir çalıştırılabilir dosya (binary/exe) oluşturur. Dil dosyaları (`locales/`) ve temalar (`themes/`) dosya içine gömülürken, kullanıcı verileri (`worlds/` ve `cache/`) taşınabilirlik için dışarıda tutulur.
+- **GitHub Actions (`package.yml`)**: `main` dalına yapılan her yüklemede (push), GitHub sunucuları hem Linux hem de Windows sürümlerini otomatik olarak derler. Üretilen dosyalar GitHub Actions sayfasında **Artifacts** olarak sunulur.
 
 ---
 
