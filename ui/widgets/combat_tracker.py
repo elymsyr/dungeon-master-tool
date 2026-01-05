@@ -288,8 +288,11 @@ class CombatTracker(QWidget):
         return data
 
     def on_data_changed(self, item): 
-        self.refresh_battle_map()
-        self.data_changed_signal.emit()
+        if item.column() == 1: # Initiative sütunu değiştiyse
+            self._sort_and_refresh()
+        else:
+            self.refresh_battle_map()
+            self.data_changed_signal.emit()
 
     # --- SAVAŞ AKIŞI ---
     def next_turn(self):
@@ -311,8 +314,28 @@ class CombatTracker(QWidget):
                 if item: item.setBackground(QBrush(QColor(40, 80, 40)))
 
     def _sort_and_refresh(self):
+        # Şu anki sıradaki kişinin EID veya ismini sakla
+        current_eid = None
+        if 0 <= self.current_turn_index < self.table.rowCount():
+            item = self.table.item(self.current_turn_index, 1)
+            if item: current_eid = item.data(Qt.ItemDataRole.UserRole)
+            if not current_eid:
+                current_eid = self.table.item(self.current_turn_index, 0).text()
+
+        self.table.blockSignals(True)
         self.table.sortItems(1, Qt.SortOrder.DescendingOrder)
-        self.current_turn_index = -1 
+        self.table.blockSignals(False)
+
+        # Sıradaki kişiyi yeni yerinde bul
+        if current_eid:
+            for row in range(self.table.rowCount()):
+                item_init = self.table.item(row, 1)
+                item_name = self.table.item(row, 0)
+                if (item_init and item_init.data(Qt.ItemDataRole.UserRole) == current_eid) or \
+                   (item_name and item_name.text() == current_eid):
+                    self.current_turn_index = row
+                    break
+        
         self.update_highlights()
         self.refresh_battle_map()
         self.data_changed_signal.emit()

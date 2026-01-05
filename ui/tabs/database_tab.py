@@ -309,6 +309,7 @@ class DatabaseTab(QWidget):
                 self.add_to_history(None) # Boş ID olarak geçmişe ekle
                 self.load_data_into_sheet(data_or_id)
                 self.sheet.inp_name.setStyleSheet("border: 2px solid #2e7d32;")
+                self.refresh_list() # Yeni eklenen bağımlılıklar (büyüler) için listeyi yenile
             elif isinstance(data_or_id, str):
                 # Zaten varmış, ID döndü
                 self.load_entity_by_id(data_or_id)

@@ -208,12 +208,20 @@ class DataManager:
         
         parsed_data, msg = self.api_client.search(category, query)
         if not parsed_data: return False, msg, None
+        
+        # Canavar ise büyülerini çöz (Eager resolve)
+        if category == "Monster" and isinstance(parsed_data, dict):
+            parsed_data = self._resolve_dependencies(parsed_data)
+            
         return True, "API'den çekildi.", parsed_data
 
     def fetch_details_from_api(self, category, index_name):
         folder_map = {
-            "Canavar": "monsters", "Büyü (Spell)": "spells", "Eşya (Equipment)": "equipment",
-            "Sınıf (Class)": "classes", "Irk (Race)": "races"
+            "Monster": "monsters", 
+            "Spell": "spells", 
+            "Equipment": "equipment",
+            "Class": "classes", 
+            "Race": "races"
         }
         folder = folder_map.get(category)
         
@@ -229,7 +237,8 @@ class DataManager:
                         with open(local_path, "r", encoding="utf-8") as f:
                             raw = json.load(f)
                             return True, self.api_client.parse_dispatcher(category, raw)
-                    except: pass
+                    except Exception as e: 
+                        print(f"Cache okuma hatası ({category}/{index_name}): {e}")
 
         # 2. API Çekim
         parsed_data, msg = self.api_client.search(category, index_name)
@@ -238,31 +247,49 @@ class DataManager:
 
     def import_entity_with_dependencies(self, data):
         """API verisindeki bağlı büyüleri indirip kaydeder."""
+        # fetch_from_api zaten _resolve_dependencies çağırıyor olabilir (Monster ise)
+        # Ama garantiye almak için burada da çağırıyoruz (pop eder)
+        data = self._resolve_dependencies(data)
+        return self.save_entity(None, data)
+
+    def _resolve_dependencies(self, data):
+        """Monster içindeki _detected_spell_indices verisini işler."""
+        if not isinstance(data, dict): return data
+        
         detected_spells = data.pop("_detected_spell_indices", [])
+        if not detected_spells: return data
+        
         linked_spell_ids = []
+        print(f"🔮 {len(detected_spells)} bağlı büyü indiriliyor...")
+        
+        for spell_index in detected_spells:
+            # 1. API'den/Cache'den büyü bilgisini çek
+            success, spell_data = self.fetch_details_from_api("Spell", spell_index)
+            if success:
+                spell_name = spell_data.get("name")
+                existing_id = None
+                
+                # 2. Veritabanında zaten var mı?
+                for eid, ent in self.data["entities"].items():
+                    if ent.get("type") == "Spell" and ent.get("name") == spell_name:
+                        existing_id = eid
+                        break
+                
+                if existing_id: 
+                    linked_spell_ids.append(existing_id)
+                else:
+                    # 3. Yoksa kaydet
+                    new_id = self.save_entity(None, spell_data)
+                    linked_spell_ids.append(new_id)
 
-        if detected_spells:
-            print(f"🔮 {len(detected_spells)} bağlı büyü indiriliyor...")
-            for spell_index in detected_spells:
-                success, spell_data = self.fetch_details_from_api("Büyü (Spell)", spell_index)
-                if success:
-                    spell_name = spell_data.get("name")
-                    existing_id = None
-                    for eid, ent in self.data["entities"].items():
-                        if ent.get("type") == "Büyü (Spell)" and ent.get("name") == spell_name:
-                            existing_id = eid; break
-                    
-                    if existing_id: linked_spell_ids.append(existing_id)
-                    else:
-                        new_id = self.save_entity(None, spell_data)
-                        linked_spell_ids.append(new_id)
-
+        # 4. Monster verisine büyü ID'lerini ekle
         if linked_spell_ids:
             if "spells" not in data: data["spells"] = []
             for sid in linked_spell_ids:
-                if sid not in data["spells"]: data["spells"].append(sid)
-
-        return self.save_entity(None, data)
+                if sid not in data["spells"]: 
+                    data["spells"].append(sid)
+        
+        return data
 
     # --- HARİTA & RESİM ---
     def import_image(self, src):
