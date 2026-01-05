@@ -24,7 +24,7 @@ class MapSelectorDialog(QDialog):
         self.selected_file = None # Seçilen dosya adı (ör: map.png)
         self.is_new_import = False # Yeni yükle butonuna basıldı mı?
         
-        self.setWindowTitle("Harita Seçimi")
+        self.setWindowTitle(tr("TITLE_MAP_SELECTOR"))
         self.setFixedSize(600, 500)
         self.setStyleSheet("background-color: #1e1e1e; color: white;")
         
@@ -34,7 +34,7 @@ class MapSelectorDialog(QDialog):
     def init_ui(self):
         layout = QVBoxLayout(self)
         
-        lbl = QLabel("Kayıtlı Haritalar (Assets):")
+        lbl = QLabel(tr("LBL_SAVED_MAPS"))
         lbl.setStyleSheet("font-weight: bold; font-size: 14px; color: #ffb74d;")
         layout.addWidget(lbl)
         
@@ -55,11 +55,11 @@ class MapSelectorDialog(QDialog):
         # Butonlar
         btn_layout = QHBoxLayout()
         
-        self.btn_import = QPushButton("📂 Yeni Harita Yükle")
+        self.btn_import = QPushButton(tr("BTN_IMPORT_NEW_MAP"))
         self.btn_import.setStyleSheet("background-color: #2e7d32; color: white; padding: 8px; font-weight: bold;")
         self.btn_import.clicked.connect(self.select_new)
         
-        self.btn_select = QPushButton("Seçili Haritayı Aç")
+        self.btn_select = QPushButton(tr("BTN_OPEN_SELECTED_MAP"))
         self.btn_select.setStyleSheet("background-color: #007acc; color: white; padding: 8px; font-weight: bold;")
         self.btn_select.clicked.connect(self.select_existing)
         
@@ -68,6 +68,11 @@ class MapSelectorDialog(QDialog):
         btn_layout.addWidget(self.btn_select)
         
         layout.addLayout(btn_layout)
+
+    def retranslate_ui(self):
+        self.setWindowTitle(tr("TITLE_MAP_SELECTOR"))
+        self.btn_import.setText(tr("BTN_IMPORT_NEW_MAP"))
+        self.btn_select.setText(tr("BTN_OPEN_SELECTED_MAP"))
 
     def load_maps(self):
         if not os.path.exists(self.assets_path):
@@ -94,7 +99,7 @@ class MapSelectorDialog(QDialog):
             self.selected_file = current_item.data(Qt.ItemDataRole.UserRole)
             self.accept()
         else:
-            QMessageBox.warning(self, "Uyarı", "Lütfen listeden bir harita seçin.")
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_MAP_FROM_LIST"))
 
     def select_new(self):
         self.is_new_import = True
@@ -176,6 +181,22 @@ class CombatTracker(QWidget):
         btn_layout2.addWidget(self.btn_clear_all)
         layout.addLayout(btn_layout2)
 
+    def retranslate_ui(self):
+        self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
+        self.inp_quick_name.setPlaceholderText(tr("HEADER_NAME"))
+        self.inp_quick_init.setPlaceholderText(tr("LBL_INIT"))
+        self.inp_quick_hp.setPlaceholderText(tr("LBL_HP"))
+        self.btn_quick_add.setText(tr("BTN_QUICK_ADD"))
+        self.btn_next_turn.setText(tr("BTN_NEXT_TURN"))
+        self.btn_add.setText(tr("BTN_ADD"))
+        self.btn_add_players.setText(tr("BTN_ADD_PLAYERS"))
+        self.btn_roll.setText(tr("BTN_ROLL_INIT"))
+        self.btn_clear_all.setText(tr("BTN_CLEAR_ALL"))
+        
+        if self.battle_map_window and self.battle_map_window.isVisible():
+            self.battle_map_window.retranslate_ui()
+            self.refresh_battle_map()
+
     # --- BATTLE MAP ENTEGRASYONU (GÜNCELLENDİ) ---
     def open_battle_map(self):
         # 1. Eğer pencere zaten açıksa öne getir
@@ -199,7 +220,7 @@ class CombatTracker(QWidget):
             if selector.exec():
                 if selector.is_new_import:
                     # Yeni Yükle
-                    fname, _ = QFileDialog.getOpenFileName(self, "Yeni Harita Seç", "", "Images (*.png *.jpg *.jpeg)")
+                    fname, _ = QFileDialog.getOpenFileName(self, tr("MSG_SELECT_MAP"), "", "Images (*.png *.jpg *.jpeg)")
                     if fname:
                         rel_path = self.dm.import_image(fname)
                         if rel_path:

@@ -1,3 +1,5 @@
 PyQt6
 requests
 PyQt6-WebEngine
+python-i18n
+PyYAML

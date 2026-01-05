@@ -46,6 +46,10 @@ class MapTab(QWidget):
         layout.addLayout(toolbar)
         layout.addWidget(viewer_frame)
 
+    def retranslate_ui(self):
+        self.btn_load_map.setText(tr("BTN_LOAD_MAP"))
+        self.btn_show_map_pl.setText(tr("BTN_PROJECT_MAP"))
+
     def upload_map_image(self):
         fname, _ = QFileDialog.getOpenFileName(self, tr("MSG_SELECT_MAP"), "", "Images (*.png *.jpg *.jpeg)")
         if fname:
@@ -87,7 +91,7 @@ class MapTab(QWidget):
     def handle_new_pin(self, x, y):
         entities = self.dm.data["entities"]
         if not entities: 
-            QMessageBox.warning(self, "Hata", "Önce veritabanına bir varlık ekleyin.")
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_ADD_ENTITY_FIRST"))
             return
             
         items, ids = [], []

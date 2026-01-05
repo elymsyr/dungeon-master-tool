@@ -3,7 +3,7 @@ environ["QTWEBENGINE_DISABLE_SANDBOX"] = "1"
 import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QTabWidget, QVBoxLayout, 
                              QWidget, QMessageBox, QFileDialog, QHBoxLayout, 
-                             QPushButton, QLabel)
+                             QPushButton, QLabel, QComboBox)
 from config import STYLESHEET
 from core.data_manager import DataManager
 from ui.player_window import PlayerWindow
@@ -52,10 +52,21 @@ class MainWindow(QMainWindow):
         self.lbl_campaign = QLabel(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
         self.lbl_campaign.setStyleSheet("color: #888; font-style: italic; margin-left: 10px;")
 
+        # Dil Seçimi
+        self.combo_lang = QComboBox()
+        self.combo_lang.addItems(["English", "Türkçe"])
+        self.combo_lang.setStyleSheet("background-color: #333; color: white; padding: 5px;")
+        
+        # Mevcut dili seç
+        current_lang = self.data_manager.settings.get("language", "EN")
+        self.combo_lang.setCurrentIndex(1 if current_lang == "TR" else 0)
+        self.combo_lang.currentIndexChanged.connect(self.change_language)
+        
         toolbar.addWidget(self.btn_toggle_player)
         toolbar.addWidget(self.btn_export_txt)
         toolbar.addWidget(self.lbl_campaign)
         toolbar.addStretch()
+        toolbar.addWidget(self.combo_lang)
         
         main_layout.addLayout(toolbar)
         
@@ -79,6 +90,26 @@ class MainWindow(QMainWindow):
         
         # Başlangıçta haritayı yükle (varsa)
         self.map_tab.render_map()
+        self.retranslate_ui()
+
+    def change_language(self, index):
+        code = "TR" if index == 1 else "EN"
+        self.data_manager.save_settings({"language": code})
+        self.retranslate_ui()
+
+    def retranslate_ui(self):
+        self.btn_toggle_player.setText(tr("BTN_PLAYER_SCREEN"))
+        self.btn_export_txt.setText(tr("BTN_EXPORT"))
+        self.lbl_campaign.setText(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
+        
+        self.tabs.setTabText(0, tr("TAB_DB"))
+        self.tabs.setTabText(1, tr("TAB_MAP"))
+        self.tabs.setTabText(2, tr("TAB_SESSION"))
+        
+        # Sekmelere de haber ver
+        if hasattr(self.db_tab, "retranslate_ui"): self.db_tab.retranslate_ui()
+        if hasattr(self.map_tab, "retranslate_ui"): self.map_tab.retranslate_ui()
+        if hasattr(self.session_tab, "retranslate_ui"): self.session_tab.retranslate_ui()
 
     def toggle_player_window(self):
         if self.player_window.isVisible():

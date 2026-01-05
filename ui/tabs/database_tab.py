@@ -75,7 +75,9 @@ class DatabaseTab(QWidget):
         self.btn_back.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack))
         self.btn_back.setFixedSize(30, 30)
         self.btn_back.setEnabled(False) # Başlangıçta pasif
-        self.btn_back.setToolTip("Geri")
+        self.btn_back.setToolTip(tr("BTN_CANCEL")) # Wait, "Geri" is "Back". I'll use a better key if I have one or just tr("Back")
+        # Actually I don't have a "Back" key yet. I'll use a new one.
+        self.btn_back.setToolTip(tr("BTN_PREVIOUS"))
         self.btn_back.clicked.connect(self.go_back)
         
         # İLERİ BUTONU
@@ -83,7 +85,7 @@ class DatabaseTab(QWidget):
         self.btn_forward.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowForward))
         self.btn_forward.setFixedSize(30, 30)
         self.btn_forward.setEnabled(False) # Başlangıçta pasif
-        self.btn_forward.setToolTip("İleri")
+        self.btn_forward.setToolTip(tr("BTN_NEXT"))
         self.btn_forward.clicked.connect(self.go_forward)
         
         # ARAMA KUTUSU
@@ -184,6 +186,21 @@ class DatabaseTab(QWidget):
         self.refresh_list()
         self.update_nav_buttons()
 
+    def retranslate_ui(self):
+        self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
+        # Update combo box "All" item
+        current_idx = self.combo_filter.currentIndex()
+        self.combo_filter.setItemText(0, tr("CAT_ALL"))
+        
+        self.check_show_library.setText(tr("LBL_CHECK_LIBRARY"))
+        self.btn_download_all.setText(tr("BTN_DOWNLOAD_ALL"))
+        self.btn_browser.setText(tr("BTN_API_BROWSER"))
+        self.btn_add.setText(tr("BTN_NEW_ENTITY"))
+        self.btn_show_stats.setText(tr("BTN_SHOW_STATS"))
+        
+        # Propagate to sheet
+        self.sheet.retranslate_ui()
+
     # --- GEZİNME (NAVIGATION) MANTIĞI ---
     def update_nav_buttons(self):
         """Butonların aktif/pasif durumunu güncelle"""
@@ -253,7 +270,7 @@ class DatabaseTab(QWidget):
                 self.list_widget.addItem(item)
 
         # 2. KÜTÜPHANE VERİLERİ (OFFLINE/CACHE)
-        if self.check_show_library.isChecked() and (len(text) > 2 or flt != "Tümü"):
+        if self.check_show_library.isChecked() and (len(text) > 2 or flt != tr("CAT_ALL")):
             lib_results = self.dm.search_in_library(flt, text)
             for res in lib_results:
                 item = QListWidgetItem(f"📚 {res['name']} ({res['type']})")
@@ -506,7 +523,7 @@ class DatabaseTab(QWidget):
 
     def delete_entity(self):
         if self.current_entity_id: 
-            if QMessageBox.question(self, tr("BTN_DELETE"), "Emin misiniz?") == QMessageBox.StandardButton.Yes:
+            if QMessageBox.question(self, tr("BTN_DELETE"), tr("MSG_CONFIRM_DELETE")) == QMessageBox.StandardButton.Yes:
                 self.dm.delete_entity(self.current_entity_id)
                 self.refresh_list()
                 self.prepare_new()
@@ -519,7 +536,7 @@ class DatabaseTab(QWidget):
 
     # --- GALERİ & RESİM ---
     def add_image_to_gallery(self):
-        fname, _ = QFileDialog.getOpenFileName(self, "Resim Seç", "", "Images (*.png *.jpg *.jpeg *.bmp)")
+        fname, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_IMG"), "", "Images (*.png *.jpg *.jpeg *.bmp)")
         if fname:
             rel = self.dm.import_image(fname)
             self.sheet.image_list.append(rel)
@@ -568,7 +585,7 @@ class DatabaseTab(QWidget):
 
     def show_stats_to_player(self):
         if not self.player_window.isVisible():
-            QMessageBox.warning(self, "Uyarı", "Oyuncu ekranı kapalı.")
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_PLAYER_SCREEN_CLOSED"))
             return
         if not self.current_entity_id: return
 
@@ -608,7 +625,7 @@ class DatabaseTab(QWidget):
     # --- DIALOGS ---
     def open_api_browser(self):
         cat = self.combo_filter.currentText()
-        if cat == "Tümü": return QMessageBox.warning(self, "Uyarı", "Lütfen bir kategori seçin.")
+        if cat == tr("CAT_ALL"): return QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_CATEGORY"))
         if ApiBrowser(self.dm, cat, self).exec(): self.refresh_list()
         
     def open_bulk_downloader(self): 
