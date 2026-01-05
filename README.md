@@ -8,6 +8,7 @@ Hi, I'm a D&D player and decided to become a Dungeon Master. I created this appl
 2. I should be able to easily track all the NPCs and monsters I create. Notes, weapons, spells, etc., I should be able to easily add and remove them, either custom made by myself or pulled from D&D 5e.
 3. I should be able to track encounters, but I want the players to roll the dice. That's why I'm not leaving everything to the application. The app exists only for tracking turn order, health, and status effects. Even though dice can be rolled within the app, I want to leave all the dice work to real dice.
 4. I should be able to keep all the information about my world in this application.
+5. I should be able to carry my world with me with a USB Flash Drive... well I am not sure about that :)
 
 If these situations are suitable for you as well, I think you will enjoy this application. There are also new features I plan to add in the future. I know the application doesn't look very good right now :) If I find time, I will look into developing it myself instead of using AI. If you enjoy the application, leaving a star on the repo would be great.
 
@@ -21,6 +22,7 @@ Selam, bir dnd oyuncusuyum ve dungeon master olmaya karar verdim. Bu uygulamayı
 2. Yarattığım tüm npc ve canavarları kolayca takip edebilmeliyim. Notlar, silahlar, büyüler vs. ister kendim custom istersem de dnd 5e den çekerek kolayca ekleyebilmeli ve çıkartabilmeliyim.
 3. Encounter takibini yapabilmeliyim ancak oyuncuların zar atmasını istiyorum. O yüzden tüm işi uygulamaya bırakmıyorum. Uygulama sadece sıra, can ve durum efekti takibi yapmam için var. Zar atılabilse de tüm zar işini gerçek zarlara bırakmak istiyorum.
 4. Dünyayla ilgili tüm bilgilerimi bu uygulamada tutabilmeliyim.
+5. Dünyamı bir USB Flash Disk ile yanımda taşıyabilmeliyim... Bundan çok emin değilim tabi.
 
 Evet, bu tarz durumlar sizin için de uygunsa, bu uygulamadan keyif alacağınızı düşünüyorum. Ayrıca ileride getirmeyi planladığım yeni özellikler de var. Şuan uygulama çok da iyi görünmüyor biliyorum :) Zaman bulursam AI yerine kendim de geliştirmeye bakacağım. Uygulamadan keyif alırsanız, repoya yıldız bırakmanız harika olur.
 
