@@ -62,3 +62,7 @@ class PlayerWindow(QMainWindow):
         
         local_url = QUrl.fromLocalFile(pdf_path)
         self.pdf_viewer.setUrl(local_url)
+
+    def update_theme(self, qss):
+        """Uygulanan QSS'i pencereye yansıtır"""
+        self.setStyleSheet(qss)

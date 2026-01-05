@@ -4,7 +4,7 @@ import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QTabWidget, QVBoxLayout, 
                              QWidget, QMessageBox, QFileDialog, QHBoxLayout, 
                              QPushButton, QLabel, QComboBox)
-from config import STYLESHEET
+from config import STYLESHEET, load_theme
 from core.data_manager import DataManager
 from ui.player_window import PlayerWindow
 from ui.tabs.database_tab import DatabaseTab
@@ -21,7 +21,10 @@ class MainWindow(QMainWindow):
         
         self.setWindowTitle(f"DM Tool - {self.data_manager.data.get('world_name', 'Bilinmiyor')}")
         self.setGeometry(100, 100, 1400, 900)
-        self.setStyleSheet(STYLESHEET)
+        
+        # Apply initial theme
+        self.current_stylesheet = load_theme(self.data_manager.current_theme)
+        self.setStyleSheet(self.current_stylesheet)
         
         self.init_ui()
 
@@ -62,11 +65,25 @@ class MainWindow(QMainWindow):
         self.combo_lang.setCurrentIndex(1 if current_lang == "TR" else 0)
         self.combo_lang.currentIndexChanged.connect(self.change_language)
         
+        # Tema Seçimi
+        self.lbl_theme = QLabel(tr("LBL_THEME"))
+        self.lbl_theme.setStyleSheet("color: #888; margin-left: 20px;")
+        self.combo_theme = QComboBox()
+        self.combo_theme.addItems(["Dark", "Light", "Emerald"])
+        self.combo_theme.setStyleSheet("background-color: #333; color: white; padding: 5px; margin-left: 10px;")
+        
+        # Mevcut temayı seç
+        theme_map = {"dark": 0, "light": 1, "emerald": 2}
+        self.combo_theme.setCurrentIndex(theme_map.get(self.data_manager.current_theme, 0))
+        self.combo_theme.currentIndexChanged.connect(self.change_theme)
+        
         toolbar.addWidget(self.btn_toggle_player)
         toolbar.addWidget(self.btn_export_txt)
         toolbar.addWidget(self.lbl_campaign)
         toolbar.addStretch()
         toolbar.addWidget(self.combo_lang)
+        toolbar.addWidget(self.lbl_theme)
+        toolbar.addWidget(self.combo_theme)
         
         main_layout.addLayout(toolbar)
         
@@ -88,7 +105,6 @@ class MainWindow(QMainWindow):
         
         main_layout.addWidget(self.tabs)
         
-        # Başlangıçta haritayı yükle (varsa)
         self.map_tab.render_map()
         self.retranslate_ui()
 
@@ -96,6 +112,19 @@ class MainWindow(QMainWindow):
         code = "TR" if index == 1 else "EN"
         self.data_manager.save_settings({"language": code})
         self.retranslate_ui()
+
+    def change_theme(self, index):
+        themes = ["dark", "light", "emerald"]
+        theme_name = themes[index]
+        self.data_manager.save_settings({"theme": theme_name})
+        
+        # Apply theme
+        self.current_stylesheet = load_theme(theme_name)
+        self.setStyleSheet(self.current_stylesheet)
+        
+        # Propagate to player window
+        if hasattr(self.player_window, "update_theme"):
+            self.player_window.update_theme(self.current_stylesheet)
 
     def retranslate_ui(self):
         self.btn_toggle_player.setText(tr("BTN_PLAYER_SCREEN"))
@@ -110,6 +139,12 @@ class MainWindow(QMainWindow):
         if hasattr(self.db_tab, "retranslate_ui"): self.db_tab.retranslate_ui()
         if hasattr(self.map_tab, "retranslate_ui"): self.map_tab.retranslate_ui()
         if hasattr(self.session_tab, "retranslate_ui"): self.session_tab.retranslate_ui()
+        
+        self.lbl_theme.setText(tr("LBL_THEME"))
+        # Tema isimlerini güncelle
+        self.combo_theme.setItemText(0, tr("THEME_DARK"))
+        self.combo_theme.setItemText(1, tr("THEME_LIGHT"))
+        self.combo_theme.setItemText(2, tr("THEME_EMERALD"))
 
     def toggle_player_window(self):
         if self.player_window.isVisible():
