@@ -69,11 +69,11 @@ class MainWindow(QMainWindow):
         self.lbl_theme = QLabel(tr("LBL_THEME"))
         self.lbl_theme.setStyleSheet("color: #888; margin-left: 20px;")
         self.combo_theme = QComboBox()
-        self.combo_theme.addItems(["Dark", "Light", "Emerald"])
+        self.combo_theme.addItems(["Dark", "Midnight", "Light", "Emerald"])
         self.combo_theme.setStyleSheet("background-color: #333; color: white; padding: 5px; margin-left: 10px;")
         
         # Mevcut temayı seç
-        theme_map = {"dark": 0, "light": 1, "emerald": 2}
+        theme_map = {"dark": 0, "midnight": 1, "light": 2, "emerald": 3}
         self.combo_theme.setCurrentIndex(theme_map.get(self.data_manager.current_theme, 0))
         self.combo_theme.currentIndexChanged.connect(self.change_theme)
         
@@ -114,7 +114,7 @@ class MainWindow(QMainWindow):
         self.retranslate_ui()
 
     def change_theme(self, index):
-        themes = ["dark", "light", "emerald"]
+        themes = ["dark", "midnight", "light", "emerald"]
         theme_name = themes[index]
         self.data_manager.save_settings({"theme": theme_name})
         
@@ -143,8 +143,9 @@ class MainWindow(QMainWindow):
         self.lbl_theme.setText(tr("LBL_THEME"))
         # Tema isimlerini güncelle
         self.combo_theme.setItemText(0, tr("THEME_DARK"))
-        self.combo_theme.setItemText(1, tr("THEME_LIGHT"))
-        self.combo_theme.setItemText(2, tr("THEME_EMERALD"))
+        self.combo_theme.setItemText(1, tr("THEME_MIDNIGHT"))
+        self.combo_theme.setItemText(2, tr("THEME_LIGHT"))
+        self.combo_theme.setItemText(3, tr("THEME_EMERALD"))
 
     def toggle_player_window(self):
         if self.player_window.isVisible():
