@@ -2,14 +2,12 @@ import PyInstaller.__main__
 import os
 import shutil
 
-# Uygulama Adı
 APP_NAME = "DungeonMasterTool"
 
-# Clean up previous builds
+# Temizlik
 if os.path.exists("dist"): shutil.rmtree("dist")
 if os.path.exists("build"): shutil.rmtree("build")
 
-# PyInstaller parameters
 params = [
     'main.py',
     f'--name={APP_NAME}',
@@ -18,31 +16,26 @@ params = [
     '--clean',
     '--noupx',
     
-    # Dependencies
-    '--collect-all=PyQt6',
-    '--collect-all=PyQt6.QtWebEngineCore',
-    '--collect-all=PyQt6.QtWebEngineWidgets',
+    # --- OPTİMİZASYON: collect-all yerine hooks kullanıyoruz ---
+    # PyInstaller'ın kendi hook'ları artık PyQt6'yı tanıyor.
+    # Sadece gerekli modülleri import ediyoruz.
     
-    # Hidden Imports
+    '--hidden-import=PyQt6.QtWebEngineWidgets',
+    '--hidden-import=PyQt6.QtWebEngineCore',
+    '--hidden-import=PyQt6.QtPrintSupport', 
+    '--hidden-import=PyQt6.QtNetwork',
     '--hidden-import=requests',
     '--hidden-import=i18n',
     '--hidden-import=yaml',
     '--hidden-import=json',
-    '--hidden-import=PyQt6.QtPrintSupport', 
-    '--hidden-import=PyQt6.QtNetwork',
     
-    # Data Files
+    # Veri Dosyaları
     '--add-data=locales;locales',
     '--add-data=themes;themes',
-    
-    # '--icon=assets/icon.ico', 
 ]
 
-print(f"Building Windows Exe for {APP_NAME}...")
-print("This process may take a while due to PyQt6 and WebEngine files...")
-
+print(f"Building optimized Windows Exe for {APP_NAME}...")
 PyInstaller.__main__.run(params)
 
 print("-" * 30)
-print(f"SUCCESS! File located at: dist/{APP_NAME}.exe")
-print("You can now distribute this file.")
+print(f"SUCCESS! File: dist/{APP_NAME}.exe")
