@@ -1,4 +1,3 @@
-"""
 # 🐉 Dungeon Master Tool
 
 ![Status](https://img.shields.io/badge/Status-Alpha-orange)
