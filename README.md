@@ -1,7 +1,5 @@
 # Dungeon Master Tool
 
-Check dist...
-
 ### Developer Note
 
 Hi, I'm a D&D player and decided to become a Dungeon Master. I created this application to help me during sessions. While doing this, my priority was to meet these requirements:
