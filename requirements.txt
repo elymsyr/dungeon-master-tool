@@ -6,3 +6,4 @@ PyYAML
 pytest
 pytest-qt
 pytest-mock
+pyinstaller
