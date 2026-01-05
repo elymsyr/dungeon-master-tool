@@ -283,21 +283,23 @@ class CombatTracker(QWidget):
     def get_combat_data_for_map(self):
         data = []
         for row in range(self.table.rowCount()):
+            item_name = self.table.item(row, 0)
             item_init = self.table.item(row, 1)
-            # Güvenlik kontrolü
-            if not item_init: continue
+            item_ac = self.table.item(row, 2)
+            item_hp = self.table.item(row, 3)
+            
+            # Tam güvenlik: Hücrelerden biri bile oluşmamışsa atla
+            if not all([item_name, item_init, item_ac, item_hp]):
+                continue
             
             eid = item_init.data(Qt.ItemDataRole.UserRole)
             x, y = None, None
             if eid and eid in self.token_positions:
                 x, y = self.token_positions[eid]
             
-            item_name = self.table.item(row, 0)
-            item_hp = self.table.item(row, 3)
-            
             data.append({
-                "name": item_name.text() if item_name else "???",
-                "hp": item_hp.text() if item_hp else "10",
+                "name": item_name.text(),
+                "hp": item_hp.text(),
                 "eid": eid,
                 "x": x, "y": y
             })
@@ -474,6 +476,20 @@ class CombatTracker(QWidget):
         ac = data.get("combat_stats", {}).get("ac", "10")
         
         # Inisiyatif Bonusu Hesapla: DEX Modifier + Ek Inisiyatif Bonusu
+        bonus_data = self.calculate_entity_initiative_bonus(data)
+        total_bonus = bonus_data["total"]
+        
+        # Zar At
+        die_roll = random.randint(1, 20)
+        total_init = die_roll + total_bonus
+        
+        # Detaylı log (Hata ayıklama için terminalde kalacak)
+        print(f"🎲 {name} savaşa eklendi - Log: {die_roll} (zar) + {bonus_data['dex_mod']} (DEX) + {bonus_data['extra']} (ek) = {total_init}")
+        
+        self.add_direct_row(name, total_init, ac, hp, "", entity_id, total_bonus)
+    
+    def calculate_entity_initiative_bonus(self, data):
+        """Varlık verisinden toplam inisiyatif bonusunu hesaplar"""
         try:
             dex = int(data.get("stats", {}).get("DEX", 10))
             dex_mod = (dex - 10) // 2
@@ -481,20 +497,18 @@ class CombatTracker(QWidget):
             dex_mod = 0
             
         try:
-            extra_init = int(data.get("combat_stats", {}).get("initiative", 0))
+            # Hem 'initiative' hem 'init_bonus' gibi farklı key olasılıklarına karşı esnek
+            c_stats = data.get("combat_stats", {})
+            extra_init = c_stats.get("initiative") or c_stats.get("init_bonus") or 0
+            extra_init = int(extra_init)
         except:
             extra_init = 0
             
-        total_bonus = dex_mod + extra_init
-        
-        # Zar At (Eğer otomatik zar isteniyorsa, şu anki yapı böyle)
-        die_roll = random.randint(1, 20)
-        total_init = die_roll + total_bonus
-        
-        # Detaylı log (DM'e bilgi)
-        print(f"🎲 {name} inisiyatif attı: {die_roll} (zar) + {dex_mod} (DEX) + {extra_init} (ek) = {total_init}")
-        
-        self.add_direct_row(name, total_init, ac, hp, "", entity_id, total_bonus)
+        return {
+            "dex_mod": dex_mod,
+            "extra": extra_init,
+            "total": dex_mod + extra_init
+        }
 
     def add_all_players(self):
         entities = self.dm.data["entities"]
@@ -509,14 +523,28 @@ class CombatTracker(QWidget):
         for row in range(self.table.rowCount()):
             item_name = self.table.item(row, 0)
             item_init = self.table.item(row, 1)
+            if not item_name or not item_init: continue
+            
             name = item_name.text()
+            eid = item_init.data(Qt.ItemDataRole.UserRole)
+            
+            # Veritabanından güncel bonusu çek (Eğer varsa)
             bonus = item_name.data(Qt.ItemDataRole.UserRole) or 0
+            if eid and eid in self.dm.data["entities"]:
+                ent_data = self.dm.data["entities"][eid]
+                bonus_data = self.calculate_entity_initiative_bonus(ent_data)
+                bonus = bonus_data["total"]
+                # Tablodaki bonusu da güncelle ki bir sonraki seferde güncel kalsın
+                item_name.setData(Qt.ItemDataRole.UserRole, bonus)
+                log_detail = f"{bonus_data['dex_mod']} (DEX) + {bonus_data['extra']} (ek)"
+            else:
+                log_detail = f"{bonus} (sabit)"
             
             die_roll = random.randint(1, 20)
             total = die_roll + bonus
             
             item_init.setText(str(total))
-            rolls.append(f"{name}: {die_roll} + {bonus} = {total}")
+            rolls.append(f"{name}: {die_roll} (zar) + {log_detail} = {total}")
             
         self.table.blockSignals(False)
         print("\n--- Inisiyatif Zar Atışları ---")
