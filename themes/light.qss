@@ -1,143 +1,37 @@
-/* LIGHT THEME */
-QMainWindow, QDialog {
-    background-color: #f0f0f0;
-    color: #333333;
-}
-QWidget {
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 14px;
-    color: #333333;
-}
-
-/* GRUPLAR VE PANELLER */
-QGroupBox {
-    border: 1px solid #cccccc;
-    border-radius: 8px;
-    margin-top: 22px;
-    background-color: #ffffff;
-    font-weight: bold;
-}
-QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    padding: 0 5px;
-    color: #1565c0; /* Koyu Mavi */
-    background-color: #f0f0f0;
-}
-
-/* LİSTELER */
-QListWidget {
-    background-color: #ffffff;
-    border: 1px solid #cccccc;
-    border-radius: 6px;
-    outline: none;
-}
-QListWidget::item {
-    padding: 8px;
-    border-bottom: 1px solid #eeeeee;
-    color: #444;
-}
-QListWidget::item:selected {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #e3f2fd, stop:1 #bbdefb); /* Açık Mavi Gradyan */
-    color: #0d47a1;
-    border-left: 4px solid #1565c0;
-}
-QListWidget::item:hover {
+/* Light Theme */
+QMainWindow, QWidget {
     background-color: #f5f5f5;
-}
-
-/* INPUTLAR */
-QLineEdit, QTextEdit, QComboBox {
-    background-color: #ffffff;
-    border: 1px solid #cccccc;
-    border-radius: 4px;
-    padding: 6px;
-    color: #333;
-    selection-background-color: #bbdefb;
-}
-QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
-    border: 1px solid #1565c0;
-}
-
-/* BUTONLAR - GENEL */
-QPushButton {
-    background-color: #e0e0e0;
-    border: 1px solid #cccccc;
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-weight: bold;
     color: #333;
 }
-QPushButton:hover {
-    background-color: #d0d0d0;
-    border-color: #bbbbbb;
-}
-QPushButton:pressed {
-    background-color: #c0c0c0;
-}
 
-/* ÖZEL BUTONLAR */
-QPushButton#primaryBtn {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #1976d2, stop:1 #1565c0);
-    border: 1px solid #0d47a1;
-    color: white;
-}
-QPushButton#primaryBtn:hover { background: #1e88e5; }
-
-QPushButton#dangerBtn {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #e53935, stop:1 #d32f2f);
-    border: 1px solid #b71c1c;
-    color: white;
-}
-QPushButton#dangerBtn:hover { background: #f44336; }
-
-QPushButton#successBtn {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #43a047, stop:1 #2e7d32);
-    border: 1px solid #1b5e20;
-    color: white;
-}
-QPushButton#successBtn:hover { background: #4caf50; }
-
-/* SEKMELER (TABS) */
 QTabWidget::pane {
-    border: 1px solid #cccccc;
-    background-color: #f0f0f0;
-    top: -1px;
+    border: 1px solid #ccc;
+    background: #fff;
 }
+
 QTabBar::tab {
     background: #e0e0e0;
-    color: #666;
-    padding: 10px 25px;
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
-    margin-right: 2px;
-    font-weight: bold;
-}
-QTabBar::tab:selected {
-    background: #ffffff;
-    color: #1565c0;
-    border-top: 3px solid #1565c0;
-}
-QTabBar::tab:hover {
-    background: #d8d8d8;
-    color: #333;
+    padding: 8px 15px;
 }
 
-/* SCROLLBAR */
-QScrollBar:vertical {
-    border: none;
-    background: #f0f0f0;
-    width: 10px;
-    margin: 0px 0px 0px 0px;
+QTabBar::tab:selected {
+    background: #1976d2;
+    color: white;
 }
-QScrollBar::handle:vertical {
-    background: #cccccc;
-    min-height: 20px;
-    border-radius: 5px;
+
+QPushButton {
+    background-color: #e0e0e0;
+    border: 1px solid #bbb;
+    padding: 6px;
 }
-QScrollBar::handle:vertical:hover {
-    background: #bbbbbb;
+
+QPushButton#primaryBtn {
+    background-color: #1976d2;
+    color: white;
 }
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    height: 0px;
+
+QLineEdit, QTextEdit, QComboBox {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    color: #333;
 }

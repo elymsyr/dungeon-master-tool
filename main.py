@@ -187,7 +187,7 @@ class MainWindow(QMainWindow):
                     # Statları da ekleyelim (Sadece savaşçı varlıklar için)
                     c = ent.get("combat_stats", {})
                     # Sadece belirli tiplerde statları gösterelim
-                    if type_ in ["NPC", "Canavar", "Oyuncu"] and c:
+                    if type_ in ["NPC", "Monster", "Player"] and c:
                         hp = c.get("hp", "-")
                         ac = c.get("ac", "-")
                         cr = c.get("cr", "-")
