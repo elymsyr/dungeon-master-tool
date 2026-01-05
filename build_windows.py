@@ -17,6 +17,7 @@ params = [
     '--onefile',
     '--noconsole',
     '--clean',
+    '--manifest=win_compat.xml',
     # Gerekli importlar
     '--hidden-import=PyQt6',
     '--hidden-import=PyQt6.QtWebEngineWidgets',
