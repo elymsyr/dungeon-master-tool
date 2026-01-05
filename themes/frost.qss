@@ -1,0 +1,70 @@
+/* Epic Fantasy DM Tool - Frost Theme */
+QMainWindow {
+    background-color: #f0f4f8;
+    color: #2c3e50;
+}
+
+QWidget {
+    background-color: #f0f4f8;
+    color: #2c3e50;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+QTabWidget::pane {
+    border: 1px solid #d6eaf8;
+    background: #ffffff;
+    border-radius: 5px;
+}
+
+QTabBar::tab {
+    background: #ebf5fb;
+    color: #5dade2;
+    padding: 10px 20px;
+    margin-right: 2px;
+}
+
+QTabBar::tab:selected {
+    background: #ffffff;
+    color: #2e86c1;
+    border-top: 3px solid #2e86c1;
+}
+
+QPushButton {
+    background-color: #d6eaf8;
+    border: 1px solid #aed6f1;
+    padding: 8px 15px;
+    border-radius: 5px;
+    color: #2c3e50;
+}
+
+QPushButton:hover {
+    background-color: #aed6f1;
+}
+
+QPushButton#primaryBtn {
+    background-color: #2e86c1;
+    color: white;
+}
+
+QLineEdit, QTextEdit, QComboBox, QListWidget {
+    background-color: #ffffff;
+    border: 1px solid #85c1e9;
+    padding: 6px;
+    border-radius: 4px;
+    color: #2c3e50;
+}
+
+QGroupBox {
+    border: 2px solid #aed6f1;
+    border-radius: 8px;
+    margin-top: 20px;
+    padding-top: 15px;
+    font-weight: bold;
+    color: #2e86c1;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 15px;
+    padding: 0 8px;
+}

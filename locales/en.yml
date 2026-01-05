@@ -152,6 +152,10 @@ en:
   THEME_MIDNIGHT: "Midnight"
   THEME_LIGHT: "Light"
   THEME_EMERALD: "Emerald"
+  THEME_PARCHMENT: "Parchment"
+  THEME_OCEAN: "Ocean"
+  THEME_FROST: "Frost"
+  THEME_AMETHYST: "Amethyst"
 
   LBL_NO_IMAGE: "No Image"
 
