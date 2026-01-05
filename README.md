@@ -34,6 +34,8 @@ Harika, GitHub Actions kısmını çıkardım ve özellikleri daha kapsamlı, ka
 
 ---
 
+<img align="center" src="https://media1.tenor.com/m/lcrQBLljnNcAAAAd/dark-souls-knight.gif" width="200"/>
+
 ## Key Features
 
 ### Immersive "Second Screen"
