@@ -1,0 +1,51 @@
+name: Build and Release Binaries
+
+on:
+    release:
+        types: [created]
+
+jobs:
+    build:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, windows-latest]
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Install dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install -r requirements.txt
+
+            - name: Build binary (Linux)
+              if: matrix.os == 'ubuntu-latest'
+              run: python build_linux.py
+
+            - name: Build binary (Windows)
+              if: matrix.os == 'windows-latest'
+              run: python build_windows.py
+
+            - name: Find built artifact
+              id: find_artifact
+              run: |
+                  if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+                    ARTIFACT=$(ls dist/DungeonMasterTool 2>/dev/null || ls dist/DungeonMasterTool.* 2>/dev/null || echo "")
+                  else
+                    ARTIFACT=$(ls dist/DungeonMasterTool.exe 2>/dev/null || echo "")
+                  fi
+                  echo "artifact=$ARTIFACT" >> $GITHUB_OUTPUT
+              shell: bash
+
+            - name: Upload Release Asset
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: ${{ steps.find_artifact.outputs.artifact }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
