@@ -9,6 +9,8 @@
 
 </div>
 
+Firstly, thank you for checking my repository. I will add photos, videos and executables soon. Since I work, I cannot give enough time, but a star would be the best motivation for me :)
+
 ---
 
 ### 🧙‍♂️ Developer Note
