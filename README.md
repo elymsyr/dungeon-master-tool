@@ -34,7 +34,7 @@ Harika, GitHub Actions kısmını çıkardım ve özellikleri daha kapsamlı, ka
 
 ---
 
-<img align="center" src="https://media1.tenor.com/m/lcrQBLljnNcAAAAd/dark-souls-knight.gif" width="200"/>
+<img align="center" src="https://media1.tenor.com/m/lcrQBLljnNcAAAAd/dark-souls-knight.gif" width="1000"/>
 
 ## Key Features
 
@@ -71,7 +71,7 @@ Focus on the battle, not the bookkeeping.
 
 ---
 
-## 🚀 Installation & Usage
+## Installation & Usage
 
 ### Option 1: Portable (Recommended)
 No installation required. Perfect for carrying on a USB stick.
@@ -95,7 +95,7 @@ python main.py
 
 ---
 
-## 🤝 Credits
+## Credits
 
 *   **Core:** Python & PyQt6
 *   **Data:** [D&D 5e API](https://www.dnd5eapi.co/)
