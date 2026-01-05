@@ -93,10 +93,8 @@ class SessionTab(QWidget):
         self.txt_notes.textChanged.connect(self.auto_save)
 
         right_layout.addLayout(session_control)
-        right_layout.addWidget(QLabel(tr("LBL_LOG")))
         right_layout.addWidget(self.txt_log)
         right_layout.addLayout(log_input_layout)
-        right_layout.addWidget(QLabel(tr("LBL_NOTES")))
         right_layout.addWidget(self.txt_notes)
 
         layout.addLayout(left_layout, 1)

@@ -151,6 +151,10 @@ tr:
   THEME_MIDNIGHT: "Gece"
   THEME_LIGHT: "Aydınlık"
   THEME_EMERALD: "Zümrüt"
+  THEME_PARCHMENT: "Parşömen"
+  THEME_OCEAN: "Okyanus"
+  THEME_FROST: "Buz"
+  THEME_AMETHYST: "Ametist"
 
   LBL_NO_IMAGE: "Resim Yok"
 
