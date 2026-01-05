@@ -125,25 +125,41 @@ class ApiBrowser(QDialog):
         self.list_widget.setEnabled(True)
         
         if success:
-            data = data_or_id
+            if isinstance(data_or_id, str):
+                # Zaten veritabanında var, ID gelmiş
+                data = self.dm.data["entities"].get(data_or_id)
+                self.btn_import.setEnabled(False)
+                self.btn_import.setText(tr("MSG_EXISTS"))
+            else:
+                # Yeni veri
+                data = data_or_id
+                self.btn_import.setEnabled(True)
+                self.btn_import.setText(tr("BTN_IMPORT"))
+
+            if not data:
+                self.lbl_name.setText(tr("MSG_ERROR"))
+                self.txt_desc.setText(tr("Bulunamadı."))
+                return
+
             self.selected_data = data
             self.lbl_name.setText(data.get("name"))
             
             # Açıklamayı oluştur
-            desc = f"Tip: {data.get('type')}\n\n"
+            desc = f"{tr('LBL_TYPE')}: {tr('CAT_' + data.get('type', '').upper())}\n\n"
             desc += data.get("description", "")
             
             # Statlar vs varsa ekle
             if "attributes" in data:
-                desc += "\n\n--- Özellikler ---\n"
+                desc += f"\n\n--- {tr('LBL_PROPERTIES')} ---\n"
                 for k, v in data["attributes"].items():
-                    desc += f"{k}: {v}\n"
+                    val = tr(v) if str(v).startswith("LBL_") else v
+                    desc += f"{tr(k)}: {val}\n"
             
             self.txt_desc.setText(desc)
-            self.btn_import.setEnabled(True)
         else:
             self.lbl_name.setText(tr("MSG_ERROR"))
             self.txt_desc.setText(msg)
+            self.btn_import.setEnabled(False)
 
     def import_selected(self):
         if self.selected_data:
@@ -153,8 +169,9 @@ class ApiBrowser(QDialog):
             QApplication.processEvents() # Arayüzün donmaması için
             
             try:
-                # Yeni "dependency-aware" import metodunu çağır
-                # Bu metod detected_spells'i işleyip temizleyecek ve kaydecek
+                # Asıl kaydetme işlemini yap (büyüklerle birlikte)
+                self.dm.import_entity_with_dependencies(self.selected_data)
+                
                 QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_IMPORT_SUCCESS_DETAIL", name=self.selected_data['name']))
                 self.accept()
             except Exception as e:
