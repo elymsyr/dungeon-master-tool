@@ -5,6 +5,8 @@ __pycache__/
 worlds/
 cache/
 
+dump.py
+
 # C extensions
 *.so
 
