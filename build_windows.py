@@ -1,43 +1,53 @@
 import PyInstaller.__main__
 import os
 import shutil
-import sys
 
-# Name of the executable
+# Uygulama Adı
 APP_NAME = "DungeonMasterTool"
 
-# Clean up previous builds
+# Önceki build artıklarını temizle
 if os.path.exists("dist"): shutil.rmtree("dist")
 if os.path.exists("build"): shutil.rmtree("build")
 
-# PyInstaller parameters for Windows
+# PyInstaller parametreleri
 params = [
-    'main.py',
-    f'--name={APP_NAME}',
-    '--onefile',
-    '--noconsole',
-    '--clean',
-    '--noupx',
-    # '--manifest=win_compat.xml',
-    # Gerekli importlar
-    '--hidden-import=PyQt6',
-    '--hidden-import=PyQt6.QtCore',
-    '--hidden-import=PyQt6.QtGui',
-    '--hidden-import=PyQt6.QtWidgets',
-    '--hidden-import=PyQt6.QtWebEngineWidgets',
-    '--hidden-import=PyQt6.QtWebEngineCore',
+    'main.py',                      # Ana dosya
+    f'--name={APP_NAME}',           # Exe adı
+    '--onefile',                    # Tek bir .exe dosyası üret
+    '--noconsole',                  # Siyah terminal penceresini gizle (GUI uygulaması olduğu için)
+    '--clean',                      # Build cache'ini temizle
+    '--noupx',                      # UPX sıkıştırmasını kapat (Qt DLL hatalarını önler)
+    
+    # --- PyQt6 ve WebEngine Bağımlılıkları ---
+    # WebEngine (PDF ve modern arayüzler için) çok fazla yan dosya içerir.
+    # --collect-all diyerek tüm gerekli binary'leri içine almasını garanti ediyoruz.
+    '--collect-all=PyQt6',
+    '--collect-all=PyQt6.QtWebEngineCore',
+    '--collect-all=PyQt6.QtWebEngineWidgets',
+    
+    # --- Gizli Importlar ---
+    # PyInstaller'ın otomatik bulamadığı kütüphaneler
     '--hidden-import=requests',
     '--hidden-import=i18n',
     '--hidden-import=yaml',
-    '--collect-submodules=PyQt6',
+    '--hidden-import=json',
+    '--hidden-import=PyQt6.QtPrintSupport', 
+    '--hidden-import=PyQt6.QtNetwork',
     
-    # Data folders to bundle (Windows uses semicolon separator for add-data)
+    # --- Veri Dosyaları ---
+    # (Kaynak Klasör ; Hedef Klasör) formatında
     '--add-data=locales;locales',
     '--add-data=themes;themes',
-    # '--icon=assets/icon.ico', # Uncomment if an icon exists
+    
+    # Eğer bir ikonunuz varsa assets klasörüne koyup bu satırı açabilirsiniz:
+    # '--icon=assets/icon.ico', 
 ]
 
-print(f"Building {APP_NAME} for Windows...")
+print(f"{APP_NAME} için Windows Exe oluşturuluyor...")
+print("Bu işlem PyQt6 ve WebEngine dosyalarının büyüklüğü nedeniyle biraz sürebilir...")
+
 PyInstaller.__main__.run(params)
 
-print(f"Process complete! Check the 'dist' folder for {APP_NAME}.exe")
+print("-" * 30)
+print(f"BAŞARILI! Dosyanız şurada: dist/{APP_NAME}.exe")
+print("Bu dosyayı bir USB'ye atıp başka bir bilgisayarda çalıştırabilirsiniz.")
