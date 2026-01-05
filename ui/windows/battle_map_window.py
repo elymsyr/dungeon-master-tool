@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QScrollArea, QFrame, QGraphicsView, 
                              QGraphicsScene, QGraphicsEllipseItem, QSlider, QGraphicsPixmapItem)
 from PyQt6.QtGui import QPixmap, QColor, QFont, QBrush, QPen, QPainter
-from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF
+from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF, QTimer
 from core.locales import tr
 
 # --- TOKEN (PUL) SINIFI ---
@@ -117,6 +117,7 @@ class BattleMapWindow(QMainWindow):
         scroll.setWidget(self.list_container)
         sidebar_layout.addWidget(scroll)
         
+        main_layout.addLayout(map_layout, 1)
         main_layout.addWidget(self.sidebar, 0)
 
     def retranslate_ui(self):
@@ -152,8 +153,8 @@ class BattleMapWindow(QMainWindow):
             self.scene.addItem(self.map_item)
             self.scene.setSceneRect(self.map_item.boundingRect())
             
-            # Resmi yükler yüklemez sığdır
-            self.fit_map_in_view()
+            # Resmi yükler yüklemez sığdır (Layout'un oturması için kısa bir bekleme)
+            QTimer.singleShot(100, self.fit_map_in_view)
         else:
             if self.map_item: self.scene.removeItem(self.map_item)
             self.map_item = None

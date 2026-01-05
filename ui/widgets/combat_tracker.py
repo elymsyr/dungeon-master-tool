@@ -130,6 +130,7 @@ class CombatTracker(QWidget):
         self.current_map_path = None # Relative path (assets/...)
         self.current_token_size = 50
         self.token_positions = {} 
+        self.loading = False # Yükleme sırasında sinyal göndermeyi engellemek için
         
         self.init_ui()
 
@@ -268,8 +269,9 @@ class CombatTracker(QWidget):
         self.data_changed_signal.emit() # Boyut değişince kaydet
 
     def refresh_battle_map(self, force_map_reload=False):
-        if not self.battle_map_window or not self.battle_map_window.isVisible(): return
+        if not self.battle_map_window: return
         
+        # Pencere görünür olmasa da veriyi güncelleyelim (arkada hazır dursun)
         data = self.get_combat_data_for_map()
         
         # Harita yolu (relative -> full)
@@ -306,6 +308,7 @@ class CombatTracker(QWidget):
         return data
 
     def on_data_changed(self, item): 
+        if self.loading: return
         if item.column() == 1: # Initiative sütunu değiştiyse
             self._sort_and_refresh()
         else:
@@ -316,12 +319,15 @@ class CombatTracker(QWidget):
     def next_turn(self):
         count = self.table.rowCount()
         if count == 0: return
+        self.loading = True
         self.current_turn_index = (self.current_turn_index + 1) % count
         self.update_highlights()
         self.refresh_battle_map()
+        self.loading = False
         self.data_changed_signal.emit()
 
     def update_highlights(self):
+        self.table.blockSignals(True)
         for r in range(self.table.rowCount()):
             for c in range(self.table.columnCount()):
                 item = self.table.item(r, c)
@@ -330,6 +336,7 @@ class CombatTracker(QWidget):
             for c in range(self.table.columnCount()):
                 item = self.table.item(self.current_turn_index, c)
                 if item: item.setBackground(QBrush(QColor(40, 80, 40)))
+        self.table.blockSignals(False)
 
     def _sort_and_refresh(self):
         # Şu anki sıradaki kişinin EID veya ismini sakla
@@ -359,7 +366,8 @@ class CombatTracker(QWidget):
         
         self.update_highlights()
         self.refresh_battle_map()
-        self.data_changed_signal.emit()
+        if not self.loading:
+            self.data_changed_signal.emit()
 
     def clear_tracker(self):
         self.table.setRowCount(0)
@@ -368,7 +376,8 @@ class CombatTracker(QWidget):
         self.current_map_path = None
         self.refresh_battle_map()
         if self.battle_map_window: self.battle_map_window.set_map_image(None)
-        self.data_changed_signal.emit()
+        if not self.loading:
+            self.data_changed_signal.emit()
 
     # --- SAVE / LOAD SİSTEMİ ---
     def get_session_state(self):
@@ -388,45 +397,63 @@ class CombatTracker(QWidget):
             x, y = None, None
             if eid and eid in self.token_positions: x, y = self.token_positions[eid]
 
+            # JSON serileştirme hatası (RecursionError) olmaması için verileri ilkel tiplere (int, str) zorla
             combatants.append({
-                "name": item_name.text(),
-                "init": item_init.text(),
-                "ac": item_ac.text() if item_ac else "",
-                "hp": item_hp.text() if item_hp else "",
-                "cond": item_cond.text() if item_cond else "",
-                "eid": eid,
-                "bonus": item_name.data(Qt.ItemDataRole.UserRole),
-                "x": x, "y": y
+                "name": str(item_name.text()),
+                "init": str(item_init.text()),
+                "ac": str(item_ac.text() if item_ac else ""),
+                "hp": str(item_hp.text() if item_hp else ""),
+                "cond": str(item_cond.text() if item_cond else ""),
+                "eid": str(eid) if eid else None,
+                "bonus": int(item_name.data(Qt.ItemDataRole.UserRole) or 0),
+                "x": float(x) if x is not None else None,
+                "y": float(y) if y is not None else None
             })
             
         return {
             "combatants": combatants,
-            "map_path": self.current_map_path, 
-            "token_size": self.current_token_size,
-            "turn_index": self.current_turn_index
+            "map_path": str(self.current_map_path) if self.current_map_path else None, 
+            "token_size": int(self.current_token_size),
+            "turn_index": int(self.current_turn_index)
         }
 
+    def load_combat_data(self, combatants_list):
+        """Eski format (sadece liste) için destek"""
+        self.load_session_state({"combatants": combatants_list})
+
     def load_session_state(self, state_data):
+        if not state_data: return
+        self.loading = True
         self.table.blockSignals(True)
         self.table.setRowCount(0)
         self.token_positions.clear()
         
         combatants = state_data.get("combatants", [])
         self.current_map_path = state_data.get("map_path")
-        self.current_token_size = state_data.get("token_size", 50)
-        self.current_turn_index = state_data.get("turn_index", -1)
+        self.current_token_size = int(state_data.get("token_size", 50))
+        self.current_turn_index = int(state_data.get("turn_index", -1))
         
         for c in combatants:
             eid = c.get("eid")
-            if eid and "x" in c and c["x"] is not None:
-                self.token_positions[eid] = (c["x"], c["y"])
-            self.add_direct_row(c["name"], c["init"], c["ac"], c["hp"], c["cond"], eid, c.get("bonus", 0))
+            if eid and c.get("x") is not None:
+                self.token_positions[eid] = (float(c["x"]), float(c["y"]))
+            self.add_direct_row(
+                str(c["name"]), 
+                str(c["init"]), 
+                str(c["ac"]), 
+                str(c["hp"]), 
+                str(c["cond"]), 
+                str(eid) if eid else None, 
+                int(c.get("bonus", 0))
+            )
             
         self.table.blockSignals(False)
         self._sort_and_refresh()
         
         if self.current_map_path:
              self.open_battle_map()
+             
+        self.loading = False
 
     # --- HELPER METHODS ---
     def add_direct_row(self, name, init, ac, hp, condition, eid, init_bonus=0):
