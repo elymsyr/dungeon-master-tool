@@ -5,28 +5,25 @@ import shutil
 # Uygulama Adı
 APP_NAME = "DungeonMasterTool"
 
-# Önceki build artıklarını temizle
+# Clean up previous builds
 if os.path.exists("dist"): shutil.rmtree("dist")
 if os.path.exists("build"): shutil.rmtree("build")
 
-# PyInstaller parametreleri
+# PyInstaller parameters
 params = [
-    'main.py',                      # Ana dosya
-    f'--name={APP_NAME}',           # Exe adı
-    '--onefile',                    # Tek bir .exe dosyası üret
-    '--noconsole',                  # Siyah terminal penceresini gizle (GUI uygulaması olduğu için)
-    '--clean',                      # Build cache'ini temizle
-    '--noupx',                      # UPX sıkıştırmasını kapat (Qt DLL hatalarını önler)
+    'main.py',
+    f'--name={APP_NAME}',
+    '--onefile',
+    '--noconsole',
+    '--clean',
+    '--noupx',
     
-    # --- PyQt6 ve WebEngine Bağımlılıkları ---
-    # WebEngine (PDF ve modern arayüzler için) çok fazla yan dosya içerir.
-    # --collect-all diyerek tüm gerekli binary'leri içine almasını garanti ediyoruz.
+    # Dependencies
     '--collect-all=PyQt6',
     '--collect-all=PyQt6.QtWebEngineCore',
     '--collect-all=PyQt6.QtWebEngineWidgets',
     
-    # --- Gizli Importlar ---
-    # PyInstaller'ın otomatik bulamadığı kütüphaneler
+    # Hidden Imports
     '--hidden-import=requests',
     '--hidden-import=i18n',
     '--hidden-import=yaml',
@@ -34,20 +31,18 @@ params = [
     '--hidden-import=PyQt6.QtPrintSupport', 
     '--hidden-import=PyQt6.QtNetwork',
     
-    # --- Veri Dosyaları ---
-    # (Kaynak Klasör ; Hedef Klasör) formatında
+    # Data Files
     '--add-data=locales;locales',
     '--add-data=themes;themes',
     
-    # Eğer bir ikonunuz varsa assets klasörüne koyup bu satırı açabilirsiniz:
     # '--icon=assets/icon.ico', 
 ]
 
-print(f"{APP_NAME} için Windows Exe oluşturuluyor...")
-print("Bu işlem PyQt6 ve WebEngine dosyalarının büyüklüğü nedeniyle biraz sürebilir...")
+print(f"Building Windows Exe for {APP_NAME}...")
+print("This process may take a while due to PyQt6 and WebEngine files...")
 
 PyInstaller.__main__.run(params)
 
 print("-" * 30)
-print(f"BAŞARILI! Dosyanız şurada: dist/{APP_NAME}.exe")
-print("Bu dosyayı bir USB'ye atıp başka bir bilgisayarda çalıştırabilirsiniz.")
+print(f"SUCCESS! File located at: dist/{APP_NAME}.exe")
+print("You can now distribute this file.")
