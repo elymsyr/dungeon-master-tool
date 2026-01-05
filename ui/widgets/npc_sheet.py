@@ -77,7 +77,7 @@ class NpcSheet(QWidget):
         # Entity Categories (CAT_ prefix used in tr)
         for cat in ENTITY_SCHEMAS.keys():
             self.inp_type.addItem(tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"), cat)
-        self.inp_type.currentTextChanged.connect(self.update_ui_by_type)
+        self.inp_type.currentIndexChanged.connect(self._on_type_index_changed)
         self.inp_tags = QLineEdit(); self.inp_tags.setPlaceholderText(tr("LBL_TAGS_PH"))
         
         self.combo_location = QComboBox()
@@ -125,7 +125,7 @@ class NpcSheet(QWidget):
         btn_layout.addStretch(); btn_layout.addWidget(self.btn_delete); btn_layout.addWidget(self.btn_save)
         main_layout.addLayout(btn_layout)
         
-        self.update_ui_by_type(self.inp_type.currentText())
+        self.update_ui_by_type(self.inp_type.currentData())
 
     def retranslate_ui(self):
         # Update category names in combo
@@ -372,14 +372,19 @@ class NpcSheet(QWidget):
                 widget.setEditable(True)
             self.layout_dynamic.addRow(f"{tr(label)}:", widget); self.dynamic_inputs[label] = widget
 
+    def _on_type_index_changed(self, index):
+        cat_key = self.inp_type.itemData(index)
+        if cat_key:
+            self.update_ui_by_type(cat_key)
+
     def update_ui_by_type(self, category_name):
         self.build_dynamic_form(category_name)
-        is_npc_like = category_name in ["NPC", "Canavar"]
-        is_player = category_name == "Oyuncu"
+        is_npc_like = category_name in ["NPC", "Monster"]
+        is_player = category_name == "Player"
         is_lore = category_name == "Lore"
         
         self.lbl_location.setVisible(is_npc_like or is_player); self.combo_location.setVisible(is_npc_like or is_player)
-        self.lbl_residents.setVisible(category_name == "Mekan"); self.list_residents.setVisible(category_name == "Mekan")
+        self.lbl_residents.setVisible(category_name == "Location"); self.list_residents.setVisible(category_name == "Location")
         
         self.tabs.setTabVisible(0, is_npc_like) # Stats
         self.tabs.setTabVisible(1, is_npc_like) # Spells

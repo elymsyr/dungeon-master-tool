@@ -1,143 +1,75 @@
-/* DARK THEME (Original Epic Theme) */
-QMainWindow, QDialog {
+/* Epic Fantasy DM Tool - Dark Theme */
+QMainWindow {
     background-color: #121212;
     color: #e0e0e0;
 }
+
 QWidget {
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 14px;
-    color: #eeeeee;
-}
-
-/* GRUPLAR VE PANELLER */
-QGroupBox {
-    border: 1px solid #333;
-    border-radius: 8px;
-    margin-top: 22px;
-    background-color: #1e1e1e;
-    font-weight: bold;
-}
-QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    padding: 0 5px;
-    color: #ffb74d; /* Altın Sarısı */
     background-color: #121212;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-/* LİSTELER */
-QListWidget {
-    background-color: #1e1e1e;
-    border: 1px solid #333;
-    border-radius: 6px;
-    outline: none;
-}
-QListWidget::item {
-    padding: 8px;
-    border-bottom: 1px solid #2c2c2c;
-    color: #ccc;
-}
-QListWidget::item:selected {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #311b92, stop:1 #4527a0); /* Mor Gradyan */
-    color: white;
-    border-left: 4px solid #ffb74d;
-}
-QListWidget::item:hover {
-    background-color: #252525;
-}
-
-/* INPUTLAR */
-QLineEdit, QTextEdit, QComboBox {
-    background-color: #252525;
-    border: 1px solid #444;
-    border-radius: 4px;
-    padding: 6px;
-    color: #fff;
-    selection-background-color: #7c4dff;
-}
-QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
-    border: 1px solid #7c4dff; /* Parlak Mor */
-}
-
-/* BUTONLAR - GENEL */
-QPushButton {
-    background-color: #333;
-    border: 1px solid #444;
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-weight: bold;
-    color: #ddd;
-}
-QPushButton:hover {
-    background-color: #444;
-    border-color: #666;
-}
-QPushButton:pressed {
-    background-color: #222;
-}
-
-/* ÖZEL BUTONLAR */
-QPushButton#primaryBtn {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #1565c0, stop:1 #0d47a1);
-    border: 1px solid #0d47a1;
-    color: white;
-}
-QPushButton#primaryBtn:hover { background: #1976d2; }
-
-QPushButton#dangerBtn {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #c62828, stop:1 #b71c1c);
-    border: 1px solid #b71c1c;
-    color: white;
-}
-QPushButton#dangerBtn:hover { background: #d32f2f; }
-
-QPushButton#successBtn {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #2e7d32, stop:1 #1b5e20);
-    border: 1px solid #1b5e20;
-    color: white;
-}
-QPushButton#successBtn:hover { background: #388e3c; }
-
-/* SEKMELER (TABS) */
 QTabWidget::pane {
     border: 1px solid #333;
-    background-color: #121212;
-    top: -1px;
-}
-QTabBar::tab {
     background: #1e1e1e;
-    color: #888;
-    padding: 10px 25px;
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
-    margin-right: 2px;
-    font-weight: bold;
-}
-QTabBar::tab:selected {
-    background: #252525;
-    color: #ffb74d;
-    border-top: 3px solid #ffb74d;
-}
-QTabBar::tab:hover {
-    background: #333;
-    color: #ccc;
 }
 
-/* SCROLLBAR (Modern İnce Çubuk) */
-QScrollBar:vertical {
-    border: none;
-    background: #121212;
-    width: 10px;
-    margin: 0px 0px 0px 0px;
+QTabBar::tab {
+    background: #252525;
+    padding: 10px 20px;
+    border: 1px solid #333;
 }
-QScrollBar::handle:vertical {
-    background: #444;
-    min-height: 20px;
-    border-radius: 5px;
+
+QTabBar::tab:selected {
+    background: #7c4dff;
+    color: white;
 }
-QScrollBar::handle:vertical:hover {
-    background: #666;
+
+QPushButton {
+    background-color: #333;
+    border: 1px solid #555;
+    padding: 8px 15px;
+    border-radius: 4px;
+    color: #fff;
 }
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    height: 0px;
+
+QPushButton:hover {
+    background-color: #444;
+}
+
+QPushButton#successBtn {
+    background-color: #2e7d32;
+    font-weight: bold;
+}
+
+QPushButton#dangerBtn {
+    background-color: #c62828;
+}
+
+QPushButton#primaryBtn {
+    background-color: #7c4dff;
+}
+
+QLineEdit, QTextEdit, QComboBox, QListWidget {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    padding: 5px;
+    border-radius: 3px;
+    color: #fff;
+}
+
+QGroupBox {
+    border: 2px solid #333;
+    border-radius: 8px;
+    margin-top: 15px;
+    padding-top: 10px;
+    font-weight: bold;
+    color: #7c4dff;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 5px;
 }
