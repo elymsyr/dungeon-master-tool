@@ -10,7 +10,6 @@ ENTITY_SCHEMAS = {
         ("Challenge Rating (CR)", "text", None),
         ("Saldırı Tipi", "text", None)
     ],
-    # ... Diğer şemalar aynı kalsın ...
     "Büyü (Spell)": [
         ("Seviye", "combo", ["Cantrip", "1", "2", "3", "4", "5", "6", "7", "8", "9"]),
         ("Okul (School)", "text", None),
@@ -19,13 +18,21 @@ ENTITY_SCHEMAS = {
         ("Süreklilik (Duration)", "text", None),
         ("Bileşenler (Components)", "text", None)
     ],
+    # --- GÜNCELLENEN KISIM BAŞLANGIÇ ---
     "Eşya (Equipment)": [
-        ("Eşya Tipi", "text", None),
-        ("Maliyet", "text", None),
-        ("Ağırlık", "text", None),
-        ("Hasar/Zırh", "text", None),
-        ("Özellikler", "text", None)
+        ("Kategori", "text", None),             # Weapon, Armor, Potion...
+        ("Nadirik (Rarity)", "text", None),     # Common, Rare...
+        ("Uyumlanma (Attunement)", "text", None), # Gerekli / Değil
+        ("Maliyet", "text", None),              # 50 gp
+        ("Ağırlık", "text", None),              # 2 lb.
+        ("Hasar Zarı", "text", None),           # 1d8
+        ("Hasar Tipi", "text", None),           # Slashing
+        ("Menzil", "text", None),               # 20/60
+        ("Zırh Sınıfı (AC)", "text", None),     # 14 + Dex
+        ("Gereksinimler", "text", None),        # Str 13
+        ("Özellikler", "text", None)            # Light, Loading...
     ],
+    # --- GÜNCELLENEN KISIM BİTİŞ ---
     "Sınıf (Class)": [("Hit Die", "text", None), ("Ana Statlar", "text", None), ("Zırh/Silah Yetkinlikleri", "text", None)],
     "Irk (Race)": [("Hız", "text", None), ("Boyut", "combo", ["Small", "Medium", "Large"]), ("Hizalanma Eğilimi", "text", None), ("Dil", "text", None)],
     "Mekan": [("Tehlike Seviyesi", "combo", ["Güvenli", "Düşük", "Orta", "Yüksek"]), ("Ortam", "text", None)],
