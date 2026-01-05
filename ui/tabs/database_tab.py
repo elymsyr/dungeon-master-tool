@@ -629,8 +629,8 @@ class DatabaseTab(QWidget):
 
     # --- DIALOGS ---
     def open_api_browser(self):
-        cat = self.combo_filter.currentText()
-        if cat == tr("CAT_ALL"): return QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_CATEGORY"))
+        cat = self.combo_filter.currentData()
+        if not cat: return QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_CATEGORY"))
         if ApiBrowser(self.dm, cat, self).exec(): self.refresh_list()
         
     def open_bulk_downloader(self): 
