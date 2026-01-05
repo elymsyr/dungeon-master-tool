@@ -16,6 +16,16 @@ CONDITIONS = [
     "Stunned", "Unconscious", "Exhaustion"
 ]
 
+class NumericTableWidgetItem(QTableWidgetItem):
+    def __lt__(self, other):
+        try:
+            # Hem DisplayRole hem EditRole üzerinden sayısal veri çekmeye çalış
+            d1 = self.data(Qt.ItemDataRole.DisplayRole)
+            d2 = other.data(Qt.ItemDataRole.DisplayRole)
+            return float(d1) < float(d2)
+        except (ValueError, TypeError, AttributeError):
+            return super().__lt__(other)
+
 # --- YENİ: HARİTA SEÇİM DİYALOĞU ---
 class MapSelectorDialog(QDialog):
     def __init__(self, assets_path, parent=None):
@@ -137,6 +147,9 @@ class CombatTracker(QWidget):
         
         self.table.customContextMenuRequested.connect(self.open_context_menu)
         self.table.itemChanged.connect(self.on_data_changed)
+        
+        # Sütun başlıklarına tıklandığında sıralama özelliğini aç
+        self.table.setSortingEnabled(False) # Otomatik sıralama çakışmasın diye kapalı
         layout.addWidget(self.table)
 
         # KONTROLLER
@@ -279,9 +292,12 @@ class CombatTracker(QWidget):
             if eid and eid in self.token_positions:
                 x, y = self.token_positions[eid]
             
+            item_name = self.table.item(row, 0)
+            item_hp = self.table.item(row, 3)
+            
             data.append({
-                "name": self.table.item(row, 0).text(),
-                "hp": self.table.item(row, 3).text(),
+                "name": item_name.text() if item_name else "???",
+                "hp": item_hp.text() if item_hp else "10",
                 "eid": eid,
                 "x": x, "y": y
             })
@@ -317,20 +333,23 @@ class CombatTracker(QWidget):
         # Şu anki sıradaki kişinin EID veya ismini sakla
         current_eid = None
         if 0 <= self.current_turn_index < self.table.rowCount():
-            item = self.table.item(self.current_turn_index, 1)
-            if item: current_eid = item.data(Qt.ItemDataRole.UserRole)
+            item_init = self.table.item(self.current_turn_index, 1)
+            if item_init: current_eid = item_init.data(Qt.ItemDataRole.UserRole)
             if not current_eid:
-                current_eid = self.table.item(self.current_turn_index, 0).text()
+                item_name = self.table.item(self.current_turn_index, 0)
+                if item_name: current_eid = item_name.text()
 
         self.table.blockSignals(True)
+        # Sütun 1'e göre (Initiative) büyükten küçüğe sırala
         self.table.sortItems(1, Qt.SortOrder.DescendingOrder)
         self.table.blockSignals(False)
 
         # Sıradaki kişiyi yeni yerinde bul
-        if current_eid:
+        if current_eid is not None:
             for row in range(self.table.rowCount()):
                 item_init = self.table.item(row, 1)
                 item_name = self.table.item(row, 0)
+                # Hem EID hem isim kontrolü (Hangisi eşleşirse)
                 if (item_init and item_init.data(Qt.ItemDataRole.UserRole) == current_eid) or \
                    (item_name and item_name.text() == current_eid):
                     self.current_turn_index = row
@@ -409,11 +428,27 @@ class CombatTracker(QWidget):
 
     # --- HELPER METHODS ---
     def add_direct_row(self, name, init, ac, hp, condition, eid, init_bonus=0):
-        row = self.table.rowCount(); self.table.insertRow(row)
-        item_name = QTableWidgetItem(name); item_name.setData(Qt.ItemDataRole.UserRole, init_bonus); self.table.setItem(row, 0, item_name)
-        item_init = QTableWidgetItem(); item_init.setData(Qt.ItemDataRole.DisplayRole, str(init)); item_init.setData(Qt.ItemDataRole.EditRole, int(init) if str(init).isdigit() else 0); item_init.setData(Qt.ItemDataRole.UserRole, eid); self.table.setItem(row, 1, item_init)
-        self.table.setItem(row, 2, QTableWidgetItem(str(ac))); self.table.setItem(row, 3, QTableWidgetItem(str(hp)))
-        cond_item = QTableWidgetItem(condition); cond_item.setForeground(QBrush(QColor("#ff5252"))) if condition else None; self.table.setItem(row, 4, cond_item)
+        row = self.table.rowCount()
+        self.table.insertRow(row)
+        
+        # İsim ve Bonus verisi (UserRole 0. kolonda)
+        item_name = QTableWidgetItem(name)
+        item_name.setData(Qt.ItemDataRole.UserRole, init_bonus)
+        self.table.setItem(row, 0, item_name)
+        
+        item_init = NumericTableWidgetItem(str(init))
+        item_init.setData(Qt.ItemDataRole.UserRole, eid)
+        self.table.setItem(row, 1, item_init)
+        
+        # AC ve HP (Sayısal Sıralama)
+        self.table.setItem(row, 2, NumericTableWidgetItem(str(ac)))
+        self.table.setItem(row, 3, NumericTableWidgetItem(str(hp)))
+        
+        # Durumlar
+        cond_item = QTableWidgetItem(condition)
+        if condition:
+            cond_item.setForeground(QBrush(QColor("#ff5252")))
+        self.table.setItem(row, 4, cond_item)
 
     def quick_add(self):
         name = self.inp_quick_name.text().strip(); 
@@ -437,10 +472,29 @@ class CombatTracker(QWidget):
         name = data.get("name", "Bilinmeyen")
         hp = data.get("combat_stats", {}).get("hp", "10")
         ac = data.get("combat_stats", {}).get("ac", "10")
-        try: dex = int(data.get("stats", {}).get("DEX", 10)); dex_mod = (dex - 10) // 2
-        except: dex_mod = 0
-        roll = random.randint(1, 20) + dex_mod
-        self.add_direct_row(name, roll, ac, hp, "", entity_id, dex_mod)
+        
+        # Inisiyatif Bonusu Hesapla: DEX Modifier + Ek Inisiyatif Bonusu
+        try:
+            dex = int(data.get("stats", {}).get("DEX", 10))
+            dex_mod = (dex - 10) // 2
+        except:
+            dex_mod = 0
+            
+        try:
+            extra_init = int(data.get("combat_stats", {}).get("initiative", 0))
+        except:
+            extra_init = 0
+            
+        total_bonus = dex_mod + extra_init
+        
+        # Zar At (Eğer otomatik zar isteniyorsa, şu anki yapı böyle)
+        die_roll = random.randint(1, 20)
+        total_init = die_roll + total_bonus
+        
+        # Detaylı log (DM'e bilgi)
+        print(f"🎲 {name} inisiyatif attı: {die_roll} (zar) + {dex_mod} (DEX) + {extra_init} (ek) = {total_init}")
+        
+        self.add_direct_row(name, total_init, ac, hp, "", entity_id, total_bonus)
 
     def add_all_players(self):
         entities = self.dm.data["entities"]
@@ -451,11 +505,23 @@ class CombatTracker(QWidget):
 
     def roll_initiatives(self):
         self.table.blockSignals(True)
+        rolls = []
         for row in range(self.table.rowCount()):
-            item = self.table.item(row, 1); bonus = self.table.item(row, 0).data(Qt.ItemDataRole.UserRole) or 0
-            roll = random.randint(1, 20) + bonus
-            item.setData(Qt.ItemDataRole.DisplayRole, str(roll)); item.setData(Qt.ItemDataRole.EditRole, roll)
+            item_name = self.table.item(row, 0)
+            item_init = self.table.item(row, 1)
+            name = item_name.text()
+            bonus = item_name.data(Qt.ItemDataRole.UserRole) or 0
+            
+            die_roll = random.randint(1, 20)
+            total = die_roll + bonus
+            
+            item_init.setText(str(total))
+            rolls.append(f"{name}: {die_roll} + {bonus} = {total}")
+            
         self.table.blockSignals(False)
+        print("\n--- Inisiyatif Zar Atışları ---")
+        for r in rolls: print(r)
+        
         self._sort_and_refresh()
 
     def open_context_menu(self, position):

@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QGraphicsScene, QGraphicsEllipseItem, QSlider, QGraphicsPixmapItem)
 from PyQt6.QtGui import QPixmap, QColor, QFont, QBrush, QPen, QPainter
 from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF
+from core.locales import tr
 
 # --- TOKEN (PUL) SINIFI ---
 class BattleTokenItem(QGraphicsEllipseItem):
