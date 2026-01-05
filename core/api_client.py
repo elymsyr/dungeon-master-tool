@@ -223,35 +223,133 @@ class DndApiClient:
         }
 
     def parse_equipment(self, data):
-        desc = "\n".join(data.get("desc", []))
+        """
+        API verisini ENTITY_SCHEMAS["Eşya (Equipment)"] formatına tam uyumlu hale getirir.
+        """
+        # 1. AÇIKLAMA (DESC)
+        desc_list = data.get("desc", [])
+        description = "\n".join(desc_list) if isinstance(desc_list, list) else str(desc_list)
         
-        # Maliyet parse
-        cost = data.get("cost", {})
-        cost_str = f"{cost.get('quantity', 0)} {cost.get('unit', '')}"
+        # 2. KATEGORİ (Detaylı)
+        # Ana: Weapon, Armor...
+        cat_main = data.get("equipment_category", {}).get("name", "Genel")
         
-        # Hasar parse (Silahsa)
-        dmg_str = ""
+        # Alt: Martial, Heavy, Shield...
+        sub_cats = []
+        if data.get("weapon_category"): sub_cats.append(data["weapon_category"])
+        if data.get("armor_category"): sub_cats.append(data["armor_category"])
+        if data.get("vehicle_category"): sub_cats.append(data["vehicle_category"])
+        if data.get("tool_category"): sub_cats.append(data["tool_category"])
+        if data.get("gear_category"): 
+            gc = data["gear_category"]
+            sub_cats.append(gc.get("name") if isinstance(gc, dict) else str(gc))
+        if data.get("category_range"): sub_cats.append(data["category_range"])
+        
+        # Boşlukları temizle ve birleştir
+        full_sub_cat = ", ".join([s for s in sub_cats if s])
+        final_category = f"{cat_main} ({full_sub_cat})" if full_sub_cat else cat_main
+        
+        # Etiketler (Arama için)
+        tags = [cat_main] + sub_cats
+
+        # 3. FİYAT
+        cost_str = "-"
+        if data.get("cost"):
+            q = data["cost"].get("quantity", 0)
+            u = data["cost"].get("unit", "gp")
+            cost_str = f"{q} {u}"
+
+        # 4. HASAR (Ayrı Ayrı Parse Ediyoruz)
+        damage_dice = ""
+        damage_type = ""
+        
+        # Silah hasarı
         if data.get("damage"):
-            dmg_str = f"{data['damage']['damage_dice']} {data['damage']['damage_type']['name']}"
-            
-        # Zırh parse
+            damage_dice = data["damage"].get("damage_dice", "")
+            if data["damage"].get("damage_type"):
+                damage_type = data["damage"]["damage_type"].get("name", "")
+        
+        # Çift el hasarı varsa parantez içinde ekle
+        if data.get("two_handed_damage"):
+            th_dice = data["two_handed_damage"].get("damage_dice")
+            if th_dice:
+                damage_dice += f" (2H: {th_dice})"
+
+        # 5. MENZİL
+        range_str = ""
+        if data.get("range"):
+            norm = data["range"].get("normal")
+            long = data["range"].get("long")
+            if norm:
+                range_str = f"{norm} ft."
+                if long: range_str += f" / {long} ft."
+
+        # 6. ZIRH SINIFI (AC)
         ac_str = ""
         if data.get("armor_class"):
-            ac = data["armor_class"]
-            ac_str = str(ac.get("base", 10))
-            if ac.get("dex_bonus"): ac_str += " + Dex"
+            ac_data = data["armor_class"]
+            # Bazen direkt sayı, bazen dict döner
+            if isinstance(ac_data, dict):
+                base = ac_data.get("base", 10)
+                dex = ac_data.get("dex_bonus", False)
+                max_bonus = ac_data.get("max_bonus")
+                ac_str = str(base)
+                if dex:
+                    ac_str += " + Dex"
+                    if max_bonus: ac_str += f" (max {max_bonus})"
+            else:
+                ac_str = str(ac_data)
+
+        # 7. GEREKSİNİMLER
+        reqs = []
+        if data.get("str_minimum") and int(data.get("str_minimum", 0)) > 0:
+            reqs.append(f"Min Str {data['str_minimum']}")
+        if data.get("stealth_disadvantage"):
+            reqs.append("Stealth Disadv.")
+        req_str = ", ".join(reqs)
+
+        # 8. ÖZELLİKLER (Properties)
+        props = [p.get("name", "") for p in data.get("properties", [])]
+        
+        # Araç Hızı / Kapasite
+        if data.get("speed"):
+            s = data["speed"]
+            val = f"{s.get('quantity')} {s.get('unit')}" if isinstance(s, dict) else s
+            props.append(f"Hız: {val}")
+        if data.get("capacity"):
+            props.append(f"Kapasite: {data['capacity']}")
             
+        prop_str = ", ".join(props)
+
+        # 9. MAGIC ITEM ÖZEL (Rarity / Attunement)
+        rarity = ""
+        if data.get("rarity"):
+            rarity = data["rarity"].get("name", "")
+            
+        attunement = "Gerekli Değil"
+        # Açıklamada 'requires attunement' geçiyor mu?
+        if "requires attunement" in description.lower():
+            attunement = "Gerekli"
+
+        # 10. ÇIKTI SÖZLÜĞÜ (Models.py ile birebir aynı anahtarlar)
         return {
             "name": data.get("name"),
             "type": "Eşya (Equipment)",
-            "description": desc,
-            "tags": [data.get("equipment_category", {}).get("name", "")],
+            "description": description,
+            "tags": tags,
+            
             "attributes": {
+                "Kategori": final_category,
+                "Nadirik (Rarity)": rarity,
+                "Uyumlanma (Attunement)": attunement,
                 "Maliyet": cost_str,
-                "Ağırlık": str(data.get("weight", 0)) + " lb",
-                "Hasar": dmg_str,
-                "Zırh Sınıfı (AC)": ac_str,
-                "Özellikler": ", ".join([p["name"] for p in data.get("properties", [])])
+                "Ağırlık": f"{data.get('weight', 0)} lb.",
+                "Hasar Zarı": damage_dice,    # <-- Models.py ile eşleşti
+                "Hasar Tipi": damage_type,    # <-- Models.py ile eşleşti
+                "Menzil": range_str,          # <-- Models.py ile eşleşti
+                "Zırh Sınıfı (AC)": ac_str,   # <-- Models.py ile eşleşti
+                "Gereksinimler": req_str,
+                "Özellikler": prop_str
             }
         }
 
