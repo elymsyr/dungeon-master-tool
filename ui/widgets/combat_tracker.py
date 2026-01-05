@@ -299,10 +299,25 @@ class CombatTracker(QWidget):
             if eid and eid in self.token_positions:
                 x, y = self.token_positions[eid]
             
+            # Tip ve Tavır Bilgisini Al
+            ent_type = "NPC"
+            attitude = "LBL_ATTR_NEUTRAL"
+            if eid and eid in self.dm.data["entities"]:
+                ent = self.dm.data["entities"][eid]
+                ent_type = ent.get("type", "NPC")
+                # Tavır: attributes içinde LBL_ATTITUDE altında saklanıyor
+                attitude = ent.get("attributes", {}).get("LBL_ATTITUDE", "LBL_ATTR_NEUTRAL")
+                
+                # Canavarlar otomatik düşmancıl
+                if ent_type == "Monster":
+                    attitude = "LBL_ATTR_HOSTILE"
+            
             data.append({
                 "name": item_name.text(),
                 "hp": item_hp.text(),
                 "eid": eid,
+                "type": ent_type,
+                "attitude": attitude,
                 "x": x, "y": y
             })
         return data

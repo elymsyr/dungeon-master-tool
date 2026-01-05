@@ -197,12 +197,13 @@ class BattleMapWindow(QMainWindow):
             hp = c.get("hp", "?")
             x, y = c.get("x"), c.get("y")
             
-            is_player = False
+            ent_type = c.get("type", "NPC")
+            attitude = c.get("attitude", "LBL_ATTR_NEUTRAL")
+            is_player = (ent_type == "Player")
+            
             img_path = None
             if eid and eid in self.dm.data["entities"]:
                 ent = self.dm.data["entities"][eid]
-                if ent.get("type") == "Oyuncu": is_player = True
-                
                 rel_path = ent.get("image_path")
                 if not rel_path and ent.get("images"): rel_path = ent.get("images")[0]
                 if rel_path: img_path = self.dm.get_full_path(rel_path)
@@ -210,19 +211,32 @@ class BattleMapWindow(QMainWindow):
             # Sidebar Kartı
             card = QFrame()
             card_layout = QHBoxLayout(card); card_layout.setContentsMargins(5,5,5,5)
-            style = "border: 2px solid #66bb6a;" if i == current_index else "border: 1px solid #444;"
-            bg = "#2e7d32" if i == current_index else "#2b2b2b"
-            card.setStyleSheet(f"background-color: {bg}; {style} border-radius: 5px;")
+            
+            # Renk Belirle
+            if i == current_index:
+                border = "#ffb74d" # Turuncu (Sıradaki)
+                bg = "#4527a0" if is_player else "#2e7d32"
+            else:
+                if is_player:
+                    border = "#4caf50" # Yeşil (Oyuncu)
+                elif attitude == "LBL_ATTR_HOSTILE":
+                    border = "#ef5350" # Kırmızı (Düşman)
+                elif attitude == "LBL_ATTR_FRIENDLY":
+                    border = "#42a5f5" # Mavi (Dost)
+                else:
+                    border = "#bdbdbd" # Gri (Nötr)
+                bg = "#2b2b2b"
+
+            card.setStyleSheet(f"background-color: {bg}; border: 1px solid {border}; border-radius: 5px;")
             
             lbl_name = QLabel(name); lbl_name.setStyleSheet("font-weight: bold;")
             hp_txt = tr("LBL_HP_SIDEBAR", hp=hp) if is_player else tr("LBL_HP_UNKNOWN")
-            lbl_hp = QLabel(hp_txt); lbl_hp.setStyleSheet("color: #ef5350;" if is_player else "color: #888; font-style: italic;")
+            lbl_hp = QLabel(hp_txt); lbl_hp.setStyleSheet(f"color: {border};" if is_player else "color: #888; font-style: italic;")
             card_layout.addWidget(lbl_name, 1); card_layout.addWidget(lbl_hp, 0)
             self.list_layout.addWidget(card)
 
             # Token Güncelleme
             if eid:
-                border = "#ffb74d" if i == current_index else ("#4caf50" if is_player else "#d32f2f")
                 
                 if eid in self.tokens:
                     token = self.tokens[eid]
