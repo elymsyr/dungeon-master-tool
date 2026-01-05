@@ -9,35 +9,74 @@
 
 </div>
 
-Firstly, thank you for checking my repository. I will add photos, videos and executables soon. Since I work, I cannot give enough time, but a star would be the best motivation for me :)
-
 ---
 
 ### 🧙‍♂️ Developer Note
 
-> Hi, I'm a D&D player and decided to become a Dungeon Master. I created this application to help me during sessions. While doing this, my priority was to meet these requirements:
->
-> 1.  **Two Screens:** I have my own screen and use a second screen to show things to the players. I should be able to show players what I want and hide what I want on this second screen, and do it easily.
-> 2.  **NPC Tracking:** I should be able to easily track all the NPCs and monsters I create. Notes, weapons, spells, etc., I should be able to easily add and remove them, either custom made by myself or pulled from D&D 5e.
-> 3.  **Real Dice:** I should be able to track encounters, but I want the players to roll the dice. That's why I'm not leaving everything to the application. The app exists only for tracking turn order, health, and status effects. Even though dice can be rolled within the app, I want to leave all the dice work to real dice.
-> 4.  **World Building:** I should be able to keep all the information about my world in this application.
-> 5.  **Portability:** I should be able to carry my world with me with a USB Flash Drive... well I am not sure about that :)
->
-> If these situations are suitable for you as well, I think you will enjoy this application. There are also new features I plan to add in the future. I know the application doesn't look very good right now :) If I find time, I will look into developing it myself instead of using AI. If you enjoy the application, leaving a star on the repo would be great.
+**Hi everyone!**
+
+I'm a D&D player who recently decided to become a Dungeon Master. I started this project just 3 days ago to help me run my own sessions.
+
+The core philosophy behind this project is simple: **"Made by a Dungeon Master, with Dungeon Masters."** My goal is to create a solid, open-source, and customizable foundation that belongs to the community.
+
+### 🎯 Why did I build this? (The Core Features)
+While developing this, my priority was to meet these specific requirements for my table:
+
+* **🖥️ Dual Screen Support:** I have my own DM screen, but I use a second monitor to show visuals to my players. The app allows me to easily toggle what is visible to players (Fog of War style) and what remains hidden for my eyes only.
+* **🎲 Real Dice Philosophy:** I believe in the magic of clicking-clacking rocks. This app is for tracking **Turn Order, Health, and Status Effects**. While digital rolling is possible, the design encourages players to roll real dice.
+* **📝 NPC & Monster Tracking:** Easily track all NPCs and monsters. Whether it's custom stats I made up or pulled from D&D 5e, I needed a way to add/remove notes, weapons, and spells on the fly.
+* **🌍 World Building:** A central place to keep all lore and world information accessible.
+* **💾 Portability:** My goal is to make this app portable enough to run from a USB Flash Drive (still testing this!).
+
+### ⚠️ Current State (Pre-Alpha)
+I am releasing an `.exe` file for anyone who wants to test the waters, but please manage your expectations:
+* **Timeframe:** This project is only **3 days old**.
+* **Development:** I work a full-time job and develop this in my limited free time.
+* **UI/Design:** The app currently relies on AI-assisted coding and basic design. It doesn't look perfect yet. If I find the time, I plan to rewrite the UI manually for a better experience.
+* **Bugs:** There are likely undiscovered bugs.
+
+### 🚀 Roadmap & What’s Coming
+While I am building the core systems, I have a small but passionate team of friends helping to elevate the project:
+* **🎨 UI Overhaul:** A complete visual redesign is in progress to improve usability.
+* **🎵 Soundpad & Atmosphere:** We are working on a dedicated Soundpad. A friend is composing custom music specifically for this tool.
+* **🔗 Integrations:** Future goals include researching connections with **D&D Beyond** and **Obsidian**.
+
+### 🤝 Join the Party
+If these features sound like something you need, I think you will enjoy this application.
+If you enjoy the project, **leaving a Star (⭐) on the repo** would be great motivation!
 
 ---
+**Herkese selamlar!**
 
-### 🇹🇷 Geliştirici Notu
+Ben D&D oynayan biriyim ve yakın zamanda Dungeon Master olmaya karar verdim. Bu projeye henüz 3 gün önce, kendi oyunlarımı yönetirken bana yardımcı olması için başladım.
 
-> Selam, bir dnd oyuncusuyum ve dungeon master olmaya karar verdim. Bu uygulamayı bana sessionlarda yardımcı olması için hazırladım. Bunu yaparken önceliğim şu gereksinimlerimi karşılamaktı:
->
-> 1.  Hem kendi ekranım var, hem de oyunculara gösterebileceğim ikinci bir ekran kullanıyorum. Bu ikinci ekranda oyunculara istediğim şeyleri gösterebilmeli, istediğim şeyleri ise gizleyebilmeliyim ve bunu kolayca yapabilmeliyim.
-> 2.  Yarattığım tüm npc ve canavarları kolayca takip edebilmeliyim. Notlar, silahlar, büyüler vs. ister kendim custom istersem de dnd 5e den çekerek kolayca ekleyebilmeli ve çıkartabilmeliyim.
-> 3.  Encounter takibini yapabilmeliyim ancak oyuncuların zar atmasını istiyorum. O yüzden tüm işi uygulamaya bırakmıyorum. Uygulama sadece sıra, can ve durum efekti takibi yapmam için var. Zar atılabilse de tüm zar işini gerçek zarlara bırakmak istiyorum.
-> 4.  Dünyayla ilgili tüm bilgilerimi bu uygulamada tutabilmeliyim.
-> 5.  Dünyamı bir USB Flash Disk ile yanımda taşıyabilmeliyim... Bundan çok emin değilim tabi.
->
-> Evet, bu tarz durumlar sizin için de uygunsa, bu uygulamadan keyif alacağınızı düşünüyorum. Ayrıca ileride getirmeyi planladığım yeni özellikler de var. Şuan uygulama çok da iyi görünmüyor biliyorum :) Zaman bulursam AI yerine kendim de geliştirmeye bakacağım. Uygulamadan keyif alırsanız, repoya yıldız bırakmanız harika olur.
+Bu projenin arkasındaki temel felsefe basit: **"Bir Dungeon Master tarafından, Dungeon Master'lar ile beraber yapıldı."** Amacım; herkesin kullanabileceği, özelleştirilebilir ve açık kaynaklı bir temel oluşturmak.
+
+### 🎯 Neden Bu Aracı Yaptım? (Temel Özellikler)
+Geliştirme sürecinde önceliğim, masamdaki şu eksikleri gidermekti:
+
+* **🖥️ Çift Ekran Desteği:** Kendim için bir DM ekranım var ama oyunculara görsel göstermek için ikinci bir monitör kullanıyorum. Uygulama, oyuncuların neyi görüp neyi görmeyeceğini (Savaş sisi vb.) kolayca yönetmemi sağlıyor.
+* **🎲 Gerçek Zar Felsefesi:** Zarın masadaki sesinin yerini hiçbir şey tutamaz. Bu uygulama sadece **Sıra Takibi (Initiative), Can (HP) ve Durum Etkilerini (Status Effects)** takip etmek için var. Uygulama içinde zar atılabilse de, tasarım felsefesi gerçek zar kullanımını teşvik eder.
+* **📝 NPC ve Canavar Takibi:** İster D&D 5e'den çekilen veriler olsun, ister kendi yarattığım statlar; tüm NPC ve canavarların notlarını, silahlarını ve büyülerini kolayca ekleyip çıkarabiliyorum.
+* **🌍 Dünya İnşası:** Yarattığım dünya ile ilgili tüm bilgileri tek bir yerde tutabilmek.
+* **💾 Taşınabilirlik:** Hedefim, dünyamı bir USB belleğe atıp her yere taşıyabilmek (Bunun üzerinde hala çalışıyorum!).
+
+### ⚠️ Mevcut Durum (Erken Erişim)
+Denemek isteyenler için bir `.exe` dosyası yayınlıyorum ancak lütfen beklentilerinizi buna göre ayarlayın:
+* **Süre:** Bu proje henüz sadece **3 günlüktür**.
+* **Geliştirme:** Tam zamanlı bir işte çalışıyorum ve bu projeyi kısıtlı boş zamanlarımda geliştiriyorum.
+* **Arayüz:** Kodlamada şu an yapay zeka desteği kullanıyorum, bu yüzden arayüz henüz mükemmel görünmeyebilir. Vakit buldukça arayüzü tamamen kendim baştan yazmayı ve geliştirmeyi planlıyorum.
+* **Hatalar:** Henüz keşfedilmemiş buglar olabilir.
+
+### 🚀 Yol Haritası
+Ben temel sistemleri kurarken, projeyi ileriye taşımak için bana yardım eden arkadaşlarım var:
+* **🎨 Arayüz Yenilemesi:** Daha iyi bir kullanıcı deneyimi için görsel tasarım yenileniyor.
+* **🎵 Soundpad ve Atmosfer:** Özel bir Soundpad üzerinde çalışıyoruz. Bir arkadaşım bu araca özel oyun içi müzikler besteliyor.
+* **🔗 Entegrasyonlar:** İleride **D&D Beyond** ve **Obsidian** gibi araçlarla bağlantı kurmayı hedefliyorum.
+
+### 🤝 Katkıda Bulunun
+Eğer bu özellikler sizin de masanızda ihtiyaç duyduğunuz şeylerse, uygulamayı seveceğinizi düşünüyorum.
+Projeyi beğenirseniz **Repo'ya bir Yıldız (⭐) bırakmanız** harika bir motivasyon olur!
 
 <br>
 
@@ -86,8 +125,8 @@ Firstly, thank you for checking my repository. I will add photos, videos and exe
 
 ## 🚀 Installation & Usage
 
-### Option 1: Portable (Recommended) ***(COMING SOON)***
-*No installation required. Perfect for carrying on a USB stick.*
+### Option 1: Portable (Recommended)
+*No installation required. Perfect for carrying on a USB stick but not tested.*
 1.  Download the latest release.
 2.  Unzip and run `dist/DungeonMasterTool.exe` for windows or `DungeonMasterTool` for linux.
 3.  Run it! All your data (worlds, custom items) saves to that folder.
