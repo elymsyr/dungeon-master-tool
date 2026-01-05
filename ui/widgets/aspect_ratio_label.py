@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QLabel
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
+from core.locales import tr
 
 class AspectRatioLabel(QLabel):
     def __init__(self, parent=None):
@@ -24,4 +25,4 @@ class AspectRatioLabel(QLabel):
             super().setPixmap(scaled)
         else:
             super().setPixmap(QPixmap())
-            self.setText("Resim Yok")
+            self.setText(tr("LBL_NO_IMAGE"))

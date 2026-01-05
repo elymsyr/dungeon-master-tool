@@ -2,8 +2,8 @@ import os
 import json
 import shutil
 import uuid
-from config import WORLDS_DIR, BASE_DIR, CACHE_DIR
-from core.models import get_default_entity_structure
+from config import WORLDS_DIR, BASE_DIR, CACHE_DIR, load_theme
+from core.models import get_default_entity_structure, SCHEMA_MAP, PROPERTY_MAP, ENTITY_SCHEMAS
 from core.api_client import DndApiClient
 from core.locales import set_language
 
@@ -14,6 +14,7 @@ class DataManager:
     def __init__(self):
         self.settings = self.load_settings()
         set_language(self.settings.get("language", "EN"))
+        self.current_theme = self.settings.get("theme", "dark")
         
         self.current_campaign_path = None
         # Varsayılan boş yapı
@@ -49,14 +50,20 @@ class DataManager:
             try:
                 with open(path, "r", encoding="utf-8") as f: return json.load(f)
             except: pass
-        return {"language": "EN"}
+        return {"language": "EN", "theme": "dark"}
 
     def save_settings(self, settings):
         path = os.path.join(CACHE_DIR, "settings.json")
         if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
-        with open(path, "w", encoding="utf-8") as f: json.dump(settings, f, indent=4)
-        self.settings = settings
-        set_language(settings.get("language", "EN"))
+        
+        # Merge with existing settings to not lose keys
+        new_settings = self.settings.copy()
+        new_settings.update(settings)
+        
+        with open(path, "w", encoding="utf-8") as f: json.dump(new_settings, f, indent=4)
+        self.settings = new_settings
+        set_language(new_settings.get("language", "EN"))
+        self.current_theme = new_settings.get("theme", "dark")
 
     def get_api_index(self, category):
         if category in self.reference_cache: return self.reference_cache[category]
@@ -106,6 +113,19 @@ class DataManager:
             if "last_active_session_id" not in self.data: self.data["last_active_session_id"] = None
             
             for eid, ent in self.data["entities"].items():
+                # Migrate Legacy Type
+                old_type = ent.get("type", "NPC")
+                if old_type in SCHEMA_MAP:
+                    ent["type"] = SCHEMA_MAP[old_type]
+                
+                # Migrate Legacy Attributes
+                attrs = ent.get("attributes", {})
+                new_attrs = {}
+                for k, v in attrs.items():
+                    new_key = PROPERTY_MAP.get(k, k)
+                    new_attrs[new_key] = v
+                ent["attributes"] = new_attrs
+
                 default = get_default_entity_structure(ent.get("type", "NPC"))
                 for key, val in default.items():
                     if key not in ent: ent[key] = val

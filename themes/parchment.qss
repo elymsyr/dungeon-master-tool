@@ -1,0 +1,80 @@
+/* Epic Fantasy DM Tool - Parchment Theme */
+QMainWindow {
+    background-color: #f4ecd8;
+    color: #3e2723;
+}
+
+QWidget {
+    background-color: #f4ecd8;
+    color: #3e2723;
+    font-family: 'Georgia', serif;
+}
+
+QTabWidget::pane {
+    border: 2px solid #d7ccc8;
+    background: #fafafa;
+    border-radius: 4px;
+}
+
+QTabBar::tab {
+    background: #efebe9;
+    color: #5d4037;
+    padding: 10px 20px;
+    border: 1px solid #d7ccc8;
+    border-bottom: none;
+    margin-right: 2px;
+}
+
+QTabBar::tab:selected {
+    background: #ffffff;
+    color: #8d6e63;
+    border-top: 3px solid #8d6e63;
+    font-weight: bold;
+}
+
+QPushButton {
+    background-color: #d7ccc8;
+    border: 1px solid #bcaaa4;
+    padding: 8px 15px;
+    border-radius: 4px;
+    color: #3e2723;
+}
+
+QPushButton:hover {
+    background-color: #bcaaa4;
+}
+
+QPushButton#primaryBtn {
+    background-color: #8d6e63;
+    color: white;
+}
+
+QLineEdit, QTextEdit, QComboBox, QListWidget {
+    background-color: #ffffff;
+    border: 1px solid #d7ccc8;
+    padding: 6px;
+    border-radius: 4px;
+    color: #3e2723;
+}
+
+QHeaderView::section {
+    background-color: #efebe9;
+    color: #5d4037;
+    padding: 6px;
+    border: 1px solid #d7ccc8;
+}
+
+QGroupBox {
+    border: 2px solid #d7ccc8;
+    border-radius: 8px;
+    margin-top: 20px;
+    padding-top: 15px;
+    font-weight: bold;
+    color: #5d4037;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 15px;
+    padding: 0 8px;
+}
