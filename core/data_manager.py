@@ -245,10 +245,12 @@ class DataManager:
         if parsed_data: return True, parsed_data
         return False, msg
 
-    def import_entity_with_dependencies(self, data):
+    def import_entity_with_dependencies(self, data, type_override=None):
         """API verisindeki bağlı büyüleri indirip kaydeder."""
-        # fetch_from_api zaten _resolve_dependencies çağırıyor olabilir (Monster ise)
-        # Ama garantiye almak için burada da çağırıyoruz (pop eder)
+        # type_override varsa tipi güncelle (Örn: Monster -> NPC)
+        if type_override:
+            data["type"] = type_override
+            
         data = self._resolve_dependencies(data)
         return self.save_entity(None, data)
 

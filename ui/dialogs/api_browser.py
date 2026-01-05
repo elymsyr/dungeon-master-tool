@@ -25,6 +25,8 @@ class ApiBrowser(QDialog):
             QPushButton:hover { background-color: #555; }
             QPushButton#importBtn { background-color: #2e7d32; }
             QPushButton#importBtn:hover { background-color: #1b5e20; }
+            QPushButton#importNpcBtn { background-color: #0277bd; }
+            QPushButton#importNpcBtn:hover { background-color: #01579b; }
         """)
         
         self.full_list = [] # API'den gelen ham liste
@@ -59,14 +61,23 @@ class ApiBrowser(QDialog):
         self.txt_desc = QTextEdit()
         self.txt_desc.setReadOnly(True)
         
+        btn_layout = QHBoxLayout()
         self.btn_import = QPushButton(tr("BTN_IMPORT"))
         self.btn_import.setObjectName("importBtn")
         self.btn_import.setEnabled(False)
         self.btn_import.clicked.connect(self.import_selected)
         
+        self.btn_import_npc = QPushButton(tr("BTN_IMPORT_NPC"))
+        self.btn_import_npc.setObjectName("importNpcBtn")
+        self.btn_import_npc.setVisible(False)
+        self.btn_import_npc.clicked.connect(lambda: self.import_selected(target_type="NPC"))
+        
+        btn_layout.addWidget(self.btn_import)
+        btn_layout.addWidget(self.btn_import_npc)
+        
         prev_layout.addWidget(self.lbl_name)
         prev_layout.addWidget(self.txt_desc)
-        prev_layout.addWidget(self.btn_import)
+        prev_layout.addLayout(btn_layout)
         
         splitter.addWidget(preview_widget)
         splitter.setSizes([300, 600])
@@ -136,14 +147,16 @@ class ApiBrowser(QDialog):
                 self.btn_import.setEnabled(True)
                 self.btn_import.setText(tr("BTN_IMPORT"))
 
-            if not data:
-                self.lbl_name.setText(tr("MSG_ERROR"))
-                self.txt_desc.setText(tr("Bulunamadı."))
-                return
-
             self.selected_data = data
             self.lbl_name.setText(data.get("name"))
             
+            # Monster ise NPC olarak aktar butonunu göster
+            if self.category == "Monster" and not isinstance(data_or_id, str):
+                self.btn_import_npc.setVisible(True)
+                self.btn_import_npc.setEnabled(True)
+            else:
+                self.btn_import_npc.setVisible(False)
+
             # Açıklamayı oluştur
             desc = f"{tr('LBL_TYPE')}: {tr('CAT_' + data.get('type', '').upper())}\n\n"
             desc += data.get("description", "")
@@ -161,16 +174,17 @@ class ApiBrowser(QDialog):
             self.txt_desc.setText(msg)
             self.btn_import.setEnabled(False)
 
-    def import_selected(self):
+    def import_selected(self, target_type=None):
         if self.selected_data:
             # Kullanıcıya geri bildirim ver
             self.btn_import.setEnabled(False)
-            self.btn_import.setText("Veriler ve Büyüler İndiriliyor...")
+            self.btn_import_npc.setEnabled(False)
+            self.btn_import.setText(tr("MSG_IMPORTING"))
             QApplication.processEvents() # Arayüzün donmaması için
             
             try:
                 # Asıl kaydetme işlemini yap (büyüklerle birlikte)
-                self.dm.import_entity_with_dependencies(self.selected_data)
+                self.dm.import_entity_with_dependencies(self.selected_data, type_override=target_type)
                 
                 QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_IMPORT_SUCCESS_DETAIL", name=self.selected_data['name']))
                 self.accept()
