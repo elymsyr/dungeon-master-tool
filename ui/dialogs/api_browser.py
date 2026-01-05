@@ -141,20 +141,43 @@ class ApiBrowser(QDialog):
                 data = self.dm.data["entities"].get(data_or_id)
                 self.btn_import.setEnabled(False)
                 self.btn_import.setText(tr("MSG_EXISTS"))
+                self.btn_import_npc.setVisible(False)
             else:
                 # Yeni veri
                 data = data_or_id
                 self.btn_import.setEnabled(True)
-                self.btn_import.setText(tr("BTN_IMPORT"))
+                
+            if not data:
+                self.lbl_name.setText(tr("MSG_ERROR"))
+                self.txt_desc.setText(tr("Bulunamadı."))
+                return
 
             self.selected_data = data
             self.lbl_name.setText(data.get("name"))
             
-            # Monster ise NPC olarak aktar butonunu göster
-            if self.category == "Monster" and not isinstance(data_or_id, str):
-                self.btn_import_npc.setVisible(True)
-                self.btn_import_npc.setEnabled(True)
+            # Monster ise butonları kategoriye göre ayarla
+            try: self.btn_import.clicked.disconnect()
+            except: pass
+            
+            if self.category == "NPC":
+                # NPC kategorisinden açıldıysa direkt NPC olarak aktar
+                self.btn_import.setText(tr("BTN_IMPORT_NPC"))
+                self.btn_import.clicked.connect(lambda: self.import_selected(target_type="NPC"))
+                self.btn_import_npc.setVisible(False)
+            elif self.category == "Monster":
+                # Monster kategorisinden açıldıysa varsayılan Monster (ama NPC seçeneği de var)
+                self.btn_import.setText(tr("BTN_IMPORT"))
+                self.btn_import.clicked.connect(lambda: self.import_selected(target_type=None))
+                
+                if not isinstance(data_or_id, str):
+                    self.btn_import_npc.setVisible(True)
+                    self.btn_import_npc.setEnabled(True)
+                else:
+                    self.btn_import_npc.setVisible(False)
             else:
+                # Diğer kategoriler (Büyü, Eşya vb.)
+                self.btn_import.setText(tr("BTN_IMPORT"))
+                self.btn_import.clicked.connect(lambda: self.import_selected(target_type=None))
                 self.btn_import_npc.setVisible(False)
 
             # Açıklamayı oluştur

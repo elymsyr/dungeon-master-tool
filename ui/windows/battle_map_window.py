@@ -7,10 +7,11 @@ from core.locales import tr
 
 # --- TOKEN (PUL) SINIFI ---
 class BattleTokenItem(QGraphicsEllipseItem):
-    def __init__(self, size, pixmap, border_color, name, eid, on_move_callback):
+    def __init__(self, size, pixmap, border_color, name, tid, eid, on_move_callback):
         super().__init__(0, 0, size, size)
         
-        self.eid = eid
+        self.tid = tid # Takip ID'si (Benzersiz)
+        self.eid = eid # Varlık ID'si (Library)
         self.name = name
         self.on_move_callback = on_move_callback 
         self.original_pixmap = pixmap 
@@ -43,7 +44,7 @@ class BattleTokenItem(QGraphicsEllipseItem):
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
         if self.on_move_callback:
-            self.on_move_callback(self.eid, self.pos().x(), self.pos().y())
+            self.on_move_callback(self.tid, self.pos().x(), self.pos().y())
 
 # --- ANA PENCERE ---
 class BattleMapWindow(QMainWindow):
@@ -164,8 +165,8 @@ class BattleMapWindow(QMainWindow):
         for token in self.tokens.values():
             token.update_appearance(self.token_size)
 
-    def on_token_moved(self, eid, x, y):
-        self.token_moved_signal.emit(eid, x, y)
+    def on_token_moved(self, tid, x, y):
+        self.token_moved_signal.emit(tid, x, y)
 
     def update_combat_data(self, combatants, current_index, map_path=None, saved_token_size=None):
         if saved_token_size:
@@ -182,13 +183,18 @@ class BattleMapWindow(QMainWindow):
             item = self.list_layout.takeAt(0)
             if item.widget(): item.widget().deleteLater()
             
-        active_ids = [c.get("eid") for c in combatants if c.get("eid")]
+        active_tids = []
+        for c in combatants:
+            key = c.get("tid") or c.get("eid")
+            if key: active_tids.append(key)
+            
+        print(f"🗺️ Harita Güncelleniyor: {len(combatants)} combatant, {len(active_tids)} geçerli ID.")
         
         # Token Temizle
-        to_remove = [eid for eid in self.tokens if eid not in active_ids]
-        for eid in to_remove:
-            self.scene.removeItem(self.tokens[eid])
-            del self.tokens[eid]
+        to_remove = [tid for tid in self.tokens if tid not in active_tids]
+        for tid in to_remove:
+            self.scene.removeItem(self.tokens[tid])
+            del self.tokens[tid]
 
         # Listeyi Güncelle
         for i, c in enumerate(combatants):
@@ -236,10 +242,12 @@ class BattleMapWindow(QMainWindow):
             self.list_layout.addWidget(card)
 
             # Token Güncelleme
-            if eid:
-                
-                if eid in self.tokens:
-                    token = self.tokens[eid]
+            token_key = c.get("tid")
+            if not token_key: token_key = c.get("eid") # Geriye dönük uyumluluk
+            
+            if token_key:
+                if token_key in self.tokens:
+                    token = self.tokens[token_key]
                     token.border_color = border
                     token.update_appearance(self.token_size)
                     token.setZValue(100 if i == current_index else 10)
@@ -250,7 +258,7 @@ class BattleMapWindow(QMainWindow):
                              token.setPos(x, y)
                 else:
                     pixmap = QPixmap(img_path) if img_path else None
-                    token = BattleTokenItem(self.token_size, pixmap, border, name, eid, self.on_token_moved)
+                    token = BattleTokenItem(self.token_size, pixmap, border, name, token_key, eid, self.on_token_moved)
                     
                     if x is not None and y is not None:
                         token.setPos(x, y)
@@ -259,4 +267,4 @@ class BattleMapWindow(QMainWindow):
                         token.setPos(50 + offset, 50)
                     
                     self.scene.addItem(token)
-                    self.tokens[eid] = token
+                    self.tokens[token_key] = token

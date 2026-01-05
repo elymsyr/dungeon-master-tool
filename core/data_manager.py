@@ -209,8 +209,8 @@ class DataManager:
         parsed_data, msg = self.api_client.search(category, query)
         if not parsed_data: return False, msg, None
         
-        # Canavar ise büyülerini çöz (Eager resolve)
-        if category == "Monster" and isinstance(parsed_data, dict):
+        # Canavar veya NPC ise büyülerini çöz (Eager resolve)
+        if category in ["Monster", "NPC"] and isinstance(parsed_data, dict):
             parsed_data = self._resolve_dependencies(parsed_data)
             
         return True, "API'den çekildi.", parsed_data

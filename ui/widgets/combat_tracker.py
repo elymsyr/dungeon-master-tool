@@ -8,6 +8,7 @@ from core.locales import tr
 from ui.windows.battle_map_window import BattleMapWindow
 import random
 import os
+import uuid
 
 # D&D 5e Standart Durumlar
 CONDITIONS = [
@@ -260,8 +261,8 @@ class CombatTracker(QWidget):
         
         self.refresh_battle_map(force_map_reload=force_reload)
 
-    def on_token_moved_in_map(self, eid, x, y):
-        self.token_positions[eid] = (x, y)
+    def on_token_moved_in_map(self, tid, x, y):
+        self.token_positions[tid] = (x, y)
         self.data_changed_signal.emit() # Pozisyon değişince kaydet
 
     def on_token_size_changed(self, val):
@@ -294,10 +295,16 @@ class CombatTracker(QWidget):
             if not all([item_name, item_init, item_ac, item_hp]):
                 continue
             
+            tid = item_init.data(Qt.ItemDataRole.UserRole + 1)
             eid = item_init.data(Qt.ItemDataRole.UserRole)
+            
             x, y = None, None
-            if eid and eid in self.token_positions:
-                x, y = self.token_positions[eid]
+            if tid and tid in self.token_positions:
+                x, y = self.token_positions[tid]
+            elif eid and eid in self.token_positions:
+                # Geriye dönük uyumluluk: tid yoksa eid'ye bak ve tid'ye taşı
+                x, y = self.token_positions.pop(eid)
+                self.token_positions[tid] = (x, y)
             
             # Tip ve Tavır Bilgisini Al
             ent_type = "NPC"
@@ -313,13 +320,16 @@ class CombatTracker(QWidget):
                     attitude = "LBL_ATTR_HOSTILE"
             
             data.append({
+                "tid": tid,
+                "eid": eid,
                 "name": item_name.text(),
                 "hp": item_hp.text(),
-                "eid": eid,
                 "type": ent_type,
                 "attitude": attitude,
                 "x": x, "y": y
             })
+        
+        print(f"📡 Haritaya gönderilen veri: {len(data)} combatant. TIDs: {[c['tid'] for c in data]}")
         return data
 
     def on_data_changed(self, item): 
@@ -354,28 +364,26 @@ class CombatTracker(QWidget):
         self.table.blockSignals(False)
 
     def _sort_and_refresh(self):
-        # Şu anki sıradaki kişinin EID veya ismini sakla
-        current_eid = None
+        # Şu anki sıradaki kişinin TID veya ismini sakla
+        current_tid = None
         if 0 <= self.current_turn_index < self.table.rowCount():
             item_init = self.table.item(self.current_turn_index, 1)
-            if item_init: current_eid = item_init.data(Qt.ItemDataRole.UserRole)
-            if not current_eid:
+            if item_init: current_tid = item_init.data(Qt.ItemDataRole.UserRole + 1)
+            if not current_tid:
                 item_name = self.table.item(self.current_turn_index, 0)
-                if item_name: current_eid = item_name.text()
+                if item_name: current_tid = item_name.text()
 
         self.table.blockSignals(True)
-        # Sütun 1'e göre (Initiative) büyükten küçüğe sırala
         self.table.sortItems(1, Qt.SortOrder.DescendingOrder)
         self.table.blockSignals(False)
 
-        # Sıradaki kişiyi yeni yerinde bul
-        if current_eid is not None:
+        # Sıradaki kişiyi yeni yerinde bul (TID ile tam kontrol)
+        if current_tid is not None:
             for row in range(self.table.rowCount()):
                 item_init = self.table.item(row, 1)
                 item_name = self.table.item(row, 0)
-                # Hem EID hem isim kontrolü (Hangisi eşleşirse)
-                if (item_init and item_init.data(Qt.ItemDataRole.UserRole) == current_eid) or \
-                   (item_name and item_name.text() == current_eid):
+                if (item_init and item_init.data(Qt.ItemDataRole.UserRole + 1) == current_tid) or \
+                   (item_name and item_name.text() == current_tid):
                     self.current_turn_index = row
                     break
         
@@ -408,18 +416,22 @@ class CombatTracker(QWidget):
 
             if item_name is None or item_init is None: continue
 
+            tid = item_init.data(Qt.ItemDataRole.UserRole + 1)
             eid = item_init.data(Qt.ItemDataRole.UserRole)
-            x, y = None, None
-            if eid and eid in self.token_positions: x, y = self.token_positions[eid]
+            
+            x, y = self.token_positions.get(tid, (None, None))
+            # Fallback for old save positions
+            if x is None and eid in self.token_positions: x, y = self.token_positions[eid]
 
             # JSON serileştirme hatası (RecursionError) olmaması için verileri ilkel tiplere (int, str) zorla
             combatants.append({
+                "tid": str(tid) if tid else None,
+                "eid": str(eid) if eid else None,
                 "name": str(item_name.text()),
                 "init": str(item_init.text()),
                 "ac": str(item_ac.text() if item_ac else ""),
                 "hp": str(item_hp.text() if item_hp else ""),
                 "cond": str(item_cond.text() if item_cond else ""),
-                "eid": str(eid) if eid else None,
                 "bonus": int(item_name.data(Qt.ItemDataRole.UserRole) or 0),
                 "x": float(x) if x is not None else None,
                 "y": float(y) if y is not None else None
@@ -449,9 +461,13 @@ class CombatTracker(QWidget):
         self.current_turn_index = int(state_data.get("turn_index", -1))
         
         for c in combatants:
+            tid = c.get("tid")
             eid = c.get("eid")
-            if eid and c.get("x") is not None:
-                self.token_positions[eid] = (float(c["x"]), float(c["y"]))
+            if not tid: tid = str(uuid.uuid4()) # Eski veriler için üret
+            
+            if c.get("x") is not None:
+                self.token_positions[tid] = (float(c["x"]), float(c["y"]))
+            
             self.add_direct_row(
                 str(c["name"]), 
                 str(c["init"]), 
@@ -459,7 +475,8 @@ class CombatTracker(QWidget):
                 str(c["hp"]), 
                 str(c["cond"]), 
                 str(eid) if eid else None, 
-                int(c.get("bonus", 0))
+                int(c.get("bonus", 0)),
+                tid
             )
             
         self.table.blockSignals(False)
@@ -471,7 +488,9 @@ class CombatTracker(QWidget):
         self.loading = False
 
     # --- HELPER METHODS ---
-    def add_direct_row(self, name, init, ac, hp, condition, eid, init_bonus=0):
+    def add_direct_row(self, name, init, ac, hp, condition, eid, init_bonus=0, tid=None):
+        if not tid: tid = str(uuid.uuid4())
+        
         row = self.table.rowCount()
         self.table.insertRow(row)
         
@@ -482,6 +501,7 @@ class CombatTracker(QWidget):
         
         item_init = NumericTableWidgetItem(str(init))
         item_init.setData(Qt.ItemDataRole.UserRole, eid)
+        item_init.setData(Qt.ItemDataRole.UserRole + 1, tid) # Unique ID harita eşleşmesi için
         self.table.setItem(row, 1, item_init)
         
         # AC ve HP (Sayısal Sıralama)
