@@ -17,13 +17,19 @@ params = [
     '--onefile',
     '--noconsole',
     '--clean',
-    '--manifest=win_compat.xml',
+    '--noupx',
+    # '--manifest=win_compat.xml',
     # Gerekli importlar
     '--hidden-import=PyQt6',
+    '--hidden-import=PyQt6.QtCore',
+    '--hidden-import=PyQt6.QtGui',
+    '--hidden-import=PyQt6.QtWidgets',
     '--hidden-import=PyQt6.QtWebEngineWidgets',
+    '--hidden-import=PyQt6.QtWebEngineCore',
     '--hidden-import=requests',
     '--hidden-import=i18n',
     '--hidden-import=yaml',
+    '--collect-submodules=PyQt6',
     
     # Data folders to bundle (Windows uses semicolon separator for add-data)
     '--add-data=locales;locales',
