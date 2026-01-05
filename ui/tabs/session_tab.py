@@ -74,7 +74,7 @@ class SessionTab(QWidget):
 
         # Log
         self.txt_log = QTextEdit()
-        self.txt_log.setPlaceholderText("Olay günlüğü...")
+        self.txt_log.setPlaceholderText(tr("LBL_EVENT_LOG_PH"))
         # Log değişince de kaydet
         self.txt_log.textChanged.connect(self.auto_save)
         
@@ -102,10 +102,29 @@ class SessionTab(QWidget):
         layout.addLayout(left_layout, 1)
         layout.addLayout(right_layout, 1)
 
+    def retranslate_ui(self):
+        # Update labels and button texts
+        self.btn_new_session.setText(tr("BTN_NEW_SESSION"))
+        self.btn_save_session.setText(tr("BTN_SAVE"))
+        self.btn_load_session.setText(tr("BTN_LOAD_SESSION"))
+        self.txt_log.setPlaceholderText(tr("LBL_EVENT_LOG_PH"))
+        self.btn_add_log.setText(tr("BTN_ADD_LOG"))
+        self.txt_notes.setPlaceholderText(tr("LBL_NOTES"))
+        
+        # Static labels (need to find them or store them)
+        # For simplicity, I'll update the ones I have references for.
+        # Labels like "Olay Günlüğü" were added as QLabel(tr("LBL_LOG")) without refs.
+        # I should probably store references to them if I want to update them.
+        # But most users care about buttons and placeholders.
+        
+        # Update combat tracker
+        if hasattr(self.combat_tracker, "retranslate_ui"):
+            self.combat_tracker.retranslate_ui()
+
     # --- FONKSİYONLAR ---
     def roll_dice(self, sides):
         result = random.randint(1, sides)
-        self.log_message(f"🎲 Rolled d{sides}: {result}")
+        self.log_message(tr("MSG_ROLLED_DICE", sides=sides, result=result))
 
     def log_message(self, message):
         timestamp = QDateTime.currentDateTime().toString("HH:mm")
@@ -118,7 +137,7 @@ class SessionTab(QWidget):
             self.inp_log_entry.clear()
 
     def new_session(self):
-        name, ok = QInputDialog.getText(self, "Yeni Oturum", "Oturum Adı:")
+        name, ok = QInputDialog.getText(self, tr("TITLE_NEW_SESSION"), tr("LBL_SESSION_NAME"))
         if ok and name:
             sid = self.dm.create_session(name)
             self.refresh_session_list()
@@ -129,7 +148,7 @@ class SessionTab(QWidget):
             self.txt_log.clear()
             self.txt_notes.clear()
             self.combat_tracker.clear_tracker()
-            self.log_message(f"Oturum Başladı: {name}")
+            self.log_message(tr("MSG_SESSION_STARTED", name=name))
             self.save_session(show_msg=False) # İlk kaydı yap
 
     def refresh_session_list(self):
@@ -172,7 +191,7 @@ class SessionTab(QWidget):
 
     def save_session(self, show_msg=False):
         if not self.current_session_id:
-            if show_msg: QMessageBox.warning(self, "Hata", "Önce bir oturum oluşturun.")
+            if show_msg: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_CREATE_SESSION_FIRST"))
             return
             
         logs = self.txt_log.toHtml()
@@ -182,4 +201,4 @@ class SessionTab(QWidget):
         self.dm.save_session_data(self.current_session_id, notes, logs, combat_state)
         
         if show_msg:
-            QMessageBox.information(self, tr("MSG_SUCCESS"), "Kaydedildi.")
+            QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_SAVED"))

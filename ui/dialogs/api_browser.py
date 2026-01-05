@@ -53,7 +53,7 @@ class ApiBrowser(QDialog):
         prev_layout = QVBoxLayout(preview_widget)
         prev_layout.setContentsMargins(0,0,0,0)
         
-        self.lbl_name = QLabel("Seçim Yok")
+        self.lbl_name = QLabel(tr("MSG_NO_SELECTION"))
         self.lbl_name.setStyleSheet("font-size: 18px; font-weight: bold; color: #ffa500; margin-bottom: 5px;")
         
         self.txt_desc = QTextEdit()
@@ -85,11 +85,11 @@ class ApiBrowser(QDialog):
 
     def on_list_loaded(self, data):
         self.setEnabled(True)
-        self.lbl_name.setText("Seçim Yok")
+        self.lbl_name.setText(tr("MSG_NO_SELECTION"))
         self.full_list = data
         
         if not self.full_list:
-            QMessageBox.information(self, "Bilgi", "Liste boş veya API'ye erişilemedi.")
+            QMessageBox.information(self, tr("MSG_WARNING"), tr("MSG_LIST_EMPTY"))
             return
 
         # Listeyi doldur
@@ -111,7 +111,7 @@ class ApiBrowser(QDialog):
         index_name = item.data(Qt.ItemDataRole.UserRole)
         
         # Kullanıcıya "Yükleniyor..." hissi ver
-        self.lbl_name.setText(item.text() + " (Yükleniyor...)")
+        self.lbl_name.setText(item.text() + f" ({tr('MSG_LOADING')})")
         self.txt_desc.clear()
         self.btn_import.setEnabled(False)
         self.list_widget.setEnabled(False)
@@ -155,9 +155,7 @@ class ApiBrowser(QDialog):
             try:
                 # Yeni "dependency-aware" import metodunu çağır
                 # Bu metod detected_spells'i işleyip temizleyecek ve kaydecek
-                new_id = self.dm.import_entity_with_dependencies(self.selected_data)
-                
-                QMessageBox.information(self, tr("MSG_SUCCESS"), f"'{self.selected_data['name']}' başarıyla aktarıldı.\n(Varsa büyüleri de eklendi.)")
+                QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_IMPORT_SUCCESS_DETAIL", name=self.selected_data['name']))
                 self.accept()
             except Exception as e:
                 self.btn_import.setEnabled(True)

@@ -55,7 +55,7 @@ class BattleMapWindow(QMainWindow):
         self.token_size = 50 
         self.map_item = None
         
-        self.setWindowTitle("Battle Map (Savaş Masası)")
+        self.setWindowTitle(tr("TITLE_BATTLE_MAP"))
         self.resize(1200, 800)
         self.setStyleSheet("background-color: #121212; color: #e0e0e0;")
         
@@ -70,13 +70,13 @@ class BattleMapWindow(QMainWindow):
         # Toolbar
         toolbar = QHBoxLayout()
         toolbar.setContentsMargins(10, 5, 10, 5)
-        lbl_size = QLabel("Token Boyutu:")
+        self.lbl_size = QLabel(tr("LBL_TOKEN_SIZE"))
         self.slider_size = QSlider(Qt.Orientation.Horizontal)
         self.slider_size.setMinimum(20); self.slider_size.setMaximum(300)
         self.slider_size.setValue(self.token_size)
         self.slider_size.valueChanged.connect(self.change_token_size)
         self.slider_size.setFixedWidth(200)
-        toolbar.addWidget(lbl_size); toolbar.addWidget(self.slider_size); toolbar.addStretch()
+        toolbar.addWidget(self.lbl_size); toolbar.addWidget(self.slider_size); toolbar.addStretch()
         map_layout.addLayout(toolbar)
         
         # Grafik Sahnesi ve Görünümü
@@ -101,10 +101,10 @@ class BattleMapWindow(QMainWindow):
         self.sidebar.setStyleSheet("background-color: #1e1e1e; border-left: 1px solid #333;")
         sidebar_layout = QVBoxLayout(self.sidebar)
         
-        lbl_title = QLabel("⚔️ Savaş Sırası")
-        lbl_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #ffb74d; padding: 10px; border-bottom: 1px solid #444;")
-        lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        sidebar_layout.addWidget(lbl_title)
+        self.lbl_title = QLabel(tr("TITLE_TURN_ORDER"))
+        self.lbl_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #ffb74d; padding: 10px; border-bottom: 1px solid #444;")
+        self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sidebar_layout.addWidget(self.lbl_title)
         
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -116,8 +116,12 @@ class BattleMapWindow(QMainWindow):
         scroll.setWidget(self.list_container)
         sidebar_layout.addWidget(scroll)
         
-        main_layout.addLayout(map_layout, 1)
         main_layout.addWidget(self.sidebar, 0)
+
+    def retranslate_ui(self):
+        self.setWindowTitle(tr("TITLE_BATTLE_MAP"))
+        self.lbl_size.setText(tr("LBL_TOKEN_SIZE"))
+        self.lbl_title.setText(tr("TITLE_TURN_ORDER"))
 
     # --- EKRAN BOYUTLANDIRMA OLAYI ---
     def resizeEvent(self, event):
@@ -209,7 +213,7 @@ class BattleMapWindow(QMainWindow):
             card.setStyleSheet(f"background-color: {bg}; {style} border-radius: 5px;")
             
             lbl_name = QLabel(name); lbl_name.setStyleSheet("font-weight: bold;")
-            hp_txt = f"{hp} HP" if is_player else "HP: ???"
+            hp_txt = tr("LBL_HP_SIDEBAR", hp=hp) if is_player else tr("LBL_HP_UNKNOWN")
             lbl_hp = QLabel(hp_txt); lbl_hp.setStyleSheet("color: #ef5350;" if is_player else "color: #888; font-style: italic;")
             card_layout.addWidget(lbl_name, 1); card_layout.addWidget(lbl_hp, 0)
             self.list_layout.addWidget(card)
