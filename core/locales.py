@@ -2,7 +2,7 @@ import i18n
 import os
 
 # Localization Configuration
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from config import BASE_DIR
 LOCALES_DIR = os.path.join(BASE_DIR, "locales")
 
 i18n.load_path.append(LOCALES_DIR)
