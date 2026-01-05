@@ -100,7 +100,9 @@ class DatabaseTab(QWidget):
         # 2. Filtreler
         filter_layout = QHBoxLayout()
         self.combo_filter = QComboBox()
-        self.combo_filter.addItems([tr("CAT_ALL")] + list(ENTITY_SCHEMAS.keys()))
+        self.combo_filter.addItem(tr("CAT_ALL"), None)
+        for cat in ENTITY_SCHEMAS.keys():
+            self.combo_filter.addItem(tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"), cat)
         self.combo_filter.currentTextChanged.connect(self.refresh_list)
         
         self.check_show_library = QCheckBox(tr("LBL_CHECK_LIBRARY"))
@@ -188,9 +190,11 @@ class DatabaseTab(QWidget):
 
     def retranslate_ui(self):
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
-        # Update combo box "All" item
-        current_idx = self.combo_filter.currentIndex()
         self.combo_filter.setItemText(0, tr("CAT_ALL"))
+        for i in range(1, self.combo_filter.count()):
+            cat = self.combo_filter.itemData(i)
+            if cat:
+                self.combo_filter.setItemText(i, tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"))
         
         self.check_show_library.setText(tr("LBL_CHECK_LIBRARY"))
         self.btn_download_all.setText(tr("BTN_DOWNLOAD_ALL"))

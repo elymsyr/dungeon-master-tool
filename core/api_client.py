@@ -4,20 +4,21 @@ from config import API_BASE_URL
 class DndApiClient:
     def __init__(self):
         self.session = requests.Session()
+        self.session.verify = False # Bypass SSL verification for reliability
         self.ENDPOINT_MAP = {
-            "Canavar": "monsters",
-            "Büyü (Spell)": "spells",
-            "Eşya (Equipment)": "equipment",
-            "Sınıf (Class)": "classes",
-            "Irk (Race)": "races",
+            "NPC": "monsters",
+            "Monster": "monsters",
+            "Spell": "spells",
+            "Equipment": "equipment",
+            "Class": "classes",
+            "Race": "races",
             "Magic Item": "magic-items"
         }
 
-    # ... (get_list, search, _fetch_all aynı kalıyor) ...
     def get_list(self, category):
         endpoint = self.ENDPOINT_MAP.get(category)
         if not endpoint:
-            if category == "Eşya (Equipment)":
+            if category == "Equipment":
                 l1 = self._fetch_all("equipment")
                 l2 = self._fetch_all("magic-items")
                 return l1 + l2
@@ -46,7 +47,7 @@ class DndApiClient:
             if response.status_code == 200:
                 return self.parse_dispatcher(category, response.json()), "Başarılı"
             
-            if category == "Eşya (Equipment)":
+            if category == "Equipment":
                 url2 = f"{API_BASE_URL}/magic-items/{formatted_query}"
                 resp2 = self.session.get(url2, timeout=10)
                 if resp2.status_code == 200:
@@ -57,11 +58,11 @@ class DndApiClient:
             return None, str(e)
 
     def parse_dispatcher(self, category, data):
-        if category == "Canavar": return self.parse_monster(data)
-        elif category == "Büyü (Spell)": return self.parse_spell(data)
-        elif category == "Eşya (Equipment)": return self.parse_equipment(data)
-        elif category == "Sınıf (Class)": return self.parse_class(data)
-        elif category == "Irk (Race)": return self.parse_race(data)
+        if category == "Monster": return self.parse_monster(data)
+        elif category == "Spell": return self.parse_spell(data)
+        elif category == "Equipment": return self.parse_equipment(data)
+        elif category == "Class": return self.parse_class(data)
+        elif category == "Race": return self.parse_race(data)
         return {}
 
     def parse_monster(self, data):
@@ -129,7 +130,7 @@ class DndApiClient:
         # 6. Veri Sözlüğünü Oluştur
         return {
             "name": data.get("name"),
-            "type": "Canavar",
+            "type": "Monster",
             "description": f"Size: {data.get('size')}, Type: {data.get('type')}, Alignment: {data.get('alignment')}",
             "tags": [data.get("type", ""), data.get("size", "")],
             "image_path": "", # API resimleri online URL'dir, lokalde yoksa boş bırakıyoruz
@@ -173,8 +174,10 @@ class DndApiClient:
             
             # Ek Özellikler
             "attributes": {
-                "Duyular (Senses)": ", ".join([f"{k}: {v}" for k, v in data.get("senses", {}).items() if k != "passive_perception"]),
-                "Diller": data.get("languages", "-")
+                "LBL_CR": str(data.get("challenge_rating", 0)),
+                "LBL_ATTACK_TYPE": "Melee / Ranged", # API doesn't have a simple field for this
+                "LBL_SENSES": ", ".join([f"{k}: {v}" for k, v in data.get("senses", {}).items() if k != "passive_perception"]),
+                "LBL_LANGUAGE": data.get("languages", "-")
             },
 
             # GEÇİCİ ALAN (DataManager bunu okuyup silecek)
@@ -207,18 +210,18 @@ class DndApiClient:
         
         return {
             "name": data.get("name"),
-            "type": "Büyü (Spell)",
+            "type": "Spell",
             "description": desc,
             "tags": classes + [f"Level {data.get('level')}", data.get("school", {}).get("name", "")],
             "attributes": {
-                "Seviye": str(data.get("level")),
-                "Okul": data.get("school", {}).get("name", ""),
-                "Süre (Casting Time)": data.get("casting_time", ""),
-                "Menzil (Range)": data.get("range", ""),
-                "Bileşenler": comp_str,
-                "Süreklilik (Duration)": ("Concentration, " if data.get("concentration") else "") + data.get("duration", ""),
-                "Ritüel": "Evet" if data.get("ritual") else "Hayır",
-                "Hasar": dmg_str
+                "LBL_LEVEL": str(data.get("level")),
+                "LBL_SCHOOL": data.get("school", {}).get("name", ""),
+                "LBL_CASTING_TIME": data.get("casting_time", ""),
+                "LBL_RANGE": data.get("range", ""),
+                "LBL_COMPONENTS": comp_str,
+                "LBL_DURATION": ("Concentration, " if data.get("concentration") else "") + data.get("duration", ""),
+                "LBL_RITUAL": "LBL_YES" if data.get("ritual") else "LBL_NO",
+                "LBL_DAMAGE": dmg_str
             }
         }
 
@@ -334,28 +337,28 @@ class DndApiClient:
         # 10. ÇIKTI SÖZLÜĞÜ (Models.py ile birebir aynı anahtarlar)
         return {
             "name": data.get("name"),
-            "type": "Eşya (Equipment)",
+            "type": "Equipment",
             "description": description,
             "tags": tags,
             
             "attributes": {
-                "Kategori": final_category,
-                "Nadirik (Rarity)": rarity,
-                "Uyumlanma (Attunement)": attunement,
-                "Maliyet": cost_str,
-                "Ağırlık": f"{data.get('weight', 0)} lb.",
-                "Hasar Zarı": damage_dice,    # <-- Models.py ile eşleşti
-                "Hasar Tipi": damage_type,    # <-- Models.py ile eşleşti
-                "Menzil": range_str,          # <-- Models.py ile eşleşti
-                "Zırh Sınıfı (AC)": ac_str,   # <-- Models.py ile eşleşti
-                "Gereksinimler": req_str,
-                "Özellikler": prop_str
+                "LBL_CATEGORY": final_category,
+                "LBL_RARITY": rarity,
+                "LBL_ATTUNEMENT": attunement,
+                "LBL_COST": cost_str,
+                "LBL_WEIGHT": f"{data.get('weight', 0)} lb.",
+                "LBL_DAMAGE_DICE": damage_dice,
+                "LBL_DAMAGE_TYPE": damage_type,
+                "LBL_RANGE": range_str,
+                "LBL_AC": ac_str,
+                "LBL_REQUIREMENTS": req_str,
+                "LBL_PROPERTIES": prop_str
             }
         }
 
     # Sınıf ve Irk parserları aynı kalabilir veya detaylandırılabilir
     def parse_class(self, data):
-        return {"name": data.get("name"), "type": "Sınıf (Class)", "description": f"Hit Die: d{data.get('hit_die')}", "attributes": {"Hit Die": f"d{data.get('hit_die')}"}}
+        return {"name": data.get("name"), "type": "Class", "description": f"Hit Die: d{data.get('hit_die')}", "attributes": {"LBL_HIT_DIE": f"d{data.get('hit_die')}"}}
 
     def parse_race(self, data):
         return {"name": data.get("name"), "type": "Irk (Race)", "description": f"Speed: {data.get('speed')}", "attributes": {"Hız": str(data.get("speed"))}}

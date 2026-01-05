@@ -1,0 +1,104 @@
+/* Epic Fantasy DM Tool - Gray Dark Theme */
+QMainWindow {
+    background-color: #2b2b2b;
+    color: #e0e0e0;
+}
+
+QWidget {
+    background-color: #2b2b2b;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+QTabWidget::pane {
+    border: 1px solid #444;
+    background: #333333;
+    border-radius: 4px;
+}
+
+QTabBar::tab {
+    background: #3c3f41;
+    padding: 10px 20px;
+    border: 1px solid #444;
+    border-bottom: none;
+    margin-right: 2px;
+}
+
+QTabBar::tab:selected {
+    background: #4e5254;
+    color: #ffd54f;
+    font-weight: bold;
+}
+
+QPushButton {
+    background-color: #4b4b4b;
+    border: 1px solid #555;
+    padding: 8px 15px;
+    border-radius: 4px;
+    color: #fff;
+}
+
+QPushButton:hover {
+    background-color: #5a5a5a;
+}
+
+QPushButton#successBtn {
+    background-color: #388e3c;
+    font-weight: bold;
+}
+
+QPushButton#dangerBtn {
+    background-color: #d32f2f;
+}
+
+QPushButton#primaryBtn {
+    background-color: #1976d2;
+}
+
+QLineEdit, QTextEdit, QComboBox, QListWidget {
+    background-color: #3c3f41;
+    border: 1px solid #555;
+    padding: 6px;
+    border-radius: 3px;
+    color: #fff;
+}
+
+QHeaderView::section {
+    background-color: #3c3f41;
+    color: white;
+    padding: 5px;
+    border: 1px solid #555;
+}
+
+QTableWidget {
+    gridline-color: #555;
+    background-color: #2b2b2b;
+    alternate-background-color: #333;
+}
+
+QGroupBox {
+    border: 2px solid #555;
+    border-radius: 8px;
+    margin-top: 15px;
+    padding-top: 15px;
+    font-weight: bold;
+    color: #ffd54f;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 5px;
+}
+
+QScrollBar:vertical {
+    border: none;
+    background: #2b2b2b;
+    width: 10px;
+}
+
+QScrollBar::handle:vertical {
+    background: #555;
+    min-height: 20px;
+    border-radius: 5px;
+}

@@ -74,8 +74,10 @@ class NpcSheet(QWidget):
         info_layout = QFormLayout()
         self.inp_name = QLineEdit()
         self.inp_type = QComboBox()
-        self.inp_type.addItems(list(ENTITY_SCHEMAS.keys()))
-        self.inp_type.currentTextChanged.connect(self.update_ui_by_type)
+        # Entity Categories (CAT_ prefix used in tr)
+        for cat in ENTITY_SCHEMAS.keys():
+            self.inp_type.addItem(tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"), cat)
+        self.inp_type.currentIndexChanged.connect(self._on_type_index_changed)
         self.inp_tags = QLineEdit(); self.inp_tags.setPlaceholderText(tr("LBL_TAGS_PH"))
         
         self.combo_location = QComboBox()
@@ -123,16 +125,29 @@ class NpcSheet(QWidget):
         btn_layout.addStretch(); btn_layout.addWidget(self.btn_delete); btn_layout.addWidget(self.btn_save)
         main_layout.addLayout(btn_layout)
         
-        self.update_ui_by_type(self.inp_type.currentText())
+        self.update_ui_by_type(self.inp_type.currentData())
 
     def retranslate_ui(self):
+        # Update category names in combo
+        for i in range(self.inp_type.count()):
+            cat = self.inp_type.itemData(i)
+            if cat:
+                self.inp_type.setItemText(i, tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"))
+
         self.btn_show_player.setText(tr("BTN_SHOW_PLAYER"))
         self.btn_add_img.setText(tr("BTN_ADD"))
         self.btn_remove_img.setToolTip(tr("BTN_REMOVE"))
         self.lbl_location.setText(tr("LBL_LOCATION"))
         self.lbl_residents.setText(tr("LBL_RESIDENTS"))
         self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
-        self.grp_dynamic.setTitle(tr("LBL_PROPERTIES"))
+        
+        # Re-trigger build_dynamic_form to refresh property labels
+        # currentData() might be None if no item selected or not initialized
+        cat_key = self.inp_type.currentData()
+        if cat_key:
+            self.build_dynamic_form(cat_key)
+        else:
+            self.grp_dynamic.setTitle(tr("LBL_PROPERTIES"))
         
         # Tabs
         self.tabs.setTabText(0, tr("TAB_STATS"))
@@ -349,20 +364,27 @@ class NpcSheet(QWidget):
         while self.layout_dynamic.rowCount() > 0: self.layout_dynamic.removeRow(0)
         self.dynamic_inputs = {} 
         schema = ENTITY_SCHEMAS.get(category_name, [])
-        self.grp_dynamic.setTitle(f"{category_name} {tr('LBL_PROPERTIES')}")
+        self.grp_dynamic.setTitle(f"{tr(f'CAT_{category_name.upper()}') if category_name in ENTITY_SCHEMAS else category_name} {tr('LBL_PROPERTIES')}")
         for label, dtype, options in schema:
             widget = QComboBox() if dtype == "combo" else QLineEdit()
-            if dtype == "combo" and options: widget.addItems(options); widget.setEditable(True)
-            self.layout_dynamic.addRow(f"{label}:", widget); self.dynamic_inputs[label] = widget
+            if dtype == "combo" and options: 
+                widget.addItems([tr(o) for o in options] if any(o.startswith("LBL_") for o in options) else options)
+                widget.setEditable(True)
+            self.layout_dynamic.addRow(f"{tr(label)}:", widget); self.dynamic_inputs[label] = widget
+
+    def _on_type_index_changed(self, index):
+        cat_key = self.inp_type.itemData(index)
+        if cat_key:
+            self.update_ui_by_type(cat_key)
 
     def update_ui_by_type(self, category_name):
         self.build_dynamic_form(category_name)
-        is_npc_like = category_name in ["NPC", "Canavar"]
-        is_player = category_name == "Oyuncu"
+        is_npc_like = category_name in ["NPC", "Monster"]
+        is_player = category_name == "Player"
         is_lore = category_name == "Lore"
         
         self.lbl_location.setVisible(is_npc_like or is_player); self.combo_location.setVisible(is_npc_like or is_player)
-        self.lbl_residents.setVisible(category_name == "Mekan"); self.list_residents.setVisible(category_name == "Mekan")
+        self.lbl_residents.setVisible(category_name == "Location"); self.list_residents.setVisible(category_name == "Location")
         
         self.tabs.setTabVisible(0, is_npc_like) # Stats
         self.tabs.setTabVisible(1, is_npc_like) # Spells

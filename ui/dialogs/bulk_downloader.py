@@ -33,7 +33,7 @@ class DownloadWorker(QThread):
         }
 
     def run(self):
-        self.log_signal.emit("🚀 Kapsamlı indirme işlemi başlatılıyor...")
+        self.log_signal.emit(tr("LOG_STARTING"))
         
         # 1. Klasörleri Hazırla
         for endpoint in self.categories.keys():
@@ -50,7 +50,7 @@ class DownloadWorker(QThread):
         for endpoint, label in self.categories.items():
             if not self.is_running: break
             
-            self.log_signal.emit(f"📂 Liste taranıyor: {label}...")
+            self.log_signal.emit(tr("LOG_SCANNING", label=label))
             try:
                 # API'den tüm listeyi çek
                 url = f"{API_BASE_URL}/{endpoint}"
@@ -65,12 +65,12 @@ class DownloadWorker(QThread):
                     # İndex dosyasını (arama listesi) güncelle
                     self._save_index(endpoint, items)
                 else:
-                    self.log_signal.emit(f"❌ Hata: {label} listesi alınamadı (Kod: {resp.status_code})")
+                    self.log_signal.emit(tr("LOG_ERROR_LIST", label=label, code=resp.status_code))
                     
             except Exception as e:
-                self.log_signal.emit(f"❌ Bağlantı hatası ({label}): {e}")
+                self.log_signal.emit(tr("LOG_CONN_ERROR", label=label, error=str(e)))
 
-        self.log_signal.emit(f"✅ Toplam {total_items_to_download} veri detaylarıyla indirilecek.")
+        self.log_signal.emit(tr("LOG_TOTAL_ITEMS", count=total_items_to_download))
         
         # Adım 2: Her Bir Öğenin Detayını İndir
         current_count = 0
@@ -79,7 +79,9 @@ class DownloadWorker(QThread):
             folder_path = os.path.join(LIBRARY_DIR, endpoint)
             label = self.categories[endpoint]
             
-            self.log_signal.emit(f"⬇️ İndiriliyor: {label} ({len(items)} adet)...")
+            label = self.categories[endpoint]
+            
+            self.log_signal.emit(tr("LOG_DOWNLOADING", label=label, count=len(items)))
             
             for item in items:
                 if not self.is_running: break
@@ -104,13 +106,13 @@ class DownloadWorker(QThread):
                         with open(file_path, "w", encoding="utf-8") as f:
                             json.dump(resp.json(), f, indent=4)
                     else:
-                        self.log_signal.emit(f"⚠️ İndirilemedi: {item.get('name')} (Kod: {resp.status_code})")
+                        self.log_signal.emit(tr("LOG_ERROR_ITEM", name=item.get('name'), code=resp.status_code))
                     
                     # API'yi boğmamak için minik bekleme
                     time.sleep(0.05)
                     
                 except Exception as e:
-                    self.log_signal.emit(f"⚠️ Hata: {item.get('name')} - {str(e)}")
+                    self.log_signal.emit(tr("LOG_ERROR_GENERAL", name=item.get('name'), error=str(e)))
 
                 current_count += 1
                 if current_count % 5 == 0: # Her 5 indirmede bir progress güncelle
@@ -195,12 +197,7 @@ class BulkDownloadDialog(QDialog):
         layout = QVBoxLayout(self)
         
         # Bilgi Etiketi
-        lbl_info = QLabel(
-            "<h3>📚 Toplu Veritabanı İndirici</h3>"
-            "<p>Bu işlem D&D 5e API üzerindeki tüm içeriği (Canavarlar, Büyüler, "
-            "Silahlar, Zırhlar, Büyülü Eşyalar, Sınıflar, Irklar) bilgisayarınıza indirir.</p>"
-            "<p style='color: #ffa500;'>⚠️ Bu işlem internet hızınıza bağlı olarak 5-10 dakika sürebilir.</p>"
-        )
+        lbl_info = QLabel(tr("LBL_DOWNLOADER_DESC"))
         lbl_info.setWordWrap(True)
         lbl_info.setStyleSheet("color: #e0e0e0; margin-bottom: 10px;")
         layout.addWidget(lbl_info)
@@ -255,7 +252,7 @@ class BulkDownloadDialog(QDialog):
 
     def start_download(self):
         self.btn_start.setEnabled(False)
-        self.btn_start.setText("İndiriliyor... Lütfen Bekleyin")
+        self.btn_start.setText(tr("MSG_DOWNLOADING_WAIT"))
         self.txt_log.clear()
         
         self.worker = DownloadWorker()
@@ -274,15 +271,15 @@ class BulkDownloadDialog(QDialog):
         sb.setValue(sb.maximum())
 
     def on_finished(self):
-        self.btn_start.setText("İndirme Tamamlandı")
+        self.btn_start.setText(tr("MSG_DOWNLOAD_FINISHED"))
         self.btn_start.setEnabled(True)
         self.progress_bar.setValue(100)
         QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_DOWNLOAD_COMPLETE"))
 
     def closeEvent(self, event):
         if self.worker and self.worker.isRunning():
-            reply = QMessageBox.question(self, "İptal", 
-                                       "İndirme işlemi devam ediyor. Kapatmak istiyor musunuz?",
+            reply = QMessageBox.question(self, tr("BTN_CANCEL"), 
+                                       tr("MSG_CONFIRM_CLOSE_DOWNLOAD"),
                                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             if reply == QMessageBox.StandardButton.Yes:
                 self.worker.stop()

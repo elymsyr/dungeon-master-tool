@@ -403,7 +403,7 @@ class CombatTracker(QWidget):
         entities = self.dm.data["entities"]
         items = []; ids = []
         for eid, data in entities.items():
-            if data.get("type") in ["NPC", "Canavar", "Oyuncu"]:
+            if data.get("type") in ["NPC", "Monster", "Player"]:
                 items.append(f"{data['name']} ({data['type']})"); ids.append(eid)
         item, ok = QInputDialog.getItem(self, tr("BTN_ADD"), tr("LBL_NAME"), items, 0, False)
         if ok and item: self.add_row_from_entity(ids[items.index(item)]); self._sort_and_refresh()
@@ -420,9 +420,10 @@ class CombatTracker(QWidget):
         self.add_direct_row(name, roll, ac, hp, "", entity_id, dex_mod)
 
     def add_all_players(self):
+        entities = self.dm.data["entities"]
         existing_eids = [self.table.item(row, 1).data(Qt.ItemDataRole.UserRole) for row in range(self.table.rowCount())]
-        for eid, data in self.dm.data["entities"].items():
-            if data.get("type") == "Oyuncu" and eid not in existing_eids: self.add_row_from_entity(eid)
+        for eid, data in entities.items():
+            if data.get("type") == "Player" and eid not in existing_eids: self.add_row_from_entity(eid)
         self._sort_and_refresh()
 
     def roll_initiatives(self):
