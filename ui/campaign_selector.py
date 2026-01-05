@@ -49,6 +49,22 @@ class CampaignSelector(QDialog):
         self.btn_load.setObjectName("loadBtn")
         self.btn_load.clicked.connect(self.load_campaign)
         layout.addWidget(self.btn_load)
+
+        # Data directory
+        dir_layout = QHBoxLayout()
+        self.lbl_data_dir = QLabel("Data Directory:")
+        self.inp_data_dir = QLineEdit()
+        self.inp_data_dir.setReadOnly(True)
+        self.btn_browse_dir = QPushButton("Browse")
+        self.btn_browse_dir.clicked.connect(self.browse_data_dir)
+        dir_layout.addWidget(self.lbl_data_dir)
+        dir_layout.addWidget(self.inp_data_dir)
+        dir_layout.addWidget(self.btn_browse_dir)
+        layout.addLayout(dir_layout)
+
+        # Set initial data dir to actual storage location from config
+        from config import get_data_root
+        self.inp_data_dir.setText(get_data_root())
         
         layout.addSpacing(20)
         
@@ -136,3 +152,18 @@ class CampaignSelector(QDialog):
             self.accept()
         else:
             QMessageBox.critical(self, "Hata", msg)
+
+    def browse_data_dir(self):
+        from PyQt6.QtWidgets import QFileDialog
+        dir_path = QFileDialog.getExistingDirectory(self, "Select Data Directory", self.inp_data_dir.text())
+        if dir_path:
+            self.dm.save_settings({"data_dir": dir_path})
+            # Re-instantiate DataManager and reload config so all paths update
+            import importlib
+            import config
+            importlib.reload(config)
+            from core.data_manager import DataManager
+            self.dm = DataManager()
+            from config import get_data_root
+            self.inp_data_dir.setText(get_data_root())
+            self.refresh_list()

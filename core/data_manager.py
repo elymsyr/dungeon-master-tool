@@ -15,21 +15,35 @@ class DataManager:
         self.settings = self.load_settings()
         set_language(self.settings.get("language", "EN"))
         self.current_theme = self.settings.get("theme", "dark")
-        
+
+        self._reload_paths()
+
         self.current_campaign_path = None
-        # Varsayılan boş yapı
         self.data = {
             "world_name": "", 
             "entities": {}, 
             "map_data": {"image_path": "", "pins": []},
             "sessions": [],
-            "last_active_session_id": None # Son oturumu hatırlamak için
+            "last_active_session_id": None
         }
         self.api_client = DndApiClient()
         self.reference_cache = {}
-        
-        if not os.path.exists(WORLDS_DIR): os.makedirs(WORLDS_DIR)
+
+        if not os.path.exists(self.WORLDS_DIR): os.makedirs(self.WORLDS_DIR)
         self._load_reference_cache()
+
+    def _reload_paths(self):
+        # Re-import config and reload paths if data_dir changed
+        import importlib
+        import config as config_mod
+        importlib.reload(config_mod)
+        self.WORLDS_DIR = config_mod.WORLDS_DIR
+        self.CACHE_DIR = config_mod.CACHE_DIR
+        self.IMAGES_DIR = config_mod.IMAGES_DIR
+        global WORLDS_DIR, CACHE_DIR, IMAGES_DIR
+        WORLDS_DIR = self.WORLDS_DIR
+        CACHE_DIR = self.CACHE_DIR
+        IMAGES_DIR = self.IMAGES_DIR
 
     def _load_reference_cache(self):
         if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
@@ -45,25 +59,49 @@ class DataManager:
 
     # --- AYARLAR ---
     def load_settings(self):
-        path = os.path.join(CACHE_DIR, "settings.json")
+        from config import get_settings_path, DATA_ROOT
+        path = get_settings_path()
+        default_settings = {"language": "EN", "theme": "dark", "data_dir": DATA_ROOT}
         if os.path.exists(path):
             try:
-                with open(path, "r", encoding="utf-8") as f: return json.load(f)
-            except: pass
-        return {"language": "EN", "theme": "dark"}
+                with open(path, "r", encoding="utf-8") as f:
+                    settings = json.load(f)
+                    # If data_dir is missing, add it and update file
+                    if "data_dir" not in settings:
+                        settings["data_dir"] = DATA_ROOT
+                        with open(path, "w", encoding="utf-8") as wf:
+                            json.dump(settings, wf, indent=4)
+                    return settings
+            except Exception:
+                pass
+        # If file does not exist, create it with defaults (including data_dir)
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(default_settings, f, indent=4)
+        except Exception:
+            pass
+        return default_settings
 
     def save_settings(self, settings):
-        path = os.path.join(CACHE_DIR, "settings.json")
-        if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
-        
+        from config import get_settings_path
+        path = get_settings_path()
         # Merge with existing settings to not lose keys
         new_settings = self.settings.copy()
         new_settings.update(settings)
-        
-        with open(path, "w", encoding="utf-8") as f: json.dump(new_settings, f, indent=4)
+        # If data_dir is being changed, write the new value directly
+        if "data_dir" in settings:
+            new_settings["data_dir"] = settings["data_dir"]
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(new_settings, f, indent=4)
+        except Exception:
+            pass
         self.settings = new_settings
         set_language(new_settings.get("language", "EN"))
         self.current_theme = new_settings.get("theme", "dark")
+        # If data_dir changed, reload paths
+        if "data_dir" in settings:
+            self._reload_paths()
 
     def get_api_index(self, category):
         if category in self.reference_cache: return self.reference_cache[category]
