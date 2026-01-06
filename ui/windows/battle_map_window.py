@@ -1,9 +1,51 @@
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QLabel, QScrollArea, QFrame, QGraphicsView, 
                              QGraphicsScene, QGraphicsEllipseItem, QSlider, QGraphicsPixmapItem)
-from PyQt6.QtGui import QPixmap, QColor, QFont, QBrush, QPen, QPainter
-from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF, QTimer
+from PyQt6.QtGui import QPixmap, QColor, QFont, QBrush, QPen, QPainter, QPainterPath
+
+from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF, QTimer, QRect # QRect de eklendi
 from core.locales import tr
+
+class SidebarConditionIcon(QWidget):
+    def __init__(self, name, icon_path, duration):
+        super().__init__()
+        self.name = name
+        self.icon_path = icon_path
+        self.duration = duration
+        self.setFixedSize(20, 20) # Sidebar için biraz daha küçük (20px)
+        self.setToolTip(f"{name} ({duration} Turns)" if duration > 0 else name)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        path = QPainterPath()
+        path.addEllipse(1, 1, 18, 18)
+        painter.setClipPath(path)
+        
+        if self.icon_path and os.path.exists(self.icon_path):
+            painter.drawPixmap(0, 0, 20, 20, QPixmap(self.icon_path))
+        else:
+            painter.setBrush(QBrush(QColor("#5c6bc0")))
+            painter.drawRect(0, 0, 20, 20)
+            painter.setPen(Qt.GlobalColor.white)
+            font = painter.font()
+            font.setPointSize(7)
+            font.setBold(True)
+            painter.setFont(font)
+            painter.drawText(QRect(0, 0, 20, 20), Qt.AlignmentFlag.AlignCenter, self.name[:2].upper())
+            
+        if self.duration > 0:
+            painter.setClipping(False)
+            painter.setBrush(QBrush(QColor(0, 0, 0, 200)))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRoundedRect(0, 12, 20, 8, 2, 2)
+            
+            painter.setPen(Qt.GlobalColor.white)
+            font = painter.font()
+            font.setPointSize(5)
+            painter.setFont(font)
+            painter.drawText(QRect(0, 12, 20, 8), Qt.AlignmentFlag.AlignCenter, str(self.duration))
 
 # --- TOKEN (PUL) SINIFI ---
 class BattleTokenItem(QGraphicsEllipseItem):
@@ -219,13 +261,13 @@ class BattleMapWindow(QMainWindow):
             name = c.get("name", "???")
             hp = c.get("hp", "?")
             x, y = c.get("x"), c.get("y")
+            conditions = c.get("conditions", []) # Durumları al
             
             ent_type = c.get("type", "NPC")
             attitude = c.get("attitude", "LBL_ATTR_NEUTRAL")
             is_player = (ent_type == "Player")
             is_active = (i == current_index)
             
-            # Tavır (Attitude) temizliği - QSS için basit stringlere çevir
             attitude_clean = "neutral"
             if attitude == "LBL_ATTR_HOSTILE": attitude_clean = "hostile"
             elif attitude == "LBL_ATTR_FRIENDLY": attitude_clean = "friendly"
@@ -237,17 +279,23 @@ class BattleMapWindow(QMainWindow):
                 if not rel_path and ent.get("images"): rel_path = ent.get("images")[0]
                 if rel_path: img_path = self.dm.get_full_path(rel_path)
 
-            # --- SIDEBAR KARTI (QSS ile Stilize Edilecek) ---
+            # --- SIDEBAR KARTI ---
             card = QFrame()
-            
-            # Özellikleri ata (QSS bunlara göre boyayacak)
             card.setProperty("class", "combatCard")
             card.setProperty("active", str(is_active).lower())
             card.setProperty("type", ent_type)
             card.setProperty("attitude", attitude_clean)
             
-            card_layout = QHBoxLayout(card)
-            card_layout.setContentsMargins(5,5,5,5)
+            # ANA DÜZEN: Dikey (Üstte İsim/Can, Altta İkonlar)
+            card_main_layout = QVBoxLayout(card)
+            card_main_layout.setContentsMargins(5, 5, 5, 5)
+            card_main_layout.setSpacing(2)
+            
+            # 1. SATIR: İsim ve Can
+            row_header = QWidget()
+            row_header_layout = QHBoxLayout(row_header)
+            row_header_layout.setContentsMargins(0, 0, 0, 0)
+            row_header_layout.setSpacing(5)
             
             lbl_name = QLabel(name)
             lbl_name.setStyleSheet("font-weight: bold; border: none; background: transparent;")
@@ -256,8 +304,33 @@ class BattleMapWindow(QMainWindow):
             lbl_hp = QLabel(hp_txt)
             lbl_hp.setStyleSheet("border: none; background: transparent; font-style: italic;")
             
-            card_layout.addWidget(lbl_name, 1)
-            card_layout.addWidget(lbl_hp, 0)
+            row_header_layout.addWidget(lbl_name, 1)
+            row_header_layout.addWidget(lbl_hp, 0)
+            
+            card_main_layout.addWidget(row_header)
+
+            # 2. SATIR: Durum İkonları (Eğer varsa)
+            if conditions:
+                row_conditions = QWidget()
+                row_cond_layout = QHBoxLayout(row_conditions)
+                row_cond_layout.setContentsMargins(0, 2, 0, 0)
+                row_cond_layout.setSpacing(4)
+                row_cond_layout.addStretch() # İkonları sağa yasla (veya sola için başa koy)
+                
+                for cond in conditions:
+                    # SidebarConditionIcon sınıfını kullan
+                    icon_widget = SidebarConditionIcon(
+                        cond.get("name", "?"), 
+                        cond.get("icon"), 
+                        cond.get("duration", 0)
+                    )
+                    row_cond_layout.addWidget(icon_widget)
+                
+                # İkonları sola yaslamak isterseniz addStretch'i buraya koyun:
+                # row_cond_layout.addStretch() 
+                
+                card_main_layout.addWidget(row_conditions)
+
             self.list_layout.addWidget(card)
 
             # --- TOKEN GÜNCELLEME ---
