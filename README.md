@@ -21,14 +21,18 @@ Manage combat, track stats, and project maps to your players without the hassle.
 
 ## 🗺️ Roadmap
 
+### ✅ Completed
+- [x] **Visual Status:** Status badges/icons on Combat Tracker & Battlemap.
+- [x] **UI/UX Overhaul:** Modernized interface, new themes (Baldur, Grim, Discord), and split-view editing.
+- [x] **Multi-Encounter:** Manage multiple encounters simultaneously within a session.
+- [x] **System Upgrades:** Advanced Entity Cards, Multi-Add, and Status Effect systems.
+
+### 🚧 In Progress / Planned
 - [ ] **Soundpad:** Support for custom music and sound effects.
-- [ ] **Visual Status:** Status badges/icons on Combat Tracker & Battlemap.
-- [ ] **UI/UX Overhaul:** Modernized interface and better user experience.
+- [ ] **Fog of War:** Interactive masking/revealing areas on the Battle Map.
+- [ ] **Campaign Notes:** Rich text editor, linking, and better folder organization for DM notes.
 - [ ] **Integrations:** Support for D&D Beyond, Obsidian, and other tools.
-- [ ] **Multi-Encounter:** Manage multiple encounters simultaneously.
-- [ ] **Multi-Window:** Support for projecting to multiple player screens.
-- [ ] **System Upgrades:** Improved systems for Entity Cards and Player management.
-- [ ] **Campaign Notes:** Better organization and text editor for DM notes.
+- [ ] **Multi-Window:** Advanced support for projecting to specific/multiple player screens.
 
 ## 🚀 Installation
 
