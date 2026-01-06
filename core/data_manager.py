@@ -79,24 +79,6 @@ class DataManager:
         if not os.path.exists(WORLDS_DIR): return []
         return [d for d in os.listdir(WORLDS_DIR) if os.path.isdir(os.path.join(WORLDS_DIR, d))]
 
-    def create_campaign(self, world_name):
-        folder = os.path.join(WORLDS_DIR, world_name)
-        try:
-            if not os.path.exists(folder): os.makedirs(folder)
-            if not os.path.exists(os.path.join(folder, "assets")): os.makedirs(os.path.join(folder, "assets"))
-            
-            self.data = {
-                "world_name": world_name, 
-                "entities": {}, 
-                "map_data": {"image_path": "", "pins": []},
-                "sessions": [],
-                "last_active_session_id": None
-            }
-            self.current_campaign_path = folder
-            self.save_data()
-            return True, "Oluşturuldu"
-        except Exception as e: return False, str(e)
-
     def load_campaign_by_name(self, name):
         return self.load_campaign(os.path.join(WORLDS_DIR, name))
 
@@ -106,19 +88,40 @@ class DataManager:
         try:
             with open(path, "r", encoding="utf-8") as f: self.data = json.load(f)
             
-            # Migration
+            # --- VERİ YAPISI MIGRATION (Eksik alanları tamamla) ---
             if "sessions" not in self.data: self.data["sessions"] = []
             if "entities" not in self.data: self.data["entities"] = {}
             if "map_data" not in self.data: self.data["map_data"] = {"image_path": "", "pins": []}
             if "last_active_session_id" not in self.data: self.data["last_active_session_id"] = None
             
+            # --- OTOMATİK SESSION OLUŞTURMA ---
+            # Eğer hiç oturum yoksa, varsayılan bir tane oluştur ve aktif et.
+            if not self.data["sessions"]:
+                new_sid = str(uuid.uuid4())
+                default_session = {
+                    "id": new_sid,
+                    "name": "Default Session",
+                    "date": "Bugün",
+                    "notes": "",
+                    "logs": "",
+                    "combatants": [] # Multi-encounter yapısı combat_tracker içinde handle ediliyor, burası temel yapı.
+                }
+                self.data["sessions"].append(default_session)
+                self.data["last_active_session_id"] = new_sid
+                print("⚠️ Otomatik 'Default Session' oluşturuldu.")
+            
+            # Eğer last_active_session_id boşsa ama session varsa, sonuncusunu seç
+            if not self.data["last_active_session_id"] and self.data["sessions"]:
+                self.data["last_active_session_id"] = self.data["sessions"][-1]["id"]
+
+            # --- ENTITY MIGRATION ---
             for eid, ent in self.data["entities"].items():
-                # Migrate Legacy Type
+                # Eski Tipi (Canavar) Yeni Tipe (Monster) Çevir
                 old_type = ent.get("type", "NPC")
                 if old_type in SCHEMA_MAP:
                     ent["type"] = SCHEMA_MAP[old_type]
                 
-                # Migrate Legacy Attributes
+                # Eski Özellik İsimlerini (Irk) Yeniye (LBL_RACE) Çevir
                 attrs = ent.get("attributes", {})
                 new_attrs = {}
                 for k, v in attrs.items():
@@ -126,14 +129,48 @@ class DataManager:
                     new_attrs[new_key] = v
                 ent["attributes"] = new_attrs
 
+                # Eksik alanları varsayılanlarla doldur
                 default = get_default_entity_structure(ent.get("type", "NPC"))
                 for key, val in default.items():
                     if key not in ent: ent[key] = val
+                
+                # Resim yolu migration
                 if not ent.get("images") and ent.get("image_path"):
                     ent["images"] = [ent["image_path"]]
 
             self.current_campaign_path = folder
+            self.save_data() # Migration değişikliklerini kaydet
             return True, "Yüklendi"
+        except Exception as e: return False, str(e)
+
+    def create_campaign(self, world_name):
+        folder = os.path.join(WORLDS_DIR, world_name)
+        try:
+            if not os.path.exists(folder): os.makedirs(folder)
+            if not os.path.exists(os.path.join(folder, "assets")): os.makedirs(os.path.join(folder, "assets"))
+            
+            # İlk session ID'sini oluştur
+            first_sid = str(uuid.uuid4())
+            
+            self.data = {
+                "world_name": world_name, 
+                "entities": {}, 
+                "map_data": {"image_path": "", "pins": []},
+                "sessions": [
+                    {
+                        "id": first_sid,
+                        "name": "Session 0",
+                        "date": "Bugün",
+                        "notes": "",
+                        "logs": "",
+                        "combatants": []
+                    }
+                ],
+                "last_active_session_id": first_sid
+            }
+            self.current_campaign_path = folder
+            self.save_data()
+            return True, "Oluşturuldu"
         except Exception as e: return False, str(e)
 
     def save_data(self):

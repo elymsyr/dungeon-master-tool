@@ -25,9 +25,9 @@ class MapPinItem(QGraphicsEllipseItem):
             menu = QMenu()
             menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #007acc; }")
             
-            act_inspect = QAction("🔍 İncele", menu)
-            act_move = QAction("✋ Taşı", menu)
-            act_delete = QAction("🗑️ Sil", menu)
+            act_inspect = QAction(tr("MENU_CTX_INSPECT"), menu)
+            act_move = QAction(tr("MENU_CTX_MOVE"), menu)
+            act_delete = QAction(tr("MENU_CTX_DELETE"), menu)
             
             menu.addAction(act_inspect)
             menu.addAction(act_move)
@@ -110,7 +110,7 @@ class MapViewer(QGraphicsView):
         menu = QMenu(self)
         menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #007acc; }")
         
-        action_add_pin = QAction("📍 Buraya Pin Ekle", self)
+        action_add_pin = QAction(tr("MENU_CTX_PIN"), self)
         menu.addAction(action_add_pin)
         
         scene_pos = self.mapToScene(event.pos())
