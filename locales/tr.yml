@@ -359,3 +359,10 @@ tr:
   MENU_CTX_MOVE: "✋ Taşı"
   MENU_CTX_DELETE: "🗑️ Sil"
   MENU_CTX_PIN: "📍 Buraya Pin Ekle"
+  # --- DURUM ETKİSİ ---
+  CAT_STATUS_EFFECT: "Durum Etkisi"
+  LBL_DURATION_TURNS: "Süre (Tur)"
+  LBL_EFFECT_TYPE: "Etki Tipi"
+  LBL_TYPE_BUFF: "Güçlendirme (Buff)"
+  LBL_TYPE_DEBUFF: "Zayıflatma (Debuff)"
+  LBL_TYPE_CONDITION: "Durum (Condition)"
