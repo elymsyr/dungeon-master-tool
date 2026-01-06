@@ -13,14 +13,17 @@ class SessionTab(QWidget):
         self.current_session_id = None
         self.init_ui()
         
-        # --- UYGULAMA AÇILINCA SON OTURUMU YÜKLE ---
         last_sid = self.dm.get_last_active_session_id()
+        
         if last_sid:
-            # Combo box'ta bul ve seç
             idx = self.combo_sessions.findData(last_sid)
             if idx >= 0:
                 self.combo_sessions.setCurrentIndex(idx)
-                self.load_session() # Otomatik yükle
+                self.load_session()
+        elif self.combo_sessions.count() > 0:
+            # ID yok ama listede session varsa ilkini seç
+            self.combo_sessions.setCurrentIndex(0)
+            self.load_session()
 
     def init_ui(self):
         layout = QHBoxLayout(self)

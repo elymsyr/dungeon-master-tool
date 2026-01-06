@@ -14,20 +14,9 @@ class ApiBrowser(QDialog):
         
         self.setWindowTitle(f"{tr('TITLE_API')}: {category}")
         self.resize(900, 600)
-        self.setStyleSheet("""
-            QDialog { background-color: #1e1e1e; color: white; }
-            QLineEdit { padding: 8px; background-color: #333; color: white; border: 1px solid #555; }
-            QListWidget { background-color: #252526; border: 1px solid #444; }
-            QListWidget::item { padding: 5px; }
-            QListWidget::item:selected { background-color: #007acc; }
-            QTextEdit { background-color: #2b2b2b; border: 1px solid #444; }
-            QPushButton { padding: 10px; background-color: #444; color: white; font-weight: bold; border: none; }
-            QPushButton:hover { background-color: #555; }
-            QPushButton#importBtn { background-color: #2e7d32; }
-            QPushButton#importBtn:hover { background-color: #1b5e20; }
-            QPushButton#importNpcBtn { background-color: #0277bd; }
-            QPushButton#importNpcBtn:hover { background-color: #01579b; }
-        """)
+        
+        # Hardcoded stil bloğu KALDIRILDI. 
+        # Tüm renkler ve şekiller artık QSS dosyalarından (dark.qss vb.) yüklenecek.
         
         self.full_list = [] # API'den gelen ham liste
         self.init_ui()
@@ -53,22 +42,27 @@ class ApiBrowser(QDialog):
         # Sağ: Önizleme
         preview_widget = QWidget()
         prev_layout = QVBoxLayout(preview_widget)
-        prev_layout.setContentsMargins(0,0,0,0)
+        prev_layout.setContentsMargins(10, 0, 0, 0) # Sol taraftan biraz boşluk bırak
         
         self.lbl_name = QLabel(tr("MSG_NO_SELECTION"))
-        self.lbl_name.setStyleSheet("font-size: 18px; font-weight: bold; color: #ffa500; margin-bottom: 5px;")
+        # Başlık için ID atıyoruz (Temalarda özelleştirilebilir)
+        self.lbl_name.setObjectName("headerLabel")
+        # Sadece font büyüklüğünü ve kalınlığını burada belirtiyoruz, rengi temaya bırakıyoruz.
+        self.lbl_name.setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 5px;")
         
         self.txt_desc = QTextEdit()
         self.txt_desc.setReadOnly(True)
         
         btn_layout = QHBoxLayout()
         self.btn_import = QPushButton(tr("BTN_IMPORT"))
-        self.btn_import.setObjectName("importBtn")
+        # Temadan "Yeşil Buton" stilini alması için ID:
+        self.btn_import.setObjectName("successBtn")
         self.btn_import.setEnabled(False)
         self.btn_import.clicked.connect(self.import_selected)
         
         self.btn_import_npc = QPushButton(tr("BTN_IMPORT_NPC"))
-        self.btn_import_npc.setObjectName("importNpcBtn")
+        # Temadan "Mavi/Ana Buton" stilini alması için ID:
+        self.btn_import_npc.setObjectName("primaryBtn")
         self.btn_import_npc.setVisible(False)
         self.btn_import_npc.clicked.connect(lambda: self.import_selected(target_type="NPC"))
         
@@ -206,7 +200,7 @@ class ApiBrowser(QDialog):
             QApplication.processEvents() # Arayüzün donmaması için
             
             try:
-                # Asıl kaydetme işlemini yap (büyüklerle birlikte)
+                # Asıl kaydetme işlemini yap (büyülerle birlikte)
                 self.dm.import_entity_with_dependencies(self.selected_data, type_override=target_type)
                 
                 QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_IMPORT_SUCCESS_DETAIL", name=self.selected_data['name']))
