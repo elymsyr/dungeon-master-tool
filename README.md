@@ -34,6 +34,15 @@ Manage combat, track stats, and project maps to your players without the hassle.
 - [ ] **Integrations:** Support for D&D Beyond, Obsidian, and other tools.
 - [ ] **Multi-Window:** Advanced support for projecting to specific/multiple player screens.
 
+## 📝 Additional Plan Notes
+- [ ] Save folder path change
+- [ ] Adding battlemaps as entities and into location entities and load
+- [ ] Split DM note area to control the battlemap fog and pawns
+- [ ] Add API import with image support
+- [ ] A better World control, bulk export entities from one world to another 
+- [ ] Add custom entity sets
+- [ ] Add prebuild worlds for newbies
+
 ## 🚀 Installation
 
 ### Option 1: Executable (Recommended)
