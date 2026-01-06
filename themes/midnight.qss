@@ -1,75 +1,86 @@
-/* Epic Fantasy DM Tool - Dark Theme */
-QMainWindow {
-    background-color: #121212;
-    color: #e0e0e0;
+/* === MIDNIGHT THEME (FIXED) === */
+QWidget { background-color: #121212; color: #b0bec5; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+QMainWindow, QDialog, QScrollArea { background-color: #121212; border: none; }
+QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #000000; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
+    background-color: #000000; color: #ffffff; border: 1px solid #333; border-radius: 4px; padding: 6px;
+}
+QLineEdit:focus { border: 1px solid #7c4dff; }
+
+/* --- KARTLAR (ŞEFFAF TEXTBOX) --- */
+QFrame[class="featureCard"] {
+    background-color: #1e1e1e; border: 1px solid #333; border-left: 4px solid #7c4dff; border-radius: 4px; margin-bottom: 8px;
+}
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+    background-color: transparent; border: none; color: #ffffff;
 }
 
-QWidget {
-    background-color: #121212;
-    color: #e0e0e0;
-    font-family: 'Segoe UI', sans-serif;
-}
+QFrame[class="combatCard"] { background-color: #1e1e1e; border: 1px solid #333; border-radius: 6px; margin-bottom: 4px; }
+QFrame[class="combatCard"] QLabel { background-color: transparent; color: #b0bec5; }
+QFrame[class="combatCard"][active="true"] { background-color: #1a1a2e; border: 1px solid #7c4dff; }
+QFrame[class="combatCard"][attitude="friendly"] { border-left: 5px solid #00c853; }
+QFrame[class="combatCard"][attitude="hostile"] { border-left: 5px solid #d50000; }
+QFrame[class="combatCard"][attitude="neutral"] { border-left: 5px solid #616161; }
+QFrame[class="combatCard"][type="Player"] { border-left: 5px solid #651fff; }
 
-QTabWidget::pane {
-    border: 1px solid #333;
-    background: #1e1e1e;
-}
-
-QTabBar::tab {
-    background: #252525;
-    padding: 10px 20px;
-    border: 1px solid #333;
-}
-
-QTabBar::tab:selected {
-    background: #7c4dff;
-    color: white;
-}
-
+QListWidget, QTableWidget { background-color: #000000; color: #b0bec5; border: 1px solid #333; }
+QListWidget::item:selected { background-color: #4527a0; color: white; }
+/* --- BUTONLAR (MIDNIGHT - PURPLE) --- */
 QPushButton {
-    background-color: #333;
-    border: 1px solid #555;
-    padding: 8px 15px;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border: 1px solid #333;
     border-radius: 4px;
-    color: #fff;
+    padding: 6px 12px;
 }
-
-QPushButton:hover {
-    background-color: #444;
-}
-
-QPushButton#successBtn {
-    background-color: #2e7d32;
-    font-weight: bold;
-}
-
-QPushButton#dangerBtn {
-    background-color: #c62828;
-}
+QPushButton:hover { background-color: #333; border-color: #651fff; }
 
 QPushButton#primaryBtn {
-    background-color: #7c4dff;
+    background-color: #651fff; /* Derin Mor */
+    color: white;
+    border: none;
+}
+QPushButton#primaryBtn:hover { background-color: #7c4dff; }
+
+QPushButton#successBtn {
+    background-color: #00c853;
+    color: white;
+    border: none;
+}
+QPushButton#successBtn:hover { background-color: #00e676; }
+
+QPushButton#dangerBtn {
+    background-color: #d50000;
+    color: white;
+    border: none;
+}
+QPushButton#dangerBtn:hover { background-color: #ff1744; }
+
+QPushButton#actionBtn {
+    background-color: #ffab00; /* Altın */
+    color: black;
+    border: none;
+}
+QPushButton#actionBtn:hover { background-color: #ffc400; }
+
+QGroupBox { background-color: transparent; border: 1px solid #333; border-radius: 6px; margin-top: 20px; padding-top: 15px; color: #b388ff; }
+QTabWidget::pane { border: 1px solid #333; background-color: #121212; }
+QTabBar::tab { background-color: #1e1e1e; color: #777; padding: 8px 15px; }
+QTabBar::tab:selected { background-color: #121212; color: #b388ff; border-top: 3px solid #651fff; }
+QLabel#headerLabel { color: #7c4dff; font-weight: bold; } QLabel#toolbarLabel { color: #b0bec5; }
+QWidget#entityItem {
+    background-color: transparent; /* Widget'ın kendisi şeffaf */
 }
 
-QLineEdit, QTextEdit, QComboBox, QListWidget {
-    background-color: #1e1e1e;
-    border: 1px solid #333;
-    padding: 5px;
-    border-radius: 3px;
-    color: #fff;
-}
-
-QGroupBox {
-    border: 2px solid #333;
-    border-radius: 8px;
-    margin-top: 15px;
-    padding-top: 10px;
+QLabel#entityName {
+    color: #e0e0e0; /* Temanın ana yazı rengi neyse o (Örn: #e0e0e0) */
+    background-color: transparent;
     font-weight: bold;
-    color: #7c4dff;
 }
 
-QGroupBox::title {
-    subcontrol-origin: margin;
-    left: 10px;
-    padding: 0 5px;
+QLabel#entityCat {
+    color: #888888; /* Daha soluk bir renk */
+    background-color: transparent;
+    font-style: italic;
 }

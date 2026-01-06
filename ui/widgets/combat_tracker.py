@@ -1,15 +1,59 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, 
                              QHBoxLayout, QPushButton, QHeaderView, QInputDialog, 
                              QMenu, QMessageBox, QFrame, QLineEdit, QFileDialog, 
-                             QDialog, QListWidget, QListWidgetItem, QLabel, QAbstractItemView)
+                             QDialog, QListWidget, QListWidgetItem, QLabel, 
+                             QAbstractItemView, QProgressBar, QSlider)
 from PyQt6.QtGui import QAction, QColor, QBrush, QCursor, QIcon, QPixmap
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QUrl
 from core.locales import tr
 from ui.windows.battle_map_window import BattleMapWindow
+from ui.dialogs.encounter_selector import EncounterSelectionDialog
 import random
 import os
 import uuid
-from ui.dialogs.encounter_selector import EncounterSelectionDialog
+
+# --- HP BAR WIDGET (Tablo İçin) ---
+class HpBarWidget(QWidget):
+    def __init__(self, current_hp, max_hp):
+        super().__init__()
+        self.current = int(current_hp) if str(current_hp).isdigit() else 10
+        self.max_val = int(max_hp) if str(max_hp).isdigit() else 10
+        if self.max_val == 0: self.max_val = 1 
+        
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(2, 2, 2, 2)
+        
+        self.bar = QProgressBar()
+        self.bar.setRange(0, self.max_val)
+        self.bar.setValue(self.current)
+        self.bar.setTextVisible(True)
+        self.bar.setFormat(f"%v / {self.max_val}") 
+        self.bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.update_color()
+        layout.addWidget(self.bar)
+
+    def update_color(self):
+        ratio = self.current / self.max_val
+        if ratio > 0.5:
+            color = "#2e7d32" # Yeşil
+        elif ratio > 0.2:
+            color = "#fbc02d" # Sarı
+        else:
+            color = "#c62828" # Kırmızı
+            
+        # Chunk rengi mecburen stil ile verilir, ancak arka plan QSS'den gelebilir.
+        # Background-color'ı transparent yaparak temanın tablo rengini almasını sağlıyoruz.
+        self.bar.setStyleSheet(f"""
+            QProgressBar::chunk {{ background-color: {color}; }}
+            QProgressBar {{ color: white; border: 1px solid #555; border-radius: 3px; background: rgba(0,0,0,0.3); }}
+        """)
+
+    def update_hp(self, new_hp):
+        self.current = int(new_hp)
+        self.bar.setValue(self.current)
+        self.bar.setFormat(f"{self.current} / {self.max_val}")
+        self.update_color()
 
 # D&D 5e Standart Durumlar
 CONDITIONS = [
@@ -21,24 +65,23 @@ CONDITIONS = [
 class NumericTableWidgetItem(QTableWidgetItem):
     def __lt__(self, other):
         try:
-            # Hem DisplayRole hem EditRole üzerinden sayısal veri çekmeye çalış
             d1 = self.data(Qt.ItemDataRole.DisplayRole)
             d2 = other.data(Qt.ItemDataRole.DisplayRole)
             return float(d1) < float(d2)
         except (ValueError, TypeError, AttributeError):
             return super().__lt__(other)
 
-# --- YENİ: HARİTA SEÇİM DİYALOĞU ---
+# --- HARİTA SEÇİM DİYALOĞU ---
 class MapSelectorDialog(QDialog):
     def __init__(self, assets_path, parent=None):
         super().__init__(parent)
         self.assets_path = assets_path
-        self.selected_file = None # Seçilen dosya adı (ör: map.png)
-        self.is_new_import = False # Yeni yükle butonuna basıldı mı?
+        self.selected_file = None 
+        self.is_new_import = False 
         
         self.setWindowTitle(tr("TITLE_MAP_SELECTOR"))
         self.setFixedSize(600, 500)
-        self.setStyleSheet("background-color: #1e1e1e; color: white;")
+        # QSS'den stil alacak, hardcoded stil kaldırıldı.
         
         self.init_ui()
         self.load_maps()
@@ -47,20 +90,18 @@ class MapSelectorDialog(QDialog):
         layout = QVBoxLayout(self)
         
         lbl = QLabel(tr("LBL_SAVED_MAPS"))
-        lbl.setStyleSheet("font-weight: bold; font-size: 14px; color: #ffb74d;")
+        lbl.setObjectName("toolbarLabel") # Başlık stili
         layout.addWidget(lbl)
         
-        # Resim Listesi (Icon Mode)
+        # Resim Listesi
         self.list_widget = QListWidget()
         self.list_widget.setViewMode(QListWidget.ViewMode.IconMode)
         self.list_widget.setIconSize(QSize(150, 150))
         self.list_widget.setResizeMode(QListWidget.ResizeMode.Adjust)
         self.list_widget.setSpacing(10)
-        self.list_widget.setStyleSheet("""
-            QListWidget { background-color: #252526; border: 1px solid #444; }
-            QListWidget::item { border: 1px solid transparent; padding: 5px; }
-            QListWidget::item:selected { background-color: #333; border: 2px solid #007acc; border-radius: 5px; }
-        """)
+        # "iconList" sınıfı ile tema dosyasından stil alabilir
+        self.list_widget.setProperty("class", "iconList")
+        
         self.list_widget.itemDoubleClicked.connect(self.select_existing)
         layout.addWidget(self.list_widget)
         
@@ -68,11 +109,11 @@ class MapSelectorDialog(QDialog):
         btn_layout = QHBoxLayout()
         
         self.btn_import = QPushButton(tr("BTN_IMPORT_NEW_MAP"))
-        self.btn_import.setStyleSheet("background-color: #2e7d32; color: white; padding: 8px; font-weight: bold;")
+        self.btn_import.setObjectName("successBtn")
         self.btn_import.clicked.connect(self.select_new)
         
         self.btn_select = QPushButton(tr("BTN_OPEN_SELECTED_MAP"))
-        self.btn_select.setStyleSheet("background-color: #007acc; color: white; padding: 8px; font-weight: bold;")
+        self.btn_select.setObjectName("primaryBtn")
         self.btn_select.clicked.connect(self.select_existing)
         
         btn_layout.addWidget(self.btn_import)
@@ -91,18 +132,14 @@ class MapSelectorDialog(QDialog):
             return
             
         valid_extensions = {".png", ".jpg", ".jpeg", ".bmp"}
-        
         files = [f for f in os.listdir(self.assets_path) 
                  if os.path.splitext(f)[1].lower() in valid_extensions]
         
         for f in files:
             full_path = os.path.join(self.assets_path, f)
-            
-            # Thumbnail oluştur
             icon = QIcon(full_path)
             item = QListWidgetItem(icon, f)
-            item.setData(Qt.ItemDataRole.UserRole, f) # Dosya adını sakla
-            
+            item.setData(Qt.ItemDataRole.UserRole, f)
             self.list_widget.addItem(item)
 
     def select_existing(self):
@@ -129,10 +166,10 @@ class CombatTracker(QWidget):
         self.battle_map_window = None 
         
         # Session State Verileri
-        self.current_map_path = None # Relative path (assets/...)
+        self.current_map_path = None
         self.current_token_size = 50
         self.token_positions = {} 
-        self.loading = False # Yükleme sırasında sinyal göndermeyi engellemek için
+        self.loading = False
         
         self.init_ui()
 
@@ -150,9 +187,9 @@ class CombatTracker(QWidget):
         
         self.table.customContextMenuRequested.connect(self.open_context_menu)
         self.table.itemChanged.connect(self.on_data_changed)
+        self.table.cellDoubleClicked.connect(self.on_cell_double_clicked)
+        self.table.setSortingEnabled(False)
         
-        # Sütun başlıklarına tıklandığında sıralama özelliğini aç
-        self.table.setSortingEnabled(False) # Otomatik sıralama çakışmasın diye kapalı
         layout.addWidget(self.table)
 
         # KONTROLLER
@@ -171,11 +208,12 @@ class CombatTracker(QWidget):
         # Butonlar 1
         btn_layout = QHBoxLayout()
         self.btn_next_turn = QPushButton(tr("BTN_NEXT_TURN"))
-        self.btn_next_turn.setStyleSheet("background-color: #fbc02d; color: black; font-weight: bold;")
+        # Sıradaki butonu için özel stil ID'si veya QSS
+        self.btn_next_turn.setObjectName("actionBtn") 
         self.btn_next_turn.clicked.connect(self.next_turn)
         
         self.btn_battle_map = QPushButton("🗺️ Battle Map")
-        self.btn_battle_map.setStyleSheet("background-color: #0277bd; color: white; font-weight: bold;")
+        self.btn_battle_map.setObjectName("primaryBtn")
         self.btn_battle_map.clicked.connect(self.open_battle_map)
 
         btn_layout.addWidget(self.btn_next_turn)
@@ -189,7 +227,7 @@ class CombatTracker(QWidget):
         self.btn_roll = QPushButton(tr("BTN_ROLL_INIT")); self.btn_roll.clicked.connect(self.roll_initiatives)
         self.btn_clear_all = QPushButton(tr("BTN_CLEAR_ALL"))
         self.btn_clear_all.clicked.connect(self.clear_tracker)
-        self.btn_clear_all.setStyleSheet("color: #ff5252;")
+        self.btn_clear_all.setObjectName("dangerBtn")
         
         btn_layout2.addWidget(self.btn_add)
         btn_layout2.addWidget(self.btn_add_players)
@@ -213,9 +251,8 @@ class CombatTracker(QWidget):
             self.battle_map_window.retranslate_ui()
             self.refresh_battle_map()
 
-    # --- BATTLE MAP ENTEGRASYONU (GÜNCELLENDİ) ---
+    # --- BATTLE MAP ENTEGRASYONU ---
     def open_battle_map(self):
-        # 1. Eğer pencere zaten açıksa öne getir
         if self.battle_map_window and self.battle_map_window.isVisible():
             self.battle_map_window.raise_()
             self.battle_map_window.activateWindow()
@@ -223,19 +260,15 @@ class CombatTracker(QWidget):
 
         force_reload = False
         
-        # 2. Eğer harita yolu yoksa SEÇİM EKRANINI AÇ
         if not self.current_map_path:
-            # Assets klasörünü bul
             assets_path = os.path.join(self.dm.current_campaign_path, "assets")
             if not os.path.exists(assets_path):
                 os.makedirs(assets_path)
             
-            # Seçim diyaloğunu aç
             selector = MapSelectorDialog(assets_path, self)
             
             if selector.exec():
                 if selector.is_new_import:
-                    # Yeni Yükle
                     fname, _ = QFileDialog.getOpenFileName(self, tr("MSG_SELECT_MAP"), "", "Images (*.png *.jpg *.jpeg)")
                     if fname:
                         rel_path = self.dm.import_image(fname)
@@ -244,41 +277,35 @@ class CombatTracker(QWidget):
                             force_reload = True
                             self.data_changed_signal.emit()
                     else:
-                        return # İptal ettiyse açma
+                        return 
                 elif selector.selected_file:
-                    # Mevcut Olanı Seç
                     self.current_map_path = os.path.join("assets", selector.selected_file)
                     force_reload = True
                     self.data_changed_signal.emit()
             else:
-                return # Diyalog kapatıldıysa harita açma
+                return 
 
-        # 3. Pencereyi Oluştur ve Göster
         self.battle_map_window = BattleMapWindow(self.dm)
         self.battle_map_window.token_moved_signal.connect(self.on_token_moved_in_map)
         self.battle_map_window.slider_size.valueChanged.connect(self.on_token_size_changed)
         
         self.battle_map_window.show()
-        
         self.refresh_battle_map(force_map_reload=force_reload)
 
     def on_token_moved_in_map(self, tid, x, y):
         self.token_positions[tid] = (x, y)
-        self.data_changed_signal.emit() # Pozisyon değişince kaydet
+        self.data_changed_signal.emit()
 
     def on_token_size_changed(self, val):
         self.current_token_size = val
-        self.data_changed_signal.emit() # Boyut değişince kaydet
+        self.data_changed_signal.emit()
 
     def refresh_battle_map(self, force_map_reload=False):
         if not self.battle_map_window: return
         
-        # Pencere görünür olmasa da veriyi güncelleyelim (arkada hazır dursun)
         data = self.get_combat_data_for_map()
         
-        # Harita yolu (relative -> full)
         map_full_path = None
-        # Eğer force_map_reload istenmişse VEYA pencerede harita hiç yoksa gönder
         if (force_map_reload or self.battle_map_window.map_item is None) and self.current_map_path:
             map_full_path = self.dm.get_full_path(self.current_map_path)
         
@@ -292,7 +319,6 @@ class CombatTracker(QWidget):
             item_ac = self.table.item(row, 2)
             item_hp = self.table.item(row, 3)
             
-            # Tam güvenlik: Hücrelerden biri bile oluşmamışsa atla
             if not all([item_name, item_init, item_ac, item_hp]):
                 continue
             
@@ -303,20 +329,15 @@ class CombatTracker(QWidget):
             if tid and tid in self.token_positions:
                 x, y = self.token_positions[tid]
             elif eid and eid in self.token_positions:
-                # Geriye dönük uyumluluk: tid yoksa eid'ye bak ve tid'ye taşı
                 x, y = self.token_positions.pop(eid)
                 self.token_positions[tid] = (x, y)
             
-            # Tip ve Tavır Bilgisini Al
             ent_type = "NPC"
             attitude = "LBL_ATTR_NEUTRAL"
             if eid and eid in self.dm.data["entities"]:
                 ent = self.dm.data["entities"][eid]
                 ent_type = ent.get("type", "NPC")
-                # Tavır: attributes içinde LBL_ATTITUDE altında saklanıyor
                 attitude = ent.get("attributes", {}).get("LBL_ATTITUDE", "LBL_ATTR_NEUTRAL")
-                
-                # Canavarlar otomatik düşmancıl
                 if ent_type == "Monster":
                     attitude = "LBL_ATTR_HOSTILE"
             
@@ -330,12 +351,11 @@ class CombatTracker(QWidget):
                 "x": x, "y": y
             })
         
-        print(f"📡 Haritaya gönderilen veri: {len(data)} combatant. TIDs: {[c['tid'] for c in data]}")
         return data
 
     def on_data_changed(self, item): 
         if self.loading: return
-        if item.column() == 1: # Initiative sütunu değiştiyse
+        if item.column() == 1: 
             self._sort_and_refresh()
         else:
             self.refresh_battle_map()
@@ -353,19 +373,30 @@ class CombatTracker(QWidget):
         self.data_changed_signal.emit()
 
     def update_highlights(self):
+        # QTableWidget arka planlarını temizle veya ayarla
+        # Burada sadece aktif satırı vurguluyoruz.
+        # Temalar için bu kısmı minimumda tutuyoruz veya özel Property ekleyebiliriz.
         self.table.blockSignals(True)
         for r in range(self.table.rowCount()):
             for c in range(self.table.columnCount()):
                 item = self.table.item(r, c)
-                if item: item.setBackground(QBrush(QColor(0,0,0,0)))
+                if item: 
+                    # Varsayılan (transparent)
+                    item.setBackground(QBrush(Qt.BrushStyle.NoBrush))
+        
         if 0 <= self.current_turn_index < self.table.rowCount():
             for c in range(self.table.columnCount()):
                 item = self.table.item(self.current_turn_index, c)
-                if item: item.setBackground(QBrush(QColor(40, 80, 40)))
+                if item: 
+                    # Aktif satır rengi - Bunu da QSS'e taşımak zor olduğu için 
+                    # (Hücre bazlı style yok) hafif bir renk veriyoruz.
+                    # Ancak ideal olan QSS selection-color kullanmaktır.
+                    # Görünürlük için hafif bir yeşil/mavi tint veriyoruz.
+                    item.setBackground(QBrush(QColor(40, 90, 120, 100)))
+        
         self.table.blockSignals(False)
 
     def _sort_and_refresh(self):
-        # Şu anki sıradaki kişinin TID veya ismini sakla
         current_tid = None
         if 0 <= self.current_turn_index < self.table.rowCount():
             item_init = self.table.item(self.current_turn_index, 1)
@@ -378,7 +409,6 @@ class CombatTracker(QWidget):
         self.table.sortItems(1, Qt.SortOrder.DescendingOrder)
         self.table.blockSignals(False)
 
-        # Sıradaki kişiyi yeni yerinde bul (TID ile tam kontrol)
         if current_tid is not None:
             for row in range(self.table.rowCount()):
                 item_init = self.table.item(row, 1)
@@ -405,10 +435,8 @@ class CombatTracker(QWidget):
 
     # --- SAVE / LOAD SİSTEMİ ---
     def get_session_state(self):
-        """Oturum kaydedilirken çağrılır. Tüm durumu paketler."""
         combatants = []
         for row in range(self.table.rowCount()):
-            # HÜCRE GÜVENLİĞİ
             item_name = self.table.item(row, 0)
             item_init = self.table.item(row, 1)
             item_ac = self.table.item(row, 2)
@@ -421,10 +449,8 @@ class CombatTracker(QWidget):
             eid = item_init.data(Qt.ItemDataRole.UserRole)
             
             x, y = self.token_positions.get(tid, (None, None))
-            # Fallback for old save positions
             if x is None and eid in self.token_positions: x, y = self.token_positions[eid]
 
-            # JSON serileştirme hatası (RecursionError) olmaması için verileri ilkel tiplere (int, str) zorla
             combatants.append({
                 "tid": str(tid) if tid else None,
                 "eid": str(eid) if eid else None,
@@ -446,7 +472,6 @@ class CombatTracker(QWidget):
         }
 
     def load_combat_data(self, combatants_list):
-        """Eski format (sadece liste) için destek"""
         self.load_session_state({"combatants": combatants_list})
 
     def load_session_state(self, state_data):
@@ -464,7 +489,7 @@ class CombatTracker(QWidget):
         for c in combatants:
             tid = c.get("tid")
             eid = c.get("eid")
-            if not tid: tid = str(uuid.uuid4()) # Eski veriler için üret
+            if not tid: tid = str(uuid.uuid4())
             
             if c.get("x") is not None:
                 self.token_positions[tid] = (float(c["x"]), float(c["y"]))
@@ -488,31 +513,68 @@ class CombatTracker(QWidget):
              
         self.loading = False
 
+    def on_cell_double_clicked(self, row, column):
+        if column == 3:
+            widget = self.table.cellWidget(row, 3)
+            if isinstance(widget, HpBarWidget):
+                current = widget.current
+                val, ok = QInputDialog.getInt(self, "HP Düzenle", "Yeni HP:", current, 0, 9999)
+                if ok:
+                    widget.update_hp(val)
+                    self.table.item(row, 3).setText(str(val))
+                    self.refresh_battle_map()
+                    self.data_changed_signal.emit()
+
     # --- HELPER METHODS ---
     def add_direct_row(self, name, init, ac, hp, condition, eid, init_bonus=0, tid=None):
-        if not tid: tid = str(uuid.uuid4())
+        if not tid:
+            tid = str(uuid.uuid4())
         
         row = self.table.rowCount()
         self.table.insertRow(row)
         
-        # İsim ve Bonus verisi (UserRole 0. kolonda)
         item_name = QTableWidgetItem(name)
         item_name.setData(Qt.ItemDataRole.UserRole, init_bonus)
         self.table.setItem(row, 0, item_name)
         
         item_init = NumericTableWidgetItem(str(init))
         item_init.setData(Qt.ItemDataRole.UserRole, eid)
-        item_init.setData(Qt.ItemDataRole.UserRole + 1, tid) # Unique ID harita eşleşmesi için
+        item_init.setData(Qt.ItemDataRole.UserRole + 1, tid)
         self.table.setItem(row, 1, item_init)
         
-        # AC ve HP (Sayısal Sıralama)
         self.table.setItem(row, 2, NumericTableWidgetItem(str(ac)))
-        self.table.setItem(row, 3, NumericTableWidgetItem(str(hp)))
         
-        # Durumlar
+        try:
+            current_hp_int = int(str(hp).strip())
+        except ValueError:
+            current_hp_int = 10
+            
+        max_hp_int = current_hp_int
+        
+        if eid and self.dm and eid in self.dm.data["entities"]:
+            try:
+                ent_data = self.dm.data["entities"][eid]
+                c_stats = ent_data.get("combat_stats", {})
+                raw_max = str(c_stats.get("max_hp", ""))
+                
+                parts = raw_max.split(" ")
+                if parts and parts[0].isdigit():
+                    db_max = int(parts[0])
+                    if db_max >= current_hp_int:
+                        max_hp_int = db_max
+            except Exception:
+                pass 
+
+        hp_widget = HpBarWidget(current_hp_int, max_hp_int)
+        self.table.setCellWidget(row, 3, hp_widget)
+        
+        dummy_hp_item = NumericTableWidgetItem(str(current_hp_int))
+        self.table.setItem(row, 3, dummy_hp_item)
+        
         cond_item = QTableWidgetItem(condition)
+        # Durum varsa kırmızı renk ver (veya tema sınıfı ata)
         if condition:
-            cond_item.setForeground(QBrush(QColor("#ff5252")))
+            cond_item.setForeground(QBrush(QColor("#ef5350")))
         self.table.setItem(row, 4, cond_item)
 
     def quick_add(self):
@@ -523,19 +585,11 @@ class CombatTracker(QWidget):
         self._sort_and_refresh()
 
     def add_combatant_dialog(self):
-        # YENİ GELİŞMİŞ DİYALOG
         dialog = EncounterSelectionDialog(self.dm, self)
-        
         if dialog.exec():
-            # Seçilen tüm ID'leri döngüyle ekle
             for eid in dialog.selected_entities:
                 self.add_row_from_entity(eid)
-            
-            # Hepsini ekledikten sonra bir kere sırala ve yenile
             self._sort_and_refresh()
-            
-            # Kullanıcıya bilgi ver (Opsiyonel)
-            # print(f"{len(dialog.selected_entities)} varlık eklendi.")
 
     def add_row_from_entity(self, entity_id):
         data = self.dm.data["entities"].get(entity_id)
@@ -544,21 +598,15 @@ class CombatTracker(QWidget):
         hp = data.get("combat_stats", {}).get("hp", "10")
         ac = data.get("combat_stats", {}).get("ac", "10")
         
-        # Inisiyatif Bonusu Hesapla: DEX Modifier + Ek Inisiyatif Bonusu
         bonus_data = self.calculate_entity_initiative_bonus(data)
         total_bonus = bonus_data["total"]
         
-        # Zar At
         die_roll = random.randint(1, 20)
         total_init = die_roll + total_bonus
-        
-        # Detaylı log (Hata ayıklama için terminalde kalacak)
-        print(f"🎲 {name} savaşa eklendi - Log: {die_roll} (zar) + {bonus_data['dex_mod']} (DEX) + {bonus_data['extra']} (ek) = {total_init}")
         
         self.add_direct_row(name, total_init, ac, hp, "", entity_id, total_bonus)
     
     def calculate_entity_initiative_bonus(self, data):
-        """Varlık verisinden toplam inisiyatif bonusunu hesaplar"""
         try:
             dex = int(data.get("stats", {}).get("DEX", 10))
             dex_mod = (dex - 10) // 2
@@ -566,7 +614,6 @@ class CombatTracker(QWidget):
             dex_mod = 0
             
         try:
-            # Hem 'initiative' hem 'init_bonus' gibi farklı key olasılıklarına karşı esnek
             c_stats = data.get("combat_stats", {})
             extra_init = c_stats.get("initiative") or c_stats.get("init_bonus") or 0
             extra_init = int(extra_init)
@@ -597,28 +644,20 @@ class CombatTracker(QWidget):
             name = item_name.text()
             eid = item_init.data(Qt.ItemDataRole.UserRole)
             
-            # Veritabanından güncel bonusu çek (Eğer varsa)
             bonus = item_name.data(Qt.ItemDataRole.UserRole) or 0
             if eid and eid in self.dm.data["entities"]:
                 ent_data = self.dm.data["entities"][eid]
                 bonus_data = self.calculate_entity_initiative_bonus(ent_data)
                 bonus = bonus_data["total"]
-                # Tablodaki bonusu da güncelle ki bir sonraki seferde güncel kalsın
                 item_name.setData(Qt.ItemDataRole.UserRole, bonus)
-                log_detail = f"{bonus_data['dex_mod']} (DEX) + {bonus_data['extra']} (ek)"
-            else:
-                log_detail = f"{bonus} (sabit)"
             
             die_roll = random.randint(1, 20)
             total = die_roll + bonus
             
             item_init.setText(str(total))
-            rolls.append(f"{name}: {die_roll} (zar) + {log_detail} = {total}")
+            rolls.append(f"{name}: {total}")
             
         self.table.blockSignals(False)
-        print("\n--- Inisiyatif Zar Atışları ---")
-        for r in rolls: print(r)
-        
         self._sort_and_refresh()
 
     def open_context_menu(self, position):
@@ -647,7 +686,7 @@ class CombatTracker(QWidget):
         else: current_list.append(condition)
         new_text = ", ".join(current_list)
         item.setText(new_text)
-        item.setForeground(QBrush(QColor("#ff5252"))) if new_text else item.setForeground(QBrush(QColor("#e0e0e0")))
+        item.setForeground(QBrush(QColor("#ef5350"))) if new_text else item.setForeground(QBrush(Qt.BrushStyle.NoBrush))
         self.refresh_battle_map()
         self.data_changed_signal.emit()
 
