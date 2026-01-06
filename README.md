@@ -9,6 +9,8 @@ Manage combat, track stats, and project maps to your players without the hassle.
 
 [📥 Download Latest Release](https://github.com/elymsyr/dungeon-master-tool/releases)
 
+> ✨ UI/UX Status: The user interface is now in a much better state—cleaner, more consistent, and easier to read. We are committed to continuously improving the look and feel in upcoming updates!
+
 ---
 
 ## ✨ Key Features
