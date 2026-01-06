@@ -182,33 +182,36 @@ class MainWindow(QMainWindow):
             self.player_window.update_theme(self.current_stylesheet)
 
     def export_entities_to_txt(self):
-        path, _ = QFileDialog.getSaveFileName(self, "Listeyi Kaydet", "export.txt", "Text Files (*.txt)")
+        # Kayıt yeri sor
+        path, _ = QFileDialog.getSaveFileName(self, tr("TITLE_EXPORT"), "export.txt", tr("FILE_FILTER_TXT"))
         if not path: return
         
         try:
             with open(path, "w", encoding="utf-8") as f:
-                f.write(f"ZINDAN EFENDISI - VARLIK LISTESI\n")
-                f.write(f"Dünya: {self.data_manager.data.get('world_name')}\n")
+                f.write(f"{tr('TXT_EXPORT_HEADER')}\n")
+                f.write(f"{tr('TXT_EXPORT_WORLD')}{self.data_manager.data.get('world_name')}\n")
                 f.write("="*50 + "\n\n")
                 
                 entities = self.data_manager.data.get("entities", {})
                 if not entities:
-                    f.write("Henüz kaydedilmiş varlık yok.\n")
+                    f.write(f"{tr('TXT_EXPORT_NO_DATA')}\n")
                 
+                # Sıralayarak yazalım
                 sorted_keys = sorted(entities.keys(), key=lambda k: entities[k].get("name", ""))
                 
                 for i, eid in enumerate(sorted_keys, 1):
                     ent = entities[eid]
-                    name = ent.get("name", "İsimsiz")
-                    type_ = ent.get("type", "Bilinmiyor")
+                    name = ent.get("name", tr("NAME_UNNAMED"))
+                    type_ = ent.get("type", tr("NAME_UNKNOWN"))
                     tags = ", ".join(ent.get("tags", []))
                     desc = ent.get("description", "").replace("\n", " ")
                     if len(desc) > 100: desc = desc[:97] + "..."
                     
                     f.write(f"{i}. {name} ({type_})\n")
-                    if tags: f.write(f"   Etiketler: {tags}\n")
-                    f.write(f"   Açıklama: {desc}\n")
+                    if tags: f.write(f"{tr('TXT_EXPORT_TAGS')}{tags}\n")
+                    f.write(f"{tr('TXT_EXPORT_DESC')}{desc}\n")
                     
+                    # Statları da ekleyelim
                     c = ent.get("combat_stats", {})
                     if type_ in ["NPC", "Monster", "Player"] and c:
                         hp = c.get("hp", "-")
@@ -218,9 +221,9 @@ class MainWindow(QMainWindow):
                         
                     f.write("-" * 30 + "\n")
             
-            QMessageBox.information(self, "Başarılı", "Liste başarıyla dışa aktarıldı.")
+            QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_EXPORT_SUCCESS"))
         except Exception as e:
-            QMessageBox.critical(self, "Hata", f"Dosya yazılamadı:\n{e}")
+            QMessageBox.critical(self, tr("MSG_ERROR"), tr("MSG_FILE_WRITE_ERROR", error=str(e)))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -24,12 +24,12 @@ class DownloadWorker(QThread):
         # Not: 'equipment' endpoint'i; Weapons, Armor, Adventuring Gear, Tools ve Mounts'u kapsar.
         # 'magic-items' ise tüm büyülü eşyaları kapsar. Bu ikisi toplam %100 eşya kapsamı sağlar.
         self.categories = {
-            "monsters": "Canavarlar",
-            "spells": "Büyüler",
-            "equipment": "Tüm Teçhizat (Silah, Zırh, Araç, Kitler...)", 
-            "magic-items": "Tüm Büyülü Eşyalar (İksir, Yüzük, Asa...)",
-            "classes": "Sınıflar",
-            "races": "Irklar"
+            "monsters": tr("CAT_MONSTERS_PL"),
+            "spells": tr("CAT_SPELLS_PL"),
+            "equipment": tr("CAT_EQUIPMENT_ALL"), 
+            "magic-items": tr("CAT_MAGIC_ITEMS_ALL"),
+            "classes": tr("CAT_CLASSES_PL"),
+            "races": tr("CAT_RACES_PL")
         }
 
     def run(self):

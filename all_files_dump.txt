@@ -1066,7 +1066,7 @@ from core.data_manager import DataManager
 from ui.player_window import PlayerWindow
 from ui.tabs.database_tab import DatabaseTab
 from ui.tabs.map_tab import MapTab
-from ui.tabs.session_tab import SessionTab # <--- YENİ EKLENEN IMPORT
+from ui.tabs.session_tab import SessionTab
 from ui.campaign_selector import CampaignSelector
 from core.locales import tr
 
@@ -1076,10 +1076,26 @@ class MainWindow(QMainWindow):
         self.data_manager = data_manager
         self.player_window = PlayerWindow()
         
+        # --- TEMA LİSTESİ (TEK KAYNAK / SOURCE OF TRUTH) ---
+        # (Dosya Adı, Görünen İsim veya Çeviri Anahtarı)
+        self.theme_list = [
+            ("dark", "THEME_DARK"),
+            ("light", "THEME_LIGHT"),
+            ("baldur", "Baldur's Gate"),
+            ("discord", "Discord"),
+            ("grim", "Grim (Dark)"),
+            ("midnight", "THEME_MIDNIGHT"),
+            ("emerald", "THEME_EMERALD"),
+            ("parchment", "THEME_PARCHMENT"),
+            ("ocean", "THEME_OCEAN"),
+            ("frost", "THEME_FROST"),
+            ("amethyst", "THEME_AMETHYST")
+        ]
+        
         self.setWindowTitle(f"DM Tool - {self.data_manager.data.get('world_name', 'Bilinmiyor')}")
         self.setGeometry(100, 100, 1400, 900)
         
-        # Apply initial theme
+        # Başlangıç temasını yükle
         self.current_stylesheet = load_theme(self.data_manager.current_theme)
         self.setStyleSheet(self.current_stylesheet)
         
@@ -1093,50 +1109,54 @@ class MainWindow(QMainWindow):
         # --- ÜST BAR (TOOLBAR) ---
         toolbar = QHBoxLayout()
         
-        
         # Oyuncu Ekranı Butonu
         self.btn_toggle_player = QPushButton(tr("BTN_PLAYER_SCREEN"))
         self.btn_toggle_player.setCheckable(True)
-        self.btn_toggle_player.setStyleSheet("""
-            QPushButton { background-color: #6a1b9a; color: white; font-weight: bold; padding: 8px; }
-            QPushButton:checked { background-color: #4a148c; border: 2px solid #ea80fc; }
-        """)
+        self.btn_toggle_player.setObjectName("primaryBtn") 
         self.btn_toggle_player.clicked.connect(self.toggle_player_window)
         
         # Dışa Aktar Butonu
         self.btn_export_txt = QPushButton(tr("BTN_EXPORT"))
-        self.btn_export_txt.setStyleSheet("background-color: #00796b; color: white; font-weight: bold; padding: 8px;")
+        self.btn_export_txt.setObjectName("successBtn")
         self.btn_export_txt.clicked.connect(self.export_entities_to_txt)
         
         # Dünya Bilgisi
         self.lbl_campaign = QLabel(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
-        self.lbl_campaign.setStyleSheet("color: #888; font-style: italic; margin-left: 10px;")
+        self.lbl_campaign.setObjectName("toolbarLabel")
 
         # Dil Seçimi
         self.combo_lang = QComboBox()
         self.combo_lang.addItems(["English", "Türkçe"])
-        self.combo_lang.setStyleSheet("background-color: #333; color: white; padding: 5px;")
         
-        # Mevcut dili seç
         current_lang = self.data_manager.settings.get("language", "EN")
         self.combo_lang.setCurrentIndex(1 if current_lang == "TR" else 0)
         self.combo_lang.currentIndexChanged.connect(self.change_language)
         
         # Tema Seçimi
         self.lbl_theme = QLabel(tr("LBL_THEME"))
-        self.lbl_theme.setStyleSheet("color: #888; margin-left: 20px;")
-        self.combo_theme = QComboBox()
-        self.combo_theme.addItems(["Dark", "Midnight", "Light", "Emerald", "Parchment", "Ocean", "Frost", "Amethyst"])
-        self.combo_theme.setStyleSheet("background-color: #333; color: white; padding: 5px; margin-left: 10px;")
+        self.lbl_theme.setObjectName("toolbarLabel")
         
-        # Mevcut temayı seç
-        theme_map = {
-            "dark": 0, "midnight": 1, "light": 2, "emerald": 3,
-            "parchment": 4, "ocean": 5, "frost": 6, "amethyst": 7
-        }
-        self.combo_theme.setCurrentIndex(theme_map.get(self.data_manager.current_theme, 0))
+        self.combo_theme = QComboBox()
+        
+        # Temaları listeye ekle
+        for _, display_name in self.theme_list:
+            if display_name.startswith("THEME_"):
+                self.combo_theme.addItem(tr(display_name))
+            else:
+                self.combo_theme.addItem(display_name)
+        
+        # Mevcut temayı bul ve seç
+        current_theme_code = self.data_manager.current_theme
+        index_to_select = 0
+        for i, (code, _) in enumerate(self.theme_list):
+            if code == current_theme_code:
+                index_to_select = i
+                break
+        
+        self.combo_theme.setCurrentIndex(index_to_select)
         self.combo_theme.currentIndexChanged.connect(self.change_theme)
         
+        # Toolbar'a ekle
         toolbar.addWidget(self.btn_toggle_player)
         toolbar.addWidget(self.btn_export_txt)
         toolbar.addWidget(self.lbl_campaign)
@@ -1174,17 +1194,17 @@ class MainWindow(QMainWindow):
         self.retranslate_ui()
 
     def change_theme(self, index):
-        themes = ["dark", "midnight", "light", "emerald", "parchment", "ocean", "frost", "amethyst"]
-        theme_name = themes[index]
-        self.data_manager.save_settings({"theme": theme_name})
-        
-        # Apply theme
-        self.current_stylesheet = load_theme(theme_name)
-        self.setStyleSheet(self.current_stylesheet)
-        
-        # Propagate to player window
-        if hasattr(self.player_window, "update_theme"):
-            self.player_window.update_theme(self.current_stylesheet)
+        if 0 <= index < len(self.theme_list):
+            theme_name = self.theme_list[index][0] # ("baldur", "Baldur's Gate") -> "baldur"
+            self.data_manager.save_settings({"theme": theme_name})
+            
+            # Apply theme
+            self.current_stylesheet = load_theme(theme_name)
+            self.setStyleSheet(self.current_stylesheet)
+            
+            # Propagate to player window
+            if hasattr(self.player_window, "update_theme"):
+                self.player_window.update_theme(self.current_stylesheet)
 
     def retranslate_ui(self):
         self.btn_toggle_player.setText(tr("BTN_PLAYER_SCREEN"))
@@ -1195,21 +1215,18 @@ class MainWindow(QMainWindow):
         self.tabs.setTabText(1, tr("TAB_MAP"))
         self.tabs.setTabText(2, tr("TAB_SESSION"))
         
-        # Sekmelere de haber ver
         if hasattr(self.db_tab, "retranslate_ui"): self.db_tab.retranslate_ui()
         if hasattr(self.map_tab, "retranslate_ui"): self.map_tab.retranslate_ui()
         if hasattr(self.session_tab, "retranslate_ui"): self.session_tab.retranslate_ui()
         
         self.lbl_theme.setText(tr("LBL_THEME"))
-        # Tema isimlerini güncelle
-        self.combo_theme.setItemText(0, tr("THEME_DARK"))
-        self.combo_theme.setItemText(1, tr("THEME_MIDNIGHT"))
-        self.combo_theme.setItemText(2, tr("THEME_LIGHT"))
-        self.combo_theme.setItemText(3, tr("THEME_EMERALD"))
-        self.combo_theme.setItemText(4, tr("THEME_PARCHMENT"))
-        self.combo_theme.setItemText(5, tr("THEME_OCEAN"))
-        self.combo_theme.setItemText(6, tr("THEME_FROST"))
-        self.combo_theme.setItemText(7, tr("THEME_AMETHYST"))
+        
+        # Tema isimlerini güncelle (Sıra bozulmadan)
+        for i, (_, display_name) in enumerate(self.theme_list):
+            if display_name.startswith("THEME_"):
+                self.combo_theme.setItemText(i, tr(display_name))
+            else:
+                self.combo_theme.setItemText(i, display_name)
 
     def toggle_player_window(self):
         if self.player_window.isVisible():
@@ -1218,40 +1235,41 @@ class MainWindow(QMainWindow):
         else:
             self.player_window.show()
             self.btn_toggle_player.setChecked(True)
+            # Pencere açıldığında temayı zorla (bazen ilk açılışta almayabiliyor)
+            self.player_window.update_theme(self.current_stylesheet)
 
     def export_entities_to_txt(self):
         # Kayıt yeri sor
-        path, _ = QFileDialog.getSaveFileName(self, "Listeyi Kaydet", "export.txt", "Text Files (*.txt)")
+        path, _ = QFileDialog.getSaveFileName(self, tr("TITLE_EXPORT"), "export.txt", tr("FILE_FILTER_TXT"))
         if not path: return
         
         try:
             with open(path, "w", encoding="utf-8") as f:
-                f.write(f"ZINDAN EFENDISI - VARLIK LISTESI\n")
-                f.write(f"Dünya: {self.data_manager.data.get('world_name')}\n")
+                f.write(f"{tr('TXT_EXPORT_HEADER')}\n")
+                f.write(f"{tr('TXT_EXPORT_WORLD')}{self.data_manager.data.get('world_name')}\n")
                 f.write("="*50 + "\n\n")
                 
                 entities = self.data_manager.data.get("entities", {})
                 if not entities:
-                    f.write("Henüz kaydedilmiş varlık yok.\n")
+                    f.write(f"{tr('TXT_EXPORT_NO_DATA')}\n")
                 
                 # Sıralayarak yazalım
                 sorted_keys = sorted(entities.keys(), key=lambda k: entities[k].get("name", ""))
                 
                 for i, eid in enumerate(sorted_keys, 1):
                     ent = entities[eid]
-                    name = ent.get("name", "İsimsiz")
-                    type_ = ent.get("type", "Bilinmiyor")
+                    name = ent.get("name", tr("NAME_UNNAMED"))
+                    type_ = ent.get("type", tr("NAME_UNKNOWN"))
                     tags = ", ".join(ent.get("tags", []))
                     desc = ent.get("description", "").replace("\n", " ")
                     if len(desc) > 100: desc = desc[:97] + "..."
                     
                     f.write(f"{i}. {name} ({type_})\n")
-                    if tags: f.write(f"   Etiketler: {tags}\n")
-                    f.write(f"   Açıklama: {desc}\n")
+                    if tags: f.write(f"{tr('TXT_EXPORT_TAGS')}{tags}\n")
+                    f.write(f"{tr('TXT_EXPORT_DESC')}{desc}\n")
                     
-                    # Statları da ekleyelim (Sadece savaşçı varlıklar için)
+                    # Statları da ekleyelim
                     c = ent.get("combat_stats", {})
-                    # Sadece belirli tiplerde statları gösterelim
                     if type_ in ["NPC", "Monster", "Player"] and c:
                         hp = c.get("hp", "-")
                         ac = c.get("ac", "-")
@@ -1260,10 +1278,9 @@ class MainWindow(QMainWindow):
                         
                     f.write("-" * 30 + "\n")
             
-            QMessageBox.information(self, "Başarılı", "Liste başarıyla dışa aktarıldı.")
+            QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_EXPORT_SUCCESS"))
         except Exception as e:
-            QMessageBox.critical(self, "Hata", f"Dosya yazılamadı:\n{e}")
-
+            QMessageBox.critical(self, tr("MSG_ERROR"), tr("MSG_FILE_WRITE_ERROR", error=str(e)))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -1351,7 +1368,7 @@ pyinstaller
 ===== FILE PATH =====
 ./.git\COMMIT_EDITMSG
 ===== FILE CONTENT =====
-update
+update themes
 
 
 ===== FILE PATH =====
@@ -1396,7 +1413,7 @@ Unnamed repository; edit this file 'description' to name the repository.
 ===== FILE PATH =====
 ./.git\FETCH_HEAD
 ===== FILE CONTENT =====
-d325e43b909578041d4db483e9c54f689e0bc05b		branch 'feature/newUI' of https://github.com/elymsyr/dungeon-master-tool
+248f9864b316030f53cc7cc981d40715be92654a		branch 'feature/newUI' of https://github.com/elymsyr/dungeon-master-tool
 a95e5d431a398652a0299ffb1fd29bd7a45bb98b	not-for-merge	tag 'alpha-v0.0.1' of https://github.com/elymsyr/dungeon-master-tool
 4d597c0119f8386127783594db44917ee6c21563	not-for-merge	tag 'alpha-v0.0.2' of https://github.com/elymsyr/dungeon-master-tool
 
@@ -1410,7 +1427,7 @@ ref: refs/heads/feature/newUI
 ===== FILE PATH =====
 ./.git\ORIG_HEAD
 ===== FILE CONTENT =====
-248f9864b316030f53cc7cc981d40715be92654a
+965cac859fb18eb66a7bda780d07ffcc774c0da6
 
 
 ===== FILE PATH =====
@@ -2441,6 +2458,7 @@ fffb66dc76eab351b317e4ff4a135f92054a517a 26c58930949718d5ab1cdb16fa5747ac48af85a
 4d597c0119f8386127783594db44917ee6c21563 ee090cec1678f1cc5da99c9e91e3b7fca3612c2e elymsyr <orhun868@gmail.com> 1767722512 +0300	commit: update
 ee090cec1678f1cc5da99c9e91e3b7fca3612c2e d325e43b909578041d4db483e9c54f689e0bc05b elymsyr <orhun868@gmail.com> 1767723293 +0300	commit: update
 d325e43b909578041d4db483e9c54f689e0bc05b 248f9864b316030f53cc7cc981d40715be92654a elymsyr <orhun868@gmail.com> 1767724060 +0300	commit: update
+248f9864b316030f53cc7cc981d40715be92654a 965cac859fb18eb66a7bda780d07ffcc774c0da6 elymsyr <orhun868@gmail.com> 1767727926 +0300	commit: update themes
 
 
 ===== FILE PATH =====
@@ -2477,6 +2495,7 @@ d1f1aa020d3ff0876d3471800515c789eef9a2a5 2b3c359a5a8e48a2fd370a419be7b1f91d1da8d
 4d597c0119f8386127783594db44917ee6c21563 ee090cec1678f1cc5da99c9e91e3b7fca3612c2e elymsyr <orhun868@gmail.com> 1767722512 +0300	commit: update
 ee090cec1678f1cc5da99c9e91e3b7fca3612c2e d325e43b909578041d4db483e9c54f689e0bc05b elymsyr <orhun868@gmail.com> 1767723293 +0300	commit: update
 d325e43b909578041d4db483e9c54f689e0bc05b 248f9864b316030f53cc7cc981d40715be92654a elymsyr <orhun868@gmail.com> 1767724060 +0300	commit: update
+248f9864b316030f53cc7cc981d40715be92654a 965cac859fb18eb66a7bda780d07ffcc774c0da6 elymsyr <orhun868@gmail.com> 1767727926 +0300	commit: update themes
 
 
 ===== FILE PATH =====
@@ -2533,6 +2552,7 @@ e3ad43004b6fdd272c0ac607a6d4a22a228ef9e9 2b3c359a5a8e48a2fd370a419be7b1f91d1da8d
 0000000000000000000000000000000000000000 ee090cec1678f1cc5da99c9e91e3b7fca3612c2e elymsyr <orhun868@gmail.com> 1767722516 +0300	update by push
 ee090cec1678f1cc5da99c9e91e3b7fca3612c2e d325e43b909578041d4db483e9c54f689e0bc05b elymsyr <orhun868@gmail.com> 1767723299 +0300	update by push
 d325e43b909578041d4db483e9c54f689e0bc05b 248f9864b316030f53cc7cc981d40715be92654a elymsyr <orhun868@gmail.com> 1767724065 +0300	update by push
+248f9864b316030f53cc7cc981d40715be92654a 965cac859fb18eb66a7bda780d07ffcc774c0da6 elymsyr <orhun868@gmail.com> 1767727931 +0300	update by push
 
 
 ===== FILE PATH =====
@@ -2607,6 +2627,11 @@ sI(À3NxZ*o|ks$7ٹp|)Mf;pAȆ)l[$V姷MN#ˣ2o8|ssNwHc>ҷӊ!ю"(
 N?c*a\"uTτ\`"ܝwqoowG}mD{.Ĺ}?XuB
 ٕMN檜IZ1ԗLY-=#")~ɝ$֘ĭWzu_~߄[uL}xt<ǷNM8SG{ te$ˢ^Pӏբ	g[YiX]abPdTQ0` /R|P*NbQb򋒜X6mjQ߯Q^߭ƭg,sL chNQ?^,]#Sk:,-ո}R{T@TWO8mZ/>54bN[JRbtU3lӑU✹^ǊZ,L$JpfPʧd޹
 lmSI+-\uVq<5rH5}B.L]
+
+===== FILE PATH =====
+./.git\objects\0d\d3d435166b431f251657752b966a1e182d1622
+===== FILE CONTENT =====
+x+)JMU023f040031QHN-HLϋ/NIM./+dhݑ􂦬DwL@!%31'?Ay2}KE4_̈́XXZ__2;'ڙ^XQ+h5i%IڮɬoVqtyfJzjI1Ýj%0)$_>S!%Rrџ>ۍm7-\ԢbCx6[.y+<Ģ	'BZFiA
 
 ===== FILE PATH =====
 ./.git\objects\11\0256aadac3c5a2363a7deb376f98c9379a18f7
@@ -2729,6 +2754,21 @@ vͨ)1]
 n?<CNij'zD|@>8j	Eɷl{y&kDyfQ~r2m}8.|㉼aQ{ԺPE?ѩIBd
 
 ===== FILE PATH =====
+./.git\objects\87\2c65d763474d6ac232cbb77d25f23e791de5bc
+===== FILE CONTENT =====
+xWnJ>y "b'n^ @\qkh@\
+Hz'q\NH曙ofz푣gd윜~8>zo?}޸zϢH4	Q+	>i$ltO_Èywh2,.^Wӝe{F3ruhG:<Iz l Z}A@Er6W 43<@Oi.*KH!yB8bmV?$i_:䓀OASԵF?bYq$	H-A#g>!(b'* $JVvۣΠQ1䑹8*"SR/TGV%;쟐'"D	|
+e{b2pHEiu-H MDt	#p)'}@Od/OG8`9u1[mJҺgjz3JKk]UPZY:W4VX|jt{A%Mwu01[lR2GK,Q23;h$JCͬǽ9dI~Iс?7B&(H])z6QkQG&+Aug]lԫDNod
+f{ڗ1)k-Sip)Qol|([	;qT$Io`9(_Kk#*yޠlEU2hnk_b3jhtLd6g9bv ks]/F.uLJ,Rܹ{Eo7ruBagy]E\Zp%xஇPC't~NLw_wk)[}sB'\Kb:H^ถ1JyZ=~A.Jz+hBe
+ BTo몜ђB{魻URmWj%S=UtW᡾+'n[Mu"-;rdO8i)MAæ  ۏ
+(h
+ߗ4Vu.`QL!)mSz_2[	*$z㔡
+ˍ(j2iiN)VkUb<sR˪sX':&gǶ\$6A{<K
+#,c'1Uj2ӯq.L[,05-e!sH
+';)
+}Qf QFْtm`;D7?V蘪=!aXe39K8$MҨ IO
+
+===== FILE PATH =====
 ./.git\objects\91\248ade886ffdc3a2d5100645375e4782f05cd4
 ===== FILE CONTENT =====
 xMn }
@@ -2788,6 +2828,73 @@ cy7o6AlX#@qS,]A	z\9'E*~<qpC][oN\|AxD[UO*yO(Sh>_7e}fg)[ʗ|6
 xM
  @=BwT(WulZ1ܾB>xNAev(KA%HcE@'SbR6 *"xs*bDb\T϶?X4\#ҁ
 -u7_ǎ-$>ınAG
+
+===== FILE PATH =====
+./.git\objects\d4\d23505bdb3c05d956ae32d73831d1f663ab076
+===== FILE CONTENT =====
+x\]oIvͳE"
+w&Y,(3[guI^6Lw2y!0/~''[ݤdRwխ[={Ww}wh2K5.nz<{RSIC28B'zp{j?%~>e?)LMuKiq=-q"Iw	G1hǓIeA\y{9/мzqIr',45T?ڎ*&K~:ƄlXͣst?Ϊwy캓(ލn7MZz+Z٤-.⸴'Z(ht{s۶=Iֽi:ƗY:6B8w'q/~Ykƃ8u:{Ϻ';;퓠Y:Giڕ[4*
+ʤqOz;(nl5
+AY܏jU"*rUFE/>Zaxm"8lȋvZіz8OT;2F2Jᆺv,%e'3&YRv"N6CDgjqV>8gY	L1ysfzbl C5umTOT~!FUQq<4
+~?;Qq1Ňl5C
+Yb.4Ž$74+MEa&8+1fqIV4TZL~7nkfwi->i/rO8}*&5oǎi
+s-&!ɇQ><TQO
+\kɄ_UR
+f|zEwQь[m"E(f=oWW89(T2_<O>ז*(+F[ARLs0WO{'$xٔo{Zf'*Uv>
+Q΢35&f'ܪnb]VdK%T/9``Ԟ7ϊM[2g**lAzh˓thADY2^kA#eJ5JP;&@klN{ptxr9nl7ŊW}=қ*bms򸳿Ou{GՔ^U0fmd2m:O=>pv)hU7Γ*Mڶb;)Oc=_|8SMifbWgG>ntHU0ɇ
+;zQ{~r?@e?(?g1n䮱Z.
+eDL,jV:I:0P"'i4kyZIe@4nnvGU+hT'--ag{~X/ &(G4	\l9+8n'i>G a`T4,ILa,g %h
+0]xanJiNC,lD[fKHܢ87ߵ'e	iz
+ȡ25uw
+W$ذ)n6EjoHwPQ?z#rL`
+|Ep҉WI <#	;OH¢&i yg f(Q,2 L5Ǔ"Z!
+;tՂFwE^Ư>'z7[;Le^K}>{N:gvNw H͓}}Ytz>4jY׌vU{ZFr,_PP,@4ZP15$w	 
+էb|Ԛvr1ԧ;u˨_.6k% 7@܀!$6@^W@zpie~\S4>+=6r<8US`^}_SW6gQ42L/CA|kӃkEDߥwdgC  oq4ZZm"c6/pk۪^ <yq
+]W_rkwcw_ygi"^[jހWqEQt=Rw&t[vrKB:hЩX,v9e;w9PunbX1S*8＄i0$u"u?㋨m4#u;RR	1V	ZāG|77
+Ҙ%ջ5=X7, MT	n'qZSj&
+F
+h}q1LA*#<&?ڗ&oM ۠_xeGg-y2އ4<A6NZCј߷T
+Kqxni{B7!͂> yÎ/._utH7tMP#&(Jv@2Nz:>ztS4Է@ǝα6.)A܋x9Sq6s݉pɹ|`E<E]$-sHw	Dl-$I۰q8mߊSxO <sI}-(;<>+qC<|ļ>>]݁Kڵ`$4ŝnTIt<$SհkT$O$Blm0p35)@c}?nM]h'M>	lo8G	NR5.K	2ޏ8ˣӸA<m-IAH3ZGqQ[pKQn9KwsnfƤQQ>y#>=p0z2:
+B=1\'&(	u~8A~9I(kJ
+pr鰷̐+]{}=|g%.[`_ؤk9^gq#Sʱu͞v~jݱC)WQlY_
+GZ~3<ŗXJͶNWr}IB4+ṫogds]8;"LU{}=55X@}B@_)6Q Fh"?vClS>j~@D`i Ϻ]#01܇r(&dq;;0o.b*.gjO(w#,|as
+!֯\0aXCh98C-Σi/ѤT/ͯe
+;V*4?/  4h?_/L̔>yiL,F(@(-t	xh$-}ɝ,RV|5UAkb_@l_3X~)hƨSUrG%].ř\]&e+:bbv'U 8.02؁֛w LaJsNlJk5$~.[+k8Df7~
+܌n붌\v?YT)e0Ce*;Y+,0
+a5F>F䌜֜6	bA3=rʪIP$CAOh(dP0d\%W.`ctҲUxJEϚTdLi7Qӱ5=2:܀ԍ9,1A5.ȫ83j77
+3/'8!I~0l7%$586_d`Ǣ&kCHT$(UC]:to@ {K4$A7:lo쑥w~6MFjXJ$h|(x~D:>T~؍Ku-OHp[@'Y-+L;K>UNw%)olˤC6Rmڲ-jC=i}k(-d{i\!i+̪ͤ1d:Xpt^ht;]tIVJAZu+PU-.uM
+H_ed 7J;VZ\v#srƗ<
+Du ;Aׇ	@&b"r-h1Cܦ	W&ҨoOo?DT5w0ۿ;Î:R݊ԆHAIQPߨ{Ta^jG1'plyHxwF/PCcߤN5M=R5t8db<
+]A]`?jChS}TH˫&@b0JT$-|zEgX!E\O+I6wsBM}} c q6,#B% L)c8tA	X@cx0`Udl$G2e{M
+iaHF0i2aMv(6(ZviqM*207GMc*LBh"rmL~z;;KB6 s0+nOxD,ѱJ|l
+VZ]WNE))hyKo*N2KK`W$soѣvPa	 !2̂
+cPx"yS\r1*%أDsV?zz)"fo
+QB5@Wp	>FlL
+MH!:ز
+
+_eGl!R p% OOM  JrS~&)]﷒B'd^H*᾽龦VX]Wؽb%(UeV ?Tx{ST+9)05,JT2#Kǿ4[5?RM>u:rs
+I6KW{A[qcӞ+rMΧ<)e|E2}kg ,ď	"Pɰ(W̅2t
+(rj Sʰdt֓P9 tkF`}mBF*7`&TDj}d-jOPM9
+ *AqWPੵ/݉%3A(tf^IyєS8
+@Pn%P!\l	fLSH<q?O!8\C!BPVޖςzj0z !ieAa'>Ǿqy:ƐyN \6h ]p}9tI"/
+מk*3gU52VI}kR8/g%qlD$a ,_Ocwf摭0=:C,"/:h~Qac`࢓ lzƋdb =o^zKU55"+LJ)ײcNmjzUL%<юRb$6޹"`o{M痕wM@UV#(#ӂ*̍~XSDÀ'T2æ/0&Ej8
+D8Qh1D^D/㥄uz+3"ULf\)tn涰/B}\ 9KΣĴVC A╷Q
+tÀӌ?Ѧ:kv|^i3:!fpy6pP5N尶I[\sSF}q{lwasda4gŴ:?=\+$0وz
+xi",ΐ-47:
+BnBS]cn2ųQAHP߯e	w#5dOp.om34ĩ%@\gwS*tBz9mr
+[9{$-yUT_V=IZ\r)Ϯ&I E՛7)[1:'WqgPs>(?Ӊ[vֹb8"'{jOOn)#	wD9elMWKan
+o!?	7I@ Ḏ@fmĥ)"2i*Es/vuƙ9O7ӡIKBɥ0P[_ҲI<@vEtZ@AgP0?`$?BVMx`?0ի]ICUA:UX9cYa.;{Kjqp]s||HZ.	dj	^rw谱!-Ad3B Z kҀ@Yv1A%XϙLdC0qu:oMrz$LD5uި07@?cytvʦ _D_s+POcYMuYK!ĸ>ѨfSGh$Ϙ+'Owv:RqwvP7AkaNFRP;M0-SM]+[K\FhgJa	*Y/U YVSiE*	y -*;ӨwZA;48[p*!W }N(?;Gtw7BJ'Aֳnʺ>,y'p^B/D=y(4OkQJp
+)Cgw-܅+tVRݣݧN=ofU=:E1g>?m%ܰFg_عnA-W,VJ=[
+dG=B1Gl,uEq[P$[xb#{zA\]_,>Γ	ˣMم;(^_S
+7K&T1Ko=~bK7jxwN8g7vǏˢǨ^bR6?[|\-:(Q66V.rk֝raD>||iӵ^N< [^Zfza+ʋ՝^Ṋ7@y8eR:"a8D{kFd4fN9ߢ3F:"gyU Ϻ=fsR 3"b[V`:A՘.B/5W#XhIқ Ƨ.̠M~t;Q)x!g&wGvXASTZm~+ظKT%y`hF]+1ѴܞQR;ePgXr^)Z(;7 5%k[OE	2|o53	
+$ƸO+Y_)&/Ώ^ӢD0ZVO3lp/pX3W9.s!լzZX@w_}$%
+۽p25L&uǽE݊=32?a缗!]_ ,qϭxR Z^R/Yn44qژ߀#-߻՗Q܎
+~H#=BmR!(Po4S+'.2 3XI|bJ/RYE#_Y=&(i\^UJ?&~;DaZUxIH|}bKKzxESb`#h~@<󞿸P/״e>(3hō
+פwdM#6
+	[c\?7\Ӆv.Ae%&	
+b|\L\q7?@%$nxf[َ14
+Wj0*@ϥ[9d:0EݶrAˋK^fJQUWkz=QLd7;oj+.=>Oހ]fv ~ʸ5н}o/ǑfF --AZX}YUn{k*cw?ڸ[]8ᶡ~fXY#˶W vKWgXۮ(e:a.ëap5{Sљ_d'iSH.nw	^RgYUmXG}_}XFv^=vuϫ#VAZK.捆"沂}i*8T09N{c켷po	р;ꟈű.زZ]0ek.3:)Hj1XxN!չǇ{߅IwNLj绣I0D}[fr{Ns#no(u
+,n/}\71C/@K:
 
 ===== FILE PATH =====
 ./.git\objects\e3\ad43004b6fdd272c0ac607a6d4a22a228ef9e9
@@ -2859,7 +2966,7 @@ xM
 ===== FILE PATH =====
 ./.git\refs\heads\feature\newUI
 ===== FILE CONTENT =====
-248f9864b316030f53cc7cc981d40715be92654a
+965cac859fb18eb66a7bda780d07ffcc774c0da6
 
 
 ===== FILE PATH =====
@@ -2889,7 +2996,7 @@ ref: refs/remotes/origin/main
 ===== FILE PATH =====
 ./.git\refs\remotes\origin\feature\newUI
 ===== FILE CONTENT =====
-248f9864b316030f53cc7cc981d40715be92654a
+965cac859fb18eb66a7bda780d07ffcc774c0da6
 
 
 ===== FILE PATH =====
@@ -3362,24 +3469,6 @@ class DataManager:
         if not os.path.exists(WORLDS_DIR): return []
         return [d for d in os.listdir(WORLDS_DIR) if os.path.isdir(os.path.join(WORLDS_DIR, d))]
 
-    def create_campaign(self, world_name):
-        folder = os.path.join(WORLDS_DIR, world_name)
-        try:
-            if not os.path.exists(folder): os.makedirs(folder)
-            if not os.path.exists(os.path.join(folder, "assets")): os.makedirs(os.path.join(folder, "assets"))
-            
-            self.data = {
-                "world_name": world_name, 
-                "entities": {}, 
-                "map_data": {"image_path": "", "pins": []},
-                "sessions": [],
-                "last_active_session_id": None
-            }
-            self.current_campaign_path = folder
-            self.save_data()
-            return True, "Oluşturuldu"
-        except Exception as e: return False, str(e)
-
     def load_campaign_by_name(self, name):
         return self.load_campaign(os.path.join(WORLDS_DIR, name))
 
@@ -3389,19 +3478,40 @@ class DataManager:
         try:
             with open(path, "r", encoding="utf-8") as f: self.data = json.load(f)
             
-            # Migration
+            # --- VERİ YAPISI MIGRATION (Eksik alanları tamamla) ---
             if "sessions" not in self.data: self.data["sessions"] = []
             if "entities" not in self.data: self.data["entities"] = {}
             if "map_data" not in self.data: self.data["map_data"] = {"image_path": "", "pins": []}
             if "last_active_session_id" not in self.data: self.data["last_active_session_id"] = None
             
+            # --- OTOMATİK SESSION OLUŞTURMA ---
+            # Eğer hiç oturum yoksa, varsayılan bir tane oluştur ve aktif et.
+            if not self.data["sessions"]:
+                new_sid = str(uuid.uuid4())
+                default_session = {
+                    "id": new_sid,
+                    "name": "Default Session",
+                    "date": "Bugün",
+                    "notes": "",
+                    "logs": "",
+                    "combatants": [] # Multi-encounter yapısı combat_tracker içinde handle ediliyor, burası temel yapı.
+                }
+                self.data["sessions"].append(default_session)
+                self.data["last_active_session_id"] = new_sid
+                print("⚠️ Otomatik 'Default Session' oluşturuldu.")
+            
+            # Eğer last_active_session_id boşsa ama session varsa, sonuncusunu seç
+            if not self.data["last_active_session_id"] and self.data["sessions"]:
+                self.data["last_active_session_id"] = self.data["sessions"][-1]["id"]
+
+            # --- ENTITY MIGRATION ---
             for eid, ent in self.data["entities"].items():
-                # Migrate Legacy Type
+                # Eski Tipi (Canavar) Yeni Tipe (Monster) Çevir
                 old_type = ent.get("type", "NPC")
                 if old_type in SCHEMA_MAP:
                     ent["type"] = SCHEMA_MAP[old_type]
                 
-                # Migrate Legacy Attributes
+                # Eski Özellik İsimlerini (Irk) Yeniye (LBL_RACE) Çevir
                 attrs = ent.get("attributes", {})
                 new_attrs = {}
                 for k, v in attrs.items():
@@ -3409,14 +3519,48 @@ class DataManager:
                     new_attrs[new_key] = v
                 ent["attributes"] = new_attrs
 
+                # Eksik alanları varsayılanlarla doldur
                 default = get_default_entity_structure(ent.get("type", "NPC"))
                 for key, val in default.items():
                     if key not in ent: ent[key] = val
+                
+                # Resim yolu migration
                 if not ent.get("images") and ent.get("image_path"):
                     ent["images"] = [ent["image_path"]]
 
             self.current_campaign_path = folder
+            self.save_data() # Migration değişikliklerini kaydet
             return True, "Yüklendi"
+        except Exception as e: return False, str(e)
+
+    def create_campaign(self, world_name):
+        folder = os.path.join(WORLDS_DIR, world_name)
+        try:
+            if not os.path.exists(folder): os.makedirs(folder)
+            if not os.path.exists(os.path.join(folder, "assets")): os.makedirs(os.path.join(folder, "assets"))
+            
+            # İlk session ID'sini oluştur
+            first_sid = str(uuid.uuid4())
+            
+            self.data = {
+                "world_name": world_name, 
+                "entities": {}, 
+                "map_data": {"image_path": "", "pins": []},
+                "sessions": [
+                    {
+                        "id": first_sid,
+                        "name": "Session 0",
+                        "date": "Bugün",
+                        "notes": "",
+                        "logs": "",
+                        "combatants": []
+                    }
+                ],
+                "last_active_session_id": first_sid
+            }
+            self.current_campaign_path = folder
+            self.save_data()
+            return True, "Oluşturuldu"
         except Exception as e: return False, str(e)
 
     def save_data(self):
@@ -4062,7 +4206,48 @@ en:
   LBL_LORE_RELIGION: "Religion"
   LBL_LORE_CULTURE: "Culture"
   LBL_LORE_OTHER: "Other"
-
+# --- NEW ADDITIONS ---
+  TITLE_SELECT_WORLD: "Select World"
+  LBL_SELECT_WORLD_TITLE: "🔮 Select World"
+  PH_NEW_WORLD_NAME: "New World Name..."
+  BTN_LOAD: "Load"
+  BTN_CREATE: "Create"
+  MSG_SELECT_WORLD_WARN: "Please select a world."
+  MSG_NAME_EMPTY: "Name cannot be empty."
+  MSG_WORLD_EXISTS: "A world with this name already exists."
+  TITLE_PLAYER_VIEW: "Player View - Second Screen"
+  MSG_NOT_FOUND: "Not Found."
+  MSG_ERROR_OCCURRED: "Error occurred: %{error}"
+  TITLE_ADD_COMBAT: "Add Entity to Combat"
+  PH_SEARCH_NAME_TAG: "Search Name or Tag..."
+  LBL_TYPE_ALL: "All"
+  HEADER_INIT_BONUS: "Init Bonus"
+  HEADER_ID: "ID"
+  LBL_ADD_COUNT: "Count to Add:"
+  BTN_ADD_SELECTED: "✅ Add Selected"
+  NAME_UNKNOWN: "Unknown"
+  NAME_UNNAMED: "Unnamed"
+  TITLE_EDIT_HP: "Edit HP"
+  LBL_NEW_HP: "New HP:"
+  MENU_CTX_INSPECT: "🔍 Inspect"
+  MENU_CTX_MOVE: "✋ Move"
+  MENU_CTX_DELETE: "🗑️ Delete"
+  MENU_CTX_PIN: "📍 Add Pin Here"
+  TITLE_EXPORT: "Save List"
+  FILE_FILTER_TXT: "Text Files (*.txt)"
+  MSG_EXPORT_SUCCESS: "List exported successfully."
+  MSG_FILE_WRITE_ERROR: "Could not write file:\n%{error}"
+  TXT_EXPORT_HEADER: "DUNGEON MASTER - ENTITY LIST"
+  TXT_EXPORT_WORLD: "World: "
+  TXT_EXPORT_NO_DATA: "No entities recorded yet."
+  TXT_EXPORT_TAGS: "   Tags: "
+  TXT_EXPORT_DESC: "   Desc: "
+  CAT_MONSTERS_PL: "Monsters"
+  CAT_SPELLS_PL: "Spells"
+  CAT_EQUIPMENT_ALL: "All Equipment"
+  CAT_MAGIC_ITEMS_ALL: "All Magic Items"
+  CAT_CLASSES_PL: "Classes"
+  CAT_RACES_PL: "Races"
 
 ===== FILE PATH =====
 ./locales\tr.yml
@@ -4321,7 +4506,48 @@ tr:
   LBL_LORE_RELIGION: "Din"
   LBL_LORE_CULTURE: "Kültür"
   LBL_LORE_OTHER: "Diğer"
-
+# --- YENİ EKLENENLER ---
+  TITLE_SELECT_WORLD: "Dünya Seç"
+  LBL_SELECT_WORLD_TITLE: "🔮 Dünya Seçimi"
+  PH_NEW_WORLD_NAME: "Yeni Dünya Adı..."
+  BTN_LOAD: "Yükle"
+  BTN_CREATE: "Oluştur"
+  MSG_SELECT_WORLD_WARN: "Lütfen bir dünya seçin."
+  MSG_NAME_EMPTY: "İsim boş olamaz."
+  MSG_WORLD_EXISTS: "Bu isimde bir dünya zaten var."
+  TITLE_PLAYER_VIEW: "Oyuncu Ekranı - İkinci Ekran"
+  MSG_NOT_FOUND: "Bulunamadı."
+  MSG_ERROR_OCCURRED: "Hata oluştu: %{error}"
+  TITLE_ADD_COMBAT: "Savaşa Varlık Ekle"
+  PH_SEARCH_NAME_TAG: "İsim veya Etiket Ara..."
+  LBL_TYPE_ALL: "Tümü"
+  HEADER_INIT_BONUS: "İnisiyatif Bonusu"
+  HEADER_ID: "ID"
+  LBL_ADD_COUNT: "Eklenecek Adet:"
+  BTN_ADD_SELECTED: "✅ Seçilenleri Ekle"
+  NAME_UNKNOWN: "Bilinmeyen"
+  NAME_UNNAMED: "İsimsiz"
+  TITLE_EDIT_HP: "Can Düzenle"
+  LBL_NEW_HP: "Yeni Can (HP):"
+  MENU_CTX_INSPECT: "🔍 İncele"
+  MENU_CTX_MOVE: "✋ Taşı"
+  MENU_CTX_DELETE: "🗑️ Sil"
+  MENU_CTX_PIN: "📍 Buraya Pin Ekle"
+  TITLE_EXPORT: "Listeyi Kaydet"
+  FILE_FILTER_TXT: "Metin Dosyaları (*.txt)"
+  MSG_EXPORT_SUCCESS: "Liste başarıyla dışa aktarıldı."
+  MSG_FILE_WRITE_ERROR: "Dosya yazılamadı:\n%{error}"
+  TXT_EXPORT_HEADER: "ZİNDAN EFENDİSİ - VARLIK LİSTESİ"
+  TXT_EXPORT_WORLD: "Dünya: "
+  TXT_EXPORT_NO_DATA: "Henüz kaydedilmiş varlık yok."
+  TXT_EXPORT_TAGS: "   Etiketler: "
+  TXT_EXPORT_DESC: "   Açıklama: "
+  CAT_MONSTERS_PL: "Canavarlar"
+  CAT_SPELLS_PL: "Büyüler"
+  CAT_EQUIPMENT_ALL: "Tüm Teçhizat"
+  CAT_MAGIC_ITEMS_ALL: "Tüm Büyülü Eşyalar"
+  CAT_CLASSES_PL: "Sınıflar"
+  CAT_RACES_PL: "Irklar"
 
 ===== FILE PATH =====
 ./tests\conftest.py
@@ -4559,891 +4785,982 @@ def test_language_switch_ui(qtbot, initialized_data_manager):
 ===== FILE PATH =====
 ./themes\amethyst.qss
 ===== FILE CONTENT =====
-/* === AMETHYST THEME === */
-QMainWindow, QDialog {
-    background-color: #211a26;
-    color: #f3e5f5;
-}
+/* === AMETHYST THEME (FIXED) === */
+QWidget { background-color: #211a26; color: #f3e5f5; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+QMainWindow, QDialog, QScrollArea { background-color: #211a26; border: none; }
+QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #2d2436; }
 
-QWidget {
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 14px;
-    color: #f3e5f5;
-}
-
-/* Kapsayıcılar */
-QTabWidget::pane, QGroupBox {
-    background-color: #2d2436;
-    border: 1px solid #4a148c;
-}
-
-/* === GİRDİ ALANLARI === */
 QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
-    background-color: #18121c;
-    color: #e1bee7;
-    border: 1px solid #7b1fa2;
-    border-radius: 4px;
-    padding: 6px;
+    background-color: #18121c; color: #e1bee7; border: 1px solid #7b1fa2; border-radius: 4px; padding: 6px;
 }
 
-QComboBox QAbstractItemView {
-    background-color: #18121c;
-    color: #e1bee7;
-    selection-background-color: #7b1fa2;
-    selection-color: white;
+/* --- KARTLAR (ŞEFFAF TEXTBOX) --- */
+QFrame[class="featureCard"] {
+    background-color: #18121c; border: 1px solid #4a148c; border-left: 4px solid #ba68c8; border-radius: 4px; margin-bottom: 8px;
+}
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+    background-color: transparent; border: none; color: #f3e5f5;
 }
 
-/* === LİSTELER === */
-QListWidget, QTableWidget {
-    background-color: #18121c;
-    color: #f3e5f5;
-    border: 1px solid #4a148c;
-}
+QFrame[class="combatCard"] { background-color: #18121c; border: 1px solid #4a148c; border-radius: 6px; margin-bottom: 4px; }
+QFrame[class="combatCard"] QLabel { background-color: transparent; color: #f3e5f5; }
+QFrame[class="combatCard"][active="true"] { background-color: #38006b; border: 1px solid #ea80fc; }
 
-QListWidget::item:selected, QTableWidget::item:selected {
-    background-color: #8e24aa;
-    color: white;
-}
-
-QHeaderView::section {
-    background-color: #38006b;
-    color: #e1bee7;
-    padding: 5px;
-    border: 1px solid #4a148c;
-}
-
-/* === BUTONLAR === */
+QListWidget, QTableWidget { background-color: #18121c; color: #f3e5f5; border: 1px solid #4a148c; }
+QListWidget::item:selected { background-color: #8e24aa; color: white; }
+/* --- BUTONLAR (AMETHYST) --- */
 QPushButton {
     background-color: #4a148c;
-    border: 1px solid #6a1b9a;
     color: #f3e5f5;
+    border: 1px solid #6a1b9a;
     border-radius: 4px;
-    padding: 8px 15px;
+    padding: 6px 12px;
+}
+QPushButton:hover { background-color: #6a1b9a; }
+
+QPushButton#primaryBtn {
+    background-color: #ab47bc; /* Açık Mor */
+    color: black;
+    border: none;
+    font-weight: bold;
+}
+QPushButton#primaryBtn:hover { background-color: #ba68c8; }
+
+QPushButton#successBtn {
+    background-color: #66bb6a;
+    color: black;
+    border: none;
+}
+QPushButton#successBtn:hover { background-color: #81c784; }
+
+QPushButton#dangerBtn {
+    background-color: #c62828;
+    color: white;
+    border: none;
+}
+QPushButton#dangerBtn:hover { background-color: #e53935; }
+
+QPushButton#actionBtn {
+    background-color: #ffa726; /* Turuncu */
+    color: black;
+    border: none;
+}
+QPushButton#actionBtn:hover { background-color: #ffb74d; }
+
+QGroupBox { background-color: transparent; border: 1px solid #4a148c; border-radius: 6px; margin-top: 20px; padding-top: 15px; color: #ce93d8; }
+QTabWidget::pane { border: 1px solid #4a148c; background-color: #2d2436; }
+QTabBar::tab { background-color: #38006b; color: #b39ddb; padding: 8px 15px; }
+QTabBar::tab:selected { background-color: #2d2436; color: #e1bee7; border-top: 3px solid #ba68c8; }
+QLabel#headerLabel { color: #ce93d8; font-weight: bold; } QLabel#toolbarLabel { color: #f3e5f5; }
+QWidget#entityItem {
+    background-color: transparent; /* Widget'ın kendisi şeffaf */
 }
 
+QLabel#entityName {
+    color: #e0e0e0; /* Temanın ana yazı rengi neyse o (Örn: #e0e0e0) */
+    background-color: transparent;
+    font-weight: bold;
+}
+
+QLabel#entityCat {
+    color: #888888; /* Daha soluk bir renk */
+    background-color: transparent;
+    font-style: italic;
+}
+
+===== FILE PATH =====
+./themes\baldur.qss
+===== FILE CONTENT =====
+/* === BALDUR THEME (FIXED) === */
+QWidget { background-color: #110b09; color: #c8b696; font-family: 'Segoe UI', serif; font-size: 14px; }
+QMainWindow, QDialog, QScrollArea { background-color: #110b09; border: none; }
+QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #1a120b; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
+    background-color: #0d0806; color: #e0d8c8; border: 1px solid #4a3b2a; border-radius: 2px; padding: 6px;
+}
+QLineEdit:focus, QTextEdit:focus { border: 1px solid #b88e4a; }
+
+/* --- KARTLAR (ŞEFFAF TEXTBOX) --- */
+QFrame[class="featureCard"] {
+    background-color: #241b14; border: 1px solid #3d2e22; border-left: 3px solid #b88e4a; border-radius: 2px; margin-bottom: 8px;
+}
+/* KART İÇİ TEXTBOX: ŞEFFAF */
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+    background-color: transparent; border: none; color: #c8b696;
+}
+
+QFrame[class="combatCard"] { background-color: #241b14; border: 1px solid #3d2e22; border-radius: 4px; margin-bottom: 4px; }
+QFrame[class="combatCard"] QLabel { background-color: transparent; color: #c8b696; }
+QFrame[class="combatCard"][active="true"] { background-color: #2d2218; border: 1px solid #ffd700; }
+QFrame[class="combatCard"][attitude="friendly"] { border-left: 5px solid #558b2f; }
+QFrame[class="combatCard"][attitude="hostile"] { border-left: 5px solid #c62828; }
+QFrame[class="combatCard"][attitude="neutral"] { border-left: 5px solid #8d6e63; }
+QFrame[class="combatCard"][type="Player"] { border-left: 5px solid #1565c0; }
+
+QListWidget, QTableWidget { background-color: #1a120b; color: #c8b696; border: 1px solid #4a3b2a; }
+QListWidget::item:selected { background-color: #3e2723; color: #ffd700; border: 1px solid #b88e4a; }
+/* --- BUTONLAR (BALDUR - BRONZE & WOOD) --- */
+QPushButton {
+    background-color: #2d241b; /* Koyu Ahşap */
+    color: #c8b696; /* Kemik Rengi */
+    border: 1px solid #4a3b2a; /* Bronz Çerçeve */
+    border-radius: 2px; /* Keskin */
+    padding: 6px 12px;
+    font-family: serif;
+    font-weight: bold;
+}
 QPushButton:hover {
-    background-color: #6a1b9a;
-    border-color: #ab47bc;
+    background-color: #3e3226;
+    border-color: #b88e4a; /* Parlayan bronz */
 }
 
 QPushButton#primaryBtn {
-    background-color: #ba68c8;
-    color: #000000;
+    background-color: #5d4037;
+    color: #ffd700; /* Altın Yazı */
+    border: 1px solid #b88e4a;
+}
+QPushButton#primaryBtn:hover { background-color: #6d4c41; }
+
+QPushButton#successBtn {
+    background-color: #33691e; /* Koyu Yaprak */
+    color: #f1f8e9;
+    border: 1px solid #558b2f;
+}
+QPushButton#successBtn:hover { background-color: #558b2f; }
+
+QPushButton#dangerBtn {
+    background-color: #8c2323; /* Kan Rengi */
+    color: #ffebee;
+    border: 1px solid #b71c1c;
+}
+QPushButton#dangerBtn:hover { background-color: #a52a2a; }
+
+QPushButton#actionBtn {
+    background-color: #b88e4a; /* Bronz/Altın */
+    color: #1a120b; /* Siyah yazı */
+    border: 1px solid #8d6e63;
+}
+QPushButton#actionBtn:hover { background-color: #d4a017; }
+
+QGroupBox { background-color: transparent; border: 1px solid #4a3b2a; border-radius: 4px; margin-top: 20px; padding-top: 15px; color: #b88e4a; }
+QTabWidget::pane { border: 1px solid #4a3b2a; background-color: #1a120b; }
+QTabBar::tab { background-color: #110b09; color: #8d6e63; padding: 8px 15px; }
+QTabBar::tab:selected { background-color: #1a120b; color: #b88e4a; border-top: 2px solid #b88e4a; }
+QLabel#headerLabel { color: #b88e4a; font-weight: bold; font-family: serif; } QLabel#toolbarLabel { color: #b88e4a; font-weight: bold; }
+QWidget#entityItem {
+    background-color: transparent; /* Widget'ın kendisi şeffaf */
+}
+
+QLabel#entityName {
+    color: #e0e0e0; /* Temanın ana yazı rengi neyse o (Örn: #e0e0e0) */
+    background-color: transparent;
     font-weight: bold;
 }
 
-/* === SEKMELER === */
-QTabBar::tab {
-    background: #38006b;
-    color: #b39ddb;
-    padding: 8px 20px;
-    margin-right: 2px;
-}
-
-QTabBar::tab:selected {
-    background: #2d2436;
-    color: #e1bee7;
-    border-top: 2px solid #ba68c8;
-    font-weight: bold;
-}
-
-QGroupBox {
-    color: #ce93d8;
-    margin-top: 20px;
-    font-weight: bold;
+QLabel#entityCat {
+    color: #888888; /* Daha soluk bir renk */
+    background-color: transparent;
+    font-style: italic;
 }
 
 ===== FILE PATH =====
 ./themes\dark.qss
 ===== FILE CONTENT =====
-/* === GENEL PENCERE AYARLARI === */
-QMainWindow, QDialog {
-    background-color: #2b2b2b;
-    color: #e0e0e0;
+/* === DARK THEME (FIXED) === */
+QWidget { background-color: #2b2b2b; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+QMainWindow, QDialog, QScrollArea { background-color: #2b2b2b; border: none; }
+QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #2b2b2b; }
+
+/* Inputlar (Genel) */
+QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
+    background-color: #1e1e1e; color: #ffffff; border: 1px solid #444; border-radius: 4px; padding: 6px; selection-background-color: #0d47a1;
+}
+QLineEdit:focus, QTextEdit:focus { border: 1px solid #42a5f5; }
+
+/* --- KARTLAR (ŞEFFAF TEXTBOX) --- */
+QFrame[class="featureCard"] {
+    background-color: #1e1e1e; border: 1px solid #3e3e3e; border-left: 4px solid #42a5f5; border-radius: 4px; margin-bottom: 8px;
+}
+/* KART İÇİ TEXTBOX: ŞEFFAF */
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+    background-color: transparent; border: none; color: #ffffff;
 }
 
-QWidget {
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 14px;
-    color: #e0e0e0;
-}
+QFrame[class="combatCard"] { background-color: #1e1e1e; border: 1px solid #444; border-radius: 6px; margin-bottom: 4px; }
+QFrame[class="combatCard"] QLabel { background-color: transparent; color: #e0e0e0; }
+QFrame[class="combatCard"][active="true"] { background-color: #152535; border: 1px solid #42a5f5; }
+QFrame[class="combatCard"][attitude="friendly"] { border-left: 5px solid #4caf50; }
+QFrame[class="combatCard"][attitude="hostile"] { border-left: 5px solid #ef5350; }
+QFrame[class="combatCard"][attitude="neutral"] { border-left: 5px solid #bdbdbd; }
+QFrame[class="combatCard"][type="Player"] { border-left: 5px solid #42a5f5; }
 
-/* Kapsayıcılar için arka plan (Inputs etkilenmesin diye özel seçim) */
-QGroupBox, QTabWidget::pane, QFrame#sidebar {
-    background-color: #2b2b2b;
-    border: 1px solid #3e3e3e;
-}
+QListWidget, QTableWidget { background-color: #1e1e1e; color: #e0e0e0; border: 1px solid #444; }
+QListWidget::item:selected { background-color: #0d47a1; color: white; }
 
-/* === YAZI VE GİRDİ ALANLARI (INPUTS) === */
-/* Burası en önemli kısım: Yazı alanlarını ayrıştırıyoruz */
-QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QDoubleSpinBox, QDateEdit, QTimeEdit {
-    background-color: #1e1e1e; /* Daha koyu, odaklanmayı sağlar */
-    color: #ffffff;
-    border: 1px solid #555;
-    border-radius: 4px;
-    padding: 6px;
-    selection-background-color: #007acc;
-}
-
-QLineEdit:focus, QTextEdit:focus {
-    border: 1px solid #007acc; /* Tıklanınca mavi çerçeve */
-}
-
-/* === LİSTELER VE TABLOLAR === */
-QListWidget, QTableWidget, QTreeWidget {
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-    border: 1px solid #444;
-    outline: none;
-}
-
-QListWidget::item, QTableWidget::item {
-    padding: 5px;
-}
-
-QListWidget::item:selected, QTableWidget::item:selected {
-    background-color: #007acc; /* Seçili öğe mavi */
-    color: white;
-    border-radius: 3px;
-}
-
-QListWidget::item:hover, QTableWidget::item:hover {
-    background-color: #333;
-}
-
-QHeaderView::section {
-    background-color: #3c3f41;
-    padding: 5px;
-    border: 1px solid #2b2b2b;
-    font-weight: bold;
-}
-
-/* === BUTONLAR === */
+/* --- BUTONLAR (DARK - SOFT) --- */
 QPushButton {
-    background-color: #3c3f41;
+    background-color: #3c3f41; /* Yumuşak Koyu Gri */
+    color: #e0e0e0;
     border: 1px solid #555;
     border-radius: 4px;
-    padding: 8px 15px;
-    color: #e0e0e0;
+    padding: 6px 12px;
+    font-weight: 600;
+}
+QPushButton:hover { background-color: #4e5254; border-color: #777; }
+QPushButton:pressed { background-color: #2b2b2b; }
+
+QPushButton#primaryBtn {
+    background-color: #1565c0; /* Mat Mavi */
+    color: white;
+    border: 1px solid #0d47a1;
+}
+QPushButton#primaryBtn:hover { background-color: #1976d2; }
+
+QPushButton#successBtn {
+    background-color: #2e7d32; /* Mat Orman Yeşili */
+    color: white;
+    border: 1px solid #1b5e20;
+}
+QPushButton#successBtn:hover { background-color: #388e3c; }
+
+QPushButton#dangerBtn {
+    background-color: #c62828; /* Mat Kırmızı */
+    color: white;
+    border: 1px solid #b71c1c;
+}
+QPushButton#dangerBtn:hover { background-color: #d32f2f; }
+
+QPushButton#actionBtn {
+    background-color: #f9a825; /* Mat Hardal Sarısı */
+    color: #1c1c1c; /* Koyu yazı */
+    border: 1px solid #f57f17;
+}
+QPushButton#actionBtn:hover { background-color: #fbc02d; }
+
+QGroupBox { background-color: transparent; border: 1px solid #444; border-radius: 6px; margin-top: 20px; padding-top: 15px; color: #42a5f5; font-weight: bold; }
+QTabWidget::pane { border: 1px solid #444; background-color: #2b2b2b; }
+QTabBar::tab { background-color: #1e1e1e; color: #aaa; padding: 8px 15px; margin-right: 2px; }
+QTabBar::tab:selected { background-color: #2b2b2b; color: white; border-top: 3px solid #42a5f5; }
+QLabel#headerLabel { color: #42a5f5; font-weight: bold; } QLabel#toolbarLabel { color: #e0e0e0; font-weight: bold; }
+QWidget#entityItem {
+    background-color: transparent; /* Widget'ın kendisi şeffaf */
+}
+
+QLabel#entityName {
+    color: #e0e0e0; /* Temanın ana yazı rengi neyse o (Örn: #e0e0e0) */
+    background-color: transparent;
     font-weight: bold;
 }
 
-QPushButton:hover {
-    background-color: #4e5254;
-    border-color: #777;
+QLabel#entityCat {
+    color: #888888; /* Daha soluk bir renk */
+    background-color: transparent;
+    font-style: italic;
 }
 
-QPushButton:pressed {
-    background-color: #2b2b2b;
+===== FILE PATH =====
+./themes\discord.qss
+===== FILE CONTENT =====
+/* === DISCORD THEME (FIXED) === */
+QWidget { background-color: #202225; color: #dcddde; font-family: 'Verdana', sans-serif; font-size: 13px; }
+QMainWindow, QDialog, QScrollArea { background-color: #202225; border: none; }
+QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #36393f; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
+    background-color: #40444b; color: #ffffff; border: none; border-radius: 4px; padding: 8px; selection-background-color: #5865f2;
+}
+QLineEdit:focus, QTextEdit:focus { background-color: #202225; }
+
+/* --- KARTLAR (ŞEFFAF TEXTBOX) --- */
+QFrame[class="featureCard"] {
+    background-color: #2f3136; border: none; border-left: 4px solid #5865f2; border-radius: 8px; margin-bottom: 8px;
+}
+/* KART İÇİ TEXTBOX: ŞEFFAF */
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+    background-color: transparent; border: none; color: #ffffff;
 }
 
-/* Özel Butonlar (ID ile) */
+QFrame[class="combatCard"] { background-color: #2f3136; border: none; border-radius: 8px; margin-bottom: 4px; }
+QFrame[class="combatCard"] QLabel { background-color: transparent; color: #dcddde; }
+QFrame[class="combatCard"][active="true"] { background-color: #40444b; border-left: 4px solid #faa61a; }
+QFrame[class="combatCard"][attitude="friendly"] { border-left: 4px solid #3ba55c; }
+QFrame[class="combatCard"][attitude="hostile"] { border-left: 4px solid #ed4245; }
+QFrame[class="combatCard"][attitude="neutral"] { border-left: 4px solid #747f8d; }
+QFrame[class="combatCard"][type="Player"] { border-left: 4px solid #5865f2; }
+
+QListWidget, QTableWidget { background-color: #2f3136; color: #dcddde; border: none; border-radius: 8px; }
+QListWidget::item:selected { background-color: #3ba55c; color: white; border-radius: 4px; }
+/* --- BUTONLAR (DISCORD - FLAT) --- */
+QPushButton {
+    background-color: #4f545c; /* Gri */
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-weight: bold;
+}
+QPushButton:hover { background-color: #686d73; }
+QPushButton:pressed { background-color: #40444b; }
+
 QPushButton#primaryBtn {
-    background-color: #0d47a1;
+    background-color: #5865f2; /* Blurple */
     color: white;
-    border: 1px solid #002171;
 }
-QPushButton#primaryBtn:hover { background-color: #1565c0; }
+QPushButton#primaryBtn:hover { background-color: #4752c4; }
+
+QPushButton#successBtn {
+    background-color: #3ba55c; /* Yeşil */
+    color: white;
+}
+QPushButton#successBtn:hover { background-color: #2d7d46; }
+
+QPushButton#dangerBtn {
+    background-color: #ed4245; /* Kırmızı */
+    color: white;
+}
+QPushButton#dangerBtn:hover { background-color: #c03537; }
+
+QPushButton#actionBtn {
+    background-color: #faa61a; /* Sarı */
+    color: #202225;
+}
+QPushButton#actionBtn:hover { background-color: #de9317; }
+
+QGroupBox { background-color: transparent; border: 1px solid #202225; border-radius: 8px; margin-top: 20px; padding-top: 15px; color: #dcddde; }
+QTabWidget::pane { border: none; background-color: #36393f; }
+QTabBar::tab { background-color: #202225; color: #72767d; padding: 10px 15px; border-radius: 4px; margin-right: 4px; }
+QTabBar::tab:selected { background-color: #36393f; color: #ffffff; }
+QLabel#headerLabel { color: #ffffff; font-weight: bold; } QLabel#toolbarLabel { color: #b9bbbe; font-weight: bold; }
+QWidget#entityItem {
+    background-color: transparent; /* Widget'ın kendisi şeffaf */
+}
+
+QLabel#entityName {
+    color: #e0e0e0; /* Temanın ana yazı rengi neyse o (Örn: #e0e0e0) */
+    background-color: transparent;
+    font-weight: bold;
+}
+
+QLabel#entityCat {
+    color: #888888; /* Daha soluk bir renk */
+    background-color: transparent;
+    font-style: italic;
+}
+
+===== FILE PATH =====
+./themes\emerald.qss
+===== FILE CONTENT =====
+/* === EMERALD THEME (FIXED) === */
+QWidget { background-color: #051e12; color: #e8f5e9; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+QMainWindow, QDialog, QScrollArea { background-color: #051e12; border: none; }
+QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #0a2718; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
+    background-color: #00150a; color: #a5d6a7; border: 1px solid #2e7d32; border-radius: 4px; padding: 6px;
+}
+
+/* --- KARTLAR (ŞEFFAF TEXTBOX) --- */
+QFrame[class="featureCard"] {
+    background-color: #00150a; border: 1px solid #1b5e20; border-left: 4px solid #00e676; border-radius: 4px; margin-bottom: 8px;
+}
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+    background-color: transparent; border: none; color: #e8f5e9;
+}
+
+QFrame[class="combatCard"] { background-color: #00150a; border: 1px solid #1b5e20; border-radius: 6px; margin-bottom: 4px; }
+QFrame[class="combatCard"] QLabel { background-color: transparent; color: #e8f5e9; }
+QFrame[class="combatCard"][active="true"] { background-color: #0f2b1d; border: 1px solid #00e676; }
+
+QListWidget, QTableWidget { background-color: #00150a; color: #e8f5e9; border: 1px solid #1b5e20; }
+QListWidget::item:selected { background-color: #00c853; color: black; }
+/* --- BUTONLAR (EMERALD - GREEN) --- */
+QPushButton {
+    background-color: #1b5e20;
+    color: #e8f5e9;
+    border: 1px solid #2e7d32;
+    border-radius: 4px;
+    padding: 6px 12px;
+}
+QPushButton:hover { background-color: #2e7d32; }
+
+QPushButton#primaryBtn {
+    background-color: #00c853; /* Parlak Yeşil */
+    color: #000000;
+    border: none;
+    font-weight: bold;
+}
+QPushButton#primaryBtn:hover { background-color: #00e676; }
 
 QPushButton#successBtn {
     background-color: #2e7d32;
     color: white;
+    border: 1px solid #66bb6a;
 }
 QPushButton#successBtn:hover { background-color: #388e3c; }
 
 QPushButton#dangerBtn {
     background-color: #c62828;
     color: white;
+    border: none;
 }
 QPushButton#dangerBtn:hover { background-color: #d32f2f; }
 
-/* === COMBO BOX (Açılır Menü) === */
-QComboBox {
-    background-color: #1e1e1e;
-    border: 1px solid #555;
-    border-radius: 4px;
-    padding: 5px;
-    color: white;
-}
-
-QComboBox::drop-down {
-    border: 0px;
-    background: transparent;
-}
-
-QComboBox QAbstractItemView {
-    background-color: #252526;
-    border: 1px solid #555;
-    selection-background-color: #007acc;
-}
-
-/* === SEKMELER (TABS) === */
-QTabBar::tab {
-    background: #2d2d2d;
-    color: #aaa;
-    padding: 8px 20px;
-    margin-right: 2px;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-}
-
-QTabBar::tab:selected {
-    background: #1e1e1e; /* İçerik ile bütünleşsin */
-    color: white;
-    border-top: 2px solid #007acc;
-    font-weight: bold;
-}
-
-/* === GRUPLAR VE KAYDIRMA ÇUBUĞU === */
-QGroupBox {
-    border: 1px solid #555;
-    border-radius: 6px;
-    margin-top: 20px;
-    padding-top: 10px;
-    font-weight: bold;
-    color: #ffd54f; /* Başlık rengi sarımtırak */
-}
-
-QGroupBox::title {
-    subcontrol-origin: margin;
-    left: 10px;
-    padding: 0 5px;
-}
-
-QScrollBar:vertical {
+QPushButton#actionBtn {
+    background-color: #ff9100; /* Turuncu (Zıt renk) */
+    color: black;
     border: none;
-    background: #2b2b2b;
-    width: 10px;
 }
-QScrollBar::handle:vertical {
-    background: #555;
-    min-height: 20px;
-    border-radius: 5px;
+QPushButton#actionBtn:hover { background-color: #ffab40; }
+
+QGroupBox { background-color: transparent; border: 1px solid #1b5e20; border-radius: 6px; margin-top: 20px; padding-top: 15px; color: #66bb6a; }
+QTabWidget::pane { border: 1px solid #1b5e20; background-color: #0a2718; }
+QTabBar::tab { background-color: #0f2b1d; color: #81c784; padding: 8px 15px; }
+QTabBar::tab:selected { background-color: #0a2718; color: #00e676; border-top: 3px solid #00e676; }
+QLabel#headerLabel { color: #00e676; font-weight: bold; } QLabel#toolbarLabel { color: #e8f5e9; }
+QWidget#entityItem {
+    background-color: transparent; /* Widget'ın kendisi şeffaf */
 }
 
-===== FILE PATH =====
-./themes\emerald.qss
-===== FILE CONTENT =====
-/* === EMERALD THEME === */
-QMainWindow, QDialog {
-    background-color: #051e12;
-    color: #e8f5e9;
-}
-
-QWidget {
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 14px;
-    color: #e8f5e9;
-}
-
-/* Kapsayıcılar */
-QTabWidget::pane, QGroupBox {
-    background-color: #0a2718;
-    border: 1px solid #1b5e20;
-}
-
-/* === GİRDİ ALANLARI === */
-QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
-    background-color: #00150a; /* Çok koyu yeşil */
-    color: #a5d6a7;
-    border: 1px solid #2e7d32;
-    border-radius: 4px;
-    padding: 6px;
-}
-
-QLineEdit:focus, QTextEdit:focus {
-    border: 1px solid #00e676;
-}
-
-QComboBox QAbstractItemView {
-    background-color: #00150a;
-    color: #e8f5e9;
-    selection-background-color: #2e7d32;
-}
-
-/* === LİSTELER === */
-QListWidget, QTableWidget {
-    background-color: #00150a;
-    color: #e8f5e9;
-    border: 1px solid #1b5e20;
-}
-
-QListWidget::item:selected, QTableWidget::item:selected {
-    background-color: #00c853;
-    color: #000000; /* Seçili iken yazı siyah */
+QLabel#entityName {
+    color: #e0e0e0; /* Temanın ana yazı rengi neyse o (Örn: #e0e0e0) */
+    background-color: transparent;
     font-weight: bold;
 }
 
-QHeaderView::section {
-    background-color: #1b5e20;
-    color: white;
-    padding: 5px;
-    border: 1px solid #2e7d32;
-}
-
-/* === BUTONLAR === */
-QPushButton {
-    background-color: #1b5e20;
-    border: 1px solid #2e7d32;
-    color: #e8f5e9;
-    border-radius: 4px;
-    padding: 8px 15px;
-}
-
-QPushButton:hover {
-    background-color: #2e7d32;
-    border-color: #66bb6a;
-}
-
-QPushButton#primaryBtn {
-    background-color: #00c853;
-    color: #000000;
-    font-weight: bold;
-}
-
-/* === SEKMELER === */
-QTabBar::tab {
-    background: #0f2b1d;
-    color: #81c784;
-    padding: 8px 20px;
-    margin-right: 2px;
-}
-
-QTabBar::tab:selected {
-    background: #0a2718;
-    color: #00e676;
-    border-top: 2px solid #00e676;
-    font-weight: bold;
-}
-
-QGroupBox {
-    color: #66bb6a;
-    margin-top: 20px;
-    font-weight: bold;
+QLabel#entityCat {
+    color: #888888; /* Daha soluk bir renk */
+    background-color: transparent;
+    font-style: italic;
 }
 
 ===== FILE PATH =====
 ./themes\frost.qss
 ===== FILE CONTENT =====
-/* === FROST THEME === */
-QMainWindow, QDialog {
-    background-color: #f0f4f8;
-    color: #2c3e50;
-}
+/* === FROST THEME (FIXED) === */
+QWidget { background-color: #e6fffa; color: #1a365d; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+QMainWindow, QDialog, QScrollArea { background-color: #e6fffa; border: none; }
+QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #f0fff4; }
 
-QWidget {
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 14px;
-    color: #2c3e50;
-}
-
-/* Kapsayıcılar */
-QTabWidget::pane, QGroupBox {
-    background-color: #ffffff;
-    border: 1px solid #cbd5e0;
-}
-
-/* === GİRDİ ALANLARI === */
 QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
-    background-color: #ffffff;
-    color: #2c3e50;
-    border: 1px solid #90cdf4;
-    border-radius: 4px;
-    padding: 6px;
+    background-color: #ffffff; color: #1a365d; border: 1px solid #81e6d9; border-radius: 4px; padding: 6px; selection-background-color: #319795; selection-color: #ffffff;
+}
+QLineEdit:focus, QTextEdit:focus { border: 1px solid #319795; background-color: #f0fdff; }
+
+/* --- KARTLAR (ŞEFFAF TEXTBOX) --- */
+QFrame[class="featureCard"] {
+    background-color: #ffffff; border: 1px solid #b2f5ea; border-left: 4px solid #319795; border-radius: 4px; margin-bottom: 8px;
+}
+/* KART İÇİ TEXTBOX: ŞEFFAF */
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+    background-color: transparent; border: none; color: #1a365d;
 }
 
-QComboBox QAbstractItemView {
-    background-color: #ffffff;
-    color: #2c3e50;
-    selection-background-color: #63b3ed;
-}
+QFrame[class="combatCard"] { background-color: #ffffff; border: 1px solid #b2f5ea; border-radius: 6px; margin-bottom: 4px; }
+QFrame[class="combatCard"] QLabel { background-color: transparent; color: #1a365d; }
+QFrame[class="combatCard"][active="true"] { background-color: #e6fffa; border: 1px solid #319795; }
+QFrame[class="combatCard"][attitude="friendly"] { border-left: 5px solid #38b2ac; }
+QFrame[class="combatCard"][attitude="hostile"] { border-left: 5px solid #e53e3e; }
+QFrame[class="combatCard"][attitude="neutral"] { border-left: 5px solid #a0aec0; }
+QFrame[class="combatCard"][type="Player"] { border-left: 5px solid #3182ce; }
 
-/* === LİSTELER === */
-QListWidget, QTableWidget {
-    background-color: #ffffff;
-    color: #2c3e50;
-    border: 1px solid #90cdf4;
-    alternate-background-color: #ebf8ff;
-}
-
-QListWidget::item:selected, QTableWidget::item:selected {
-    background-color: #4299e1;
-    color: #ffffff;
-}
-
-QHeaderView::section {
-    background-color: #bee3f8;
-    color: #2a4365;
-    padding: 5px;
-    border: 1px solid #90cdf4;
-}
-
-/* === BUTONLAR === */
+QListWidget, QTableWidget { background-color: #ffffff; color: #1a365d; border: 1px solid #81e6d9; }
+QListWidget::item:selected { background-color: #319795; color: #ffffff; }
+/* --- BUTONLAR (FROST - COLD) --- */
 QPushButton {
-    background-color: #e6fffa;
-    border: 1px solid #4fd1c5;
-    color: #234e52;
+    background-color: #ffffff;
+    color: #234e52; /* Koyu Teal */
+    border: 1px solid #81e6d9;
     border-radius: 4px;
-    padding: 8px 15px;
+    padding: 6px 12px;
+    font-weight: 600;
 }
-
-QPushButton:hover {
-    background-color: #b2f5ea;
-}
+QPushButton:hover { background-color: #e6fffa; }
 
 QPushButton#primaryBtn {
-    background-color: #3182ce;
+    background-color: #319795; /* Teal */
     color: white;
     border: none;
 }
+QPushButton#primaryBtn:hover { background-color: #2c7a7b; }
 
-/* === SEKMELER === */
-QTabBar::tab {
-    background: #e2e8f0;
-    color: #4a5568;
-    padding: 8px 20px;
-    margin-right: 2px;
+QPushButton#successBtn {
+    background-color: #38b2ac; /* Açık Teal */
+    color: white;
+    border: none;
+}
+QPushButton#successBtn:hover { background-color: #319795; }
+
+QPushButton#dangerBtn {
+    background-color: #e53e3e; /* Kırmızı */
+    color: white;
+    border: none;
+}
+QPushButton#dangerBtn:hover { background-color: #c53030; }
+
+QPushButton#actionBtn {
+    background-color: #dd6b20; /* Turuncu (Kontrast için) */
+    color: white;
+    border: none;
+}
+QPushButton#actionBtn:hover { background-color: #c05621; }
+
+QGroupBox { background-color: transparent; border: 1px solid #81e6d9; border-radius: 6px; margin-top: 20px; padding-top: 15px; color: #285e61; font-weight: bold; }
+QTabWidget::pane { border: 1px solid #81e6d9; background-color: #ffffff; }
+QTabBar::tab { background-color: #e6fffa; color: #2c7a7b; padding: 8px 15px; }
+QTabBar::tab:selected { background-color: #ffffff; color: #234e52; border-top: 3px solid #319795; font-weight: bold; }
+QLabel#headerLabel { color: #285e61; font-weight: bold; } QLabel#toolbarLabel { color: #234e52; font-weight: bold; }
+/* --- ENTITY LIST ITEM DÜZELTMESİ (AÇIK) --- */
+QWidget#entityItem {
+    background-color: transparent;
 }
 
-QTabBar::tab:selected {
-    background: #ffffff;
-    color: #2b6cb0;
-    border-top: 3px solid #4299e1;
+QLabel#entityName {
+    color: #000000; /* Koyu yazı */
+    background-color: transparent;
     font-weight: bold;
 }
 
-QGroupBox {
-    color: #2b6cb0;
-    margin-top: 20px;
+QLabel#entityCat {
+    color: #555555; /* Gri yazı */
+    background-color: transparent;
+    font-style: italic;
+}
+
+===== FILE PATH =====
+./themes\grim.qss
+===== FILE CONTENT =====
+/* === GRIM THEME (FIXED) === */
+QWidget { background-color: #1c1c1c; color: #d7d7d7; font-family: 'Georgia', serif; font-size: 14px; }
+QMainWindow, QDialog, QScrollArea { background-color: #1c1c1c; border: none; }
+QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #262626; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
+    background-color: #333333; color: #e6e6e6; border: 1px solid #555; border-radius: 0px; padding: 6px;
+}
+QLineEdit:focus { border: 1px solid #a63a28; }
+
+/* --- KARTLAR (ŞEFFAF TEXTBOX) --- */
+QFrame[class="featureCard"] {
+    background-color: #3e3b36; border: 1px solid #111; border-left: 4px solid #a63a28; border-radius: 0px; margin-bottom: 8px;
+}
+/* KART İÇİ TEXTBOX: ŞEFFAF */
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+    background-color: transparent; border: none; color: #f0f0f0;
+}
+
+QFrame[class="combatCard"] { background-color: #3e3b36; border: 1px solid #111; border-radius: 0px; margin-bottom: 4px; }
+QFrame[class="combatCard"] QLabel { background-color: transparent; color: #f0f0f0; }
+QFrame[class="combatCard"][active="true"] { background-color: #4e4b46; border: 1px solid #d45d00; }
+QFrame[class="combatCard"][attitude="friendly"] { border-left: 5px solid #5e7d58; }
+QFrame[class="combatCard"][attitude="hostile"] { border-left: 5px solid #8a2be2; }
+QFrame[class="combatCard"][attitude="neutral"] { border-left: 5px solid #777; }
+QFrame[class="combatCard"][type="Player"] { border-left: 5px solid #a63a28; }
+
+QListWidget, QTableWidget { background-color: #262626; color: #d7d7d7; border: 1px solid #444; }
+QListWidget::item:selected { background-color: #a63a28; color: white; }
+/* --- BUTONLAR (GRIM - RUST) --- */
+QPushButton {
+    background-color: #333;
+    color: #ccc;
+    border: 1px solid #555;
+    border-radius: 2px;
+    padding: 6px 12px;
+    text-transform: uppercase;
     font-weight: bold;
+    letter-spacing: 1px;
+}
+QPushButton:hover { background-color: #444; border-color: #a63a28; }
+
+QPushButton#primaryBtn {
+    background-color: #7f2a1e; /* Pıhtı Kırmızısı */
+    color: #fff;
+    border: 1px solid #a63a28;
+}
+QPushButton#primaryBtn:hover { background-color: #8f3a2e; }
+
+QPushButton#successBtn {
+    background-color: #3d5c38; /* Soluk Yeşil */
+    color: #dcedc8;
+    border: 1px solid #558b2f;
+}
+QPushButton#successBtn:hover { background-color: #4b7043; }
+
+QPushButton#dangerBtn {
+    background-color: #5c2b2b; /* Koyu Bordo */
+    color: #ffcdd2;
+    border: 1px solid #8c2323;
+}
+QPushButton#dangerBtn:hover { background-color: #6d3b3b; }
+
+QPushButton#actionBtn {
+    background-color: #a63a28; /* Pas Rengi */
+    color: #1c1c1c;
+    border: 1px solid #bf360c;
+}
+QPushButton#actionBtn:hover { background-color: #bf4330; }
+
+QGroupBox { background-color: transparent; border: 1px solid #555; margin-top: 20px; padding-top: 15px; color: #a63a28; font-family: serif; }
+QTabWidget::pane { border: 1px solid #555; background-color: #262626; }
+QTabBar::tab { background-color: #1c1c1c; color: #777; padding: 8px 15px; }
+QTabBar::tab:selected { background-color: #262626; color: #a63a28; border-top: 2px solid #a63a28; }
+QLabel#headerLabel { color: #a63a28; font-weight: bold; font-family: serif; font-size: 18px; } QLabel#toolbarLabel { color: #d7d7d7; }
+QWidget#entityItem {
+    background-color: transparent; /* Widget'ın kendisi şeffaf */
+}
+
+QLabel#entityName {
+    color: #e0e0e0; /* Temanın ana yazı rengi neyse o (Örn: #e0e0e0) */
+    background-color: transparent;
+    font-weight: bold;
+}
+
+QLabel#entityCat {
+    color: #888888; /* Daha soluk bir renk */
+    background-color: transparent;
+    font-style: italic;
 }
 
 ===== FILE PATH =====
 ./themes\light.qss
 ===== FILE CONTENT =====
-/* === PREMIUM LIGHT THEME === */
-QMainWindow, QDialog {
-    background-color: #f5f7fa;
-    color: #24292e;
+/* === LIGHT THEME (FIXED) === */
+QWidget { background-color: #f5f7fa; color: #212121; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+QMainWindow, QDialog, QScrollArea { background-color: #f5f7fa; border: none; }
+QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #ffffff; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
+    background-color: #ffffff; color: #000000; border: 1px solid #cbd5e0; border-radius: 4px; padding: 6px; selection-background-color: #3182ce; selection-color: #ffffff;
+}
+QLineEdit:focus, QTextEdit:focus { border: 1px solid #3182ce; background-color: #ffffff; }
+
+/* --- KARTLAR (ŞEFFAF TEXTBOX) --- */
+QFrame[class="featureCard"] {
+    background-color: #f8f9fa; border: 1px solid #e2e8f0; border-left: 4px solid #3182ce; border-radius: 6px; margin-bottom: 8px;
+}
+/* KART İÇİ TEXTBOX: ŞEFFAF */
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+    background-color: transparent; border: none; color: #000000;
 }
 
-QWidget {
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 14px;
-    color: #24292e; /* Koyu Gri/Siyah Yazı */
-}
+QFrame[class="combatCard"] { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 4px; }
+QFrame[class="combatCard"] QLabel { background-color: transparent; color: #000000; }
+QFrame[class="combatCard"][active="true"] { background-color: #ebf8ff; border: 1px solid #3182ce; }
+QFrame[class="combatCard"][attitude="friendly"] { border-left: 5px solid #38a169; }
+QFrame[class="combatCard"][attitude="hostile"] { border-left: 5px solid #e53e3e; }
+QFrame[class="combatCard"][attitude="neutral"] { border-left: 5px solid #a0aec0; }
+QFrame[class="combatCard"][type="Player"] { border-left: 5px solid #3182ce; }
 
-/* Kapsayıcılar */
-QTabWidget::pane, QGroupBox, QFrame#sidebar {
-    background-color: #ffffff;
-    border: 1px solid #d1d5da;
-    border-radius: 4px;
-}
-
-/* === GİRDİ ALANLARI (INPUTS) === */
-QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QDateEdit, QTimeEdit {
-    background-color: #ffffff;
-    color: #24292e;
-    border: 1px solid #d1d5da;
-    border-radius: 4px;
-    padding: 6px;
-    selection-background-color: #0366d6;
-    selection-color: #ffffff;
-}
-
-QLineEdit:focus, QTextEdit:focus {
-    border: 1px solid #0366d6;
-}
-
-/* === COMBO BOX & MENÜLER (Düzeltilen Kısım) === */
-QComboBox {
-    background-color: #ffffff;
-    color: #24292e;
-    border: 1px solid #d1d5da;
-    padding: 5px;
-    border-radius: 4px;
-}
-
-/* Açılır listenin arka planı beyaz olsun */
-QComboBox QAbstractItemView {
-    background-color: #ffffff;
-    color: #24292e;
-    border: 1px solid #d1d5da;
-    selection-background-color: #e1e4e8;
-    selection-color: #24292e;
-    outline: none;
-}
-
-QMenu {
-    background-color: #ffffff;
-    color: #24292e;
-    border: 1px solid #d1d5da;
-}
-
-QMenu::item:selected {
-    background-color: #0366d6;
-    color: white;
-}
-
-/* === LİSTELER VE TABLOLAR === */
-QListWidget, QTableWidget, QTreeWidget {
-    background-color: #ffffff;
-    color: #24292e;
-    border: 1px solid #d1d5da;
-    alternate-background-color: #f6f8fa;
-}
-
-QListWidget::item:selected, QTableWidget::item:selected {
-    background-color: #0366d6;
-    color: #ffffff;
-}
-
-QHeaderView::section {
-    background-color: #f6f8fa;
-    color: #24292e;
-    padding: 6px;
-    border: 1px solid #d1d5da;
-    font-weight: bold;
-}
-
-/* === BUTONLAR === */
+QListWidget, QTableWidget { background-color: #ffffff; color: #212121; border: 1px solid #cbd5e0; }
+QListWidget::item:selected { background-color: #3182ce; color: #ffffff; }
+/* --- BUTONLAR (LIGHT - SOFT) --- */
 QPushButton {
-    background-color: #f6f8fa;
+    background-color: #ffffff;
     color: #24292e;
     border: 1px solid #d1d5da;
     border-radius: 4px;
-    padding: 8px 16px;
+    padding: 6px 12px;
     font-weight: 600;
 }
-
 QPushButton:hover {
-    background-color: #e1e4e8;
+    background-color: #f3f4f6; /* Çok hafif gri hover */
     border-color: #959da5;
 }
-
-QPushButton:pressed {
-    background-color: #d1d5da;
-}
+QPushButton:pressed { background-color: #e1e4e8; }
 
 QPushButton#primaryBtn {
-    background-color: #2188ff;
+    background-color: #2188ff; /* GitHub Mavisi */
     color: white;
     border: 1px solid #0366d6;
 }
 QPushButton#primaryBtn:hover { background-color: #0366d6; }
 
+QPushButton#successBtn {
+    background-color: #2ea44f; /* Yumuşak Yeşil */
+    color: white;
+    border: 1px solid #22863a;
+}
+QPushButton#successBtn:hover { background-color: #2c974b; }
+
 QPushButton#dangerBtn {
-    background-color: #d73a49;
+    background-color: #d73a49; /* Yumuşak Kırmızı */
     color: white;
     border: 1px solid #b60205;
 }
+QPushButton#dangerBtn:hover { background-color: #cb2431; }
 
-/* === SEKMELER === */
-QTabBar::tab {
-    background: #e1e4e8;
-    color: #586069;
-    padding: 8px 20px;
-    margin-right: 2px;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-}
-
-QTabBar::tab:selected {
-    background: #ffffff;
+QPushButton#actionBtn {
+    background-color: #ffb300; /* Amber */
     color: #24292e;
-    border-top: 3px solid #0366d6;
+    border: 1px solid #e6a200;
+}
+QPushButton#actionBtn:hover { background-color: #ffca28; }
+
+QGroupBox { background-color: transparent; border: 1px solid #cbd5e0; border-radius: 6px; margin-top: 20px; padding-top: 15px; color: #2b6cb0; font-weight: bold; }
+QTabWidget::pane { border: 1px solid #cbd5e0; background-color: #ffffff; }
+QTabBar::tab { background-color: #e2e8f0; color: #4a5568; padding: 8px 15px; }
+QTabBar::tab:selected { background-color: #ffffff; color: #2b6cb0; border-top: 3px solid #3182ce; font-weight: bold; }
+QLabel#headerLabel { color: #2b6cb0; font-weight: bold; } QLabel#toolbarLabel { color: #1a202c; font-weight: bold; }
+/* --- ENTITY LIST ITEM DÜZELTMESİ (AÇIK) --- */
+QWidget#entityItem {
+    background-color: transparent;
+}
+
+QLabel#entityName {
+    color: #000000; /* Koyu yazı */
+    background-color: transparent;
     font-weight: bold;
 }
 
-QGroupBox {
-    margin-top: 20px;
-    font-weight: bold;
-    color: #0366d6;
+QLabel#entityCat {
+    color: #555555; /* Gri yazı */
+    background-color: transparent;
+    font-style: italic;
 }
 
 ===== FILE PATH =====
 ./themes\midnight.qss
 ===== FILE CONTENT =====
-QMainWindow, QDialog {
-    background-color: #121212;
-    color: #b0bec5;
-}
+/* === MIDNIGHT THEME (FIXED) === */
+QWidget { background-color: #121212; color: #b0bec5; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+QMainWindow, QDialog, QScrollArea { background-color: #121212; border: none; }
+QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #000000; }
 
-QWidget {
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 14px;
-    color: #b0bec5;
-}
-
-/* --- INPUTLAR --- */
 QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
-    background-color: #000000; /* Tam siyah */
-    color: #ffffff;
-    border: 1px solid #333;
-    border-radius: 4px;
-    padding: 6px;
+    background-color: #000000; color: #ffffff; border: 1px solid #333; border-radius: 4px; padding: 6px;
+}
+QLineEdit:focus { border: 1px solid #7c4dff; }
+
+/* --- KARTLAR (ŞEFFAF TEXTBOX) --- */
+QFrame[class="featureCard"] {
+    background-color: #1e1e1e; border: 1px solid #333; border-left: 4px solid #7c4dff; border-radius: 4px; margin-bottom: 8px;
+}
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+    background-color: transparent; border: none; color: #ffffff;
 }
 
-QLineEdit:focus, QTextEdit:focus {
-    border: 1px solid #7c4dff; /* Mor Vurgu */
-}
+QFrame[class="combatCard"] { background-color: #1e1e1e; border: 1px solid #333; border-radius: 6px; margin-bottom: 4px; }
+QFrame[class="combatCard"] QLabel { background-color: transparent; color: #b0bec5; }
+QFrame[class="combatCard"][active="true"] { background-color: #1a1a2e; border: 1px solid #7c4dff; }
+QFrame[class="combatCard"][attitude="friendly"] { border-left: 5px solid #00c853; }
+QFrame[class="combatCard"][attitude="hostile"] { border-left: 5px solid #d50000; }
+QFrame[class="combatCard"][attitude="neutral"] { border-left: 5px solid #616161; }
+QFrame[class="combatCard"][type="Player"] { border-left: 5px solid #651fff; }
 
-/* --- LİSTELER --- */
-QListWidget, QTableWidget {
-    background-color: #000000;
-    border: 1px solid #333;
-    alternate-background-color: #0a0a0a;
-}
-
-QListWidget::item:selected, QTableWidget::item:selected {
-    background-color: #4527a0; /* Koyu Mor */
-    color: white;
-}
-
-/* --- BUTONLAR --- */
+QListWidget, QTableWidget { background-color: #000000; color: #b0bec5; border: 1px solid #333; }
+QListWidget::item:selected { background-color: #4527a0; color: white; }
+/* --- BUTONLAR (MIDNIGHT - PURPLE) --- */
 QPushButton {
     background-color: #1e1e1e;
+    color: #e0e0e0;
     border: 1px solid #333;
     border-radius: 4px;
-    padding: 8px 15px;
-    color: #e0e0e0;
+    padding: 6px 12px;
 }
-
-QPushButton:hover {
-    background-color: #333;
-    border-color: #7c4dff;
-}
+QPushButton:hover { background-color: #333; border-color: #651fff; }
 
 QPushButton#primaryBtn {
-    background-color: #651fff;
+    background-color: #651fff; /* Derin Mor */
     color: white;
+    border: none;
+}
+QPushButton#primaryBtn:hover { background-color: #7c4dff; }
+
+QPushButton#successBtn {
+    background-color: #00c853;
+    color: white;
+    border: none;
+}
+QPushButton#successBtn:hover { background-color: #00e676; }
+
+QPushButton#dangerBtn {
+    background-color: #d50000;
+    color: white;
+    border: none;
+}
+QPushButton#dangerBtn:hover { background-color: #ff1744; }
+
+QPushButton#actionBtn {
+    background-color: #ffab00; /* Altın */
+    color: black;
+    border: none;
+}
+QPushButton#actionBtn:hover { background-color: #ffc400; }
+
+QGroupBox { background-color: transparent; border: 1px solid #333; border-radius: 6px; margin-top: 20px; padding-top: 15px; color: #b388ff; }
+QTabWidget::pane { border: 1px solid #333; background-color: #121212; }
+QTabBar::tab { background-color: #1e1e1e; color: #777; padding: 8px 15px; }
+QTabBar::tab:selected { background-color: #121212; color: #b388ff; border-top: 3px solid #651fff; }
+QLabel#headerLabel { color: #7c4dff; font-weight: bold; } QLabel#toolbarLabel { color: #b0bec5; }
+QWidget#entityItem {
+    background-color: transparent; /* Widget'ın kendisi şeffaf */
 }
 
-/* --- SEKMELER --- */
-QTabWidget::pane {
-    border: 1px solid #333;
-    background-color: #121212;
+QLabel#entityName {
+    color: #e0e0e0; /* Temanın ana yazı rengi neyse o (Örn: #e0e0e0) */
+    background-color: transparent;
+    font-weight: bold;
 }
 
-QTabBar::tab {
-    background: #1e1e1e;
-    color: #777;
-    padding: 8px 15px;
-}
-
-QTabBar::tab:selected {
-    background: #121212;
-    color: #b388ff;
-    border-top: 2px solid #651fff;
-}
-
-QGroupBox {
-    border: 1px solid #333;
-    border-radius: 5px;
-    margin-top: 15px;
-    color: #7c4dff;
+QLabel#entityCat {
+    color: #888888; /* Daha soluk bir renk */
+    background-color: transparent;
+    font-style: italic;
 }
 
 ===== FILE PATH =====
 ./themes\ocean.qss
 ===== FILE CONTENT =====
-/* === OCEAN THEME === */
-QMainWindow, QDialog {
-    background-color: #0f1b26;
-    color: #e0f7fa;
-}
+/* === OCEAN THEME (FIXED) === */
+QWidget { background-color: #0f1b26; color: #e0f7fa; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+QMainWindow, QDialog, QScrollArea { background-color: #0f1b26; border: none; }
+QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #162533; }
 
-QWidget {
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 14px;
-    color: #e0f7fa;
-}
-
-/* Kapsayıcılar */
-QTabWidget::pane, QGroupBox {
-    background-color: #162533;
-    border: 1px solid #37474f;
-}
-
-/* === GİRDİ ALANLARI === */
 QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
-    background-color: #0a131a;
-    color: #80deea;
-    border: 1px solid #4dd0e1;
-    border-radius: 4px;
-    padding: 6px;
+    background-color: #0a131a; color: #80deea; border: 1px solid #4dd0e1; border-radius: 4px; padding: 6px;
 }
 
-QComboBox QAbstractItemView {
-    background-color: #0a131a;
-    color: #e0f7fa;
-    selection-background-color: #00acc1;
-    selection-color: white;
+/* --- KARTLAR (ŞEFFAF TEXTBOX) --- */
+QFrame[class="featureCard"] {
+    background-color: #0a131a; border: 1px solid #37474f; border-left: 4px solid #00bcd4; border-radius: 4px; margin-bottom: 8px;
+}
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+    background-color: transparent; border: none; color: #e0f7fa;
 }
 
-/* === LİSTELER === */
-QListWidget, QTableWidget {
-    background-color: #0a131a;
-    color: #e0f7fa;
-    border: 1px solid #37474f;
+QFrame[class="combatCard"] { background-color: #0a131a; border: 1px solid #37474f; border-radius: 6px; margin-bottom: 4px; }
+QFrame[class="combatCard"] QLabel { background-color: transparent; color: #e0f7fa; }
+QFrame[class="combatCard"][active="true"] { background-color: #263238; border: 1px solid #00bcd4; }
+
+QListWidget, QTableWidget { background-color: #0a131a; color: #e0f7fa; border: 1px solid #37474f; }
+QListWidget::item:selected { background-color: #00acc1; color: white; }
+QPushButton { background-color: #263238; color: #e0f7fa; border: 1px solid #455a64; border-radius: 4px; padding: 6px 12px; }
+QPushButton:hover { background-color: #37474f; border-color: #4dd0e1; }
+QPushButton#primaryBtn { background-color: #00bcd4; color: black; border: none; font-weight: bold; }
+QPushButton#successBtn { background-color: #00897b; color: white; border: none; }
+QPushButton#dangerBtn { background-color: #c62828; color: white; border: none; }
+
+QGroupBox { background-color: transparent; border: 1px solid #37474f; border-radius: 6px; margin-top: 20px; padding-top: 15px; color: #4dd0e1; }
+QTabWidget::pane { border: 1px solid #37474f; background-color: #162533; }
+QTabBar::tab { background-color: #1c2a38; color: #546e7a; padding: 8px 15px; }
+QTabBar::tab:selected { background-color: #162533; color: #26c6da; border-top: 2px solid #26c6da; }
+QLabel#headerLabel { color: #26c6da; font-weight: bold; } QLabel#toolbarLabel { color: #e0f7fa; }
+QWidget#entityItem {
+    background-color: transparent; /* Widget'ın kendisi şeffaf */
 }
 
-QListWidget::item:selected, QTableWidget::item:selected {
-    background-color: #00acc1;
-    color: #ffffff;
-}
-
-QHeaderView::section {
-    background-color: #263238;
-    color: #80deea;
-    padding: 5px;
-    border: 1px solid #37474f;
-}
-
-/* === BUTONLAR === */
-QPushButton {
-    background-color: #263238;
-    border: 1px solid #455a64;
-    color: #e0f7fa;
-    border-radius: 4px;
-    padding: 8px 15px;
-}
-
-QPushButton:hover {
-    background-color: #37474f;
-    border-color: #4dd0e1;
-}
-
-QPushButton#primaryBtn {
-    background-color: #00bcd4;
-    color: #000000;
+QLabel#entityName {
+    color: #e0e0e0; /* Temanın ana yazı rengi neyse o (Örn: #e0e0e0) */
+    background-color: transparent;
     font-weight: bold;
 }
 
-/* === SEKMELER === */
-QTabBar::tab {
-    background: #1c2a38;
-    color: #546e7a;
-    padding: 8px 20px;
-    margin-right: 2px;
-}
-
-QTabBar::tab:selected {
-    background: #162533;
-    color: #26c6da;
-    border-top: 2px solid #26c6da;
-    font-weight: bold;
-}
-
-QGroupBox {
-    color: #4dd0e1;
-    margin-top: 20px;
-    font-weight: bold;
+QLabel#entityCat {
+    color: #888888; /* Daha soluk bir renk */
+    background-color: transparent;
+    font-style: italic;
 }
 
 ===== FILE PATH =====
 ./themes\parchment.qss
 ===== FILE CONTENT =====
-/* === PARCHMENT THEME === */
-QMainWindow, QDialog {
-    background-color: #f4ecd8;
-    color: #3e2723;
-}
+/* === PARCHMENT THEME (FIXED) === */
+QWidget { background-color: #dccdb5; color: #3e2723; font-family: 'Georgia', serif; font-size: 14px; }
+QMainWindow, QDialog, QScrollArea { background-color: #dccdb5; border: none; }
+QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #e5dace; }
 
-QWidget {
-    font-family: 'Georgia', 'Segoe UI', serif;
-    font-size: 14px;
-    color: #3e2723;
-}
-
-/* Kapsayıcılar */
-QTabWidget::pane, QGroupBox {
-    background-color: #fdfbf7;
-    border: 1px solid #d7ccc8;
-}
-
-/* === GİRDİ ALANLARI === */
 QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
-    background-color: #ffffff;
-    color: #3e2723;
-    border: 1px solid #a1887f;
-    border-radius: 4px;
-    padding: 6px;
+    background-color: #f2eadd; color: #3e2723; border: 1px solid #a1887f; border-radius: 4px; padding: 6px; selection-background-color: #8d6e63;
+}
+QLineEdit:focus, QTextEdit:focus { border: 1px solid #5d4037; background-color: #ffffff; }
+
+/* --- KARTLAR (ŞEFFAF TEXTBOX) --- */
+QFrame[class="featureCard"] {
+    background-color: #ebdcc6; border: 1px solid #bcaaa4; border-left: 4px solid #795548; border-radius: 4px; margin-bottom: 8px;
+}
+/* KART İÇİ TEXTBOX: ŞEFFAF */
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+    background-color: transparent; border: none; color: #3e2723;
 }
 
-QComboBox QAbstractItemView {
-    background-color: #fff8e1;
-    color: #3e2723;
-    selection-background-color: #8d6e63;
-    selection-color: #ffffff;
-}
+QFrame[class="combatCard"] { background-color: #ebdcc6; border: 1px solid #bcaaa4; border-radius: 6px; margin-bottom: 4px; }
+QFrame[class="combatCard"] QLabel { background-color: transparent; color: #3e2723; }
+QFrame[class="combatCard"][active="true"] { background-color: #d7ccc8; border: 2px solid #5d4037; }
+QFrame[class="combatCard"][attitude="friendly"] { border-left: 5px solid #558b2f; }
+QFrame[class="combatCard"][attitude="hostile"] { border-left: 5px solid #c62828; }
+QFrame[class="combatCard"][attitude="neutral"] { border-left: 5px solid #8d6e63; }
+QFrame[class="combatCard"][type="Player"] { border-left: 5px solid #1565c0; }
 
-/* === LİSTELER === */
-QListWidget, QTableWidget {
-    background-color: #fff8e1;
-    color: #3e2723;
-    border: 1px solid #d7ccc8;
-    alternate-background-color: #f4ecd8;
-}
-
-QListWidget::item:selected, QTableWidget::item:selected {
-    background-color: #8d6e63;
-    color: #ffffff;
-}
-
-QHeaderView::section {
-    background-color: #d7ccc8;
-    color: #3e2723;
-    padding: 5px;
-    border: 1px solid #a1887f;
-}
-
-/* === BUTONLAR === */
+QListWidget, QTableWidget { background-color: #f2eadd; color: #3e2723; border: 1px solid #a1887f; }
+QListWidget::item:selected { background-color: #a1887f; color: #fff8e1; }
+/* --- BUTONLAR (PARCHMENT - LEATHER STYLE) --- */
 QPushButton {
-    background-color: #efebe9;
-    border: 1px solid #a1887f;
-    color: #3e2723;
+    background-color: #e5dace; /* Açık parşömen */
+    color: #4e342e; /* Koyu kahve yazı */
+    border: 1px solid #a1887f; /* Bronz sınır */
     border-radius: 4px;
-    padding: 8px 15px;
+    padding: 6px 12px;
+    font-weight: bold;
 }
-
-QPushButton:hover {
-    background-color: #d7ccc8;
-}
+QPushButton:hover { background-color: #d7ccc8; border-color: #8d6e63; }
 
 QPushButton#primaryBtn {
-    background-color: #5d4037;
-    color: #f4ecd8;
+    background-color: #5d4037; /* Koyu Deri */
+    color: #fdfbf7; /* Kağıt rengi yazı */
+    border: 1px solid #3e2723;
 }
+QPushButton#primaryBtn:hover { background-color: #6d4c41; }
 
-/* === SEKMELER === */
-QTabBar::tab {
-    background: #d7ccc8;
-    color: #5d4037;
-    padding: 8px 20px;
-    border: 1px solid #a1887f;
-    border-bottom: none;
-    margin-right: 2px;
+QPushButton#successBtn {
+    background-color: #558b2f; /* Yosun Yeşili */
+    color: white;
+    border: 1px solid #33691e;
 }
+QPushButton#successBtn:hover { background-color: #689f38; }
 
-QTabBar::tab:selected {
-    background: #fdfbf7;
+QPushButton#dangerBtn {
+    background-color: #c62828; /* Mühür Kırmızısı */
+    color: white;
+    border: 1px solid #b71c1c;
+}
+QPushButton#dangerBtn:hover { background-color: #d32f2f; }
+
+QPushButton#actionBtn {
+    background-color: #ff8f00; /* Kehribar */
     color: #3e2723;
-    font-weight: bold;
-    border-bottom: 2px solid #fdfbf7;
+    border: 1px solid #ff6f00;
+}
+QPushButton#actionBtn:hover { background-color: #ffa000; }
+
+QGroupBox { background-color: transparent; border: 1px solid #a1887f; border-radius: 6px; margin-top: 20px; padding-top: 15px; color: #5d4037; font-weight: bold; }
+QTabWidget::pane { border: 1px solid #a1887f; background-color: #e5dace; }
+QTabBar::tab { background-color: #dccdb5; color: #6d4c41; padding: 8px 15px; }
+QTabBar::tab:selected { background-color: #e5dace; color: #3e2723; border-top: 3px solid #5d4037; font-weight: bold; }
+QLabel#headerLabel { color: #5d4037; font-weight: bold; } QLabel#toolbarLabel { color: #3e2723; font-weight: bold; }
+/* --- ENTITY LIST ITEM DÜZELTMESİ (AÇIK) --- */
+QWidget#entityItem {
+    background-color: transparent;
 }
 
-QGroupBox {
-    color: #5d4037;
+QLabel#entityName {
+    color: #000000; /* Koyu yazı */
+    background-color: transparent;
     font-weight: bold;
-    margin-top: 15px;
+}
+
+QLabel#entityCat {
+    color: #555555; /* Gri yazı */
+    background-color: transparent;
+    font-style: italic;
 }
 
 ===== FILE PATH =====
 ./ui\campaign_selector.py
 ===== FILE CONTENT =====
+# ui/campaign_selector.py tamamını güncelleyelim:
+
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QListWidget, QPushButton, 
-                             QLineEdit, QHBoxLayout, QLabel, QMessageBox, QWidget, QComboBox) # QComboBox eklendi
+                             QLineEdit, QHBoxLayout, QLabel, QMessageBox, QWidget, QComboBox)
 from core.locales import tr, set_language
 from PyQt6.QtCore import Qt
 
@@ -5453,21 +5770,9 @@ class CampaignSelector(QDialog):
         self.dm = data_manager
         self.selected_campaign = None
         
-        self.selected_campaign = None
-        
-        self.setWindowTitle("Select World")
+        self.setWindowTitle("Select World") # Geçici, update_texts düzeltecek
         self.setFixedSize(400, 500)
-        self.setStyleSheet("""
-            QDialog { background-color: #1e1e1e; color: white; }
-            QListWidget { background-color: #252526; border: 1px solid #333; font-size: 16px; }
-            QListWidget::item { padding: 10px; }
-            QListWidget::item:selected { background-color: #007acc; }
-            QLineEdit { padding: 8px; background-color: #333; color: white; border: 1px solid #555; }
-            QPushButton { padding: 10px; background-color: #444; color: white; border: none; font-weight: bold; }
-            QPushButton:hover { background-color: #555; }
-            QPushButton#createBtn { background-color: #2e7d32; }
-            QPushButton#loadBtn { background-color: #007acc; }
-        """)
+        # Stil QSS'den gelecek, burayı temizliyoruz veya basic bırakıyoruz
         
         self.init_ui()
         self.refresh_list()
@@ -5476,21 +5781,20 @@ class CampaignSelector(QDialog):
         layout = QVBoxLayout(self)
         
         # Başlık
-        # Başlık
-        self.lbl_title = QLabel("🔮 Select World")
+        self.lbl_title = QLabel()
         self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #ffa500;")
+        self.lbl_title.setObjectName("headerLabel") # QSS ID
+        self.lbl_title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 10px;")
         layout.addWidget(self.lbl_title)
         
         # Liste
         self.list_widget = QListWidget()
-        self.list_widget.itemDoubleClicked.connect(self.load_campaign) # Çift tıklama ile aç
+        self.list_widget.itemDoubleClicked.connect(self.load_campaign)
         layout.addWidget(self.list_widget)
         
         # Yükle Butonu
-        # Yükle Butonu
-        self.btn_load = QPushButton("Load")
-        self.btn_load.setObjectName("loadBtn")
+        self.btn_load = QPushButton()
+        self.btn_load.setObjectName("primaryBtn")
         self.btn_load.clicked.connect(self.load_campaign)
         layout.addWidget(self.btn_load)
         
@@ -5499,10 +5803,9 @@ class CampaignSelector(QDialog):
         # Yeni Oluşturma Alanı
         create_layout = QHBoxLayout()
         self.inp_new_name = QLineEdit()
-        self.inp_new_name.setPlaceholderText("Yeni Dünya Adı...")
         
-        self.btn_create = QPushButton("Create")
-        self.btn_create.setObjectName("createBtn")
+        self.btn_create = QPushButton()
+        self.btn_create.setObjectName("successBtn")
         self.btn_create.clicked.connect(self.create_campaign)
         
         create_layout.addWidget(self.inp_new_name)
@@ -5510,16 +5813,14 @@ class CampaignSelector(QDialog):
         
         layout.addLayout(create_layout)
 
-        # Dil Seçimi (Alt Kısım)
+        # Dil Seçimi
         lang_layout = QHBoxLayout()
-        self.lbl_lang = QLabel(tr("LBL_LANGUAGE")) # "Language / Dil:"
+        self.lbl_lang = QLabel(tr("LBL_LANGUAGE"))
         self.combo_lang = QComboBox()
         self.combo_lang.addItems(["English", "Türkçe"])
         
-        # Mevcut dili seç
         current_lang = self.dm.settings.get("language", "EN")
         self.combo_lang.setCurrentIndex(1 if current_lang == "TR" else 0)
-        
         self.combo_lang.currentIndexChanged.connect(self.change_language)
         
         lang_layout.addStretch()
@@ -5536,10 +5837,10 @@ class CampaignSelector(QDialog):
 
     def update_texts(self):
         self.setWindowTitle(tr("TITLE_SELECT_WORLD"))
-        self.lbl_title.setText(tr("TITLE_SELECT_WORLD"))
-        self.btn_load.setText(tr("BTN_LOAD_SESSION")) # "Load" / "Yükle"
-        self.inp_new_name.setPlaceholderText(tr("MSG_ENTER_WORLD_NAME"))
-        self.btn_create.setText(tr("BTN_CREATE_WORLD"))
+        self.lbl_title.setText(tr("LBL_SELECT_WORLD_TITLE"))
+        self.btn_load.setText(tr("BTN_LOAD"))
+        self.inp_new_name.setPlaceholderText(tr("PH_NEW_WORLD_NAME"))
+        self.btn_create.setText(tr("BTN_CREATE"))
         self.lbl_lang.setText(tr("LBL_LANGUAGE"))
 
     def refresh_list(self):
@@ -5548,10 +5849,9 @@ class CampaignSelector(QDialog):
         self.list_widget.addItems(campaigns)
 
     def load_campaign(self):
-        # Seçili item var mı?
         current_item = self.list_widget.currentItem()
         if not current_item:
-            QMessageBox.warning(self, "Uyarı", "Lütfen bir dünya seçin.")
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_WORLD_WARN"))
             return
             
         world_name = current_item.text()
@@ -5559,19 +5859,18 @@ class CampaignSelector(QDialog):
         
         if success:
             self.selected_campaign = world_name
-            self.accept() # Diyaloğu kapat ve "Başarılı" kodu dön
+            self.accept()
         else:
-            QMessageBox.critical(self, "Hata", msg)
+            QMessageBox.critical(self, tr("MSG_ERROR"), msg)
 
     def create_campaign(self):
         name = self.inp_new_name.text().strip()
         if not name:
-            QMessageBox.warning(self, "Uyarı", "İsim boş olamaz.")
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NAME_EMPTY"))
             return
             
-        # Zaten var mı kontrolü (basit)
         if name in self.dm.get_available_campaigns():
-             QMessageBox.warning(self, "Uyarı", "Bu isimde bir dünya zaten var.")
+             QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_WORLD_EXISTS"))
              return
 
         success, msg = self.dm.create_campaign(name)
@@ -5579,7 +5878,7 @@ class CampaignSelector(QDialog):
             self.selected_campaign = name
             self.accept()
         else:
-            QMessageBox.critical(self, "Hata", msg)
+            QMessageBox.critical(self, tr("MSG_ERROR"), msg)
 
 ===== FILE PATH =====
 ./ui\player_window.py
@@ -5709,20 +6008,9 @@ class ApiBrowser(QDialog):
         
         self.setWindowTitle(f"{tr('TITLE_API')}: {category}")
         self.resize(900, 600)
-        self.setStyleSheet("""
-            QDialog { background-color: #1e1e1e; color: white; }
-            QLineEdit { padding: 8px; background-color: #333; color: white; border: 1px solid #555; }
-            QListWidget { background-color: #252526; border: 1px solid #444; }
-            QListWidget::item { padding: 5px; }
-            QListWidget::item:selected { background-color: #007acc; }
-            QTextEdit { background-color: #2b2b2b; border: 1px solid #444; }
-            QPushButton { padding: 10px; background-color: #444; color: white; font-weight: bold; border: none; }
-            QPushButton:hover { background-color: #555; }
-            QPushButton#importBtn { background-color: #2e7d32; }
-            QPushButton#importBtn:hover { background-color: #1b5e20; }
-            QPushButton#importNpcBtn { background-color: #0277bd; }
-            QPushButton#importNpcBtn:hover { background-color: #01579b; }
-        """)
+        
+        # Hardcoded stil bloğu KALDIRILDI. 
+        # Tüm renkler ve şekiller artık QSS dosyalarından (dark.qss vb.) yüklenecek.
         
         self.full_list = [] # API'den gelen ham liste
         self.init_ui()
@@ -5748,22 +6036,27 @@ class ApiBrowser(QDialog):
         # Sağ: Önizleme
         preview_widget = QWidget()
         prev_layout = QVBoxLayout(preview_widget)
-        prev_layout.setContentsMargins(0,0,0,0)
+        prev_layout.setContentsMargins(10, 0, 0, 0) # Sol taraftan biraz boşluk bırak
         
         self.lbl_name = QLabel(tr("MSG_NO_SELECTION"))
-        self.lbl_name.setStyleSheet("font-size: 18px; font-weight: bold; color: #ffa500; margin-bottom: 5px;")
+        # Başlık için ID atıyoruz (Temalarda özelleştirilebilir)
+        self.lbl_name.setObjectName("headerLabel")
+        # Sadece font büyüklüğünü ve kalınlığını burada belirtiyoruz, rengi temaya bırakıyoruz.
+        self.lbl_name.setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 5px;")
         
         self.txt_desc = QTextEdit()
         self.txt_desc.setReadOnly(True)
         
         btn_layout = QHBoxLayout()
         self.btn_import = QPushButton(tr("BTN_IMPORT"))
-        self.btn_import.setObjectName("importBtn")
+        # Temadan "Yeşil Buton" stilini alması için ID:
+        self.btn_import.setObjectName("successBtn")
         self.btn_import.setEnabled(False)
         self.btn_import.clicked.connect(self.import_selected)
         
         self.btn_import_npc = QPushButton(tr("BTN_IMPORT_NPC"))
-        self.btn_import_npc.setObjectName("importNpcBtn")
+        # Temadan "Mavi/Ana Buton" stilini alması için ID:
+        self.btn_import_npc.setObjectName("primaryBtn")
         self.btn_import_npc.setVisible(False)
         self.btn_import_npc.clicked.connect(lambda: self.import_selected(target_type="NPC"))
         
@@ -5901,7 +6194,7 @@ class ApiBrowser(QDialog):
             QApplication.processEvents() # Arayüzün donmaması için
             
             try:
-                # Asıl kaydetme işlemini yap (büyüklerle birlikte)
+                # Asıl kaydetme işlemini yap (büyülerle birlikte)
                 self.dm.import_entity_with_dependencies(self.selected_data, type_override=target_type)
                 
                 QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_IMPORT_SUCCESS_DETAIL", name=self.selected_data['name']))
@@ -5940,12 +6233,12 @@ class DownloadWorker(QThread):
         # Not: 'equipment' endpoint'i; Weapons, Armor, Adventuring Gear, Tools ve Mounts'u kapsar.
         # 'magic-items' ise tüm büyülü eşyaları kapsar. Bu ikisi toplam %100 eşya kapsamı sağlar.
         self.categories = {
-            "monsters": "Canavarlar",
-            "spells": "Büyüler",
-            "equipment": "Tüm Teçhizat (Silah, Zırh, Araç, Kitler...)", 
-            "magic-items": "Tüm Büyülü Eşyalar (İksir, Yüzük, Asa...)",
-            "classes": "Sınıflar",
-            "races": "Irklar"
+            "monsters": tr("CAT_MONSTERS_PL"),
+            "spells": tr("CAT_SPELLS_PL"),
+            "equipment": tr("CAT_EQUIPMENT_ALL"), 
+            "magic-items": tr("CAT_MAGIC_ITEMS_ALL"),
+            "classes": tr("CAT_CLASSES_PL"),
+            "races": tr("CAT_RACES_PL")
         }
 
     def run(self):
@@ -6220,25 +6513,11 @@ class EncounterSelectionDialog(QDialog):
     def __init__(self, data_manager, parent=None):
         super().__init__(parent)
         self.dm = data_manager
-        self.selected_entities = [] # [(entity_id, count), ...]
+        self.selected_entities = [] 
         
-        self.setWindowTitle("Savaşa Varlık Ekle")
+        self.setWindowTitle(tr("TITLE_ADD_COMBAT"))
         self.resize(800, 600)
-        self.setStyleSheet("""
-            QDialog { background-color: #1e1e1e; color: #e0e0e0; }
-            QLineEdit, QComboBox, QSpinBox { 
-                background-color: #333; color: white; border: 1px solid #555; padding: 5px; 
-            }
-            QTableWidget { 
-                background-color: #252526; gridline-color: #444; color: white; border: none;
-            }
-            QTableWidget::item:selected { background-color: #007acc; }
-            QHeaderView::section { background-color: #333; color: white; padding: 4px; }
-            QPushButton { 
-                background-color: #0d47a1; color: white; padding: 10px; font-weight: bold; border-radius: 4px; 
-            }
-            QPushButton:hover { background-color: #1565c0; }
-        """)
+        # Stil QSS'den gelecek, buraya yazmıyoruz.
         
         self.init_ui()
         self.load_data()
@@ -6250,16 +6529,20 @@ class EncounterSelectionDialog(QDialog):
         filter_layout = QHBoxLayout()
         
         self.inp_search = QLineEdit()
-        self.inp_search.setPlaceholderText("İsim veya Etiket Ara...")
+        self.inp_search.setPlaceholderText(tr("PH_SEARCH_NAME_TAG"))
         self.inp_search.textChanged.connect(self.filter_table)
         
         self.combo_type = QComboBox()
-        self.combo_type.addItems(["Tümü", "NPC", "Canavar", "Oyuncu"])
+        self.combo_type.addItem(tr("LBL_TYPE_ALL"), "Tümü")
+        self.combo_type.addItem(tr("CAT_NPC"), "NPC")
+        self.combo_type.addItem(tr("CAT_MONSTER"), "Monster") # Data 'Monster' olduğu için value 'Monster' kalmalı
+        self.combo_type.addItem(tr("CAT_PLAYER"), "Player")
+        
         self.combo_type.currentTextChanged.connect(self.filter_table)
         
         filter_layout.addWidget(QLabel("🔍"))
         filter_layout.addWidget(self.inp_search, 3)
-        filter_layout.addWidget(QLabel("Tip:"))
+        filter_layout.addWidget(QLabel(f"{tr('LBL_TYPE')}:"))
         filter_layout.addWidget(self.combo_type, 1)
         
         layout.addLayout(filter_layout)
@@ -6267,29 +6550,31 @@ class EncounterSelectionDialog(QDialog):
         # --- ORTA TABLO ALANI ---
         self.table = QTableWidget()
         self.table.setColumnCount(6)
-        # Sütunlar: İsim, Tip, HP, AC, Init Bonus, ID(Gizli)
-        self.table.setHorizontalHeaderLabels(["İsim", "Tip", "HP", "AC", "Init Bonus", "ID"])
-        self.table.hideColumn(5) # ID sütununu gizle
+        # Başlıklar
+        headers = [tr("HEADER_NAME"), tr("LBL_TYPE"), tr("LBL_HP"), tr("LBL_AC"), tr("HEADER_INIT_BONUS"), "ID"]
+        self.table.setHorizontalHeaderLabels(headers)
+        self.table.hideColumn(5) # ID sütunu gizli
         
         # Tablo Ayarları
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection) # Çoklu Seçim
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.table.setSortingEnabled(True)
-        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers) # Düzenlenemez
-        self.table.doubleClicked.connect(self.add_and_close) # Çift tıklayınca ekle ve kapat
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.doubleClicked.connect(self.add_and_close)
         
         layout.addWidget(self.table)
         
         # --- ALT AKSİYON ALANI ---
         action_layout = QHBoxLayout()
-        self.lbl_count = QLabel("Seçilenlerden Kaçar Adet Eklensin:")
+        self.lbl_count = QLabel(tr("LBL_ADD_COUNT"))
         self.spin_count = QSpinBox()
         self.spin_count.setRange(1, 20)
         self.spin_count.setValue(1)
         self.spin_count.setFixedWidth(60)
         
-        self.btn_add = QPushButton("✅ Seçilenleri Savaşa Ekle")
+        self.btn_add = QPushButton(tr("BTN_ADD_SELECTED"))
+        self.btn_add.setObjectName("successBtn")
         self.btn_add.clicked.connect(self.accept_selection)
         
         action_layout.addStretch()
@@ -6299,9 +6584,24 @@ class EncounterSelectionDialog(QDialog):
         
         layout.addLayout(action_layout)
 
+    def _parse_int(self, value):
+        """Metin içindeki ilk sayıyı alır (Örn: '45 (5d10)' -> 45)"""
+        if not value: return 0
+        try:
+            # Boşluktan böl ve ilk kısmı al
+            first_part = str(value).split(' ')[0]
+            # Sadece rakamları filtrele (Örn: '14,' -> '14')
+            clean_num = ''.join(filter(str.isdigit, first_part))
+            return int(clean_num) if clean_num else 0
+        except:
+            return 0
+
     def load_data(self):
         self.table.setRowCount(0)
         entities = self.dm.data["entities"]
+        
+        # Verileri sıralama kolaylığı için önce listeye alalım (Opsiyonel ama temiz olur)
+        # Ancak direkt döngü de olur.
         
         for eid, data in entities.items():
             etype = data.get("type", "NPC")
@@ -6310,20 +6610,25 @@ class EncounterSelectionDialog(QDialog):
             if etype not in ["NPC", "Monster", "Canavar", "Player", "Oyuncu"]:
                 continue
                 
-            name = data.get("name", "İsimsiz")
+            name = data.get("name", tr("NAME_UNNAMED"))
             tags = " ".join(data.get("tags", [])).lower()
             
-            # Statları Çek
+            # Statları Çek ve Temizle
             c_stats = data.get("combat_stats", {})
-            hp = str(c_stats.get("hp", "10"))
-            ac = str(c_stats.get("ac", "10"))
+            
+            raw_hp = c_stats.get("hp", "10")
+            raw_ac = c_stats.get("ac", "10")
+            
+            # Temizlenmiş (Sayısal) Değerler (Sıralama için kullanılabilir)
+            hp_val = self._parse_int(raw_hp)
+            ac_val = self._parse_int(raw_ac)
             
             # İnisiyatif Bonusu Hesapla
             stats = data.get("stats", {})
             dex = int(stats.get("DEX", 10))
             dex_mod = (dex - 10) // 2
             
-            extra_init = int(c_stats.get("initiative") or c_stats.get("init_bonus") or 0)
+            extra_init = self._parse_int(c_stats.get("initiative") or c_stats.get("init_bonus") or 0)
             total_init_bonus = dex_mod + extra_init
             
             sign = "+" if total_init_bonus >= 0 else ""
@@ -6333,69 +6638,77 @@ class EncounterSelectionDialog(QDialog):
             row = self.table.rowCount()
             self.table.insertRow(row)
             
-            self.table.setItem(row, 0, QTableWidgetItem(name))
+            # 0: İsim
+            item_name = QTableWidgetItem(name)
+            # Arama için gizli veri (İsim + Tag + Tip)
+            search_data = f"{name.lower()} {tags} {etype.lower()}"
+            item_name.setData(Qt.ItemDataRole.UserRole, search_data)
+            self.table.setItem(row, 0, item_name)
+            
+            # 1: Tip
             self.table.setItem(row, 1, QTableWidgetItem(etype))
             
-            # Sayısal sıralama için özel item kullanmıyoruz şimdilik, string yeterli
-            hp_item = QTableWidgetItem(hp)
-            hp_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.table.setItem(row, 2, hp_item)
+            # 2: HP (Sayısal sıralama için setData kullanıyoruz)
+            item_hp = QTableWidgetItem(str(hp_val))
+            item_hp.setData(Qt.ItemDataRole.DisplayRole, hp_val) # Sayısal sıralama
+            item_hp.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table.setItem(row, 2, item_hp)
             
-            ac_item = QTableWidgetItem(ac)
-            ac_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.table.setItem(row, 3, ac_item)
+            # 3: AC
+            item_ac = QTableWidgetItem(str(ac_val))
+            item_ac.setData(Qt.ItemDataRole.DisplayRole, ac_val)
+            item_ac.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table.setItem(row, 3, item_ac)
             
-            init_item = QTableWidgetItem(init_str)
-            init_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            # Renklendirme (Yüksek inisiyatif yeşil)
+            # 4: Init Bonus
+            item_init = QTableWidgetItem(init_str)
+            item_init.setData(Qt.ItemDataRole.DisplayRole, total_init_bonus)
+            item_init.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             if total_init_bonus > 0:
-                init_item.setForeground(QBrush(QColor("#66bb6a")))
+                item_init.setForeground(QBrush(QColor("#4caf50"))) # Yeşil
             elif total_init_bonus < 0:
-                init_item.setForeground(QBrush(QColor("#ef5350")))
-            self.table.setItem(row, 4, init_item)
+                item_init.setForeground(QBrush(QColor("#ef5350"))) # Kırmızı
+            self.table.setItem(row, 4, item_init)
             
+            # 5: ID (Gizli)
             self.table.setItem(row, 5, QTableWidgetItem(eid))
-            
-            # Arama için gizli veri sakla (isim + tagler)
-            self.table.item(row, 0).setData(Qt.ItemDataRole.UserRole, f"{name.lower()} {tags} {etype.lower()}")
 
     def filter_table(self):
         search_text = self.inp_search.text().lower()
-        filter_type = self.combo_type.currentText()
+        # Combo data (Tümü, NPC, Monster, Player)
+        filter_type = self.combo_type.currentData() 
         
-        mapping = {"NPC": ["NPC"], "Canavar": ["Monster", "Canavar"], "Oyuncu": ["Player", "Oyuncu"]}
+        # Tip eşleştirme haritası (Data'daki tip ile filtre arasındaki ilişki)
+        mapping = {
+            "NPC": ["NPC"], 
+            "Monster": ["Monster", "Canavar"], 
+            "Player": ["Player", "Oyuncu"]
+        }
         allowed_types = mapping.get(filter_type, [])
         
         for row in range(self.table.rowCount()):
-            # Gizli veriden (UserRole) arama yap
-            row_data = self.table.item(row, 0).data(Qt.ItemDataRole.UserRole)
-            row_type = self.table.item(row, 1).text()
+            # Gizli arama verisi (isim + tagler)
+            row_search_data = self.table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+            row_type_text = self.table.item(row, 1).text()
             
-            match_text = search_text in row_data
-            match_type = (filter_type == "Tümü") or (row_type in allowed_types)
+            match_text = search_text in row_search_data
+            match_type = (filter_type == "Tümü") or (row_type_text in allowed_types)
             
             self.table.setRowHidden(row, not (match_text and match_type))
 
     def accept_selection(self):
-        """Seçilen satırları topla ve dialogu onayla"""
         selected_rows = self.table.selectionModel().selectedRows()
-        
-        if not selected_rows:
-            return
+        if not selected_rows: return
             
         count = self.spin_count.value()
-        
         for index in selected_rows:
             row = index.row()
             eid = self.table.item(row, 5).text()
-            # Her bir varlık için "count" kadar ekle
             for _ in range(count):
                 self.selected_entities.append(eid)
-                
         self.accept()
 
     def add_and_close(self):
-        """Çift tıklayınca sadece o satırdan 1 adet ekle ve kapat"""
         row = self.table.currentRow()
         if row >= 0:
             eid = self.table.item(row, 5).text()
@@ -6548,21 +6861,29 @@ class EntityListItemWidget(QWidget):
     """
     def __init__(self, name, raw_category, parent=None):
         super().__init__(parent)
+        
+        # --- BU SATIRI EKLEYİN ---
+        self.setObjectName("entityItem") 
+        # Böylece QSS dosyasında #entityItem diyerek bu widget'ı hedefleyebiliriz.
+        
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(2)
         
         # İsim Alanı
         lbl_name = QLabel(name)
-        lbl_name.setStyleSheet("font-size: 14px; font-weight: bold; color: #e0e0e0;")
+        # --- objectName EKLENDİ ---
+        lbl_name.setObjectName("entityName")
+        # Hardcoded stili temizleyip QSS'e bırakıyoruz veya sadece font ayarı bırakıyoruz
+        lbl_name.setStyleSheet("font-size: 14px; font-weight: bold; background-color: transparent;")
         
-        # Kategori Alanı (Çeviri burada yapılır)
-        # raw_category örn: "monster", "spell"
-        # tr() fonksiyonu bunu "Canavar" veya "Monster" yapar.
+        # Kategori Alanı
         display_cat = self.translate_category(raw_category)
-        
         lbl_cat = QLabel(display_cat)
-        lbl_cat.setStyleSheet("font-size: 11px; color: #888; font-style: italic;")
+        # --- objectName EKLENDİ ---
+        lbl_cat.setObjectName("entityCat")
+        # Arka planı şeffaf yapıyoruz
+        lbl_cat.setStyleSheet("font-size: 11px; font-style: italic; background-color: transparent;")
         
         layout.addWidget(lbl_name)
         layout.addWidget(lbl_cat)
@@ -7209,14 +7530,17 @@ class SessionTab(QWidget):
         self.current_session_id = None
         self.init_ui()
         
-        # --- UYGULAMA AÇILINCA SON OTURUMU YÜKLE ---
         last_sid = self.dm.get_last_active_session_id()
+        
         if last_sid:
-            # Combo box'ta bul ve seç
             idx = self.combo_sessions.findData(last_sid)
             if idx >= 0:
                 self.combo_sessions.setCurrentIndex(idx)
-                self.load_session() # Otomatik yükle
+                self.load_session()
+        elif self.combo_sessions.count() > 0:
+            # ID yok ama listede session varsa ilkini seç
+            self.combo_sessions.setCurrentIndex(0)
+            self.load_session()
 
     def init_ui(self):
         layout = QHBoxLayout(self)
@@ -7435,198 +7759,150 @@ class AspectRatioLabel(QLabel):
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, 
                              QHBoxLayout, QPushButton, QHeaderView, QInputDialog, 
                              QMenu, QMessageBox, QFrame, QLineEdit, QFileDialog, 
-                             QDialog, QListWidget, QListWidgetItem, QLabel, QAbstractItemView)
+                             QDialog, QListWidget, QListWidgetItem, QLabel, 
+                             QAbstractItemView, QProgressBar, QSlider, QComboBox)
 from PyQt6.QtGui import QAction, QColor, QBrush, QCursor, QIcon, QPixmap
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QUrl
 from core.locales import tr
 from ui.windows.battle_map_window import BattleMapWindow
+from ui.dialogs.encounter_selector import EncounterSelectionDialog
 import random
 import os
 import uuid
-from ui.dialogs.encounter_selector import EncounterSelectionDialog
-from PyQt6.QtWidgets import QProgressBar, QWidget, QHBoxLayout, QLabel
-from PyQt6.QtCore import Qt
+
+# --- YARDIMCI FONKSİYONLAR VE SINIFLAR ---
+def clean_stat_value(value, default=10):
+    if value is None: return default
+    s_val = str(value).strip()
+    if not s_val: return default
+    try:
+        first_part = s_val.split(' ')[0]
+        digits = ''.join(filter(str.isdigit, first_part))
+        return int(digits) if digits else default
+    except: return default
 
 class HpBarWidget(QWidget):
+    hpChanged = pyqtSignal(int)
     def __init__(self, current_hp, max_hp):
         super().__init__()
-        self.current = int(current_hp) if str(current_hp).isdigit() else 10
-        self.max_val = int(max_hp) if str(max_hp).isdigit() else 10
-        if self.max_val == 0: self.max_val = 1 # Sıfıra bölünme hatası önlemi
+        self.current = int(current_hp)
+        self.max_val = int(max_hp) if int(max_hp) > 0 else 1
         
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(2, 2, 2, 2)
+        layout = QHBoxLayout(self); layout.setContentsMargins(0, 2, 0, 2); layout.setSpacing(2)
         
-        self.bar = QProgressBar()
-        self.bar.setRange(0, self.max_val)
-        self.bar.setValue(self.current)
-        self.bar.setTextVisible(True)
-        self.bar.setFormat(f"%v / {self.max_val}") # Örn: 15 / 20
-        self.bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.btn_minus = QPushButton("-"); self.btn_minus.setFixedSize(20, 20); self.btn_minus.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_minus.setStyleSheet("QPushButton { background-color: #c62828; color: white; border: none; border-radius: 3px; font-weight: bold; } QPushButton:hover { background-color: #d32f2f; }")
+        self.btn_minus.clicked.connect(self.decrease_hp)
         
+        self.bar = QProgressBar(); self.bar.setRange(0, self.max_val); self.bar.setValue(self.current); self.bar.setTextVisible(True); self.bar.setFormat(f"%v / {self.max_val}"); self.bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.update_color()
-        layout.addWidget(self.bar)
+        
+        self.btn_plus = QPushButton("+"); self.btn_plus.setFixedSize(20, 20); self.btn_plus.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_plus.setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border: none; border-radius: 3px; font-weight: bold; } QPushButton:hover { background-color: #388e3c; }")
+        self.btn_plus.clicked.connect(self.increase_hp)
+        
+        layout.addWidget(self.btn_minus); layout.addWidget(self.bar, 1); layout.addWidget(self.btn_plus)
 
     def update_color(self):
-        # Yüzde hesabı
         ratio = self.current / self.max_val
-        if ratio > 0.5:
-            color = "#2e7d32" # Yeşil (Sağlıklı)
-        elif ratio > 0.2:
-            color = "#fbc02d" # Sarı (Yaralı)
-            self.bar.setStyleSheet(f"QProgressBar::chunk {{ background-color: {color}; }} QProgressBar {{ color: black; }}")
-            return
-        else:
-            color = "#c62828" # Kırmızı (Kritik)
-            
-        self.bar.setStyleSheet(f"""
-            QProgressBar {{
-                border: 1px solid #555;
-                border-radius: 3px;
-                text-align: center;
-                color: white;
-                background-color: #333;
-            }}
-            QProgressBar::chunk {{
-                background-color: {color};
-            }}
-        """)
+        if ratio > 0.5: color = "#2e7d32"
+        elif ratio > 0.2: color = "#fbc02d"
+        else: color = "#c62828"
+        self.bar.setStyleSheet(f"QProgressBar::chunk {{ background-color: {color}; }} QProgressBar {{ color: white; border: 1px solid #555; border-radius: 3px; background: rgba(0,0,0,0.3); }}")
 
     def update_hp(self, new_hp):
         self.current = int(new_hp)
         self.bar.setValue(self.current)
         self.bar.setFormat(f"{self.current} / {self.max_val}")
         self.update_color()
+        self.hpChanged.emit(self.current)
 
-# D&D 5e Standart Durumlar
-CONDITIONS = [
-    "Blinded", "Charmed", "Deafened", "Frightened", "Grappled", "Incapacitated", 
-    "Invisible", "Paralyzed", "Petrified", "Poisoned", "Prone", "Restrained", 
-    "Stunned", "Unconscious", "Exhaustion"
-]
+    def decrease_hp(self): self.update_hp(self.current - 1)
+    def increase_hp(self): self.update_hp(self.current + 1)
+
+CONDITIONS = ["Blinded", "Charmed", "Deafened", "Frightened", "Grappled", "Incapacitated", "Invisible", "Paralyzed", "Petrified", "Poisoned", "Prone", "Restrained", "Stunned", "Unconscious", "Exhaustion"]
 
 class NumericTableWidgetItem(QTableWidgetItem):
     def __lt__(self, other):
-        try:
-            # Hem DisplayRole hem EditRole üzerinden sayısal veri çekmeye çalış
-            d1 = self.data(Qt.ItemDataRole.DisplayRole)
-            d2 = other.data(Qt.ItemDataRole.DisplayRole)
-            return float(d1) < float(d2)
-        except (ValueError, TypeError, AttributeError):
-            return super().__lt__(other)
+        try: return float(self.data(Qt.ItemDataRole.DisplayRole)) < float(other.data(Qt.ItemDataRole.DisplayRole))
+        except: return super().__lt__(other)
 
-# --- YENİ: HARİTA SEÇİM DİYALOĞU ---
 class MapSelectorDialog(QDialog):
     def __init__(self, assets_path, parent=None):
         super().__init__(parent)
-        self.assets_path = assets_path
-        self.selected_file = None # Seçilen dosya adı (ör: map.png)
-        self.is_new_import = False # Yeni yükle butonuna basıldı mı?
-        
-        self.setWindowTitle(tr("TITLE_MAP_SELECTOR"))
-        self.setFixedSize(600, 500)
-        self.setStyleSheet("background-color: #1e1e1e; color: white;")
-        
-        self.init_ui()
-        self.load_maps()
-
+        self.assets_path = assets_path; self.selected_file = None; self.is_new_import = False
+        self.setWindowTitle(tr("TITLE_MAP_SELECTOR")); self.setFixedSize(600, 500)
+        self.init_ui(); self.load_maps()
     def init_ui(self):
-        layout = QVBoxLayout(self)
-        
-        lbl = QLabel(tr("LBL_SAVED_MAPS"))
-        lbl.setStyleSheet("font-weight: bold; font-size: 14px; color: #ffb74d;")
-        layout.addWidget(lbl)
-        
-        # Resim Listesi (Icon Mode)
-        self.list_widget = QListWidget()
-        self.list_widget.setViewMode(QListWidget.ViewMode.IconMode)
-        self.list_widget.setIconSize(QSize(150, 150))
-        self.list_widget.setResizeMode(QListWidget.ResizeMode.Adjust)
-        self.list_widget.setSpacing(10)
-        self.list_widget.setStyleSheet("""
-            QListWidget { background-color: #252526; border: 1px solid #444; }
-            QListWidget::item { border: 1px solid transparent; padding: 5px; }
-            QListWidget::item:selected { background-color: #333; border: 2px solid #007acc; border-radius: 5px; }
-        """)
-        self.list_widget.itemDoubleClicked.connect(self.select_existing)
-        layout.addWidget(self.list_widget)
-        
-        # Butonlar
-        btn_layout = QHBoxLayout()
-        
-        self.btn_import = QPushButton(tr("BTN_IMPORT_NEW_MAP"))
-        self.btn_import.setStyleSheet("background-color: #2e7d32; color: white; padding: 8px; font-weight: bold;")
-        self.btn_import.clicked.connect(self.select_new)
-        
-        self.btn_select = QPushButton(tr("BTN_OPEN_SELECTED_MAP"))
-        self.btn_select.setStyleSheet("background-color: #007acc; color: white; padding: 8px; font-weight: bold;")
-        self.btn_select.clicked.connect(self.select_existing)
-        
-        btn_layout.addWidget(self.btn_import)
-        btn_layout.addStretch()
-        btn_layout.addWidget(self.btn_select)
-        
-        layout.addLayout(btn_layout)
-
-    def retranslate_ui(self):
-        self.setWindowTitle(tr("TITLE_MAP_SELECTOR"))
-        self.btn_import.setText(tr("BTN_IMPORT_NEW_MAP"))
-        self.btn_select.setText(tr("BTN_OPEN_SELECTED_MAP"))
-
+        l = QVBoxLayout(self); lbl = QLabel(tr("LBL_SAVED_MAPS")); lbl.setObjectName("toolbarLabel"); l.addWidget(lbl)
+        self.lw = QListWidget(); self.lw.setViewMode(QListWidget.ViewMode.IconMode); self.lw.setIconSize(QSize(150, 150)); self.lw.setResizeMode(QListWidget.ResizeMode.Adjust); self.lw.setSpacing(10); self.lw.setProperty("class", "iconList"); self.lw.itemDoubleClicked.connect(self.select_existing); l.addWidget(self.lw)
+        h = QHBoxLayout(); b1 = QPushButton(tr("BTN_IMPORT_NEW_MAP")); b1.setObjectName("successBtn"); b1.clicked.connect(self.select_new)
+        b2 = QPushButton(tr("BTN_OPEN_SELECTED_MAP")); b2.setObjectName("primaryBtn"); b2.clicked.connect(self.select_existing)
+        h.addWidget(b1); h.addStretch(); h.addWidget(b2); l.addLayout(h)
     def load_maps(self):
-        if not os.path.exists(self.assets_path):
-            return
-            
-        valid_extensions = {".png", ".jpg", ".jpeg", ".bmp"}
-        
-        files = [f for f in os.listdir(self.assets_path) 
-                 if os.path.splitext(f)[1].lower() in valid_extensions]
-        
-        for f in files:
-            full_path = os.path.join(self.assets_path, f)
-            
-            # Thumbnail oluştur
-            icon = QIcon(full_path)
-            item = QListWidgetItem(icon, f)
-            item.setData(Qt.ItemDataRole.UserRole, f) # Dosya adını sakla
-            
-            self.list_widget.addItem(item)
-
+        if not os.path.exists(self.assets_path): return
+        for f in os.listdir(self.assets_path):
+            if f.lower().endswith(('.png', '.jpg', '.jpeg')): self.lw.addItem(QListWidgetItem(QIcon(os.path.join(self.assets_path, f)), f))
     def select_existing(self):
-        current_item = self.list_widget.currentItem()
-        if current_item:
-            self.selected_file = current_item.data(Qt.ItemDataRole.UserRole)
-            self.accept()
-        else:
-            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_MAP_FROM_LIST"))
-
-    def select_new(self):
-        self.is_new_import = True
-        self.accept()
+        if self.lw.currentItem(): self.selected_file = self.lw.currentItem().text(); self.accept()
+        else: QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_MAP_FROM_LIST"))
+    def select_new(self): self.is_new_import = True; self.accept()
 
 
-# --- COMBAT TRACKER ANA SINIF ---
+# --- COMBAT TRACKER (MULTI-ENCOUNTER) ---
 class CombatTracker(QWidget):
     data_changed_signal = pyqtSignal()
 
     def __init__(self, data_manager):
         super().__init__()
         self.dm = data_manager
-        self.current_turn_index = -1
         self.battle_map_window = None 
+        self.loading = False
         
-        # Session State Verileri
-        self.current_map_path = None # Relative path (assets/...)
-        self.current_token_size = 50
-        self.token_positions = {} 
-        self.loading = False # Yükleme sırasında sinyal göndermeyi engellemek için
+        # Encounter Verileri (Dict of Dicts)
+        # { "enc_id": { "name": "...", "combatants": [], "map_path": "...", "round": 1, "turn_index": -1, ... } }
+        self.encounters = {}
+        self.current_encounter_id = None
+        
+        # Varsayılan bir encounter oluştur
+        self.create_encounter("Default Encounter")
         
         self.init_ui()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
         
-        # TABLO
+        # --- ENCOUNTER YÖNETİMİ ---
+        enc_layout = QHBoxLayout()
+        self.combo_encounters = QComboBox()
+        self.combo_encounters.currentIndexChanged.connect(self.switch_encounter)
+        self.combo_encounters.setMinimumWidth(200)
+        
+        # BUTON GENİŞLİKLERİ ARTIRILDI (30 -> 40)
+        self.btn_new_enc = QPushButton("➕")
+        self.btn_new_enc.setToolTip("Yeni Encounter")
+        self.btn_new_enc.clicked.connect(self.prompt_new_encounter)
+        self.btn_new_enc.setFixedWidth(40) 
+        
+        self.btn_rename_enc = QPushButton("✏️")
+        self.btn_rename_enc.setToolTip("İsim Değiştir")
+        self.btn_rename_enc.clicked.connect(self.rename_encounter)
+        self.btn_rename_enc.setFixedWidth(40)
+        
+        self.btn_del_enc = QPushButton("🗑️")
+        self.btn_del_enc.setToolTip("Encounter Sil")
+        self.btn_del_enc.clicked.connect(self.delete_encounter)
+        self.btn_del_enc.setFixedWidth(40)
+        self.btn_del_enc.setObjectName("dangerBtn")
+        
+        enc_layout.addWidget(QLabel("Encounter:"))
+        enc_layout.addWidget(self.combo_encounters)
+        enc_layout.addWidget(self.btn_new_enc)
+        enc_layout.addWidget(self.btn_rename_enc)
+        enc_layout.addWidget(self.btn_del_enc)
+        layout.addLayout(enc_layout)
+
+        # --- TABLO ---
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
@@ -7637,12 +7913,12 @@ class CombatTracker(QWidget):
         
         self.table.customContextMenuRequested.connect(self.open_context_menu)
         self.table.itemChanged.connect(self.on_data_changed)
+        self.table.cellDoubleClicked.connect(self.on_cell_double_clicked)
+        self.table.setSortingEnabled(False)
         
-        # Sütun başlıklarına tıklandığında sıralama özelliğini aç
-        self.table.setSortingEnabled(False) # Otomatik sıralama çakışmasın diye kapalı
         layout.addWidget(self.table)
 
-        # KONTROLLER
+        # --- KONTROLLER ---
         quick_layout = QHBoxLayout()
         self.inp_quick_name = QLineEdit(); self.inp_quick_name.setPlaceholderText(tr("HEADER_NAME"))
         self.inp_quick_init = QLineEdit(); self.inp_quick_init.setPlaceholderText(tr("LBL_INIT")); self.inp_quick_init.setMaximumWidth(50)
@@ -7655,40 +7931,45 @@ class CombatTracker(QWidget):
         quick_layout.addWidget(self.btn_quick_add, 1)
         layout.addLayout(quick_layout)
 
-        # Butonlar 1
+        # Tur Kontrol ve Harita
         btn_layout = QHBoxLayout()
+        self.lbl_round = QLabel("Round: 1")
+        self.lbl_round.setObjectName("headerLabel")
+        self.lbl_round.setStyleSheet("font-size: 16px; font-weight: bold; margin-right: 10px;")
+        
         self.btn_next_turn = QPushButton(tr("BTN_NEXT_TURN"))
-        self.btn_next_turn.setStyleSheet("background-color: #fbc02d; color: black; font-weight: bold;")
+        self.btn_next_turn.setObjectName("actionBtn") 
         self.btn_next_turn.clicked.connect(self.next_turn)
         
         self.btn_battle_map = QPushButton("🗺️ Battle Map")
-        self.btn_battle_map.setStyleSheet("background-color: #0277bd; color: white; font-weight: bold;")
+        self.btn_battle_map.setObjectName("primaryBtn")
         self.btn_battle_map.clicked.connect(self.open_battle_map)
 
+        btn_layout.addWidget(self.lbl_round)
         btn_layout.addWidget(self.btn_next_turn)
         btn_layout.addWidget(self.btn_battle_map)
         layout.addLayout(btn_layout)
         
-        # Butonlar 2
+        # Alt Butonlar
         btn_layout2 = QHBoxLayout()
         self.btn_add = QPushButton(tr("BTN_ADD")); self.btn_add.clicked.connect(self.add_combatant_dialog)
         self.btn_add_players = QPushButton(tr("BTN_ADD_PLAYERS")); self.btn_add_players.clicked.connect(self.add_all_players)
         self.btn_roll = QPushButton(tr("BTN_ROLL_INIT")); self.btn_roll.clicked.connect(self.roll_initiatives)
         self.btn_clear_all = QPushButton(tr("BTN_CLEAR_ALL"))
         self.btn_clear_all.clicked.connect(self.clear_tracker)
-        self.btn_clear_all.setStyleSheet("color: #ff5252;")
+        self.btn_clear_all.setObjectName("dangerBtn")
         
         btn_layout2.addWidget(self.btn_add)
         btn_layout2.addWidget(self.btn_add_players)
         btn_layout2.addWidget(self.btn_roll)
         btn_layout2.addWidget(self.btn_clear_all)
         layout.addLayout(btn_layout2)
+        
+        self.refresh_ui_from_current_encounter()
 
     def retranslate_ui(self):
         self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
         self.inp_quick_name.setPlaceholderText(tr("HEADER_NAME"))
-        self.inp_quick_init.setPlaceholderText(tr("LBL_INIT"))
-        self.inp_quick_hp.setPlaceholderText(tr("LBL_HP"))
         self.btn_quick_add.setText(tr("BTN_QUICK_ADD"))
         self.btn_next_turn.setText(tr("BTN_NEXT_TURN"))
         self.btn_add.setText(tr("BTN_ADD"))
@@ -7700,364 +7981,401 @@ class CombatTracker(QWidget):
             self.battle_map_window.retranslate_ui()
             self.refresh_battle_map()
 
-    # --- BATTLE MAP ENTEGRASYONU (GÜNCELLENDİ) ---
-    def open_battle_map(self):
-        # 1. Eğer pencere zaten açıksa öne getir
-        if self.battle_map_window and self.battle_map_window.isVisible():
-            self.battle_map_window.raise_()
-            self.battle_map_window.activateWindow()
+    # --- ENCOUNTER YÖNETİMİ ---
+    def create_encounter(self, name):
+        eid = str(uuid.uuid4())
+        self.encounters[eid] = {
+            "id": eid,
+            "name": name,
+            "combatants": [],
+            "map_path": None,
+            "token_size": 50,
+            "turn_index": -1,
+            "round": 1,
+            "token_positions": {} # {tid: (x, y)}
+        }
+        self.current_encounter_id = eid
+        return eid
+
+    def prompt_new_encounter(self):
+        name, ok = QInputDialog.getText(self, "Yeni Encounter", "Encounter Adı:")
+        if ok and name:
+            eid = self.create_encounter(name)
+            self.combo_encounters.addItem(name, eid)
+            self.combo_encounters.setCurrentIndex(self.combo_encounters.count() - 1)
+
+    def rename_encounter(self):
+        if not self.current_encounter_id: return
+        current_name = self.encounters[self.current_encounter_id]["name"]
+        name, ok = QInputDialog.getText(self, "İsim Değiştir", "Yeni Ad:", text=current_name)
+        if ok and name:
+            self.encounters[self.current_encounter_id]["name"] = name
+            idx = self.combo_encounters.findData(self.current_encounter_id)
+            self.combo_encounters.setItemText(idx, name)
+            self.data_changed_signal.emit()
+
+    def delete_encounter(self):
+        if len(self.encounters) <= 1:
+            QMessageBox.warning(self, "Hata", "Son encounter silinemez.")
             return
-
-        force_reload = False
         
-        # 2. Eğer harita yolu yoksa SEÇİM EKRANINI AÇ
-        if not self.current_map_path:
-            # Assets klasörünü bul
-            assets_path = os.path.join(self.dm.current_campaign_path, "assets")
-            if not os.path.exists(assets_path):
-                os.makedirs(assets_path)
+        reply = QMessageBox.question(self, "Sil", "Bu encounter silinsin mi?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
+            old_id = self.current_encounter_id
+            del self.encounters[old_id]
             
-            # Seçim diyaloğunu aç
-            selector = MapSelectorDialog(assets_path, self)
+            # Combo'dan sil
+            idx = self.combo_encounters.findData(old_id)
+            self.combo_encounters.removeItem(idx)
             
-            if selector.exec():
-                if selector.is_new_import:
-                    # Yeni Yükle
-                    fname, _ = QFileDialog.getOpenFileName(self, tr("MSG_SELECT_MAP"), "", "Images (*.png *.jpg *.jpeg)")
-                    if fname:
-                        rel_path = self.dm.import_image(fname)
-                        if rel_path:
-                            self.current_map_path = rel_path
-                            force_reload = True
-                            self.data_changed_signal.emit()
-                    else:
-                        return # İptal ettiyse açma
-                elif selector.selected_file:
-                    # Mevcut Olanı Seç
-                    self.current_map_path = os.path.join("assets", selector.selected_file)
-                    force_reload = True
-                    self.data_changed_signal.emit()
-            else:
-                return # Diyalog kapatıldıysa harita açma
-
-        # 3. Pencereyi Oluştur ve Göster
-        self.battle_map_window = BattleMapWindow(self.dm)
-        self.battle_map_window.token_moved_signal.connect(self.on_token_moved_in_map)
-        self.battle_map_window.slider_size.valueChanged.connect(self.on_token_size_changed)
-        
-        self.battle_map_window.show()
-        
-        self.refresh_battle_map(force_map_reload=force_reload)
-
-    def on_token_moved_in_map(self, tid, x, y):
-        self.token_positions[tid] = (x, y)
-        self.data_changed_signal.emit() # Pozisyon değişince kaydet
-
-    def on_token_size_changed(self, val):
-        self.current_token_size = val
-        self.data_changed_signal.emit() # Boyut değişince kaydet
-
-    def refresh_battle_map(self, force_map_reload=False):
-        if not self.battle_map_window: return
-        
-        # Pencere görünür olmasa da veriyi güncelleyelim (arkada hazır dursun)
-        data = self.get_combat_data_for_map()
-        
-        # Harita yolu (relative -> full)
-        map_full_path = None
-        # Eğer force_map_reload istenmişse VEYA pencerede harita hiç yoksa gönder
-        if (force_map_reload or self.battle_map_window.map_item is None) and self.current_map_path:
-            map_full_path = self.dm.get_full_path(self.current_map_path)
-        
-        self.battle_map_window.update_combat_data(data, self.current_turn_index, map_full_path, self.current_token_size)
-
-    def get_combat_data_for_map(self):
-        data = []
-        for row in range(self.table.rowCount()):
-            item_name = self.table.item(row, 0)
-            item_init = self.table.item(row, 1)
-            item_ac = self.table.item(row, 2)
-            item_hp = self.table.item(row, 3)
-            
-            # Tam güvenlik: Hücrelerden biri bile oluşmamışsa atla
-            if not all([item_name, item_init, item_ac, item_hp]):
-                continue
-            
-            tid = item_init.data(Qt.ItemDataRole.UserRole + 1)
-            eid = item_init.data(Qt.ItemDataRole.UserRole)
-            
-            x, y = None, None
-            if tid and tid in self.token_positions:
-                x, y = self.token_positions[tid]
-            elif eid and eid in self.token_positions:
-                # Geriye dönük uyumluluk: tid yoksa eid'ye bak ve tid'ye taşı
-                x, y = self.token_positions.pop(eid)
-                self.token_positions[tid] = (x, y)
-            
-            # Tip ve Tavır Bilgisini Al
-            ent_type = "NPC"
-            attitude = "LBL_ATTR_NEUTRAL"
-            if eid and eid in self.dm.data["entities"]:
-                ent = self.dm.data["entities"][eid]
-                ent_type = ent.get("type", "NPC")
-                # Tavır: attributes içinde LBL_ATTITUDE altında saklanıyor
-                attitude = ent.get("attributes", {}).get("LBL_ATTITUDE", "LBL_ATTR_NEUTRAL")
-                
-                # Canavarlar otomatik düşmancıl
-                if ent_type == "Monster":
-                    attitude = "LBL_ATTR_HOSTILE"
-            
-            data.append({
-                "tid": tid,
-                "eid": eid,
-                "name": item_name.text(),
-                "hp": item_hp.text(),
-                "type": ent_type,
-                "attitude": attitude,
-                "x": x, "y": y
-            })
-        
-        print(f"📡 Haritaya gönderilen veri: {len(data)} combatant. TIDs: {[c['tid'] for c in data]}")
-        return data
-
-    def on_data_changed(self, item): 
-        if self.loading: return
-        if item.column() == 1: # Initiative sütunu değiştiyse
-            self._sort_and_refresh()
-        else:
-            self.refresh_battle_map()
+            # İlkine geç
+            self.switch_encounter(0)
             self.data_changed_signal.emit()
 
-    # --- SAVAŞ AKIŞI ---
-    def next_turn(self):
-        count = self.table.rowCount()
-        if count == 0: return
-        self.loading = True
-        self.current_turn_index = (self.current_turn_index + 1) % count
-        self.update_highlights()
-        self.refresh_battle_map()
-        self.loading = False
-        self.data_changed_signal.emit()
+    def switch_encounter(self, index):
+        eid = self.combo_encounters.itemData(index)
+        if eid and eid in self.encounters:
+            # Önce mevcut olanı kaydet (State'i güncelle)
+            self._save_current_state_to_memory()
+            
+            self.current_encounter_id = eid
+            self.refresh_ui_from_current_encounter()
+            
+            # Harita varsa yükle
+            if self.battle_map_window:
+                self.refresh_battle_map(force_map_reload=True)
 
-    def update_highlights(self):
-        self.table.blockSignals(True)
-        for r in range(self.table.rowCount()):
-            for c in range(self.table.columnCount()):
-                item = self.table.item(r, c)
-                if item: item.setBackground(QBrush(QColor(0,0,0,0)))
-        if 0 <= self.current_turn_index < self.table.rowCount():
-            for c in range(self.table.columnCount()):
-                item = self.table.item(self.current_turn_index, c)
-                if item: item.setBackground(QBrush(QColor(40, 80, 40)))
-        self.table.blockSignals(False)
-
-    def _sort_and_refresh(self):
-        # Şu anki sıradaki kişinin TID veya ismini sakla
-        current_tid = None
-        if 0 <= self.current_turn_index < self.table.rowCount():
-            item_init = self.table.item(self.current_turn_index, 1)
-            if item_init: current_tid = item_init.data(Qt.ItemDataRole.UserRole + 1)
-            if not current_tid:
-                item_name = self.table.item(self.current_turn_index, 0)
-                if item_name: current_tid = item_name.text()
-
-        self.table.blockSignals(True)
-        self.table.sortItems(1, Qt.SortOrder.DescendingOrder)
-        self.table.blockSignals(False)
-
-        # Sıradaki kişiyi yeni yerinde bul (TID ile tam kontrol)
-        if current_tid is not None:
-            for row in range(self.table.rowCount()):
-                item_init = self.table.item(row, 1)
-                item_name = self.table.item(row, 0)
-                if (item_init and item_init.data(Qt.ItemDataRole.UserRole + 1) == current_tid) or \
-                   (item_name and item_name.text() == current_tid):
-                    self.current_turn_index = row
-                    break
+    def _save_current_state_to_memory(self):
+        """Mevcut tabloyu hafızadaki dict'e yazar"""
+        if not self.current_encounter_id: return
+        enc = self.encounters[self.current_encounter_id]
         
-        self.update_highlights()
-        self.refresh_battle_map()
-        if not self.loading:
-            self.data_changed_signal.emit()
-
-    def clear_tracker(self):
-        self.table.setRowCount(0)
-        self.current_turn_index = -1
-        self.token_positions.clear()
-        self.current_map_path = None
-        self.refresh_battle_map()
-        if self.battle_map_window: self.battle_map_window.set_map_image(None)
-        if not self.loading:
-            self.data_changed_signal.emit()
-
-    # --- SAVE / LOAD SİSTEMİ ---
-    def get_session_state(self):
-        """Oturum kaydedilirken çağrılır. Tüm durumu paketler."""
+        # Combatants
         combatants = []
         for row in range(self.table.rowCount()):
-            # HÜCRE GÜVENLİĞİ
+            # Hücreleri al
             item_name = self.table.item(row, 0)
             item_init = self.table.item(row, 1)
             item_ac = self.table.item(row, 2)
-            item_hp = self.table.item(row, 3)
             item_cond = self.table.item(row, 4)
+            
+            # --- KRİTİK KONTROL ---
+            # Eğer hücrelerden herhangi biri henüz oluşturulmadıysa (None ise), bu satırı atla.
+            if not item_name or not item_init: 
+                continue
 
-            if item_name is None or item_init is None: continue
-
+            # Verileri güvenli şekilde al
             tid = item_init.data(Qt.ItemDataRole.UserRole + 1)
             eid = item_init.data(Qt.ItemDataRole.UserRole)
             
-            x, y = self.token_positions.get(tid, (None, None))
-            # Fallback for old save positions
-            if x is None and eid in self.token_positions: x, y = self.token_positions[eid]
+            # HP Widget'tan al (Hücre boşsa 0 kabul et)
+            hp_widget = self.table.cellWidget(row, 3)
+            current_hp_val = hp_widget.current if isinstance(hp_widget, HpBarWidget) else 0
+            
+            # Pozisyon verisini enc["token_positions"] dan alıyoruz
+            x, y = enc["token_positions"].get(tid, (None, None))
 
-            # JSON serileştirme hatası (RecursionError) olmaması için verileri ilkel tiplere (int, str) zorla
             combatants.append({
                 "tid": str(tid) if tid else None,
                 "eid": str(eid) if eid else None,
                 "name": str(item_name.text()),
                 "init": str(item_init.text()),
                 "ac": str(item_ac.text() if item_ac else ""),
-                "hp": str(item_hp.text() if item_hp else ""),
+                "hp": str(current_hp_val),
                 "cond": str(item_cond.text() if item_cond else ""),
                 "bonus": int(item_name.data(Qt.ItemDataRole.UserRole) or 0),
                 "x": float(x) if x is not None else None,
                 "y": float(y) if y is not None else None
             })
-            
-        return {
-            "combatants": combatants,
-            "map_path": str(self.current_map_path) if self.current_map_path else None, 
-            "token_size": int(self.current_token_size),
-            "turn_index": int(self.current_turn_index)
-        }
+        
+        enc["combatants"] = combatants
 
-    def load_combat_data(self, combatants_list):
-        """Eski format (sadece liste) için destek"""
-        self.load_session_state({"combatants": combatants_list})
-
-    def load_session_state(self, state_data):
-        if not state_data: return
+    def refresh_ui_from_current_encounter(self):
         self.loading = True
         self.table.blockSignals(True)
         self.table.setRowCount(0)
-        self.token_positions.clear()
         
-        combatants = state_data.get("combatants", [])
-        self.current_map_path = state_data.get("map_path")
-        self.current_token_size = int(state_data.get("token_size", 50))
-        self.current_turn_index = int(state_data.get("turn_index", -1))
+        if not self.current_encounter_id: return
+        enc = self.encounters[self.current_encounter_id]
         
-        for c in combatants:
+        self.lbl_round.setText(f"Round: {enc.get('round', 1)}")
+        
+        for c in enc.get("combatants", []):
             tid = c.get("tid")
-            eid = c.get("eid")
-            if not tid: tid = str(uuid.uuid4()) # Eski veriler için üret
-            
+            if not tid: tid = str(uuid.uuid4())
+            # Pozisyonları hafızaya yükle
             if c.get("x") is not None:
-                self.token_positions[tid] = (float(c["x"]), float(c["y"]))
+                enc["token_positions"][tid] = (float(c["x"]), float(c["y"]))
             
             self.add_direct_row(
-                str(c["name"]), 
-                str(c["init"]), 
-                str(c["ac"]), 
-                str(c["hp"]), 
-                str(c["cond"]), 
-                str(eid) if eid else None, 
-                int(c.get("bonus", 0)),
-                tid
+                str(c["name"]), str(c["init"]), str(c["ac"]), str(c["hp"]), str(c["cond"]), 
+                str(c.get("eid")) if c.get("eid") else None, int(c.get("bonus", 0)), tid
             )
             
+        self._sort_and_refresh() # Sıralama ve renkler
         self.table.blockSignals(False)
-        self._sort_and_refresh()
-        
-        if self.current_map_path:
-             self.open_battle_map()
-             
         self.loading = False
 
-    def on_cell_double_clicked(self, row, column):
-        # Sadece HP sütunu (3. sütun) için çalışsın
-        if column == 3:
-            widget = self.table.cellWidget(row, 3)
-            if isinstance(widget, HpBarWidget):
-                current = widget.current
-                val, ok = QInputDialog.getInt(self, "HP Düzenle", "Yeni HP:", current, 0, 9999)
-                if ok:
-                    widget.update_hp(val)
-                    # Arkadaki dummy item'ı da güncelle (sıralama ve kaydetme için)
-                    self.table.item(row, 3).setText(str(val))
-                    self.refresh_battle_map()
-                    self.data_changed_signal.emit()
+    # --- BATTLE MAP ENTEGRASYONU ---
+    def open_battle_map(self):
+        if self.battle_map_window and self.battle_map_window.isVisible():
+            self.battle_map_window.raise_(); self.battle_map_window.activateWindow(); return
+        
+        # Harita Seçimi (Eğer yoksa)
+        enc = self.encounters[self.current_encounter_id]
+        if not enc.get("map_path"):
+            assets_path = os.path.join(self.dm.current_campaign_path, "assets")
+            if not os.path.exists(assets_path): os.makedirs(assets_path)
+            selector = MapSelectorDialog(assets_path, self)
+            if selector.exec():
+                if selector.is_new_import:
+                    fname, _ = QFileDialog.getOpenFileName(self, tr("MSG_SELECT_MAP"), "", "Images (*.png *.jpg *.jpeg)")
+                    if fname:
+                        rel_path = self.dm.import_image(fname)
+                        if rel_path: enc["map_path"] = rel_path; self.data_changed_signal.emit()
+                    else: return 
+                elif selector.selected_file:
+                    enc["map_path"] = os.path.join("assets", selector.selected_file); self.data_changed_signal.emit()
+            else: return 
 
-    # --- HELPER METHODS ---
-    def add_direct_row(self, name, init, ac, hp, condition, eid, init_bonus=0, tid=None):
-        if not tid:
-            tid = str(uuid.uuid4())
+        self.battle_map_window = BattleMapWindow(self.dm)
+        self.battle_map_window.token_moved_signal.connect(self.on_token_moved_in_map)
+        self.battle_map_window.slider_size.valueChanged.connect(self.on_token_size_changed)
+        self.battle_map_window.show()
+        self.refresh_battle_map(force_map_reload=True)
+
+    def on_token_moved_in_map(self, tid, x, y):
+        # Sadece o anki encounter'ın pozisyonunu güncelle
+        if self.current_encounter_id:
+            self.encounters[self.current_encounter_id]["token_positions"][tid] = (x, y)
+            self.data_changed_signal.emit()
+
+    def on_token_size_changed(self, val):
+        if self.current_encounter_id:
+            self.encounters[self.current_encounter_id]["token_size"] = val
+            self.data_changed_signal.emit()
+
+    def refresh_battle_map(self, force_map_reload=False):
+        if not self.battle_map_window or not self.current_encounter_id: return
         
-        row = self.table.rowCount()
-        self.table.insertRow(row)
+        enc = self.encounters[self.current_encounter_id]
         
-        # 0. SÜTUN: İSİM (NAME)
-        # İnisiyatif bonusunu data olarak saklıyoruz
-        item_name = QTableWidgetItem(name)
-        item_name.setData(Qt.ItemDataRole.UserRole, init_bonus)
-        self.table.setItem(row, 0, item_name)
+        # Hafızayı güncelle (tablodan) ki haritaya doğru gitsin
+        self._save_current_state_to_memory()
         
-        # 1. SÜTUN: İNİSİYATİF (INIT)
-        # Entity ID (eid) ve Token ID (tid)'yi burada saklıyoruz
-        item_init = NumericTableWidgetItem(str(init))
-        item_init.setData(Qt.ItemDataRole.UserRole, eid)
-        item_init.setData(Qt.ItemDataRole.UserRole + 1, tid)
-        self.table.setItem(row, 1, item_init)
-        
-        # 2. SÜTUN: ZIRH SINIFI (AC)
-        self.table.setItem(row, 2, NumericTableWidgetItem(str(ac)))
-        
-        # 3. SÜTUN: HP (HP BAR WIDGET)
-        # Mevcut HP'yi güvenli bir şekilde sayıya çevir
-        try:
-            current_hp_int = int(str(hp).strip())
-        except ValueError:
-            current_hp_int = 10 # Hata durumunda varsayılan
+        map_full_path = None
+        if (force_map_reload or self.battle_map_window.map_item is None) and enc.get("map_path"):
+            map_full_path = self.dm.get_full_path(enc["map_path"])
             
-        # Max HP Belirleme Mantığı
-        max_hp_int = current_hp_int # Varsayılan: Eğer DB'de yoksa, şu anki canı full kabul et
+        # Veriyi hazırla
+        combatants_data = []
+        for c in enc["combatants"]:
+            # Type/Attitude hesapla (Entity'den)
+            ent_type = "NPC"; attitude = "LBL_ATTR_NEUTRAL"
+            if c["eid"] and c["eid"] in self.dm.data["entities"]:
+                ent = self.dm.data["entities"][c["eid"]]
+                ent_type = ent.get("type", "NPC")
+                attitude = ent.get("attributes", {}).get("LBL_ATTITUDE", "LBL_ATTR_NEUTRAL")
+                if ent_type == "Monster": attitude = "LBL_ATTR_HOSTILE"
+            
+            c["type"] = ent_type; c["attitude"] = attitude # Geçici ekle
+            combatants_data.append(c)
+
+        self.battle_map_window.update_combat_data(combatants_data, enc["turn_index"], map_full_path, enc["token_size"])
+
+    # --- TABLO İŞLEMLERİ ---
+    def add_direct_row(self, name, init, ac, hp, condition, eid, init_bonus=0, tid=None):
+        if not tid: tid = str(uuid.uuid4())
+        row = self.table.rowCount(); self.table.insertRow(row)
         
-        # Eğer bu bir kayıtlı varlık ise veritabanından Max HP'yi çek
+        item_name = QTableWidgetItem(name); item_name.setData(Qt.ItemDataRole.UserRole, init_bonus); self.table.setItem(row, 0, item_name)
+        
+        item_init = NumericTableWidgetItem(str(init)); item_init.setData(Qt.ItemDataRole.UserRole, eid); item_init.setData(Qt.ItemDataRole.UserRole + 1, tid); self.table.setItem(row, 1, item_init)
+        
+        self.table.setItem(row, 2, NumericTableWidgetItem(str(clean_stat_value(ac))))
+        
+        cur_hp = clean_stat_value(hp); max_hp = cur_hp
         if eid and self.dm and eid in self.dm.data["entities"]:
             try:
-                ent_data = self.dm.data["entities"][eid]
-                c_stats = ent_data.get("combat_stats", {})
-                raw_max = str(c_stats.get("max_hp", ""))
-                
-                # Veritabanında genelde "45 (5d8+5)" formatında olabilir.
-                # Boşluktan bölüp ilk kısmı (45) alıyoruz.
-                parts = raw_max.split(" ")
-                if parts and parts[0].isdigit():
-                    db_max = int(parts[0])
-                    # Eğer DB'den gelen max, şu anki candan büyükse onu kullan
-                    if db_max >= current_hp_int:
-                        max_hp_int = db_max
-                    # Not: Eğer current > db_max ise (örn: geçici can), current'ı max kabul etmeye devam et
-            except Exception:
-                pass # Bir hata olursa varsayılan (current = max) kalsın
-
-        # Görsel Widget'ı Oluştur (Yeşil/Sarı/Kırmızı çubuk)
-        # Not: HpBarWidget sınıfının import edildiğinden veya dosyanın üstünde tanımlı olduğundan emin olun.
-        hp_widget = HpBarWidget(current_hp_int, max_hp_int)
-        self.table.setCellWidget(row, 3, hp_widget)
+                db_max = clean_stat_value(self.dm.data["entities"][eid].get("combat_stats", {}).get("max_hp"))
+                if db_max >= cur_hp: max_hp = db_max
+            except: pass
+            
+        hp_w = HpBarWidget(cur_hp, max_hp)
+        hp_w.hpChanged.connect(lambda val, w=hp_w: self.on_widget_hp_changed(w, val))
+        self.table.setCellWidget(row, 3, hp_w)
+        self.table.setItem(row, 3, NumericTableWidgetItem(str(cur_hp)))
         
-        # Tablo sıralaması (Sorting) bozulmasın diye arkaya sayısal item ekle
-        # Bu item widget'ın arkasında kalır ama sort algoritmaları bunu okur.
-        dummy_hp_item = NumericTableWidgetItem(str(current_hp_int))
-        self.table.setItem(row, 3, dummy_hp_item)
-        
-        # 4. SÜTUN: DURUM (CONDITION)
         cond_item = QTableWidgetItem(condition)
-        if condition:
-            cond_item.setForeground(QBrush(QColor("#ff5252"))) # Kırmızı yazı
+        if condition: cond_item.setForeground(QBrush(QColor("#ef5350")))
         self.table.setItem(row, 4, cond_item)
 
+    def on_widget_hp_changed(self, widget, new_val):
+        index = self.table.indexAt(widget.pos())
+        if index.isValid():
+            self.table.item(index.row(), 3).setText(str(new_val))
+            self._save_current_state_to_memory()
+            self.refresh_battle_map()
+            self.data_changed_signal.emit()
+
+    def on_cell_double_clicked(self, row, column):
+        if column == 3:
+            w = self.table.cellWidget(row, 3)
+            if isinstance(w, HpBarWidget):
+                val, ok = QInputDialog.getInt(self, tr("TITLE_EDIT_HP"), tr("LBL_NEW_HP"), w.current, 0, 9999)
+                if ok: w.update_hp(val)
+
+    def on_data_changed(self, item):
+        if self.loading: return
+        if item.column() == 1: self._sort_and_refresh()
+        else: 
+            self._save_current_state_to_memory()
+            self.refresh_battle_map()
+            self.data_changed_signal.emit()
+
+    # --- OYUN AKIŞI ---
+    def next_turn(self):
+        if not self.current_encounter_id: return
+        enc = self.encounters[self.current_encounter_id]
+        count = self.table.rowCount()
+        if count == 0: return
+        
+        self.loading = True
+        enc["turn_index"] += 1
+        if enc["turn_index"] >= count:
+            enc["turn_index"] = 0
+            enc["round"] += 1
+            self.lbl_round.setText(f"Round: {enc['round']}")
+            
+        self.update_highlights()
+        self.refresh_battle_map()
+        self.loading = False
+        self.data_changed_signal.emit()
+
+    def update_highlights(self):
+        if not self.current_encounter_id: return
+        idx = self.encounters[self.current_encounter_id]["turn_index"]
+        
+        self.table.blockSignals(True)
+        for r in range(self.table.rowCount()):
+            for c in range(self.table.columnCount()):
+                it = self.table.item(r, c)
+                if it: it.setBackground(QBrush(Qt.BrushStyle.NoBrush))
+        
+        if 0 <= idx < self.table.rowCount():
+            for c in range(self.table.columnCount()):
+                it = self.table.item(idx, c)
+                if it: it.setBackground(QBrush(QColor(100, 149, 237, 100)))
+        self.table.blockSignals(False)
+
+    def _sort_and_refresh(self):
+        # Aktif sıradaki kişiyi kaybetmemek için ID ile takip et
+        if not self.current_encounter_id: return
+        enc = self.encounters[self.current_encounter_id]
+        
+        current_tid = None
+        if 0 <= enc["turn_index"] < self.table.rowCount():
+            it = self.table.item(enc["turn_index"], 1)
+            if it: current_tid = it.data(Qt.ItemDataRole.UserRole + 1)
+
+        self.table.blockSignals(True)
+        self.table.sortItems(1, Qt.SortOrder.DescendingOrder)
+        self.table.blockSignals(False)
+
+        if current_tid:
+            for r in range(self.table.rowCount()):
+                it = self.table.item(r, 1)
+                if it and it.data(Qt.ItemDataRole.UserRole + 1) == current_tid:
+                    enc["turn_index"] = r
+                    break
+        
+        self.update_highlights()
+        self.refresh_battle_map()
+        if not self.loading: self.data_changed_signal.emit()
+
+    def clear_tracker(self):
+        if not self.current_encounter_id: return
+        enc = self.encounters[self.current_encounter_id]
+        
+        self.table.setRowCount(0)
+        enc["combatants"] = []
+        enc["token_positions"] = {}
+        enc["turn_index"] = -1
+        enc["round"] = 1
+        enc["map_path"] = None # Haritayı da silmek ister mi? Genelde hayır ama clear all dediği için silebiliriz.
+        
+        self.lbl_round.setText("Round: 1")
+        self.refresh_battle_map(force_map_reload=True) # Harita silinsin
+        if not self.loading: self.data_changed_signal.emit()
+
+    # --- SAVE / LOAD SİSTEMİ (SESSION TAB İÇİN) ---
+    def get_session_state(self):
+        """Tüm encounterları paketler ve SessionTab'a gönderir"""
+        self._save_current_state_to_memory() # Son hali kaydet
+        
+        # JSON'a uygun hale getir (basit tipler)
+        return {
+            "encounters": self.encounters,
+            "current_encounter_id": self.current_encounter_id
+        }
+
+    def load_session_state(self, state_data):
+        """SessionTab'dan gelen veriyi yükler"""
+        self.loading = True
+        self.combo_encounters.blockSignals(True)
+        self.combo_encounters.clear()
+        
+        # Yeni yapı mı eski yapı mı?
+        if "encounters" in state_data:
+            # Yeni yapı (Multi-Encounter)
+            self.encounters = state_data["encounters"]
+            target_id = state_data.get("current_encounter_id")
+        else:
+            # Eski yapı (Tek Encounter) -> Dönüştür
+            # Eski veriyi "Default Encounter" olarak içeri al
+            combatants = state_data.get("combatants", [])
+            eid = str(uuid.uuid4())
+            self.encounters = {
+                eid: {
+                    "id": eid,
+                    "name": "Encounter",
+                    "combatants": combatants,
+                    "map_path": state_data.get("map_path"),
+                    "token_size": state_data.get("token_size", 50),
+                    "turn_index": state_data.get("turn_index", -1),
+                    "round": state_data.get("round", 1),
+                    "token_positions": {} # Eski yapıda bu veriyi combatants içinden ayıklamak gerekirdi, şimdilik boş
+                }
+            }
+            # Eski combatantlarda x,y varsa token_positions'a taşı
+            for c in combatants:
+                tid = c.get("tid") or str(uuid.uuid4())
+                if c.get("x") is not None:
+                    self.encounters[eid]["token_positions"][tid] = (c["x"], c["y"])
+            target_id = eid
+
+        # Combo'yu doldur
+        for eid, enc in self.encounters.items():
+            self.combo_encounters.addItem(enc["name"], eid)
+        
+        # Seçimi yap
+        if target_id and target_id in self.encounters:
+            idx = self.combo_encounters.findData(target_id)
+            self.combo_encounters.setCurrentIndex(idx)
+            self.current_encounter_id = target_id
+        elif len(self.encounters) > 0:
+            self.combo_encounters.setCurrentIndex(0)
+            self.current_encounter_id = self.combo_encounters.itemData(0)
+            
+        self.refresh_ui_from_current_encounter()
+        self.combo_encounters.blockSignals(False)
+        self.loading = False
+
+    def load_combat_data(self, combatants_list):
+        """Eski (çok eski) liste formatı desteği"""
+        self.load_session_state({"combatants": combatants_list})
+
+    # ... (Diğer: quick_add, add_combatant_dialog, add_row_from_entity vb. aynı) ...
     def quick_add(self):
         name = self.inp_quick_name.text().strip(); 
         if not name: return
@@ -8066,61 +8384,28 @@ class CombatTracker(QWidget):
         self._sort_and_refresh()
 
     def add_combatant_dialog(self):
-        # YENİ GELİŞMİŞ DİYALOG
         dialog = EncounterSelectionDialog(self.dm, self)
-        
         if dialog.exec():
-            # Seçilen tüm ID'leri döngüyle ekle
-            for eid in dialog.selected_entities:
-                self.add_row_from_entity(eid)
-            
-            # Hepsini ekledikten sonra bir kere sırala ve yenile
+            for eid in dialog.selected_entities: self.add_row_from_entity(eid)
             self._sort_and_refresh()
-            
-            # Kullanıcıya bilgi ver (Opsiyonel)
-            # print(f"{len(dialog.selected_entities)} varlık eklendi.")
 
     def add_row_from_entity(self, entity_id):
         data = self.dm.data["entities"].get(entity_id)
         if not data: return
-        name = data.get("name", "Bilinmeyen")
+        name = data.get("name", tr("NAME_UNKNOWN"))
         hp = data.get("combat_stats", {}).get("hp", "10")
         ac = data.get("combat_stats", {}).get("ac", "10")
-        
-        # Inisiyatif Bonusu Hesapla: DEX Modifier + Ek Inisiyatif Bonusu
         bonus_data = self.calculate_entity_initiative_bonus(data)
         total_bonus = bonus_data["total"]
-        
-        # Zar At
         die_roll = random.randint(1, 20)
-        total_init = die_roll + total_bonus
-        
-        # Detaylı log (Hata ayıklama için terminalde kalacak)
-        print(f"🎲 {name} savaşa eklendi - Log: {die_roll} (zar) + {bonus_data['dex_mod']} (DEX) + {bonus_data['extra']} (ek) = {total_init}")
-        
-        self.add_direct_row(name, total_init, ac, hp, "", entity_id, total_bonus)
+        self.add_direct_row(name, die_roll + total_bonus, ac, hp, "", entity_id, total_bonus)
     
     def calculate_entity_initiative_bonus(self, data):
-        """Varlık verisinden toplam inisiyatif bonusunu hesaplar"""
-        try:
-            dex = int(data.get("stats", {}).get("DEX", 10))
-            dex_mod = (dex - 10) // 2
-        except:
-            dex_mod = 0
-            
-        try:
-            # Hem 'initiative' hem 'init_bonus' gibi farklı key olasılıklarına karşı esnek
-            c_stats = data.get("combat_stats", {})
-            extra_init = c_stats.get("initiative") or c_stats.get("init_bonus") or 0
-            extra_init = int(extra_init)
-        except:
-            extra_init = 0
-            
-        return {
-            "dex_mod": dex_mod,
-            "extra": extra_init,
-            "total": dex_mod + extra_init
-        }
+        try: dex = int(data.get("stats", {}).get("DEX", 10)); dex_mod = (dex - 10) // 2
+        except: dex_mod = 0
+        try: c_stats = data.get("combat_stats", {}); extra = clean_stat_value(c_stats.get("initiative") or c_stats.get("init_bonus"), 0)
+        except: extra = 0
+        return {"dex_mod": dex_mod, "extra": extra, "total": dex_mod + extra}
 
     def add_all_players(self):
         entities = self.dm.data["entities"]
@@ -8131,37 +8416,17 @@ class CombatTracker(QWidget):
 
     def roll_initiatives(self):
         self.table.blockSignals(True)
-        rolls = []
         for row in range(self.table.rowCount()):
-            item_name = self.table.item(row, 0)
-            item_init = self.table.item(row, 1)
+            item_name = self.table.item(row, 0); item_init = self.table.item(row, 1)
             if not item_name or not item_init: continue
-            
-            name = item_name.text()
             eid = item_init.data(Qt.ItemDataRole.UserRole)
-            
-            # Veritabanından güncel bonusu çek (Eğer varsa)
             bonus = item_name.data(Qt.ItemDataRole.UserRole) or 0
             if eid and eid in self.dm.data["entities"]:
                 ent_data = self.dm.data["entities"][eid]
-                bonus_data = self.calculate_entity_initiative_bonus(ent_data)
-                bonus = bonus_data["total"]
-                # Tablodaki bonusu da güncelle ki bir sonraki seferde güncel kalsın
+                bonus = self.calculate_entity_initiative_bonus(ent_data)["total"]
                 item_name.setData(Qt.ItemDataRole.UserRole, bonus)
-                log_detail = f"{bonus_data['dex_mod']} (DEX) + {bonus_data['extra']} (ek)"
-            else:
-                log_detail = f"{bonus} (sabit)"
-            
-            die_roll = random.randint(1, 20)
-            total = die_roll + bonus
-            
-            item_init.setText(str(total))
-            rolls.append(f"{name}: {die_roll} (zar) + {log_detail} = {total}")
-            
+            item_init.setText(str(random.randint(1, 20) + bonus))
         self.table.blockSignals(False)
-        print("\n--- Inisiyatif Zar Atışları ---")
-        for r in rolls: print(r)
-        
         self._sort_and_refresh()
 
     def open_context_menu(self, position):
@@ -8190,17 +8455,19 @@ class CombatTracker(QWidget):
         else: current_list.append(condition)
         new_text = ", ".join(current_list)
         item.setText(new_text)
-        item.setForeground(QBrush(QColor("#ff5252"))) if new_text else item.setForeground(QBrush(QColor("#e0e0e0")))
+        item.setForeground(QBrush(QColor("#ef5350"))) if new_text else item.setForeground(QBrush(Qt.BrushStyle.NoBrush))
         self.refresh_battle_map()
         self.data_changed_signal.emit()
 
     def delete_row(self, row):
         self.table.removeRow(row)
-        if self.table.rowCount() > 0:
-            if self.current_turn_index >= row:
-                self.current_turn_index = max(0, self.current_turn_index - 1)
-        else:
-            self.current_turn_index = -1
+        # Turn index güncellemesi
+        if self.current_encounter_id:
+            enc = self.encounters[self.current_encounter_id]
+            if self.table.rowCount() > 0:
+                if enc["turn_index"] >= row: enc["turn_index"] = max(0, enc["turn_index"] - 1)
+            else: enc["turn_index"] = -1
+        
         self.update_highlights()
         self.refresh_battle_map()
         self.data_changed_signal.emit()
@@ -8286,9 +8553,9 @@ class MapPinItem(QGraphicsEllipseItem):
             menu = QMenu()
             menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #007acc; }")
             
-            act_inspect = QAction("🔍 İncele", menu)
-            act_move = QAction("✋ Taşı", menu)
-            act_delete = QAction("🗑️ Sil", menu)
+            act_inspect = QAction(tr("MENU_CTX_INSPECT"), menu)
+            act_move = QAction(tr("MENU_CTX_MOVE"), menu)
+            act_delete = QAction(tr("MENU_CTX_DELETE"), menu)
             
             menu.addAction(act_inspect)
             menu.addAction(act_move)
@@ -8371,7 +8638,7 @@ class MapViewer(QGraphicsView):
         menu = QMenu(self)
         menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #007acc; }")
         
-        action_add_pin = QAction("📍 Buraya Pin Ekle", self)
+        action_add_pin = QAction(tr("MENU_CTX_PIN"), self)
         menu.addAction(action_add_pin)
         
         scene_pos = self.mapToScene(event.pos())
@@ -8410,10 +8677,15 @@ class NpcSheet(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
+
+        scroll.setObjectName("mainScroll") 
         
         self.content_widget = QWidget()
-        self.content_layout = QVBoxLayout(self.content_widget)
+        self.content_widget.setObjectName("sheetContainer")
+        self.content_widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
+        self.content_layout = QVBoxLayout(self.content_widget)
+        
         # --- ÜST BÖLÜM (RESİM & TEMEL BİLGİ) ---
         top_layout = QHBoxLayout()
         img_layout = QVBoxLayout()
@@ -8439,17 +8711,17 @@ class NpcSheet(QWidget):
         
         btn_img_actions = QHBoxLayout()
         self.btn_add_img = QPushButton(tr("BTN_ADD"))
-        self.btn_add_img.setObjectName("successBtn")
+        self.btn_add_img.setObjectName("successBtn") # Yeşil buton stili
         
         self.btn_remove_img = QPushButton()
         self.btn_remove_img.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
-        self.btn_remove_img.setObjectName("dangerBtn")
+        self.btn_remove_img.setObjectName("dangerBtn") # Kırmızı buton stili
         
         btn_img_actions.addWidget(self.btn_add_img)
         btn_img_actions.addWidget(self.btn_remove_img)
 
         self.btn_show_player = QPushButton(tr("BTN_SHOW_PLAYER"))
-        self.btn_show_player.setObjectName("primaryBtn")
+        self.btn_show_player.setObjectName("primaryBtn") # Mavi/Ana buton stili
         
         img_layout.addWidget(self.lbl_image)
         img_layout.addLayout(gallery_controls)
@@ -8471,9 +8743,8 @@ class NpcSheet(QWidget):
         self.list_residents = QListWidget(); self.list_residents.setMaximumHeight(80)
         self.lbl_residents = QLabel(tr("LBL_RESIDENTS"))
         
-        # --- GÜNCELLEME: Ana açıklama kutusunu da büyüttük ---
         self.inp_desc = QTextEdit()
-        self.inp_desc.setMinimumHeight(80)  # Min 80px (yaklaşık 4 satır)
+        self.inp_desc.setMinimumHeight(80)
         self.inp_desc.setMaximumHeight(150)
         self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
 
@@ -8504,7 +8775,7 @@ class NpcSheet(QWidget):
         scroll.setWidget(self.content_widget)
         main_layout.addWidget(scroll)
 
-        # --- BUTONLAR ---
+        # --- ALT BUTONLAR ---
         btn_layout = QHBoxLayout(); btn_layout.setContentsMargins(10, 10, 10, 10)
         self.btn_delete = QPushButton(tr("BTN_DELETE")); self.btn_delete.setObjectName("dangerBtn")
         self.btn_save = QPushButton(tr("BTN_SAVE")); self.btn_save.setObjectName("primaryBtn")
@@ -8527,8 +8798,6 @@ class NpcSheet(QWidget):
         self.lbl_residents.setText(tr("LBL_RESIDENTS"))
         self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
         
-        # Re-trigger build_dynamic_form to refresh property labels
-        # currentData() might be None if no item selected or not initialized
         cat_key = self.inp_type.currentData()
         if cat_key:
             self.build_dynamic_form(cat_key)
@@ -8576,7 +8845,11 @@ class NpcSheet(QWidget):
             lbl_title = QLabel(s); lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter); lbl_title.setStyleSheet("font-weight: bold;")
             inp = QLineEdit("10"); inp.setAlignment(Qt.AlignmentFlag.AlignCenter); inp.setMaximumWidth(50)
             inp.textChanged.connect(lambda text, key=s: self._update_modifier(key, text))
-            lbl_mod = QLabel("+0"); lbl_mod.setAlignment(Qt.AlignmentFlag.AlignCenter); lbl_mod.setStyleSheet("color: #aaa; font-size: 11px;")
+            
+            lbl_mod = QLabel("+0"); lbl_mod.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            # Property kullanarak durumu QSS'e bildiriyoruz
+            lbl_mod.setProperty("class", "statModifier")
+            
             self.stats_inputs[s] = inp; self.stats_modifiers[s] = lbl_mod
             v.addWidget(lbl_title); v.addWidget(inp); v.addWidget(lbl_mod); l.addLayout(v)
         layout.addWidget(self.grp_base_stats)
@@ -8619,7 +8892,22 @@ class NpcSheet(QWidget):
         try:
             val = int(text_value); mod = (val - 10) // 2; sign = "+" if mod >= 0 else ""
             self.stats_modifiers[stat_key].setText(f"{sign}{mod}")
-            self.stats_modifiers[stat_key].setStyleSheet(f"color: {'#4caf50' if mod > 0 else '#aaa'}; font-size: 11px; font-weight: bold;")
+            
+            # Dinamik Stil: QSS'de kullanmak için property değiştir
+            state = "positive" if mod > 0 else "neutral"
+            self.stats_modifiers[stat_key].setProperty("state", state)
+            
+            # Stili anlık güncellemek için unpolish/polish
+            self.stats_modifiers[stat_key].style().unpolish(self.stats_modifiers[stat_key])
+            self.stats_modifiers[stat_key].style().polish(self.stats_modifiers[stat_key])
+            
+            # NOT: Eğer QSS'de [state="positive"] tanımlı değilse renk değişmeyebilir.
+            # O yüzden hafif bir manuel renk kodu bırakıyoruz (istenirse silinebilir)
+            if mod > 0:
+                self.stats_modifiers[stat_key].setStyleSheet("color: #4caf50; font-weight: bold;")
+            else:
+                self.stats_modifiers[stat_key].setStyleSheet("color: #aaa; font-weight: normal;")
+                
         except ValueError:
             self.stats_modifiers[stat_key].setText("-")
 
@@ -8638,10 +8926,10 @@ class NpcSheet(QWidget):
         self.list_assigned_spells.setAlternatingRowColors(True)
         self.list_assigned_spells.setMinimumHeight(300)
         self.list_assigned_spells.setAlternatingRowColors(True)
-        self.list_assigned_spells.setStyleSheet("QListWidget::item { border-bottom: 1px solid #333; padding: 2px; } QListWidget::item:selected { border: 1px solid #7c4dff; }")
 
         self.btn_remove_spell = QPushButton(tr("BTN_REMOVE"))
         self.btn_remove_spell.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        self.btn_remove_spell.setObjectName("dangerBtn")
         
         l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_spells); l_linked.addWidget(self.btn_remove_spell)
         layout.addWidget(self.grp_spells)
@@ -8672,6 +8960,7 @@ class NpcSheet(QWidget):
         self.list_assigned_items = QListWidget(); self.list_assigned_items.setAlternatingRowColors(True)
         self.btn_remove_item_link = QPushButton(tr("BTN_REMOVE"))
         self.btn_remove_item_link.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        self.btn_remove_item_link.setObjectName("dangerBtn")
         
         l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_items); l_linked.addWidget(self.btn_remove_item_link)
         layout.addWidget(self.grp_db_items)
@@ -8695,45 +8984,61 @@ class NpcSheet(QWidget):
         
         h_action = QHBoxLayout()
         self.btn_open_pdf = QPushButton(tr("BTN_OPEN_PDF")); self.btn_open_pdf.setObjectName("primaryBtn")
-        self.btn_project_pdf = QPushButton(tr("BTN_PROJECT_PDF")); self.btn_project_pdf.setStyleSheet("background-color: #6a1b9a; color: white;")
+        self.btn_project_pdf = QPushButton(tr("BTN_PROJECT_PDF")); self.btn_project_pdf.setObjectName("actionBtn")
         self.btn_remove_pdf = QPushButton(tr("BTN_REMOVE"))
         self.btn_remove_pdf.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        self.btn_remove_pdf.setObjectName("dangerBtn")
         
         h_action.addWidget(self.btn_open_pdf); h_action.addWidget(self.btn_project_pdf); h_action.addWidget(self.btn_remove_pdf)
         v.addLayout(h_action); layout.addWidget(self.grp_pdf); layout.addStretch()
 
     # --- YARDIMCILAR ---
     def _create_section(self, title):
-        group = QGroupBox(title); v = QVBoxLayout(group); group.dynamic_area = QVBoxLayout(); v.addLayout(group.dynamic_area); return group
+        group = QGroupBox(title)
+        v = QVBoxLayout(group)
+        group.dynamic_area = QVBoxLayout()
+        v.addLayout(group.dynamic_area)
+        return group
 
     def add_btn_to_section(self, container, label):
-        btn = QPushButton(label); btn.clicked.connect(lambda: self.add_feature_card(container))
+        btn = QPushButton(label)
+        btn.clicked.connect(lambda: self.add_feature_card(container))
+        btn.setObjectName("successBtn")
         container.layout().insertWidget(0, btn)
 
     def add_feature_card(self, group, name="", desc="", ph_title=None, ph_desc=None):
         if ph_title is None: ph_title = tr("LBL_TITLE_PH")
         if ph_desc is None: ph_desc = tr("LBL_DETAILS_PH")
-        card = QFrame(); card.setStyleSheet("background-color: #2b2b2b; border: 1px solid #444; border-radius: 4px; margin-bottom: 4px;")
-        l = QVBoxLayout(card); h = QHBoxLayout()
         
-        t = QLineEdit(name); t.setPlaceholderText(ph_title); t.setStyleSheet("color: orange; font-weight: bold; border:none; font-size: 14px;")
+        card = QFrame()
+        # QSS Tarafından yakalanması için sınıf ataması
+        card.setProperty("class", "featureCard")
         
-        # --- SİLME BUTONU (STANDART İKON) ---
+        l = QVBoxLayout(card)
+        h = QHBoxLayout()
+        
+        t = QLineEdit(name)
+        t.setPlaceholderText(ph_title)
+        # Kart içi başlık (Border'ı kaldır, background'ı transparan yap ki kart rengini alsın)
+        t.setStyleSheet("font-weight: bold; border:none; font-size: 14px; background: transparent;")
+        
+        # --- SİLME BUTONU ---
         btn = QPushButton()
         btn.setFixedSize(24,24)
         btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton))
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setToolTip(tr("BTN_REMOVE"))
+        btn.setStyleSheet("background: transparent; border: none;") # İkon butonu temizle
         
         btn.clicked.connect(lambda: [group.dynamic_area.removeWidget(card), card.deleteLater()])
         h.addWidget(t); h.addWidget(btn); l.addLayout(h)
         
-        # --- GÜNCELLEME: Yüksekliği artırıldı ---
         d = QTextEdit(desc)
         d.setPlaceholderText(ph_desc)
-        d.setMinimumHeight(80)  # Min 80px (yaklaşık 4 satır)
-        d.setMaximumHeight(300) # Esneme payı
-        d.setStyleSheet("border:none; color: #ccc;")
+        d.setMinimumHeight(80) 
+        d.setMaximumHeight(300)
+        # Kart içi açıklama (Border yok, transparan arka plan)
+        d.setStyleSheet("border:none; background: transparent;")
         l.addWidget(d)
         
         group.dynamic_area.addWidget(card)
@@ -8834,17 +9139,20 @@ class BattleTokenItem(QGraphicsEllipseItem):
     def update_appearance(self, size):
         self.setRect(0, 0, size, size)
         
+        # Sınır Rengi (Border)
         pen = QPen(QColor(self.border_color))
         pen.setWidth(3)
         self.setPen(pen)
         
         if self.original_pixmap and not self.original_pixmap.isNull():
+            # Resmi token içine sığdır (Yuvarlak kesim maskesi QBrush ile yapılır)
             scaled = self.original_pixmap.scaled(int(size), int(size), 
                                                Qt.AspectRatioMode.KeepAspectRatioByExpanding, 
                                                Qt.TransformationMode.SmoothTransformation)
             brush = QBrush(scaled)
             self.setBrush(brush)
         else:
+            # Resim yoksa koyu gri dolgu
             self.setBrush(QBrush(QColor("#444")))
 
     def mouseReleaseEvent(self, event):
@@ -8865,7 +9173,8 @@ class BattleMapWindow(QMainWindow):
         
         self.setWindowTitle(tr("TITLE_BATTLE_MAP"))
         self.resize(1200, 800)
-        self.setStyleSheet("background-color: #121212; color: #e0e0e0;")
+        
+        # Hardcoded stil kaldırıldı, QMainWindow stili QSS'den gelecek.
         
         central = QWidget()
         self.setCentralWidget(central)
@@ -8878,26 +9187,34 @@ class BattleMapWindow(QMainWindow):
         # Toolbar
         toolbar = QHBoxLayout()
         toolbar.setContentsMargins(10, 5, 10, 5)
+        
         self.lbl_size = QLabel(tr("LBL_TOKEN_SIZE"))
+        self.lbl_size.setObjectName("toolbarLabel")
+        
         self.slider_size = QSlider(Qt.Orientation.Horizontal)
         self.slider_size.setMinimum(20); self.slider_size.setMaximum(300)
         self.slider_size.setValue(self.token_size)
         self.slider_size.valueChanged.connect(self.change_token_size)
         self.slider_size.setFixedWidth(200)
-        toolbar.addWidget(self.lbl_size); toolbar.addWidget(self.slider_size); toolbar.addStretch()
+        
+        toolbar.addWidget(self.lbl_size)
+        toolbar.addWidget(self.slider_size)
+        toolbar.addStretch()
         map_layout.addLayout(toolbar)
         
         # Grafik Sahnesi ve Görünümü
         self.scene = QGraphicsScene()
+        # Sahne arka planı (Canvas) her zaman koyu olması harita için iyidir, 
+        # ancak tema uyumu istenirse bu satır kaldırılabilir.
         self.scene.setBackgroundBrush(QBrush(QColor("#111")))
         
         self.view = QGraphicsView(self.scene)
         self.view.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.view.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         self.view.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-        self.view.setStyleSheet("border: none;")
+        self.view.setStyleSheet("border: none;") # View çerçevesini kaldır
         
-        # Scroll barları kapat (Tam sığdıracağımız için gerek yok)
+        # Scroll barları kapat
         self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         
@@ -8906,18 +9223,25 @@ class BattleMapWindow(QMainWindow):
         # --- SAĞ: SIDEBAR ---
         self.sidebar = QWidget()
         self.sidebar.setFixedWidth(300)
-        self.sidebar.setStyleSheet("background-color: #1e1e1e; border-left: 1px solid #333;")
+        # Sidebar'ı QSS ile stillendirmek için objectName atıyoruz
+        self.sidebar.setObjectName("sidebarFrame") 
+        
         sidebar_layout = QVBoxLayout(self.sidebar)
         
         self.lbl_title = QLabel(tr("TITLE_TURN_ORDER"))
-        self.lbl_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #ffb74d; padding: 10px; border-bottom: 1px solid #444;")
+        self.lbl_title.setObjectName("headerLabel") # QSS için ID
         self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sidebar_layout.addWidget(self.lbl_title)
         
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setObjectName("sidebarScroll")
+        
         self.list_container = QWidget()
+        self.list_container.setObjectName("sheetContainer")
+        self.list_container.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        
         self.list_layout = QVBoxLayout(self.list_container)
         self.list_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.list_layout.setSpacing(5)
@@ -8994,9 +9318,7 @@ class BattleMapWindow(QMainWindow):
             key = c.get("tid") or c.get("eid")
             if key: active_tids.append(key)
             
-        print(f"🗺️ Harita Güncelleniyor: {len(combatants)} combatant, {len(active_tids)} geçerli ID.")
-        
-        # Token Temizle
+        # Token Temizle (Artık listede olmayanları kaldır)
         to_remove = [tid for tid in self.tokens if tid not in active_tids]
         for tid in to_remove:
             self.scene.removeItem(self.tokens[tid])
@@ -9012,6 +9334,12 @@ class BattleMapWindow(QMainWindow):
             ent_type = c.get("type", "NPC")
             attitude = c.get("attitude", "LBL_ATTR_NEUTRAL")
             is_player = (ent_type == "Player")
+            is_active = (i == current_index)
+            
+            # Tavır (Attitude) temizliği - QSS için basit stringlere çevir
+            attitude_clean = "neutral"
+            if attitude == "LBL_ATTR_HOSTILE": attitude_clean = "hostile"
+            elif attitude == "LBL_ATTR_FRIENDLY": attitude_clean = "friendly"
             
             img_path = None
             if eid and eid in self.dm.data["entities"]:
@@ -9020,55 +9348,65 @@ class BattleMapWindow(QMainWindow):
                 if not rel_path and ent.get("images"): rel_path = ent.get("images")[0]
                 if rel_path: img_path = self.dm.get_full_path(rel_path)
 
-            # Sidebar Kartı
+            # --- SIDEBAR KARTI (QSS ile Stilize Edilecek) ---
             card = QFrame()
-            card_layout = QHBoxLayout(card); card_layout.setContentsMargins(5,5,5,5)
             
-            # Renk Belirle
-            if i == current_index:
-                border = "#ffb74d" # Turuncu (Sıradaki)
-                bg = "#4527a0" if is_player else "#2e7d32"
-            else:
-                if is_player:
-                    border = "#4caf50" # Yeşil (Oyuncu)
-                elif attitude == "LBL_ATTR_HOSTILE":
-                    border = "#ef5350" # Kırmızı (Düşman)
-                elif attitude == "LBL_ATTR_FRIENDLY":
-                    border = "#42a5f5" # Mavi (Dost)
-                else:
-                    border = "#bdbdbd" # Gri (Nötr)
-                bg = "#2b2b2b"
-
-            card.setStyleSheet(f"background-color: {bg}; border: 1px solid {border}; border-radius: 5px;")
+            # Özellikleri ata (QSS bunlara göre boyayacak)
+            card.setProperty("class", "combatCard")
+            card.setProperty("active", str(is_active).lower())
+            card.setProperty("type", ent_type)
+            card.setProperty("attitude", attitude_clean)
             
-            lbl_name = QLabel(name); lbl_name.setStyleSheet("font-weight: bold;")
+            card_layout = QHBoxLayout(card)
+            card_layout.setContentsMargins(5,5,5,5)
+            
+            lbl_name = QLabel(name)
+            lbl_name.setStyleSheet("font-weight: bold; border: none; background: transparent;")
+            
             hp_txt = tr("LBL_HP_SIDEBAR", hp=hp) if is_player else tr("LBL_HP_UNKNOWN")
-            lbl_hp = QLabel(hp_txt); lbl_hp.setStyleSheet(f"color: {border};" if is_player else "color: #888; font-style: italic;")
-            card_layout.addWidget(lbl_name, 1); card_layout.addWidget(lbl_hp, 0)
+            lbl_hp = QLabel(hp_txt)
+            lbl_hp.setStyleSheet("border: none; background: transparent; font-style: italic;")
+            
+            card_layout.addWidget(lbl_name, 1)
+            card_layout.addWidget(lbl_hp, 0)
             self.list_layout.addWidget(card)
 
-            # Token Güncelleme
+            # --- TOKEN GÜNCELLEME ---
+            # Tokenlar QGraphicsItem olduğu için QSS kullanamaz. 
+            # Rengi burada manuel belirleyip token nesnesine veriyoruz.
+            
+            token_border_color = "#bdbdbd" # Varsayılan: Gri
+            if is_active:
+                token_border_color = "#ffb74d" # Turuncu (Aktif)
+            elif is_player:
+                token_border_color = "#4caf50" # Yeşil (Oyuncu)
+            elif attitude_clean == "hostile":
+                token_border_color = "#ef5350" # Kırmızı (Düşman)
+            elif attitude_clean == "friendly":
+                token_border_color = "#42a5f5" # Mavi (Dost)
+
             token_key = c.get("tid")
-            if not token_key: token_key = c.get("eid") # Geriye dönük uyumluluk
+            if not token_key: token_key = c.get("eid")
             
             if token_key:
                 if token_key in self.tokens:
                     token = self.tokens[token_key]
-                    token.border_color = border
+                    token.border_color = token_border_color
                     token.update_appearance(self.token_size)
-                    token.setZValue(100 if i == current_index else 10)
+                    token.setZValue(100 if is_active else 10)
                     
                     if x is not None and y is not None:
-                         # Sürüklerken titremesin diye tolerans
+                         # Sürüklerken titremesin diye küçük tolerans
                          if abs(token.x() - x) > 1 or abs(token.y() - y) > 1:
                              token.setPos(x, y)
                 else:
                     pixmap = QPixmap(img_path) if img_path else None
-                    token = BattleTokenItem(self.token_size, pixmap, border, name, token_key, eid, self.on_token_moved)
+                    token = BattleTokenItem(self.token_size, pixmap, token_border_color, name, token_key, eid, self.on_token_moved)
                     
                     if x is not None and y is not None:
                         token.setPos(x, y)
                     else:
+                        # Haritada pozisyonu yoksa sırayla diz
                         offset = len(self.tokens) * (self.token_size + 10)
                         token.setPos(50 + offset, 50)
                     
