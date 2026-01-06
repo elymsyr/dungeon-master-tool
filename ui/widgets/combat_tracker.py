@@ -9,6 +9,7 @@ from ui.windows.battle_map_window import BattleMapWindow
 import random
 import os
 import uuid
+from ui.dialogs.encounter_selector import EncounterSelectionDialog
 
 # D&D 5e Standart Durumlar
 CONDITIONS = [
@@ -522,13 +523,19 @@ class CombatTracker(QWidget):
         self._sort_and_refresh()
 
     def add_combatant_dialog(self):
-        entities = self.dm.data["entities"]
-        items = []; ids = []
-        for eid, data in entities.items():
-            if data.get("type") in ["NPC", "Monster", "Player"]:
-                items.append(f"{data['name']} ({data['type']})"); ids.append(eid)
-        item, ok = QInputDialog.getItem(self, tr("BTN_ADD"), tr("LBL_NAME"), items, 0, False)
-        if ok and item: self.add_row_from_entity(ids[items.index(item)]); self._sort_and_refresh()
+        # YENİ GELİŞMİŞ DİYALOG
+        dialog = EncounterSelectionDialog(self.dm, self)
+        
+        if dialog.exec():
+            # Seçilen tüm ID'leri döngüyle ekle
+            for eid in dialog.selected_entities:
+                self.add_row_from_entity(eid)
+            
+            # Hepsini ekledikten sonra bir kere sırala ve yenile
+            self._sort_and_refresh()
+            
+            # Kullanıcıya bilgi ver (Opsiyonel)
+            # print(f"{len(dialog.selected_entities)} varlık eklendi.")
 
     def add_row_from_entity(self, entity_id):
         data = self.dm.data["entities"].get(entity_id)
