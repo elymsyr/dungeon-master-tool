@@ -1,0 +1,92 @@
+/* === BALDUR THEME (FIXED) === */
+QWidget { background-color: #110b09; color: #c8b696; font-family: 'Segoe UI', serif; font-size: 14px; }
+QMainWindow, QDialog, QScrollArea { background-color: #110b09; border: none; }
+QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #1a120b; }
+
+QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QComboBox {
+    background-color: #0d0806; color: #e0d8c8; border: 1px solid #4a3b2a; border-radius: 2px; padding: 6px;
+}
+QLineEdit:focus, QTextEdit:focus { border: 1px solid #b88e4a; }
+
+/* --- KARTLAR (ŞEFFAF TEXTBOX) --- */
+QFrame[class="featureCard"] {
+    background-color: #241b14; border: 1px solid #3d2e22; border-left: 3px solid #b88e4a; border-radius: 2px; margin-bottom: 8px;
+}
+/* KART İÇİ TEXTBOX: ŞEFFAF */
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+    background-color: transparent; border: none; color: #c8b696;
+}
+
+QFrame[class="combatCard"] { background-color: #241b14; border: 1px solid #3d2e22; border-radius: 4px; margin-bottom: 4px; }
+QFrame[class="combatCard"] QLabel { background-color: transparent; color: #c8b696; }
+QFrame[class="combatCard"][active="true"] { background-color: #2d2218; border: 1px solid #ffd700; }
+QFrame[class="combatCard"][attitude="friendly"] { border-left: 5px solid #558b2f; }
+QFrame[class="combatCard"][attitude="hostile"] { border-left: 5px solid #c62828; }
+QFrame[class="combatCard"][attitude="neutral"] { border-left: 5px solid #8d6e63; }
+QFrame[class="combatCard"][type="Player"] { border-left: 5px solid #1565c0; }
+
+QListWidget, QTableWidget { background-color: #1a120b; color: #c8b696; border: 1px solid #4a3b2a; }
+QListWidget::item:selected { background-color: #3e2723; color: #ffd700; border: 1px solid #b88e4a; }
+/* --- BUTONLAR (BALDUR - BRONZE & WOOD) --- */
+QPushButton {
+    background-color: #2d241b; /* Koyu Ahşap */
+    color: #c8b696; /* Kemik Rengi */
+    border: 1px solid #4a3b2a; /* Bronz Çerçeve */
+    border-radius: 2px; /* Keskin */
+    padding: 6px 12px;
+    font-family: serif;
+    font-weight: bold;
+}
+QPushButton:hover {
+    background-color: #3e3226;
+    border-color: #b88e4a; /* Parlayan bronz */
+}
+
+QPushButton#primaryBtn {
+    background-color: #5d4037;
+    color: #ffd700; /* Altın Yazı */
+    border: 1px solid #b88e4a;
+}
+QPushButton#primaryBtn:hover { background-color: #6d4c41; }
+
+QPushButton#successBtn {
+    background-color: #33691e; /* Koyu Yaprak */
+    color: #f1f8e9;
+    border: 1px solid #558b2f;
+}
+QPushButton#successBtn:hover { background-color: #558b2f; }
+
+QPushButton#dangerBtn {
+    background-color: #8c2323; /* Kan Rengi */
+    color: #ffebee;
+    border: 1px solid #b71c1c;
+}
+QPushButton#dangerBtn:hover { background-color: #a52a2a; }
+
+QPushButton#actionBtn {
+    background-color: #b88e4a; /* Bronz/Altın */
+    color: #1a120b; /* Siyah yazı */
+    border: 1px solid #8d6e63;
+}
+QPushButton#actionBtn:hover { background-color: #d4a017; }
+
+QGroupBox { background-color: transparent; border: 1px solid #4a3b2a; border-radius: 4px; margin-top: 20px; padding-top: 15px; color: #b88e4a; }
+QTabWidget::pane { border: 1px solid #4a3b2a; background-color: #1a120b; }
+QTabBar::tab { background-color: #110b09; color: #8d6e63; padding: 8px 15px; }
+QTabBar::tab:selected { background-color: #1a120b; color: #b88e4a; border-top: 2px solid #b88e4a; }
+QLabel#headerLabel { color: #b88e4a; font-weight: bold; font-family: serif; } QLabel#toolbarLabel { color: #b88e4a; font-weight: bold; }
+QWidget#entityItem {
+    background-color: transparent; /* Widget'ın kendisi şeffaf */
+}
+
+QLabel#entityName {
+    color: #e0e0e0; /* Temanın ana yazı rengi neyse o (Örn: #e0e0e0) */
+    background-color: transparent;
+    font-weight: bold;
+}
+
+QLabel#entityCat {
+    color: #888888; /* Daha soluk bir renk */
+    background-color: transparent;
+    font-style: italic;
+}

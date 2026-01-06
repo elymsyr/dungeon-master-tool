@@ -13,6 +13,60 @@ from ui.workers import ApiSearchWorker
 from core.models import ENTITY_SCHEMAS
 from core.locales import tr
 
+class EntityListItemWidget(QWidget):
+    """
+    Listede görünecek özel satır tasarımı.
+    Üstte: İsim (Bold)
+    Altta: Kategori (Gri ve İtalik) - Dinamik Çeviri
+    """
+    def __init__(self, name, raw_category, parent=None):
+        super().__init__(parent)
+        
+        # --- BU SATIRI EKLEYİN ---
+        self.setObjectName("entityItem") 
+        # Böylece QSS dosyasında #entityItem diyerek bu widget'ı hedefleyebiliriz.
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(2)
+        
+        # İsim Alanı
+        lbl_name = QLabel(name)
+        # --- objectName EKLENDİ ---
+        lbl_name.setObjectName("entityName")
+        # Hardcoded stili temizleyip QSS'e bırakıyoruz veya sadece font ayarı bırakıyoruz
+        lbl_name.setStyleSheet("font-size: 14px; font-weight: bold; background-color: transparent;")
+        
+        # Kategori Alanı
+        display_cat = self.translate_category(raw_category)
+        lbl_cat = QLabel(display_cat)
+        # --- objectName EKLENDİ ---
+        lbl_cat.setObjectName("entityCat")
+        # Arka planı şeffaf yapıyoruz
+        lbl_cat.setStyleSheet("font-size: 11px; font-style: italic; background-color: transparent;")
+        
+        layout.addWidget(lbl_name)
+        layout.addWidget(lbl_cat)
+
+    def translate_category(self, raw_cat):
+        # Ham veriyi (monster, Canavar vb.) standartlaştıralım
+        key_map = {
+            "monster": "CAT_MONSTER", "monsters": "CAT_MONSTER", "canavar": "CAT_MONSTER",
+            "spell": "CAT_SPELL", "spells": "CAT_SPELL", "büyü (spell)": "CAT_SPELL",
+            "npc": "CAT_NPC",
+            "equipment": "CAT_EQUIPMENT", "eşya (equipment)": "CAT_EQUIPMENT",
+            "magic-items": "CAT_EQUIPMENT",
+            "class": "CAT_CLASS", "classes": "CAT_CLASS", "sınıf (class)": "CAT_CLASS",
+            "race": "CAT_RACE", "races": "CAT_RACE", "irk (race)": "CAT_RACE"
+        }
+        
+        # Küçük harfe çevirip eşleştir
+        translation_key = key_map.get(str(raw_cat).lower())
+        
+        if translation_key:
+            return tr(translation_key)
+        return str(raw_cat).title() # Eşleşmezse olduğu gibi yaz
+
 # --- 1. SÜRÜKLENEBİLİR LİSTE ---
 class DraggableListWidget(QListWidget):
     def __init__(self, parent=None):
@@ -172,31 +226,82 @@ class DatabaseTab(QWidget):
         self.btn_browser.setText(tr("BTN_API_BROWSER"))
         self.btn_add.setText(tr("BTN_NEW_ENTITY"))
 
-    # --- LİSTELEME ---
     def refresh_list(self):
         self.list_widget.clear()
         text = self.inp_search.text().lower()
-        flt = self.combo_filter.currentText()
         
-        # Yerel Varlıklar
-        for eid, data in self.dm.data["entities"].items():
-            name = data.get("name", "").lower()
-            etype = data.get("type", "")
-            if flt != tr("CAT_ALL") and etype != flt: continue
-            
-            if text in name or any(text in t.lower() for t in data.get("tags", [])):
-                item = QListWidgetItem(f"👤 {data['name']} ({etype})")
-                item.setData(Qt.ItemDataRole.UserRole, eid)
-                self.list_widget.addItem(item)
+        # Filtreleme için standart kategori isimlerini kullanalım
+        # Kullanıcı arayüzde "Canavar" seçer ama biz "monster" ararız
+        flt_ui = self.combo_filter.currentText()     # Görünen: "Canavar"
+        flt_data = self.combo_filter.currentData()   # Veri: "Monster" (Schema'dan gelen)
 
-        # Kütüphane
-        if self.check_show_library.isChecked() and (len(text) > 2 or flt != tr("CAT_ALL")):
-            lib_results = self.dm.search_in_library(flt, text)
+        # Kategori Dönüştürücü (Database -> API Key)
+        def normalize_type(t):
+            t = str(t).lower()
+            if t in ["canavar", "monster", "monsters"]: return "monster"
+            if "spell" in t or "büyü" in t: return "spell"
+            if "equipment" in t or "eşya" in t: return "equipment"
+            if "class" in t or "sınıf" in t: return "class"
+            if "race" in t or "irk" in t: return "race"
+            return t
+
+        target_cat = normalize_type(flt_data) if flt_data else None
+
+        # 1. YEREL VARLIKLAR
+        for eid, data in self.dm.data["entities"].items():
+            name = data.get("name", "")
+            raw_type = data.get("type", "NPC")
+            norm_type = normalize_type(raw_type)
+            
+            # Filtre Kontrolü
+            if target_cat and norm_type != target_cat: continue
+            if text not in name.lower() and text not in str(data.get("tags", "")).lower(): continue
+            
+            # Liste Öğesi Oluştur
+            item = QListWidgetItem(self.list_widget)
+            item.setData(Qt.ItemDataRole.UserRole, eid)
+            
+            # Görsel Widget Ekle
+            widget = EntityListItemWidget(name, raw_type)
+            item.setSizeHint(widget.sizeHint())
+            self.list_widget.setItemWidget(item, widget)
+
+        # 2. KÜTÜPHANE (CACHE/OFFLINE)
+        if self.check_show_library.isChecked() and (len(text) > 2 or target_cat):
+            # Kütüphanede arama yaparken de raw kategoriyi (monster) kullanıyoruz
+            # DataManager.search_in_library fonksiyonu artık standart anahtarlarla çalışmalı
+            # Ancak eski cache dosyalarınızda "Canavar" yazıyor olabilir.
+            
+            # Bu yüzden search_in_library'den dönen sonuçları da standardize edeceğiz.
+            # Not: search_in_library metoduna "None" gönderirsek hepsinde arar, biz burada filtreleyelim.
+            
+            lib_results = self.dm.search_in_library(None, text) # Hepsini getir, burada eleyelim
+            
             for res in lib_results:
-                item = QListWidgetItem(f"📚 {res['name']} ({res['type']})")
-                item.setForeground(QBrush(QColor("#888")))
-                item.setData(Qt.ItemDataRole.UserRole, res['id'])
-                self.list_widget.addItem(item)
+                res_cat = res["type"] # Örn: "Canavar" veya "monsters" gelebilir
+                norm_res_cat = normalize_type(res_cat)
+                
+                # Filtreye uyuyor mu?
+                if target_cat and norm_res_cat != target_cat: continue
+                
+                item = QListWidgetItem(self.list_widget)
+                # ID formatı: lib_kategori_index
+                # Burada KRİTİK NOKTA: Kategori ismini API'nin anlayacağı dile (ingilizce) çevirip ID'ye gömmeliyiz.
+                # Örn: lib_monster_aboleth (lib_Canavar_aboleth DEĞİL)
+                
+                api_safe_cat = "monsters" if norm_res_cat == "monster" else \
+                               "spells" if norm_res_cat == "spell" else \
+                               "equipment" if norm_res_cat == "equipment" else \
+                               "classes" if norm_res_cat == "class" else \
+                               "races" if norm_res_cat == "race" else norm_res_cat
+                               
+                safe_id = f"lib_{api_safe_cat}_{res['index']}"
+                item.setData(Qt.ItemDataRole.UserRole, safe_id)
+                
+                # Görsel Widget (Kütüphane öğesi olduğu belli olsun diye ismin yanına ikon koyabiliriz)
+                widget = EntityListItemWidget("📚 " + res["name"], res_cat)
+                item.setSizeHint(widget.sizeHint())
+                self.list_widget.setItemWidget(item, widget)
 
     # --- SEKME AÇMA MANTIĞI ---
     def on_item_double_clicked(self, item):
@@ -250,9 +355,32 @@ class DatabaseTab(QWidget):
 
     def _fetch_and_open_api_entity(self, cat, idx, target_panel):
         # API'den veri çekme işlemi
-        worker = ApiSearchWorker(self.dm, cat, idx)
-        worker.finished.connect(lambda s, d, m: self._on_api_fetched(s, d, m, target_panel))
-        worker.start()
+        # HATA BURADAYDI: "worker =" derseniz fonksiyon bitince silinir.
+        # DÜZELTME: "self.worker =" diyerek sınıfın hafızasında tutuyoruz.
+        
+        self.api_worker = ApiSearchWorker(self.dm, cat, idx)
+        
+        # Lambda fonksiyonu ile panel bilgisini taşıyoruz
+        self.api_worker.finished.connect(lambda s, d, m: self._on_api_fetched(s, d, m, target_panel))
+        
+        # İş bitince worker'ı temizlemek iyi bir pratiktir
+        self.api_worker.finished.connect(lambda: setattr(self, 'api_worker', None))
+        
+        self.api_worker.start()
+
+    def open_entity_card(self, eid):
+        # Kütüphane öğesi mi? (lib_...)
+        if str(eid).startswith("lib_"):
+            parts = eid.split("_")
+            cat = parts[1]; idx = parts[2]
+            
+            # BURASI DA DEĞİŞMELİ: worker -> self.worker
+            self.search_worker = ApiSearchWorker(self.dm, cat, idx)
+            self.search_worker.finished.connect(lambda s, d, m: self.on_api_fetched(s, d, m))
+            self.search_worker.start()
+        else:
+            # Zaten var, kartı aç
+            self._create_card_window(eid)
 
     def _on_api_fetched(self, success, data_or_id, msg, target_panel):
         if success:
