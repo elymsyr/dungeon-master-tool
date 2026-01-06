@@ -122,22 +122,22 @@ class CombatTracker(QWidget):
         
         # BUTON GENİŞLİKLERİ ARTIRILDI (30 -> 40)
         self.btn_new_enc = QPushButton("➕")
-        self.btn_new_enc.setToolTip("Yeni Encounter")
+        self.btn_new_enc.setToolTip(tr("TIP_NEW_ENC"))
         self.btn_new_enc.clicked.connect(self.prompt_new_encounter)
         self.btn_new_enc.setFixedWidth(40) 
         
         self.btn_rename_enc = QPushButton("✏️")
-        self.btn_rename_enc.setToolTip("İsim Değiştir")
+        self.btn_rename_enc.setToolTip(tr("TIP_RENAME_ENC"))
         self.btn_rename_enc.clicked.connect(self.rename_encounter)
         self.btn_rename_enc.setFixedWidth(40)
         
         self.btn_del_enc = QPushButton("🗑️")
-        self.btn_del_enc.setToolTip("Encounter Sil")
+        self.btn_del_enc.setToolTip(tr("TIP_DEL_ENC"))
         self.btn_del_enc.clicked.connect(self.delete_encounter)
         self.btn_del_enc.setFixedWidth(40)
         self.btn_del_enc.setObjectName("dangerBtn")
         
-        enc_layout.addWidget(QLabel("Encounter:"))
+        enc_layout.addWidget(QLabel(f"{tr('LBL_ENCOUNTER_PREFIX')}"))
         enc_layout.addWidget(self.combo_encounters)
         enc_layout.addWidget(self.btn_new_enc)
         enc_layout.addWidget(self.btn_rename_enc)
@@ -175,7 +175,7 @@ class CombatTracker(QWidget):
 
         # Tur Kontrol ve Harita
         btn_layout = QHBoxLayout()
-        self.lbl_round = QLabel("Round: 1")
+        self.lbl_round = QLabel(f"{tr('LBL_ROUND_PREFIX')}1")
         self.lbl_round.setObjectName("headerLabel")
         self.lbl_round.setStyleSheet("font-size: 16px; font-weight: bold; margin-right: 10px;")
         
@@ -183,7 +183,7 @@ class CombatTracker(QWidget):
         self.btn_next_turn.setObjectName("actionBtn") 
         self.btn_next_turn.clicked.connect(self.next_turn)
         
-        self.btn_battle_map = QPushButton("🗺️ Battle Map")
+        self.btn_battle_map = QPushButton(tr("BTN_BATTLE_MAP"))
         self.btn_battle_map.setObjectName("primaryBtn")
         self.btn_battle_map.clicked.connect(self.open_battle_map)
 
@@ -249,7 +249,7 @@ class CombatTracker(QWidget):
     def rename_encounter(self):
         if not self.current_encounter_id: return
         current_name = self.encounters[self.current_encounter_id]["name"]
-        name, ok = QInputDialog.getText(self, "İsim Değiştir", "Yeni Ad:", text=current_name)
+        name, ok = QInputDialog.getText(self, tr("TITLE_RENAME_ENC"), tr("LBL_NEW_NAME"), text=current_name)
         if ok and name:
             self.encounters[self.current_encounter_id]["name"] = name
             idx = self.combo_encounters.findData(self.current_encounter_id)
@@ -258,10 +258,10 @@ class CombatTracker(QWidget):
 
     def delete_encounter(self):
         if len(self.encounters) <= 1:
-            QMessageBox.warning(self, "Hata", "Son encounter silinemez.")
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_LAST_ENC_DELETE"))
             return
         
-        reply = QMessageBox.question(self, "Sil", "Bu encounter silinsin mi?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        reply = QMessageBox.question(self, tr("TITLE_DELETE"), tr("MSG_CONFIRM_ENC_DELETE"), QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if reply == QMessageBox.StandardButton.Yes:
             old_id = self.current_encounter_id
             del self.encounters[old_id]
@@ -340,7 +340,7 @@ class CombatTracker(QWidget):
         if not self.current_encounter_id: return
         enc = self.encounters[self.current_encounter_id]
         
-        self.lbl_round.setText(f"Round: {enc.get('round', 1)}")
+        self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{enc.get('round', 1)}")
         
         for c in enc.get("combatants", []):
             tid = c.get("tid")
@@ -487,7 +487,7 @@ class CombatTracker(QWidget):
         if enc["turn_index"] >= count:
             enc["turn_index"] = 0
             enc["round"] += 1
-            self.lbl_round.setText(f"Round: {enc['round']}")
+            self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{enc['round']}")
             
         self.update_highlights()
         self.refresh_battle_map()
@@ -546,7 +546,7 @@ class CombatTracker(QWidget):
         enc["round"] = 1
         enc["map_path"] = None # Haritayı da silmek ister mi? Genelde hayır ama clear all dediği için silebiliriz.
         
-        self.lbl_round.setText("Round: 1")
+        self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}1")
         self.refresh_battle_map(force_map_reload=True) # Harita silinsin
         if not self.loading: self.data_changed_signal.emit()
 

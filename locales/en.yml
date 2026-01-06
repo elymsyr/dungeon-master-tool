@@ -295,3 +295,68 @@ en:
   CAT_MAGIC_ITEMS_ALL: "All Magic Items"
   CAT_CLASSES_PL: "Classes"
   CAT_RACES_PL: "Races"
+  # --- FINAL LOCALIZATION ADDITIONS ---
+  # Campaign Selector
+  TITLE_SELECT_WORLD: "Select World"
+  LBL_SELECT_WORLD_TITLE: "🔮 Select World"
+  PH_NEW_WORLD_NAME: "New World Name..."
+  BTN_LOAD: "Load"
+  BTN_CREATE: "Create"
+  MSG_SELECT_WORLD_WARN: "Please select a world."
+  MSG_NAME_EMPTY: "Name cannot be empty."
+  MSG_WORLD_EXISTS: "A world with this name already exists."
+  
+  # Combat Tracker & Encounter
+  LBL_ENCOUNTER_PREFIX: "Encounter:"
+  TIP_NEW_ENC: "New Encounter"
+  TIP_RENAME_ENC: "Rename Encounter"
+  TIP_DEL_ENC: "Delete Encounter"
+  TITLE_NEW_ENC: "New Encounter"
+  LBL_ENC_NAME: "Encounter Name:"
+  TITLE_RENAME_ENC: "Rename"
+  LBL_NEW_NAME: "New Name:"
+  TITLE_DELETE: "Delete"
+  MSG_CONFIRM_ENC_DELETE: "Delete this encounter?"
+  MSG_LAST_ENC_DELETE: "Cannot delete the last encounter."
+  LBL_ROUND_PREFIX: "Round: "
+  BTN_BATTLE_MAP: "🗺️ Battle Map"
+  
+  # Encounter Selector Dialog
+  TITLE_ADD_COMBAT: "Add Entity to Combat"
+  PH_SEARCH_NAME_TAG: "Search Name or Tag..."
+  LBL_TYPE_ALL: "All"
+  HEADER_INIT_BONUS: "Init Bonus"
+  HEADER_ID: "ID"
+  LBL_ADD_COUNT: "Count to Add:"
+  BTN_ADD_SELECTED: "✅ Add Selected"
+  NAME_UNKNOWN: "Unknown"
+  NAME_UNNAMED: "Unnamed"
+  
+  # Export / Main Window
+  TITLE_EXPORT: "Save List"
+  FILE_FILTER_TXT: "Text Files (*.txt)"
+  MSG_EXPORT_SUCCESS: "List exported successfully."
+  MSG_FILE_WRITE_ERROR: "Could not write file:\n%{error}"
+  TXT_EXPORT_HEADER: "DUNGEON MASTER - ENTITY LIST"
+  TXT_EXPORT_WORLD: "World: "
+  TXT_EXPORT_NO_DATA: "No entities recorded yet."
+  TXT_EXPORT_TAGS: "   Tags: "
+  TXT_EXPORT_DESC: "   Desc: "
+  
+  # Categories (Plurals for Dialogs)
+  CAT_MONSTERS_PL: "Monsters"
+  CAT_SPELLS_PL: "Spells"
+  CAT_EQUIPMENT_ALL: "All Equipment"
+  CAT_MAGIC_ITEMS_ALL: "All Magic Items"
+  CAT_CLASSES_PL: "Classes"
+  CAT_RACES_PL: "Races"
+  
+  # HP Editing
+  TITLE_EDIT_HP: "Edit HP"
+  LBL_NEW_HP: "New HP:"
+  
+  # Context Menus
+  MENU_CTX_INSPECT: "🔍 Inspect"
+  MENU_CTX_MOVE: "✋ Move"
+  MENU_CTX_DELETE: "🗑️ Delete"
+  MENU_CTX_PIN: "📍 Add Pin Here"

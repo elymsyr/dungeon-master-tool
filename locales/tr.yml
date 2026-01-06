@@ -294,3 +294,68 @@ tr:
   CAT_MAGIC_ITEMS_ALL: "Tüm Büyülü Eşyalar"
   CAT_CLASSES_PL: "Sınıflar"
   CAT_RACES_PL: "Irklar"
+  # --- SON LOKALİZASYON EKLEMELERİ ---
+  # Campaign Selector
+  TITLE_SELECT_WORLD: "Dünya Seç"
+  LBL_SELECT_WORLD_TITLE: "🔮 Dünya Seçimi"
+  PH_NEW_WORLD_NAME: "Yeni Dünya Adı..."
+  BTN_LOAD: "Yükle"
+  BTN_CREATE: "Oluştur"
+  MSG_SELECT_WORLD_WARN: "Lütfen bir dünya seçin."
+  MSG_NAME_EMPTY: "İsim boş olamaz."
+  MSG_WORLD_EXISTS: "Bu isimde bir dünya zaten var."
+  
+  # Combat Tracker & Encounter
+  LBL_ENCOUNTER_PREFIX: "Karşılaşma:"
+  TIP_NEW_ENC: "Yeni Karşılaşma"
+  TIP_RENAME_ENC: "İsim Değiştir"
+  TIP_DEL_ENC: "Karşılaşmayı Sil"
+  TITLE_NEW_ENC: "Yeni Karşılaşma"
+  LBL_ENC_NAME: "Karşılaşma Adı:"
+  TITLE_RENAME_ENC: "Yeniden Adlandır"
+  LBL_NEW_NAME: "Yeni Ad:"
+  TITLE_DELETE: "Sil"
+  MSG_CONFIRM_ENC_DELETE: "Bu karşılaşma silinsin mi?"
+  MSG_LAST_ENC_DELETE: "Son karşılaşma silinemez."
+  LBL_ROUND_PREFIX: "Tur: "
+  BTN_BATTLE_MAP: "🗺️ Savaş Haritası"
+  
+  # Encounter Selector Dialog
+  TITLE_ADD_COMBAT: "Savaşa Varlık Ekle"
+  PH_SEARCH_NAME_TAG: "İsim veya Etiket Ara..."
+  LBL_TYPE_ALL: "Tümü"
+  HEADER_INIT_BONUS: "İnisiyatif Bonusu"
+  HEADER_ID: "ID"
+  LBL_ADD_COUNT: "Eklenecek Adet:"
+  BTN_ADD_SELECTED: "✅ Seçilenleri Ekle"
+  NAME_UNKNOWN: "Bilinmeyen"
+  NAME_UNNAMED: "İsimsiz"
+  
+  # Export / Main Window
+  TITLE_EXPORT: "Listeyi Kaydet"
+  FILE_FILTER_TXT: "Metin Dosyaları (*.txt)"
+  MSG_EXPORT_SUCCESS: "Liste başarıyla dışa aktarıldı."
+  MSG_FILE_WRITE_ERROR: "Dosya yazılamadı:\n%{error}"
+  TXT_EXPORT_HEADER: "ZİNDAN EFENDİSİ - VARLIK LİSTESİ"
+  TXT_EXPORT_WORLD: "Dünya: "
+  TXT_EXPORT_NO_DATA: "Henüz kaydedilmiş varlık yok."
+  TXT_EXPORT_TAGS: "   Etiketler: "
+  TXT_EXPORT_DESC: "   Açıklama: "
+  
+  # Categories (Plurals for Dialogs)
+  CAT_MONSTERS_PL: "Canavarlar"
+  CAT_SPELLS_PL: "Büyüler"
+  CAT_EQUIPMENT_ALL: "Tüm Teçhizat"
+  CAT_MAGIC_ITEMS_ALL: "Tüm Büyülü Eşyalar"
+  CAT_CLASSES_PL: "Sınıflar"
+  CAT_RACES_PL: "Irklar"
+  
+  # HP Editing
+  TITLE_EDIT_HP: "Can Düzenle"
+  LBL_NEW_HP: "Yeni Can (HP):"
+  
+  # Context Menus
+  MENU_CTX_INSPECT: "🔍 İncele"
+  MENU_CTX_MOVE: "✋ Taşı"
+  MENU_CTX_DELETE: "🗑️ Sil"
+  MENU_CTX_PIN: "📍 Buraya Pin Ekle"
