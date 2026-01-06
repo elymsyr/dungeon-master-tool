@@ -59,6 +59,10 @@ ENTITY_SCHEMAS = {
     "Lore": [
         ("LBL_CATEGORY", "combo", ["LBL_LORE_HISTORY", "LBL_LORE_GEOGRAPHY", "LBL_LORE_RELIGION", "LBL_LORE_CULTURE", "LBL_LORE_OTHER"]), 
         ("LBL_SECRET_INFO", "text", None)
+    ],
+    "Status Effect": [
+        ("LBL_DURATION_TURNS", "text", None),  # Tur Süresi (Örn: 3 Rounds)
+        ("LBL_EFFECT_TYPE", "combo", ["LBL_TYPE_BUFF", "LBL_TYPE_DEBUFF", "LBL_TYPE_CONDITION"])
     ]
 }
 
@@ -72,7 +76,8 @@ SCHEMA_MAP = {
     "Mekan": "Location",
     "Oyuncu": "Player",
     "Görev": "Quest",
-    "Lore": "Lore"
+    "Lore": "Lore",
+    "Durum Etkisi": "Status Effect"
 }
 
 # Mapping for legacy property labels compatibility
@@ -112,7 +117,9 @@ PROPERTY_MAP = {
     "Durum": "LBL_STATUS",
     "Görevi Veren": "LBL_GIVER",
     "Ödül": "LBL_REWARD",
-    "Gizli Bilgi": "LBL_SECRET_INFO"
+    "Gizli Bilgi": "LBL_SECRET_INFO",
+    "Süre (Tur)": "LBL_DURATION_TURNS",
+    "Etki Tipi": "LBL_EFFECT_TYPE"
 }
 
 def get_default_entity_structure(entity_type="NPC"):

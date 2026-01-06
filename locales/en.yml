@@ -360,3 +360,10 @@ en:
   MENU_CTX_MOVE: "✋ Move"
   MENU_CTX_DELETE: "🗑️ Delete"
   MENU_CTX_PIN: "📍 Add Pin Here"
+# --- STATUS EFFECT ---
+  CAT_STATUS_EFFECT: "Status Effect"
+  LBL_DURATION_TURNS: "Duration (Turns)"
+  LBL_EFFECT_TYPE: "Effect Type"
+  LBL_TYPE_BUFF: "Buff (Positive)"
+  LBL_TYPE_DEBUFF: "Debuff (Negative)"
+  LBL_TYPE_CONDITION: "Condition"

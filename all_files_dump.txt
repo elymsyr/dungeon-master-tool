@@ -1366,9 +1366,15 @@ pytest-mock
 pyinstaller
 
 ===== FILE PATH =====
+./.git\AUTO_MERGE
+===== FILE CONTENT =====
+5c0c68af87952c3d96edee455a0bc2189ce185d3
+
+
+===== FILE PATH =====
 ./.git\COMMIT_EDITMSG
 ===== FILE CONTENT =====
-update themes
+update
 
 
 ===== FILE PATH =====
@@ -1413,7 +1419,7 @@ Unnamed repository; edit this file 'description' to name the repository.
 ===== FILE PATH =====
 ./.git\FETCH_HEAD
 ===== FILE CONTENT =====
-248f9864b316030f53cc7cc981d40715be92654a		branch 'feature/newUI' of https://github.com/elymsyr/dungeon-master-tool
+c59ed60e528fd7bb945e191db381f7a9df156a08		branch 'main' of https://github.com/elymsyr/dungeon-master-tool
 a95e5d431a398652a0299ffb1fd29bd7a45bb98b	not-for-merge	tag 'alpha-v0.0.1' of https://github.com/elymsyr/dungeon-master-tool
 4d597c0119f8386127783594db44917ee6c21563	not-for-merge	tag 'alpha-v0.0.2' of https://github.com/elymsyr/dungeon-master-tool
 
@@ -1421,13 +1427,13 @@ a95e5d431a398652a0299ffb1fd29bd7a45bb98b	not-for-merge	tag 'alpha-v0.0.1' of htt
 ===== FILE PATH =====
 ./.git\HEAD
 ===== FILE CONTENT =====
-ref: refs/heads/feature/newUI
+ref: refs/heads/main
 
 
 ===== FILE PATH =====
 ./.git\ORIG_HEAD
 ===== FILE CONTENT =====
-965cac859fb18eb66a7bda780d07ffcc774c0da6
+c59ed60e528fd7bb945e191db381f7a9df156a08
 
 
 ===== FILE PATH =====
@@ -2459,6 +2465,11 @@ fffb66dc76eab351b317e4ff4a135f92054a517a 26c58930949718d5ab1cdb16fa5747ac48af85a
 ee090cec1678f1cc5da99c9e91e3b7fca3612c2e d325e43b909578041d4db483e9c54f689e0bc05b elymsyr <orhun868@gmail.com> 1767723293 +0300	commit: update
 d325e43b909578041d4db483e9c54f689e0bc05b 248f9864b316030f53cc7cc981d40715be92654a elymsyr <orhun868@gmail.com> 1767724060 +0300	commit: update
 248f9864b316030f53cc7cc981d40715be92654a 965cac859fb18eb66a7bda780d07ffcc774c0da6 elymsyr <orhun868@gmail.com> 1767727926 +0300	commit: update themes
+965cac859fb18eb66a7bda780d07ffcc774c0da6 07ff6f56178144b46af4ba661d2aae0bd046b103 elymsyr <orhun868@gmail.com> 1767729579 +0300	commit: update multi encounter
+07ff6f56178144b46af4ba661d2aae0bd046b103 4f951a74582026487c1a0b143fe635d5867195cb elymsyr <orhun868@gmail.com> 1767730093 +0300	commit: update
+4f951a74582026487c1a0b143fe635d5867195cb 4d597c0119f8386127783594db44917ee6c21563 elymsyr <orhun868@gmail.com> 1767730151 +0300	checkout: moving from feature/newUI to main
+4d597c0119f8386127783594db44917ee6c21563 c59ed60e528fd7bb945e191db381f7a9df156a08 elymsyr <orhun868@gmail.com> 1767730153 +0300	pull --tags origin main: Fast-forward
+c59ed60e528fd7bb945e191db381f7a9df156a08 c59ed60e528fd7bb945e191db381f7a9df156a08 elymsyr <orhun868@gmail.com> 1767730439 +0300	reset: moving to HEAD
 
 
 ===== FILE PATH =====
@@ -2486,6 +2497,7 @@ e70ade1ac7f7abd34eec22a3828259326221da53 0711452ac1a77fd7a84cef6a76a9d7f589a98a0
 123a00429e92f4057be5634aaeffe2c925fee33b d1f1aa020d3ff0876d3471800515c789eef9a2a5 elymsyr <orhun868@gmail.com> 1767645738 +0300	commit: bug fix character
 d1f1aa020d3ff0876d3471800515c789eef9a2a5 2b3c359a5a8e48a2fd370a419be7b1f91d1da8dd elymsyr <orhun868@gmail.com> 1767645740 +0300	pull --tags origin main: Merge made by the 'ort' strategy.
 2b3c359a5a8e48a2fd370a419be7b1f91d1da8dd 4d597c0119f8386127783594db44917ee6c21563 elymsyr <orhun868@gmail.com> 1767646201 +0300	commit: update release bug fix
+4d597c0119f8386127783594db44917ee6c21563 c59ed60e528fd7bb945e191db381f7a9df156a08 elymsyr <orhun868@gmail.com> 1767730153 +0300	pull --tags origin main: Fast-forward
 
 
 ===== FILE PATH =====
@@ -2496,6 +2508,8 @@ d1f1aa020d3ff0876d3471800515c789eef9a2a5 2b3c359a5a8e48a2fd370a419be7b1f91d1da8d
 ee090cec1678f1cc5da99c9e91e3b7fca3612c2e d325e43b909578041d4db483e9c54f689e0bc05b elymsyr <orhun868@gmail.com> 1767723293 +0300	commit: update
 d325e43b909578041d4db483e9c54f689e0bc05b 248f9864b316030f53cc7cc981d40715be92654a elymsyr <orhun868@gmail.com> 1767724060 +0300	commit: update
 248f9864b316030f53cc7cc981d40715be92654a 965cac859fb18eb66a7bda780d07ffcc774c0da6 elymsyr <orhun868@gmail.com> 1767727926 +0300	commit: update themes
+965cac859fb18eb66a7bda780d07ffcc774c0da6 07ff6f56178144b46af4ba661d2aae0bd046b103 elymsyr <orhun868@gmail.com> 1767729579 +0300	commit: update multi encounter
+07ff6f56178144b46af4ba661d2aae0bd046b103 4f951a74582026487c1a0b143fe635d5867195cb elymsyr <orhun868@gmail.com> 1767730093 +0300	commit: update
 
 
 ===== FILE PATH =====
@@ -2544,6 +2558,7 @@ e70ade1ac7f7abd34eec22a3828259326221da53 0711452ac1a77fd7a84cef6a76a9d7f589a98a0
 123a00429e92f4057be5634aaeffe2c925fee33b e3ad43004b6fdd272c0ac607a6d4a22a228ef9e9 elymsyr <orhun868@gmail.com> 1767645740 +0300	pull --tags origin main: fast-forward
 e3ad43004b6fdd272c0ac607a6d4a22a228ef9e9 2b3c359a5a8e48a2fd370a419be7b1f91d1da8dd elymsyr <orhun868@gmail.com> 1767645744 +0300	update by push
 2b3c359a5a8e48a2fd370a419be7b1f91d1da8dd 4d597c0119f8386127783594db44917ee6c21563 elymsyr <orhun868@gmail.com> 1767646221 +0300	update by push
+4d597c0119f8386127783594db44917ee6c21563 c59ed60e528fd7bb945e191db381f7a9df156a08 elymsyr <orhun868@gmail.com> 1767730153 +0300	pull --tags origin main: fast-forward
 
 
 ===== FILE PATH =====
@@ -2553,6 +2568,8 @@ e3ad43004b6fdd272c0ac607a6d4a22a228ef9e9 2b3c359a5a8e48a2fd370a419be7b1f91d1da8d
 ee090cec1678f1cc5da99c9e91e3b7fca3612c2e d325e43b909578041d4db483e9c54f689e0bc05b elymsyr <orhun868@gmail.com> 1767723299 +0300	update by push
 d325e43b909578041d4db483e9c54f689e0bc05b 248f9864b316030f53cc7cc981d40715be92654a elymsyr <orhun868@gmail.com> 1767724065 +0300	update by push
 248f9864b316030f53cc7cc981d40715be92654a 965cac859fb18eb66a7bda780d07ffcc774c0da6 elymsyr <orhun868@gmail.com> 1767727931 +0300	update by push
+965cac859fb18eb66a7bda780d07ffcc774c0da6 07ff6f56178144b46af4ba661d2aae0bd046b103 elymsyr <orhun868@gmail.com> 1767729586 +0300	update by push
+07ff6f56178144b46af4ba661d2aae0bd046b103 4f951a74582026487c1a0b143fe635d5867195cb elymsyr <orhun868@gmail.com> 1767730098 +0300	update by push
 
 
 ===== FILE PATH =====
@@ -2651,10 +2668,130 @@ xM
 0@se^eg`d}K[s[-̚H:A|DDMȋکZucNMd1iNtbY:mEr,i^i/mzw@]USm.ms|IH
 
 ===== FILE PATH =====
+./.git\objects\18\d7788d3a5ecb6f7e4882e6cabea8784b9595cd
+===== FILE CONTENT =====
+x}rIri[cF&D(6,Q@&3HG$]ֆG]ٗ"Gygf=ښp:Nyv&ыo:/yZQ62_OflQ$9{+zt'ZyGbQ,r6gi2LY{͒Ft*iQ$)iLRϦiw8%Ff2/t|#yۧE't^>Ir3t_vfo	Ef̄[;u!.B^
+Ev9I!YZL`e/;&^{U; V$\-l:/:IY>W'Rp̿H[q(Zt`i/q:(g5%=)@xт'hzbfXd;w֢{EoEO|t}Fý;,d/ʤKƋ4#%qu)BEReEt8Q|j  h++DfmpLge$PJF-:h#0s2mxkumgܭf4>`m;Y!"M.d2VH"
+z^yY#`ElVͺ|gL!HtRUE	ǡϦYǐhtZGh\Ekwl!hs*`ī`}	#[v/c1hƳkBq:EZ Ӳ8HlZу`y2ȦGmHzuZNl@t3nkQvfz?`c@p/ˎ%BTg5UoW^(M˸}NyEbmFk<݃=QVY#MX^E=_>{|<O>6GwiჳgZڍ8\HF3Ly)ώ2ΤǖIa8s^\XZ8I/YaOEZ)~:'IG%g{?@rqrvP殿l1&eڗAӶXt>	&$Q~t?K8
+.}8X"ҋF̦dS[d8YFZ$kߑ$xv:O@=q-ؐOyԊ`%fWvm*55(->`Ї-0Q
+.e}\bROR`ǜFonFEɠ}0~4GmeTEk=jvpb=?M`?C'ڱ z朦+e}J0>lQ#9`Ťu:~/7^=fM%RA-<M_ݽM>m:lG-5D}Mt?9Ood> DӼx:ѽHd|AH9eaQH4%qʵ8W.0wW -
+u/Gɢҡ4\dڬ<fUol<d$Y#&]|?n76v;H4UQ
+@[,DzzVK7_¥rwpL[N&uMVj{2#ᵧ`#(+TUي&p- R-N2b;Z'{'~99:nـ[hcBtfYG93?#\xblN@VB~ouwd<p?:q{*giK5㎛ ^!{5=s}01/;\7i,uV<hY_rSAA
+epם!ncG[avcuS^-YVQ3~Y?
+p'&U	U?D58;:!NΠh=998:>v؝ޯ]($N2H9}ݣC-JnTMlW+Z5씮X*FdL  k8ؗ`<R8(	FfEƥ#$^z֡m쩥Ajk1K|NA-NM!^tXQ̧w#oz~6hK4ھgDlhhCmGh!/ 삛=@iWҖ!GvSbdu>h5&O)ĶQz>>;WʊA}z|t@~T7mZ-u&`std$:9y=W'{;GOm	W0ÄIyFUGi4)?P~!=(r(<Q#?E՟kS㨌pR\r`(*,Ȇ[?w,(@~6lm	:@8 $o
+EHxbxqoчO<
+i2@Rźo@8[,Z:ɋq2N<բxgdm>`qkW/߼GXLlW6[
+Z	χݓ/_Di};)ȢR=dtuP`&by#Y
+qu(2.Ff'b5,߉EO^Fv/`^?܈>qN!_iOX
+}4gM':OYj5NsKCW8SiYb%r0ihec?M]tu^^)I^ΠY~CƮ:K@zS?vtzo.馮kvE^6n꠩;yhDSyת="}>d3r~qjWj-nmi5^!ܷ;XµB
+mkh&:pe#P[Tʓ'GmKnxKt2?rd8Dz6˳'c*"~CYw{{?>HW;ϰ 9i6R2
+׃@[<1tw\IG;o~v!.-H}w7Bx^~smFez,D}NMQ&;gA8nSD>6)t6ʃt<^h
+B􇲮kSֈ48)d`-'
+pј
+>?:<9>$M}ٍZkR$ȿ't-4>H=tpA5(Rk,kPAr>,_+
+Ƞ&b9L嫽]"HP9D`N"QP֣q̸
+3[^-+j9u3Or0'<zsѻ4zj[ق1CKD$qD|RcWϱ$I.:OK6CCYÌ8I4` h
+bP߾$4aO'}?GԮvCHKs.uCFĩN[W4?OTBO@K_ݏƭjYeNr=sUU?+%ˁ߶O7~jzth-֢q!m6'n-Htp:6PB8vx	-4&&/h~S$$5a`dsLad
+k44ʰ7.b̌*`>o7*ܾ*fF w
+}u+&nʓ6hIqM[ꐩnX;K,OQ.ٯذFuc{
+cȰEZ"v	_u9\y!VrwAjZՓML%emx椩gHuE
+f^J\FU̮3&iq_!iy	Bq/۩S
+[HkˈmbZtGN="SH# f*m|{/Tx0-HqKb(Z_-!Kag]`J'9֭R+Y"Q?!B.jؾ&ܩ!;l:㖯ǧ)Z5Rj)1ऴ;VCZbעYR GY&rq}hIu@h
+L$xt`M%h0pa[LsH2lE<D%o0jƓh
+;<
+X:oߨ=׊7_- p[WmD9LgэΒbK>9
+/
+jqݱ]8ztmuW`)0"hM[Ǚ6JjȻATk,U;ZR3n=C؛M-"CX:I?t<ec/y:_~K
+dQm@B$[{pI>Tk:?8(iB8CF!R=&70BJ(NmTZvhVZpeҘFZte|!ӯ	bEl"_GF5XdVUUbi9/dJHwCZ4c"8:A)ӻYtG g۱;$kK7i!<W+kzDk[2Ӫ'hmMǵp;/sW{Đc.,58=u*O
+%)?X+bFjQfvFarhϠFWɇ$Ϟy3A(HǩmRD
+ybS>{OJ*%h{%}ίd$cEEtBeL^m|byTֵ{/RS&ϼ=Gb+Gz#`ȡ#2#Óa:tY&_`sLI
+ѷ{Hr|RN@$#G2p3g]'lJ
+?H1>$8~^d)*	ch#~U1#IV{+ًH3*X ,܀<]T}3Tx'pCV"^kUCmu͢1g [u^[q2xX^>dB:Ko%[.E6
+.нz\u%kgrO$Xq!or!kH5MjP Vՠd*Vub;\JeW<
+N%v{il4׵Chs11K+;L"ԤZQvD3yKKjDl+y\3`'HcMf_VT&f\#xۨ7a\sم:ұʂs?gcmgf;#8+J~WB/H?OdZ98ӛ
+~:4O	nQ~7
+@mF
+tyakSvyKlyz"lހ$X}c!(b3lpXc -f1ZDNY=xOb)܌\1vGzqyR1L
+:Z
+.XzUeKA֢dLnF#u~X[_%ddKZ5=D]e{ Te˲! 8?#S۔Z[(ÒK"؄] &ȺV^H(A!3|5!by6}svP
+V;〆d ]jXn ҇0Vp qC>B`9OWK w^S@A\t&8RP0?G}yB_-( Q%9N80@'(+E]$[ƛ"Vb2&FR0fhNXb5AæVXhAMNeZP1t-Lṉ*EGi.;V@ɑ#"">/c&K閝	g
+WldNkvϰ]1/d"߈pdU"]_psraxn,iQ"Yd_ȉ#\g !5]{4bp12;j(,١P]%zUaf!w	uf1lHz?SGC
+AF[JN̔C2NMӠ18jjV_8qKǈE1#K3בv8CqP68G[ق)=8R^pfq5(M8w碒5U&oJ`tiБv]rYU srݲPRJҬb+NzZtr5O]Y@`k	rg!&V^E.$%ዝct]aN/Tw_81p]WViL<giѪK,(3  uN+㑎cWp+aGY뚭wyv(A:6
+ɫ.QGn8fgGnQ+&=̸MMhyKzP-x%c`Ve\AH;Ո3^#Si#mO,PYP˽*6'\TJ,Ҿpkܢ<VFJU4/>vu}0);!kcZVm8kaU/Sto 8F%~2r4-Ƀk|B0݂߂<Ϫ`Պ a&cZWps_2hcyd`ō8Tzcj,qKTOj[[>??S̥ѣ۩`ɵRfN\X?ާ՘|M7]U4+UX߿O1^vܽ>f@^>~>zcqt'؆S$u{Qq8ZDE
+K%
+6Z5G/]cxMu|6y3M+/ng>:DzclM e	v+:	0^[-]ƪR=~f z' L~L1|DĈ6<c*
+&ːLuDm-:
+'JGD	w}eQaU&6^kGt1l;4jQuqUߝۤě]ԛ&&U5>!]lF;-(,p>c?R[?_06
+`k~Td>࿤,)Wm(]ej
+u&F܊6jce`ǫFڪhPp "}6cIc[{Vo
++VH_
+7ܲ9*͍Y®*)<O4#L^^8ysl?\ZX/씌zZ*lh1xGi.ښWab ܿb-jn]vRn9j9Ƀ7[|lSro[(C;qk\,ONzFXo	P[E	Nܓ!\ӴD`zeXDO݈Hs#gMu*^5%^ZFA
+N|s-]aY*Mvj٠dE ik1xsg7-H}yvJ^*8?^_z6T,7e1x+WYJ[m!8n@)c\Q_uu_	f5:b6:f6<!6pl/[Fxc"jHjm^MvϹ1Rl<߿1%3f12ž1*$)G, lGav9uSD]/.A3dN1:
+r!kAMu GڡKͼ0m"K^ݼA"qPݗGe,à(qB&j}	Dݨğ9qj΄MDqӔA-zri*Ƞa/k|!<Wk44EqwvX(!yܛ0gel@TfIy4
+Lf3i?B{e9vUj)ve_9'T'?ZQ$ovs-#XWZ9i3]$K#ٽ2g)p<>p|@\Dl8mȢ4 w9>uЈ??Ȝalí<;'sm?*8JV`@1CԲӬ͜
+0jgYWUbGf+T<z	pq6ʥ8bRkbAA
+y-Rnߨ+\Up÷U{K:httN̚8RM<y0:9Nl
+օ׆S&|"nۂ<+DxfB2,{ ]Y4Eh08|m׉rx@)wW8.J7&bpdaU	U~V&6b|gM
+P/EX	#4w`N HWit4Zb13Gvs=N{2{@ yQ]E(#PԎ2{hZm%-پIN[XGؗfV<k׉fjrdw"`$K5.Ow\in'p
+nLWRjk
+pE_Sy1'6_!y: )S=y3S}IBqa՚\Pyk3W`Q'u
+v;TTg-`qUx8RY+7s.^j-,*Ti^6GV5D?Jb^
+$T(s>RW5
++.6_UL"MVe	`bͣS!~_`Tdmi5j#_"'HҫYV5dM}!
+(g=]C&8EN-w];-,S>_@ c[Q}&m-zl+!tL7jMɒdj,#ehJlȵ]p*
+S=JS12~Y*WjZa9(2֨ův]&uΐ߃Qإ	{Ef1}MX^߃*RCP?q!.nֿuJ8H$mTP6I!j0ة!U_P'a1D6&vcUAo/XXċp轻ܪFJ&IiPY% È:Zfq:4{Nح3T7;VHMpgkٔ!VL t붦SlVr^0(O%V8i f>vD;E H:3Nx󁰠&~f[.TѿI@S$b(}.,< BcPIaXѐ-#|q4VLE1s8o(2AmWjD6kQ	"obu2\Gr,5ߨ7pt%7KWnKw0WM/5$VylߴkJЁq,Jvg7[<?`ZHD	w?ʴPY)u/xJ)_;tϚZEI<>fÃ.^	\:6aпsܯKA`Koa.gkH*]
+`\֌P:8# '6=qҊquR/ܵ,t;zB$N&aEOu+!ɓٷdl5)`Vx Wc4Zr᭹3bXjo;"&XF kuP##v;yN[DqS3UR[.OucS^6
+:m7T!Fdq>q,b+ Tu(Wqk]}{u?ge=<6eihPbd:g`M3\sݎj9
+&¤rb%[jԋ/-?J뀜,@G+O|
+
+===== FILE PATH =====
 ./.git\objects\19\6ba88b198b47d45ae4e45155bec23720f428dd
 ===== FILE CONTENT =====
 xK
 0a9E5	xt+?mC*HbAc5hꚕe;^%냆`ϖ#Ud\e#eY=|n}:Vx^ik/4u7ʿN{QA
+
+===== FILE PATH =====
+./.git\objects\3b\e3c1de9fa3464a52262d34b1a04d3a4ca676f8
+===== FILE CONTENT =====
+xKN1P>EK,H{!ĖKO;il&`[*JY,F?*+@GdLthHYdB;'L{ܑX:2R=Z8VS[yi1
+*DnwbU]	Om{u[>^X{
+
+===== FILE PATH =====
+./.git\objects\45\f375f88813cbaee82dfc070d050d931a31668e
+===== FILE CONTENT =====
+xZmXV3Q,PfvL\v˕NV+*w.\t( ,,.h#HHՊ_?@:=Ҭ@H!羝{^\GkEו:{<Vߛ篊QGEUtb?7[mCL3-Λ~p:Ki;+w]**m%(s7~le3r`>G|Z-i9hۦ^.SvD2:ϋǶ-{>c[vFU[nE8YE]}Z4ۮhU4NE{˹Ai8=
+5KWmQ/%xft?Sk*Ldϲ{v7yg;nj_ͼͻE-T^
+%Qf 47ee	C8Jx##}_|cn,M~?3'ŗj6P:+%7rBsXVy~5N75.mMQ솾rF>QJ` 5=Aݕݥ!XL7j+F\R!A]6ebiF->bv,S*SJbfQrFzFE]B
+1v\+2qi?Ӧ-Z<?Ht9NhUk\tfYT17(h?N҈t*-	%Jqe
+GbfNmv@X-õDLxGnQY91	ȼ*I[ݻ7ir<˸oa\lDpxqaiu"w9{+ʫ*uTe]`OQxz)<Wn]|JaK=3fְs!\m(1iC.$UA}z>F11xЧ'b6U}oD@X]%ҹg,#xo}Jxp`˅$$&(A5:|ۻSviϓm ;gfvFE	pԬraؗp dF8#ҙ[ޫoXgA?6{>`bX@nXM{)ցl18_*b^AR	56XCG[p#0VL`6v-%#_j3|F9zt越3&N*w9Mt%>D:e(jgxM)E"tz\E.ͣ`ĂmFIQtyo{Dr/xNUYԫKu;4X΂8e#B,U!p7M,5H6yY8
+`n
+*.zJ2b#0]CCϲeHyqSٮջKzD4zG!ƛKeP'ăarɞuB3%,Lǰllv		C({djsahG 
+Ghcom>.mGʡp&E~.6֋1ZD	#~::\L.Ygo0K'2'͹̳\ʴ޸H=AepW)i۾ѿ)QwؒS4&K1QuKw3&gAr[gQkr7`6}Ͽ>2wRo~5&u6X&`<z$"-Lnp EMwPv5eI#/p_%bΐy!Aw԰R*_YU^V'A5cP8+5j/ :ۢsVp ]H~A|hPH(Ӫl#1M[Anv&S0I*3BV\cr,ca! X_4}P:G>PkSt4-ŕkChT^P.>]^
+8Gf
+J}vu;`gu D⴨7f#dٰ+]&"jʮrh@[Q`WC1>:ZNPDPFZj")v~^+ߴ`;b2i^*ŬE01R5L֨% NX>;H1ks	jX6?EXVJܗri5`3JBCr6YMGw]ZBLir*vk^(RU,k%/Q`
+	yT8EHg:k^iHO@LR]t/'i
+cxgѹ(I3I UvVl;}Q޾{i8ã	
+iZLILOߌRO 1($f3VzH]oB_-NVE^͈beڊϋ쒝(L85:)wG=y@X/鬯{a-!>9S$>|	6P!(R#V
+(`**)J.pM|kϛ>\)s\t9ֺz*yɣ
+6eUjI{_.Y|Cu^֘( Y+0FI.:eΐxKߞ8BY<FeeK21MY"p
+;AզmNQ J@$ k
+[F\D4.rJƮL!c:)A2Gt$Z"q6AV4i뫯X1jЖl@톱2_5yk
+JEv0Bxo="  ֪n:u˴eu7kw߬VIXw 
+
+e	
+sM2Ϝ%PMs^: D[U2ЪxQvg0Gy3ތV
+Jj5­@%,Y3^=֑9doRH1~㎡a@"t~0/lԠ	;aI϶1@]<39]# FH(#ROז*vi(9z3$p+tHgc̉Cz"Z,~clzol Xx_؈fQv`:Wӕ1z]	`Xib!퍞 S3AB
+z>8ZKbvG=SGb$DKw&ܟ$	76_#ÖEP&N:S$MtEjIѮRѮHb'M5XcNSJxCl ʌhD#9Il:8.,`cַ0s-5|3(JAAJwAmV?LԦrk{-ThHK_/jt$!,	K>Ǻ6p,9"KG}	zJ--vܜ;l)
+{s}	dΦM,fxG	@)J?
+Ğ _mwR#Юt#	.
+"-.<@sImrvҏ'%^Jݩf @bCQ(kxU=b+7nzQsqCm`.3źܝ7* xd,WȁHE
+92   ef`s0o8~U1Az(f1ߜ%i ՌZZt
+f9*+X.$(a wԃaR= ?Q(*OR)SFa뫟!{< Dv>a"I<<^oN@&q(Sq;!S2}lNZ
+30:i	k=gp41n4K|ũfڵfztw]C%Z\x̀nè	VfދMVc%xZB*t[]a61R :aM#EF6 ]Լ/C%bE) Ϡ
+5I=CHD#`_"&|#AĻJ}+>/TS_7"jRh_>!sjJ%>3_×:NmM`p
+^;(m@3%W_\ a!  aմ`=h1H8@jt4=#N!vżxZxȫ,48ϼh+,GJwZ0uZfzKp7ĴG{\;z}]]G
+lP.u:P"?^R|jZ*Z4σ`°M[ hM`)*)H1^ϰȓ3IDL;fw&i!yMby!߉`Hdu^-'Yqm.s8gF1]	8ٰ"*Qi yCy|D|ea)1[LH] dlG %9=O̼Λs<^}ߥ of?#p}*I+O?Smikz{Bp2S`=z;UVTwBtQc ]`<v5U 
+N3*891AђsYs7>:JOcYC=k(b̯w''0f?4jQBTrK]7k9
 
 ===== FILE PATH =====
 ./.git\objects\47\01d7371aabafe4a554bd387ccad4f47bec258a
@@ -2745,6 +2882,40 @@ xA
 0@Q94L"^eL&ZhS+৵֩Àԛ*Ę&+$\} O٤2"$Y%-^K\%:}4/4_ZopZ󫿻:oYcB>[D
 
 ===== FILE PATH =====
+./.git\objects\58\966e20d84fda691dbdbfd5367cbf625e4d47a0
+===== FILE CONTENT =====
+xAn!ESTDU&Rf"dg6=@_=}]E·96߈s.h!S(4
+˯ۦkXLFk-	-8,E{@<TJHcj$5Ly>ݞ9>.~V۾~)g	;y~9ʹzvvnaLRH
+
+===== FILE PATH =====
+./.git\objects\5d\11d1ca7828b67f09d1d401f9fabec2c13482ca
+===== FILE CONTENT =====
+xZ]XZ_q(Lcv\].o\v˕NV+*w7.piH@H0HYKHՊ_?@=vuzY	"9zy(ǿa/f,U|4(8*s;Af?Eemje`ȜinY4I3MvVZ7/TUJQ2nf&lln,[J#H$EsжMkO4c4m]gEM8uǶ-{>e[vFe[nE$YE]}V4ۮhU4NE{AiW8;
+5KϖmQ/%xft?Sk*Ldϲ{v7z1g;ij_ͼͻE-T^%QfM!47ee	A8Jx##}_|cn4M5mJɍUܵ⦲v۩fSԪ;'.!CTR?X5qMtpPwew)wH),%GIj&ݕP#.quήQvKko1cBxz]qq	o@1(9y#MpWT梮p!;mz{ִwYӖV-yifnff'K.d2,fa-J-O4b`07ݴolBR{GxYF$..zS'.>&"֭qp-S{.y;Fy}GjTVN9qpbL2g{VcMa2>&u6mx?EC1(ciu"w9{+ʫ*uVe]`OQxz)<nU|Ja=3fְs!\Gm81iC.$UA}v>F11xЧ'b6U}oD@X]%ҹg,#xouJxp`˅$''&(A'7:|ۻQviϓm ;gfvFE	p,saؗp dB8#ө[ޫoXA?6{>`bX@nXM{)ցl18_*b^WAR)56XC[p#0VL`::FM[?\KFdtAt1/rtWm;cL6Ts:/dKz_=DZCI<^ݔz:=.x"QpĂmFiQtyo{Dr=Z&5˲갩wnSi)q4GdYBo.Y`kܛm$4q,^sT]ZdF(a +el&u][w?+GT!(hbCD97?ە˗ʠN<= g<KXa: 3h9Q~ٟͩN ::+0A	. 4AKzP[/ƈk%t
+s=N2q뫟da,=0#62r)zZLG#ᛖ]zRInDEilbKrƿ	OӘ'v
+R<.a`Fa\,22ɍnEuɥ޸?FXaDXK֬i۬	L08U+) QyHE[LMwPv5eI#/p_'bΐy!Aw԰R*_YU^V'A5cP8+5j/ :ۢsVp ]H~A|hPH(Ӫl#1M[An(M&aT0;Zcr,ca! XL	_4}
+PZ#|ugpIY(nص)a:xJҡOt4
+*A/{(l.i#xg>:Hafe3
+x: "QqV+3`[ulk󴉈ڲVh:*:9Gnlvּӽ*Zg-IJ7 ؎54x&&Fguv1kbQ&Lkk.T
+S3⼶5*0)ke	Syt!g|͏tq&s-/b?1\$1BM1DazLiMVĝmWSA\J+ŨĚ3
+l!8Z~KgXca,!N<ҙ?`Κ0YG-,T&IA>Ft?X}sy;Yt'1
+~tҧ?Tl`o:fl@N@x/^qxLC<;c#"7cԓ=@+zĔR盲[C%~qɲqQlmiouѝ_3	'FG3%@[96uy/%	Rf~o>ɄiҎje)0{%y&W'EA}립+;+J} iDjz<?~Զ?`TMX9=?w_#~w?TD8E΢\5Jr'uѩ-sdX	-(KW@]!OPpnzqkءe6ms}Q$$Yn2Bn.dNxt2s/,}DG2%kIdESָuQ<mɦynkA)e^TTo#Ѓ(R jSgL;PQ~B-}o5q
+Ω [kP@ <8Z$YU?WhNe]ݽU%3@y	:M@ewsY79hUޠĠ^#4]2PE;)csI:id#{9P$ZI	8M
+A=ClS?ܕ9`;"tmbnlB8g@gBt6FIʜ9*7vv:WŉHa6q!e{5])@x=]*\k9m\:cdP^tUzFOg[KUx	B~hZlaHyd$fs~$3{hJĩR'`tn4O-8ڵB*ڕi\]Z kթ~JIo(vB
+D1CmWhd G7M''Elyf2 E#0ԢfOuE);H.V)7Tnmj
+iIEY푎$4aX}R߄!GCah/A@^UۿŎ uǀ8Aÿ{}.{8LٴIEH]4(;^P	am@\42=zڕ=^YXŀV2PG@uҁ>uqiwᥙ;&9 i.G?J x@U"
+qY~f7=QrI0
+̙bU7zböG
+r mwC|0@@0CY,:m8Π.`Ug 9N j7.jDv50]æyzJ_F'h 	nbXT幅-O2y=~ʔQjȯmt:GpO6prl3&u2ϥpyc\{;
+:Ơ+nNG''_La<{/4hyZmx Z
+>YhG\dn4K|ũfܵfztw]C%Z\x̀nè	VfދMVc%xZ\*t[]a61R :aM#yF6 ׼/CbE) Ϡ
+5I=CHD#`_ &|#AĻJ}+>/TS_7"j\h_>!sjJ>3_×:NmM`p
+^;(m@3%W_\ a!  aմ`=h1H8@jt4=#N!vżxZxȫ,48ϼh+,GJwZ0uZfzKp7ĴG{\;z}]]G
+lP.u:P"?^RoɁo5--nmA0a&Ӏ\}X6b
+$@ϰȓSIDL;fw&i!yMby!߉`Hdu^-'Yqm.s8gF1]	8ٰ"*Qi yCy|D|ea)1[LH] dlG 9=O̼Λs<^}ߦ of?#p}'*oI+O?Smikz{Bp<U`=z;uVT&wBt
+%
+
+===== FILE PATH =====
 ./.git\objects\5d\4b5299790a6d27beb4bb91ecd242c6f25b5eef
 ===== FILE CONTENT =====
 xA
@@ -2821,6 +2992,40 @@ n:dV~p據N!F$F(㕭2.ۗSELM/Pt@i>t<(Y>2:*^u4@
 0Gz,^;!4ҎTj"Ft2G@pc͘|H/<OPW4TcFj=J|#"c81 %|1n=Z?YﳤMڼL,+3głLSvvzbs&ڕ2B76tEE 5:TP%h=쀘9Տ
 cy7o6AlX#@qS,]A	z\9'E*~<qpC][oN\|AxD[UO*yO(Sh>_7e}fg)[ʗ|6
 ~/'_OF.nr:߻"Z'7Ra=N	er+|_|EࠍR	Jh̊c.k nx:nĊKx w
+
+===== FILE PATH =====
+./.git\objects\9f\a5c920ca489032579a911987fef1d5022ef123
+===== FILE CONTENT =====
+xZ]XZ_qQ4d2ڝ0mL\vNJ%m]\4Q$@ $YX],%H$
+k?y9=>ǯ~[E췕:̢EGi4y~glf׉\?DˢҎYlCOc3)0k0I`iJE4s.on܍[5[4=^sn,[JO8A߶MkO$
+c4m]EL9ug-{9c[v<?blMW6"PϋV|ʚW,t^"uߏ0ϫBͪ-[/ CEnu3'8lM[sѼ_BJy/)QeB|ӷPfsV/~7*l"$zoUq쬔JaY[(^WQn;lZu[0,ajVG饜N)e(NDQj%"Κ5jS[ mhW??/(APo78{cej\eJxO#ވO?Uk
+RӦSh=ݼ+Λ,rhI~FafvBZ3̢mƈߡޢY4NBsMܶ&+Źx+lDjɊ9}c"b1ϝcm;XTye+'OI@'m5v,X&i*qw*4öڎoI܉("oOPGA稬O;mo'd׿[QNU*b}IhAvB6oURlwU'X1ԷcpϋX7ƤGГ9.}fc0bO'kO
+	0&!,U}oOX]%wOE#8ou7Jx``I"0OMPO^4W:|ۻK)f$v@$Hj+sY~ma 6˼0K4`,WGzq2뗃ƙ8͎5,X;
+Xi:-F+/<#;hXQc9+:w?/b3H6mNp-1?`9lV]m<d^rut越MM'zǋ`:GOֻEnyԫRT/BÅ/_G~$+ΊڤK}#0< \EVM1sOOSf9rk$ˢ]W~(ɽ灱nǱ.n s;]//nS!ti]Sʮ-y7vmnV
+}'BQr_D97ޕKeP'ăarɞuB3%,Lǰllv		C({?
+gЎ@ c{+0A{	. 4AeAj%0{8gHw7?:S5pÄYz<a8GleR޵VF7-2-,Hѥ` Mⰿ{-<Kc)HQAUq~$,Hu,{M.nW4OeFu4/AfݤfMe^LӨG,g
+PXokF}s2da[2' hvUJw?9>B:3J$F{gCͱ`B1 ӱQv[tۇ=&H?_4z4ʴ}[HLkФF=J)p$!}xؽ)˘jh3Wv7Tyycb|"vmv΋4t|JPz6OzW4ΑY<ҐGi=H`f=`g:"aq^+{3y?l>ieeWh@[QWt1r܏ܘiu [y{U("
+(F#S@NZX~4^+߷`;b2$Mz/^bĢL\l$bgymkT`R g,{H1ks	jX6GX[gVJwܗri5`
+3JBCr&6YMGw]ZBLir*vk^(RU,k%/Q`
+	yT8EH'
+:k.a
+iǚ-,D&Q>At?tX>x{y7YtΣ
+~tҧJl`o]:fl@NCKi^OhHrUbLzDhzfL8RAy%1CC|3zk`an8^y=4#.v$
+-V.kv¢xFp2Ts$C[GΆ|Fr|_|
+/6_f
+iG2Te{%yG&>REA#}+;/J# IDjz<Ot
+mw]ɲ,goZue>S.kLS ,LY$wR2gJN%qߜ8BY8EeeK2)MY"x
+;AզmOP JB$ k
+[F\t"tT]1]+1>#$)Mk|':Q(<mɦynkA)2[n`T*w{[A)3 ]Ruөs\(Y~vwMPІGT5(KLUVWv-m	x,΀*l/{,3YjWwTLP^B&ƫ9͛f*QbPˠnm	.a(΢Uĝo걎̹$:id#{9>62HoŃ
+Sp44z``5,)6g&"+76"s	%vDQ6}]
+a_}	_
+	s&g^#3)C 8,^'6"9B #L'j 03$zƻ^UBe?QFOyљ W5z.8ZKbvG=p0IKw&DNKHfv%D,ⅉSgNIhS!	~:oXR۵B*ڕi\zl ֘kBP)%[	q6eq]
+hAפ6|}s-4̜e@FFF`E.0R 6GO
+xL+[LԦrk{6ѐd+^HBX|O|7OZj7-c !t4З@^U{ CqJRD_rQiA6ޑC{AŏN$'e읁,Tid+,jxqfaW#?Qd*@uҁ>?9IK3w@MMs bQ(kxU1D9i~nzasuOmS̙bUz'bMöG
+/@$"``2X0Fu
+0o8~U1Az8qf1\QK$64h`	et|?~P+<IW~EIJ?e(Lw36:#8O6prl3&u2ϥpyc\񫃞w=Sq;!{I=*d"
+ٜ6Xgx:A}Jp4#X.vyHr׶mЭށw{_c kq1)4&*ݚQQr,~2?̎JZZ\*t[]a=Jmb@tRGv=F6 ׼/CbE)HϠ
+5I@HD#`"&}#A`_ݍ/TSߒ7"jRh_tC6O7O|#g|/uO7`ښwPڌ+eS;Δ\CMr g?ǅvbWFż9{)Т qh*{4FC$w̋y 'C.W+u]h>q4yVX'4f`Pnثi'0(2pu:+v)<|	C>)G8	
 
 ===== FILE PATH =====
 ./.git\objects\a9\5e5d431a398652a0299ffb1fd29bd7a45bb98b
@@ -2960,13 +3165,13 @@ xM
 ===== FILE PATH =====
 ./.git\refs\heads\main
 ===== FILE CONTENT =====
-4d597c0119f8386127783594db44917ee6c21563
+c59ed60e528fd7bb945e191db381f7a9df156a08
 
 
 ===== FILE PATH =====
 ./.git\refs\heads\feature\newUI
 ===== FILE CONTENT =====
-965cac859fb18eb66a7bda780d07ffcc774c0da6
+4f951a74582026487c1a0b143fe635d5867195cb
 
 
 ===== FILE PATH =====
@@ -2990,13 +3195,13 @@ ref: refs/remotes/origin/main
 ===== FILE PATH =====
 ./.git\refs\remotes\origin\main
 ===== FILE CONTENT =====
-4d597c0119f8386127783594db44917ee6c21563
+c59ed60e528fd7bb945e191db381f7a9df156a08
 
 
 ===== FILE PATH =====
 ./.git\refs\remotes\origin\feature\newUI
 ===== FILE CONTENT =====
-965cac859fb18eb66a7bda780d07ffcc774c0da6
+4f951a74582026487c1a0b143fe635d5867195cb
 
 
 ===== FILE PATH =====
@@ -3852,6 +4057,10 @@ ENTITY_SCHEMAS = {
     "Lore": [
         ("LBL_CATEGORY", "combo", ["LBL_LORE_HISTORY", "LBL_LORE_GEOGRAPHY", "LBL_LORE_RELIGION", "LBL_LORE_CULTURE", "LBL_LORE_OTHER"]), 
         ("LBL_SECRET_INFO", "text", None)
+    ],
+    "Status Effect": [
+        ("LBL_DURATION_TURNS", "text", None),  # Tur Süresi (Örn: 3 Rounds)
+        ("LBL_EFFECT_TYPE", "combo", ["LBL_TYPE_BUFF", "LBL_TYPE_DEBUFF", "LBL_TYPE_CONDITION"])
     ]
 }
 
@@ -3865,7 +4074,8 @@ SCHEMA_MAP = {
     "Mekan": "Location",
     "Oyuncu": "Player",
     "Görev": "Quest",
-    "Lore": "Lore"
+    "Lore": "Lore",
+    "Durum Etkisi": "Status Effect"
 }
 
 # Mapping for legacy property labels compatibility
@@ -3905,7 +4115,9 @@ PROPERTY_MAP = {
     "Durum": "LBL_STATUS",
     "Görevi Veren": "LBL_GIVER",
     "Ödül": "LBL_REWARD",
-    "Gizli Bilgi": "LBL_SECRET_INFO"
+    "Gizli Bilgi": "LBL_SECRET_INFO",
+    "Süre (Tur)": "LBL_DURATION_TURNS",
+    "Etki Tipi": "LBL_EFFECT_TYPE"
 }
 
 def get_default_entity_structure(entity_type="NPC"):
@@ -4248,6 +4460,78 @@ en:
   CAT_MAGIC_ITEMS_ALL: "All Magic Items"
   CAT_CLASSES_PL: "Classes"
   CAT_RACES_PL: "Races"
+  # --- FINAL LOCALIZATION ADDITIONS ---
+  # Campaign Selector
+  TITLE_SELECT_WORLD: "Select World"
+  LBL_SELECT_WORLD_TITLE: "🔮 Select World"
+  PH_NEW_WORLD_NAME: "New World Name..."
+  BTN_LOAD: "Load"
+  BTN_CREATE: "Create"
+  MSG_SELECT_WORLD_WARN: "Please select a world."
+  MSG_NAME_EMPTY: "Name cannot be empty."
+  MSG_WORLD_EXISTS: "A world with this name already exists."
+  
+  # Combat Tracker & Encounter
+  LBL_ENCOUNTER_PREFIX: "Encounter:"
+  TIP_NEW_ENC: "New Encounter"
+  TIP_RENAME_ENC: "Rename Encounter"
+  TIP_DEL_ENC: "Delete Encounter"
+  TITLE_NEW_ENC: "New Encounter"
+  LBL_ENC_NAME: "Encounter Name:"
+  TITLE_RENAME_ENC: "Rename"
+  LBL_NEW_NAME: "New Name:"
+  TITLE_DELETE: "Delete"
+  MSG_CONFIRM_ENC_DELETE: "Delete this encounter?"
+  MSG_LAST_ENC_DELETE: "Cannot delete the last encounter."
+  LBL_ROUND_PREFIX: "Round: "
+  BTN_BATTLE_MAP: "🗺️ Battle Map"
+  
+  # Encounter Selector Dialog
+  TITLE_ADD_COMBAT: "Add Entity to Combat"
+  PH_SEARCH_NAME_TAG: "Search Name or Tag..."
+  LBL_TYPE_ALL: "All"
+  HEADER_INIT_BONUS: "Init Bonus"
+  HEADER_ID: "ID"
+  LBL_ADD_COUNT: "Count to Add:"
+  BTN_ADD_SELECTED: "✅ Add Selected"
+  NAME_UNKNOWN: "Unknown"
+  NAME_UNNAMED: "Unnamed"
+  
+  # Export / Main Window
+  TITLE_EXPORT: "Save List"
+  FILE_FILTER_TXT: "Text Files (*.txt)"
+  MSG_EXPORT_SUCCESS: "List exported successfully."
+  MSG_FILE_WRITE_ERROR: "Could not write file:\n%{error}"
+  TXT_EXPORT_HEADER: "DUNGEON MASTER - ENTITY LIST"
+  TXT_EXPORT_WORLD: "World: "
+  TXT_EXPORT_NO_DATA: "No entities recorded yet."
+  TXT_EXPORT_TAGS: "   Tags: "
+  TXT_EXPORT_DESC: "   Desc: "
+  
+  # Categories (Plurals for Dialogs)
+  CAT_MONSTERS_PL: "Monsters"
+  CAT_SPELLS_PL: "Spells"
+  CAT_EQUIPMENT_ALL: "All Equipment"
+  CAT_MAGIC_ITEMS_ALL: "All Magic Items"
+  CAT_CLASSES_PL: "Classes"
+  CAT_RACES_PL: "Races"
+  
+  # HP Editing
+  TITLE_EDIT_HP: "Edit HP"
+  LBL_NEW_HP: "New HP:"
+  
+  # Context Menus
+  MENU_CTX_INSPECT: "🔍 Inspect"
+  MENU_CTX_MOVE: "✋ Move"
+  MENU_CTX_DELETE: "🗑️ Delete"
+  MENU_CTX_PIN: "📍 Add Pin Here"
+# --- STATUS EFFECT ---
+  CAT_STATUS_EFFECT: "Status Effect"
+  LBL_DURATION_TURNS: "Duration (Turns)"
+  LBL_EFFECT_TYPE: "Effect Type"
+  LBL_TYPE_BUFF: "Buff (Positive)"
+  LBL_TYPE_DEBUFF: "Debuff (Negative)"
+  LBL_TYPE_CONDITION: "Condition"
 
 ===== FILE PATH =====
 ./locales\tr.yml
@@ -4548,6 +4832,78 @@ tr:
   CAT_MAGIC_ITEMS_ALL: "Tüm Büyülü Eşyalar"
   CAT_CLASSES_PL: "Sınıflar"
   CAT_RACES_PL: "Irklar"
+  # --- SON LOKALİZASYON EKLEMELERİ ---
+  # Campaign Selector
+  TITLE_SELECT_WORLD: "Dünya Seç"
+  LBL_SELECT_WORLD_TITLE: "🔮 Dünya Seçimi"
+  PH_NEW_WORLD_NAME: "Yeni Dünya Adı..."
+  BTN_LOAD: "Yükle"
+  BTN_CREATE: "Oluştur"
+  MSG_SELECT_WORLD_WARN: "Lütfen bir dünya seçin."
+  MSG_NAME_EMPTY: "İsim boş olamaz."
+  MSG_WORLD_EXISTS: "Bu isimde bir dünya zaten var."
+  
+  # Combat Tracker & Encounter
+  LBL_ENCOUNTER_PREFIX: "Karşılaşma:"
+  TIP_NEW_ENC: "Yeni Karşılaşma"
+  TIP_RENAME_ENC: "İsim Değiştir"
+  TIP_DEL_ENC: "Karşılaşmayı Sil"
+  TITLE_NEW_ENC: "Yeni Karşılaşma"
+  LBL_ENC_NAME: "Karşılaşma Adı:"
+  TITLE_RENAME_ENC: "Yeniden Adlandır"
+  LBL_NEW_NAME: "Yeni Ad:"
+  TITLE_DELETE: "Sil"
+  MSG_CONFIRM_ENC_DELETE: "Bu karşılaşma silinsin mi?"
+  MSG_LAST_ENC_DELETE: "Son karşılaşma silinemez."
+  LBL_ROUND_PREFIX: "Tur: "
+  BTN_BATTLE_MAP: "🗺️ Savaş Haritası"
+  
+  # Encounter Selector Dialog
+  TITLE_ADD_COMBAT: "Savaşa Varlık Ekle"
+  PH_SEARCH_NAME_TAG: "İsim veya Etiket Ara..."
+  LBL_TYPE_ALL: "Tümü"
+  HEADER_INIT_BONUS: "İnisiyatif Bonusu"
+  HEADER_ID: "ID"
+  LBL_ADD_COUNT: "Eklenecek Adet:"
+  BTN_ADD_SELECTED: "✅ Seçilenleri Ekle"
+  NAME_UNKNOWN: "Bilinmeyen"
+  NAME_UNNAMED: "İsimsiz"
+  
+  # Export / Main Window
+  TITLE_EXPORT: "Listeyi Kaydet"
+  FILE_FILTER_TXT: "Metin Dosyaları (*.txt)"
+  MSG_EXPORT_SUCCESS: "Liste başarıyla dışa aktarıldı."
+  MSG_FILE_WRITE_ERROR: "Dosya yazılamadı:\n%{error}"
+  TXT_EXPORT_HEADER: "ZİNDAN EFENDİSİ - VARLIK LİSTESİ"
+  TXT_EXPORT_WORLD: "Dünya: "
+  TXT_EXPORT_NO_DATA: "Henüz kaydedilmiş varlık yok."
+  TXT_EXPORT_TAGS: "   Etiketler: "
+  TXT_EXPORT_DESC: "   Açıklama: "
+  
+  # Categories (Plurals for Dialogs)
+  CAT_MONSTERS_PL: "Canavarlar"
+  CAT_SPELLS_PL: "Büyüler"
+  CAT_EQUIPMENT_ALL: "Tüm Teçhizat"
+  CAT_MAGIC_ITEMS_ALL: "Tüm Büyülü Eşyalar"
+  CAT_CLASSES_PL: "Sınıflar"
+  CAT_RACES_PL: "Irklar"
+  
+  # HP Editing
+  TITLE_EDIT_HP: "Can Düzenle"
+  LBL_NEW_HP: "Yeni Can (HP):"
+  
+  # Context Menus
+  MENU_CTX_INSPECT: "🔍 İncele"
+  MENU_CTX_MOVE: "✋ Taşı"
+  MENU_CTX_DELETE: "🗑️ Sil"
+  MENU_CTX_PIN: "📍 Buraya Pin Ekle"
+  # --- DURUM ETKİSİ ---
+  CAT_STATUS_EFFECT: "Durum Etkisi"
+  LBL_DURATION_TURNS: "Süre (Tur)"
+  LBL_EFFECT_TYPE: "Etki Tipi"
+  LBL_TYPE_BUFF: "Güçlendirme (Buff)"
+  LBL_TYPE_DEBUFF: "Zayıflatma (Debuff)"
+  LBL_TYPE_CONDITION: "Durum (Condition)"
 
 ===== FILE PATH =====
 ./tests\conftest.py
@@ -7760,9 +8116,9 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetIte
                              QHBoxLayout, QPushButton, QHeaderView, QInputDialog, 
                              QMenu, QMessageBox, QFrame, QLineEdit, QFileDialog, 
                              QDialog, QListWidget, QListWidgetItem, QLabel, 
-                             QAbstractItemView, QProgressBar, QSlider, QComboBox)
-from PyQt6.QtGui import QAction, QColor, QBrush, QCursor, QIcon, QPixmap
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QUrl
+                             QAbstractItemView, QProgressBar, QSlider, QComboBox, QScrollArea)
+from PyQt6.QtGui import QAction, QColor, QBrush, QCursor, QIcon, QPixmap, QPainter, QPainterPath
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QUrl, QRect
 from core.locales import tr
 from ui.windows.battle_map_window import BattleMapWindow
 from ui.dialogs.encounter_selector import EncounterSelectionDialog
@@ -7770,7 +8126,7 @@ import random
 import os
 import uuid
 
-# --- YARDIMCI FONKSİYONLAR VE SINIFLAR ---
+# --- YARDIMCILAR ---
 def clean_stat_value(value, default=10):
     if value is None: return default
     s_val = str(value).strip()
@@ -7781,42 +8137,101 @@ def clean_stat_value(value, default=10):
         return int(digits) if digits else default
     except: return default
 
+# --- DURUM İKONU WIDGETI ---
+class ConditionIcon(QWidget):
+    removed = pyqtSignal(str) # effect_name
+
+    def __init__(self, name, icon_path, duration=0, max_duration=0):
+        super().__init__()
+        self.name = name; self.icon_path = icon_path; self.duration = int(duration); self.max_duration = int(max_duration)
+        self.setFixedSize(36, 36); self.setCursor(Qt.CursorShape.PointingHandCursor); self.setToolTip(f"{name} ({self.duration}/{self.max_duration} Turns)")
+
+    def paintEvent(self, event):
+        painter = QPainter(self); painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        path = QPainterPath(); path.addEllipse(2, 2, 32, 32); painter.setClipPath(path)
+        if self.icon_path and os.path.exists(self.icon_path): painter.drawPixmap(0, 0, 36, 36, QPixmap(self.icon_path))
+        else:
+            painter.setBrush(QBrush(QColor("#5c6bc0"))); painter.drawRect(0, 0, 36, 36); painter.setPen(Qt.GlobalColor.white)
+            painter.drawText(QRect(0, 0, 36, 36), Qt.AlignmentFlag.AlignCenter, self.name[:2].upper())
+        if self.max_duration > 0:
+            painter.setClipping(False); painter.setBrush(QBrush(QColor(0, 0, 0, 200))); painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRoundedRect(0, 22, 36, 14, 3, 3); painter.setPen(Qt.GlobalColor.white)
+            font = painter.font(); font.setPointSize(7); font.setBold(True); painter.setFont(font)
+            painter.drawText(QRect(0, 22, 36, 14), Qt.AlignmentFlag.AlignCenter, f"{self.duration}/{self.max_duration}")
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.RightButton:
+            menu = QMenu(self); del_act = QAction("❌ Kaldır", self); del_act.triggered.connect(lambda: self.removed.emit(self.name)); menu.addAction(del_act); menu.exec(event.globalPos())
+
+# --- DURUMLAR WIDGETI ---
+class ConditionsWidget(QWidget):
+    conditionsChanged = pyqtSignal()
+    clicked = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.layout = QHBoxLayout(self)
+        self.layout.setContentsMargins(2, 2, 2, 2)
+        self.layout.setSpacing(2)
+        self.layout.addStretch()
+        self.active_conditions = []
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            # Eğer tıklanan yer bir ikon değilse (boşluksa) sinyal gönder
+            child = self.childAt(event.pos())
+            if not isinstance(child, ConditionIcon):
+                self.clicked.emit()
+        super().mousePressEvent(event)
+
+    def set_conditions(self, conditions_list):
+        while self.layout.count() > 1: 
+            item = self.layout.takeAt(0)
+            if item.widget(): item.widget().deleteLater()
+        self.active_conditions = conditions_list
+        for cond in conditions_list:
+            icon_widget = ConditionIcon(cond["name"], cond.get("icon"), cond.get("duration"), cond.get("max_duration"))
+            icon_widget.removed.connect(self.remove_condition)
+            self.layout.insertWidget(self.layout.count() - 1, icon_widget)
+
+    def add_condition(self, name, icon_path, max_turns):
+        for c in self.active_conditions:
+            if c["name"] == name: c["duration"] = max_turns; c["max_duration"] = max_turns; self.set_conditions(self.active_conditions); self.conditionsChanged.emit(); return
+        self.active_conditions.append({"name": name, "icon": icon_path, "duration": max_turns, "max_duration": max_turns})
+        self.set_conditions(self.active_conditions); self.conditionsChanged.emit()
+
+    def remove_condition(self, name):
+        self.active_conditions = [c for c in self.active_conditions if c["name"] != name]
+        self.set_conditions(self.active_conditions); self.conditionsChanged.emit()
+
+    def tick_conditions(self):
+        remaining = []
+        for c in self.active_conditions:
+            if c["max_duration"] > 0:
+                c["duration"] -= 1
+                if c["duration"] > 0: remaining.append(c)
+            else: remaining.append(c)
+        self.active_conditions = remaining; self.set_conditions(self.active_conditions); self.conditionsChanged.emit()
+
+# --- HP BAR WIDGET ---
 class HpBarWidget(QWidget):
     hpChanged = pyqtSignal(int)
     def __init__(self, current_hp, max_hp):
-        super().__init__()
-        self.current = int(current_hp)
-        self.max_val = int(max_hp) if int(max_hp) > 0 else 1
-        
-        layout = QHBoxLayout(self); layout.setContentsMargins(0, 2, 0, 2); layout.setSpacing(2)
-        
-        self.btn_minus = QPushButton("-"); self.btn_minus.setFixedSize(20, 20); self.btn_minus.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_minus.setStyleSheet("QPushButton { background-color: #c62828; color: white; border: none; border-radius: 3px; font-weight: bold; } QPushButton:hover { background-color: #d32f2f; }")
-        self.btn_minus.clicked.connect(self.decrease_hp)
-        
+        super().__init__(); self.current = int(current_hp); self.max_val = int(max_hp) if int(max_hp) > 0 else 1
+        l = QHBoxLayout(self); l.setContentsMargins(0, 2, 0, 2); l.setSpacing(2)
+        b_m = QPushButton("-"); b_m.setFixedSize(20, 20); b_m.setCursor(Qt.CursorShape.PointingHandCursor); b_m.setStyleSheet("QPushButton { background-color: #c62828; color: white; border: none; border-radius: 3px; font-weight: bold; } QPushButton:hover { background-color: #d32f2f; }"); b_m.clicked.connect(self.decrease_hp)
         self.bar = QProgressBar(); self.bar.setRange(0, self.max_val); self.bar.setValue(self.current); self.bar.setTextVisible(True); self.bar.setFormat(f"%v / {self.max_val}"); self.bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.update_color()
-        
-        self.btn_plus = QPushButton("+"); self.btn_plus.setFixedSize(20, 20); self.btn_plus.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_plus.setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border: none; border-radius: 3px; font-weight: bold; } QPushButton:hover { background-color: #388e3c; }")
-        self.btn_plus.clicked.connect(self.increase_hp)
-        
-        layout.addWidget(self.btn_minus); layout.addWidget(self.bar, 1); layout.addWidget(self.btn_plus)
+        b_p = QPushButton("+"); b_p.setFixedSize(20, 20); b_p.setCursor(Qt.CursorShape.PointingHandCursor); b_p.setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border: none; border-radius: 3px; font-weight: bold; } QPushButton:hover { background-color: #388e3c; }"); b_p.clicked.connect(self.increase_hp)
+        l.addWidget(b_m); l.addWidget(self.bar, 1); l.addWidget(b_p)
 
     def update_color(self):
-        ratio = self.current / self.max_val
-        if ratio > 0.5: color = "#2e7d32"
-        elif ratio > 0.2: color = "#fbc02d"
-        else: color = "#c62828"
-        self.bar.setStyleSheet(f"QProgressBar::chunk {{ background-color: {color}; }} QProgressBar {{ color: white; border: 1px solid #555; border-radius: 3px; background: rgba(0,0,0,0.3); }}")
+        r = self.current / self.max_val if self.max_val > 0 else 0
+        c = "#2e7d32" if r > 0.5 else "#fbc02d" if r > 0.2 else "#c62828"
+        self.bar.setStyleSheet(f"QProgressBar::chunk {{ background-color: {c}; }} QProgressBar {{ color: white; border: 1px solid #555; border-radius: 3px; background: rgba(0,0,0,0.3); }}")
 
-    def update_hp(self, new_hp):
-        self.current = int(new_hp)
-        self.bar.setValue(self.current)
-        self.bar.setFormat(f"{self.current} / {self.max_val}")
-        self.update_color()
-        self.hpChanged.emit(self.current)
-
+    def update_hp(self, new_hp): self.current = int(new_hp); self.bar.setValue(self.current); self.bar.setFormat(f"{self.current} / {self.max_val}"); self.update_color(); self.hpChanged.emit(self.current)
     def decrease_hp(self): self.update_hp(self.current - 1)
     def increase_hp(self): self.update_hp(self.current + 1)
 
@@ -7829,143 +8244,378 @@ class NumericTableWidgetItem(QTableWidgetItem):
 
 class MapSelectorDialog(QDialog):
     def __init__(self, assets_path, parent=None):
-        super().__init__(parent)
-        self.assets_path = assets_path; self.selected_file = None; self.is_new_import = False
-        self.setWindowTitle(tr("TITLE_MAP_SELECTOR")); self.setFixedSize(600, 500)
-        self.init_ui(); self.load_maps()
+        super().__init__(parent); self.assets_path = assets_path; self.selected_file = None; self.is_new_import = False; self.setWindowTitle(tr("TITLE_MAP_SELECTOR")); self.setFixedSize(600, 500); self.init_ui(); self.load_maps()
     def init_ui(self):
         l = QVBoxLayout(self); lbl = QLabel(tr("LBL_SAVED_MAPS")); lbl.setObjectName("toolbarLabel"); l.addWidget(lbl)
         self.lw = QListWidget(); self.lw.setViewMode(QListWidget.ViewMode.IconMode); self.lw.setIconSize(QSize(150, 150)); self.lw.setResizeMode(QListWidget.ResizeMode.Adjust); self.lw.setSpacing(10); self.lw.setProperty("class", "iconList"); self.lw.itemDoubleClicked.connect(self.select_existing); l.addWidget(self.lw)
-        h = QHBoxLayout(); b1 = QPushButton(tr("BTN_IMPORT_NEW_MAP")); b1.setObjectName("successBtn"); b1.clicked.connect(self.select_new)
-        b2 = QPushButton(tr("BTN_OPEN_SELECTED_MAP")); b2.setObjectName("primaryBtn"); b2.clicked.connect(self.select_existing)
-        h.addWidget(b1); h.addStretch(); h.addWidget(b2); l.addLayout(h)
+        h = QHBoxLayout(); b1 = QPushButton(tr("BTN_IMPORT_NEW_MAP")); b1.setObjectName("successBtn"); b1.clicked.connect(self.select_new); b2 = QPushButton(tr("BTN_OPEN_SELECTED_MAP")); b2.setObjectName("primaryBtn"); b2.clicked.connect(self.select_existing); h.addWidget(b1); h.addStretch(); h.addWidget(b2); l.addLayout(h)
     def load_maps(self):
         if not os.path.exists(self.assets_path): return
         for f in os.listdir(self.assets_path):
-            if f.lower().endswith(('.png', '.jpg', '.jpeg')): self.lw.addItem(QListWidgetItem(QIcon(os.path.join(self.assets_path, f)), f))
+             if f.lower().endswith(('.png', '.jpg', '.jpeg')): self.lw.addItem(QListWidgetItem(QIcon(os.path.join(self.assets_path, f)), f))
     def select_existing(self):
         if self.lw.currentItem(): self.selected_file = self.lw.currentItem().text(); self.accept()
         else: QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_MAP_FROM_LIST"))
     def select_new(self): self.is_new_import = True; self.accept()
 
-
-# --- COMBAT TRACKER (MULTI-ENCOUNTER) ---
+# --- COMBAT TRACKER ---
 class CombatTracker(QWidget):
     data_changed_signal = pyqtSignal()
 
     def __init__(self, data_manager):
         super().__init__()
-        self.dm = data_manager
-        self.battle_map_window = None 
-        self.loading = False
-        
-        # Encounter Verileri (Dict of Dicts)
-        # { "enc_id": { "name": "...", "combatants": [], "map_path": "...", "round": 1, "turn_index": -1, ... } }
-        self.encounters = {}
-        self.current_encounter_id = None
-        
-        # Varsayılan bir encounter oluştur
-        self.create_encounter("Default Encounter")
-        
-        self.init_ui()
+        self.dm = data_manager; self.battle_map_window = None; self.loading = False; self.encounters = {}; self.current_encounter_id = None
+        self.create_encounter("Default Encounter"); self.init_ui()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
         
-        # --- ENCOUNTER YÖNETİMİ ---
         enc_layout = QHBoxLayout()
-        self.combo_encounters = QComboBox()
-        self.combo_encounters.currentIndexChanged.connect(self.switch_encounter)
-        self.combo_encounters.setMinimumWidth(200)
-        
-        # BUTON GENİŞLİKLERİ ARTIRILDI (30 -> 40)
-        self.btn_new_enc = QPushButton("➕")
-        self.btn_new_enc.setToolTip("Yeni Encounter")
-        self.btn_new_enc.clicked.connect(self.prompt_new_encounter)
-        self.btn_new_enc.setFixedWidth(40) 
-        
-        self.btn_rename_enc = QPushButton("✏️")
-        self.btn_rename_enc.setToolTip("İsim Değiştir")
-        self.btn_rename_enc.clicked.connect(self.rename_encounter)
-        self.btn_rename_enc.setFixedWidth(40)
-        
-        self.btn_del_enc = QPushButton("🗑️")
-        self.btn_del_enc.setToolTip("Encounter Sil")
-        self.btn_del_enc.clicked.connect(self.delete_encounter)
-        self.btn_del_enc.setFixedWidth(40)
-        self.btn_del_enc.setObjectName("dangerBtn")
-        
-        enc_layout.addWidget(QLabel("Encounter:"))
-        enc_layout.addWidget(self.combo_encounters)
-        enc_layout.addWidget(self.btn_new_enc)
-        enc_layout.addWidget(self.btn_rename_enc)
-        enc_layout.addWidget(self.btn_del_enc)
+        self.combo_encounters = QComboBox(); self.combo_encounters.currentIndexChanged.connect(self.switch_encounter); self.combo_encounters.setMinimumWidth(200)
+        self.btn_new_enc = QPushButton("➕"); self.btn_new_enc.setFixedWidth(40); self.btn_new_enc.setToolTip(tr("TIP_NEW_ENC")); self.btn_new_enc.clicked.connect(self.prompt_new_encounter)
+        self.btn_rename_enc = QPushButton("✏️"); self.btn_rename_enc.setFixedWidth(40); self.btn_rename_enc.setToolTip(tr("TIP_RENAME_ENC")); self.btn_rename_enc.clicked.connect(self.rename_encounter)
+        self.btn_del_enc = QPushButton("🗑️"); self.btn_del_enc.setFixedWidth(40); self.btn_del_enc.setToolTip(tr("TIP_DEL_ENC")); self.btn_del_enc.clicked.connect(self.delete_encounter); self.btn_del_enc.setObjectName("dangerBtn")
+        enc_layout.addWidget(QLabel(tr("LBL_ENCOUNTER_PREFIX"))); enc_layout.addWidget(self.combo_encounters); enc_layout.addWidget(self.btn_new_enc); enc_layout.addWidget(self.btn_rename_enc); enc_layout.addWidget(self.btn_del_enc)
         layout.addLayout(enc_layout)
 
-        # --- TABLO ---
-        self.table = QTableWidget()
-        self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
-        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        
-        self.table.customContextMenuRequested.connect(self.open_context_menu)
-        self.table.itemChanged.connect(self.on_data_changed)
-        self.table.cellDoubleClicked.connect(self.on_cell_double_clicked)
-        self.table.setSortingEnabled(False)
-        
+        self.table = QTableWidget(); self.table.setColumnCount(5); self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch); self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows); self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self.open_context_menu); self.table.itemChanged.connect(self.on_data_changed); self.table.cellDoubleClicked.connect(self.on_cell_double_clicked); self.table.setSortingEnabled(False)
         layout.addWidget(self.table)
 
-        # --- KONTROLLER ---
-        quick_layout = QHBoxLayout()
+        q_lo = QHBoxLayout()
         self.inp_quick_name = QLineEdit(); self.inp_quick_name.setPlaceholderText(tr("HEADER_NAME"))
         self.inp_quick_init = QLineEdit(); self.inp_quick_init.setPlaceholderText(tr("LBL_INIT")); self.inp_quick_init.setMaximumWidth(50)
         self.inp_quick_hp = QLineEdit(); self.inp_quick_hp.setPlaceholderText(tr("LBL_HP")); self.inp_quick_hp.setMaximumWidth(50)
         self.btn_quick_add = QPushButton(tr("BTN_QUICK_ADD")); self.btn_quick_add.clicked.connect(self.quick_add)
-        
-        quick_layout.addWidget(self.inp_quick_name, 3)
-        quick_layout.addWidget(self.inp_quick_init, 1)
-        quick_layout.addWidget(self.inp_quick_hp, 1)
-        quick_layout.addWidget(self.btn_quick_add, 1)
-        layout.addLayout(quick_layout)
+        q_lo.addWidget(self.inp_quick_name, 3); q_lo.addWidget(self.inp_quick_init, 1); q_lo.addWidget(self.inp_quick_hp, 1); q_lo.addWidget(self.btn_quick_add, 1)
+        layout.addLayout(q_lo)
 
-        # Tur Kontrol ve Harita
         btn_layout = QHBoxLayout()
-        self.lbl_round = QLabel("Round: 1")
-        self.lbl_round.setObjectName("headerLabel")
-        self.lbl_round.setStyleSheet("font-size: 16px; font-weight: bold; margin-right: 10px;")
-        
-        self.btn_next_turn = QPushButton(tr("BTN_NEXT_TURN"))
-        self.btn_next_turn.setObjectName("actionBtn") 
-        self.btn_next_turn.clicked.connect(self.next_turn)
-        
-        self.btn_battle_map = QPushButton("🗺️ Battle Map")
-        self.btn_battle_map.setObjectName("primaryBtn")
-        self.btn_battle_map.clicked.connect(self.open_battle_map)
-
-        btn_layout.addWidget(self.lbl_round)
-        btn_layout.addWidget(self.btn_next_turn)
-        btn_layout.addWidget(self.btn_battle_map)
+        self.lbl_round = QLabel(f"{tr('LBL_ROUND_PREFIX')}1"); self.lbl_round.setObjectName("headerLabel"); self.lbl_round.setStyleSheet("font-size: 16px; font-weight: bold; margin-right: 10px;")
+        self.btn_next_turn = QPushButton(tr("BTN_NEXT_TURN")); self.btn_next_turn.setObjectName("actionBtn"); self.btn_next_turn.clicked.connect(self.next_turn)
+        self.btn_battle_map = QPushButton(tr("BTN_BATTLE_MAP")); self.btn_battle_map.setObjectName("primaryBtn"); self.btn_battle_map.clicked.connect(self.open_battle_map)
+        btn_layout.addWidget(self.lbl_round); btn_layout.addWidget(self.btn_next_turn); btn_layout.addWidget(self.btn_battle_map)
         layout.addLayout(btn_layout)
         
-        # Alt Butonlar
         btn_layout2 = QHBoxLayout()
         self.btn_add = QPushButton(tr("BTN_ADD")); self.btn_add.clicked.connect(self.add_combatant_dialog)
         self.btn_add_players = QPushButton(tr("BTN_ADD_PLAYERS")); self.btn_add_players.clicked.connect(self.add_all_players)
         self.btn_roll = QPushButton(tr("BTN_ROLL_INIT")); self.btn_roll.clicked.connect(self.roll_initiatives)
+        
+        # --- HATA BURADAYDI: self.clear_tracker tanımlanmadan önce kullanılıyordu ---
+        # Ama Python'da self.clear_tracker metoduna referans vermek sorun olmaz, 
+        # sorun clear_tracker metodunun sınıf içinde hiç tanımlanmamış olmasıydı.
         self.btn_clear_all = QPushButton(tr("BTN_CLEAR_ALL"))
-        self.btn_clear_all.clicked.connect(self.clear_tracker)
+        self.btn_clear_all.clicked.connect(self.clear_tracker) 
         self.btn_clear_all.setObjectName("dangerBtn")
         
-        btn_layout2.addWidget(self.btn_add)
-        btn_layout2.addWidget(self.btn_add_players)
-        btn_layout2.addWidget(self.btn_roll)
-        btn_layout2.addWidget(self.btn_clear_all)
+        btn_layout2.addWidget(self.btn_add); btn_layout2.addWidget(self.btn_add_players); btn_layout2.addWidget(self.btn_roll); btn_layout2.addWidget(self.btn_clear_all)
         layout.addLayout(btn_layout2)
         
-        self.refresh_ui_from_current_encounter()
+        self.refresh_encounter_combo()
+
+    def create_encounter(self, name):
+        eid = str(uuid.uuid4()); self.encounters[eid] = {"id":eid, "name":name, "combatants":[], "map_path":None, "token_size":50, "turn_index":-1, "round":1, "token_positions":{}}; self.current_encounter_id = eid; return eid
+    def prompt_new_encounter(self): 
+        n,ok = QInputDialog.getText(self, tr("TITLE_NEW_ENC"), tr("LBL_ENC_NAME")); 
+        if ok and n: self.create_encounter(n); self.refresh_encounter_combo()
+    def rename_encounter(self):
+        if not self.current_encounter_id: return
+        n,ok = QInputDialog.getText(self, tr("TITLE_RENAME_ENC"), tr("LBL_NEW_NAME"), text=self.encounters[self.current_encounter_id]["name"])
+        if ok and n: self.encounters[self.current_encounter_id]["name"] = n; self.refresh_encounter_combo()
+    def delete_encounter(self):
+        if len(self.encounters) <= 1: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_LAST_ENC_DELETE")); return
+        if QMessageBox.question(self, tr("TITLE_DELETE"), tr("MSG_CONFIRM_ENC_DELETE"), QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No)==QMessageBox.StandardButton.Yes: del self.encounters[self.current_encounter_id]; self.refresh_encounter_combo()
+    def switch_encounter(self, idx): 
+        eid = self.combo_encounters.itemData(idx)
+        if eid and eid in self.encounters: self._save_current_state_to_memory(); self.current_encounter_id = eid; self.refresh_ui_from_current_encounter(); self.refresh_battle_map(force_map_reload=True)
+    def refresh_encounter_combo(self):
+        self.combo_encounters.blockSignals(True); self.combo_encounters.clear()
+        if not self.encounters: self.create_encounter("Default Encounter")
+        for eid, e in self.encounters.items(): self.combo_encounters.addItem(e["name"], eid)
+        if self.current_encounter_id: self.combo_encounters.setCurrentIndex(self.combo_encounters.findData(self.current_encounter_id))
+        else: self.current_encounter_id = self.combo_encounters.itemData(0); self.combo_encounters.setCurrentIndex(0)
+        self.combo_encounters.blockSignals(False); self.refresh_ui_from_current_encounter()
+
+    def add_direct_row(self, name, init, ac, hp, conditions_data, eid, init_bonus=0, tid=None):
+        if not tid: tid = str(uuid.uuid4())
+        row = self.table.rowCount(); self.table.insertRow(row)
+        self.table.insertRow(row)
+        it_init = NumericTableWidgetItem(str(init)); it_init.setData(Qt.ItemDataRole.UserRole, eid); it_init.setData(Qt.ItemDataRole.UserRole+1, tid); self.table.setItem(row, 1, it_init)
+        self.table.setItem(row, 2, NumericTableWidgetItem(str(clean_stat_value(ac))))
+        cur = clean_stat_value(hp); mx = cur
+        if eid and eid in self.dm.data["entities"]:
+             try: db_max = clean_stat_value(self.dm.data["entities"][eid]["combat_stats"]["max_hp"]); mx = db_max if db_max >= cur else cur
+             except: pass
+        hp_w = HpBarWidget(cur, mx); hp_w.hpChanged.connect(lambda v, w=hp_w: self.on_widget_hp_changed(w, v)); self.table.setCellWidget(row, 3, hp_w)
+        self.table.setItem(row, 3, NumericTableWidgetItem(str(cur))) 
+        cond_w = ConditionsWidget()
+        if isinstance(conditions_data, str) and conditions_data:
+            conditions_data = [{"name": c.strip(), "icon": None, "duration": 0, "max_duration": 0} for c in conditions_data.split(",")]
+        elif not isinstance(conditions_data, list):
+            conditions_data = []
+            
+        cond_w.set_conditions(conditions_data)
+        cond_w.conditionsChanged.connect(self.data_changed_signal.emit)
+        cond_w.clicked.connect(lambda w=cond_w: self.open_condition_menu_for_widget(w))
+        
+        self.table.setCellWidget(row, 4, cond_w)
+
+    def open_condition_menu_for_widget(self, widget):
+        # Widget'ın hangi satırda olduğunu bul
+        index = self.table.indexAt(widget.pos())
+        if not index.isValid(): return
+        row = index.row()
+        
+        # Menüyü oluştur
+        menu = QMenu(self)
+        menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #007acc; }")
+        
+        # 1. Standart Durumlar (Standard 5e Conditions)
+        std_menu = menu.addMenu("Standart Durumlar")
+        for cond in CONDITIONS: # Dosyanın başında tanımlı liste
+            action = QAction(cond, self)
+            action.triggered.connect(lambda checked, r=row, n=cond: self.add_condition_to_row(r, n, None, 0))
+            std_menu.addAction(action)
+            
+        menu.addSeparator()
+        
+        # 2. Özel Durum Etkileri (Status Effects from Database)
+        # Veritabanında tipi "Status Effect" olanları çek
+        custom_effects = [e for e in self.dm.data["entities"].values() if e.get("type") == "Status Effect"]
+        
+        if custom_effects:
+            lbl = menu.addAction("--- Kayıtlı Etkiler ---")
+            lbl.setEnabled(False)
+            
+            for eff in custom_effects:
+                eff_name = eff.get("name", "Bilinmeyen")
+                
+                # İkon yolu (varsa)
+                icon_path = None
+                if eff.get("images"):
+                    full_path = self.dm.get_full_path(eff["images"][0])
+                    if full_path and os.path.exists(full_path):
+                        icon_path = full_path
+                
+                # Süre (Duration)
+                try: 
+                    duration = int(eff.get("attributes", {}).get("LBL_DURATION_TURNS", 0))
+                except: 
+                    duration = 0
+                
+                action = QAction(eff_name, self)
+                if icon_path:
+                    action.setIcon(QIcon(icon_path))
+                
+                # Tıklanınca eklenecek
+                action.triggered.connect(lambda checked, r=row, n=eff_name, p=icon_path, d=duration: self.add_condition_to_row(r, n, p, d))
+                menu.addAction(action)
+        else:
+            no_act = menu.addAction("(Kayıtlı Etki Yok)")
+            no_act.setEnabled(False)
+
+        # Menüyü fare pozisyonunda aç
+        menu.exec(QCursor.pos())
+
+    def refresh_ui_from_current_encounter(self):
+        self.loading = True; self.table.blockSignals(True); self.table.setRowCount(0)
+        if not self.current_encounter_id: return
+        enc = self.encounters[self.current_encounter_id]
+        self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{enc.get('round', 1)}")
+        for c in enc.get("combatants", []):
+            tid = c.get("tid") or str(uuid.uuid4())
+            if c.get("x") is not None: enc["token_positions"][tid] = (float(c["x"]), float(c["y"]))
+            self.add_direct_row(c["name"], c["init"], c["ac"], c["hp"], c.get("conditions", []), c["eid"], c.get("bonus", 0), tid)
+        self._sort_and_refresh(); self.table.blockSignals(False); self.loading = False
+
+    def _save_current_state_to_memory(self):
+        if not self.current_encounter_id: return
+        enc = self.encounters[self.current_encounter_id]; combatants = []
+        for r in range(self.table.rowCount()):
+            if not self.table.item(r, 0): continue
+            hp_w = self.table.cellWidget(r, 3); cond_w = self.table.cellWidget(r, 4)
+            tid = self.table.item(r, 1).data(Qt.ItemDataRole.UserRole+1); eid = self.table.item(r, 1).data(Qt.ItemDataRole.UserRole)
+            combatants.append({
+                "tid": str(tid), "eid": str(eid) if eid else None,
+                "name": self.table.item(r, 0).text(), "init": self.table.item(r, 1).text(), "ac": self.table.item(r, 2).text(),
+                "hp": str(hp_w.current) if hp_w else "0", "conditions": cond_w.active_conditions if cond_w else [], "bonus": 0,
+                "x": enc["token_positions"].get(tid, (None,None))[0], "y": enc["token_positions"].get(tid, (None,None))[1]
+            })
+        enc["combatants"] = combatants
+
+    def next_turn(self):
+        if not self.current_encounter_id: return
+        enc = self.encounters[self.current_encounter_id]; count = self.table.rowCount()
+        if count == 0: return
+        self.loading = True; enc["turn_index"] += 1
+        if enc["turn_index"] >= count: enc["turn_index"] = 0; enc["round"] += 1; self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{enc['round']}")
+        w = self.table.cellWidget(enc["turn_index"], 4)
+        if w: w.tick_conditions()
+        self.update_highlights(); self.refresh_battle_map(); self.loading = False; self.data_changed_signal.emit()
+
+    def update_highlights(self):
+        if not self.current_encounter_id: return
+        idx = self.encounters[self.current_encounter_id]["turn_index"]
+        self.table.blockSignals(True)
+        for r in range(self.table.rowCount()):
+             for c in range(self.table.columnCount()):
+                  if self.table.item(r, c): self.table.item(r, c).setBackground(QBrush(Qt.BrushStyle.NoBrush))
+        if 0 <= idx < self.table.rowCount():
+             for c in range(self.table.columnCount()):
+                  if self.table.item(idx, c): self.table.item(idx, c).setBackground(QBrush(QColor(100, 149, 237, 100)))
+        self.table.blockSignals(False)
+
+    def _sort_and_refresh(self):
+        if not self.current_encounter_id: return
+        enc = self.encounters[self.current_encounter_id]; cur_tid = None
+        if 0 <= enc["turn_index"] < self.table.rowCount(): cur_tid = self.table.item(enc["turn_index"], 1).data(Qt.ItemDataRole.UserRole+1)
+        self.table.blockSignals(True); self.table.sortItems(1, Qt.SortOrder.DescendingOrder); self.table.blockSignals(False)
+        if cur_tid:
+             for r in range(self.table.rowCount()):
+                  if self.table.item(r, 1).data(Qt.ItemDataRole.UserRole+1) == cur_tid: enc["turn_index"] = r; break
+        self.update_highlights(); self.refresh_battle_map(); 
+        if not self.loading: self.data_changed_signal.emit()
+
+    def on_widget_hp_changed(self, widget, val):
+        idx = self.table.indexAt(widget.pos())
+        if idx.isValid(): self.table.item(idx.row(), 3).setText(str(val)); self._save_current_state_to_memory(); self.refresh_battle_map(); self.data_changed_signal.emit()
+
+    def open_context_menu(self, pos):
+        row = self.table.rowAt(pos.y()); 
+        if row == -1: return
+        menu = QMenu()
+        add_cond_menu = menu.addMenu("🩸 " + tr("MENU_ADD_COND") if tr("MENU_ADD_COND") else "Add Condition")
+        for c in CONDITIONS: 
+             a = QAction(c, self); a.triggered.connect(lambda ch, n=c: self.add_condition_to_row(row, n, None, 0)); add_cond_menu.addAction(a)
+        add_cond_menu.addSeparator()
+        custom_effects = [e for e in self.dm.data["entities"].values() if e.get("type") == "Status Effect"]
+        for eff in custom_effects:
+            p = self.dm.get_full_path(eff["images"][0]) if eff.get("images") else None
+            try: d = int(eff.get("attributes", {}).get("LBL_DURATION_TURNS", 0))
+            except: d = 0
+            a = QAction(eff["name"], self); 
+            if p: a.setIcon(QIcon(p))
+            a.triggered.connect(lambda ch, n=eff["name"], p=p, d=d: self.add_condition_to_row(row, n, p, d))
+            add_cond_menu.addAction(a)
+        menu.addSeparator()
+        del_act = QAction("❌ " + tr("MENU_REMOVE_COMBAT") if tr("MENU_REMOVE_COMBAT") else "Remove", self); del_act.triggered.connect(lambda: self.delete_row(row)); menu.addAction(del_act)
+        menu.exec(self.table.viewport().mapToGlobal(pos))
+
+    def add_condition_to_row(self, row, name, icon_path, duration):
+        if duration == 0:
+            d, ok = QInputDialog.getInt(self, "Duration", f"{name} duration (0=Infinite)?", 0, 0, 100)
+            if ok: duration = d
+        w = self.table.cellWidget(row, 4)
+        if w: w.add_condition(name, icon_path, duration)
+    
+    # --- EKSİK OLAN FONKSİYON EKLENDİ ---
+    def clear_tracker(self):
+        if not self.current_encounter_id: return
+        enc = self.encounters[self.current_encounter_id]
+        
+        self.table.setRowCount(0)
+        enc["combatants"] = []
+        enc["token_positions"] = {}
+        enc["turn_index"] = -1
+        enc["round"] = 1
+        enc["map_path"] = None 
+        
+        self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}1")
+        self.refresh_battle_map(force_map_reload=True) 
+        if not self.loading: self.data_changed_signal.emit()
+    # -----------------------------------
+
+    def on_cell_double_clicked(self, r, c): 
+        if c==3: 
+            w=self.table.cellWidget(r,3); 
+            if w: 
+                v,ok=QInputDialog.getInt(self, tr("TITLE_EDIT_HP"), tr("LBL_NEW_HP"), w.current, 0, 9999)
+                if ok: w.update_hp(v)
+    def on_data_changed(self, i): 
+        if self.loading: return
+        if i.column()==1: self._sort_and_refresh()
+        else: self._save_current_state_to_memory(); self.data_changed_signal.emit()
+    def quick_add(self):
+        n=self.inp_quick_name.text().strip(); 
+        if n: self.add_direct_row(n, self.inp_quick_init.text() or str(random.randint(1,20)), "10", self.inp_quick_hp.text() or "10", [], None); self.inp_quick_name.clear(); self._sort_and_refresh()
+    def add_combatant_dialog(self):
+        d=EncounterSelectionDialog(self.dm, self)
+        if d.exec(): 
+            for eid in d.selected_entities: self.add_row_from_entity(eid)
+            self._sort_and_refresh()
+    def add_row_from_entity(self, eid):
+        d=self.dm.data["entities"].get(eid)
+        if d:
+            try: m=(int(d["stats"]["DEX"])-10)//2
+            except: m=0
+            try: m+=clean_stat_value(d["combat_stats"].get("initiative"), 0)
+            except: pass
+            self.add_direct_row(d["name"], random.randint(1,20)+m, d["combat_stats"].get("ac","10"), d["combat_stats"].get("hp","10"), [], eid, m)
+    def add_all_players(self):
+        ex=[self.table.item(r,1).data(Qt.ItemDataRole.UserRole) for r in range(self.table.rowCount())]
+        for k,v in self.dm.data["entities"].items(): 
+            if v["type"]=="Player" and k not in ex: self.add_row_from_entity(k)
+        self._sort_and_refresh()
+    def roll_initiatives(self):
+        self.table.blockSignals(True)
+        for r in range(self.table.rowCount()):
+             b = self.table.item(r,0).data(Qt.ItemDataRole.UserRole) or 0
+             self.table.item(r,1).setText(str(random.randint(1,20)+b))
+        self.table.blockSignals(False); self._sort_and_refresh()
+    def delete_row(self, r): 
+        self.table.removeRow(r)
+        if self.current_encounter_id:
+             enc = self.encounters[self.current_encounter_id]
+             if enc["turn_index"] >= r: enc["turn_index"] = max(0, enc["turn_index"]-1)
+        self.update_highlights(); self.refresh_battle_map(); self.data_changed_signal.emit()
+    def get_session_state(self): self._save_current_state_to_memory(); return {"encounters": self.encounters, "current_encounter_id": self.current_encounter_id}
+    def load_session_state(self, d):
+        self.loading=True; self.combo_encounters.blockSignals(True); self.combo_encounters.clear()
+        if "encounters" in d: self.encounters=d["encounters"]; tid=d.get("current_encounter_id")
+        else: # Legacy
+             eid=str(uuid.uuid4()); self.encounters={eid:{"id":eid,"name":"Legacy","combatants":d.get("combatants",[]),"round":1,"turn_index":-1,"token_positions":{},"token_size":50}}; tid=eid
+        for k,v in self.encounters.items(): self.combo_encounters.addItem(v["name"], k)
+        if tid: self.combo_encounters.setCurrentIndex(self.combo_encounters.findData(tid)); self.current_encounter_id=tid
+        else: self.combo_encounters.setCurrentIndex(0); self.current_encounter_id=self.combo_encounters.itemData(0)
+        self.refresh_ui_from_current_encounter(); self.combo_encounters.blockSignals(False); self.loading=False
+    def load_combat_data(self, l): self.load_session_state({"combatants":l})
+    
+    def open_battle_map(self):
+        if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.raise_(); self.battle_map_window.activateWindow(); return
+        enc = self.encounters.get(self.current_encounter_id)
+        if not enc: return
+        if not enc.get("map_path"):
+             d=MapSelectorDialog(os.path.join(self.dm.current_campaign_path,"assets"), self)
+             if d.exec():
+                  if d.is_new_import: 
+                       f,_=QFileDialog.getOpenFileName(self,"Select","", "Img (*.png *.jpg)"); 
+                       if f: enc["map_path"]=self.dm.import_image(f)
+                  elif d.selected_file: enc["map_path"]=os.path.join("assets",d.selected_file)
+                  self.data_changed_signal.emit()
+             else: return
+        self.battle_map_window = BattleMapWindow(self.dm)
+        self.battle_map_window.token_moved_signal.connect(self.on_token_moved_in_map)
+        self.battle_map_window.slider_size.valueChanged.connect(self.on_token_size_changed)
+        self.battle_map_window.show(); self.refresh_battle_map(True)
+    def on_token_moved_in_map(self, tid, x, y): 
+        if self.current_encounter_id: self.encounters[self.current_encounter_id]["token_positions"][tid]=(x,y); self.data_changed_signal.emit()
+    def on_token_size_changed(self, v): 
+        if self.current_encounter_id: self.encounters[self.current_encounter_id]["token_size"]=v; self.data_changed_signal.emit()
+    def refresh_battle_map(self, force_map_reload=False):
+        if not self.battle_map_window or not self.current_encounter_id: return
+        enc=self.encounters[self.current_encounter_id]; self._save_current_state_to_memory()
+        mp=self.dm.get_full_path(enc.get("map_path")) if (force_map_reload or not self.battle_map_window.map_item) else None
+        cd=[]
+        for c in enc["combatants"]:
+             t="NPC"; a="LBL_ATTR_NEUTRAL"
+             if c["eid"] in self.dm.data["entities"]:
+                  e=self.dm.data["entities"][c["eid"]]; t=e.get("type","NPC"); a=e.get("attributes",{}).get("LBL_ATTITUDE","LBL_ATTR_NEUTRAL"); 
+                  if t=="Monster": a="LBL_ATTR_HOSTILE"
+             c["type"]=t; c["attitude"]=a; cd.append(c)
+        self.battle_map_window.update_combat_data(cd, enc["turn_index"], mp, enc["token_size"])
 
     def retranslate_ui(self):
         self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
@@ -7976,501 +8626,8 @@ class CombatTracker(QWidget):
         self.btn_add_players.setText(tr("BTN_ADD_PLAYERS"))
         self.btn_roll.setText(tr("BTN_ROLL_INIT"))
         self.btn_clear_all.setText(tr("BTN_CLEAR_ALL"))
-        
-        if self.battle_map_window and self.battle_map_window.isVisible():
-            self.battle_map_window.retranslate_ui()
-            self.refresh_battle_map()
-
-    # --- ENCOUNTER YÖNETİMİ ---
-    def create_encounter(self, name):
-        eid = str(uuid.uuid4())
-        self.encounters[eid] = {
-            "id": eid,
-            "name": name,
-            "combatants": [],
-            "map_path": None,
-            "token_size": 50,
-            "turn_index": -1,
-            "round": 1,
-            "token_positions": {} # {tid: (x, y)}
-        }
-        self.current_encounter_id = eid
-        return eid
-
-    def prompt_new_encounter(self):
-        name, ok = QInputDialog.getText(self, "Yeni Encounter", "Encounter Adı:")
-        if ok and name:
-            eid = self.create_encounter(name)
-            self.combo_encounters.addItem(name, eid)
-            self.combo_encounters.setCurrentIndex(self.combo_encounters.count() - 1)
-
-    def rename_encounter(self):
-        if not self.current_encounter_id: return
-        current_name = self.encounters[self.current_encounter_id]["name"]
-        name, ok = QInputDialog.getText(self, "İsim Değiştir", "Yeni Ad:", text=current_name)
-        if ok and name:
-            self.encounters[self.current_encounter_id]["name"] = name
-            idx = self.combo_encounters.findData(self.current_encounter_id)
-            self.combo_encounters.setItemText(idx, name)
-            self.data_changed_signal.emit()
-
-    def delete_encounter(self):
-        if len(self.encounters) <= 1:
-            QMessageBox.warning(self, "Hata", "Son encounter silinemez.")
-            return
-        
-        reply = QMessageBox.question(self, "Sil", "Bu encounter silinsin mi?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        if reply == QMessageBox.StandardButton.Yes:
-            old_id = self.current_encounter_id
-            del self.encounters[old_id]
-            
-            # Combo'dan sil
-            idx = self.combo_encounters.findData(old_id)
-            self.combo_encounters.removeItem(idx)
-            
-            # İlkine geç
-            self.switch_encounter(0)
-            self.data_changed_signal.emit()
-
-    def switch_encounter(self, index):
-        eid = self.combo_encounters.itemData(index)
-        if eid and eid in self.encounters:
-            # Önce mevcut olanı kaydet (State'i güncelle)
-            self._save_current_state_to_memory()
-            
-            self.current_encounter_id = eid
-            self.refresh_ui_from_current_encounter()
-            
-            # Harita varsa yükle
-            if self.battle_map_window:
-                self.refresh_battle_map(force_map_reload=True)
-
-    def _save_current_state_to_memory(self):
-        """Mevcut tabloyu hafızadaki dict'e yazar"""
-        if not self.current_encounter_id: return
-        enc = self.encounters[self.current_encounter_id]
-        
-        # Combatants
-        combatants = []
-        for row in range(self.table.rowCount()):
-            # Hücreleri al
-            item_name = self.table.item(row, 0)
-            item_init = self.table.item(row, 1)
-            item_ac = self.table.item(row, 2)
-            item_cond = self.table.item(row, 4)
-            
-            # --- KRİTİK KONTROL ---
-            # Eğer hücrelerden herhangi biri henüz oluşturulmadıysa (None ise), bu satırı atla.
-            if not item_name or not item_init: 
-                continue
-
-            # Verileri güvenli şekilde al
-            tid = item_init.data(Qt.ItemDataRole.UserRole + 1)
-            eid = item_init.data(Qt.ItemDataRole.UserRole)
-            
-            # HP Widget'tan al (Hücre boşsa 0 kabul et)
-            hp_widget = self.table.cellWidget(row, 3)
-            current_hp_val = hp_widget.current if isinstance(hp_widget, HpBarWidget) else 0
-            
-            # Pozisyon verisini enc["token_positions"] dan alıyoruz
-            x, y = enc["token_positions"].get(tid, (None, None))
-
-            combatants.append({
-                "tid": str(tid) if tid else None,
-                "eid": str(eid) if eid else None,
-                "name": str(item_name.text()),
-                "init": str(item_init.text()),
-                "ac": str(item_ac.text() if item_ac else ""),
-                "hp": str(current_hp_val),
-                "cond": str(item_cond.text() if item_cond else ""),
-                "bonus": int(item_name.data(Qt.ItemDataRole.UserRole) or 0),
-                "x": float(x) if x is not None else None,
-                "y": float(y) if y is not None else None
-            })
-        
-        enc["combatants"] = combatants
-
-    def refresh_ui_from_current_encounter(self):
-        self.loading = True
-        self.table.blockSignals(True)
-        self.table.setRowCount(0)
-        
-        if not self.current_encounter_id: return
-        enc = self.encounters[self.current_encounter_id]
-        
-        self.lbl_round.setText(f"Round: {enc.get('round', 1)}")
-        
-        for c in enc.get("combatants", []):
-            tid = c.get("tid")
-            if not tid: tid = str(uuid.uuid4())
-            # Pozisyonları hafızaya yükle
-            if c.get("x") is not None:
-                enc["token_positions"][tid] = (float(c["x"]), float(c["y"]))
-            
-            self.add_direct_row(
-                str(c["name"]), str(c["init"]), str(c["ac"]), str(c["hp"]), str(c["cond"]), 
-                str(c.get("eid")) if c.get("eid") else None, int(c.get("bonus", 0)), tid
-            )
-            
-        self._sort_and_refresh() # Sıralama ve renkler
-        self.table.blockSignals(False)
-        self.loading = False
-
-    # --- BATTLE MAP ENTEGRASYONU ---
-    def open_battle_map(self):
-        if self.battle_map_window and self.battle_map_window.isVisible():
-            self.battle_map_window.raise_(); self.battle_map_window.activateWindow(); return
-        
-        # Harita Seçimi (Eğer yoksa)
-        enc = self.encounters[self.current_encounter_id]
-        if not enc.get("map_path"):
-            assets_path = os.path.join(self.dm.current_campaign_path, "assets")
-            if not os.path.exists(assets_path): os.makedirs(assets_path)
-            selector = MapSelectorDialog(assets_path, self)
-            if selector.exec():
-                if selector.is_new_import:
-                    fname, _ = QFileDialog.getOpenFileName(self, tr("MSG_SELECT_MAP"), "", "Images (*.png *.jpg *.jpeg)")
-                    if fname:
-                        rel_path = self.dm.import_image(fname)
-                        if rel_path: enc["map_path"] = rel_path; self.data_changed_signal.emit()
-                    else: return 
-                elif selector.selected_file:
-                    enc["map_path"] = os.path.join("assets", selector.selected_file); self.data_changed_signal.emit()
-            else: return 
-
-        self.battle_map_window = BattleMapWindow(self.dm)
-        self.battle_map_window.token_moved_signal.connect(self.on_token_moved_in_map)
-        self.battle_map_window.slider_size.valueChanged.connect(self.on_token_size_changed)
-        self.battle_map_window.show()
-        self.refresh_battle_map(force_map_reload=True)
-
-    def on_token_moved_in_map(self, tid, x, y):
-        # Sadece o anki encounter'ın pozisyonunu güncelle
-        if self.current_encounter_id:
-            self.encounters[self.current_encounter_id]["token_positions"][tid] = (x, y)
-            self.data_changed_signal.emit()
-
-    def on_token_size_changed(self, val):
-        if self.current_encounter_id:
-            self.encounters[self.current_encounter_id]["token_size"] = val
-            self.data_changed_signal.emit()
-
-    def refresh_battle_map(self, force_map_reload=False):
-        if not self.battle_map_window or not self.current_encounter_id: return
-        
-        enc = self.encounters[self.current_encounter_id]
-        
-        # Hafızayı güncelle (tablodan) ki haritaya doğru gitsin
-        self._save_current_state_to_memory()
-        
-        map_full_path = None
-        if (force_map_reload or self.battle_map_window.map_item is None) and enc.get("map_path"):
-            map_full_path = self.dm.get_full_path(enc["map_path"])
-            
-        # Veriyi hazırla
-        combatants_data = []
-        for c in enc["combatants"]:
-            # Type/Attitude hesapla (Entity'den)
-            ent_type = "NPC"; attitude = "LBL_ATTR_NEUTRAL"
-            if c["eid"] and c["eid"] in self.dm.data["entities"]:
-                ent = self.dm.data["entities"][c["eid"]]
-                ent_type = ent.get("type", "NPC")
-                attitude = ent.get("attributes", {}).get("LBL_ATTITUDE", "LBL_ATTR_NEUTRAL")
-                if ent_type == "Monster": attitude = "LBL_ATTR_HOSTILE"
-            
-            c["type"] = ent_type; c["attitude"] = attitude # Geçici ekle
-            combatants_data.append(c)
-
-        self.battle_map_window.update_combat_data(combatants_data, enc["turn_index"], map_full_path, enc["token_size"])
-
-    # --- TABLO İŞLEMLERİ ---
-    def add_direct_row(self, name, init, ac, hp, condition, eid, init_bonus=0, tid=None):
-        if not tid: tid = str(uuid.uuid4())
-        row = self.table.rowCount(); self.table.insertRow(row)
-        
-        item_name = QTableWidgetItem(name); item_name.setData(Qt.ItemDataRole.UserRole, init_bonus); self.table.setItem(row, 0, item_name)
-        
-        item_init = NumericTableWidgetItem(str(init)); item_init.setData(Qt.ItemDataRole.UserRole, eid); item_init.setData(Qt.ItemDataRole.UserRole + 1, tid); self.table.setItem(row, 1, item_init)
-        
-        self.table.setItem(row, 2, NumericTableWidgetItem(str(clean_stat_value(ac))))
-        
-        cur_hp = clean_stat_value(hp); max_hp = cur_hp
-        if eid and self.dm and eid in self.dm.data["entities"]:
-            try:
-                db_max = clean_stat_value(self.dm.data["entities"][eid].get("combat_stats", {}).get("max_hp"))
-                if db_max >= cur_hp: max_hp = db_max
-            except: pass
-            
-        hp_w = HpBarWidget(cur_hp, max_hp)
-        hp_w.hpChanged.connect(lambda val, w=hp_w: self.on_widget_hp_changed(w, val))
-        self.table.setCellWidget(row, 3, hp_w)
-        self.table.setItem(row, 3, NumericTableWidgetItem(str(cur_hp)))
-        
-        cond_item = QTableWidgetItem(condition)
-        if condition: cond_item.setForeground(QBrush(QColor("#ef5350")))
-        self.table.setItem(row, 4, cond_item)
-
-    def on_widget_hp_changed(self, widget, new_val):
-        index = self.table.indexAt(widget.pos())
-        if index.isValid():
-            self.table.item(index.row(), 3).setText(str(new_val))
-            self._save_current_state_to_memory()
-            self.refresh_battle_map()
-            self.data_changed_signal.emit()
-
-    def on_cell_double_clicked(self, row, column):
-        if column == 3:
-            w = self.table.cellWidget(row, 3)
-            if isinstance(w, HpBarWidget):
-                val, ok = QInputDialog.getInt(self, tr("TITLE_EDIT_HP"), tr("LBL_NEW_HP"), w.current, 0, 9999)
-                if ok: w.update_hp(val)
-
-    def on_data_changed(self, item):
-        if self.loading: return
-        if item.column() == 1: self._sort_and_refresh()
-        else: 
-            self._save_current_state_to_memory()
-            self.refresh_battle_map()
-            self.data_changed_signal.emit()
-
-    # --- OYUN AKIŞI ---
-    def next_turn(self):
-        if not self.current_encounter_id: return
-        enc = self.encounters[self.current_encounter_id]
-        count = self.table.rowCount()
-        if count == 0: return
-        
-        self.loading = True
-        enc["turn_index"] += 1
-        if enc["turn_index"] >= count:
-            enc["turn_index"] = 0
-            enc["round"] += 1
-            self.lbl_round.setText(f"Round: {enc['round']}")
-            
-        self.update_highlights()
-        self.refresh_battle_map()
-        self.loading = False
-        self.data_changed_signal.emit()
-
-    def update_highlights(self):
-        if not self.current_encounter_id: return
-        idx = self.encounters[self.current_encounter_id]["turn_index"]
-        
-        self.table.blockSignals(True)
-        for r in range(self.table.rowCount()):
-            for c in range(self.table.columnCount()):
-                it = self.table.item(r, c)
-                if it: it.setBackground(QBrush(Qt.BrushStyle.NoBrush))
-        
-        if 0 <= idx < self.table.rowCount():
-            for c in range(self.table.columnCount()):
-                it = self.table.item(idx, c)
-                if it: it.setBackground(QBrush(QColor(100, 149, 237, 100)))
-        self.table.blockSignals(False)
-
-    def _sort_and_refresh(self):
-        # Aktif sıradaki kişiyi kaybetmemek için ID ile takip et
-        if not self.current_encounter_id: return
-        enc = self.encounters[self.current_encounter_id]
-        
-        current_tid = None
-        if 0 <= enc["turn_index"] < self.table.rowCount():
-            it = self.table.item(enc["turn_index"], 1)
-            if it: current_tid = it.data(Qt.ItemDataRole.UserRole + 1)
-
-        self.table.blockSignals(True)
-        self.table.sortItems(1, Qt.SortOrder.DescendingOrder)
-        self.table.blockSignals(False)
-
-        if current_tid:
-            for r in range(self.table.rowCount()):
-                it = self.table.item(r, 1)
-                if it and it.data(Qt.ItemDataRole.UserRole + 1) == current_tid:
-                    enc["turn_index"] = r
-                    break
-        
-        self.update_highlights()
-        self.refresh_battle_map()
-        if not self.loading: self.data_changed_signal.emit()
-
-    def clear_tracker(self):
-        if not self.current_encounter_id: return
-        enc = self.encounters[self.current_encounter_id]
-        
-        self.table.setRowCount(0)
-        enc["combatants"] = []
-        enc["token_positions"] = {}
-        enc["turn_index"] = -1
-        enc["round"] = 1
-        enc["map_path"] = None # Haritayı da silmek ister mi? Genelde hayır ama clear all dediği için silebiliriz.
-        
-        self.lbl_round.setText("Round: 1")
-        self.refresh_battle_map(force_map_reload=True) # Harita silinsin
-        if not self.loading: self.data_changed_signal.emit()
-
-    # --- SAVE / LOAD SİSTEMİ (SESSION TAB İÇİN) ---
-    def get_session_state(self):
-        """Tüm encounterları paketler ve SessionTab'a gönderir"""
-        self._save_current_state_to_memory() # Son hali kaydet
-        
-        # JSON'a uygun hale getir (basit tipler)
-        return {
-            "encounters": self.encounters,
-            "current_encounter_id": self.current_encounter_id
-        }
-
-    def load_session_state(self, state_data):
-        """SessionTab'dan gelen veriyi yükler"""
-        self.loading = True
-        self.combo_encounters.blockSignals(True)
-        self.combo_encounters.clear()
-        
-        # Yeni yapı mı eski yapı mı?
-        if "encounters" in state_data:
-            # Yeni yapı (Multi-Encounter)
-            self.encounters = state_data["encounters"]
-            target_id = state_data.get("current_encounter_id")
-        else:
-            # Eski yapı (Tek Encounter) -> Dönüştür
-            # Eski veriyi "Default Encounter" olarak içeri al
-            combatants = state_data.get("combatants", [])
-            eid = str(uuid.uuid4())
-            self.encounters = {
-                eid: {
-                    "id": eid,
-                    "name": "Encounter",
-                    "combatants": combatants,
-                    "map_path": state_data.get("map_path"),
-                    "token_size": state_data.get("token_size", 50),
-                    "turn_index": state_data.get("turn_index", -1),
-                    "round": state_data.get("round", 1),
-                    "token_positions": {} # Eski yapıda bu veriyi combatants içinden ayıklamak gerekirdi, şimdilik boş
-                }
-            }
-            # Eski combatantlarda x,y varsa token_positions'a taşı
-            for c in combatants:
-                tid = c.get("tid") or str(uuid.uuid4())
-                if c.get("x") is not None:
-                    self.encounters[eid]["token_positions"][tid] = (c["x"], c["y"])
-            target_id = eid
-
-        # Combo'yu doldur
-        for eid, enc in self.encounters.items():
-            self.combo_encounters.addItem(enc["name"], eid)
-        
-        # Seçimi yap
-        if target_id and target_id in self.encounters:
-            idx = self.combo_encounters.findData(target_id)
-            self.combo_encounters.setCurrentIndex(idx)
-            self.current_encounter_id = target_id
-        elif len(self.encounters) > 0:
-            self.combo_encounters.setCurrentIndex(0)
-            self.current_encounter_id = self.combo_encounters.itemData(0)
-            
-        self.refresh_ui_from_current_encounter()
-        self.combo_encounters.blockSignals(False)
-        self.loading = False
-
-    def load_combat_data(self, combatants_list):
-        """Eski (çok eski) liste formatı desteği"""
-        self.load_session_state({"combatants": combatants_list})
-
-    # ... (Diğer: quick_add, add_combatant_dialog, add_row_from_entity vb. aynı) ...
-    def quick_add(self):
-        name = self.inp_quick_name.text().strip(); 
-        if not name: return
-        self.add_direct_row(name, self.inp_quick_init.text() or str(random.randint(1,20)), "10", self.inp_quick_hp.text() or "10", "", None)
-        self.inp_quick_name.clear(); self.inp_quick_init.clear(); self.inp_quick_hp.clear()
-        self._sort_and_refresh()
-
-    def add_combatant_dialog(self):
-        dialog = EncounterSelectionDialog(self.dm, self)
-        if dialog.exec():
-            for eid in dialog.selected_entities: self.add_row_from_entity(eid)
-            self._sort_and_refresh()
-
-    def add_row_from_entity(self, entity_id):
-        data = self.dm.data["entities"].get(entity_id)
-        if not data: return
-        name = data.get("name", tr("NAME_UNKNOWN"))
-        hp = data.get("combat_stats", {}).get("hp", "10")
-        ac = data.get("combat_stats", {}).get("ac", "10")
-        bonus_data = self.calculate_entity_initiative_bonus(data)
-        total_bonus = bonus_data["total"]
-        die_roll = random.randint(1, 20)
-        self.add_direct_row(name, die_roll + total_bonus, ac, hp, "", entity_id, total_bonus)
-    
-    def calculate_entity_initiative_bonus(self, data):
-        try: dex = int(data.get("stats", {}).get("DEX", 10)); dex_mod = (dex - 10) // 2
-        except: dex_mod = 0
-        try: c_stats = data.get("combat_stats", {}); extra = clean_stat_value(c_stats.get("initiative") or c_stats.get("init_bonus"), 0)
-        except: extra = 0
-        return {"dex_mod": dex_mod, "extra": extra, "total": dex_mod + extra}
-
-    def add_all_players(self):
-        entities = self.dm.data["entities"]
-        existing_eids = [self.table.item(row, 1).data(Qt.ItemDataRole.UserRole) for row in range(self.table.rowCount())]
-        for eid, data in entities.items():
-            if data.get("type") == "Player" and eid not in existing_eids: self.add_row_from_entity(eid)
-        self._sort_and_refresh()
-
-    def roll_initiatives(self):
-        self.table.blockSignals(True)
-        for row in range(self.table.rowCount()):
-            item_name = self.table.item(row, 0); item_init = self.table.item(row, 1)
-            if not item_name or not item_init: continue
-            eid = item_init.data(Qt.ItemDataRole.UserRole)
-            bonus = item_name.data(Qt.ItemDataRole.UserRole) or 0
-            if eid and eid in self.dm.data["entities"]:
-                ent_data = self.dm.data["entities"][eid]
-                bonus = self.calculate_entity_initiative_bonus(ent_data)["total"]
-                item_name.setData(Qt.ItemDataRole.UserRole, bonus)
-            item_init.setText(str(random.randint(1, 20) + bonus))
-        self.table.blockSignals(False)
-        self._sort_and_refresh()
-
-    def open_context_menu(self, position):
-        row = self.table.rowAt(position.y()); 
-        if row == -1: return
-        menu = QMenu()
-        cond_menu = menu.addMenu(tr("MENU_ADD_COND"))
-        current_cond_text = self.table.item(row, 4).text()
-        current_conditions = [c.strip() for c in current_cond_text.split(",") if c.strip()]
-        for cond in CONDITIONS:
-            action = QAction(cond, self); action.setCheckable(True)
-            if any(cond.split(" ")[0] in c for c in current_conditions): action.setChecked(True)
-            action.triggered.connect(lambda checked, c=cond, r=row: self.toggle_condition(r, c))
-            cond_menu.addAction(action)
-        menu.addSeparator()
-        del_action = QAction(tr("MENU_REMOVE_COMBAT"), self)
-        del_action.triggered.connect(lambda: self.delete_row(row))
-        menu.addAction(del_action)
-        menu.exec(self.table.viewport().mapToGlobal(position))
-        self.refresh_battle_map()
-
-    def toggle_condition(self, row, condition):
-        item = self.table.item(row, 4)
-        current_list = [c.strip() for c in item.text().split(",") if c.strip()]
-        if condition in current_list: current_list.remove(condition)
-        else: current_list.append(condition)
-        new_text = ", ".join(current_list)
-        item.setText(new_text)
-        item.setForeground(QBrush(QColor("#ef5350"))) if new_text else item.setForeground(QBrush(Qt.BrushStyle.NoBrush))
-        self.refresh_battle_map()
-        self.data_changed_signal.emit()
-
-    def delete_row(self, row):
-        self.table.removeRow(row)
-        # Turn index güncellemesi
-        if self.current_encounter_id:
-            enc = self.encounters[self.current_encounter_id]
-            if self.table.rowCount() > 0:
-                if enc["turn_index"] >= row: enc["turn_index"] = max(0, enc["turn_index"] - 1)
-            else: enc["turn_index"] = -1
-        
-        self.update_highlights()
-        self.refresh_battle_map()
-        self.data_changed_signal.emit()
+        if self.current_encounter_id: self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{self.encounters[self.current_encounter_id].get('round', 1)}")
+        if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.retranslate_ui(); self.refresh_battle_map()
 
 ===== FILE PATH =====
 ./ui\widgets\image_viewer.py
@@ -8674,12 +8831,13 @@ class NpcSheet(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
+        # Scroll Area Ayarları
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
-
         scroll.setObjectName("mainScroll") 
         
+        # İçerik Widget'ı (Tema rengini alması için ayarlar)
         self.content_widget = QWidget()
         self.content_widget.setObjectName("sheetContainer")
         self.content_widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -8689,6 +8847,8 @@ class NpcSheet(QWidget):
         # --- ÜST BÖLÜM (RESİM & TEMEL BİLGİ) ---
         top_layout = QHBoxLayout()
         img_layout = QVBoxLayout()
+        
+        # Resim Gösterici
         self.lbl_image = AspectRatioLabel()
         self.lbl_image.setFixedSize(200, 200)
         
@@ -8697,10 +8857,12 @@ class NpcSheet(QWidget):
         self.btn_prev_img = QPushButton()
         self.btn_prev_img.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack))
         self.btn_prev_img.setMaximumWidth(30)
+        self.btn_prev_img.clicked.connect(self.show_prev_image)
         
         self.btn_next_img = QPushButton()
         self.btn_next_img.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowForward))
         self.btn_next_img.setMaximumWidth(30)
+        self.btn_next_img.clicked.connect(self.show_next_image)
         
         self.lbl_img_counter = QLabel("0/0")
         self.lbl_img_counter.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -8709,19 +8871,23 @@ class NpcSheet(QWidget):
         gallery_controls.addWidget(self.lbl_img_counter)
         gallery_controls.addWidget(self.btn_next_img)
         
+        # Resim Ekle/Sil Butonları
         btn_img_actions = QHBoxLayout()
         self.btn_add_img = QPushButton(tr("BTN_ADD"))
-        self.btn_add_img.setObjectName("successBtn") # Yeşil buton stili
+        self.btn_add_img.setObjectName("successBtn")
+        self.btn_add_img.clicked.connect(self.add_image_dialog)
         
         self.btn_remove_img = QPushButton()
         self.btn_remove_img.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
-        self.btn_remove_img.setObjectName("dangerBtn") # Kırmızı buton stili
+        self.btn_remove_img.setObjectName("dangerBtn")
+        self.btn_remove_img.clicked.connect(self.remove_current_image)
         
         btn_img_actions.addWidget(self.btn_add_img)
         btn_img_actions.addWidget(self.btn_remove_img)
 
+        # Oyuncuya Göster Butonu
         self.btn_show_player = QPushButton(tr("BTN_SHOW_PLAYER"))
-        self.btn_show_player.setObjectName("primaryBtn") # Mavi/Ana buton stili
+        self.btn_show_player.setObjectName("primaryBtn")
         
         img_layout.addWidget(self.lbl_image)
         img_layout.addLayout(gallery_controls)
@@ -8729,13 +8895,15 @@ class NpcSheet(QWidget):
         img_layout.addWidget(self.btn_show_player)
         img_layout.addStretch()
 
+        # Bilgi Formu
         info_layout = QFormLayout()
         self.inp_name = QLineEdit()
         self.inp_type = QComboBox()
-        # Entity Categories (CAT_ prefix used in tr)
+        
         for cat in ENTITY_SCHEMAS.keys():
             self.inp_type.addItem(tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"), cat)
         self.inp_type.currentIndexChanged.connect(self._on_type_index_changed)
+        
         self.inp_tags = QLineEdit(); self.inp_tags.setPlaceholderText(tr("LBL_TAGS_PH"))
         
         self.combo_location = QComboBox()
@@ -8785,7 +8953,6 @@ class NpcSheet(QWidget):
         self.update_ui_by_type(self.inp_type.currentData())
 
     def retranslate_ui(self):
-        # Update category names in combo
         for i in range(self.inp_type.count()):
             cat = self.inp_type.itemData(i)
             if cat:
@@ -8799,12 +8966,9 @@ class NpcSheet(QWidget):
         self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
         
         cat_key = self.inp_type.currentData()
-        if cat_key:
-            self.build_dynamic_form(cat_key)
-        else:
-            self.grp_dynamic.setTitle(tr("LBL_PROPERTIES"))
+        if cat_key: self.build_dynamic_form(cat_key)
+        else: self.grp_dynamic.setTitle(tr("LBL_PROPERTIES"))
         
-        # Tabs
         self.tabs.setTabText(0, tr("TAB_STATS"))
         self.tabs.setTabText(1, tr("TAB_SPELLS"))
         self.tabs.setTabText(2, tr("TAB_ACTIONS"))
@@ -8814,18 +8978,14 @@ class NpcSheet(QWidget):
         self.btn_delete.setText(tr("BTN_DELETE"))
         self.btn_save.setText(tr("BTN_SAVE"))
         
-        # Stats groups
         if hasattr(self, "grp_base_stats"): self.grp_base_stats.setTitle(tr("GRP_STATS"))
         if hasattr(self, "grp_combat_stats"): self.grp_combat_stats.setTitle(tr("GRP_COMBAT"))
         if hasattr(self, "grp_defense"): self.grp_defense.setTitle(tr("GRP_DEFENSE"))
-        
-        # Other groups
         if hasattr(self, "grp_spells"): self.grp_spells.setTitle(tr("GRP_SPELLS"))
         if hasattr(self, "grp_inventory"): self.grp_inventory.setTitle(tr("GRP_INVENTORY"))
         if hasattr(self, "grp_pdf"): self.grp_pdf.setTitle(tr("GRP_PDF"))
         if hasattr(self, "grp_db_items"): self.grp_db_items.setTitle(tr("LBL_DB_ITEMS"))
         
-        # Section titles
         self.trait_container.setTitle(tr("LBL_TRAITS"))
         self.action_container.setTitle(tr("LBL_ACTIONS"))
         self.reaction_container.setTitle(tr("LBL_REACTIONS"))
@@ -8833,11 +8993,48 @@ class NpcSheet(QWidget):
         self.custom_spell_container.setTitle(tr("LBL_MANUAL_SPELLS"))
         self.inventory_container.setTitle(tr("GRP_INVENTORY"))
 
+    # --- RESİM YÖNETİMİ ---
+    def add_image_dialog(self):
+        fname, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_IMG"), "", "Images (*.png *.jpg *.jpeg *.bmp)")
+        if fname:
+            self.image_list.append(fname)
+            self.current_img_index = len(self.image_list) - 1
+            self.update_image_display()
+
+    def remove_current_image(self):
+        if not self.image_list: return
+        del self.image_list[self.current_img_index]
+        if self.current_img_index >= len(self.image_list):
+            self.current_img_index = max(0, len(self.image_list) - 1)
+        self.update_image_display()
+
+    def show_prev_image(self):
+        if not self.image_list: return
+        self.current_img_index = (self.current_img_index - 1) % len(self.image_list)
+        self.update_image_display()
+
+    def show_next_image(self):
+        if not self.image_list: return
+        self.current_img_index = (self.current_img_index + 1) % len(self.image_list)
+        self.update_image_display()
+
+    def update_image_display(self):
+        if not self.image_list:
+            self.lbl_image.setPixmap(None)
+            self.lbl_img_counter.setText("0/0")
+            return
+        
+        path = self.image_list[self.current_img_index]
+        if os.path.exists(path):
+            self.lbl_image.setPixmap(QPixmap(path))
+        else:
+            self.lbl_image.setPixmap(None)
+            
+        self.lbl_img_counter.setText(f"{self.current_img_index + 1}/{len(self.image_list)}")
+
     # --- TAB KURULUMLARI ---
     def setup_stats_tab(self):
         layout = QVBoxLayout(self.tab_stats)
-        
-        # Base Stats
         self.grp_base_stats = QGroupBox(tr("GRP_STATS")); l = QHBoxLayout(self.grp_base_stats)
         self.stats_inputs = {}; self.stats_modifiers = {}
         for s in ["STR", "DEX", "CON", "INT", "WIS", "CHA"]:
@@ -8845,20 +9042,12 @@ class NpcSheet(QWidget):
             lbl_title = QLabel(s); lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter); lbl_title.setStyleSheet("font-weight: bold;")
             inp = QLineEdit("10"); inp.setAlignment(Qt.AlignmentFlag.AlignCenter); inp.setMaximumWidth(50)
             inp.textChanged.connect(lambda text, key=s: self._update_modifier(key, text))
-            
-            lbl_mod = QLabel("+0"); lbl_mod.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            # Property kullanarak durumu QSS'e bildiriyoruz
-            lbl_mod.setProperty("class", "statModifier")
-            
+            lbl_mod = QLabel("+0"); lbl_mod.setAlignment(Qt.AlignmentFlag.AlignCenter); lbl_mod.setProperty("class", "statModifier")
             self.stats_inputs[s] = inp; self.stats_modifiers[s] = lbl_mod
             v.addWidget(lbl_title); v.addWidget(inp); v.addWidget(lbl_mod); l.addLayout(v)
         layout.addWidget(self.grp_base_stats)
-        
-        # Combat Stats
         self.grp_combat_stats = self._create_combat_stats_group()
         layout.addWidget(self.grp_combat_stats)
-
-        # Extended Stats
         self.grp_defense = QGroupBox(tr("GRP_DEFENSE")); form3 = QFormLayout(self.grp_defense)
         self.inp_saves = QLineEdit(); self.inp_skills = QLineEdit()
         self.inp_vuln = QLineEdit(); self.inp_resist = QLineEdit()
@@ -8876,15 +9065,12 @@ class NpcSheet(QWidget):
         self.inp_ac = QLineEdit(); self.inp_ac.setPlaceholderText(tr("HEADER_AC"))
         self.inp_speed = QLineEdit(); self.inp_prof = QLineEdit(); self.inp_pp = QLineEdit()
         self.inp_init = QLineEdit(); self.inp_init.setPlaceholderText(tr("LBL_INIT"))
-        
         row1 = QHBoxLayout()
         for t, w in [(tr("LBL_MAX_HP"), self.inp_max_hp), (tr("LBL_HP"), self.inp_hp), (tr("HEADER_AC"), self.inp_ac), (tr("LBL_SPEED"), self.inp_speed)]:
              v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); row1.addLayout(v)
-        
         row2 = QHBoxLayout()
         for t, w in [(tr("LBL_PROF_BONUS"), self.inp_prof), (tr("LBL_PASSIVE_PERC"), self.inp_pp), (tr("LBL_INIT_BONUS"), self.inp_init)]:
              v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); row2.addLayout(v)
-             
         v_comb.addLayout(row1); v_comb.addLayout(row2)
         return grp
 
@@ -8892,49 +9078,27 @@ class NpcSheet(QWidget):
         try:
             val = int(text_value); mod = (val - 10) // 2; sign = "+" if mod >= 0 else ""
             self.stats_modifiers[stat_key].setText(f"{sign}{mod}")
-            
-            # Dinamik Stil: QSS'de kullanmak için property değiştir
             state = "positive" if mod > 0 else "neutral"
             self.stats_modifiers[stat_key].setProperty("state", state)
-            
-            # Stili anlık güncellemek için unpolish/polish
             self.stats_modifiers[stat_key].style().unpolish(self.stats_modifiers[stat_key])
             self.stats_modifiers[stat_key].style().polish(self.stats_modifiers[stat_key])
-            
-            # NOT: Eğer QSS'de [state="positive"] tanımlı değilse renk değişmeyebilir.
-            # O yüzden hafif bir manuel renk kodu bırakıyoruz (istenirse silinebilir)
-            if mod > 0:
-                self.stats_modifiers[stat_key].setStyleSheet("color: #4caf50; font-weight: bold;")
-            else:
-                self.stats_modifiers[stat_key].setStyleSheet("color: #aaa; font-weight: normal;")
-                
+            if mod > 0: self.stats_modifiers[stat_key].setStyleSheet("color: #4caf50; font-weight: bold;")
+            else: self.stats_modifiers[stat_key].setStyleSheet("color: #aaa; font-weight: normal;")
         except ValueError:
             self.stats_modifiers[stat_key].setText("-")
 
     def setup_spells_tab(self):
         layout = QVBoxLayout(self.tab_spells)
-        
-        # Linked Spells
         self.grp_spells = QGroupBox(tr("GRP_SPELLS"))
         l_linked = QVBoxLayout(self.grp_spells)
         h = QHBoxLayout()
         self.combo_all_spells = QComboBox(); self.combo_all_spells.setEditable(True); self.combo_all_spells.setPlaceholderText(tr("LBL_SEARCH"))
         self.btn_add_spell = QPushButton(tr("BTN_ADD")); self.btn_add_spell.setObjectName("successBtn")
         h.addWidget(self.combo_all_spells, 3); h.addWidget(self.btn_add_spell, 1)
-        
-        self.list_assigned_spells = QListWidget()
-        self.list_assigned_spells.setAlternatingRowColors(True)
-        self.list_assigned_spells.setMinimumHeight(300)
-        self.list_assigned_spells.setAlternatingRowColors(True)
-
-        self.btn_remove_spell = QPushButton(tr("BTN_REMOVE"))
-        self.btn_remove_spell.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
-        self.btn_remove_spell.setObjectName("dangerBtn")
-        
+        self.list_assigned_spells = QListWidget(); self.list_assigned_spells.setAlternatingRowColors(True); self.list_assigned_spells.setMinimumHeight(300)
+        self.btn_remove_spell = QPushButton(tr("BTN_REMOVE")); self.btn_remove_spell.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)); self.btn_remove_spell.setObjectName("dangerBtn")
         l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_spells); l_linked.addWidget(self.btn_remove_spell)
         layout.addWidget(self.grp_spells)
-        
-        # Manual Spells
         self.custom_spell_container = self._create_section(tr("LBL_MANUAL_SPELLS"))
         self.add_btn_to_section(self.custom_spell_container, tr("BTN_ADD"))
         layout.addWidget(self.custom_spell_container); layout.addStretch()
@@ -8945,27 +9109,18 @@ class NpcSheet(QWidget):
         self.action_container = self._create_section(tr("LBL_ACTIONS")); self.add_btn_to_section(self.action_container, tr("BTN_ADD"))
         self.reaction_container = self._create_section(tr("LBL_REACTIONS")); self.add_btn_to_section(self.reaction_container, tr("BTN_ADD"))
         self.legendary_container = self._create_section(tr("LBL_LEGENDARY_ACTIONS")); self.add_btn_to_section(self.legendary_container, tr("BTN_ADD"))
-        layout.addWidget(self.trait_container); layout.addWidget(self.action_container)
-        layout.addWidget(self.reaction_container); layout.addWidget(self.legendary_container); layout.addStretch()
+        layout.addWidget(self.trait_container); layout.addWidget(self.action_container); layout.addWidget(self.reaction_container); layout.addWidget(self.legendary_container); layout.addStretch()
 
     def setup_inventory_tab(self):
         layout = QVBoxLayout(self.tab_inventory)
-        
-        # Linked Items
         self.grp_db_items = QGroupBox(tr("LBL_DB_ITEMS")); l_linked = QVBoxLayout(self.grp_db_items); h = QHBoxLayout()
         self.combo_all_items = QComboBox(); self.combo_all_items.setEditable(True)
         self.btn_add_item_link = QPushButton(tr("BTN_ADD")); self.btn_add_item_link.setObjectName("successBtn")
         h.addWidget(self.combo_all_items, 3); h.addWidget(self.btn_add_item_link, 1)
-        
         self.list_assigned_items = QListWidget(); self.list_assigned_items.setAlternatingRowColors(True)
-        self.btn_remove_item_link = QPushButton(tr("BTN_REMOVE"))
-        self.btn_remove_item_link.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
-        self.btn_remove_item_link.setObjectName("dangerBtn")
-        
+        self.btn_remove_item_link = QPushButton(tr("BTN_REMOVE")); self.btn_remove_item_link.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)); self.btn_remove_item_link.setObjectName("dangerBtn")
         l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_items); l_linked.addWidget(self.btn_remove_item_link)
         layout.addWidget(self.grp_db_items)
-        
-        # Manual Inventory
         self.inventory_container = self._create_section(tr("GRP_INVENTORY"))
         self.add_btn_to_section(self.inventory_container, tr("BTN_ADD"))
         layout.addWidget(self.inventory_container); layout.addStretch()
@@ -8978,79 +9133,43 @@ class NpcSheet(QWidget):
         self.btn_open_pdf_folder = QPushButton(); self.btn_open_pdf_folder.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon))
         h_btn.addWidget(self.btn_add_pdf, 3); h_btn.addWidget(self.btn_open_pdf_folder, 1)
         v.addLayout(h_btn)
-        
         self.list_pdfs = QListWidget(); self.list_pdfs.setAlternatingRowColors(True)
         v.addWidget(self.list_pdfs)
-        
         h_action = QHBoxLayout()
         self.btn_open_pdf = QPushButton(tr("BTN_OPEN_PDF")); self.btn_open_pdf.setObjectName("primaryBtn")
         self.btn_project_pdf = QPushButton(tr("BTN_PROJECT_PDF")); self.btn_project_pdf.setObjectName("actionBtn")
-        self.btn_remove_pdf = QPushButton(tr("BTN_REMOVE"))
-        self.btn_remove_pdf.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
-        self.btn_remove_pdf.setObjectName("dangerBtn")
-        
+        self.btn_remove_pdf = QPushButton(tr("BTN_REMOVE")); self.btn_remove_pdf.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)); self.btn_remove_pdf.setObjectName("dangerBtn")
         h_action.addWidget(self.btn_open_pdf); h_action.addWidget(self.btn_project_pdf); h_action.addWidget(self.btn_remove_pdf)
         v.addLayout(h_action); layout.addWidget(self.grp_pdf); layout.addStretch()
 
     # --- YARDIMCILAR ---
     def _create_section(self, title):
-        group = QGroupBox(title)
-        v = QVBoxLayout(group)
-        group.dynamic_area = QVBoxLayout()
-        v.addLayout(group.dynamic_area)
-        return group
+        group = QGroupBox(title); v = QVBoxLayout(group); group.dynamic_area = QVBoxLayout(); v.addLayout(group.dynamic_area); return group
 
     def add_btn_to_section(self, container, label):
-        btn = QPushButton(label)
-        btn.clicked.connect(lambda: self.add_feature_card(container))
-        btn.setObjectName("successBtn")
+        btn = QPushButton(label); btn.clicked.connect(lambda: self.add_feature_card(container)); btn.setObjectName("successBtn")
         container.layout().insertWidget(0, btn)
 
     def add_feature_card(self, group, name="", desc="", ph_title=None, ph_desc=None):
         if ph_title is None: ph_title = tr("LBL_TITLE_PH")
         if ph_desc is None: ph_desc = tr("LBL_DETAILS_PH")
-        
-        card = QFrame()
-        # QSS Tarafından yakalanması için sınıf ataması
-        card.setProperty("class", "featureCard")
-        
-        l = QVBoxLayout(card)
-        h = QHBoxLayout()
-        
-        t = QLineEdit(name)
-        t.setPlaceholderText(ph_title)
-        # Kart içi başlık (Border'ı kaldır, background'ı transparan yap ki kart rengini alsın)
-        t.setStyleSheet("font-weight: bold; border:none; font-size: 14px; background: transparent;")
-        
-        # --- SİLME BUTONU ---
-        btn = QPushButton()
-        btn.setFixedSize(24,24)
-        btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton))
-        btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn.setToolTip(tr("BTN_REMOVE"))
-        btn.setStyleSheet("background: transparent; border: none;") # İkon butonu temizle
-        
+        card = QFrame(); card.setProperty("class", "featureCard")
+        l = QVBoxLayout(card); h = QHBoxLayout()
+        t = QLineEdit(name); t.setPlaceholderText(ph_title); t.setStyleSheet("font-weight: bold; border:none; font-size: 14px; background: transparent;")
+        btn = QPushButton(); btn.setFixedSize(24,24); btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton)); btn.setCursor(Qt.CursorShape.PointingHandCursor); btn.setToolTip(tr("BTN_REMOVE")); btn.setStyleSheet("background: transparent; border: none;")
         btn.clicked.connect(lambda: [group.dynamic_area.removeWidget(card), card.deleteLater()])
         h.addWidget(t); h.addWidget(btn); l.addLayout(h)
-        
-        d = QTextEdit(desc)
-        d.setPlaceholderText(ph_desc)
-        d.setMinimumHeight(80) 
-        d.setMaximumHeight(300)
-        # Kart içi açıklama (Border yok, transparan arka plan)
-        d.setStyleSheet("border:none; background: transparent;")
-        l.addWidget(d)
-        
-        group.dynamic_area.addWidget(card)
-        card.inp_title = t; card.inp_desc = d
+        d = QTextEdit(desc); d.setPlaceholderText(ph_desc); d.setMinimumHeight(80); d.setMaximumHeight(300); d.setStyleSheet("border:none; background: transparent;")
+        l.addWidget(d); group.dynamic_area.addWidget(card); card.inp_title = t; card.inp_desc = d
 
+    # --- DÜZELTİLMİŞ FONKSİYON ---
     def clear_all_cards(self):
         containers = [self.trait_container, self.action_container, self.reaction_container, self.legendary_container, self.inventory_container, self.custom_spell_container]
         for g in containers:
             while g.dynamic_area.count(): 
                 c = g.dynamic_area.takeAt(0)
                 if c.widget(): c.widget().deleteLater()
-
+    
     def build_dynamic_form(self, category_name):
         while self.layout_dynamic.rowCount() > 0: self.layout_dynamic.removeRow(0)
         self.dynamic_inputs = {} 
@@ -9065,14 +9184,14 @@ class NpcSheet(QWidget):
 
     def _on_type_index_changed(self, index):
         cat_key = self.inp_type.itemData(index)
-        if cat_key:
-            self.update_ui_by_type(cat_key)
+        if cat_key: self.update_ui_by_type(cat_key)
 
     def update_ui_by_type(self, category_name):
         self.build_dynamic_form(category_name)
         is_npc_like = category_name in ["NPC", "Monster"]
         is_player = category_name == "Player"
         is_lore = category_name == "Lore"
+        is_status = category_name == "Status Effect"
         
         self.lbl_location.setVisible(is_npc_like or is_player); self.combo_location.setVisible(is_npc_like or is_player)
         self.lbl_residents.setVisible(category_name == "Location"); self.list_residents.setVisible(category_name == "Location")
@@ -9081,20 +9200,20 @@ class NpcSheet(QWidget):
         self.tabs.setTabVisible(1, is_npc_like) # Spells
         self.tabs.setTabVisible(2, is_npc_like) # Actions
         self.tabs.setTabVisible(3, is_npc_like) # Inv
+        self.tabs.setTabVisible(4, is_lore or is_player or is_status)
         
         if is_player:
             if self.grp_combat_stats.parent() == self.tab_stats:
-                self.tab_stats.layout().removeWidget(self.grp_combat_stats)
-                idx = self.content_layout.indexOf(self.tabs)
-                self.content_layout.insertWidget(idx, self.grp_combat_stats)
-                self.grp_combat_stats.setVisible(True)
+                self.tab_stats.layout().removeWidget(self.grp_combat_stats); idx = self.content_layout.indexOf(self.tabs); self.content_layout.insertWidget(idx, self.grp_combat_stats)
+            self.grp_combat_stats.setVisible(True)
+        elif is_status:
+            self.grp_combat_stats.setVisible(False)
         else:
             if self.grp_combat_stats.parent() != self.tab_stats:
-                self.content_layout.removeWidget(self.grp_combat_stats)
-                self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
+                self.content_layout.removeWidget(self.grp_combat_stats); self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
             self.grp_combat_stats.setVisible(is_npc_like)
         
-        self.tabs.setTabVisible(4, is_lore or is_player)
+        if is_status: self.lbl_image.setText("Icon")
 
     def prepare_new_entity(self):
         self.inp_name.clear(); self.inp_desc.clear(); self.inp_tags.clear(); self.lbl_image.setPixmap(None)
