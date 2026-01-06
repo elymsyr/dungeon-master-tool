@@ -24,10 +24,15 @@ class NpcSheet(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
+
+        scroll.setObjectName("mainScroll") 
         
         self.content_widget = QWidget()
-        self.content_layout = QVBoxLayout(self.content_widget)
+        self.content_widget.setObjectName("sheetContainer")
+        self.content_widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
+        self.content_layout = QVBoxLayout(self.content_widget)
+        
         # --- ÜST BÖLÜM (RESİM & TEMEL BİLGİ) ---
         top_layout = QHBoxLayout()
         img_layout = QVBoxLayout()
@@ -53,17 +58,17 @@ class NpcSheet(QWidget):
         
         btn_img_actions = QHBoxLayout()
         self.btn_add_img = QPushButton(tr("BTN_ADD"))
-        self.btn_add_img.setObjectName("successBtn")
+        self.btn_add_img.setObjectName("successBtn") # Yeşil buton stili
         
         self.btn_remove_img = QPushButton()
         self.btn_remove_img.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
-        self.btn_remove_img.setObjectName("dangerBtn")
+        self.btn_remove_img.setObjectName("dangerBtn") # Kırmızı buton stili
         
         btn_img_actions.addWidget(self.btn_add_img)
         btn_img_actions.addWidget(self.btn_remove_img)
 
         self.btn_show_player = QPushButton(tr("BTN_SHOW_PLAYER"))
-        self.btn_show_player.setObjectName("primaryBtn")
+        self.btn_show_player.setObjectName("primaryBtn") # Mavi/Ana buton stili
         
         img_layout.addWidget(self.lbl_image)
         img_layout.addLayout(gallery_controls)
@@ -85,9 +90,8 @@ class NpcSheet(QWidget):
         self.list_residents = QListWidget(); self.list_residents.setMaximumHeight(80)
         self.lbl_residents = QLabel(tr("LBL_RESIDENTS"))
         
-        # --- GÜNCELLEME: Ana açıklama kutusunu da büyüttük ---
         self.inp_desc = QTextEdit()
-        self.inp_desc.setMinimumHeight(80)  # Min 80px (yaklaşık 4 satır)
+        self.inp_desc.setMinimumHeight(80)
         self.inp_desc.setMaximumHeight(150)
         self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
 
@@ -118,7 +122,7 @@ class NpcSheet(QWidget):
         scroll.setWidget(self.content_widget)
         main_layout.addWidget(scroll)
 
-        # --- BUTONLAR ---
+        # --- ALT BUTONLAR ---
         btn_layout = QHBoxLayout(); btn_layout.setContentsMargins(10, 10, 10, 10)
         self.btn_delete = QPushButton(tr("BTN_DELETE")); self.btn_delete.setObjectName("dangerBtn")
         self.btn_save = QPushButton(tr("BTN_SAVE")); self.btn_save.setObjectName("primaryBtn")
@@ -141,8 +145,6 @@ class NpcSheet(QWidget):
         self.lbl_residents.setText(tr("LBL_RESIDENTS"))
         self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
         
-        # Re-trigger build_dynamic_form to refresh property labels
-        # currentData() might be None if no item selected or not initialized
         cat_key = self.inp_type.currentData()
         if cat_key:
             self.build_dynamic_form(cat_key)
@@ -190,7 +192,11 @@ class NpcSheet(QWidget):
             lbl_title = QLabel(s); lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter); lbl_title.setStyleSheet("font-weight: bold;")
             inp = QLineEdit("10"); inp.setAlignment(Qt.AlignmentFlag.AlignCenter); inp.setMaximumWidth(50)
             inp.textChanged.connect(lambda text, key=s: self._update_modifier(key, text))
-            lbl_mod = QLabel("+0"); lbl_mod.setAlignment(Qt.AlignmentFlag.AlignCenter); lbl_mod.setStyleSheet("color: #aaa; font-size: 11px;")
+            
+            lbl_mod = QLabel("+0"); lbl_mod.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            # Property kullanarak durumu QSS'e bildiriyoruz
+            lbl_mod.setProperty("class", "statModifier")
+            
             self.stats_inputs[s] = inp; self.stats_modifiers[s] = lbl_mod
             v.addWidget(lbl_title); v.addWidget(inp); v.addWidget(lbl_mod); l.addLayout(v)
         layout.addWidget(self.grp_base_stats)
@@ -233,7 +239,22 @@ class NpcSheet(QWidget):
         try:
             val = int(text_value); mod = (val - 10) // 2; sign = "+" if mod >= 0 else ""
             self.stats_modifiers[stat_key].setText(f"{sign}{mod}")
-            self.stats_modifiers[stat_key].setStyleSheet(f"color: {'#4caf50' if mod > 0 else '#aaa'}; font-size: 11px; font-weight: bold;")
+            
+            # Dinamik Stil: QSS'de kullanmak için property değiştir
+            state = "positive" if mod > 0 else "neutral"
+            self.stats_modifiers[stat_key].setProperty("state", state)
+            
+            # Stili anlık güncellemek için unpolish/polish
+            self.stats_modifiers[stat_key].style().unpolish(self.stats_modifiers[stat_key])
+            self.stats_modifiers[stat_key].style().polish(self.stats_modifiers[stat_key])
+            
+            # NOT: Eğer QSS'de [state="positive"] tanımlı değilse renk değişmeyebilir.
+            # O yüzden hafif bir manuel renk kodu bırakıyoruz (istenirse silinebilir)
+            if mod > 0:
+                self.stats_modifiers[stat_key].setStyleSheet("color: #4caf50; font-weight: bold;")
+            else:
+                self.stats_modifiers[stat_key].setStyleSheet("color: #aaa; font-weight: normal;")
+                
         except ValueError:
             self.stats_modifiers[stat_key].setText("-")
 
@@ -252,10 +273,10 @@ class NpcSheet(QWidget):
         self.list_assigned_spells.setAlternatingRowColors(True)
         self.list_assigned_spells.setMinimumHeight(300)
         self.list_assigned_spells.setAlternatingRowColors(True)
-        self.list_assigned_spells.setStyleSheet("QListWidget::item { border-bottom: 1px solid #333; padding: 2px; } QListWidget::item:selected { border: 1px solid #7c4dff; }")
 
         self.btn_remove_spell = QPushButton(tr("BTN_REMOVE"))
         self.btn_remove_spell.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        self.btn_remove_spell.setObjectName("dangerBtn")
         
         l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_spells); l_linked.addWidget(self.btn_remove_spell)
         layout.addWidget(self.grp_spells)
@@ -286,6 +307,7 @@ class NpcSheet(QWidget):
         self.list_assigned_items = QListWidget(); self.list_assigned_items.setAlternatingRowColors(True)
         self.btn_remove_item_link = QPushButton(tr("BTN_REMOVE"))
         self.btn_remove_item_link.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        self.btn_remove_item_link.setObjectName("dangerBtn")
         
         l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_items); l_linked.addWidget(self.btn_remove_item_link)
         layout.addWidget(self.grp_db_items)
@@ -309,45 +331,61 @@ class NpcSheet(QWidget):
         
         h_action = QHBoxLayout()
         self.btn_open_pdf = QPushButton(tr("BTN_OPEN_PDF")); self.btn_open_pdf.setObjectName("primaryBtn")
-        self.btn_project_pdf = QPushButton(tr("BTN_PROJECT_PDF")); self.btn_project_pdf.setStyleSheet("background-color: #6a1b9a; color: white;")
+        self.btn_project_pdf = QPushButton(tr("BTN_PROJECT_PDF")); self.btn_project_pdf.setObjectName("actionBtn")
         self.btn_remove_pdf = QPushButton(tr("BTN_REMOVE"))
         self.btn_remove_pdf.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        self.btn_remove_pdf.setObjectName("dangerBtn")
         
         h_action.addWidget(self.btn_open_pdf); h_action.addWidget(self.btn_project_pdf); h_action.addWidget(self.btn_remove_pdf)
         v.addLayout(h_action); layout.addWidget(self.grp_pdf); layout.addStretch()
 
     # --- YARDIMCILAR ---
     def _create_section(self, title):
-        group = QGroupBox(title); v = QVBoxLayout(group); group.dynamic_area = QVBoxLayout(); v.addLayout(group.dynamic_area); return group
+        group = QGroupBox(title)
+        v = QVBoxLayout(group)
+        group.dynamic_area = QVBoxLayout()
+        v.addLayout(group.dynamic_area)
+        return group
 
     def add_btn_to_section(self, container, label):
-        btn = QPushButton(label); btn.clicked.connect(lambda: self.add_feature_card(container))
+        btn = QPushButton(label)
+        btn.clicked.connect(lambda: self.add_feature_card(container))
+        btn.setObjectName("successBtn")
         container.layout().insertWidget(0, btn)
 
     def add_feature_card(self, group, name="", desc="", ph_title=None, ph_desc=None):
         if ph_title is None: ph_title = tr("LBL_TITLE_PH")
         if ph_desc is None: ph_desc = tr("LBL_DETAILS_PH")
-        card = QFrame(); card.setStyleSheet("background-color: #2b2b2b; border: 1px solid #444; border-radius: 4px; margin-bottom: 4px;")
-        l = QVBoxLayout(card); h = QHBoxLayout()
         
-        t = QLineEdit(name); t.setPlaceholderText(ph_title); t.setStyleSheet("color: orange; font-weight: bold; border:none; font-size: 14px;")
+        card = QFrame()
+        # QSS Tarafından yakalanması için sınıf ataması
+        card.setProperty("class", "featureCard")
         
-        # --- SİLME BUTONU (STANDART İKON) ---
+        l = QVBoxLayout(card)
+        h = QHBoxLayout()
+        
+        t = QLineEdit(name)
+        t.setPlaceholderText(ph_title)
+        # Kart içi başlık (Border'ı kaldır, background'ı transparan yap ki kart rengini alsın)
+        t.setStyleSheet("font-weight: bold; border:none; font-size: 14px; background: transparent;")
+        
+        # --- SİLME BUTONU ---
         btn = QPushButton()
         btn.setFixedSize(24,24)
         btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton))
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setToolTip(tr("BTN_REMOVE"))
+        btn.setStyleSheet("background: transparent; border: none;") # İkon butonu temizle
         
         btn.clicked.connect(lambda: [group.dynamic_area.removeWidget(card), card.deleteLater()])
         h.addWidget(t); h.addWidget(btn); l.addLayout(h)
         
-        # --- GÜNCELLEME: Yüksekliği artırıldı ---
         d = QTextEdit(desc)
         d.setPlaceholderText(ph_desc)
-        d.setMinimumHeight(80)  # Min 80px (yaklaşık 4 satır)
-        d.setMaximumHeight(300) # Esneme payı
-        d.setStyleSheet("border:none; color: #ccc;")
+        d.setMinimumHeight(80) 
+        d.setMaximumHeight(300)
+        # Kart içi açıklama (Border yok, transparan arka plan)
+        d.setStyleSheet("border:none; background: transparent;")
         l.addWidget(d)
         
         group.dynamic_area.addWidget(card)
