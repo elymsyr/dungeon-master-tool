@@ -30,6 +30,8 @@ Manage combat, track stats, and project maps to your players without the hassle.
 - [x] **System Upgrades:** Advanced Entity Cards, Multi-Add, and Status Effect systems.
 
 ### 🚧 In Progress / Planned
+
+- [ ] **More Sources and Prebuild Worlds:** We're planning to add more entities from other sources like 5E 2024, Forgotten Realms and else... Also adding custom design prebuild worlds to hell newbies.
 - [ ] **Soundpad:** Support for custom music and sound effects.
 - [ ] **Fog of War:** Interactive masking/revealing areas on the Battle Map.
 - [ ] **Campaign Notes:** Rich text editor, linking, and better folder organization for DM notes.
@@ -43,7 +45,6 @@ Manage combat, track stats, and project maps to your players without the hassle.
 - [ ] Add API import with image support
 - [ ] A better World control, bulk export entities from one world to another 
 - [ ] Add custom entity sets
-- [ ] Add prebuild worlds for newbies
 
 ## 🚀 Installation
 
