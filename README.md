@@ -11,6 +11,7 @@ Manage combat, track stats, and project maps to your players without the hassle.
 
 > ✨ UI/UX Status: The user interface is now in a much better state—cleaner, more consistent, and easier to read. We are committed to continuously improving the look and feel in upcoming updates!
 
+> Hey guys, leaving a star or a feedback would be the best motivation for me, since I work on a full-time job. I am trying to create an app for dungeon masters. Hope you'll like it :)
 ---
 
 ## ✨ Key Features
