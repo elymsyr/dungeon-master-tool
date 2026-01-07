@@ -4,6 +4,10 @@ import shutil
 
 APP_NAME = "DungeonMasterTool"
 
+# Determine the correct path separator for --add-data based on OS
+# Windows uses ';', Linux/Mac use ':'
+PATH_SEP = ';' if os.name == 'nt' else ':'
+
 # Temizlik
 if os.path.exists("dist"): shutil.rmtree("dist")
 if os.path.exists("build"): shutil.rmtree("build")
@@ -30,8 +34,8 @@ params = [
     '--hidden-import=json',
     
     # Veri Dosyaları
-    '--add-data=locales;locales',
-    '--add-data=themes;themes',
+    f'--add-data=locales{PATH_SEP}locales',
+    f'--add-data=themes{PATH_SEP}themes',
 ]
 
 print(f"Building optimized Windows Exe for {APP_NAME}...")
