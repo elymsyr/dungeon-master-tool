@@ -143,11 +143,18 @@ class NpcSheet(QWidget):
         self.update_ui_by_type(self.inp_type.currentData())
 
     def retranslate_ui(self):
+        """
+        Dil değiştiğinde arayüzdeki tüm metinleri günceller.
+        Dinamik alanlar (etiketler ve combobox seçenekleri) dahildir.
+        """
+        # 1. Statik Combobox (Varlık Tipi) Güncellemesi
         for i in range(self.inp_type.count()):
             cat = self.inp_type.itemData(i)
             if cat:
+                # CAT_NPC, CAT_MONSTER gibi anahtarları çevir
                 self.inp_type.setItemText(i, tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"))
 
+        # 2. Buton ve Etiket Metinleri
         self.btn_show_player.setText(tr("BTN_SHOW_PLAYER"))
         self.btn_add_img.setText(tr("BTN_ADD"))
         self.btn_remove_img.setToolTip(tr("BTN_REMOVE"))
@@ -155,19 +162,45 @@ class NpcSheet(QWidget):
         self.lbl_residents.setText(tr("LBL_RESIDENTS"))
         self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
         
+        # 3. Dinamik Özellikler Alanı (Grup Başlığı ve İçerik)
         cat_key = self.inp_type.currentData()
-        if cat_key: self.build_dynamic_form(cat_key)
-        else: self.grp_dynamic.setTitle(tr("LBL_PROPERTIES"))
-        
+        if cat_key: 
+            cat_trans = tr(f"CAT_{cat_key.upper()}") if cat_key in ENTITY_SCHEMAS else cat_key
+            self.grp_dynamic.setTitle(f"{cat_trans} {tr('LBL_PROPERTIES')}")
+        else: 
+            self.grp_dynamic.setTitle(tr("LBL_PROPERTIES"))
+
+        # --- KRİTİK KISIM: Dinamik Form Elemanlarını Güncelleme ---
+        # self.dynamic_inputs sözlüğü { "LBL_RACE": widget_objesi } şeklindedir.
+        for label_key, widget in self.dynamic_inputs.items():
+            # A) Sol taraftaki Etiketi (Label) Güncelle
+            # QFormLayout, bir widget'a bağlı olan etiketi bulmamızı sağlar.
+            label_widget = self.layout_dynamic.labelForField(widget)
+            if label_widget:
+                label_widget.setText(f"{tr(label_key)}:")
+            
+            # B) Eğer Widget bir ComboBox ise, seçenekleri (Items) Güncelle
+            if isinstance(widget, QComboBox):
+                for i in range(widget.count()):
+                    # build_dynamic_form fonksiyonunda kaydettiğimiz orijinal anahtarı (key) alıyoruz.
+                    original_key = widget.itemData(i)
+                    if original_key:
+                        # Eğer anahtar "LBL_" ile başlıyorsa çevirisini al, yoksa olduğu gibi bırak
+                        new_text = tr(original_key) if str(original_key).startswith("LBL_") else original_key
+                        widget.setItemText(i, new_text)
+
+        # 4. Sekme Başlıkları
         self.tabs.setTabText(0, tr("TAB_STATS"))
         self.tabs.setTabText(1, tr("TAB_SPELLS"))
         self.tabs.setTabText(2, tr("TAB_ACTIONS"))
         self.tabs.setTabText(3, tr("TAB_INV"))
         self.tabs.setTabText(4, tr("TAB_DOCS"))
         
+        # 5. Alt Butonlar
         self.btn_delete.setText(tr("BTN_DELETE"))
         self.btn_save.setText(tr("BTN_SAVE"))
         
+        # 6. Alt Grup Başlıkları (Varsa)
         if hasattr(self, "grp_base_stats"): self.grp_base_stats.setTitle(tr("GRP_STATS"))
         if hasattr(self, "grp_combat_stats"): self.grp_combat_stats.setTitle(tr("GRP_COMBAT"))
         if hasattr(self, "grp_defense"): self.grp_defense.setTitle(tr("GRP_DEFENSE"))
@@ -176,12 +209,63 @@ class NpcSheet(QWidget):
         if hasattr(self, "grp_pdf"): self.grp_pdf.setTitle(tr("GRP_PDF"))
         if hasattr(self, "grp_db_items"): self.grp_db_items.setTitle(tr("LBL_DB_ITEMS"))
         
+        # 7. Kart Alanı Başlıkları
         self.trait_container.setTitle(tr("LBL_TRAITS"))
         self.action_container.setTitle(tr("LBL_ACTIONS"))
         self.reaction_container.setTitle(tr("LBL_REACTIONS"))
         self.legendary_container.setTitle(tr("LBL_LEGENDARY_ACTIONS"))
         self.custom_spell_container.setTitle(tr("LBL_MANUAL_SPELLS"))
         self.inventory_container.setTitle(tr("GRP_INVENTORY"))
+
+        # 8. Statik Placeholder Güncellemeleri
+        self.inp_tags.setPlaceholderText(tr("LBL_TAGS_PH"))
+        self.inp_hp.setPlaceholderText(tr("LBL_HP"))
+        self.inp_max_hp.setPlaceholderText(tr("LBL_MAX_HP"))
+        self.inp_ac.setPlaceholderText(tr("HEADER_AC"))
+        self.inp_init.setPlaceholderText(tr("LBL_INIT"))
+        self.combo_all_spells.setPlaceholderText(tr("LBL_SEARCH"))
+
+    def build_dynamic_form(self, category_name):
+        """
+        Entity tipine göre (NPC, Monster vs.) dinamik form alanlarını oluşturur.
+        Önemli: ComboBox'larda itemData olarak çeviri anahtarını saklarız.
+        Böylece dil değiştiğinde orijinal anahtarı bulup tekrar çevirebiliriz.
+        """
+        # 1. Mevcut satırları temizle
+        while self.layout_dynamic.rowCount() > 0: 
+            self.layout_dynamic.removeRow(0)
+        
+        # Referans sözlüğünü sıfırla
+        self.dynamic_inputs = {} 
+        
+        # İlgili şemayı al
+        schema = ENTITY_SCHEMAS.get(category_name, [])
+        
+        # Grup başlığını ayarla (Örn: NPC Özellikler)
+        cat_trans = tr(f"CAT_{category_name.upper()}") if category_name in ENTITY_SCHEMAS else category_name
+        self.grp_dynamic.setTitle(f"{cat_trans} {tr('LBL_PROPERTIES')}")
+        
+        # 2. Şemadaki her alan için widget oluştur
+        for label_key, dtype, options in schema:
+            if dtype == "combo":
+                widget = QComboBox()
+                widget.setEditable(True) # Kullanıcı manuel de yazabilsin
+                if options:
+                    for opt in options:
+                        # Görünen Metin: tr(opt) -> "Dost"
+                        # Arka Plan Verisi: opt -> "LBL_ATTR_FRIENDLY"
+                        display_text = tr(opt) if str(opt).startswith("LBL_") else opt
+                        widget.addItem(display_text, opt) 
+            else:
+                widget = QLineEdit()
+            
+            # 3. Form satırını ekle
+            # label_key (Örn: "LBL_RACE") kullanarak çeviriyi alıyoruz
+            self.layout_dynamic.addRow(f"{tr(label_key)}:", widget)
+            
+            # 4. Widget'ı sözlüğe kaydet
+            # Anahtar olarak label_key kullanıyoruz ki retranslate sırasında etiketi bulabilelim.
+            self.dynamic_inputs[label_key] = widget
 
     # --- RESİM YÖNETİMİ ---
     def add_image_dialog(self):
@@ -360,18 +444,6 @@ class NpcSheet(QWidget):
                 c = g.dynamic_area.takeAt(0)
                 if c.widget(): c.widget().deleteLater()
     
-    def build_dynamic_form(self, category_name):
-        while self.layout_dynamic.rowCount() > 0: self.layout_dynamic.removeRow(0)
-        self.dynamic_inputs = {} 
-        schema = ENTITY_SCHEMAS.get(category_name, [])
-        self.grp_dynamic.setTitle(f"{tr(f'CAT_{category_name.upper()}') if category_name in ENTITY_SCHEMAS else category_name} {tr('LBL_PROPERTIES')}")
-        for label, dtype, options in schema:
-            widget = QComboBox() if dtype == "combo" else QLineEdit()
-            if dtype == "combo" and options: 
-                widget.addItems([tr(o) for o in options] if any(o.startswith("LBL_") for o in options) else options)
-                widget.setEditable(True)
-            self.layout_dynamic.addRow(f"{tr(label)}:", widget); self.dynamic_inputs[label] = widget
-
     def _on_type_index_changed(self, index):
         cat_key = self.inp_type.itemData(index)
         if cat_key: self.update_ui_by_type(cat_key)
