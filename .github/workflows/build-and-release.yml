@@ -1,6 +1,3 @@
-===== FILE PATH =====
-./.github/workflows/build_release.yml
-===== FILE CONTENT =====
 name: Build and Release
 
 on:
