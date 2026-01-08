@@ -187,20 +187,25 @@ class DatabaseTab(QWidget):
         data = self.dm.data["entities"].get(eid)
         if not data: return
         
-        # --- DEĞİŞİKLİK: self.dm ile Sheet oluşturma ---
         new_sheet = NpcSheet(self.dm)
         new_sheet.setProperty("entity_id", eid)
         
+        # Populate
         self.populate_sheet(new_sheet, data)
+        
+        # --- BUTON BAĞLANTILARI ---
         new_sheet.btn_save.clicked.connect(lambda: self.save_sheet_data(new_sheet))
         new_sheet.btn_delete.clicked.connect(lambda: self.delete_entity_from_tab(new_sheet))
         
-        new_sheet.btn_show_player.clicked.connect(lambda: self._show_to_player(new_sheet))
-        new_sheet.btn_add_pdf.clicked.connect(lambda: self._add_pdf_to_sheet(new_sheet))
-        new_sheet.btn_open_pdf.clicked.connect(lambda: self._open_pdf_file(new_sheet))
-        new_sheet.btn_project_pdf.clicked.connect(lambda: self._project_pdf_to_player(new_sheet))
-        new_sheet.btn_remove_pdf.clicked.connect(lambda: self._remove_pdf_from_sheet(new_sheet))
-        new_sheet.btn_open_pdf_folder.clicked.connect(lambda: self._open_pdf_folder(new_sheet))
+        # Projeksiyon İşlevleri (DatabaseTab Handle Eder)
+        new_sheet.btn_show_player.clicked.connect(lambda: self.project_entity_image(new_sheet))
+        new_sheet.btn_project_pdf.clicked.connect(lambda: self.project_entity_pdf(new_sheet))
+        
+        # Yönetim İşlevleri (NpcSheet Handle Eder)
+        new_sheet.btn_add_pdf.clicked.connect(new_sheet.add_pdf_dialog)
+        new_sheet.btn_open_pdf.clicked.connect(new_sheet.open_current_pdf)
+        new_sheet.btn_remove_pdf.clicked.connect(new_sheet.remove_current_pdf)
+        new_sheet.btn_open_pdf_folder.clicked.connect(new_sheet.open_pdf_folder)
         
         icon_char = "👤" if data.get("type") == "NPC" else "🐉" if data.get("type") == "Monster" else "📜"
         tab_index = target_manager.addTab(new_sheet, f"{icon_char} {data.get('name')}")
@@ -250,25 +255,36 @@ class DatabaseTab(QWidget):
                 idx = manager.indexOf(sheet)
                 if idx != -1: manager.removeTab(idx)
 
-    # NpcSheet ile aynı yardımcı fonksiyonları buraya kopyalamak yerine, 
-    # NpcSheet sınıfındaki metodları kullanmak daha doğru olurdu ama 
-    # yapı gereği DatabaseTab içinde ayrı mantıklar var.
-    # Ancak populate ve collect metodlarını zaten NpcSheet içinde güncelledik.
-    # Burada sadece çağırıyoruz.
-    def populate_sheet(self, s, data):
-        s.populate_sheet(s, data) # NpcSheet içindeki metodu çağırıyoruz
+    # NpcSheet'ten yardımcı metodları çağır
+    def populate_sheet(self, s, data): s.populate_sheet(s, data)
+    def collect_data_from_sheet(self, s): return s.collect_data_from_sheet(s)
 
-    def collect_data_from_sheet(self, s):
-        return s.collect_data_from_sheet(s) # NpcSheet içindeki metodu çağırıyoruz
+    # --- YENİ PROJEKSİYON FONKSİYONLARI ---
+    def project_entity_image(self, sheet):
+        if not sheet.image_list:
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_IMAGE_IN_ENTITY"))
+            return
+        img_path = sheet.image_list[sheet.current_img_index]
+        full_path = self.dm.get_full_path(img_path)
+        if full_path and os.path.exists(full_path):
+            self.player_window.show_image(QPixmap(full_path))
+            self.player_window.show()
+        else:
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
 
-    # --- PLAYER WINDOW & PDF HANDLERS ---
-    def _show_to_player(self, sheet): sheet._show_to_player(sheet)
-    def _add_pdf_to_sheet(self, sheet): sheet._add_pdf_to_sheet(sheet)
-    def _open_pdf_file(self, sheet): sheet._open_pdf_file(sheet)
-    def _project_pdf_to_player(self, sheet): sheet._project_pdf_to_player(sheet)
-    def _remove_pdf_from_sheet(self, sheet): sheet._remove_pdf_from_sheet(sheet)
-    def _open_pdf_folder(self, sheet): sheet._open_pdf_folder(sheet)
+    def project_entity_pdf(self, sheet):
+        selected = sheet.list_pdfs.currentItem()
+        if not selected:
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_PDF_FIRST"))
+            return
+        pdf_path = self.dm.get_full_path(selected.text())
+        if pdf_path and os.path.exists(pdf_path):
+            self.player_window.show_pdf(pdf_path)
+            self.player_window.show()
+        else:
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
     
+    # Dialoglar
     def open_api_browser(self):
         cat = self.combo_filter.currentData()
         if not cat: return QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_CATEGORY"))

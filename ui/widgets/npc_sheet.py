@@ -10,9 +10,9 @@ from core.locales import tr
 import os
 
 class NpcSheet(QWidget):
-    def __init__(self, data_manager): # <-- DataManager Eklendi
+    def __init__(self, data_manager):
         super().__init__()
-        self.dm = data_manager        # <-- Saklandı
+        self.dm = data_manager
         self.dynamic_inputs = {}
         self.image_list = []
         self.current_img_index = 0
@@ -22,28 +22,24 @@ class NpcSheet(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Scroll Area Ayarları
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setObjectName("mainScroll") 
         
-        # İçerik Widget'ı
         self.content_widget = QWidget()
         self.content_widget.setObjectName("sheetContainer")
         self.content_widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         self.content_layout = QVBoxLayout(self.content_widget)
         
-        # --- ÜST BÖLÜM (RESİM & TEMEL BİLGİ) ---
+        # --- ÜST BÖLÜM ---
         top_layout = QHBoxLayout()
         img_layout = QVBoxLayout()
         
-        # Resim Gösterici
         self.lbl_image = AspectRatioLabel()
         self.lbl_image.setFixedSize(200, 200)
         
-        # Galeri Kontrolleri
         gallery_controls = QHBoxLayout()
         self.btn_prev_img = QPushButton()
         self.btn_prev_img.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack))
@@ -62,7 +58,6 @@ class NpcSheet(QWidget):
         gallery_controls.addWidget(self.lbl_img_counter)
         gallery_controls.addWidget(self.btn_next_img)
         
-        # Resim Ekle/Sil Butonları
         btn_img_actions = QHBoxLayout()
         self.btn_add_img = QPushButton(tr("BTN_ADD"))
         self.btn_add_img.setObjectName("successBtn")
@@ -76,7 +71,7 @@ class NpcSheet(QWidget):
         btn_img_actions.addWidget(self.btn_add_img)
         btn_img_actions.addWidget(self.btn_remove_img)
 
-        # Oyuncuya Göster Butonu
+        # Oyuncuya Göster Butonu (Logic DatabaseTab'da bağlanacak)
         self.btn_show_player = QPushButton(tr("BTN_SHOW_PLAYER"))
         self.btn_show_player.setObjectName("primaryBtn")
         
@@ -86,7 +81,6 @@ class NpcSheet(QWidget):
         img_layout.addWidget(self.btn_show_player)
         img_layout.addStretch()
 
-        # Bilgi Formu
         info_layout = QFormLayout()
         self.inp_name = QLineEdit()
         self.inp_type = QComboBox()
@@ -96,7 +90,6 @@ class NpcSheet(QWidget):
         self.inp_type.currentIndexChanged.connect(self._on_type_index_changed)
         
         self.inp_tags = QLineEdit(); self.inp_tags.setPlaceholderText(tr("LBL_TAGS_PH"))
-        
         self.combo_location = QComboBox()
         self.lbl_location = QLabel(tr("LBL_LOCATION"))
         self.list_residents = QListWidget(); self.list_residents.setMaximumHeight(80)
@@ -117,12 +110,10 @@ class NpcSheet(QWidget):
         top_layout.addLayout(img_layout); top_layout.addLayout(info_layout)
         self.content_layout.addLayout(top_layout)
 
-        # --- DİNAMİK ALANLAR ---
         self.grp_dynamic = QGroupBox(tr("LBL_PROPERTIES"))
         self.layout_dynamic = QFormLayout(self.grp_dynamic)
         self.content_layout.addWidget(self.grp_dynamic)
 
-        # --- SEKMELER ---
         self.tabs = QTabWidget()
         self.tab_stats = QWidget(); self.setup_stats_tab(); self.tabs.addTab(self.tab_stats, tr("TAB_STATS"))
         self.tab_spells = QWidget(); self.setup_spells_tab(); self.tabs.addTab(self.tab_spells, tr("TAB_SPELLS"))
@@ -132,7 +123,7 @@ class NpcSheet(QWidget):
 
         self.content_layout.addWidget(self.tabs)
         
-        # --- YENİ: DM NOTES (EN ALTA EKLENDİ) ---
+        # DM Notes
         self.grp_dm_notes = QGroupBox("DM Notes (Private)")
         self.grp_dm_notes.setStyleSheet("QGroupBox { border: 1px solid #d32f2f; color: #e57373; font-weight: bold; }")
         dm_notes_layout = QVBoxLayout(self.grp_dm_notes)
@@ -141,12 +132,10 @@ class NpcSheet(QWidget):
         self.inp_dm_notes.setMinimumHeight(100)
         dm_notes_layout.addWidget(self.inp_dm_notes)
         self.content_layout.addWidget(self.grp_dm_notes)
-        # ----------------------------------------
 
         scroll.setWidget(self.content_widget)
         main_layout.addWidget(scroll)
 
-        # --- ALT BUTONLAR ---
         btn_layout = QHBoxLayout(); btn_layout.setContentsMargins(10, 10, 10, 10)
         self.btn_delete = QPushButton(tr("BTN_DELETE")); self.btn_delete.setObjectName("dangerBtn")
         self.btn_save = QPushButton(tr("BTN_SAVE")); self.btn_save.setObjectName("primaryBtn")
@@ -156,8 +145,6 @@ class NpcSheet(QWidget):
         self.update_ui_by_type(self.inp_type.currentData())
 
     def retranslate_ui(self):
-        # ... (Önceki çeviri kodları) ...
-        # Mevcut kodlar buraya gelecek, ek olarak DM Notes başlığı:
         for i in range(self.inp_type.count()):
             cat = self.inp_type.itemData(i)
             if cat: self.inp_type.setItemText(i, tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"))
@@ -182,7 +169,6 @@ class NpcSheet(QWidget):
         self.btn_delete.setText(tr("BTN_DELETE"))
         self.btn_save.setText(tr("BTN_SAVE"))
         
-        # Alt Grup Başlıkları
         if hasattr(self, "grp_base_stats"): self.grp_base_stats.setTitle(tr("GRP_STATS"))
         if hasattr(self, "grp_combat_stats"): self.grp_combat_stats.setTitle(tr("GRP_COMBAT"))
         if hasattr(self, "grp_defense"): self.grp_defense.setTitle(tr("GRP_DEFENSE"))
@@ -198,6 +184,7 @@ class NpcSheet(QWidget):
         self.custom_spell_container.setTitle(tr("LBL_MANUAL_SPELLS"))
         self.inventory_container.setTitle(tr("GRP_INVENTORY"))
 
+    # ... (build_dynamic_form, add_image_dialog, remove_current_image, show_prev_image, show_next_image, update_image_display, setup_stats_tab, setup_spells_tab, setup_features_tab, setup_inventory_tab, populate_sheet, collect_data_from_sheet, _fill_cards, _create_combat_stats_group, _update_modifier AYNI) ...
     def build_dynamic_form(self, category_name):
         while self.layout_dynamic.rowCount() > 0: self.layout_dynamic.removeRow(0)
         self.dynamic_inputs = {} 
@@ -215,11 +202,9 @@ class NpcSheet(QWidget):
             self.layout_dynamic.addRow(f"{tr(label_key)}:", widget)
             self.dynamic_inputs[label_key] = widget
 
-    # --- RESİM YÖNETİMİ ---
     def add_image_dialog(self):
         fname, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_IMG"), "", "Images (*.png *.jpg *.jpeg *.bmp)")
         if fname:
-            # DataManager üzerinden import
             rel_path = self.dm.import_image(fname)
             if rel_path:
                 self.image_list.append(rel_path)
@@ -246,15 +231,12 @@ class NpcSheet(QWidget):
     def update_image_display(self):
         if not self.image_list:
             self.lbl_image.setPixmap(None); self.lbl_img_counter.setText("0/0"); return
-        
         rel_path = self.image_list[self.current_img_index]
         full_path = self.dm.get_full_path(rel_path)
-        
         if full_path and os.path.exists(full_path): self.lbl_image.setPixmap(QPixmap(full_path))
         else: self.lbl_image.setPixmap(None)
         self.lbl_img_counter.setText(f"{self.current_img_index + 1}/{len(self.image_list)}")
 
-    # ... (Tab Setup Metodları Aynı: setup_stats_tab, setup_spells_tab, vb.) ...
     def setup_stats_tab(self):
         layout = QVBoxLayout(self.tab_stats)
         self.grp_base_stats = QGroupBox(tr("GRP_STATS")); l = QHBoxLayout(self.grp_base_stats)
@@ -364,7 +346,6 @@ class NpcSheet(QWidget):
         h_action.addWidget(self.btn_open_pdf); h_action.addWidget(self.btn_project_pdf); h_action.addWidget(self.btn_remove_pdf)
         v.addLayout(h_action); layout.addWidget(self.grp_pdf); layout.addStretch()
 
-    # --- YARDIMCILAR ---
     def _create_section(self, title):
         group = QGroupBox(title); v = QVBoxLayout(group); group.dynamic_area = QVBoxLayout(); v.addLayout(group.dynamic_area); return group
 
@@ -401,16 +382,13 @@ class NpcSheet(QWidget):
         is_player = category_name == "Player"
         is_lore = category_name == "Lore"
         is_status = category_name == "Status Effect"
-        
         self.lbl_location.setVisible(is_npc_like or is_player); self.combo_location.setVisible(is_npc_like or is_player)
         self.lbl_residents.setVisible(category_name == "Location"); self.list_residents.setVisible(category_name == "Location")
-        
         self.tabs.setTabVisible(0, is_npc_like) 
         self.tabs.setTabVisible(1, is_npc_like) 
         self.tabs.setTabVisible(2, is_npc_like) 
         self.tabs.setTabVisible(3, is_npc_like) 
         self.tabs.setTabVisible(4, is_lore or is_player or is_status)
-        
         if is_player:
             if self.grp_combat_stats.parent() == self.tab_stats:
                 self.tab_stats.layout().removeWidget(self.grp_combat_stats); idx = self.content_layout.indexOf(self.tabs); self.content_layout.insertWidget(idx, self.grp_combat_stats)
@@ -421,10 +399,8 @@ class NpcSheet(QWidget):
             if self.grp_combat_stats.parent() != self.tab_stats:
                 self.content_layout.removeWidget(self.grp_combat_stats); self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
             self.grp_combat_stats.setVisible(is_npc_like)
-        
         if is_status: self.lbl_image.setText("Icon")
 
-    # --- VERİ DOLDURMA (DM NOTES DAHİL) ---
     def populate_sheet(self, s, data):
         s.inp_name.setText(data.get("name", ""))
         curr_type = data.get("type", "NPC")
@@ -432,7 +408,7 @@ class NpcSheet(QWidget):
         s.inp_type.setCurrentIndex(idx if idx >= 0 else 0)
         s.inp_tags.setText(", ".join(data.get("tags", [])))
         s.inp_desc.setText(data.get("description", ""))
-        s.inp_dm_notes.setText(data.get("dm_notes", "")) # DM Notes Doldur
+        s.inp_dm_notes.setText(data.get("dm_notes", ""))
         
         stats = data.get("stats", {})
         for k, v in s.stats_inputs.items(): v.setText(str(stats.get(k, 10)))
@@ -458,15 +434,13 @@ class NpcSheet(QWidget):
         for l, w in s.dynamic_inputs.items():
             val = attrs.get(l, "")
             if isinstance(w, QComboBox): 
-                ix = w.findData(val)
-                if ix >= 0:
-                    w.setCurrentIndex(ix)
-                else:
-                    ix_text = w.findText(val)
-                    if ix_text >= 0: w.setCurrentIndex(ix_text)
+                ix = w.findData(val); 
+                if ix >= 0: w.setCurrentIndex(ix)
+                else: 
+                    ix_t = w.findText(val)
+                    if ix_t >= 0: w.setCurrentIndex(ix_t)
                     else: w.setCurrentText(val)
-            else: 
-                w.setText(str(val))
+            else: w.setText(str(val))
 
         s.clear_all_cards()
         self._fill_cards(s, s.trait_container, data.get("traits", []))
@@ -507,7 +481,7 @@ class NpcSheet(QWidget):
             "type": s.inp_type.currentText(),
             "tags": [t.strip() for t in s.inp_tags.text().split(",") if t.strip()],
             "description": s.inp_desc.toPlainText(),
-            "dm_notes": s.inp_dm_notes.toPlainText(), # DM Notes Kaydet
+            "dm_notes": s.inp_dm_notes.toPlainText(),
             "images": s.image_list,
             "stats": {k: int(v.text() or 10) for k, v in s.stats_inputs.items()},
             "combat_stats": {
@@ -529,63 +503,39 @@ class NpcSheet(QWidget):
     def _fill_cards(self, sheet, container, data_list):
         for item in data_list: sheet.add_feature_card(container, item.get("name"), item.get("desc"))
 
-    # ... (Geri kalan metodlar aynı: _show_to_player, _add_pdf_to_sheet vb.) ...
-    def _show_to_player(self, sheet):
-        """Show current entity image to player window"""
-        if not sheet.image_list:
-            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_IMAGE_IN_ENTITY"))
-            return
-        img_path = sheet.image_list[sheet.current_img_index]
-        full_path = self.dm.get_full_path(img_path)
-        if full_path and os.path.exists(full_path):
-            from PyQt6.QtGui import QPixmap
-            pixmap = QPixmap(full_path)
-            self.player_window.show_image(pixmap)
-            self.player_window.show()
-        else:
-            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
-    
-    def _add_pdf_to_sheet(self, sheet):
-        from PyQt6.QtWidgets import QFileDialog
+    # --- PDF FONKSİYONLARI (Window Bağımlılıksız) ---
+    def add_pdf_dialog(self):
         fname, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_PDF"), "", "PDF Files (*.pdf)")
         if fname:
-            eid = sheet.property("entity_id")
+            eid = self.property("entity_id")
             pdf_filename = self.dm.import_pdf(fname)
             data = self.dm.data["entities"].get(eid, {})
             pdfs = data.get("pdfs", [])
             if pdf_filename not in pdfs:
                 pdfs.append(pdf_filename); data["pdfs"] = pdfs
                 self.dm.save_entity(eid, data)
-                sheet.list_pdfs.addItem(pdf_filename)
+                self.list_pdfs.addItem(pdf_filename)
     
-    def _open_pdf_file(self, sheet):
-        selected = sheet.list_pdfs.currentItem()
+    def open_current_pdf(self):
+        selected = self.list_pdfs.currentItem()
         if not selected: QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_PDF_FIRST")); return
         pdf_path = self.dm.get_full_path(selected.text())
         if pdf_path and os.path.exists(pdf_path):
             QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_path))
         else: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
     
-    def _project_pdf_to_player(self, sheet):
-        selected = sheet.list_pdfs.currentItem()
-        if not selected: QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_PDF_FIRST")); return
-        pdf_path = self.dm.get_full_path(selected.text())
-        if pdf_path and os.path.exists(pdf_path):
-            self.player_window.show_pdf(pdf_path); self.player_window.show()
-        else: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
-    
-    def _remove_pdf_from_sheet(self, sheet):
-        selected = sheet.list_pdfs.currentItem()
+    def remove_current_pdf(self):
+        selected = self.list_pdfs.currentItem()
         if not selected: return
         if QMessageBox.question(self, tr("BTN_REMOVE"), tr("MSG_REMOVE_PDF_CONFIRM")) == QMessageBox.StandardButton.Yes:
-            eid = sheet.property("entity_id")
+            eid = self.property("entity_id")
             pdf_filename = selected.text()
             data = self.dm.data["entities"].get(eid, {})
             pdfs = data.get("pdfs", [])
             if pdf_filename in pdfs: pdfs.remove(pdf_filename); data["pdfs"] = pdfs; self.dm.save_entity(eid, data)
-            sheet.list_pdfs.takeItem(sheet.list_pdfs.row(selected))
+            self.list_pdfs.takeItem(self.list_pdfs.row(selected))
     
-    def _open_pdf_folder(self, sheet):
+    def open_pdf_folder(self):
         pdf_dir = os.path.join(self.dm.current_campaign_path, "assets")
         os.makedirs(pdf_dir, exist_ok=True)
         QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_dir))
