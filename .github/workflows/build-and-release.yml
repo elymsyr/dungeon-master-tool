@@ -1,3 +1,6 @@
+===== FILE PATH =====
+./.github/workflows/build_release.yml
+===== FILE CONTENT =====
 name: Build and Release
 
 on:
@@ -10,9 +13,15 @@ permissions:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    # Global environment variables
+    env:
+      # Force Python to use UTF-8 encoding for console output. 
+      # This prevents "UnicodeEncodeError: 'charmap'..." when printing emojis on Windows.
+      PYTHONUTF8: 1
+    
     strategy:
       matrix:
-        # Ubuntu 20.04 daha geniş uyumluluk sağlar
+        # Ubuntu 20.04 provides better binary compatibility for Linux
         os: [ubuntu-20.04, windows-latest]
 
     steps:
@@ -30,29 +39,29 @@ jobs:
           pip install -r requirements.txt
 
       # --- LINUX BUILD ---
-      - name: Build (Linux)
+      - name: Build Application (Linux)
         if: matrix.os == 'ubuntu-20.04'
         run: python build_linux.py
 
-      - name: Archive Linux (tar.gz)
+      - name: Archive Linux Artifact (tar.gz)
         if: matrix.os == 'ubuntu-20.04'
         run: |
-          # dist/DungeonMasterTool klasörünü sıkıştır
+          # Compress the dist/DungeonMasterTool folder while preserving permissions
           tar -czvf DungeonMasterTool-Linux.tar.gz -C dist DungeonMasterTool
 
       # --- WINDOWS BUILD ---
-      - name: Build (Windows)
+      - name: Build Application (Windows)
         if: matrix.os == 'windows-latest'
         run: python build_windows.py
 
-      - name: Archive Windows (zip)
+      - name: Archive Windows Artifact (zip)
         if: matrix.os == 'windows-latest'
         run: |
-          # PowerShell kullanarak zipleme
+          # Use PowerShell to zip the distribution folder
           Compress-Archive -Path dist\DungeonMasterTool -DestinationPath DungeonMasterTool-Windows.zip
 
-      # --- ARTIFACT BELİRLEME ---
-      - name: Set Artifact Path
+      # --- ARTIFACT PATH RESOLUTION ---
+      - name: Determine Artifact Path
         id: set_artifact
         shell: bash
         run: |
@@ -62,8 +71,8 @@ jobs:
             echo "path=DungeonMasterTool-Windows.zip" >> $GITHUB_OUTPUT
           fi
 
-      # --- YÜKLEME (RELEASE UPLOAD) ---
-      - name: Upload Release Asset
+      # --- RELEASE UPLOAD ---
+      - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
