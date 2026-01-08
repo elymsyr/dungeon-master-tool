@@ -32,10 +32,7 @@ class ConditionIcon(QWidget):
         self.icon_path = icon_path
         self.duration = int(duration)
         self.max_duration = int(max_duration)
-        
-        # --- DEĞİŞİKLİK 1: Boyutu Küçülttük (36 -> 24) ---
         self.setFixedSize(24, 24) 
-        
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setToolTip(f"{name} ({self.duration}/{self.max_duration} Turns)")
 
@@ -43,44 +40,38 @@ class ConditionIcon(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
-        # --- DEĞİŞİKLİK 2: Çizim alanını 24px'e göre ayarladık ---
         path = QPainterPath()
-        path.addEllipse(1, 1, 22, 22) # Kenarlardan 1px boşluk, 22px çap
+        path.addEllipse(1, 1, 22, 22)
         painter.setClipPath(path)
         
         if self.icon_path and os.path.exists(self.icon_path):
-            # Resmi küçük daireye sığdır
             painter.drawPixmap(0, 0, 24, 24, QPixmap(self.icon_path))
         else:
-            # Resim yoksa varsayılan renk ve harf
             painter.setBrush(QBrush(QColor("#5c6bc0")))
             painter.drawRect(0, 0, 24, 24)
             painter.setPen(Qt.GlobalColor.white)
             
-            # Yazı fontunu küçült
             font = painter.font()
-            font.setPointSize(8) 
+            # --- DÜZELTME: setPointSize yerine setPixelSize kullanıyoruz ---
+            font.setPixelSize(10) 
             font.setBold(True)
             painter.setFont(font)
             
             painter.drawText(QRect(0, 0, 24, 24), Qt.AlignmentFlag.AlignCenter, self.name[:2].upper())
             
-        # Süre Göstergesi (Badge)
         if self.max_duration > 0:
-            painter.setClipping(False) # Badge dairenin dışına taşmasın ama kesilmesin diye klibi kaldırıyoruz
-            painter.setBrush(QBrush(QColor(0, 0, 0, 200))) # Yarı saydam siyah arka plan
+            painter.setClipping(False)
+            painter.setBrush(QBrush(QColor(0, 0, 0, 200)))
             painter.setPen(Qt.PenStyle.NoPen)
-            
-            # Badge konumu (En alt kısım)
             painter.drawRoundedRect(0, 14, 24, 10, 2, 2) 
             
             painter.setPen(Qt.GlobalColor.white)
             font = painter.font()
-            font.setPointSize(6) # Rakam fontu iyice küçüldü
+            # --- DÜZELTME: setPointSize yerine setPixelSize ---
+            font.setPixelSize(8)
             font.setBold(True)
             painter.setFont(font)
             
-            # Rakamı ortala
             painter.drawText(QRect(0, 14, 24, 10), Qt.AlignmentFlag.AlignCenter, f"{self.duration}")
 
     def mousePressEvent(self, event):
@@ -107,7 +98,6 @@ class ConditionsWidget(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            # Eğer tıklanan yer bir ikon değilse (boşluksa) sinyal gönder
             child = self.childAt(event.pos())
             if not isinstance(child, ConditionIcon):
                 self.clicked.emit()
@@ -231,10 +221,6 @@ class CombatTracker(QWidget):
         self.btn_add = QPushButton(tr("BTN_ADD")); self.btn_add.clicked.connect(self.add_combatant_dialog)
         self.btn_add_players = QPushButton(tr("BTN_ADD_PLAYERS")); self.btn_add_players.clicked.connect(self.add_all_players)
         self.btn_roll = QPushButton(tr("BTN_ROLL_INIT")); self.btn_roll.clicked.connect(self.roll_initiatives)
-        
-        # --- HATA BURADAYDI: self.clear_tracker tanımlanmadan önce kullanılıyordu ---
-        # Ama Python'da self.clear_tracker metoduna referans vermek sorun olmaz, 
-        # sorun clear_tracker metodunun sınıf içinde hiç tanımlanmamış olmasıydı.
         self.btn_clear_all = QPushButton(tr("BTN_CLEAR_ALL"))
         self.btn_clear_all.clicked.connect(self.clear_tracker) 
         self.btn_clear_all.setObjectName("dangerBtn")
@@ -244,6 +230,7 @@ class CombatTracker(QWidget):
         
         self.refresh_encounter_combo()
 
+    # ... (Geri kalan tüm metodlar aynı: create_encounter, switch_encounter, add_direct_row vb.) ...
     def create_encounter(self, name):
         eid = str(uuid.uuid4()); self.encounters[eid] = {"id":eid, "name":name, "combatants":[], "map_path":None, "token_size":50, "turn_index":-1, "round":1, "token_positions":{}}; self.current_encounter_id = eid; return eid
     def prompt_new_encounter(self): 
@@ -269,23 +256,15 @@ class CombatTracker(QWidget):
 
     def add_direct_row(self, name, init, ac, hp, conditions_data, eid, init_bonus=0, tid=None):
         if not tid: tid = str(uuid.uuid4())
-        
-        # --- KRİTİK EKLEME: Sinyalleri Durdur ---
-        # Tabloyu doldururken "Veri değişti" sinyalini kapatıyoruz ki sürekli kaydetmeye çalışıp çökmesin.
         self.table.blockSignals(True)
-        
         row = self.table.rowCount()
         self.table.insertRow(row)
-        
         self.table.setItem(row, 0, QTableWidgetItem(name))
-        
         it_init = NumericTableWidgetItem(str(init))
         it_init.setData(Qt.ItemDataRole.UserRole, eid)
         it_init.setData(Qt.ItemDataRole.UserRole+1, tid)
         self.table.setItem(row, 1, it_init)
-        
         self.table.setItem(row, 2, NumericTableWidgetItem(str(clean_stat_value(ac))))
-        
         cur = clean_stat_value(hp)
         mx = cur
         if eid and eid in self.dm.data["entities"]:
@@ -293,88 +272,50 @@ class CombatTracker(QWidget):
                  db_max = clean_stat_value(self.dm.data["entities"][eid]["combat_stats"]["max_hp"])
                  mx = db_max if db_max >= cur else cur
              except: pass
-             
         hp_w = HpBarWidget(cur, mx)
         hp_w.hpChanged.connect(lambda v, w=hp_w: self.on_widget_hp_changed(w, v))
         self.table.setCellWidget(row, 3, hp_w)
-        
-        # HP hücresi (Sort için gizli text)
         self.table.setItem(row, 3, NumericTableWidgetItem(str(cur))) 
-        
         cond_w = ConditionsWidget()
-        # --- Condition Widget Signal Bağlantısı (Önceki düzeltmelerden gelen) ---
         cond_w.clicked.connect(lambda w=cond_w: self.open_condition_menu_for_widget(w))
-        
         if isinstance(conditions_data, str) and conditions_data: 
             conditions_data = [{"name": c.strip(), "icon": None, "duration": 0, "max_duration": 0} for c in conditions_data.split(",")]
-        elif not isinstance(conditions_data, list): 
-            conditions_data = []
-            
+        elif not isinstance(conditions_data, list): conditions_data = []
         cond_w.set_conditions(conditions_data)
         cond_w.conditionsChanged.connect(self.data_changed_signal.emit)
         self.table.setCellWidget(row, 4, cond_w)
-
-        # --- KRİTİK EKLEME: Sinyalleri Geri Aç ---
         self.table.blockSignals(False)
-        
-        # İşlem bitince bir kere kaydet sinyali gönderelim
         self.data_changed_signal.emit()
 
     def open_condition_menu_for_widget(self, widget):
-        # Widget'ın hangi satırda olduğunu bul
         index = self.table.indexAt(widget.pos())
         if not index.isValid(): return
         row = index.row()
-        
-        # Menüyü oluştur
         menu = QMenu(self)
         menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #007acc; }")
-        
-        # 1. Standart Durumlar (Standard 5e Conditions)
         std_menu = menu.addMenu(tr("MENU_STD_CONDITIONS"))
-        for cond in CONDITIONS: # Dosyanın başında tanımlı liste
+        for cond in CONDITIONS: 
             action = QAction(cond, self)
             action.triggered.connect(lambda checked, r=row, n=cond: self.add_condition_to_row(r, n, None, 0))
             std_menu.addAction(action)
-            
         menu.addSeparator()
-        
-        # 2. Özel Durum Etkileri (Status Effects from Database)
-        # Veritabanında tipi "Status Effect" olanları çek
         custom_effects = [e for e in self.dm.data["entities"].values() if e.get("type") == "Status Effect"]
-        
         if custom_effects:
-            lbl = menu.addAction(tr("MENU_SAVED_EFFECTS"))
-            lbl.setEnabled(False)
-            
+            lbl = menu.addAction(tr("MENU_SAVED_EFFECTS")); lbl.setEnabled(False)
             for eff in custom_effects:
                 eff_name = eff.get("name", "Bilinmeyen")
-                
-                # İkon yolu (varsa)
                 icon_path = None
                 if eff.get("images"):
                     full_path = self.dm.get_full_path(eff["images"][0])
-                    if full_path and os.path.exists(full_path):
-                        icon_path = full_path
-                
-                # Süre (Duration)
-                try: 
-                    duration = int(eff.get("attributes", {}).get("LBL_DURATION_TURNS", 0))
-                except: 
-                    duration = 0
-                
+                    if full_path and os.path.exists(full_path): icon_path = full_path
+                try: duration = int(eff.get("attributes", {}).get("LBL_DURATION_TURNS", 0))
+                except: duration = 0
                 action = QAction(eff_name, self)
-                if icon_path:
-                    action.setIcon(QIcon(icon_path))
-                
-                # Tıklanınca eklenecek
+                if icon_path: action.setIcon(QIcon(icon_path))
                 action.triggered.connect(lambda checked, r=row, n=eff_name, p=icon_path, d=duration: self.add_condition_to_row(r, n, p, d))
                 menu.addAction(action)
         else:
-            no_act = menu.addAction(tr("MSG_NO_SAVED_EFFECTS"))
-            no_act.setEnabled(False)
-
-        # Menüyü fare pozisyonunda aç
+            no_act = menu.addAction(tr("MSG_NO_SAVED_EFFECTS")); no_act.setEnabled(False)
         menu.exec(QCursor.pos())
 
     def refresh_ui_from_current_encounter(self):
@@ -390,46 +331,30 @@ class CombatTracker(QWidget):
 
     def _save_current_state_to_memory(self):
         if not self.current_encounter_id: return
-        
         enc = self.encounters[self.current_encounter_id]
         combatants = []
-        
         for r in range(self.table.rowCount()):
-            # İsim hücresi yoksa bu satırı atla (Henüz oluşmamış satır)
             if not self.table.item(r, 0): continue
-            
-            # --- GÜVENLİ VERİ OKUMA ---
-            # Eğer hücre henüz oluşturulmadıysa (None ise) varsayılan değer döndür
             def get_text_safe(col_index, default_val=""):
                 item = self.table.item(r, col_index)
                 return item.text() if item else default_val
-
             hp_w = self.table.cellWidget(r, 3)
             cond_w = self.table.cellWidget(r, 4)
-            
-            # ID'leri güvenli al
             tid = None
             eid = None
             item_init = self.table.item(r, 1)
             if item_init:
                 tid = item_init.data(Qt.ItemDataRole.UserRole + 1)
                 eid = item_init.data(Qt.ItemDataRole.UserRole)
-            
             if not tid: tid = str(uuid.uuid4())
-
             combatants.append({
-                "tid": str(tid),
-                "eid": str(eid) if eid else None,
-                "name": get_text_safe(0, "???"),  # İsim
-                "init": get_text_safe(1, "0"),    # İnisiyatif
-                "ac": get_text_safe(2, "10"),     # AC
-                "hp": str(hp_w.current) if hp_w else "0",
-                "conditions": cond_w.active_conditions if cond_w else [],
-                "bonus": 0,
+                "tid": str(tid), "eid": str(eid) if eid else None,
+                "name": get_text_safe(0, "???"), "init": get_text_safe(1, "0"),
+                "ac": get_text_safe(2, "10"), "hp": str(hp_w.current) if hp_w else "0",
+                "conditions": cond_w.active_conditions if cond_w else [], "bonus": 0,
                 "x": enc["token_positions"].get(tid, (None,None))[0],
                 "y": enc["token_positions"].get(tid, (None,None))[1]
             })
-            
         enc["combatants"] = combatants
 
     def next_turn(self):
@@ -497,22 +422,18 @@ class CombatTracker(QWidget):
         w = self.table.cellWidget(row, 4)
         if w: w.add_condition(name, icon_path, duration)
     
-    # --- EKSİK OLAN FONKSİYON EKLENDİ ---
     def clear_tracker(self):
         if not self.current_encounter_id: return
         enc = self.encounters[self.current_encounter_id]
-        
         self.table.setRowCount(0)
         enc["combatants"] = []
         enc["token_positions"] = {}
         enc["turn_index"] = -1
         enc["round"] = 1
         enc["map_path"] = None 
-        
         self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}1")
         self.refresh_battle_map(force_map_reload=True) 
         if not self.loading: self.data_changed_signal.emit()
-    # -----------------------------------
 
     def on_cell_double_clicked(self, r, c): 
         if c==3: 
@@ -561,7 +482,7 @@ class CombatTracker(QWidget):
     def load_session_state(self, d):
         self.loading=True; self.combo_encounters.blockSignals(True); self.combo_encounters.clear()
         if "encounters" in d: self.encounters=d["encounters"]; tid=d.get("current_encounter_id")
-        else: # Legacy
+        else: 
              eid=str(uuid.uuid4()); self.encounters={eid:{"id":eid,"name":"Legacy","combatants":d.get("combatants",[]),"round":1,"turn_index":-1,"token_positions":{},"token_size":50}}; tid=eid
         for k,v in self.encounters.items(): self.combo_encounters.addItem(v["name"], k)
         if tid: self.combo_encounters.setCurrentIndex(self.combo_encounters.findData(tid)); self.current_encounter_id=tid
