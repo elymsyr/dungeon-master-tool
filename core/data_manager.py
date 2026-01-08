@@ -30,11 +30,9 @@ class DataManager:
         
         if not os.path.exists(WORLDS_DIR): os.makedirs(WORLDS_DIR)
         
-        # Cache'i yükle
         self.reload_library_cache()
 
     def reload_library_cache(self):
-        """Kütüphane indeksini diskten tekrar okur."""
         if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
         if os.path.exists(CACHE_FILE):
             try:
@@ -50,7 +48,6 @@ class DataManager:
         with open(CACHE_FILE, "w", encoding="utf-8") as f: 
             json.dump(self.reference_cache, f, indent=4)
 
-    # --- AYARLAR ---
     def load_settings(self):
         path = os.path.join(CACHE_DIR, "settings.json")
         if os.path.exists(path):
@@ -80,7 +77,6 @@ class DataManager:
             return data
         return []
 
-    # --- KAMPANYA YÖNETİMİ ---
     def get_available_campaigns(self):
         if not os.path.exists(WORLDS_DIR): return []
         return [d for d in os.listdir(WORLDS_DIR) if os.path.isdir(os.path.join(WORLDS_DIR, d))]
@@ -113,15 +109,15 @@ class DataManager:
 
             self.current_campaign_path = folder
             
-            # --- MIGRATION START: Absolute Path Fix & Data Update ---
+            # --- PATH VE VERİ MİGRASYONU ---
             self._fix_absolute_paths()
             
             for eid, ent in self.data["entities"].items():
-                # Tip güncellemesi (TR -> EN)
+                # Tip güncellemesi (Eski Türkçe tipleri İngilizceye çevir)
                 old_type = ent.get("type", "NPC")
                 if old_type in SCHEMA_MAP: ent["type"] = SCHEMA_MAP[old_type]
                 
-                # Attribute güncellemesi
+                # Attribute key güncellemesi
                 attrs = ent.get("attributes", {})
                 new_attrs = {}
                 for k, v in attrs.items():
@@ -129,7 +125,9 @@ class DataManager:
                     new_attrs[new_key] = v
                 ent["attributes"] = new_attrs
 
-                # Eksik alanları varsayılanla doldur (dm_notes dahil)
+                # --- KRİTİK NOKTA: Eksik alanları tamamla ---
+                # get_default_entity_structure içinde "dm_notes" var.
+                # Aşağıdaki döngü, mevcut entity'de "dm_notes" yoksa ekler.
                 default = get_default_entity_structure(ent.get("type", "NPC"))
                 for key, val in default.items():
                     if key not in ent: ent[key] = val
@@ -137,29 +135,21 @@ class DataManager:
                 # Resim path güncellemesi
                 if not ent.get("images") and ent.get("image_path"):
                     ent["images"] = [ent["image_path"]]
-            # --- MIGRATION END ---
+            # -------------------------------
 
             self.save_data()
             return True, "Yüklendi"
         except Exception as e: return False, str(e)
 
     def _fix_absolute_paths(self):
-        """
-        Entity'lerdeki mutlak (C:/Users/...) resim yollarını bulur,
-        Assets klasörüne kopyalar ve yolu relative (assets/...) yapar.
-        """
         if not self.current_campaign_path: return
         changed = False
-        
-        # Assets klasörünün varlığından emin ol
         assets_dir = os.path.join(self.current_campaign_path, "assets")
         if not os.path.exists(assets_dir): os.makedirs(assets_dir)
 
         for eid, ent in self.data["entities"].items():
-            # 1. 'images' listesini kontrol et
             new_images = []
             for img_path in ent.get("images", []):
-                # Eğer yol mutlaksa ve dosya varsa
                 if os.path.isabs(img_path) and os.path.exists(img_path):
                     rel_path = self.import_image(img_path)
                     if rel_path:
@@ -171,7 +161,6 @@ class DataManager:
                     new_images.append(img_path)
             ent["images"] = new_images
 
-            # 2. 'image_path' (Legacy) kontrol et
             legacy_path = ent.get("image_path")
             if legacy_path and os.path.isabs(legacy_path) and os.path.exists(legacy_path):
                 rel_path = self.import_image(legacy_path)
@@ -179,15 +168,13 @@ class DataManager:
                     ent["image_path"] = rel_path
                     changed = True
         
-        if changed:
-            print("🔧 Absolute paths fixed and assets copied.")
+        if changed: print("🔧 Absolute paths fixed and assets copied.")
 
     def create_campaign(self, world_name):
         folder = os.path.join(WORLDS_DIR, world_name)
         try:
             if not os.path.exists(folder): os.makedirs(folder)
             if not os.path.exists(os.path.join(folder, "assets")): os.makedirs(os.path.join(folder, "assets"))
-            
             first_sid = str(uuid.uuid4())
             self.data = {
                 "world_name": world_name, "entities": {}, 
@@ -205,7 +192,6 @@ class DataManager:
             with open(os.path.join(self.current_campaign_path, "data.json"), "w", encoding="utf-8") as f:
                 json.dump(self.data, f, indent=4, ensure_ascii=False)
 
-    # --- SESSION YÖNETİMİ ---
     def create_session(self, name):
         session_id = str(uuid.uuid4())
         new_session = {"id": session_id, "name": name, "date": "Bugün", "notes": "", "logs": "", "combatants": []}
@@ -230,13 +216,9 @@ class DataManager:
                 self.save_data()
                 break
 
-    def set_active_session(self, session_id):
-        self.data["last_active_session_id"] = session_id
-        
-    def get_last_active_session_id(self):
-        return self.data.get("last_active_session_id")
+    def set_active_session(self, session_id): self.data["last_active_session_id"] = session_id
+    def get_last_active_session_id(self): return self.data.get("last_active_session_id")
 
-    # --- VARLIK YÖNETİMİ ---
     def save_entity(self, eid, data):
         if not eid: eid = str(uuid.uuid4())
         if eid in self.data["entities"]: self.data["entities"][eid].update(data)
@@ -253,78 +235,54 @@ class DataManager:
         for eid, ent in self.data["entities"].items():
             if ent["name"].lower() == query.lower() and ent["type"] == category:
                 return True, "Veritabanında zaten var.", eid
-        
         parsed_data, msg = self.api_client.search(category, query)
         if not parsed_data: return False, msg, None
-        
         if category in ["Monster", "NPC"] and isinstance(parsed_data, dict):
             parsed_data = self._resolve_dependencies(parsed_data)
-            
         return True, "API'den çekildi.", parsed_data
 
     def fetch_details_from_api(self, category, index_name):
-        folder_map = {
-            "Monster": "monsters", "Spell": "spells", 
-            "Equipment": "equipment", "Class": "classes", "Race": "races"
-        }
+        folder_map = {"Monster": "monsters", "Spell": "spells", "Equipment": "equipment", "Class": "classes", "Race": "races"}
         folder = folder_map.get(category)
-        
         if folder:
             paths = [os.path.join(LIBRARY_DIR, folder, f"{index_name}.json")]
             if category == "Eşya (Equipment)" or category == "Equipment":
                 paths.append(os.path.join(LIBRARY_DIR, "magic-items", f"{index_name}.json"))
-            
             for local_path in paths:
                 if os.path.exists(local_path):
                     try:
                         with open(local_path, "r", encoding="utf-8") as f:
                             raw = json.load(f)
                             return True, self.api_client.parse_dispatcher(category, raw)
-                    except Exception as e: 
-                        print(f"Cache okuma hatası ({category}/{index_name}): {e}")
-
+                    except Exception as e: print(f"Cache okuma hatası ({category}/{index_name}): {e}")
         parsed_data, msg = self.api_client.search(category, index_name)
         if parsed_data: return True, parsed_data
         return False, msg
 
     def import_entity_with_dependencies(self, data, type_override=None):
         if type_override: data["type"] = type_override
-        # Resolve dependencies also handles image downloading now
         data = self._resolve_dependencies(data)
         return self.save_entity(None, data)
 
     def _resolve_dependencies(self, data):
         if not isinstance(data, dict): return data
-        
-        # --- NEW: HANDLE IMAGE DOWNLOAD ---
         remote_url = data.pop("_remote_image_url", None)
         if remote_url and self.current_campaign_path:
             try:
-                # Create a filename based on name
                 safe_name = "".join([c for c in data.get("name", "image") if c.isalnum() or c in (' ','-','_')]).strip().replace(' ', '_')
-                filename = f"{safe_name}_{uuid.uuid4().hex[:6]}.png" # Assume PNG or check ext
-                
-                # Check for extension in URL
+                filename = f"{safe_name}_{uuid.uuid4().hex[:6]}.png"
                 if remote_url.lower().endswith(".jpg"): filename = filename.replace(".png", ".jpg")
                 elif remote_url.lower().endswith(".jpeg"): filename = filename.replace(".png", ".jpeg")
-                
-                # Download
                 img_data = self.api_client.download_image_bytes(remote_url)
                 if img_data:
                     assets_dir = os.path.join(self.current_campaign_path, "assets")
                     if not os.path.exists(assets_dir): os.makedirs(assets_dir)
-                    
                     full_path = os.path.join(assets_dir, filename)
-                    with open(full_path, "wb") as f:
-                        f.write(img_data)
-                    
-                    # Update Entity Data
+                    with open(full_path, "wb") as f: f.write(img_data)
                     rel_path = os.path.join("assets", filename)
                     data["image_path"] = rel_path
                     data["images"] = [rel_path]
-            except Exception as e:
-                print(f"Error downloading image: {e}")
-        # ----------------------------------
+            except Exception as e: print(f"Error downloading image: {e}")
 
         detected_spells = data.pop("_detected_spell_indices", [])
         if not detected_spells: return data
@@ -335,69 +293,46 @@ class DataManager:
             if success:
                 spell_name = spell_data.get("name")
                 existing_id = None
-                
                 for eid, ent in self.data["entities"].items():
-                    if ent.get("type") == "Spell" and ent.get("name") == spell_name:
-                        existing_id = eid
-                        break
-                
+                    if ent.get("type") == "Spell" and ent.get("name") == spell_name: existing_id = eid; break
                 if existing_id: linked_spell_ids.append(existing_id)
                 else:
                     new_id = self.save_entity(None, spell_data)
                     linked_spell_ids.append(new_id)
-
         if linked_spell_ids:
             if "spells" not in data: data["spells"] = []
             for sid in linked_spell_ids:
                 if sid not in data["spells"]: data["spells"].append(sid)
-        
         return data
 
-    # --- HARİTA & RESİM ---
     def import_image(self, src):
-        """Resmi assets klasörüne kopyalar ve relative path döner."""
         if not self.current_campaign_path: return None
-        
-        # Eğer dosya zaten assets içindeyse kopyalama, sadece yol düzelt
         abs_assets = os.path.abspath(os.path.join(self.current_campaign_path, "assets"))
         abs_src = os.path.abspath(src)
-        
-        if abs_src.startswith(abs_assets):
-            return os.path.relpath(abs_src, self.current_campaign_path)
-
+        if abs_src.startswith(abs_assets): return os.path.relpath(abs_src, self.current_campaign_path)
         try:
             fname = f"{uuid.uuid4().hex}_{os.path.basename(src)}"
             dest_dir = os.path.join(self.current_campaign_path, "assets")
             if not os.path.exists(dest_dir): os.makedirs(dest_dir)
-            
             dest = os.path.join(dest_dir, fname)
             shutil.copy2(src, dest)
             return os.path.join("assets", fname)
-        except Exception as e:
-            print(f"Image import error: {e}")
-            return None
+        except Exception as e: print(f"Image import error: {e}"); return None
 
     def import_pdf(self, src):
         if not self.current_campaign_path: return None
-        # PDF için de aynı relative mantığı
         abs_assets = os.path.abspath(os.path.join(self.current_campaign_path, "assets"))
         abs_src = os.path.abspath(src)
-        
-        if abs_src.startswith(abs_assets):
-            return os.path.relpath(abs_src, self.current_campaign_path)
-
+        if abs_src.startswith(abs_assets): return os.path.relpath(abs_src, self.current_campaign_path)
         try:
             fname = f"{uuid.uuid4().hex}_{os.path.basename(src)}"
             dest = os.path.join(self.current_campaign_path, "assets", fname)
             shutil.copy2(src, dest)
             return os.path.join("assets", fname)
-        except Exception:
-            return None
+        except Exception: return None
 
     def get_full_path(self, rel):
-        """Relative (assets/...) yolu Absolute yola çevirir."""
         if not rel: return None
-        # Eğer zaten absolute ise dokunma
         if os.path.isabs(rel): return rel
         return os.path.join(self.current_campaign_path, rel) if self.current_campaign_path else None
     
@@ -415,15 +350,8 @@ class DataManager:
         results = []
         search_text = search_text.lower()
         cats = [category] if category in self.reference_cache else list(self.reference_cache.keys())
-        
         for c in cats:
             for item in self.reference_cache.get(c, []):
                 if len(search_text) < 2 or search_text in item["name"].lower():
-                    results.append({
-                        "id": f"lib_{c}_{item['index']}", 
-                        "name": item["name"], 
-                        "type": c, 
-                        "is_library": True,
-                        "index": item["index"]
-                    })
+                    results.append({"id": f"lib_{c}_{item['index']}", "name": item["name"], "type": c, "is_library": True, "index": item["index"]})
         return results
