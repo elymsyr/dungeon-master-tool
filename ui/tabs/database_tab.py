@@ -3,8 +3,8 @@ from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QListWidget,
                              QPushButton, QLineEdit, QComboBox, QSplitter, 
                              QMessageBox, QListWidgetItem, QCheckBox, QLabel, 
                              QStyle, QTabWidget, QMenu, QTabBar)
-from PyQt6.QtGui import QColor, QBrush, QDrag, QAction, QIcon
-from PyQt6.QtCore import Qt, QMimeData
+from PyQt6.QtGui import QColor, QBrush, QDrag, QAction, QIcon, QPixmap, QDesktopServices
+from PyQt6.QtCore import Qt, QMimeData, QUrl
 
 from ui.widgets.npc_sheet import NpcSheet
 from ui.dialogs.api_browser import ApiBrowser
@@ -348,6 +348,14 @@ class DatabaseTab(QWidget):
         new_sheet.btn_save.clicked.connect(lambda: self.save_sheet_data(new_sheet))
         new_sheet.btn_delete.clicked.connect(lambda: self.delete_entity_from_tab(new_sheet))
         
+        # Player Window \u0026 PDF Buttons
+        new_sheet.btn_show_player.clicked.connect(lambda: self._show_to_player(new_sheet))
+        new_sheet.btn_add_pdf.clicked.connect(lambda: self._add_pdf_to_sheet(new_sheet))
+        new_sheet.btn_open_pdf.clicked.connect(lambda: self._open_pdf_file(new_sheet))
+        new_sheet.btn_project_pdf.clicked.connect(lambda: self._project_pdf_to_player(new_sheet))
+        new_sheet.btn_remove_pdf.clicked.connect(lambda: self._remove_pdf_from_sheet(new_sheet))
+        new_sheet.btn_open_pdf_folder.clicked.connect(lambda: self._open_pdf_folder(new_sheet))
+        
         # Sekmeye Ekle
         icon_char = "👤" if data.get("type") == "NPC" else "🐉" if data.get("type") == "Monster" else "📜"
         tab_index = target_manager.addTab(new_sheet, f"{icon_char} {data.get('name')}")
@@ -486,6 +494,11 @@ class DatabaseTab(QWidget):
         for spell_id in data.get("spells", []):
             spell = self.dm.data["entities"].get(spell_id)
             if spell: s.list_assigned_spells.addItem(f"{spell['name']} (Lv {spell.get('attributes',{}).get('LBL_LEVEL','?')})")
+        
+        # PDF List
+        s.list_pdfs.clear()
+        for pdf_filename in data.get("pdfs", []):
+            s.list_pdfs.addItem(pdf_filename)
 
     def collect_data_from_sheet(self, s):
         if not s.inp_name.text(): return None
@@ -515,12 +528,130 @@ class DatabaseTab(QWidget):
             "attributes": {l: (w.currentText() if isinstance(w, QComboBox) else w.text()) for l, w in s.dynamic_inputs.items()},
             "traits": get_cards(s.trait_container), "actions": get_cards(s.action_container),
             "reactions": get_cards(s.reaction_container), "legendary_actions": get_cards(s.legendary_container),
-            "inventory": get_cards(s.inventory_container), "custom_spells": get_cards(s.custom_spell_container)
+            "inventory": get_cards(s.inventory_container), "custom_spells": get_cards(s.custom_spell_container),
+            "pdfs": [s.list_pdfs.item(i).text() for i in range(s.list_pdfs.count())]
         }
         return data
 
     def _fill_cards(self, sheet, container, data_list):
         for item in data_list: sheet.add_feature_card(container, item.get("name"), item.get("desc"))
+
+    # --- PLAYER WINDOW & PDF HANDLERS ---
+    def _show_to_player(self, sheet):
+        """Show current entity image to player window"""
+        if not sheet.image_list:
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_IMAGE"))
+            return
+        
+        # Get current image path
+        img_path = sheet.image_list[sheet.current_img_index]
+        full_path = self.dm.get_full_path(img_path)
+        
+        if full_path and os.path.exists(full_path):
+            from PyQt6.QtGui import QPixmap
+            pixmap = QPixmap(full_path)
+            self.player_window.show_image(pixmap)
+            self.player_window.show()
+        else:
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND"))
+    
+    def _add_pdf_to_sheet(self, sheet):
+        """Add PDF file to entity"""
+        from PyQt6.QtWidgets import QFileDialog
+        
+        fname, _ = QFileDialog.getOpenFileName(
+            self, 
+            tr("BTN_SELECT_PDF"), 
+            "", 
+            "PDF Files (*.pdf)"
+        )
+        
+        if fname:
+            eid = sheet.property("entity_id")
+            pdf_filename = self.dm.import_pdf(fname)
+            
+            # Get current entity data
+            data = self.dm.data["entities"].get(eid, {})
+            pdfs = data.get("pdfs", [])
+            
+            # Add new PDF if not already in list
+            if pdf_filename not in pdfs:
+                pdfs.append(pdf_filename)
+                data["pdfs"] = pdfs
+                self.dm.save_entity(eid, data)
+                
+                # Update UI list
+                sheet.list_pdfs.addItem(pdf_filename)
+    
+    def _open_pdf_file(self, sheet):
+        """Open selected PDF in system viewer"""
+        selected = sheet.list_pdfs.currentItem()
+        if not selected:
+            QMessageBox.warning(self, tr("MSG_WARNING"), "Please select a PDF first")
+            return
+        
+        pdf_filename = selected.text()
+        pdf_path = self.dm.get_full_path(pdf_filename)
+        
+        if pdf_path and os.path.exists(pdf_path):
+            from PyQt6.QtGui import QDesktopServices
+            from PyQt6.QtCore import QUrl
+            QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_path))
+        else:
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND"))
+    
+    def _project_pdf_to_player(self, sheet):
+        """Project PDF to player window"""
+        selected = sheet.list_pdfs.currentItem()
+        if not selected:
+            QMessageBox.warning(self, tr("MSG_WARNING"), "Please select a PDF first")
+            return
+        
+        pdf_filename = selected.text()
+        pdf_path = self.dm.get_full_path(pdf_filename)
+        
+        if pdf_path and os.path.exists(pdf_path):
+            self.player_window.show_pdf(pdf_path)
+            self.player_window.show()
+        else:
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND"))
+    
+    def _remove_pdf_from_sheet(self, sheet):
+        """Remove selected PDF from entity"""
+        selected = sheet.list_pdfs.currentItem()
+        if not selected:
+            return
+        
+        if QMessageBox.question(
+            self, 
+            tr("BTN_REMOVE"), 
+            "Remove this PDF from the entity?"
+        ) == QMessageBox.StandardButton.Yes:
+            eid = sheet.property("entity_id")
+            pdf_filename = selected.text()
+            
+            # Remove from data
+            data = self.dm.data["entities"].get(eid, {})
+            pdfs = data.get("pdfs", [])
+            if pdf_filename in pdfs:
+                pdfs.remove(pdf_filename)
+                data["pdfs"] = pdfs
+                self.dm.save_entity(eid, data)
+            
+            # Remove from UI
+            sheet.list_pdfs.takeItem(sheet.list_pdfs.row(selected))
+    
+    def _open_pdf_folder(self, sheet):
+        """Open PDF folder in file manager"""
+        eid = sheet.property("entity_id")
+        pdf_dir = os.path.join(self.dm.current_campaign_path, "assets")
+        
+        # Create folder if it doesn't exist
+        os.makedirs(pdf_dir, exist_ok=True)
+        
+        from PyQt6.QtGui import QDesktopServices
+        from PyQt6.QtCore import QUrl
+        QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_dir))
 
     # Dialogs
     def open_api_browser(self):

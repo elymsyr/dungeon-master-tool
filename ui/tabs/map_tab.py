@@ -71,9 +71,9 @@ class MapTab(QWidget):
                 ent = entities[pin["entity_id"]]
                 color = "#007acc"
                 if ent["type"] == "NPC": color = "#ff9800"
-                elif ent["type"] == "Mekan": color = "#2e7d32"
-                elif ent["type"] == "Canavar": color = "#d32f2f"
-                elif ent["type"] == "Oyuncu": color = "#4caf50"
+                elif ent["type"] == "Location": color = "#2e7d32"
+                elif ent["type"] == "Monster": color = "#d32f2f"
+                elif ent["type"] == "Player": color = "#4caf50"
                 
                 pin_id = pin.get("id")
                 if not pin_id: pin_id = str(uuid.uuid4())
@@ -98,7 +98,7 @@ class MapTab(QWidget):
         
         # --- FİLTRELEME MANTIĞI ---
         # Haritaya sadece fiziksel olarak bulunabilen şeyler eklensin
-        allowed_types = ["NPC", "Canavar", "Oyuncu", "Mekan", "Eşya", "Eşya (Equipment)"]
+        allowed_types = ["NPC", "Monster", "Player", "Location", "Equipment"]
         
         for eid, data in entities.items():
             # Eğer varlığın tipi izin verilenler listesindeyse listeye ekle
