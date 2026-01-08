@@ -118,11 +118,10 @@ class MapTab(QWidget):
     def on_pin_action(self, action_type, pin_obj):
         if action_type == "inspect":
             # Ana penceredeki Database tabına geç ve karakteri yükle
-            # Bunun için main_window referansına veya signal'e ihtiyacımız var.
-            # Şimdilik main_window_ref üzerinden gidelim.
             if self.main_window_ref:
                 self.main_window_ref.tabs.setCurrentIndex(0) # Database tab
-                self.main_window_ref.db_tab.load_entity_by_id(pin_obj.entity_id)
+                # --- DÜZELTME: load_entity_by_id yerine open_entity_tab ---
+                self.main_window_ref.db_tab.open_entity_tab(pin_obj.entity_id)
                 
         elif action_type == "move":
             self.map_viewer.start_move_mode(pin_obj.pin_id)

@@ -30,6 +30,13 @@ class NpcSheet(QWidget):
         self.content_widget = QWidget()
         self.content_widget.setObjectName("sheetContainer")
         self.content_widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        
+        # --- TÜM METİN GİRDİLERİ İÇİN ŞEFFAF ARKA PLAN ---
+        self.content_widget.setStyleSheet("""
+            QLineEdit, QTextEdit, QPlainTextEdit {
+                background-color: transparent;
+            }
+        """)
 
         self.content_layout = QVBoxLayout(self.content_widget)
         
@@ -192,7 +199,6 @@ class NpcSheet(QWidget):
         self.custom_spell_container.setTitle(tr("LBL_MANUAL_SPELLS"))
         self.inventory_container.setTitle(tr("GRP_INVENTORY"))
 
-    # ... (Metodlar: build_dynamic_form, add_image_dialog vb. aynı) ...
     def build_dynamic_form(self, category_name):
         while self.layout_dynamic.rowCount() > 0: self.layout_dynamic.removeRow(0)
         self.dynamic_inputs = {} 
@@ -367,11 +373,10 @@ class NpcSheet(QWidget):
         card = QFrame(); card.setProperty("class", "featureCard")
         l = QVBoxLayout(card); h = QHBoxLayout()
         
-        # --- DÜZELTME: class="cardInput" atıyoruz, hardcoded color yok ---
         t = QLineEdit(name)
         t.setPlaceholderText(ph_title)
         t.setProperty("class", "cardInput") 
-        t.setStyleSheet("font-weight: bold; border:none; font-size: 14px; background: transparent;")
+        t.setStyleSheet("font-weight: bold; border:none; font-size: 14px;")
         
         btn = QPushButton(); btn.setFixedSize(24,24); btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton)); btn.setCursor(Qt.CursorShape.PointingHandCursor); btn.setToolTip(tr("BTN_REMOVE")); btn.setStyleSheet("background: transparent; border: none;")
         btn.clicked.connect(lambda: [group.dynamic_area.removeWidget(card), card.deleteLater()])
@@ -381,7 +386,7 @@ class NpcSheet(QWidget):
         d.setPlaceholderText(ph_desc)
         d.setMinimumHeight(80); d.setMaximumHeight(300)
         d.setProperty("class", "cardInput")
-        d.setStyleSheet("border:none; background: transparent;")
+        d.setStyleSheet("border:none;")
         
         l.addWidget(d); group.dynamic_area.addWidget(card); card.inp_title = t; card.inp_desc = d
 
@@ -521,7 +526,6 @@ class NpcSheet(QWidget):
     def _fill_cards(self, sheet, container, data_list):
         for item in data_list: sheet.add_feature_card(container, item.get("name"), item.get("desc"))
 
-    # --- PDF FONKSİYONLARI ---
     def add_pdf_dialog(self):
         fname, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_PDF"), "", "PDF Files (*.pdf)")
         if fname:

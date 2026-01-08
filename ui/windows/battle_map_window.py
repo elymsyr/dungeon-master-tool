@@ -31,8 +31,7 @@ class SidebarConditionIcon(QWidget):
             painter.drawRect(0, 0, 20, 20)
             painter.setPen(Qt.GlobalColor.white)
             font = painter.font()
-            # --- DÜZELTME: setPointSize yerine setPixelSize ---
-            font.setPixelSize(7)
+            font.setPixelSize(7) # DÜZELTİLDİ
             font.setBold(True)
             painter.setFont(font)
             painter.drawText(QRect(0, 0, 20, 20), Qt.AlignmentFlag.AlignCenter, self.name[:2].upper())
@@ -45,8 +44,7 @@ class SidebarConditionIcon(QWidget):
             
             painter.setPen(Qt.GlobalColor.white)
             font = painter.font()
-            # --- DÜZELTME: setPointSize yerine setPixelSize ---
-            font.setPixelSize(5)
+            font.setPixelSize(5) # DÜZELTİLDİ
             painter.setFont(font)
             painter.drawText(QRect(0, 12, 20, 8), Qt.AlignmentFlag.AlignCenter, str(self.duration))
 
