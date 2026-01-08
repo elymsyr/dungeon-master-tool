@@ -62,5 +62,18 @@ pip install -r requirements.txt
 python main.py
 ```
 
+## 📸 Screenshots
+<p align="center">
+  <img src="media/main_0.png" width="100%" alt="Player Map View" />
+  <img src="media/main_1.png" width="100%" alt="Entity Stat Block" />
+  <img src="media/main_2.png" width="100%" alt="Entity Stat Block" />
+  <img src="media/session_0.png" width="100%" alt="Entity Stat Block" />
+  <img src="media/session_1.png" width="100%" alt="Entity Stat Block" />
+  <img src="media/map.png" width="100%" alt="Entity Stat Block" />
+  <img src="media/battlemap.png" width="100%" alt="Entity Stat Block" />
+  <img src="media/bulk.png" width="100%" alt="Entity Stat Block" />
+  <img src="media/api.png" width="100%" alt="Entity Stat Block" />
+</p>
+
 ## ⚠️ Disclaimer
 This project is currently in Pre-Alpha. Expect bugs and frequent updates.

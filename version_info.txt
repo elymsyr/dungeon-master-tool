@@ -16,13 +16,13 @@ VSVersionInfo(
       StringTable(
         u'040904B0',
         [StringStruct(u'CompanyName', u'Dungeon Master Tool Open Source'),
-        StringStruct(u'FileDescription', u'Dungeon Master Tool'),
-        StringStruct(u'FileVersion', u'0.1.0'),
+        StringStruct(u'FileDescription', u'Dungeon Master Tool: https://github.com/elymsyr/dungeon-master-tool'),
+        StringStruct(u'FileVersion', u'0.2.0'),
         StringStruct(u'InternalName', u'dmtool'),
         StringStruct(u'LegalCopyright', u'Copyright (c) 2025 Elymsyr'),
         StringStruct(u'OriginalFilename', u'DungeonMasterTool.exe'),
         StringStruct(u'ProductName', u'Dungeon Master Tool'),
-        StringStruct(u'ProductVersion', u'0.1.0')])
+        StringStruct(u'ProductVersion', u'0.3.1')])
       ]
     ),
     VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
