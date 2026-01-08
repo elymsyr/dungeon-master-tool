@@ -5,7 +5,11 @@ from core.locales import tr
 class DndApiClient:
     def __init__(self):
         self.session = requests.Session()
-        self.session.verify = False # Bypass SSL verification for reliability
+        
+        # SOLVED: Enable SSL verification for security.
+        # If you get an SSLError, ensure 'pip install --upgrade certifi' is run.
+        self.session.verify = True 
+        
         self.ENDPOINT_MAP = {
             "NPC": "monsters",
             "Monster": "monsters",
@@ -31,6 +35,7 @@ class DndApiClient:
     def _fetch_all(self, endpoint):
         url = f"{API_BASE_URL}/{endpoint}"
         try:
+            # Added verify=True explicit (though session handles it)
             response = self.session.get(url, timeout=10)
             if response.status_code == 200:
                 return response.json().get("results", [])
@@ -134,7 +139,6 @@ class DndApiClient:
                         detected_spells.append(index)
 
         # 6. RESİM URL TESPİTİ
-        # API returns: "/api/images/monsters/adult-black-dragon.png"
         remote_image_url = ""
         if data.get("image"):
             remote_image_url = self.DOMAIN_ROOT + data.get("image")
@@ -147,7 +151,7 @@ class DndApiClient:
             "tags": [data.get("type", ""), data.get("size", "")],
             "image_path": "", # Local path will be filled by DataManager
             
-            # Temporary field for DataManager to process download
+            # Temporary field for DataManager
             "_remote_image_url": remote_image_url,
 
             # Temel Statlar
@@ -199,20 +203,16 @@ class DndApiClient:
             "_detected_spell_indices": detected_spells
         }
 
-    # ... (Other parse methods remain the same) ...
     def parse_spell(self, data):
-        # ... (Existing content) ...
         desc = "\n".join(data.get("desc", []))
         if data.get("higher_level"):
             desc += "\n\n**Higher Levels:** " + "\n".join(data.get("higher_level", []))
         
-        # Components
         comps = data.get("components", [])
         comp_str = ", ".join(comps)
         if "M" in comps and data.get("material"):
             comp_str += f" ({data.get('material')})"
 
-        # Damage
         dmg_str = ""
         dmg = data.get("damage", {})
         if dmg.get("damage_type"):
@@ -242,7 +242,6 @@ class DndApiClient:
         }
     
     def parse_equipment(self, data):
-        # ... (Same as your previous file, no changes needed here) ...
         desc_list = data.get("desc", [])
         description = "\n".join(desc_list) if isinstance(desc_list, list) else str(desc_list)
         cat_main = data.get("equipment_category", {}).get("name", tr("LBL_GENERAL_CAT"))
