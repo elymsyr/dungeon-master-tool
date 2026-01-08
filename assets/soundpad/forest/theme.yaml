@@ -4,23 +4,23 @@ states:
   normal:
     tracks:
       base: 
-        - file: "ambience.mp3"
+        - file: "ambience.wav"
           repeat: 0
       level1: 
-        - file: "wind.mp3"
+        - file: "wind.wav"
           repeat: 0
       level2: 
-        - file: "birds.mp3"
+        - file: "birds.wav"
           repeat: 0
           
   combat:
     tracks:
       base: 
-        - file: "drums_low.mp3"
+        - file: "drums_low.wav"
           repeat: 0
       level1: 
-        - file: "drums_mid.mp3"
+        - file: "drums_mid.wav"
           repeat: 0
       level2: 
-        - file: "orchestra_high.mp3"
+        - file: "orchestra_high.wav"
           repeat: 0

@@ -1,54 +1,65 @@
 import os
-from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PyQt6.QtCore import QUrl, QObject, pyqtSignal, QPropertyAnimation, QEasingCurve, pyqtProperty
+import pygame
+from PyQt6.QtCore import QObject, QTimer, pyqtSignal, pyqtProperty, QPropertyAnimation, QEasingCurve
 from typing import Dict, List
 from .models import Theme, MusicState, Track
 
+# PyGame Mixer'ı Başlat (Sadece 1 kere)
+try:
+    pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=2048)
+    pygame.mixer.set_num_channels(32) # Aynı anda 32 ses çalabilir
+except Exception as e:
+    print(f"Audio Init Error: {e}")
+
 class TrackPlayer(QObject):
-    """Tek bir Track'i (örn: Combat -> Level1) çalar."""
+    """
+    PyGame Sound nesnesini yöneten sarmalayıcı.
+    """
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.player = QMediaPlayer()
-        self.audio = QAudioOutput()
-        self.player.setAudioOutput(self.audio)
+        self.sound = None
+        self.channel = None # PyGame Channel
+        self._volume = 0.0 # 0.0 - 1.0
         
-        self.current_track: Track = None
-        self.seq_index = 0
-        self.loop_counter = 0
-        
-        self._volume = 0.0
-        self.audio.setVolume(0.0)
-        
+        # Animasyon için property
         self.anim = QPropertyAnimation(self, b"volume")
         self.anim.setDuration(2000)
         self.anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
 
-        self.player.mediaStatusChanged.connect(self._on_media_status)
-
     @pyqtProperty(float)
-    def volume(self): return self._volume
+    def volume(self):
+        return self._volume
+
     @volume.setter
     def volume(self, val):
         self._volume = val
-        self.audio.setVolume(val)
+        if self.channel:
+            self.channel.set_volume(val)
 
     def load_track(self, track: Track):
-        self.current_track = track
-        self.seq_index = 0
-        self.loop_counter = 0
-        self._prepare_next()
-
-    def _prepare_next(self):
-        if not self.current_track or not self.current_track.sequence: return
-        node = self.current_track.sequence[self.seq_index]
+        if not track.sequence: return
+        
+        # Sadece ilk dosyayı yükler (Basit loop mantığı için)
+        # Gelişmiş sequence mantığı için burası genişletilebilir
+        node = track.sequence[0]
         if os.path.exists(node.file_path):
-            self.player.setSource(QUrl.fromLocalFile(os.path.abspath(node.file_path)))
+            try:
+                self.sound = pygame.mixer.Sound(node.file_path)
+            except Exception as e:
+                print(f"Load Error ({node.file_path}): {e}")
         else:
-            print(f"⚠️ Dosya Yok: {node.file_path}")
+            print(f"⚠️ Missing: {node.file_path}")
 
     def play(self):
-        if self.player.source().isValid(): self.player.play()
-    def stop(self): self.player.stop()
+        if self.sound:
+            # loops=-1 (Sonsuz)
+            self.channel = self.sound.play(loops=-1)
+            if self.channel:
+                self.channel.set_volume(self._volume)
+
+    def stop(self):
+        if self.sound:
+            self.sound.stop()
     
     def fade_to(self, target, duration=1000):
         self.anim.stop()
@@ -57,25 +68,10 @@ class TrackPlayer(QObject):
         self.anim.setEndValue(target)
         self.anim.start()
 
-    def _on_media_status(self, status):
-        if status == QMediaPlayer.MediaStatus.EndOfMedia:
-            if not self.current_track: return
-            node = self.current_track.sequence[self.seq_index]
-            self.loop_counter += 1
-            
-            if node.repeat_count > 0 and self.loop_counter >= node.repeat_count:
-                self.seq_index += 1
-                self.loop_counter = 0
-                if self.seq_index >= len(self.current_track.sequence): self.seq_index = 0
-                self._prepare_next()
-                self.player.play()
-            else:
-                self.player.play()
-
 class MultiTrackDeck(QObject):
     """
     Bir 'State'i (Normal, Combat) yönetir.
-    Intensity ayarına göre içindeki tracklerin sesini açar/kısar.
+    PyGame kanallarını senkronize başlatır.
     """
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -91,8 +87,7 @@ class MultiTrackDeck(QObject):
         self.update_mix()
 
     def load_state(self, state: MusicState):
-        for p in self.players.values():
-            p.stop(); p.deleteLater()
+        self.stop()
         self.players.clear()
 
         for track_id, track_data in state.tracks.items():
@@ -101,6 +96,8 @@ class MultiTrackDeck(QObject):
             self.players[track_id] = tp
 
     def play(self):
+        # PyGame'de sesler "neredeyse" aynı anda başlar.
+        # Daha hassas senkronizasyon için buffer ayarı önemlidir.
         for p in self.players.values():
             p.volume = 0.0
             p.play()
@@ -121,13 +118,11 @@ class MultiTrackDeck(QObject):
 
 class MusicBrain(QObject):
     """
-    İki MultiTrackDeck arasında State geçişi yapar.
+    İki MultiTrackDeck arasında geçiş yapar.
     """
     def __init__(self):
         super().__init__()
-        
-        # --- KRİTİK DÜZELTME: Önce değişkenleri tanımla ---
-        self._fade_ratio = 1.0 # 1.0 = Active %100, Inactive %0
+        self._fade_ratio = 1.0 
         self.global_volume = 0.5
         
         self.deck_a = MultiTrackDeck(self)
@@ -136,7 +131,6 @@ class MusicBrain(QObject):
         self.active_deck = self.deck_a
         self.inactive_deck = self.deck_b
         
-        # Animasyonu en son tanımla
         self.anim = QPropertyAnimation(self, b"fade_ratio")
         self.anim.setDuration(2000)
         
@@ -149,7 +143,6 @@ class MusicBrain(QObject):
     @fade_ratio.setter
     def fade_ratio(self, val):
         self._fade_ratio = val
-        # Decklerin Master Volume'unu ayarla
         self.active_deck.deck_volume = self.global_volume * val
         self.inactive_deck.deck_volume = self.global_volume * (1.0 - val)
 
