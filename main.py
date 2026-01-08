@@ -1,6 +1,7 @@
 from os import environ
 environ["QTWEBENGINE_DISABLE_SANDBOX"] = "1"
 import sys
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QTabWidget, QVBoxLayout, 
                              QWidget, QMessageBox, QFileDialog, QHBoxLayout, 
                              QPushButton, QLabel, QComboBox)
@@ -226,6 +227,9 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, tr("MSG_ERROR"), tr("MSG_FILE_WRITE_ERROR", error=str(e)))
 
 if __name__ == "__main__":
+    # Enable lazy loading of QtWebEngine widgets
+    QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    
     app = QApplication(sys.argv)
     
     # 1. Veri Yöneticisi Başlat
