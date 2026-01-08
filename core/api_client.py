@@ -1,5 +1,6 @@
 import requests
 from config import API_BASE_URL
+from core.locales import tr
 
 class DndApiClient:
     def __init__(self):
@@ -37,7 +38,7 @@ class DndApiClient:
 
     def search(self, category, query):
         endpoint = self.ENDPOINT_MAP.get(category)
-        if not endpoint: return None, "Kategori desteklenmiyor."
+        if not endpoint: return None, tr("MSG_CAT_NOT_SUPPORTED")
 
         formatted_query = query.lower().strip().replace(" ", "-")
         url = f"{API_BASE_URL}/{endpoint}/{formatted_query}"
@@ -45,15 +46,15 @@ class DndApiClient:
         try:
             response = self.session.get(url, timeout=10)
             if response.status_code == 200:
-                return self.parse_dispatcher(category, response.json()), "Başarılı"
+                return self.parse_dispatcher(category, response.json()), tr("MSG_SEARCH_SUCCESS")
             
             if category == "Equipment":
                 url2 = f"{API_BASE_URL}/magic-items/{formatted_query}"
                 resp2 = self.session.get(url2, timeout=10)
                 if resp2.status_code == 200:
-                    return self.parse_equipment(resp2.json()), "Magic Item bulundu."
+                    return self.parse_equipment(resp2.json()), tr("MSG_FOUND_MAGIC_ITEM")
 
-            return None, "Bulunamadı."
+            return None, tr("MSG_SEARCH_NOT_FOUND")
         except Exception as e:
             return None, str(e)
 
@@ -235,7 +236,7 @@ class DndApiClient:
         
         # 2. KATEGORİ (Detaylı)
         # Ana: Weapon, Armor...
-        cat_main = data.get("equipment_category", {}).get("name", "Genel")
+        cat_main = data.get("equipment_category", {}).get("name", tr("LBL_GENERAL_CAT"))
         
         # Alt: Martial, Heavy, Shield...
         sub_cats = []
@@ -318,9 +319,9 @@ class DndApiClient:
         if data.get("speed"):
             s = data["speed"]
             val = f"{s.get('quantity')} {s.get('unit')}" if isinstance(s, dict) else s
-            props.append(f"Hız: {val}")
+            props.append(f"{tr('LBL_PROP_SPEED')}: {val}")
         if data.get("capacity"):
-            props.append(f"Kapasite: {data['capacity']}")
+            props.append(f"{tr('LBL_PROP_CAPACITY')}: {data['capacity']}")
             
         prop_str = ", ".join(props)
 
@@ -329,10 +330,10 @@ class DndApiClient:
         if data.get("rarity"):
             rarity = data["rarity"].get("name", "")
             
-        attunement = "Gerekli Değil"
+        attunement = tr("LBL_NO_ATTUNEMENT")
         # Açıklamada 'requires attunement' geçiyor mu?
         if "requires attunement" in description.lower():
-            attunement = "Gerekli"
+            attunement = tr("LBL_REQ_ATTUNEMENT")
 
         # 10. ÇIKTI SÖZLÜĞÜ (Models.py ile birebir aynı anahtarlar)
         return {
