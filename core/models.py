@@ -127,8 +127,8 @@ def get_default_entity_structure(entity_type="NPC"):
         "name": "Yeni Kayıt",
         "type": entity_type,
         "description": "",
-        "images": [], # YENİ: Çoklu resim desteği
-        "image_path": "", # Geriye dönük uyumluluk için (varsa ilk resim buraya da yazılır)
+        "images": [], 
+        "image_path": "", 
         "tags": [],
         "attributes": {},
         "stats": {"STR": 10, "DEX": 10, "CON": 10, "INT": 10, "WIS": 10, "CHA": 10},
@@ -141,17 +141,20 @@ def get_default_entity_structure(entity_type="NPC"):
         "legendary_actions": [],
         
         # Büyüler
-        "spells": [],             # ID Listesi (Linked)
-        "custom_spells": [],      # Manuel Kartlar
+        "spells": [],             
+        "custom_spells": [],      
         
-        # Envanter (YENİLENEN KISIM)
-        "equipment_ids": [],      # YENİ: ID Listesi (Linked Items)
-        "inventory": [],          # Manuel Kartlar (Mevcut yapı)
+        # Envanter
+        "equipment_ids": [],      
+        "inventory": [],          
         
-        "pdfs": [],               # PDF Dosyaları
+        "pdfs": [],               
         "location_id": None,
+        
+        # --- YENİ: DM ÖZEL NOTLARI ---
+        "dm_notes": "",
 
-        # --- Gelişmiş Statlar (NPC/Canavar için) ---
+        # --- Gelişmiş Statlar ---
         "saving_throws": "",
         "damage_vulnerabilities": "",
         "damage_resistances": "",

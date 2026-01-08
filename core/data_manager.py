@@ -111,11 +111,17 @@ class DataManager:
             if not self.data["last_active_session_id"] and self.data["sessions"]:
                 self.data["last_active_session_id"] = self.data["sessions"][-1]["id"]
 
-            # Migration Logic
+            self.current_campaign_path = folder
+            
+            # --- MIGRATION START: Absolute Path Fix & Data Update ---
+            self._fix_absolute_paths()
+            
             for eid, ent in self.data["entities"].items():
+                # Tip güncellemesi (TR -> EN)
                 old_type = ent.get("type", "NPC")
                 if old_type in SCHEMA_MAP: ent["type"] = SCHEMA_MAP[old_type]
                 
+                # Attribute güncellemesi
                 attrs = ent.get("attributes", {})
                 new_attrs = {}
                 for k, v in attrs.items():
@@ -123,17 +129,58 @@ class DataManager:
                     new_attrs[new_key] = v
                 ent["attributes"] = new_attrs
 
+                # Eksik alanları varsayılanla doldur (dm_notes dahil)
                 default = get_default_entity_structure(ent.get("type", "NPC"))
                 for key, val in default.items():
                     if key not in ent: ent[key] = val
                 
+                # Resim path güncellemesi
                 if not ent.get("images") and ent.get("image_path"):
                     ent["images"] = [ent["image_path"]]
+            # --- MIGRATION END ---
 
-            self.current_campaign_path = folder
             self.save_data()
             return True, "Yüklendi"
         except Exception as e: return False, str(e)
+
+    def _fix_absolute_paths(self):
+        """
+        Entity'lerdeki mutlak (C:/Users/...) resim yollarını bulur,
+        Assets klasörüne kopyalar ve yolu relative (assets/...) yapar.
+        """
+        if not self.current_campaign_path: return
+        changed = False
+        
+        # Assets klasörünün varlığından emin ol
+        assets_dir = os.path.join(self.current_campaign_path, "assets")
+        if not os.path.exists(assets_dir): os.makedirs(assets_dir)
+
+        for eid, ent in self.data["entities"].items():
+            # 1. 'images' listesini kontrol et
+            new_images = []
+            for img_path in ent.get("images", []):
+                # Eğer yol mutlaksa ve dosya varsa
+                if os.path.isabs(img_path) and os.path.exists(img_path):
+                    rel_path = self.import_image(img_path)
+                    if rel_path:
+                        new_images.append(rel_path)
+                        changed = True
+                    else:
+                        new_images.append(img_path)
+                else:
+                    new_images.append(img_path)
+            ent["images"] = new_images
+
+            # 2. 'image_path' (Legacy) kontrol et
+            legacy_path = ent.get("image_path")
+            if legacy_path and os.path.isabs(legacy_path) and os.path.exists(legacy_path):
+                rel_path = self.import_image(legacy_path)
+                if rel_path:
+                    ent["image_path"] = rel_path
+                    changed = True
+        
+        if changed:
+            print("🔧 Absolute paths fixed and assets copied.")
 
     def create_campaign(self, world_name):
         folder = os.path.join(WORLDS_DIR, world_name)
@@ -308,21 +355,51 @@ class DataManager:
 
     # --- HARİTA & RESİM ---
     def import_image(self, src):
+        """Resmi assets klasörüne kopyalar ve relative path döner."""
         if not self.current_campaign_path: return None
-        fname = f"{uuid.uuid4().hex}_{os.path.basename(src)}"
-        dest = os.path.join(self.current_campaign_path, "assets", fname)
-        shutil.copy2(src, dest)
-        return os.path.join("assets", fname)
+        
+        # Eğer dosya zaten assets içindeyse kopyalama, sadece yol düzelt
+        abs_assets = os.path.abspath(os.path.join(self.current_campaign_path, "assets"))
+        abs_src = os.path.abspath(src)
+        
+        if abs_src.startswith(abs_assets):
+            return os.path.relpath(abs_src, self.current_campaign_path)
+
+        try:
+            fname = f"{uuid.uuid4().hex}_{os.path.basename(src)}"
+            dest_dir = os.path.join(self.current_campaign_path, "assets")
+            if not os.path.exists(dest_dir): os.makedirs(dest_dir)
+            
+            dest = os.path.join(dest_dir, fname)
+            shutil.copy2(src, dest)
+            return os.path.join("assets", fname)
+        except Exception as e:
+            print(f"Image import error: {e}")
+            return None
 
     def import_pdf(self, src):
         if not self.current_campaign_path: return None
-        fname = f"{uuid.uuid4().hex}_{os.path.basename(src)}"
-        dest = os.path.join(self.current_campaign_path, "assets", fname)
-        shutil.copy2(src, dest)
-        return os.path.join("assets", fname)
+        # PDF için de aynı relative mantığı
+        abs_assets = os.path.abspath(os.path.join(self.current_campaign_path, "assets"))
+        abs_src = os.path.abspath(src)
+        
+        if abs_src.startswith(abs_assets):
+            return os.path.relpath(abs_src, self.current_campaign_path)
+
+        try:
+            fname = f"{uuid.uuid4().hex}_{os.path.basename(src)}"
+            dest = os.path.join(self.current_campaign_path, "assets", fname)
+            shutil.copy2(src, dest)
+            return os.path.join("assets", fname)
+        except Exception:
+            return None
 
     def get_full_path(self, rel):
-        return os.path.join(self.current_campaign_path, rel) if self.current_campaign_path and rel else None
+        """Relative (assets/...) yolu Absolute yola çevirir."""
+        if not rel: return None
+        # Eğer zaten absolute ise dokunma
+        if os.path.isabs(rel): return rel
+        return os.path.join(self.current_campaign_path, rel) if self.current_campaign_path else None
     
     def set_map_image(self, rel): self.data["map_data"]["image_path"] = rel; self.save_data()
     def add_pin(self, x, y, eid): self.data["map_data"]["pins"].append({"id": str(uuid.uuid4()), "x": x, "y": y, "entity_id": eid}); self.save_data()

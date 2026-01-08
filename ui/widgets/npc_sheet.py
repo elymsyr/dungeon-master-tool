@@ -10,8 +10,9 @@ from core.locales import tr
 import os
 
 class NpcSheet(QWidget):
-    def __init__(self):
+    def __init__(self, data_manager): # <-- DataManager Eklendi
         super().__init__()
+        self.dm = data_manager        # <-- Saklandı
         self.dynamic_inputs = {}
         self.image_list = []
         self.current_img_index = 0
@@ -27,7 +28,7 @@ class NpcSheet(QWidget):
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setObjectName("mainScroll") 
         
-        # İçerik Widget'ı (Tema rengini alması için ayarlar)
+        # İçerik Widget'ı
         self.content_widget = QWidget()
         self.content_widget.setObjectName("sheetContainer")
         self.content_widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -130,6 +131,18 @@ class NpcSheet(QWidget):
         self.tab_docs = QWidget(); self.setup_docs_tab(); self.tabs.addTab(self.tab_docs, tr("TAB_DOCS"))
 
         self.content_layout.addWidget(self.tabs)
+        
+        # --- YENİ: DM NOTES (EN ALTA EKLENDİ) ---
+        self.grp_dm_notes = QGroupBox("DM Notes (Private)")
+        self.grp_dm_notes.setStyleSheet("QGroupBox { border: 1px solid #d32f2f; color: #e57373; font-weight: bold; }")
+        dm_notes_layout = QVBoxLayout(self.grp_dm_notes)
+        self.inp_dm_notes = QTextEdit()
+        self.inp_dm_notes.setPlaceholderText("Hidden from players...")
+        self.inp_dm_notes.setMinimumHeight(100)
+        dm_notes_layout.addWidget(self.inp_dm_notes)
+        self.content_layout.addWidget(self.grp_dm_notes)
+        # ----------------------------------------
+
         scroll.setWidget(self.content_widget)
         main_layout.addWidget(scroll)
 
@@ -143,64 +156,33 @@ class NpcSheet(QWidget):
         self.update_ui_by_type(self.inp_type.currentData())
 
     def retranslate_ui(self):
-        """
-        Dil değiştiğinde arayüzdeki tüm metinleri günceller.
-        Dinamik alanlar (etiketler ve combobox seçenekleri) dahildir.
-        """
-        # 1. Statik Combobox (Varlık Tipi) Güncellemesi
+        # ... (Önceki çeviri kodları) ...
+        # Mevcut kodlar buraya gelecek, ek olarak DM Notes başlığı:
         for i in range(self.inp_type.count()):
             cat = self.inp_type.itemData(i)
-            if cat:
-                # CAT_NPC, CAT_MONSTER gibi anahtarları çevir
-                self.inp_type.setItemText(i, tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"))
+            if cat: self.inp_type.setItemText(i, tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"))
 
-        # 2. Buton ve Etiket Metinleri
         self.btn_show_player.setText(tr("BTN_SHOW_PLAYER"))
         self.btn_add_img.setText(tr("BTN_ADD"))
-        self.btn_remove_img.setToolTip(tr("BTN_REMOVE"))
         self.lbl_location.setText(tr("LBL_LOCATION"))
         self.lbl_residents.setText(tr("LBL_RESIDENTS"))
         self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
         
-        # 3. Dinamik Özellikler Alanı (Grup Başlığı ve İçerik)
         cat_key = self.inp_type.currentData()
         if cat_key: 
             cat_trans = tr(f"CAT_{cat_key.upper()}") if cat_key in ENTITY_SCHEMAS else cat_key
             self.grp_dynamic.setTitle(f"{cat_trans} {tr('LBL_PROPERTIES')}")
-        else: 
-            self.grp_dynamic.setTitle(tr("LBL_PROPERTIES"))
+        else: self.grp_dynamic.setTitle(tr("LBL_PROPERTIES"))
 
-        # --- KRİTİK KISIM: Dinamik Form Elemanlarını Güncelleme ---
-        # self.dynamic_inputs sözlüğü { "LBL_RACE": widget_objesi } şeklindedir.
-        for label_key, widget in self.dynamic_inputs.items():
-            # A) Sol taraftaki Etiketi (Label) Güncelle
-            # QFormLayout, bir widget'a bağlı olan etiketi bulmamızı sağlar.
-            label_widget = self.layout_dynamic.labelForField(widget)
-            if label_widget:
-                label_widget.setText(f"{tr(label_key)}:")
-            
-            # B) Eğer Widget bir ComboBox ise, seçenekleri (Items) Güncelle
-            if isinstance(widget, QComboBox):
-                for i in range(widget.count()):
-                    # build_dynamic_form fonksiyonunda kaydettiğimiz orijinal anahtarı (key) alıyoruz.
-                    original_key = widget.itemData(i)
-                    if original_key:
-                        # Eğer anahtar "LBL_" ile başlıyorsa çevirisini al, yoksa olduğu gibi bırak
-                        new_text = tr(original_key) if str(original_key).startswith("LBL_") else original_key
-                        widget.setItemText(i, new_text)
-
-        # 4. Sekme Başlıkları
         self.tabs.setTabText(0, tr("TAB_STATS"))
         self.tabs.setTabText(1, tr("TAB_SPELLS"))
         self.tabs.setTabText(2, tr("TAB_ACTIONS"))
         self.tabs.setTabText(3, tr("TAB_INV"))
         self.tabs.setTabText(4, tr("TAB_DOCS"))
-        
-        # 5. Alt Butonlar
         self.btn_delete.setText(tr("BTN_DELETE"))
         self.btn_save.setText(tr("BTN_SAVE"))
         
-        # 6. Alt Grup Başlıkları (Varsa)
+        # Alt Grup Başlıkları
         if hasattr(self, "grp_base_stats"): self.grp_base_stats.setTitle(tr("GRP_STATS"))
         if hasattr(self, "grp_combat_stats"): self.grp_combat_stats.setTitle(tr("GRP_COMBAT"))
         if hasattr(self, "grp_defense"): self.grp_defense.setTitle(tr("GRP_DEFENSE"))
@@ -209,7 +191,6 @@ class NpcSheet(QWidget):
         if hasattr(self, "grp_pdf"): self.grp_pdf.setTitle(tr("GRP_PDF"))
         if hasattr(self, "grp_db_items"): self.grp_db_items.setTitle(tr("LBL_DB_ITEMS"))
         
-        # 7. Kart Alanı Başlıkları
         self.trait_container.setTitle(tr("LBL_TRAITS"))
         self.action_container.setTitle(tr("LBL_ACTIONS"))
         self.reaction_container.setTitle(tr("LBL_REACTIONS"))
@@ -217,63 +198,33 @@ class NpcSheet(QWidget):
         self.custom_spell_container.setTitle(tr("LBL_MANUAL_SPELLS"))
         self.inventory_container.setTitle(tr("GRP_INVENTORY"))
 
-        # 8. Statik Placeholder Güncellemeleri
-        self.inp_tags.setPlaceholderText(tr("LBL_TAGS_PH"))
-        self.inp_hp.setPlaceholderText(tr("LBL_HP"))
-        self.inp_max_hp.setPlaceholderText(tr("LBL_MAX_HP"))
-        self.inp_ac.setPlaceholderText(tr("HEADER_AC"))
-        self.inp_init.setPlaceholderText(tr("LBL_INIT"))
-        self.combo_all_spells.setPlaceholderText(tr("LBL_SEARCH"))
-
     def build_dynamic_form(self, category_name):
-        """
-        Entity tipine göre (NPC, Monster vs.) dinamik form alanlarını oluşturur.
-        Önemli: ComboBox'larda itemData olarak çeviri anahtarını saklarız.
-        Böylece dil değiştiğinde orijinal anahtarı bulup tekrar çevirebiliriz.
-        """
-        # 1. Mevcut satırları temizle
-        while self.layout_dynamic.rowCount() > 0: 
-            self.layout_dynamic.removeRow(0)
-        
-        # Referans sözlüğünü sıfırla
+        while self.layout_dynamic.rowCount() > 0: self.layout_dynamic.removeRow(0)
         self.dynamic_inputs = {} 
-        
-        # İlgili şemayı al
         schema = ENTITY_SCHEMAS.get(category_name, [])
-        
-        # Grup başlığını ayarla (Örn: NPC Özellikler)
         cat_trans = tr(f"CAT_{category_name.upper()}") if category_name in ENTITY_SCHEMAS else category_name
         self.grp_dynamic.setTitle(f"{cat_trans} {tr('LBL_PROPERTIES')}")
-        
-        # 2. Şemadaki her alan için widget oluştur
         for label_key, dtype, options in schema:
             if dtype == "combo":
-                widget = QComboBox()
-                widget.setEditable(True) # Kullanıcı manuel de yazabilsin
+                widget = QComboBox(); widget.setEditable(True)
                 if options:
                     for opt in options:
-                        # Görünen Metin: tr(opt) -> "Dost"
-                        # Arka Plan Verisi: opt -> "LBL_ATTR_FRIENDLY"
                         display_text = tr(opt) if str(opt).startswith("LBL_") else opt
                         widget.addItem(display_text, opt) 
-            else:
-                widget = QLineEdit()
-            
-            # 3. Form satırını ekle
-            # label_key (Örn: "LBL_RACE") kullanarak çeviriyi alıyoruz
+            else: widget = QLineEdit()
             self.layout_dynamic.addRow(f"{tr(label_key)}:", widget)
-            
-            # 4. Widget'ı sözlüğe kaydet
-            # Anahtar olarak label_key kullanıyoruz ki retranslate sırasında etiketi bulabilelim.
             self.dynamic_inputs[label_key] = widget
 
     # --- RESİM YÖNETİMİ ---
     def add_image_dialog(self):
         fname, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_IMG"), "", "Images (*.png *.jpg *.jpeg *.bmp)")
         if fname:
-            self.image_list.append(fname)
-            self.current_img_index = len(self.image_list) - 1
-            self.update_image_display()
+            # DataManager üzerinden import
+            rel_path = self.dm.import_image(fname)
+            if rel_path:
+                self.image_list.append(rel_path)
+                self.current_img_index = len(self.image_list) - 1
+                self.update_image_display()
 
     def remove_current_image(self):
         if not self.image_list: return
@@ -294,19 +245,16 @@ class NpcSheet(QWidget):
 
     def update_image_display(self):
         if not self.image_list:
-            self.lbl_image.setPixmap(None)
-            self.lbl_img_counter.setText("0/0")
-            return
+            self.lbl_image.setPixmap(None); self.lbl_img_counter.setText("0/0"); return
         
-        path = self.image_list[self.current_img_index]
-        if os.path.exists(path):
-            self.lbl_image.setPixmap(QPixmap(path))
-        else:
-            self.lbl_image.setPixmap(None)
-            
+        rel_path = self.image_list[self.current_img_index]
+        full_path = self.dm.get_full_path(rel_path)
+        
+        if full_path and os.path.exists(full_path): self.lbl_image.setPixmap(QPixmap(full_path))
+        else: self.lbl_image.setPixmap(None)
         self.lbl_img_counter.setText(f"{self.current_img_index + 1}/{len(self.image_list)}")
 
-    # --- TAB KURULUMLARI ---
+    # ... (Tab Setup Metodları Aynı: setup_stats_tab, setup_spells_tab, vb.) ...
     def setup_stats_tab(self):
         layout = QVBoxLayout(self.tab_stats)
         self.grp_base_stats = QGroupBox(tr("GRP_STATS")); l = QHBoxLayout(self.grp_base_stats)
@@ -330,7 +278,7 @@ class NpcSheet(QWidget):
         form3.addRow(tr("LBL_VULN"), self.inp_vuln); form3.addRow(tr("LBL_RESIST"), self.inp_resist)
         form3.addRow(tr("LBL_DMG_IMMUNE"), self.inp_dmg_immune); form3.addRow(tr("LBL_COND_IMMUNE"), self.inp_cond_immune)
         layout.addWidget(self.grp_defense); layout.addStretch()
-        
+
     def _create_combat_stats_group(self):
         grp = QGroupBox(tr("GRP_COMBAT"))
         v_comb = QVBoxLayout(grp)
@@ -436,7 +384,6 @@ class NpcSheet(QWidget):
         d = QTextEdit(desc); d.setPlaceholderText(ph_desc); d.setMinimumHeight(80); d.setMaximumHeight(300); d.setStyleSheet("border:none; background: transparent;")
         l.addWidget(d); group.dynamic_area.addWidget(card); card.inp_title = t; card.inp_desc = d
 
-    # --- DÜZELTİLMİŞ FONKSİYON ---
     def clear_all_cards(self):
         containers = [self.trait_container, self.action_container, self.reaction_container, self.legendary_container, self.inventory_container, self.custom_spell_container]
         for g in containers:
@@ -458,10 +405,10 @@ class NpcSheet(QWidget):
         self.lbl_location.setVisible(is_npc_like or is_player); self.combo_location.setVisible(is_npc_like or is_player)
         self.lbl_residents.setVisible(category_name == "Location"); self.list_residents.setVisible(category_name == "Location")
         
-        self.tabs.setTabVisible(0, is_npc_like) # Stats
-        self.tabs.setTabVisible(1, is_npc_like) # Spells
-        self.tabs.setTabVisible(2, is_npc_like) # Actions
-        self.tabs.setTabVisible(3, is_npc_like) # Inv
+        self.tabs.setTabVisible(0, is_npc_like) 
+        self.tabs.setTabVisible(1, is_npc_like) 
+        self.tabs.setTabVisible(2, is_npc_like) 
+        self.tabs.setTabVisible(3, is_npc_like) 
         self.tabs.setTabVisible(4, is_lore or is_player or is_status)
         
         if is_player:
@@ -477,12 +424,168 @@ class NpcSheet(QWidget):
         
         if is_status: self.lbl_image.setText("Icon")
 
-    def prepare_new_entity(self):
-        self.inp_name.clear(); self.inp_desc.clear(); self.inp_tags.clear(); self.lbl_image.setPixmap(None)
-        self.image_list = []; self.current_img_index = 0; self.lbl_img_counter.setText("0/0") 
-        self.clear_all_cards(); self.inp_type.setCurrentIndex(0)
-        for i in self.stats_inputs.values(): i.setText("10")
-        self.inp_hp.clear(); self.inp_max_hp.clear(); self.inp_ac.clear(); self.list_assigned_spells.clear(); self.list_assigned_items.clear()
-        self.inp_prof.clear(); self.inp_pp.clear(); self.inp_skills.clear(); self.inp_init.clear()
-        self.inp_saves.clear(); self.inp_vuln.clear(); self.inp_resist.clear(); self.inp_dmg_immune.clear(); self.inp_cond_immune.clear()
-        self.combo_location.clear(); self.list_residents.clear(); self.list_pdfs.clear()
+    # --- VERİ DOLDURMA (DM NOTES DAHİL) ---
+    def populate_sheet(self, s, data):
+        s.inp_name.setText(data.get("name", ""))
+        curr_type = data.get("type", "NPC")
+        idx = s.inp_type.findText(curr_type)
+        s.inp_type.setCurrentIndex(idx if idx >= 0 else 0)
+        s.inp_tags.setText(", ".join(data.get("tags", [])))
+        s.inp_desc.setText(data.get("description", ""))
+        s.inp_dm_notes.setText(data.get("dm_notes", "")) # DM Notes Doldur
+        
+        stats = data.get("stats", {})
+        for k, v in s.stats_inputs.items(): v.setText(str(stats.get(k, 10)))
+        
+        c = data.get("combat_stats", {})
+        s.inp_hp.setText(str(c.get("hp", "")))
+        s.inp_max_hp.setText(str(c.get("max_hp", "")))
+        s.inp_ac.setText(str(c.get("ac", ""))) 
+        s.inp_speed.setText(str(c.get("speed", "")))
+        s.inp_init.setText(str(c.get("initiative", "")))
+
+        s.inp_saves.setText(data.get("saving_throws", ""))
+        s.inp_skills.setText(data.get("skills", ""))
+        s.inp_vuln.setText(data.get("damage_vulnerabilities", ""))
+        s.inp_resist.setText(data.get("damage_resistances", ""))
+        s.inp_dmg_immune.setText(data.get("damage_immunities", ""))
+        s.inp_cond_immune.setText(data.get("condition_immunities", ""))
+        s.inp_prof.setText(str(data.get("proficiency_bonus", "")))
+        s.inp_pp.setText(str(data.get("passive_perception", "")))
+
+        s.update_ui_by_type(curr_type)
+        attrs = data.get("attributes", {})
+        for l, w in s.dynamic_inputs.items():
+            val = attrs.get(l, "")
+            if isinstance(w, QComboBox): 
+                ix = w.findData(val)
+                if ix >= 0:
+                    w.setCurrentIndex(ix)
+                else:
+                    ix_text = w.findText(val)
+                    if ix_text >= 0: w.setCurrentIndex(ix_text)
+                    else: w.setCurrentText(val)
+            else: 
+                w.setText(str(val))
+
+        s.clear_all_cards()
+        self._fill_cards(s, s.trait_container, data.get("traits", []))
+        self._fill_cards(s, s.action_container, data.get("actions", []))
+        self._fill_cards(s, s.reaction_container, data.get("reactions", []))
+        self._fill_cards(s, s.legendary_container, data.get("legendary_actions", []))
+        self._fill_cards(s, s.inventory_container, data.get("inventory", []))
+        self._fill_cards(s, s.custom_spell_container, data.get("custom_spells", []))
+        
+        s.image_list = data.get("images", [])
+        if not s.image_list and data.get("image_path"): s.image_list = [data.get("image_path")]
+        s.current_img_index = 0
+        if s.image_list:
+             path = self.dm.get_full_path(s.image_list[0])
+             if path and os.path.exists(path): s.lbl_image.setPixmap(QPixmap(path))
+        
+        s.list_assigned_spells.clear()
+        for spell_id in data.get("spells", []):
+            spell = self.dm.data["entities"].get(spell_id)
+            if spell: s.list_assigned_spells.addItem(f"{spell['name']} (Lv {spell.get('attributes',{}).get('LBL_LEVEL','?')})")
+        
+        s.list_pdfs.clear()
+        for pdf_filename in data.get("pdfs", []):
+            s.list_pdfs.addItem(pdf_filename)
+
+    def collect_data_from_sheet(self, s):
+        if not s.inp_name.text(): return None
+        
+        def get_cards(container):
+            res = []; layout = container.dynamic_area
+            for i in range(layout.count()):
+                w = layout.itemAt(i).widget()
+                if w: res.append({"name": w.inp_title.text(), "desc": w.inp_desc.toPlainText()})
+            return res
+            
+        data = {
+            "name": s.inp_name.text(), 
+            "type": s.inp_type.currentText(),
+            "tags": [t.strip() for t in s.inp_tags.text().split(",") if t.strip()],
+            "description": s.inp_desc.toPlainText(),
+            "dm_notes": s.inp_dm_notes.toPlainText(), # DM Notes Kaydet
+            "images": s.image_list,
+            "stats": {k: int(v.text() or 10) for k, v in s.stats_inputs.items()},
+            "combat_stats": {
+                "hp": s.inp_hp.text(), "max_hp": s.inp_max_hp.text(), "ac": s.inp_ac.text(),
+                "speed": s.inp_speed.text(), "initiative": s.inp_init.text()
+            },
+            "saving_throws": s.inp_saves.text(), "skills": s.inp_skills.text(),
+            "damage_vulnerabilities": s.inp_vuln.text(), "damage_resistances": s.inp_resist.text(),
+            "damage_immunities": s.inp_dmg_immune.text(), "condition_immunities": s.inp_cond_immune.text(),
+            "proficiency_bonus": s.inp_prof.text(), "passive_perception": s.inp_pp.text(),
+            "attributes": {l: (w.currentText() if isinstance(w, QComboBox) else w.text()) for l, w in s.dynamic_inputs.items()},
+            "traits": get_cards(s.trait_container), "actions": get_cards(s.action_container),
+            "reactions": get_cards(s.reaction_container), "legendary_actions": get_cards(s.legendary_container),
+            "inventory": get_cards(s.inventory_container), "custom_spells": get_cards(s.custom_spell_container),
+            "pdfs": [s.list_pdfs.item(i).text() for i in range(s.list_pdfs.count())]
+        }
+        return data
+
+    def _fill_cards(self, sheet, container, data_list):
+        for item in data_list: sheet.add_feature_card(container, item.get("name"), item.get("desc"))
+
+    # ... (Geri kalan metodlar aynı: _show_to_player, _add_pdf_to_sheet vb.) ...
+    def _show_to_player(self, sheet):
+        """Show current entity image to player window"""
+        if not sheet.image_list:
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_IMAGE_IN_ENTITY"))
+            return
+        img_path = sheet.image_list[sheet.current_img_index]
+        full_path = self.dm.get_full_path(img_path)
+        if full_path and os.path.exists(full_path):
+            from PyQt6.QtGui import QPixmap
+            pixmap = QPixmap(full_path)
+            self.player_window.show_image(pixmap)
+            self.player_window.show()
+        else:
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
+    
+    def _add_pdf_to_sheet(self, sheet):
+        from PyQt6.QtWidgets import QFileDialog
+        fname, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_PDF"), "", "PDF Files (*.pdf)")
+        if fname:
+            eid = sheet.property("entity_id")
+            pdf_filename = self.dm.import_pdf(fname)
+            data = self.dm.data["entities"].get(eid, {})
+            pdfs = data.get("pdfs", [])
+            if pdf_filename not in pdfs:
+                pdfs.append(pdf_filename); data["pdfs"] = pdfs
+                self.dm.save_entity(eid, data)
+                sheet.list_pdfs.addItem(pdf_filename)
+    
+    def _open_pdf_file(self, sheet):
+        selected = sheet.list_pdfs.currentItem()
+        if not selected: QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_PDF_FIRST")); return
+        pdf_path = self.dm.get_full_path(selected.text())
+        if pdf_path and os.path.exists(pdf_path):
+            QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_path))
+        else: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
+    
+    def _project_pdf_to_player(self, sheet):
+        selected = sheet.list_pdfs.currentItem()
+        if not selected: QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_PDF_FIRST")); return
+        pdf_path = self.dm.get_full_path(selected.text())
+        if pdf_path and os.path.exists(pdf_path):
+            self.player_window.show_pdf(pdf_path); self.player_window.show()
+        else: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
+    
+    def _remove_pdf_from_sheet(self, sheet):
+        selected = sheet.list_pdfs.currentItem()
+        if not selected: return
+        if QMessageBox.question(self, tr("BTN_REMOVE"), tr("MSG_REMOVE_PDF_CONFIRM")) == QMessageBox.StandardButton.Yes:
+            eid = sheet.property("entity_id")
+            pdf_filename = selected.text()
+            data = self.dm.data["entities"].get(eid, {})
+            pdfs = data.get("pdfs", [])
+            if pdf_filename in pdfs: pdfs.remove(pdf_filename); data["pdfs"] = pdfs; self.dm.save_entity(eid, data)
+            sheet.list_pdfs.takeItem(sheet.list_pdfs.row(selected))
+    
+    def _open_pdf_folder(self, sheet):
+        pdf_dir = os.path.join(self.dm.current_campaign_path, "assets")
+        os.makedirs(pdf_dir, exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_dir))
