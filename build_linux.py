@@ -1,45 +1,58 @@
 import PyInstaller.__main__
 import os
 import shutil
-import sys
 
-# Name of the executable
 APP_NAME = "DungeonMasterTool"
 
-# Clean up previous builds
+# Temizlik
 if os.path.exists("dist"): shutil.rmtree("dist")
 if os.path.exists("build"): shutil.rmtree("build")
 
-# PyInstaller parameters
+# 1. PyInstaller Parametreleri
 params = [
     'main.py',
     f'--name={APP_NAME}',
-    '--onedir',  # <-- DEĞİŞTİ: Klasör olarak çıkar
+    '--onedir',
     '--noconsole',
     '--clean',
-    # Gerekli importlar
-    '--hidden-import=PyQt6',
+    '--noupx',
+    
+    # Gerekli kütüphaneler
     '--hidden-import=PyQt6.QtWebEngineWidgets',
+    '--hidden-import=PyQt6.QtWebEngineCore',
+    '--hidden-import=PyQt6.QtPrintSupport', 
+    '--hidden-import=PyQt6.QtNetwork',
     '--hidden-import=requests',
     '--hidden-import=i18n',
     '--hidden-import=yaml',
-    
-    # Data folders to bundle
-    '--add-data=locales:locales',
-    '--add-data=themes:themes',
+    '--hidden-import=json',
 ]
 
-print(f"Building {APP_NAME} for Linux (Directory Mode)...")
+print(f"🔨 Building {APP_NAME} for Linux...")
 PyInstaller.__main__.run(params)
 
-# İzinleri ayarla (Klasör içindeki çalıştırılabilir dosyayı bul)
-# onedir modunda çıktı: dist/DungeonMasterTool/DungeonMasterTool
-binary_folder = os.path.join("dist", APP_NAME)
-binary_path = os.path.join(binary_folder, APP_NAME)
+# 2. Klasörleri Kopyala
+target_dir = os.path.join("dist", APP_NAME)
+folders_to_copy = ["assets", "themes", "locales"]
 
+print("\n📂 Copying external resources...")
+for folder in folders_to_copy:
+    src = os.path.join(".", folder)
+    dst = os.path.join(target_dir, folder)
+    
+    if os.path.exists(src):
+        if os.path.exists(dst):
+            shutil.rmtree(dst)
+        shutil.copytree(src, dst)
+        print(f"   ✅ Copied: {folder}")
+    else:
+        print(f"   ⚠️ Warning: Source folder not found: {folder}")
+
+# 3. İzinleri Ayarla
+binary_path = os.path.join(target_dir, APP_NAME)
 if os.path.exists(binary_path):
     os.chmod(binary_path, 0o755)
-    print(f"Success! Final binary folder: {binary_folder}")
-    print(f"Executable is at: {binary_path}")
-else:
-    print("Build failed. Executable not found.")
+    print(f"   ✅ Permissions set for executable.")
+
+print("-" * 30)
+print(f"🎉 SUCCESS! Build available at: {target_dir}")
