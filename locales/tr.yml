@@ -366,3 +366,33 @@ tr:
   LBL_TYPE_BUFF: "Güçlendirme (Buff)"
   LBL_TYPE_DEBUFF: "Zayıflatma (Debuff)"
   LBL_TYPE_CONDITION: "Durum (Condition)"
+
+  # Eksik Hata Mesajları
+  MSG_NO_IMAGE_IN_ENTITY: "Bu varlıkta gösterilecek resim yok."
+  MSG_FILE_NOT_FOUND_DISK: "Dosya diskte bulunamadı."
+  MSG_SELECT_PDF_FIRST: "Lütfen önce bir PDF seçin."
+  MSG_REMOVE_PDF_CONFIRM: "Bu PDF dosyası varlıktan kaldırılsın mı?"
+  MSG_CAT_NOT_SUPPORTED: "Kategori desteklenmiyor."
+  MSG_FOUND_MAGIC_ITEM: "Büyülü Eşya bulundu."
+  MSG_SEARCH_SUCCESS: "Başarılı."
+  MSG_SEARCH_NOT_FOUND: "Bulunamadı."
+
+  # Combat Tracker Sağ Tık Menüsü
+  MENU_STD_CONDITIONS: "Standart Durumlar"
+  MENU_SAVED_EFFECTS: "--- Kayıtlı Etkiler ---"
+  MSG_NO_SAVED_EFFECTS: "(Kayıtlı Etki Yok)"
+  LBL_DURATION_PROMPT_TITLE: "Süre"
+  LBL_DURATION_PROMPT_MSG: "%{name} süresi (0=Sonsuz)?"
+
+  # API / Eşya Ayrıştırma
+  LBL_PROP_SPEED: "Hız"
+  LBL_PROP_CAPACITY: "Kapasite"
+  LBL_REQ_ATTUNEMENT: "Gerekli"
+  LBL_NO_ATTUNEMENT: "Gerekli Değil"
+  LBL_GENERAL_CAT: "Genel"
+
+  # Mantıksal Olarak Kullanılan Eksik Kategoriler
+  CAT_STATUS_EFFECT: "Durum Etkisi"
+  CAT_LORE: "Lore"
+  CAT_QUEST: "Görev"
+  CAT_LOCATION: "Mekan"

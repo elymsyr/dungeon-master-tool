@@ -331,7 +331,7 @@ class CombatTracker(QWidget):
         menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #007acc; }")
         
         # 1. Standart Durumlar (Standard 5e Conditions)
-        std_menu = menu.addMenu("Standart Durumlar")
+        std_menu = menu.addMenu(tr("MENU_STD_CONDITIONS"))
         for cond in CONDITIONS: # Dosyanın başında tanımlı liste
             action = QAction(cond, self)
             action.triggered.connect(lambda checked, r=row, n=cond: self.add_condition_to_row(r, n, None, 0))
@@ -344,7 +344,7 @@ class CombatTracker(QWidget):
         custom_effects = [e for e in self.dm.data["entities"].values() if e.get("type") == "Status Effect"]
         
         if custom_effects:
-            lbl = menu.addAction("--- Kayıtlı Etkiler ---")
+            lbl = menu.addAction(tr("MENU_SAVED_EFFECTS"))
             lbl.setEnabled(False)
             
             for eff in custom_effects:
@@ -371,7 +371,7 @@ class CombatTracker(QWidget):
                 action.triggered.connect(lambda checked, r=row, n=eff_name, p=icon_path, d=duration: self.add_condition_to_row(r, n, p, d))
                 menu.addAction(action)
         else:
-            no_act = menu.addAction("(Kayıtlı Etki Yok)")
+            no_act = menu.addAction(tr("MSG_NO_SAVED_EFFECTS"))
             no_act.setEnabled(False)
 
         # Menüyü fare pozisyonunda aç
@@ -492,7 +492,7 @@ class CombatTracker(QWidget):
 
     def add_condition_to_row(self, row, name, icon_path, duration):
         if duration == 0:
-            d, ok = QInputDialog.getInt(self, "Duration", f"{name} duration (0=Infinite)?", 0, 0, 100)
+            d, ok = QInputDialog.getInt(self, tr("LBL_DURATION_PROMPT_TITLE"), tr("LBL_DURATION_PROMPT_MSG", name=name), 0, 0, 100)
             if ok: duration = d
         w = self.table.cellWidget(row, 4)
         if w: w.add_condition(name, icon_path, duration)
