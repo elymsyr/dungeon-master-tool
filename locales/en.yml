@@ -367,3 +367,33 @@ en:
   LBL_TYPE_BUFF: "Buff (Positive)"
   LBL_TYPE_DEBUFF: "Debuff (Negative)"
   LBL_TYPE_CONDITION: "Condition"
+
+  # Missing Error Messages
+  MSG_NO_IMAGE_IN_ENTITY: "No image found in this entity."
+  MSG_FILE_NOT_FOUND_DISK: "File not found on disk."
+  MSG_SELECT_PDF_FIRST: "Please select a PDF first."
+  MSG_REMOVE_PDF_CONFIRM: "Remove this PDF from the entity?"
+  MSG_CAT_NOT_SUPPORTED: "Category not supported."
+  MSG_FOUND_MAGIC_ITEM: "Magic Item found."
+  MSG_SEARCH_SUCCESS: "Success."
+  MSG_SEARCH_NOT_FOUND: "Not found."
+  
+  # Combat Tracker Context Menu
+  MENU_STD_CONDITIONS: "Standard Conditions"
+  MENU_SAVED_EFFECTS: "--- Saved Effects ---"
+  MSG_NO_SAVED_EFFECTS: "(No Saved Effects)"
+  LBL_DURATION_PROMPT_TITLE: "Duration"
+  LBL_DURATION_PROMPT_MSG: "%{name} duration (0=Infinite)?"
+  
+  # API / Item Parsing
+  LBL_PROP_SPEED: "Speed"
+  LBL_PROP_CAPACITY: "Capacity"
+  LBL_REQ_ATTUNEMENT: "Required"
+  LBL_NO_ATTUNEMENT: "Not Required"
+  LBL_GENERAL_CAT: "General"
+  
+  # Missing Categories used in logic
+  CAT_STATUS_EFFECT: "Status Effect"
+  CAT_LORE: "Lore"
+  CAT_QUEST: "Quest"
+  CAT_LOCATION: "Location"
