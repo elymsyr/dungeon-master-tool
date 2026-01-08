@@ -3,8 +3,9 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QGraphicsScene, QGraphicsEllipseItem, QSlider, QGraphicsPixmapItem)
 from PyQt6.QtGui import QPixmap, QColor, QFont, QBrush, QPen, QPainter, QPainterPath
 
-from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF, QTimer, QRect # QRect de eklendi
+from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF, QTimer, QRect
 from core.locales import tr
+import os
 
 class SidebarConditionIcon(QWidget):
     def __init__(self, name, icon_path, duration):
@@ -12,7 +13,7 @@ class SidebarConditionIcon(QWidget):
         self.name = name
         self.icon_path = icon_path
         self.duration = duration
-        self.setFixedSize(20, 20) # Sidebar için biraz daha küçük (20px)
+        self.setFixedSize(20, 20) 
         self.setToolTip(f"{name} ({duration} Turns)" if duration > 0 else name)
 
     def paintEvent(self, event):
@@ -30,7 +31,8 @@ class SidebarConditionIcon(QWidget):
             painter.drawRect(0, 0, 20, 20)
             painter.setPen(Qt.GlobalColor.white)
             font = painter.font()
-            font.setPointSize(7)
+            # --- DÜZELTME: setPointSize yerine setPixelSize ---
+            font.setPixelSize(7)
             font.setBold(True)
             painter.setFont(font)
             painter.drawText(QRect(0, 0, 20, 20), Qt.AlignmentFlag.AlignCenter, self.name[:2].upper())
@@ -43,7 +45,8 @@ class SidebarConditionIcon(QWidget):
             
             painter.setPen(Qt.GlobalColor.white)
             font = painter.font()
-            font.setPointSize(5)
+            # --- DÜZELTME: setPointSize yerine setPixelSize ---
+            font.setPixelSize(5)
             painter.setFont(font)
             painter.drawText(QRect(0, 12, 20, 8), Qt.AlignmentFlag.AlignCenter, str(self.duration))
 
@@ -52,14 +55,13 @@ class BattleTokenItem(QGraphicsEllipseItem):
     def __init__(self, size, pixmap, border_color, name, tid, eid, on_move_callback):
         super().__init__(0, 0, size, size)
         
-        self.tid = tid # Takip ID'si (Benzersiz)
-        self.eid = eid # Varlık ID'si (Library)
+        self.tid = tid 
+        self.eid = eid 
         self.name = name
         self.on_move_callback = on_move_callback 
         self.original_pixmap = pixmap 
         self.border_color = border_color
         
-        # Hareket ve Seçim Bayrakları
         self.setFlag(QGraphicsEllipseItem.GraphicsItemFlag.ItemIsMovable)
         self.setFlag(QGraphicsEllipseItem.GraphicsItemFlag.ItemIsSelectable)
         self.setFlag(QGraphicsEllipseItem.GraphicsItemFlag.ItemSendsGeometryChanges)
@@ -69,21 +71,17 @@ class BattleTokenItem(QGraphicsEllipseItem):
 
     def update_appearance(self, size):
         self.setRect(0, 0, size, size)
-        
-        # Sınır Rengi (Border)
         pen = QPen(QColor(self.border_color))
         pen.setWidth(3)
         self.setPen(pen)
         
         if self.original_pixmap and not self.original_pixmap.isNull():
-            # Resmi token içine sığdır (Yuvarlak kesim maskesi QBrush ile yapılır)
             scaled = self.original_pixmap.scaled(int(size), int(size), 
                                                Qt.AspectRatioMode.KeepAspectRatioByExpanding, 
                                                Qt.TransformationMode.SmoothTransformation)
             brush = QBrush(scaled)
             self.setBrush(brush)
         else:
-            # Resim yoksa koyu gri dolgu
             self.setBrush(QBrush(QColor("#444")))
 
     def mouseReleaseEvent(self, event):
@@ -101,11 +99,8 @@ class BattleMapWindow(QMainWindow):
         self.tokens = {} 
         self.token_size = 50 
         self.map_item = None
-        
         self.setWindowTitle(tr("TITLE_BATTLE_MAP"))
         self.resize(1200, 800)
-        
-        # Hardcoded stil kaldırıldı, QMainWindow stili QSS'den gelecek.
         
         central = QWidget()
         self.setCentralWidget(central)
@@ -114,14 +109,11 @@ class BattleMapWindow(QMainWindow):
         
         # --- SOL: HARİTA ALANI ---
         map_layout = QVBoxLayout()
-        
-        # Toolbar
         toolbar = QHBoxLayout()
         toolbar.setContentsMargins(10, 5, 10, 5)
         
         self.lbl_size = QLabel(tr("LBL_TOKEN_SIZE"))
         self.lbl_size.setObjectName("toolbarLabel")
-        
         self.slider_size = QSlider(Qt.Orientation.Horizontal)
         self.slider_size.setMinimum(20); self.slider_size.setMaximum(300)
         self.slider_size.setValue(self.token_size)
@@ -133,34 +125,25 @@ class BattleMapWindow(QMainWindow):
         toolbar.addStretch()
         map_layout.addLayout(toolbar)
         
-        # Grafik Sahnesi ve Görünümü
         self.scene = QGraphicsScene()
-        # Sahne arka planı (Canvas) her zaman koyu olması harita için iyidir, 
-        # ancak tema uyumu istenirse bu satır kaldırılabilir.
         self.scene.setBackgroundBrush(QBrush(QColor("#111")))
-        
         self.view = QGraphicsView(self.scene)
         self.view.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.view.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         self.view.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-        self.view.setStyleSheet("border: none;") # View çerçevesini kaldır
-        
-        # Scroll barları kapat
+        self.view.setStyleSheet("border: none;") 
         self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        
         map_layout.addWidget(self.view)
         
         # --- SAĞ: SIDEBAR ---
         self.sidebar = QWidget()
         self.sidebar.setFixedWidth(300)
-        # Sidebar'ı QSS ile stillendirmek için objectName atıyoruz
         self.sidebar.setObjectName("sidebarFrame") 
-        
         sidebar_layout = QVBoxLayout(self.sidebar)
         
         self.lbl_title = QLabel(tr("TITLE_TURN_ORDER"))
-        self.lbl_title.setObjectName("headerLabel") # QSS için ID
+        self.lbl_title.setObjectName("headerLabel")
         self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sidebar_layout.addWidget(self.lbl_title)
         
@@ -187,35 +170,25 @@ class BattleMapWindow(QMainWindow):
         self.lbl_size.setText(tr("LBL_TOKEN_SIZE"))
         self.lbl_title.setText(tr("TITLE_TURN_ORDER"))
 
-    # --- EKRAN BOYUTLANDIRMA OLAYI ---
     def resizeEvent(self, event):
-        """Pencere boyutu değiştiğinde haritayı tekrar sığdır"""
-        if self.map_item:
-            self.fit_map_in_view()
+        if self.map_item: self.fit_map_in_view()
         super().resizeEvent(event)
 
     def showEvent(self, event):
-        """Pencere ilk açıldığında haritayı sığdır"""
-        if self.map_item:
-            self.fit_map_in_view()
+        if self.map_item: self.fit_map_in_view()
         super().showEvent(event)
 
     def fit_map_in_view(self):
-        """Haritayı görüntü alanına (bozulmadan) sığdırır"""
-        if self.map_item:
-            self.view.fitInView(self.map_item, Qt.AspectRatioMode.KeepAspectRatio)
+        if self.map_item: self.view.fitInView(self.map_item, Qt.AspectRatioMode.KeepAspectRatio)
 
     def set_map_image(self, pixmap):
         if pixmap:
             if self.map_item: self.scene.removeItem(self.map_item)
-            
             self.map_item = QGraphicsPixmapItem(pixmap)
             self.map_item.setZValue(-100)
             self.map_item.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
             self.scene.addItem(self.map_item)
             self.scene.setSceneRect(self.map_item.boundingRect())
-            
-            # Resmi yükler yüklemez sığdır (Layout'un oturması için kısa bir bekleme)
             QTimer.singleShot(100, self.fit_map_in_view)
         else:
             if self.map_item: self.scene.removeItem(self.map_item)
@@ -223,8 +196,7 @@ class BattleMapWindow(QMainWindow):
 
     def change_token_size(self, val):
         self.token_size = val
-        for token in self.tokens.values():
-            token.update_appearance(self.token_size)
+        for token in self.tokens.values(): token.update_appearance(self.token_size)
 
     def on_token_moved(self, tid, x, y):
         self.token_moved_signal.emit(tid, x, y)
@@ -236,10 +208,8 @@ class BattleMapWindow(QMainWindow):
             self.slider_size.setValue(saved_token_size)
             self.slider_size.blockSignals(False)
 
-        if map_path:
-            self.set_map_image(QPixmap(map_path))
+        if map_path: self.set_map_image(QPixmap(map_path))
 
-        # Sidebar Temizle
         while self.list_layout.count():
             item = self.list_layout.takeAt(0)
             if item.widget(): item.widget().deleteLater()
@@ -249,19 +219,17 @@ class BattleMapWindow(QMainWindow):
             key = c.get("tid") or c.get("eid")
             if key: active_tids.append(key)
             
-        # Token Temizle (Artık listede olmayanları kaldır)
         to_remove = [tid for tid in self.tokens if tid not in active_tids]
         for tid in to_remove:
             self.scene.removeItem(self.tokens[tid])
             del self.tokens[tid]
 
-        # Listeyi Güncelle
         for i, c in enumerate(combatants):
             eid = c.get("eid")
             name = c.get("name", "???")
             hp = c.get("hp", "?")
             x, y = c.get("x"), c.get("y")
-            conditions = c.get("conditions", []) # Durumları al
+            conditions = c.get("conditions", []) 
             
             ent_type = c.get("type", "NPC")
             attitude = c.get("attitude", "LBL_ATTR_NEUTRAL")
@@ -279,19 +247,16 @@ class BattleMapWindow(QMainWindow):
                 if not rel_path and ent.get("images"): rel_path = ent.get("images")[0]
                 if rel_path: img_path = self.dm.get_full_path(rel_path)
 
-            # --- SIDEBAR KARTI ---
             card = QFrame()
             card.setProperty("class", "combatCard")
             card.setProperty("active", str(is_active).lower())
             card.setProperty("type", ent_type)
             card.setProperty("attitude", attitude_clean)
             
-            # ANA DÜZEN: Dikey (Üstte İsim/Can, Altta İkonlar)
             card_main_layout = QVBoxLayout(card)
             card_main_layout.setContentsMargins(5, 5, 5, 5)
             card_main_layout.setSpacing(2)
             
-            # 1. SATIR: İsim ve Can
             row_header = QWidget()
             row_header_layout = QHBoxLayout(row_header)
             row_header_layout.setContentsMargins(0, 0, 0, 0)
@@ -306,46 +271,26 @@ class BattleMapWindow(QMainWindow):
             
             row_header_layout.addWidget(lbl_name, 1)
             row_header_layout.addWidget(lbl_hp, 0)
-            
             card_main_layout.addWidget(row_header)
 
-            # 2. SATIR: Durum İkonları (Eğer varsa)
             if conditions:
                 row_conditions = QWidget()
                 row_cond_layout = QHBoxLayout(row_conditions)
                 row_cond_layout.setContentsMargins(0, 2, 0, 0)
                 row_cond_layout.setSpacing(4)
-                row_cond_layout.addStretch() # İkonları sağa yasla (veya sola için başa koy)
-                
+                row_cond_layout.addStretch() 
                 for cond in conditions:
-                    # SidebarConditionIcon sınıfını kullan
-                    icon_widget = SidebarConditionIcon(
-                        cond.get("name", "?"), 
-                        cond.get("icon"), 
-                        cond.get("duration", 0)
-                    )
+                    icon_widget = SidebarConditionIcon(cond.get("name", "?"), cond.get("icon"), cond.get("duration", 0))
                     row_cond_layout.addWidget(icon_widget)
-                
-                # İkonları sola yaslamak isterseniz addStretch'i buraya koyun:
-                # row_cond_layout.addStretch() 
-                
                 card_main_layout.addWidget(row_conditions)
 
             self.list_layout.addWidget(card)
 
-            # --- TOKEN GÜNCELLEME ---
-            # Tokenlar QGraphicsItem olduğu için QSS kullanamaz. 
-            # Rengi burada manuel belirleyip token nesnesine veriyoruz.
-            
-            token_border_color = "#bdbdbd" # Varsayılan: Gri
-            if is_active:
-                token_border_color = "#ffb74d" # Turuncu (Aktif)
-            elif is_player:
-                token_border_color = "#4caf50" # Yeşil (Oyuncu)
-            elif attitude_clean == "hostile":
-                token_border_color = "#ef5350" # Kırmızı (Düşman)
-            elif attitude_clean == "friendly":
-                token_border_color = "#42a5f5" # Mavi (Dost)
+            token_border_color = "#bdbdbd" 
+            if is_active: token_border_color = "#ffb74d" 
+            elif is_player: token_border_color = "#4caf50" 
+            elif attitude_clean == "hostile": token_border_color = "#ef5350" 
+            elif attitude_clean == "friendly": token_border_color = "#42a5f5" 
 
             token_key = c.get("tid")
             if not token_key: token_key = c.get("eid")
@@ -356,21 +301,14 @@ class BattleMapWindow(QMainWindow):
                     token.border_color = token_border_color
                     token.update_appearance(self.token_size)
                     token.setZValue(100 if is_active else 10)
-                    
                     if x is not None and y is not None:
-                         # Sürüklerken titremesin diye küçük tolerans
-                         if abs(token.x() - x) > 1 or abs(token.y() - y) > 1:
-                             token.setPos(x, y)
+                         if abs(token.x() - x) > 1 or abs(token.y() - y) > 1: token.setPos(x, y)
                 else:
                     pixmap = QPixmap(img_path) if img_path else None
                     token = BattleTokenItem(self.token_size, pixmap, token_border_color, name, token_key, eid, self.on_token_moved)
-                    
-                    if x is not None and y is not None:
-                        token.setPos(x, y)
+                    if x is not None and y is not None: token.setPos(x, y)
                     else:
-                        # Haritada pozisyonu yoksa sırayla diz
                         offset = len(self.tokens) * (self.token_size + 10)
                         token.setPos(50 + offset, 50)
-                    
                     self.scene.addItem(token)
                     self.tokens[token_key] = token

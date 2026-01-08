@@ -71,7 +71,6 @@ class NpcSheet(QWidget):
         btn_img_actions.addWidget(self.btn_add_img)
         btn_img_actions.addWidget(self.btn_remove_img)
 
-        # Oyuncuya Göster Butonu (Logic DatabaseTab'da bağlanacak)
         self.btn_show_player = QPushButton(tr("BTN_SHOW_PLAYER"))
         self.btn_show_player.setObjectName("primaryBtn")
         
@@ -123,7 +122,6 @@ class NpcSheet(QWidget):
 
         self.content_layout.addWidget(self.tabs)
         
-        # DM Notes
         self.grp_dm_notes = QGroupBox("DM Notes (Private)")
         self.grp_dm_notes.setStyleSheet("QGroupBox { border: 1px solid #d32f2f; color: #e57373; font-weight: bold; }")
         dm_notes_layout = QVBoxLayout(self.grp_dm_notes)
@@ -161,6 +159,16 @@ class NpcSheet(QWidget):
             self.grp_dynamic.setTitle(f"{cat_trans} {tr('LBL_PROPERTIES')}")
         else: self.grp_dynamic.setTitle(tr("LBL_PROPERTIES"))
 
+        for label_key, widget in self.dynamic_inputs.items():
+            label_widget = self.layout_dynamic.labelForField(widget)
+            if label_widget: label_widget.setText(f"{tr(label_key)}:")
+            if isinstance(widget, QComboBox):
+                for i in range(widget.count()):
+                    original_key = widget.itemData(i)
+                    if original_key:
+                        new_text = tr(original_key) if str(original_key).startswith("LBL_") else original_key
+                        widget.setItemText(i, new_text)
+
         self.tabs.setTabText(0, tr("TAB_STATS"))
         self.tabs.setTabText(1, tr("TAB_SPELLS"))
         self.tabs.setTabText(2, tr("TAB_ACTIONS"))
@@ -184,7 +192,7 @@ class NpcSheet(QWidget):
         self.custom_spell_container.setTitle(tr("LBL_MANUAL_SPELLS"))
         self.inventory_container.setTitle(tr("GRP_INVENTORY"))
 
-    # ... (build_dynamic_form, add_image_dialog, remove_current_image, show_prev_image, show_next_image, update_image_display, setup_stats_tab, setup_spells_tab, setup_features_tab, setup_inventory_tab, populate_sheet, collect_data_from_sheet, _fill_cards, _create_combat_stats_group, _update_modifier AYNI) ...
+    # ... (Metodlar: build_dynamic_form, add_image_dialog vb. aynı) ...
     def build_dynamic_form(self, category_name):
         while self.layout_dynamic.rowCount() > 0: self.layout_dynamic.removeRow(0)
         self.dynamic_inputs = {} 
@@ -358,11 +366,23 @@ class NpcSheet(QWidget):
         if ph_desc is None: ph_desc = tr("LBL_DETAILS_PH")
         card = QFrame(); card.setProperty("class", "featureCard")
         l = QVBoxLayout(card); h = QHBoxLayout()
-        t = QLineEdit(name); t.setPlaceholderText(ph_title); t.setStyleSheet("font-weight: bold; border:none; font-size: 14px; background: transparent;")
+        
+        # --- DÜZELTME: class="cardInput" atıyoruz, hardcoded color yok ---
+        t = QLineEdit(name)
+        t.setPlaceholderText(ph_title)
+        t.setProperty("class", "cardInput") 
+        t.setStyleSheet("font-weight: bold; border:none; font-size: 14px; background: transparent;")
+        
         btn = QPushButton(); btn.setFixedSize(24,24); btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton)); btn.setCursor(Qt.CursorShape.PointingHandCursor); btn.setToolTip(tr("BTN_REMOVE")); btn.setStyleSheet("background: transparent; border: none;")
         btn.clicked.connect(lambda: [group.dynamic_area.removeWidget(card), card.deleteLater()])
         h.addWidget(t); h.addWidget(btn); l.addLayout(h)
-        d = QTextEdit(desc); d.setPlaceholderText(ph_desc); d.setMinimumHeight(80); d.setMaximumHeight(300); d.setStyleSheet("border:none; background: transparent;")
+        
+        d = QTextEdit(desc)
+        d.setPlaceholderText(ph_desc)
+        d.setMinimumHeight(80); d.setMaximumHeight(300)
+        d.setProperty("class", "cardInput")
+        d.setStyleSheet("border:none; background: transparent;")
+        
         l.addWidget(d); group.dynamic_area.addWidget(card); card.inp_title = t; card.inp_desc = d
 
     def clear_all_cards(self):
@@ -468,14 +488,12 @@ class NpcSheet(QWidget):
 
     def collect_data_from_sheet(self, s):
         if not s.inp_name.text(): return None
-        
         def get_cards(container):
             res = []; layout = container.dynamic_area
             for i in range(layout.count()):
                 w = layout.itemAt(i).widget()
                 if w: res.append({"name": w.inp_title.text(), "desc": w.inp_desc.toPlainText()})
             return res
-            
         data = {
             "name": s.inp_name.text(), 
             "type": s.inp_type.currentText(),
@@ -503,7 +521,7 @@ class NpcSheet(QWidget):
     def _fill_cards(self, sheet, container, data_list):
         for item in data_list: sheet.add_feature_card(container, item.get("name"), item.get("desc"))
 
-    # --- PDF FONKSİYONLARI (Window Bağımlılıksız) ---
+    # --- PDF FONKSİYONLARI ---
     def add_pdf_dialog(self):
         fname, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_PDF"), "", "PDF Files (*.pdf)")
         if fname:
@@ -520,8 +538,7 @@ class NpcSheet(QWidget):
         selected = self.list_pdfs.currentItem()
         if not selected: QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_PDF_FIRST")); return
         pdf_path = self.dm.get_full_path(selected.text())
-        if pdf_path and os.path.exists(pdf_path):
-            QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_path))
+        if pdf_path and os.path.exists(pdf_path): QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_path))
         else: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
     
     def remove_current_pdf(self):
