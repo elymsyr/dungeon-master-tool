@@ -7,7 +7,7 @@ cache/
 dump.py
 dist/
 build/
-
+output.txt
 # C extensions
 *.so
 
