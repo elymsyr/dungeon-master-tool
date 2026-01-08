@@ -7,3 +7,4 @@ pytest
 pytest-qt
 pytest-mock
 pyinstaller
+pygame
