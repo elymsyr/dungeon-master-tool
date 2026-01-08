@@ -1,73 +1,72 @@
-name: Build and Release Binaries
+name: Build and Release
 
 on:
-    release:
-        types: [created]
+  release:
+    types: [created]
 
 permissions:
   contents: write
 
 jobs:
-    build:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os: [ubuntu-20.04, windows-latest]
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # Ubuntu 20.04 daha geniş uyumluluk sağlar
+        os: [ubuntu-20.04, windows-latest]
 
-            - name: Set up Python
-              uses: actions/setup-python@v5
-              with:
-                  python-version: "3.11"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Install dependencies
-              run: |
-                  python -m pip install --upgrade pip
-                  pip install -r requirements.txt
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-            # --- LINUX BUILD ---
-            - name: Build binary (Linux)
-              if: matrix.os == 'ubuntu-latest'
-              run: python build_linux.py
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-            # --- LINUX ARCHIVE (TAR.GZ) ---
-            # Linux'ta klasörü tar.gz yapıyoruz (Dosya izinlerini korur)
-            - name: Archive Linux Artifact
-              if: matrix.os == 'ubuntu-latest'
-              run: |
-                tar -czvf dist/DungeonMasterTool-Linux.tar.gz -C dist DungeonMasterTool
+      # --- LINUX BUILD ---
+      - name: Build (Linux)
+        if: matrix.os == 'ubuntu-20.04'
+        run: python build_linux.py
 
-            # --- WINDOWS BUILD ---
-            - name: Build binary (Windows)
-              if: matrix.os == 'windows-latest'
-              run: python build_windows.py
+      - name: Archive Linux (tar.gz)
+        if: matrix.os == 'ubuntu-20.04'
+        run: |
+          # dist/DungeonMasterTool klasörünü sıkıştır
+          tar -czvf DungeonMasterTool-Linux.tar.gz -C dist DungeonMasterTool
 
-            # --- WINDOWS ARCHIVE (ZIP) ---
-            # Windows'ta klasörü zip yapıyoruz
-            - name: Zip Windows Artifact
-              if: matrix.os == 'windows-latest'
-              run: |
-                Compress-Archive -Path dist/DungeonMasterTool/* -DestinationPath dist/DungeonMasterTool-Windows.zip
+      # --- WINDOWS BUILD ---
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        run: python build_windows.py
 
-            # --- ARTIFACT SEÇİMİ ---
-            - name: Find built artifact
-              id: find_artifact
-              run: |
-                  if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-                    # Linux için tar.gz dosyasını seç
-                    echo "artifact=dist/DungeonMasterTool-Linux.tar.gz" >> $GITHUB_OUTPUT
-                  else
-                    # Windows için zip dosyasını seç
-                    echo "artifact=dist/DungeonMasterTool-Windows.zip" >> $GITHUB_OUTPUT
-                  fi
-              shell: bash
+      - name: Archive Windows (zip)
+        if: matrix.os == 'windows-latest'
+        run: |
+          # PowerShell kullanarak zipleme
+          Compress-Archive -Path dist\DungeonMasterTool -DestinationPath DungeonMasterTool-Windows.zip
 
-            # --- YÜKLEME ---
-            - name: Upload Release Asset
-              uses: softprops/action-gh-release@v2
-              with:
-                  files: ${{ steps.find_artifact.outputs.artifact }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # --- ARTIFACT BELİRLEME ---
+      - name: Set Artifact Path
+        id: set_artifact
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
+            echo "path=DungeonMasterTool-Linux.tar.gz" >> $GITHUB_OUTPUT
+          else
+            echo "path=DungeonMasterTool-Windows.zip" >> $GITHUB_OUTPUT
+          fi
+
+      # --- YÜKLEME (RELEASE UPLOAD) ---
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{ steps.set_artifact.outputs.path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
