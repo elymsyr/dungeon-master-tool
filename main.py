@@ -151,18 +151,23 @@ class MainWindow(QMainWindow):
                 self.player_window.update_theme(self.current_stylesheet)
 
     def retranslate_ui(self):
+        # 1. Üst Bar Butonları
         self.btn_toggle_player.setText(tr("BTN_PLAYER_SCREEN"))
         self.btn_export_txt.setText(tr("BTN_EXPORT"))
         self.lbl_campaign.setText(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
         
+        # 2. Sekme Başlıkları
         self.tabs.setTabText(0, tr("TAB_DB"))
         self.tabs.setTabText(1, tr("TAB_MAP"))
         self.tabs.setTabText(2, tr("TAB_SESSION"))
         
+        # 3. Alt Sekmeleri Tetikle (Özyinelemeli Çeviri)
+        # NpcSheet içindeki güncellemeler bu çağrılar sayesinde yapılır
         if hasattr(self.db_tab, "retranslate_ui"): self.db_tab.retranslate_ui()
         if hasattr(self.map_tab, "retranslate_ui"): self.map_tab.retranslate_ui()
         if hasattr(self.session_tab, "retranslate_ui"): self.session_tab.retranslate_ui()
         
+        # 4. Tema Seçimi
         self.lbl_theme.setText(tr("LBL_THEME"))
         
         # Tema isimlerini güncelle (Sıra bozulmadan)

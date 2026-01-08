@@ -216,15 +216,31 @@ class DatabaseTab(QWidget):
         self.refresh_list()
 
     def retranslate_ui(self):
+        # 1. Kenar Çubuğu (Sidebar) Elemanlarını Güncelle
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
-        self.combo_filter.setItemText(0, tr("CAT_ALL"))
-        for i in range(1, self.combo_filter.count()):
+        
+        # Filtre Combobox'ını güncelle
+        for i in range(self.combo_filter.count()):
             cat = self.combo_filter.itemData(i)
-            if cat: self.combo_filter.setItemText(i, tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"))
+            if cat: 
+                # Standart kategori anahtarlarını çevir
+                self.combo_filter.setItemText(i, tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"))
+            else:
+                self.combo_filter.setItemText(i, tr("CAT_ALL"))
+
         self.check_show_library.setText(tr("LBL_CHECK_LIBRARY"))
         self.btn_download_all.setText(tr("BTN_DOWNLOAD_ALL"))
         self.btn_browser.setText(tr("BTN_API_BROWSER"))
         self.btn_add.setText(tr("BTN_NEW_ENTITY"))
+
+        # 2. Açık Olan Sekmeleri (NpcSheet'leri) Güncelle
+        # Sol ve Sağ panellerdeki tüm sekmeleri gezip dillerini güncelliyoruz.
+        for manager in [self.tab_manager_left, self.tab_manager_right]:
+            for i in range(manager.count()):
+                widget = manager.widget(i)
+                # Eğer widget bir NpcSheet ise (retranslate_ui metodu varsa) çağır
+                if hasattr(widget, "retranslate_ui"):
+                    widget.retranslate_ui()
 
     def refresh_list(self):
         self.list_widget.clear()
@@ -471,8 +487,17 @@ class DatabaseTab(QWidget):
         for l, w in s.dynamic_inputs.items():
             val = attrs.get(l, "")
             if isinstance(w, QComboBox): 
-                ix = w.findText(val); w.setCurrentIndex(ix) if ix>=0 else w.setCurrentText(val)
-            else: w.setText(str(val))
+                ix = w.findData(val)
+                if ix >= 0:
+                    w.setCurrentIndex(ix)
+                else:
+                    ix_text = w.findText(val)
+                    if ix_text >= 0:
+                        w.setCurrentIndex(ix_text)
+                    else:
+                        w.setCurrentText(val)
+            else: 
+                w.setText(str(val))
 
         s.clear_all_cards()
         self._fill_cards(s, s.trait_container, data.get("traits", []))
