@@ -1,0 +1,26 @@
+id: "forest"
+name: "Elven Forest"
+states:
+  normal:
+    tracks:
+      base: 
+        - file: "ambience.mp3"
+          repeat: 0
+      level1: 
+        - file: "wind.mp3"
+          repeat: 0
+      level2: 
+        - file: "birds.mp3"
+          repeat: 0
+          
+  combat:
+    tracks:
+      base: 
+        - file: "drums_low.mp3"
+          repeat: 0
+      level1: 
+        - file: "drums_mid.mp3"
+          repeat: 0
+      level2: 
+        - file: "orchestra_high.mp3"
+          repeat: 0

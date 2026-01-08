@@ -13,6 +13,7 @@ from ui.tabs.map_tab import MapTab
 from ui.tabs.session_tab import SessionTab
 from ui.campaign_selector import CampaignSelector
 from core.locales import tr
+from ui.soundpad_panel import SoundpadPanel
 
 class MainWindow(QMainWindow):
     def __init__(self, data_manager):
@@ -64,6 +65,13 @@ class MainWindow(QMainWindow):
         self.btn_export_txt.setObjectName("successBtn")
         self.btn_export_txt.clicked.connect(self.export_entities_to_txt)
         
+        # --- YENİ BUTON: SOUNDPAD ---
+        self.btn_toggle_sound = QPushButton("🔊")
+        self.btn_toggle_sound.setCheckable(True) # Basılı kalabilen buton (Toggle)
+        self.btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
+        self.btn_toggle_sound.clicked.connect(self.toggle_soundpad)
+        # ----------------------------
+        
         # Dünya Bilgisi
         self.lbl_campaign = QLabel(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
         self.lbl_campaign.setObjectName("toolbarLabel")
@@ -103,6 +111,7 @@ class MainWindow(QMainWindow):
         # Toolbar'a ekle
         toolbar.addWidget(self.btn_toggle_player)
         toolbar.addWidget(self.btn_export_txt)
+        toolbar.addWidget(self.btn_toggle_sound) # Soundpad Butonu
         toolbar.addWidget(self.lbl_campaign)
         toolbar.addStretch()
         toolbar.addWidget(self.combo_lang)
@@ -110,6 +119,9 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(self.combo_theme)
         
         main_layout.addLayout(toolbar)
+        
+        # --- ORTA ALAN (İÇERİK + SOUNDPAD) ---
+        content_layout = QHBoxLayout()
         
         # --- SEKMELER (TABS) ---
         self.tabs = QTabWidget()
@@ -127,15 +139,56 @@ class MainWindow(QMainWindow):
         self.session_tab = SessionTab(self.data_manager)
         self.tabs.addTab(self.session_tab, tr("TAB_SESSION"))
         
-        main_layout.addWidget(self.tabs)
+        # --- SOUNDPAD PANELİ (SAĞ TARAF) ---
+        self.soundpad_panel = SoundpadPanel()
+        self.soundpad_panel.setVisible(False) # Başlangıçta gizli
+        
+        # Layout'a Ekleme (Sol: Sekmeler, Sağ: Soundpad)
+        content_layout.addWidget(self.tabs, 1) # 1 = Esnek (Genişleyen)
+        content_layout.addWidget(self.soundpad_panel, 0) # 0 = Sabit Genişlik
+        
+        main_layout.addLayout(content_layout)
         
         self.map_tab.render_map()
         self.retranslate_ui()
+
+    def retranslate_ui(self):
+        # Üst Bar Çevirileri
+        self.btn_toggle_player.setText(tr("BTN_PLAYER_SCREEN"))
+        self.btn_export_txt.setText(tr("BTN_EXPORT"))
+        self.btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
+        self.lbl_campaign.setText(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
+        
+        # Sekme İsimleri
+        self.tabs.setTabText(0, tr("TAB_DB"))
+        self.tabs.setTabText(1, tr("TAB_MAP"))
+        self.tabs.setTabText(2, tr("TAB_SESSION"))
+        
+        # Alt Bileşenleri Tetikle (Recursive Update)
+        if hasattr(self.db_tab, "retranslate_ui"): self.db_tab.retranslate_ui()
+        if hasattr(self.map_tab, "retranslate_ui"): self.map_tab.retranslate_ui()
+        if hasattr(self.session_tab, "retranslate_ui"): self.session_tab.retranslate_ui()
+        if hasattr(self.soundpad_panel, "retranslate_ui"): self.soundpad_panel.retranslate_ui()
+        
+        # Tema Çevirisi
+        self.lbl_theme.setText(tr("LBL_THEME"))
+        
+        # Tema Combobox İsimlerini Güncelle
+        for i, (_, display_name) in enumerate(self.theme_list):
+            if display_name.startswith("THEME_"):
+                self.combo_theme.setItemText(i, tr(display_name))
+            else:
+                self.combo_theme.setItemText(i, display_name)
 
     def change_language(self, index):
         code = "TR" if index == 1 else "EN"
         self.data_manager.save_settings({"language": code})
         self.retranslate_ui()
+
+    def toggle_soundpad(self):
+        is_visible = self.soundpad_panel.isVisible()
+        self.soundpad_panel.setVisible(not is_visible)
+        self.btn_toggle_sound.setChecked(not is_visible)
 
     def change_theme(self, index):
         if 0 <= index < len(self.theme_list):
@@ -149,33 +202,6 @@ class MainWindow(QMainWindow):
             # Propagate to player window
             if hasattr(self.player_window, "update_theme"):
                 self.player_window.update_theme(self.current_stylesheet)
-
-    def retranslate_ui(self):
-        # 1. Üst Bar Butonları
-        self.btn_toggle_player.setText(tr("BTN_PLAYER_SCREEN"))
-        self.btn_export_txt.setText(tr("BTN_EXPORT"))
-        self.lbl_campaign.setText(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
-        
-        # 2. Sekme Başlıkları
-        self.tabs.setTabText(0, tr("TAB_DB"))
-        self.tabs.setTabText(1, tr("TAB_MAP"))
-        self.tabs.setTabText(2, tr("TAB_SESSION"))
-        
-        # 3. Alt Sekmeleri Tetikle (Özyinelemeli Çeviri)
-        # NpcSheet içindeki güncellemeler bu çağrılar sayesinde yapılır
-        if hasattr(self.db_tab, "retranslate_ui"): self.db_tab.retranslate_ui()
-        if hasattr(self.map_tab, "retranslate_ui"): self.map_tab.retranslate_ui()
-        if hasattr(self.session_tab, "retranslate_ui"): self.session_tab.retranslate_ui()
-        
-        # 4. Tema Seçimi
-        self.lbl_theme.setText(tr("LBL_THEME"))
-        
-        # Tema isimlerini güncelle (Sıra bozulmadan)
-        for i, (_, display_name) in enumerate(self.theme_list):
-            if display_name.startswith("THEME_"):
-                self.combo_theme.setItemText(i, tr(display_name))
-            else:
-                self.combo_theme.setItemText(i, display_name)
 
     def toggle_player_window(self):
         if self.player_window.isVisible():

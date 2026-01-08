@@ -397,3 +397,7 @@ en:
   CAT_LORE: "Lore"
   CAT_QUEST: "Quest"
   CAT_LOCATION: "Location"
+
+  BTN_TOGGLE_SOUNDPAD: "Toggle Soundpad"
+  TITLE_SOUNDPAD: "Soundpad"
+  MSG_SOUNDPAD_COMING_SOON: "Music and FX controls will appear here."
