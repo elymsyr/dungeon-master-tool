@@ -540,7 +540,7 @@ class DatabaseTab(QWidget):
     def _show_to_player(self, sheet):
         """Show current entity image to player window"""
         if not sheet.image_list:
-            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_IMAGE"))
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_IMAGE_IN_ENTITY"))
             return
         
         # Get current image path
@@ -553,7 +553,7 @@ class DatabaseTab(QWidget):
             self.player_window.show_image(pixmap)
             self.player_window.show()
         else:
-            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND"))
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
     
     def _add_pdf_to_sheet(self, sheet):
         """Add PDF file to entity"""
@@ -587,7 +587,7 @@ class DatabaseTab(QWidget):
         """Open selected PDF in system viewer"""
         selected = sheet.list_pdfs.currentItem()
         if not selected:
-            QMessageBox.warning(self, tr("MSG_WARNING"), "Please select a PDF first")
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_PDF_FIRST"))
             return
         
         pdf_filename = selected.text()
@@ -598,13 +598,13 @@ class DatabaseTab(QWidget):
             from PyQt6.QtCore import QUrl
             QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_path))
         else:
-            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND"))
+            MessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
     
     def _project_pdf_to_player(self, sheet):
         """Project PDF to player window"""
         selected = sheet.list_pdfs.currentItem()
         if not selected:
-            QMessageBox.warning(self, tr("MSG_WARNING"), "Please select a PDF first")
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_PDF_FIRST"))
             return
         
         pdf_filename = selected.text()
@@ -614,7 +614,7 @@ class DatabaseTab(QWidget):
             self.player_window.show_pdf(pdf_path)
             self.player_window.show()
         else:
-            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND"))
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
     
     def _remove_pdf_from_sheet(self, sheet):
         """Remove selected PDF from entity"""
@@ -625,7 +625,7 @@ class DatabaseTab(QWidget):
         if QMessageBox.question(
             self, 
             tr("BTN_REMOVE"), 
-            "Remove this PDF from the entity?"
+            tr("MSG_REMOVE_PDF_CONFIRM")
         ) == QMessageBox.StandardButton.Yes:
             eid = sheet.property("entity_id")
             pdf_filename = selected.text()
