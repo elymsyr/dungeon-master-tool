@@ -17,31 +17,38 @@ class DataManager:
         self.current_theme = self.settings.get("theme", "dark")
         
         self.current_campaign_path = None
-        # Varsayılan boş yapı
+        
         self.data = {
             "world_name": "", 
             "entities": {}, 
             "map_data": {"image_path": "", "pins": []},
             "sessions": [],
-            "last_active_session_id": None # Son oturumu hatırlamak için
+            "last_active_session_id": None
         }
         self.api_client = DndApiClient()
         self.reference_cache = {}
         
         if not os.path.exists(WORLDS_DIR): os.makedirs(WORLDS_DIR)
-        self._load_reference_cache()
+        
+        # Cache'i yükle
+        self.reload_library_cache()
 
-    def _load_reference_cache(self):
+    def reload_library_cache(self):
+        """Kütüphane indeksini diskten tekrar okur."""
         if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
         if os.path.exists(CACHE_FILE):
             try:
-                with open(CACHE_FILE, "r", encoding="utf-8") as f: self.reference_cache = json.load(f)
-            except: self.reference_cache = {}
-        else: self.reference_cache = {}
+                with open(CACHE_FILE, "r", encoding="utf-8") as f: 
+                    self.reference_cache = json.load(f)
+            except: 
+                self.reference_cache = {}
+        else: 
+            self.reference_cache = {}
 
     def _save_reference_cache(self):
         if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
-        with open(CACHE_FILE, "w", encoding="utf-8") as f: json.dump(self.reference_cache, f, indent=4)
+        with open(CACHE_FILE, "w", encoding="utf-8") as f: 
+            json.dump(self.reference_cache, f, indent=4)
 
     # --- AYARLAR ---
     def load_settings(self):
@@ -56,7 +63,6 @@ class DataManager:
         path = os.path.join(CACHE_DIR, "settings.json")
         if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
         
-        # Merge with existing settings to not lose keys
         new_settings = self.settings.copy()
         new_settings.update(settings)
         
@@ -88,40 +94,28 @@ class DataManager:
         try:
             with open(path, "r", encoding="utf-8") as f: self.data = json.load(f)
             
-            # --- VERİ YAPISI MIGRATION (Eksik alanları tamamla) ---
             if "sessions" not in self.data: self.data["sessions"] = []
             if "entities" not in self.data: self.data["entities"] = {}
             if "map_data" not in self.data: self.data["map_data"] = {"image_path": "", "pins": []}
             if "last_active_session_id" not in self.data: self.data["last_active_session_id"] = None
             
-            # --- OTOMATİK SESSION OLUŞTURMA ---
-            # Eğer hiç oturum yoksa, varsayılan bir tane oluştur ve aktif et.
             if not self.data["sessions"]:
                 new_sid = str(uuid.uuid4())
                 default_session = {
-                    "id": new_sid,
-                    "name": "Default Session",
-                    "date": "Bugün",
-                    "notes": "",
-                    "logs": "",
-                    "combatants": [] # Multi-encounter yapısı combat_tracker içinde handle ediliyor, burası temel yapı.
+                    "id": new_sid, "name": "Default Session", "date": "Bugün", 
+                    "notes": "", "logs": "", "combatants": []
                 }
                 self.data["sessions"].append(default_session)
                 self.data["last_active_session_id"] = new_sid
-                print("⚠️ Otomatik 'Default Session' oluşturuldu.")
             
-            # Eğer last_active_session_id boşsa ama session varsa, sonuncusunu seç
             if not self.data["last_active_session_id"] and self.data["sessions"]:
                 self.data["last_active_session_id"] = self.data["sessions"][-1]["id"]
 
-            # --- ENTITY MIGRATION ---
+            # Migration Logic
             for eid, ent in self.data["entities"].items():
-                # Eski Tipi (Canavar) Yeni Tipe (Monster) Çevir
                 old_type = ent.get("type", "NPC")
-                if old_type in SCHEMA_MAP:
-                    ent["type"] = SCHEMA_MAP[old_type]
+                if old_type in SCHEMA_MAP: ent["type"] = SCHEMA_MAP[old_type]
                 
-                # Eski Özellik İsimlerini (Irk) Yeniye (LBL_RACE) Çevir
                 attrs = ent.get("attributes", {})
                 new_attrs = {}
                 for k, v in attrs.items():
@@ -129,17 +123,15 @@ class DataManager:
                     new_attrs[new_key] = v
                 ent["attributes"] = new_attrs
 
-                # Eksik alanları varsayılanlarla doldur
                 default = get_default_entity_structure(ent.get("type", "NPC"))
                 for key, val in default.items():
                     if key not in ent: ent[key] = val
                 
-                # Resim yolu migration
                 if not ent.get("images") and ent.get("image_path"):
                     ent["images"] = [ent["image_path"]]
 
             self.current_campaign_path = folder
-            self.save_data() # Migration değişikliklerini kaydet
+            self.save_data()
             return True, "Yüklendi"
         except Exception as e: return False, str(e)
 
@@ -149,23 +141,11 @@ class DataManager:
             if not os.path.exists(folder): os.makedirs(folder)
             if not os.path.exists(os.path.join(folder, "assets")): os.makedirs(os.path.join(folder, "assets"))
             
-            # İlk session ID'sini oluştur
             first_sid = str(uuid.uuid4())
-            
             self.data = {
-                "world_name": world_name, 
-                "entities": {}, 
+                "world_name": world_name, "entities": {}, 
                 "map_data": {"image_path": "", "pins": []},
-                "sessions": [
-                    {
-                        "id": first_sid,
-                        "name": "Session 0",
-                        "date": "Bugün",
-                        "notes": "",
-                        "logs": "",
-                        "combatants": []
-                    }
-                ],
+                "sessions": [{"id": first_sid, "name": "Session 0", "date": "Bugün", "notes": "", "logs": "", "combatants": []}],
                 "last_active_session_id": first_sid
             }
             self.current_campaign_path = folder
@@ -181,14 +161,7 @@ class DataManager:
     # --- SESSION YÖNETİMİ ---
     def create_session(self, name):
         session_id = str(uuid.uuid4())
-        new_session = {
-            "id": session_id,
-            "name": name,
-            "date": "Bugün",
-            "notes": "",
-            "logs": "",
-            "combatants": [] # Yeni yapıda burası dict (state) olabilir
-        }
+        new_session = {"id": session_id, "name": name, "date": "Bugün", "notes": "", "logs": "", "combatants": []}
         if "sessions" not in self.data: self.data["sessions"] = []
         self.data["sessions"].append(new_session)
         self.set_active_session(session_id)
@@ -205,17 +178,13 @@ class DataManager:
         if "sessions" not in self.data: return
         for s in self.data["sessions"]:
             if s["id"] == session_id:
-                s["notes"] = notes
-                s["logs"] = logs
-                s["combatants"] = combatants # Artık state dict'i de olabilir
+                s["notes"] = notes; s["logs"] = logs; s["combatants"] = combatants
                 self.set_active_session(session_id)
                 self.save_data()
                 break
 
     def set_active_session(self, session_id):
         self.data["last_active_session_id"] = session_id
-        # save_data burada çağrılmaz, genellikle save_session_data içinde kaydedilir zaten
-        # ama anlık değişim için çağrılabilir.
         
     def get_last_active_session_id(self):
         return self.data.get("last_active_session_id")
@@ -233,11 +202,6 @@ class DataManager:
             del self.data["entities"][eid]
             self.save_data()
 
-    def get_entity_name(self, eid):
-        if eid in self.data["entities"]:
-            return self.data["entities"][eid].get("name")
-        return None
-
     def fetch_from_api(self, category, query):
         for eid, ent in self.data["entities"].items():
             if ent["name"].lower() == query.lower() and ent["type"] == category:
@@ -246,7 +210,6 @@ class DataManager:
         parsed_data, msg = self.api_client.search(category, query)
         if not parsed_data: return False, msg, None
         
-        # Canavar veya NPC ise büyülerini çöz (Eager resolve)
         if category in ["Monster", "NPC"] and isinstance(parsed_data, dict):
             parsed_data = self._resolve_dependencies(parsed_data)
             
@@ -254,18 +217,16 @@ class DataManager:
 
     def fetch_details_from_api(self, category, index_name):
         folder_map = {
-            "Monster": "monsters", 
-            "Spell": "spells", 
-            "Equipment": "equipment",
-            "Class": "classes", 
-            "Race": "races"
+            "Monster": "monsters", "Spell": "spells", 
+            "Equipment": "equipment", "Class": "classes", "Race": "races"
         }
         folder = folder_map.get(category)
         
         # 1. Cache Kontrol
         if folder:
             paths = [os.path.join(LIBRARY_DIR, folder, f"{index_name}.json")]
-            if category == "Eşya (Equipment)":
+            # Magic Items özel durumu
+            if category == "Eşya (Equipment)" or category == "Equipment":
                 paths.append(os.path.join(LIBRARY_DIR, "magic-items", f"{index_name}.json"))
             
             for local_path in paths:
@@ -283,50 +244,37 @@ class DataManager:
         return False, msg
 
     def import_entity_with_dependencies(self, data, type_override=None):
-        """API verisindeki bağlı büyüleri indirip kaydeder."""
-        # type_override varsa tipi güncelle (Örn: Monster -> NPC)
-        if type_override:
-            data["type"] = type_override
-            
+        if type_override: data["type"] = type_override
         data = self._resolve_dependencies(data)
         return self.save_entity(None, data)
 
     def _resolve_dependencies(self, data):
-        """Monster içindeki _detected_spell_indices verisini işler."""
         if not isinstance(data, dict): return data
         
         detected_spells = data.pop("_detected_spell_indices", [])
         if not detected_spells: return data
         
         linked_spell_ids = []
-        print(f"🔮 {len(detected_spells)} bağlı büyü indiriliyor...")
-        
         for spell_index in detected_spells:
-            # 1. API'den/Cache'den büyü bilgisini çek
             success, spell_data = self.fetch_details_from_api("Spell", spell_index)
             if success:
                 spell_name = spell_data.get("name")
                 existing_id = None
                 
-                # 2. Veritabanında zaten var mı?
                 for eid, ent in self.data["entities"].items():
                     if ent.get("type") == "Spell" and ent.get("name") == spell_name:
                         existing_id = eid
                         break
                 
-                if existing_id: 
-                    linked_spell_ids.append(existing_id)
+                if existing_id: linked_spell_ids.append(existing_id)
                 else:
-                    # 3. Yoksa kaydet
                     new_id = self.save_entity(None, spell_data)
                     linked_spell_ids.append(new_id)
 
-        # 4. Monster verisine büyü ID'lerini ekle
         if linked_spell_ids:
             if "spells" not in data: data["spells"] = []
             for sid in linked_spell_ids:
-                if sid not in data["spells"]: 
-                    data["spells"].append(sid)
+                if sid not in data["spells"]: data["spells"].append(sid)
         
         return data
 
@@ -358,12 +306,21 @@ class DataManager:
         self.data["map_data"]["pins"] = [p for p in self.data["map_data"]["pins"] if p.get("id") != pid]
         self.save_data()
 
+    # --- DÜZELTİLEN KISIM ---
     def search_in_library(self, category, search_text):
         results = []
         search_text = search_text.lower()
         cats = [category] if category in self.reference_cache else list(self.reference_cache.keys())
+        
         for c in cats:
             for item in self.reference_cache.get(c, []):
-                if search_text in item["name"].lower():
-                    results.append({"id": f"lib_{c}_{item['index']}", "name": item["name"], "type": c, "is_library": True})
+                # Arama metni 2 karakterden kısaysa hepsini döndürme, sadece eşleşeni döndür
+                if len(search_text) < 2 or search_text in item["name"].lower():
+                    results.append({
+                        "id": f"lib_{c}_{item['index']}", 
+                        "name": item["name"], 
+                        "type": c, 
+                        "is_library": True,
+                        "index": item["index"]  # <-- EKLENDİ: Bu eksikti
+                    })
         return results

@@ -274,6 +274,9 @@ class BulkDownloadDialog(QDialog):
         self.btn_start.setText(tr("MSG_DOWNLOAD_FINISHED"))
         self.btn_start.setEnabled(True)
         self.progress_bar.setValue(100)
+        if self.parent() and hasattr(self.parent(), "dm"):
+            self.parent().dm.reload_library_cache()
+            
         QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_DOWNLOAD_COMPLETE"))
 
     def closeEvent(self, event):

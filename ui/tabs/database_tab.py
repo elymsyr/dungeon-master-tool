@@ -247,9 +247,7 @@ class DatabaseTab(QWidget):
         text = self.inp_search.text().lower()
         
         # Filtreleme için standart kategori isimlerini kullanalım
-        # Kullanıcı arayüzde "Canavar" seçer ama biz "monster" ararız
-        flt_ui = self.combo_filter.currentText()     # Görünen: "Canavar"
-        flt_data = self.combo_filter.currentData()   # Veri: "Monster" (Schema'dan gelen)
+        flt_data = self.combo_filter.currentData()
 
         # Kategori Dönüştürücü (Database -> API Key)
         def normalize_type(t):
@@ -269,41 +267,33 @@ class DatabaseTab(QWidget):
             raw_type = data.get("type", "NPC")
             norm_type = normalize_type(raw_type)
             
-            # Filtre Kontrolü
             if target_cat and norm_type != target_cat: continue
             if text not in name.lower() and text not in str(data.get("tags", "")).lower(): continue
             
-            # Liste Öğesi Oluştur
             item = QListWidgetItem(self.list_widget)
             item.setData(Qt.ItemDataRole.UserRole, eid)
             
-            # Görsel Widget Ekle
             widget = EntityListItemWidget(name, raw_type)
             item.setSizeHint(widget.sizeHint())
             self.list_widget.setItemWidget(item, widget)
 
         # 2. KÜTÜPHANE (CACHE/OFFLINE)
         if self.check_show_library.isChecked() and (len(text) > 2 or target_cat):
-            # Kütüphanede arama yaparken de raw kategoriyi (monster) kullanıyoruz
-            # DataManager.search_in_library fonksiyonu artık standart anahtarlarla çalışmalı
-            # Ancak eski cache dosyalarınızda "Canavar" yazıyor olabilir.
-            
-            # Bu yüzden search_in_library'den dönen sonuçları da standardize edeceğiz.
-            # Not: search_in_library metoduna "None" gönderirsek hepsinde arar, biz burada filtreleyelim.
-            
-            lib_results = self.dm.search_in_library(None, text) # Hepsini getir, burada eleyelim
+            lib_results = self.dm.search_in_library(None, text)
             
             for res in lib_results:
-                res_cat = res["type"] # Örn: "Canavar" veya "monsters" gelebilir
+                # --- HATA DÜZELTME BAŞLANGICI ---
+                # 'index' anahtarı yoksa güvenli çıkış yap
+                if "index" not in res:
+                    continue
+                # ------------------------------
+
+                res_cat = res["type"]
                 norm_res_cat = normalize_type(res_cat)
                 
-                # Filtreye uyuyor mu?
                 if target_cat and norm_res_cat != target_cat: continue
                 
                 item = QListWidgetItem(self.list_widget)
-                # ID formatı: lib_kategori_index
-                # Burada KRİTİK NOKTA: Kategori ismini API'nin anlayacağı dile (ingilizce) çevirip ID'ye gömmeliyiz.
-                # Örn: lib_monster_aboleth (lib_Canavar_aboleth DEĞİL)
                 
                 api_safe_cat = "monsters" if norm_res_cat == "monster" else \
                                "spells" if norm_res_cat == "spell" else \
@@ -314,7 +304,6 @@ class DatabaseTab(QWidget):
                 safe_id = f"lib_{api_safe_cat}_{res['index']}"
                 item.setData(Qt.ItemDataRole.UserRole, safe_id)
                 
-                # Görsel Widget (Kütüphane öğesi olduğu belli olsun diye ismin yanına ikon koyabiliriz)
                 widget = EntityListItemWidget("📚 " + res["name"], res_cat)
                 item.setSizeHint(widget.sizeHint())
                 self.list_widget.setItemWidget(item, widget)
