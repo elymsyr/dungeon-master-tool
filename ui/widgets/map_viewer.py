@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsEllipseItem, QMenu, QGraphicsItem
 from PyQt6.QtGui import QPixmap, QBrush, QColor, QPen, QAction, QPainter, QWheelEvent, QCursor
 from PyQt6.QtCore import Qt, pyqtSignal
+from core.locales import tr
 
 class MapPinItem(QGraphicsEllipseItem):
     def __init__(self, x, y, radius, color, pin_id, entity_id, tooltip_text, callback_action):
