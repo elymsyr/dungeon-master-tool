@@ -222,10 +222,8 @@ class DataManager:
         }
         folder = folder_map.get(category)
         
-        # 1. Cache Kontrol
         if folder:
             paths = [os.path.join(LIBRARY_DIR, folder, f"{index_name}.json")]
-            # Magic Items özel durumu
             if category == "Eşya (Equipment)" or category == "Equipment":
                 paths.append(os.path.join(LIBRARY_DIR, "magic-items", f"{index_name}.json"))
             
@@ -238,19 +236,49 @@ class DataManager:
                     except Exception as e: 
                         print(f"Cache okuma hatası ({category}/{index_name}): {e}")
 
-        # 2. API Çekim
         parsed_data, msg = self.api_client.search(category, index_name)
         if parsed_data: return True, parsed_data
         return False, msg
 
     def import_entity_with_dependencies(self, data, type_override=None):
         if type_override: data["type"] = type_override
+        # Resolve dependencies also handles image downloading now
         data = self._resolve_dependencies(data)
         return self.save_entity(None, data)
 
     def _resolve_dependencies(self, data):
         if not isinstance(data, dict): return data
         
+        # --- NEW: HANDLE IMAGE DOWNLOAD ---
+        remote_url = data.pop("_remote_image_url", None)
+        if remote_url and self.current_campaign_path:
+            try:
+                # Create a filename based on name
+                safe_name = "".join([c for c in data.get("name", "image") if c.isalnum() or c in (' ','-','_')]).strip().replace(' ', '_')
+                filename = f"{safe_name}_{uuid.uuid4().hex[:6]}.png" # Assume PNG or check ext
+                
+                # Check for extension in URL
+                if remote_url.lower().endswith(".jpg"): filename = filename.replace(".png", ".jpg")
+                elif remote_url.lower().endswith(".jpeg"): filename = filename.replace(".png", ".jpeg")
+                
+                # Download
+                img_data = self.api_client.download_image_bytes(remote_url)
+                if img_data:
+                    assets_dir = os.path.join(self.current_campaign_path, "assets")
+                    if not os.path.exists(assets_dir): os.makedirs(assets_dir)
+                    
+                    full_path = os.path.join(assets_dir, filename)
+                    with open(full_path, "wb") as f:
+                        f.write(img_data)
+                    
+                    # Update Entity Data
+                    rel_path = os.path.join("assets", filename)
+                    data["image_path"] = rel_path
+                    data["images"] = [rel_path]
+            except Exception as e:
+                print(f"Error downloading image: {e}")
+        # ----------------------------------
+
         detected_spells = data.pop("_detected_spell_indices", [])
         if not detected_spells: return data
         
@@ -306,7 +334,6 @@ class DataManager:
         self.data["map_data"]["pins"] = [p for p in self.data["map_data"]["pins"] if p.get("id") != pid]
         self.save_data()
 
-    # --- DÜZELTİLEN KISIM ---
     def search_in_library(self, category, search_text):
         results = []
         search_text = search_text.lower()
@@ -314,13 +341,12 @@ class DataManager:
         
         for c in cats:
             for item in self.reference_cache.get(c, []):
-                # Arama metni 2 karakterden kısaysa hepsini döndürme, sadece eşleşeni döndür
                 if len(search_text) < 2 or search_text in item["name"].lower():
                     results.append({
                         "id": f"lib_{c}_{item['index']}", 
                         "name": item["name"], 
                         "type": c, 
                         "is_library": True,
-                        "index": item["index"]  # <-- EKLENDİ: Bu eksikti
+                        "index": item["index"]
                     })
         return results
