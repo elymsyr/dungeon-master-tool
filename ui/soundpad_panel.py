@@ -127,30 +127,67 @@ class SoundpadPanel(QWidget):
             self.grp_states.setVisible(True)
 
     def _rebuild_state_buttons(self):
-        # Eski butonları temizle
+        # Temizle
         while self.layout_states.count():
             child = self.layout_states.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+            if child.widget(): child.widget().deleteLater()
         
         if not self.current_theme: return
 
-        # Yeni butonları ekle
+        # Butonları Sakla (Daha sonra ikon değiştirmek için)
+        self.state_buttons = {} 
+
         for state_name in self.current_theme.states.keys():
-            btn = QPushButton(state_name.title()) # 'combat' -> 'Combat'
+            btn = QPushButton(state_name.title())
+            btn.setCheckable(True) # Basılı kalma özelliği
             
-            # Renk kodlaması (Opsiyonel ama şık durur)
-            if state_name.lower() == "combat":
-                btn.setObjectName("dangerBtn") # Kırmızı
-            elif state_name.lower() == "victory":
-                btn.setObjectName("successBtn") # Yeşil
-            else:
-                btn.setObjectName("primaryBtn") # Mavi/Gri
-                
-            # Lambda'da state_name'i sabitlemek önemli
-            btn.clicked.connect(lambda checked, s=state_name: self.audio_brain.set_state(s))
+            # Renkler
+            if state_name.lower() == "combat": btn.setObjectName("dangerBtn")
+            elif state_name.lower() == "victory": btn.setObjectName("successBtn")
+            else: btn.setObjectName("primaryBtn")
+            
+            # Tıklama olayı
+            btn.clicked.connect(lambda ch, s=state_name: self.on_state_clicked(s))
             
             self.layout_states.addWidget(btn)
+            self.state_buttons[state_name] = btn
+
+    def on_state_clicked(self, state_name):
+        """
+        1. Tık: Kuyruğa al (İkonu ⏳ yap)
+        2. Tık: Hemen geç (Zorla)
+        """
+        # Şu anki durumu kontrol et
+        current_id = self.audio_brain.current_state_id
+        pending_id = self.audio_brain.pending_state_id
+        
+        # Eğer zaten bu moddaysak ve bekleyen bir şey yoksa işlem yapma
+        if state_name == current_id and pending_id is None:
+            # Buton basılı kaldıysa geri kaldır
+            self.state_buttons[state_name].setChecked(True)
+            return
+
+        # SENARYO 1: Zaten kuyruktaysa -> Hemen Geç (Force)
+        if state_name == pending_id:
+            self.audio_brain.force_transition()
+            # İkonu normale döndür (Geçiş başlayınca resetlenecek)
+            self.state_buttons[state_name].setText(state_name.title() + " 🚀")
+            return
+
+        # SENARYO 2: İlk defa tıklandı -> Kuyruğa Al
+        self.audio_brain.queue_state(state_name)
+        
+        # Görsel Geri Bildirim
+        for name, btn in self.state_buttons.items():
+            if name == state_name:
+                btn.setText(name.title() + " ⏳") # Kum saati
+                btn.setChecked(True)
+            elif name == current_id:
+                btn.setText(name.title()) # Mevcut olan normal kalsın
+                btn.setChecked(True)
+            else:
+                btn.setText(name.title())
+                btn.setChecked(False)
 
     def change_intensity(self, val):
         labels = ["Base", "Low", "High", "Epic"]
