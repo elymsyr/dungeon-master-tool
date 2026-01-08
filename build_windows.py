@@ -15,10 +15,11 @@ if os.path.exists("build"): shutil.rmtree("build")
 params = [
     'main.py',
     f'--name={APP_NAME}',
-    '--onefile',
+    '--onedir',
     '--noconsole',
     '--clean',
     '--noupx',
+    '--version-file=version_info.txt',
     
     # --- OPTİMİZASYON: collect-all yerine hooks kullanıyoruz ---
     # PyInstaller'ın kendi hook'ları artık PyQt6'yı tanıyor.

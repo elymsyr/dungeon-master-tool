@@ -14,10 +14,10 @@ if os.path.exists("build"): shutil.rmtree("build")
 params = [
     'main.py',
     f'--name={APP_NAME}',
-    '--onefile',
+    '--onedir',  # <-- DEĞİŞTİ: Klasör olarak çıkar
     '--noconsole',
     '--clean',
-    # Gerekli importlar (explicitly mentioned just in case)
+    # Gerekli importlar
     '--hidden-import=PyQt6',
     '--hidden-import=PyQt6.QtWebEngineWidgets',
     '--hidden-import=requests',
@@ -29,13 +29,17 @@ params = [
     '--add-data=themes:themes',
 ]
 
-print(f"Building {APP_NAME} for Linux...")
+print(f"Building {APP_NAME} for Linux (Directory Mode)...")
 PyInstaller.__main__.run(params)
 
-# Make sure it's executable (optional for linux)
-binary_path = os.path.join("dist", APP_NAME)
+# İzinleri ayarla (Klasör içindeki çalıştırılabilir dosyayı bul)
+# onedir modunda çıktı: dist/DungeonMasterTool/DungeonMasterTool
+binary_folder = os.path.join("dist", APP_NAME)
+binary_path = os.path.join(binary_folder, APP_NAME)
+
 if os.path.exists(binary_path):
     os.chmod(binary_path, 0o755)
-    print(f"Success! Final binary: {binary_path}")
+    print(f"Success! Final binary folder: {binary_folder}")
+    print(f"Executable is at: {binary_path}")
 else:
-    print("Build failed. Check the logs above.")
+    print("Build failed. Executable not found.")

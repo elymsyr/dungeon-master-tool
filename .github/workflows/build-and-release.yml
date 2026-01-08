@@ -27,25 +27,44 @@ jobs:
                   python -m pip install --upgrade pip
                   pip install -r requirements.txt
 
+            # --- LINUX BUILD ---
             - name: Build binary (Linux)
               if: matrix.os == 'ubuntu-latest'
               run: python build_linux.py
 
+            # --- LINUX ARCHIVE (TAR.GZ) ---
+            # Linux'ta klasörü tar.gz yapıyoruz (Dosya izinlerini korur)
+            - name: Archive Linux Artifact
+              if: matrix.os == 'ubuntu-latest'
+              run: |
+                tar -czvf dist/DungeonMasterTool-Linux.tar.gz -C dist DungeonMasterTool
+
+            # --- WINDOWS BUILD ---
             - name: Build binary (Windows)
               if: matrix.os == 'windows-latest'
               run: python build_windows.py
 
+            # --- WINDOWS ARCHIVE (ZIP) ---
+            # Windows'ta klasörü zip yapıyoruz
+            - name: Zip Windows Artifact
+              if: matrix.os == 'windows-latest'
+              run: |
+                Compress-Archive -Path dist/DungeonMasterTool/* -DestinationPath dist/DungeonMasterTool-Windows.zip
+
+            # --- ARTIFACT SEÇİMİ ---
             - name: Find built artifact
               id: find_artifact
               run: |
                   if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-                    ARTIFACT=$(ls dist/DungeonMasterTool 2>/dev/null || ls dist/DungeonMasterTool.* 2>/dev/null || echo "")
+                    # Linux için tar.gz dosyasını seç
+                    echo "artifact=dist/DungeonMasterTool-Linux.tar.gz" >> $GITHUB_OUTPUT
                   else
-                    ARTIFACT=$(ls dist/DungeonMasterTool.exe 2>/dev/null || echo "")
+                    # Windows için zip dosyasını seç
+                    echo "artifact=dist/DungeonMasterTool-Windows.zip" >> $GITHUB_OUTPUT
                   fi
-                  echo "artifact=$ARTIFACT" >> $GITHUB_OUTPUT
               shell: bash
 
+            # --- YÜKLEME ---
             - name: Upload Release Asset
               uses: softprops/action-gh-release@v2
               with:
