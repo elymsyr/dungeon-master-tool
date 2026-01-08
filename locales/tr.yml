@@ -396,3 +396,7 @@ tr:
   CAT_LORE: "Lore"
   CAT_QUEST: "Görev"
   CAT_LOCATION: "Mekan"
+
+  BTN_TOGGLE_SOUNDPAD: "Soundpad'i Aç/Kapat"
+  TITLE_SOUNDPAD: "Soundpad"
+  MSG_SOUNDPAD_COMING_SOON: "Müzik ve Efekt kontrolleri buraya gelecek."
