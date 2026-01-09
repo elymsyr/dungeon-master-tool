@@ -4,28 +4,28 @@
 ambience:
   - id: "rain"
     name: "Yağmur"
-    file: "ambience/rain_0.wav"
+    file: "ambience/rain"
   - id: "crowd"
     name: "Kalabalık"
-    file: "ambience/crowd_0.wav"
+    file: "ambience/crowd"
   - id: "fireplace"
     name: "Kumbar"
-    file: "ambience/fireplace_0.wav"
+    file: "ambience/fireplace"
   - id: "dungeon"
     name: "Zindan"
-    file: "ambience/dungeon_0.wav"
+    file: "ambience/dungeon"
 
 # Her zaman kullanılabilir olan tek seferlik ses efektleri
 sfx:
   - id: "sword_hit"
     name: "Kılıç Vuruşu"
-    file: "sfx/sword-slice-2-393845.wav"
+    file: "sfx/sword-slice"
   - id: "arrow_woosh"
     name: "Ok Vızıltısı"
-    file: "sfx/arrow-swish-06040.wav"
+    file: "sfx/arrow-swish"
   - id: "door_creak"
     name: "Kapı Gıcırtısı"
-    file: "sfx/door-creaking-06040.wav"
+    file: "sfx/door-creaking"
 
 # Varsayılan (Global) Kısayollar
 shortcuts:

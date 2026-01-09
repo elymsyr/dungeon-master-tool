@@ -1,56 +1,82 @@
 import os
+import random
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtCore import QUrl, QObject, pyqtSignal, QPropertyAnimation, QEasingCurve, pyqtProperty
 from typing import Dict, List
 from .models import Theme, MusicState, Track
+from config import SOUNDPAD_ROOT
 
 # --- YARDIMCI SINIFLAR (DEĞİŞİKLİK YOK) ---
 
 class TrackPlayer(QObject):
+    """Tek bir müzik katmanını (Track) yöneten oynatıcı."""
     loop_finished = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.player = QMediaPlayer(); self.audio = QAudioOutput()
-        self.player.setAudioOutput(self.audio); self._volume = 0.0 
-        self.audio.setVolume(self._volume); self.last_position = 0
+        self.player = QMediaPlayer()
+        self.audio = QAudioOutput()
+        self.player.setAudioOutput(self.audio)
+        self._volume = 0.0 
+        self.audio.setVolume(self._volume)
+        self.last_position = 0
         self.anim = QPropertyAnimation(self, b"volume"); self.anim.setDuration(2000)
         self.anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
         self.player.positionChanged.connect(self._on_position_changed)
+
     @pyqtProperty(float)
     def volume(self): return self._volume
+    
     @volume.setter
-    def volume(self, val): self._volume = val; self.audio.setVolume(val)
+    def volume(self, val):
+        self._volume = val
+        self.audio.setVolume(val)
+
     def load_track(self, track: Track):
         if not track.sequence: return
         node = track.sequence[0]
         if os.path.exists(node.file_path):
             self.player.setSource(QUrl.fromLocalFile(os.path.abspath(node.file_path)))
-            self.player.setLoops(QMediaPlayer.Loops.Infinite); self.last_position = 0
+            self.player.setLoops(QMediaPlayer.Loops.Infinite) 
+            self.last_position = 0
+
     def play(self): self.player.play()
     def stop(self): self.player.stop(); self.last_position = 0
+    
     def fade_to(self, target, duration=1500):
         if self.anim.state() == QPropertyAnimation.State.Running: self.anim.stop()
         self.anim.setDuration(duration)
         self.anim.setStartValue(self._volume); self.anim.setEndValue(target); self.anim.start()
+
     def _on_position_changed(self, position):
         if position < self.last_position and position < 500: self.loop_finished.emit()
         self.last_position = position
 
 class MultiTrackDeck(QObject):
+    """Bir 'State'i (Normal, Combat) yönetir ve katmanları senkronize eder."""
     loop_finished = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.players: Dict[str, TrackPlayer] = {}; self.master_volume = 0.0; self.active_levels = ["base"]
+        self.players: Dict[str, TrackPlayer] = {} 
+        self.master_volume = 0.0 
+        self.active_levels = ["base"]
+
     @pyqtProperty(float)
     def deck_volume(self): return self.master_volume
+    
     @deck_volume.setter
-    def deck_volume(self, val): self.master_volume = val; self.update_mix()
+    def deck_volume(self, val):
+        self.master_volume = val
+        self.update_mix()
+
     def load_state(self, state: MusicState):
         for p in self.players.values(): p.stop(); p.deleteLater()
         self.players.clear()
         for track_id, track_data in state.tracks.items():
             tp = TrackPlayer(self); tp.load_track(track_data); self.players[track_id] = tp
         if "base" in self.players: self.players["base"].loop_finished.connect(self.loop_finished.emit)
+
     def play(self):
         for p in self.players.values(): p.volume = 0.0; p.play()
         self.update_mix()
@@ -67,8 +93,13 @@ class MultiTrackDeck(QObject):
 
 class MusicBrain(QObject):
     state_changed = pyqtSignal(str)
-    def __init__(self):
+
+    def __init__(self, global_library):
         super().__init__()
+        
+        self.library = global_library
+        
+        # Müzik Sistemi
         self.global_music_volume = 0.5; self._fade_ratio = 1.0 
         self.anim = QPropertyAnimation(self, b"fade_ratio"); self.anim.setDuration(2000)
         self.deck_a = MultiTrackDeck(self); self.deck_b = MultiTrackDeck(self)
@@ -76,11 +107,15 @@ class MusicBrain(QObject):
         self.deck_a.loop_finished.connect(self._check_queue); self.deck_b.loop_finished.connect(self._check_queue)
         self.current_theme: Theme = None; self.current_state_id = None
         self.pending_state_id = None; self.current_intensity_level = 0
+        
+        # Ambiyans Sistemi
         self.AMBIENCE_PLAYER_COUNT = 4; self.ambience_players = []
         for _ in range(self.AMBIENCE_PLAYER_COUNT):
             player = QMediaPlayer(); audio_output = QAudioOutput()
             player.setAudioOutput(audio_output); player.setLoops(QMediaPlayer.Loops.Infinite)
             self.ambience_players.append({'player': player, 'output': audio_output, 'id': None})
+            
+        # SFX Sistemi
         self.SFX_PLAYER_COUNT = 8; self.sfx_pool = []
         for _ in range(self.SFX_PLAYER_COUNT):
             player = QMediaPlayer(); audio_output = QAudioOutput()
@@ -100,7 +135,8 @@ class MusicBrain(QObject):
         if theme and theme.states:
             start_state = list(theme.states.keys())[0]
             self._hard_switch(start_state)
-        else: self.active_deck.stop(); self.inactive_deck.stop()
+        else:
+            self.active_deck.stop(); self.inactive_deck.stop()
 
     def set_state(self, state_name: str):
         if not self.current_theme or state_name not in self.current_theme.states or state_name == self.current_state_id: return
@@ -122,11 +158,7 @@ class MusicBrain(QObject):
     def _check_queue(self):
         if self.pending_state_id: self.set_state(self.pending_state_id); self.pending_state_id = None
     
-    # --- YENİ EKLENEN YARDIMCI METOT (HATAYI DÜZELTEN KISIM) ---
     def _get_mask_for_level(self, level: int) -> List[str]:
-        """
-        Yoğunluk seviyesini (örn: 2) bir katman listesine çevirir (örn: ['base', 'level1', 'level2']).
-        """
         return ["base"] + [f"level{i+1}" for i in range(level)]
 
     def _hard_switch(self, state_name):
@@ -138,14 +170,20 @@ class MusicBrain(QObject):
         self.active_deck.deck_volume = self.global_music_volume; self.active_deck.play()
         self._fade_ratio = 1.0; self.current_state_id = state_name; self.state_changed.emit(state_name)
 
-    def play_ambience(self, slot_index, file_path, volume):
+    def play_ambience(self, slot_index, ambience_id, volume):
         if not (0 <= slot_index < self.AMBIENCE_PLAYER_COUNT): return
         slot = self.ambience_players[slot_index]; player = slot['player']
-        if not file_path: player.stop(); slot['id'] = None; return
-        if os.path.exists(file_path):
-            player.setSource(QUrl.fromLocalFile(os.path.abspath(file_path)))
+        if not ambience_id:
+            player.stop(); slot['id'] = None; return
+        ambience_data = next((a for a in self.library['ambience'] if a['id'] == ambience_id), None)
+        if not ambience_data or not ambience_data.get('files'):
+            player.stop(); slot['id'] = None; return
+        chosen_file_rel = random.choice(ambience_data['files'])
+        full_path = os.path.join(SOUNDPAD_ROOT, chosen_file_rel)
+        if os.path.exists(full_path):
+            player.setSource(QUrl.fromLocalFile(os.path.abspath(full_path)))
             slot['output'].setVolume(volume / 100.0)
-            player.play(); slot['id'] = os.path.basename(file_path)
+            player.play(); slot['id'] = ambience_id
 
     def set_ambience_volume(self, slot_index, volume):
         if 0 <= slot_index < self.AMBIENCE_PLAYER_COUNT:
@@ -154,15 +192,19 @@ class MusicBrain(QObject):
     def stop_ambience(self):
         for slot in self.ambience_players: slot['player'].stop(); slot['id'] = None
 
-    def play_sfx(self, file_path, volume=1.0):
-        if not os.path.exists(file_path): return
+    def play_sfx(self, sfx_id, volume=1.0):
+        sfx_data = next((s for s in self.library['sfx'] if s['id'] == sfx_id), None)
+        if not sfx_data or not sfx_data.get('files'): return
+        chosen_file_rel = random.choice(sfx_data['files'])
+        full_path = os.path.join(SOUNDPAD_ROOT, chosen_file_rel)
+        if not os.path.exists(full_path): return
         for slot in self.sfx_pool:
             if not slot['busy']:
                 slot['busy'] = True; player = slot['player']
                 handler = lambda status, s=slot: self._on_sfx_finished(status, s)
                 player.mediaStatusChanged.connect(handler)
                 slot['handler'] = handler; slot['output'].setVolume(volume)
-                player.setSource(QUrl.fromLocalFile(os.path.abspath(file_path)))
+                player.setSource(QUrl.fromLocalFile(os.path.abspath(full_path)))
                 player.play(); return
 
     def _on_sfx_finished(self, status, slot):

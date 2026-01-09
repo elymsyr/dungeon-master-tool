@@ -7,7 +7,6 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from core.locales import tr
 from core.audio.engine import MusicBrain
 from core.audio.loader import load_all_themes, load_global_library
-from config import SOUNDPAD_ROOT
 
 class SoundpadPanel(QWidget):
     theme_loaded_with_shortcuts = pyqtSignal(dict)
@@ -17,8 +16,11 @@ class SoundpadPanel(QWidget):
         self.setFixedWidth(350)
         self.setObjectName("soundpadContainer")
         
-        self.audio_brain = MusicBrain()
+        # Global kütüphaneyi yükle ve bunu kullanarak ses motorunu başlat
         self.global_library = load_global_library()
+        self.audio_brain = MusicBrain(self.global_library)
+        
+        # Müzik temalarını yükle
         self.themes = load_all_themes()
         
         self.current_theme = None
@@ -26,8 +28,12 @@ class SoundpadPanel(QWidget):
         self.sfx_buttons = {}
 
         self.init_ui()
+        
+        # Arayüzü global kütüphane verileriyle doldur
         self._build_ambience_slots()
         self._build_sfx_grid()
+        
+        # Uygulama açıldığında varsayılan (global) kısayolları yükle
         self.theme_loaded_with_shortcuts.emit(self.global_library.get('shortcuts', {}))
 
     def init_ui(self):
@@ -114,7 +120,6 @@ class SoundpadPanel(QWidget):
             slot_box = QGroupBox(f"Ambiyans Slot {i+1}"); slot_layout = QVBoxLayout(slot_box)
             combo = QComboBox(); combo.addItem(tr("Sessizlik"), None)
             for ambience in ambience_list: combo.addItem(ambience['name'], ambience['id'])
-            
             slider = QSlider(Qt.Orientation.Horizontal); slider.setRange(0, 100); slider.setValue(70)
             self.ambience_slots.append({'group': slot_box, 'combo': combo, 'slider': slider})
             slot_layout.addWidget(combo); slot_layout.addWidget(slider)
@@ -148,7 +153,7 @@ class SoundpadPanel(QWidget):
             self.current_theme = None
             self.grp_states.setVisible(False); self.grp_intensity.setVisible(False)
             self.theme_loaded_with_shortcuts.emit(self.global_library.get('shortcuts', {}))
-            self.audio_brain.stop_all() # Müzik temasını kaldırınca müziği durdur
+            self.audio_brain.set_theme(None)
             return
         
         self.current_theme = self.themes[tid]
@@ -174,23 +179,16 @@ class SoundpadPanel(QWidget):
         for name, btn in self.state_buttons.items(): btn.setChecked(name == state_name)
 
     def _on_ambience_change(self, slot_index):
-        slot = self.ambience_slots[slot_index]; ambience_id = slot['combo'].currentData()
-        file_path = None
-        if ambience_id:
-            ambience_data = next((a for a in self.global_library['ambience'] if a['id'] == ambience_id), None)
-            if ambience_data: file_path = os.path.join(SOUNDPAD_ROOT, ambience_data['file'])
-        
+        slot = self.ambience_slots[slot_index]
+        ambience_id = slot['combo'].currentData()
         volume = slot['slider'].value()
-        self.audio_brain.play_ambience(slot_index, file_path, volume)
+        self.audio_brain.play_ambience(slot_index, ambience_id, volume)
 
     def _on_ambience_volume_change(self, slot_index, volume):
         self.audio_brain.set_ambience_volume(slot_index, volume)
 
     def play_sfx(self, sfx_id):
-        sfx_data = next((s for s in self.global_library['sfx'] if s['id'] == sfx_id), None)
-        if sfx_data and 'file' in sfx_data:
-            full_path = os.path.join(SOUNDPAD_ROOT, sfx_data['file'])
-            self.audio_brain.play_sfx(full_path)
+        self.audio_brain.play_sfx(sfx_id)
 
     def stop_ambience(self):
         self.audio_brain.stop_ambience()
@@ -198,7 +196,8 @@ class SoundpadPanel(QWidget):
             slot['combo'].blockSignals(True); slot['combo'].setCurrentIndex(0); slot['combo'].blockSignals(False)
 
     def stop_all(self):
-        self.audio_brain.stop_all() # Bu zaten müziği ve ambiyansı durdurur
+        self.audio_brain.stop_all()
+        self.stop_ambience()
         if self.combo_themes.currentIndex() > 0:
             self.combo_themes.setCurrentIndex(0); self.load_selected_theme()
 
@@ -215,4 +214,4 @@ class SoundpadPanel(QWidget):
         self.tabs.setTabText(0, "🎵 " + tr("Müzik"))
         self.tabs.setTabText(1, "🌿 " + tr("Ambiyans"))
         self.tabs.setTabText(2, "💥 " + tr("SFX"))
-        # Diğer UI elemanlarının metinleri de buraya eklenebilir.
+        # Diğer UI elemanları için çeviri güncellemeleri de buraya eklenebilir.
