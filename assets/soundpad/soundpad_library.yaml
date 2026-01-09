@@ -3,34 +3,31 @@
 # Her zaman kullanılabilir olan arka plan sesleri
 ambience:
   - id: "rain"
-    name: "Yağmur"
+    name: "Rain"
     file: "ambience/rain"
   - id: "crowd"
-    name: "Kalabalık"
+    name: "Crowd"
     file: "ambience/crowd"
   - id: "fireplace"
-    name: "Kumbar"
+    name: "Fireplace"
     file: "ambience/fireplace"
   - id: "dungeon"
-    name: "Zindan"
+    name: "Dungeon"
     file: "ambience/dungeon"
 
 # Her zaman kullanılabilir olan tek seferlik ses efektleri
 sfx:
   - id: "sword_hit"
-    name: "Kılıç Vuruşu"
+    name: "Sword Slice"
     file: "sfx/sword-slice"
   - id: "arrow_woosh"
-    name: "Ok Vızıltısı"
+    name: "Arrow Swish"
     file: "sfx/arrow-swish"
   - id: "door_creak"
-    name: "Kapı Gıcırtısı"
+    name: "Door Creak"
     file: "sfx/door-creaking"
 
 # Varsayılan (Global) Kısayollar
 shortcuts:
   stop_all: "Ctrl+."
   stop_ambience: "Ctrl+,"
-  play_sfx:
-    sword_hit: "Num+1"
-    arrow_woosh: "Num+2"
