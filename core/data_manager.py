@@ -1,3 +1,6 @@
+
+import time
+import uuid
 import os
 import json
 import shutil
@@ -219,12 +222,145 @@ class DataManager:
     def set_active_session(self, session_id): self.data["last_active_session_id"] = session_id
     def get_last_active_session_id(self): return self.data.get("last_active_session_id")
 
-    def save_entity(self, eid, data):
-        if not eid: eid = str(uuid.uuid4())
-        if eid in self.data["entities"]: self.data["entities"][eid].update(data)
-        else: self.data["entities"][eid] = data
-        self.save_data()
+    def save_entity(self, eid, data, should_save=True):
+        """
+        Varlığı kaydeder. 
+        should_save=False yapılırsa sadece belleğe yazar, diske (data.json) yazmaz.
+        Bu, toplu işlemlerde (örn: yaratıkla gelen 20 büyüyü eklerken) hızı artırır.
+        """
+        if not eid: 
+            eid = str(uuid.uuid4())
+        
+        if eid in self.data["entities"]: 
+            self.data["entities"][eid].update(data)
+        else: 
+            self.data["entities"][eid] = data
+        
+        if should_save:
+            self.save_data()
         return eid
+
+    def _resolve_dependencies(self, data):
+        """
+        Bağımlılıkları (resimler ve büyüler) çözer.
+        Performans için optimize edildi ve zaman ölçer eklendi.
+        """
+        if not isinstance(data, dict): return data
+        
+        total_start = time.perf_counter()
+        print(f"\n--- 🔍 Resolving Dependencies for: {data.get('name')} ---")
+
+        # 1. RESİM İNDİRME / KONTROLÜ
+        img_start = time.perf_counter()
+        remote_url = data.pop("_remote_image_url", None)
+        if remote_url and self.current_campaign_path:
+            # Eğer zaten yerel bir resim yolu varsa indirmeyi atla
+            if not data.get("image_path"):
+                try:
+                    safe_name = "".join([c for c in data.get("name", "image") if c.isalnum() or c in (' ','-','_')]).strip().replace(' ', '_')
+                    ext = ".jpg" if ".jpg" in remote_url.lower() or ".jpeg" in remote_url.lower() else ".png"
+                    filename = f"{safe_name}_{uuid.uuid4().hex[:6]}{ext}"
+                    
+                    assets_dir = os.path.join(self.current_campaign_path, "assets")
+                    if not os.path.exists(assets_dir): os.makedirs(assets_dir)
+                    
+                    full_path = os.path.join(assets_dir, filename)
+                    img_bytes = self.api_client.download_image_bytes(remote_url)
+                    if img_bytes:
+                        with open(full_path, "wb") as f:
+                            f.write(img_bytes)
+                        rel_path = os.path.join("assets", filename)
+                        data["image_path"] = rel_path
+                        data["images"] = [rel_path]
+                except Exception as e:
+                    print(f"DEBUG: Image Download Error: {e}")
+        print(f"DEBUG: 🖼️ Image Step: {(time.perf_counter() - img_start)*1000:.2f}ms")
+
+        # 2. BÜYÜLERİ LİNKLEME
+        spell_start = time.perf_counter()
+        detected_spells = data.pop("_detected_spell_indices", [])
+        
+        if detected_spells:
+            # Mevcut büyüleri bellekte bir haritaya al (Hızlı arama için)
+            existing_spells_map = {
+                ent.get("name"): eid 
+                for eid, ent in self.data["entities"].items() 
+                if ent.get("type") == "Spell"
+            }
+            
+            linked_ids = []
+            new_entities_added = False
+            
+            for s_idx in detected_spells:
+                # local_only=True: Eğer büyü bilgisayarda yoksa internetten ÇEKME, pas geç.
+                success, spell_data = self.fetch_details_from_api("Spell", s_idx, local_only=True)
+                
+                if success:
+                    s_name = spell_data.get("name")
+                    if s_name in existing_spells_map:
+                        linked_ids.append(existing_spells_map[s_name])
+                    else:
+                        # should_save=False: Her büyü eklendiğinde data.json'ı baştan yazma!
+                        new_id = self.save_entity(None, spell_data, should_save=False)
+                        linked_ids.append(new_id)
+                        existing_spells_map[s_name] = new_id
+                        new_entities_added = True
+            
+            if linked_ids:
+                if "spells" not in data: data["spells"] = []
+                for sid in linked_ids:
+                    if sid not in data["spells"]: data["spells"].append(sid)
+
+            # Tüm büyü ekleme bittikten sonra TEK BİR KEZ diske yaz
+            if new_entities_added:
+                save_disk_start = time.perf_counter()
+                self.save_data()
+                print(f"DEBUG: 💾 Disk Write (data.json): {(time.perf_counter() - save_disk_start)*1000:.2f}ms")
+
+        print(f"DEBUG: ✨ Spell Step: {(time.perf_counter() - spell_start)*1000:.2f}ms")
+        print(f"--- ✅ Total Resolution Time: {(time.perf_counter() - total_start)*1000:.2f}ms ---\n")
+        
+        return data
+
+    def fetch_details_from_api(self, category, index_name, local_only=False):
+        """
+        Kütüphane verisini çeker. 
+        local_only=True ise asla internete çıkmaz, sadece yerel 'cache/library' klasörüne bakar.
+        """
+        fetch_start = time.perf_counter()
+        
+        folder_map = {
+            "Monster": "monsters", "NPC": "monsters", "Spell": "spells", 
+            "Equipment": "equipment", "Class": "classes", "Race": "races"
+        }
+        folder = folder_map.get(category)
+        
+        # 1. YEREL CACHE KONTROLÜ
+        if folder:
+            paths = [os.path.join(LIBRARY_DIR, folder, f"{index_name}.json")]
+            if category == "Equipment":
+                paths.append(os.path.join(LIBRARY_DIR, "magic-items", f"{index_name}.json"))
+            
+            for local_path in paths:
+                if os.path.exists(local_path):
+                    try:
+                        with open(local_path, "r", encoding="utf-8") as f:
+                            raw = json.load(f)
+                        parsed = self.api_client.parse_dispatcher(category, raw)
+                        return True, parsed
+                    except Exception as e:
+                        print(f"DEBUG: Cache Read Error ({index_name}): {e}")
+
+        # 2. İNTERNET FALLBACK
+        if local_only:
+            return False, "Not in local cache."
+
+        # İnternetten çek (local_only=False ise buraya düşer)
+        parsed_data, msg = self.api_client.search(category, index_name)
+        if parsed_data:
+            return True, parsed_data
+            
+        return False, msg
 
     def delete_entity(self, eid):
         if eid in self.data["entities"]:
@@ -232,78 +368,33 @@ class DataManager:
             self.save_data()
 
     def fetch_from_api(self, category, query):
+        # 1. Check existing active entities
         for eid, ent in self.data["entities"].items():
             if ent["name"].lower() == query.lower() and ent["type"] == category:
                 return True, "Veritabanında zaten var.", eid
+        
+        # 2. Try to fetch from local Library Cache first
+        # This prevents "Category not supported" if API is down and speeds up loading
+        success, local_data = self.fetch_details_from_api(category, query)
+        if success and local_data:
+             # Resolve dependencies (spells, images) for local data too
+             if category in ["Monster", "NPC"]:
+                 local_data = self._resolve_dependencies(local_data)
+             return True, "Cache'den yüklendi.", local_data
+
+        # 3. Fallback to Internet API
         parsed_data, msg = self.api_client.search(category, query)
         if not parsed_data: return False, msg, None
+        
         if category in ["Monster", "NPC"] and isinstance(parsed_data, dict):
             parsed_data = self._resolve_dependencies(parsed_data)
+            
         return True, "API'den çekildi.", parsed_data
-
-    def fetch_details_from_api(self, category, index_name):
-        folder_map = {"Monster": "monsters", "Spell": "spells", "Equipment": "equipment", "Class": "classes", "Race": "races"}
-        folder = folder_map.get(category)
-        if folder:
-            paths = [os.path.join(LIBRARY_DIR, folder, f"{index_name}.json")]
-            if category == "Eşya (Equipment)" or category == "Equipment":
-                paths.append(os.path.join(LIBRARY_DIR, "magic-items", f"{index_name}.json"))
-            for local_path in paths:
-                if os.path.exists(local_path):
-                    try:
-                        with open(local_path, "r", encoding="utf-8") as f:
-                            raw = json.load(f)
-                            return True, self.api_client.parse_dispatcher(category, raw)
-                    except Exception as e: print(f"Cache okuma hatası ({category}/{index_name}): {e}")
-        parsed_data, msg = self.api_client.search(category, index_name)
-        if parsed_data: return True, parsed_data
-        return False, msg
 
     def import_entity_with_dependencies(self, data, type_override=None):
         if type_override: data["type"] = type_override
         data = self._resolve_dependencies(data)
         return self.save_entity(None, data)
-
-    def _resolve_dependencies(self, data):
-        if not isinstance(data, dict): return data
-        remote_url = data.pop("_remote_image_url", None)
-        if remote_url and self.current_campaign_path:
-            try:
-                safe_name = "".join([c for c in data.get("name", "image") if c.isalnum() or c in (' ','-','_')]).strip().replace(' ', '_')
-                filename = f"{safe_name}_{uuid.uuid4().hex[:6]}.png"
-                if remote_url.lower().endswith(".jpg"): filename = filename.replace(".png", ".jpg")
-                elif remote_url.lower().endswith(".jpeg"): filename = filename.replace(".png", ".jpeg")
-                img_data = self.api_client.download_image_bytes(remote_url)
-                if img_data:
-                    assets_dir = os.path.join(self.current_campaign_path, "assets")
-                    if not os.path.exists(assets_dir): os.makedirs(assets_dir)
-                    full_path = os.path.join(assets_dir, filename)
-                    with open(full_path, "wb") as f: f.write(img_data)
-                    rel_path = os.path.join("assets", filename)
-                    data["image_path"] = rel_path
-                    data["images"] = [rel_path]
-            except Exception as e: print(f"Error downloading image: {e}")
-
-        detected_spells = data.pop("_detected_spell_indices", [])
-        if not detected_spells: return data
-        
-        linked_spell_ids = []
-        for spell_index in detected_spells:
-            success, spell_data = self.fetch_details_from_api("Spell", spell_index)
-            if success:
-                spell_name = spell_data.get("name")
-                existing_id = None
-                for eid, ent in self.data["entities"].items():
-                    if ent.get("type") == "Spell" and ent.get("name") == spell_name: existing_id = eid; break
-                if existing_id: linked_spell_ids.append(existing_id)
-                else:
-                    new_id = self.save_entity(None, spell_data)
-                    linked_spell_ids.append(new_id)
-        if linked_spell_ids:
-            if "spells" not in data: data["spells"] = []
-            for sid in linked_spell_ids:
-                if sid not in data["spells"]: data["spells"].append(sid)
-        return data
 
     def import_image(self, src):
         if not self.current_campaign_path: return None
