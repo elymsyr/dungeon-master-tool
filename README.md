@@ -29,23 +29,19 @@ Manage combat, track stats, and project maps to your players without the hassle.
 - [x] **UI/UX Overhaul:** Modernized interface, new themes (Baldur, Grim, Discord), and split-view editing.
 - [x] **Multi-Encounter:** Manage multiple encounters simultaneously within a session.
 - [x] **System Upgrades:** Advanced Entity Cards, Multi-Add, and Status Effect systems.
+- [x] **Soundpad:** Support for custom music and sound effects.
 
 ### 🚧 In Progress / Planned
 
 - [ ] **More Sources and Prebuild Worlds:** We're planning to add more entities from other sources like 5E 2024, Forgotten Realms and else... Also adding custom design prebuild worlds to help newbies.
-- [ ] **Soundpad:** Support for custom music and sound effects.
-- [ ] **Fog of War:** Interactive masking/revealing areas on the Battle Map.
+- [ ] **Soundpad:** Better soundpad and songs. (Currently, the songs are uploaded only for test purposes.
+- [ ] **Fog of War:** Interactive masking/revealing areas on the Battle Map. Splitting DM note area to control the battlemap fog and pawns private.
 - [ ] **Campaign Notes:** Rich text editor, linking, and better folder organization for DM notes.
 - [ ] **Integrations:** Support for D&D Beyond, Obsidian, and other tools.
 - [ ] **Multi-Window:** Advanced support for projecting to specific/multiple player screens.
-
-## 📝 Additional Plan Notes
-- [ ] Save folder path change
-- [ ] Adding battlemaps as entities and into location entities and load
-- [ ] Split DM note area to control the battlemap fog and pawns
-- [ ] Add API import with image support
-- [ ] A better World control, bulk export entities from one world to another 
-- [ ] Add custom entity sets
+- [ ] **Advanced Linking and Mentioning:** Support linking entities on any text in the app.
+- [ ] **Custom World Pre-build:** Creating custom pre-build worlds and creating fast worlds.
+- [ ] **Random Creator:** Random creator for NPCs, NPC names, battles and more...
 
 ## 🚀 Installation
 
@@ -74,6 +70,10 @@ python main.py
   <img src="media/bulk.png" width="100%" alt="Entity Stat Block" />
   <img src="media/api.png" width="100%" alt="Entity Stat Block" />
 </p>
+
+## 📝 Customizable Areas
+
+You can customize anything as you want. If you want to add custom songs, you can add them to the assets using yaml files. You can add language support. Soon, there will a HOW TO area that includes how to use and custimize anything.
 
 ## ⚠️ Disclaimer
 This project is currently in Pre-Alpha. Expect bugs and frequent updates.
