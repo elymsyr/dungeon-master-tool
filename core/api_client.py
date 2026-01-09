@@ -86,7 +86,7 @@ class DndApiClient:
 
     def parse_monster(self, data):
         """
-        API'den veya Yerel Cache'den gelen ham veriyi DM Tool formatına çevirir.
+        API'den veya yerel dosyadan gelen ham canavar verisini parse eder.
         """
         # 1. AC Parse
         ac_val = "10"
@@ -102,22 +102,26 @@ class DndApiClient:
         speed_dict = data.get("speed", {})
         speed_str = ", ".join([f"{k.capitalize()} {v}" for k, v in speed_dict.items()])
 
-        # 3. Saves & Skills Parse
+        # 3. Saves & Skills Parse (HATA BURADA DÜZELTİLDİ)
         saves, skills = [], []
         for prof in data.get("proficiencies", []):
             name = prof.get("proficiency", {}).get("name", "")
             val = prof.get("value", 0)
             sign = "+" if val >= 0 else ""
+            
             if "Saving Throw:" in name:
-                saves.append(f"{name.replace('Saving Throw:', '').strip()} {sign}{val}")
+                stat = name.replace("Saving Throw:", "").strip()
+                saves.append(f"{stat} {sign}{val}")
             elif "Skill:" in name:
-                skills.append(f"{skill_name.replace('Skill:', '').strip()} {sign}{val}")
+                # HATALI KISIM DÜZELTİLDİ: 'skill_name' yerine 'name' kullanıldı
+                skill_label = name.replace("Skill:", "").strip()
+                skills.append(f"{skill_label} {sign}{val}")
 
-        # 4. Action/Trait Formatlama
-        def format_list(raw_list):
-            return [{"name": x.get("name", "Action"), "desc": x.get("desc", "")} for x in raw_list]
+        # 4. Action/Trait Formatlama Yardımcısı
+        def format_actions(action_list):
+            return [{"name": a.get("name", "Action"), "desc": a.get("desc", "")} for a in action_list]
 
-        # 5. Büyü ve Resim Tespiti
+        # 5. BAĞIMLILIK TESPİTİ (Büyü ve Ekipman)
         detected_spells = []
         for ability in data.get("special_abilities", []):
             if "spellcasting" in ability:
@@ -125,19 +129,27 @@ class DndApiClient:
                     url = spell_ref.get("url")
                     if url: detected_spells.append(url.rstrip("/").split("/")[-1])
 
-        # Resim Mantığı: Cache yolu varsa onu kullan, yoksa URL'yi DataManager'a pasla
-        local_img = data.get("local_image_path", "")
-        remote_url = ""
-        if not local_img and data.get("image"):
-            remote_url = self.DOMAIN_ROOT + data.get("image")
+        detected_equipment = []
+        # Bazı API versiyonlarında veya özel datalarda canavarın eşyaları 'equipment' altında gelir
+        if "equipment" in data:
+            for item in data["equipment"]:
+                url = item.get("equipment", {}).get("url") if isinstance(item, dict) else None
+                if url: detected_equipment.append(url.rstrip("/").split("/")[-1])
 
+        # 6. RESİM URL TESPİTİ
+        local_img = data.get("local_image_path", "")
+        remote_image_url = ""
+        if not local_img and data.get("image"):
+            remote_image_url = self.DOMAIN_ROOT + data.get("image")
+
+        # 7. Veri Sözlüğünü Oluştur
         return {
             "name": data.get("name"),
             "type": "Monster",
             "description": f"Size: {data.get('size')}, Type: {data.get('type')}, Align: {data.get('alignment')}",
             "tags": [data.get("type", ""), data.get("size", "")],
-            "image_path": local_img, # Bulk download ile gelmişse doludur
-            "_remote_image_url": remote_url, # Yeni çekiliyorsa doludur
+            "image_path": local_img,
+            "_remote_image_url": remote_image_url,
             "stats": {
                 "STR": data.get("strength", 10), "DEX": data.get("dexterity", 10),
                 "CON": data.get("constitution", 10), "INT": data.get("intelligence", 10),
@@ -158,17 +170,18 @@ class DndApiClient:
             "condition_immunities": ", ".join([c["name"] if isinstance(c, dict) else c for c in data.get("condition_immunities", [])]),
             "proficiency_bonus": str(data.get("proficiency_bonus", "")),
             "passive_perception": str(data.get("senses", {}).get("passive_perception", "")),
-            "traits": format_list(data.get("special_abilities", [])),
-            "actions": format_list(data.get("actions", [])),
-            "reactions": format_list(data.get("reactions", [])),
-            "legendary_actions": format_list(data.get("legendary_actions", [])),
+            "traits": format_actions(data.get("special_abilities", [])),
+            "actions": format_actions(data.get("actions", [])),
+            "reactions": format_actions(data.get("reactions", [])),
+            "legendary_actions": format_actions(data.get("legendary_actions", [])),
             "attributes": {
                 "LBL_CR": str(data.get("challenge_rating", 0)),
                 "LBL_ATTACK_TYPE": "Melee / Ranged", 
                 "LBL_SENSES": ", ".join([f"{k}: {v}" for k, v in data.get("senses", {}).items() if k != "passive_perception"]),
                 "LBL_LANGUAGE": data.get("languages", "-")
             },
-            "_detected_spell_indices": detected_spells
+            "_detected_spell_indices": detected_spells,
+            "_detected_equipment_indices": detected_equipment
         }
 
     def parse_spell(self, data):

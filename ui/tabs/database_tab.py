@@ -274,9 +274,13 @@ class DatabaseTab(QWidget):
                 idx = manager.indexOf(sheet)
                 if idx != -1: manager.removeTab(idx)
 
-    # NpcSheet'ten yardımcı metodları çağır
-    def populate_sheet(self, s, data): s.populate_sheet(s, data)
-    def collect_data_from_sheet(self, s): return s.collect_data_from_sheet(s)
+    def populate_sheet(self, s, data): 
+        # 's' objesi üzerinden metod çağrılırken Python otomatik olarak 'self'i atar.
+        s.populate_sheet(data) 
+
+    def collect_data_from_sheet(self, s): 
+        # 's' objesi üzerinden metod çağrılırken Python otomatik olarak 'self'i atar.
+        return s.collect_data_from_sheet()
 
     # --- YENİ PROJEKSİYON FONKSİYONLARI ---
     def project_entity_image(self, sheet):

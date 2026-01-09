@@ -240,61 +240,79 @@ class DataManager:
             self.save_data()
         return eid
 
-# core/data_manager.py içinde ilgili kısımları bulun ve değiştirin:
-
     def _resolve_dependencies(self, data):
+        """
+        Bağımlılıkları (Resim, Büyü, Ekipman) kampanya bazında çözer.
+        """
         if not isinstance(data, dict): return data
         
-        # 1. RESİM İNDİRME VE CACHE'E KAYDETME
+        # 1. RESİM İNDİRME / CACHE
         remote_url = data.pop("_remote_image_url", None)
-        if remote_url:
-            # Resmin kaydedileceği yer: cache/library/images/
-            library_img_dir = os.path.join(LIBRARY_DIR, "images")
-            if not os.path.exists(library_img_dir): os.makedirs(library_img_dir)
-            
-            # Dosya adı oluştur (index veya isimden)
-            safe_name = "".join([c for c in data.get("name", "img") if c.isalnum()]).lower()
-            ext = ".jpg" if ".jpg" in remote_url.lower() else ".png"
-            filename = f"{safe_name}{ext}"
-            full_lib_path = os.path.join(library_img_dir, filename)
-            
-            # Eğer kütüphane cache'inde yoksa indir
-            if not os.path.exists(full_lib_path):
-                img_bytes = self.api_client.download_image_bytes(remote_url)
-                if img_bytes:
-                    with open(full_lib_path, "wb") as f: f.write(img_bytes)
-            
-            # Şimdi bu resmi kampanya klasörüne (worlds/X/assets) kopyala (aktif kullanım için)
-            if self.current_campaign_path and os.path.exists(full_lib_path):
-                rel_path = self.import_image(full_lib_path) # Mevcut kopyalama mantığını kullanır
-                data["image_path"] = rel_path
-                data["images"] = [rel_path]
+        if remote_url and self.current_campaign_path:
+            try:
+                # Kütüphane klasöründe var mı? (cache/library/images)
+                library_img_dir = os.path.join(CACHE_DIR, "library", "images")
+                if not os.path.exists(library_img_dir): os.makedirs(library_img_dir)
+                
+                safe_name = "".join([c for c in data.get("name", "img") if c.isalnum()]).lower()
+                ext = ".jpg" if ".jpg" in remote_url.lower() else ".png"
+                filename = f"{safe_name}{ext}"
+                lib_path = os.path.join(library_img_dir, filename)
+                
+                # Cache'de yoksa indir
+                if not os.path.exists(lib_path):
+                    img_bytes = self.api_client.download_image_bytes(remote_url)
+                    if img_bytes:
+                        with open(lib_path, "wb") as f: f.write(img_bytes)
+                
+                # Kampanyaya kopyala
+                if os.path.exists(lib_path):
+                    rel_path = self.import_image(lib_path)
+                    data["image_path"] = rel_path
+                    data["images"] = [rel_path]
+            except Exception as e: print(f"Dependency Error (Image): {e}")
 
-        # 2. BÜYÜLERİ ÇEK VE LOKAL VERİTABANINA (CAMPAIGN) EKLE
+        # 2. BÜYÜLERİ OTOMATİK İÇE AKTAR
         detected_spells = data.pop("_detected_spell_indices", [])
         if detected_spells:
-            linked_ids = []
-            for s_idx in detected_spells:
-                # Önce kütüphaneye bak, yoksa internetten indir ve kütüphaneye de kaydet
-                success, spell_data = self.fetch_details_from_api("Spell", s_idx)
-                if success:
-                    # Kampanyada var mı kontrol et
-                    existing_id = None
-                    for eid, ent in self.data["entities"].items():
-                        if ent.get("name") == spell_data["name"] and ent.get("type") == "Spell":
-                            existing_id = eid; break
-                    
-                    if existing_id: linked_ids.append(existing_id)
-                    else:
-                        new_id = self.save_entity(None, spell_data, should_save=False)
-                        linked_ids.append(new_id)
-            
-            if linked_ids:
-                if "spells" not in data: data["spells"] = []
-                for sid in linked_ids:
-                    if sid not in data["spells"]: data["spells"].append(sid)
+            self._auto_import_linked_entities(data, detected_spells, "Spell", "spells")
+
+        # 3. EKİPMANLARI OTOMATİK İÇE AKTAR
+        detected_equip = data.pop("_detected_equipment_indices", [])
+        if detected_equip:
+            self._auto_import_linked_entities(data, detected_equip, "Equipment", "equipment_ids")
 
         return data
+
+    def _auto_import_linked_entities(self, main_data, indices, category, target_list_key):
+        """
+        Büyü veya Ekipman gibi varlıkları kampanyada yoksa kütüphaneden/API'den çeker ve listeye ekler.
+        """
+        if target_list_key not in main_data:
+            main_data[target_list_key] = []
+            
+        # Kampanyadaki mevcut varlıkları bir haritaya al (Hızlı kontrol)
+        existing_map = {
+            ent.get("name"): eid 
+            for eid, ent in self.data["entities"].items() 
+            if ent.get("type") == category
+        }
+
+        for idx in indices:
+            # Önce lokal cache'e bak, yoksa API'ye sor
+            success, sub_data = self.fetch_details_from_api(category, idx)
+            
+            if success:
+                ent_name = sub_data.get("name")
+                if ent_name in existing_map:
+                    new_id = existing_map[ent_name]
+                else:
+                    # Yeni varlığı kampanyaya diske yazmadan ekle
+                    new_id = self.save_entity(None, sub_data, should_save=False)
+                    existing_map[ent_name] = new_id
+                
+                if new_id not in main_data[target_list_key]:
+                    main_data[target_list_key].append(new_id)
 
     def fetch_details_from_api(self, category, index_name, local_only=False):
         """

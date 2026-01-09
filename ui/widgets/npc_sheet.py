@@ -426,100 +426,130 @@ class NpcSheet(QWidget):
             self.grp_combat_stats.setVisible(is_npc_like)
         if is_status: self.lbl_image.setText("Icon")
 
-    def populate_sheet(self, s, data):
-        s.inp_name.setText(data.get("name", ""))
+    def populate_sheet(self, data):
+        """
+        UI formlarını verilerle doldurur.
+        """
+        self.inp_name.setText(data.get("name", ""))
         curr_type = data.get("type", "NPC")
-        idx = s.inp_type.findText(curr_type)
-        s.inp_type.setCurrentIndex(idx if idx >= 0 else 0)
-        s.inp_tags.setText(", ".join(data.get("tags", [])))
-        s.inp_desc.setText(data.get("description", ""))
-        s.inp_dm_notes.setText(data.get("dm_notes", ""))
+        idx = self.inp_type.findText(tr(f"CAT_{curr_type.upper().replace(' ', '_')}"))
+        if idx < 0: idx = self.inp_type.findData(curr_type)
+        self.inp_type.setCurrentIndex(idx if idx >= 0 else 0)
         
+        self.inp_tags.setText(", ".join(data.get("tags", [])))
+        self.inp_desc.setText(data.get("description", ""))
+        self.inp_dm_notes.setText(data.get("dm_notes", ""))
+        
+        # İstatistikler
         stats = data.get("stats", {})
-        for k, v in s.stats_inputs.items(): v.setText(str(stats.get(k, 10)))
+        for k, v in self.stats_inputs.items():
+            v.setText(str(stats.get(k, 10)))
+            self._update_modifier(k, v.text())
         
+        # Savaş Statları
         c = data.get("combat_stats", {})
-        s.inp_hp.setText(str(c.get("hp", "")))
-        s.inp_max_hp.setText(str(c.get("max_hp", "")))
-        s.inp_ac.setText(str(c.get("ac", ""))) 
-        s.inp_speed.setText(str(c.get("speed", "")))
-        s.inp_init.setText(str(c.get("initiative", "")))
+        self.inp_hp.setText(str(c.get("hp", "")))
+        self.inp_max_hp.setText(str(c.get("max_hp", "")))
+        self.inp_ac.setText(str(c.get("ac", ""))) 
+        self.inp_speed.setText(str(c.get("speed", "")))
+        self.inp_init.setText(str(c.get("initiative", "")))
 
-        s.inp_saves.setText(data.get("saving_throws", ""))
-        s.inp_skills.setText(data.get("skills", ""))
-        s.inp_vuln.setText(data.get("damage_vulnerabilities", ""))
-        s.inp_resist.setText(data.get("damage_resistances", ""))
-        s.inp_dmg_immune.setText(data.get("damage_immunities", ""))
-        s.inp_cond_immune.setText(data.get("condition_immunities", ""))
-        s.inp_prof.setText(str(data.get("proficiency_bonus", "")))
-        s.inp_pp.setText(str(data.get("passive_perception", "")))
+        # Savunma ve Yetenekler
+        self.inp_saves.setText(data.get("saving_throws", ""))
+        self.inp_skills.setText(data.get("skills", ""))
+        self.inp_vuln.setText(data.get("damage_vulnerabilities", ""))
+        self.inp_resist.setText(data.get("damage_resistances", ""))
+        self.inp_dmg_immune.setText(data.get("damage_immunities", ""))
+        self.inp_cond_immune.setText(data.get("condition_immunities", ""))
+        self.inp_prof.setText(str(data.get("proficiency_bonus", "")))
+        self.inp_pp.setText(str(data.get("passive_perception", "")))
 
-        s.update_ui_by_type(curr_type)
+        # UI Görünürlüğünü Güncelle
+        self.update_ui_by_type(curr_type)
+        
+        # Dinamik Alanlar (Attributes)
         attrs = data.get("attributes", {})
-        for l, w in s.dynamic_inputs.items():
-            val = attrs.get(l, "")
-            if isinstance(w, QComboBox): 
-                ix = w.findData(val); 
-                if ix >= 0: w.setCurrentIndex(ix)
-                else: 
-                    ix_t = w.findText(val)
-                    if ix_t >= 0: w.setCurrentIndex(ix_t)
-                    else: w.setCurrentText(val)
-            else: w.setText(str(val))
+        for label_key, widget in self.dynamic_inputs.items():
+            val = attrs.get(label_key, "")
+            if isinstance(widget, QComboBox):
+                ix = widget.findData(val)
+                if ix >= 0: widget.setCurrentIndex(ix)
+                else: widget.setCurrentText(val)
+            else:
+                widget.setText(str(val))
 
-        s.clear_all_cards()
-        self._fill_cards(s, s.trait_container, data.get("traits", []))
-        self._fill_cards(s, s.action_container, data.get("actions", []))
-        self._fill_cards(s, s.reaction_container, data.get("reactions", []))
-        self._fill_cards(s, s.legendary_container, data.get("legendary_actions", []))
-        self._fill_cards(s, s.inventory_container, data.get("inventory", []))
-        self._fill_cards(s, s.custom_spell_container, data.get("custom_spells", []))
+        # Kartları Temizle ve Doldur (Actions, Traits vb.)
+        self.clear_all_cards()
+        for item in data.get("traits", []): self.add_feature_card(self.trait_container, item.get("name"), item.get("desc"))
+        for item in data.get("actions", []): self.add_feature_card(self.action_container, item.get("name"), item.get("desc"))
+        for item in data.get("reactions", []): self.add_feature_card(self.reaction_container, item.get("name"), item.get("desc"))
+        for item in data.get("legendary_actions", []): self.add_feature_card(self.legendary_container, item.get("name"), item.get("desc"))
+        for item in data.get("custom_spells", []): self.add_feature_card(self.custom_spell_container, item.get("name"), item.get("desc"))
+        for item in data.get("inventory", []): self.add_feature_card(self.inventory_container, item.get("name"), item.get("desc"))
         
-        s.image_list = data.get("images", [])
-        if not s.image_list and data.get("image_path"): s.image_list = [data.get("image_path")]
-        s.current_img_index = 0
-        if s.image_list:
-             path = self.dm.get_full_path(s.image_list[0])
-             if path and os.path.exists(path): s.lbl_image.setPixmap(QPixmap(path))
+        # Resim Galeri Güncellemesi
+        self.image_list = data.get("images", [])
+        if not self.image_list and data.get("image_path"): self.image_list = [data.get("image_path")]
+        self.current_img_index = 0
+        self.update_image_display()
         
-        s.list_assigned_spells.clear()
+        # BÜYÜ LİSTESİ RENDER
+        self.list_assigned_spells.clear()
         for spell_id in data.get("spells", []):
             spell = self.dm.data["entities"].get(spell_id)
-            if spell: s.list_assigned_spells.addItem(f"{spell['name']} (Lv {spell.get('attributes',{}).get('LBL_LEVEL','?')})")
+            if spell:
+                level = spell.get('attributes',{}).get('LBL_LEVEL','?')
+                self.list_assigned_spells.addItem(f"{spell['name']} (Lv {level})")
         
-        s.list_pdfs.clear()
-        for pdf_filename in data.get("pdfs", []):
-            s.list_pdfs.addItem(pdf_filename)
+        # EKİPMAN LİSTESİ RENDER (YENİ)
+        self.list_assigned_items.clear()
+        for item_id in data.get("equipment_ids", []):
+            item = self.dm.data["entities"].get(item_id)
+            if item:
+                cat = item.get('attributes',{}).get('LBL_CATEGORY', 'Item')
+                self.list_assigned_items.addItem(f"{item['name']} ({cat})")
 
-    def collect_data_from_sheet(self, s):
-        if not s.inp_name.text(): return None
+        # PDF Listesi
+        self.list_pdfs.clear()
+        for pdf in data.get("pdfs", []): self.list_pdfs.addItem(pdf)
+
+    def collect_data_from_sheet(self): # SADECE self
+        """Formdaki verileri toplar ve bir sözlük olarak döner."""
+        if not self.inp_name.text(): return None
+        
         def get_cards(container):
             res = []; layout = container.dynamic_area
             for i in range(layout.count()):
                 w = layout.itemAt(i).widget()
                 if w: res.append({"name": w.inp_title.text(), "desc": w.inp_desc.toPlainText()})
             return res
+            
         data = {
-            "name": s.inp_name.text(), 
-            "type": s.inp_type.currentText(),
-            "tags": [t.strip() for t in s.inp_tags.text().split(",") if t.strip()],
-            "description": s.inp_desc.toPlainText(),
-            "dm_notes": s.inp_dm_notes.toPlainText(),
-            "images": s.image_list,
-            "stats": {k: int(v.text() or 10) for k, v in s.stats_inputs.items()},
+            "name": self.inp_name.text(), 
+            "type": self.inp_type.currentText(),
+            "tags": [t.strip() for t in self.inp_tags.text().split(",") if t.strip()],
+            "description": self.inp_desc.toPlainText(),
+            "dm_notes": self.inp_dm_notes.toPlainText(),
+            "images": self.image_list,
+            "stats": {k: int(v.text() or 10) for k, v in self.stats_inputs.items()},
             "combat_stats": {
-                "hp": s.inp_hp.text(), "max_hp": s.inp_max_hp.text(), "ac": s.inp_ac.text(),
-                "speed": s.inp_speed.text(), "initiative": s.inp_init.text()
+                "hp": self.inp_hp.text(), "max_hp": self.inp_max_hp.text(), "ac": self.inp_ac.text(),
+                "speed": self.inp_speed.text(), "initiative": self.inp_init.text()
             },
-            "saving_throws": s.inp_saves.text(), "skills": s.inp_skills.text(),
-            "damage_vulnerabilities": s.inp_vuln.text(), "damage_resistances": s.inp_resist.text(),
-            "damage_immunities": s.inp_dmg_immune.text(), "condition_immunities": s.inp_cond_immune.text(),
-            "proficiency_bonus": s.inp_prof.text(), "passive_perception": s.inp_pp.text(),
-            "attributes": {l: (w.currentText() if isinstance(w, QComboBox) else w.text()) for l, w in s.dynamic_inputs.items()},
-            "traits": get_cards(s.trait_container), "actions": get_cards(s.action_container),
-            "reactions": get_cards(s.reaction_container), "legendary_actions": get_cards(s.legendary_container),
-            "inventory": get_cards(s.inventory_container), "custom_spells": get_cards(s.custom_spell_container),
-            "pdfs": [s.list_pdfs.item(i).text() for i in range(s.list_pdfs.count())]
+            "saving_throws": self.inp_saves.text(), "skills": self.inp_skills.text(),
+            "damage_vulnerabilities": self.inp_vuln.text(), "damage_resistances": self.inp_resist.text(),
+            "damage_immunities": self.inp_dmg_immune.text(), "condition_immunities": self.inp_cond_immune.text(),
+            "proficiency_bonus": self.inp_prof.text(), "passive_perception": self.inp_pp.text(),
+            "attributes": {l: (w.currentText() if isinstance(w, QComboBox) else w.text()) for l, w in self.dynamic_inputs.items()},
+            "traits": get_cards(self.trait_container), 
+            "actions": get_cards(self.action_container),
+            "reactions": get_cards(self.reaction_container), 
+            "legendary_actions": get_cards(self.legendary_container),
+            "inventory": get_cards(self.inventory_container), 
+            "custom_spells": get_cards(self.custom_spell_container),
+            "pdfs": [self.list_pdfs.item(i).text() for i in range(self.list_pdfs.count())],
+            "spells": [self.list_assigned_spells.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.list_assigned_spells.count()) if self.list_assigned_spells.item(i).data(Qt.ItemDataRole.UserRole)],
+            "equipment_ids": [self.list_assigned_items.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.list_assigned_items.count()) if self.list_assigned_items.item(i).data(Qt.ItemDataRole.UserRole)]
         }
         return data
 
