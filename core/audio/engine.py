@@ -19,19 +19,24 @@ class TrackPlayer(QObject):
         self._volume = 0.0 
         self.audio.setVolume(0.0)
         
+        # Loop tespiti için değişken
+        self.last_position = 0
+        
         self.anim = QPropertyAnimation(self, b"volume")
         self.anim.setDuration(2000)
         self.anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
 
-        self.player.mediaStatusChanged.connect(self._on_media_status)
+        # Pozisyon takibi (Sonsuz döngüde başa sarmayı anlamak için)
+        self.player.positionChanged.connect(self._on_position_changed)
 
     @pyqtProperty(float)
     def volume(self): return self._volume
     
     @volume.setter
     def volume(self, val):
-        self._volume = val
-        self.audio.setVolume(val)
+        if abs(self._volume - val) > 0.001:
+            self._volume = val
+            self.audio.setVolume(val)
 
     def load_track(self, track: Track):
         if not track.sequence: return
@@ -40,15 +45,11 @@ class TrackPlayer(QObject):
         if os.path.exists(node.file_path):
             self.player.setSource(QUrl.fromLocalFile(os.path.abspath(node.file_path)))
             
-            # --- LOOP STRATEJİSİ ---
-            # Pocket Bard tarzı için Infinite Loop en iyisidir.
-            # Ancak 'loop_finished' sinyalini almak için (Queue mantığı için)
-            # manuel loop kontrolü bazen daha iyi olabilir.
-            # Gapless için Infinite kullanıyoruz, ancak Infinite modunda EndOfMedia sinyali GELMEZ.
-            # Bu yüzden Queue mantığı için QMediaPlayer.Loops.One kullanıp
-            # sinyal gelince kendimiz tekrar play() diyeceğiz.
-            # WAV kullanılıyorsa bu yöntem de neredeyse gapless'tır.
-            self.player.setLoops(QMediaPlayer.Loops.Once) 
+            # --- DÜZELTME: Sonsuz Döngü ---
+            # Once yerine Infinite kullanıyoruz. Bu, Qt'nin native gapless playback 
+            # özelliklerini (desteklenen formatlarda) kullanmasını sağlar.
+            self.player.setLoops(QMediaPlayer.Loops.Infinite) 
+            self.last_position = 0
         else:
             print(f"⚠️ Dosya Yok: {node.file_path}")
 
@@ -58,22 +59,32 @@ class TrackPlayer(QObject):
 
     def stop(self):
         self.player.stop()
+        self.last_position = 0
     
     def fade_to(self, target, duration=1500):
+        if abs(self._volume - target) < 0.01 and self.anim.state() != QPropertyAnimation.State.Running:
+            return
+        if self.anim.state() == QPropertyAnimation.State.Running and abs(self.anim.endValue() - target) < 0.01:
+            return
         if self.anim.state() == QPropertyAnimation.State.Running:
             self.anim.stop()
+        
         self.anim.setDuration(duration)
         self.anim.setStartValue(self._volume)
         self.anim.setEndValue(target)
         self.anim.start()
 
-    def _on_media_status(self, status):
-        if status == QMediaPlayer.MediaStatus.EndOfMedia:
-            # Sinyal gönder (Bu sinyal yukarıda MusicBrain tarafından yakalanıp geçişi tetikleyecek)
+    def _on_position_changed(self, position):
+        """
+        Infinite Loop modunda 'EndOfMedia' sinyali gelmez.
+        Bu yüzden şarkının süresi sıfırlandığında (başa döndüğünde) döngüyü biz tespit ederiz.
+        """
+        # Eğer pozisyon aniden azaldıysa (örn: 50000ms -> 100ms), başa sarmış demektir.
+        if position < self.last_position and position < 500: # 500ms tolerans
+            # Sinyal gönder (Queue sistemi çalışsın diye)
             self.loop_finished.emit()
-            
-            # Tekrar oynat (Loop)
-            self.play()
+        
+        self.last_position = position
 
 class MultiTrackDeck(QObject):
     """
@@ -92,8 +103,10 @@ class MultiTrackDeck(QObject):
     def deck_volume(self): return self.master_volume
     @deck_volume.setter
     def deck_volume(self, val):
-        self.master_volume = val
-        self.update_mix()
+        # Gereksiz güncellemeyi önle
+        if abs(self.master_volume - val) > 0.001:
+            self.master_volume = val
+            self.update_mix()
 
     def load_state(self, state: MusicState):
         for p in self.players.values():
@@ -105,11 +118,10 @@ class MultiTrackDeck(QObject):
             tp.load_track(track_data)
             self.players[track_id] = tp
             
-        # Sinyal Bağlantısı: Sadece 'base' kanalının bitişini dinle (Senkronizasyon lideri)
+        # Sinyal Bağlantısı: 'base' kanalını lider kabul et
         if "base" in self.players:
             self.players["base"].loop_finished.connect(self.loop_finished.emit)
         elif self.players:
-            # Base yoksa herhangi birini dinle
             list(self.players.values())[0].loop_finished.connect(self.loop_finished.emit)
 
     def play(self):
@@ -122,6 +134,10 @@ class MultiTrackDeck(QObject):
         for p in self.players.values(): p.stop()
 
     def set_intensity_mask(self, levels: List[str]):
+        # Eğer maske değişmediyse işlem yapma (Freeze önleyici)
+        if self.active_levels == levels:
+            return
+            
         self.active_levels = levels
         self.update_mix()
 
@@ -175,7 +191,6 @@ class MusicBrain(QObject):
         start_state = "normal" if "normal" in theme.states else list(theme.states.keys())[0]
         self._hard_switch(start_state)
 
-    # --- YENİ EKLENEN KUYRUK MANTIĞI ---
     def queue_state(self, state_name):
         """Sıradaki loop bitince geçilecek."""
         if state_name == self.current_state_id: return
@@ -195,7 +210,6 @@ class MusicBrain(QObject):
             print("✅ Loop bitti, otomatik geçiş.")
             self.set_state(self.pending_state_id)
             self.pending_state_id = None
-    # -----------------------------------
 
     def set_state(self, state_name: str):
         if not self.current_theme or state_name not in self.current_theme.states: return
@@ -225,9 +239,14 @@ class MusicBrain(QObject):
         self.state_changed.emit(state_name)
 
     def set_intensity(self, level: int):
+        # Donmayı önlemek için gereksiz yere aynı seviyeyi set etme
+        if self.current_intensity_level == level:
+            return
+
         self.current_intensity_level = level
         mask = self._get_mask_for_level(level)
-        print(f"🎚️ Intensity: {level} -> {mask}")
+        
+        # Sadece maskeyi güncelle
         self.active_deck.set_intensity_mask(mask)
         self.inactive_deck.set_intensity_mask(mask)
 
