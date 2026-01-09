@@ -178,8 +178,27 @@ class DatabaseTab(QWidget):
     def open_entity_tab(self, eid, target_panel="left"):
         if str(eid).startswith("lib_"):
             parts = eid.split("_")
-            self._fetch_and_open_api_entity(parts[1], parts[2], target_panel)
+            # parts[0] = "lib", parts[1] = raw_category (e.g., "monsters"), parts[2] = index
+            
+            raw_cat = parts[1]
+            
+            # Fix: Map the plural/lowercase folder names back to Internal Model Types
+            category_map = {
+                "monsters": "Monster",
+                "spells": "Spell",
+                "equipment": "Equipment",
+                "magic-items": "Equipment", # Both map to Equipment model
+                "classes": "Class",
+                "races": "Race",
+                "npc": "NPC"
+            }
+            
+            # Get correct category, default to capitalizing if not found
+            target_cat = category_map.get(raw_cat, raw_cat.capitalize())
+            
+            self._fetch_and_open_api_entity(target_cat, parts[2], target_panel)
             return
+            
         target_manager = self.tab_manager_left if target_panel == "left" else self.tab_manager_right
         for i in range(target_manager.count()):
             sheet = target_manager.widget(i)
