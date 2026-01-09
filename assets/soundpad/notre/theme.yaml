@@ -12,3 +12,21 @@ states:
       level2: 
         - file: "130_notre_2.wav"
           repeat: 0
+  combat:
+    tracks:
+      base: 
+        - file: "166_some_battle_0.wav"
+          repeat: 0
+      level1: 
+        - file: "166_some_battle_1.wav"
+          repeat: 0
+
+  duello:
+    tracks:
+      base: 
+        - file: "126_some_battle_0.wav"
+          repeat: 0
+      level1: 
+        - file: "126_some_battle_1.wav"
+          repeat: 0
+

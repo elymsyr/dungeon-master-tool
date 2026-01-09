@@ -12,3 +12,14 @@ states:
       level2: 
         - file: "meditation_130_12_2.wav"
           repeat: 0
+  combat:
+    tracks:
+      base: 
+        - file: "140_dark_boss_0.wav"
+          repeat: 0
+      level1: 
+        - file: "140_dark_boss_1.wav"
+          repeat: 0
+      level2: 
+        - file: "140_dark_boss_2.wav"
+          repeat: 0
