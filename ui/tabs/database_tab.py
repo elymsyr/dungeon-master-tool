@@ -181,7 +181,6 @@ class DatabaseTab(QWidget):
         data: Veritabanında olmayan (harici/geçici) veri sözlüğü.
         """
         
-        # 1. Eğer 'lib_' ile başlayan bir ID geldiyse, API'den çekme işlemini başlat
         if eid and str(eid).startswith("lib_"):
             parts = eid.split("_")
             raw_cat = parts[1]
@@ -195,7 +194,6 @@ class DatabaseTab(QWidget):
             
         target_manager = self.tab_manager_left if target_panel == "left" else self.tab_manager_right
         
-        # 2. Eğer ID varsa, zaten açık mı diye kontrol et
         if eid:
             for i in range(target_manager.count()):
                 sheet = target_manager.widget(i)
@@ -203,19 +201,19 @@ class DatabaseTab(QWidget):
                     target_manager.setCurrentIndex(i)
                     return
             
-            # Veritabanından veriyi çek
             data = self.dm.data["entities"].get(eid)
         
-        # 3. Veri yoksa (ne parametre ne DB), çık
         if not data: return
         
-        # 4. Yeni sayfa oluştur
         new_sheet = NpcSheet(self.dm)
-        new_sheet.setProperty("entity_id", eid) # ID yoksa None olur (Geçici mod)
+        new_sheet.setProperty("entity_id", eid)
+        
+        # --- BURASI EKLENDİ ---
+        new_sheet.request_open_entity.connect(lambda id: self.open_entity_tab(id, target_panel))
+        # ---------------------
         
         self.populate_sheet(new_sheet, data)
         
-        # Buton Bağlantıları
         new_sheet.btn_save.clicked.connect(lambda: self.save_sheet_data(new_sheet))
         new_sheet.btn_delete.clicked.connect(lambda: self.delete_entity_from_tab(new_sheet))
         new_sheet.btn_show_player.clicked.connect(lambda: self.project_entity_image(new_sheet))
@@ -225,10 +223,8 @@ class DatabaseTab(QWidget):
         new_sheet.btn_remove_pdf.clicked.connect(new_sheet.remove_current_pdf)
         new_sheet.btn_open_pdf_folder.clicked.connect(new_sheet.open_pdf_folder)
         
-        # İkon belirle
         icon_char = "👤" if data.get("type") == "NPC" else "🐉" if data.get("type") == "Monster" else "📜"
         
-        # Eğer geçici ise başlığa işaret koy
         tab_title = f"{icon_char} {data.get('name')}"
         if not eid:
             tab_title = f"⚠️ {tab_title} (Unsaved)"

@@ -126,6 +126,7 @@ def get_default_entity_structure(entity_type="NPC"):
     return {
         "name": "Yeni Kayıt",
         "type": entity_type,
+        "source": "",  # <--- YENİ EKLENDİ
         "description": "",
         "images": [],
         "image_path": "",
@@ -151,8 +152,7 @@ def get_default_entity_structure(entity_type="NPC"):
         "pdfs": [],               
         "location_id": None,
 
-        # --- YENİ EKLENEN: DM NOTLARI ---
-        "dm_notes": "", # <--- Burası eklendi, varsayılan boş.
+        "dm_notes": "", 
 
         # --- Gelişmiş Statlar ---
         "saving_throws": "",

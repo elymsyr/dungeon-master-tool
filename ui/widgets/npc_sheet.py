@@ -1,8 +1,8 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, 
                              QLineEdit, QTextEdit, QComboBox, QTabWidget, 
                              QLabel, QGroupBox, QPushButton, QScrollArea, QFrame, 
-                             QListWidget, QFileDialog, QMessageBox, QStyle)
-from PyQt6.QtCore import Qt, QUrl
+                             QListWidget, QFileDialog, QMessageBox, QStyle, QListWidgetItem)
+from PyQt6.QtCore import Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QDesktopServices, QPixmap
 from ui.widgets.aspect_ratio_label import AspectRatioLabel
 from ui.workers import ImageDownloadWorker
@@ -12,13 +12,21 @@ from config import CACHE_DIR
 import os
 
 class NpcSheet(QWidget):
+    # --- SİNYAL: Bağlı bir öğeye (Büyü/Eşya/Sakin) çift tıklandığında tetiklenir ---
+    request_open_entity = pyqtSignal(str) 
+
     def __init__(self, data_manager):
         super().__init__()
         self.dm = data_manager
         self.dynamic_inputs = {}
+        
+        # --- VERİ LİSTELERİ (RAM) ---
         self.image_list = []
         self.current_img_index = 0
-        self.image_worker = None # Resim indirme worker referansı
+        self.linked_spell_ids = []     # Veritabanından seçilen büyülerin ID'leri
+        self.linked_item_ids = []      # Veritabanından seçilen eşyaların ID'leri
+        self.image_worker = None       # Resim indirme worker referansı
+        
         self.init_ui()
 
     def init_ui(self):
@@ -43,7 +51,7 @@ class NpcSheet(QWidget):
 
         self.content_layout = QVBoxLayout(self.content_widget)
         
-        # --- ÜST BÖLÜM ---
+        # --- ÜST BÖLÜM (RESİM & TEMEL BİLGİLER) ---
         top_layout = QHBoxLayout()
         img_layout = QVBoxLayout()
         
@@ -93,15 +101,25 @@ class NpcSheet(QWidget):
         info_layout = QFormLayout()
         self.inp_name = QLineEdit()
         self.inp_type = QComboBox()
-        
         for cat in ENTITY_SCHEMAS.keys():
             self.inp_type.addItem(tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"), cat)
         self.inp_type.currentIndexChanged.connect(self._on_type_index_changed)
         
+        # --- KAYNAK (SOURCE) ALANI ---
+        self.inp_source = QLineEdit()
+        self.inp_source.setPlaceholderText("SRD 5e, Custom, etc.")
+        
         self.inp_tags = QLineEdit(); self.inp_tags.setPlaceholderText(tr("LBL_TAGS_PH"))
+        
+        # --- LOKASYON (HİBRİT: SEÇ VEYA YAZ) ---
         self.combo_location = QComboBox()
+        self.combo_location.setEditable(True) 
+        self.combo_location.setPlaceholderText("Seç veya Yaz...")
         self.lbl_location = QLabel(tr("LBL_LOCATION"))
+        
         self.list_residents = QListWidget(); self.list_residents.setMaximumHeight(80)
+        # Sakinlere çift tıklayınca git
+        self.list_residents.itemDoubleClicked.connect(self._on_linked_item_dbl_click)
         self.lbl_residents = QLabel(tr("LBL_RESIDENTS"))
         
         self.inp_desc = QTextEdit()
@@ -111,6 +129,7 @@ class NpcSheet(QWidget):
 
         info_layout.addRow(tr("LBL_NAME"), self.inp_name)
         info_layout.addRow(tr("LBL_TYPE"), self.inp_type)
+        info_layout.addRow(tr("LBL_SOURCE"), self.inp_source) # Eklendi
         info_layout.addRow(tr("LBL_TAGS"), self.inp_tags)
         info_layout.addRow(self.lbl_location, self.combo_location)
         info_layout.addRow(self.lbl_residents, self.list_residents)
@@ -152,116 +171,32 @@ class NpcSheet(QWidget):
         
         self.update_ui_by_type(self.inp_type.currentData())
 
-    def retranslate_ui(self):
-        for i in range(self.inp_type.count()):
-            cat = self.inp_type.itemData(i)
-            if cat: self.inp_type.setItemText(i, tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"))
-
-        self.btn_show_player.setText(tr("BTN_SHOW_PLAYER"))
-        self.btn_add_img.setText(tr("BTN_ADD"))
-        self.lbl_location.setText(tr("LBL_LOCATION"))
-        self.lbl_residents.setText(tr("LBL_RESIDENTS"))
-        self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
+    def refresh_reference_combos(self):
+        """
+        Veritabanındaki diğer varlıkları tarayıp ilgili Combo Box'ları doldurur.
+        """
+        self.combo_location.clear()
+        self.combo_all_spells.clear()
+        self.combo_all_items.clear()
         
-        cat_key = self.inp_type.currentData()
-        if cat_key: 
-            cat_trans = tr(f"CAT_{cat_key.upper()}") if cat_key in ENTITY_SCHEMAS else cat_key
-            self.grp_dynamic.setTitle(f"{cat_trans} {tr('LBL_PROPERTIES')}")
-        else: self.grp_dynamic.setTitle(tr("LBL_PROPERTIES"))
-
-        for label_key, widget in self.dynamic_inputs.items():
-            label_widget = self.layout_dynamic.labelForField(widget)
-            if label_widget: label_widget.setText(f"{tr(label_key)}:")
-            if isinstance(widget, QComboBox):
-                for i in range(widget.count()):
-                    original_key = widget.itemData(i)
-                    if original_key:
-                        new_text = tr(original_key) if str(original_key).startswith("LBL_") else original_key
-                        widget.setItemText(i, new_text)
-
-        self.tabs.setTabText(0, tr("TAB_STATS"))
-        self.tabs.setTabText(1, tr("TAB_SPELLS"))
-        self.tabs.setTabText(2, tr("TAB_ACTIONS"))
-        self.tabs.setTabText(3, tr("TAB_INV"))
-        self.tabs.setTabText(4, tr("TAB_DOCS"))
-        self.btn_delete.setText(tr("BTN_DELETE"))
-        self.btn_save.setText(tr("BTN_SAVE"))
+        self.combo_location.addItem("-", None) # Boş seçenek
         
-        if hasattr(self, "grp_base_stats"): self.grp_base_stats.setTitle(tr("GRP_STATS"))
-        if hasattr(self, "grp_combat_stats"): self.grp_combat_stats.setTitle(tr("GRP_COMBAT"))
-        if hasattr(self, "grp_defense"): self.grp_defense.setTitle(tr("GRP_DEFENSE"))
-        if hasattr(self, "grp_spells"): self.grp_spells.setTitle(tr("GRP_SPELLS"))
-        if hasattr(self, "grp_inventory"): self.grp_inventory.setTitle(tr("GRP_INVENTORY"))
-        if hasattr(self, "grp_pdf"): self.grp_pdf.setTitle(tr("GRP_PDF"))
-        if hasattr(self, "grp_db_items"): self.grp_db_items.setTitle(tr("LBL_DB_ITEMS"))
-        
-        self.trait_container.setTitle(tr("LBL_TRAITS"))
-        self.action_container.setTitle(tr("LBL_ACTIONS"))
-        self.reaction_container.setTitle(tr("LBL_REACTIONS"))
-        self.legendary_container.setTitle(tr("LBL_LEGENDARY_ACTIONS"))
-        self.custom_spell_container.setTitle(tr("LBL_MANUAL_SPELLS"))
-        self.inventory_container.setTitle(tr("GRP_INVENTORY"))
-
-    def build_dynamic_form(self, category_name):
-        while self.layout_dynamic.rowCount() > 0: self.layout_dynamic.removeRow(0)
-        self.dynamic_inputs = {} 
-        schema = ENTITY_SCHEMAS.get(category_name, [])
-        cat_trans = tr(f"CAT_{category_name.upper()}") if category_name in ENTITY_SCHEMAS else category_name
-        self.grp_dynamic.setTitle(f"{cat_trans} {tr('LBL_PROPERTIES')}")
-        for label_key, dtype, options in schema:
-            if dtype == "combo":
-                widget = QComboBox(); widget.setEditable(True)
-                if options:
-                    for opt in options:
-                        display_text = tr(opt) if str(opt).startswith("LBL_") else opt
-                        widget.addItem(display_text, opt) 
-            else: widget = QLineEdit()
-            self.layout_dynamic.addRow(f"{tr(label_key)}:", widget)
-            self.dynamic_inputs[label_key] = widget
-
-    def add_image_dialog(self):
-        fname, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_IMG"), "", "Images (*.png *.jpg *.jpeg *.bmp)")
-        if fname:
-            rel_path = self.dm.import_image(fname)
-            if rel_path:
-                self.image_list.append(rel_path)
-                self.current_img_index = len(self.image_list) - 1
-                self.update_image_display()
-
-    def remove_current_image(self):
-        if not self.image_list: return
-        del self.image_list[self.current_img_index]
-        if self.current_img_index >= len(self.image_list):
-            self.current_img_index = max(0, len(self.image_list) - 1)
-        self.update_image_display()
-
-    def show_prev_image(self):
-        if not self.image_list: return
-        self.current_img_index = (self.current_img_index - 1) % len(self.image_list)
-        self.update_image_display()
-
-    def show_next_image(self):
-        if not self.image_list: return
-        self.current_img_index = (self.current_img_index + 1) % len(self.image_list)
-        self.update_image_display()
-
-    def update_image_display(self):
-        if not self.image_list:
-            self.lbl_image.setPixmap(None)
-            self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE"))
-            self.lbl_img_counter.setText("0/0")
-            return
+        for eid, ent in self.dm.data["entities"].items():
+            etype = ent.get("type")
+            name = ent.get("name", "Unnamed")
             
-        rel_path = self.image_list[self.current_img_index]
-        full_path = self.dm.get_full_path(rel_path)
-        
-        if full_path and os.path.exists(full_path): 
-            self.lbl_image.setPixmap(QPixmap(full_path))
-        else: 
-            self.lbl_image.setPixmap(None)
-            self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE"))
+            if etype == "Location":
+                self.combo_location.addItem(f"📍 {name}", eid)
             
-        self.lbl_img_counter.setText(f"{self.current_img_index + 1}/{len(self.image_list)}")
+            elif etype == "Spell":
+                level = ent.get("attributes", {}).get("LBL_LEVEL", "?")
+                self.combo_all_spells.addItem(f"{name} (Lv {level})", eid)
+            
+            elif etype == "Equipment":
+                cat = ent.get("attributes", {}).get("LBL_CATEGORY", "Item")
+                self.combo_all_items.addItem(f"{name} ({cat})", eid)
+
+    # --- TAB KURULUMLARI ---
 
     def setup_stats_tab(self):
         layout = QVBoxLayout(self.tab_stats)
@@ -276,8 +211,24 @@ class NpcSheet(QWidget):
             self.stats_inputs[s] = inp; self.stats_modifiers[s] = lbl_mod
             v.addWidget(lbl_title); v.addWidget(inp); v.addWidget(lbl_mod); l.addLayout(v)
         layout.addWidget(self.grp_base_stats)
-        self.grp_combat_stats = self._create_combat_stats_group()
+        
+        self.grp_combat_stats = QGroupBox(tr("GRP_COMBAT"))
+        v_comb = QVBoxLayout(self.grp_combat_stats)
+        self.inp_hp = QLineEdit(); self.inp_hp.setPlaceholderText(tr("LBL_HP"))
+        self.inp_max_hp = QLineEdit(); self.inp_max_hp.setPlaceholderText(tr("LBL_MAX_HP"))
+        self.inp_ac = QLineEdit(); self.inp_ac.setPlaceholderText(tr("HEADER_AC"))
+        self.inp_speed = QLineEdit(); self.inp_prof = QLineEdit(); self.inp_pp = QLineEdit()
+        self.inp_init = QLineEdit(); self.inp_init.setPlaceholderText(tr("LBL_INIT"))
+        
+        r1 = QHBoxLayout()
+        for t, w in [(tr("LBL_MAX_HP"), self.inp_max_hp), (tr("LBL_HP"), self.inp_hp), (tr("HEADER_AC"), self.inp_ac), (tr("LBL_SPEED"), self.inp_speed)]:
+             v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); r1.addLayout(v)
+        r2 = QHBoxLayout()
+        for t, w in [(tr("LBL_PROF_BONUS"), self.inp_prof), (tr("LBL_PASSIVE_PERC"), self.inp_pp), (tr("LBL_INIT_BONUS"), self.inp_init)]:
+             v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); r2.addLayout(v)
+        v_comb.addLayout(r1); v_comb.addLayout(r2)
         layout.addWidget(self.grp_combat_stats)
+
         self.grp_defense = QGroupBox(tr("GRP_DEFENSE")); form3 = QFormLayout(self.grp_defense)
         self.inp_saves = QLineEdit(); self.inp_skills = QLineEdit()
         self.inp_vuln = QLineEdit(); self.inp_resist = QLineEdit()
@@ -286,23 +237,6 @@ class NpcSheet(QWidget):
         form3.addRow(tr("LBL_VULN"), self.inp_vuln); form3.addRow(tr("LBL_RESIST"), self.inp_resist)
         form3.addRow(tr("LBL_DMG_IMMUNE"), self.inp_dmg_immune); form3.addRow(tr("LBL_COND_IMMUNE"), self.inp_cond_immune)
         layout.addWidget(self.grp_defense); layout.addStretch()
-
-    def _create_combat_stats_group(self):
-        grp = QGroupBox(tr("GRP_COMBAT"))
-        v_comb = QVBoxLayout(grp)
-        self.inp_hp = QLineEdit(); self.inp_hp.setPlaceholderText(tr("LBL_HP"))
-        self.inp_max_hp = QLineEdit(); self.inp_max_hp.setPlaceholderText(tr("LBL_MAX_HP"))
-        self.inp_ac = QLineEdit(); self.inp_ac.setPlaceholderText(tr("HEADER_AC"))
-        self.inp_speed = QLineEdit(); self.inp_prof = QLineEdit(); self.inp_pp = QLineEdit()
-        self.inp_init = QLineEdit(); self.inp_init.setPlaceholderText(tr("LBL_INIT"))
-        row1 = QHBoxLayout()
-        for t, w in [(tr("LBL_MAX_HP"), self.inp_max_hp), (tr("LBL_HP"), self.inp_hp), (tr("HEADER_AC"), self.inp_ac), (tr("LBL_SPEED"), self.inp_speed)]:
-             v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); row1.addLayout(v)
-        row2 = QHBoxLayout()
-        for t, w in [(tr("LBL_PROF_BONUS"), self.inp_prof), (tr("LBL_PASSIVE_PERC"), self.inp_pp), (tr("LBL_INIT_BONUS"), self.inp_init)]:
-             v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); row2.addLayout(v)
-        v_comb.addLayout(row1); v_comb.addLayout(row2)
-        return grp
 
     def _update_modifier(self, stat_key, text_value):
         try:
@@ -314,24 +248,55 @@ class NpcSheet(QWidget):
             self.stats_modifiers[stat_key].style().polish(self.stats_modifiers[stat_key])
             if mod > 0: self.stats_modifiers[stat_key].setStyleSheet("color: #4caf50; font-weight: bold;")
             else: self.stats_modifiers[stat_key].setStyleSheet("color: #aaa; font-weight: normal;")
-        except ValueError:
-            self.stats_modifiers[stat_key].setText("-")
+        except ValueError: self.stats_modifiers[stat_key].setText("-")
 
     def setup_spells_tab(self):
         layout = QVBoxLayout(self.tab_spells)
+        
+        # 1. VERİTABANI BÜYÜLERİ
         self.grp_spells = QGroupBox(tr("GRP_SPELLS"))
         l_linked = QVBoxLayout(self.grp_spells)
         h = QHBoxLayout()
-        self.combo_all_spells = QComboBox(); self.combo_all_spells.setEditable(True); self.combo_all_spells.setPlaceholderText(tr("LBL_SEARCH"))
-        self.btn_add_spell = QPushButton(tr("BTN_ADD")); self.btn_add_spell.setObjectName("successBtn")
-        h.addWidget(self.combo_all_spells, 3); h.addWidget(self.btn_add_spell, 1)
-        self.list_assigned_spells = QListWidget(); self.list_assigned_spells.setAlternatingRowColors(True); self.list_assigned_spells.setMinimumHeight(300)
-        self.btn_remove_spell = QPushButton(tr("BTN_REMOVE")); self.btn_remove_spell.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)); self.btn_remove_spell.setObjectName("dangerBtn")
-        l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_spells); l_linked.addWidget(self.btn_remove_spell)
+        self.combo_all_spells = QComboBox(); self.combo_all_spells.setEditable(True); self.combo_all_spells.setPlaceholderText("Veritabanından Büyü Ara...")
+        self.btn_add_spell_link = QPushButton(tr("BTN_ADD")); self.btn_add_spell_link.setObjectName("successBtn"); self.btn_add_spell_link.clicked.connect(self.add_linked_spell)
+        h.addWidget(self.combo_all_spells, 3); h.addWidget(self.btn_add_spell_link, 1)
+        
+        self.list_assigned_spells = QListWidget(); self.list_assigned_spells.setAlternatingRowColors(True); self.list_assigned_spells.setMinimumHeight(200)
+        # Sinyal Bağlantısı
+        self.list_assigned_spells.itemDoubleClicked.connect(self._on_linked_item_dbl_click)
+        
+        self.btn_remove_spell_link = QPushButton(tr("BTN_REMOVE")); self.btn_remove_spell_link.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)); self.btn_remove_spell_link.setObjectName("dangerBtn"); self.btn_remove_spell_link.clicked.connect(self.remove_linked_spell)
+        
+        l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_spells); l_linked.addWidget(self.btn_remove_spell_link)
         layout.addWidget(self.grp_spells)
+        
+        # 2. MANUEL BÜYÜLER
         self.custom_spell_container = self._create_section(tr("LBL_MANUAL_SPELLS"))
         self.add_btn_to_section(self.custom_spell_container, tr("BTN_ADD"))
         layout.addWidget(self.custom_spell_container); layout.addStretch()
+
+    def setup_inventory_tab(self):
+        layout = QVBoxLayout(self.tab_inventory)
+        
+        # 1. VERİTABANI EŞYALARI
+        self.grp_db_items = QGroupBox(tr("LBL_DB_ITEMS")); l_linked = QVBoxLayout(self.grp_db_items); h = QHBoxLayout()
+        self.combo_all_items = QComboBox(); self.combo_all_items.setEditable(True); self.combo_all_items.setPlaceholderText("Veritabanından Eşya Ara...")
+        self.btn_add_item_link = QPushButton(tr("BTN_ADD")); self.btn_add_item_link.setObjectName("successBtn"); self.btn_add_item_link.clicked.connect(self.add_linked_item)
+        h.addWidget(self.combo_all_items, 3); h.addWidget(self.btn_add_item_link, 1)
+        
+        self.list_assigned_items = QListWidget(); self.list_assigned_items.setAlternatingRowColors(True)
+        # Sinyal Bağlantısı
+        self.list_assigned_items.itemDoubleClicked.connect(self._on_linked_item_dbl_click)
+        
+        self.btn_remove_item_link = QPushButton(tr("BTN_REMOVE")); self.btn_remove_item_link.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)); self.btn_remove_item_link.setObjectName("dangerBtn"); self.btn_remove_item_link.clicked.connect(self.remove_linked_item)
+        
+        l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_items); l_linked.addWidget(self.btn_remove_item_link)
+        layout.addWidget(self.grp_db_items)
+        
+        # 2. MANUEL EŞYALAR
+        self.inventory_container = self._create_section(tr("GRP_INVENTORY"))
+        self.add_btn_to_section(self.inventory_container, tr("BTN_ADD"))
+        layout.addWidget(self.inventory_container); layout.addStretch()
 
     def setup_features_tab(self):
         layout = QVBoxLayout(self.tab_features)
@@ -340,20 +305,6 @@ class NpcSheet(QWidget):
         self.reaction_container = self._create_section(tr("LBL_REACTIONS")); self.add_btn_to_section(self.reaction_container, tr("BTN_ADD"))
         self.legendary_container = self._create_section(tr("LBL_LEGENDARY_ACTIONS")); self.add_btn_to_section(self.legendary_container, tr("BTN_ADD"))
         layout.addWidget(self.trait_container); layout.addWidget(self.action_container); layout.addWidget(self.reaction_container); layout.addWidget(self.legendary_container); layout.addStretch()
-
-    def setup_inventory_tab(self):
-        layout = QVBoxLayout(self.tab_inventory)
-        self.grp_db_items = QGroupBox(tr("LBL_DB_ITEMS")); l_linked = QVBoxLayout(self.grp_db_items); h = QHBoxLayout()
-        self.combo_all_items = QComboBox(); self.combo_all_items.setEditable(True)
-        self.btn_add_item_link = QPushButton(tr("BTN_ADD")); self.btn_add_item_link.setObjectName("successBtn")
-        h.addWidget(self.combo_all_items, 3); h.addWidget(self.btn_add_item_link, 1)
-        self.list_assigned_items = QListWidget(); self.list_assigned_items.setAlternatingRowColors(True)
-        self.btn_remove_item_link = QPushButton(tr("BTN_REMOVE")); self.btn_remove_item_link.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)); self.btn_remove_item_link.setObjectName("dangerBtn")
-        l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_items); l_linked.addWidget(self.btn_remove_item_link)
-        layout.addWidget(self.grp_db_items)
-        self.inventory_container = self._create_section(tr("GRP_INVENTORY"))
-        self.add_btn_to_section(self.inventory_container, tr("BTN_ADD"))
-        layout.addWidget(self.inventory_container); layout.addStretch()
 
     def setup_docs_tab(self):
         layout = QVBoxLayout(self.tab_docs)
@@ -372,6 +323,56 @@ class NpcSheet(QWidget):
         h_action.addWidget(self.btn_open_pdf); h_action.addWidget(self.btn_project_pdf); h_action.addWidget(self.btn_remove_pdf)
         v.addLayout(h_action); layout.addWidget(self.grp_pdf); layout.addStretch()
 
+    # --- YARDIMCI FONKSİYONLAR ---
+
+    def _on_linked_item_dbl_click(self, item):
+        """Listeye çift tıklandığında sinyali ateşle."""
+        eid = item.data(Qt.ItemDataRole.UserRole)
+        if eid:
+            self.request_open_entity.emit(eid)
+
+    def add_linked_spell(self):
+        eid = self.combo_all_spells.currentData()
+        if not eid: return
+        if eid not in self.linked_spell_ids:
+            self.linked_spell_ids.append(eid)
+            self._render_linked_list(self.list_assigned_spells, self.linked_spell_ids)
+
+    def remove_linked_spell(self):
+        row = self.list_assigned_spells.currentRow()
+        if row >= 0:
+            del self.linked_spell_ids[row]
+            self.list_assigned_spells.takeItem(row)
+
+    def add_linked_item(self):
+        eid = self.combo_all_items.currentData()
+        if not eid: return
+        if eid not in self.linked_item_ids:
+            self.linked_item_ids.append(eid)
+            self._render_linked_list(self.list_assigned_items, self.linked_item_ids)
+
+    def remove_linked_item(self):
+        row = self.list_assigned_items.currentRow()
+        if row >= 0:
+            del self.linked_item_ids[row]
+            self.list_assigned_items.takeItem(row)
+
+    def _render_linked_list(self, list_widget, id_list):
+        list_widget.clear()
+        for eid in id_list:
+            ent = self.dm.data["entities"].get(eid)
+            name = ent.get("name", "Unknown") if ent else "Silinmiş Öğe"
+            extra = ""
+            if ent:
+                if ent.get("type") == "Spell": extra = f" (Lv {ent.get('attributes',{}).get('LBL_LEVEL','?')})"
+                elif ent.get("type") == "Equipment": extra = f" ({ent.get('attributes',{}).get('LBL_CATEGORY','')})"
+            
+            item = QListWidgetItem(f"{name}{extra}")
+            item.setData(Qt.ItemDataRole.UserRole, eid)
+            list_widget.addItem(item)
+
+    # --- UI YÖNETİMİ ---
+
     def _create_section(self, title):
         group = QGroupBox(title); v = QVBoxLayout(group); group.dynamic_area = QVBoxLayout(); v.addLayout(group.dynamic_area); return group
 
@@ -384,31 +385,19 @@ class NpcSheet(QWidget):
         if ph_desc is None: ph_desc = tr("LBL_DETAILS_PH")
         card = QFrame(); card.setProperty("class", "featureCard")
         l = QVBoxLayout(card); h = QHBoxLayout()
-        
-        t = QLineEdit(name)
-        t.setPlaceholderText(ph_title)
-        t.setProperty("class", "cardInput") 
-        t.setStyleSheet("font-weight: bold; border:none; font-size: 14px;")
-        
-        btn = QPushButton(); btn.setFixedSize(24,24); btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton)); btn.setCursor(Qt.CursorShape.PointingHandCursor); btn.setToolTip(tr("BTN_REMOVE")); btn.setStyleSheet("background: transparent; border: none;")
-        btn.clicked.connect(lambda: [group.dynamic_area.removeWidget(card), card.deleteLater()])
+        t = QLineEdit(name); t.setPlaceholderText(ph_title); t.setProperty("class", "cardInput"); t.setStyleSheet("font-weight: bold; border:none; font-size: 14px;")
+        btn = QPushButton(); btn.setFixedSize(24,24); btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton)); btn.setStyleSheet("background: transparent; border: none;"); btn.clicked.connect(lambda: [group.dynamic_area.removeWidget(card), card.deleteLater()])
         h.addWidget(t); h.addWidget(btn); l.addLayout(h)
-        
-        d = QTextEdit(desc)
-        d.setPlaceholderText(ph_desc)
-        d.setMinimumHeight(80); d.setMaximumHeight(300)
-        d.setProperty("class", "cardInput")
-        d.setStyleSheet("border:none;")
-        
+        d = QTextEdit(desc); d.setPlaceholderText(ph_desc); d.setMinimumHeight(80); d.setMaximumHeight(300); d.setProperty("class", "cardInput"); d.setStyleSheet("border:none;")
         l.addWidget(d); group.dynamic_area.addWidget(card); card.inp_title = t; card.inp_desc = d
 
     def clear_all_cards(self):
         containers = [self.trait_container, self.action_container, self.reaction_container, self.legendary_container, self.inventory_container, self.custom_spell_container]
         for g in containers:
             while g.dynamic_area.count(): 
-                c = g.dynamic_area.takeAt(0)
-                if c.widget(): c.widget().deleteLater()
-    
+                item = g.dynamic_area.takeAt(0)
+                if item.widget(): item.widget().deleteLater()
+
     def _on_type_index_changed(self, index):
         cat_key = self.inp_type.itemData(index)
         if cat_key: self.update_ui_by_type(cat_key)
@@ -419,228 +408,211 @@ class NpcSheet(QWidget):
         is_player = category_name == "Player"
         is_lore = category_name == "Lore"
         is_status = category_name == "Status Effect"
+        
+        # Lokasyon Sakinlerini Güncelle
+        if category_name == "Location":
+            self.list_residents.clear()
+            my_id = self.property("entity_id")
+            if my_id:
+                for eid, ent in self.dm.data["entities"].items():
+                    loc_ref = ent.get("location_id") or ent.get("attributes", {}).get("LBL_ATTR_LOCATION")
+                    if loc_ref == my_id:
+                        item = QListWidgetItem(f"{ent['name']} ({ent['type']})")
+                        item.setData(Qt.ItemDataRole.UserRole, eid)
+                        self.list_residents.addItem(item)
+
         self.lbl_location.setVisible(is_npc_like or is_player); self.combo_location.setVisible(is_npc_like or is_player)
         self.lbl_residents.setVisible(category_name == "Location"); self.list_residents.setVisible(category_name == "Location")
-        self.tabs.setTabVisible(0, is_npc_like) 
-        self.tabs.setTabVisible(1, is_npc_like) 
-        self.tabs.setTabVisible(2, is_npc_like) 
-        self.tabs.setTabVisible(3, is_npc_like) 
+        self.tabs.setTabVisible(0, is_npc_like); self.tabs.setTabVisible(1, is_npc_like); self.tabs.setTabVisible(2, is_npc_like); self.tabs.setTabVisible(3, is_npc_like)
         self.tabs.setTabVisible(4, is_lore or is_player or is_status)
-        if is_player:
-            if self.grp_combat_stats.parent() == self.tab_stats:
-                self.tab_stats.layout().removeWidget(self.grp_combat_stats); idx = self.content_layout.indexOf(self.tabs); self.content_layout.insertWidget(idx, self.grp_combat_stats)
-            self.grp_combat_stats.setVisible(True)
-        elif is_status:
-            self.grp_combat_stats.setVisible(False)
+        if is_player: 
+             if self.grp_combat_stats.parent() == self.tab_stats: self.tab_stats.layout().removeWidget(self.grp_combat_stats); self.content_layout.insertWidget(self.content_layout.indexOf(self.tabs), self.grp_combat_stats)
+             self.grp_combat_stats.setVisible(True)
+        elif is_status: self.grp_combat_stats.setVisible(False)
         else:
-            if self.grp_combat_stats.parent() != self.tab_stats:
-                self.content_layout.removeWidget(self.grp_combat_stats); self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
-            self.grp_combat_stats.setVisible(is_npc_like)
+             if self.grp_combat_stats.parent() != self.tab_stats: self.content_layout.removeWidget(self.grp_combat_stats); self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
+             self.grp_combat_stats.setVisible(is_npc_like)
         if is_status: self.lbl_image.setText("Icon")
 
+    def build_dynamic_form(self, category_name):
+        while self.layout_dynamic.rowCount() > 0: self.layout_dynamic.removeRow(0)
+        self.dynamic_inputs = {} 
+        schema = ENTITY_SCHEMAS.get(category_name, [])
+        cat_trans = tr(f"CAT_{category_name.upper()}") if category_name in ENTITY_SCHEMAS else category_name
+        self.grp_dynamic.setTitle(f"{cat_trans} {tr('LBL_PROPERTIES')}")
+        for label_key, dtype, options in schema:
+            if dtype == "combo":
+                widget = QComboBox(); widget.setEditable(True)
+                if options:
+                    for opt in options: widget.addItem(tr(opt) if str(opt).startswith("LBL_") else opt, opt)
+            else: widget = QLineEdit()
+            self.layout_dynamic.addRow(f"{tr(label_key)}:", widget); self.dynamic_inputs[label_key] = widget
+
+    # --- VERİ YÜKLEME VE TOPLAMA ---
+
     def populate_sheet(self, data):
-        """
-        UI formlarını verilerle doldurur.
-        """
-        self.inp_name.setText(data.get("name", ""))
-        curr_type = data.get("type", "NPC")
-        idx = self.inp_type.findText(tr(f"CAT_{curr_type.upper().replace(' ', '_')}"))
-        if idx < 0: idx = self.inp_type.findData(curr_type)
-        self.inp_type.setCurrentIndex(idx if idx >= 0 else 0)
+        # 1. Referansları Doldur
+        self.refresh_reference_combos()
         
+        self.inp_name.setText(data.get("name", ""))
+        self.inp_source.setText(data.get("source", "")) 
+        
+        curr_type = data.get("type", "NPC")
+        idx = self.inp_type.findData(curr_type)
+        self.inp_type.setCurrentIndex(idx if idx >= 0 else 0)
         self.inp_tags.setText(", ".join(data.get("tags", [])))
         self.inp_desc.setText(data.get("description", ""))
         self.inp_dm_notes.setText(data.get("dm_notes", ""))
         
-        # İstatistikler
+        # Lokasyon Yükleme
+        loc_val = data.get("location_id") or data.get("attributes", {}).get("LBL_ATTR_LOCATION")
+        if loc_val:
+            idx = self.combo_location.findData(loc_val)
+            if idx >= 0: self.combo_location.setCurrentIndex(idx)
+            else: self.combo_location.setCurrentText(str(loc_val))
+        else:
+            self.combo_location.setCurrentIndex(0)
+
         stats = data.get("stats", {})
-        for k, v in self.stats_inputs.items():
-            v.setText(str(stats.get(k, 10)))
-            self._update_modifier(k, v.text())
+        for k, v in self.stats_inputs.items(): v.setText(str(stats.get(k, 10))); self._update_modifier(k, v.text())
         
-        # Savaş Statları
         c = data.get("combat_stats", {})
-        self.inp_hp.setText(str(c.get("hp", "")))
-        self.inp_max_hp.setText(str(c.get("max_hp", "")))
-        self.inp_ac.setText(str(c.get("ac", ""))) 
-        self.inp_speed.setText(str(c.get("speed", "")))
-        self.inp_init.setText(str(c.get("initiative", "")))
-
-        # Savunma ve Yetenekler
-        self.inp_saves.setText(data.get("saving_throws", ""))
-        self.inp_skills.setText(data.get("skills", ""))
-        self.inp_vuln.setText(data.get("damage_vulnerabilities", ""))
-        self.inp_resist.setText(data.get("damage_resistances", ""))
-        self.inp_dmg_immune.setText(data.get("damage_immunities", ""))
-        self.inp_cond_immune.setText(data.get("condition_immunities", ""))
-        self.inp_prof.setText(str(data.get("proficiency_bonus", "")))
-        self.inp_pp.setText(str(data.get("passive_perception", "")))
-
-        # UI Görünürlüğünü Güncelle
-        self.update_ui_by_type(curr_type)
+        self.inp_hp.setText(str(c.get("hp", ""))); self.inp_max_hp.setText(str(c.get("max_hp", "")))
+        self.inp_ac.setText(str(c.get("ac", ""))); self.inp_speed.setText(str(c.get("speed", ""))); self.inp_init.setText(str(c.get("initiative", "")))
         
-        # Dinamik Alanlar (Attributes)
+        self.inp_saves.setText(data.get("saving_throws", "")); self.inp_skills.setText(data.get("skills", ""))
+        self.inp_vuln.setText(data.get("damage_vulnerabilities", "")); self.inp_resist.setText(data.get("damage_resistances", ""))
+        self.inp_dmg_immune.setText(data.get("damage_immunities", "")); self.inp_cond_immune.setText(data.get("condition_immunities", ""))
+        self.inp_prof.setText(str(data.get("proficiency_bonus", ""))); self.inp_pp.setText(str(data.get("passive_perception", "")))
+
+        self.update_ui_by_type(curr_type)
         attrs = data.get("attributes", {})
         for label_key, widget in self.dynamic_inputs.items():
             val = attrs.get(label_key, "")
             if isinstance(widget, QComboBox):
-                ix = widget.findData(val)
+                ix = widget.findData(val); 
                 if ix >= 0: widget.setCurrentIndex(ix)
-                else: widget.setCurrentText(val)
-            else:
-                widget.setText(str(val))
+                else: widget.setCurrentText(str(val))
+            else: widget.setText(str(val))
 
-        # Kartları Temizle ve Doldur (Actions, Traits vb.)
         self.clear_all_cards()
-        for item in data.get("traits", []): self.add_feature_card(self.trait_container, item.get("name"), item.get("desc"))
-        for item in data.get("actions", []): self.add_feature_card(self.action_container, item.get("name"), item.get("desc"))
-        for item in data.get("reactions", []): self.add_feature_card(self.reaction_container, item.get("name"), item.get("desc"))
-        for item in data.get("legendary_actions", []): self.add_feature_card(self.legendary_container, item.get("name"), item.get("desc"))
-        for item in data.get("custom_spells", []): self.add_feature_card(self.custom_spell_container, item.get("name"), item.get("desc"))
-        for item in data.get("inventory", []): self.add_feature_card(self.inventory_container, item.get("name"), item.get("desc"))
-        
-        # --- RESİM GALERİ GÜNCELLEMESİ (LAZY LOADING) ---
+        for k, container in [("traits", self.trait_container), ("actions", self.action_container), ("reactions", self.reaction_container), ("legendary_actions", self.legendary_container), ("custom_spells", self.custom_spell_container), ("inventory", self.inventory_container)]:
+            for item in data.get(k, []): self.add_feature_card(container, item.get("name"), item.get("desc"))
+
+        self.linked_spell_ids = data.get("spells", [])
+        self._render_linked_list(self.list_assigned_spells, self.linked_spell_ids)
+        self.linked_item_ids = data.get("equipment_ids", [])
+        self._render_linked_list(self.list_assigned_items, self.linked_item_ids)
+
         self.image_list = data.get("images", [])
-        if not self.image_list and data.get("image_path"): 
-            self.image_list = [data.get("image_path")]
-        
+        if not self.image_list and data.get("image_path"): self.image_list = [data.get("image_path")]
         remote_url = data.get("_remote_image_url")
         
-        # Eğer lokal resim yoksa ama remote URL varsa -> İNDİR
+        # Lazy Image Load
         if not self.image_list and remote_url:
-            self.lbl_image.setPlaceholderText(tr("MSG_DOWNLOADING_IMAGE"))
-            self.lbl_image.setPixmap(None)
-            self.lbl_img_counter.setText("-")
+            self.lbl_image.setPlaceholderText(tr("MSG_DOWNLOADING_IMAGE")); self.lbl_image.setPixmap(None); self.lbl_img_counter.setText("-")
             self._start_lazy_image_download(remote_url, data.get("name", "entity"))
         else:
-            self.current_img_index = 0
-            self.update_image_display()
-        
-        # BÜYÜ LİSTESİ RENDER
-        self.list_assigned_spells.clear()
-        for spell_id in data.get("spells", []):
-            spell = self.dm.data["entities"].get(spell_id)
-            if spell:
-                level = spell.get('attributes',{}).get('LBL_LEVEL','?')
-                self.list_assigned_spells.addItem(f"{spell['name']} (Lv {level})")
-        
-        # EKİPMAN LİSTESİ RENDER
-        self.list_assigned_items.clear()
-        for item_id in data.get("equipment_ids", []):
-            item = self.dm.data["entities"].get(item_id)
-            if item:
-                cat = item.get('attributes',{}).get('LBL_CATEGORY', 'Item')
-                self.list_assigned_items.addItem(f"{item['name']} ({cat})")
+            self.current_img_index = 0; self.update_image_display()
 
-        # PDF Listesi
         self.list_pdfs.clear()
         for pdf in data.get("pdfs", []): self.list_pdfs.addItem(pdf)
 
-    def _start_lazy_image_download(self, url, name):
-        """Resmi arka planda indirir."""
-        # Dosya adı oluştur
-        safe_name = "".join([c for c in name if c.isalnum()]).lower()
-        ext = ".jpg" if ".jpg" in url.lower() else ".png"
-        filename = f"{safe_name}{ext}"
-        save_dir = os.path.join(CACHE_DIR, "library", "images")
-        
-        self.image_worker = ImageDownloadWorker(url, save_dir, filename)
-        self.image_worker.finished.connect(self._on_image_downloaded)
-        self.image_worker.start()
-
-    def _on_image_downloaded(self, success, local_abs_path):
-        """İndirme bitince UI'ı günceller ama DB'ye kaydetmez."""
-        if success and local_abs_path:
-            # 1. Yolu import et (Assets klasörüne kopyalar veya hazırlar)
-            rel_path = self.dm.import_image(local_abs_path)
-            
-            if rel_path:
-                # Sadece Belleği (RAM) ve UI'ı güncelle
-                self.image_list = [rel_path]
-                self.current_img_index = 0
-                self.update_image_display()
-                
-                # ÖNEMLİ DEĞİŞİKLİK:
-                # self.dm.save_entity(...) BURADAN KALDIRILDI.
-                # Kayıt, kullanıcı "Kaydet" butonuna bastığında yapılacak.
-        else:
-            self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE"))
-            self.lbl_image.setPixmap(None)
-
-    def collect_data_from_sheet(self): # SADECE self
-        """Formdaki verileri toplar ve bir sözlük olarak döner."""
+    def collect_data_from_sheet(self):
         if not self.inp_name.text(): return None
-        
         def get_cards(container):
-            res = []; layout = container.dynamic_area
-            for i in range(layout.count()):
-                w = layout.itemAt(i).widget()
+            res = []
+            for i in range(container.dynamic_area.count()):
+                w = container.dynamic_area.itemAt(i).widget()
                 if w: res.append({"name": w.inp_title.text(), "desc": w.inp_desc.toPlainText()})
             return res
-            
+        
+        # Hibrit Lokasyon Kaydı
+        loc_id = self.combo_location.currentData()
+        loc_text = self.combo_location.currentText()
+        final_loc = loc_id if (loc_id and self.combo_location.currentIndex() > 0) else loc_text.strip()
+
         data = {
             "name": self.inp_name.text(), 
             "type": self.inp_type.currentText(),
+            "source": self.inp_source.text(),
             "tags": [t.strip() for t in self.inp_tags.text().split(",") if t.strip()],
-            "description": self.inp_desc.toPlainText(),
+            "description": self.inp_desc.toPlainText(), 
             "dm_notes": self.inp_dm_notes.toPlainText(),
-            "images": self.image_list,
+            "images": self.image_list, 
+            "location_id": final_loc,
             "stats": {k: int(v.text() or 10) for k, v in self.stats_inputs.items()},
-            "combat_stats": {
-                "hp": self.inp_hp.text(), "max_hp": self.inp_max_hp.text(), "ac": self.inp_ac.text(),
-                "speed": self.inp_speed.text(), "initiative": self.inp_init.text()
-            },
+            "combat_stats": {"hp": self.inp_hp.text(), "max_hp": self.inp_max_hp.text(), "ac": self.inp_ac.text(), "speed": self.inp_speed.text(), "initiative": self.inp_init.text()},
             "saving_throws": self.inp_saves.text(), "skills": self.inp_skills.text(),
             "damage_vulnerabilities": self.inp_vuln.text(), "damage_resistances": self.inp_resist.text(),
             "damage_immunities": self.inp_dmg_immune.text(), "condition_immunities": self.inp_cond_immune.text(),
             "proficiency_bonus": self.inp_prof.text(), "passive_perception": self.inp_pp.text(),
             "attributes": {l: (w.currentText() if isinstance(w, QComboBox) else w.text()) for l, w in self.dynamic_inputs.items()},
-            "traits": get_cards(self.trait_container), 
-            "actions": get_cards(self.action_container),
-            "reactions": get_cards(self.reaction_container), 
-            "legendary_actions": get_cards(self.legendary_container),
-            "inventory": get_cards(self.inventory_container), 
-            "custom_spells": get_cards(self.custom_spell_container),
-            "pdfs": [self.list_pdfs.item(i).text() for i in range(self.list_pdfs.count())],
-            "spells": [self.list_assigned_spells.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.list_assigned_spells.count()) if self.list_assigned_spells.item(i).data(Qt.ItemDataRole.UserRole)],
-            "equipment_ids": [self.list_assigned_items.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.list_assigned_items.count()) if self.list_assigned_items.item(i).data(Qt.ItemDataRole.UserRole)]
+            "traits": get_cards(self.trait_container), "actions": get_cards(self.action_container),
+            "reactions": get_cards(self.reaction_container), "legendary_actions": get_cards(self.legendary_container),
+            "inventory": get_cards(self.inventory_container), "custom_spells": get_cards(self.custom_spell_container),
+            "spells": self.linked_spell_ids, "equipment_ids": self.linked_item_ids,
+            "pdfs": [self.list_pdfs.item(i).text() for i in range(self.list_pdfs.count())]
         }
         return data
 
-    def _fill_cards(self, sheet, container, data_list):
-        for item in data_list: sheet.add_feature_card(container, item.get("name"), item.get("desc"))
+    def _start_lazy_image_download(self, url, name):
+        safe_name = "".join([c for c in name if c.isalnum()]).lower()
+        ext = ".jpg" if ".jpg" in url.lower() else ".png"
+        filename = f"{safe_name}{ext}"
+        save_dir = os.path.join(CACHE_DIR, "library", "images")
+        self.image_worker = ImageDownloadWorker(url, save_dir, filename)
+        self.image_worker.finished.connect(self._on_image_downloaded)
+        self.image_worker.start()
 
+    def _on_image_downloaded(self, success, local_abs_path):
+        if success and local_abs_path:
+            rel_path = self.dm.import_image(local_abs_path)
+            if rel_path:
+                self.image_list = [rel_path]; self.current_img_index = 0; self.update_image_display()
+        else:
+            self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE")); self.lbl_image.setPixmap(None)
+
+    def add_image_dialog(self):
+        f, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_IMG"), "", "Images (*.png *.jpg)")
+        if f: 
+            p = self.dm.import_image(f)
+            if p: self.image_list.append(p); self.current_img_index = len(self.image_list)-1; self.update_image_display()
+    def remove_current_image(self):
+        if self.image_list: del self.image_list[self.current_img_index]; self.current_img_index=max(0, self.current_img_index-1); self.update_image_display()
+    def show_prev_image(self):
+        if self.image_list: self.current_img_index=(self.current_img_index-1)%len(self.image_list); self.update_image_display()
+    def show_next_image(self):
+        if self.image_list: self.current_img_index=(self.current_img_index+1)%len(self.image_list); self.update_image_display()
+    def update_image_display(self):
+        if not self.image_list: self.lbl_image.setPixmap(None); self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE")); self.lbl_img_counter.setText("0/0"); return
+        p = self.dm.get_full_path(self.image_list[self.current_img_index])
+        if p and os.path.exists(p): self.lbl_image.setPixmap(QPixmap(p))
+        else: self.lbl_image.setPixmap(None); self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE"))
+        self.lbl_img_counter.setText(f"{self.current_img_index+1}/{len(self.image_list)}")
+    
     def add_pdf_dialog(self):
-        fname, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_PDF"), "", "PDF Files (*.pdf)")
-        if fname:
-            eid = self.property("entity_id")
-            pdf_filename = self.dm.import_pdf(fname)
-            data = self.dm.data["entities"].get(eid, {})
-            pdfs = data.get("pdfs", [])
-            if pdf_filename not in pdfs:
-                pdfs.append(pdf_filename); data["pdfs"] = pdfs
-                self.dm.save_entity(eid, data)
-                self.list_pdfs.addItem(pdf_filename)
-    
+        f, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_PDF"), "", "PDF (*.pdf)")
+        if f:
+            p = self.dm.import_pdf(f); eid = self.property("entity_id")
+            if p: 
+                self.list_pdfs.addItem(p)
+                if eid:
+                    d = self.dm.data["entities"].get(eid); 
+                    if d: 
+                        l = d.get("pdfs",[]); 
+                        if p not in l: l.append(p); d["pdfs"]=l; self.dm.save_entity(eid, d)
     def open_current_pdf(self):
-        selected = self.list_pdfs.currentItem()
-        if not selected: QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_PDF_FIRST")); return
-        pdf_path = self.dm.get_full_path(selected.text())
-        if pdf_path and os.path.exists(pdf_path): QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_path))
-        else: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
-    
+        i = self.list_pdfs.currentItem()
+        if i: 
+            p = self.dm.get_full_path(i.text())
+            if p and os.path.exists(p): QDesktopServices.openUrl(QUrl.fromLocalFile(p))
     def remove_current_pdf(self):
-        selected = self.list_pdfs.currentItem()
-        if not selected: return
-        if QMessageBox.question(self, tr("BTN_REMOVE"), tr("MSG_REMOVE_PDF_CONFIRM")) == QMessageBox.StandardButton.Yes:
-            eid = self.property("entity_id")
-            pdf_filename = selected.text()
-            data = self.dm.data["entities"].get(eid, {})
-            pdfs = data.get("pdfs", [])
-            if pdf_filename in pdfs: pdfs.remove(pdf_filename); data["pdfs"] = pdfs; self.dm.save_entity(eid, data)
-            self.list_pdfs.takeItem(self.list_pdfs.row(selected))
-    
+        i = self.list_pdfs.currentItem()
+        if i and QMessageBox.question(self, tr("BTN_REMOVE"), tr("MSG_REMOVE_PDF_CONFIRM"))==QMessageBox.StandardButton.Yes:
+            eid = self.property("entity_id"); txt=i.text(); self.list_pdfs.takeItem(self.list_pdfs.row(i))
+            if eid:
+                d = self.dm.data["entities"].get(eid)
+                if d and txt in d.get("pdfs",[]): d["pdfs"].remove(txt); self.dm.save_entity(eid, d)
     def open_pdf_folder(self):
-        pdf_dir = os.path.join(self.dm.current_campaign_path, "assets")
-        os.makedirs(pdf_dir, exist_ok=True)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_dir))
+        d = os.path.join(self.dm.current_campaign_path, "assets"); os.makedirs(d, exist_ok=True); QDesktopServices.openUrl(QUrl.fromLocalFile(d))
