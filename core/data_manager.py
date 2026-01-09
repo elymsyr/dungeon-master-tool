@@ -240,86 +240,60 @@ class DataManager:
             self.save_data()
         return eid
 
+# core/data_manager.py içinde ilgili kısımları bulun ve değiştirin:
+
     def _resolve_dependencies(self, data):
-        """
-        Bağımlılıkları (resimler ve büyüler) çözer.
-        Performans için optimize edildi ve zaman ölçer eklendi.
-        """
         if not isinstance(data, dict): return data
         
-        total_start = time.perf_counter()
-        print(f"\n--- 🔍 Resolving Dependencies for: {data.get('name')} ---")
-
-        # 1. RESİM İNDİRME / KONTROLÜ
-        img_start = time.perf_counter()
+        # 1. RESİM İNDİRME VE CACHE'E KAYDETME
         remote_url = data.pop("_remote_image_url", None)
-        if remote_url and self.current_campaign_path:
-            # Eğer zaten yerel bir resim yolu varsa indirmeyi atla
-            if not data.get("image_path"):
-                try:
-                    safe_name = "".join([c for c in data.get("name", "image") if c.isalnum() or c in (' ','-','_')]).strip().replace(' ', '_')
-                    ext = ".jpg" if ".jpg" in remote_url.lower() or ".jpeg" in remote_url.lower() else ".png"
-                    filename = f"{safe_name}_{uuid.uuid4().hex[:6]}{ext}"
-                    
-                    assets_dir = os.path.join(self.current_campaign_path, "assets")
-                    if not os.path.exists(assets_dir): os.makedirs(assets_dir)
-                    
-                    full_path = os.path.join(assets_dir, filename)
-                    img_bytes = self.api_client.download_image_bytes(remote_url)
-                    if img_bytes:
-                        with open(full_path, "wb") as f:
-                            f.write(img_bytes)
-                        rel_path = os.path.join("assets", filename)
-                        data["image_path"] = rel_path
-                        data["images"] = [rel_path]
-                except Exception as e:
-                    print(f"DEBUG: Image Download Error: {e}")
-        print(f"DEBUG: 🖼️ Image Step: {(time.perf_counter() - img_start)*1000:.2f}ms")
+        if remote_url:
+            # Resmin kaydedileceği yer: cache/library/images/
+            library_img_dir = os.path.join(LIBRARY_DIR, "images")
+            if not os.path.exists(library_img_dir): os.makedirs(library_img_dir)
+            
+            # Dosya adı oluştur (index veya isimden)
+            safe_name = "".join([c for c in data.get("name", "img") if c.isalnum()]).lower()
+            ext = ".jpg" if ".jpg" in remote_url.lower() else ".png"
+            filename = f"{safe_name}{ext}"
+            full_lib_path = os.path.join(library_img_dir, filename)
+            
+            # Eğer kütüphane cache'inde yoksa indir
+            if not os.path.exists(full_lib_path):
+                img_bytes = self.api_client.download_image_bytes(remote_url)
+                if img_bytes:
+                    with open(full_lib_path, "wb") as f: f.write(img_bytes)
+            
+            # Şimdi bu resmi kampanya klasörüne (worlds/X/assets) kopyala (aktif kullanım için)
+            if self.current_campaign_path and os.path.exists(full_lib_path):
+                rel_path = self.import_image(full_lib_path) # Mevcut kopyalama mantığını kullanır
+                data["image_path"] = rel_path
+                data["images"] = [rel_path]
 
-        # 2. BÜYÜLERİ LİNKLEME
-        spell_start = time.perf_counter()
+        # 2. BÜYÜLERİ ÇEK VE LOKAL VERİTABANINA (CAMPAIGN) EKLE
         detected_spells = data.pop("_detected_spell_indices", [])
-        
         if detected_spells:
-            # Mevcut büyüleri bellekte bir haritaya al (Hızlı arama için)
-            existing_spells_map = {
-                ent.get("name"): eid 
-                for eid, ent in self.data["entities"].items() 
-                if ent.get("type") == "Spell"
-            }
-            
             linked_ids = []
-            new_entities_added = False
-            
             for s_idx in detected_spells:
-                # local_only=True: Eğer büyü bilgisayarda yoksa internetten ÇEKME, pas geç.
-                success, spell_data = self.fetch_details_from_api("Spell", s_idx, local_only=True)
-                
+                # Önce kütüphaneye bak, yoksa internetten indir ve kütüphaneye de kaydet
+                success, spell_data = self.fetch_details_from_api("Spell", s_idx)
                 if success:
-                    s_name = spell_data.get("name")
-                    if s_name in existing_spells_map:
-                        linked_ids.append(existing_spells_map[s_name])
+                    # Kampanyada var mı kontrol et
+                    existing_id = None
+                    for eid, ent in self.data["entities"].items():
+                        if ent.get("name") == spell_data["name"] and ent.get("type") == "Spell":
+                            existing_id = eid; break
+                    
+                    if existing_id: linked_ids.append(existing_id)
                     else:
-                        # should_save=False: Her büyü eklendiğinde data.json'ı baştan yazma!
                         new_id = self.save_entity(None, spell_data, should_save=False)
                         linked_ids.append(new_id)
-                        existing_spells_map[s_name] = new_id
-                        new_entities_added = True
             
             if linked_ids:
                 if "spells" not in data: data["spells"] = []
                 for sid in linked_ids:
                     if sid not in data["spells"]: data["spells"].append(sid)
 
-            # Tüm büyü ekleme bittikten sonra TEK BİR KEZ diske yaz
-            if new_entities_added:
-                save_disk_start = time.perf_counter()
-                self.save_data()
-                print(f"DEBUG: 💾 Disk Write (data.json): {(time.perf_counter() - save_disk_start)*1000:.2f}ms")
-
-        print(f"DEBUG: ✨ Spell Step: {(time.perf_counter() - spell_start)*1000:.2f}ms")
-        print(f"--- ✅ Total Resolution Time: {(time.perf_counter() - total_start)*1000:.2f}ms ---\n")
-        
         return data
 
     def fetch_details_from_api(self, category, index_name, local_only=False):

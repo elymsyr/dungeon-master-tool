@@ -36,87 +36,84 @@ class DownloadWorker(QThread):
         self.log_signal.emit(tr("LOG_STARTING"))
         
         # 1. Klasörleri Hazırla
+        lib_img_dir = os.path.join(LIBRARY_DIR, "images")
         for endpoint in self.categories.keys():
             path = os.path.join(LIBRARY_DIR, endpoint)
-            if not os.path.exists(path):
-                os.makedirs(path)
+            if not os.path.exists(path): os.makedirs(path)
+        if not os.path.exists(lib_img_dir): os.makedirs(lib_img_dir)
 
         session = requests.Session()
         
         # Adım 1: Tüm Listeleri (Index) Çek
-        total_items_to_download = 0
         lists_to_process = {}
+        total_items_to_download = 0
         
         for endpoint, label in self.categories.items():
             if not self.is_running: break
-            
             self.log_signal.emit(tr("LOG_SCANNING", label=label))
             try:
-                # API'den tüm listeyi çek
                 url = f"{API_BASE_URL}/{endpoint}"
                 resp = session.get(url, timeout=10)
-                
                 if resp.status_code == 200:
-                    data = resp.json()
-                    items = data.get("results", [])
+                    items = resp.json().get("results", [])
                     lists_to_process[endpoint] = items
                     total_items_to_download += len(items)
-                    
-                    # İndex dosyasını (arama listesi) güncelle
-                    self._save_index(endpoint, items)
+                    self._save_index(endpoint, items) # Indexleri cache'e kaydet
                 else:
-                    self.log_signal.emit(tr("LOG_ERROR_LIST", label=label, code=resp.status_code))
-                    
+                    self.log_signal.emit(f"❌ Error: {endpoint} list failed.")
             except Exception as e:
-                self.log_signal.emit(tr("LOG_CONN_ERROR", label=label, error=str(e)))
+                self.log_signal.emit(f"❌ Conn Error: {str(e)}")
 
-        self.log_signal.emit(tr("LOG_TOTAL_ITEMS", count=total_items_to_download))
-        
-        # Adım 2: Her Bir Öğenin Detayını İndir
+        # Adım 2: Detayları ve Resimleri İndir
         current_count = 0
-        
         for endpoint, items in lists_to_process.items():
             folder_path = os.path.join(LIBRARY_DIR, endpoint)
             label = self.categories[endpoint]
-            
-            label = self.categories[endpoint]
-            
             self.log_signal.emit(tr("LOG_DOWNLOADING", label=label, count=len(items)))
             
             for item in items:
                 if not self.is_running: break
-                
                 index = item["index"]
                 file_path = os.path.join(folder_path, f"{index}.json")
                 
-                # Eğer dosya zaten varsa ve boyutu 0 değilse atla (Zaman tasarrufu)
-                if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+                # Eğer dosya zaten varsa ve resim kontrolü yapılmışsa atla
+                if os.path.exists(file_path):
                     current_count += 1
-                    # Her 50 itemde bir arayüzü güncelle ki donmasın
-                    if current_count % 10 == 0:
-                        self._update_progress(current_count, total_items_to_download)
+                    if current_count % 10 == 0: self._update_progress(current_count, total_items_to_download)
                     continue
 
-                # API'den Detay Çek
                 try:
                     url = f"{API_BASE_URL}/{endpoint}/{index}"
                     resp = session.get(url, timeout=5)
-                    
                     if resp.status_code == 200:
+                        detail_data = resp.json()
+                        
+                        # --- RESİM İNDİRME MANTIĞI ---
+                        if "image" in detail_data and detail_data["image"]:
+                            img_url = "https://www.dnd5eapi.co" + detail_data["image"]
+                            ext = ".jpg" if ".jpg" in img_url.lower() else ".png"
+                            img_filename = f"{index}{ext}"
+                            img_dest_path = os.path.join(lib_img_dir, img_filename)
+                            
+                            if not os.path.exists(img_dest_path):
+                                img_resp = session.get(img_url, timeout=10)
+                                if img_resp.status_code == 200:
+                                    with open(img_dest_path, "wb") as f:
+                                        f.write(img_resp.content)
+                            
+                            # JSON'a yerel yolu göm (DataManager bunu kullanacak)
+                            detail_data["local_image_path"] = f"cache/library/images/{img_filename}"
+                        
+                        # Modifiye edilmiş JSON'ı kaydet
                         with open(file_path, "w", encoding="utf-8") as f:
-                            json.dump(resp.json(), f, indent=4)
-                    else:
-                        self.log_signal.emit(tr("LOG_ERROR_ITEM", name=item.get('name'), code=resp.status_code))
+                            json.dump(detail_data, f, indent=4)
                     
-                    # API'yi boğmamak için minik bekleme
-                    time.sleep(0.05)
-                    
+                    time.sleep(0.05) # API limitlerine takılmamak için
                 except Exception as e:
-                    self.log_signal.emit(tr("LOG_ERROR_GENERAL", name=item.get('name'), error=str(e)))
+                    self.log_signal.emit(f"⚠️ Error {index}: {str(e)}")
 
                 current_count += 1
-                if current_count % 5 == 0: # Her 5 indirmede bir progress güncelle
-                    self._update_progress(current_count, total_items_to_download)
+                if current_count % 5 == 0: self._update_progress(current_count, total_items_to_download)
 
         self.finished_signal.emit()
 
