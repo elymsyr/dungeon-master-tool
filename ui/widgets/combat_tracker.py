@@ -52,7 +52,6 @@ class ConditionIcon(QWidget):
             painter.setPen(Qt.GlobalColor.white)
             
             font = painter.font()
-            # --- DÜZELTME: setPointSize yerine setPixelSize kullanıyoruz ---
             font.setPixelSize(10) 
             font.setBold(True)
             painter.setFont(font)
@@ -67,7 +66,6 @@ class ConditionIcon(QWidget):
             
             painter.setPen(Qt.GlobalColor.white)
             font = painter.font()
-            # --- DÜZELTME: setPointSize yerine setPixelSize ---
             font.setPixelSize(8)
             font.setBold(True)
             painter.setFont(font)
@@ -230,29 +228,64 @@ class CombatTracker(QWidget):
         
         self.refresh_encounter_combo()
 
-    # ... (Geri kalan tüm metodlar aynı: create_encounter, switch_encounter, add_direct_row vb.) ...
     def create_encounter(self, name):
         eid = str(uuid.uuid4()); self.encounters[eid] = {"id":eid, "name":name, "combatants":[], "map_path":None, "token_size":50, "turn_index":-1, "round":1, "token_positions":{}}; self.current_encounter_id = eid; return eid
+    
     def prompt_new_encounter(self): 
         n,ok = QInputDialog.getText(self, tr("TITLE_NEW_ENC"), tr("LBL_ENC_NAME")); 
         if ok and n: self.create_encounter(n); self.refresh_encounter_combo()
+    
     def rename_encounter(self):
-        if not self.current_encounter_id: return
+        # FIX: Safety check
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
         n,ok = QInputDialog.getText(self, tr("TITLE_RENAME_ENC"), tr("LBL_NEW_NAME"), text=self.encounters[self.current_encounter_id]["name"])
         if ok and n: self.encounters[self.current_encounter_id]["name"] = n; self.refresh_encounter_combo()
+    
     def delete_encounter(self):
         if len(self.encounters) <= 1: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_LAST_ENC_DELETE")); return
-        if QMessageBox.question(self, tr("TITLE_DELETE"), tr("MSG_CONFIRM_ENC_DELETE"), QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No)==QMessageBox.StandardButton.Yes: del self.encounters[self.current_encounter_id]; self.refresh_encounter_combo()
+        if QMessageBox.question(self, tr("TITLE_DELETE"), tr("MSG_CONFIRM_ENC_DELETE"), QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No)==QMessageBox.StandardButton.Yes: 
+            # Silme işlemi
+            del self.encounters[self.current_encounter_id]
+            # Listeyi yenile (current_encounter_id'yi de güncelleyecek)
+            self.refresh_encounter_combo()
+    
     def switch_encounter(self, idx): 
         eid = self.combo_encounters.itemData(idx)
-        if eid and eid in self.encounters: self._save_current_state_to_memory(); self.current_encounter_id = eid; self.refresh_ui_from_current_encounter(); self.refresh_battle_map(force_map_reload=True)
+        # Sadece geçerli bir ID varsa işlemi yap
+        if eid and eid in self.encounters: 
+            # Önceki verileri kaydet (Eğer önceki ID geçerliyse)
+            if self.current_encounter_id in self.encounters:
+                self._save_current_state_to_memory()
+            
+            self.current_encounter_id = eid
+            self.refresh_ui_from_current_encounter()
+            self.refresh_battle_map(force_map_reload=True)
+            
     def refresh_encounter_combo(self):
-        self.combo_encounters.blockSignals(True); self.combo_encounters.clear()
-        if not self.encounters: self.create_encounter("Default Encounter")
-        for eid, e in self.encounters.items(): self.combo_encounters.addItem(e["name"], eid)
-        if self.current_encounter_id: self.combo_encounters.setCurrentIndex(self.combo_encounters.findData(self.current_encounter_id))
-        else: self.current_encounter_id = self.combo_encounters.itemData(0); self.combo_encounters.setCurrentIndex(0)
-        self.combo_encounters.blockSignals(False); self.refresh_ui_from_current_encounter()
+        self.combo_encounters.blockSignals(True)
+        self.combo_encounters.clear()
+        
+        if not self.encounters: 
+            self.create_encounter("Default Encounter")
+            
+        for eid, e in self.encounters.items(): 
+            self.combo_encounters.addItem(e["name"], eid)
+        
+        # --- DÜZELTME: ID Kontrolü ---
+        # Mevcut ID hala listede var mı?
+        idx = self.combo_encounters.findData(self.current_encounter_id)
+        
+        if idx >= 0:
+            # Varsa onu seç
+            self.combo_encounters.setCurrentIndex(idx)
+        else:
+            # Yoksa (silindiyse), ilkini seç ve ID'yi güncelle
+            self.combo_encounters.setCurrentIndex(0)
+            self.current_encounter_id = self.combo_encounters.itemData(0)
+            
+        self.combo_encounters.blockSignals(False)
+        # UI'yı yeni seçilen ID'ye göre yenile
+        self.refresh_ui_from_current_encounter()
 
     def add_direct_row(self, name, init, ac, hp, conditions_data, eid, init_bonus=0, tid=None):
         if not tid: tid = str(uuid.uuid4())
@@ -319,8 +352,12 @@ class CombatTracker(QWidget):
         menu.exec(QCursor.pos())
 
     def refresh_ui_from_current_encounter(self):
+        # FIX: Safety check
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters:
+            self.table.setRowCount(0)
+            return
+            
         self.loading = True; self.table.blockSignals(True); self.table.setRowCount(0)
-        if not self.current_encounter_id: return
         enc = self.encounters[self.current_encounter_id]
         self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{enc.get('round', 1)}")
         for c in enc.get("combatants", []):
@@ -330,7 +367,9 @@ class CombatTracker(QWidget):
         self._sort_and_refresh(); self.table.blockSignals(False); self.loading = False
 
     def _save_current_state_to_memory(self):
-        if not self.current_encounter_id: return
+        # FIX: Safety check before saving
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
+        
         enc = self.encounters[self.current_encounter_id]
         combatants = []
         for r in range(self.table.rowCount()):
@@ -358,7 +397,7 @@ class CombatTracker(QWidget):
         enc["combatants"] = combatants
 
     def next_turn(self):
-        if not self.current_encounter_id: return
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
         enc = self.encounters[self.current_encounter_id]; count = self.table.rowCount()
         if count == 0: return
         self.loading = True; enc["turn_index"] += 1
@@ -368,7 +407,7 @@ class CombatTracker(QWidget):
         self.update_highlights(); self.refresh_battle_map(); self.loading = False; self.data_changed_signal.emit()
 
     def update_highlights(self):
-        if not self.current_encounter_id: return
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
         idx = self.encounters[self.current_encounter_id]["turn_index"]
         self.table.blockSignals(True)
         for r in range(self.table.rowCount()):
@@ -423,7 +462,7 @@ class CombatTracker(QWidget):
         if w: w.add_condition(name, icon_path, duration)
     
     def clear_tracker(self):
-        if not self.current_encounter_id: return
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
         enc = self.encounters[self.current_encounter_id]
         self.table.setRowCount(0)
         enc["combatants"] = []
@@ -474,7 +513,7 @@ class CombatTracker(QWidget):
         self.table.blockSignals(False); self._sort_and_refresh()
     def delete_row(self, r): 
         self.table.removeRow(r)
-        if self.current_encounter_id:
+        if self.current_encounter_id and self.current_encounter_id in self.encounters:
              enc = self.encounters[self.current_encounter_id]
              if enc["turn_index"] >= r: enc["turn_index"] = max(0, enc["turn_index"]-1)
         self.update_highlights(); self.refresh_battle_map(); self.data_changed_signal.emit()
@@ -485,8 +524,15 @@ class CombatTracker(QWidget):
         else: 
              eid=str(uuid.uuid4()); self.encounters={eid:{"id":eid,"name":"Legacy","combatants":d.get("combatants",[]),"round":1,"turn_index":-1,"token_positions":{},"token_size":50}}; tid=eid
         for k,v in self.encounters.items(): self.combo_encounters.addItem(v["name"], k)
-        if tid: self.combo_encounters.setCurrentIndex(self.combo_encounters.findData(tid)); self.current_encounter_id=tid
-        else: self.combo_encounters.setCurrentIndex(0); self.current_encounter_id=self.combo_encounters.itemData(0)
+        
+        # ID Kontrolü ve Seçim
+        if tid and tid in self.encounters: 
+            self.combo_encounters.setCurrentIndex(self.combo_encounters.findData(tid))
+            self.current_encounter_id=tid
+        else: 
+            self.combo_encounters.setCurrentIndex(0)
+            self.current_encounter_id=self.combo_encounters.itemData(0)
+            
         self.refresh_ui_from_current_encounter(); self.combo_encounters.blockSignals(False); self.loading=False
     def load_combat_data(self, l): self.load_session_state({"combatants":l})
     
@@ -512,7 +558,7 @@ class CombatTracker(QWidget):
     def on_token_size_changed(self, v): 
         if self.current_encounter_id: self.encounters[self.current_encounter_id]["token_size"]=v; self.data_changed_signal.emit()
     def refresh_battle_map(self, force_map_reload=False):
-        if not self.battle_map_window or not self.current_encounter_id: return
+        if not self.battle_map_window or not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
         enc=self.encounters[self.current_encounter_id]; self._save_current_state_to_memory()
         mp=self.dm.get_full_path(enc.get("map_path")) if (force_map_reload or not self.battle_map_window.map_item) else None
         cd=[]
@@ -533,5 +579,5 @@ class CombatTracker(QWidget):
         self.btn_add_players.setText(tr("BTN_ADD_PLAYERS"))
         self.btn_roll.setText(tr("BTN_ROLL_INIT"))
         self.btn_clear_all.setText(tr("BTN_CLEAR_ALL"))
-        if self.current_encounter_id: self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{self.encounters[self.current_encounter_id].get('round', 1)}")
+        if self.current_encounter_id and self.current_encounter_id in self.encounters: self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{self.encounters[self.current_encounter_id].get('round', 1)}")
         if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.retranslate_ui(); self.refresh_battle_map()

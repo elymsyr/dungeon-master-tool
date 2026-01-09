@@ -422,3 +422,4 @@ tr:
   INTENSITY_HIGH: "Yüksek"
 
   MSG_DOWNLOADING_IMAGE: "Resim İndiriliyor..."
+  LBL_SOURCE: "Kaynak:"

@@ -219,6 +219,17 @@ class DataManager:
         if not eid: 
             eid = str(uuid.uuid4())
         
+        # --- KAYNAK MANTIĞI (YENİ EKLENDİ) ---
+        world_name = self.data.get("world_name", "Unknown World")
+        
+        # Eğer hiç kaynak belirtilmemişse, bu dünya kaynaklıdır
+        if not data.get("source"):
+            data["source"] = world_name
+        
+        # Not: Eğer var olan bir kaydı güncelliyorsak source'a dokunmuyoruz,
+        # kullanıcı NpcSheet üzerinden değiştirebilir.
+        # -------------------------------------
+
         if eid in self.data["entities"]: 
             self.data["entities"][eid].update(data)
         else: 
@@ -227,6 +238,27 @@ class DataManager:
         if should_save:
             self.save_data()
         return eid
+
+    def prepare_entity_from_external(self, data, type_override=None):
+        """
+        Veriyi hazırlar (bağımlılıkları çözer) ama VERİTABANINA KAYDETMEZ.
+        Geçici önizleme için kullanılır.
+        """
+        if type_override: data["type"] = type_override
+        
+        # --- KAYNAK BİRLEŞTİRME MANTIĞI (YENİ) ---
+        # Örn: "SRD 5e (2014)" -> "SRD 5e (2014) / MyCampaignName"
+        original_source = data.get("source", "")
+        world_name = self.data.get("world_name", "")
+        
+        if original_source and world_name and world_name not in original_source:
+            data["source"] = f"{original_source} / {world_name}"
+        elif not original_source:
+            data["source"] = world_name
+        # -----------------------------------------
+
+        data = self._resolve_dependencies(data)
+        return data
 
     def _resolve_dependencies(self, data):
         """
@@ -332,17 +364,6 @@ class DataManager:
         if type_override: data["type"] = type_override
         data = self._resolve_dependencies(data)
         return self.save_entity(None, data)
-
-    def prepare_entity_from_external(self, data, type_override=None):
-        """
-        [YENİ] Veriyi hazırlar (bağımlılıkları çözer) ama VERİTABANINA KAYDETMEZ.
-        Geçici önizleme için kullanılır.
-        """
-        if type_override: data["type"] = type_override
-        # Büyüleri vb. yine de içeri almak zorundayız, çünkü ID ile referans veriliyor.
-        # Bu yan etki (spells tablosunun dolması) kabul edilebilir.
-        data = self._resolve_dependencies(data)
-        return data
 
     def import_image(self, src):
         if not self.current_campaign_path: return None

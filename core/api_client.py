@@ -147,6 +147,7 @@ class DndApiClient:
             "name": data.get("name"),
             "type": "Monster",
             "description": f"Size: {data.get('size')}, Type: {data.get('type')}, Align: {data.get('alignment')}",
+            "source": "SRD 5e (2014)",
             "tags": [data.get("type", ""), data.get("size", "")],
             "image_path": local_img,
             "_remote_image_url": remote_image_url,
@@ -209,6 +210,7 @@ class DndApiClient:
             "name": data.get("name"),
             "type": "Spell",
             "description": desc,
+            "source": "SRD 5e (2014)",
             "tags": classes + [f"Level {data.get('level')}", data.get("school", {}).get("name", "")],
             "attributes": {
                 "LBL_LEVEL": str(data.get("level")),
@@ -297,6 +299,7 @@ class DndApiClient:
             "name": data.get("name"),
             "type": "Equipment",
             "description": description,
+            "source": "SRD 5e (2014)",
             "tags": tags,
             "attributes": {
                 "LBL_CATEGORY": final_category,
@@ -314,7 +317,7 @@ class DndApiClient:
         }
 
     def parse_class(self, data):
-        return {"name": data.get("name"), "type": "Class", "description": f"Hit Die: d{data.get('hit_die')}", "attributes": {"LBL_HIT_DIE": f"d{data.get('hit_die')}"}}
+        return {"name": data.get("name"), "type": "Class", "description": f"Hit Die: d{data.get('hit_die')}", "source": "SRD 5e (2014)", "attributes": {"LBL_HIT_DIE": f"d{data.get('hit_die')}"}}
 
     def parse_race(self, data):
-        return {"name": data.get("name"), "type": "Irk (Race)", "description": f"Speed: {data.get('speed')}", "attributes": {"Hız": str(data.get("speed"))}}
+        return {"name": data.get("name"), "type": "Irk (Race)", "description": f"Speed: {data.get('speed')}", "source": "SRD 5e (2014)", "attributes": {"Hız": str(data.get("speed"))}}

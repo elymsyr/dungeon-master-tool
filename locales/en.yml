@@ -423,3 +423,4 @@ en:
   INTENSITY_HIGH: "High"
 
   MSG_DOWNLOADING_IMAGE: "Downloading Image..."
+  LBL_SOURCE: "Source:"
