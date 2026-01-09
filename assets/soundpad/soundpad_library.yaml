@@ -1,0 +1,36 @@
+# assets/soundpad/soundpad_library.yaml
+
+# Her zaman kullanılabilir olan arka plan sesleri
+ambience:
+  - id: "rain"
+    name: "Yağmur"
+    file: "ambience/rain_0.wav"
+  - id: "crowd"
+    name: "Kalabalık"
+    file: "ambience/crowd_0.wav"
+  - id: "fireplace"
+    name: "Kumbar"
+    file: "ambience/fireplace_0.wav"
+  - id: "dungeon"
+    name: "Zindan"
+    file: "ambience/dungeon_0.wav"
+
+# Her zaman kullanılabilir olan tek seferlik ses efektleri
+sfx:
+  - id: "sword_hit"
+    name: "Kılıç Vuruşu"
+    file: "sfx/sword-slice-2-393845.wav"
+  - id: "arrow_woosh"
+    name: "Ok Vızıltısı"
+    file: "sfx/arrow-swish-06040.wav"
+  - id: "door_creak"
+    name: "Kapı Gıcırtısı"
+    file: "sfx/door-creaking-06040.wav"
+
+# Varsayılan (Global) Kısayollar
+shortcuts:
+  stop_all: "Ctrl+."
+  stop_ambience: "Ctrl+,"
+  play_sfx:
+    sword_hit: "Num+1"
+    arrow_woosh: "Num+2"

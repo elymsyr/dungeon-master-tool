@@ -1,206 +1,218 @@
 import os
+import copy
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QFrame, QPushButton, 
-                             QHBoxLayout, QSlider, QComboBox, QGroupBox, QScrollArea)
-from PyQt6.QtCore import Qt
+                             QHBoxLayout, QSlider, QComboBox, QGroupBox, QTabWidget,
+                             QGridLayout, QScrollArea)
+from PyQt6.QtCore import Qt, pyqtSignal
 from core.locales import tr
 from core.audio.engine import MusicBrain
-from core.audio.loader import load_all_themes
+from core.audio.loader import load_all_themes, load_global_library
+from config import SOUNDPAD_ROOT
 
 class SoundpadPanel(QWidget):
+    theme_loaded_with_shortcuts = pyqtSignal(dict)
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedWidth(320)
+        self.setFixedWidth(350)
         self.setObjectName("soundpadContainer")
         
-        # Ses Motoru
         self.audio_brain = MusicBrain()
-        
-        # Temalar
+        self.global_library = load_global_library()
         self.themes = load_all_themes()
-        self.current_theme = None
         
+        self.current_theme = None
+        self.ambience_slots = []
+        self.sfx_buttons = {}
+
         self.init_ui()
+        self._build_ambience_slots()
+        self._build_sfx_grid()
+        self.theme_loaded_with_shortcuts.emit(self.global_library.get('shortcuts', {}))
 
     def init_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(10, 10, 10, 10)
         
-        # Başlık
         self.lbl_title = QLabel("🔊 " + tr("TITLE_SOUNDPAD"))
-        self.lbl_title.setObjectName("headerLabel")
-        self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_title.setStyleSheet("font-size: 18px; font-weight: bold; margin-bottom: 10px;")
-        layout.addWidget(self.lbl_title)
+        self.lbl_title.setObjectName("headerLabel"); self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(self.lbl_title)
         
-        # --- İÇERİK ---
-        self.content_frame = QFrame()
-        self.content_frame.setStyleSheet("background-color: rgba(0, 0, 0, 0.2); border-radius: 6px;")
-        self.v_box = QVBoxLayout(self.content_frame)
-        
-        if not self.themes:
-            lbl_err = QLabel("No themes found.\nCheck assets/soundpad folder.")
-            lbl_err.setStyleSheet("color: #ff5555; font-style: italic;")
-            lbl_err.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.v_box.addWidget(lbl_err)
-        else:
-            # 1. Tema Seçimi
-            lbl_select = QLabel("Select Theme:")
-            self.combo_themes = QComboBox()
-            for tid, theme in self.themes.items():
-                self.combo_themes.addItem(theme.name, tid)
-            
-            # Tema Yükle Butonu
-            self.btn_load_theme = QPushButton("📂 Load Theme")
-            self.btn_load_theme.setObjectName("primaryBtn")
-            self.btn_load_theme.clicked.connect(self.load_selected_theme)
-            
-            self.v_box.addWidget(lbl_select)
-            self.v_box.addWidget(self.combo_themes)
-            self.v_box.addWidget(self.btn_load_theme)
-            
-            self.v_box.addSpacing(15)
-            
-            # 2. State (Mod) Butonları Alanı (Dinamik)
-            self.grp_states = QGroupBox("Mood / State")
-            self.grp_states.setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #555; margin-top: 5px; }")
-            self.layout_states = QVBoxLayout(self.grp_states)
-            self.v_box.addWidget(self.grp_states)
-            self.grp_states.setVisible(False) # Başlangıçta gizli
-            
-            self.v_box.addSpacing(15)
-            
-            # 3. Intensity Slider
-            self.grp_intensity = QGroupBox("Intensity")
-            self.grp_intensity.setStyleSheet("QGroupBox { font-weight: bold; border: 1px solid #555; margin-top: 5px; }")
-            v_int = QVBoxLayout(self.grp_intensity)
-            
-            self.slider_intensity = QSlider(Qt.Orientation.Horizontal)
-            self.slider_intensity.setRange(0, 2) # Base, Lv1, Lv2
-            self.slider_intensity.setTickPosition(QSlider.TickPosition.TicksBelow)
-            self.slider_intensity.setTickInterval(1)
-            self.slider_intensity.setValue(0)
-            self.slider_intensity.valueChanged.connect(self.change_intensity)
-            
-            self.lbl_intensity_val = QLabel("Base")
-            self.lbl_intensity_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            
-            v_int.addWidget(self.slider_intensity)
-            v_int.addWidget(self.lbl_intensity_val)
-            self.v_box.addWidget(self.grp_intensity)
-            self.grp_intensity.setVisible(False) # Başlangıçta gizli
-            
-            self.v_box.addStretch()
-            
-            # 4. Master Volume & Stop
-            lbl_vol = QLabel("Master Volume")
-            self.slider_vol = QSlider(Qt.Orientation.Horizontal)
-            self.slider_vol.setRange(0, 100)
-            self.slider_vol.setValue(50)
-            self.slider_vol.valueChanged.connect(self.change_volume)
-            
-            self.btn_stop = QPushButton("⏹️ Stop All")
-            self.btn_stop.setObjectName("dangerBtn")
-            self.btn_stop.clicked.connect(self.stop_all)
-            
-            self.v_box.addWidget(lbl_vol)
-            self.v_box.addWidget(self.slider_vol)
-            self.v_box.addSpacing(5)
-            self.v_box.addWidget(self.btn_stop)
+        self.tabs = QTabWidget(); main_layout.addWidget(self.tabs, 1)
+        self.music_tab = QWidget(); self.ambience_tab = QWidget(); self.sfx_tab = QWidget()
+        self.tabs.addTab(self.music_tab, "🎵 " + tr("Müzik"))
+        self.tabs.addTab(self.ambience_tab, "🌿 " + tr("Ambiyans"))
+        self.tabs.addTab(self.sfx_tab, "💥 " + tr("SFX"))
 
-        layout.addWidget(self.content_frame)
+        self._setup_music_tab(); self._setup_ambience_tab(); self._setup_sfx_tab()
+        
+        global_controls_group = QGroupBox(tr("Genel Kontroller"))
+        global_layout = QVBoxLayout(global_controls_group)
+        
+        vol_layout = QHBoxLayout(); vol_layout.addWidget(QLabel(tr("Ana Müzik Sesi")))
+        self.slider_vol = QSlider(Qt.Orientation.Horizontal)
+        self.slider_vol.setRange(0, 100); self.slider_vol.setValue(50)
+        self.slider_vol.valueChanged.connect(self.change_master_volume)
+        vol_layout.addWidget(self.slider_vol); global_layout.addLayout(vol_layout)
+        
+        stop_buttons_layout = QHBoxLayout()
+        self.btn_stop_ambience = QPushButton(tr("Ambiyansı Durdur"))
+        self.btn_stop_ambience.clicked.connect(self.stop_ambience)
+        self.btn_stop_all = QPushButton(tr("Tümünü Durdur")); self.btn_stop_all.setObjectName("dangerBtn")
+        self.btn_stop_all.clicked.connect(self.stop_all)
+        stop_buttons_layout.addWidget(self.btn_stop_ambience); stop_buttons_layout.addWidget(self.btn_stop_all)
+        global_layout.addLayout(stop_buttons_layout)
+        
+        main_layout.addWidget(global_controls_group)
+
+    def _setup_music_tab(self):
+        layout = QVBoxLayout(self.music_tab)
+        if not self.themes:
+            layout.addWidget(QLabel(tr("Hiç müzik teması bulunamadı.")))
+            return
+
+        theme_layout = QHBoxLayout()
+        self.combo_themes = QComboBox(); self.combo_themes.addItem(tr("Müzik Teması Seç..."), None)
+        for tid, theme in self.themes.items(): self.combo_themes.addItem(theme.name, tid)
+        
+        self.btn_load_theme = QPushButton("📂 " + tr("Yükle")); self.btn_load_theme.setObjectName("primaryBtn")
+        self.btn_load_theme.clicked.connect(self.load_selected_theme)
+        theme_layout.addWidget(self.combo_themes, 1); theme_layout.addWidget(self.btn_load_theme)
+        layout.addLayout(theme_layout)
+
+        self.grp_states = QGroupBox(tr("Müzik Durumu")); self.layout_states = QVBoxLayout(self.grp_states)
+        self.grp_states.setVisible(False); layout.addWidget(self.grp_states)
+
+        self.grp_intensity = QGroupBox(tr("Yoğunluk")); v_int = QVBoxLayout(self.grp_intensity)
+        self.slider_intensity = QSlider(Qt.Orientation.Horizontal); self.slider_intensity.setRange(0, 3)
+        self.slider_intensity.setTickPosition(QSlider.TickPosition.TicksBelow); self.slider_intensity.setTickInterval(1)
+        self.slider_intensity.valueChanged.connect(self.change_intensity)
+        self.lbl_intensity_val = QLabel("Base"); self.lbl_intensity_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        v_int.addWidget(self.slider_intensity); v_int.addWidget(self.lbl_intensity_val)
+        self.grp_intensity.setVisible(False); layout.addWidget(self.grp_intensity)
+        layout.addStretch()
+
+    def _setup_ambience_tab(self):
+        layout = QVBoxLayout(self.ambience_tab)
+        scroll = QScrollArea(); scroll.setWidgetResizable(True); scroll.setFrameShape(QFrame.Shape.NoFrame)
+        content_widget = QWidget()
+        self.ambience_layout = QVBoxLayout(content_widget)
+        self.ambience_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        scroll.setWidget(content_widget); layout.addWidget(scroll)
+
+    def _setup_sfx_tab(self):
+        layout = QVBoxLayout(self.sfx_tab)
+        scroll = QScrollArea(); scroll.setWidgetResizable(True); scroll.setFrameShape(QFrame.Shape.NoFrame)
+        content_widget = QWidget()
+        self.sfx_grid_layout = QGridLayout(content_widget)
+        self.sfx_grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        scroll.setWidget(content_widget); layout.addWidget(scroll)
+
+    def _build_ambience_slots(self):
+        ambience_list = self.global_library.get('ambience', [])
+        for i in range(4):
+            slot_box = QGroupBox(f"Ambiyans Slot {i+1}"); slot_layout = QVBoxLayout(slot_box)
+            combo = QComboBox(); combo.addItem(tr("Sessizlik"), None)
+            for ambience in ambience_list: combo.addItem(ambience['name'], ambience['id'])
+            
+            slider = QSlider(Qt.Orientation.Horizontal); slider.setRange(0, 100); slider.setValue(70)
+            self.ambience_slots.append({'group': slot_box, 'combo': combo, 'slider': slider})
+            slot_layout.addWidget(combo); slot_layout.addWidget(slider)
+            self.ambience_layout.addWidget(slot_box)
+            combo.currentIndexChanged.connect(lambda _, s_idx=i: self._on_ambience_change(s_idx))
+            slider.valueChanged.connect(lambda value, s_idx=i: self._on_ambience_volume_change(s_idx, value))
+
+    def _build_sfx_grid(self):
+        sfx_list = self.global_library.get('sfx', [])
+        row, col = 0, 0
+        for sfx in sfx_list:
+            btn = QPushButton(sfx['name']); btn.setMinimumHeight(40)
+            btn.clicked.connect(lambda _, s_id=sfx['id']: self.play_sfx(s_id))
+            self.sfx_grid_layout.addWidget(btn, row, col)
+            self.sfx_buttons[sfx['id']] = btn
+            col += 1
+            if col > 1: col = 0; row += 1
+
+    def _rebuild_state_buttons(self):
+        while self.layout_states.count(): self.layout_states.takeAt(0).widget().deleteLater()
+        if not self.current_theme: return
+        self.state_buttons = {} 
+        for state_name in self.current_theme.states.keys():
+            btn = QPushButton(state_name.title()); btn.setCheckable(True)
+            btn.clicked.connect(lambda _, s=state_name: self.on_state_clicked(s))
+            self.layout_states.addWidget(btn); self.state_buttons[state_name] = btn
 
     def load_selected_theme(self):
         tid = self.combo_themes.currentData()
-        if tid in self.themes:
-            self.current_theme = self.themes[tid]
-            
-            # Motoru güncelle
-            self.audio_brain.set_theme(self.current_theme)
-            
-            # Slider sıfırla
-            self.slider_intensity.setValue(0)
-            self.lbl_intensity_val.setText("Base")
-            self.grp_intensity.setVisible(True)
-            
-            # State butonlarını oluştur
-            self._rebuild_state_buttons()
-            self.grp_states.setVisible(True)
-
-    def _rebuild_state_buttons(self):
-        # Temizle
-        while self.layout_states.count():
-            child = self.layout_states.takeAt(0)
-            if child.widget(): child.widget().deleteLater()
+        if tid is None:
+            self.current_theme = None
+            self.grp_states.setVisible(False); self.grp_intensity.setVisible(False)
+            self.theme_loaded_with_shortcuts.emit(self.global_library.get('shortcuts', {}))
+            self.audio_brain.stop_all() # Müzik temasını kaldırınca müziği durdur
+            return
         
-        if not self.current_theme: return
+        self.current_theme = self.themes[tid]
+        self.audio_brain.set_theme(self.current_theme)
+        self._rebuild_state_buttons()
+        self.grp_states.setVisible(True); self.slider_intensity.setValue(0); self.grp_intensity.setVisible(True)
+        final_shortcuts = self._merge_shortcuts()
+        self.theme_loaded_with_shortcuts.emit(final_shortcuts)
 
-        # Butonları Sakla (Daha sonra ikon değiştirmek için)
-        self.state_buttons = {} 
-
-        for state_name in self.current_theme.states.keys():
-            btn = QPushButton(state_name.title())
-            btn.setCheckable(True) # Basılı kalma özelliği
-            
-            # Renkler
-            if state_name.lower() == "combat": btn.setObjectName("dangerBtn")
-            elif state_name.lower() == "victory": btn.setObjectName("successBtn")
-            else: btn.setObjectName("primaryBtn")
-            
-            # Tıklama olayı
-            btn.clicked.connect(lambda ch, s=state_name: self.on_state_clicked(s))
-            
-            self.layout_states.addWidget(btn)
-            self.state_buttons[state_name] = btn
+    def _merge_shortcuts(self):
+        final_shortcuts = copy.deepcopy(self.global_library.get('shortcuts', {}))
+        if not self.current_theme: return final_shortcuts
+        theme_shortcuts = getattr(self.current_theme, 'shortcuts', {})
+        for key, value in theme_shortcuts.items():
+            if isinstance(value, dict):
+                if key not in final_shortcuts: final_shortcuts[key] = {}
+                for sub_key, sub_value in value.items(): final_shortcuts[key][sub_key] = sub_value
+            else: final_shortcuts[key] = value
+        return final_shortcuts
 
     def on_state_clicked(self, state_name):
-        """
-        1. Tık: Kuyruğa al (İkonu ⏳ yap)
-        2. Tık: Hemen geç (Zorla)
-        """
-        # Şu anki durumu kontrol et
-        current_id = self.audio_brain.current_state_id
-        pending_id = self.audio_brain.pending_state_id
-        
-        # Eğer zaten bu moddaysak ve bekleyen bir şey yoksa işlem yapma
-        if state_name == current_id and pending_id is None:
-            # Buton basılı kaldıysa geri kaldır
-            self.state_buttons[state_name].setChecked(True)
-            return
-
-        # SENARYO 1: Zaten kuyruktaysa -> Hemen Geç (Force)
-        if state_name == pending_id:
-            self.audio_brain.force_transition()
-            # İkonu normale döndür (Geçiş başlayınca resetlenecek)
-            self.state_buttons[state_name].setText(state_name.title() + " 🚀")
-            return
-
-        # SENARYO 2: İlk defa tıklandı -> Kuyruğa Al
         self.audio_brain.queue_state(state_name)
-        
-        # Görsel Geri Bildirim
-        for name, btn in self.state_buttons.items():
-            if name == state_name:
-                btn.setText(name.title() + " ⏳") # Kum saati
-                btn.setChecked(True)
-            elif name == current_id:
-                btn.setText(name.title()) # Mevcut olan normal kalsın
-                btn.setChecked(True)
-            else:
-                btn.setText(name.title())
-                btn.setChecked(False)
+        for name, btn in self.state_buttons.items(): btn.setChecked(name == state_name)
 
-    def change_intensity(self, val):
-        labels = ["Base", "Low", "High", "Epic"]
-        text = labels[val] if val < len(labels) else str(val)
-        self.lbl_intensity_val.setText(text)
+    def _on_ambience_change(self, slot_index):
+        slot = self.ambience_slots[slot_index]; ambience_id = slot['combo'].currentData()
+        file_path = None
+        if ambience_id:
+            ambience_data = next((a for a in self.global_library['ambience'] if a['id'] == ambience_id), None)
+            if ambience_data: file_path = os.path.join(SOUNDPAD_ROOT, ambience_data['file'])
         
-        self.audio_brain.set_intensity(val)
+        volume = slot['slider'].value()
+        self.audio_brain.play_ambience(slot_index, file_path, volume)
 
-    def change_volume(self, val):
-        self.audio_brain.set_volume(val / 100.0)
+    def _on_ambience_volume_change(self, slot_index, volume):
+        self.audio_brain.set_ambience_volume(slot_index, volume)
+
+    def play_sfx(self, sfx_id):
+        sfx_data = next((s for s in self.global_library['sfx'] if s['id'] == sfx_id), None)
+        if sfx_data and 'file' in sfx_data:
+            full_path = os.path.join(SOUNDPAD_ROOT, sfx_data['file'])
+            self.audio_brain.play_sfx(full_path)
+
+    def stop_ambience(self):
+        self.audio_brain.stop_ambience()
+        for slot in self.ambience_slots:
+            slot['combo'].blockSignals(True); slot['combo'].setCurrentIndex(0); slot['combo'].blockSignals(False)
 
     def stop_all(self):
-        self.audio_brain.stop()
+        self.audio_brain.stop_all() # Bu zaten müziği ve ambiyansı durdurur
+        if self.combo_themes.currentIndex() > 0:
+            self.combo_themes.setCurrentIndex(0); self.load_selected_theme()
+
+    def change_master_volume(self, value):
+        self.audio_brain.set_master_volume(value / 100.0)
+
+    def change_intensity(self, value):
+        labels = ["Base", "Low", "Medium", "High"]
+        self.lbl_intensity_val.setText(labels[value] if value < len(labels) else str(value))
+        self.audio_brain.set_intensity(value)
 
     def retranslate_ui(self):
         self.lbl_title.setText("🔊 " + tr("TITLE_SOUNDPAD"))
+        self.tabs.setTabText(0, "🎵 " + tr("Müzik"))
+        self.tabs.setTabText(1, "🌿 " + tr("Ambiyans"))
+        self.tabs.setTabText(2, "💥 " + tr("SFX"))
+        # Diğer UI elemanlarının metinleri de buraya eklenebilir.
