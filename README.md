@@ -73,7 +73,7 @@ python main.py
 
 ## 📝 Customizable Areas
 
-You can customize anything as you want. If you want to add custom songs, you can add them to the assets using yaml files. You can add language support. Soon, there will a HOW TO area that includes how to use and custimize anything.
+You can customize anything as you want. If you want to add custom songs, you can add them to the assets using yaml files. You can add language support. Soon, there will be a HOW TO area that includes how to use and custimize anything.
 
 ## ⚠️ Disclaimer
 This project is currently in Pre-Alpha. Expect bugs and frequent updates.
