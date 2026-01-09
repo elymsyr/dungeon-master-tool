@@ -27,21 +27,29 @@ def get_data_root():
 
 DATA_ROOT = get_data_root()
 
-# Klasör yolları (BASE_DIR'e, yani exe'nin yanına göre ayarlanır)
+# --- Dizin Tanımlamaları ---
+
+# Kullanıcı verileri (Değişken, uygulama yanında)
 WORLDS_DIR = os.path.join(DATA_ROOT, "worlds")
 CACHE_DIR = os.path.join(DATA_ROOT, "cache")
-IMAGES_DIR = os.path.join(DATA_ROOT, "assets") # assets exe'nin yanında olacak
 
-# Klasörleri oluştur (Eğer yoksa)
-for d in [WORLDS_DIR, CACHE_DIR, IMAGES_DIR]:
+# Uygulama varlıkları (Sabit, exe yanında)
+ASSETS_DIR = os.path.join(BASE_DIR, "assets")
+IMAGES_DIR = ASSETS_DIR  # IMAGES_DIR eski uyumluluk için kalabilir, artık ASSETS_DIR'i işaret ediyor
+THEMES_DIR = os.path.join(BASE_DIR, "themes")
+LOCALES_DIR = os.path.join(BASE_DIR, "locales")
+
+# YENİ EKLENEN SOUNDPAD DİZİNİ
+SOUNDPAD_ROOT = os.path.join(ASSETS_DIR, "soundpad")
+
+# Gerekli klasörleri uygulamanın başlangıcında oluştur
+for d in [WORLDS_DIR, CACHE_DIR, ASSETS_DIR, SOUNDPAD_ROOT]:
     if not os.path.exists(d):
         os.makedirs(d)
 
-API_BASE_URL = "https://www.dnd5eapi.co/api"
+# --- Diğer Ayarlar ---
 
-# Temalar ve Locales de artık BASE_DIR (Exe yanı) altında aranacak
-THEMES_DIR = os.path.join(BASE_DIR, "themes")
-LOCALES_DIR = os.path.join(BASE_DIR, "locales")
+API_BASE_URL = "https://www.dnd5eapi.co/api"
 
 def load_theme(theme_name):
     """Loads a .qss theme file from the themes directory."""

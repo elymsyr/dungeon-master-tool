@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QTabWidget, QVBoxLayout, 
                              QWidget, QMessageBox, QFileDialog, QHBoxLayout, 
                              QPushButton, QLabel, QComboBox)
+from PyQt6.QtGui import QShortcut, QKeySequence # Kısayollar için importlar
 from config import STYLESHEET, load_theme
 from core.data_manager import DataManager
 from ui.player_window import PlayerWindow
@@ -20,198 +21,130 @@ class MainWindow(QMainWindow):
         self.data_manager = data_manager
         self.player_window = PlayerWindow()
         
-        # --- TEMA LİSTESİ (TEK KAYNAK / SOURCE OF TRUTH) ---
-        # (Dosya Adı, Görünen İsim veya Çeviri Anahtarı)
         self.theme_list = [
-            ("dark", "THEME_DARK"),
-            ("light", "THEME_LIGHT"),
-            ("baldur", "Baldur's Gate"),
-            ("discord", "Discord"),
-            ("grim", "Grim (Dark)"),
-            ("midnight", "THEME_MIDNIGHT"),
-            ("emerald", "THEME_EMERALD"),
-            ("parchment", "THEME_PARCHMENT"),
-            ("ocean", "THEME_OCEAN"),
-            ("frost", "THEME_FROST"),
-            ("amethyst", "THEME_AMETHYST")
+            ("dark", "THEME_DARK"), ("light", "THEME_LIGHT"), ("baldur", "Baldur's Gate"),
+            ("discord", "Discord"), ("grim", "Grim (Dark)"), ("midnight", "THEME_MIDNIGHT"),
+            ("emerald", "THEME_EMERALD"), ("parchment", "THEME_PARCHMENT"), ("ocean", "THEME_OCEAN"),
+            ("frost", "THEME_FROST"), ("amethyst", "THEME_AMETHYST")
         ]
         
         self.setWindowTitle(f"DM Tool - {self.data_manager.data.get('world_name', 'Bilinmiyor')}")
         self.setGeometry(100, 100, 1400, 900)
         
-        # Başlangıç temasını yükle
         self.current_stylesheet = load_theme(self.data_manager.current_theme)
         self.setStyleSheet(self.current_stylesheet)
+        
+        # Aktif kısayolları saklamak için bir liste
+        self.active_shortcuts = []
         
         self.init_ui()
 
     def init_ui(self):
-        central = QWidget()
-        self.setCentralWidget(central)
+        central = QWidget(); self.setCentralWidget(central)
         main_layout = QVBoxLayout(central)
-        
-        # --- ÜST BAR (TOOLBAR) ---
         toolbar = QHBoxLayout()
         
-        # Oyuncu Ekranı Butonu
-        self.btn_toggle_player = QPushButton(tr("BTN_PLAYER_SCREEN"))
-        self.btn_toggle_player.setCheckable(True)
-        self.btn_toggle_player.setObjectName("primaryBtn") 
-        self.btn_toggle_player.clicked.connect(self.toggle_player_window)
-        
-        # Dışa Aktar Butonu
-        self.btn_export_txt = QPushButton(tr("BTN_EXPORT"))
-        self.btn_export_txt.setObjectName("successBtn")
+        self.btn_toggle_player = QPushButton(tr("BTN_PLAYER_SCREEN")); self.btn_toggle_player.setCheckable(True)
+        self.btn_toggle_player.setObjectName("primaryBtn"); self.btn_toggle_player.clicked.connect(self.toggle_player_window)
+        self.btn_export_txt = QPushButton(tr("BTN_EXPORT")); self.btn_export_txt.setObjectName("successBtn")
         self.btn_export_txt.clicked.connect(self.export_entities_to_txt)
+        self.btn_toggle_sound = QPushButton("🔊"); self.btn_toggle_sound.setCheckable(True)
+        self.btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD")); self.btn_toggle_sound.clicked.connect(self.toggle_soundpad)
         
-        # --- YENİ BUTON: SOUNDPAD ---
-        self.btn_toggle_sound = QPushButton("🔊")
-        self.btn_toggle_sound.setCheckable(True) # Basılı kalabilen buton (Toggle)
-        self.btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
-        self.btn_toggle_sound.clicked.connect(self.toggle_soundpad)
-        # ----------------------------
-        
-        # Dünya Bilgisi
         self.lbl_campaign = QLabel(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
         self.lbl_campaign.setObjectName("toolbarLabel")
 
-        # Dil Seçimi
-        self.combo_lang = QComboBox()
-        self.combo_lang.addItems(["English", "Türkçe"])
-        
+        self.combo_lang = QComboBox(); self.combo_lang.addItems(["English", "Türkçe"])
         current_lang = self.data_manager.settings.get("language", "EN")
         self.combo_lang.setCurrentIndex(1 if current_lang == "TR" else 0)
         self.combo_lang.currentIndexChanged.connect(self.change_language)
         
-        # Tema Seçimi
-        self.lbl_theme = QLabel(tr("LBL_THEME"))
-        self.lbl_theme.setObjectName("toolbarLabel")
-        
+        self.lbl_theme = QLabel(tr("LBL_THEME")); self.lbl_theme.setObjectName("toolbarLabel")
         self.combo_theme = QComboBox()
-        
-        # Temaları listeye ekle
         for _, display_name in self.theme_list:
-            if display_name.startswith("THEME_"):
-                self.combo_theme.addItem(tr(display_name))
-            else:
-                self.combo_theme.addItem(display_name)
+            self.combo_theme.addItem(tr(display_name) if display_name.startswith("THEME_") else display_name)
         
-        # Mevcut temayı bul ve seç
         current_theme_code = self.data_manager.current_theme
-        index_to_select = 0
-        for i, (code, _) in enumerate(self.theme_list):
-            if code == current_theme_code:
-                index_to_select = i
-                break
-        
+        index_to_select = next((i for i, (code, _) in enumerate(self.theme_list) if code == current_theme_code), 0)
         self.combo_theme.setCurrentIndex(index_to_select)
         self.combo_theme.currentIndexChanged.connect(self.change_theme)
         
-        # Toolbar'a ekle
-        toolbar.addWidget(self.btn_toggle_player)
-        toolbar.addWidget(self.btn_export_txt)
-        toolbar.addWidget(self.btn_toggle_sound) # Soundpad Butonu
-        toolbar.addWidget(self.lbl_campaign)
-        toolbar.addStretch()
-        toolbar.addWidget(self.combo_lang)
-        toolbar.addWidget(self.lbl_theme)
-        toolbar.addWidget(self.combo_theme)
-        
+        toolbar.addWidget(self.btn_toggle_player); toolbar.addWidget(self.btn_export_txt)
+        toolbar.addWidget(self.btn_toggle_sound); toolbar.addWidget(self.lbl_campaign)
+        toolbar.addStretch(); toolbar.addWidget(self.combo_lang)
+        toolbar.addWidget(self.lbl_theme); toolbar.addWidget(self.combo_theme)
         main_layout.addLayout(toolbar)
         
-        # --- ORTA ALAN (İÇERİK + SOUNDPAD) ---
         content_layout = QHBoxLayout()
-        
-        # --- SEKMELER (TABS) ---
         self.tabs = QTabWidget()
-        
-        # Tab 1: Veritabanı
         self.db_tab = DatabaseTab(self.data_manager, self.player_window)
         self.tabs.addTab(self.db_tab, tr("TAB_DB"))
-        
-        # Tab 2: Harita
-        # self'i (MainWindow) gönderiyoruz ki pinlere tıklayınca db_tab'a geçebilsin
         self.map_tab = MapTab(self.data_manager, self.player_window, self) 
         self.tabs.addTab(self.map_tab, tr("TAB_MAP")) 
-        
-        # Tab 3: Session (Oyun Yönetimi)
         self.session_tab = SessionTab(self.data_manager)
         self.tabs.addTab(self.session_tab, tr("TAB_SESSION"))
         
-        # --- SOUNDPAD PANELİ (SAĞ TARAF) ---
-        self.soundpad_panel = SoundpadPanel()
-        self.soundpad_panel.setVisible(False) # Başlangıçta gizli
+        # --- SOUNDPAD VE KISAYOL ENTEGRASYONU ---
+        self.soundpad_panel = SoundpadPanel(); self.soundpad_panel.setVisible(False)
+        self.soundpad_panel.theme_loaded_with_shortcuts.connect(self.setup_soundpad_shortcuts)
         
-        # Layout'a Ekleme (Sol: Sekmeler, Sağ: Soundpad)
-        content_layout.addWidget(self.tabs, 1) # 1 = Esnek (Genişleyen)
-        content_layout.addWidget(self.soundpad_panel, 0) # 0 = Sabit Genişlik
-        
+        content_layout.addWidget(self.tabs, 1); content_layout.addWidget(self.soundpad_panel, 0)
         main_layout.addLayout(content_layout)
         
         self.map_tab.render_map()
         self.retranslate_ui()
 
+    def setup_soundpad_shortcuts(self, shortcuts_map):
+        """Soundpad'den gelen kısayol haritasına göre global kısayolları oluşturur/temizler."""
+        for shortcut in self.active_shortcuts:
+            shortcut.setEnabled(False); shortcut.deleteLater()
+        self.active_shortcuts.clear()
+
+        if stop_all_key := shortcuts_map.get("stop_all"):
+            sc = QShortcut(QKeySequence(stop_all_key), self)
+            sc.activated.connect(self.soundpad_panel.stop_all)
+            self.active_shortcuts.append(sc)
+
+        if stop_ambience_key := shortcuts_map.get("stop_ambience"):
+            sc = QShortcut(QKeySequence(stop_ambience_key), self)
+            sc.activated.connect(self.soundpad_panel.stop_ambience)
+            self.active_shortcuts.append(sc)
+            
+        if sfx_shortcuts := shortcuts_map.get("play_sfx", {}):
+            for sfx_id, key_sequence in sfx_shortcuts.items():
+                if key_sequence and sfx_id in self.soundpad_panel.sfx_buttons:
+                    sc = QShortcut(QKeySequence(key_sequence), self)
+                    sc.activated.connect(lambda s_id=sfx_id: self.soundpad_panel.play_sfx(s_id))
+                    self.active_shortcuts.append(sc)
+    
+    # --- Diğer MainWindow Metotları (Değişiklik yok) ---
     def retranslate_ui(self):
-        # Üst Bar Çevirileri
-        self.btn_toggle_player.setText(tr("BTN_PLAYER_SCREEN"))
-        self.btn_export_txt.setText(tr("BTN_EXPORT"))
+        self.btn_toggle_player.setText(tr("BTN_PLAYER_SCREEN")); self.btn_export_txt.setText(tr("BTN_EXPORT"))
         self.btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
         self.lbl_campaign.setText(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
-        
-        # Sekme İsimleri
-        self.tabs.setTabText(0, tr("TAB_DB"))
-        self.tabs.setTabText(1, tr("TAB_MAP"))
-        self.tabs.setTabText(2, tr("TAB_SESSION"))
-        
-        # Alt Bileşenleri Tetikle (Recursive Update)
+        self.tabs.setTabText(0, tr("TAB_DB")); self.tabs.setTabText(1, tr("TAB_MAP")); self.tabs.setTabText(2, tr("TAB_SESSION"))
         if hasattr(self.db_tab, "retranslate_ui"): self.db_tab.retranslate_ui()
         if hasattr(self.map_tab, "retranslate_ui"): self.map_tab.retranslate_ui()
         if hasattr(self.session_tab, "retranslate_ui"): self.session_tab.retranslate_ui()
         if hasattr(self.soundpad_panel, "retranslate_ui"): self.soundpad_panel.retranslate_ui()
-        
-        # Tema Çevirisi
         self.lbl_theme.setText(tr("LBL_THEME"))
-        
-        # Tema Combobox İsimlerini Güncelle
         for i, (_, display_name) in enumerate(self.theme_list):
-            if display_name.startswith("THEME_"):
-                self.combo_theme.setItemText(i, tr(display_name))
-            else:
-                self.combo_theme.setItemText(i, display_name)
+            self.combo_theme.setItemText(i, tr(display_name) if display_name.startswith("THEME_") else display_name)
 
     def change_language(self, index):
-        code = "TR" if index == 1 else "EN"
-        self.data_manager.save_settings({"language": code})
-        self.retranslate_ui()
-
+        self.data_manager.save_settings({"language": "TR" if index == 1 else "EN"}); self.retranslate_ui()
     def toggle_soundpad(self):
         is_visible = self.soundpad_panel.isVisible()
-        self.soundpad_panel.setVisible(not is_visible)
-        self.btn_toggle_sound.setChecked(not is_visible)
-
+        self.soundpad_panel.setVisible(not is_visible); self.btn_toggle_sound.setChecked(not is_visible)
     def change_theme(self, index):
         if 0 <= index < len(self.theme_list):
-            theme_name = self.theme_list[index][0] # ("baldur", "Baldur's Gate") -> "baldur"
+            theme_name = self.theme_list[index][0]
             self.data_manager.save_settings({"theme": theme_name})
-            
-            # Apply theme
-            self.current_stylesheet = load_theme(theme_name)
-            self.setStyleSheet(self.current_stylesheet)
-            
-            # Propagate to player window
-            if hasattr(self.player_window, "update_theme"):
-                self.player_window.update_theme(self.current_stylesheet)
-
+            self.current_stylesheet = load_theme(theme_name); self.setStyleSheet(self.current_stylesheet)
+            if hasattr(self.player_window, "update_theme"): self.player_window.update_theme(self.current_stylesheet)
     def toggle_player_window(self):
-        if self.player_window.isVisible():
-            self.player_window.hide()
-            self.btn_toggle_player.setChecked(False)
-        else:
-            self.player_window.show()
-            self.btn_toggle_player.setChecked(True)
-            # Pencere açıldığında temayı zorla (bazen ilk açılışta almayabiliyor)
-            self.player_window.update_theme(self.current_stylesheet)
-
+        if self.player_window.isVisible(): self.player_window.hide(); self.btn_toggle_player.setChecked(False)
+        else: self.player_window.show(); self.btn_toggle_player.setChecked(True); self.player_window.update_theme(self.current_stylesheet)
     def export_entities_to_txt(self):
         # Kayıt yeri sor
         path, _ = QFileDialog.getSaveFileName(self, tr("TITLE_EXPORT"), "export.txt", tr("FILE_FILTER_TXT"))
@@ -257,18 +190,11 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, tr("MSG_ERROR"), tr("MSG_FILE_WRITE_ERROR", error=str(e)))
 
 if __name__ == "__main__":
-    # Enable lazy loading of QtWebEngine widgets
     QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
-    
     app = QApplication(sys.argv)
-    
-    # 1. Veri Yöneticisi Başlat
     dm = DataManager()
-    
-    # 2. Seçim Ekranı
     selector = CampaignSelector(dm)
     if selector.exec():
-        # 3. Ana Pencere
         window = MainWindow(dm)
         window.show()
         sys.exit(app.exec())
