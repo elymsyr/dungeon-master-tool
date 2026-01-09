@@ -1,0 +1,14 @@
+id: "notre"
+name: "Notre Dame"
+states:
+  normal:
+    tracks:
+      base: 
+        - file: "130_notre_0.wav"
+          repeat: 0
+      level1: 
+        - file: "130_notre_1.wav"
+          repeat: 0
+      level2: 
+        - file: "130_notre_2.wav"
+          repeat: 0

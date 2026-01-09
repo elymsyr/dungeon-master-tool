@@ -1,0 +1,11 @@
+id: "samurai"
+name: "Samurai"
+states:
+  normal:
+    tracks:
+      base: 
+        - file: "170_samurai_0.wav"
+          repeat: 0
+      level1: 
+        - file: "170_samurai_1.wav"
+          repeat: 0
