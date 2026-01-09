@@ -4,11 +4,11 @@ states:
   normal:
     tracks:
       base: 
-        - file: "166_salute_0.wav"
+        - file: "120_salute_0.wav"
           repeat: 0
       level1: 
-        - file: "166_salute_1.wav"
+        - file: "120_salute_1.wav"
           repeat: 0
       level2: 
-        - file: "166_salute_2.wav"
+        - file: "120_salute_2.wav"
           repeat: 0
