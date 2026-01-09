@@ -1,0 +1,14 @@
+id: "pain"
+name: "Pain"
+states:
+  normal:
+    tracks:
+      base: 
+        - file: "166_pain_0.wav"
+          repeat: 0
+      level1: 
+        - file: "166_pain_1.wav"
+          repeat: 0
+      level2: 
+        - file: "166_pain_2.wav"
+          repeat: 0
