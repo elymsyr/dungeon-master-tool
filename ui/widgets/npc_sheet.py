@@ -5,8 +5,10 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout,
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QPixmap
 from ui.widgets.aspect_ratio_label import AspectRatioLabel
+from ui.workers import ImageDownloadWorker
 from core.models import ENTITY_SCHEMAS
 from core.locales import tr
+from config import CACHE_DIR
 import os
 
 class NpcSheet(QWidget):
@@ -16,6 +18,7 @@ class NpcSheet(QWidget):
         self.dynamic_inputs = {}
         self.image_list = []
         self.current_img_index = 0
+        self.image_worker = None # Resim indirme worker referansı
         self.init_ui()
 
     def init_ui(self):
@@ -244,11 +247,20 @@ class NpcSheet(QWidget):
 
     def update_image_display(self):
         if not self.image_list:
-            self.lbl_image.setPixmap(None); self.lbl_img_counter.setText("0/0"); return
+            self.lbl_image.setPixmap(None)
+            self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE"))
+            self.lbl_img_counter.setText("0/0")
+            return
+            
         rel_path = self.image_list[self.current_img_index]
         full_path = self.dm.get_full_path(rel_path)
-        if full_path and os.path.exists(full_path): self.lbl_image.setPixmap(QPixmap(full_path))
-        else: self.lbl_image.setPixmap(None)
+        
+        if full_path and os.path.exists(full_path): 
+            self.lbl_image.setPixmap(QPixmap(full_path))
+        else: 
+            self.lbl_image.setPixmap(None)
+            self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE"))
+            
         self.lbl_img_counter.setText(f"{self.current_img_index + 1}/{len(self.image_list)}")
 
     def setup_stats_tab(self):
@@ -487,11 +499,22 @@ class NpcSheet(QWidget):
         for item in data.get("custom_spells", []): self.add_feature_card(self.custom_spell_container, item.get("name"), item.get("desc"))
         for item in data.get("inventory", []): self.add_feature_card(self.inventory_container, item.get("name"), item.get("desc"))
         
-        # Resim Galeri Güncellemesi
+        # --- RESİM GALERİ GÜNCELLEMESİ (LAZY LOADING) ---
         self.image_list = data.get("images", [])
-        if not self.image_list and data.get("image_path"): self.image_list = [data.get("image_path")]
-        self.current_img_index = 0
-        self.update_image_display()
+        if not self.image_list and data.get("image_path"): 
+            self.image_list = [data.get("image_path")]
+        
+        remote_url = data.get("_remote_image_url")
+        
+        # Eğer lokal resim yoksa ama remote URL varsa -> İNDİR
+        if not self.image_list and remote_url:
+            self.lbl_image.setPlaceholderText(tr("MSG_DOWNLOADING_IMAGE"))
+            self.lbl_image.setPixmap(None)
+            self.lbl_img_counter.setText("-")
+            self._start_lazy_image_download(remote_url, data.get("name", "entity"))
+        else:
+            self.current_img_index = 0
+            self.update_image_display()
         
         # BÜYÜ LİSTESİ RENDER
         self.list_assigned_spells.clear()
@@ -501,7 +524,7 @@ class NpcSheet(QWidget):
                 level = spell.get('attributes',{}).get('LBL_LEVEL','?')
                 self.list_assigned_spells.addItem(f"{spell['name']} (Lv {level})")
         
-        # EKİPMAN LİSTESİ RENDER (YENİ)
+        # EKİPMAN LİSTESİ RENDER
         self.list_assigned_items.clear()
         for item_id in data.get("equipment_ids", []):
             item = self.dm.data["entities"].get(item_id)
@@ -512,6 +535,37 @@ class NpcSheet(QWidget):
         # PDF Listesi
         self.list_pdfs.clear()
         for pdf in data.get("pdfs", []): self.list_pdfs.addItem(pdf)
+
+    def _start_lazy_image_download(self, url, name):
+        """Resmi arka planda indirir."""
+        # Dosya adı oluştur
+        safe_name = "".join([c for c in name if c.isalnum()]).lower()
+        ext = ".jpg" if ".jpg" in url.lower() else ".png"
+        filename = f"{safe_name}{ext}"
+        save_dir = os.path.join(CACHE_DIR, "library", "images")
+        
+        self.image_worker = ImageDownloadWorker(url, save_dir, filename)
+        self.image_worker.finished.connect(self._on_image_downloaded)
+        self.image_worker.start()
+
+    def _on_image_downloaded(self, success, local_abs_path):
+        """İndirme bitince UI'ı günceller ama DB'ye kaydetmez."""
+        if success and local_abs_path:
+            # 1. Yolu import et (Assets klasörüne kopyalar veya hazırlar)
+            rel_path = self.dm.import_image(local_abs_path)
+            
+            if rel_path:
+                # Sadece Belleği (RAM) ve UI'ı güncelle
+                self.image_list = [rel_path]
+                self.current_img_index = 0
+                self.update_image_display()
+                
+                # ÖNEMLİ DEĞİŞİKLİK:
+                # self.dm.save_entity(...) BURADAN KALDIRILDI.
+                # Kayıt, kullanıcı "Kaydet" butonuna bastığında yapılacak.
+        else:
+            self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE"))
+            self.lbl_image.setPixmap(None)
 
     def collect_data_from_sheet(self): # SADECE self
         """Formdaki verileri toplar ve bir sözlük olarak döner."""

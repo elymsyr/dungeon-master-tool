@@ -420,3 +420,5 @@ tr:
   INTENSITY_LOW: "Düşük"
   INTENSITY_MEDIUM: "Orta"
   INTENSITY_HIGH: "Yüksek"
+
+  MSG_DOWNLOADING_IMAGE: "Resim İndiriliyor..."

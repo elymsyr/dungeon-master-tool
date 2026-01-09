@@ -1,4 +1,3 @@
-
 import time
 import uuid
 import os
@@ -116,11 +115,9 @@ class DataManager:
             self._fix_absolute_paths()
             
             for eid, ent in self.data["entities"].items():
-                # Tip güncellemesi (Eski Türkçe tipleri İngilizceye çevir)
                 old_type = ent.get("type", "NPC")
                 if old_type in SCHEMA_MAP: ent["type"] = SCHEMA_MAP[old_type]
                 
-                # Attribute key güncellemesi
                 attrs = ent.get("attributes", {})
                 new_attrs = {}
                 for k, v in attrs.items():
@@ -128,14 +125,10 @@ class DataManager:
                     new_attrs[new_key] = v
                 ent["attributes"] = new_attrs
 
-                # --- KRİTİK NOKTA: Eksik alanları tamamla ---
-                # get_default_entity_structure içinde "dm_notes" var.
-                # Aşağıdaki döngü, mevcut entity'de "dm_notes" yoksa ekler.
                 default = get_default_entity_structure(ent.get("type", "NPC"))
                 for key, val in default.items():
                     if key not in ent: ent[key] = val
                 
-                # Resim path güncellemesi
                 if not ent.get("images") and ent.get("image_path"):
                     ent["images"] = [ent["image_path"]]
             # -------------------------------
@@ -223,11 +216,6 @@ class DataManager:
     def get_last_active_session_id(self): return self.data.get("last_active_session_id")
 
     def save_entity(self, eid, data, should_save=True):
-        """
-        Varlığı kaydeder. 
-        should_save=False yapılırsa sadece belleğe yazar, diske (data.json) yazmaz.
-        Bu, toplu işlemlerde (örn: yaratıkla gelen 20 büyüyü eklerken) hızı artırır.
-        """
         if not eid: 
             eid = str(uuid.uuid4())
         
@@ -242,42 +230,19 @@ class DataManager:
 
     def _resolve_dependencies(self, data):
         """
-        Bağımlılıkları (Resim, Büyü, Ekipman) kampanya bazında çözer.
+        Bağımlılıkları (Büyü, Ekipman) kampanya bazında çözer.
         """
         if not isinstance(data, dict): return data
         
-        # 1. RESİM İNDİRME / CACHE
-        remote_url = data.pop("_remote_image_url", None)
-        if remote_url and self.current_campaign_path:
-            try:
-                # Kütüphane klasöründe var mı? (cache/library/images)
-                library_img_dir = os.path.join(CACHE_DIR, "library", "images")
-                if not os.path.exists(library_img_dir): os.makedirs(library_img_dir)
-                
-                safe_name = "".join([c for c in data.get("name", "img") if c.isalnum()]).lower()
-                ext = ".jpg" if ".jpg" in remote_url.lower() else ".png"
-                filename = f"{safe_name}{ext}"
-                lib_path = os.path.join(library_img_dir, filename)
-                
-                # Cache'de yoksa indir
-                if not os.path.exists(lib_path):
-                    img_bytes = self.api_client.download_image_bytes(remote_url)
-                    if img_bytes:
-                        with open(lib_path, "wb") as f: f.write(img_bytes)
-                
-                # Kampanyaya kopyala
-                if os.path.exists(lib_path):
-                    rel_path = self.import_image(lib_path)
-                    data["image_path"] = rel_path
-                    data["images"] = [rel_path]
-            except Exception as e: print(f"Dependency Error (Image): {e}")
+        # 1. RESİM (Sadece URL kontrolü, indirme yok)
+        # NpcSheet açıldığında lazy-load yapılacak.
 
-        # 2. BÜYÜLERİ OTOMATİK İÇE AKTAR
+        # 2. BÜYÜLER
         detected_spells = data.pop("_detected_spell_indices", [])
         if detected_spells:
             self._auto_import_linked_entities(data, detected_spells, "Spell", "spells")
 
-        # 3. EKİPMANLARI OTOMATİK İÇE AKTAR
+        # 3. EKİPMAN
         detected_equip = data.pop("_detected_equipment_indices", [])
         if detected_equip:
             self._auto_import_linked_entities(data, detected_equip, "Equipment", "equipment_ids")
@@ -285,13 +250,9 @@ class DataManager:
         return data
 
     def _auto_import_linked_entities(self, main_data, indices, category, target_list_key):
-        """
-        Büyü veya Ekipman gibi varlıkları kampanyada yoksa kütüphaneden/API'den çeker ve listeye ekler.
-        """
         if target_list_key not in main_data:
             main_data[target_list_key] = []
             
-        # Kampanyadaki mevcut varlıkları bir haritaya al (Hızlı kontrol)
         existing_map = {
             ent.get("name"): eid 
             for eid, ent in self.data["entities"].items() 
@@ -299,15 +260,12 @@ class DataManager:
         }
 
         for idx in indices:
-            # Önce lokal cache'e bak, yoksa API'ye sor
             success, sub_data = self.fetch_details_from_api(category, idx)
-            
             if success:
                 ent_name = sub_data.get("name")
                 if ent_name in existing_map:
                     new_id = existing_map[ent_name]
                 else:
-                    # Yeni varlığı kampanyaya diske yazmadan ekle
                     new_id = self.save_entity(None, sub_data, should_save=False)
                     existing_map[ent_name] = new_id
                 
@@ -315,19 +273,13 @@ class DataManager:
                     main_data[target_list_key].append(new_id)
 
     def fetch_details_from_api(self, category, index_name, local_only=False):
-        """
-        Kütüphane verisini çeker. 
-        local_only=True ise asla internete çıkmaz, sadece yerel 'cache/library' klasörüne bakar.
-        """
-        fetch_start = time.perf_counter()
-        
         folder_map = {
             "Monster": "monsters", "NPC": "monsters", "Spell": "spells", 
             "Equipment": "equipment", "Class": "classes", "Race": "races"
         }
         folder = folder_map.get(category)
         
-        # 1. YEREL CACHE KONTROLÜ
+        # 1. Yerel Cache
         if folder:
             paths = [os.path.join(LIBRARY_DIR, folder, f"{index_name}.json")]
             if category == "Equipment":
@@ -343,15 +295,10 @@ class DataManager:
                     except Exception as e:
                         print(f"DEBUG: Cache Read Error ({index_name}): {e}")
 
-        # 2. İNTERNET FALLBACK
-        if local_only:
-            return False, "Not in local cache."
-
-        # İnternetten çek (local_only=False ise buraya düşer)
+        # 2. İnternet
+        if local_only: return False, "Not in local cache."
         parsed_data, msg = self.api_client.search(category, index_name)
-        if parsed_data:
-            return True, parsed_data
-            
+        if parsed_data: return True, parsed_data
         return False, msg
 
     def delete_entity(self, eid):
@@ -360,21 +307,18 @@ class DataManager:
             self.save_data()
 
     def fetch_from_api(self, category, query):
-        # 1. Check existing active entities
+        # 1. Veritabanı Kontrolü
         for eid, ent in self.data["entities"].items():
             if ent["name"].lower() == query.lower() and ent["type"] == category:
                 return True, "Veritabanında zaten var.", eid
         
-        # 2. Try to fetch from local Library Cache first
-        # This prevents "Category not supported" if API is down and speeds up loading
+        # 2. Cache/API Kontrolü
         success, local_data = self.fetch_details_from_api(category, query)
         if success and local_data:
-             # Resolve dependencies (spells, images) for local data too
              if category in ["Monster", "NPC"]:
                  local_data = self._resolve_dependencies(local_data)
              return True, "Cache'den yüklendi.", local_data
 
-        # 3. Fallback to Internet API
         parsed_data, msg = self.api_client.search(category, query)
         if not parsed_data: return False, msg, None
         
@@ -384,9 +328,21 @@ class DataManager:
         return True, "API'den çekildi.", parsed_data
 
     def import_entity_with_dependencies(self, data, type_override=None):
+        """Bu metod hala direkt kayıt için kullanılabilir (Örn: Manuel import butonları)"""
         if type_override: data["type"] = type_override
         data = self._resolve_dependencies(data)
         return self.save_entity(None, data)
+
+    def prepare_entity_from_external(self, data, type_override=None):
+        """
+        [YENİ] Veriyi hazırlar (bağımlılıkları çözer) ama VERİTABANINA KAYDETMEZ.
+        Geçici önizleme için kullanılır.
+        """
+        if type_override: data["type"] = type_override
+        # Büyüleri vb. yine de içeri almak zorundayız, çünkü ID ile referans veriliyor.
+        # Bu yan etki (spells tablosunun dolması) kabul edilebilir.
+        data = self._resolve_dependencies(data)
+        return data
 
     def import_image(self, src):
         if not self.current_campaign_path: return None
@@ -415,17 +371,11 @@ class DataManager:
         except Exception: return None
 
     def get_full_path(self, rel):
-        """Relative yolu Absolute yola çevirir."""
         if not rel: return None
         if os.path.isabs(rel): return rel
-        
-        # Eğer kampanya seçilmediyse ana assets'e bak
         base = self.current_campaign_path if self.current_campaign_path else BASE_DIR
-        
-        # Yoldaki ters/düz slaşları normalize et (Windows/Linux uyumu)
         clean_rel = rel.replace("\\", "/")
         full_path = os.path.normpath(os.path.join(base, clean_rel))
-        
         return full_path
     
     def set_map_image(self, rel): self.data["map_data"]["image_path"] = rel; self.save_data()
