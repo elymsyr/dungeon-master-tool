@@ -423,9 +423,18 @@ class DataManager:
         except Exception: return None
 
     def get_full_path(self, rel):
+        """Relative yolu Absolute yola çevirir."""
         if not rel: return None
         if os.path.isabs(rel): return rel
-        return os.path.join(self.current_campaign_path, rel) if self.current_campaign_path else None
+        
+        # Eğer kampanya seçilmediyse ana assets'e bak
+        base = self.current_campaign_path if self.current_campaign_path else BASE_DIR
+        
+        # Yoldaki ters/düz slaşları normalize et (Windows/Linux uyumu)
+        clean_rel = rel.replace("\\", "/")
+        full_path = os.path.normpath(os.path.join(base, clean_rel))
+        
+        return full_path
     
     def set_map_image(self, rel): self.data["map_data"]["image_path"] = rel; self.save_data()
     def add_pin(self, x, y, eid): self.data["map_data"]["pins"].append({"id": str(uuid.uuid4()), "x": x, "y": y, "entity_id": eid}); self.save_data()
