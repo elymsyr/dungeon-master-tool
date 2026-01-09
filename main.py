@@ -1,5 +1,4 @@
 from os import environ
-environ["QTWEBENGINE_DISABLE_SANDBOX"] = "1"
 import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QTabWidget, QVBoxLayout, 
