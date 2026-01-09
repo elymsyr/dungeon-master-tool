@@ -1,3 +1,5 @@
+import os
+import requests
 from PyQt6.QtCore import QThread, pyqtSignal
 
 class ApiSearchWorker(QThread):
@@ -29,3 +31,40 @@ class ApiListWorker(QThread):
     def run(self):
         data = self.api_client.get_list(self.category)
         self.finished.emit(data)
+
+class ImageDownloadWorker(QThread):
+    """
+    Resmi arka planda indirir ve kaydedilen yerel yolu sinyal olarak döner.
+    UI donmasını engellemek için NpcSheet tarafından kullanılır.
+    """
+    finished = pyqtSignal(bool, str) # success, local_abs_path
+
+    def __init__(self, url, save_dir, filename):
+        super().__init__()
+        self.url = url
+        self.save_dir = save_dir
+        self.filename = filename
+
+    def run(self):
+        try:
+            if not os.path.exists(self.save_dir):
+                os.makedirs(self.save_dir)
+            
+            full_path = os.path.join(self.save_dir, self.filename)
+            
+            # Dosya zaten varsa indirme (Cache kontrolü)
+            if os.path.exists(full_path):
+                self.finished.emit(True, full_path)
+                return
+
+            # Resmi indir
+            response = requests.get(self.url, timeout=15)
+            if response.status_code == 200:
+                with open(full_path, "wb") as f:
+                    f.write(response.content)
+                self.finished.emit(True, full_path)
+            else:
+                self.finished.emit(False, "")
+        except Exception as e:
+            print(f"Image download error: {e}")
+            self.finished.emit(False, "")

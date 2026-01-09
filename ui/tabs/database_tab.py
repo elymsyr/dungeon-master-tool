@@ -175,59 +175,65 @@ class DatabaseTab(QWidget):
         eid = item.data(Qt.ItemDataRole.UserRole)
         self.open_entity_tab(eid, target_panel="left")
 
-    def open_entity_tab(self, eid, target_panel="left"):
-        if str(eid).startswith("lib_"):
+    def open_entity_tab(self, eid, target_panel="left", data=None):
+        """
+        eid: Veritabanındaki ID (lib_... veya uuid). Eğer None ise ve 'data' doluysa GEÇİCİ sekme açar.
+        data: Veritabanında olmayan (harici/geçici) veri sözlüğü.
+        """
+        
+        # 1. Eğer 'lib_' ile başlayan bir ID geldiyse, API'den çekme işlemini başlat
+        if eid and str(eid).startswith("lib_"):
             parts = eid.split("_")
-            # parts[0] = "lib", parts[1] = raw_category (e.g., "monsters"), parts[2] = index
-            
             raw_cat = parts[1]
-            
-            # Fix: Map the plural/lowercase folder names back to Internal Model Types
             category_map = {
-                "monsters": "Monster",
-                "spells": "Spell",
-                "equipment": "Equipment",
-                "magic-items": "Equipment", # Both map to Equipment model
-                "classes": "Class",
-                "races": "Race",
-                "npc": "NPC"
+                "monsters": "Monster", "spells": "Spell", "equipment": "Equipment",
+                "magic-items": "Equipment", "classes": "Class", "races": "Race", "npc": "NPC"
             }
-            
-            # Get correct category, default to capitalizing if not found
             target_cat = category_map.get(raw_cat, raw_cat.capitalize())
-            
             self._fetch_and_open_api_entity(target_cat, parts[2], target_panel)
             return
             
         target_manager = self.tab_manager_left if target_panel == "left" else self.tab_manager_right
-        for i in range(target_manager.count()):
-            sheet = target_manager.widget(i)
-            if sheet.property("entity_id") == eid: target_manager.setCurrentIndex(i); return
-        data = self.dm.data["entities"].get(eid)
+        
+        # 2. Eğer ID varsa, zaten açık mı diye kontrol et
+        if eid:
+            for i in range(target_manager.count()):
+                sheet = target_manager.widget(i)
+                if sheet.property("entity_id") == eid: 
+                    target_manager.setCurrentIndex(i)
+                    return
+            
+            # Veritabanından veriyi çek
+            data = self.dm.data["entities"].get(eid)
+        
+        # 3. Veri yoksa (ne parametre ne DB), çık
         if not data: return
         
+        # 4. Yeni sayfa oluştur
         new_sheet = NpcSheet(self.dm)
-        new_sheet.setProperty("entity_id", eid)
+        new_sheet.setProperty("entity_id", eid) # ID yoksa None olur (Geçici mod)
         
-        # Populate
         self.populate_sheet(new_sheet, data)
         
-        # --- BUTON BAĞLANTILARI ---
+        # Buton Bağlantıları
         new_sheet.btn_save.clicked.connect(lambda: self.save_sheet_data(new_sheet))
         new_sheet.btn_delete.clicked.connect(lambda: self.delete_entity_from_tab(new_sheet))
-        
-        # Projeksiyon İşlevleri (DatabaseTab Handle Eder)
         new_sheet.btn_show_player.clicked.connect(lambda: self.project_entity_image(new_sheet))
         new_sheet.btn_project_pdf.clicked.connect(lambda: self.project_entity_pdf(new_sheet))
-        
-        # Yönetim İşlevleri (NpcSheet Handle Eder)
         new_sheet.btn_add_pdf.clicked.connect(new_sheet.add_pdf_dialog)
         new_sheet.btn_open_pdf.clicked.connect(new_sheet.open_current_pdf)
         new_sheet.btn_remove_pdf.clicked.connect(new_sheet.remove_current_pdf)
         new_sheet.btn_open_pdf_folder.clicked.connect(new_sheet.open_pdf_folder)
         
+        # İkon belirle
         icon_char = "👤" if data.get("type") == "NPC" else "🐉" if data.get("type") == "Monster" else "📜"
-        tab_index = target_manager.addTab(new_sheet, f"{icon_char} {data.get('name')}")
+        
+        # Eğer geçici ise başlığa işaret koy
+        tab_title = f"{icon_char} {data.get('name')}"
+        if not eid:
+            tab_title = f"⚠️ {tab_title} (Unsaved)"
+            
+        tab_index = target_manager.addTab(new_sheet, tab_title)
         target_manager.setCurrentIndex(tab_index)
 
     def _fetch_and_open_api_entity(self, cat, idx, target_panel):
@@ -239,12 +245,16 @@ class DatabaseTab(QWidget):
     def _on_api_fetched(self, success, data_or_id, msg, target_panel):
         if success:
             if isinstance(data_or_id, dict):
-                new_id = self.dm.import_entity_with_dependencies(data_or_id)
-                self.refresh_list()
-                self.open_entity_tab(new_id, target_panel)
+                # --- DEĞİŞİKLİK: KAYDETMEDEN HAZIRLA ---
+                # Eskiden import_entity_with_dependencies (kaydeden) çağırıyorduk.
+                # Şimdi prepare_entity_from_external (kaydetmeyen) çağırıyoruz.
+                processed_data = self.dm.prepare_entity_from_external(data_or_id)
+                self.open_entity_tab(eid=None, target_panel=target_panel, data=processed_data)
             elif isinstance(data_or_id, str):
+                # Zaten ID geldiyse veritabanında vardır
                 self.open_entity_tab(data_or_id, target_panel)
-        else: QMessageBox.warning(self, tr("MSG_ERROR"), msg)
+        else: 
+            QMessageBox.warning(self, tr("MSG_ERROR"), msg)
 
     def create_new_entity(self):
         default_data = {"name": "Yeni Varlık", "type": "NPC"}
@@ -256,17 +266,34 @@ class DatabaseTab(QWidget):
         eid = sheet.property("entity_id")
         data = self.collect_data_from_sheet(sheet)
         if not data: return
-        self.dm.save_entity(eid, data)
+        
+        # Eğer ID yoksa (geçici moddaysa) yeni oluşturacak, varsa güncelleyecek
+        new_eid = self.dm.save_entity(eid, data)
+        
+        # Sayfaya yeni ID'yi ata (Artık kaydedildi)
+        sheet.setProperty("entity_id", new_eid)
+        
         QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_SAVED"))
+        
+        # Tab başlığını güncelle (⚠️ Unsaved yazısını kaldır)
         for manager in [self.tab_manager_left, self.tab_manager_right]:
             idx = manager.indexOf(sheet)
             if idx != -1:
                 icon_char = "👤" if data.get("type") == "NPC" else "🐉"
                 manager.setTabText(idx, f"{icon_char} {data.get('name')}")
+        
         self.refresh_list()
 
     def delete_entity_from_tab(self, sheet):
         eid = sheet.property("entity_id")
+        
+        # Eğer henüz kaydedilmemişse sadece sekmeyi kapat
+        if not eid:
+            for manager in [self.tab_manager_left, self.tab_manager_right]:
+                idx = manager.indexOf(sheet)
+                if idx != -1: manager.removeTab(idx)
+            return
+
         if QMessageBox.question(self, tr("BTN_DELETE"), tr("MSG_CONFIRM_DELETE")) == QMessageBox.StandardButton.Yes:
             self.dm.delete_entity(eid)
             self.refresh_list()
@@ -275,14 +302,11 @@ class DatabaseTab(QWidget):
                 if idx != -1: manager.removeTab(idx)
 
     def populate_sheet(self, s, data): 
-        # 's' objesi üzerinden metod çağrılırken Python otomatik olarak 'self'i atar.
         s.populate_sheet(data) 
 
     def collect_data_from_sheet(self, s): 
-        # 's' objesi üzerinden metod çağrılırken Python otomatik olarak 'self'i atar.
         return s.collect_data_from_sheet()
 
-    # --- YENİ PROJEKSİYON FONKSİYONLARI ---
     def project_entity_image(self, sheet):
         if not sheet.image_list:
             QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_IMAGE_IN_ENTITY"))
@@ -307,7 +331,6 @@ class DatabaseTab(QWidget):
         else:
             QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
     
-    # Dialoglar
     def open_api_browser(self):
         cat = self.combo_filter.currentData()
         if not cat: return QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_CATEGORY"))

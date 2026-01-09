@@ -421,3 +421,5 @@ en:
   INTENSITY_LOW: "Low"
   INTENSITY_MEDIUM: "Medium"
   INTENSITY_HIGH: "High"
+
+  MSG_DOWNLOADING_IMAGE: "Downloading Image..."

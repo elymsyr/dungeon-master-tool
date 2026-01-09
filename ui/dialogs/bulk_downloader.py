@@ -64,7 +64,7 @@ class DownloadWorker(QThread):
             except Exception as e:
                 self.log_signal.emit(f"❌ Conn Error: {str(e)}")
 
-        # Adım 2: Detayları ve Resimleri İndir
+        # Adım 2: Detayları İndir (SADECE JSON - RESİMLER İSTEK ÜZERİNE İNECEK)
         current_count = 0
         for endpoint, items in lists_to_process.items():
             folder_path = os.path.join(LIBRARY_DIR, endpoint)
@@ -76,7 +76,7 @@ class DownloadWorker(QThread):
                 index = item["index"]
                 file_path = os.path.join(folder_path, f"{index}.json")
                 
-                # Eğer dosya zaten varsa ve resim kontrolü yapılmışsa atla
+                # Eğer dosya zaten varsa atla
                 if os.path.exists(file_path):
                     current_count += 1
                     if current_count % 10 == 0: self._update_progress(current_count, total_items_to_download)
@@ -88,27 +88,11 @@ class DownloadWorker(QThread):
                     if resp.status_code == 200:
                         detail_data = resp.json()
                         
-                        # --- RESİM İNDİRME MANTIĞI ---
-                        if "image" in detail_data and detail_data["image"]:
-                            img_url = "https://www.dnd5eapi.co" + detail_data["image"]
-                            ext = ".jpg" if ".jpg" in img_url.lower() else ".png"
-                            img_filename = f"{index}{ext}"
-                            img_dest_path = os.path.join(lib_img_dir, img_filename)
-                            
-                            if not os.path.exists(img_dest_path):
-                                img_resp = session.get(img_url, timeout=10)
-                                if img_resp.status_code == 200:
-                                    with open(img_dest_path, "wb") as f:
-                                        f.write(img_resp.content)
-                            
-                            # JSON'a yerel yolu göm (DataManager bunu kullanacak)
-                            detail_data["local_image_path"] = f"cache/library/images/{img_filename}"
-                        
-                        # Modifiye edilmiş JSON'ı kaydet
+                        # JSON'ı kaydet
                         with open(file_path, "w", encoding="utf-8") as f:
                             json.dump(detail_data, f, indent=4)
                     
-                    time.sleep(0.05) # API limitlerine takılmamak için
+                    time.sleep(0.02) # API limitlerine takılmamak için (Resim yok, hızlı geçebiliriz)
                 except Exception as e:
                     self.log_signal.emit(f"⚠️ Error {index}: {str(e)}")
 
