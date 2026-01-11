@@ -509,3 +509,10 @@ class DataManager:
                 if len(search_text) < 2 or search_text in item["name"].lower():
                     results.append({"id": f"lib_{c}_{item['index']}", "name": item["name"], "type": c, "is_library": True, "index": item["index"]})
         return results
+    
+    def get_all_entity_mentions(self):
+        """@ menüsü için tüm varlıkların isim ve ID'lerini döner."""
+        mentions = []
+        for eid, ent in self.data["entities"].items():
+            mentions.append({"id": eid, "name": ent["name"], "type": ent["type"]})
+        return mentions

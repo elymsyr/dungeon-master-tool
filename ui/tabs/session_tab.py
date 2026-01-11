@@ -95,6 +95,10 @@ class SessionTab(QWidget):
         self.txt_notes.setPlaceholderText(tr("LBL_NOTES"))
         self.txt_notes.textChanged.connect(self.auto_save)
 
+        self.txt_log.set_data_manager(self.dm)
+        if hasattr(self.parent(), "db_tab"):
+             self.txt_log.entity_link_clicked.connect(self.parent().db_tab.open_entity_tab)
+
         # Yerleşim
         right_layout.addLayout(session_control)
         right_layout.addWidget(QLabel(tr("LBL_LOG")))
