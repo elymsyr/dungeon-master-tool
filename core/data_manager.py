@@ -3,13 +3,16 @@ import uuid
 import os
 import json
 import shutil
+import msgpack  # HIZLI FORMAT İÇİN EKLENDİ
 from config import WORLDS_DIR, BASE_DIR, CACHE_DIR, load_theme
 from core.models import get_default_entity_structure, SCHEMA_MAP, PROPERTY_MAP
 from core.api_client import DndApiClient
 from core.locales import set_language
 
 LIBRARY_DIR = os.path.join(CACHE_DIR, "library")
-CACHE_FILE = os.path.join(CACHE_DIR, "reference_indexes.json")
+# Kütüphane önbelleği için artık .dat (MsgPack) kullanacağız, ama .json desteği de kalacak
+CACHE_FILE_JSON = os.path.join(CACHE_DIR, "reference_indexes.json")
+CACHE_FILE_DAT = os.path.join(CACHE_DIR, "reference_indexes.dat")
 
 class DataManager:
     def __init__(self):
@@ -34,22 +37,42 @@ class DataManager:
         self.reload_library_cache()
 
     def reload_library_cache(self):
+        """Kütüphane indeksini yükler. Önce hızlı formatı (.dat) dener."""
         if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
-        if os.path.exists(CACHE_FILE):
+        
+        # 1. Hızlı format var mı?
+        if os.path.exists(CACHE_FILE_DAT):
             try:
-                with open(CACHE_FILE, "r", encoding="utf-8") as f: 
+                with open(CACHE_FILE_DAT, "rb") as f:
+                    # raw=False: Byte yerine String olarak yüklemesini sağlar
+                    self.reference_cache = msgpack.unpack(f, raw=False)
+                return
+            except Exception as e:
+                print(f"Cache DAT load error: {e}")
+
+        # 2. Yoksa eski JSON var mı?
+        if os.path.exists(CACHE_FILE_JSON):
+            try:
+                with open(CACHE_FILE_JSON, "r", encoding="utf-8") as f: 
                     self.reference_cache = json.load(f)
+                # JSON bulduysak hemen hızlı formata çevirip kaydedelim
+                self._save_reference_cache()
             except: 
                 self.reference_cache = {}
         else: 
             self.reference_cache = {}
 
     def _save_reference_cache(self):
+        """Kütüphane indeksini MsgPack (.dat) olarak kaydeder."""
         if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
-        with open(CACHE_FILE, "w", encoding="utf-8") as f: 
-            json.dump(self.reference_cache, f, indent=4)
+        try:
+            with open(CACHE_FILE_DAT, "wb") as f: 
+                msgpack.pack(self.reference_cache, f)
+        except Exception as e:
+            print(f"Cache save error: {e}")
 
     def load_settings(self):
+        # Ayarlar küçük olduğu için ve elle düzenlenebildiği için JSON kalması daha iyi
         path = os.path.join(CACHE_DIR, "settings.json")
         if os.path.exists(path):
             try:
@@ -86,59 +109,86 @@ class DataManager:
         return self.load_campaign(os.path.join(WORLDS_DIR, name))
 
     def load_campaign(self, folder):
-        path = os.path.join(folder, "data.json")
-        if not os.path.exists(path): return False, "Dosya yok"
-        try:
-            with open(path, "r", encoding="utf-8") as f: self.data = json.load(f)
-            
-            if "sessions" not in self.data: self.data["sessions"] = []
-            if "entities" not in self.data: self.data["entities"] = {}
-            
-            # Harita verisi kontrolü ve Timeline başlatma
-            if "map_data" not in self.data: self.data["map_data"] = {"image_path": "", "pins": [], "timeline": []}
-            if "timeline" not in self.data["map_data"]: self.data["map_data"]["timeline"] = []
-            
-            if "last_active_session_id" not in self.data: self.data["last_active_session_id"] = None
-            
-            if not self.data["sessions"]:
-                new_sid = str(uuid.uuid4())
-                default_session = {
-                    "id": new_sid, "name": "Default Session", "date": "Bugün", 
-                    "notes": "", "logs": "", "combatants": []
-                }
-                self.data["sessions"].append(default_session)
-                self.data["last_active_session_id"] = new_sid
-            
-            if not self.data["last_active_session_id"] and self.data["sessions"]:
-                self.data["last_active_session_id"] = self.data["sessions"][-1]["id"]
+        """
+        Kampanyayı yükler. 
+        Önce .dat (MsgPack) dosyasına bakar. Yoksa .json dosyasına bakar ve dönüştürür.
+        """
+        json_path = os.path.join(folder, "data.json")
+        dat_path = os.path.join(folder, "data.dat")
+        
+        loaded = False
+        
+        # 1. MsgPack (Hızlı Format) Dene
+        if os.path.exists(dat_path):
+            try:
+                with open(dat_path, "rb") as f:
+                    self.data = msgpack.unpack(f, raw=False)
+                loaded = True
+            except Exception as e:
+                print(f"Error loading DAT file, falling back to JSON: {e}")
+        
+        # 2. Başarısızsa veya yoksa JSON Dene
+        if not loaded and os.path.exists(json_path):
+            try:
+                with open(json_path, "r", encoding="utf-8") as f:
+                    self.data = json.load(f)
+                loaded = True
+                # JSON'dan yüklendiyse, bir sonraki sefere hızlı açılması için DAT olarak kaydet
+                self.current_campaign_path = folder
+                self.save_data() 
+                print("MIGRATION: Converted JSON campaign to MsgPack.")
+            except Exception as e:
+                return False, f"JSON Load Error: {str(e)}"
 
-            self.current_campaign_path = folder
-            
-            # --- PATH VE VERİ MİGRASYONU ---
-            self._fix_absolute_paths()
-            
-            for eid, ent in self.data["entities"].items():
-                old_type = ent.get("type", "NPC")
-                if old_type in SCHEMA_MAP: ent["type"] = SCHEMA_MAP[old_type]
-                
-                attrs = ent.get("attributes", {})
-                new_attrs = {}
-                for k, v in attrs.items():
-                    new_key = PROPERTY_MAP.get(k, k)
-                    new_attrs[new_key] = v
-                ent["attributes"] = new_attrs
+        if not loaded:
+            return False, "Kayıt dosyası bulunamadı (data.dat veya data.json)."
 
-                default = get_default_entity_structure(ent.get("type", "NPC"))
-                for key, val in default.items():
-                    if key not in ent: ent[key] = val
-                
-                if not ent.get("images") and ent.get("image_path"):
-                    ent["images"] = [ent["image_path"]]
-            # -------------------------------
+        # --- Veri Bütünlüğü Kontrolleri ---
+        if "sessions" not in self.data: self.data["sessions"] = []
+        if "entities" not in self.data: self.data["entities"] = {}
+        if "map_data" not in self.data: self.data["map_data"] = {"image_path": "", "pins": [], "timeline": []}
+        if "timeline" not in self.data["map_data"]: self.data["map_data"]["timeline"] = []
+        if "last_active_session_id" not in self.data: self.data["last_active_session_id"] = None
+        
+        if not self.data["sessions"]:
+            new_sid = str(uuid.uuid4())
+            default_session = {
+                "id": new_sid, "name": "Default Session", "date": "Bugün", 
+                "notes": "", "logs": "", "combatants": []
+            }
+            self.data["sessions"].append(default_session)
+            self.data["last_active_session_id"] = new_sid
+        
+        if not self.data["last_active_session_id"] and self.data["sessions"]:
+            self.data["last_active_session_id"] = self.data["sessions"][-1]["id"]
 
-            self.save_data()
-            return True, "Yüklendi"
-        except Exception as e: return False, str(e)
+        self.current_campaign_path = folder
+        
+        # --- PATH VE VERİ MİGRASYONU ---
+        self._fix_absolute_paths()
+        
+        for eid, ent in self.data["entities"].items():
+            old_type = ent.get("type", "NPC")
+            if old_type in SCHEMA_MAP: ent["type"] = SCHEMA_MAP[old_type]
+            
+            attrs = ent.get("attributes", {})
+            new_attrs = {}
+            for k, v in attrs.items():
+                new_key = PROPERTY_MAP.get(k, k)
+                new_attrs[new_key] = v
+            ent["attributes"] = new_attrs
+
+            default = get_default_entity_structure(ent.get("type", "NPC"))
+            for key, val in default.items():
+                if key not in ent: ent[key] = val
+            
+            if not ent.get("images") and ent.get("image_path"):
+                ent["images"] = [ent["image_path"]]
+        # -------------------------------
+
+        # Güncel halini hızlı formatta kaydet
+        self.save_data()
+        return True, "Yüklendi"
 
     def _fix_absolute_paths(self):
         if not self.current_campaign_path: return
@@ -187,9 +237,14 @@ class DataManager:
         except Exception as e: return False, str(e)
 
     def save_data(self):
+        """Veriyi MsgPack (.dat) formatında kaydeder. JSON'dan çok daha hızlıdır."""
         if self.current_campaign_path:
-            with open(os.path.join(self.current_campaign_path, "data.json"), "w", encoding="utf-8") as f:
-                json.dump(self.data, f, indent=4, ensure_ascii=False)
+            dat_path = os.path.join(self.current_campaign_path, "data.dat")
+            try:
+                with open(dat_path, "wb") as f:
+                    msgpack.pack(self.data, f)
+            except Exception as e:
+                print(f"CRITICAL SAVE ERROR: {e}")
 
     def create_session(self, name):
         session_id = str(uuid.uuid4())
@@ -219,15 +274,9 @@ class DataManager:
     def get_last_active_session_id(self): return self.data.get("last_active_session_id")
 
     def save_entity(self, eid, data, should_save=True, auto_source_update=True):
-        """
-        Varlığı kaydeder. 
-        auto_source_update=True ise (örn: Manuel Kayıt) evren ismini ekler.
-        auto_source_update=False ise (örn: Import) kaynak ismine dokunmaz.
-        """
         if not eid: 
             eid = str(uuid.uuid4())
         
-        # --- KAYNAK BİRLEŞTİRME MANTIĞI ---
         if auto_source_update:
             world_name = self.data.get("world_name", "Unknown World")
             current_source = data.get("source", "")
@@ -236,9 +285,7 @@ class DataManager:
                 if not current_source:
                     data["source"] = world_name
                 elif world_name not in current_source:
-                    # 'SRD 5e (2014)' -> 'SRD 5e (2014) / MyWorld'
                     data["source"] = f"{current_source} / {world_name}"
-        # ----------------------------------
 
         if eid in self.data["entities"]: 
             self.data["entities"][eid].update(data)
@@ -250,77 +297,47 @@ class DataManager:
         return eid
 
     def prepare_entity_from_external(self, data, type_override=None):
-        """API veya dış kaynaktan gelen veriyi hazırlar ama VERİTABANINA KAYDETMEZ."""
         if type_override: data["type"] = type_override
-        
-        # Import sırasında varsayılan kaynak. 
         if not data.get("source"):
             data["source"] = "SRD 5e (2014)" 
-        
         data = self._resolve_dependencies(data)
         return data
 
     def _resolve_dependencies(self, data):
         if not isinstance(data, dict): return data
-        
         detected_spells = data.pop("_detected_spell_indices", [])
-        if detected_spells:
-            self._auto_import_linked_entities(data, detected_spells, "Spell", "spells")
-
+        if detected_spells: self._auto_import_linked_entities(data, detected_spells, "Spell", "spells")
         detected_equip = data.pop("_detected_equipment_indices", [])
-        if detected_equip:
-            self._auto_import_linked_entities(data, detected_equip, "Equipment", "equipment_ids")
-
+        if detected_equip: self._auto_import_linked_entities(data, detected_equip, "Equipment", "equipment_ids")
         return data
 
     def _auto_import_linked_entities(self, main_data, indices, category, target_list_key):
-        if target_list_key not in main_data:
-            main_data[target_list_key] = []
-            
-        existing_map = {
-            ent.get("name"): eid 
-            for eid, ent in self.data["entities"].items() 
-            if ent.get("type") == category
-        }
-
+        if target_list_key not in main_data: main_data[target_list_key] = []
+        existing_map = {ent.get("name"): eid for eid, ent in self.data["entities"].items() if ent.get("type") == category}
         for idx in indices:
             success, sub_data = self.fetch_details_from_api(category, idx)
             if success:
                 ent_name = sub_data.get("name")
-                if ent_name in existing_map:
-                    new_id = existing_map[ent_name]
-                else:
-                    # BAĞIMLILIKLARI IMPORT EDERKEN DE KAYNAĞI BOZMA
-                    new_id = self.save_entity(None, sub_data, should_save=False, auto_source_update=False)
-                    existing_map[ent_name] = new_id
-                
-                if new_id not in main_data[target_list_key]:
-                    main_data[target_list_key].append(new_id)
+                if ent_name in existing_map: new_id = existing_map[ent_name]
+                else: new_id = self.save_entity(None, sub_data, should_save=False, auto_source_update=False); existing_map[ent_name] = new_id
+                if new_id not in main_data[target_list_key]: main_data[target_list_key].append(new_id)
 
     def fetch_details_from_api(self, category, index_name, local_only=False):
-        folder_map = {
-            "Monster": "monsters", "NPC": "monsters", "Spell": "spells", 
-            "Equipment": "equipment", "Class": "classes", "Race": "races"
-        }
+        folder_map = {"Monster": "monsters", "NPC": "monsters", "Spell": "spells", "Equipment": "equipment", "Class": "classes", "Race": "races"}
         folder = folder_map.get(category)
-        
-        # 1. Yerel Cache
         if folder:
+            # 1. Önce MsgPack dene (Hızlı) - Ancak API cache dosyaları genelde JSON iner.
+            # Reference_Index cache'i MsgPack yaptık ama detay dosyaları (örn: aboleth.json) 
+            # şimdilik JSON kalabilir çünkü tek tek yükleniyorlar.
             paths = [os.path.join(LIBRARY_DIR, folder, f"{index_name}.json")]
-            if category == "Equipment":
-                paths.append(os.path.join(LIBRARY_DIR, "magic-items", f"{index_name}.json"))
-            
+            if category == "Equipment": paths.append(os.path.join(LIBRARY_DIR, "magic-items", f"{index_name}.json"))
             for local_path in paths:
                 if os.path.exists(local_path):
                     try:
-                        with open(local_path, "r", encoding="utf-8") as f:
-                            raw = json.load(f)
+                        with open(local_path, "r", encoding="utf-8") as f: raw = json.load(f)
                         parsed = self.api_client.parse_dispatcher(category, raw)
                         return True, parsed
-                    except Exception as e:
-                        print(f"DEBUG: Cache Read Error ({index_name}): {e}")
-
-        # 2. İnternet
+                    except Exception as e: print(f"DEBUG: Cache Read Error ({index_name}): {e}")
         if local_only: return False, "Not in local cache."
         parsed_data, msg = self.api_client.search(category, index_name)
         if parsed_data: return True, parsed_data
@@ -332,31 +349,19 @@ class DataManager:
             self.save_data()
 
     def fetch_from_api(self, category, query):
-        # 1. Veritabanı Kontrolü
         for eid, ent in self.data["entities"].items():
             if ent["name"].lower() == query.lower() and ent["type"] == category:
                 return True, "Veritabanında zaten var.", eid
-        
-        # 2. Cache/API Kontrolü
         success, local_data = self.fetch_details_from_api(category, query)
         if success and local_data:
-             if category in ["Monster", "NPC"]:
-                 local_data = self._resolve_dependencies(local_data)
+             if category in ["Monster", "NPC"]: local_data = self._resolve_dependencies(local_data)
              return True, "Cache'den yüklendi.", local_data
-
         parsed_data, msg = self.api_client.search(category, query)
         if not parsed_data: return False, msg, None
-        
-        if category in ["Monster", "NPC"] and isinstance(parsed_data, dict):
-            parsed_data = self._resolve_dependencies(parsed_data)
-            
+        if category in ["Monster", "NPC"] and isinstance(parsed_data, dict): parsed_data = self._resolve_dependencies(parsed_data)
         return True, "API'den çekildi.", parsed_data
 
     def import_entity_with_dependencies(self, data, type_override=None):
-        """
-        Doğrudan kaydetmek için kullanılır (Örn: Toplu import).
-        Burada auto_source_update=False göndererek "SRD 5e" yazısının bozulmamasını sağlıyoruz.
-        """
         if type_override: data["type"] = type_override
         data = self._resolve_dependencies(data)
         return self.save_entity(None, data, auto_source_update=False)
@@ -395,49 +400,15 @@ class DataManager:
         full_path = os.path.normpath(os.path.join(base, clean_rel))
         return full_path
     
-    # --- MAP & TIMELINE METHODS ---
+    # --- MAP & TIMELINE ---
     def set_map_image(self, rel): self.data["map_data"]["image_path"] = rel; self.save_data()
     
-    def move_pin(self, pid, x, y):
-        for p in self.data["map_data"]["pins"]:
-             if p.get("id") == pid: p["x"]=x; p["y"]=y; break
-        self.save_data()
-    
-    def remove_specific_pin(self, pid):
-        self.data["map_data"]["pins"] = [p for p in self.data["map_data"]["pins"] if p.get("id") != pid]
-        self.save_data()
-
-    def remove_timeline_pin(self, pin_id):
-        if "timeline" in self.data["map_data"]:
-            self.data["map_data"]["timeline"] = [p for p in self.data["map_data"]["timeline"] if p.get("id") != pin_id]
-            self.save_data()
-
-    def update_timeline_pin(self, pin_id, day, note, entity_ids):
-        if "timeline" in self.data["map_data"]:
-            for p in self.data["map_data"]["timeline"]:
-                if p["id"] == pin_id:
-                    p["day"] = int(day)
-                    p["note"] = note
-                    p["entity_ids"] = entity_ids # Listeyi güncelle
-                    break
-            self.data["map_data"]["timeline"].sort(key=lambda k: k['day'])
-            self.save_data()
-
     def add_pin(self, x, y, eid, color=None, note=""): 
-        # Varsayılan renk None (Otomatik tip rengi kullanılacak)
-        pin_data = {
-            "id": str(uuid.uuid4()), 
-            "x": x, 
-            "y": y, 
-            "entity_id": eid,
-            "color": color,
-            "note": note
-        }
+        pin_data = {"id": str(uuid.uuid4()), "x": x, "y": y, "entity_id": eid, "color": color, "note": note}
         self.data["map_data"]["pins"].append(pin_data)
         self.save_data()
     
     def update_map_pin(self, pin_id, color=None, note=None):
-        """Normal bir pini günceller (Renk ve Not)."""
         for p in self.data["map_data"]["pins"]:
             if p.get("id") == pin_id:
                 if color is not None: p["color"] = color
@@ -445,52 +416,13 @@ class DataManager:
                 break
         self.save_data()
 
-    # --- TIMELINE PIN YÖNETİMİ ---
-    def get_timeline_pin(self, pin_id):
-        """Verilen ID'ye sahip pini döndürür."""
-        if "timeline" in self.data["map_data"]:
-            for p in self.data["map_data"]["timeline"]:
-                if p["id"] == pin_id:
-                    return p
-        return None
-
-    def update_timeline_chain_color(self, start_pin_id, color):
-        """
-        Birbiriyle bağlantılı (Parent-Child ilişkisi olan) TÜM pinlerin rengini değiştirir.
-        """
-        if "timeline" not in self.data["map_data"]: return
-        
-        timeline = self.data["map_data"]["timeline"]
-        
-        # 1. Bağlantı Haritası Oluştur (Çift Yönlü - Undirected Graph)
-        adjacency = {p["id"]: [] for p in timeline}
-        for p in timeline:
-            pid = p["id"]
-            parent = p.get("parent_id")
-            if parent and parent in adjacency:
-                adjacency[pid].append(parent)
-                adjacency[parent].append(pid)
-        
-        # 2. BFS (Genişlik Öncelikli Arama) ile bağlı tüm düğümleri bul
-        connected_ids = set()
-        queue = [start_pin_id]
-        
-        while queue:
-            current = queue.pop(0)
-            if current in connected_ids: continue
-            connected_ids.add(current)
-            
-            # Komşuları kuyruğa ekle
-            if current in adjacency:
-                for neighbor in adjacency[current]:
-                    if neighbor not in connected_ids:
-                        queue.append(neighbor)
-        
-        # 3. Bulunan tüm pinlerin rengini güncelle
-        for p in timeline:
-            if p["id"] in connected_ids:
-                p["color"] = color
-                
+    def move_pin(self, pid, x, y):
+        for p in self.data["map_data"]["pins"]:
+             if p.get("id") == pid: p["x"]=x; p["y"]=y; break
+        self.save_data()
+    
+    def remove_specific_pin(self, pid):
+        self.data["map_data"]["pins"] = [p for p in self.data["map_data"]["pins"] if p.get("id") != pid]
         self.save_data()
 
     def add_timeline_pin(self, x, y, day, note, parent_id=None, entity_ids=None, color=None, session_id=None):
@@ -503,14 +435,17 @@ class DataManager:
             "parent_id": parent_id,
             "entity_ids": entity_ids if entity_ids else [],
             "color": color,
-            "session_id": session_id  # <--- NEW FIELD
+            "session_id": session_id
         }
-        if "timeline" not in self.data["map_data"]:
-            self.data["map_data"]["timeline"] = []
-            
+        if "timeline" not in self.data["map_data"]: self.data["map_data"]["timeline"] = []
         self.data["map_data"]["timeline"].append(pin)
         self.data["map_data"]["timeline"].sort(key=lambda k: k['day'])
         self.save_data()
+
+    def remove_timeline_pin(self, pin_id):
+        if "timeline" in self.data["map_data"]:
+            self.data["map_data"]["timeline"] = [p for p in self.data["map_data"]["timeline"] if p.get("id") != pin_id]
+            self.save_data()
 
     def update_timeline_pin(self, pin_id, day, note, entity_ids, session_id=None):
         if "timeline" in self.data["map_data"]:
@@ -519,18 +454,50 @@ class DataManager:
                     p["day"] = int(day)
                     p["note"] = note
                     p["entity_ids"] = entity_ids
-                    p["session_id"] = session_id # <--- NEW FIELD
+                    p["session_id"] = session_id
                     break
             self.data["map_data"]["timeline"].sort(key=lambda k: k['day'])
             self.save_data()
-     
+    
+    def update_timeline_pin_visuals(self, pin_id, color=None):
+        if "timeline" in self.data["map_data"]:
+            for p in self.data["map_data"]["timeline"]:
+                if p["id"] == pin_id:
+                    if color: p["color"] = color
+                    break
+            self.save_data()
+
+    def get_timeline_pin(self, pin_id):
+        if "timeline" in self.data["map_data"]:
+            for p in self.data["map_data"]["timeline"]:
+                if p["id"] == pin_id: return p
+        return None
+
+    def update_timeline_chain_color(self, start_pin_id, color):
+        if "timeline" not in self.data["map_data"]: return
+        timeline = self.data["map_data"]["timeline"]
+        adjacency = {p["id"]: [] for p in timeline}
+        for p in timeline:
+            pid = p["id"]; parent = p.get("parent_id")
+            if parent and parent in adjacency:
+                adjacency[pid].append(parent); adjacency[parent].append(pid)
+        connected_ids = set(); queue = [start_pin_id]
+        while queue:
+            current = queue.pop(0)
+            if current in connected_ids: continue
+            connected_ids.add(current)
+            if current in adjacency:
+                for neighbor in adjacency[current]:
+                    if neighbor not in connected_ids: queue.append(neighbor)
+        for p in timeline:
+            if p["id"] in connected_ids: p["color"] = color
+        self.save_data()
+
     def move_timeline_pin(self, pin_id, x, y):
         if "timeline" in self.data["map_data"]:
             for p in self.data["map_data"]["timeline"]:
                 if p["id"] == pin_id:
-                    p["x"] = x
-                    p["y"] = y
-                    break
+                    p["x"] = x; p["y"] = y; break
             self.save_data()
 
     def search_in_library(self, category, search_text):
