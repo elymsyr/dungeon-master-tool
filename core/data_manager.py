@@ -110,7 +110,6 @@ class DataManager:
 
             self.current_campaign_path = folder
             
-            # --- PATH VE VERİ MİGRASYONU ---
             self._fix_absolute_paths()
             
             for eid, ent in self.data["entities"].items():
@@ -130,7 +129,6 @@ class DataManager:
                 
                 if not ent.get("images") and ent.get("image_path"):
                     ent["images"] = [ent["image_path"]]
-            # -------------------------------
 
             self.save_data()
             return True, "Yüklendi"
@@ -214,24 +212,27 @@ class DataManager:
     def set_active_session(self, session_id): self.data["last_active_session_id"] = session_id
     def get_last_active_session_id(self): return self.data.get("last_active_session_id")
 
-    def save_entity(self, eid, data, should_save=True):
+    def save_entity(self, eid, data, should_save=True, auto_source_update=True):
+        """
+        Varlığı kaydeder. 
+        auto_source_update=True ise (örn: Manuel Kayıt) evren ismini ekler.
+        auto_source_update=False ise (örn: Import) kaynak ismine dokunmaz.
+        """
         if not eid: 
             eid = str(uuid.uuid4())
         
-        # --- GÜNCELLEME: KAYIT SIRASINDA KAYNAK BİRLEŞTİRME ---
-        # 1. API'den yeni çekildiyse (prepare ile), source 'SRD 5e' gelir.
-        # 2. Burada kaydederken 'SRD 5e / Evren Adı' formatına çeviriyoruz.
-        # 3. Eğer kullanıcı elle değiştirdiyse, yine evren adını ekliyoruz (eğer yoksa).
-        world_name = self.data.get("world_name", "Unknown World")
-        current_source = data.get("source", "")
-        
-        if world_name:
-            if not current_source:
-                data["source"] = world_name
-            elif world_name not in current_source:
-                # 'SRD 5e (2014)' -> 'SRD 5e (2014) / MyWorld'
-                data["source"] = f"{current_source} / {world_name}"
-        # ------------------------------------------------------
+        # --- KAYNAK BİRLEŞTİRME MANTIĞI ---
+        if auto_source_update:
+            world_name = self.data.get("world_name", "Unknown World")
+            current_source = data.get("source", "")
+            
+            if world_name:
+                if not current_source:
+                    data["source"] = world_name
+                elif world_name not in current_source:
+                    # 'SRD 5e (2014)' -> 'SRD 5e (2014) / MyWorld'
+                    data["source"] = f"{current_source} / {world_name}"
+        # ----------------------------------
 
         if eid in self.data["entities"]: 
             self.data["entities"][eid].update(data)
@@ -243,27 +244,17 @@ class DataManager:
         return eid
 
     def prepare_entity_from_external(self, data, type_override=None):
-        """
-        API veya dış kaynaktan gelen veriyi hazırlar (Örn: Büyüleri indirir).
-        Ancak VERİTABANINA KAYDETMEZ.
-        Geçici sekmelerde göstermek için kullanılır.
-        """
+        """API veya dış kaynaktan gelen veriyi hazırlar ama VERİTABANINA KAYDETMEZ."""
         if type_override: data["type"] = type_override
         
-        # --- GÜNCELLEME: KAYNAK MANTIĞI ---
-        # Import sırasında orijinal kaynak korunur.
-        # Kaydetme aşamasında evren adı eklenecektir.
+        # Import sırasında varsayılan kaynak. 
         if not data.get("source"):
             data["source"] = "SRD 5e (2014)" 
-        # ----------------------------------
-
+        
         data = self._resolve_dependencies(data)
         return data
 
     def _resolve_dependencies(self, data):
-        """
-        Bağımlılıkları (Büyü, Ekipman) kampanya bazında çözer.
-        """
         if not isinstance(data, dict): return data
         
         detected_spells = data.pop("_detected_spell_indices", [])
@@ -293,7 +284,8 @@ class DataManager:
                 if ent_name in existing_map:
                     new_id = existing_map[ent_name]
                 else:
-                    new_id = self.save_entity(None, sub_data, should_save=False)
+                    # BAĞIMLILIKLARI IMPORT EDERKEN DE KAYNAĞI BOZMA
+                    new_id = self.save_entity(None, sub_data, should_save=False, auto_source_update=False)
                     existing_map[ent_name] = new_id
                 
                 if new_id not in main_data[target_list_key]:
@@ -306,7 +298,6 @@ class DataManager:
         }
         folder = folder_map.get(category)
         
-        # 1. Yerel Cache
         if folder:
             paths = [os.path.join(LIBRARY_DIR, folder, f"{index_name}.json")]
             if category == "Equipment":
@@ -322,7 +313,6 @@ class DataManager:
                     except Exception as e:
                         print(f"DEBUG: Cache Read Error ({index_name}): {e}")
 
-        # 2. İnternet
         if local_only: return False, "Not in local cache."
         parsed_data, msg = self.api_client.search(category, index_name)
         if parsed_data: return True, parsed_data
@@ -334,12 +324,10 @@ class DataManager:
             self.save_data()
 
     def fetch_from_api(self, category, query):
-        # 1. Veritabanı Kontrolü
         for eid, ent in self.data["entities"].items():
             if ent["name"].lower() == query.lower() and ent["type"] == category:
                 return True, "Veritabanında zaten var.", eid
         
-        # 2. Cache/API Kontrolü
         success, local_data = self.fetch_details_from_api(category, query)
         if success and local_data:
              if category in ["Monster", "NPC"]:
@@ -356,11 +344,13 @@ class DataManager:
 
     def import_entity_with_dependencies(self, data, type_override=None):
         """
-        Doğrudan kaydetmek için kullanılır (Örn: Toplu import).
+        API Browser vb. yerlerden IMPORT (Ekleme) yapılırken çağrılır.
+        Burada auto_source_update=False göndererek "SRD 5e" yazısının bozulmamasını sağlıyoruz.
         """
         if type_override: data["type"] = type_override
         data = self._resolve_dependencies(data)
-        return self.save_entity(None, data)
+        # Import sırasında kaynak ismini değiştirme!
+        return self.save_entity(None, data, auto_source_update=False)
 
     def import_image(self, src):
         if not self.current_campaign_path: return None
