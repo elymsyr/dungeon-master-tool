@@ -103,6 +103,15 @@ class SessionTab(QWidget):
         layout.addLayout(left_layout, 1)
         layout.addLayout(right_layout, 1)
 
+    def load_session_by_id(self, session_id):
+        """Loads a session programmatically (e.g. from Map Tab)."""
+        idx = self.combo_sessions.findData(session_id)
+        if idx >= 0:
+            self.combo_sessions.setCurrentIndex(idx)
+            self.load_session() # This triggers the actual UI update
+        else:
+            QMessageBox.warning(self, tr("MSG_WARNING"), "Oturum bulunamadı veya silinmiş.")
+
     def retranslate_ui(self):
         # Update labels and button texts
         self.btn_new_session.setText(tr("BTN_NEW_SESSION"))
