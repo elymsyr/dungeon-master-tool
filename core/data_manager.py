@@ -3,9 +3,8 @@ import uuid
 import os
 import json
 import shutil
-import uuid
 from config import WORLDS_DIR, BASE_DIR, CACHE_DIR, load_theme
-from core.models import get_default_entity_structure, SCHEMA_MAP, PROPERTY_MAP, ENTITY_SCHEMAS
+from core.models import get_default_entity_structure, SCHEMA_MAP, PROPERTY_MAP
 from core.api_client import DndApiClient
 from core.locales import set_language
 
@@ -219,16 +218,20 @@ class DataManager:
         if not eid: 
             eid = str(uuid.uuid4())
         
-        # --- KAYNAK MANTIĞI (YENİ EKLENDİ) ---
+        # --- GÜNCELLEME: KAYIT SIRASINDA KAYNAK BİRLEŞTİRME ---
+        # 1. API'den yeni çekildiyse (prepare ile), source 'SRD 5e' gelir.
+        # 2. Burada kaydederken 'SRD 5e / Evren Adı' formatına çeviriyoruz.
+        # 3. Eğer kullanıcı elle değiştirdiyse, yine evren adını ekliyoruz (eğer yoksa).
         world_name = self.data.get("world_name", "Unknown World")
+        current_source = data.get("source", "")
         
-        # Eğer hiç kaynak belirtilmemişse, bu dünya kaynaklıdır
-        if not data.get("source"):
-            data["source"] = world_name
-        
-        # Not: Eğer var olan bir kaydı güncelliyorsak source'a dokunmuyoruz,
-        # kullanıcı NpcSheet üzerinden değiştirebilir.
-        # -------------------------------------
+        if world_name:
+            if not current_source:
+                data["source"] = world_name
+            elif world_name not in current_source:
+                # 'SRD 5e (2014)' -> 'SRD 5e (2014) / MyWorld'
+                data["source"] = f"{current_source} / {world_name}"
+        # ------------------------------------------------------
 
         if eid in self.data["entities"]: 
             self.data["entities"][eid].update(data)
@@ -241,21 +244,18 @@ class DataManager:
 
     def prepare_entity_from_external(self, data, type_override=None):
         """
-        Veriyi hazırlar (bağımlılıkları çözer) ama VERİTABANINA KAYDETMEZ.
-        Geçici önizleme için kullanılır.
+        API veya dış kaynaktan gelen veriyi hazırlar (Örn: Büyüleri indirir).
+        Ancak VERİTABANINA KAYDETMEZ.
+        Geçici sekmelerde göstermek için kullanılır.
         """
         if type_override: data["type"] = type_override
         
-        # --- KAYNAK BİRLEŞTİRME MANTIĞI (YENİ) ---
-        # Örn: "SRD 5e (2014)" -> "SRD 5e (2014) / MyCampaignName"
-        original_source = data.get("source", "")
-        world_name = self.data.get("world_name", "")
-        
-        if original_source and world_name and world_name not in original_source:
-            data["source"] = f"{original_source} / {world_name}"
-        elif not original_source:
-            data["source"] = world_name
-        # -----------------------------------------
+        # --- GÜNCELLEME: KAYNAK MANTIĞI ---
+        # Import sırasında orijinal kaynak korunur.
+        # Kaydetme aşamasında evren adı eklenecektir.
+        if not data.get("source"):
+            data["source"] = "SRD 5e (2014)" 
+        # ----------------------------------
 
         data = self._resolve_dependencies(data)
         return data
@@ -266,15 +266,10 @@ class DataManager:
         """
         if not isinstance(data, dict): return data
         
-        # 1. RESİM (Sadece URL kontrolü, indirme yok)
-        # NpcSheet açıldığında lazy-load yapılacak.
-
-        # 2. BÜYÜLER
         detected_spells = data.pop("_detected_spell_indices", [])
         if detected_spells:
             self._auto_import_linked_entities(data, detected_spells, "Spell", "spells")
 
-        # 3. EKİPMAN
         detected_equip = data.pop("_detected_equipment_indices", [])
         if detected_equip:
             self._auto_import_linked_entities(data, detected_equip, "Equipment", "equipment_ids")
@@ -360,7 +355,9 @@ class DataManager:
         return True, "API'den çekildi.", parsed_data
 
     def import_entity_with_dependencies(self, data, type_override=None):
-        """Bu metod hala direkt kayıt için kullanılabilir (Örn: Manuel import butonları)"""
+        """
+        Doğrudan kaydetmek için kullanılır (Örn: Toplu import).
+        """
         if type_override: data["type"] = type_override
         data = self._resolve_dependencies(data)
         return self.save_entity(None, data)
