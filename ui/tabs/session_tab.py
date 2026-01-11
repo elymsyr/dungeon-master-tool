@@ -219,6 +219,3 @@ class SessionTab(QWidget):
         combat_state = self.combat_tracker.get_session_state()
         
         self.dm.save_session_data(self.current_session_id, notes, logs, combat_state)
-        
-        if show_msg:
-            QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_SAVED"))
