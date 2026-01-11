@@ -19,9 +19,9 @@ class TimelinePinItem(QGraphicsRectItem):
         self.setBrush(QBrush(QColor(final_color)))
         pen = QPen(Qt.GlobalColor.white if self.session_id else Qt.GlobalColor.black, 2)
         self.setPen(pen)
-        tooltip = f"Gün {day}: {note}"
+        tooltip = f"{tr('LBL_DAY')} {day}: {note}"
         if entity_name: tooltip = f"[{entity_name}]\n{tooltip}"
-        if session_id: tooltip += "\n(🔗 Oturum Bağlantısı)"
+        if session_id: tooltip += f"\n{tr('LBL_TIMELINE_LINKED')}"
         self.setToolTip(tooltip)
         self.setZValue(20) 
         self.setCursor(Qt.CursorShape.PointingHandCursor)

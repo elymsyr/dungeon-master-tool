@@ -17,10 +17,20 @@ params = [
     '--noupx',
     '--version-file=version_info.txt',
     
+    # PyQt6 Modules
     '--hidden-import=PyQt6.QtWebEngineWidgets',
     '--hidden-import=PyQt6.QtWebEngineCore',
     '--hidden-import=PyQt6.QtPrintSupport', 
     '--hidden-import=PyQt6.QtNetwork',
+    '--hidden-import=PyQt6.QtMultimedia',
+    
+    # Logic & Data Modules
+    '--hidden-import=msgpack',
+    '--hidden-import=markdown',
+    '--hidden-import=markdown.extensions.extra',
+    '--hidden-import=markdown.extensions.nl2br',
+    
+    # General Utils
     '--hidden-import=requests',
     '--hidden-import=i18n',
     '--hidden-import=yaml',

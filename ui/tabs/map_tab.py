@@ -71,7 +71,6 @@ class MapTab(QWidget):
                 self.map_viewer.add_timeline_object(TimelinePinItem(t["x"], t["y"], t["day"], t["note"], t["id"], ", ".join(names) if names else None, t.get("color"), t.get("session_id"), self.on_timeline_action))
 
     def handle_canvas_click(self, x, y):
-        # Timeline modunda boş yere tıklandığında (Yalnızca Sağ Tık -> Pin Ekle menüsünden gelirse)
         if self.show_timeline:
             dlg = TimelineEntryDialog(self.dm, default_day=1, default_note="", parent=self)
             if dlg.exec():
@@ -79,7 +78,6 @@ class MapTab(QWidget):
         else: self.handle_new_entity_pin(x, y)
 
     def handle_quick_link_placement(self, x, y):
-        """Pencere açmadan direkt bağlantılı pin yerleştirir."""
         if not self.pending_parent_id: return
         parent = self.dm.get_timeline_pin(self.pending_parent_id)
         day = parent['day'] if parent else 1; color = parent.get('color') if parent else None

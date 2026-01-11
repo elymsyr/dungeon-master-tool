@@ -1,38 +1,38 @@
 # 🐉 Dungeon Master Tool
 
 ![Status](https://img.shields.io/badge/Status-Alpha-orange)
-![License](https://img.shields.io/badge/License-GPL-blue)
+![License](https://img.shields.io/badge/License-MIT-blue)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey)
 
-**A portable, offline-first DM tool designed for dual-monitor setups.**
-Manage combat, track stats, and project maps to your players without the hassle.
+**A portable, offline-first DM tool designed for dual-monitor setups.**  
+Manage combat, track branching timelines, and project a rich campaign wiki to your players seamlessly.
 
 [📥 Download Latest Release](https://github.com/elymsyr/dungeon-master-tool/releases)
 
-> ✨ UI/UX Status: The user interface is now in a much better state—cleaner, more consistent, and easier to read. We are committed to continuously improving the look and feel in upcoming updates!
-
-> Hey guys, leaving a star or a feedback would be the best motivation for me, since I work on a full-time job. I am trying to create an app for dungeon masters. Hope you'll like it :)
+> ✨ UI/UX Status: The interface is continuously evolving to be cleaner and more intuitive. Your feedback and GitHub stars are the best motivation!
 ---
 
 ## ✨ Key Features
 
-*   **Dual Screen Support:** Keep your DM notes private while projecting maps and stat blocks to a second screen.
-*   **Combat Tracker:** Streamlined Initiative, HP, and Condition tracking.
-*   **Lightweight VTT:** Drag & drop tokens onto maps instantly.
-*   **5e Database:** Built-in API browser for Monsters, Spells, and Items.
-*   **Portable:** No installation required. Runs entirely from a USB drive.
+*   **Dual-Monitor Support:** Keep DM notes private while projecting maps and stat blocks to players.
+*   **Narrative Wiki:** Full **Markdown** support with **dynamic @mentions** to link NPCs, Monsters, and Lore.
+*   **Story Timeline:** Map-based tracker with **branching paths**, travel lines, and session-linked events.
+*   **Streamlined Combat:** High-speed tracking for Initiative, HP, and Conditions with visual status badges.
+*   **High Performance:** Optimized with **MsgPack binary storage** for near-instant loading and saving.
+*   **5e Database:** Integrated browser and bulk downloader for Monsters, Spells, and Items.
+*   **Portable & Offline:** No installation or internet required. Runs entirely from a USB drive.
 
 ## 🗺️ Roadmap
 
 ### ✅ Completed
-- [x] **Visual Status:** Status badges/icons on Combat Tracker & Battlemap.
-- [x] **UI/UX Overhaul:** Modernized interface, new themes (Baldur, Grim, Discord), and split-view editing.
-- [x] **Multi-Encounter:** Manage multiple encounters simultaneously within a session.
-- [x] **System Upgrades:** Advanced Entity Cards, Multi-Add, and Status Effect systems.
-- [x] **Soundpad:** Support for custom music and sound effects.
+- [x] **Story Timeline 2.0:** Branching map paths and parent-child event linking.
+- [x] **Dynamic Linking:** Personal wiki experience using `@mentions` in any text area.
+- [x] **Markdown Integration:** Rich text editing for descriptions, logs, and DM notes.
+- [x] **Binary Storage:** Migration from JSON to high-speed MsgPack (`.dat`).
+- [x] **Soundpad:** Support for custom music, ambience layers, and sound effects.
+- [x] **UI/UX Overhaul:** Themes (Baldur, Grim, Discord, etc.) and dual-pane workspace.
 
 ### 🚧 In Progress / Planned
-
 - [ ] **More Sources and Prebuild Worlds:** We're planning to add more entities from other sources like 5E 2024, Forgotten Realms and else... Also adding custom design prebuild worlds to help newbies.
 - [ ] **Soundpad:** Better soundpad and songs. (Currently, the songs are uploaded only for test purposes.
 - [ ] **Fog of War:** Interactive masking/revealing areas on the Battle Map. Splitting DM note area to control the battlemap fog and pawns private.
@@ -47,8 +47,8 @@ Manage combat, track stats, and project maps to your players without the hassle.
 
 ### Option 1: Executable (Recommended)
 1.  Go to the **Releases** page.
-2.  Download the latest `.exe`.
-3.  Run it! (Data saves locally).
+2.  Download the latest `.zip` (Windows) or `.tar.gz` (Linux).
+3.  Run it! Your campaign data saves locally in the application folder.
 
 ### Option 2: From Source
 ```bash
@@ -63,17 +63,17 @@ python main.py
   <img src="media/main_0.png" width="100%" alt="Player Map View" />
   <img src="media/main_1.png" width="100%" alt="Entity Stat Block" />
   <img src="media/main_2.png" width="100%" alt="Entity Stat Block" />
+  <img src="media/map_0.png" width="100%" alt="Entity Stat Block" />
+  <img src="media/map_1.png" width="100%" alt="Entity Stat Block" />
   <img src="media/session_0.png" width="100%" alt="Entity Stat Block" />
   <img src="media/session_1.png" width="100%" alt="Entity Stat Block" />
-  <img src="media/map.png" width="100%" alt="Entity Stat Block" />
   <img src="media/battlemap.png" width="100%" alt="Entity Stat Block" />
   <img src="media/bulk.png" width="100%" alt="Entity Stat Block" />
   <img src="media/api.png" width="100%" alt="Entity Stat Block" />
 </p>
 
-## 📝 Customizable Areas
-
-You can customize anything as you want. If you want to add custom songs, you can add them to the assets using yaml files. You can add language support. Soon, there will be a HOW TO area that includes how to use and custimize anything.
+## 📝 Customization
+You can easily extend the tool by editing the YAML files in `assets/soundpad` for custom music or adding your own `.qss` files to `themes/` for custom looks.
 
 ## ⚠️ Disclaimer
-This project is currently in Pre-Alpha. Expect bugs and frequent updates.
+This project is currently in **Alpha**. Expect frequent updates and occasional bugs. Backup your world data regularly!
