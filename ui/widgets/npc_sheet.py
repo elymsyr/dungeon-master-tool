@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout,
 from PyQt6.QtCore import Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QDesktopServices, QPixmap, QKeySequence, QShortcut
 from ui.widgets.aspect_ratio_label import AspectRatioLabel
+from ui.widgets.markdown_editor import MarkdownEditor 
 from ui.workers import ImageDownloadWorker
 from core.models import ENTITY_SCHEMAS
 from core.locales import tr
@@ -12,29 +13,28 @@ from config import CACHE_DIR
 import os
 
 class NpcSheet(QWidget):
-    # --- SİNYALLER ---
-    request_open_entity = pyqtSignal(str)   # Bağlı karta git (Örn: Büyüye çift tıkla)
-    data_changed = pyqtSignal()             # Veri değişti (Tab başlığına * koymak için)
-    save_requested = pyqtSignal()           # Kaydet isteği (Ctrl+S veya Buton)
+    # --- SIGNALS ---
+    request_open_entity = pyqtSignal(str)   # Navigate to linked card
+    data_changed = pyqtSignal()             # Data modified (for unsaved changes indicator)
+    save_requested = pyqtSignal()           # Save triggered (Ctrl+S or Button)
 
     def __init__(self, data_manager):
         super().__init__()
         self.dm = data_manager
         self.dynamic_inputs = {}
         
-        # --- VERİ LİSTELERİ ---
+        # --- DATA LISTS ---
         self.image_list = []
         self.current_img_index = 0
         self.linked_spell_ids = []     
         self.linked_item_ids = []      
         self.image_worker = None       
         
-        # Değişiklik takibi için bayrak
         self.is_dirty = False
         
         self.init_ui()
         
-        # Ctrl+S Kısayolu
+        # Ctrl+S Shortcut
         self.shortcut_save = QShortcut(QKeySequence("Ctrl+S"), self)
         self.shortcut_save.activated.connect(self.emit_save_request)
 
@@ -51,19 +51,19 @@ class NpcSheet(QWidget):
         self.content_widget.setObjectName("sheetContainer")
         self.content_widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         
-        # Şeffaf input alanları
         self.content_widget.setStyleSheet("""
-            QLineEdit, QTextEdit, QPlainTextEdit {
+            QLineEdit, QPlainTextEdit {
                 background-color: transparent;
             }
         """)
 
         self.content_layout = QVBoxLayout(self.content_widget)
         
-        # --- ÜST BÖLÜM (RESİM & TEMEL BİLGİLER) ---
+        # --- TOP SECTION (Image & Metadata Side-by-Side) ---
         top_layout = QHBoxLayout()
-        img_layout = QVBoxLayout()
         
+        # Image Column (Left)
+        img_layout = QVBoxLayout()
         self.lbl_image = AspectRatioLabel()
         self.lbl_image.setFixedSize(200, 200)
         
@@ -107,6 +107,7 @@ class NpcSheet(QWidget):
         img_layout.addWidget(self.btn_show_player)
         img_layout.addStretch()
 
+        # Metadata Column (Right)
         info_layout = QFormLayout()
         self.inp_name = QLineEdit()
         self.inp_type = QComboBox()
@@ -114,27 +115,22 @@ class NpcSheet(QWidget):
             self.inp_type.addItem(tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"), cat)
         self.inp_type.currentIndexChanged.connect(self._on_type_index_changed)
         
-        # --- KAYNAK (SOURCE) ---
         self.inp_source = QLineEdit()
         self.inp_source.setPlaceholderText("SRD 5e, Custom, etc.")
-        self.inp_source.setReadOnly(True) # Elle değiştirilemez, DataManager halledecek
-        self.inp_source.setToolTip("Kaydettiğinizde otomatik olarak Evren ismi eklenecektir.")
+        self.inp_source.setReadOnly(True)
         
-        self.inp_tags = QLineEdit(); self.inp_tags.setPlaceholderText(tr("LBL_TAGS_PH"))
+        self.inp_tags = QLineEdit()
+        self.inp_tags.setPlaceholderText(tr("LBL_TAGS_PH"))
         
         self.combo_location = QComboBox()
         self.combo_location.setEditable(True) 
-        self.combo_location.setPlaceholderText("Seç veya Yaz...")
+        self.combo_location.setPlaceholderText("Select or Write...")
         self.lbl_location = QLabel(tr("LBL_LOCATION"))
         
-        self.list_residents = QListWidget(); self.list_residents.setMaximumHeight(80)
+        self.list_residents = QListWidget()
+        self.list_residents.setMaximumHeight(80)
         self.list_residents.itemDoubleClicked.connect(self._on_linked_item_dbl_click)
         self.lbl_residents = QLabel(tr("LBL_RESIDENTS"))
-        
-        self.inp_desc = QTextEdit()
-        self.inp_desc.setMinimumHeight(80)
-        self.inp_desc.setMaximumHeight(150)
-        self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
 
         info_layout.addRow(tr("LBL_NAME"), self.inp_name)
         info_layout.addRow(tr("LBL_TYPE"), self.inp_type)
@@ -142,40 +138,48 @@ class NpcSheet(QWidget):
         info_layout.addRow(tr("LBL_TAGS"), self.inp_tags)
         info_layout.addRow(self.lbl_location, self.combo_location)
         info_layout.addRow(self.lbl_residents, self.list_residents)
-        info_layout.addRow(tr("LBL_DESC"), self.inp_desc)
 
-        top_layout.addLayout(img_layout); top_layout.addLayout(info_layout)
+        top_layout.addLayout(img_layout)
+        top_layout.addLayout(info_layout, 1) # Give info layout more weight
         self.content_layout.addLayout(top_layout)
 
+        # --- FULL WIDTH DESCRIPTION (Moved out of top_layout) ---
+        self.content_layout.addWidget(QLabel(f"<b>{tr('LBL_DESC')} (Public Info)</b>"))
+        self.inp_desc = MarkdownEditor()
+        self.inp_desc.setMinimumHeight(180)
+        self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
+        self.content_layout.addWidget(self.inp_desc)
+
+        # Dynamic Attributes
         self.grp_dynamic = QGroupBox(tr("LBL_PROPERTIES"))
         self.layout_dynamic = QFormLayout(self.grp_dynamic)
         self.content_layout.addWidget(self.grp_dynamic)
 
+        # Tabs
         self.tabs = QTabWidget()
         self.tab_stats = QWidget(); self.setup_stats_tab(); self.tabs.addTab(self.tab_stats, tr("TAB_STATS"))
         self.tab_spells = QWidget(); self.setup_spells_tab(); self.tabs.addTab(self.tab_spells, tr("TAB_SPELLS"))
         self.tab_features = QWidget(); self.setup_features_tab(); self.tabs.addTab(self.tab_features, tr("TAB_ACTIONS"))
         self.tab_inventory = QWidget(); self.setup_inventory_tab(); self.tabs.addTab(self.tab_inventory, tr("TAB_INV"))
         self.tab_docs = QWidget(); self.setup_docs_tab(); self.tabs.addTab(self.tab_docs, tr("TAB_DOCS"))
-
         self.content_layout.addWidget(self.tabs)
         
-        self.grp_dm_notes = QGroupBox("DM Notes (Private)")
+        # DM Notes
+        self.grp_dm_notes = QGroupBox("🕵️ DM Notes (Private)")
         self.grp_dm_notes.setStyleSheet("QGroupBox { border: 1px solid #d32f2f; color: #e57373; font-weight: bold; }")
         dm_notes_layout = QVBoxLayout(self.grp_dm_notes)
-        self.inp_dm_notes = QTextEdit()
-        self.inp_dm_notes.setPlaceholderText("Hidden from players...")
-        self.inp_dm_notes.setMinimumHeight(100)
+        self.inp_dm_notes = MarkdownEditor()
+        self.inp_dm_notes.setPlaceholderText("Hidden from players... (Markdown supported)")
+        self.inp_dm_notes.setMinimumHeight(120)
         dm_notes_layout.addWidget(self.inp_dm_notes)
         self.content_layout.addWidget(self.grp_dm_notes)
 
         scroll.setWidget(self.content_widget)
         main_layout.addWidget(scroll)
 
+        # Footer Buttons
         btn_layout = QHBoxLayout(); btn_layout.setContentsMargins(10, 10, 10, 10)
         self.btn_delete = QPushButton(tr("BTN_DELETE")); self.btn_delete.setObjectName("dangerBtn")
-        
-        # Save butonu artık direkt kayıt yapmaz, sinyal gönderir
         self.btn_save = QPushButton(tr("BTN_SAVE")); self.btn_save.setObjectName("primaryBtn")
         self.btn_save.clicked.connect(self.emit_save_request)
         
@@ -183,38 +187,69 @@ class NpcSheet(QWidget):
         main_layout.addLayout(btn_layout)
         
         self.update_ui_by_type(self.inp_type.currentData())
-        
-        # Değişiklikleri dinlemeye başla
         self._connect_change_signals()
 
-    def _connect_change_signals(self):
-        """Tüm girdileri değişiklik algılama mekanizmasına bağlar."""
-        inputs = [
-            self.inp_name, self.inp_tags, self.inp_desc, self.inp_dm_notes,
-            self.inp_hp, self.inp_max_hp, self.inp_ac, self.inp_speed, 
-            self.inp_prof, self.inp_pp, self.inp_init,
-            self.inp_saves, self.inp_skills, self.inp_vuln, 
-            self.inp_resist, self.inp_dmg_immune, self.inp_cond_immune
-        ]
-        # Stat inputlarını ekle
-        inputs.extend(self.stats_inputs.values())
+    def add_feature_card(self, group, name="", desc="", ph_title=None, ph_desc=None):
+        """Adds a feature card with a Title and a Markdown Body (Notes area)."""
+        self.mark_as_dirty()
+        if ph_title is None: ph_title = tr("LBL_TITLE_PH")
+        if ph_desc is None: ph_desc = tr("LBL_DETAILS_PH")
         
+        card = QFrame()
+        card.setProperty("class", "featureCard")
+        l = QVBoxLayout(card)
+        
+        h_header = QHBoxLayout()
+        t = QLineEdit(name)
+        t.setPlaceholderText(ph_title)
+        t.setStyleSheet("font-weight: bold; border:none; font-size: 14px;")
+        t.textChanged.connect(self.mark_as_dirty)
+        
+        btn_del = QPushButton()
+        btn_del.setFixedSize(24,24)
+        btn_del.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton))
+        btn_del.setStyleSheet("background: transparent; border: none;")
+        btn_del.clicked.connect(lambda: [group.dynamic_area.removeWidget(card), card.deleteLater(), self.mark_as_dirty()])
+        
+        h_header.addWidget(t)
+        h_header.addWidget(btn_del)
+        l.addLayout(h_header)
+        
+        # --- NOTES AREA (MARKDOWN) FOR EACH CARD ---
+        d = MarkdownEditor(text=desc)
+        d.setPlaceholderText(ph_desc)
+        d.setMinimumHeight(120) # Height for card body
+        d.textChanged.connect(self.mark_as_dirty)
+        l.addWidget(d)
+        
+        group.dynamic_area.addWidget(card)
+        card.inp_title = t
+        card.inp_desc = d
+
+    def _connect_change_signals(self):
+        inputs = [
+            self.inp_name, self.inp_tags, self.inp_hp, self.inp_max_hp, 
+            self.inp_ac, self.inp_speed, self.inp_prof, self.inp_pp, self.inp_init,
+            self.inp_saves, self.inp_skills, self.inp_vuln, self.inp_resist, 
+            self.inp_dmg_immune, self.inp_cond_immune
+        ]
+        inputs.extend(self.stats_inputs.values())
         for w in inputs:
             if isinstance(w, QLineEdit): w.textChanged.connect(self.mark_as_dirty)
             elif isinstance(w, QTextEdit): w.textChanged.connect(self.mark_as_dirty)
-            
+        
+        self.inp_desc.textChanged.connect(self.mark_as_dirty)
+        self.inp_dm_notes.textChanged.connect(self.mark_as_dirty)
         self.inp_type.currentIndexChanged.connect(self.mark_as_dirty)
         self.combo_location.editTextChanged.connect(self.mark_as_dirty)
         self.combo_location.currentIndexChanged.connect(self.mark_as_dirty)
 
     def mark_as_dirty(self):
-        """Veri değiştiğinde çağrılır."""
         if not self.is_dirty:
             self.is_dirty = True
             self.data_changed.emit()
 
     def emit_save_request(self):
-        """Kaydetme isteği gönderir (Buton veya Ctrl+S)."""
         self.save_requested.emit()
 
     def refresh_reference_combos(self):
@@ -276,10 +311,6 @@ class NpcSheet(QWidget):
         try:
             val = int(text_value); mod = (val - 10) // 2; sign = "+" if mod >= 0 else ""
             self.stats_modifiers[stat_key].setText(f"{sign}{mod}")
-            state = "positive" if mod > 0 else "neutral"
-            self.stats_modifiers[stat_key].setProperty("state", state)
-            self.stats_modifiers[stat_key].style().unpolish(self.stats_modifiers[stat_key])
-            self.stats_modifiers[stat_key].style().polish(self.stats_modifiers[stat_key])
             if mod > 0: self.stats_modifiers[stat_key].setStyleSheet("color: #4caf50; font-weight: bold;")
             else: self.stats_modifiers[stat_key].setStyleSheet("color: #aaa; font-weight: normal;")
         except ValueError: self.stats_modifiers[stat_key].setText("-")
@@ -289,7 +320,7 @@ class NpcSheet(QWidget):
         self.grp_spells = QGroupBox(tr("GRP_SPELLS"))
         l_linked = QVBoxLayout(self.grp_spells)
         h = QHBoxLayout()
-        self.combo_all_spells = QComboBox(); self.combo_all_spells.setEditable(True); self.combo_all_spells.setPlaceholderText("Veritabanından Büyü Ara...")
+        self.combo_all_spells = QComboBox(); self.combo_all_spells.setEditable(True); self.combo_all_spells.setPlaceholderText("Search spells...")
         self.btn_add_spell_link = QPushButton(tr("BTN_ADD")); self.btn_add_spell_link.setObjectName("successBtn"); self.btn_add_spell_link.clicked.connect(self.add_linked_spell)
         h.addWidget(self.combo_all_spells, 3); h.addWidget(self.btn_add_spell_link, 1)
         self.list_assigned_spells = QListWidget(); self.list_assigned_spells.setAlternatingRowColors(True); self.list_assigned_spells.setMinimumHeight(200)
@@ -304,7 +335,7 @@ class NpcSheet(QWidget):
     def setup_inventory_tab(self):
         layout = QVBoxLayout(self.tab_inventory)
         self.grp_db_items = QGroupBox(tr("LBL_DB_ITEMS")); l_linked = QVBoxLayout(self.grp_db_items); h = QHBoxLayout()
-        self.combo_all_items = QComboBox(); self.combo_all_items.setEditable(True); self.combo_all_items.setPlaceholderText("Veritabanından Eşya Ara...")
+        self.combo_all_items = QComboBox(); self.combo_all_items.setEditable(True); self.combo_all_items.setPlaceholderText("Search items...")
         self.btn_add_item_link = QPushButton(tr("BTN_ADD")); self.btn_add_item_link.setObjectName("successBtn"); self.btn_add_item_link.clicked.connect(self.add_linked_item)
         h.addWidget(self.combo_all_items, 3); h.addWidget(self.btn_add_item_link, 1)
         self.list_assigned_items = QListWidget(); self.list_assigned_items.setAlternatingRowColors(True)
@@ -379,7 +410,7 @@ class NpcSheet(QWidget):
         list_widget.clear()
         for eid in id_list:
             ent = self.dm.data["entities"].get(eid)
-            name = ent.get("name", "Unknown") if ent else "Silinmiş Öğe"
+            name = ent.get("name", "Unknown") if ent else "Removed Item"
             extra = ""
             if ent:
                 if ent.get("type") == "Spell": extra = f" (Lv {ent.get('attributes',{}).get('LBL_LEVEL','?')})"
@@ -394,21 +425,6 @@ class NpcSheet(QWidget):
     def add_btn_to_section(self, container, label):
         btn = QPushButton(label); btn.clicked.connect(lambda: self.add_feature_card(container)); btn.setObjectName("successBtn")
         container.layout().insertWidget(0, btn)
-
-    def add_feature_card(self, group, name="", desc="", ph_title=None, ph_desc=None):
-        self.mark_as_dirty()
-        if ph_title is None: ph_title = tr("LBL_TITLE_PH")
-        if ph_desc is None: ph_desc = tr("LBL_DETAILS_PH")
-        card = QFrame(); card.setProperty("class", "featureCard")
-        l = QVBoxLayout(card); h = QHBoxLayout()
-        t = QLineEdit(name); t.setPlaceholderText(ph_title); t.setProperty("class", "cardInput"); t.setStyleSheet("font-weight: bold; border:none; font-size: 14px;")
-        t.textChanged.connect(self.mark_as_dirty) # Kart başlığı değişince
-        btn = QPushButton(); btn.setFixedSize(24,24); btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton)); btn.setStyleSheet("background: transparent; border: none;")
-        btn.clicked.connect(lambda: [group.dynamic_area.removeWidget(card), card.deleteLater(), self.mark_as_dirty()])
-        h.addWidget(t); h.addWidget(btn); l.addLayout(h)
-        d = QTextEdit(desc); d.setPlaceholderText(ph_desc); d.setMinimumHeight(80); d.setMaximumHeight(300); d.setProperty("class", "cardInput"); d.setStyleSheet("border:none;")
-        d.textChanged.connect(self.mark_as_dirty) # Kart açıklaması değişince
-        l.addWidget(d); group.dynamic_area.addWidget(card); card.inp_title = t; card.inp_desc = d
 
     def clear_all_cards(self):
         containers = [self.trait_container, self.action_container, self.reaction_container, self.legendary_container, self.inventory_container, self.custom_spell_container]
@@ -450,7 +466,6 @@ class NpcSheet(QWidget):
         else:
              if self.grp_combat_stats.parent() != self.tab_stats: self.content_layout.removeWidget(self.grp_combat_stats); self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
              self.grp_combat_stats.setVisible(is_npc_like)
-        if is_status: self.lbl_image.setText("Icon")
 
     def build_dynamic_form(self, category_name):
         while self.layout_dynamic.rowCount() > 0: self.layout_dynamic.removeRow(0)
@@ -463,19 +478,17 @@ class NpcSheet(QWidget):
                 widget = QComboBox(); widget.setEditable(True)
                 if options:
                     for opt in options: widget.addItem(tr(opt) if str(opt).startswith("LBL_") else opt, opt)
-                widget.editTextChanged.connect(self.mark_as_dirty) # Combo değişince
+                widget.editTextChanged.connect(self.mark_as_dirty) 
                 widget.currentIndexChanged.connect(self.mark_as_dirty)
             else: 
                 widget = QLineEdit()
-                widget.textChanged.connect(self.mark_as_dirty) # Text değişince
+                widget.textChanged.connect(self.mark_as_dirty)
             self.layout_dynamic.addRow(f"{tr(label_key)}:", widget); self.dynamic_inputs[label_key] = widget
 
     def populate_sheet(self, data):
         self.refresh_reference_combos()
-        
         self.inp_name.setText(data.get("name", ""))
         self.inp_source.setText(data.get("source", "")) 
-        
         curr_type = data.get("type", "NPC")
         idx = self.inp_type.findData(curr_type)
         self.inp_type.setCurrentIndex(idx if idx >= 0 else 0)
@@ -534,8 +547,6 @@ class NpcSheet(QWidget):
 
         self.list_pdfs.clear()
         for pdf in data.get("pdfs", []): self.list_pdfs.addItem(pdf)
-        
-        # Veri yüklendikten sonra dirty flag'i temizle
         self.is_dirty = False
 
     def collect_data_from_sheet(self):
@@ -544,7 +555,8 @@ class NpcSheet(QWidget):
             res = []
             for i in range(container.dynamic_area.count()):
                 w = container.dynamic_area.itemAt(i).widget()
-                if w: res.append({"name": w.inp_title.text(), "desc": w.inp_desc.toPlainText()})
+                if w: 
+                    res.append({"name": w.inp_title.text(), "desc": w.inp_desc.toPlainText()})
             return res
         
         loc_id = self.combo_location.currentData()
