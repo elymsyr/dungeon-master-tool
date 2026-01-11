@@ -8,3 +8,4 @@ pytest-qt
 pytest-mock
 pyinstaller
 msgpack
+markdown
