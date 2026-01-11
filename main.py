@@ -90,6 +90,9 @@ class MainWindow(QMainWindow):
         
         content_layout.addWidget(self.tabs, 1); content_layout.addWidget(self.soundpad_panel, 0)
         main_layout.addLayout(content_layout)
+
+        self.session_tab.txt_log.entity_link_clicked.connect(self.db_tab.open_entity_tab)
+        self.session_tab.txt_notes.entity_link_clicked.connect(self.db_tab.open_entity_tab)
         
         self.map_tab.render_map()
         self.retranslate_ui()
