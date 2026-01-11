@@ -424,3 +424,15 @@ en:
 
   MSG_DOWNLOADING_IMAGE: "Downloading Image..."
   LBL_SOURCE: "Source:"
+  CAT_MAGIC_ITEM: "Magic Item"
+
+  BTN_TOGGLE_TIMELINE: "⏳ Timeline: %{state}"
+  MENU_LINK_NEW: "🔗 Add Linked Event"
+  MENU_EDIT_TIMELINE: "✏️ Edit (Day/Note)"
+  MENU_CHANGE_COLOR: "🎨 Change Color"
+  MENU_EDIT_NOTE: "📝 Edit Note"
+  MSG_LINK_MODE_TITLE: "Link Mode"
+  MSG_LINK_MODE_DESC: "Click anywhere on map to add the next event in the chain."
+  MSG_DELETE_TIMELINE: "Delete this event and its links?"
+  LBL_NEW_EVENT: "New Event"
+  LBL_NOTE_TITLE: "Pin Note"
