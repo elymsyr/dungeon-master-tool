@@ -3,9 +3,8 @@ import uuid
 import os
 import json
 import shutil
-import uuid
 from config import WORLDS_DIR, BASE_DIR, CACHE_DIR, load_theme
-from core.models import get_default_entity_structure, SCHEMA_MAP, PROPERTY_MAP, ENTITY_SCHEMAS
+from core.models import get_default_entity_structure, SCHEMA_MAP, PROPERTY_MAP
 from core.api_client import DndApiClient
 from core.locales import set_language
 
@@ -23,7 +22,7 @@ class DataManager:
         self.data = {
             "world_name": "", 
             "entities": {}, 
-            "map_data": {"image_path": "", "pins": []},
+            "map_data": {"image_path": "", "pins": [], "timeline": []},
             "sessions": [],
             "last_active_session_id": None
         }
@@ -94,7 +93,11 @@ class DataManager:
             
             if "sessions" not in self.data: self.data["sessions"] = []
             if "entities" not in self.data: self.data["entities"] = {}
-            if "map_data" not in self.data: self.data["map_data"] = {"image_path": "", "pins": []}
+            
+            # Harita verisi kontrolü ve Timeline başlatma
+            if "map_data" not in self.data: self.data["map_data"] = {"image_path": "", "pins": [], "timeline": []}
+            if "timeline" not in self.data["map_data"]: self.data["map_data"]["timeline"] = []
+            
             if "last_active_session_id" not in self.data: self.data["last_active_session_id"] = None
             
             if not self.data["sessions"]:
@@ -174,7 +177,7 @@ class DataManager:
             first_sid = str(uuid.uuid4())
             self.data = {
                 "world_name": world_name, "entities": {}, 
-                "map_data": {"image_path": "", "pins": []},
+                "map_data": {"image_path": "", "pins": [], "timeline": []},
                 "sessions": [{"id": first_sid, "name": "Session 0", "date": "Bugün", "notes": "", "logs": "", "combatants": []}],
                 "last_active_session_id": first_sid
             }
@@ -215,20 +218,27 @@ class DataManager:
     def set_active_session(self, session_id): self.data["last_active_session_id"] = session_id
     def get_last_active_session_id(self): return self.data.get("last_active_session_id")
 
-    def save_entity(self, eid, data, should_save=True):
+    def save_entity(self, eid, data, should_save=True, auto_source_update=True):
+        """
+        Varlığı kaydeder. 
+        auto_source_update=True ise (örn: Manuel Kayıt) evren ismini ekler.
+        auto_source_update=False ise (örn: Import) kaynak ismine dokunmaz.
+        """
         if not eid: 
             eid = str(uuid.uuid4())
         
-        # --- KAYNAK MANTIĞI (YENİ EKLENDİ) ---
-        world_name = self.data.get("world_name", "Unknown World")
-        
-        # Eğer hiç kaynak belirtilmemişse, bu dünya kaynaklıdır
-        if not data.get("source"):
-            data["source"] = world_name
-        
-        # Not: Eğer var olan bir kaydı güncelliyorsak source'a dokunmuyoruz,
-        # kullanıcı NpcSheet üzerinden değiştirebilir.
-        # -------------------------------------
+        # --- KAYNAK BİRLEŞTİRME MANTIĞI ---
+        if auto_source_update:
+            world_name = self.data.get("world_name", "Unknown World")
+            current_source = data.get("source", "")
+            
+            if world_name:
+                if not current_source:
+                    data["source"] = world_name
+                elif world_name not in current_source:
+                    # 'SRD 5e (2014)' -> 'SRD 5e (2014) / MyWorld'
+                    data["source"] = f"{current_source} / {world_name}"
+        # ----------------------------------
 
         if eid in self.data["entities"]: 
             self.data["entities"][eid].update(data)
@@ -240,41 +250,23 @@ class DataManager:
         return eid
 
     def prepare_entity_from_external(self, data, type_override=None):
-        """
-        Veriyi hazırlar (bağımlılıkları çözer) ama VERİTABANINA KAYDETMEZ.
-        Geçici önizleme için kullanılır.
-        """
+        """API veya dış kaynaktan gelen veriyi hazırlar ama VERİTABANINA KAYDETMEZ."""
         if type_override: data["type"] = type_override
         
-        # --- KAYNAK BİRLEŞTİRME MANTIĞI (YENİ) ---
-        # Örn: "SRD 5e (2014)" -> "SRD 5e (2014) / MyCampaignName"
-        original_source = data.get("source", "")
-        world_name = self.data.get("world_name", "")
+        # Import sırasında varsayılan kaynak. 
+        if not data.get("source"):
+            data["source"] = "SRD 5e (2014)" 
         
-        if original_source and world_name and world_name not in original_source:
-            data["source"] = f"{original_source} / {world_name}"
-        elif not original_source:
-            data["source"] = world_name
-        # -----------------------------------------
-
         data = self._resolve_dependencies(data)
         return data
 
     def _resolve_dependencies(self, data):
-        """
-        Bağımlılıkları (Büyü, Ekipman) kampanya bazında çözer.
-        """
         if not isinstance(data, dict): return data
         
-        # 1. RESİM (Sadece URL kontrolü, indirme yok)
-        # NpcSheet açıldığında lazy-load yapılacak.
-
-        # 2. BÜYÜLER
         detected_spells = data.pop("_detected_spell_indices", [])
         if detected_spells:
             self._auto_import_linked_entities(data, detected_spells, "Spell", "spells")
 
-        # 3. EKİPMAN
         detected_equip = data.pop("_detected_equipment_indices", [])
         if detected_equip:
             self._auto_import_linked_entities(data, detected_equip, "Equipment", "equipment_ids")
@@ -298,7 +290,8 @@ class DataManager:
                 if ent_name in existing_map:
                     new_id = existing_map[ent_name]
                 else:
-                    new_id = self.save_entity(None, sub_data, should_save=False)
+                    # BAĞIMLILIKLARI IMPORT EDERKEN DE KAYNAĞI BOZMA
+                    new_id = self.save_entity(None, sub_data, should_save=False, auto_source_update=False)
                     existing_map[ent_name] = new_id
                 
                 if new_id not in main_data[target_list_key]:
@@ -360,10 +353,13 @@ class DataManager:
         return True, "API'den çekildi.", parsed_data
 
     def import_entity_with_dependencies(self, data, type_override=None):
-        """Bu metod hala direkt kayıt için kullanılabilir (Örn: Manuel import butonları)"""
+        """
+        Doğrudan kaydetmek için kullanılır (Örn: Toplu import).
+        Burada auto_source_update=False göndererek "SRD 5e" yazısının bozulmamasını sağlıyoruz.
+        """
         if type_override: data["type"] = type_override
         data = self._resolve_dependencies(data)
-        return self.save_entity(None, data)
+        return self.save_entity(None, data, auto_source_update=False)
 
     def import_image(self, src):
         if not self.current_campaign_path: return None
@@ -399,15 +395,143 @@ class DataManager:
         full_path = os.path.normpath(os.path.join(base, clean_rel))
         return full_path
     
+    # --- MAP & TIMELINE METHODS ---
     def set_map_image(self, rel): self.data["map_data"]["image_path"] = rel; self.save_data()
-    def add_pin(self, x, y, eid): self.data["map_data"]["pins"].append({"id": str(uuid.uuid4()), "x": x, "y": y, "entity_id": eid}); self.save_data()
+    
     def move_pin(self, pid, x, y):
         for p in self.data["map_data"]["pins"]:
              if p.get("id") == pid: p["x"]=x; p["y"]=y; break
         self.save_data()
+    
     def remove_specific_pin(self, pid):
         self.data["map_data"]["pins"] = [p for p in self.data["map_data"]["pins"] if p.get("id") != pid]
         self.save_data()
+
+    def remove_timeline_pin(self, pin_id):
+        if "timeline" in self.data["map_data"]:
+            self.data["map_data"]["timeline"] = [p for p in self.data["map_data"]["timeline"] if p.get("id") != pin_id]
+            self.save_data()
+
+    def update_timeline_pin(self, pin_id, day, note, entity_ids):
+        if "timeline" in self.data["map_data"]:
+            for p in self.data["map_data"]["timeline"]:
+                if p["id"] == pin_id:
+                    p["day"] = int(day)
+                    p["note"] = note
+                    p["entity_ids"] = entity_ids # Listeyi güncelle
+                    break
+            self.data["map_data"]["timeline"].sort(key=lambda k: k['day'])
+            self.save_data()
+
+    def add_pin(self, x, y, eid, color=None, note=""): 
+        # Varsayılan renk None (Otomatik tip rengi kullanılacak)
+        pin_data = {
+            "id": str(uuid.uuid4()), 
+            "x": x, 
+            "y": y, 
+            "entity_id": eid,
+            "color": color,
+            "note": note
+        }
+        self.data["map_data"]["pins"].append(pin_data)
+        self.save_data()
+    
+    def update_map_pin(self, pin_id, color=None, note=None):
+        """Normal bir pini günceller (Renk ve Not)."""
+        for p in self.data["map_data"]["pins"]:
+            if p.get("id") == pin_id:
+                if color is not None: p["color"] = color
+                if note is not None: p["note"] = note
+                break
+        self.save_data()
+
+    # --- TIMELINE PIN YÖNETİMİ ---
+    def get_timeline_pin(self, pin_id):
+        """Verilen ID'ye sahip pini döndürür."""
+        if "timeline" in self.data["map_data"]:
+            for p in self.data["map_data"]["timeline"]:
+                if p["id"] == pin_id:
+                    return p
+        return None
+
+    def update_timeline_chain_color(self, start_pin_id, color):
+        """
+        Birbiriyle bağlantılı (Parent-Child ilişkisi olan) TÜM pinlerin rengini değiştirir.
+        """
+        if "timeline" not in self.data["map_data"]: return
+        
+        timeline = self.data["map_data"]["timeline"]
+        
+        # 1. Bağlantı Haritası Oluştur (Çift Yönlü - Undirected Graph)
+        adjacency = {p["id"]: [] for p in timeline}
+        for p in timeline:
+            pid = p["id"]
+            parent = p.get("parent_id")
+            if parent and parent in adjacency:
+                adjacency[pid].append(parent)
+                adjacency[parent].append(pid)
+        
+        # 2. BFS (Genişlik Öncelikli Arama) ile bağlı tüm düğümleri bul
+        connected_ids = set()
+        queue = [start_pin_id]
+        
+        while queue:
+            current = queue.pop(0)
+            if current in connected_ids: continue
+            connected_ids.add(current)
+            
+            # Komşuları kuyruğa ekle
+            if current in adjacency:
+                for neighbor in adjacency[current]:
+                    if neighbor not in connected_ids:
+                        queue.append(neighbor)
+        
+        # 3. Bulunan tüm pinlerin rengini güncelle
+        for p in timeline:
+            if p["id"] in connected_ids:
+                p["color"] = color
+                
+        self.save_data()
+
+    def add_timeline_pin(self, x, y, day, note, parent_id=None, entity_ids=None, color=None, session_id=None):
+        pin = {
+            "id": str(uuid.uuid4()),
+            "x": x,
+            "y": y,
+            "day": int(day),
+            "note": note,
+            "parent_id": parent_id,
+            "entity_ids": entity_ids if entity_ids else [],
+            "color": color,
+            "session_id": session_id  # <--- NEW FIELD
+        }
+        if "timeline" not in self.data["map_data"]:
+            self.data["map_data"]["timeline"] = []
+            
+        self.data["map_data"]["timeline"].append(pin)
+        self.data["map_data"]["timeline"].sort(key=lambda k: k['day'])
+        self.save_data()
+
+    def update_timeline_pin(self, pin_id, day, note, entity_ids, session_id=None):
+        if "timeline" in self.data["map_data"]:
+            for p in self.data["map_data"]["timeline"]:
+                if p["id"] == pin_id:
+                    p["day"] = int(day)
+                    p["note"] = note
+                    p["entity_ids"] = entity_ids
+                    p["session_id"] = session_id # <--- NEW FIELD
+                    break
+            self.data["map_data"]["timeline"].sort(key=lambda k: k['day'])
+            self.save_data()
+     
+    def move_timeline_pin(self, pin_id, x, y):
+        if "timeline" in self.data["map_data"]:
+            for p in self.data["map_data"]["timeline"]:
+                if p["id"] == pin_id:
+                    p["x"] = x
+                    p["y"] = y
+                    break
+            self.save_data()
 
     def search_in_library(self, category, search_text):
         results = []

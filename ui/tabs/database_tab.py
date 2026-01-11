@@ -2,7 +2,8 @@ import os
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QListWidget, 
                              QPushButton, QLineEdit, QComboBox, QSplitter, 
                              QMessageBox, QListWidgetItem, QCheckBox, QLabel, 
-                             QStyle, QTabWidget, QMenu, QTabBar)
+                             QStyle, QTabWidget, QMenu, QTabBar, QToolButton, 
+                             QWidgetAction, QFrame)
 from PyQt6.QtGui import QColor, QBrush, QDrag, QAction, QIcon, QPixmap, QDesktopServices
 from PyQt6.QtCore import Qt, QMimeData, QUrl
 
@@ -14,20 +15,40 @@ from core.models import ENTITY_SCHEMAS
 from core.locales import tr
 
 class EntityListItemWidget(QWidget):
-    def __init__(self, name, raw_category, parent=None):
+    def __init__(self, name, raw_category, source=None, parent=None):
         super().__init__(parent)
         self.setObjectName("entityItem") 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(2)
+        
+        # Üst Satır: İsim
         lbl_name = QLabel(name)
         lbl_name.setObjectName("entityName")
         lbl_name.setStyleSheet("font-size: 14px; font-weight: bold; background-color: transparent;")
+        
+        # Alt Satır: Kategori | Kaynak
+        meta_layout = QHBoxLayout()
+        meta_layout.setContentsMargins(0, 0, 0, 0)
+        
         display_cat = self.translate_category(raw_category)
         lbl_cat = QLabel(display_cat)
         lbl_cat.setObjectName("entityCat")
-        lbl_cat.setStyleSheet("font-size: 11px; font-style: italic; background-color: transparent;")
-        layout.addWidget(lbl_name); layout.addWidget(lbl_cat)
+        lbl_cat.setStyleSheet("font-size: 11px; font-style: italic; background-color: transparent; color: #888;")
+        
+        meta_layout.addWidget(lbl_cat)
+        
+        if source:
+            lbl_source = QLabel(f"[{source}]")
+            # Temaya uyumlu olması için şeffaf arka plan ve nötr gri renk
+            lbl_source.setStyleSheet("font-size: 10px; color: #666; background-color: transparent;")
+            lbl_source.setAlignment(Qt.AlignmentFlag.AlignRight)
+            meta_layout.addWidget(lbl_source)
+        else:
+            meta_layout.addStretch()
+
+        layout.addWidget(lbl_name)
+        layout.addLayout(meta_layout)
 
     def translate_category(self, raw_cat):
         key_map = {
@@ -37,10 +58,18 @@ class EntityListItemWidget(QWidget):
             "equipment": "CAT_EQUIPMENT", "eşya (equipment)": "CAT_EQUIPMENT",
             "magic-items": "CAT_EQUIPMENT",
             "class": "CAT_CLASS", "classes": "CAT_CLASS", "sınıf (class)": "CAT_CLASS",
-            "race": "CAT_RACE", "races": "CAT_RACE", "irk (race)": "CAT_RACE"
+            "race": "CAT_RACE", "races": "CAT_RACE", "irk (race)": "CAT_RACE",
+            "location": "CAT_LOCATION", "mekan": "CAT_LOCATION",
+            "player": "CAT_PLAYER", "oyuncu": "CAT_PLAYER"
         }
-        translation_key = key_map.get(str(raw_cat).lower())
-        if translation_key: return tr(translation_key)
+        raw_lower = str(raw_cat).lower()
+        if raw_lower in key_map:
+            return tr(key_map[raw_lower])
+        
+        for schema_key in ENTITY_SCHEMAS.keys():
+            if schema_key.lower() == raw_lower:
+                return tr(f"CAT_{schema_key.upper().replace(' ', '_')}")
+                
         return str(raw_cat).title()
 
 class DraggableListWidget(QListWidget):
@@ -82,105 +111,342 @@ class EntityTabWidget(QTabWidget):
 class DatabaseTab(QWidget):
     def __init__(self, data_manager, player_window):
         super().__init__()
-        self.dm = data_manager; self.player_window = player_window; self.init_ui()
+        self.dm = data_manager
+        self.player_window = player_window
+        
+        # --- FİLTRE DURUMLARI ---
+        self.active_categories = set() 
+        self.active_sources = set()    
+        self.available_sources = set() 
+        
+        self.init_ui()
 
     def init_ui(self):
         main_layout = QHBoxLayout(self)
-        sidebar_widget = QWidget(); sidebar_layout = QVBoxLayout(sidebar_widget); sidebar_layout.setContentsMargins(0, 0, 0, 0)
         
-        self.inp_search = QLineEdit(); self.inp_search.setPlaceholderText(tr("LBL_SEARCH")); self.inp_search.textChanged.connect(self.refresh_list)
+        # --- SOL KENAR ÇUBUĞU ---
+        sidebar_widget = QWidget()
+        sidebar_layout = QVBoxLayout(sidebar_widget)
+        sidebar_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Arama Kutusu
+        self.inp_search = QLineEdit()
+        self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
+        self.inp_search.textChanged.connect(self.refresh_list)
+        
+        # Filtreleme Alanı
         filter_layout = QHBoxLayout()
-        self.combo_filter = QComboBox(); self.combo_filter.addItem(tr("CAT_ALL"), None)
-        for cat in ENTITY_SCHEMAS.keys(): self.combo_filter.addItem(tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"), cat)
-        self.combo_filter.currentTextChanged.connect(self.refresh_list)
-        self.check_show_library = QCheckBox(tr("LBL_CHECK_LIBRARY")); self.check_show_library.setChecked(True); self.check_show_library.stateChanged.connect(self.refresh_list)
-        filter_layout.addWidget(self.combo_filter); filter_layout.addWidget(self.check_show_library)
         
-        self.btn_download_all = QPushButton(tr("BTN_DOWNLOAD_ALL")); self.btn_download_all.clicked.connect(self.open_bulk_downloader)
-        self.btn_browser = QPushButton(tr("BTN_API_BROWSER")); self.btn_browser.clicked.connect(self.open_api_browser)
-        self.list_widget = DraggableListWidget(); self.list_widget.itemDoubleClicked.connect(self.on_item_double_clicked)
-        self.btn_add = QPushButton(tr("BTN_NEW_ENTITY")); self.btn_add.setObjectName("successBtn"); self.btn_add.clicked.connect(self.create_new_entity)
+        # --- FİLTRE BUTONU ---
+        self.btn_filter = QToolButton()
+        self.btn_filter.setText(f" {tr('LBL_FILTER')}")
+        self.btn_filter.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogListView))
+        self.btn_filter.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.btn_filter.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.btn_filter.setFixedWidth(120)
         
-        sidebar_layout.addWidget(self.inp_search); sidebar_layout.addLayout(filter_layout); sidebar_layout.addWidget(self.btn_download_all); sidebar_layout.addWidget(self.btn_browser); sidebar_layout.addWidget(self.list_widget); sidebar_layout.addWidget(self.btn_add)
+        # Yükseklik zıplamasını önlemek için sabit yükseklik
+        self.btn_filter.setFixedHeight(32)
+        
+        # Mavi çerçeve (focus) sorununu önlemek için
+        self.btn_filter.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        
+        # Başlangıç Stili (Border Yok)
+        self.refresh_filter_button_style()
+        
+        # Menüyü Hazırla
+        self.filter_menu = QMenu(self.btn_filter)
+        # Menünün genel stili
+        self.filter_menu.setStyleSheet("""
+            QMenu {
+                border: 1px solid rgba(100, 100, 100, 0.5);
+                border-radius: 6px;
+                padding: 5px;
+            }
+        """)
+        
+        self.btn_filter.setMenu(self.filter_menu)
+        self.filter_menu.aboutToShow.connect(self.update_filter_menu) 
+        
+        self.check_show_library = QCheckBox(tr("LBL_CHECK_LIBRARY"))
+        self.check_show_library.setChecked(True)
+        self.check_show_library.stateChanged.connect(self.refresh_list)
+        
+        filter_layout.addWidget(self.btn_filter)
+        filter_layout.addWidget(self.check_show_library)
+        
+        # Butonlar
+        self.btn_download_all = QPushButton(tr("BTN_DOWNLOAD_ALL"))
+        self.btn_download_all.clicked.connect(self.open_bulk_downloader)
+        
+        self.btn_browser = QPushButton(tr("BTN_API_BROWSER"))
+        self.btn_browser.clicked.connect(self.open_api_browser)
+        
+        self.list_widget = DraggableListWidget()
+        self.list_widget.itemDoubleClicked.connect(self.on_item_double_clicked)
+        
+        self.btn_add = QPushButton(tr("BTN_NEW_ENTITY"))
+        self.btn_add.setObjectName("successBtn")
+        self.btn_add.clicked.connect(self.create_new_entity)
+        
+        # Layout Yerleşimi
+        sidebar_layout.addWidget(self.inp_search)
+        sidebar_layout.addLayout(filter_layout)
+        sidebar_layout.addWidget(self.btn_download_all)
+        sidebar_layout.addWidget(self.btn_browser)
+        sidebar_layout.addWidget(self.list_widget)
+        sidebar_layout.addWidget(self.btn_add)
 
+        # --- SAĞ TARAF (SEKMELER) ---
         self.workspace_splitter = QSplitter(Qt.Orientation.Horizontal)
         self.tab_manager_left = EntityTabWidget(self.dm, self, "left")
         self.tab_manager_right = EntityTabWidget(self.dm, self, "right")
-        self.workspace_splitter.addWidget(self.tab_manager_left); self.workspace_splitter.addWidget(self.tab_manager_right)
-        self.workspace_splitter.setSizes([800, 800]); self.workspace_splitter.setCollapsible(0, False)
+        self.workspace_splitter.addWidget(self.tab_manager_left)
+        self.workspace_splitter.addWidget(self.tab_manager_right)
+        self.workspace_splitter.setSizes([800, 800])
+        self.workspace_splitter.setCollapsible(0, False)
 
         main_splitter = QSplitter(Qt.Orientation.Horizontal)
-        main_splitter.addWidget(sidebar_widget); main_splitter.addWidget(self.workspace_splitter)
-        main_splitter.setSizes([300, 1200])
+        main_splitter.addWidget(sidebar_widget)
+        main_splitter.addWidget(self.workspace_splitter)
+        main_splitter.setSizes([350, 1150]) 
+        
         main_layout.addWidget(main_splitter)
+        
         self.refresh_list()
 
-    def retranslate_ui(self):
-        self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
-        for i in range(self.combo_filter.count()):
-            cat = self.combo_filter.itemData(i)
-            if cat: self.combo_filter.setItemText(i, tr(f"CAT_{cat.upper().replace(' ', '_').replace('(', '').replace(')', '')}"))
-            else: self.combo_filter.setItemText(i, tr("CAT_ALL"))
-        self.check_show_library.setText(tr("LBL_CHECK_LIBRARY"))
-        self.btn_download_all.setText(tr("BTN_DOWNLOAD_ALL"))
-        self.btn_browser.setText(tr("BTN_API_BROWSER"))
-        self.btn_add.setText(tr("BTN_NEW_ENTITY"))
-        for manager in [self.tab_manager_left, self.tab_manager_right]:
-            for i in range(manager.count()):
-                widget = manager.widget(i)
-                if hasattr(widget, "retranslate_ui"): widget.retranslate_ui()
+    def update_filter_menu(self):
+        """
+        Menü açıldığında içeriği oluşturur.
+        Kapsayıcı panele (Container) özel stil vererek mavi çerçeveleri ve odaklanma sorunlarını çözer.
+        """
+        self.filter_menu.clear()
+        
+        container = QWidget()
+        container.setObjectName("filterMenuContainer")
+        container.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        
+        # Konteyner için agresif stil temizliği (Border yok, Outline yok)
+        container.setStyleSheet("""
+            QWidget {
+                background: transparent;
+                outline: none;
+                border: none;
+            }
+            QCheckBox {
+                padding: 6px; 
+                spacing: 8px;
+                border-radius: 4px;
+            }
+            QCheckBox:hover {
+                background-color: rgba(255, 255, 255, 0.1); 
+            }
+            QCheckBox:focus {
+                border: none;
+                outline: none;
+            }
+        """)
+        
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(2)
+        
+        # BÖLÜM 1: TİPLER
+        lbl_cat = QLabel(tr("LBL_TYPE"))
+        lbl_cat.setStyleSheet("font-weight: bold; margin-bottom: 4px; border: none;")
+        layout.addWidget(lbl_cat)
+        
+        categories = sorted(list(ENTITY_SCHEMAS.keys()) + ["NPC", "Monster"])
+        categories = sorted(list(set(categories)))
+
+        for cat in categories:
+            display_text = cat
+            trans_key = f"CAT_{cat.upper().replace(' ', '_')}"
+            translated = tr(trans_key)
+            if translated != trans_key: display_text = translated
+            
+            chk = QCheckBox(display_text)
+            chk.setChecked(cat in self.active_categories)
+            chk.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            chk.setCursor(Qt.CursorShape.PointingHandCursor)
+            chk.toggled.connect(lambda checked, c=cat: self.toggle_category_filter(c, checked))
+            layout.addWidget(chk)
+
+        # BÖLÜM 2: KAYNAKLAR
+        self.available_sources.clear()
+        for ent in self.dm.data["entities"].values():
+            src = ent.get("source")
+            if src: self.available_sources.add(src)
+        
+        if self.available_sources:
+            line = QFrame()
+            line.setFrameShape(QFrame.Shape.HLine)
+            line.setFrameShadow(QFrame.Shadow.Sunken)
+            line.setStyleSheet("background-color: rgba(128, 128, 128, 0.5); border: none; margin-top: 8px; margin-bottom: 8px;")
+            layout.addWidget(line)
+
+            lbl_src = QLabel(tr("LBL_SOURCE"))
+            lbl_src.setStyleSheet("font-weight: bold; margin-bottom: 4px; border: none;")
+            layout.addWidget(lbl_src)
+            
+            for src in sorted(self.available_sources):
+                chk = QCheckBox(src)
+                chk.setChecked(src in self.active_sources)
+                chk.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+                chk.setCursor(Qt.CursorShape.PointingHandCursor)
+                chk.toggled.connect(lambda checked, s=src: self.toggle_source_filter(s, checked))
+                layout.addWidget(chk)
+
+        # Konteyneri QWidgetAction içine koyarak menü kapanmasını engelliyoruz
+        action_widget = QWidgetAction(self.filter_menu)
+        action_widget.setDefaultWidget(container)
+        self.filter_menu.addAction(action_widget)
+
+        self.filter_menu.addSeparator()
+        
+        # Temizle butonu (Buna basınca menü kapanmalı, o yüzden standart Action)
+        clear_action = QAction("❌ " + tr("BTN_CLEAR"), self.filter_menu)
+        clear_action.triggered.connect(self.clear_filters)
+        self.filter_menu.addAction(clear_action)
+
+    def toggle_category_filter(self, category, checked):
+        if checked: self.active_categories.add(category)
+        else: self.active_categories.discard(category)
+        self.refresh_filter_button_style()
+        self.refresh_list()
+
+    def toggle_source_filter(self, source, checked):
+        if checked: self.active_sources.add(source)
+        else: self.active_sources.discard(source)
+        self.refresh_filter_button_style()
+        self.refresh_list()
+
+    def clear_filters(self):
+        self.active_categories.clear()
+        self.active_sources.clear()
+        self.refresh_filter_button_style()
+        self.refresh_list()
+
+    def refresh_filter_button_style(self):
+        """Buton stilini seçili filtre durumuna göre günceller. Asla border göstermez."""
+        count = len(self.active_categories) + len(self.active_sources)
+        
+        # Ortak Stil (Border yok, padding ayarlı, yükseklik sabit)
+        base_style = """
+            QToolButton {
+                border: none;
+                border-radius: 4px;
+                padding: 0px 5px;
+                background-color: transparent;
+                min-height: 20px;
+                max-height: 20px;
+                margin: 0px;
+            }
+            QToolButton::menu-indicator { 
+                image: none; 
+                width: 0px; 
+            }
+            QToolButton:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+            QToolButton:pressed {
+                background-color: rgba(0, 0, 0, 0.2);
+            }
+        """
+        
+        if count > 0:
+            self.btn_filter.setText(f" {tr('LBL_FILTER')} ({count})")
+            # Seçiliyken: Kalın yazı, tema vurgu rengi (highlight)
+            self.btn_filter.setStyleSheet(base_style + """
+                QToolButton {
+                    font-weight: bold;
+                    color: palette(highlight); 
+                }
+            """)
+        else:
+            self.btn_filter.setText(f" {tr('LBL_FILTER')}")
+            # Seçili değilken: Normal yazı, standart metin rengi
+            self.btn_filter.setStyleSheet(base_style + """
+                QToolButton {
+                    font-weight: normal;
+                    color: palette(text);
+                }
+            """)
+
+    def normalize_type(self, t):
+        t = str(t).lower()
+        if t in ["canavar", "monster", "monsters"]: return "monster"
+        if "spell" in t or "büyü" in t: return "spell"
+        if "equipment" in t or "eşya" in t: return "equipment"
+        if "class" in t or "sınıf" in t: return "class"
+        if "race" in t or "irk" in t: return "race"
+        if "location" in t or "mekan" in t: return "location"
+        if "player" in t or "oyuncu" in t: return "player"
+        return t
 
     def refresh_list(self):
         self.list_widget.clear()
         text = self.inp_search.text().lower()
-        flt_data = self.combo_filter.currentData()
-
-        def normalize_type(t):
-            t = str(t).lower()
-            if t in ["canavar", "monster", "monsters"]: return "monster"
-            if "spell" in t or "büyü" in t: return "spell"
-            if "equipment" in t or "eşya" in t: return "equipment"
-            if "class" in t or "sınıf" in t: return "class"
-            if "race" in t or "irk" in t: return "race"
-            return t
-        target_cat = normalize_type(flt_data) if flt_data else None
-
+        
+        norm_active_cats = {self.normalize_type(c) for c in self.active_categories}
+        
+        # --- VERİTABANI ARAMASI ---
         for eid, data in self.dm.data["entities"].items():
             name = data.get("name", "")
             raw_type = data.get("type", "NPC")
-            norm_type = normalize_type(raw_type)
-            if target_cat and norm_type != target_cat: continue
-            if text not in name.lower() and text not in str(data.get("tags", "")).lower(): continue
+            norm_type = self.normalize_type(raw_type)
+            source = data.get("source", "")
+            
+            if norm_active_cats and norm_type not in norm_active_cats:
+                continue
+                
+            if self.active_sources and source not in self.active_sources:
+                continue
+            
+            search_content = f"{name} {data.get('tags', [])} {raw_type}".lower()
+            if text and text not in search_content:
+                continue
+            
             item = QListWidgetItem(self.list_widget)
             item.setData(Qt.ItemDataRole.UserRole, eid)
-            widget = EntityListItemWidget(name, raw_type)
+            
+            widget = EntityListItemWidget(name, raw_type, source)
             item.setSizeHint(widget.sizeHint())
             self.list_widget.setItemWidget(item, widget)
 
-        if self.check_show_library.isChecked() and (len(text) > 2 or target_cat):
-            lib_results = self.dm.search_in_library(None, text)
-            for res in lib_results:
-                if "index" not in res: continue
-                res_cat = res["type"]; norm_res_cat = normalize_type(res_cat)
-                if target_cat and norm_res_cat != target_cat: continue
-                item = QListWidgetItem(self.list_widget)
-                api_safe_cat = "monsters" if norm_res_cat == "monster" else "spells" if norm_res_cat == "spell" else "equipment" if norm_res_cat == "equipment" else "classes" if norm_res_cat == "class" else "races" if norm_res_cat == "race" else norm_res_cat
-                safe_id = f"lib_{api_safe_cat}_{res['index']}"
-                item.setData(Qt.ItemDataRole.UserRole, safe_id)
-                widget = EntityListItemWidget("📚 " + res["name"], res_cat)
-                item.setSizeHint(widget.sizeHint())
-                self.list_widget.setItemWidget(item, widget)
+        # --- KÜTÜPHANE ARAMASI ---
+        if self.check_show_library.isChecked() and not self.active_sources:
+            if len(text) > 2 or self.active_categories:
+                lib_results = self.dm.search_in_library(None, text)
+                
+                for res in lib_results:
+                    if "index" not in res: continue
+                    res_cat = res["type"]
+                    norm_res_cat = self.normalize_type(res_cat)
+                    
+                    if norm_active_cats and norm_res_cat not in norm_active_cats:
+                        continue
+                    
+                    item = QListWidgetItem(self.list_widget)
+                    api_safe_cat = "monsters" if norm_res_cat == "monster" else \
+                                   "spells" if norm_res_cat == "spell" else \
+                                   "equipment" if norm_res_cat == "equipment" else \
+                                   "classes" if norm_res_cat == "class" else \
+                                   "races" if norm_res_cat == "race" else \
+                                   res_cat.lower()
+                                   
+                    safe_id = f"lib_{api_safe_cat}_{res['index']}"
+                    item.setData(Qt.ItemDataRole.UserRole, safe_id)
+                    
+                    widget = EntityListItemWidget("📚 " + res["name"], res_cat, "SRD 5e")
+                    item.setSizeHint(widget.sizeHint())
+                    self.list_widget.setItemWidget(item, widget)
 
     def on_item_double_clicked(self, item):
         eid = item.data(Qt.ItemDataRole.UserRole)
         self.open_entity_tab(eid, target_panel="left")
 
     def open_entity_tab(self, eid, target_panel="left", data=None):
-        """
-        eid: Veritabanındaki ID (lib_... veya uuid). Eğer None ise ve 'data' doluysa GEÇİCİ sekme açar.
-        data: Veritabanında olmayan (harici/geçici) veri sözlüğü.
-        """
-        
         if eid and str(eid).startswith("lib_"):
             parts = eid.split("_")
             raw_cat = parts[1]
@@ -200,21 +466,20 @@ class DatabaseTab(QWidget):
                 if sheet.property("entity_id") == eid: 
                     target_manager.setCurrentIndex(i)
                     return
-            
             data = self.dm.data["entities"].get(eid)
         
         if not data: return
         
         new_sheet = NpcSheet(self.dm)
         new_sheet.setProperty("entity_id", eid)
-        
-        # --- BURASI EKLENDİ ---
         new_sheet.request_open_entity.connect(lambda id: self.open_entity_tab(id, target_panel))
-        # ---------------------
+        
+        # Kayıt ve Değişiklik Sinyalleri
+        new_sheet.save_requested.connect(lambda: self.save_sheet_data(new_sheet))
+        new_sheet.data_changed.connect(lambda: self.mark_tab_unsaved(new_sheet, target_manager))
         
         self.populate_sheet(new_sheet, data)
         
-        new_sheet.btn_save.clicked.connect(lambda: self.save_sheet_data(new_sheet))
         new_sheet.btn_delete.clicked.connect(lambda: self.delete_entity_from_tab(new_sheet))
         new_sheet.btn_show_player.clicked.connect(lambda: self.project_entity_image(new_sheet))
         new_sheet.btn_project_pdf.clicked.connect(lambda: self.project_entity_pdf(new_sheet))
@@ -224,13 +489,19 @@ class DatabaseTab(QWidget):
         new_sheet.btn_open_pdf_folder.clicked.connect(new_sheet.open_pdf_folder)
         
         icon_char = "👤" if data.get("type") == "NPC" else "🐉" if data.get("type") == "Monster" else "📜"
-        
         tab_title = f"{icon_char} {data.get('name')}"
-        if not eid:
-            tab_title = f"⚠️ {tab_title} (Unsaved)"
+        if not eid: tab_title = f"⚠️ {tab_title}"
             
         tab_index = target_manager.addTab(new_sheet, tab_title)
         target_manager.setCurrentIndex(tab_index)
+
+    def mark_tab_unsaved(self, sheet, manager):
+        """Veri değiştiğinde sekme başlığına yıldız ekler."""
+        idx = manager.indexOf(sheet)
+        if idx != -1:
+            current_title = manager.tabText(idx)
+            if not current_title.startswith("*") and not current_title.startswith("⚠️"):
+                manager.setTabText(idx, f"* {current_title}")
 
     def _fetch_and_open_api_entity(self, cat, idx, target_panel):
         self.api_worker = ApiSearchWorker(self.dm, cat, idx)
@@ -241,13 +512,9 @@ class DatabaseTab(QWidget):
     def _on_api_fetched(self, success, data_or_id, msg, target_panel):
         if success:
             if isinstance(data_or_id, dict):
-                # --- DEĞİŞİKLİK: KAYDETMEDEN HAZIRLA ---
-                # Eskiden import_entity_with_dependencies (kaydeden) çağırıyorduk.
-                # Şimdi prepare_entity_from_external (kaydetmeyen) çağırıyoruz.
                 processed_data = self.dm.prepare_entity_from_external(data_or_id)
                 self.open_entity_tab(eid=None, target_panel=target_panel, data=processed_data)
             elif isinstance(data_or_id, str):
-                # Zaten ID geldiyse veritabanında vardır
                 self.open_entity_tab(data_or_id, target_panel)
         else: 
             QMessageBox.warning(self, tr("MSG_ERROR"), msg)
@@ -259,31 +526,30 @@ class DatabaseTab(QWidget):
         self.open_entity_tab(new_id, "left")
 
     def save_sheet_data(self, sheet):
+        """Artık mesaj kutusu göstermiyor, sessizce kaydedip UI güncelliyor."""
         eid = sheet.property("entity_id")
         data = self.collect_data_from_sheet(sheet)
         if not data: return
         
-        # Eğer ID yoksa (geçici moddaysa) yeni oluşturacak, varsa güncelleyecek
         new_eid = self.dm.save_entity(eid, data)
-        
-        # Sayfaya yeni ID'yi ata (Artık kaydedildi)
         sheet.setProperty("entity_id", new_eid)
+        sheet.is_dirty = False
         
-        QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_SAVED"))
+        # Güncel veriyi çekip UI'da source'u güncelle (örn: '/ WorldName' eklendi)
+        updated_data = self.dm.data["entities"][new_eid]
+        sheet.inp_source.setText(updated_data.get("source", ""))
         
-        # Tab başlığını güncelle (⚠️ Unsaved yazısını kaldır)
+        # Başlıklardaki yıldızı kaldır
         for manager in [self.tab_manager_left, self.tab_manager_right]:
             idx = manager.indexOf(sheet)
             if idx != -1:
                 icon_char = "👤" if data.get("type") == "NPC" else "🐉"
                 manager.setTabText(idx, f"{icon_char} {data.get('name')}")
-        
+                
         self.refresh_list()
 
     def delete_entity_from_tab(self, sheet):
         eid = sheet.property("entity_id")
-        
-        # Eğer henüz kaydedilmemişse sadece sekmeyi kapat
         if not eid:
             for manager in [self.tab_manager_left, self.tab_manager_right]:
                 idx = manager.indexOf(sheet)
@@ -297,11 +563,8 @@ class DatabaseTab(QWidget):
                 idx = manager.indexOf(sheet)
                 if idx != -1: manager.removeTab(idx)
 
-    def populate_sheet(self, s, data): 
-        s.populate_sheet(data) 
-
-    def collect_data_from_sheet(self, s): 
-        return s.collect_data_from_sheet()
+    def populate_sheet(self, s, data): s.populate_sheet(data) 
+    def collect_data_from_sheet(self, s): return s.collect_data_from_sheet()
 
     def project_entity_image(self, sheet):
         if not sheet.image_list:
@@ -328,7 +591,34 @@ class DatabaseTab(QWidget):
             QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
     
     def open_api_browser(self):
-        cat = self.combo_filter.currentData()
-        if not cat: return QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_CATEGORY"))
-        if ApiBrowser(self.dm, cat, self).exec(): self.refresh_list()
+        # 1. Try to get category from Filter Button's active selection
+        target_cat = "Monster" # Default
+        
+        if self.active_categories:
+            # Pick the first one from the set
+            first_cat = list(self.active_categories)[0]
+            # Map internal keys to API Browser keys
+            if first_cat in ["NPC", "Monster"]: target_cat = "Monster"
+            elif first_cat == "Spell": target_cat = "Spell"
+            elif first_cat == "Equipment": target_cat = "Equipment"
+            elif first_cat == "Class": target_cat = "Class"
+            elif first_cat == "Race": target_cat = "Race"
+        
+        # 2. Open Dialog
+        if ApiBrowser(self.dm, target_cat, self).exec(): 
+            self.refresh_list()
+        
     def open_bulk_downloader(self): BulkDownloadDialog(self).exec()
+
+    def retranslate_ui(self):
+        self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
+        self.btn_filter.setText(f" {tr('LBL_FILTER')}") 
+        self.refresh_filter_button_style() 
+        self.check_show_library.setText(tr("LBL_CHECK_LIBRARY"))
+        self.btn_download_all.setText(tr("BTN_DOWNLOAD_ALL"))
+        self.btn_browser.setText(tr("BTN_API_BROWSER"))
+        self.btn_add.setText(tr("BTN_NEW_ENTITY"))
+        for manager in [self.tab_manager_left, self.tab_manager_right]:
+            for i in range(manager.count()):
+                widget = manager.widget(i)
+                if hasattr(widget, "retranslate_ui"): widget.retranslate_ui()
