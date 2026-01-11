@@ -146,6 +146,8 @@ class NpcSheet(QWidget):
         # --- FULL WIDTH DESCRIPTION (Moved out of top_layout) ---
         self.content_layout.addWidget(QLabel(f"<b>{tr('LBL_DESC')} (Public Info)</b>"))
         self.inp_desc = MarkdownEditor()
+        self.inp_desc.set_data_manager(self.dm) # EKLE
+        self.inp_desc.entity_link_clicked.connect(self.request_open_entity.emit) # EKLE
         self.inp_desc.setMinimumHeight(180)
         self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
         self.content_layout.addWidget(self.inp_desc)
@@ -169,6 +171,8 @@ class NpcSheet(QWidget):
         self.grp_dm_notes.setStyleSheet("QGroupBox { border: 1px solid #d32f2f; color: #e57373; font-weight: bold; }")
         dm_notes_layout = QVBoxLayout(self.grp_dm_notes)
         self.inp_dm_notes = MarkdownEditor()
+        self.inp_dm_notes.set_data_manager(self.dm) # EKLE
+        self.inp_dm_notes.entity_link_clicked.connect(self.request_open_entity.emit) # EKLE
         self.inp_dm_notes.setPlaceholderText("Hidden from players... (Markdown supported)")
         self.inp_dm_notes.setMinimumHeight(120)
         dm_notes_layout.addWidget(self.inp_dm_notes)
@@ -217,6 +221,8 @@ class NpcSheet(QWidget):
         
         # --- NOTES AREA (MARKDOWN) FOR EACH CARD ---
         d = MarkdownEditor(text=desc)
+        d.set_data_manager(self.dm) # EKLE
+        d.entity_link_clicked.connect(self.request_open_entity.emit) # EKLE
         d.setPlaceholderText(ph_desc)
         d.setMinimumHeight(120) # Height for card body
         d.textChanged.connect(self.mark_as_dirty)
