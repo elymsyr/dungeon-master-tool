@@ -145,13 +145,13 @@ class DatabaseTab(QWidget):
         self.btn_filter.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.btn_filter.setFixedWidth(120)
         
-        # [DÜZELTME] Yükseklik zıplamasını önlemek için sabit yükseklik
+        # Yükseklik zıplamasını önlemek için sabit yükseklik
         self.btn_filter.setFixedHeight(32)
         
-        # [DÜZELTME] Mavi çerçeve (focus) sorununu önlemek için
+        # Mavi çerçeve (focus) sorununu önlemek için
         self.btn_filter.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         
-        # [DÜZELTME] Başlangıç Stili (Border Yok)
+        # Başlangıç Stili (Border Yok)
         self.refresh_filter_button_style()
         
         # Menüyü Hazırla
@@ -328,10 +328,10 @@ class DatabaseTab(QWidget):
         self.refresh_list()
 
     def refresh_filter_button_style(self):
+        """Buton stilini seçili filtre durumuna göre günceller. Asla border göstermez."""
         count = len(self.active_categories) + len(self.active_sources)
         
-        # [DÜZELTME] Buton yüksekliği sabitlendiği için padding ile oynayarak metni ortalıyoruz.
-        # "border: none" kuralı her iki durumda da (dolu/boş) geçerli.
+        # Ortak Stil (Border yok, padding ayarlı, yükseklik sabit)
         base_style = """
             QToolButton {
                 border: none;
@@ -356,7 +356,7 @@ class DatabaseTab(QWidget):
         
         if count > 0:
             self.btn_filter.setText(f" {tr('LBL_FILTER')} ({count})")
-            # Seçiliyken: Kalın yazı, tema vurgu rengi (highlight), ASLA BORDER YOK
+            # Seçiliyken: Kalın yazı, tema vurgu rengi (highlight)
             self.btn_filter.setStyleSheet(base_style + """
                 QToolButton {
                     font-weight: bold;
@@ -365,7 +365,7 @@ class DatabaseTab(QWidget):
             """)
         else:
             self.btn_filter.setText(f" {tr('LBL_FILTER')}")
-            # Seçili değilken: Normal yazı, standart metin rengi, ASLA BORDER YOK
+            # Seçili değilken: Normal yazı, standart metin rengi
             self.btn_filter.setStyleSheet(base_style + """
                 QToolButton {
                     font-weight: normal;
@@ -474,9 +474,12 @@ class DatabaseTab(QWidget):
         new_sheet.setProperty("entity_id", eid)
         new_sheet.request_open_entity.connect(lambda id: self.open_entity_tab(id, target_panel))
         
+        # Kayıt ve Değişiklik Sinyalleri
+        new_sheet.save_requested.connect(lambda: self.save_sheet_data(new_sheet))
+        new_sheet.data_changed.connect(lambda: self.mark_tab_unsaved(new_sheet, target_manager))
+        
         self.populate_sheet(new_sheet, data)
         
-        new_sheet.btn_save.clicked.connect(lambda: self.save_sheet_data(new_sheet))
         new_sheet.btn_delete.clicked.connect(lambda: self.delete_entity_from_tab(new_sheet))
         new_sheet.btn_show_player.clicked.connect(lambda: self.project_entity_image(new_sheet))
         new_sheet.btn_project_pdf.clicked.connect(lambda: self.project_entity_pdf(new_sheet))
@@ -487,10 +490,18 @@ class DatabaseTab(QWidget):
         
         icon_char = "👤" if data.get("type") == "NPC" else "🐉" if data.get("type") == "Monster" else "📜"
         tab_title = f"{icon_char} {data.get('name')}"
-        if not eid: tab_title = f"⚠️ {tab_title} (Unsaved)"
+        if not eid: tab_title = f"⚠️ {tab_title}"
             
         tab_index = target_manager.addTab(new_sheet, tab_title)
         target_manager.setCurrentIndex(tab_index)
+
+    def mark_tab_unsaved(self, sheet, manager):
+        """Veri değiştiğinde sekme başlığına yıldız ekler."""
+        idx = manager.indexOf(sheet)
+        if idx != -1:
+            current_title = manager.tabText(idx)
+            if not current_title.startswith("*") and not current_title.startswith("⚠️"):
+                manager.setTabText(idx, f"* {current_title}")
 
     def _fetch_and_open_api_entity(self, cat, idx, target_panel):
         self.api_worker = ApiSearchWorker(self.dm, cat, idx)
@@ -515,18 +526,26 @@ class DatabaseTab(QWidget):
         self.open_entity_tab(new_id, "left")
 
     def save_sheet_data(self, sheet):
+        """Artık mesaj kutusu göstermiyor, sessizce kaydedip UI güncelliyor."""
         eid = sheet.property("entity_id")
         data = self.collect_data_from_sheet(sheet)
         if not data: return
+        
         new_eid = self.dm.save_entity(eid, data)
         sheet.setProperty("entity_id", new_eid)
-        QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_SAVED"))
+        sheet.is_dirty = False
         
+        # Güncel veriyi çekip UI'da source'u güncelle (örn: '/ WorldName' eklendi)
+        updated_data = self.dm.data["entities"][new_eid]
+        sheet.inp_source.setText(updated_data.get("source", ""))
+        
+        # Başlıklardaki yıldızı kaldır
         for manager in [self.tab_manager_left, self.tab_manager_right]:
             idx = manager.indexOf(sheet)
             if idx != -1:
                 icon_char = "👤" if data.get("type") == "NPC" else "🐉"
                 manager.setTabText(idx, f"{icon_char} {data.get('name')}")
+                
         self.refresh_list()
 
     def delete_entity_from_tab(self, sheet):
@@ -572,8 +591,22 @@ class DatabaseTab(QWidget):
             QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
     
     def open_api_browser(self):
-        cat = "Monster"
-        if ApiBrowser(self.dm, cat, self).exec(): self.refresh_list()
+        # 1. Try to get category from Filter Button's active selection
+        target_cat = "Monster" # Default
+        
+        if self.active_categories:
+            # Pick the first one from the set
+            first_cat = list(self.active_categories)[0]
+            # Map internal keys to API Browser keys
+            if first_cat in ["NPC", "Monster"]: target_cat = "Monster"
+            elif first_cat == "Spell": target_cat = "Spell"
+            elif first_cat == "Equipment": target_cat = "Equipment"
+            elif first_cat == "Class": target_cat = "Class"
+            elif first_cat == "Race": target_cat = "Race"
+        
+        # 2. Open Dialog
+        if ApiBrowser(self.dm, target_cat, self).exec(): 
+            self.refresh_list()
         
     def open_bulk_downloader(self): BulkDownloadDialog(self).exec()
 
