@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QTextEdit,
 from PyQt6.QtCore import QDateTime
 from core.locales import tr
 from ui.widgets.combat_tracker import CombatTracker
+from ui.widgets.markdown_editor import MarkdownEditor # Yeni Markdown Bileşeni
 import random
 
 class SessionTab(QWidget):
@@ -13,6 +14,7 @@ class SessionTab(QWidget):
         self.current_session_id = None
         self.init_ui()
         
+        # Son aktif oturumu yükle
         last_sid = self.dm.get_last_active_session_id()
         
         if last_sid:
@@ -51,69 +53,60 @@ class SessionTab(QWidget):
         # --- SAĞ: NOTLAR & LOG ---
         right_layout = QVBoxLayout()
         
-        # Session Seçici
+        # Session Seçici ve Kontroller
         session_control = QHBoxLayout()
         self.combo_sessions = QComboBox()
         self.refresh_session_list()
         
-        # Session değişince otomatik yükle (opsiyonel ama kullanışlı)
-        # self.combo_sessions.currentIndexChanged.connect(self.load_session) 
-        # Ancak kullanıcı yeni oluştururken vs karışabilir, butona bırakalım şimdilik.
-        
         self.btn_new_session = QPushButton(tr("BTN_NEW_SESSION"))
         self.btn_new_session.clicked.connect(self.new_session)
         
-        # Manuel Kayıt Butonu (Auto-save var ama kullanıcılar basmayı sever)
         self.btn_save_session = QPushButton(tr("BTN_SAVE"))
         self.btn_save_session.clicked.connect(lambda: self.save_session(show_msg=True))
+        
+        self.btn_load_session = QPushButton(tr("BTN_LOAD_SESSION"))
+        self.btn_load_session.clicked.connect(self.load_session)
         
         session_control.addWidget(self.combo_sessions, 2)
         session_control.addWidget(self.btn_new_session, 1)
         session_control.addWidget(self.btn_save_session, 1)
-        
-        self.btn_load_session = QPushButton(tr("BTN_LOAD_SESSION"))
-        self.btn_load_session.clicked.connect(self.load_session)
-        session_control.addWidget(self.btn_load_session)
+        session_control.addWidget(self.btn_load_session, 1)
 
-        # Log
-        self.txt_log = QTextEdit()
+        # --- LOG ALANI (MARKDOWN EDITOR) ---
+        self.txt_log = MarkdownEditor()
         self.txt_log.setPlaceholderText(tr("LBL_EVENT_LOG_PH"))
-        # Log değişince de kaydet
+        # Değişiklik olduğunda otomatik kaydet
         self.txt_log.textChanged.connect(self.auto_save)
         
+        # Hızlı Log Girişi (Standart TextEdit kalabilir, sadece ekleme yapıyor)
         log_input_layout = QHBoxLayout()
         self.inp_log_entry = QTextEdit()
         self.inp_log_entry.setMaximumHeight(50)
+        self.inp_log_entry.setPlaceholderText("Hızlı log ekle...")
+        
         self.btn_add_log = QPushButton(tr("BTN_ADD_LOG"))
         self.btn_add_log.clicked.connect(self.add_log)
+        
         log_input_layout.addWidget(self.inp_log_entry)
         log_input_layout.addWidget(self.btn_add_log)
 
-        # Notlar
-        self.txt_notes = QTextEdit()
+        # --- NOTLAR ALANI (MARKDOWN EDITOR) ---
+        self.txt_notes = MarkdownEditor()
         self.txt_notes.setPlaceholderText(tr("LBL_NOTES"))
-        # Not değişince de kaydet
         self.txt_notes.textChanged.connect(self.auto_save)
 
+        # Yerleşim
         right_layout.addLayout(session_control)
+        right_layout.addWidget(QLabel(tr("LBL_LOG")))
         right_layout.addWidget(self.txt_log)
         right_layout.addLayout(log_input_layout)
+        right_layout.addWidget(QLabel(tr("LBL_NOTES")))
         right_layout.addWidget(self.txt_notes)
 
         layout.addLayout(left_layout, 1)
         layout.addLayout(right_layout, 1)
 
-    def load_session_by_id(self, session_id):
-        """Loads a session programmatically (e.g. from Map Tab)."""
-        idx = self.combo_sessions.findData(session_id)
-        if idx >= 0:
-            self.combo_sessions.setCurrentIndex(idx)
-            self.load_session() # This triggers the actual UI update
-        else:
-            QMessageBox.warning(self, tr("MSG_WARNING"), "Oturum bulunamadı veya silinmiş.")
-
     def retranslate_ui(self):
-        # Update labels and button texts
         self.btn_new_session.setText(tr("BTN_NEW_SESSION"))
         self.btn_save_session.setText(tr("BTN_SAVE"))
         self.btn_load_session.setText(tr("BTN_LOAD_SESSION"))
@@ -121,13 +114,6 @@ class SessionTab(QWidget):
         self.btn_add_log.setText(tr("BTN_ADD_LOG"))
         self.txt_notes.setPlaceholderText(tr("LBL_NOTES"))
         
-        # Static labels (need to find them or store them)
-        # For simplicity, I'll update the ones I have references for.
-        # Labels like "Olay Günlüğü" were added as QLabel(tr("LBL_LOG")) without refs.
-        # I should probably store references to them if I want to update them.
-        # But most users care about buttons and placeholders.
-        
-        # Update combat tracker
         if hasattr(self.combat_tracker, "retranslate_ui"):
             self.combat_tracker.retranslate_ui()
 
@@ -137,8 +123,18 @@ class SessionTab(QWidget):
         self.log_message(tr("MSG_ROLLED_DICE", sides=sides, result=result))
 
     def log_message(self, message):
+        """Loga zaman damgalı mesaj ekler."""
         timestamp = QDateTime.currentDateTime().toString("HH:mm")
-        self.txt_log.append(f"[{timestamp}] {message}")
+        # MarkdownEditor'e ekleme yapmak için mevcut metni alıp sonuna ekliyoruz
+        current_text = self.txt_log.toPlainText()
+        new_line = f"**[{timestamp}]** {message}"
+        
+        if current_text:
+            self.txt_log.setText(current_text + "\n" + new_line)
+        else:
+            self.txt_log.setText(new_line)
+            
+        # Değişiklik sinyali otomatik gideceği için auto_save çalışır
 
     def add_log(self):
         text = self.inp_log_entry.toPlainText().strip()
@@ -155,11 +151,11 @@ class SessionTab(QWidget):
             if idx >= 0: self.combo_sessions.setCurrentIndex(idx)
             
             self.current_session_id = sid
-            self.txt_log.clear()
-            self.txt_notes.clear()
+            self.txt_log.setText("")
+            self.txt_notes.setText("")
             self.combat_tracker.clear_tracker()
             self.log_message(tr("MSG_SESSION_STARTED", name=name))
-            self.save_session(show_msg=False) # İlk kaydı yap
+            self.save_session(show_msg=False)
 
     def refresh_session_list(self):
         self.combo_sessions.clear()
@@ -174,13 +170,16 @@ class SessionTab(QWidget):
         session_data = self.dm.get_session(sid)
         if session_data:
             self.current_session_id = sid
-            self.dm.set_active_session(sid) # Aktif olarak işaretle
+            self.dm.set_active_session(sid) 
             
-            # Notlar ve Loglar
+            # Markdown Editörlerini Doldur
+            # Sinyalleri geçici olarak durduruyoruz ki yüklerken auto_save tetiklenmesin
             self.txt_log.blockSignals(True)
             self.txt_notes.blockSignals(True)
-            self.txt_log.setHtml(session_data.get("logs", ""))
+            
+            self.txt_log.setText(session_data.get("logs", ""))
             self.txt_notes.setText(session_data.get("notes", ""))
+            
             self.txt_log.blockSignals(False)
             self.txt_notes.blockSignals(False)
             
@@ -190,9 +189,15 @@ class SessionTab(QWidget):
                  self.combat_tracker.load_session_state(combatants_data)
             else:
                  self.combat_tracker.load_combat_data(combatants_data)
-            
-            # Loga yazma (Gereksiz kalabalık etmesin)
-            # self.log_message("Oturum Yüklendi.")
+
+    def load_session_by_id(self, session_id):
+        """Timeline'dan veya dışarıdan çağrıldığında spesifik bir oturumu yükler."""
+        idx = self.combo_sessions.findData(session_id)
+        if idx >= 0:
+            self.combo_sessions.setCurrentIndex(idx)
+            self.load_session()
+        else:
+            QMessageBox.warning(self, tr("MSG_WARNING"), "Oturum bulunamadı veya silinmiş.")
 
     def auto_save(self):
         """Kullanıcıya mesaj göstermeden sessizce kaydeder."""
@@ -204,7 +209,8 @@ class SessionTab(QWidget):
             if show_msg: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_CREATE_SESSION_FIRST"))
             return
             
-        logs = self.txt_log.toHtml()
+        # MarkdownEditor'den ham metni (Markdown) alıyoruz
+        logs = self.txt_log.toPlainText()
         notes = self.txt_notes.toPlainText()
         combat_state = self.combat_tracker.get_session_state()
         
