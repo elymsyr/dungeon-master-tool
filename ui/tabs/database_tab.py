@@ -332,8 +332,10 @@ class DatabaseTab(QWidget):
         new_sheet.data_changed.connect(lambda: self.mark_tab_unsaved(new_sheet, target_manager))
         self.populate_sheet(new_sheet, data)
         new_sheet.btn_delete.clicked.connect(lambda: self.delete_entity_from_tab(new_sheet))
-        new_sheet.btn_show_player.clicked.connect(lambda: self.project_entity_image(new_sheet))
+        
+        # --- BUTON BAĞLANTILARI ---
         new_sheet.btn_project_pdf.clicked.connect(lambda: self.project_entity_pdf(new_sheet))
+        
         new_sheet.btn_add_pdf.clicked.connect(new_sheet.add_pdf_dialog)
         new_sheet.btn_open_pdf.clicked.connect(new_sheet.open_current_pdf)
         new_sheet.btn_remove_pdf.clicked.connect(new_sheet.remove_current_pdf)
@@ -342,6 +344,41 @@ class DatabaseTab(QWidget):
         tab_title = f"{icon_char} {data.get('name')}"
         if not eid: tab_title = f"⚠️ {tab_title}"
         tab_index = target_manager.addTab(new_sheet, tab_title); target_manager.setCurrentIndex(tab_index)
+
+    # --- EKLENEN METODLAR (HATA DÜZELTMESİ) ---
+    def project_entity_image(self, sheet):
+        if not sheet.image_list:
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_IMAGE_IN_ENTITY"))
+            return
+        
+        # Geçerli resim yolunu al
+        rel_path = sheet.image_list[sheet.current_img_index]
+        full_path = self.dm.get_full_path(rel_path)
+        
+        if full_path and os.path.exists(full_path):
+            # Player Window'a çoklu resim desteğiyle ekle
+            self.player_window.add_image_to_view(full_path)
+            if not self.player_window.isVisible():
+                self.player_window.show()
+        else:
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
+
+    def project_entity_pdf(self, sheet):
+        current_item = sheet.list_pdfs.currentItem()
+        if not current_item:
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_PDF_FIRST"))
+            return
+            
+        rel_path = current_item.text()
+        full_path = self.dm.get_full_path(rel_path)
+        
+        if full_path and os.path.exists(full_path):
+            self.player_window.show_pdf(full_path)
+            if not self.player_window.isVisible():
+                self.player_window.show()
+        else:
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_FILE_NOT_FOUND_DISK"))
+    # ------------------------------------------
 
     def mark_tab_unsaved(self, sheet, manager):
         idx = manager.indexOf(sheet)
