@@ -1,6 +1,3 @@
-Here is the updated `README.md` file. I have reorganized the **Roadmap**, added a **Feature Guide** for the new Projection and Fog systems, and included a detailed section on **Customizing the Soundpad**.
-
-```markdown
 # 🐉 Dungeon Master Tool
 
 ![Status](https://img.shields.io/badge/Status-Beta-blue)
@@ -149,4 +146,3 @@ python main.py
 
 ## ⚠️ Disclaimer
 This project is currently in **Alpha**. Expect frequent updates and occasional bugs. Backup your world data regularly!
-```
