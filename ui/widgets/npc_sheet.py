@@ -98,13 +98,9 @@ class NpcSheet(QWidget):
         btn_img_actions.addWidget(self.btn_add_img)
         btn_img_actions.addWidget(self.btn_remove_img)
 
-        self.btn_show_player = QPushButton(tr("BTN_SHOW_PLAYER"))
-        self.btn_show_player.setObjectName("primaryBtn")
-        
         img_layout.addWidget(self.lbl_image)
         img_layout.addLayout(gallery_controls)
         img_layout.addLayout(btn_img_actions)
-        img_layout.addWidget(self.btn_show_player)
         img_layout.addStretch()
 
         # Metadata Column (Right)
@@ -626,10 +622,21 @@ class NpcSheet(QWidget):
     def show_next_image(self):
         if self.image_list: self.current_img_index=(self.current_img_index+1)%len(self.image_list); self.update_image_display()
     def update_image_display(self):
-        if not self.image_list: self.lbl_image.setPixmap(None); self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE")); self.lbl_img_counter.setText("0/0"); return
+        if not self.image_list: 
+            self.lbl_image.setPixmap(None, path=None) # Path None
+            self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE"))
+            self.lbl_img_counter.setText("0/0")
+            return
+            
         p = self.dm.get_full_path(self.image_list[self.current_img_index])
-        if p and os.path.exists(p): self.lbl_image.setPixmap(QPixmap(p))
-        else: self.lbl_image.setPixmap(None); self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE"))
+        
+        if p and os.path.exists(p): 
+            # setPixmap metoduna path parametresini de veriyoruz
+            self.lbl_image.setPixmap(QPixmap(p), path=p) 
+        else: 
+            self.lbl_image.setPixmap(None, path=None)
+            self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE"))
+            
         self.lbl_img_counter.setText(f"{self.current_img_index+1}/{len(self.image_list)}")
     
     def add_pdf_dialog(self):

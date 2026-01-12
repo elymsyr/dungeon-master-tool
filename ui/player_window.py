@@ -1,7 +1,6 @@
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QStackedWidget, QTextBrowser
+from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QStackedWidget, QTextBrowser, QHBoxLayout
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QPixmap
-# QWebEngineView is imported lazily in show_pdf() to prevent segfault on startup
 from ui.widgets.image_viewer import ImageViewer
 
 class PlayerWindow(QMainWindow):
@@ -16,14 +15,16 @@ class PlayerWindow(QMainWindow):
         layout = QVBoxLayout(central)
         layout.setContentsMargins(0, 0, 0, 0)
         
-        # STACKED WIDGET (Sayfalar arası geçiş için)
         self.stack = QStackedWidget()
         
-        # SAYFA 0: RESİM GÖRÜNTÜLEYİCİ (Zoom/Pan özellikli)
-        self.image_viewer = ImageViewer()
-        self.stack.addWidget(self.image_viewer)
+        # SAYFA 0: ÇOKLU RESİM GÖRÜNTÜLEYİCİ
+        self.multi_image_widget = QWidget()
+        self.multi_image_layout = QHBoxLayout(self.multi_image_widget)
+        self.multi_image_layout.setContentsMargins(0, 0, 0, 0)
+        self.multi_image_layout.setSpacing(2)
+        self.stack.addWidget(self.multi_image_widget)
         
-        # SAYFA 1: KARAKTER KARTI (HTML Stat Block)
+        # SAYFA 1: KARAKTER KARTI
         self.stat_viewer = QTextBrowser()
         self.stat_viewer.setStyleSheet("""
             QTextBrowser {
@@ -36,46 +37,78 @@ class PlayerWindow(QMainWindow):
         """)
         self.stack.addWidget(self.stat_viewer)
 
-        # SAYFA 2: PDF GÖRÜNTÜLEYİCİ (WebEngine) - Lazy loaded
-        # QWebEngineView is created on first use to avoid segfault on startup
+        # SAYFA 2: PDF GÖRÜNTÜLEYİCİ
         self.pdf_viewer = None
-        self.pdf_viewer_index = None  # Track the stack index when created
+        self.pdf_viewer_index = None
         
         layout.addWidget(self.stack)
+        self.active_image_paths = []
 
-    def show_image(self, pixmap):
-        """Sadece resmi gösterir"""
+    def add_image_to_view(self, image_path, pixmap=None):
+        """Ekrana yeni bir resim ekler. Pixmap varsa direkt kullanır."""
         self.stack.setCurrentIndex(0)
-        self.image_viewer.set_image(pixmap)
+        
+        if image_path in self.active_image_paths:
+            return
+
+        viewer = ImageViewer()
+        
+        if pixmap:
+            # Hafızadan gelen (Harita vs.)
+            viewer.set_image(pixmap)
+        else:
+            # Dosyadan okunan (Sürükle bırak)
+            loaded_pix = QPixmap(image_path)
+            viewer.set_image(loaded_pix)
+        
+        self.multi_image_layout.addWidget(viewer)
+        self.active_image_paths.append(image_path)
+
+    def remove_image_from_view(self, image_path):
+        if image_path not in self.active_image_paths:
+            return
+            
+        index = self.active_image_paths.index(image_path)
+        item = self.multi_image_layout.itemAt(index)
+        if item:
+            widget = item.widget()
+            self.multi_image_layout.removeWidget(widget)
+            widget.deleteLater()
+            
+        self.active_image_paths.pop(index)
+
+    def clear_images(self):
+        while self.multi_image_layout.count():
+            item = self.multi_image_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        self.active_image_paths.clear()
+
+    # Eski uyumluluk metodları
+    def show_image(self, pixmap):
+        self.clear_images()
+        self.stack.setCurrentIndex(0)
+        viewer = ImageViewer()
+        viewer.set_image(pixmap)
+        self.multi_image_layout.addWidget(viewer)
 
     def show_stat_block(self, html_content):
-        """Karakter kartını (HTML) gösterir"""
         self.stack.setCurrentIndex(1)
         self.stat_viewer.setHtml(html_content)
 
     def show_pdf(self, pdf_path):
-        """PDF dosyasını gösterir (lazy loads QWebEngineView on first use)"""
-        # Lazy initialization: create QWebEngineView only when needed
         if self.pdf_viewer is None:
             from PyQt6.QtWebEngineWidgets import QWebEngineView
             self.pdf_viewer = QWebEngineView()
             self.pdf_viewer.setStyleSheet("background-color: #333;")
             self.stack.addWidget(self.pdf_viewer)
             self.pdf_viewer_index = self.stack.count() - 1
-            
-            # Enable PDF viewing settings
-            self.pdf_viewer.settings().setAttribute(
-                self.pdf_viewer.settings().WebAttribute.PluginsEnabled, True
-            )
-            self.pdf_viewer.settings().setAttribute(
-                self.pdf_viewer.settings().WebAttribute.PdfViewerEnabled, True
-            )
+            self.pdf_viewer.settings().setAttribute(self.pdf_viewer.settings().WebAttribute.PluginsEnabled, True)
+            self.pdf_viewer.settings().setAttribute(self.pdf_viewer.settings().WebAttribute.PdfViewerEnabled, True)
         
-        # Switch to PDF viewer and load the file
         self.stack.setCurrentIndex(self.pdf_viewer_index)
         local_url = QUrl.fromLocalFile(pdf_path)
         self.pdf_viewer.setUrl(local_url)
 
     def update_theme(self, qss):
-        """Uygulanan QSS'i pencereye yansıtır"""
         self.setStyleSheet(qss)
