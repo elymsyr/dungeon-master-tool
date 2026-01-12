@@ -5,7 +5,7 @@ from PyQt6.QtCore import QDateTime
 from core.locales import tr
 from ui.widgets.combat_tracker import CombatTracker
 from ui.widgets.markdown_editor import MarkdownEditor
-from ui.windows.battle_map_window import BattleMapWidget # Yeni Widget
+from ui.windows.battle_map_window import BattleMapWidget
 import random
 
 class SessionTab(QWidget):
@@ -28,14 +28,18 @@ class SessionTab(QWidget):
     def init_ui(self):
         layout = QHBoxLayout(self)
 
-        # --- SOL: SAVAŞ TAKİPÇİSİ ---
         left_layout = QVBoxLayout()
         self.combat_tracker = CombatTracker(self.dm)
         
-        # Bağlantılar
-        self.combat_tracker.data_changed_signal.connect(self.auto_save)
-        # CombatTracker değiştiğinde gömülü haritayı güncelle
+        # --- KEY CONNECTIONS ---
+        # 1. Attach handler so CombatTracker can save fog just before switching encounters
+        self.combat_tracker.set_fog_save_handler(self.save_fog_for_encounter)
+        
+        # 2. When data changes, FIRST refresh the map/fog to the new encounter
         self.combat_tracker.data_changed_signal.connect(self.refresh_embedded_map)
+        
+        # 3. THEN auto-save the session state (now safe because map is updated)
+        self.combat_tracker.data_changed_signal.connect(self.auto_save)
         
         left_layout.addWidget(QLabel(tr("TITLE_COMBAT")))
         left_layout.addWidget(self.combat_tracker)
@@ -48,18 +52,17 @@ class SessionTab(QWidget):
             dice_layout.addWidget(btn)
         left_layout.addWidget(dice_group)
         
-        # --- SAĞ: KONTROLLER VE TABLAR ---
         right_layout = QVBoxLayout()
-        
-        # Session Kontrolleri
         session_control = QHBoxLayout()
         self.combo_sessions = QComboBox()
         self.refresh_session_list()
         
         self.btn_new_session = QPushButton(tr("BTN_NEW_SESSION"))
         self.btn_new_session.clicked.connect(self.new_session)
+        
         self.btn_save_session = QPushButton(tr("BTN_SAVE"))
         self.btn_save_session.clicked.connect(lambda: self.save_session(show_msg=True))
+        
         self.btn_load_session = QPushButton(tr("BTN_LOAD_SESSION"))
         self.btn_load_session.clicked.connect(self.load_session)
         
@@ -68,7 +71,6 @@ class SessionTab(QWidget):
         session_control.addWidget(self.btn_save_session, 1)
         session_control.addWidget(self.btn_load_session, 1)
 
-        # Log
         self.txt_log = MarkdownEditor()
         self.txt_log.setPlaceholderText(tr("LBL_EVENT_LOG_PH"))
         self.txt_log.textChanged.connect(self.auto_save)
@@ -85,10 +87,7 @@ class SessionTab(QWidget):
         log_input_layout.addWidget(self.inp_log_entry)
         log_input_layout.addWidget(self.btn_add_log)
 
-        # --- ALT KISIM: TABLAR (DM Notes | Battle Map) ---
         self.bottom_tabs = QTabWidget()
-        
-        # TAB 1: DM Notes
         self.tab_dm_notes = QWidget()
         notes_layout = QVBoxLayout(self.tab_dm_notes)
         notes_layout.setContentsMargins(0, 0, 0, 0)
@@ -97,15 +96,14 @@ class SessionTab(QWidget):
         self.txt_notes.textChanged.connect(self.auto_save)
         notes_layout.addWidget(self.txt_notes)
         
-        # TAB 2: Battle Map (Embedded)
-        self.embedded_map = BattleMapWidget()
-        
-        # Gömülü haritadan gelen hareket sinyalleri CombatTracker'a gidiyor
+        self.embedded_map = BattleMapWidget(is_dm_view=True)
         self.embedded_map.token_moved_signal.connect(self.combat_tracker.on_token_moved_in_map)
         self.embedded_map.token_size_changed_signal.connect(self.combat_tracker.on_token_size_changed)
-        
-        # YENİ: Gömülü haritadaki zoom/pan hareketini dış pencereye aktar
         self.embedded_map.view_sync_signal.connect(self.combat_tracker.sync_map_view_to_external)
+        self.embedded_map.fog_update_signal.connect(self.combat_tracker.sync_fog_to_external)
+        
+        # When fog changes, save immediately (without triggering circular signals)
+        self.embedded_map.fog_update_signal.connect(lambda: self.save_session(show_msg=False))
         
         self.bottom_tabs.addTab(self.tab_dm_notes, "📝 " + tr("LBL_NOTES"))
         self.bottom_tabs.addTab(self.embedded_map, "🗺️ " + tr("TITLE_BATTLE_MAP"))
@@ -119,22 +117,21 @@ class SessionTab(QWidget):
         layout.addLayout(left_layout, 2)
         layout.addLayout(right_layout, 3)
 
-    # ... (roll_dice, log_message, add_log, new_session vb. aynı kalıyor) ...
-    # Sadece yeni eklenen fonksiyonları buraya yazıyorum:
+    def save_fog_for_encounter(self, encounter_id):
+        """Called by CombatTracker right BEFORE switching encounter ID."""
+        if encounter_id in self.combat_tracker.encounters:
+            fog_b64 = self.embedded_map.get_fog_data_base64()
+            if fog_b64:
+                self.combat_tracker.encounters[encounter_id]["fog_data"] = fog_b64
 
     def refresh_embedded_map(self):
-        """
-        Combat Tracker'daki değişiklikleri gömülü haritaya yansıtır.
-        """
-        # Eğer aktif bir encounter yoksa çık
-        if not self.combat_tracker.current_encounter_id: 
-            return
-        
+        """Loads map and fog for the CURRENT encounter ID."""
+        if not self.combat_tracker.current_encounter_id: return
         enc = self.combat_tracker.encounters.get(self.combat_tracker.current_encounter_id)
         if not enc: return
         
-        # Eğer gömülü harita görünür değilse güncelleme yapma (Performans)
-        # Ama verilerin güncel kalması için yapmak daha güvenli olabilir.
+        # 1. Reset Fog FIRST to avoid ghosting
+        self.embedded_map.reset_fog()
         
         combatants = []
         for c in enc.get("combatants", []):
@@ -150,7 +147,7 @@ class SessionTab(QWidget):
              
         map_path = self.dm.get_full_path(enc.get("map_path"))
         
-        # BattleMapWidget'ın yeni akıllı update fonksiyonunu çağır
+        # 2. Update Map/Tokens
         self.embedded_map.update_tokens(
             combatants, 
             enc.get("turn_index", -1), 
@@ -158,49 +155,29 @@ class SessionTab(QWidget):
             map_path, 
             enc.get("token_size", 50)
         )
+        
+        # 3. Load Fog
+        fog_data = enc.get("fog_data")
+        if fog_data:
+            self.embedded_map.load_fog_from_base64(fog_data)
+        else:
+            # If map exists but no fog data, default to full black
+            if map_path:
+                self.embedded_map.fill_fog()
 
-    def load_session(self):
-        # ... Mevcut load_session kodunun sonuna ekle:
-        # Session yüklendiğinde haritayı da tetikle
-        self.refresh_embedded_map() 
-    
-    # ... (Diğer fonksiyonlar: save_session, auto_save vb. aynı) ...
-    def roll_dice(self, sides):
-        result = random.randint(1, sides)
-        self.log_message(tr("MSG_ROLLED_DICE", sides=sides, result=result))
-
-    def log_message(self, message):
-        timestamp = QDateTime.currentDateTime().toString("HH:mm")
-        current_text = self.txt_log.toPlainText()
-        new_line = f"**[{timestamp}]** {message}"
-        if current_text: self.txt_log.setText(current_text + "\n" + new_line)
-        else: self.txt_log.setText(new_line)
-
-    def add_log(self):
-        text = self.inp_log_entry.toPlainText().strip()
-        if text:
-            self.log_message(text)
-            self.inp_log_entry.clear()
-
-    def new_session(self):
-        name, ok = QInputDialog.getText(self, tr("TITLE_NEW_SESSION"), tr("LBL_SESSION_NAME"))
-        if ok and name:
-            sid = self.dm.create_session(name)
-            self.refresh_session_list()
-            idx = self.combo_sessions.findData(sid)
-            if idx >= 0: self.combo_sessions.setCurrentIndex(idx)
-            self.current_session_id = sid
-            self.txt_log.setText("")
-            self.txt_notes.setText("")
-            self.combat_tracker.clear_tracker()
-            self.log_message(tr("MSG_SESSION_STARTED", name=name))
-            self.save_session(show_msg=False)
-
-    def refresh_session_list(self):
-        self.combo_sessions.clear()
-        sessions = self.dm.data.get("sessions", [])
-        for s in sessions:
-            self.combo_sessions.addItem(s["name"], s["id"])
+    def save_session(self, show_msg=False):
+        if not self.current_session_id:
+            if show_msg: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_CREATE_SESSION_FIRST"))
+            return
+        
+        # Save current fog to current ID
+        if self.combat_tracker.current_encounter_id:
+            self.save_fog_for_encounter(self.combat_tracker.current_encounter_id)
+        
+        logs = self.txt_log.toPlainText()
+        notes = self.txt_notes.toPlainText()
+        combat_state = self.combat_tracker.get_session_state()
+        self.dm.save_session_data(self.current_session_id, notes, logs, combat_state)
 
     def load_session(self):
         sid = self.combo_sessions.currentData()
@@ -215,27 +192,46 @@ class SessionTab(QWidget):
             self.txt_notes.setText(session_data.get("notes", ""))
             self.txt_log.blockSignals(False)
             self.txt_notes.blockSignals(False)
+            
             combatants_data = session_data.get("combatants", [])
-            if isinstance(combatants_data, dict): self.combat_tracker.load_session_state(combatants_data)
-            else: self.combat_tracker.load_combat_data(combatants_data)
-            self.refresh_embedded_map() # EKLENDİ
+            if isinstance(combatants_data, dict): 
+                self.combat_tracker.load_session_state(combatants_data)
+            else: 
+                self.combat_tracker.load_combat_data(combatants_data)
+            
+            self.refresh_embedded_map()
 
+    # --- Standard Methods ---
+    def roll_dice(self, sides):
+        result = random.randint(1, sides)
+        self.log_message(tr("MSG_ROLLED_DICE", sides=sides, result=result))
+    def log_message(self, message):
+        timestamp = QDateTime.currentDateTime().toString("HH:mm")
+        current_text = self.txt_log.toPlainText()
+        new_line = f"**[{timestamp}]** {message}"
+        if current_text: self.txt_log.setText(current_text + "\n" + new_line)
+        else: self.txt_log.setText(new_line)
+    def add_log(self):
+        text = self.inp_log_entry.toPlainText().strip()
+        if text: self.log_message(text); self.inp_log_entry.clear()
+    def new_session(self):
+        name, ok = QInputDialog.getText(self, tr("TITLE_NEW_SESSION"), tr("LBL_SESSION_NAME"))
+        if ok and name:
+            sid = self.dm.create_session(name); self.refresh_session_list(); idx = self.combo_sessions.findData(sid)
+            if idx >= 0: self.combo_sessions.setCurrentIndex(idx)
+            self.current_session_id = sid; self.txt_log.setText(""); self.txt_notes.setText(""); self.combat_tracker.clear_tracker()
+            self.log_message(tr("MSG_SESSION_STARTED", name=name)); self.save_session(show_msg=False)
+    def refresh_session_list(self):
+        self.combo_sessions.clear(); sessions = self.dm.data.get("sessions", [])
+        for s in sessions: self.combo_sessions.addItem(s["name"], s["id"])
     def load_session_by_id(self, session_id):
         idx = self.combo_sessions.findData(session_id)
-        if idx >= 0:
-            self.combo_sessions.setCurrentIndex(idx)
-            self.load_session()
-        else:
-            QMessageBox.warning(self, tr("MSG_WARNING"), "Oturum bulunamadı veya silinmiş.")
-
+        if idx >= 0: self.combo_sessions.setCurrentIndex(idx); self.load_session()
+        else: QMessageBox.warning(self, tr("MSG_WARNING"), "Oturum bulunamadı veya silinmiş.")
+    def retranslate_ui(self):
+        self.btn_new_session.setText(tr("BTN_NEW_SESSION")); self.btn_save_session.setText(tr("BTN_SAVE")); self.btn_load_session.setText(tr("BTN_LOAD_SESSION"))
+        self.txt_log.setPlaceholderText(tr("LBL_EVENT_LOG_PH")); self.btn_add_log.setText(tr("BTN_ADD_LOG")); self.txt_notes.setPlaceholderText(tr("LBL_NOTES"))
+        self.bottom_tabs.setTabText(0, "📝 " + tr("LBL_NOTES")); self.bottom_tabs.setTabText(1, "🗺️ " + tr("TITLE_BATTLE_MAP")); self.embedded_map.retranslate_ui()
+        if hasattr(self.combat_tracker, "retranslate_ui"): self.combat_tracker.retranslate_ui()
     def auto_save(self):
         if self.current_session_id: self.save_session(show_msg=False)
-
-    def save_session(self, show_msg=False):
-        if not self.current_session_id:
-            if show_msg: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_CREATE_SESSION_FIRST"))
-            return
-        logs = self.txt_log.toPlainText()
-        notes = self.txt_notes.toPlainText()
-        combat_state = self.combat_tracker.get_session_state()
-        self.dm.save_session_data(self.current_session_id, notes, logs, combat_state)

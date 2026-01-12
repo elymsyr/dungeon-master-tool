@@ -1,17 +1,71 @@
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QLabel, QScrollArea, QFrame, QGraphicsView, 
                              QGraphicsScene, QGraphicsEllipseItem, QSlider, 
-                             QGraphicsPixmapItem, QPushButton)
+                             QGraphicsPixmapItem, QPushButton, QCheckBox, QGraphicsPathItem)
 from PyQt6.QtGui import (QPixmap, QColor, QFont, QBrush, QPen, QPainter, 
-                         QPainterPath, QCursor, QWheelEvent, QMouseEvent)
-from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF, QTimer, QRect, QPoint
+                         QPainterPath, QCursor, QWheelEvent, QMouseEvent, QImage, QPolygonF)
+from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF, QTimer, QRect, QPoint, QByteArray, QBuffer, QIODevice
 from core.locales import tr
 import os
+import base64
 
-# --- ÖZELLEŞTİRİLMİŞ GRAFİK GÖRÜNÜMÜ ---
+# --- FOG OF WAR LAYER ---
+class FogItem(QGraphicsPixmapItem):
+    def __init__(self, width, height):
+        super().__init__()
+        self.setZValue(200) # Above tokens
+        # Start completely black (filled)
+        self.image = QImage(int(width), int(height), QImage.Format.Format_ARGB32)
+        self.image.fill(QColor(0, 0, 0, 255)) 
+        self.update_pixmap()
+        
+    def update_pixmap(self):
+        self.setPixmap(QPixmap.fromImage(self.image))
+
+    def paint_polygon(self, points, is_adding):
+        if not points or len(points) < 2: return
+        painter = QPainter(self.image)
+        try:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+            
+            if is_adding:
+                brush_color = QColor(0, 0, 0, 255)
+                mode = QPainter.CompositionMode.CompositionMode_SourceOver
+            else:
+                brush_color = Qt.GlobalColor.transparent
+                mode = QPainter.CompositionMode.CompositionMode_Clear
+
+            painter.setCompositionMode(mode)
+            painter.setBrush(QBrush(brush_color))
+            
+            pen = QPen(brush_color)
+            pen.setWidthF(2.0) 
+            pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+            pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+            painter.setPen(pen)
+            
+            path = QPainterPath()
+            path.moveTo(points[0])
+            for p in points[1:]:
+                path.lineTo(p)
+            
+            path.closeSubpath()
+            painter.drawPath(path)
+            
+        finally:
+            painter.end()
+            
+        self.update_pixmap()
+
+    def set_fog_image(self, qimage):
+        self.image = qimage
+        self.update_pixmap()
+
+# --- CUSTOM GRAPHICS VIEW ---
 class BattleMapView(QGraphicsView):
-    # Sinyal: Görünen Alan Dikdörtgeni (Rect)
     view_changed_signal = pyqtSignal(QRectF)
+    fog_changed_signal = pyqtSignal(object) 
 
     def __init__(self, scene, parent=None):
         super().__init__(scene, parent)
@@ -25,25 +79,34 @@ class BattleMapView(QGraphicsView):
         self._is_panning = False
         self._pan_start_pos = QPoint()
         self._programmatic_change = False
+        
+        # Fog Editing
+        self.is_fog_edit_mode = False
+        self.fog_item = None
+        self._is_drawing_fog = False
+        self._current_fog_points = [] 
+        self._last_paint_mode = True 
+        
+        # Visual Feedback Line
+        self._temp_path_item = QGraphicsPathItem()
+        self._temp_path_item.setZValue(250) 
+        pen = QPen(Qt.GlobalColor.yellow, 2, Qt.PenStyle.DashLine)
+        self._temp_path_item.setPen(pen)
+        scene.addItem(self._temp_path_item)
+
+    def set_fog_item(self, item):
+        self.fog_item = item
 
     def _emit_view_state(self):
-        """Ekranda görünen harita alanını hesaplar ve gönderir."""
         if self._programmatic_change: return
-        
-        # Viewport (Ekran) karesini Sahne (Harita) koordinatlarına çevir
         viewport_rect = self.viewport().rect()
         scene_rect = self.mapToScene(viewport_rect).boundingRect()
-        
         self.view_changed_signal.emit(scene_rect)
 
     def wheelEvent(self, event: QWheelEvent):
-        zoom_in_factor = 1.15
-        zoom_out_factor = 1 / zoom_in_factor
-        if event.angleDelta().y() > 0:
-            self.scale(zoom_in_factor, zoom_in_factor)
-        else:
-            self.scale(zoom_out_factor, zoom_out_factor)
-        
+        zoom_in = 1.15; zoom_out = 1/1.15
+        if event.angleDelta().y() > 0: self.scale(zoom_in, zoom_in)
+        else: self.scale(zoom_out, zoom_out)
         self._emit_view_state()
 
     def mousePressEvent(self, event: QMouseEvent):
@@ -52,16 +115,19 @@ class BattleMapView(QGraphicsView):
             self._pan_start_pos = event.pos()
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
             event.accept()
-        else:
-            super().mousePressEvent(event)
+            return
 
-    def mouseReleaseEvent(self, event: QMouseEvent):
-        if event.button() == Qt.MouseButton.MiddleButton:
-            self._is_panning = False
-            self.setCursor(Qt.CursorShape.ArrowCursor)
-            event.accept()
-        else:
-            super().mouseReleaseEvent(event)
+        if self.is_fog_edit_mode and self.fog_item:
+            if event.button() == Qt.MouseButton.LeftButton:
+                self._last_paint_mode = True # Add
+                self._start_fog_draw(event.pos())
+                event.accept(); return
+            elif event.button() == Qt.MouseButton.RightButton:
+                self._last_paint_mode = False # Remove
+                self._start_fog_draw(event.pos())
+                event.accept(); return
+
+        super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent):
         if self._is_panning:
@@ -71,17 +137,71 @@ class BattleMapView(QGraphicsView):
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
             event.accept()
             self._emit_view_state()
-        else:
-            super().mouseMoveEvent(event)
+            return
+
+        if self._is_drawing_fog:
+            self._continue_fog_draw(event.pos())
+            event.accept()
+            return
+
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.MiddleButton:
+            self._is_panning = False
+            self.setCursor(Qt.CursorShape.ArrowCursor if not self.is_fog_edit_mode else Qt.CursorShape.CrossCursor)
+            event.accept()
+        
+        if self._is_drawing_fog:
+            self._finish_fog_draw()
+            event.accept()
+            return
+
+        super().mouseReleaseEvent(event)
+
+    # --- FOG DRAWING LOGIC ---
+    def _start_fog_draw(self, view_pos):
+        self._is_drawing_fog = True
+        self._current_fog_points = [self.mapToScene(view_pos)]
+        
+        color = Qt.GlobalColor.red if self._last_paint_mode else Qt.GlobalColor.green
+        pen = QPen(color, 2, Qt.PenStyle.SolidLine)
+        pen.setCosmetic(True)
+        self._temp_path_item.setPen(pen)
+        self._temp_path_item.setPath(QPainterPath())
+        self._temp_path_item.setVisible(True)
+
+    def _continue_fog_draw(self, view_pos):
+        scene_pos = self.mapToScene(view_pos)
+        if self._current_fog_points and (scene_pos - self._current_fog_points[-1]).manhattanLength() < 2:
+            return
+            
+        self._current_fog_points.append(scene_pos)
+        
+        path = QPainterPath()
+        if self._current_fog_points:
+            path.moveTo(self._current_fog_points[0])
+            for p in self._current_fog_points[1:]:
+                path.lineTo(p)
+        self._temp_path_item.setPath(path)
+
+    def _finish_fog_draw(self):
+        self._is_drawing_fog = False
+        self._temp_path_item.setVisible(False)
+        self._temp_path_item.setPath(QPainterPath()) 
+        
+        if self.fog_item and len(self._current_fog_points) > 2:
+            self.fog_item.paint_polygon(self._current_fog_points, self._last_paint_mode)
+            self.fog_changed_signal.emit(self.fog_item.image)
+        
+        self._current_fog_points = []
 
     def set_view_state(self, rect):
-        """Dışarıdan gelen dikdörtgeni ekrana sığdırır (Fit)."""
         self._programmatic_change = True
-        # KeepAspectRatio: En/Boy oranını koruyarak sığdır (Tam görünüm)
         self.fitInView(rect, Qt.AspectRatioMode.KeepAspectRatio)
         self._programmatic_change = False
 
-# --- YARDIMCI SINIFLAR ---
+# --- HELPERS ---
 class SidebarConditionIcon(QWidget):
     def __init__(self, name, icon_path, duration):
         super().__init__()
@@ -117,35 +237,133 @@ class BattleTokenItem(QGraphicsEllipseItem):
         super().mouseReleaseEvent(event)
         if self.on_move_callback: self.on_move_callback(self.tid, self.pos().x(), self.pos().y())
 
-# --- ORTAK HARİTA WIDGET'I ---
+# --- SHARED MAP WIDGET ---
 class BattleMapWidget(QWidget):
     token_moved_signal = pyqtSignal(str, float, float)
     token_size_changed_signal = pyqtSignal(int)
     view_sync_signal = pyqtSignal(QRectF)
+    fog_update_signal = pyqtSignal(object) 
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, is_dm_view=False):
         super().__init__(parent)
         self.tokens = {} 
         self.token_size = 50 
         self.map_item = None
         self.current_map_path = None
+        self.fog_item = None
+        self.is_dm_view = is_dm_view 
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
         toolbar = QHBoxLayout(); toolbar.setContentsMargins(5, 5, 5, 5)
-        self.btn_reset_view = QPushButton("🏠"); self.btn_reset_view.setToolTip("Fit Map to View"); self.btn_reset_view.setFixedSize(30, 25); self.btn_reset_view.clicked.connect(self.fit_map_in_view)
+        self.btn_reset_view = QPushButton("🏠"); self.btn_reset_view.setToolTip(tr("TIP_FIT_VIEW")); self.btn_reset_view.setFixedSize(30, 25); self.btn_reset_view.clicked.connect(self.fit_map_in_view)
+        
         self.lbl_size = QLabel(tr("LBL_TOKEN_SIZE")); self.lbl_size.setObjectName("toolbarLabel")
-        self.slider_size = QSlider(Qt.Orientation.Horizontal); self.slider_size.setMinimum(20); self.slider_size.setMaximum(300); self.slider_size.setValue(self.token_size); self.slider_size.valueChanged.connect(self.change_token_size); self.slider_size.setFixedWidth(150)
-        toolbar.addWidget(self.btn_reset_view); toolbar.addWidget(self.lbl_size); toolbar.addWidget(self.slider_size); toolbar.addStretch(); layout.addLayout(toolbar)
+        self.slider_size = QSlider(Qt.Orientation.Horizontal); self.slider_size.setMinimum(20); self.slider_size.setMaximum(300); self.slider_size.setValue(self.token_size); self.slider_size.valueChanged.connect(self.change_token_size); self.slider_size.setFixedWidth(120)
+        
+        toolbar.addWidget(self.btn_reset_view)
+        toolbar.addWidget(self.lbl_size)
+        toolbar.addWidget(self.slider_size)
+        
+        if self.is_dm_view:
+            toolbar.addSpacing(15)
+            self.btn_fog_toggle = QPushButton(tr("BTN_FOG")); self.btn_fog_toggle.setCheckable(True)
+            self.btn_fog_toggle.setStyleSheet("QPushButton:checked { background-color: #d32f2f; color: white; font-weight: bold; }")
+            self.btn_fog_toggle.clicked.connect(self.toggle_fog_mode)
+            toolbar.addWidget(self.btn_fog_toggle)
+            
+            self.lbl_fog_hint = QLabel(tr("LBL_FOG_HINT"))
+            self.lbl_fog_hint.setStyleSheet("color: #aaa; font-size: 10px; margin-left: 5px; margin-right: 5px;")
+            toolbar.addWidget(self.lbl_fog_hint)
+            
+            self.btn_fog_fill = QPushButton(tr("BTN_FOG_FILL")); self.btn_fog_fill.setFixedSize(60, 25)
+            self.btn_fog_fill.clicked.connect(self.fill_fog)
+            self.btn_fog_clear = QPushButton(tr("BTN_FOG_CLEAR")); self.btn_fog_clear.setFixedSize(60, 25)
+            self.btn_fog_clear.clicked.connect(self.clear_fog)
+            toolbar.addWidget(self.btn_fog_fill)
+            toolbar.addWidget(self.btn_fog_clear)
+
+        toolbar.addStretch()
+        layout.addLayout(toolbar)
         
         self.scene = QGraphicsScene(); self.scene.setBackgroundBrush(QBrush(QColor("#111")))
-        
         self.view = BattleMapView(self.scene) 
         self.view.setStyleSheet("border: none;") 
         self.view.view_changed_signal.connect(self.view_sync_signal.emit)
         
+        self.view.fog_changed_signal.connect(self.on_local_fog_changed)
+        
         layout.addWidget(self.view)
+
+    def get_fog_data_base64(self):
+        if not self.fog_item: return None
+        buffer = QBuffer()
+        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+        self.fog_item.image.save(buffer, "PNG")
+        return base64.b64encode(buffer.data()).decode('utf-8')
+
+    def load_fog_from_base64(self, b64_str):
+        if not b64_str: return
+        try:
+            data = base64.b64decode(b64_str)
+            img = QImage()
+            img.loadFromData(data, "PNG")
+            
+            if not self.fog_item and self.map_item:
+                self.init_fog_layer(self.map_item.boundingRect().width(), self.map_item.boundingRect().height())
+            
+            if self.fog_item:
+                if img.size() != self.fog_item.image.size():
+                    img = img.scaled(self.fog_item.image.size())
+                
+                self.fog_item.set_fog_image(img)
+                self.on_local_fog_changed(img)
+        except Exception as e:
+            print(f"Fog load error: {e}")
+
+    def reset_fog(self):
+        """Removes the fog item from the scene entirely."""
+        if self.fog_item:
+            self.scene.removeItem(self.fog_item)
+            self.fog_item = None
+
+    def toggle_fog_mode(self, checked):
+        self.view.is_fog_edit_mode = checked
+        if checked:
+            self.view.setCursor(Qt.CursorShape.CrossCursor)
+        else:
+            self.view.setCursor(Qt.CursorShape.ArrowCursor)
+
+    def init_fog_layer(self, width, height):
+        if self.fog_item: self.scene.removeItem(self.fog_item)
+        self.fog_item = FogItem(width, height)
+        self.fog_item.setOpacity(0.5 if self.is_dm_view else 1.0)
+        self.scene.addItem(self.fog_item)
+        self.view.set_fog_item(self.fog_item)
+
+    def fill_fog(self):
+        if self.fog_item:
+            self.fog_item.image.fill(QColor(0, 0, 0, 255))
+            self.fog_item.update_pixmap()
+            self.on_local_fog_changed(self.fog_item.image)
+
+    def clear_fog(self):
+        if self.fog_item:
+            self.fog_item.image.fill(Qt.GlobalColor.transparent)
+            self.fog_item.update_pixmap()
+            self.on_local_fog_changed(self.fog_item.image)
+
+    def on_local_fog_changed(self, qimage):
+        self.fog_update_signal.emit(qimage)
+
+    def apply_external_fog(self, qimage):
+        if not self.fog_item and self.map_item:
+            rect = self.map_item.boundingRect()
+            self.init_fog_layer(rect.width(), rect.height())
+        
+        if self.fog_item and qimage:
+            self.fog_item.set_fog_image(qimage)
 
     def fit_map_in_view(self):
         if self.map_item: self.view.fitInView(self.map_item, Qt.AspectRatioMode.KeepAspectRatio)
@@ -154,15 +372,30 @@ class BattleMapWidget(QWidget):
         self.view.set_view_state(rect)
 
     def set_map_image(self, pixmap, path_ref=None):
-        if path_ref and path_ref == self.current_map_path and self.map_item: return
+        # Even if path is same, if fog is missing (reset), allow re-init
+        if path_ref and path_ref == self.current_map_path and self.map_item: 
+            if not self.fog_item:
+                self.init_fog_layer(self.map_item.boundingRect().width(), self.map_item.boundingRect().height())
+            return
+
         self.current_map_path = path_ref
+        
         if pixmap:
             if self.map_item: self.scene.removeItem(self.map_item)
-            self.map_item = QGraphicsPixmapItem(pixmap); self.map_item.setZValue(-100); self.map_item.setTransformationMode(Qt.TransformationMode.SmoothTransformation); self.scene.addItem(self.map_item); self.scene.setSceneRect(self.map_item.boundingRect())
+            self.map_item = QGraphicsPixmapItem(pixmap)
+            self.map_item.setZValue(-100)
+            self.map_item.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
+            self.scene.addItem(self.map_item)
+            self.scene.setSceneRect(self.map_item.boundingRect())
+            
+            if not self.fog_item:
+                self.init_fog_layer(pixmap.width(), pixmap.height())
+            
             QTimer.singleShot(50, self.fit_map_in_view)
         else:
             if self.map_item: self.scene.removeItem(self.map_item)
-            self.map_item = None; self.current_map_path = None
+            if self.fog_item: self.scene.removeItem(self.fog_item)
+            self.map_item = None; self.fog_item = None; self.current_map_path = None
 
     def change_token_size(self, val):
         self.token_size = val
@@ -170,7 +403,15 @@ class BattleMapWidget(QWidget):
         self.token_size_changed_signal.emit(val)
 
     def on_token_moved(self, tid, x, y): self.token_moved_signal.emit(tid, x, y)
-    def retranslate_ui(self): self.lbl_size.setText(tr("LBL_TOKEN_SIZE"))
+    
+    def retranslate_ui(self): 
+        self.lbl_size.setText(tr("LBL_TOKEN_SIZE"))
+        self.btn_reset_view.setToolTip(tr("TIP_FIT_VIEW"))
+        if self.is_dm_view:
+            self.btn_fog_toggle.setText(tr("BTN_FOG"))
+            self.lbl_fog_hint.setText(tr("LBL_FOG_HINT"))
+            self.btn_fog_fill.setText(tr("BTN_FOG_FILL"))
+            self.btn_fog_clear.setText(tr("BTN_FOG_CLEAR"))
 
     def update_tokens(self, combatants, current_index, dm_manager, map_path=None, saved_token_size=None):
         if saved_token_size and saved_token_size != self.token_size:
@@ -212,7 +453,7 @@ class BattleMapWidget(QWidget):
         to_remove = [tid for tid in self.tokens if tid not in incoming_tids]
         for tid in to_remove: self.scene.removeItem(self.tokens[tid]); del self.tokens[tid]
 
-# --- ANA PENCERE (WRAPPER) ---
+# --- MAIN WINDOW (WRAPPER) ---
 class BattleMapWindow(QMainWindow):
     token_moved_signal = pyqtSignal(str, float, float)
 
@@ -220,7 +461,8 @@ class BattleMapWindow(QMainWindow):
         super().__init__()
         self.dm = data_manager; self.map_item = None; self.setWindowTitle(tr("TITLE_BATTLE_MAP")); self.resize(1200, 800)
         central = QWidget(); self.setCentralWidget(central); main_layout = QHBoxLayout(central); main_layout.setContentsMargins(0, 0, 0, 0)
-        self.map_widget = BattleMapWidget(); self.map_widget.token_moved_signal.connect(self.token_moved_signal.emit)
+        self.map_widget = BattleMapWidget(is_dm_view=False) 
+        self.map_widget.token_moved_signal.connect(self.token_moved_signal.emit)
         self.slider_size = self.map_widget.slider_size 
         main_layout.addWidget(self.map_widget, 1)
         self.sidebar = QWidget(); self.sidebar.setFixedWidth(300); self.sidebar.setObjectName("sidebarFrame"); sidebar_layout = QVBoxLayout(self.sidebar)
@@ -234,19 +476,16 @@ class BattleMapWindow(QMainWindow):
     def update_combat_data(self, combatants, current_index, map_path=None, saved_token_size=None):
         self.map_widget.update_tokens(combatants, current_index, self.dm, map_path, saved_token_size); self._update_sidebar(combatants, current_index)
     
-    def sync_view(self, rect):
-        """DM ekranından gelen dikdörtgeni uygular."""
-        self.map_widget.apply_view_state(rect)
+    def sync_view(self, rect): self.map_widget.apply_view_state(rect)
+    
+    def sync_fog(self, qimage): self.map_widget.apply_external_fog(qimage)
 
     def _update_sidebar(self, combatants, current_index):
-        # --- HATA DÜZELTMESİ BURADA YAPILDI ---
-        # Önceki kodda tek satırlık while döngüsü hatası vardı.
-        # Şimdi döngü ve silme işlemi doğru bir şekilde ayrıldı.
-        while self.list_layout.count(): 
+        while self.list_layout.count():
             item = self.list_layout.takeAt(0)
-            if item.widget(): 
+            if item.widget():
                 item.widget().deleteLater()
-        
+                
         for i, c in enumerate(combatants):
             name = c.get("name", "???"); hp = c.get("hp", "?"); conditions = c.get("conditions", []) 
             ent_type = c.get("type", "NPC"); attitude = c.get("attitude", "LBL_ATTR_NEUTRAL"); is_player = (ent_type == "Player"); is_active = (i == current_index)
