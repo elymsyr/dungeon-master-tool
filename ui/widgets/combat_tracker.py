@@ -553,22 +553,58 @@ class CombatTracker(QWidget):
         self.battle_map_window.token_moved_signal.connect(self.on_token_moved_in_map)
         self.battle_map_window.slider_size.valueChanged.connect(self.on_token_size_changed)
         self.battle_map_window.show(); self.refresh_battle_map(True)
+
+    def sync_map_view_to_external(self, rect):
+        """Gömülü haritadan gelen görünüm karesini dış pencereye yansıtır."""
+        if self.battle_map_window and self.battle_map_window.isVisible():
+            self.battle_map_window.sync_view(rect)
+    
     def on_token_moved_in_map(self, tid, x, y): 
-        if self.current_encounter_id: self.encounters[self.current_encounter_id]["token_positions"][tid]=(x,y); self.data_changed_signal.emit()
+        if self.current_encounter_id: 
+            # Pozisyonu kaydet
+            self.encounters[self.current_encounter_id]["token_positions"][tid] = (x, y)
+            
+            # Veri değişti sinyali gönder (Bu, SessionTab'i uyaracak)
+            self.data_changed_signal.emit()
+            
+            # Harici pencere açıksa onu da güncelle (Akıllı güncelleme sayesinde sorun olmaz)
+            if self.battle_map_window and self.battle_map_window.isVisible():
+                self.refresh_battle_map(force_map_reload=False)
+
     def on_token_size_changed(self, v): 
-        if self.current_encounter_id: self.encounters[self.current_encounter_id]["token_size"]=v; self.data_changed_signal.emit()
+        if self.current_encounter_id: 
+            self.encounters[self.current_encounter_id]["token_size"] = v
+            self.data_changed_signal.emit()
+            # Harici pencere açıksa güncelle
+            if self.battle_map_window and self.battle_map_window.isVisible():
+                self.refresh_battle_map(force_map_reload=False)
+
     def refresh_battle_map(self, force_map_reload=False):
-        if not self.battle_map_window or not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
-        enc=self.encounters[self.current_encounter_id]; self._save_current_state_to_memory()
-        mp=self.dm.get_full_path(enc.get("map_path")) if (force_map_reload or not self.battle_map_window.map_item) else None
-        cd=[]
+        # Bu fonksiyon hem harici pencereyi günceller, hem de veri hazırlığı yapar.
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
+        
+        enc = self.encounters[self.current_encounter_id]
+        
+        # Mevcut tablo verilerini (HP vb.) belleğe al ki senkronize olsun
+        self._save_current_state_to_memory()
+        
+        mp = self.dm.get_full_path(enc.get("map_path"))
+        
+        cd = []
         for c in enc["combatants"]:
-             t="NPC"; a="LBL_ATTR_NEUTRAL"
+             t = "NPC"; a = "LBL_ATTR_NEUTRAL"
              if c["eid"] in self.dm.data["entities"]:
-                  e=self.dm.data["entities"][c["eid"]]; t=e.get("type","NPC"); a=e.get("attributes",{}).get("LBL_ATTITUDE","LBL_ATTR_NEUTRAL"); 
-                  if t=="Monster": a="LBL_ATTR_HOSTILE"
-             c["type"]=t; c["attitude"]=a; cd.append(c)
-        self.battle_map_window.update_combat_data(cd, enc["turn_index"], mp, enc["token_size"])
+                  e = self.dm.data["entities"][c["eid"]]
+                  t = e.get("type", "NPC")
+                  a = e.get("attributes", {}).get("LBL_ATTITUDE", "LBL_ATTR_NEUTRAL")
+                  if t == "Monster": a = "LBL_ATTR_HOSTILE"
+             c["type"] = t
+             c["attitude"] = a
+             cd.append(c)
+        
+        # Harici pencere açıksa güncelle
+        if self.battle_map_window and self.battle_map_window.isVisible():
+            self.battle_map_window.update_combat_data(cd, enc["turn_index"], mp, enc["token_size"])
 
     def retranslate_ui(self):
         self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
