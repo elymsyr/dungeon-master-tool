@@ -406,6 +406,10 @@ class CombatTracker(QWidget):
         else: self.combo_encounters.setCurrentIndex(0); self.current_encounter_id=self.combo_encounters.itemData(0)
         self.refresh_ui_from_current_encounter(); self.combo_encounters.blockSignals(False); self.loading=False
     
+    def load_combat_data(self, data):
+        """Compatibility method for legacy session data (list of combatants)."""
+        self.load_session_state({"combatants": data})
+
     def open_battle_map(self):
         if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.raise_(); self.battle_map_window.activateWindow(); return
         enc = self.encounters.get(self.current_encounter_id)
