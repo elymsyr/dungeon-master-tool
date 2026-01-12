@@ -44,6 +44,7 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 - [ ] **Soundpad:** Better soundpad and songs. Currently, the songs are uploaded only for test purposes.
 - [ ] **Integrations:** Support for D&D Beyond, Obsidian, and other tools.
 - [ ] **Custom World Pre-build:** Creating custom pre-build worlds and creating fast worlds.
+- [ ] **Battlemap View Lock and Toggle:** Toggle player view and lock map movement for player's battlemap screen.
 
 ## 🎮 Feature Guide
 
