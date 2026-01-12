@@ -450,3 +450,9 @@ en:
   PH_TIMELINE_NOTES: "Story details, clues, events..."
   MENU_GOTO_SESSION: "Go to Session"
   LBL_TIMELINE_LINKED: "(🔗 Session Linked)"
+
+  BTN_FOG: "☁️ Fog"
+  BTN_FOG_FILL: "Fill"
+  BTN_FOG_CLEAR: "Clear"
+  LBL_FOG_HINT: "(L-Click: Add | R-Click: Remove)"
+  TIP_FIT_VIEW: "Fit Map to View"
