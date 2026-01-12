@@ -1,6 +1,9 @@
+Here is the updated `README.md` file. I have reorganized the **Roadmap**, added a **Feature Guide** for the new Projection and Fog systems, and included a detailed section on **Customizing the Soundpad**.
+
+```markdown
 # 🐉 Dungeon Master Tool
 
-![Status](https://img.shields.io/badge/Status-Alpha-orange)
+![Status](https://img.shields.io/badge/Status-Beta-blue)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey)
 
@@ -9,39 +12,111 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 
 [📥 Download Latest Release](https://github.com/elymsyr/dungeon-master-tool/releases)
 
-> ✨ UI/UX Status: The interface is continuously evolving to be cleaner and more intuitive. Your feedback and GitHub stars are the best motivation!
+> ✨ **v0.5.0 Update:** Now featuring Multi-Image Projection, Drag & Drop workflow, and a fully integrated Fog of War system!
+
 ---
 
 ## ✨ Key Features
 
-*   **Dual-Monitor Support:** Keep DM notes private while projecting maps and stat blocks to players.
-*   **Narrative Wiki:** Full **Markdown** support with **dynamic @mentions** to link NPCs, Monsters, and Lore.
+*   **Dynamic Player Screen:** Drag & drop multiple images (NPCs, Maps, Items) to the projection bar to create an instant **split-screen view** for players.
+*   **Fog of War:** Interactive masking on the Battle Map. Draw fog to hide secrets and erase it to reveal rooms as players explore.
+*   **Embedded Battle Map:** Move tokens, manage combat, and sync views without leaving the session log.
+*   **Adaptive Soundpad:** Layered music system with intensity sliders (Base -> Low -> High) and instant SFX.
 *   **Story Timeline:** Map-based tracker with **branching paths**, travel lines, and session-linked events.
-*   **Streamlined Combat:** High-speed tracking for Initiative, HP, and Conditions with visual status badges.
-*   **High Performance:** Optimized with **MsgPack binary storage** for near-instant loading and saving.
 *   **5e Database:** Integrated browser and bulk downloader for Monsters, Spells, and Items.
 *   **Portable & Offline:** No installation or internet required. Runs entirely from a USB drive.
 
 ## 🗺️ Roadmap
 
 ### ✅ Completed
+- [x] **Dynamic Projection:** Drag & drop images to header to project. Support for multi-image split view.
+- [x] **Fog of War:** Drawing tools (Lasso), global fill/clear, and per-encounter persistence.
+- [x] **Embedded Map:** Seamless synchronization between DM view and Player view.
+- [x] **Soundpad:** Support for custom music, ambience layers, and sound effects.
 - [x] **Story Timeline 2.0:** Branching map paths and parent-child event linking.
 - [x] **Dynamic Linking:** Personal wiki experience using `@mentions` in any text area.
 - [x] **Markdown Integration:** Rich text editing for descriptions, logs, and DM notes.
 - [x] **Binary Storage:** Migration from JSON to high-speed MsgPack (`.dat`).
-- [x] **Soundpad:** Support for custom music, ambience layers, and sound effects.
-- [x] **UI/UX Overhaul:** Themes (Baldur, Grim, Discord, etc.) and dual-pane workspace.
+- [x] **Advanced Linking and Mentioning:** Support linking entities on any text in the app.
+- [x] **Multi-Window:** Advanced support for projecting to specific/multiple player screens.
+- [x] **Campaign Notes:** Rich text editor, linking, and better folder organization for DM notes.
 
 ### 🚧 In Progress / Planned
-- [ ] **More Sources and Prebuild Worlds:** We're planning to add more entities from other sources like 5E 2024, Forgotten Realms and else... Also adding custom design prebuild worlds to help newbies.
-- [ ] **Soundpad:** Better soundpad and songs. (Currently, the songs are uploaded only for test purposes.
-- [ ] **Fog of War:** Interactive masking/revealing areas on the Battle Map. Splitting DM note area to control the battlemap fog and pawns private.
-- [ ] **Campaign Notes:** Rich text editor, linking, and better folder organization for DM notes.
-- [ ] **Integrations:** Support for D&D Beyond, Obsidian, and other tools.
-- [ ] **Multi-Window:** Advanced support for projecting to specific/multiple player screens.
-- [ ] **Advanced Linking and Mentioning:** Support linking entities on any text in the app.
-- [ ] **Custom World Pre-build:** Creating custom pre-build worlds and creating fast worlds.
 - [ ] **Random Creator:** Random creator for NPCs, NPC names, battles and more...
+- [ ] **More Sources and Prebuild Worlds:** We're planning to add more entities from other sources like 5E 2024, Forgotten Realms and else... Also adding custom design prebuild worlds to help newbies.
+- [ ] **Soundpad:** Better soundpad and songs. Currently, the songs are uploaded only for test purposes.
+- [ ] **Integrations:** Support for D&D Beyond, Obsidian, and other tools.
+- [ ] **Custom World Pre-build:** Creating custom pre-build worlds and creating fast worlds.
+
+## 🎮 Feature Guide
+
+### 📺 Using the Player Screen (Projection)
+1.  Click the **"📺 Toggle Player Screen"** button in the top toolbar to open the second window.
+2.  A **"Drop to Project"** area will appear next to the World Name in the main toolbar.
+3.  **Drag & Drop:** Click and drag any image (from an NPC sheet, Item card, or Monster view) and drop it into this area.
+4.  **Multi-View:** Drop a second image to automatically split the player screen and show both side-by-side.
+5.  **Remove:** Click the small thumbnail in the toolbar to remove that specific image from the projection.
+
+### 🌫️ Using Fog of War
+1.  Go to the **Session Tab**.
+2.  Click the **"☁️ Fog"** button on the map toolbar to enable editing mode.
+3.  **Hide Area:** Hold **Left Click** and draw a shape to cover an area with fog.
+4.  **Reveal Area:** Hold **Right Click** and draw a shape to clear the fog.
+5.  **Persistence:** Fog state is saved automatically for each unique encounter.
+
+## 🎵 Customizing Soundpad
+
+You can easily add your own music tracks and themes by adding folders to the `assets/soundpad` directory.
+
+### Directory Structure
+```text
+assets/
+  soundpad/
+    soundpad_library.yaml  <-- Global SFX and Ambience definitions
+    MyCustomTheme/         <-- Your new theme folder
+      theme.yaml           <-- Theme definition
+      combat_base.wav
+      combat_high.wav
+      explore_base.wav
+```
+
+### How to Create a Theme (`theme.yaml`)
+Create a `theme.yaml` file inside your theme folder. Use the structure below. The **Intensity Slider** in the app controls which track plays (Base, Level 1, Level 2).
+
+```yaml
+id: "my_custom_theme"
+name: "Epic Boss Battle"
+states:
+  normal:
+    tracks:
+      base: 
+        - file: "explore_base.wav"
+          repeat: 0  # 0 = Infinite Loop
+      level1: 
+        - file: "explore_tension.wav"
+          repeat: 0
+  combat:
+    tracks:
+      base: 
+        - file: "combat_drums.wav"
+          repeat: 0
+      level1: 
+        - file: "combat_strings.wav"
+          repeat: 0
+      level2: 
+        - file: "combat_choir.wav"
+          repeat: 0
+```
+
+### Adding SFX or Ambience
+Edit `assets/soundpad/soundpad_library.yaml` to register global sounds that are available in every theme.
+
+```yaml
+sfx:
+  - id: "fireball"
+    name: "Fireball"
+    file: "sfx/fire_explosion.wav"
+```
 
 ## 🚀 Installation
 
@@ -72,8 +147,6 @@ python main.py
   <img src="media/api.png" width="100%" alt="Entity Stat Block" />
 </p>
 
-## 📝 Customization
-You can easily extend the tool by editing the YAML files in `assets/soundpad` for custom music or adding your own `.qss` files to `themes/` for custom looks.
-
 ## ⚠️ Disclaimer
 This project is currently in **Alpha**. Expect frequent updates and occasional bugs. Backup your world data regularly!
+```
