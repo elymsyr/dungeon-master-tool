@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QTabWidget, QVBoxLayout, 
                              QWidget, QMessageBox, QFileDialog, QHBoxLayout, 
                              QPushButton, QLabel, QComboBox)
-from PyQt6.QtGui import QShortcut, QKeySequence # Kısayollar için importlar
+from PyQt6.QtGui import QShortcut, QKeySequence 
 from config import STYLESHEET, load_theme
 from core.data_manager import DataManager
 from ui.player_window import PlayerWindow
@@ -14,6 +14,7 @@ from ui.tabs.session_tab import SessionTab
 from ui.campaign_selector import CampaignSelector
 from core.locales import tr
 from ui.soundpad_panel import SoundpadPanel
+from ui.widgets.projection_manager import ProjectionManager
 
 class MainWindow(QMainWindow):
     def __init__(self, data_manager):
@@ -34,7 +35,6 @@ class MainWindow(QMainWindow):
         self.current_stylesheet = load_theme(self.data_manager.current_theme)
         self.setStyleSheet(self.current_stylesheet)
         
-        # Aktif kısayolları saklamak için bir liste
         self.active_shortcuts = []
         
         self.init_ui()
@@ -42,7 +42,10 @@ class MainWindow(QMainWindow):
     def init_ui(self):
         central = QWidget(); self.setCentralWidget(central)
         main_layout = QVBoxLayout(central)
+        
+        # --- TOOLBAR SETUP ---
         toolbar = QHBoxLayout()
+        toolbar.setContentsMargins(5, 5, 5, 5) # Add some spacing
         
         self.btn_toggle_player = QPushButton(tr("BTN_PLAYER_SCREEN")); self.btn_toggle_player.setCheckable(True)
         self.btn_toggle_player.setObjectName("primaryBtn"); self.btn_toggle_player.clicked.connect(self.toggle_player_window)
@@ -53,7 +56,15 @@ class MainWindow(QMainWindow):
         
         self.lbl_campaign = QLabel(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
         self.lbl_campaign.setObjectName("toolbarLabel")
+        self.lbl_campaign.setStyleSheet("font-weight: bold; margin-right: 10px;")
 
+        # --- PROJECTION MANAGER (HEADER INTEGRATION) ---
+        self.projection_manager = ProjectionManager()
+        self.projection_manager.setVisible(False) 
+        self.projection_manager.image_added.connect(self.player_window.add_image_to_view)
+        self.projection_manager.image_removed.connect(self.player_window.remove_image_from_view)
+
+        # Right side controls
         self.combo_lang = QComboBox(); self.combo_lang.addItems(["English", "Türkçe"])
         current_lang = self.data_manager.settings.get("language", "EN")
         self.combo_lang.setCurrentIndex(1 if current_lang == "TR" else 0)
@@ -69,12 +80,25 @@ class MainWindow(QMainWindow):
         self.combo_theme.setCurrentIndex(index_to_select)
         self.combo_theme.currentIndexChanged.connect(self.change_theme)
         
-        toolbar.addWidget(self.btn_toggle_player); toolbar.addWidget(self.btn_export_txt)
-        toolbar.addWidget(self.btn_toggle_sound); toolbar.addWidget(self.lbl_campaign)
-        toolbar.addStretch(); toolbar.addWidget(self.combo_lang)
-        toolbar.addWidget(self.lbl_theme); toolbar.addWidget(self.combo_theme)
-        main_layout.addLayout(toolbar)
+        # Adding widgets to toolbar
+        toolbar.addWidget(self.btn_toggle_player)
+        toolbar.addWidget(self.btn_export_txt)
+        toolbar.addWidget(self.btn_toggle_sound)
+        toolbar.addSpacing(10)
+        toolbar.addWidget(self.lbl_campaign)
         
+        # INSERT PROJECTION MANAGER HERE (Next to Campaign Name)
+        toolbar.addWidget(self.projection_manager)
+        
+        toolbar.addStretch() # Spacer
+        
+        toolbar.addWidget(self.combo_lang)
+        toolbar.addWidget(self.lbl_theme)
+        toolbar.addWidget(self.combo_theme)
+        
+        main_layout.addLayout(toolbar)
+        # ---------------------
+
         content_layout = QHBoxLayout()
         self.tabs = QTabWidget()
         self.db_tab = DatabaseTab(self.data_manager, self.player_window)
@@ -84,7 +108,6 @@ class MainWindow(QMainWindow):
         self.session_tab = SessionTab(self.data_manager)
         self.tabs.addTab(self.session_tab, tr("TAB_SESSION"))
         
-        # --- SOUNDPAD VE KISAYOL ENTEGRASYONU ---
         self.soundpad_panel = SoundpadPanel(); self.soundpad_panel.setVisible(False)
         self.soundpad_panel.theme_loaded_with_shortcuts.connect(self.setup_soundpad_shortcuts)
         
@@ -98,7 +121,6 @@ class MainWindow(QMainWindow):
         self.retranslate_ui()
 
     def setup_soundpad_shortcuts(self, shortcuts_map):
-        """Soundpad'den gelen kısayol haritasına göre global kısayolları oluşturur/temizler."""
         for shortcut in self.active_shortcuts:
             shortcut.setEnabled(False); shortcut.deleteLater()
         self.active_shortcuts.clear()
@@ -120,7 +142,6 @@ class MainWindow(QMainWindow):
                     sc.activated.connect(lambda s_id=sfx_id: self.soundpad_panel.play_sfx(s_id))
                     self.active_shortcuts.append(sc)
     
-    # --- Diğer MainWindow Metotları (Değişiklik yok) ---
     def retranslate_ui(self):
         self.btn_toggle_player.setText(tr("BTN_PLAYER_SCREEN")); self.btn_export_txt.setText(tr("BTN_EXPORT"))
         self.btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
@@ -136,20 +157,31 @@ class MainWindow(QMainWindow):
 
     def change_language(self, index):
         self.data_manager.save_settings({"language": "TR" if index == 1 else "EN"}); self.retranslate_ui()
+    
     def toggle_soundpad(self):
         is_visible = self.soundpad_panel.isVisible()
         self.soundpad_panel.setVisible(not is_visible); self.btn_toggle_sound.setChecked(not is_visible)
+    
     def change_theme(self, index):
         if 0 <= index < len(self.theme_list):
             theme_name = self.theme_list[index][0]
             self.data_manager.save_settings({"theme": theme_name})
             self.current_stylesheet = load_theme(theme_name); self.setStyleSheet(self.current_stylesheet)
             if hasattr(self.player_window, "update_theme"): self.player_window.update_theme(self.current_stylesheet)
+    
     def toggle_player_window(self):
-        if self.player_window.isVisible(): self.player_window.hide(); self.btn_toggle_player.setChecked(False)
-        else: self.player_window.show(); self.btn_toggle_player.setChecked(True); self.player_window.update_theme(self.current_stylesheet)
+        """Toggle Player Screen and the Projection Bar in the header."""
+        if self.player_window.isVisible(): 
+            self.player_window.hide()
+            self.btn_toggle_player.setChecked(False)
+            self.projection_manager.setVisible(False)
+        else: 
+            self.player_window.show()
+            self.btn_toggle_player.setChecked(True)
+            self.player_window.update_theme(self.current_stylesheet)
+            self.projection_manager.setVisible(True)
+
     def export_entities_to_txt(self):
-        # Kayıt yeri sor
         path, _ = QFileDialog.getSaveFileName(self, tr("TITLE_EXPORT"), "export.txt", tr("FILE_FILTER_TXT"))
         if not path: return
         
@@ -163,7 +195,6 @@ class MainWindow(QMainWindow):
                 if not entities:
                     f.write(f"{tr('TXT_EXPORT_NO_DATA')}\n")
                 
-                # Sıralayarak yazalım
                 sorted_keys = sorted(entities.keys(), key=lambda k: entities[k].get("name", ""))
                 
                 for i, eid in enumerate(sorted_keys, 1):
@@ -178,7 +209,6 @@ class MainWindow(QMainWindow):
                     if tags: f.write(f"{tr('TXT_EXPORT_TAGS')}{tags}\n")
                     f.write(f"{tr('TXT_EXPORT_DESC')}{desc}\n")
                     
-                    # Statları da ekleyelim
                     c = ent.get("combat_stats", {})
                     if type_ in ["NPC", "Monster", "Player"] and c:
                         hp = c.get("hp", "-")

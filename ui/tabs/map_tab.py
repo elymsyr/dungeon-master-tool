@@ -1,5 +1,6 @@
 import os
 import uuid
+import time
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
                              QFileDialog, QFrame, QMessageBox, QInputDialog, QLabel,
                              QColorDialog)
@@ -8,12 +9,20 @@ from PyQt6.QtCore import Qt, QRectF
 from ui.widgets.map_viewer import MapViewer, MapPinItem, TimelinePinItem
 from ui.dialogs.timeline_entry import TimelineEntryDialog
 from core.locales import tr
+from config import CACHE_DIR
 
 class MapTab(QWidget):
     def __init__(self, data_manager, player_window, main_window_ref):
         super().__init__()
-        self.dm = data_manager; self.player_window = player_window; self.main_window_ref = main_window_ref
-        self.show_timeline = False; self.pending_parent_id = None
+        self.dm = data_manager
+        self.player_window = player_window
+        self.main_window_ref = main_window_ref
+        self.show_timeline = False
+        self.pending_parent_id = None
+        
+        # Son yansıtılan haritanın ID'sini (sanal yolunu) tutar
+        self.last_projected_path = None
+        
         self.init_ui()
 
     def init_ui(self):
@@ -31,7 +40,7 @@ class MapTab(QWidget):
         self.map_viewer.pin_created_signal.connect(self.handle_canvas_click) 
         self.map_viewer.pin_moved_signal.connect(self.handle_pin_moved)
         self.map_viewer.timeline_moved_signal.connect(self.handle_timeline_moved)
-        self.map_viewer.link_placed_signal.connect(self.handle_quick_link_placement) # YENİ
+        self.map_viewer.link_placed_signal.connect(self.handle_quick_link_placement) 
         v_layout.addWidget(self.map_viewer); layout.addWidget(viewer_frame)
 
     def retranslate_ui(self):
@@ -112,7 +121,7 @@ class MapTab(QWidget):
             if self.main_window_ref and pin_obj.session_id: self.main_window_ref.tabs.setCurrentIndex(2); self.main_window_ref.session_tab.load_session_by_id(pin_obj.session_id)
         elif action_type == "link_new":
             self.pending_parent_id = pin_obj.pin_id
-            self.map_viewer.start_link_mode() # Mouse imleci crosshair olur, sessiz bekler
+            self.map_viewer.start_link_mode() 
         elif action_type == "edit_timeline":
             t = self.dm.get_timeline_pin(pin_obj.pin_id)
             if not t: return
@@ -132,9 +141,36 @@ class MapTab(QWidget):
     def handle_timeline_moved(self, pin_id, new_x, new_y): self.dm.move_timeline_pin(pin_id, new_x, new_y); self.render_map()
 
     def push_map_to_player(self):
-        if not self.player_window.isVisible(): QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_PLAYER_SCREEN")); return
+        """
+        Haritanın anlık görüntüsünü alır ve Projection Manager'a gönderir.
+        DOSYA KAYDETMEZ (Performans için doğrudan RAM üzerinden çalışır).
+        """
+        if not self.player_window.isVisible():
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_PLAYER_SCREEN"))
+            return
+            
         rect = self.map_viewer.scene.itemsBoundingRect()
         if rect.isEmpty(): return
-        img = QPixmap(rect.size().toSize()); img.fill(Qt.GlobalColor.transparent); painter = QPainter(img)
-        self.map_viewer.scene.render(painter, target=QRectF(img.rect()), source=rect); painter.end()
-        self.player_window.show_image(img)
+        
+        # Haritayı bir resim (QPixmap) olarak oluştur
+        img = QPixmap(rect.size().toSize())
+        img.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(img)
+        self.map_viewer.scene.render(painter, target=QRectF(img.rect()), source=rect)
+        painter.end()
+        
+        # Sanal bir ID (isim) oluşturuyoruz ki ProjectionManager bunu takip edebilsin
+        # "map_snapshot_" prefix'i önemli, çünkü Thumbnail'de "MAP" yazısı buna göre çıkıyor.
+        fake_path = f"map_snapshot_{int(time.time())}.png"
+        
+        if self.main_window_ref and hasattr(self.main_window_ref, "projection_manager"):
+            # Eğer daha önce bir harita yansıtılmışsa, ekranı kalabalıklaştırmamak için eskisini kaldırıyoruz
+            if self.last_projected_path:
+                self.main_window_ref.projection_manager.remove_image(self.last_projected_path)
+            
+            # Yeni haritayı (resim nesnesiyle birlikte) ekliyoruz
+            self.main_window_ref.projection_manager.add_image(fake_path, pixmap=img)
+            self.last_projected_path = fake_path
+        else:
+            # Fallback: Eğer yönetici yoksa eski usul göster (ama ana pencerede yönetici varsa bu çalışmaz)
+            self.player_window.add_image_to_view(fake_path, pixmap=img)
