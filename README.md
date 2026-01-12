@@ -1,6 +1,6 @@
 # 🐉 Dungeon Master Tool
 
-![Status](https://img.shields.io/badge/Status-Beta-blue)
+![Status](https://img.shields.io/badge/Status-Alpha-blue)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey)
 
