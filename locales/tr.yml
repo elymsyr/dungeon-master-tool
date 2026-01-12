@@ -449,3 +449,9 @@ tr:
   PH_TIMELINE_NOTES: "Hikaye detayları, ipuçları, olaylar..."
   MENU_GOTO_SESSION: "Oturuma Git"
   LBL_TIMELINE_LINKED: "(🔗 Oturum Bağlantısı Var)"
+
+  BTN_FOG: "☁️ Sis"
+  BTN_FOG_FILL: "Doldur"
+  BTN_FOG_CLEAR: "Temizle"
+  LBL_FOG_HINT: "(Sol: Ekle | Sağ: Sil)"
+  TIP_FIT_VIEW: "Haritayı Ekrana Sığdır"
