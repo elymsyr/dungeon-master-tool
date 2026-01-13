@@ -8,7 +8,7 @@ from ui.dialogs.bulk_downloader import BulkDownloadDialog
 from core.locales import tr
 
 class ApiBrowser(QDialog):
-    # API İstemcisinin (ApiClient) tanıdığı kesin anahtarlar
+    # Keys recognized by the ApiClient
     CATEGORY_KEYS = [
         "Monster", 
         "Spell", 
@@ -24,7 +24,7 @@ class ApiBrowser(QDialog):
         self.selection_mode = selection_mode
         self.selected_entity_id = None # Return value
         
-        # Başlangıç kategorisini doğrula ve ayarla
+        # Verify and set initial category
         self.current_category = "Monster" 
         norm_init = str(initial_category).lower()
         
@@ -51,10 +51,10 @@ class ApiBrowser(QDialog):
     def init_ui(self):
         main_layout = QVBoxLayout(self)
         
-        # --- ÜST BAR: Kategori ve Arama ---
+        # --- TOP BAR: Category and Search ---
         top_layout = QHBoxLayout()
         
-        # 0. Kaynak ve Doküman Seçici
+        # 0. Source and Document Selector
         self.combo_source = QComboBox()
         self.combo_source.setFixedWidth(200)
         sources = self.dm.api_client.get_available_sources()
@@ -63,27 +63,28 @@ class ApiBrowser(QDialog):
             
         curr = self.dm.api_client.current_source_key
         idx = self.combo_source.findData(curr)
-        if idx >= 0: self.combo_source.setCurrentIndex(idx)
+        if idx >= 0: 
+            self.combo_source.setCurrentIndex(idx)
         self.combo_source.currentIndexChanged.connect(self.on_source_changed)
 
-        # Doküman Filtresi (Sadece Open5e için)
+        # Document Filter (Open5e only)
         self.combo_doc = QComboBox()
         self.combo_doc.setFixedWidth(150)
         self.combo_doc.addItem(tr("LBL_ALL_DOCS"), None)
-        self.combo_doc.setVisible(False) # Başlangıçta gizli
+        self.combo_doc.setVisible(False) # Hidden initially
         self.combo_doc.currentIndexChanged.connect(self.on_doc_filter_changed)
 
-        # 1. Kategori Seçici
+        # 1. Category Selector
         self.combo_cat = QComboBox()
         self.combo_cat.setFixedWidth(180)
         self.combo_cat.currentIndexChanged.connect(self.on_category_changed)
         
-        # 2. Arama Kutusu
+        # 2. Search Box
         self.inp_filter = QLineEdit()
         self.inp_filter.setPlaceholderText(tr("LBL_SEARCH_API"))
         self.inp_filter.textChanged.connect(self.filter_list)
         
-        # 3. Bulk Download Butonu (Sadece D&D 5e için aktif olacak)
+        # 3. Bulk Download Button (Active only for D&D 5e)
         self.btn_bulk = QPushButton()
         self.btn_bulk.setToolTip(tr("BTN_DOWNLOAD_ALL"))
         self.btn_bulk.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowDown))
@@ -100,10 +101,10 @@ class ApiBrowser(QDialog):
         
         main_layout.addLayout(top_layout)
         
-        # --- ORTA: Bölücü (Liste | Önizleme) ---
+        # --- MIDDLE: Splitter (List | Preview) ---
         splitter = QSplitter(Qt.Orientation.Horizontal)
         
-        # Sol: Liste ve Sayfalama
+        # Left: List and Pagination
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
         left_layout.setContentsMargins(0,0,0,0)
@@ -113,7 +114,7 @@ class ApiBrowser(QDialog):
         self.list_widget.itemClicked.connect(self.on_item_clicked)
         left_layout.addWidget(self.list_widget)
         
-        # Sayfalama Kontrolleri
+        # Pagination Controls
         self.pagination_widget = QWidget()
         pag_layout = QHBoxLayout(self.pagination_widget)
         pag_layout.setContentsMargins(0, 5, 0, 0)
@@ -136,7 +137,7 @@ class ApiBrowser(QDialog):
         left_layout.addWidget(self.pagination_widget)
         splitter.addWidget(left_widget)
         
-        # Sağ: Önizleme
+        # Right: Preview
         preview_widget = QWidget()
         prev_layout = QVBoxLayout(preview_widget)
         prev_layout.setContentsMargins(10, 0, 0, 0)
@@ -171,12 +172,12 @@ class ApiBrowser(QDialog):
         
         main_layout.addWidget(splitter)
         
-        # Kategorileri ve listeyi yükle
+        # Load categories and list
         self.update_source_ui()
         self.refresh_categories()
 
     def on_category_changed(self):
-        """Kategori değiştiğinde listeyi yenile."""
+        """Refreshes the list when category changes."""
         self.current_category = self.combo_cat.currentData()
         self.load_list()
 
@@ -191,8 +192,10 @@ class ApiBrowser(QDialog):
         
         if hasattr(self, 'list_worker') and self.list_worker is not None:
             if self.list_worker.isRunning():
-                try: self.list_worker.finished.disconnect()
-                except: pass
+                try: 
+                    self.list_worker.finished.disconnect()
+                except: 
+                    pass
                 self.list_worker.quit()
                 self.list_worker.deleteLater()
 
@@ -318,8 +321,10 @@ class ApiBrowser(QDialog):
                     self.selected_data = self.dm.data["entities"].get(data_or_id)
                     self.btn_import.setEnabled(True)
                     self.btn_import.setText(tr("BTN_SELECT"))
-                    try: self.btn_import.clicked.disconnect()
-                    except: pass
+                    try: 
+                        self.btn_import.clicked.disconnect()
+                    except: 
+                        pass
                     self.btn_import.clicked.connect(self.accept)
                 else:
                     data = self.dm.data["entities"].get(data_or_id)
@@ -339,8 +344,10 @@ class ApiBrowser(QDialog):
             self.selected_data = data
             self.lbl_name.setText(data.get("name"))
             
-            try: self.btn_import.clicked.disconnect()
-            except: pass
+            try: 
+                self.btn_import.clicked.disconnect()
+            except: 
+                pass
             
             if self.current_category == "NPC":
                 self.btn_import.setText(tr("BTN_SELECT") if self.selection_mode else tr("BTN_IMPORT_NPC"))

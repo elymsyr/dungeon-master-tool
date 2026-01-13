@@ -43,12 +43,13 @@ class TimelineEntryDialog(QDialog):
             
         if self.selected_session_id:
             idx = self.combo_session.findData(self.selected_session_id)
-            if idx >= 0: self.combo_session.setCurrentIndex(idx)
+            if idx >= 0: 
+                self.combo_session.setCurrentIndex(idx)
             
         form.addRow(f"{tr('LBL_SESSION_LINK')}:", self.combo_session)
         layout.addLayout(form)
         
-        # --- OYUNCULAR ---
+        # --- PLAYERS ---
         grp_players = QGroupBox(tr("GRP_PLAYERS"))
         layout_players = QVBoxLayout(grp_players)
         
@@ -67,7 +68,7 @@ class TimelineEntryDialog(QDialog):
         layout_players.addWidget(self.list_players)
         layout.addWidget(grp_players)
 
-        # --- DİĞERLERİ ---
+        # --- OTHERS ---
         grp_others = QGroupBox(tr("GRP_OTHERS"))
         layout_others = QVBoxLayout(grp_others)
         h_other_header = QHBoxLayout()

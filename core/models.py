@@ -61,7 +61,7 @@ ENTITY_SCHEMAS = {
         ("LBL_SECRET_INFO", "text", None)
     ],
     "Status Effect": [
-        ("LBL_DURATION_TURNS", "text", None),  # Tur Süresi (Örn: 3 Rounds)
+        ("LBL_DURATION_TURNS", "text", None),  # Turn Duration (e.g., 3 Rounds)
         ("LBL_EFFECT_TYPE", "combo", ["LBL_TYPE_BUFF", "LBL_TYPE_DEBUFF", "LBL_TYPE_CONDITION"]),
         ("LBL_LINKED_CONDITION", "entity_select", "Condition")
     ],
@@ -167,17 +167,17 @@ def get_default_entity_structure(entity_type="NPC"):
         "stats": {"STR": 10, "DEX": 10, "CON": 10, "INT": 10, "WIS": 10, "CHA": 10},
         "combat_stats": {"hp": "", "max_hp": "", "ac": "", "speed": "", "cr": "", "xp": "", "initiative": ""},
         
-        # --- LİSTELER ---
+        # --- LISTS ---
         "traits": [],
         "actions": [],
         "reactions": [],
         "legendary_actions": [],
         
-        # Büyüler
+        # Spells
         "spells": [],             
         "custom_spells": [],      
         
-        # Envanter
+        # Inventory
         "equipment_ids": [],      
         "inventory": [],          
         
@@ -186,7 +186,7 @@ def get_default_entity_structure(entity_type="NPC"):
 
         "dm_notes": "", 
 
-        # --- Gelişmiş Statlar ---
+        # --- Advanced Stats ---
         "saving_throws": "",
         "damage_vulnerabilities": "",
         "damage_resistances": "",

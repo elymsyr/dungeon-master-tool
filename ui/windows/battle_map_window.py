@@ -107,9 +107,12 @@ class BattleMapView(QGraphicsView):
         self.view_changed_signal.emit(scene_rect)
 
     def wheelEvent(self, event: QWheelEvent):
-        zoom_in = 1.15; zoom_out = 1/1.15
-        if event.angleDelta().y() > 0: self.scale(zoom_in, zoom_in)
-        else: self.scale(zoom_out, zoom_out)
+        zoom_in = 1.15
+        zoom_out = 1/1.15
+        if event.angleDelta().y() > 0: 
+            self.scale(zoom_in, zoom_in)
+        else: 
+            self.scale(zoom_out, zoom_out)
         self._emit_view_state()
 
     def mousePressEvent(self, event: QMouseEvent):
@@ -124,11 +127,13 @@ class BattleMapView(QGraphicsView):
             if event.button() == Qt.MouseButton.LeftButton:
                 self._last_paint_mode = True # Add
                 self._start_fog_draw(event.pos())
-                event.accept(); return
+                event.accept()
+                return
             elif event.button() == Qt.MouseButton.RightButton:
                 self._last_paint_mode = False # Remove
                 self._start_fog_draw(event.pos())
-                event.accept(); return
+                event.accept()
+                return
 
         super().mousePressEvent(event)
 
@@ -208,33 +213,66 @@ class BattleMapView(QGraphicsView):
 class SidebarConditionIcon(QWidget):
     def __init__(self, name, icon_path, duration):
         super().__init__()
-        self.name = name; self.icon_path = icon_path; self.duration = duration; self.setFixedSize(20, 20) 
+        self.name = name
+        self.icon_path = icon_path
+        self.duration = duration
+        self.setFixedSize(20, 20) 
         self.setToolTip(f"{name} ({duration} Turns)" if duration > 0 else name)
     def paintEvent(self, event):
-        painter = QPainter(self); painter.setRenderHint(QPainter.RenderHint.Antialiasing); path = QPainterPath(); path.addEllipse(1, 1, 18, 18); painter.setClipPath(path)
-        if self.icon_path and os.path.exists(self.icon_path): painter.drawPixmap(0, 0, 20, 20, QPixmap(self.icon_path))
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        path = QPainterPath()
+        path.addEllipse(1, 1, 18, 18)
+        painter.setClipPath(path)
+        if self.icon_path and os.path.exists(self.icon_path): 
+            painter.drawPixmap(0, 0, 20, 20, QPixmap(self.icon_path))
         else:
-            painter.setBrush(QBrush(QColor("#5c6bc0"))); painter.drawRect(0, 0, 20, 20); painter.setPen(Qt.GlobalColor.white)
-            font = painter.font(); font.setPixelSize(7); font.setBold(True); painter.setFont(font)
+            painter.setBrush(QBrush(QColor("#5c6bc0")))
+            painter.drawRect(0, 0, 20, 20)
+            painter.setPen(Qt.GlobalColor.white)
+            font = painter.font()
+            font.setPixelSize(7)
+            font.setBold(True)
+            painter.setFont(font)
             painter.drawText(QRect(0, 0, 20, 20), Qt.AlignmentFlag.AlignCenter, self.name[:2].upper())
         if self.duration > 0:
-            painter.setClipping(False); painter.setBrush(QBrush(QColor(0, 0, 0, 200))); painter.setPen(Qt.PenStyle.NoPen); painter.drawRoundedRect(0, 12, 20, 8, 2, 2)
-            painter.setPen(Qt.GlobalColor.white); font = painter.font(); font.setPixelSize(5); painter.setFont(font)
+            painter.setClipping(False)
+            painter.setBrush(QBrush(QColor(0, 0, 0, 200)))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRoundedRect(0, 12, 20, 8, 2, 2)
+            painter.setPen(Qt.GlobalColor.white)
+            font = painter.font()
+            font.setPixelSize(5)
+            painter.setFont(font)
             painter.drawText(QRect(0, 12, 20, 8), Qt.AlignmentFlag.AlignCenter, str(self.duration))
 
 class BattleTokenItem(QGraphicsEllipseItem):
     def __init__(self, size, pixmap, border_color, name, tid, eid, on_move_callback):
         super().__init__(0, 0, size, size)
-        self.tid = tid; self.eid = eid; self.name = name; self.on_move_callback = on_move_callback; self.original_pixmap = pixmap; self.border_color = border_color; self.current_size = size
-        self.setFlag(QGraphicsEllipseItem.GraphicsItemFlag.ItemIsMovable); self.setFlag(QGraphicsEllipseItem.GraphicsItemFlag.ItemIsSelectable); self.setFlag(QGraphicsEllipseItem.GraphicsItemFlag.ItemSendsGeometryChanges)
-        self.setToolTip(name); self.update_appearance(size, border_color)
+        self.tid = tid
+        self.eid = eid
+        self.name = name
+        self.on_move_callback = on_move_callback
+        self.original_pixmap = pixmap
+        self.border_color = border_color
+        self.current_size = size
+        self.setFlag(QGraphicsEllipseItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsEllipseItem.GraphicsItemFlag.ItemIsSelectable)
+        self.setFlag(QGraphicsEllipseItem.GraphicsItemFlag.ItemSendsGeometryChanges)
+        self.setToolTip(name)
+        self.update_appearance(size, border_color)
     def update_appearance(self, size, border_color=None):
-        self.current_size = size; self.setRect(0, 0, size, size)
-        if border_color: self.border_color = border_color
-        pen = QPen(QColor(self.border_color)); pen.setWidth(3); self.setPen(pen)
+        self.current_size = size
+        self.setRect(0, 0, size, size)
+        if border_color: 
+            self.border_color = border_color
+        pen = QPen(QColor(self.border_color))
+        pen.setWidth(3)
+        self.setPen(pen)
         if self.original_pixmap and not self.original_pixmap.isNull():
             scaled = self.original_pixmap.scaled(int(size), int(size), Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation)
-            brush = QBrush(scaled); self.setBrush(brush)
+            brush = QBrush(scaled)
+            self.setBrush(brush)
         else: self.setBrush(QBrush(QColor("#444")))
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
@@ -269,10 +307,19 @@ class BattleMapWidget(QWidget):
         self.toolbar = QHBoxLayout()
         self.toolbar.setContentsMargins(5, 5, 5, 5)
         
-        self.btn_reset_view = QPushButton("🏠"); self.btn_reset_view.setToolTip(tr("TIP_FIT_VIEW")); self.btn_reset_view.setFixedSize(30, 25); self.btn_reset_view.clicked.connect(self.fit_map_in_view)
+        self.btn_reset_view = QPushButton("🏠")
+        self.btn_reset_view.setToolTip(tr("TIP_FIT_VIEW"))
+        self.btn_reset_view.setFixedSize(30, 25)
+        self.btn_reset_view.clicked.connect(self.fit_map_in_view)
         
-        self.lbl_size = QLabel(tr("LBL_TOKEN_SIZE")); self.lbl_size.setObjectName("toolbarLabel")
-        self.slider_size = QSlider(Qt.Orientation.Horizontal); self.slider_size.setMinimum(20); self.slider_size.setMaximum(300); self.slider_size.setValue(self.token_size); self.slider_size.valueChanged.connect(self.change_token_size); self.slider_size.setFixedWidth(120)
+        self.lbl_size = QLabel(tr("LBL_TOKEN_SIZE"))
+        self.lbl_size.setObjectName("toolbarLabel")
+        self.slider_size = QSlider(Qt.Orientation.Horizontal)
+        self.slider_size.setMinimum(20)
+        self.slider_size.setMaximum(300)
+        self.slider_size.setValue(self.token_size)
+        self.slider_size.valueChanged.connect(self.change_token_size)
+        self.slider_size.setFixedWidth(120)
         
         self.toolbar.addWidget(self.btn_reset_view)
         
@@ -289,7 +336,8 @@ class BattleMapWidget(QWidget):
         
         if self.is_dm_view:
             self.toolbar.addSpacing(15)
-            self.btn_fog_toggle = QPushButton(tr("BTN_FOG")); self.btn_fog_toggle.setCheckable(True)
+            self.btn_fog_toggle = QPushButton(tr("BTN_FOG"))
+            self.btn_fog_toggle.setCheckable(True)
             self.btn_fog_toggle.setStyleSheet("QPushButton:checked { background-color: #d32f2f; color: white; font-weight: bold; }")
             self.btn_fog_toggle.clicked.connect(self.toggle_fog_mode)
             self.toolbar.addWidget(self.btn_fog_toggle)
@@ -298,9 +346,11 @@ class BattleMapWidget(QWidget):
             self.lbl_fog_hint.setStyleSheet("color: #aaa; font-size: 10px; margin-left: 5px; margin-right: 5px;")
             self.toolbar.addWidget(self.lbl_fog_hint)
             
-            self.btn_fog_fill = QPushButton(tr("BTN_FOG_FILL")); self.btn_fog_fill.setFixedSize(60, 25)
+            self.btn_fog_fill = QPushButton(tr("BTN_FOG_FILL"))
+            self.btn_fog_fill.setFixedSize(60, 25)
             self.btn_fog_fill.clicked.connect(self.fill_fog)
-            self.btn_fog_clear = QPushButton(tr("BTN_FOG_CLEAR")); self.btn_fog_clear.setFixedSize(60, 25)
+            self.btn_fog_clear = QPushButton(tr("BTN_FOG_CLEAR"))
+            self.btn_fog_clear.setFixedSize(60, 25)
             self.btn_fog_clear.clicked.connect(self.clear_fog)
             self.toolbar.addWidget(self.btn_fog_fill)
             self.toolbar.addWidget(self.btn_fog_clear)
@@ -308,7 +358,8 @@ class BattleMapWidget(QWidget):
         self.toolbar.addStretch()
         layout.addLayout(self.toolbar)
         
-        self.scene = QGraphicsScene(); self.scene.setBackgroundBrush(QBrush(QColor("#111")))
+        self.scene = QGraphicsScene()
+        self.scene.setBackgroundBrush(QBrush(QColor("#111")))
         self.view = BattleMapView(self.scene) 
         self.view.setStyleSheet("border: none;") 
         
@@ -324,16 +375,19 @@ class BattleMapWidget(QWidget):
     def toggle_view_lock(self, checked):
         self.is_view_locked = checked
         if checked:
-            self.btn_lock_view.setText("🔒"); self.btn_lock_view.setStyleSheet("background-color: #d32f2f; color: white;")
+            self.btn_lock_view.setText("🔒")
+            self.btn_lock_view.setStyleSheet("background-color: #d32f2f; color: white;")
         else:
-            self.btn_lock_view.setText("🔓"); self.btn_lock_view.setStyleSheet("")
+            self.btn_lock_view.setText("🔓")
+            self.btn_lock_view.setStyleSheet("")
 
     def on_view_changed_internal(self, rect):
         if not self.is_view_locked: self.view_sync_signal.emit(rect)
 
     def get_fog_data_base64(self):
         if not self.fog_item: return None
-        buffer = QBuffer(); buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+        buffer = QBuffer()
+        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
         self.fog_item.image.save(buffer, "PNG")
         return base64.b64encode(buffer.data()).decode('utf-8')
 
@@ -377,15 +431,20 @@ class BattleMapWidget(QWidget):
         except Exception as e: print(f"Fog load error: {e}")
 
     def reset_fog(self):
-        if self.fog_item: self.scene.removeItem(self.fog_item); self.fog_item = None
+        if self.fog_item: 
+            self.scene.removeItem(self.fog_item)
+            self.fog_item = None
 
     def toggle_fog_mode(self, checked):
         self.view.is_fog_edit_mode = checked
-        if checked: self.view.setCursor(Qt.CursorShape.CrossCursor)
-        else: self.view.setCursor(Qt.CursorShape.ArrowCursor)
+        if checked: 
+            self.view.setCursor(Qt.CursorShape.CrossCursor)
+        else: 
+            self.view.setCursor(Qt.CursorShape.ArrowCursor)
 
     def init_fog_layer(self, width, height):
-        if self.fog_item: self.scene.removeItem(self.fog_item)
+        if self.fog_item: 
+            self.scene.removeItem(self.fog_item)
         self.fog_item = FogItem(width, height)
         self.fog_item.setOpacity(0.5 if self.is_dm_view else 1.0)
         self.scene.addItem(self.fog_item)
@@ -580,20 +639,44 @@ class BattleMapWindow(QMainWindow):
 
     def __init__(self, data_manager):
         super().__init__()
-        self.dm = data_manager; self.map_item = None; self.setWindowTitle(tr("TITLE_BATTLE_MAP")); self.resize(1200, 800)
-        central = QWidget(); self.setCentralWidget(central); main_layout = QHBoxLayout(central); main_layout.setContentsMargins(0, 0, 0, 0)
+        self.dm = data_manager
+        self.map_item = None
+        self.setWindowTitle(tr("TITLE_BATTLE_MAP"))
+        self.resize(1200, 800)
+        central = QWidget()
+        self.setCentralWidget(central)
+        main_layout = QHBoxLayout(central)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         self.map_widget = BattleMapWidget(is_dm_view=False) 
         self.map_widget.token_moved_signal.connect(self.token_moved_signal.emit)
         self.slider_size = self.map_widget.slider_size 
         main_layout.addWidget(self.map_widget, 1)
-        self.sidebar = QWidget(); self.sidebar.setFixedWidth(300); self.sidebar.setObjectName("sidebarFrame"); sidebar_layout = QVBoxLayout(self.sidebar)
-        self.lbl_title = QLabel(tr("TITLE_TURN_ORDER")); self.lbl_title.setObjectName("headerLabel"); self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter); sidebar_layout.addWidget(self.lbl_title)
-        scroll = QScrollArea(); scroll.setWidgetResizable(True); scroll.setFrameShape(QFrame.Shape.NoFrame); scroll.setObjectName("sidebarScroll")
-        self.list_container = QWidget(); self.list_container.setObjectName("sheetContainer"); self.list_container.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.list_layout = QVBoxLayout(self.list_container); self.list_layout.setAlignment(Qt.AlignmentFlag.AlignTop); self.list_layout.setSpacing(5); scroll.setWidget(self.list_container); sidebar_layout.addWidget(scroll)
+        self.sidebar = QWidget()
+        self.sidebar.setFixedWidth(300)
+        self.sidebar.setObjectName("sidebarFrame")
+        sidebar_layout = QVBoxLayout(self.sidebar)
+        self.lbl_title = QLabel(tr("TITLE_TURN_ORDER"))
+        self.lbl_title.setObjectName("headerLabel")
+        self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sidebar_layout.addWidget(self.lbl_title)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setObjectName("sidebarScroll")
+        self.list_container = QWidget()
+        self.list_container.setObjectName("sheetContainer")
+        self.list_container.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.list_layout = QVBoxLayout(self.list_container)
+        self.list_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.list_layout.setSpacing(5)
+        scroll.setWidget(self.list_container)
+        sidebar_layout.addWidget(scroll)
         main_layout.addWidget(self.sidebar, 0)
 
-    def retranslate_ui(self): self.setWindowTitle(tr("TITLE_BATTLE_MAP")); self.lbl_title.setText(tr("TITLE_TURN_ORDER")); self.map_widget.retranslate_ui()
+    def retranslate_ui(self): 
+        self.setWindowTitle(tr("TITLE_BATTLE_MAP"))
+        self.lbl_title.setText(tr("TITLE_TURN_ORDER"))
+        self.map_widget.retranslate_ui()
     
     def update_combat_data(self, combatants, current_index, map_path=None, saved_token_size=None, fog_data=None):
         self.map_widget.update_tokens(combatants, current_index, self.dm, map_path, saved_token_size, fog_data)
@@ -610,19 +693,46 @@ class BattleMapWindow(QMainWindow):
                 item.widget().deleteLater()
                 
         for i, c in enumerate(combatants):
-            name = c.get("name", "???"); hp = c.get("hp", "?"); conditions = c.get("conditions", []) 
-            ent_type = c.get("type", "NPC"); attitude = c.get("attitude", "LBL_ATTR_NEUTRAL"); is_player = (ent_type == "Player"); is_active = (i == current_index)
+            name = c.get("name", "???")
+            hp = c.get("hp", "?")
+            conditions = c.get("conditions", []) 
+            ent_type = c.get("type", "NPC")
+            attitude = c.get("attitude", "LBL_ATTR_NEUTRAL")
+            is_player = (ent_type == "Player")
+            is_active = (i == current_index)
             attitude_clean = "neutral"
-            if attitude == "LBL_ATTR_HOSTILE": attitude_clean = "hostile"
-            elif attitude == "LBL_ATTR_FRIENDLY": attitude_clean = "friendly"
-            card = QFrame(); card.setProperty("class", "combatCard"); card.setProperty("active", str(is_active).lower()); card.setProperty("type", ent_type); card.setProperty("attitude", attitude_clean)
-            card_main_layout = QVBoxLayout(card); card_main_layout.setContentsMargins(5, 5, 5, 5); card_main_layout.setSpacing(2)
-            row_header = QWidget(); row_header_layout = QHBoxLayout(row_header); row_header_layout.setContentsMargins(0, 0, 0, 0); row_header_layout.setSpacing(5)
-            lbl_name = QLabel(name); lbl_name.setStyleSheet("font-weight: bold; border: none; background: transparent;")
-            hp_txt = tr("LBL_HP_SIDEBAR", hp=hp) if is_player else tr("LBL_HP_UNKNOWN"); lbl_hp = QLabel(hp_txt); lbl_hp.setStyleSheet("border: none; background: transparent; font-style: italic;")
-            row_header_layout.addWidget(lbl_name, 1); row_header_layout.addWidget(lbl_hp, 0); card_main_layout.addWidget(row_header)
+            if attitude == "LBL_ATTR_HOSTILE": 
+                attitude_clean = "hostile"
+            elif attitude == "LBL_ATTR_FRIENDLY": 
+                attitude_clean = "friendly"
+            card = QFrame()
+            card.setProperty("class", "combatCard")
+            card.setProperty("active", str(is_active).lower())
+            card.setProperty("type", ent_type)
+            card.setProperty("attitude", attitude_clean)
+            card_main_layout = QVBoxLayout(card)
+            card_main_layout.setContentsMargins(5, 5, 5, 5)
+            card_main_layout.setSpacing(2)
+            row_header = QWidget()
+            row_header_layout = QHBoxLayout(row_header)
+            row_header_layout.setContentsMargins(0, 0, 0, 0)
+            row_header_layout.setSpacing(5)
+            lbl_name = QLabel(name)
+            lbl_name.setStyleSheet("font-weight: bold; border: none; background: transparent;")
+            hp_txt = tr("LBL_HP_SIDEBAR", hp=hp) if is_player else tr("LBL_HP_UNKNOWN")
+            lbl_hp = QLabel(hp_txt)
+            lbl_hp.setStyleSheet("border: none; background: transparent; font-style: italic;")
+            row_header_layout.addWidget(lbl_name, 1)
+            row_header_layout.addWidget(lbl_hp, 0)
+            card_main_layout.addWidget(row_header)
             if conditions:
-                row_conditions = QWidget(); row_cond_layout = QHBoxLayout(row_conditions); row_cond_layout.setContentsMargins(0, 2, 0, 0); row_cond_layout.setSpacing(4); row_cond_layout.addStretch() 
-                for cond in conditions: icon_widget = SidebarConditionIcon(cond.get("name", "?"), cond.get("icon"), cond.get("duration", 0)); row_cond_layout.addWidget(icon_widget)
+                row_conditions = QWidget()
+                row_cond_layout = QHBoxLayout(row_conditions)
+                row_cond_layout.setContentsMargins(0, 2, 0, 0)
+                row_cond_layout.setSpacing(4)
+                row_cond_layout.addStretch() 
+                for cond in conditions: 
+                    icon_widget = SidebarConditionIcon(cond.get("name", "?"), cond.get("icon"), cond.get("duration", 0))
+                    row_cond_layout.addWidget(icon_widget)
                 card_main_layout.addWidget(row_conditions)
             self.list_layout.addWidget(card)

@@ -40,19 +40,25 @@ class MainWindow(QMainWindow):
         self.init_ui()
 
     def init_ui(self):
-        central = QWidget(); self.setCentralWidget(central)
+        central = QWidget()
+        self.setCentralWidget(central)
         main_layout = QVBoxLayout(central)
         
         # --- TOOLBAR SETUP ---
         toolbar = QHBoxLayout()
         toolbar.setContentsMargins(5, 5, 5, 5) # Add some spacing
         
-        self.btn_toggle_player = QPushButton(tr("BTN_PLAYER_SCREEN")); self.btn_toggle_player.setCheckable(True)
-        self.btn_toggle_player.setObjectName("primaryBtn"); self.btn_toggle_player.clicked.connect(self.toggle_player_window)
-        self.btn_export_txt = QPushButton(tr("BTN_EXPORT")); self.btn_export_txt.setObjectName("successBtn")
+        self.btn_toggle_player = QPushButton(tr("BTN_PLAYER_SCREEN"))
+        self.btn_toggle_player.setCheckable(True)
+        self.btn_toggle_player.setObjectName("primaryBtn")
+        self.btn_toggle_player.clicked.connect(self.toggle_player_window)
+        self.btn_export_txt = QPushButton(tr("BTN_EXPORT"))
+        self.btn_export_txt.setObjectName("successBtn")
         self.btn_export_txt.clicked.connect(self.export_entities_to_txt)
-        self.btn_toggle_sound = QPushButton("🔊"); self.btn_toggle_sound.setCheckable(True)
-        self.btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD")); self.btn_toggle_sound.clicked.connect(self.toggle_soundpad)
+        self.btn_toggle_sound = QPushButton("🔊")
+        self.btn_toggle_sound.setCheckable(True)
+        self.btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
+        self.btn_toggle_sound.clicked.connect(self.toggle_soundpad)
         
         self.lbl_campaign = QLabel(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
         self.lbl_campaign.setObjectName("toolbarLabel")
@@ -65,12 +71,14 @@ class MainWindow(QMainWindow):
         self.projection_manager.image_removed.connect(self.player_window.remove_image_from_view)
 
         # Right side controls
-        self.combo_lang = QComboBox(); self.combo_lang.addItems(["English", "Türkçe"])
+        self.combo_lang = QComboBox()
+        self.combo_lang.addItems(["English", "Türkçe"])
         current_lang = self.data_manager.settings.get("language", "EN")
         self.combo_lang.setCurrentIndex(1 if current_lang == "TR" else 0)
         self.combo_lang.currentIndexChanged.connect(self.change_language)
         
-        self.lbl_theme = QLabel(tr("LBL_THEME")); self.lbl_theme.setObjectName("toolbarLabel")
+        self.lbl_theme = QLabel(tr("LBL_THEME"))
+        self.lbl_theme.setObjectName("toolbarLabel")
         self.combo_theme = QComboBox()
         for _, display_name in self.theme_list:
             self.combo_theme.addItem(tr(display_name) if display_name.startswith("THEME_") else display_name)
@@ -108,10 +116,12 @@ class MainWindow(QMainWindow):
         self.session_tab = SessionTab(self.data_manager)
         self.tabs.addTab(self.session_tab, tr("TAB_SESSION"))
         
-        self.soundpad_panel = SoundpadPanel(); self.soundpad_panel.setVisible(False)
+        self.soundpad_panel = SoundpadPanel()
+        self.soundpad_panel.setVisible(False)
         self.soundpad_panel.theme_loaded_with_shortcuts.connect(self.setup_soundpad_shortcuts)
         
-        content_layout.addWidget(self.tabs, 1); content_layout.addWidget(self.soundpad_panel, 0)
+        content_layout.addWidget(self.tabs, 1)
+        content_layout.addWidget(self.soundpad_panel, 0)
         main_layout.addLayout(content_layout)
 
         self.session_tab.txt_log.entity_link_clicked.connect(self.db_tab.open_entity_tab)
@@ -121,8 +131,10 @@ class MainWindow(QMainWindow):
         self.retranslate_ui()
 
     def setup_soundpad_shortcuts(self, shortcuts_map):
+        """Sets up keyboard shortcuts for the soundpad."""
         for shortcut in self.active_shortcuts:
-            shortcut.setEnabled(False); shortcut.deleteLater()
+            shortcut.setEnabled(False)
+            shortcut.deleteLater()
         self.active_shortcuts.clear()
 
         if stop_all_key := shortcuts_map.get("stop_all"):
@@ -143,10 +155,14 @@ class MainWindow(QMainWindow):
                     self.active_shortcuts.append(sc)
     
     def retranslate_ui(self):
-        self.btn_toggle_player.setText(tr("BTN_PLAYER_SCREEN")); self.btn_export_txt.setText(tr("BTN_EXPORT"))
+        """Updates the UI texts for language changes."""
+        self.btn_toggle_player.setText(tr("BTN_PLAYER_SCREEN"))
+        self.btn_export_txt.setText(tr("BTN_EXPORT"))
         self.btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
         self.lbl_campaign.setText(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
-        self.tabs.setTabText(0, tr("TAB_DB")); self.tabs.setTabText(1, tr("TAB_MAP")); self.tabs.setTabText(2, tr("TAB_SESSION"))
+        self.tabs.setTabText(0, tr("TAB_DB"))
+        self.tabs.setTabText(1, tr("TAB_MAP"))
+        self.tabs.setTabText(2, tr("TAB_SESSION"))
         if hasattr(self.db_tab, "retranslate_ui"): self.db_tab.retranslate_ui()
         if hasattr(self.map_tab, "retranslate_ui"): self.map_tab.retranslate_ui()
         if hasattr(self.session_tab, "retranslate_ui"): self.session_tab.retranslate_ui()
@@ -156,17 +172,23 @@ class MainWindow(QMainWindow):
             self.combo_theme.setItemText(i, tr(display_name) if display_name.startswith("THEME_") else display_name)
 
     def change_language(self, index):
-        self.data_manager.save_settings({"language": "TR" if index == 1 else "EN"}); self.retranslate_ui()
+        """Changes the application language."""
+        self.data_manager.save_settings({"language": "TR" if index == 1 else "EN"})
+        self.retranslate_ui()
     
     def toggle_soundpad(self):
+        """Toggles the visibility of the soundpad panel."""
         is_visible = self.soundpad_panel.isVisible()
-        self.soundpad_panel.setVisible(not is_visible); self.btn_toggle_sound.setChecked(not is_visible)
+        self.soundpad_panel.setVisible(not is_visible)
+        self.btn_toggle_sound.setChecked(not is_visible)
     
     def change_theme(self, index):
+        """Changes the application theme."""
         if 0 <= index < len(self.theme_list):
             theme_name = self.theme_list[index][0]
             self.data_manager.save_settings({"theme": theme_name})
-            self.current_stylesheet = load_theme(theme_name); self.setStyleSheet(self.current_stylesheet)
+            self.current_stylesheet = load_theme(theme_name)
+            self.setStyleSheet(self.current_stylesheet)
             if hasattr(self.player_window, "update_theme"): self.player_window.update_theme(self.current_stylesheet)
     
     def toggle_player_window(self):
