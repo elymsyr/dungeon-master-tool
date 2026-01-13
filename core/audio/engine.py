@@ -6,10 +6,10 @@ from typing import Dict, List
 from .models import Theme, MusicState, Track
 from config import SOUNDPAD_ROOT
 
-# --- YARDIMCI SINIFLAR (DEĞİŞİKLİK YOK) ---
+# --- HELPER CLASSES (NO CHANGE) ---
 
 class TrackPlayer(QObject):
-    """Tek bir müzik katmanını (Track) yöneten oynatıcı."""
+    """Player managing a single music layer (Track)."""
     loop_finished = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -20,7 +20,9 @@ class TrackPlayer(QObject):
         self._volume = 0.0 
         self.audio.setVolume(self._volume)
         self.last_position = 0
-        self.anim = QPropertyAnimation(self, b"volume"); self.anim.setDuration(2000)
+        self.last_position = 0
+        self.anim = QPropertyAnimation(self, b"volume")
+        self.anim.setDuration(2000)
         self.anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
         self.player.positionChanged.connect(self._on_position_changed)
 
@@ -40,8 +42,12 @@ class TrackPlayer(QObject):
             self.player.setLoops(QMediaPlayer.Loops.Infinite) 
             self.last_position = 0
 
-    def play(self): self.player.play()
-    def stop(self): self.player.stop(); self.last_position = 0
+    def play(self):
+        self.player.play()
+
+    def stop(self):
+        self.player.stop()
+        self.last_position = 0
     
     def fade_to(self, target, duration=1500):
         if self.anim.state() == QPropertyAnimation.State.Running: self.anim.stop()
@@ -53,7 +59,7 @@ class TrackPlayer(QObject):
         self.last_position = position
 
 class MultiTrackDeck(QObject):
-    """Bir 'State'i (Normal, Combat) yönetir ve katmanları senkronize eder."""
+    """Manages a 'State' (Normal, Combat) and synchronizes layers."""
     loop_finished = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -78,12 +84,16 @@ class MultiTrackDeck(QObject):
         if "base" in self.players: self.players["base"].loop_finished.connect(self.loop_finished.emit)
 
     def play(self):
-        for p in self.players.values(): p.volume = 0.0; p.play()
+        for p in self.players.values():
+            p.volume = 0.0
+            p.play()
         self.update_mix()
+    
     def stop(self):
         for p in self.players.values(): p.stop()
     def set_intensity_mask(self, levels: List[str]):
-        self.active_levels = levels; self.update_mix()
+        self.active_levels = levels
+        self.update_mix()
     def update_mix(self):
         for pid, player in self.players.items():
             target = self.master_volume if pid in self.active_levels else 0.0
@@ -102,21 +112,28 @@ class MusicBrain(QObject):
         # Müzik Sistemi
         self.global_music_volume = 0.5; self._fade_ratio = 1.0 
         self.anim = QPropertyAnimation(self, b"fade_ratio"); self.anim.setDuration(2000)
-        self.deck_a = MultiTrackDeck(self); self.deck_b = MultiTrackDeck(self)
-        self.active_deck = self.deck_a; self.inactive_deck = self.deck_b
-        self.deck_a.loop_finished.connect(self._check_queue); self.deck_b.loop_finished.connect(self._check_queue)
-        self.current_theme: Theme = None; self.current_state_id = None
-        self.pending_state_id = None; self.current_intensity_level = 0
+        self.deck_a = MultiTrackDeck(self)
+        self.deck_b = MultiTrackDeck(self)
+        self.active_deck = self.deck_a
+        self.inactive_deck = self.deck_b
+        self.deck_a.loop_finished.connect(self._check_queue)
+        self.deck_b.loop_finished.connect(self._check_queue)
+        self.current_theme: Theme = None
+        self.current_state_id = None
+        self.pending_state_id = None
+        self.current_intensity_level = 0
         
-        # Ambiyans Sistemi
-        self.AMBIENCE_PLAYER_COUNT = 4; self.ambience_players = []
+        # Ambience System
+        self.AMBIENCE_PLAYER_COUNT = 4
+        self.ambience_players = []
         for _ in range(self.AMBIENCE_PLAYER_COUNT):
             player = QMediaPlayer(); audio_output = QAudioOutput()
             player.setAudioOutput(audio_output); player.setLoops(QMediaPlayer.Loops.Infinite)
             self.ambience_players.append({'player': player, 'output': audio_output, 'id': None})
             
-        # SFX Sistemi
-        self.SFX_PLAYER_COUNT = 8; self.sfx_pool = []
+        # SFX System
+        self.SFX_PLAYER_COUNT = 8
+        self.sfx_pool = []
         for _ in range(self.SFX_PLAYER_COUNT):
             player = QMediaPlayer(); audio_output = QAudioOutput()
             player.setAudioOutput(audio_output)
@@ -146,7 +163,10 @@ class MusicBrain(QObject):
         self.inactive_deck.deck_volume = 0.0; self.inactive_deck.play()
         self.active_deck, self.inactive_deck = self.inactive_deck, self.active_deck
         self.current_state_id = state_name
-        self.anim.stop(); self.anim.setStartValue(0.0); self.anim.setEndValue(1.0); self.anim.start()
+        self.anim.stop()
+        self.anim.setStartValue(0.0)
+        self.anim.setEndValue(1.0)
+        self.anim.start()
         self.state_changed.emit(state_name)
 
     def set_intensity(self, level: int):

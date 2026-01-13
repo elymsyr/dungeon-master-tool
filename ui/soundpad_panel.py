@@ -41,6 +41,7 @@ class SoundpadPanel(QWidget):
         main_layout.setContentsMargins(10, 10, 10, 10)
         
         # Title
+        # Title
         self.lbl_title = QLabel(tr("TITLE_SOUNDPAD"))
         self.lbl_title.setObjectName("headerLabel")
         self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -49,6 +50,7 @@ class SoundpadPanel(QWidget):
         # Tabs
         self.tabs = QTabWidget()
         main_layout.addWidget(self.tabs, 1)
+        
         
         self.music_tab = QWidget()
         self.ambience_tab = QWidget()

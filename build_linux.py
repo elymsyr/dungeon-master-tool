@@ -5,8 +5,10 @@ import shutil
 APP_NAME = "DungeonMasterTool"
 
 # Clean
-if os.path.exists("dist"): shutil.rmtree("dist")
-if os.path.exists("build"): shutil.rmtree("build")
+if os.path.exists("dist"):
+    shutil.rmtree("dist")
+if os.path.exists("build"):
+    shutil.rmtree("build")
 
 params = [
     'main.py',
@@ -47,7 +49,8 @@ for folder in folders_to_copy:
     src = os.path.join(".", folder)
     dst = os.path.join(target_dir, folder)
     if os.path.exists(src):
-        if os.path.exists(dst): shutil.rmtree(dst)
+        if os.path.exists(dst):
+            shutil.rmtree(dst)
         shutil.copytree(src, dst)
         print(f"Copied: {folder}")
 

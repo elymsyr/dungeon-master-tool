@@ -3,22 +3,22 @@ import sys
 
 def get_base_path():
     """ 
-    Uygulamanın çalıştığı ana dizini döner.
-    Frozen (EXE) modda ise, EXE'nin bulunduğu klasörü (sys.executable) döner.
-    Böylece assets/themes/locales klasörleri EXE'nin yanında aranır.
+    Returns the main directory where the application is running.
+    In Frozen (EXE) mode, returns the folder containing the EXE (sys.executable).
+    This ensures assets/themes/locales folders are looked for next to the EXE.
     """
     if getattr(sys, 'frozen', False):
         # .../dist/DungeonMasterTool/DungeonMasterTool.exe -> .../dist/DungeonMasterTool/
         return os.path.dirname(sys.executable)
     
-    # Geliştirme ortamı (Dev)
+    # Development environment (Dev)
     return os.path.dirname(os.path.abspath(__file__))
 
 BASE_DIR = get_base_path()
 
 def get_data_root():
     """ 
-    Kullanıcı verilerinin (save dosyaları, dünyalar) saklanacağı dizin.
+    Directory where user data (save files, worlds) will be stored.
     """
     if getattr(sys, 'frozen', False):
         return os.path.dirname(sys.executable)
@@ -27,22 +27,22 @@ def get_data_root():
 
 DATA_ROOT = get_data_root()
 
-# --- Dizin Tanımlamaları ---
+# --- Directory Definitions ---
 
-# Kullanıcı verileri (Değişken, uygulama yanında)
+# User data (Variable, next to application)
 WORLDS_DIR = os.path.join(DATA_ROOT, "worlds")
 CACHE_DIR = os.path.join(DATA_ROOT, "cache")
 
-# Uygulama varlıkları (Sabit, exe yanında)
+# Application assets (Fixed, next to exe)
 ASSETS_DIR = os.path.join(BASE_DIR, "assets")
-IMAGES_DIR = ASSETS_DIR  # IMAGES_DIR eski uyumluluk için kalabilir, artık ASSETS_DIR'i işaret ediyor
+IMAGES_DIR = ASSETS_DIR  # IMAGES_DIR can remain for backwards compatibility, now points to ASSETS_DIR
 THEMES_DIR = os.path.join(BASE_DIR, "themes")
 LOCALES_DIR = os.path.join(BASE_DIR, "locales")
 
-# YENİ EKLENEN SOUNDPAD DİZİNİ
+# NEW ADDED SOUNDPAD DIRECTORY
 SOUNDPAD_ROOT = os.path.join(ASSETS_DIR, "soundpad")
 
-# Gerekli klasörleri uygulamanın başlangıcında oluştur
+# Create necessary folders at application startup
 for d in [WORLDS_DIR, CACHE_DIR, ASSETS_DIR, SOUNDPAD_ROOT]:
     if not os.path.exists(d):
         os.makedirs(d)

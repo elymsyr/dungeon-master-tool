@@ -8,9 +8,9 @@ AUDIO_EXTENSIONS = {'.wav', '.mp3', '.ogg', '.flac', '.m4a'}
 
 def _find_audio_files(path_fragment):
     """
-    Verilen yol parçasının bir klasör olup olmadığını kontrol eder.
-    Eğer klasörse, içindeki tüm ses dosyalarını liste olarak döndürür.
-    Eğer tek bir dosyaysa, tek elemanlı bir liste döndürür.
+    Checks if the given path fragment is a directory.
+    If it is a directory, returns a list of all audio files inside.
+    If it is a single file, returns a single-element list.
     """
     full_path = os.path.join(SOUNDPAD_ROOT, path_fragment)
     
@@ -40,8 +40,8 @@ def _find_audio_files(path_fragment):
 
 def load_global_library():
     """
-    Global kütüphaneyi yükler. 'file' anahtarını tarayarak
-    tekil dosyaları veya klasör içindeki dosyaları 'files' listesine dönüştürür.
+    Loads the global library. Scans the 'file' key
+    and transforms single files or files inside folders into the 'files' list.
     """
     library = {'ambience': [], 'sfx': [], 'shortcuts': {}}
     library_file = os.path.join(SOUNDPAD_ROOT, "soundpad_library.yaml")
@@ -84,12 +84,13 @@ def load_all_themes():
     return themes
 
 def _parse_theme_file(yaml_path, base_folder):
-    """Tek bir tema dosyasını ayrıştırır (Bu fonksiyonun mantığı aynı kalır)."""
+    """Parses a single theme file (Logic remains the same)."""
     try:
         with open(yaml_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
         if not data: return None
-        t_id = data.get("id", os.path.basename(base_folder)); t_name = data.get("name", t_id)
+        t_id = data.get("id", os.path.basename(base_folder))
+        t_name = data.get("name", t_id)
         theme_obj = Theme(name=t_name, id=t_id)
         theme_obj.shortcuts = data.get("shortcuts", {})
         
@@ -99,7 +100,8 @@ def _parse_theme_file(yaml_path, base_folder):
             raw_tracks = state_data.get("tracks", {})
             for track_id, track_seq in raw_tracks.items():
                 track_obj = Track(name=track_id)
-                if not isinstance(track_seq, list): track_seq = [track_seq]
+                if not isinstance(track_seq, list):
+                    track_seq = [track_seq]
                 for node_data in track_seq:
                     filename = node_data if isinstance(node_data, str) else node_data.get("file")
                     if not filename: continue

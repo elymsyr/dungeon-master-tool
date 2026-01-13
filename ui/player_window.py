@@ -17,14 +17,14 @@ class PlayerWindow(QMainWindow):
         
         self.stack = QStackedWidget()
         
-        # SAYFA 0: ÇOKLU RESİM GÖRÜNTÜLEYİCİ
+        # PAGE 0: MULTI-IMAGE VIEWER
         self.multi_image_widget = QWidget()
         self.multi_image_layout = QHBoxLayout(self.multi_image_widget)
         self.multi_image_layout.setContentsMargins(0, 0, 0, 0)
         self.multi_image_layout.setSpacing(2)
         self.stack.addWidget(self.multi_image_widget)
         
-        # SAYFA 1: KARAKTER KARTI
+        # PAGE 1: CHARACTER SHEET
         self.stat_viewer = QTextBrowser()
         self.stat_viewer.setStyleSheet("""
             QTextBrowser {
@@ -37,7 +37,7 @@ class PlayerWindow(QMainWindow):
         """)
         self.stack.addWidget(self.stat_viewer)
 
-        # SAYFA 2: PDF GÖRÜNTÜLEYİCİ
+        # PAGE 2: PDF VIEWER
         self.pdf_viewer = None
         self.pdf_viewer_index = None
         
@@ -45,7 +45,7 @@ class PlayerWindow(QMainWindow):
         self.active_image_paths = []
 
     def add_image_to_view(self, image_path, pixmap=None):
-        """Ekrana yeni bir resim ekler. Varsa GÜNCELLER (Zoom bozulmaz)."""
+        """Adds a new image to the screen. UPDATES if exists (Zoom persists)."""
         self.stack.setCurrentIndex(0)
         
         # --- UPDATE EXISTING LOGIC ---
@@ -69,10 +69,10 @@ class PlayerWindow(QMainWindow):
         viewer = ImageViewer()
         
         if pixmap:
-            # Hafızadan gelen (Harita vs.)
+            # From memory (Map etc.)
             viewer.set_image(pixmap)
         else:
-            # Dosyadan okunan (Sürükle bırak)
+            # Read from file (Drag & Drop)
             loaded_pix = QPixmap(image_path)
             viewer.set_image(loaded_pix)
         
@@ -99,7 +99,7 @@ class PlayerWindow(QMainWindow):
                 item.widget().deleteLater()
         self.active_image_paths.clear()
 
-    # Eski uyumluluk metodları
+    # Legacy compatibility methods
     def show_image(self, pixmap):
         self.clear_images()
         self.stack.setCurrentIndex(0)

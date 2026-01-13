@@ -13,8 +13,8 @@ class ApiSearchWorker(QThread):
 
     def run(self):
         try:
-            # fetch_from_api artık ya (True, msg, ID) dönüyor (zaten varsa)
-            # ya da (True, msg, DATA_DICT) dönüyor (yeni çekildiyse)
+            # fetch_from_api now returns either (True, msg, ID) (if exists)
+            # or (True, msg, DATA_DICT) (if newly fetched)
             success, msg, result = self.data_manager.fetch_from_api(self.category, self.query)
             self.finished.emit(success, result, msg)
         except Exception as e:
@@ -36,8 +36,8 @@ class ApiListWorker(QThread):
 
 class ImageDownloadWorker(QThread):
     """
-    Resmi arka planda indirir ve kaydedilen yerel yolu sinyal olarak döner.
-    UI donmasını engellemek için NpcSheet tarafından kullanılır.
+    Downloads image in background and emits local path.
+    Used by NpcSheet to prevent UI freeze.
     """
     finished = pyqtSignal(bool, str) # success, local_abs_path
 
@@ -54,12 +54,12 @@ class ImageDownloadWorker(QThread):
             
             full_path = os.path.join(self.save_dir, self.filename)
             
-            # Dosya zaten varsa indirme (Cache kontrolü)
+            # If file exists, do not download (Cache check)
             if os.path.exists(full_path):
                 self.finished.emit(True, full_path)
                 return
 
-            # Resmi indir
+            # Download image
             response = requests.get(self.url, timeout=15)
             if response.status_code == 200:
                 with open(full_path, "wb") as f:

@@ -9,15 +9,16 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 
 [📥 Download Latest Release](https://github.com/elymsyr/dungeon-master-tool/releases)
 
-> ✨ **v0.5.0 Update:** Now featuring Multi-Image Projection, Drag & Drop workflow, and a fully integrated Fog of War system!
+> ✨ **v0.6.0 Update:** Now featuring Multi-Image Projection, Drag & Drop workflow, Video Maps, and a fully integrated Fog of War system!
 
 ---
 
 ## ✨ Key Features
 
 *   **Dynamic Player Screen:** Drag & drop multiple images (NPCs, Maps, Items) to the projection bar to create an instant **second split-screen view** for players.
-*   **Fog of War:** Interactive masking on the Battle Map. Draw fog to hide secrets and erase it to reveal rooms as players explore.
-*   **Embedded Battle Map:** Move tokens, manage combat, and sync views without leaving the session log and control the second battlemap screen for playeres.
+*   **Fog of War:** Interactive masking on the Battle Map. Draw fog to hide secrets and erase it to reveal rooms as players explore. **Persists per encounter.**
+*   **Animated Battle Maps:** Support for local video files (`.mp4`, `.webm`) to create immersive, moving battlegrounds.
+*   **Embedded Battle Map:** Move tokens, manage combat, and sync views without leaving the session log. Control the second battlemap screen for players with a single click.
 *   **Adaptive Soundpad:** Layered music system with intensity sliders (Base -> Low -> High) with ambiences and instant SFX.
 *   **Story Timeline:** Map-based tracker with **branching paths**, travel lines, and session-linked events. Implement NPC or Monster stories using timeline pins and hide them from players.
 *   **System Agnostic:** While optimized for 5e, you can play **any TTRPG** (Pathfinder, OSR, Homebrew) by creating custom entity cards or using "Handwritten" notes without code. Please create an issue if you want more sources :)
@@ -29,6 +30,7 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 ### ✅ Completed
 - [x] **Dynamic Projection:** Drag & drop images to header to project. Support for multi-image split view.
 - [x] **Fog of War:** Drawing tools (Lasso), global fill/clear, and per-encounter persistence.
+- [x] **Animated Maps:** Support for local video files as battle maps.
 - [x] **Embedded Map:** Seamless synchronization between DM view and Player view.
 - [x] **Soundpad:** Support for custom music, ambience layers, and sound effects.
 - [x] **Story Timeline 2.0:** Branching map paths and parent-child event linking.
@@ -39,6 +41,8 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 - [x] **Multi-Window:** Advanced support for projecting to specific/multiple player screens.
 - [x] **Campaign Notes:** Rich text editor, linking, and better folder organization for DM notes.
 - [x] **More Sources:** Open5E API is connected.
+- [x] **Battlemap View Lock and Toggle:** Toggle player view and lock map movement for player's battlemap screen.
+
 
 ### 🚧 In Progress / Planned
 - [ ] **Random Creator:** Random creator for NPCs, NPC names, battles and more...
@@ -46,23 +50,24 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 - [ ] **Soundpad:** Better soundpad and songs. Currently, the songs are uploaded only for test purposes.
 - [ ] **Integrations:** Support for D&D Beyond, Obsidian, and other tools.
 - [ ] **Custom World Pre-build:** Creating custom pre-build worlds and creating fast worlds.
-- [ ] **Battlemap View Lock and Toggle:** Toggle player view and lock map movement for player's battlemap screen.
 
 ## 🎮 Feature Guide
 
 ### 📺 Using the Player Screen (Projection)
 1.  Click the **"📺 Toggle Player Screen"** button in the top toolbar to open the second window.
 2.  A **"Drop to Project"** area will appear next to the World Name in the main toolbar.
-3.  **Drag & Drop:** Click and drag any image (from an NPC sheet, Item card, or Monster view) and drop it into this area.
+3.  **Drag & Drop:** Click and drag any image (from an NPC sheet, Item card, or Map list) and drop it into this area.
 4.  **Multi-View:** Drop a second image to automatically split the player screen and show both side-by-side.
 5.  **Remove:** Click the small thumbnail in the toolbar to remove that specific image from the projection.
+6.  **Project Map:** Inside the Map Tab or Session Tab, click "Project Map" to instantly send the current battle map state (including fog) to the screen.
 
 ### 🌫️ Using Fog of War
-1.  Go to the **Session Tab**.
+1.  Go to the **Session Tab** (or open the Battle Map Window).
 2.  Click the **"☁️ Fog"** button on the map toolbar to enable editing mode.
 3.  **Hide Area:** Hold **Left Click** and draw a shape to cover an area with fog.
 4.  **Reveal Area:** Hold **Right Click** and draw a shape to clear the fog.
-5.  **Persistence:** Fog state is saved automatically for each unique encounter.
+5.  **Persistence:** Fog state is saved automatically for each unique encounter ID in the Combat Tracker.
+6.  **Fill/Clear:** Use the toolbar buttons to instantly fill the whole map with fog or clear it.
 
 ## 🎵 Customizing Soundpad
 
