@@ -1,9 +1,10 @@
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget, 
                              QLineEdit, QPushButton, QLabel, QTextEdit, 
                              QMessageBox, QListWidgetItem, QSplitter, QWidget, 
-                             QApplication, QComboBox)
+                             QApplication, QComboBox, QStyle)
 from PyQt6.QtCore import Qt
 from ui.workers import ApiListWorker, ApiSearchWorker
+from ui.dialogs.bulk_downloader import BulkDownloadDialog
 from core.locales import tr
 
 class ApiBrowser(QDialog):
@@ -82,12 +83,20 @@ class ApiBrowser(QDialog):
         self.inp_filter.setPlaceholderText(tr("LBL_SEARCH_API"))
         self.inp_filter.textChanged.connect(self.filter_list)
         
+        # 3. Bulk Download Butonu (Sadece D&D 5e için aktif olacak)
+        self.btn_bulk = QPushButton()
+        self.btn_bulk.setToolTip(tr("BTN_DOWNLOAD_ALL"))
+        self.btn_bulk.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowDown))
+        self.btn_bulk.setFixedSize(30, 30)
+        self.btn_bulk.clicked.connect(self.open_bulk_downloader)
+
         top_layout.addWidget(QLabel(tr("LBL_SOURCE")))
         top_layout.addWidget(self.combo_source)
         top_layout.addWidget(self.combo_doc)
         top_layout.addWidget(QLabel(tr("LBL_CATEGORY")))
         top_layout.addWidget(self.combo_cat)
         top_layout.addWidget(self.inp_filter, 1)
+        top_layout.addWidget(self.btn_bulk)
         
         main_layout.addLayout(top_layout)
         
@@ -162,8 +171,8 @@ class ApiBrowser(QDialog):
         
         main_layout.addWidget(splitter)
         
-        # Kategorileri ve listeyi yükle (UI elemanları hazır olduktan sonra)
-        self.update_source_ui() # Initialize Doc Combo & Pagination controls visibility
+        # Kategorileri ve listeyi yükle
+        self.update_source_ui()
         self.refresh_categories()
 
     def on_category_changed(self):
@@ -180,7 +189,6 @@ class ApiBrowser(QDialog):
         self.btn_import_npc.setVisible(False)
         self.setEnabled(False)
         
-        # [DÜZELTME] Önceki worker varsa temizle
         if hasattr(self, 'list_worker') and self.list_worker is not None:
             if self.list_worker.isRunning():
                 try: self.list_worker.finished.disconnect()
@@ -188,20 +196,11 @@ class ApiBrowser(QDialog):
                 self.list_worker.quit()
                 self.list_worker.deleteLater()
 
-        # Endpoint değil, Kategori Adını gönderiyoruz (ApiClient bunu endpoint'e çevirecek)
-        # Worker artık (category, page, filters) almalı, ama worker imzasını değiştirmemiz gerekebilir.
-        # Basitlik için ApiListWorker'a bu parametreleri set ediyoruz veya worker'ı güncelliyoruz.
-        # Hızlı çözüm: ApiListWorker constructor'ını güncellemeden önce worker'a parametre ekleyelim.
-        # Ama Worker thread içinde çalıştığı için parametreleri __init__'te alması en doğrusu.
-        # UI/Workers.py dosyasını güncellememiz gerekebilir.
-        
-        # Şimdilik varsayalım ki worker güncellenecek.
         filters = {}
         if self.combo_doc.isVisible():
             doc_slug = self.combo_doc.currentData()
             if doc_slug: filters["document__slug"] = doc_slug
             
-        # ApiListWorker artık DataManager kullanıyor (caching için)
         self.list_worker = ApiListWorker(self.dm, self.current_category, page=self.current_page, filters=filters, parent=self)
         self.list_worker.finished.connect(self.on_list_loaded)
         self.list_worker.start()
@@ -210,7 +209,6 @@ class ApiBrowser(QDialog):
         self.setEnabled(True)
         self.lbl_name.setText(tr("MSG_NO_SELECTION"))
         
-        # Handle new dict format
         if isinstance(data, dict):
              self.full_list = data.get("results", [])
              self.total_count = data.get("count", 0)
@@ -225,10 +223,9 @@ class ApiBrowser(QDialog):
         self.update_pagination_ui()
 
         if not self.full_list:
-            self.list_widget.clear() # Ensure clear even if empty list
-            # Boş liste veya hata durumu
+            self.list_widget.clear()
             item = QListWidgetItem(tr("MSG_LIST_EMPTY"))
-            item.setFlags(Qt.ItemFlag.NoItemFlags) # Tıklanamaz
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
             self.list_widget.addItem(item)
             return
 
@@ -238,20 +235,23 @@ class ApiBrowser(QDialog):
         new_source = self.combo_source.currentData()
         self.dm.api_client.set_source(new_source)
         self.update_source_ui()
-        self.current_page = 1 # Reset page on source change
+        self.current_page = 1 
         self.refresh_categories()
 
     def update_source_ui(self):
-        is_open5e = (self.dm.api_client.current_source_key == "open5e")
+        current_key = self.dm.api_client.current_source_key
+        is_open5e = (current_key == "open5e")
+        is_dnd5e = (current_key == "dnd5e")
+
         self.combo_doc.setVisible(is_open5e)
         self.pagination_widget.setVisible(is_open5e)
+        self.btn_bulk.setVisible(is_dnd5e)
         
         if is_open5e:
             self.combo_doc.blockSignals(True)
             self.combo_doc.clear()
             self.combo_doc.addItem(tr("LBL_ALL_DOCS"), None)
             
-            # Fetch documents
             docs = self.dm.api_client.get_documents()
             for slug, title in docs:
                 self.combo_doc.addItem(title, slug)
@@ -297,7 +297,6 @@ class ApiBrowser(QDialog):
         self.btn_import.setEnabled(False)
         self.list_widget.setEnabled(False)
         
-        # Seçili kategori ve indeks ile arama yap
         if hasattr(self, 'detail_worker') and self.detail_worker is not None:
              if self.detail_worker.isRunning():
                  try: self.detail_worker.finished.disconnect()
@@ -314,14 +313,11 @@ class ApiBrowser(QDialog):
         
         if success:
             if isinstance(data_or_id, str):
-                # Veritabanında zaten var (ID döndü)
                 if self.selection_mode:
-                    # Selection mode'da var olanı seçmeye izin ver
-                    self.selected_entity_id = data_or_id # Pre-set (but wait for button click)
+                    self.selected_entity_id = data_or_id
                     self.selected_data = self.dm.data["entities"].get(data_or_id)
                     self.btn_import.setEnabled(True)
                     self.btn_import.setText(tr("BTN_SELECT"))
-                    # Button logic override for existing item
                     try: self.btn_import.clicked.disconnect()
                     except: pass
                     self.btn_import.clicked.connect(self.accept)
@@ -331,7 +327,6 @@ class ApiBrowser(QDialog):
                     self.btn_import.setText(tr("MSG_EXISTS"))
                 self.btn_import_npc.setVisible(False)
             else:
-                # Yeni Veri
                 data = data_or_id
                 self.btn_import.setEnabled(True)
                 self.btn_import.setText(tr("BTN_IMPORT"))
@@ -344,7 +339,6 @@ class ApiBrowser(QDialog):
             self.selected_data = data
             self.lbl_name.setText(data.get("name"))
             
-            # Kategoriye göre Import Butonları
             try: self.btn_import.clicked.disconnect()
             except: pass
             
@@ -357,19 +351,16 @@ class ApiBrowser(QDialog):
                 self.btn_import.setText(tr("BTN_SELECT") if self.selection_mode else tr("BTN_IMPORT"))
                 self.btn_import.clicked.connect(lambda: self.import_selected(target_type=None))
                 
-                # Sadece yeni veriyse "NPC Olarak Al" seçeneği göster
                 if not isinstance(data_or_id, str) and not self.selection_mode:
                     self.btn_import_npc.setVisible(True)
                     self.btn_import_npc.setEnabled(True)
                 else:
                     self.btn_import_npc.setVisible(False)
             else:
-                # Diğerleri (Spell, Equipment vb.)
                 self.btn_import.setText(tr("BTN_SELECT") if self.selection_mode else tr("BTN_IMPORT"))
                 self.btn_import.clicked.connect(lambda: self.import_selected(target_type=None))
                 self.btn_import_npc.setVisible(False)
 
-            # Açıklama Metni Oluştur
             desc = f"{tr('LBL_TYPE')}: {tr('CAT_' + data.get('type', '').upper())}\n\n"
             desc += data.get("description", "")
             
@@ -397,57 +388,15 @@ class ApiBrowser(QDialog):
                 
                 if self.selection_mode:
                     self.selected_entity_id = new_id
-                    self.accept() # Close dialog
+                    self.accept()
                     return
 
                 QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_IMPORT_SUCCESS_DETAIL", name=self.selected_data['name']))
-                self.load_list() # Buton durumunu güncellemek için listeyi yenile
+                self.load_list() 
             except Exception as e:
                 self.btn_import.setEnabled(True)
                 self.btn_import.setText(tr("BTN_SELECT") if self.selection_mode else tr("BTN_IMPORT"))
                 QMessageBox.critical(self, tr("MSG_ERROR"), f"Error: {str(e)}")
-
-    def on_source_changed(self):
-        new_source = self.combo_source.currentData()
-        self.dm.api_client.set_source(new_source)
-        self.update_source_ui()
-        self.current_page = 1 # Reset page on source change
-        self.refresh_categories()
-
-    def update_source_ui(self):
-        is_open5e = (self.dm.api_client.current_source_key == "open5e")
-        self.combo_doc.setVisible(is_open5e)
-        self.pagination_widget.setVisible(is_open5e)
-        
-        if is_open5e:
-            self.combo_doc.blockSignals(True)
-            self.combo_doc.clear()
-            self.combo_doc.addItem(tr("LBL_ALL_DOCS"), None)
-            
-            # Fetch documents
-            docs = self.dm.api_client.get_documents()
-            for slug, title in docs:
-                self.combo_doc.addItem(title, slug)
-            self.combo_doc.blockSignals(False)
-
-    def on_doc_filter_changed(self):
-        self.current_page = 1
-        self.load_list()
-
-    def next_page(self):
-        if self.next_page_url:
-            self.current_page += 1
-            self.load_list()
-
-    def prev_page(self):
-        if self.prev_page_url:
-            self.current_page -= 1
-            self.load_list()
-    
-    def update_pagination_ui(self):
-        self.lbl_page.setText(f"Page {self.current_page}")
-        self.btn_prev.setEnabled(bool(self.prev_page_url))
-        self.btn_next.setEnabled(bool(self.next_page_url))
 
     def refresh_categories(self):
         self.combo_cat.blockSignals(True)
@@ -461,7 +410,6 @@ class ApiBrowser(QDialog):
             if display_text == trans_key: display_text = cat_key
             self.combo_cat.addItem(display_text, cat_key)
             
-        # Seçimi korumaya çalış
         idx = self.combo_cat.findData(self.current_category)
         if idx < 0:
             idx = 0
@@ -471,3 +419,6 @@ class ApiBrowser(QDialog):
         self.combo_cat.setCurrentIndex(idx)
         self.combo_cat.blockSignals(False)
         self.on_category_changed()
+    
+    def open_bulk_downloader(self):
+        BulkDownloadDialog(self).exec()
