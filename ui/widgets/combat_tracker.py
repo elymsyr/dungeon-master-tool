@@ -103,21 +103,110 @@ class NumericTableWidgetItem(QTableWidgetItem):
         try: return float(self.data(Qt.ItemDataRole.DisplayRole)) < float(other.data(Qt.ItemDataRole.DisplayRole))
         except: return super().__lt__(other)
 
+# --- MAP SEÇİCİ (GÜNCELLENDİ: BATTLEMAP DESTEĞİ) ---
 class MapSelectorDialog(QDialog):
-    def __init__(self, assets_path, parent=None):
-        super().__init__(parent); self.assets_path = assets_path; self.selected_file = None; self.is_new_import = False; self.setWindowTitle(tr("TITLE_MAP_SELECTOR")); self.setFixedSize(600, 500); self.init_ui(); self.load_maps()
+    def __init__(self, data_manager, parent=None):
+        super().__init__(parent)
+        self.dm = data_manager
+        self.selected_file = None
+        self.is_new_import = False
+        
+        self.setWindowTitle(tr("TITLE_MAP_SELECTOR"))
+        self.setFixedSize(650, 550)
+        
+        self.init_ui()
+        self.load_locations()
+
     def init_ui(self):
-        l = QVBoxLayout(self); lbl = QLabel(tr("LBL_SAVED_MAPS")); lbl.setObjectName("toolbarLabel"); l.addWidget(lbl)
-        self.lw = QListWidget(); self.lw.setViewMode(QListWidget.ViewMode.IconMode); self.lw.setIconSize(QSize(150, 150)); self.lw.setResizeMode(QListWidget.ResizeMode.Adjust); self.lw.setSpacing(10); self.lw.setProperty("class", "iconList"); self.lw.itemDoubleClicked.connect(self.select_existing); l.addWidget(self.lw)
-        h = QHBoxLayout(); b1 = QPushButton(tr("BTN_IMPORT_NEW_MAP")); b1.setObjectName("successBtn"); b1.clicked.connect(self.select_new); b2 = QPushButton(tr("BTN_OPEN_SELECTED_MAP")); b2.setObjectName("primaryBtn"); b2.clicked.connect(self.select_existing); h.addWidget(b1); h.addStretch(); h.addWidget(b2); l.addLayout(h)
-    def load_maps(self):
-        if not os.path.exists(self.assets_path): return
-        for f in os.listdir(self.assets_path):
-             if f.lower().endswith(('.png', '.jpg', '.jpeg')): self.lw.addItem(QListWidgetItem(QIcon(os.path.join(self.assets_path, f)), f))
+        l = QVBoxLayout(self)
+        
+        lbl = QLabel(tr("LBL_SAVED_MAPS")) # "Kayıtlı Haritalar (Locations)"
+        lbl.setObjectName("toolbarLabel")
+        l.addWidget(lbl)
+        
+        self.lw = QListWidget()
+        self.lw.setViewMode(QListWidget.ViewMode.IconMode)
+        self.lw.setIconSize(QSize(160, 160))
+        self.lw.setResizeMode(QListWidget.ResizeMode.Adjust)
+        self.lw.setSpacing(10)
+        self.lw.setProperty("class", "iconList")
+        self.lw.itemDoubleClicked.connect(self.select_existing)
+        l.addWidget(self.lw)
+        
+        h = QHBoxLayout()
+        # "Import New Map" seçeneği (Manuel dosya seçimi için)
+        b1 = QPushButton(tr("BTN_IMPORT_NEW_MAP"))
+        b1.setObjectName("successBtn")
+        b1.clicked.connect(self.select_new)
+        
+        b2 = QPushButton(tr("BTN_OPEN_SELECTED_MAP"))
+        b2.setObjectName("primaryBtn")
+        b2.clicked.connect(self.select_existing)
+        
+        h.addWidget(b1)
+        h.addStretch()
+        h.addWidget(b2)
+        l.addLayout(h)
+
+    def load_locations(self):
+        """Veritabanındaki 'Location' türündeki varlıkların BATTLEMAP resimlerini listeler."""
+        self.lw.clear()
+        
+        for eid, ent in self.dm.data["entities"].items():
+            if ent.get("type") == "Location":
+                loc_name = ent.get("name", "Unknown Location")
+                
+                # Sadece 'battlemaps' listesini al
+                battlemaps = ent.get("battlemaps", [])
+                
+                # Eğer battlemap yoksa, ana resmi fallback olarak kullanabiliriz (opsiyonel)
+                # Ama istenen "battlemap part" olduğu için sadece onları listeleyelim.
+                # Kullanıcı kolaylığı için, eğer hiç battlemap yoksa ve ana resim varsa onu ekleyelim.
+                if not battlemaps and ent.get("image_path"):
+                    battlemaps = [ent["image_path"]]
+                elif not battlemaps and ent.get("images"):
+                    battlemaps = [ent["images"][0]]
+
+                if not battlemaps:
+                    continue
+
+                for i, img_path in enumerate(battlemaps):
+                    if not img_path: continue
+                    
+                    full_path = self.dm.get_full_path(img_path)
+                    if not full_path or not os.path.exists(full_path): continue
+                    
+                    # İsimlendirme
+                    display_name = loc_name
+                    if len(battlemaps) > 1:
+                        display_name = f"{loc_name} ({i+1})"
+                    
+                    pix = QPixmap(full_path).scaled(160, 160, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                    icon = QIcon(pix)
+                    
+                    item = QListWidgetItem(icon, display_name)
+                    item.setData(Qt.ItemDataRole.UserRole, img_path)
+                    item.setToolTip(f"{loc_name} - Battlemap {i+1}")
+                    self.lw.addItem(item)
+
     def select_existing(self):
-        if self.lw.currentItem(): self.selected_file = self.lw.currentItem().text(); self.accept()
-        else: QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_MAP_FROM_LIST"))
-    def select_new(self): self.is_new_import = True; self.accept()
+        current = self.lw.currentItem()
+        if not current:
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_MAP_FROM_LIST"))
+            return
+            
+        img_path = current.data(Qt.ItemDataRole.UserRole)
+        
+        if not img_path:
+            QMessageBox.warning(self, tr("MSG_WARNING"), "Dosya yolu hatası.")
+            return
+            
+        self.selected_file = img_path
+        self.accept()
+
+    def select_new(self):
+        self.is_new_import = True
+        self.accept()
 
 # --- COMBAT TRACKER ---
 class CombatTracker(QWidget):
@@ -126,10 +215,9 @@ class CombatTracker(QWidget):
     def __init__(self, data_manager):
         super().__init__()
         self.dm = data_manager; self.battle_map_window = None; self.loading = False; self.encounters = {}; self.current_encounter_id = None
-        self.fog_save_handler = None # Sis kaydetme işleyicisi (SessionTab tarafından atanır)
+        self.fog_save_handler = None 
         self.create_encounter("Default Encounter"); self.init_ui()
 
-    # --- YENİ METOD: Sis kaydetme işleyicisini ayarla ---
     def set_fog_save_handler(self, handler):
         self.fog_save_handler = handler
 
@@ -194,17 +282,12 @@ class CombatTracker(QWidget):
     def switch_encounter(self, idx): 
         eid = self.combo_encounters.itemData(idx)
         if eid and eid in self.encounters: 
-            
-            # --- KRİTİK GÜNCELLEME: Değiştirmeden önce ESKİ sisi kaydet ---
             if self.current_encounter_id and self.fog_save_handler:
                 self.fog_save_handler(self.current_encounter_id)
-            
             if self.current_encounter_id in self.encounters:
                 self._save_current_state_to_memory()
-            
             self.current_encounter_id = eid
             self.refresh_ui_from_current_encounter()
-            # Embedded map'i session tab güncelleyecektir, ancak harici pencere açıksa:
             if self.battle_map_window and self.battle_map_window.isVisible():
                 self.refresh_battle_map(force_map_reload=True)
             
@@ -415,12 +498,14 @@ class CombatTracker(QWidget):
         enc = self.encounters.get(self.current_encounter_id)
         if not enc: return
         if not enc.get("map_path"):
-             d=MapSelectorDialog(os.path.join(self.dm.current_campaign_path,"assets"), self)
+             # --- DEĞİŞİKLİK BURADA: DataManager'ı gönderiyoruz ---
+             d = MapSelectorDialog(self.dm, self)
              if d.exec():
                   if d.is_new_import: 
                        f,_=QFileDialog.getOpenFileName(self,"Select","", "Img (*.png *.jpg)"); 
                        if f: enc["map_path"]=self.dm.import_image(f)
-                  elif d.selected_file: enc["map_path"]=os.path.join("assets",d.selected_file)
+                  elif d.selected_file: 
+                       enc["map_path"] = d.selected_file
                   self.data_changed_signal.emit()
              else: return
         self.battle_map_window = BattleMapWindow(self.dm)
