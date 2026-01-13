@@ -6,7 +6,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QFrame, QPushButton,
 from PyQt6.QtCore import Qt, pyqtSignal
 from core.locales import tr
 from core.audio.engine import MusicBrain
-from core.audio.loader import load_all_themes, load_global_library, add_to_library
+from core.audio.loader import load_all_themes, load_global_library, add_to_library, create_theme
+from ui.dialogs.theme_builder import ThemeBuilderDialog
 
 class SoundpadPanel(QWidget):
     theme_loaded_with_shortcuts = pyqtSignal(dict)
@@ -110,8 +111,16 @@ class SoundpadPanel(QWidget):
         self.btn_load_theme.setObjectName("primaryBtn")
         self.btn_load_theme.clicked.connect(self.load_selected_theme)
         
+        self.btn_load_theme = QPushButton("📂 " + tr("BTN_LOAD_THEME"))
+        self.btn_load_theme.setObjectName("primaryBtn")
+        self.btn_load_theme.clicked.connect(self.load_selected_theme)
+        
+        self.btn_create_theme = QPushButton("✨ " + tr("BTN_CREATE_THEME"))
+        self.btn_create_theme.clicked.connect(self.open_theme_builder)
+        
         theme_layout.addWidget(self.combo_themes, 1)
         theme_layout.addWidget(self.btn_load_theme)
+        theme_layout.addWidget(self.btn_create_theme)
         layout.addLayout(theme_layout)
 
         self.grp_states = QGroupBox(tr("GRP_MUSIC_STATE"))
@@ -392,3 +401,28 @@ class SoundpadPanel(QWidget):
                 idx = self.ambience_slots[i]['combo'].findData(sel_id)
                 if idx >= 0:
                     self.ambience_slots[i]['combo'].setCurrentIndex(idx)
+
+    def open_theme_builder(self):
+        dlg = ThemeBuilderDialog(self)
+        if dlg.exec():
+            data = dlg.get_data()
+            success, result = create_theme(data['name'], data['id'], data['map'])
+            
+            if success:
+                QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_THEME_CREATED"))
+                # Reload themes
+                self.themes = load_all_themes()
+                
+                # Update Combo
+                self.combo_themes.clear()
+                self.combo_themes.addItem(tr("COMBO_SELECT_THEME"), None)
+                for tid, theme in self.themes.items():
+                    self.combo_themes.addItem(theme.name, tid)
+                    
+                # Select new theme
+                idx = self.combo_themes.findData(data['id'])
+                if idx >= 0:
+                    self.combo_themes.setCurrentIndex(idx)
+                    self.load_selected_theme()
+            else:
+                QMessageBox.critical(self, tr("MSG_ERROR"), str(result))

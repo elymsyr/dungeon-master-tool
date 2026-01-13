@@ -187,3 +187,64 @@ def add_to_library(category, name, file_path):
         return False, f"YAML update failed: {e}"
         
     return True, new_entry
+
+def create_theme(name, t_id, state_map):
+    """
+    Creates a new theme directory and yaml file.
+    name: Display Name (e.g. "Dark Forest")
+    t_id: Directory Name (e.g. "dark_forest")
+    state_map: { 
+        'normal': { 'base': 'path/to/file.wav', 'level1': '...' },
+        'combat': { ... }
+    }
+    """
+    if not name or not t_id or not state_map:
+        return False, "Missing info"
+        
+    theme_dir = os.path.join(SOUNDPAD_ROOT, t_id)
+    if os.path.exists(theme_dir):
+        return False, "Theme ID already exists"
+        
+    try:
+        os.makedirs(theme_dir)
+        
+        # Build YAML structure
+        yaml_states = {}
+        
+        for state_name, tracks in state_map.items():
+            state_data = {'tracks': {}}
+            
+            for track_key, src_path in tracks.items():
+                if not src_path or not os.path.exists(src_path): 
+                    continue
+                    
+                # Copy file
+                # Rename logic: {state}_{track}_{filename}
+                ext = os.path.splitext(src_path)[1]
+                new_filename = f"{state_name}_{track_key}{ext}"
+                dest_path = os.path.join(theme_dir, new_filename)
+                
+                shutil.copy2(src_path, dest_path)
+                
+                # Add to yaml data
+                # Simplest structure: list of single file with repeat 0
+                state_data['tracks'][track_key] = [
+                    {'file': new_filename, 'repeat': 0}
+                ]
+            
+            yaml_states[state_name] = state_data
+            
+        theme_data = {
+            'id': t_id,
+            'name': name,
+            'states': yaml_states
+        }
+        
+        yaml_path = os.path.join(theme_dir, "theme.yaml")
+        with open(yaml_path, "w", encoding="utf-8") as f:
+            yaml.dump(theme_data, f, allow_unicode=True, default_flow_style=False)
+            
+        return True, theme_dir
+        
+    except Exception as e:
+        return False, str(e)

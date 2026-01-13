@@ -464,4 +464,17 @@ tr:
   TITLE_SELECT_AUDIO: "Ses Dosyası Seç"
   TITLE_ADD_SOUND: "Ses Ekle"
   LBL_SOUND_NAME: "Ses Adı:"
+  LBL_SOUND_NAME: "Ses Adı:"
   MSG_SOUND_ADDED: "Ses başarıyla eklendi."
+
+  # Theme Builder
+  TITLE_THEME_BUILDER: "Tema Oluşturucu"
+  LBL_THEME_NAME: "Tema Adı"
+  LBL_THEME_ID: "Tema ID (Klasör)"
+  LBL_STATES: "Durumlar"
+  LBL_TRACKS: "Parçalar (Yoğunluk)"
+  BTN_CREATE_THEME: "Tema Oluştur"
+  TITLE_ADD_STATE: "Durum Ekle"
+  LBL_STATE_NAME: "Durum Adı"
+  MSG_THEME_CREATED: "Tema başarıyla oluşturuldu!"
+  MSG_NO_FILE: "Dosya seçilmedi..."
