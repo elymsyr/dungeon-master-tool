@@ -33,6 +33,12 @@ class ApiBrowser(QDialog):
         self.selected_data = None
         self.full_list = [] 
         
+        # Pagination State
+        self.current_page = 1
+        self.total_count = 0
+        self.next_page_url = None
+        self.prev_page_url = None 
+        
         self.setWindowTitle(tr("TITLE_API"))
         self.resize(1000, 650)
         
@@ -45,26 +51,28 @@ class ApiBrowser(QDialog):
         # --- ÜST BAR: Kategori ve Arama ---
         top_layout = QHBoxLayout()
         
+        # 0. Kaynak ve Doküman Seçici
+        self.combo_source = QComboBox()
+        self.combo_source.setFixedWidth(200)
+        sources = self.dm.api_client.get_available_sources()
+        for key, name in sources:
+            self.combo_source.addItem(name, key)
+            
+        curr = self.dm.api_client.current_source_key
+        idx = self.combo_source.findData(curr)
+        if idx >= 0: self.combo_source.setCurrentIndex(idx)
+        self.combo_source.currentIndexChanged.connect(self.on_source_changed)
+
+        # Doküman Filtresi (Sadece Open5e için)
+        self.combo_doc = QComboBox()
+        self.combo_doc.setFixedWidth(150)
+        self.combo_doc.addItem(tr("LBL_ALL_DOCS"), None)
+        self.combo_doc.setVisible(False) # Başlangıçta gizli
+        self.combo_doc.currentIndexChanged.connect(self.on_doc_filter_changed)
+
         # 1. Kategori Seçici
         self.combo_cat = QComboBox()
         self.combo_cat.setFixedWidth(180)
-        
-        for cat_key in self.CATEGORY_KEYS:
-            # Dil dosyasından çeviri anahtarını oluştur (Örn: CAT_MAGIC_ITEM)
-            trans_key = f"CAT_{cat_key.upper().replace(' ', '_')}"
-            display_text = tr(trans_key)
-            
-            # Eğer çeviri yoksa (anahtarın kendisi döndüyse), orijinali kullan
-            if display_text == trans_key:
-                display_text = cat_key
-                
-            self.combo_cat.addItem(display_text, cat_key)
-        
-        # Başlangıç kategorisini seçili yap
-        index = self.combo_cat.findData(self.current_category)
-        if index >= 0:
-            self.combo_cat.setCurrentIndex(index)
-            
         self.combo_cat.currentIndexChanged.connect(self.on_category_changed)
         
         # 2. Arama Kutusu
@@ -72,6 +80,9 @@ class ApiBrowser(QDialog):
         self.inp_filter.setPlaceholderText(tr("LBL_SEARCH_API"))
         self.inp_filter.textChanged.connect(self.filter_list)
         
+        top_layout.addWidget(QLabel(tr("LBL_SOURCE")))
+        top_layout.addWidget(self.combo_source)
+        top_layout.addWidget(self.combo_doc)
         top_layout.addWidget(QLabel(tr("LBL_CATEGORY")))
         top_layout.addWidget(self.combo_cat)
         top_layout.addWidget(self.inp_filter, 1)
@@ -81,11 +92,38 @@ class ApiBrowser(QDialog):
         # --- ORTA: Bölücü (Liste | Önizleme) ---
         splitter = QSplitter(Qt.Orientation.Horizontal)
         
-        # Sol: Liste
+        # Sol: Liste ve Sayfalama
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.setContentsMargins(0,0,0,0)
+        
         self.list_widget = QListWidget()
         self.list_widget.setAlternatingRowColors(True)
         self.list_widget.itemClicked.connect(self.on_item_clicked)
-        splitter.addWidget(self.list_widget)
+        left_layout.addWidget(self.list_widget)
+        
+        # Sayfalama Kontrolleri
+        self.pagination_widget = QWidget()
+        pag_layout = QHBoxLayout(self.pagination_widget)
+        pag_layout.setContentsMargins(0, 5, 0, 0)
+        
+        self.btn_prev = QPushButton("<")
+        self.btn_prev.setFixedWidth(30)
+        self.btn_prev.clicked.connect(self.prev_page)
+        
+        self.lbl_page = QLabel("Page 1")
+        self.lbl_page.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.btn_next = QPushButton(">")
+        self.btn_next.setFixedWidth(30)
+        self.btn_next.clicked.connect(self.next_page)
+        
+        pag_layout.addWidget(self.btn_prev)
+        pag_layout.addWidget(self.lbl_page)
+        pag_layout.addWidget(self.btn_next)
+        
+        left_layout.addWidget(self.pagination_widget)
+        splitter.addWidget(left_widget)
         
         # Sağ: Önizleme
         preview_widget = QWidget()
@@ -121,6 +159,10 @@ class ApiBrowser(QDialog):
         splitter.setSizes([350, 650])
         
         main_layout.addWidget(splitter)
+        
+        # Kategorileri ve listeyi yükle (UI elemanları hazır olduktan sonra)
+        self.update_source_ui() # Initialize Doc Combo & Pagination controls visibility
+        self.refresh_categories()
 
     def on_category_changed(self):
         """Kategori değiştiğinde listeyi yenile."""
@@ -136,17 +178,53 @@ class ApiBrowser(QDialog):
         self.btn_import_npc.setVisible(False)
         self.setEnabled(False)
         
-        # [DÜZELTME] Endpoint değil, Kategori Adını gönderiyoruz (ApiClient bunu endpoint'e çevirecek)
-        self.list_worker = ApiListWorker(self.dm.api_client, self.current_category)
+        # [DÜZELTME] Önceki worker varsa temizle
+        if hasattr(self, 'list_worker') and self.list_worker is not None:
+            if self.list_worker.isRunning():
+                try: self.list_worker.finished.disconnect()
+                except: pass
+                self.list_worker.quit()
+                self.list_worker.deleteLater()
+
+        # Endpoint değil, Kategori Adını gönderiyoruz (ApiClient bunu endpoint'e çevirecek)
+        # Worker artık (category, page, filters) almalı, ama worker imzasını değiştirmemiz gerekebilir.
+        # Basitlik için ApiListWorker'a bu parametreleri set ediyoruz veya worker'ı güncelliyoruz.
+        # Hızlı çözüm: ApiListWorker constructor'ını güncellemeden önce worker'a parametre ekleyelim.
+        # Ama Worker thread içinde çalıştığı için parametreleri __init__'te alması en doğrusu.
+        # UI/Workers.py dosyasını güncellememiz gerekebilir.
+        
+        # Şimdilik varsayalım ki worker güncellenecek.
+        filters = {}
+        if self.combo_doc.isVisible():
+            doc_slug = self.combo_doc.currentData()
+            if doc_slug: filters["document__slug"] = doc_slug
+            
+        # ApiListWorker henüz güncellenmedi, önce onu güncellemeliyiz.
+        # Geçici olarak burada duralım ve worker'ı güncelleyelim.
+        self.list_worker = ApiListWorker(self.dm.api_client, self.current_category, page=self.current_page, filters=filters, parent=self)
         self.list_worker.finished.connect(self.on_list_loaded)
         self.list_worker.start()
 
     def on_list_loaded(self, data):
         self.setEnabled(True)
         self.lbl_name.setText(tr("MSG_NO_SELECTION"))
-        self.full_list = data
         
+        # Handle new dict format
+        if isinstance(data, dict):
+             self.full_list = data.get("results", [])
+             self.total_count = data.get("count", 0)
+             self.next_page_url = data.get("next")
+             self.prev_page_url = data.get("previous")
+        else:
+             self.full_list = data
+             self.total_count = len(data)
+             self.next_page_url = None
+             self.prev_page_url = None
+
+        self.update_pagination_ui()
+
         if not self.full_list:
+            self.list_widget.clear() # Ensure clear even if empty list
             # Boş liste veya hata durumu
             item = QListWidgetItem(tr("MSG_LIST_EMPTY"))
             item.setFlags(Qt.ItemFlag.NoItemFlags) # Tıklanamaz
@@ -155,6 +233,48 @@ class ApiBrowser(QDialog):
 
         self.filter_list()
 
+    def on_source_changed(self):
+        new_source = self.combo_source.currentData()
+        self.dm.api_client.set_source(new_source)
+        self.update_source_ui()
+        self.current_page = 1 # Reset page on source change
+        self.refresh_categories()
+
+    def update_source_ui(self):
+        is_open5e = (self.dm.api_client.current_source_key == "open5e")
+        self.combo_doc.setVisible(is_open5e)
+        self.pagination_widget.setVisible(is_open5e)
+        
+        if is_open5e:
+            self.combo_doc.blockSignals(True)
+            self.combo_doc.clear()
+            self.combo_doc.addItem(tr("LBL_ALL_DOCS"), None)
+            
+            # Fetch documents
+            docs = self.dm.api_client.get_documents()
+            for slug, title in docs:
+                self.combo_doc.addItem(title, slug)
+            self.combo_doc.blockSignals(False)
+
+    def on_doc_filter_changed(self):
+        self.current_page = 1
+        self.load_list()
+
+    def next_page(self):
+        if self.next_page_url:
+            self.current_page += 1
+            self.load_list()
+
+    def prev_page(self):
+        if self.prev_page_url:
+            self.current_page -= 1
+            self.load_list()
+    
+    def update_pagination_ui(self):
+        self.lbl_page.setText(f"Page {self.current_page}")
+        self.btn_prev.setEnabled(bool(self.prev_page_url))
+        self.btn_next.setEnabled(bool(self.next_page_url))
+        
     def filter_list(self):
         query = self.inp_filter.text().lower()
         self.list_widget.clear()
@@ -177,7 +297,14 @@ class ApiBrowser(QDialog):
         self.list_widget.setEnabled(False)
         
         # Seçili kategori ve indeks ile arama yap
-        self.detail_worker = ApiSearchWorker(self.dm, self.current_category, index_name)
+        if hasattr(self, 'detail_worker') and self.detail_worker is not None:
+             if self.detail_worker.isRunning():
+                 try: self.detail_worker.finished.disconnect()
+                 except: pass
+                 self.detail_worker.quit()
+                 self.detail_worker.deleteLater()
+        
+        self.detail_worker = ApiSearchWorker(self.dm, self.current_category, index_name, parent=self)
         self.detail_worker.finished.connect(self.on_details_loaded)
         self.detail_worker.start()
 
@@ -261,3 +388,68 @@ class ApiBrowser(QDialog):
                 self.btn_import.setEnabled(True)
                 self.btn_import.setText(tr("BTN_IMPORT"))
                 QMessageBox.critical(self, tr("MSG_ERROR"), f"Error: {str(e)}")
+
+    def on_source_changed(self):
+        new_source = self.combo_source.currentData()
+        self.dm.api_client.set_source(new_source)
+        self.update_source_ui()
+        self.current_page = 1 # Reset page on source change
+        self.refresh_categories()
+
+    def update_source_ui(self):
+        is_open5e = (self.dm.api_client.current_source_key == "open5e")
+        self.combo_doc.setVisible(is_open5e)
+        self.pagination_widget.setVisible(is_open5e)
+        
+        if is_open5e:
+            self.combo_doc.blockSignals(True)
+            self.combo_doc.clear()
+            self.combo_doc.addItem(tr("LBL_ALL_DOCS"), None)
+            
+            # Fetch documents
+            docs = self.dm.api_client.get_documents()
+            for slug, title in docs:
+                self.combo_doc.addItem(title, slug)
+            self.combo_doc.blockSignals(False)
+
+    def on_doc_filter_changed(self):
+        self.current_page = 1
+        self.load_list()
+
+    def next_page(self):
+        if self.next_page_url:
+            self.current_page += 1
+            self.load_list()
+
+    def prev_page(self):
+        if self.prev_page_url:
+            self.current_page -= 1
+            self.load_list()
+    
+    def update_pagination_ui(self):
+        self.lbl_page.setText(f"Page {self.current_page}")
+        self.btn_prev.setEnabled(bool(self.prev_page_url))
+        self.btn_next.setEnabled(bool(self.next_page_url))
+
+    def refresh_categories(self):
+        self.combo_cat.blockSignals(True)
+        self.combo_cat.clear()
+        
+        cats = self.dm.api_client.get_supported_categories()
+        
+        for cat_key in cats:
+            trans_key = f"CAT_{cat_key.upper().replace(' ', '_')}"
+            display_text = tr(trans_key)
+            if display_text == trans_key: display_text = cat_key
+            self.combo_cat.addItem(display_text, cat_key)
+            
+        # Seçimi korumaya çalış
+        idx = self.combo_cat.findData(self.current_category)
+        if idx < 0:
+            idx = 0
+            if cats:
+                self.current_category = cats[0]
+
+        self.combo_cat.setCurrentIndex(idx)
+        self.combo_cat.blockSignals(False)
+        self.on_category_changed()
