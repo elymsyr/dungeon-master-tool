@@ -3,7 +3,7 @@ import uuid
 import time
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
                              QFileDialog, QFrame, QMessageBox, QInputDialog, QLabel,
-                             QColorDialog)
+                             QColorDialog, QCheckBox)
 from PyQt6.QtGui import QPixmap, QColor, QPainter
 from PyQt6.QtCore import Qt, QRectF
 from ui.widgets.map_viewer import MapViewer, MapPinItem, TimelinePinItem
@@ -20,7 +20,6 @@ class MapTab(QWidget):
         self.show_timeline = False
         self.pending_parent_id = None
         
-        # Son yansıtılan haritanın ID'sini (sanal yolunu) tutar
         self.last_projected_path = None
         
         self.init_ui()
@@ -30,9 +29,25 @@ class MapTab(QWidget):
         self.btn_load_map = QPushButton(tr("BTN_LOAD_MAP")); self.btn_load_map.clicked.connect(self.upload_map_image)
         self.btn_toggle_timeline = QPushButton(tr("BTN_TOGGLE_TIMELINE", state="OFF")); self.btn_toggle_timeline.setCheckable(True)
         self.btn_toggle_timeline.clicked.connect(self.toggle_timeline_mode)
+        
+        # --- FILTER 1: TIMELINE (Show Non-Player) ---
+        self.check_timeline_filter = QCheckBox(tr("LBL_SHOW_NON_PLAYER") if hasattr(tr, "LBL_SHOW_NON_PLAYER") else "Show Non-Player Timeline")
+        self.check_timeline_filter.setToolTip("If checked, reveals timeline events that do not involve players.")
+        self.check_timeline_filter.setChecked(False) 
+        self.check_timeline_filter.stateChanged.connect(self.apply_filters)
+
+        # --- FILTER 2: MAP PINS (Show Locations) ---
+        self.check_show_locations = QCheckBox(tr("LBL_SHOW_LOCATIONS") if hasattr(tr, "LBL_SHOW_LOCATIONS") else "Show Map Pins")
+        self.check_show_locations.setToolTip("Show/Hide entity icons (Locations, NPCs) on the map.")
+        self.check_show_locations.setChecked(True) 
+        self.check_show_locations.stateChanged.connect(self.apply_filters)
+        
         self.btn_show_map_pl = QPushButton(tr("BTN_PROJECT_MAP")); self.btn_show_map_pl.setObjectName("primaryBtn")
         self.btn_show_map_pl.clicked.connect(self.push_map_to_player)
-        for w in [self.btn_load_map, self.btn_toggle_timeline]: toolbar.addWidget(w)
+        
+        for w in [self.btn_load_map, self.btn_toggle_timeline, self.check_timeline_filter, self.check_show_locations]: 
+            toolbar.addWidget(w)
+        
         toolbar.addStretch(); toolbar.addWidget(self.btn_show_map_pl); layout.addLayout(toolbar)
         viewer_frame = QFrame(); viewer_frame.setStyleSheet("background-color: #111; border: 1px solid #444;")
         v_layout = QVBoxLayout(viewer_frame); v_layout.setContentsMargins(0,0,0,0)
@@ -46,6 +61,48 @@ class MapTab(QWidget):
     def retranslate_ui(self):
         self.btn_load_map.setText(tr("BTN_LOAD_MAP")); self.btn_show_map_pl.setText(tr("BTN_PROJECT_MAP"))
         st = "ON" if self.show_timeline else "OFF"; self.btn_toggle_timeline.setText(tr("BTN_TOGGLE_TIMELINE", state=st))
+        self.check_timeline_filter.setText(tr("LBL_SHOW_NON_PLAYER") if hasattr(tr, "LBL_SHOW_NON_PLAYER") else "Show Non-Player Timeline")
+        self.check_show_locations.setText(tr("LBL_SHOW_LOCATIONS") if hasattr(tr, "LBL_SHOW_LOCATIONS") else "Show Map Pins")
+
+    def apply_filters(self):
+        """
+        Applies visibility logic and auto-updates the projection if active.
+        """
+        show_non_player_timeline = self.check_timeline_filter.isChecked()
+        show_map_pins = self.check_show_locations.isChecked()
+        
+        entities = self.dm.data["entities"]
+        
+        def has_player(id_list):
+            if not id_list: return False
+            for eid in id_list:
+                if eid in entities and entities[eid].get("type") == "Player":
+                    return True
+            return False
+
+        for item in self.map_viewer.scene.items():
+            # 1. Timeline Pins
+            if isinstance(item, TimelinePinItem):
+                pin_data = self.dm.get_timeline_pin(item.pin_id)
+                if pin_data:
+                    ids = pin_data.get("entity_ids", [])
+                    if not ids and pin_data.get("entity_id"): ids = [pin_data["entity_id"]]
+                    is_player_related = has_player(ids)
+                    if is_player_related:
+                        item.setVisible(True)
+                    else:
+                        item.setVisible(show_non_player_timeline)
+            
+            # 2. Map Pins
+            elif isinstance(item, MapPinItem):
+                item.setVisible(show_map_pins)
+
+        # --- AUTO UPDATE PROJECTION ---
+        # If we have a previously projected map, and it is still in the Projection Manager, update it.
+        if self.main_window_ref and hasattr(self.main_window_ref, "projection_manager"):
+            pm = self.main_window_ref.projection_manager
+            if self.last_projected_path and self.last_projected_path in pm.thumbnails:
+                self.push_map_to_player()
 
     def toggle_timeline_mode(self):
         self.show_timeline = self.btn_toggle_timeline.isChecked(); st = "ON" if self.show_timeline else "OFF"
@@ -61,7 +118,9 @@ class MapTab(QWidget):
         path = self.dm.get_full_path(self.dm.data["map_data"].get("image_path"))
         if not path or not os.path.exists(path): return
         self.map_viewer.load_map(QPixmap(path))
+        
         pins = self.dm.data["map_data"].get("pins", []); entities = self.dm.data["entities"]
+        
         for pin in pins:
             if pin["entity_id"] in entities:
                 ent = entities[pin["entity_id"]]; default_color = "#007acc"
@@ -70,7 +129,10 @@ class MapTab(QWidget):
                 elif ent["type"] == "Monster": default_color = "#d32f2f"
                 elif ent["type"] == "Player": default_color = "#4caf50"
                 col = pin.get("color") if pin.get("color") else default_color
-                self.map_viewer.add_pin_object(MapPinItem(pin["x"], pin["y"], 24, col, pin.get("id", str(uuid.uuid4())), pin["entity_id"], ent["name"], pin.get("note", ""), self.on_pin_action))
+                
+                pin_item = MapPinItem(pin["x"], pin["y"], 24, col, pin.get("id", str(uuid.uuid4())), pin["entity_id"], ent["name"], pin.get("note", ""), self.on_pin_action)
+                self.map_viewer.add_pin_object(pin_item)
+                
         if self.show_timeline:
             timeline_data = self.dm.data["map_data"].get("timeline", [])
             self.map_viewer.draw_timeline_connections(timeline_data)
@@ -78,6 +140,9 @@ class MapTab(QWidget):
                 names = [entities[eid]["name"] for eid in t.get("entity_ids", []) if eid in entities]
                 if not names and t.get("entity_id") in entities: names = [entities[t["entity_id"]]["name"]]
                 self.map_viewer.add_timeline_object(TimelinePinItem(t["x"], t["y"], t["day"], t["note"], t["id"], ", ".join(names) if names else None, t.get("color"), t.get("session_id"), self.on_timeline_action))
+
+        # Apply current filter state (and auto-update projection)
+        self.apply_filters()
 
     def handle_canvas_click(self, x, y):
         if self.show_timeline:
@@ -142,8 +207,7 @@ class MapTab(QWidget):
 
     def push_map_to_player(self):
         """
-        Haritanın anlık görüntüsünü alır ve Projection Manager'a gönderir.
-        DOSYA KAYDETMEZ (Performans için doğrudan RAM üzerinden çalışır).
+        Projects map to player screen. Uses UUID to avoid filename collisions during rapid auto-updates.
         """
         if not self.player_window.isVisible():
             QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_PLAYER_SCREEN"))
@@ -159,18 +223,16 @@ class MapTab(QWidget):
         self.map_viewer.scene.render(painter, target=QRectF(img.rect()), source=rect)
         painter.end()
         
-        # Sanal bir ID (isim) oluşturuyoruz ki ProjectionManager bunu takip edebilsin
-        # "map_snapshot_" prefix'i önemli, çünkü Thumbnail'de "MAP" yazısı buna göre çıkıyor.
-        fake_path = f"map_snapshot_{int(time.time())}.png"
+        # Sanal bir ID (UUID)
+        fake_path = f"map_snapshot_{uuid.uuid4().hex}.png"
         
         if self.main_window_ref and hasattr(self.main_window_ref, "projection_manager"):
             # Eğer daha önce bir harita yansıtılmışsa, ekranı kalabalıklaştırmamak için eskisini kaldırıyoruz
             if self.last_projected_path:
                 self.main_window_ref.projection_manager.remove_image(self.last_projected_path)
             
-            # Yeni haritayı (resim nesnesiyle birlikte) ekliyoruz
+            # Yeni haritayı ekliyoruz
             self.main_window_ref.projection_manager.add_image(fake_path, pixmap=img)
             self.last_projected_path = fake_path
         else:
-            # Fallback: Eğer yönetici yoksa eski usul göster (ama ana pencerede yönetici varsa bu çalışmaz)
             self.player_window.add_image_to_view(fake_path, pixmap=img)
