@@ -102,8 +102,21 @@ class SessionTab(QWidget):
         self.embedded_map.view_sync_signal.connect(self.combat_tracker.sync_map_view_to_external)
         self.embedded_map.fog_update_signal.connect(self.combat_tracker.sync_fog_to_external)
         
-        # When fog changes, save immediately (without triggering circular signals)
+        # When fog changes, save immediately
         self.embedded_map.fog_update_signal.connect(lambda: self.save_session(show_msg=False))
+        
+        # --- Add Custom Buttons to BattleMap Toolbar ---
+        self.btn_load_map = QPushButton(tr("BTN_LOAD_MAP") if hasattr(tr, "BTN_LOAD_MAP") else "Load Map")
+        self.btn_load_map.setObjectName("primaryBtn")
+        self.btn_load_map.clicked.connect(self.combat_tracker.load_map_dialog)
+        
+        self.btn_open_external = QPushButton(tr("BTN_BATTLE_MAP") if hasattr(tr, "BTN_BATTLE_MAP") else "Open Window")
+        self.btn_open_external.setObjectName("actionBtn")
+        self.btn_open_external.clicked.connect(self.combat_tracker.open_battle_map)
+        
+        self.embedded_map.add_toolbar_widget(self.btn_load_map)
+        self.embedded_map.add_toolbar_widget(self.btn_open_external)
+        # -----------------------------------------------
         
         self.bottom_tabs.addTab(self.tab_dm_notes, "📝 " + tr("LBL_NOTES"))
         self.bottom_tabs.addTab(self.embedded_map, "🗺️ " + tr("TITLE_BATTLE_MAP"))
@@ -130,9 +143,6 @@ class SessionTab(QWidget):
         enc = self.combat_tracker.encounters.get(self.combat_tracker.current_encounter_id)
         if not enc: return
         
-        # 1. Reset Fog FIRST to avoid ghosting
-        self.embedded_map.reset_fog()
-        
         combatants = []
         for c in enc.get("combatants", []):
              t = "NPC"; a = "LBL_ATTR_NEUTRAL"
@@ -146,24 +156,16 @@ class SessionTab(QWidget):
              combatants.append(c)
              
         map_path = self.dm.get_full_path(enc.get("map_path"))
+        fog_data = enc.get("fog_data")
         
-        # 2. Update Map/Tokens
         self.embedded_map.update_tokens(
             combatants, 
             enc.get("turn_index", -1), 
             self.dm, 
             map_path, 
-            enc.get("token_size", 50)
+            enc.get("token_size", 50),
+            fog_data=fog_data
         )
-        
-        # 3. Load Fog
-        fog_data = enc.get("fog_data")
-        if fog_data:
-            self.embedded_map.load_fog_from_base64(fog_data)
-        else:
-            # If map exists but no fog data, default to full black
-            if map_path:
-                self.embedded_map.fill_fog()
 
     def save_session(self, show_msg=False):
         if not self.current_session_id:
@@ -233,5 +235,8 @@ class SessionTab(QWidget):
         self.txt_log.setPlaceholderText(tr("LBL_EVENT_LOG_PH")); self.btn_add_log.setText(tr("BTN_ADD_LOG")); self.txt_notes.setPlaceholderText(tr("LBL_NOTES"))
         self.bottom_tabs.setTabText(0, "📝 " + tr("LBL_NOTES")); self.bottom_tabs.setTabText(1, "🗺️ " + tr("TITLE_BATTLE_MAP")); self.embedded_map.retranslate_ui()
         if hasattr(self.combat_tracker, "retranslate_ui"): self.combat_tracker.retranslate_ui()
+        self.btn_load_map.setText(tr("BTN_LOAD_MAP") if hasattr(tr, "BTN_LOAD_MAP") else "Load Map")
+        self.btn_open_external.setText(tr("BTN_BATTLE_MAP") if hasattr(tr, "BTN_BATTLE_MAP") else "Open Window")
+
     def auto_save(self):
         if self.current_session_id: self.save_session(show_msg=False)

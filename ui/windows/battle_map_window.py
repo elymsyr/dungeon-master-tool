@@ -6,8 +6,6 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
 from PyQt6.QtGui import (QPixmap, QColor, QFont, QBrush, QPen, QPainter, 
                          QPainterPath, QCursor, QWheelEvent, QMouseEvent, QImage, QPolygonF)
 from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF, QTimer, QRect, QPoint, QByteArray, QBuffer, QIODevice, QUrl
-from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtWebEngineCore import QWebEngineSettings
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QGraphicsVideoItem
 from core.locales import tr
@@ -18,7 +16,7 @@ import base64
 class FogItem(QGraphicsPixmapItem):
     def __init__(self, width, height):
         super().__init__()
-        self.setZValue(200) # Above tokens
+        self.setZValue(200) # Above tokens (100) and Map (-100)
         # Start completely black (filled)
         self.image = QImage(int(width), int(height), QImage.Format.Format_ARGB32)
         self.image.fill(QColor(0, 0, 0, 255)) 
@@ -259,10 +257,6 @@ class BattleMapWidget(QWidget):
         self.is_dm_view = is_dm_view 
         self.is_view_locked = False 
         
-        # --- WEB ENGINE (Online/YouTube) ---
-        self.web_view = None
-        self.web_proxy = None
-        
         # --- NATIVE VIDEO PLAYER (Local Files) ---
         self.video_player = None
         self.video_item = None
@@ -271,13 +265,16 @@ class BattleMapWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
-        toolbar = QHBoxLayout(); toolbar.setContentsMargins(5, 5, 5, 5)
+        # --- TOOLBAR SETUP ---
+        self.toolbar = QHBoxLayout()
+        self.toolbar.setContentsMargins(5, 5, 5, 5)
+        
         self.btn_reset_view = QPushButton("🏠"); self.btn_reset_view.setToolTip(tr("TIP_FIT_VIEW")); self.btn_reset_view.setFixedSize(30, 25); self.btn_reset_view.clicked.connect(self.fit_map_in_view)
         
         self.lbl_size = QLabel(tr("LBL_TOKEN_SIZE")); self.lbl_size.setObjectName("toolbarLabel")
         self.slider_size = QSlider(Qt.Orientation.Horizontal); self.slider_size.setMinimum(20); self.slider_size.setMaximum(300); self.slider_size.setValue(self.token_size); self.slider_size.valueChanged.connect(self.change_token_size); self.slider_size.setFixedWidth(120)
         
-        toolbar.addWidget(self.btn_reset_view)
+        self.toolbar.addWidget(self.btn_reset_view)
         
         if self.is_dm_view:
             self.btn_lock_view = QPushButton("🔓")
@@ -285,31 +282,31 @@ class BattleMapWidget(QWidget):
             self.btn_lock_view.setCheckable(True)
             self.btn_lock_view.setToolTip(tr("BTN_LOCK_VIEW_TOOLTIP") if hasattr(tr, "BTN_LOCK_VIEW_TOOLTIP") else "Lock Player View")
             self.btn_lock_view.clicked.connect(self.toggle_view_lock)
-            toolbar.addWidget(self.btn_lock_view)
+            self.toolbar.addWidget(self.btn_lock_view)
         
-        toolbar.addWidget(self.lbl_size)
-        toolbar.addWidget(self.slider_size)
+        self.toolbar.addWidget(self.lbl_size)
+        self.toolbar.addWidget(self.slider_size)
         
         if self.is_dm_view:
-            toolbar.addSpacing(15)
+            self.toolbar.addSpacing(15)
             self.btn_fog_toggle = QPushButton(tr("BTN_FOG")); self.btn_fog_toggle.setCheckable(True)
             self.btn_fog_toggle.setStyleSheet("QPushButton:checked { background-color: #d32f2f; color: white; font-weight: bold; }")
             self.btn_fog_toggle.clicked.connect(self.toggle_fog_mode)
-            toolbar.addWidget(self.btn_fog_toggle)
+            self.toolbar.addWidget(self.btn_fog_toggle)
             
             self.lbl_fog_hint = QLabel(tr("LBL_FOG_HINT"))
             self.lbl_fog_hint.setStyleSheet("color: #aaa; font-size: 10px; margin-left: 5px; margin-right: 5px;")
-            toolbar.addWidget(self.lbl_fog_hint)
+            self.toolbar.addWidget(self.lbl_fog_hint)
             
             self.btn_fog_fill = QPushButton(tr("BTN_FOG_FILL")); self.btn_fog_fill.setFixedSize(60, 25)
             self.btn_fog_fill.clicked.connect(self.fill_fog)
             self.btn_fog_clear = QPushButton(tr("BTN_FOG_CLEAR")); self.btn_fog_clear.setFixedSize(60, 25)
             self.btn_fog_clear.clicked.connect(self.clear_fog)
-            toolbar.addWidget(self.btn_fog_fill)
-            toolbar.addWidget(self.btn_fog_clear)
+            self.toolbar.addWidget(self.btn_fog_fill)
+            self.toolbar.addWidget(self.btn_fog_clear)
 
-        toolbar.addStretch()
-        layout.addLayout(toolbar)
+        self.toolbar.addStretch()
+        layout.addLayout(self.toolbar)
         
         self.scene = QGraphicsScene(); self.scene.setBackgroundBrush(QBrush(QColor("#111")))
         self.view = BattleMapView(self.scene) 
@@ -319,6 +316,10 @@ class BattleMapWidget(QWidget):
         self.view.fog_changed_signal.connect(self.on_local_fog_changed)
         
         layout.addWidget(self.view)
+
+    def add_toolbar_widget(self, widget):
+        """Adds a widget to the far right of the toolbar (after stretch)."""
+        self.toolbar.addWidget(widget)
 
     def toggle_view_lock(self, checked):
         self.is_view_locked = checked
@@ -336,25 +337,43 @@ class BattleMapWidget(QWidget):
         self.fog_item.image.save(buffer, "PNG")
         return base64.b64encode(buffer.data()).decode('utf-8')
 
+    def get_current_map_size(self):
+        """Helper to determine what the actual content size is."""
+        w, h = 1920, 1080
+        if self.map_item and self.map_item.isVisible():
+            r = self.map_item.boundingRect()
+            w, h = r.width(), r.height()
+        elif self.video_item and self.video_item.isVisible():
+            r = self.video_item.boundingRect() # sometimes nativeSize needed
+            if r.width() > 0:
+                w, h = r.width(), r.height()
+        return int(w), int(h)
+
     def load_fog_from_base64(self, b64_str):
         if not b64_str: return
         try:
             data = base64.b64decode(b64_str)
             img = QImage(); img.loadFromData(data, "PNG")
             
+            target_w, target_h = self.get_current_map_size()
+            
+            # If no fog exists, initialize with saved size OR map size
             if not self.fog_item:
-                w, h = 1920, 1080 
-                # Determine size based on active layer
-                if self.map_item and self.map_item.isVisible():
-                    w, h = self.map_item.boundingRect().width(), self.map_item.boundingRect().height()
-                elif self.video_item and self.video_item.isVisible():
-                    w, h = self.video_item.boundingRect().width(), self.video_item.boundingRect().height()
-                
-                self.init_fog_layer(w, h)
+                self.init_fog_layer(max(img.width(), target_w), max(img.height(), target_h))
+            
+            # If the loaded fog doesn't match current map, we might need to recreate/resize
+            # But usually we just load what we have. 
+            # If the user clicks "Fill" later, that function will now fix the size.
             
             if self.fog_item:
-                if img.size() != self.fog_item.image.size(): img = img.scaled(self.fog_item.image.size())
-                self.fog_item.set_fog_image(img); self.on_local_fog_changed(img)
+                # If sizes differ drastically, resize current item to match image?
+                # For now, just set the image.
+                if img.size() != self.fog_item.image.size(): 
+                    self.init_fog_layer(img.width(), img.height())
+                
+                self.fog_item.set_fog_image(img)
+                self.on_local_fog_changed(img)
+                
         except Exception as e: print(f"Fog load error: {e}")
 
     def reset_fog(self):
@@ -373,12 +392,25 @@ class BattleMapWidget(QWidget):
         self.view.set_fog_item(self.fog_item)
 
     def fill_fog(self):
+        # 1. Determine correct size
+        target_w, target_h = self.get_current_map_size()
+        
+        # 2. Check if current fog item exists and matches size
+        if not self.fog_item or self.fog_item.image.width() != target_w or self.fog_item.image.height() != target_h:
+            self.init_fog_layer(target_w, target_h)
+            
+        # 3. Fill
         if self.fog_item:
             self.fog_item.image.fill(QColor(0, 0, 0, 255))
             self.fog_item.update_pixmap()
             self.on_local_fog_changed(self.fog_item.image)
 
     def clear_fog(self):
+        # Similar logic: Ensure coverage before clearing (though clearing usually implies transparent)
+        target_w, target_h = self.get_current_map_size()
+        if not self.fog_item or self.fog_item.image.width() != target_w or self.fog_item.image.height() != target_h:
+            self.init_fog_layer(target_w, target_h)
+
         if self.fog_item:
             self.fog_item.image.fill(Qt.GlobalColor.transparent)
             self.fog_item.update_pixmap()
@@ -388,13 +420,10 @@ class BattleMapWidget(QWidget):
         self.fog_update_signal.emit(qimage)
 
     def apply_external_fog(self, qimage):
-        if not self.fog_item:
-            w, h = 1920, 1080
-            # Attempt to guess size
-            if self.map_item and self.map_item.isVisible(): 
-                w, h = self.map_item.boundingRect().width(), self.map_item.boundingRect().height()
-            elif self.video_item and self.video_item.isVisible():
-                w, h = self.video_item.boundingRect().width(), self.video_item.boundingRect().height()
+        if not self.fog_item and qimage:
+            self.init_fog_layer(qimage.width(), qimage.height())
+        elif not self.fog_item:
+            w, h = self.get_current_map_size()
             self.init_fog_layer(w, h)
         
         if self.fog_item and qimage: self.fog_item.set_fog_image(qimage)
@@ -402,108 +431,23 @@ class BattleMapWidget(QWidget):
     def fit_map_in_view(self):
         if self.map_item and self.map_item.isVisible(): 
             self.view.fitInView(self.map_item, Qt.AspectRatioMode.KeepAspectRatio)
-        elif self.web_proxy and self.web_proxy.isVisible():
-            self.view.fitInView(self.web_proxy, Qt.AspectRatioMode.KeepAspectRatio)
         elif self.video_item and self.video_item.isVisible():
             self.view.fitInView(self.video_item, Qt.AspectRatioMode.KeepAspectRatio)
 
     def apply_view_state(self, rect): self.view.set_view_state(rect)
-
-    def _extract_youtube_id(self, url):
-        """Extracts YouTube ID from various URL formats."""
-        url_str = str(url)
-        video_id = ""
-        
-        if "v=" in url_str:
-            try: video_id = url_str.split("v=")[1].split("&")[0]
-            except: pass
-        elif "youtu.be/" in url_str:
-            try: video_id = url_str.split("youtu.be/")[1].split("?")[0]
-            except: pass
-        elif "embed/" in url_str:
-            try: video_id = url_str.split("embed/")[1].split("?")[0]
-            except: pass
-            
-        return video_id
 
     def set_map_image(self, pixmap, path_ref=None):
         self.current_map_path = path_ref
         
         # --- CLEANUP PREVIOUS ---
         if self.map_item: self.map_item.hide()
-        if self.web_proxy:
-            self.web_proxy.hide()
-            # Önceki içeriği temizle ama WebEngine'i yok etme (performans için)
-            self.web_view.setUrl(QUrl("about:blank"))
         if self.video_item:
             self.video_item.hide()
             if self.video_player: self.video_player.stop()
 
-        is_url = path_ref and (path_ref.startswith("http://") or path_ref.startswith("https://"))
         is_local_video = path_ref and path_ref.endswith(('.mp4', '.webm', '.mkv', '.avi', '.m4v'))
 
-        # --- 1. ONLINE URL (YouTube/Web) ---
-        if is_url:
-            if not self.web_view:
-                self.web_view = QWebEngineView()
-                settings = self.web_view.settings()
-                settings.setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, True)
-                settings.setAttribute(QWebEngineSettings.WebAttribute.PlaybackRequiresUserGesture, False)
-                settings.setAttribute(QWebEngineSettings.WebAttribute.JavascriptEnabled, True)
-                settings.setAttribute(QWebEngineSettings.WebAttribute.LocalStorageEnabled, True)
-                self.web_view.setAttribute(Qt.WidgetAttribute.WA_DontCreateNativeAncestors)
-                self.web_view.resize(1920, 1080)
-                self.web_proxy = QGraphicsProxyWidget()
-                self.web_proxy.setWidget(self.web_view)
-                self.web_proxy.setZValue(-200)
-                self.scene.addItem(self.web_proxy)
-            
-            self.web_proxy.show()
-            self.web_proxy.setGeometry(QRectF(0, 0, 1920, 1080))
-            
-            # YOUTUBE ÖZEL İŞLEMİ (HTML EMBED)
-            if "youtube.com" in path_ref or "youtu.be" in path_ref:
-                video_id = self._extract_youtube_id(path_ref)
-                if video_id:
-                    # Origin/Referer problemini aşmak için HTML + BaseURL kullanıyoruz
-                    # 'iv_load_policy=3' -> Annotations kapalı
-                    # 'rel=0' -> İlgili videolar kapalı (daha temiz)
-                    # 'modestbranding=1' -> Logo minimal
-                    embed_url = f"https://www.youtube.com/embed/{video_id}?autoplay=1&mute=1&controls=0&loop=1&playlist={video_id}&modestbranding=1&iv_load_policy=3&rel=0&showinfo=0"
-                    
-                    html_content = f"""
-                    <!DOCTYPE html>
-                    <html style="width:100%; height:100%; margin:0; padding:0; overflow:hidden; background-color:black;">
-                    <body style="width:100%; height:100%; margin:0; padding:0;">
-                        <iframe 
-                            id="player" 
-                            type="text/html" 
-                            width="100%" 
-                            height="100%" 
-                            src="{embed_url}" 
-                            frameborder="0" 
-                            allow="autoplay; encrypted-media" 
-                            allowfullscreen>
-                        </iframe>
-                    </body>
-                    </html>
-                    """
-                    # BaseURL olarak youtube.com vererek "Origin" hatasını (153/150) çözüyoruz.
-                    self.web_view.setHtml(html_content, baseUrl=QUrl("https://www.youtube.com"))
-                    
-                    self.scene.setSceneRect(0, 0, 1920, 1080)
-                    if not self.fog_item: self.init_fog_layer(1920, 1080)
-                    QTimer.singleShot(800, self.fit_map_in_view)
-                    return
-
-            # Diğer Web Siteleri
-            self.web_view.setUrl(QUrl(path_ref))
-            self.scene.setSceneRect(0, 0, 1920, 1080)
-            if not self.fog_item: self.init_fog_layer(1920, 1080)
-            QTimer.singleShot(500, self.fit_map_in_view)
-            return
-
-        # --- 2. LOCAL VIDEO FILE (Native Player) ---
+        # --- 1. LOCAL VIDEO FILE ---
         if is_local_video:
             if not self.video_player:
                 self.video_player = QMediaPlayer()
@@ -513,27 +457,26 @@ class BattleMapWidget(QWidget):
                 self.video_item.setZValue(-200)
                 self.scene.addItem(self.video_item)
                 self.video_player.setVideoOutput(self.video_item)
-                # Loop video
                 self.video_player.setLoops(QMediaPlayer.Loops.Infinite)
             
             self.video_item.show()
             self.video_player.setSource(QUrl.fromLocalFile(path_ref))
             self.video_player.play()
             
-            # Wait for metadata to resize fog
             def on_media_status(status):
                 if status == QMediaPlayer.MediaStatus.BufferedMedia or status == QMediaPlayer.MediaStatus.LoadedMedia:
                     sz = self.video_item.nativeSize()
                     if not sz.isEmpty():
                         self.video_item.setSize(sz)
                         self.scene.setSceneRect(0, 0, sz.width(), sz.height())
+                        # Note: If Fog exists (loaded from saved data), don't overwrite it here
+                        # But if NO fog, use video size
                         if not self.fog_item: self.init_fog_layer(sz.width(), sz.height())
                         self.fit_map_in_view()
-                    
             self.video_player.mediaStatusChanged.connect(on_media_status)
             return
 
-        # --- 3. STATIC IMAGE ---
+        # --- 2. STATIC IMAGE ---
         if pixmap:
             if not self.map_item:
                 self.map_item = QGraphicsPixmapItem()
@@ -548,7 +491,6 @@ class BattleMapWidget(QWidget):
             if not self.fog_item: self.init_fog_layer(pixmap.width(), pixmap.height())
             QTimer.singleShot(50, self.fit_map_in_view)
         else:
-            # Clear everything handled above
             self.current_map_path = None
 
     def change_token_size(self, val):
@@ -567,25 +509,34 @@ class BattleMapWidget(QWidget):
             self.btn_fog_fill.setText(tr("BTN_FOG_FILL"))
             self.btn_fog_clear.setText(tr("BTN_FOG_CLEAR"))
 
-    def update_tokens(self, combatants, current_index, dm_manager, map_path=None, saved_token_size=None):
+    def update_tokens(self, combatants, current_index, dm_manager, map_path=None, saved_token_size=None, fog_data=None):
+        """
+        Updates the map. Arguments allow setting everything in one go.
+        fog_data: Base64 string of saved fog. If provided, it is applied BEFORE tokens are visible.
+        """
         if saved_token_size and saved_token_size != self.token_size:
             self.token_size = saved_token_size; self.slider_size.blockSignals(True); self.slider_size.setValue(saved_token_size); self.slider_size.blockSignals(False)
         
-        # --- FIXED: Only load map if path has CHANGED ---
+        # 1. Update Map Background
         if map_path != self.current_map_path:
             if map_path:
-                is_url = map_path.startswith("http")
                 is_video = map_path.endswith(('.mp4', '.webm', '.mkv', '.avi', '.m4v'))
-                
-                if is_url or is_video:
-                    self.set_map_image(None, map_path)
+                if is_video: self.set_map_image(None, map_path)
                 else:
                     pix = QPixmap(map_path) if os.path.exists(map_path) else None
                     self.set_map_image(pix, map_path)
             else:
                 self.set_map_image(None, None)
-        # ------------------------------------------------
-        
+
+        # 2. Update Fog (Priority over tokens to prevent flashing)
+        if fog_data:
+            self.load_fog_from_base64(fog_data)
+        elif map_path and not self.fog_item:
+            # If new map and no fog data, default to full fog (hidden)
+            self.init_fog_layer(1920, 1080) 
+            self.fill_fog()
+
+        # 3. Update Tokens
         incoming_tids = set()
         for i, c in enumerate(combatants):
             tid = c.get("tid") or c.get("eid")
@@ -619,6 +570,7 @@ class BattleMapWidget(QWidget):
                 if x is not None and y is not None: new_token.setPos(x, y)
                 else: offset = len(self.tokens) * (self.token_size + 10); new_token.setPos(50 + offset, 50)
                 new_token.setZValue(100 if is_active else 10); self.scene.addItem(new_token); self.tokens[tid] = new_token
+        
         to_remove = [tid for tid in self.tokens if tid not in incoming_tids]
         for tid in to_remove: self.scene.removeItem(self.tokens[tid]); del self.tokens[tid]
 
@@ -642,8 +594,10 @@ class BattleMapWindow(QMainWindow):
         main_layout.addWidget(self.sidebar, 0)
 
     def retranslate_ui(self): self.setWindowTitle(tr("TITLE_BATTLE_MAP")); self.lbl_title.setText(tr("TITLE_TURN_ORDER")); self.map_widget.retranslate_ui()
-    def update_combat_data(self, combatants, current_index, map_path=None, saved_token_size=None):
-        self.map_widget.update_tokens(combatants, current_index, self.dm, map_path, saved_token_size); self._update_sidebar(combatants, current_index)
+    
+    def update_combat_data(self, combatants, current_index, map_path=None, saved_token_size=None, fog_data=None):
+        self.map_widget.update_tokens(combatants, current_index, self.dm, map_path, saved_token_size, fog_data)
+        self._update_sidebar(combatants, current_index)
     
     def sync_view(self, rect): self.map_widget.apply_view_state(rect)
     
