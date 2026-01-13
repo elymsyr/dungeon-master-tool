@@ -157,6 +157,9 @@ class DatabaseTab(QWidget):
         sidebar_layout = QVBoxLayout(sidebar_widget)
         sidebar_layout.setContentsMargins(0, 0, 0, 0)
         
+        # CHANGED: Allow sidebar to shrink to 100px
+        sidebar_widget.setMinimumWidth(100)
+        
         self.inp_search = QLineEdit()
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
         self.inp_search.textChanged.connect(self.refresh_list)
@@ -167,7 +170,8 @@ class DatabaseTab(QWidget):
         self.btn_filter.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogListView))
         self.btn_filter.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.btn_filter.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        self.btn_filter.setFixedWidth(120)
+        # CHANGED: Relax fixed width
+        self.btn_filter.setMinimumWidth(80)
         self.btn_filter.setFixedHeight(32)
         self.btn_filter.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.refresh_filter_button_style()
@@ -201,15 +205,21 @@ class DatabaseTab(QWidget):
         self.workspace_splitter = QSplitter(Qt.Orientation.Horizontal)
         self.tab_manager_left = EntityTabWidget(self.dm, self, "left")
         self.tab_manager_right = EntityTabWidget(self.dm, self, "right")
+        
+        # CHANGED: Set very low minimum width for tabs to allow squeezing
+        self.tab_manager_left.setMinimumWidth(50)
+        self.tab_manager_right.setMinimumWidth(50)
+        
         self.workspace_splitter.addWidget(self.tab_manager_left)
         self.workspace_splitter.addWidget(self.tab_manager_right)
-        self.workspace_splitter.setSizes([800, 800])
+        self.workspace_splitter.setSizes([500, 500])
         self.workspace_splitter.setCollapsible(0, False)
 
         main_splitter = QSplitter(Qt.Orientation.Horizontal)
         main_splitter.addWidget(sidebar_widget)
         main_splitter.addWidget(self.workspace_splitter)
-        main_splitter.setSizes([350, 1150]) 
+        
+        main_splitter.setSizes([300, 800]) 
         
         main_layout.addWidget(main_splitter)
         self.refresh_list()
@@ -393,12 +403,10 @@ class DatabaseTab(QWidget):
             QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_IMAGE_IN_ENTITY"))
             return
         
-        # Geçerli resim yolunu al
         rel_path = sheet.image_list[sheet.current_img_index]
         full_path = self.dm.get_full_path(rel_path)
         
         if full_path and os.path.exists(full_path):
-            # Player Window'a çoklu resim desteğiyle ekle
             self.player_window.add_image_to_view(full_path)
             if not self.player_window.isVisible():
                 self.player_window.show()
