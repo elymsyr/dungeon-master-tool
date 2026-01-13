@@ -463,6 +463,10 @@ class Open5eApiSource(ApiSource):
         if category in ["Monster", "NPC"]: return self.parse_monster(data)
         elif category == "Spell": return self.parse_spell(data)
         elif category in ["Magic Item", "Weapon", "Armor"]: return self.parse_item(data)
+        elif category == "Feat": return self.parse_feat(data)
+        elif category == "Background": return self.parse_background(data)
+        elif category == "Plane": return self.parse_plane(data)
+        elif category == "Condition": return self.parse_condition(data)
         # Fallback generic parse
         return self.parse_generic(category, data)
 
@@ -565,6 +569,51 @@ class Open5eApiSource(ApiSource):
                 "Weight": data.get("weight", "")
             }
         }
+
+    def parse_feat(self, data):
+        return {
+            "name": data.get("name"),
+            "type": "Feat",
+            "description": data.get("desc", ""),
+            "source": self._get_source_str(data),
+            "attributes": {
+                "LBL_PREREQUISITE": data.get("prerequisite", "")
+            }
+        }
+
+    def parse_background(self, data):
+        # Open5e Backgrounds
+        return {
+            "name": data.get("name"),
+            "type": "Background",
+            "description": f"{data.get('desc', '')}\n\nFeature: {data.get('feature', '')}\n{data.get('feature_desc', '')}",
+            "source": self._get_source_str(data),
+            "attributes": {
+                "LBL_SKILL_PROFICIENCIES": data.get("skill_proficiencies", ""),
+                "LBL_TOOL_PROFICIENCIES": data.get("tool_proficiencies", ""),
+                "LBL_LANGUAGES": data.get("languages", ""),
+                "LBL_EQUIPMENT": data.get("equipment", "")
+            }
+        }
+
+    def parse_plane(self, data):
+        return {
+            "name": data.get("name"),
+            "type": "Plane",
+            "description": data.get("desc", ""),
+            "source": self._get_source_str(data),
+            "attributes": {} 
+        }
+
+    def parse_condition(self, data):
+        return {
+            "name": data.get("name"),
+            "type": "Condition",
+            "description": data.get("desc", ""),
+            "source": self._get_source_str(data),
+            "attributes": {}
+        }
+
 
 def json_dict_to_str(d):
     if not d: return ""
