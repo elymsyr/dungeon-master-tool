@@ -6,6 +6,20 @@ from PyQt6.QtGui import (QPixmap, QBrush, QColor, QPen, QAction, QPainter,
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF
 from core.locales import tr
 
+class TimelineConnectionItem(QGraphicsPathItem):
+    """
+    Represents the dashed line between two timeline pins.
+    Stores IDs to allow filtering logic to hide the line if an endpoint is hidden.
+    """
+    def __init__(self, path, color, start_id, end_id):
+        super().__init__(path)
+        self.start_id = start_id
+        self.end_id = end_id
+        
+        pen = QPen(QColor(color), 3, Qt.PenStyle.DashLine)
+        self.setPen(pen)
+        self.setZValue(15) # Below pins (20), above map (0)
+
 class TimelinePinItem(QGraphicsRectItem):
     def __init__(self, x, y, day, note, pin_id, entity_name, color, session_id, callback_action):
         super().__init__(x - 12, y - 12, 24, 24)
@@ -94,7 +108,8 @@ class MapViewer(QGraphicsView):
     pin_created_signal = pyqtSignal(float, float)
     pin_moved_signal = pyqtSignal(str, float, float)
     timeline_moved_signal = pyqtSignal(str, float, float)
-    link_placed_signal = pyqtSignal(float, float) # Hızlı bağlantı için yeni sinyal
+    link_placed_signal = pyqtSignal(float, float) # Connect to new point
+    existing_pin_linked_signal = pyqtSignal(str)  # Connect to existing pin (ID)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -104,7 +119,7 @@ class MapViewer(QGraphicsView):
         self.setBackgroundBrush(QBrush(QColor("#111")))
         self.map_item = None
         self.is_moving_pin = False; self.moving_pin_id = None; self.moving_pin_type = None
-        self.is_link_mode = False # Hızlı bağlantı modu aktif mi?
+        self.is_link_mode = False 
 
     def load_map(self, pixmap):
         self.scene.clear(); self.map_item = QGraphicsPixmapItem(pixmap); self.map_item.setZValue(0); self.scene.addItem(self.map_item)
@@ -116,13 +131,31 @@ class MapViewer(QGraphicsView):
     def draw_timeline_connections(self, timeline_data):
         coords = {p["id"]: (p["x"], p["y"]) for p in timeline_data}
         for pin in timeline_data:
-            parent_id = pin.get("parent_id")
-            if parent_id and parent_id in coords:
-                start_pt = coords[parent_id]; end_pt = (pin["x"], pin["y"])
-                path = QPainterPath(); path.moveTo(start_pt[0], start_pt[1]); path.lineTo(end_pt[0], end_pt[1])
-                path_item = QGraphicsPathItem(path)
-                pen = QPen(QColor("#ffb300"), 3, Qt.PenStyle.DashLine); path_item.setPen(pen)
-                path_item.setZValue(15); self.scene.addItem(path_item)
+            # Collect all parents
+            parents = []
+            if pin.get("parent_ids"):
+                parents.extend(pin["parent_ids"])
+            
+            # Legacy Single ID (Add if not in list)
+            legacy_parent = pin.get("parent_id")
+            if legacy_parent and legacy_parent not in parents:
+                parents.append(legacy_parent)
+            
+            # Remove duplicates
+            parents = list(set(parents))
+
+            # Draw a line for each parent
+            for pid in parents:
+                if pid in coords:
+                    start_pt = coords[pid]
+                    end_pt = (pin["x"], pin["y"])
+                    path = QPainterPath()
+                    path.moveTo(start_pt[0], start_pt[1])
+                    path.lineTo(end_pt[0], end_pt[1])
+                    
+                    # USE THE NEW CLASS HERE
+                    conn_item = TimelineConnectionItem(path, "#ffb300", start_id=pid, end_id=pin["id"])
+                    self.scene.addItem(conn_item)
 
     def start_move_mode(self, pin_id, p_type="entity"):
         self.is_moving_pin = True; self.moving_pin_id = pin_id; self.moving_pin_type = p_type
@@ -142,6 +175,14 @@ class MapViewer(QGraphicsView):
         # BAĞLANTI MODUNDA TIKLAMA DENETİMİ
         if self.is_link_mode:
             if event.button() == Qt.MouseButton.LeftButton:
+                # 1. Check if we clicked an EXISTING timeline item first
+                item = self.itemAt(event.pos())
+                if isinstance(item, TimelinePinItem):
+                    self.existing_pin_linked_signal.emit(item.pin_id)
+                    self.cancel_move_mode()
+                    return
+
+                # 2. If not, treat as placing a NEW pin
                 scene_pos = self.mapToScene(event.pos())
                 if self.map_item and self.map_item.boundingRect().contains(scene_pos):
                     self.link_placed_signal.emit(scene_pos.x(), scene_pos.y())

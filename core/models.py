@@ -154,10 +154,14 @@ def get_default_entity_structure(entity_type="NPC"):
     return {
         "name": "Yeni Kayıt",
         "type": entity_type,
-        "source": "",  # <--- YENİ EKLENDİ
+        "source": "", 
         "description": "",
         "images": [],
         "image_path": "",
+        
+        # --- NEW FIELD FOR LOCATIONS ---
+        "battlemaps": [], # List of file paths
+        
         "tags": [],
         "attributes": {},
         "stats": {"STR": 10, "DEX": 10, "CON": 10, "INT": 10, "WIS": 10, "CHA": 10},
