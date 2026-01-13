@@ -86,15 +86,19 @@ class DraggableListWidget(QListWidget):
 class EntityTabWidget(QTabWidget):
     def __init__(self, data_manager, parent_db_tab, panel_id):
         super().__init__()
-        self.dm = data_manager; self.parent_db_tab = parent_db_tab; self.panel_id = panel_id
-        self.setTabsClosable(True); self.setMovable(True); self.setAcceptDrops(True)
+        self.dm = data_manager
+        self.parent_db_tab = parent_db_tab
+        self.panel_id = panel_id
+        self.setTabsClosable(True)
+        self.setMovable(True)
+        self.setAcceptDrops(True)
         self.tabCloseRequested.connect(self.close_tab)
         
-        # --- KISAYOL: Ctrl + W ---
+        # --- SHORTCUT: Ctrl + W ---
         self.close_shortcut = QShortcut(QKeySequence("Ctrl+W"), self)
         self.close_shortcut.activated.connect(self.close_current_tab)
 
-        # --- MOUSE ORTA TUŞ TAKİBİ ---
+        # --- MOUSE MIDDLE CLICK TRACKING ---
         self.tabBar().installEventFilter(self)
 
         self.setStyleSheet("""
@@ -105,13 +109,13 @@ class EntityTabWidget(QTabWidget):
         """)
 
     def close_current_tab(self):
-        """Aktif sekmeyi kapatır."""
+        """Closes the active tab."""
         idx = self.currentIndex()
         if idx != -1:
             self.close_tab(idx)
 
     def eventFilter(self, obj, event):
-        """Sekme başlığına orta tuşla basıldığında sekmeyi kapatır."""
+        """Closes the tab when middle-clicked on the tab bar."""
         if obj is self.tabBar() and event.type() == QEvent.Type.MouseButtonRelease:
             if event.button() == Qt.MouseButton.MiddleButton:
                 idx = self.tabBar().tabAt(event.pos())
@@ -121,7 +125,8 @@ class EntityTabWidget(QTabWidget):
         return super().eventFilter(obj, event)
 
     def dragEnterEvent(self, event):
-        if event.mimeData().hasText(): event.acceptProposedAction()
+        if event.mimeData().hasText(): 
+            event.acceptProposedAction()
         
     def dropEvent(self, event):
         eid = event.mimeData().text()
@@ -130,7 +135,8 @@ class EntityTabWidget(QTabWidget):
         
     def close_tab(self, index):
         widget = self.widget(index)
-        if widget: widget.deleteLater()
+        if widget: 
+            widget.deleteLater()
         self.removeTab(index)
 
 class DatabaseTab(QWidget):
@@ -218,8 +224,12 @@ class DatabaseTab(QWidget):
             QCheckBox:hover { background-color: rgba(255, 255, 255, 0.1); }
             QCheckBox:focus { border: none; outline: none; }
         """)
-        layout = QVBoxLayout(container); layout.setContentsMargins(10, 10, 10, 10); layout.setSpacing(2)
-        lbl_cat = QLabel(tr("LBL_TYPE")); lbl_cat.setStyleSheet("font-weight: bold; margin-bottom: 4px; border: none;"); layout.addWidget(lbl_cat)
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(2)
+        lbl_cat = QLabel(tr("LBL_TYPE"))
+        lbl_cat.setStyleSheet("font-weight: bold; margin-bottom: 4px; border: none;")
+        layout.addWidget(lbl_cat)
         categories = sorted(list(ENTITY_SCHEMAS.keys()) + ["NPC", "Monster"])
         categories = sorted(list(set(categories)))
         for cat in categories:
@@ -227,35 +237,61 @@ class DatabaseTab(QWidget):
             trans_key = f"CAT_{cat.upper().replace(' ', '_')}"
             translated = tr(trans_key)
             if translated != trans_key: display_text = translated
-            chk = QCheckBox(display_text); chk.setChecked(cat in self.active_categories); chk.setFocusPolicy(Qt.FocusPolicy.NoFocus); chk.setCursor(Qt.CursorShape.PointingHandCursor)
-            chk.toggled.connect(lambda checked, c=cat: self.toggle_category_filter(c, checked)); layout.addWidget(chk)
+            chk = QCheckBox(display_text)
+            chk.setChecked(cat in self.active_categories)
+            chk.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            chk.setCursor(Qt.CursorShape.PointingHandCursor)
+            chk.toggled.connect(lambda checked, c=cat: self.toggle_category_filter(c, checked))
+            layout.addWidget(chk)
         self.available_sources.clear()
         for ent in self.dm.data["entities"].values():
             src = ent.get("source")
             if src: self.available_sources.add(src)
         if self.available_sources:
-            line = QFrame(); line.setFrameShape(QFrame.Shape.HLine); line.setFrameShadow(QFrame.Shadow.Sunken)
-            line.setStyleSheet("background-color: rgba(128, 128, 128, 0.5); border: none; margin-top: 8px; margin-bottom: 8px;"); layout.addWidget(line)
-            lbl_src = QLabel(tr("LBL_SOURCE")); lbl_src.setStyleSheet("font-weight: bold; margin-bottom: 4px; border: none;"); layout.addWidget(lbl_src)
+            line = QFrame()
+            line.setFrameShape(QFrame.Shape.HLine)
+            line.setFrameShadow(QFrame.Shadow.Sunken)
+            line.setStyleSheet("background-color: rgba(128, 128, 128, 0.5); border: none; margin-top: 8px; margin-bottom: 8px;")
+            layout.addWidget(line)
+            lbl_src = QLabel(tr("LBL_SOURCE"))
+            lbl_src.setStyleSheet("font-weight: bold; margin-bottom: 4px; border: none;")
+            layout.addWidget(lbl_src)
             for src in sorted(self.available_sources):
-                chk = QCheckBox(src); chk.setChecked(src in self.active_sources); chk.setFocusPolicy(Qt.FocusPolicy.NoFocus); chk.setCursor(Qt.CursorShape.PointingHandCursor)
-                chk.toggled.connect(lambda checked, s=src: self.toggle_source_filter(s, checked)); layout.addWidget(chk)
-        action_widget = QWidgetAction(self.filter_menu); action_widget.setDefaultWidget(container); self.filter_menu.addAction(action_widget)
+                chk = QCheckBox(src)
+                chk.setChecked(src in self.active_sources)
+                chk.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+                chk.setCursor(Qt.CursorShape.PointingHandCursor)
+                chk.toggled.connect(lambda checked, s=src: self.toggle_source_filter(s, checked))
+                layout.addWidget(chk)
+        action_widget = QWidgetAction(self.filter_menu)
+        action_widget.setDefaultWidget(container)
+        self.filter_menu.addAction(action_widget)
         self.filter_menu.addSeparator()
-        clear_action = QAction("❌ " + tr("BTN_CLEAR"), self.filter_menu); clear_action.triggered.connect(self.clear_filters); self.filter_menu.addAction(clear_action)
+        clear_action = QAction("❌ " + tr("BTN_CLEAR"), self.filter_menu)
+        clear_action.triggered.connect(self.clear_filters)
+        self.filter_menu.addAction(clear_action)
 
     def toggle_category_filter(self, category, checked):
-        if checked: self.active_categories.add(category)
-        else: self.active_categories.discard(category)
-        self.refresh_filter_button_style(); self.refresh_list()
+        if checked: 
+            self.active_categories.add(category)
+        else: 
+            self.active_categories.discard(category)
+        self.refresh_filter_button_style()
+        self.refresh_list()
 
     def toggle_source_filter(self, source, checked):
-        if checked: self.active_sources.add(source)
-        else: self.active_sources.discard(source)
-        self.refresh_filter_button_style(); self.refresh_list()
+        if checked: 
+            self.active_sources.add(source)
+        else: 
+            self.active_sources.discard(source)
+        self.refresh_filter_button_style()
+        self.refresh_list()
 
     def clear_filters(self):
-        self.active_categories.clear(); self.active_sources.clear(); self.refresh_filter_button_style(); self.refresh_list()
+        self.active_categories.clear()
+        self.active_sources.clear()
+        self.refresh_filter_button_style()
+        self.refresh_list()
 
     def refresh_filter_button_style(self):
         count = len(self.active_categories) + len(self.active_sources)
@@ -283,25 +319,33 @@ class DatabaseTab(QWidget):
         text = self.inp_search.text().lower()
         norm_active_cats = {self.normalize_type(c) for c in self.active_categories}
         for eid, data in self.dm.data["entities"].items():
-            name = data.get("name", ""); raw_type = data.get("type", "NPC"); norm_type = self.normalize_type(raw_type); source = data.get("source", "")
+            name = data.get("name", "")
+            raw_type = data.get("type", "NPC")
+            norm_type = self.normalize_type(raw_type)
+            source = data.get("source", "")
             if norm_active_cats and norm_type not in norm_active_cats: continue
             if self.active_sources and source not in self.active_sources: continue
             search_content = f"{name} {data.get('tags', [])} {raw_type}".lower()
             if text and text not in search_content: continue
-            item = QListWidgetItem(self.list_widget); item.setData(Qt.ItemDataRole.UserRole, eid)
-            widget = EntityListItemWidget(name, raw_type, source); item.setSizeHint(widget.sizeHint())
+            item = QListWidgetItem(self.list_widget)
+            item.setData(Qt.ItemDataRole.UserRole, eid)
+            widget = EntityListItemWidget(name, raw_type, source)
+            item.setSizeHint(widget.sizeHint())
             self.list_widget.setItemWidget(item, widget)
         if self.check_show_library.isChecked() and not self.active_sources:
             if len(text) > 2 or self.active_categories:
                 lib_results = self.dm.search_in_library(None, text)
                 for res in lib_results:
                     if "index" not in res: continue
-                    res_cat = res["type"]; norm_res_cat = self.normalize_type(res_cat)
+                    res_cat = res["type"]
+                    norm_res_cat = self.normalize_type(res_cat)
                     if norm_active_cats and norm_res_cat not in norm_active_cats: continue
                     item = QListWidgetItem(self.list_widget)
                     api_safe_cat = "monsters" if norm_res_cat == "monster" else "spells" if norm_res_cat == "spell" else "equipment" if norm_res_cat == "equipment" else "classes" if norm_res_cat == "class" else "races" if norm_res_cat == "race" else res_cat.lower()
-                    safe_id = f"lib_{api_safe_cat}_{res['index']}"; item.setData(Qt.ItemDataRole.UserRole, safe_id)
-                    widget = EntityListItemWidget("📚 " + res["name"], res_cat, "SRD 5e"); item.setSizeHint(widget.sizeHint())
+                    safe_id = f"lib_{api_safe_cat}_{res['index']}"
+                    item.setData(Qt.ItemDataRole.UserRole, safe_id)
+                    widget = EntityListItemWidget("📚 " + res["name"], res_cat, "SRD 5e")
+                    item.setSizeHint(widget.sizeHint())
                     self.list_widget.setItemWidget(item, widget)
 
     def on_item_double_clicked(self, item):
@@ -310,7 +354,8 @@ class DatabaseTab(QWidget):
 
     def open_entity_tab(self, eid, target_panel="left", data=None):
         if eid and str(eid).startswith("lib_"):
-            parts = eid.split("_"); raw_cat = parts[1]
+            parts = eid.split("_")
+            raw_cat = parts[1]
             category_map = {"monsters": "Monster", "spells": "Spell", "equipment": "Equipment", "magic-items": "Equipment", "classes": "Class", "races": "Race", "npc": "NPC"}
             target_cat = category_map.get(raw_cat, raw_cat.capitalize())
             self._fetch_and_open_api_entity(target_cat, parts[2], target_panel)
@@ -400,8 +445,10 @@ class DatabaseTab(QWidget):
         else: QMessageBox.warning(self, tr("MSG_ERROR"), msg)
 
     def create_new_entity(self):
-        default_data = {"name": "Yeni Varlık", "type": "NPC"}; new_id = self.dm.save_entity(None, default_data)
-        self.refresh_list(); self.open_entity_tab(new_id, "left")
+        default_data = {"name": "Yeni Varlık", "type": "NPC"}
+        new_id = self.dm.save_entity(None, default_data)
+        self.refresh_list()
+        self.open_entity_tab(new_id, "left")
 
     def save_sheet_data(self, sheet):
         eid = sheet.property("entity_id"); data = self.collect_data_from_sheet(sheet)
@@ -419,17 +466,22 @@ class DatabaseTab(QWidget):
         eid = sheet.property("entity_id")
         if not eid:
             for manager in [self.tab_manager_left, self.tab_manager_right]:
-                idx = manager.indexOf(sheet); 
-                if idx != -1: manager.removeTab(idx)
+                idx = manager.indexOf(sheet) 
+                if idx != -1: 
+                    manager.removeTab(idx)
             return
         if QMessageBox.question(self, tr("BTN_DELETE"), tr("MSG_CONFIRM_DELETE")) == QMessageBox.StandardButton.Yes:
-            self.dm.delete_entity(eid); self.refresh_list()
+            self.dm.delete_entity(eid)
+            self.refresh_list()
             for manager in [self.tab_manager_left, self.tab_manager_right]:
                 idx = manager.indexOf(sheet)
-                if idx != -1: manager.removeTab(idx)
+                if idx != -1: 
+                    manager.removeTab(idx)
 
-    def populate_sheet(self, s, data): s.populate_sheet(data) 
-    def collect_data_from_sheet(self, s): return s.collect_data_from_sheet()
+    def populate_sheet(self, s, data): 
+        s.populate_sheet(data) 
+    def collect_data_from_sheet(self, s): 
+        return s.collect_data_from_sheet()
     def open_api_browser(self):
         target_cat = "Monster"
         if self.active_categories:
@@ -439,10 +491,12 @@ class DatabaseTab(QWidget):
             elif first_cat == "Equipment": target_cat = "Equipment"
             elif first_cat == "Class": target_cat = "Class"
             elif first_cat == "Race": target_cat = "Race"
-        if ApiBrowser(self.dm, target_cat, self).exec(): self.refresh_list()
+        if ApiBrowser(self.dm, target_cat, self).exec(): 
+            self.refresh_list()
     def retranslate_ui(self):
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
-        self.btn_filter.setText(f" {tr('LBL_FILTER')}"); self.refresh_filter_button_style() 
+        self.btn_filter.setText(f" {tr('LBL_FILTER')}")
+        self.refresh_filter_button_style() 
         self.check_show_library.setText(tr("LBL_CHECK_LIBRARY"))
         self.btn_browser.setText(tr("BTN_API_BROWSER"))
         self.btn_add.setText(tr("BTN_NEW_ENTITY"))

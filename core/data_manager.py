@@ -3,14 +3,14 @@ import uuid
 import os
 import json
 import shutil
-import msgpack  # HIZLI FORMAT İÇİN EKLENDİ
+import msgpack  # ADDED FOR FAST FORMAT
 from config import WORLDS_DIR, BASE_DIR, CACHE_DIR, load_theme
 from core.models import get_default_entity_structure, SCHEMA_MAP, PROPERTY_MAP
 from core.api_client import DndApiClient
 from core.locales import set_language
 
 LIBRARY_DIR = os.path.join(CACHE_DIR, "library")
-# Kütüphane önbelleği için artık .dat (MsgPack) kullanacağız, ama .json desteği de kalacak
+# We will use .dat (MsgPack) for library cache, but .json support remains
 CACHE_FILE_JSON = os.path.join(CACHE_DIR, "reference_indexes.json")
 CACHE_FILE_DAT = os.path.join(CACHE_DIR, "reference_indexes.dat")
 
@@ -32,19 +32,21 @@ class DataManager:
         self.api_client = DndApiClient()
         self.reference_cache = {}
         
-        if not os.path.exists(WORLDS_DIR): os.makedirs(WORLDS_DIR)
+        if not os.path.exists(WORLDS_DIR):
+            os.makedirs(WORLDS_DIR)
         
         self.reload_library_cache()
 
     def reload_library_cache(self):
-        """Kütüphane indeksini yükler. Önce hızlı formatı (.dat) dener."""
-        if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
+        """Loads library index. Tries fast format (.dat) first."""
+        if not os.path.exists(CACHE_DIR):
+            os.makedirs(CACHE_DIR)
         
         # 1. Hızlı format var mı?
         if os.path.exists(CACHE_FILE_DAT):
             try:
                 with open(CACHE_FILE_DAT, "rb") as f:
-                    # raw=False: Byte yerine String olarak yüklemesini sağlar
+                    # raw=False: Load as String instead of Byte
                     self.reference_cache = msgpack.unpack(f, raw=False)
                 return
             except Exception as e:
@@ -55,7 +57,7 @@ class DataManager:
             try:
                 with open(CACHE_FILE_JSON, "r", encoding="utf-8") as f: 
                     self.reference_cache = json.load(f)
-                # JSON bulduysak hemen hızlı formata çevirip kaydedelim
+                # If JSON found, convert to fast format immediately and save
                 self._save_reference_cache()
             except: 
                 self.reference_cache = {}
@@ -126,8 +128,8 @@ class DataManager:
 
     def load_campaign(self, folder):
         """
-        Kampanyayı yükler. 
-        Önce .dat (MsgPack) dosyasına bakar. Yoksa .json dosyasına bakar ve dönüştürür.
+        Loads the campaign.
+        Checks .dat (MsgPack) first. If not found, checks .json and converts.
         """
         json_path = os.path.join(folder, "data.json")
         dat_path = os.path.join(folder, "data.dat")
@@ -160,11 +162,16 @@ class DataManager:
             return False, "Kayıt dosyası bulunamadı (data.dat veya data.json)."
 
         # --- Veri Bütünlüğü Kontrolleri ---
-        if "sessions" not in self.data: self.data["sessions"] = []
-        if "entities" not in self.data: self.data["entities"] = {}
-        if "map_data" not in self.data: self.data["map_data"] = {"image_path": "", "pins": [], "timeline": []}
-        if "timeline" not in self.data["map_data"]: self.data["map_data"]["timeline"] = []
-        if "last_active_session_id" not in self.data: self.data["last_active_session_id"] = None
+        if "sessions" not in self.data:
+            self.data["sessions"] = []
+        if "entities" not in self.data:
+            self.data["entities"] = {}
+        if "map_data" not in self.data:
+            self.data["map_data"] = {"image_path": "", "pins": [], "timeline": []}
+        if "timeline" not in self.data["map_data"]:
+            self.data["map_data"]["timeline"] = []
+        if "last_active_session_id" not in self.data:
+            self.data["last_active_session_id"] = None
         
         if not self.data["sessions"]:
             new_sid = str(uuid.uuid4())
@@ -253,7 +260,7 @@ class DataManager:
         except Exception as e: return False, str(e)
 
     def save_data(self):
-        """Veriyi MsgPack (.dat) formatında kaydeder. JSON'dan çok daha hızlıdır."""
+        """Saves data in MsgPack (.dat) format. Much faster than JSON."""
         if self.current_campaign_path:
             dat_path = os.path.join(self.current_campaign_path, "data.dat")
             try:
@@ -281,13 +288,18 @@ class DataManager:
         if "sessions" not in self.data: return
         for s in self.data["sessions"]:
             if s["id"] == session_id:
-                s["notes"] = notes; s["logs"] = logs; s["combatants"] = combatants
+                s["notes"] = notes
+                s["logs"] = logs
+                s["combatants"] = combatants
                 self.set_active_session(session_id)
                 self.save_data()
                 break
 
-    def set_active_session(self, session_id): self.data["last_active_session_id"] = session_id
-    def get_last_active_session_id(self): return self.data.get("last_active_session_id")
+    def set_active_session(self, session_id):
+        self.data["last_active_session_id"] = session_id
+
+    def get_last_active_session_id(self):
+        return self.data.get("last_active_session_id")
 
     def save_entity(self, eid, data, should_save=True, auto_source_update=True):
         if not eid: 
@@ -437,7 +449,9 @@ class DataManager:
         return full_path
     
     # --- MAP & TIMELINE ---
-    def set_map_image(self, rel): self.data["map_data"]["image_path"] = rel; self.save_data()
+    def set_map_image(self, rel):
+        self.data["map_data"]["image_path"] = rel
+        self.save_data()
     
     def add_pin(self, x, y, eid, color=None, note=""): 
         pin_data = {"id": str(uuid.uuid4()), "x": x, "y": y, "entity_id": eid, "color": color, "note": note}

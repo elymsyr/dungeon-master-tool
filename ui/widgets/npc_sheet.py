@@ -158,15 +158,33 @@ class NpcSheet(QWidget):
         self.content_layout.addWidget(self.grp_dynamic)
 
         # Tabs
+        # Tabs
         self.tabs = QTabWidget()
-        self.tab_stats = QWidget(); self.setup_stats_tab(); self.tabs.addTab(self.tab_stats, tr("TAB_STATS"))
-        self.tab_spells = QWidget(); self.setup_spells_tab(); self.tabs.addTab(self.tab_spells, tr("TAB_SPELLS"))
-        self.tab_features = QWidget(); self.setup_features_tab(); self.tabs.addTab(self.tab_features, tr("TAB_ACTIONS"))
-        self.tab_inventory = QWidget(); self.setup_inventory_tab(); self.tabs.addTab(self.tab_inventory, tr("TAB_INV"))
-        self.tab_docs = QWidget(); self.setup_docs_tab(); self.tabs.addTab(self.tab_docs, tr("TAB_DOCS"))
+        self.tab_stats = QWidget()
+        self.setup_stats_tab()
+        self.tabs.addTab(self.tab_stats, tr("TAB_STATS"))
+        
+        self.tab_spells = QWidget()
+        self.setup_spells_tab()
+        self.tabs.addTab(self.tab_spells, tr("TAB_SPELLS"))
+        
+        self.tab_features = QWidget()
+        self.setup_features_tab()
+        self.tabs.addTab(self.tab_features, tr("TAB_ACTIONS"))
+        
+        self.tab_inventory = QWidget()
+        self.setup_inventory_tab()
+        self.tabs.addTab(self.tab_inventory, tr("TAB_INV"))
+        
+        self.tab_docs = QWidget()
+        self.setup_docs_tab()
+        self.tabs.addTab(self.tab_docs, tr("TAB_DOCS"))
         
         # --- NEW BATTLEMAP TAB ---
-        self.tab_battlemaps = QWidget(); self.setup_battlemap_tab(); self.tabs.addTab(self.tab_battlemaps, "Battlemaps")
+        # --- NEW BATTLEMAP TAB ---
+        self.tab_battlemaps = QWidget()
+        self.setup_battlemap_tab()
+        self.tabs.addTab(self.tab_battlemaps, "Battlemaps")
         
         self.content_layout.addWidget(self.tabs)
         
@@ -186,12 +204,17 @@ class NpcSheet(QWidget):
         main_layout.addWidget(scroll)
 
         # Footer Buttons
-        btn_layout = QHBoxLayout(); btn_layout.setContentsMargins(10, 10, 10, 10)
-        self.btn_delete = QPushButton(tr("BTN_DELETE")); self.btn_delete.setObjectName("dangerBtn")
-        self.btn_save = QPushButton(tr("BTN_SAVE")); self.btn_save.setObjectName("primaryBtn")
+        btn_layout = QHBoxLayout()
+        btn_layout.setContentsMargins(10, 10, 10, 10)
+        self.btn_delete = QPushButton(tr("BTN_DELETE"))
+        self.btn_delete.setObjectName("dangerBtn")
+        self.btn_save = QPushButton(tr("BTN_SAVE"))
+        self.btn_save.setObjectName("primaryBtn")
         self.btn_save.clicked.connect(self.emit_save_request)
         
-        btn_layout.addStretch(); btn_layout.addWidget(self.btn_delete); btn_layout.addWidget(self.btn_save)
+        btn_layout.addStretch()
+        btn_layout.addWidget(self.btn_delete)
+        btn_layout.addWidget(self.btn_save)
         main_layout.addLayout(btn_layout)
         
         self.update_ui_by_type(self.inp_type.currentData())
@@ -304,8 +327,10 @@ class NpcSheet(QWidget):
                         item.setData(Qt.ItemDataRole.UserRole, eid)
                         self.list_residents.addItem(item)
 
-        self.lbl_location.setVisible(is_npc_like or is_player); self.combo_location.setVisible(is_npc_like or is_player)
-        self.lbl_residents.setVisible(category_name == "Location"); self.list_residents.setVisible(category_name == "Location")
+        self.lbl_location.setVisible(is_npc_like or is_player)
+        self.combo_location.setVisible(is_npc_like or is_player)
+        self.lbl_residents.setVisible(category_name == "Location")
+        self.list_residents.setVisible(category_name == "Location")
         
         # Tabs Visibility
         self.tabs.setTabVisible(0, is_npc_like) # Stats
@@ -320,11 +345,15 @@ class NpcSheet(QWidget):
             self.tabs.setTabVisible(idx_battlemap, is_location)
 
         if is_player: 
-             if self.grp_combat_stats.parent() == self.tab_stats: self.tab_stats.layout().removeWidget(self.grp_combat_stats); self.content_layout.insertWidget(self.content_layout.indexOf(self.tabs), self.grp_combat_stats)
+             if self.grp_combat_stats.parent() == self.tab_stats: 
+                 self.tab_stats.layout().removeWidget(self.grp_combat_stats)
+                 self.content_layout.insertWidget(self.content_layout.indexOf(self.tabs), self.grp_combat_stats)
              self.grp_combat_stats.setVisible(True)
         elif is_status: self.grp_combat_stats.setVisible(False)
         else:
-             if self.grp_combat_stats.parent() != self.tab_stats: self.content_layout.removeWidget(self.grp_combat_stats); self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
+             if self.grp_combat_stats.parent() != self.tab_stats: 
+                 self.content_layout.removeWidget(self.grp_combat_stats)
+                 self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
              self.grp_combat_stats.setVisible(is_npc_like)
 
     # ... (Other methods) ...
@@ -344,32 +373,46 @@ class NpcSheet(QWidget):
         loc_val = data.get("location_id") or data.get("attributes", {}).get("LBL_ATTR_LOCATION")
         if loc_val:
             idx = self.combo_location.findData(loc_val)
-            if idx >= 0: self.combo_location.setCurrentIndex(idx)
-            else: self.combo_location.setCurrentText(str(loc_val))
+            if idx >= 0: 
+                self.combo_location.setCurrentIndex(idx)
+            else: 
+                self.combo_location.setCurrentText(str(loc_val))
         else:
             self.combo_location.setCurrentIndex(0)
 
         stats = data.get("stats", {})
-        for k, v in self.stats_inputs.items(): v.setText(str(stats.get(k, 10))); self._update_modifier(k, v.text())
+        for k, v in self.stats_inputs.items(): 
+            v.setText(str(stats.get(k, 10)))
+            self._update_modifier(k, v.text())
         
         c = data.get("combat_stats", {})
-        self.inp_hp.setText(str(c.get("hp", ""))); self.inp_max_hp.setText(str(c.get("max_hp", "")))
-        self.inp_ac.setText(str(c.get("ac", ""))); self.inp_speed.setText(str(c.get("speed", ""))); self.inp_init.setText(str(c.get("initiative", "")))
+        self.inp_hp.setText(str(c.get("hp", "")))
+        self.inp_max_hp.setText(str(c.get("max_hp", "")))
+        self.inp_ac.setText(str(c.get("ac", "")))
+        self.inp_speed.setText(str(c.get("speed", "")))
+        self.inp_init.setText(str(c.get("initiative", "")))
         
-        self.inp_saves.setText(data.get("saving_throws", "")); self.inp_skills.setText(data.get("skills", ""))
-        self.inp_vuln.setText(data.get("damage_vulnerabilities", "")); self.inp_resist.setText(data.get("damage_resistances", ""))
-        self.inp_dmg_immune.setText(data.get("damage_immunities", "")); self.inp_cond_immune.setText(data.get("condition_immunities", ""))
-        self.inp_prof.setText(str(data.get("proficiency_bonus", ""))); self.inp_pp.setText(str(data.get("passive_perception", "")))
+        self.inp_saves.setText(data.get("saving_throws", ""))
+        self.inp_skills.setText(data.get("skills", ""))
+        self.inp_vuln.setText(data.get("damage_vulnerabilities", ""))
+        self.inp_resist.setText(data.get("damage_resistances", ""))
+        self.inp_dmg_immune.setText(data.get("damage_immunities", ""))
+        self.inp_cond_immune.setText(data.get("condition_immunities", ""))
+        self.inp_prof.setText(str(data.get("proficiency_bonus", "")))
+        self.inp_pp.setText(str(data.get("passive_perception", "")))
 
         self.update_ui_by_type(curr_type)
         attrs = data.get("attributes", {})
         for label_key, widget in self.dynamic_inputs.items():
             val = attrs.get(label_key, "")
             if isinstance(widget, QComboBox):
-                ix = widget.findData(val); 
-                if ix >= 0: widget.setCurrentIndex(ix)
-                else: widget.setCurrentText(str(val))
-            else: widget.setText(str(val))
+                ix = widget.findData(val)
+                if ix >= 0: 
+                    widget.setCurrentIndex(ix)
+                else: 
+                    widget.setCurrentText(str(val))
+            else: 
+                widget.setText(str(val))
 
         self.clear_all_cards()
         for k, container in [("traits", self.trait_container), ("actions", self.action_container), ("reactions", self.reaction_container), ("legendary_actions", self.legendary_container), ("custom_spells", self.custom_spell_container), ("inventory", self.inventory_container)]:
@@ -390,10 +433,13 @@ class NpcSheet(QWidget):
 
         remote_url = data.get("_remote_image_url")
         if not self.image_list and remote_url:
-            self.lbl_image.setPlaceholderText(tr("MSG_DOWNLOADING_IMAGE")); self.lbl_image.setPixmap(None); self.lbl_img_counter.setText("-")
+            self.lbl_image.setPlaceholderText(tr("MSG_DOWNLOADING_IMAGE"))
+            self.lbl_image.setPixmap(None)
+            self.lbl_img_counter.setText("-")
             self._start_lazy_image_download(remote_url, data.get("name", "entity"))
         else:
-            self.current_img_index = 0; self.update_image_display()
+            self.current_img_index = 0
+            self.update_image_display()
 
         self.list_pdfs.clear()
         for pdf in data.get("pdfs", []): self.list_pdfs.addItem(pdf)
@@ -524,32 +570,57 @@ class NpcSheet(QWidget):
 
     def setup_stats_tab(self):
         layout = QVBoxLayout(self.tab_stats)
-        self.grp_base_stats = QGroupBox(tr("GRP_STATS")); l = QHBoxLayout(self.grp_base_stats)
-        self.stats_inputs = {}; self.stats_modifiers = {}
+        self.grp_base_stats = QGroupBox(tr("GRP_STATS"))
+        l = QHBoxLayout(self.grp_base_stats)
+        self.stats_inputs = {}
+        self.stats_modifiers = {}
         for s in ["STR", "DEX", "CON", "INT", "WIS", "CHA"]:
             v = QVBoxLayout()
-            lbl_title = QLabel(s); lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter); lbl_title.setStyleSheet("font-weight: bold;")
-            inp = QLineEdit("10"); inp.setAlignment(Qt.AlignmentFlag.AlignCenter); inp.setMaximumWidth(50)
+            lbl_title = QLabel(s)
+            lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl_title.setStyleSheet("font-weight: bold;")
+            inp = QLineEdit("10")
+            inp.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            inp.setMaximumWidth(50)
             inp.textChanged.connect(lambda text, key=s: self._update_modifier(key, text))
-            lbl_mod = QLabel("+0"); lbl_mod.setAlignment(Qt.AlignmentFlag.AlignCenter); lbl_mod.setProperty("class", "statModifier")
-            self.stats_inputs[s] = inp; self.stats_modifiers[s] = lbl_mod
-            v.addWidget(lbl_title); v.addWidget(inp); v.addWidget(lbl_mod); l.addLayout(v)
+            lbl_mod = QLabel("+0")
+            lbl_mod.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl_mod.setProperty("class", "statModifier")
+            self.stats_inputs[s] = inp
+            self.stats_modifiers[s] = lbl_mod
+            v.addWidget(lbl_title)
+            v.addWidget(inp)
+            v.addWidget(lbl_mod)
+            l.addLayout(v)
         layout.addWidget(self.grp_base_stats)
         
         self.grp_combat_stats = QGroupBox(tr("GRP_COMBAT"))
         v_comb = QVBoxLayout(self.grp_combat_stats)
-        self.inp_hp = QLineEdit(); self.inp_hp.setPlaceholderText(tr("LBL_HP"))
-        self.inp_max_hp = QLineEdit(); self.inp_max_hp.setPlaceholderText(tr("LBL_MAX_HP"))
-        self.inp_ac = QLineEdit(); self.inp_ac.setPlaceholderText(tr("HEADER_AC"))
-        self.inp_speed = QLineEdit(); self.inp_prof = QLineEdit(); self.inp_pp = QLineEdit()
-        self.inp_init = QLineEdit(); self.inp_init.setPlaceholderText(tr("LBL_INIT"))
+        self.inp_hp = QLineEdit()
+        self.inp_hp.setPlaceholderText(tr("LBL_HP"))
+        self.inp_max_hp = QLineEdit()
+        self.inp_max_hp.setPlaceholderText(tr("LBL_MAX_HP"))
+        self.inp_ac = QLineEdit()
+        self.inp_ac.setPlaceholderText(tr("HEADER_AC"))
+        self.inp_speed = QLineEdit()
+        self.inp_prof = QLineEdit()
+        self.inp_pp = QLineEdit()
+        self.inp_init = QLineEdit()
+        self.inp_init.setPlaceholderText(tr("LBL_INIT"))
         r1 = QHBoxLayout()
         for t, w in [(tr("LBL_MAX_HP"), self.inp_max_hp), (tr("LBL_HP"), self.inp_hp), (tr("HEADER_AC"), self.inp_ac), (tr("LBL_SPEED"), self.inp_speed)]:
-             v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); r1.addLayout(v)
+             v = QVBoxLayout()
+             v.addWidget(QLabel(t))
+             v.addWidget(w)
+             r1.addLayout(v)
         r2 = QHBoxLayout()
         for t, w in [(tr("LBL_PROF_BONUS"), self.inp_prof), (tr("LBL_PASSIVE_PERC"), self.inp_pp), (tr("LBL_INIT_BONUS"), self.inp_init)]:
-             v = QVBoxLayout(); v.addWidget(QLabel(t)); v.addWidget(w); r2.addLayout(v)
-        v_comb.addLayout(r1); v_comb.addLayout(r2)
+             v = QVBoxLayout()
+             v.addWidget(QLabel(t))
+             v.addWidget(w)
+             r2.addLayout(v)
+        v_comb.addLayout(r1)
+        v_comb.addLayout(r2)
         layout.addWidget(self.grp_combat_stats)
 
         self.grp_defense = QGroupBox(tr("GRP_DEFENSE")); form3 = QFormLayout(self.grp_defense)
@@ -574,13 +645,25 @@ class NpcSheet(QWidget):
         self.grp_spells = QGroupBox(tr("GRP_SPELLS"))
         l_linked = QVBoxLayout(self.grp_spells)
         h = QHBoxLayout()
-        self.combo_all_spells = QComboBox(); self.combo_all_spells.setEditable(True); self.combo_all_spells.setPlaceholderText("Search spells...")
-        self.btn_add_spell_link = QPushButton(tr("BTN_ADD")); self.btn_add_spell_link.setObjectName("successBtn"); self.btn_add_spell_link.clicked.connect(self.add_linked_spell)
-        h.addWidget(self.combo_all_spells, 3); h.addWidget(self.btn_add_spell_link, 1)
-        self.list_assigned_spells = QListWidget(); self.list_assigned_spells.setAlternatingRowColors(True); self.list_assigned_spells.setMinimumHeight(200)
+        self.combo_all_spells = QComboBox()
+        self.combo_all_spells.setEditable(True)
+        self.combo_all_spells.setPlaceholderText("Search spells...")
+        self.btn_add_spell_link = QPushButton(tr("BTN_ADD"))
+        self.btn_add_spell_link.setObjectName("successBtn")
+        self.btn_add_spell_link.clicked.connect(self.add_linked_spell)
+        h.addWidget(self.combo_all_spells, 3)
+        h.addWidget(self.btn_add_spell_link, 1)
+        self.list_assigned_spells = QListWidget()
+        self.list_assigned_spells.setAlternatingRowColors(True)
+        self.list_assigned_spells.setMinimumHeight(200)
         self.list_assigned_spells.itemDoubleClicked.connect(self._on_linked_item_dbl_click)
-        self.btn_remove_spell_link = QPushButton(tr("BTN_REMOVE")); self.btn_remove_spell_link.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)); self.btn_remove_spell_link.setObjectName("dangerBtn"); self.btn_remove_spell_link.clicked.connect(self.remove_linked_spell)
-        l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_spells); l_linked.addWidget(self.btn_remove_spell_link)
+        self.btn_remove_spell_link = QPushButton(tr("BTN_REMOVE"))
+        self.btn_remove_spell_link.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        self.btn_remove_spell_link.setObjectName("dangerBtn")
+        self.btn_remove_spell_link.clicked.connect(self.remove_linked_spell)
+        l_linked.addLayout(h)
+        l_linked.addWidget(self.list_assigned_spells)
+        l_linked.addWidget(self.btn_remove_spell_link)
         layout.addWidget(self.grp_spells)
         self.custom_spell_container = self._create_section(tr("LBL_MANUAL_SPELLS"))
         self.add_btn_to_section(self.custom_spell_container, tr("BTN_ADD"))
@@ -588,14 +671,27 @@ class NpcSheet(QWidget):
 
     def setup_inventory_tab(self):
         layout = QVBoxLayout(self.tab_inventory)
-        self.grp_db_items = QGroupBox(tr("LBL_DB_ITEMS")); l_linked = QVBoxLayout(self.grp_db_items); h = QHBoxLayout()
-        self.combo_all_items = QComboBox(); self.combo_all_items.setEditable(True); self.combo_all_items.setPlaceholderText("Search items...")
-        self.btn_add_item_link = QPushButton(tr("BTN_ADD")); self.btn_add_item_link.setObjectName("successBtn"); self.btn_add_item_link.clicked.connect(self.add_linked_item)
-        h.addWidget(self.combo_all_items, 3); h.addWidget(self.btn_add_item_link, 1)
-        self.list_assigned_items = QListWidget(); self.list_assigned_items.setAlternatingRowColors(True)
+        self.grp_db_items = QGroupBox(tr("LBL_DB_ITEMS"))
+        l_linked = QVBoxLayout(self.grp_db_items)
+        h = QHBoxLayout()
+        self.combo_all_items = QComboBox()
+        self.combo_all_items.setEditable(True)
+        self.combo_all_items.setPlaceholderText("Search items...")
+        self.btn_add_item_link = QPushButton(tr("BTN_ADD"))
+        self.btn_add_item_link.setObjectName("successBtn")
+        self.btn_add_item_link.clicked.connect(self.add_linked_item)
+        h.addWidget(self.combo_all_items, 3)
+        h.addWidget(self.btn_add_item_link, 1)
+        self.list_assigned_items = QListWidget()
+        self.list_assigned_items.setAlternatingRowColors(True)
         self.list_assigned_items.itemDoubleClicked.connect(self._on_linked_item_dbl_click)
-        self.btn_remove_item_link = QPushButton(tr("BTN_REMOVE")); self.btn_remove_item_link.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)); self.btn_remove_item_link.setObjectName("dangerBtn"); self.btn_remove_item_link.clicked.connect(self.remove_linked_item)
-        l_linked.addLayout(h); l_linked.addWidget(self.list_assigned_items); l_linked.addWidget(self.btn_remove_item_link)
+        self.btn_remove_item_link = QPushButton(tr("BTN_REMOVE"))
+        self.btn_remove_item_link.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        self.btn_remove_item_link.setObjectName("dangerBtn")
+        self.btn_remove_item_link.clicked.connect(self.remove_linked_item)
+        l_linked.addLayout(h)
+        l_linked.addWidget(self.list_assigned_items)
+        l_linked.addWidget(self.btn_remove_item_link)
         layout.addWidget(self.grp_db_items)
         self.inventory_container = self._create_section(tr("GRP_INVENTORY"))
         self.add_btn_to_section(self.inventory_container, tr("BTN_ADD"))
@@ -603,28 +699,49 @@ class NpcSheet(QWidget):
 
     def setup_features_tab(self):
         layout = QVBoxLayout(self.tab_features)
-        self.trait_container = self._create_section(tr("LBL_TRAITS")); self.add_btn_to_section(self.trait_container, tr("BTN_ADD"))
-        self.action_container = self._create_section(tr("LBL_ACTIONS")); self.add_btn_to_section(self.action_container, tr("BTN_ADD"))
-        self.reaction_container = self._create_section(tr("LBL_REACTIONS")); self.add_btn_to_section(self.reaction_container, tr("BTN_ADD"))
-        self.legendary_container = self._create_section(tr("LBL_LEGENDARY_ACTIONS")); self.add_btn_to_section(self.legendary_container, tr("BTN_ADD"))
-        layout.addWidget(self.trait_container); layout.addWidget(self.action_container); layout.addWidget(self.reaction_container); layout.addWidget(self.legendary_container); layout.addStretch()
+        self.trait_container = self._create_section(tr("LBL_TRAITS"))
+        self.add_btn_to_section(self.trait_container, tr("BTN_ADD"))
+        self.action_container = self._create_section(tr("LBL_ACTIONS"))
+        self.add_btn_to_section(self.action_container, tr("BTN_ADD"))
+        self.reaction_container = self._create_section(tr("LBL_REACTIONS"))
+        self.add_btn_to_section(self.reaction_container, tr("BTN_ADD"))
+        self.legendary_container = self._create_section(tr("LBL_LEGENDARY_ACTIONS"))
+        self.add_btn_to_section(self.legendary_container, tr("BTN_ADD"))
+        layout.addWidget(self.trait_container)
+        layout.addWidget(self.action_container)
+        layout.addWidget(self.reaction_container)
+        layout.addWidget(self.legendary_container)
+        layout.addStretch()
 
     def setup_docs_tab(self):
         layout = QVBoxLayout(self.tab_docs)
-        self.grp_pdf = QGroupBox(tr("GRP_PDF")); v = QVBoxLayout(self.grp_pdf)
+        self.grp_pdf = QGroupBox(tr("GRP_PDF"))
+        v = QVBoxLayout(self.grp_pdf)
         h_btn = QHBoxLayout()
-        self.btn_add_pdf = QPushButton(tr("BTN_ADD")); self.btn_add_pdf.setObjectName("successBtn")
-        self.btn_open_pdf_folder = QPushButton(); self.btn_open_pdf_folder.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon))
-        h_btn.addWidget(self.btn_add_pdf, 3); h_btn.addWidget(self.btn_open_pdf_folder, 1)
+        self.btn_add_pdf = QPushButton(tr("BTN_ADD"))
+        self.btn_add_pdf.setObjectName("successBtn")
+        self.btn_open_pdf_folder = QPushButton()
+        self.btn_open_pdf_folder.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon))
+        h_btn.addWidget(self.btn_add_pdf, 3)
+        h_btn.addWidget(self.btn_open_pdf_folder, 1)
         v.addLayout(h_btn)
-        self.list_pdfs = QListWidget(); self.list_pdfs.setAlternatingRowColors(True)
+        self.list_pdfs = QListWidget()
+        self.list_pdfs.setAlternatingRowColors(True)
         v.addWidget(self.list_pdfs)
         h_action = QHBoxLayout()
-        self.btn_open_pdf = QPushButton(tr("BTN_OPEN_PDF")); self.btn_open_pdf.setObjectName("primaryBtn")
-        self.btn_project_pdf = QPushButton(tr("BTN_PROJECT_PDF")); self.btn_project_pdf.setObjectName("actionBtn")
-        self.btn_remove_pdf = QPushButton(tr("BTN_REMOVE")); self.btn_remove_pdf.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)); self.btn_remove_pdf.setObjectName("dangerBtn")
-        h_action.addWidget(self.btn_open_pdf); h_action.addWidget(self.btn_project_pdf); h_action.addWidget(self.btn_remove_pdf)
-        v.addLayout(h_action); layout.addWidget(self.grp_pdf); layout.addStretch()
+        self.btn_open_pdf = QPushButton(tr("BTN_OPEN_PDF"))
+        self.btn_open_pdf.setObjectName("primaryBtn")
+        self.btn_project_pdf = QPushButton(tr("BTN_PROJECT_PDF"))
+        self.btn_project_pdf.setObjectName("actionBtn")
+        self.btn_remove_pdf = QPushButton(tr("BTN_REMOVE"))
+        self.btn_remove_pdf.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        self.btn_remove_pdf.setObjectName("dangerBtn")
+        h_action.addWidget(self.btn_open_pdf)
+        h_action.addWidget(self.btn_project_pdf)
+        h_action.addWidget(self.btn_remove_pdf)
+        v.addLayout(h_action)
+        layout.addWidget(self.grp_pdf)
+        layout.addStretch()
 
     def _on_linked_item_dbl_click(self, item):
         eid = item.data(Qt.ItemDataRole.UserRole)
@@ -674,10 +791,16 @@ class NpcSheet(QWidget):
             list_widget.addItem(item)
 
     def _create_section(self, title):
-        group = QGroupBox(title); v = QVBoxLayout(group); group.dynamic_area = QVBoxLayout(); v.addLayout(group.dynamic_area); return group
+        group = QGroupBox(title)
+        v = QVBoxLayout(group)
+        group.dynamic_area = QVBoxLayout()
+        v.addLayout(group.dynamic_area)
+        return group
 
     def add_btn_to_section(self, container, label):
-        btn = QPushButton(label); btn.clicked.connect(lambda: self.add_feature_card(container)); btn.setObjectName("successBtn")
+        btn = QPushButton(label)
+        btn.clicked.connect(lambda: self.add_feature_card(container))
+        btn.setObjectName("successBtn")
         container.layout().insertWidget(0, btn)
 
     def clear_all_cards(self):
@@ -787,9 +910,12 @@ class NpcSheet(QWidget):
         if success and local_abs_path:
             rel_path = self.dm.import_image(local_abs_path)
             if rel_path:
-                self.image_list = [rel_path]; self.current_img_index = 0; self.update_image_display()
+                self.image_list = [rel_path]
+                self.current_img_index = 0
+                self.update_image_display()
         else:
-            self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE")); self.lbl_image.setPixmap(None)
+            self.lbl_image.setPlaceholderText(tr("LBL_NO_IMAGE"))
+            self.lbl_image.setPixmap(None)
 
     def add_image_dialog(self):
         f, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_IMG"), "", "Images (*.png *.jpg)")

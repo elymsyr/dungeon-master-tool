@@ -211,32 +211,54 @@ class SessionTab(QWidget):
         timestamp = QDateTime.currentDateTime().toString("HH:mm")
         current_text = self.txt_log.toPlainText()
         new_line = f"**[{timestamp}]** {message}"
-        if current_text: self.txt_log.setText(current_text + "\n" + new_line)
-        else: self.txt_log.setText(new_line)
+        if current_text: 
+            self.txt_log.setText(current_text + "\n" + new_line)
+        else: 
+            self.txt_log.setText(new_line)
     def add_log(self):
         text = self.inp_log_entry.toPlainText().strip()
-        if text: self.log_message(text); self.inp_log_entry.clear()
+        if text: 
+            self.log_message(text)
+            self.inp_log_entry.clear()
     def new_session(self):
         name, ok = QInputDialog.getText(self, tr("TITLE_NEW_SESSION"), tr("LBL_SESSION_NAME"))
         if ok and name:
-            sid = self.dm.create_session(name); self.refresh_session_list(); idx = self.combo_sessions.findData(sid)
+            sid = self.dm.create_session(name)
+            self.refresh_session_list()
+            idx = self.combo_sessions.findData(sid)
             if idx >= 0: self.combo_sessions.setCurrentIndex(idx)
-            self.current_session_id = sid; self.txt_log.setText(""); self.txt_notes.setText(""); self.combat_tracker.clear_tracker()
-            self.log_message(tr("MSG_SESSION_STARTED", name=name)); self.save_session(show_msg=False)
+            self.current_session_id = sid
+            self.txt_log.setText("")
+            self.txt_notes.setText("")
+            self.combat_tracker.clear_tracker()
+            self.log_message(tr("MSG_SESSION_STARTED", name=name))
+            self.save_session(show_msg=False)
     def refresh_session_list(self):
-        self.combo_sessions.clear(); sessions = self.dm.data.get("sessions", [])
-        for s in sessions: self.combo_sessions.addItem(s["name"], s["id"])
+        self.combo_sessions.clear()
+        sessions = self.dm.data.get("sessions", [])
+        for s in sessions: 
+            self.combo_sessions.addItem(s["name"], s["id"])
     def load_session_by_id(self, session_id):
         idx = self.combo_sessions.findData(session_id)
-        if idx >= 0: self.combo_sessions.setCurrentIndex(idx); self.load_session()
-        else: QMessageBox.warning(self, tr("MSG_WARNING"), "Oturum bulunamadı veya silinmiş.")
+        if idx >= 0: 
+            self.combo_sessions.setCurrentIndex(idx)
+            self.load_session()
+        else: 
+            QMessageBox.warning(self, tr("MSG_WARNING"), "Oturum bulunamadı veya silinmiş.")
     def retranslate_ui(self):
-        self.btn_new_session.setText(tr("BTN_NEW_SESSION")); self.btn_save_session.setText(tr("BTN_SAVE")); self.btn_load_session.setText(tr("BTN_LOAD_SESSION"))
-        self.txt_log.setPlaceholderText(tr("LBL_EVENT_LOG_PH")); self.btn_add_log.setText(tr("BTN_ADD_LOG")); self.txt_notes.setPlaceholderText(tr("LBL_NOTES"))
-        self.bottom_tabs.setTabText(0, "📝 " + tr("LBL_NOTES")); self.bottom_tabs.setTabText(1, "🗺️ " + tr("TITLE_BATTLE_MAP")); self.embedded_map.retranslate_ui()
+        self.btn_new_session.setText(tr("BTN_NEW_SESSION"))
+        self.btn_save_session.setText(tr("BTN_SAVE"))
+        self.btn_load_session.setText(tr("BTN_LOAD_SESSION"))
+        self.txt_log.setPlaceholderText(tr("LBL_EVENT_LOG_PH"))
+        self.btn_add_log.setText(tr("BTN_ADD_LOG"))
+        self.txt_notes.setPlaceholderText(tr("LBL_NOTES"))
+        self.bottom_tabs.setTabText(0, "📝 " + tr("LBL_NOTES"))
+        self.bottom_tabs.setTabText(1, "🗺️ " + tr("TITLE_BATTLE_MAP"))
+        self.embedded_map.retranslate_ui()
         if hasattr(self.combat_tracker, "retranslate_ui"): self.combat_tracker.retranslate_ui()
         self.btn_load_map.setText(tr("BTN_LOAD_MAP") if hasattr(tr, "BTN_LOAD_MAP") else "Load Map")
         self.btn_open_external.setText(tr("BTN_BATTLE_MAP") if hasattr(tr, "BTN_BATTLE_MAP") else "Open Window")
 
     def auto_save(self):
-        if self.current_session_id: self.save_session(show_msg=False)
+        if self.current_session_id: 
+            self.save_session(show_msg=False)

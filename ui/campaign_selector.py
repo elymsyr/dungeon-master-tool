@@ -11,9 +11,9 @@ class CampaignSelector(QDialog):
         self.dm = data_manager
         self.selected_campaign = None
         
-        self.setWindowTitle("Select World") # Geçici, update_texts düzeltecek
+        self.setWindowTitle("Select World") # Temporary, update_texts will fix
         self.setFixedSize(400, 500)
-        # Stil QSS'den gelecek, burayı temizliyoruz veya basic bırakıyoruz
+        # Style will come from QSS or basic
         
         self.init_ui()
         self.refresh_list()
@@ -21,19 +21,19 @@ class CampaignSelector(QDialog):
     def init_ui(self):
         layout = QVBoxLayout(self)
         
-        # Başlık
+        # Title
         self.lbl_title = QLabel()
         self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_title.setObjectName("headerLabel") # QSS ID
         self.lbl_title.setStyleSheet("font-size: 20px; font-weight: bold; margin-bottom: 10px;")
         layout.addWidget(self.lbl_title)
         
-        # Liste
+        # List
         self.list_widget = QListWidget()
         self.list_widget.itemDoubleClicked.connect(self.load_campaign)
         layout.addWidget(self.list_widget)
         
-        # Yükle Butonu
+        # Load Button
         self.btn_load = QPushButton()
         self.btn_load.setObjectName("primaryBtn")
         self.btn_load.clicked.connect(self.load_campaign)
@@ -41,7 +41,7 @@ class CampaignSelector(QDialog):
         
         layout.addSpacing(20)
         
-        # Yeni Oluşturma Alanı
+        # New Creation Area
         create_layout = QHBoxLayout()
         self.inp_new_name = QLineEdit()
         
@@ -54,7 +54,7 @@ class CampaignSelector(QDialog):
         
         layout.addLayout(create_layout)
 
-        # Dil Seçimi
+        # Language Selection
         lang_layout = QHBoxLayout()
         self.lbl_lang = QLabel(tr("LBL_LANGUAGE"))
         self.combo_lang = QComboBox()

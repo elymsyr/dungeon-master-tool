@@ -13,7 +13,7 @@ class EncounterSelectionDialog(QDialog):
         
         self.setWindowTitle(tr("TITLE_ADD_COMBAT"))
         self.resize(800, 600)
-        # Stil QSS'den gelecek, buraya yazmıyoruz.
+        # Style will come from QSS.
         
         self.init_ui()
         self.load_data()
@@ -21,7 +21,7 @@ class EncounterSelectionDialog(QDialog):
     def init_ui(self):
         layout = QVBoxLayout(self)
         
-        # --- ÜST FİLTRE ALANI ---
+        # --- TOP FILTER AREA ---
         filter_layout = QHBoxLayout()
         
         self.inp_search = QLineEdit()
@@ -31,7 +31,7 @@ class EncounterSelectionDialog(QDialog):
         self.combo_type = QComboBox()
         self.combo_type.addItem(tr("LBL_TYPE_ALL"), "Tümü")
         self.combo_type.addItem(tr("CAT_NPC"), "NPC")
-        self.combo_type.addItem(tr("CAT_MONSTER"), "Monster") # Data 'Monster' olduğu için value 'Monster' kalmalı
+        self.combo_type.addItem(tr("CAT_MONSTER"), "Monster") # Value remains 'Monster' as per data
         self.combo_type.addItem(tr("CAT_PLAYER"), "Player")
         
         self.combo_type.currentTextChanged.connect(self.filter_table)
@@ -43,15 +43,15 @@ class EncounterSelectionDialog(QDialog):
         
         layout.addLayout(filter_layout)
         
-        # --- ORTA TABLO ALANI ---
+        # --- MIDDLE TABLE AREA ---
         self.table = QTableWidget()
         self.table.setColumnCount(6)
-        # Başlıklar
+        # Headers
         headers = [tr("HEADER_NAME"), tr("LBL_TYPE"), tr("LBL_HP"), tr("LBL_AC"), tr("HEADER_INIT_BONUS"), "ID"]
         self.table.setHorizontalHeaderLabels(headers)
-        self.table.hideColumn(5) # ID sütunu gizli
+        self.table.hideColumn(5) # Hide ID column
         
-        # Tablo Ayarları
+        # Table Settings
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -61,7 +61,7 @@ class EncounterSelectionDialog(QDialog):
         
         layout.addWidget(self.table)
         
-        # --- ALT AKSİYON ALANI ---
+        # --- BOTTOM ACTION AREA ---
         action_layout = QHBoxLayout()
         self.lbl_count = QLabel(tr("LBL_ADD_COUNT"))
         self.spin_count = QSpinBox()
@@ -81,12 +81,12 @@ class EncounterSelectionDialog(QDialog):
         layout.addLayout(action_layout)
 
     def _parse_int(self, value):
-        """Metin içindeki ilk sayıyı alır (Örn: '45 (5d10)' -> 45)"""
+        """Extracts the first number from text (e.g., '45 (5d10)' -> 45)"""
         if not value: return 0
         try:
-            # Boşluktan böl ve ilk kısmı al
+            # Split by space and take first part
             first_part = str(value).split(' ')[0]
-            # Sadece rakamları filtrele (Örn: '14,' -> '14')
+            # Filter only digits (e.g., '14,' -> '14')
             clean_num = ''.join(filter(str.isdigit, first_part))
             return int(clean_num) if clean_num else 0
         except:
@@ -96,30 +96,30 @@ class EncounterSelectionDialog(QDialog):
         self.table.setRowCount(0)
         entities = self.dm.data["entities"]
         
-        # Verileri sıralama kolaylığı için önce listeye alalım (Opsiyonel ama temiz olur)
-        # Ancak direkt döngü de olur.
+        # Collect data first for easier sorting (Optional but cleaner)
+        # Direct loop is also fine.
         
         for eid, data in entities.items():
             etype = data.get("type", "NPC")
             
-            # Sadece savaşçı tipleri listele
+            # List only combat types
             if etype not in ["NPC", "Monster", "Canavar", "Player", "Oyuncu"]:
                 continue
                 
             name = data.get("name", tr("NAME_UNNAMED"))
             tags = " ".join(data.get("tags", [])).lower()
             
-            # Statları Çek ve Temizle
+            # Fetch and Clean Stats
             c_stats = data.get("combat_stats", {})
             
             raw_hp = c_stats.get("hp", "10")
             raw_ac = c_stats.get("ac", "10")
             
-            # Temizlenmiş (Sayısal) Değerler (Sıralama için kullanılabilir)
+            # Cleaned (Numeric) Values (For sorting)
             hp_val = self._parse_int(raw_hp)
             ac_val = self._parse_int(raw_ac)
             
-            # İnisiyatif Bonusu Hesapla
+            # Calculate Initiative Bonus
             stats = data.get("stats", {})
             dex = int(stats.get("DEX", 10))
             dex_mod = (dex - 10) // 2
@@ -130,23 +130,23 @@ class EncounterSelectionDialog(QDialog):
             sign = "+" if total_init_bonus >= 0 else ""
             init_str = f"{sign}{total_init_bonus}"
             
-            # Tabloya Ekle
+            # Add to Table
             row = self.table.rowCount()
             self.table.insertRow(row)
             
-            # 0: İsim
+            # 0: Name
             item_name = QTableWidgetItem(name)
-            # Arama için gizli veri (İsim + Tag + Tip)
+            # Hidden data for search (Name + Tags + Type)
             search_data = f"{name.lower()} {tags} {etype.lower()}"
             item_name.setData(Qt.ItemDataRole.UserRole, search_data)
             self.table.setItem(row, 0, item_name)
             
-            # 1: Tip
+            # 1: Type
             self.table.setItem(row, 1, QTableWidgetItem(etype))
             
-            # 2: HP (Sayısal sıralama için setData kullanıyoruz)
+            # 2: HP (Use setData for numeric sorting)
             item_hp = QTableWidgetItem(str(hp_val))
-            item_hp.setData(Qt.ItemDataRole.DisplayRole, hp_val) # Sayısal sıralama
+            item_hp.setData(Qt.ItemDataRole.DisplayRole, hp_val) # Numeric sorting
             item_hp.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.table.setItem(row, 2, item_hp)
             
@@ -161,12 +161,12 @@ class EncounterSelectionDialog(QDialog):
             item_init.setData(Qt.ItemDataRole.DisplayRole, total_init_bonus)
             item_init.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             if total_init_bonus > 0:
-                item_init.setForeground(QBrush(QColor("#4caf50"))) # Yeşil
+                item_init.setForeground(QBrush(QColor("#4caf50"))) # Green
             elif total_init_bonus < 0:
-                item_init.setForeground(QBrush(QColor("#ef5350"))) # Kırmızı
+                item_init.setForeground(QBrush(QColor("#ef5350"))) # Red
             self.table.setItem(row, 4, item_init)
             
-            # 5: ID (Gizli)
+            # 5: ID (Hidden)
             self.table.setItem(row, 5, QTableWidgetItem(eid))
 
     def filter_table(self):
@@ -174,7 +174,7 @@ class EncounterSelectionDialog(QDialog):
         # Combo data (Tümü, NPC, Monster, Player)
         filter_type = self.combo_type.currentData() 
         
-        # Tip eşleştirme haritası (Data'daki tip ile filtre arasındaki ilişki)
+        # Type mapping map (Relation between data type and filter)
         mapping = {
             "NPC": ["NPC"], 
             "Monster": ["Monster", "Canavar"], 
@@ -183,7 +183,7 @@ class EncounterSelectionDialog(QDialog):
         allowed_types = mapping.get(filter_type, [])
         
         for row in range(self.table.rowCount()):
-            # Gizli arama verisi (isim + tagler)
+            # Hidden search data (name + tags)
             row_search_data = self.table.item(row, 0).data(Qt.ItemDataRole.UserRole)
             row_type_text = self.table.item(row, 1).text()
             
