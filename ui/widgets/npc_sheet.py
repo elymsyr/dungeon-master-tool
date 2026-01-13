@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout,
                              QLineEdit, QTextEdit, QComboBox, QTabWidget, 
                              QLabel, QGroupBox, QPushButton, QScrollArea, QFrame, 
                              QListWidget, QFileDialog, QMessageBox, QStyle, QListWidgetItem, 
-                             QApplication)
+                             QApplication, QInputDialog)
 from PyQt6.QtCore import Qt, QUrl, pyqtSignal, QSize
 from PyQt6.QtGui import QDesktopServices, QPixmap, QKeySequence, QShortcut, QIcon
 from ui.widgets.aspect_ratio_label import AspectRatioLabel
@@ -31,7 +31,7 @@ class NpcSheet(QWidget):
         self.current_img_index = 0
         self.linked_spell_ids = []     
         self.linked_item_ids = []
-        self.battlemap_list = [] # NEW: Stores battlemap paths for Locations
+        self.battlemap_list = [] 
         self.image_worker = None       
         
         self.is_dirty = False
@@ -140,10 +140,10 @@ class NpcSheet(QWidget):
         info_layout.addRow(self.lbl_residents, self.list_residents)
 
         top_layout.addLayout(img_layout)
-        top_layout.addLayout(info_layout, 1) # Give info layout more weight
+        top_layout.addLayout(info_layout, 1) 
         self.content_layout.addLayout(top_layout)
 
-        # --- FULL WIDTH DESCRIPTION (Moved out of top_layout) ---
+        # --- FULL WIDTH DESCRIPTION ---
         self.content_layout.addWidget(QLabel(f"<b>{tr('LBL_DESC')} (Public Info)</b>"))
         self.inp_desc = MarkdownEditor()
         self.inp_desc.set_data_manager(self.dm) 
@@ -200,14 +200,15 @@ class NpcSheet(QWidget):
     def setup_battlemap_tab(self):
         layout = QVBoxLayout(self.tab_battlemaps)
         
-        lbl_info = QLabel("Add images to be used as Battlemaps in Combat Tracker.")
+        lbl_info = QLabel("Add images or videos for Combat Tracker.")
         lbl_info.setStyleSheet("color: #888; font-style: italic;")
         layout.addWidget(lbl_info)
         
         # Buttons
         h_btn = QHBoxLayout()
-        self.btn_add_map = QPushButton(tr("BTN_ADD"))
+        self.btn_add_map = QPushButton("Add Media")
         self.btn_add_map.clicked.connect(self.add_battlemap_dialog)
+        
         self.btn_remove_map = QPushButton(tr("BTN_REMOVE"))
         self.btn_remove_map.clicked.connect(self.remove_selected_battlemap)
         
@@ -225,8 +226,13 @@ class NpcSheet(QWidget):
         layout.addWidget(self.list_battlemaps)
 
     def add_battlemap_dialog(self):
-        # Allow multiple files
-        files, _ = QFileDialog.getOpenFileNames(self, "Select Battlemaps", "", "Images (*.png *.jpg *.jpeg *.bmp)")
+        # Allow multiple files AND VIDEO FORMATS
+        files, _ = QFileDialog.getOpenFileNames(
+            self, 
+            "Select Battlemaps", 
+            "", 
+            "Media (*.png *.jpg *.jpeg *.bmp *.mp4 *.webm *.mkv *.m4v *.avi)"
+        )
         if files:
             for f in files:
                 rel_path = self.dm.import_image(f)
@@ -244,18 +250,37 @@ class NpcSheet(QWidget):
 
     def _render_battlemap_list(self):
         self.list_battlemaps.clear()
+        
+        video_exts = {'.mp4', '.webm', '.mkv', '.m4v', '.avi', '.mov'}
+        
         for path in self.battlemap_list:
-            full_path = self.dm.get_full_path(path)
-            name = os.path.basename(path)
+            # Skip HTTP links completely as requested
+            if path.startswith("http"): continue
+                
+            display_name = os.path.basename(path)
+            icon = None
             
-            icon = QIcon()
-            if full_path and os.path.exists(full_path):
+            full_path = self.dm.get_full_path(path)
+            if not full_path or not os.path.exists(full_path): continue
+            
+            # Check extension for Video vs Image
+            ext = os.path.splitext(full_path)[1].lower()
+            
+            if ext in video_exts:
+                # Use a Play Icon for videos
+                icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay)
+                display_name = f"{display_name} (Video)"
+            else:
+                # It's an image, create thumbnail
                 pix = QPixmap(full_path).scaled(120, 120, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
                 icon = QIcon(pix)
             
-            item = QListWidgetItem(icon, name)
-            item.setData(Qt.ItemDataRole.UserRole, path)
-            self.list_battlemaps.addItem(item)
+            # Create Item
+            if icon:
+                item = QListWidgetItem(icon, display_name)
+                item.setData(Qt.ItemDataRole.UserRole, path)
+                item.setToolTip(path)
+                self.list_battlemaps.addItem(item)
 
     # ... (Rest of existing methods: add_feature_card, _connect_change_signals, etc.) ...
 
@@ -287,9 +312,9 @@ class NpcSheet(QWidget):
         self.tabs.setTabVisible(1, is_npc_like) # Spells
         self.tabs.setTabVisible(2, is_npc_like) # Actions
         self.tabs.setTabVisible(3, is_npc_like) # Inventory
-        self.tabs.setTabVisible(4, is_lore or is_player or is_status or is_location) # Docs (Available for most)
+        self.tabs.setTabVisible(4, is_lore or is_player or is_status or is_location) # Docs
         
-        # Battlemap Tab Visibility (Only for Locations)
+        # Battlemap Tab Visibility
         idx_battlemap = self.tabs.indexOf(self.tab_battlemaps)
         if idx_battlemap != -1:
             self.tabs.setTabVisible(idx_battlemap, is_location)
@@ -316,7 +341,6 @@ class NpcSheet(QWidget):
         self.inp_desc.setText(data.get("description", ""))
         self.inp_dm_notes.setText(data.get("dm_notes", ""))
         
-        # ... (Stats population) ...
         loc_val = data.get("location_id") or data.get("attributes", {}).get("LBL_ATTR_LOCATION")
         if loc_val:
             idx = self.combo_location.findData(loc_val)
@@ -359,10 +383,10 @@ class NpcSheet(QWidget):
         self.image_list = data.get("images", [])
         if not self.image_list and data.get("image_path"): self.image_list = [data.get("image_path")]
         
-        # --- NEW: POPULATE BATTLEMAPS ---
+        # --- POPULATE BATTLEMAPS ---
         self.battlemap_list = data.get("battlemaps", [])
         self._render_battlemap_list()
-        # --------------------------------
+        # ---------------------------
 
         remote_url = data.get("_remote_image_url")
         if not self.image_list and remote_url:
@@ -419,7 +443,6 @@ class NpcSheet(QWidget):
         }
         return data
 
-    # ... (Rest of existing methods like add_feature_card, add_btn_to_section, etc.) ...
     def add_feature_card(self, group, name="", desc="", ph_title=None, ph_desc=None):
         self.mark_as_dirty()
         if ph_title is None: ph_title = tr("LBL_TITLE_PH")

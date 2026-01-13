@@ -2,7 +2,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetIte
                              QHBoxLayout, QPushButton, QHeaderView, QInputDialog, 
                              QMenu, QMessageBox, QFrame, QLineEdit, QFileDialog, 
                              QDialog, QListWidget, QListWidgetItem, QLabel, 
-                             QAbstractItemView, QProgressBar, QSlider, QComboBox, QScrollArea)
+                             QAbstractItemView, QProgressBar, QSlider, QComboBox, 
+                             QScrollArea, QStyle)
 from PyQt6.QtGui import QAction, QColor, QBrush, QCursor, QIcon, QPixmap, QPainter, QPainterPath
 from PyQt6.QtCore import Qt, pyqtSignal, QSize, QUrl, QRect
 from core.locales import tr
@@ -103,7 +104,7 @@ class NumericTableWidgetItem(QTableWidgetItem):
         try: return float(self.data(Qt.ItemDataRole.DisplayRole)) < float(other.data(Qt.ItemDataRole.DisplayRole))
         except: return super().__lt__(other)
 
-# --- MAP SEÇİCİ (GÜNCELLENDİ: BATTLEMAP DESTEĞİ) ---
+# --- MAP SEÇİCİ ---
 class MapSelectorDialog(QDialog):
     def __init__(self, data_manager, parent=None):
         super().__init__(parent)
@@ -119,10 +120,7 @@ class MapSelectorDialog(QDialog):
 
     def init_ui(self):
         l = QVBoxLayout(self)
-        
-        lbl = QLabel(tr("LBL_SAVED_MAPS")) # "Kayıtlı Haritalar (Locations)"
-        lbl.setObjectName("toolbarLabel")
-        l.addWidget(lbl)
+        lbl = QLabel(tr("LBL_SAVED_MAPS")); lbl.setObjectName("toolbarLabel"); l.addWidget(lbl)
         
         self.lw = QListWidget()
         self.lw.setViewMode(QListWidget.ViewMode.IconMode)
@@ -134,7 +132,6 @@ class MapSelectorDialog(QDialog):
         l.addWidget(self.lw)
         
         h = QHBoxLayout()
-        # "Import New Map" seçeneği (Manuel dosya seçimi için)
         b1 = QPushButton(tr("BTN_IMPORT_NEW_MAP"))
         b1.setObjectName("successBtn")
         b1.clicked.connect(self.select_new)
@@ -143,64 +140,43 @@ class MapSelectorDialog(QDialog):
         b2.setObjectName("primaryBtn")
         b2.clicked.connect(self.select_existing)
         
-        h.addWidget(b1)
-        h.addStretch()
-        h.addWidget(b2)
-        l.addLayout(h)
+        h.addWidget(b1); h.addStretch(); h.addWidget(b2); l.addLayout(h)
 
     def load_locations(self):
-        """Veritabanındaki 'Location' türündeki varlıkların BATTLEMAP resimlerini listeler."""
         self.lw.clear()
-        
         for eid, ent in self.dm.data["entities"].items():
             if ent.get("type") == "Location":
                 loc_name = ent.get("name", "Unknown Location")
-                
-                # Sadece 'battlemaps' listesini al
                 battlemaps = ent.get("battlemaps", [])
-                
-                # Eğer battlemap yoksa, ana resmi fallback olarak kullanabiliriz (opsiyonel)
-                # Ama istenen "battlemap part" olduğu için sadece onları listeleyelim.
-                # Kullanıcı kolaylığı için, eğer hiç battlemap yoksa ve ana resim varsa onu ekleyelim.
-                if not battlemaps and ent.get("image_path"):
-                    battlemaps = [ent["image_path"]]
-                elif not battlemaps and ent.get("images"):
-                    battlemaps = [ent["images"][0]]
-
-                if not battlemaps:
-                    continue
+                if not battlemaps and ent.get("image_path"): battlemaps = [ent["image_path"]]
+                elif not battlemaps and ent.get("images"): battlemaps = [ent["images"][0]]
+                if not battlemaps: continue
 
                 for i, img_path in enumerate(battlemaps):
                     if not img_path: continue
-                    
-                    full_path = self.dm.get_full_path(img_path)
-                    if not full_path or not os.path.exists(full_path): continue
-                    
-                    # İsimlendirme
-                    display_name = loc_name
-                    if len(battlemaps) > 1:
-                        display_name = f"{loc_name} ({i+1})"
-                    
-                    pix = QPixmap(full_path).scaled(160, 160, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                    icon = QIcon(pix)
-                    
-                    item = QListWidgetItem(icon, display_name)
-                    item.setData(Qt.ItemDataRole.UserRole, img_path)
-                    item.setToolTip(f"{loc_name} - Battlemap {i+1}")
-                    self.lw.addItem(item)
+                    # Video/URL Handling for Icon
+                    if img_path.startswith("http") or img_path.endswith((".mp4", ".webm", ".mkv", ".avi")):
+                        icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay) 
+                        display_name = f"{loc_name} (VIDEO {i+1})"
+                        item = QListWidgetItem(icon, display_name)
+                        item.setData(Qt.ItemDataRole.UserRole, img_path)
+                        item.setToolTip(img_path)
+                        self.lw.addItem(item)
+                    else:
+                        full_path = self.dm.get_full_path(img_path)
+                        if not full_path or not os.path.exists(full_path): continue
+                        display_name = f"{loc_name} ({i+1})" if len(battlemaps) > 1 else loc_name
+                        pix = QPixmap(full_path).scaled(160, 160, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                        icon = QIcon(pix)
+                        item = QListWidgetItem(icon, display_name)
+                        item.setData(Qt.ItemDataRole.UserRole, img_path)
+                        item.setToolTip(f"{loc_name} - Map {i+1}")
+                        self.lw.addItem(item)
 
     def select_existing(self):
         current = self.lw.currentItem()
-        if not current:
-            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_MAP_FROM_LIST"))
-            return
-            
+        if not current: QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_MAP_FROM_LIST")); return
         img_path = current.data(Qt.ItemDataRole.UserRole)
-        
-        if not img_path:
-            QMessageBox.warning(self, tr("MSG_WARNING"), "Dosya yolu hatası.")
-            return
-            
         self.selected_file = img_path
         self.accept()
 
@@ -218,16 +194,15 @@ class CombatTracker(QWidget):
         self.fog_save_handler = None 
         self.create_encounter("Default Encounter"); self.init_ui()
 
-    def set_fog_save_handler(self, handler):
-        self.fog_save_handler = handler
+    def set_fog_save_handler(self, handler): self.fog_save_handler = handler
 
     def init_ui(self):
         layout = QVBoxLayout(self)
         enc_layout = QHBoxLayout()
         self.combo_encounters = QComboBox(); self.combo_encounters.currentIndexChanged.connect(self.switch_encounter); self.combo_encounters.setMinimumWidth(200)
-        self.btn_new_enc = QPushButton("➕"); self.btn_new_enc.setFixedWidth(40); self.btn_new_enc.setToolTip(tr("TIP_NEW_ENC")); self.btn_new_enc.clicked.connect(self.prompt_new_encounter)
-        self.btn_rename_enc = QPushButton("✏️"); self.btn_rename_enc.setFixedWidth(40); self.btn_rename_enc.setToolTip(tr("TIP_RENAME_ENC")); self.btn_rename_enc.clicked.connect(self.rename_encounter)
-        self.btn_del_enc = QPushButton("🗑️"); self.btn_del_enc.setFixedWidth(40); self.btn_del_enc.setToolTip(tr("TIP_DEL_ENC")); self.btn_del_enc.clicked.connect(self.delete_encounter); self.btn_del_enc.setObjectName("dangerBtn")
+        self.btn_new_enc = QPushButton("➕"); self.btn_new_enc.setFixedWidth(40); self.btn_new_enc.clicked.connect(self.prompt_new_encounter)
+        self.btn_rename_enc = QPushButton("✏️"); self.btn_rename_enc.setFixedWidth(40); self.btn_rename_enc.clicked.connect(self.rename_encounter)
+        self.btn_del_enc = QPushButton("🗑️"); self.btn_del_enc.setFixedWidth(40); self.btn_del_enc.clicked.connect(self.delete_encounter); self.btn_del_enc.setObjectName("dangerBtn")
         enc_layout.addWidget(QLabel(tr("LBL_ENCOUNTER_PREFIX"))); enc_layout.addWidget(self.combo_encounters); enc_layout.addWidget(self.btn_new_enc); enc_layout.addWidget(self.btn_rename_enc); enc_layout.addWidget(self.btn_del_enc)
         layout.addLayout(enc_layout)
 
@@ -245,11 +220,13 @@ class CombatTracker(QWidget):
         q_lo.addWidget(self.inp_quick_name, 3); q_lo.addWidget(self.inp_quick_init, 1); q_lo.addWidget(self.inp_quick_hp, 1); q_lo.addWidget(self.btn_quick_add, 1)
         layout.addLayout(q_lo)
 
+        # Removed 'Open Battle Map' button from here
         btn_layout = QHBoxLayout()
         self.lbl_round = QLabel(f"{tr('LBL_ROUND_PREFIX')}1"); self.lbl_round.setObjectName("headerLabel"); self.lbl_round.setStyleSheet("font-size: 16px; font-weight: bold; margin-right: 10px;")
         self.btn_next_turn = QPushButton(tr("BTN_NEXT_TURN")); self.btn_next_turn.setObjectName("actionBtn"); self.btn_next_turn.clicked.connect(self.next_turn)
-        self.btn_battle_map = QPushButton(tr("BTN_BATTLE_MAP")); self.btn_battle_map.setObjectName("primaryBtn"); self.btn_battle_map.clicked.connect(self.open_battle_map)
-        btn_layout.addWidget(self.lbl_round); btn_layout.addWidget(self.btn_next_turn); btn_layout.addWidget(self.btn_battle_map)
+        
+        btn_layout.addWidget(self.lbl_round)
+        btn_layout.addWidget(self.btn_next_turn)
         layout.addLayout(btn_layout)
         
         btn_layout2 = QHBoxLayout()
@@ -493,25 +470,36 @@ class CombatTracker(QWidget):
         """Compatibility method for legacy session data (list of combatants)."""
         self.load_session_state({"combatants": data})
 
+    def load_map_dialog(self):
+        """Exposed method to load map for current encounter."""
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
+        enc = self.encounters[self.current_encounter_id]
+        
+        d = MapSelectorDialog(self.dm, self)
+        if d.exec():
+            if d.is_new_import: 
+                f, _ = QFileDialog.getOpenFileName(self, "Select", "", "Media (*.png *.jpg *.jpeg *.mp4 *.webm *.mkv *.m4v)")
+                if f: 
+                    enc["map_path"] = self.dm.import_image(f)
+            elif d.selected_file: 
+                enc["map_path"] = d.selected_file
+            
+            self.data_changed_signal.emit()
+            if self.battle_map_window and self.battle_map_window.isVisible():
+                self.refresh_battle_map(force_map_reload=True)
+
     def open_battle_map(self):
-        if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.raise_(); self.battle_map_window.activateWindow(); return
-        enc = self.encounters.get(self.current_encounter_id)
-        if not enc: return
-        if not enc.get("map_path"):
-             # --- DEĞİŞİKLİK BURADA: DataManager'ı gönderiyoruz ---
-             d = MapSelectorDialog(self.dm, self)
-             if d.exec():
-                  if d.is_new_import: 
-                       f,_=QFileDialog.getOpenFileName(self,"Select","", "Img (*.png *.jpg)"); 
-                       if f: enc["map_path"]=self.dm.import_image(f)
-                  elif d.selected_file: 
-                       enc["map_path"] = d.selected_file
-                  self.data_changed_signal.emit()
-             else: return
+        """Opens external window. Does NOT prompt for map."""
+        if self.battle_map_window and self.battle_map_window.isVisible(): 
+            self.battle_map_window.raise_()
+            self.battle_map_window.activateWindow()
+            return
+            
         self.battle_map_window = BattleMapWindow(self.dm)
         self.battle_map_window.token_moved_signal.connect(self.on_token_moved_in_map)
         self.battle_map_window.slider_size.valueChanged.connect(self.on_token_size_changed)
-        self.battle_map_window.show(); self.refresh_battle_map(True)
+        self.battle_map_window.show()
+        self.refresh_battle_map(True)
     
     def on_token_moved_in_map(self, tid, x, y): 
         if self.current_encounter_id: 
@@ -526,7 +514,10 @@ class CombatTracker(QWidget):
     def refresh_battle_map(self, force_map_reload=False):
         if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
         enc=self.encounters[self.current_encounter_id]; self._save_current_state_to_memory()
-        mp=self.dm.get_full_path(enc.get("map_path"))
+        
+        raw_path = enc.get("map_path")
+        mp = self.dm.get_full_path(raw_path)
+        
         cd=[]
         for c in enc["combatants"]:
              t="NPC"; a="LBL_ATTR_NEUTRAL"
@@ -534,7 +525,17 @@ class CombatTracker(QWidget):
                   e=self.dm.data["entities"][c["eid"]]; t=e.get("type","NPC"); a=e.get("attributes",{}).get("LBL_ATTITUDE","LBL_ATTR_NEUTRAL"); 
                   if t=="Monster": a="LBL_ATTR_HOSTILE"
              c["type"]=t; c["attitude"]=a; cd.append(c)
-        if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.update_combat_data(cd, enc["turn_index"], mp, enc["token_size"])
+             
+        fog_data = enc.get("fog_data")
+             
+        if self.battle_map_window and self.battle_map_window.isVisible(): 
+            self.battle_map_window.update_combat_data(
+                cd, 
+                enc["turn_index"], 
+                mp, 
+                enc["token_size"],
+                fog_data=fog_data
+            )
     
     def sync_map_view_to_external(self, rect):
         if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.sync_view(rect)
