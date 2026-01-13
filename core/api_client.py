@@ -17,6 +17,10 @@ class ApiSource:
         """Returns list of (slug, title) for available source books."""
         return []
 
+    def get_details(self, category, index):
+        """Returns RAW JSON dictionary for the given entry."""
+        raise NotImplementedError
+
     def search(self, category, query):
         raise NotImplementedError
 
@@ -71,27 +75,37 @@ class Dnd5eApiSource(ApiSource):
         except Exception:
             return []
 
-    def search(self, category, query):
+    def get_details(self, category, index):
         endpoint = self.ENDPOINT_MAP.get(category)
-        if not endpoint: return None, tr("MSG_CAT_NOT_SUPPORTED")
+        if not endpoint: return None
 
-        formatted_query = query.lower().strip().replace(" ", "-")
-        url = f"{API_BASE_URL}/{endpoint}/{formatted_query}"
-        
+        # Dnd5e lookup by index
+        url = f"{API_BASE_URL}/{endpoint}/{index}"
         try:
             response = self.session.get(url, timeout=10)
             if response.status_code == 200:
-                return self.parse_dispatcher(category, response.json()), tr("MSG_SEARCH_SUCCESS")
-            
+                return response.json()
+             
+            # Fallback for Equipment/Magic Item ambiguity
             if category == "Equipment":
-                url2 = f"{API_BASE_URL}/magic-items/{formatted_query}"
-                resp2 = self.session.get(url2, timeout=10)
-                if resp2.status_code == 200:
-                    return self.parse_equipment(resp2.json()), tr("MSG_FOUND_MAGIC_ITEM")
-
-            return None, tr("MSG_SEARCH_NOT_FOUND")
+                 url2 = f"{API_BASE_URL}/magic-items/{index}"
+                 resp2 = self.session.get(url2, timeout=10)
+                 if resp2.status_code == 200: return resp2.json()
+            
+            return None
         except Exception as e:
-            return None, str(e)
+            print(f"Dnd5e Details Error: {e}")
+            return None
+
+    def search(self, category, query):
+        # Existing search logic actually fetches details because Dnd5e "search" is just by index (slug)
+        # But for compatibility we keep it. However, now DataManager will prefer get_details logic.
+        raw_data = self.get_details(category, query)
+        if raw_data:
+             if category == "Equipment" and "equipment_category" not in raw_data and "desc" in raw_data and "rarity" in raw_data:
+                 return self.parse_equipment(raw_data), tr("MSG_FOUND_MAGIC_ITEM")
+             return self.parse_dispatcher(category, raw_data), tr("MSG_SEARCH_SUCCESS")
+        return None, tr("MSG_SEARCH_NOT_FOUND")
 
     def parse_dispatcher(self, category, data):
         if category in ["Monster", "NPC"]: return self.parse_monster(data)
@@ -409,6 +423,22 @@ class Open5eApiSource(ApiSource):
             print(f"Open5e Docs Error: {e}")
             return []
 
+    def get_details(self, category, index):
+        endpoint = self.ENDPOINT_MAP.get(category)
+        if not endpoint: return None
+
+        # Open5e uses 'slug' for lookup usually
+        url = f"{self.BASE_URL}/{endpoint}/{index}/?format=json"
+        
+        try:
+            response = self.session.get(url, timeout=10)
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            print(f"Open5e Details Error: {e}")
+            return None
+
     def search(self, category, query):
         endpoint = self.ENDPOINT_MAP.get(category)
         if not endpoint: return None, tr("MSG_CAT_NOT_SUPPORTED")
@@ -570,6 +600,9 @@ class DndApiClient:
 
     def get_documents(self):
         return self.current_source.get_documents()
+
+    def get_details(self, category, index):
+        return self.current_source.get_details(category, index)
 
     def search(self, category, query):
         return self.current_source.search(category, query)

@@ -23,15 +23,15 @@ class ApiSearchWorker(QThread):
 class ApiListWorker(QThread):
     finished = pyqtSignal(object) # list or dict
 
-    def __init__(self, api_client, category, page=1, filters=None, parent=None):
+    def __init__(self, data_manager, category, page=1, filters=None, parent=None):
         super().__init__(parent)
-        self.api_client = api_client
+        self.dm = data_manager
         self.category = category
         self.page = page
         self.filters = filters
 
     def run(self):
-        data = self.api_client.get_list(self.category, page=self.page, filters=self.filters)
+        data = self.dm.get_api_index(self.category, page=self.page, filters=self.filters)
         self.finished.emit(data)
 
 class ImageDownloadWorker(QThread):
