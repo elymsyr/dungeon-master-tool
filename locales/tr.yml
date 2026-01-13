@@ -455,3 +455,5 @@ tr:
   BTN_FOG_CLEAR: "Temizle"
   LBL_FOG_HINT: "(Sol: Ekle | Sağ: Sil)"
   TIP_FIT_VIEW: "Haritayı Ekrana Sığdır"
+
+  LBL_ALL_DOCS: "Hepsi"

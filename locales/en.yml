@@ -456,3 +456,5 @@ en:
   BTN_FOG_CLEAR: "Clear"
   LBL_FOG_HINT: "(L-Click: Add | R-Click: Remove)"
   TIP_FIT_VIEW: "Fit Map to View"
+
+  LBL_ALL_DOCS: "All"

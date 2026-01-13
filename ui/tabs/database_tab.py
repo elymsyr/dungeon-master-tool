@@ -178,8 +178,6 @@ class DatabaseTab(QWidget):
         filter_layout.addWidget(self.btn_filter)
         filter_layout.addWidget(self.check_show_library)
         
-        self.btn_download_all = QPushButton(tr("BTN_DOWNLOAD_ALL"))
-        self.btn_download_all.clicked.connect(self.open_bulk_downloader)
         self.btn_browser = QPushButton(tr("BTN_API_BROWSER"))
         self.btn_browser.clicked.connect(self.open_api_browser)
         self.list_widget = DraggableListWidget()
@@ -190,7 +188,6 @@ class DatabaseTab(QWidget):
         
         sidebar_layout.addWidget(self.inp_search)
         sidebar_layout.addLayout(filter_layout)
-        sidebar_layout.addWidget(self.btn_download_all)
         sidebar_layout.addWidget(self.btn_browser)
         sidebar_layout.addWidget(self.list_widget)
         sidebar_layout.addWidget(self.btn_add)
@@ -443,12 +440,10 @@ class DatabaseTab(QWidget):
             elif first_cat == "Class": target_cat = "Class"
             elif first_cat == "Race": target_cat = "Race"
         if ApiBrowser(self.dm, target_cat, self).exec(): self.refresh_list()
-    def open_bulk_downloader(self): BulkDownloadDialog(self).exec()
     def retranslate_ui(self):
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
         self.btn_filter.setText(f" {tr('LBL_FILTER')}"); self.refresh_filter_button_style() 
         self.check_show_library.setText(tr("LBL_CHECK_LIBRARY"))
-        self.btn_download_all.setText(tr("BTN_DOWNLOAD_ALL"))
         self.btn_browser.setText(tr("BTN_API_BROWSER"))
         self.btn_add.setText(tr("BTN_NEW_ENTITY"))
         for manager in [self.tab_manager_left, self.tab_manager_right]:
