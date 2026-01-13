@@ -19,7 +19,7 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 *   **Fog of War:** Interactive masking on the Battle Map. Draw fog to hide secrets and erase it to reveal rooms as players explore. **Persists per encounter.**
 *   **Animated Battle Maps:** Support for local video files (`.mp4`, `.webm`) to create immersive, moving battlegrounds.
 *   **Embedded Battle Map:** Move tokens, manage combat, and sync views without leaving the session log. Control the second battlemap screen for players with a single click.
-*   **Adaptive Soundpad:** Layered music system with intensity sliders (Base -> Low -> High) with ambiences and instant SFX.
+*   **Adaptive Soundpad:** Layered music system with intensity sliders (Base -> Low -> High) with ambiences and instant SFX. **Now supports importing your own Sounds and Themes directly from the app!**
 *   **Story Timeline:** Map-based tracker with **branching paths**, travel lines, and session-linked events. Implement NPC or Monster stories using timeline pins and hide them from players.
 *   **System Agnostic:** While optimized for 5e, you can play **any TTRPG** (Pathfinder, OSR, Homebrew) by creating custom entity cards or using "Handwritten" notes without code. Please create an issue if you want more sources :)
 *   **Multi-Source Database:** Integrated browser with **SRD 5e** and **Open5e** support. Instantly fetch Monsters, Spells, Feats, Backgrounds and more.
@@ -42,6 +42,7 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 - [x] **Campaign Notes:** Rich text editor, linking, and better folder organization for DM notes.
 - [x] **More Sources:** Open5E API is connected.
 - [x] **Battlemap View Lock and Toggle:** Toggle player view and lock map movement for player's battlemap screen.
+- [x] **In-App Soundpad Import:** Add single sounds and create full themes directly from the UI.
 
 
 ### 🚧 In Progress / Planned
@@ -71,57 +72,7 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 
 ## 🎵 Customizing Soundpad
 
-You can easily add your own music tracks and themes by adding folders to the `assets/soundpad` directory.
-
-### Directory Structure
-```text
-assets/
-  soundpad/
-    soundpad_library.yaml  <-- Global SFX and Ambience definitions
-    MyCustomTheme/         <-- Your new theme folder
-      theme.yaml           <-- Theme definition
-      combat_base.wav
-      combat_high.wav
-      explore_base.wav
-```
-
-### How to Create a Theme (`theme.yaml`)
-Create a `theme.yaml` file inside your theme folder. Use the structure below. The **Intensity Slider** in the app controls which track plays (Base, Level 1, Level 2).
-
-```yaml
-id: "my_custom_theme"
-name: "Epic Boss Battle"
-states:
-  normal:
-    tracks:
-      base: 
-        - file: "explore_base.wav"
-          repeat: 0  # 0 = Infinite Loop
-      level1: 
-        - file: "explore_tension.wav"
-          repeat: 0
-  combat:
-    tracks:
-      base: 
-        - file: "combat_drums.wav"
-          repeat: 0
-      level1: 
-        - file: "combat_strings.wav"
-          repeat: 0
-      level2: 
-        - file: "combat_choir.wav"
-          repeat: 0
-```
-
-### Adding SFX or Ambience
-Edit `assets/soundpad/soundpad_library.yaml` to register global sounds that are available in every theme.
-
-```yaml
-sfx:
-  - id: "fireball"
-    name: "Fireball"
-    file: "sfx/fire_explosion.wav"
-```
+You no longer need to edit YAML files manually! Use the new **Theme Builder** in the Soundpad panel to create themes, assign tracks, and handle file organization automatically.
 
 ## 🚀 Installation
 
@@ -138,7 +89,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-## 📸 Screenshots
+<!-- ## 📸 Screenshots
 <p align="center">
   <img src="media/main_0.png" width="100%" alt="Player Map View" />
   <img src="media/main_1.png" width="100%" alt="Entity Stat Block" />
@@ -150,7 +101,7 @@ python main.py
   <img src="media/battlemap.png" width="100%" alt="Entity Stat Block" />
   <img src="media/bulk.png" width="100%" alt="Entity Stat Block" />
   <img src="media/api.png" width="100%" alt="Entity Stat Block" />
-</p>
+</p> -->
 
 ## ⚠️ Disclaimer
 This project is currently in **Alpha**. Expect frequent updates and occasional bugs. Backup your world data regularly!
