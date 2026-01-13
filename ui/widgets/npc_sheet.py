@@ -200,23 +200,19 @@ class NpcSheet(QWidget):
     def setup_battlemap_tab(self):
         layout = QVBoxLayout(self.tab_battlemaps)
         
-        lbl_info = QLabel("Add images or URLs (YouTube/Images) for Combat Tracker.")
+        lbl_info = QLabel("Add images or videos for Combat Tracker.")
         lbl_info.setStyleSheet("color: #888; font-style: italic;")
         layout.addWidget(lbl_info)
         
         # Buttons
         h_btn = QHBoxLayout()
-        self.btn_add_map = QPushButton("Add File")
+        self.btn_add_map = QPushButton("Add Media")
         self.btn_add_map.clicked.connect(self.add_battlemap_dialog)
-        
-        self.btn_add_url = QPushButton("Add URL")
-        self.btn_add_url.clicked.connect(self.add_battlemap_url)
         
         self.btn_remove_map = QPushButton(tr("BTN_REMOVE"))
         self.btn_remove_map.clicked.connect(self.remove_selected_battlemap)
         
         h_btn.addWidget(self.btn_add_map)
-        h_btn.addWidget(self.btn_add_url)
         h_btn.addWidget(self.btn_remove_map)
         h_btn.addStretch()
         layout.addLayout(h_btn)
@@ -245,13 +241,6 @@ class NpcSheet(QWidget):
             self._render_battlemap_list()
             self.mark_as_dirty()
 
-    def add_battlemap_url(self):
-        url, ok = QInputDialog.getText(self, "Add URL", "Enter Stream/Image URL (e.g. YouTube):")
-        if ok and url:
-            self.battlemap_list.append(url.strip())
-            self._render_battlemap_list()
-            self.mark_as_dirty()
-
     def remove_selected_battlemap(self):
         row = self.list_battlemaps.currentRow()
         if row >= 0:
@@ -265,31 +254,26 @@ class NpcSheet(QWidget):
         video_exts = {'.mp4', '.webm', '.mkv', '.m4v', '.avi', '.mov'}
         
         for path in self.battlemap_list:
+            # Skip HTTP links completely as requested
+            if path.startswith("http"): continue
+                
             display_name = os.path.basename(path)
             icon = None
             
-            # 1. URL Logic
-            if path.startswith("http"):
-                icon = self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon) # Generic web icon
-                if "youtube" in path or "youtu.be" in path:
-                    display_name = f"YouTube: {display_name}"
+            full_path = self.dm.get_full_path(path)
+            if not full_path or not os.path.exists(full_path): continue
             
-            # 2. Local File Logic
+            # Check extension for Video vs Image
+            ext = os.path.splitext(full_path)[1].lower()
+            
+            if ext in video_exts:
+                # Use a Play Icon for videos
+                icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay)
+                display_name = f"{display_name} (Video)"
             else:
-                full_path = self.dm.get_full_path(path)
-                if not full_path or not os.path.exists(full_path): continue
-                
-                # Check extension for Video vs Image
-                ext = os.path.splitext(full_path)[1].lower()
-                
-                if ext in video_exts:
-                    # Use a Play Icon for videos (don't generate pixmap from video file)
-                    icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay)
-                    display_name = f"{display_name} (Video)"
-                else:
-                    # It's an image, create thumbnail
-                    pix = QPixmap(full_path).scaled(120, 120, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                    icon = QIcon(pix)
+                # It's an image, create thumbnail
+                pix = QPixmap(full_path).scaled(120, 120, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                icon = QIcon(pix)
             
             # Create Item
             if icon:

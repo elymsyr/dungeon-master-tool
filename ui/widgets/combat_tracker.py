@@ -220,11 +220,13 @@ class CombatTracker(QWidget):
         q_lo.addWidget(self.inp_quick_name, 3); q_lo.addWidget(self.inp_quick_init, 1); q_lo.addWidget(self.inp_quick_hp, 1); q_lo.addWidget(self.btn_quick_add, 1)
         layout.addLayout(q_lo)
 
+        # Removed 'Open Battle Map' button from here
         btn_layout = QHBoxLayout()
         self.lbl_round = QLabel(f"{tr('LBL_ROUND_PREFIX')}1"); self.lbl_round.setObjectName("headerLabel"); self.lbl_round.setStyleSheet("font-size: 16px; font-weight: bold; margin-right: 10px;")
         self.btn_next_turn = QPushButton(tr("BTN_NEXT_TURN")); self.btn_next_turn.setObjectName("actionBtn"); self.btn_next_turn.clicked.connect(self.next_turn)
-        self.btn_battle_map = QPushButton(tr("BTN_BATTLE_MAP")); self.btn_battle_map.setObjectName("primaryBtn"); self.btn_battle_map.clicked.connect(self.open_battle_map)
-        btn_layout.addWidget(self.lbl_round); btn_layout.addWidget(self.btn_next_turn); btn_layout.addWidget(self.btn_battle_map)
+        
+        btn_layout.addWidget(self.lbl_round)
+        btn_layout.addWidget(self.btn_next_turn)
         layout.addLayout(btn_layout)
         
         btn_layout2 = QHBoxLayout()
@@ -468,29 +470,36 @@ class CombatTracker(QWidget):
         """Compatibility method for legacy session data (list of combatants)."""
         self.load_session_state({"combatants": data})
 
+    def load_map_dialog(self):
+        """Exposed method to load map for current encounter."""
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
+        enc = self.encounters[self.current_encounter_id]
+        
+        d = MapSelectorDialog(self.dm, self)
+        if d.exec():
+            if d.is_new_import: 
+                f, _ = QFileDialog.getOpenFileName(self, "Select", "", "Media (*.png *.jpg *.jpeg *.mp4 *.webm *.mkv *.m4v)")
+                if f: 
+                    enc["map_path"] = self.dm.import_image(f)
+            elif d.selected_file: 
+                enc["map_path"] = d.selected_file
+            
+            self.data_changed_signal.emit()
+            if self.battle_map_window and self.battle_map_window.isVisible():
+                self.refresh_battle_map(force_map_reload=True)
+
     def open_battle_map(self):
-        if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.raise_(); self.battle_map_window.activateWindow(); return
-        enc = self.encounters.get(self.current_encounter_id)
-        if not enc: return
-        if not enc.get("map_path"):
-             # --- UPDATED: ADD VIDEO FILTERS ---
-             d = MapSelectorDialog(self.dm, self)
-             if d.exec():
-                  if d.is_new_import: 
-                       f,_=QFileDialog.getOpenFileName(self,"Select","", "Media (*.png *.jpg *.jpeg *.mp4 *.webm *.mkv *.m4v)")
-                       if f: 
-                           # If video, assume absolute path for now (or copy)
-                           # For simplicity, we store the full path or import relative
-                           # dm.import_image does copy to assets.
-                           enc["map_path"] = self.dm.import_image(f)
-                  elif d.selected_file: 
-                       enc["map_path"] = d.selected_file
-                  self.data_changed_signal.emit()
-             else: return
+        """Opens external window. Does NOT prompt for map."""
+        if self.battle_map_window and self.battle_map_window.isVisible(): 
+            self.battle_map_window.raise_()
+            self.battle_map_window.activateWindow()
+            return
+            
         self.battle_map_window = BattleMapWindow(self.dm)
         self.battle_map_window.token_moved_signal.connect(self.on_token_moved_in_map)
         self.battle_map_window.slider_size.valueChanged.connect(self.on_token_size_changed)
-        self.battle_map_window.show(); self.refresh_battle_map(True)
+        self.battle_map_window.show()
+        self.refresh_battle_map(True)
     
     def on_token_moved_in_map(self, tid, x, y): 
         if self.current_encounter_id: 
@@ -506,12 +515,8 @@ class CombatTracker(QWidget):
         if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
         enc=self.encounters[self.current_encounter_id]; self._save_current_state_to_memory()
         
-        # --- PATH HANDLING FOR VIDEOS ---
         raw_path = enc.get("map_path")
-        mp = raw_path
-        if raw_path and not raw_path.startswith("http"):
-             # If it's a file, get full path
-             mp = self.dm.get_full_path(raw_path)
+        mp = self.dm.get_full_path(raw_path)
         
         cd=[]
         for c in enc["combatants"]:
@@ -520,7 +525,17 @@ class CombatTracker(QWidget):
                   e=self.dm.data["entities"][c["eid"]]; t=e.get("type","NPC"); a=e.get("attributes",{}).get("LBL_ATTITUDE","LBL_ATTR_NEUTRAL"); 
                   if t=="Monster": a="LBL_ATTR_HOSTILE"
              c["type"]=t; c["attitude"]=a; cd.append(c)
-        if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.update_combat_data(cd, enc["turn_index"], mp, enc["token_size"])
+             
+        fog_data = enc.get("fog_data")
+             
+        if self.battle_map_window and self.battle_map_window.isVisible(): 
+            self.battle_map_window.update_combat_data(
+                cd, 
+                enc["turn_index"], 
+                mp, 
+                enc["token_size"],
+                fog_data=fog_data
+            )
     
     def sync_map_view_to_external(self, rect):
         if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.sync_view(rect)
