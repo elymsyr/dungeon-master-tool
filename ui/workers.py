@@ -5,8 +5,8 @@ from PyQt6.QtCore import QThread, pyqtSignal
 class ApiSearchWorker(QThread):
     finished = pyqtSignal(bool, object, str) # success, data, message
 
-    def __init__(self, data_manager, category, query):
-        super().__init__()
+    def __init__(self, data_manager, category, query, parent=None):
+        super().__init__(parent)
         self.data_manager = data_manager
         self.category = category
         self.query = query
@@ -21,15 +21,17 @@ class ApiSearchWorker(QThread):
             self.finished.emit(False, {}, str(e))
 
 class ApiListWorker(QThread):
-    finished = pyqtSignal(list)
+    finished = pyqtSignal(object) # list or dict
 
-    def __init__(self, api_client, category):
-        super().__init__()
-        self.api_client = api_client
+    def __init__(self, data_manager, category, page=1, filters=None, parent=None):
+        super().__init__(parent)
+        self.dm = data_manager
         self.category = category
+        self.page = page
+        self.filters = filters
 
     def run(self):
-        data = self.api_client.get_list(self.category)
+        data = self.dm.get_api_index(self.category, page=self.page, filters=self.filters)
         self.finished.emit(data)
 
 class ImageDownloadWorker(QThread):

@@ -2,14 +2,42 @@ import requests
 from config import API_BASE_URL
 from core.locales import tr
 
-class DndApiClient:
-    def __init__(self):
-        self.session = requests.Session()
-        
-        # SOLVED: Enable SSL verification for security.
-        # If you get an SSLError, ensure 'pip install --upgrade certifi' is run.
-        self.session.verify = True 
-        
+class ApiSource:
+    """Abstract base class for API sources."""
+    def __init__(self, session):
+        self.session = session
+
+    def get_list(self, category, page=1, filters=None):
+        raise NotImplementedError
+
+    def get_supported_categories(self):
+        raise NotImplementedError
+
+    def get_documents(self):
+        """Returns list of (slug, title) for available source books."""
+        return []
+
+    def get_details(self, category, index):
+        """Returns RAW JSON dictionary for the given entry."""
+        raise NotImplementedError
+
+    def search(self, category, query):
+        raise NotImplementedError
+
+    def download_image_bytes(self, full_url):
+        try:
+            response = self.session.get(full_url, timeout=15)
+            if response.status_code == 200:
+                return response.content
+            return None
+        except Exception as e:
+            print(f"Image download error: {e}")
+            return None
+
+class Dnd5eApiSource(ApiSource):
+    """Legacy API Source (dnd5eapi.co)"""
+    def __init__(self, session):
+        super().__init__(session)
         self.ENDPOINT_MAP = {
             "NPC": "monsters",
             "Monster": "monsters",
@@ -19,23 +47,27 @@ class DndApiClient:
             "Race": "races",
             "Magic Item": "magic-items"
         }
-        # The API base is .../api, but images are at the root
         self.DOMAIN_ROOT = "https://www.dnd5eapi.co"
 
-    def get_list(self, category):
+    def get_supported_categories(self):
+        return list(self.ENDPOINT_MAP.keys())
+
+    def get_list(self, category, page=1, filters=None):
+        # D&D 5e API does not support pagination/filtering in list endpoint naturally in this implementation
         endpoint = self.ENDPOINT_MAP.get(category)
         if not endpoint:
             if category == "Equipment":
                 l1 = self._fetch_all("equipment")
                 l2 = self._fetch_all("magic-items")
-                return l1 + l2
-            return []
-        return self._fetch_all(endpoint)
+                return {"results": l1 + l2, "count": len(l1)+len(l2), "next": None, "previous": None}
+            return {"results": [], "count": 0, "next": None, "previous": None}
+        
+        results = self._fetch_all(endpoint)
+        return {"results": results, "count": len(results), "next": None, "previous": None}
 
     def _fetch_all(self, endpoint):
         url = f"{API_BASE_URL}/{endpoint}"
         try:
-            # Added verify=True explicit (though session handles it)
             response = self.session.get(url, timeout=10)
             if response.status_code == 200:
                 return response.json().get("results", [])
@@ -43,38 +75,37 @@ class DndApiClient:
         except Exception:
             return []
 
-    def search(self, category, query):
+    def get_details(self, category, index):
         endpoint = self.ENDPOINT_MAP.get(category)
-        if not endpoint: return None, tr("MSG_CAT_NOT_SUPPORTED")
+        if not endpoint: return None
 
-        formatted_query = query.lower().strip().replace(" ", "-")
-        url = f"{API_BASE_URL}/{endpoint}/{formatted_query}"
-        
+        # Dnd5e lookup by index
+        url = f"{API_BASE_URL}/{endpoint}/{index}"
         try:
             response = self.session.get(url, timeout=10)
             if response.status_code == 200:
-                return self.parse_dispatcher(category, response.json()), tr("MSG_SEARCH_SUCCESS")
-            
+                return response.json()
+             
+            # Fallback for Equipment/Magic Item ambiguity
             if category == "Equipment":
-                url2 = f"{API_BASE_URL}/magic-items/{formatted_query}"
-                resp2 = self.session.get(url2, timeout=10)
-                if resp2.status_code == 200:
-                    return self.parse_equipment(resp2.json()), tr("MSG_FOUND_MAGIC_ITEM")
-
-            return None, tr("MSG_SEARCH_NOT_FOUND")
-        except Exception as e:
-            return None, str(e)
-
-    def download_image_bytes(self, full_url):
-        """Downloads image data from the full URL."""
-        try:
-            response = self.session.get(full_url, timeout=15)
-            if response.status_code == 200:
-                return response.content
+                 url2 = f"{API_BASE_URL}/magic-items/{index}"
+                 resp2 = self.session.get(url2, timeout=10)
+                 if resp2.status_code == 200: return resp2.json()
+            
             return None
         except Exception as e:
-            print(f"Image download error: {e}")
+            print(f"Dnd5e Details Error: {e}")
             return None
+
+    def search(self, category, query):
+        # Existing search logic actually fetches details because Dnd5e "search" is just by index (slug)
+        # But for compatibility we keep it. However, now DataManager will prefer get_details logic.
+        raw_data = self.get_details(category, query)
+        if raw_data:
+             if category == "Equipment" and "equipment_category" not in raw_data and "desc" in raw_data and "rarity" in raw_data:
+                 return self.parse_equipment(raw_data), tr("MSG_FOUND_MAGIC_ITEM")
+             return self.parse_dispatcher(category, raw_data), tr("MSG_SEARCH_SUCCESS")
+        return None, tr("MSG_SEARCH_NOT_FOUND")
 
     def parse_dispatcher(self, category, data):
         if category in ["Monster", "NPC"]: return self.parse_monster(data)
@@ -85,9 +116,6 @@ class DndApiClient:
         return {}
 
     def parse_monster(self, data):
-        """
-        API'den veya yerel dosyadan gelen ham canavar verisini parse eder.
-        """
         # 1. AC Parse
         ac_val = "10"
         raw_ac = data.get("armor_class", [])
@@ -102,7 +130,7 @@ class DndApiClient:
         speed_dict = data.get("speed", {})
         speed_str = ", ".join([f"{k.capitalize()} {v}" for k, v in speed_dict.items()])
 
-        # 3. Saves & Skills Parse (HATA BURADA DÜZELTİLDİ)
+        # 3. Saves & Skills Parse
         saves, skills = [], []
         for prof in data.get("proficiencies", []):
             name = prof.get("proficiency", {}).get("name", "")
@@ -113,7 +141,6 @@ class DndApiClient:
                 stat = name.replace("Saving Throw:", "").strip()
                 saves.append(f"{stat} {sign}{val}")
             elif "Skill:" in name:
-                # HATALI KISIM DÜZELTİLDİ: 'skill_name' yerine 'name' kullanıldı
                 skill_label = name.replace("Skill:", "").strip()
                 skills.append(f"{skill_label} {sign}{val}")
 
@@ -130,7 +157,6 @@ class DndApiClient:
                     if url: detected_spells.append(url.rstrip("/").split("/")[-1])
 
         detected_equipment = []
-        # Bazı API versiyonlarında veya özel datalarda canavarın eşyaları 'equipment' altında gelir
         if "equipment" in data:
             for item in data["equipment"]:
                 url = item.get("equipment", {}).get("url") if isinstance(item, dict) else None
@@ -142,7 +168,6 @@ class DndApiClient:
         if not local_img and data.get("image"):
             remote_image_url = self.DOMAIN_ROOT + data.get("image")
 
-        # 7. Veri Sözlüğünü Oluştur
         return {
             "name": data.get("name"),
             "type": "Monster",
@@ -320,4 +345,319 @@ class DndApiClient:
         return {"name": data.get("name"), "type": "Class", "description": f"Hit Die: d{data.get('hit_die')}", "source": "SRD 5e (2014)", "attributes": {"LBL_HIT_DIE": f"d{data.get('hit_die')}"}}
 
     def parse_race(self, data):
-        return {"name": data.get("name"), "type": "Irk (Race)", "description": f"Speed: {data.get('speed')}", "source": "SRD 5e (2014)", "attributes": {"Hız": str(data.get("speed"))}}
+        return {"name": data.get("name"), "type": "Race", "description": f"Speed: {data.get('speed')}", "source": "SRD 5e (2014)", "attributes": {"Hız": str(data.get("speed"))}}
+
+
+class Open5eApiSource(ApiSource):
+    """Open5e API Source"""
+    def __init__(self, session):
+        super().__init__(session)
+        self.BASE_URL = "https://api.open5e.com"
+        # Map our Categories to Open5e endpoints
+        self.ENDPOINT_MAP = {
+            "Monster": "v1/monsters",
+            "NPC": "v1/monsters",
+            "Spell": "v1/spells",
+            "Magic Item": "v1/magicitems",
+            "Weapon": "v1/weapons",
+            "Armor": "v1/armor",
+            "Class": "v1/classes",
+            "Race": "v1/races",
+            "Background": "v1/backgrounds",
+            "Feat": "v1/feats",
+            "Condition": "v1/conditions",
+            "Plane": "v1/planes"
+        }
+
+    def get_supported_categories(self):
+        return list(self.ENDPOINT_MAP.keys())
+
+    def get_list(self, category, page=1, filters=None):
+        endpoint = self.ENDPOINT_MAP.get(category)
+        if not endpoint: return {"results": [], "count": 0, "next": None, "previous": None}
+        
+        # Base URL
+        url = f"{self.BASE_URL}/{endpoint}/?format=json&limit=50&page={page}"
+        
+        # Apply Filters (specifically 'document__slug')
+        if filters and isinstance(filters, dict):
+            for k, v in filters.items():
+                if v: url += f"&{k}={v}"
+
+        try:
+            response = self.session.get(url, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                results = data.get("results", [])
+                
+                # Transform list for UI (Name, Index/Slug)
+                final_list = []
+                for item in results:
+                    final_list.append({
+                        "name": item.get("name", "Unknown"),
+                        "index": item.get("slug") or item.get("key"), # Open5e uses 'slug'
+                        "url": item.get("url")
+                    })
+                return {
+                    "results": final_list, 
+                    "count": data.get("count", 0), 
+                    "next": data.get("next"), 
+                    "previous": data.get("previous")
+                }
+            return {"results": [], "count": 0, "next": None, "previous": None}
+        except Exception as e:
+            print(f"Open5e List Error: {e}")
+            return {"results": [], "count": 0, "next": None, "previous": None}
+
+    def get_documents(self):
+        try:
+            url = f"{self.BASE_URL}/v1/documents/?format=json&limit=100"
+            response = self.session.get(url, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                results = data.get("results", [])
+                # Return list of (slug, title)
+                return [(item.get("slug"), item.get("title")) for item in results]
+            return []
+        except Exception as e:
+            print(f"Open5e Docs Error: {e}")
+            return []
+
+    def get_details(self, category, index):
+        endpoint = self.ENDPOINT_MAP.get(category)
+        if not endpoint: return None
+
+        # Open5e uses 'slug' for lookup usually
+        url = f"{self.BASE_URL}/{endpoint}/{index}/?format=json"
+        
+        try:
+            response = self.session.get(url, timeout=10)
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            print(f"Open5e Details Error: {e}")
+            return None
+
+    def search(self, category, query):
+        endpoint = self.ENDPOINT_MAP.get(category)
+        if not endpoint: return None, tr("MSG_CAT_NOT_SUPPORTED")
+
+        # Open5e doesn't support path-based search like /monsters/{name} directly efficiently without knowing slug.
+        # But 'query' here from the UI is actually the 'index/slug' when clicked from list.
+        # If it's a raw text search, we should use ?search= param.
+        # However, ApiClient.search logic conventionally usually fetches DETAILS by ID.
+        # Let's assume 'query' IS the slug if it's coming from on_item_clicked.
+        
+        url = f"{self.BASE_URL}/{endpoint}/{query}/?format=json"
+        
+        try:
+            response = self.session.get(url, timeout=10)
+            if response.status_code == 200:
+                return self.parse_dispatcher(category, response.json()), tr("MSG_SEARCH_SUCCESS")
+            return None, tr("MSG_SEARCH_NOT_FOUND")
+        except Exception as e:
+            return None, str(e)
+
+    def parse_dispatcher(self, category, data):
+        if category in ["Monster", "NPC"]: return self.parse_monster(data)
+        elif category == "Spell": return self.parse_spell(data)
+        elif category in ["Magic Item", "Weapon", "Armor"]: return self.parse_item(data)
+        elif category == "Feat": return self.parse_feat(data)
+        elif category == "Background": return self.parse_background(data)
+        elif category == "Plane": return self.parse_plane(data)
+        elif category == "Condition": return self.parse_condition(data)
+        # Fallback generic parse
+        return self.parse_generic(category, data)
+
+    def parse_generic(self, category, data):
+        desc = data.get("desc", data.get("description", ""))
+        return {
+            "name": data.get("name"),
+            "type": category,
+            "description": desc,
+            "source": self._get_source_str(data),
+            "attributes": {}
+        }
+
+    def _get_source_str(self, data):
+        doc = data.get("document__title") or data.get("document", {}).get("title", "")
+        return f"Open5e - {doc}" if doc else "Open5e"
+
+    def parse_monster(self, data):
+        # Open5e format is slightly different but similar keys
+        ac_val = str(data.get("armor_class", 10))
+        speed_dict = data.get("speed", {})
+        speed_str = ", ".join([f"{k} {v}" for k, v in speed_dict.items()]) if isinstance(speed_dict, dict) else str(speed_dict)
+
+        # Actions
+        def format_actions(action_list):
+            if not action_list: return []
+            return [{"name": a.get("name", "Action"), "desc": a.get("desc", "")} for a in action_list]
+
+        return {
+            "name": data.get("name"),
+            "type": "Monster",
+            "description": data.get("desc", "") + f"\n\n{data.get('legendary_desc', '')}",
+            "source": self._get_source_str(data),
+            "tags": [data.get("type", ""), data.get("size", ""), data.get("subtype", "")],
+            "image_path": "", # Open5e rarely has images directly or uses img_main
+            "_remote_image_url": data.get("img_main", ""),
+            "stats": {
+                "STR": data.get("strength", 10), "DEX": data.get("dexterity", 10),
+                "CON": data.get("constitution", 10), "INT": data.get("intelligence", 10),
+                "WIS": data.get("wisdom", 10), "CHA": data.get("charisma", 10)
+            },
+            "combat_stats": {
+                "hp": str(data.get("hit_points", 10)),
+                "max_hp": f"{data.get('hit_points', 10)} ({data.get('hit_dice', '')})",
+                "ac": str(ac_val), "speed": speed_str,
+                "cr": str(data.get("challenge_rating", 0)), "xp": "",
+                "initiative": ""
+            },
+            "saving_throws": f"STR {data.get('strength_save')}" if data.get('strength_save') else "", # Simplified, Open5e provides precise save values sometimes
+            "skills": json_dict_to_str(data.get("skills", {})),
+            "damage_vulnerabilities": data.get("damage_vulnerabilities", ""),
+            "damage_resistances": data.get("damage_resistances", ""),
+            "damage_immunities": data.get("damage_immunities", ""),
+            "condition_immunities": data.get("condition_immunities", ""),
+            "proficiency_bonus": "",
+            "passive_perception": str(data.get("perception", "")), # Open5e keys differ
+            "traits": format_actions(data.get("special_abilities", [])),
+            "actions": format_actions(data.get("actions", [])),
+            "reactions": format_actions(data.get("reactions", [])),
+            "legendary_actions": format_actions(data.get("legendary_actions", [])),
+            "attributes": {
+                "LBL_CR": str(data.get("challenge_rating", 0)),
+                "LBL_SENSES": data.get("senses", ""),
+                "LBL_LANGUAGE": data.get("languages", "-")
+            }
+        }
+
+    def parse_spell(self, data):
+        return {
+            "name": data.get("name"),
+            "type": "Spell",
+            "description": data.get("desc", ""),
+            "source": self._get_source_str(data),
+            "tags": [f"Level {data.get('level_int', 0)}", data.get("school", ""), data.get("dnd_class", "")],
+            "attributes": {
+                "LBL_LEVEL": data.get("level", ""),
+                "LBL_SCHOOL": data.get("school", ""),
+                "LBL_CASTING_TIME": data.get("casting_time", ""),
+                "LBL_RANGE": data.get("range", ""),
+                "LBL_COMPONENTS": data.get("components", ""),
+                "LBL_DURATION": ("C, " if data.get("concentration") == "yes" else "") + data.get("duration", ""),
+                "LBL_RITUAL": "Yes" if data.get("ritual") == "yes" else "No"
+            }
+        }
+    
+    def parse_item(self, data):
+        # Magic Items, Weapons, Armor
+        return {
+            "name": data.get("name"),
+            "type": "Equipment",
+            "description": data.get("desc", ""),
+            "source": self._get_source_str(data),
+            "tags": [data.get("type", ""), data.get("rarity", "")],
+            "attributes": {
+                "LBL_RARITY": data.get("rarity", ""),
+                "LBL_ATTUNEMENT": data.get("requires_attunement", ""),
+                # Open5e specific fields
+                "Category": data.get("category", ""),
+                "Cost": data.get("cost", ""),
+                "Weight": data.get("weight", "")
+            }
+        }
+
+    def parse_feat(self, data):
+        return {
+            "name": data.get("name"),
+            "type": "Feat",
+            "description": data.get("desc", ""),
+            "source": self._get_source_str(data),
+            "attributes": {
+                "LBL_PREREQUISITE": data.get("prerequisite", "")
+            }
+        }
+
+    def parse_background(self, data):
+        # Open5e Backgrounds
+        return {
+            "name": data.get("name"),
+            "type": "Background",
+            "description": f"{data.get('desc', '')}\n\nFeature: {data.get('feature', '')}\n{data.get('feature_desc', '')}",
+            "source": self._get_source_str(data),
+            "attributes": {
+                "LBL_SKILL_PROFICIENCIES": data.get("skill_proficiencies", ""),
+                "LBL_TOOL_PROFICIENCIES": data.get("tool_proficiencies", ""),
+                "LBL_LANGUAGES": data.get("languages", ""),
+                "LBL_EQUIPMENT": data.get("equipment", "")
+            }
+        }
+
+    def parse_plane(self, data):
+        return {
+            "name": data.get("name"),
+            "type": "Plane",
+            "description": data.get("desc", ""),
+            "source": self._get_source_str(data),
+            "attributes": {} 
+        }
+
+    def parse_condition(self, data):
+        return {
+            "name": data.get("name"),
+            "type": "Condition",
+            "description": data.get("desc", ""),
+            "source": self._get_source_str(data),
+            "attributes": {}
+        }
+
+
+def json_dict_to_str(d):
+    if not d: return ""
+    return ", ".join([f"{k}: {v}" for k, v in d.items()])
+
+class DndApiClient:
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.verify = True 
+        
+        self.sources = {
+            "dnd5e": Dnd5eApiSource(self.session),
+            "open5e": Open5eApiSource(self.session)
+        }
+        self.current_source_key = "dnd5e"
+
+    @property
+    def current_source(self):
+        return self.sources[self.current_source_key]
+
+    def set_source(self, key):
+        if key in self.sources:
+            self.current_source_key = key
+
+    def get_available_sources(self):
+        return [("dnd5e", "D&D 5e API (Official SRD)"), ("open5e", "Open5e API (Community)")]
+
+    def get_supported_categories(self):
+        return self.current_source.get_supported_categories()
+
+    def get_list(self, category, page=1, filters=None):
+        return self.current_source.get_list(category, page=page, filters=filters)
+
+    def get_documents(self):
+        return self.current_source.get_documents()
+
+    def get_details(self, category, index):
+        return self.current_source.get_details(category, index)
+
+    def search(self, category, query):
+        return self.current_source.search(category, query)
+
+    def download_image_bytes(self, full_url):
+        return self.current_source.download_image_bytes(full_url)
+
+    def parse_dispatcher(self, category, data):
+        return self.current_source.parse_dispatcher(category, data)
