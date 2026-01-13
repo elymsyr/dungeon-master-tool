@@ -2,7 +2,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetIte
                              QHBoxLayout, QPushButton, QHeaderView, QInputDialog, 
                              QMenu, QMessageBox, QFrame, QLineEdit, QFileDialog, 
                              QDialog, QListWidget, QListWidgetItem, QLabel, 
-                             QAbstractItemView, QProgressBar, QSlider, QComboBox, QScrollArea)
+                             QAbstractItemView, QProgressBar, QSlider, QComboBox, 
+                             QScrollArea, QStyle)
 from PyQt6.QtGui import QAction, QColor, QBrush, QCursor, QIcon, QPixmap, QPainter, QPainterPath
 from PyQt6.QtCore import Qt, pyqtSignal, QSize, QUrl, QRect
 from core.locales import tr
@@ -103,7 +104,7 @@ class NumericTableWidgetItem(QTableWidgetItem):
         try: return float(self.data(Qt.ItemDataRole.DisplayRole)) < float(other.data(Qt.ItemDataRole.DisplayRole))
         except: return super().__lt__(other)
 
-# --- MAP SEÇİCİ (GÜNCELLENDİ: BATTLEMAP DESTEĞİ) ---
+# --- MAP SEÇİCİ ---
 class MapSelectorDialog(QDialog):
     def __init__(self, data_manager, parent=None):
         super().__init__(parent)
@@ -119,10 +120,7 @@ class MapSelectorDialog(QDialog):
 
     def init_ui(self):
         l = QVBoxLayout(self)
-        
-        lbl = QLabel(tr("LBL_SAVED_MAPS")) # "Kayıtlı Haritalar (Locations)"
-        lbl.setObjectName("toolbarLabel")
-        l.addWidget(lbl)
+        lbl = QLabel(tr("LBL_SAVED_MAPS")); lbl.setObjectName("toolbarLabel"); l.addWidget(lbl)
         
         self.lw = QListWidget()
         self.lw.setViewMode(QListWidget.ViewMode.IconMode)
@@ -134,7 +132,6 @@ class MapSelectorDialog(QDialog):
         l.addWidget(self.lw)
         
         h = QHBoxLayout()
-        # "Import New Map" seçeneği (Manuel dosya seçimi için)
         b1 = QPushButton(tr("BTN_IMPORT_NEW_MAP"))
         b1.setObjectName("successBtn")
         b1.clicked.connect(self.select_new)
@@ -143,64 +140,43 @@ class MapSelectorDialog(QDialog):
         b2.setObjectName("primaryBtn")
         b2.clicked.connect(self.select_existing)
         
-        h.addWidget(b1)
-        h.addStretch()
-        h.addWidget(b2)
-        l.addLayout(h)
+        h.addWidget(b1); h.addStretch(); h.addWidget(b2); l.addLayout(h)
 
     def load_locations(self):
-        """Veritabanındaki 'Location' türündeki varlıkların BATTLEMAP resimlerini listeler."""
         self.lw.clear()
-        
         for eid, ent in self.dm.data["entities"].items():
             if ent.get("type") == "Location":
                 loc_name = ent.get("name", "Unknown Location")
-                
-                # Sadece 'battlemaps' listesini al
                 battlemaps = ent.get("battlemaps", [])
-                
-                # Eğer battlemap yoksa, ana resmi fallback olarak kullanabiliriz (opsiyonel)
-                # Ama istenen "battlemap part" olduğu için sadece onları listeleyelim.
-                # Kullanıcı kolaylığı için, eğer hiç battlemap yoksa ve ana resim varsa onu ekleyelim.
-                if not battlemaps and ent.get("image_path"):
-                    battlemaps = [ent["image_path"]]
-                elif not battlemaps and ent.get("images"):
-                    battlemaps = [ent["images"][0]]
-
-                if not battlemaps:
-                    continue
+                if not battlemaps and ent.get("image_path"): battlemaps = [ent["image_path"]]
+                elif not battlemaps and ent.get("images"): battlemaps = [ent["images"][0]]
+                if not battlemaps: continue
 
                 for i, img_path in enumerate(battlemaps):
                     if not img_path: continue
-                    
-                    full_path = self.dm.get_full_path(img_path)
-                    if not full_path or not os.path.exists(full_path): continue
-                    
-                    # İsimlendirme
-                    display_name = loc_name
-                    if len(battlemaps) > 1:
-                        display_name = f"{loc_name} ({i+1})"
-                    
-                    pix = QPixmap(full_path).scaled(160, 160, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                    icon = QIcon(pix)
-                    
-                    item = QListWidgetItem(icon, display_name)
-                    item.setData(Qt.ItemDataRole.UserRole, img_path)
-                    item.setToolTip(f"{loc_name} - Battlemap {i+1}")
-                    self.lw.addItem(item)
+                    # Video/URL Handling for Icon
+                    if img_path.startswith("http") or img_path.endswith((".mp4", ".webm", ".mkv", ".avi")):
+                        icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay) 
+                        display_name = f"{loc_name} (VIDEO {i+1})"
+                        item = QListWidgetItem(icon, display_name)
+                        item.setData(Qt.ItemDataRole.UserRole, img_path)
+                        item.setToolTip(img_path)
+                        self.lw.addItem(item)
+                    else:
+                        full_path = self.dm.get_full_path(img_path)
+                        if not full_path or not os.path.exists(full_path): continue
+                        display_name = f"{loc_name} ({i+1})" if len(battlemaps) > 1 else loc_name
+                        pix = QPixmap(full_path).scaled(160, 160, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                        icon = QIcon(pix)
+                        item = QListWidgetItem(icon, display_name)
+                        item.setData(Qt.ItemDataRole.UserRole, img_path)
+                        item.setToolTip(f"{loc_name} - Map {i+1}")
+                        self.lw.addItem(item)
 
     def select_existing(self):
         current = self.lw.currentItem()
-        if not current:
-            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_MAP_FROM_LIST"))
-            return
-            
+        if not current: QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_MAP_FROM_LIST")); return
         img_path = current.data(Qt.ItemDataRole.UserRole)
-        
-        if not img_path:
-            QMessageBox.warning(self, tr("MSG_WARNING"), "Dosya yolu hatası.")
-            return
-            
         self.selected_file = img_path
         self.accept()
 
@@ -218,16 +194,15 @@ class CombatTracker(QWidget):
         self.fog_save_handler = None 
         self.create_encounter("Default Encounter"); self.init_ui()
 
-    def set_fog_save_handler(self, handler):
-        self.fog_save_handler = handler
+    def set_fog_save_handler(self, handler): self.fog_save_handler = handler
 
     def init_ui(self):
         layout = QVBoxLayout(self)
         enc_layout = QHBoxLayout()
         self.combo_encounters = QComboBox(); self.combo_encounters.currentIndexChanged.connect(self.switch_encounter); self.combo_encounters.setMinimumWidth(200)
-        self.btn_new_enc = QPushButton("➕"); self.btn_new_enc.setFixedWidth(40); self.btn_new_enc.setToolTip(tr("TIP_NEW_ENC")); self.btn_new_enc.clicked.connect(self.prompt_new_encounter)
-        self.btn_rename_enc = QPushButton("✏️"); self.btn_rename_enc.setFixedWidth(40); self.btn_rename_enc.setToolTip(tr("TIP_RENAME_ENC")); self.btn_rename_enc.clicked.connect(self.rename_encounter)
-        self.btn_del_enc = QPushButton("🗑️"); self.btn_del_enc.setFixedWidth(40); self.btn_del_enc.setToolTip(tr("TIP_DEL_ENC")); self.btn_del_enc.clicked.connect(self.delete_encounter); self.btn_del_enc.setObjectName("dangerBtn")
+        self.btn_new_enc = QPushButton("➕"); self.btn_new_enc.setFixedWidth(40); self.btn_new_enc.clicked.connect(self.prompt_new_encounter)
+        self.btn_rename_enc = QPushButton("✏️"); self.btn_rename_enc.setFixedWidth(40); self.btn_rename_enc.clicked.connect(self.rename_encounter)
+        self.btn_del_enc = QPushButton("🗑️"); self.btn_del_enc.setFixedWidth(40); self.btn_del_enc.clicked.connect(self.delete_encounter); self.btn_del_enc.setObjectName("dangerBtn")
         enc_layout.addWidget(QLabel(tr("LBL_ENCOUNTER_PREFIX"))); enc_layout.addWidget(self.combo_encounters); enc_layout.addWidget(self.btn_new_enc); enc_layout.addWidget(self.btn_rename_enc); enc_layout.addWidget(self.btn_del_enc)
         layout.addLayout(enc_layout)
 
@@ -498,12 +473,16 @@ class CombatTracker(QWidget):
         enc = self.encounters.get(self.current_encounter_id)
         if not enc: return
         if not enc.get("map_path"):
-             # --- DEĞİŞİKLİK BURADA: DataManager'ı gönderiyoruz ---
+             # --- UPDATED: ADD VIDEO FILTERS ---
              d = MapSelectorDialog(self.dm, self)
              if d.exec():
                   if d.is_new_import: 
-                       f,_=QFileDialog.getOpenFileName(self,"Select","", "Img (*.png *.jpg)"); 
-                       if f: enc["map_path"]=self.dm.import_image(f)
+                       f,_=QFileDialog.getOpenFileName(self,"Select","", "Media (*.png *.jpg *.jpeg *.mp4 *.webm *.mkv *.m4v)")
+                       if f: 
+                           # If video, assume absolute path for now (or copy)
+                           # For simplicity, we store the full path or import relative
+                           # dm.import_image does copy to assets.
+                           enc["map_path"] = self.dm.import_image(f)
                   elif d.selected_file: 
                        enc["map_path"] = d.selected_file
                   self.data_changed_signal.emit()
@@ -526,7 +505,14 @@ class CombatTracker(QWidget):
     def refresh_battle_map(self, force_map_reload=False):
         if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
         enc=self.encounters[self.current_encounter_id]; self._save_current_state_to_memory()
-        mp=self.dm.get_full_path(enc.get("map_path"))
+        
+        # --- PATH HANDLING FOR VIDEOS ---
+        raw_path = enc.get("map_path")
+        mp = raw_path
+        if raw_path and not raw_path.startswith("http"):
+             # If it's a file, get full path
+             mp = self.dm.get_full_path(raw_path)
+        
         cd=[]
         for c in enc["combatants"]:
              t="NPC"; a="LBL_ATTR_NEUTRAL"
