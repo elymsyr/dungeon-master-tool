@@ -92,20 +92,29 @@ class DataManager:
         set_language(new_settings.get("language", "EN"))
         self.current_theme = new_settings.get("theme", "dark")
 
-    def get_api_index(self, category):
-        if category in self.reference_cache: return self.reference_cache[category]
-        response = self.api_client.get_list(category)
+    def get_api_index(self, category, page=1, filters=None):
+        # Cache Key Generation
+        source = self.api_client.current_source_key
+        filter_str = str(sorted(filters.items())) if filters else ""
+        cache_key = f"{source}_{category}_p{page}_{hash(filter_str)}"
+        
+        if cache_key in self.reference_cache: 
+            return self.reference_cache[cache_key]
+            
+        response = self.api_client.get_list(category, page=page, filters=filters)
         
         # Handle new format {"results": [], "count": ...}
-        if isinstance(response, dict) and "results" in response:
-            data = response["results"]
-        else:
-            data = response
-
-        if data:
-            self.reference_cache[category] = data
+        # We cache the WHOLE response dict for paginated sources to preserve next/prev links offline
+        data_to_cache = response
+        
+        # Backward compatibility check for methods expecting just a list (if any)
+        # But get_api_index callers likely need to know about pagination now.
+        # However, ApiBrowser.load_list calls this.
+        
+        if data_to_cache:
+            self.reference_cache[cache_key] = data_to_cache
             self._save_reference_cache()
-            return data
+            return data_to_cache
         return []
 
     def get_available_campaigns(self):
@@ -330,25 +339,45 @@ class DataManager:
                 if new_id not in main_data[target_list_key]: main_data[target_list_key].append(new_id)
 
     def fetch_details_from_api(self, category, index_name, local_only=False):
+        # 1. Kaynak bazlı klasör yapısı (varsayılan dnd5e)
+        source_key = self.api_client.current_source_key
+        # category names are mapped to folders
         folder_map = {"Monster": "monsters", "NPC": "monsters", "Spell": "spells", "Equipment": "equipment", "Class": "classes", "Race": "races"}
         folder = folder_map.get(category)
+        
         if folder:
-            # 1. Önce MsgPack dene (Hızlı) - Ancak API cache dosyaları genelde JSON iner.
-            # Reference_Index cache'i MsgPack yaptık ama detay dosyaları (örn: aboleth.json) 
-            # şimdilik JSON kalabilir çünkü tek tek yükleniyorlar.
-            paths = [os.path.join(LIBRARY_DIR, folder, f"{index_name}.json")]
-            if category == "Equipment": paths.append(os.path.join(LIBRARY_DIR, "magic-items", f"{index_name}.json"))
-            for local_path in paths:
-                if os.path.exists(local_path):
-                    try:
-                        with open(local_path, "r", encoding="utf-8") as f: raw = json.load(f)
-                        parsed = self.api_client.parse_dispatcher(category, raw)
-                        return True, parsed
-                    except Exception as e: print(f"DEBUG: Cache Read Error ({index_name}): {e}")
+            # Örnek: cache/library/open5e/monsters/aboleth.json
+            base_lib = os.path.join(LIBRARY_DIR, source_key, folder)
+            local_path = os.path.join(base_lib, f"{index_name}.json")
+            
+            # 2. Önce Cache Kontrolü
+            if os.path.exists(local_path):
+                try:
+                    with open(local_path, "r", encoding="utf-8") as f: raw = json.load(f)
+                    parsed = self.api_client.parse_dispatcher(category, raw)
+                    return True, parsed
+                except Exception as e: print(f"DEBUG: Cache Read Error ({index_name}): {e}")
+        
         if local_only: return False, "Not in local cache."
-        parsed_data, msg = self.api_client.search(category, index_name)
-        if parsed_data: return True, parsed_data
-        return False, msg
+
+        # 3. API'den Çek (get_details ile RAW data al)
+        raw_data = self.api_client.get_details(category, index_name)
+        
+        if raw_data:
+            # 4. Cache'e Kaydet
+            if folder:
+                try:
+                    if not os.path.exists(base_lib): os.makedirs(base_lib)
+                    with open(local_path, "w", encoding="utf-8") as f:
+                        json.dump(raw_data, f, indent=2)
+                except Exception as e:
+                    print(f"Cache Write Error: {e}")
+            
+            # 5. Parse Et ve Dön
+            parsed_data = self.api_client.parse_dispatcher(category, raw_data)
+            return True, parsed_data
+            
+        return False, tr("MSG_SEARCH_NOT_FOUND")
 
     def delete_entity(self, eid):
         if eid in self.data["entities"]:

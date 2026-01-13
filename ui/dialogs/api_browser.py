@@ -199,9 +199,8 @@ class ApiBrowser(QDialog):
             doc_slug = self.combo_doc.currentData()
             if doc_slug: filters["document__slug"] = doc_slug
             
-        # ApiListWorker henüz güncellenmedi, önce onu güncellemeliyiz.
-        # Geçici olarak burada duralım ve worker'ı güncelleyelim.
-        self.list_worker = ApiListWorker(self.dm.api_client, self.current_category, page=self.current_page, filters=filters, parent=self)
+        # ApiListWorker artık DataManager kullanıyor (caching için)
+        self.list_worker = ApiListWorker(self.dm, self.current_category, page=self.current_page, filters=filters, parent=self)
         self.list_worker.finished.connect(self.on_list_loaded)
         self.list_worker.start()
 
