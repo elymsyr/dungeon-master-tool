@@ -1,10 +1,13 @@
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QLabel, QScrollArea, QFrame, QGraphicsView, 
                              QGraphicsScene, QGraphicsEllipseItem, QSlider, 
-                             QGraphicsPixmapItem, QPushButton, QCheckBox, QGraphicsPathItem)
+                             QGraphicsPixmapItem, QPushButton, QCheckBox, 
+                             QGraphicsPathItem, QGraphicsProxyWidget)
 from PyQt6.QtGui import (QPixmap, QColor, QFont, QBrush, QPen, QPainter, 
                          QPainterPath, QCursor, QWheelEvent, QMouseEvent, QImage, QPolygonF)
-from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF, QTimer, QRect, QPoint, QByteArray, QBuffer, QIODevice
+from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF, QTimer, QRect, QPoint, QByteArray, QBuffer, QIODevice, QUrl
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtMultimediaWidgets import QGraphicsVideoItem
 from core.locales import tr
 import os
 import base64
@@ -13,7 +16,7 @@ import base64
 class FogItem(QGraphicsPixmapItem):
     def __init__(self, width, height):
         super().__init__()
-        self.setZValue(200) # Above tokens
+        self.setZValue(200) # Above tokens (100) and Map (-100)
         # Start completely black (filled)
         self.image = QImage(int(width), int(height), QImage.Format.Format_ARGB32)
         self.image.fill(QColor(0, 0, 0, 255)) 
@@ -252,116 +255,134 @@ class BattleMapWidget(QWidget):
         self.current_map_path = None
         self.fog_item = None
         self.is_dm_view = is_dm_view 
-        self.is_view_locked = False # New state for locking view
+        self.is_view_locked = False 
+        
+        # --- NATIVE VIDEO PLAYER (Local Files) ---
+        self.video_player = None
+        self.video_item = None
+        self.audio_output = None
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
-        toolbar = QHBoxLayout(); toolbar.setContentsMargins(5, 5, 5, 5)
-        self.btn_reset_view = QPushButton("🏠"); self.btn_reset_view.setToolTip(tr("TIP_FIT_VIEW")); self.btn_reset_view.setFixedSize(40, 30); self.btn_reset_view.clicked.connect(self.fit_map_in_view)
+        # --- TOOLBAR SETUP ---
+        self.toolbar = QHBoxLayout()
+        self.toolbar.setContentsMargins(5, 5, 5, 5)
+        
+        self.btn_reset_view = QPushButton("🏠"); self.btn_reset_view.setToolTip(tr("TIP_FIT_VIEW")); self.btn_reset_view.setFixedSize(30, 25); self.btn_reset_view.clicked.connect(self.fit_map_in_view)
         
         self.lbl_size = QLabel(tr("LBL_TOKEN_SIZE")); self.lbl_size.setObjectName("toolbarLabel")
         self.slider_size = QSlider(Qt.Orientation.Horizontal); self.slider_size.setMinimum(20); self.slider_size.setMaximum(300); self.slider_size.setValue(self.token_size); self.slider_size.valueChanged.connect(self.change_token_size); self.slider_size.setFixedWidth(120)
         
-        toolbar.addWidget(self.btn_reset_view)
+        self.toolbar.addWidget(self.btn_reset_view)
         
-        # --- NEW: LOCK BUTTON (DM ONLY) ---
         if self.is_dm_view:
             self.btn_lock_view = QPushButton("🔓")
-            self.btn_lock_view.setFixedSize(40, 30)
+            self.btn_lock_view.setFixedSize(30, 25)
             self.btn_lock_view.setCheckable(True)
             self.btn_lock_view.setToolTip(tr("BTN_LOCK_VIEW_TOOLTIP") if hasattr(tr, "BTN_LOCK_VIEW_TOOLTIP") else "Lock Player View")
             self.btn_lock_view.clicked.connect(self.toggle_view_lock)
-            toolbar.addWidget(self.btn_lock_view)
+            self.toolbar.addWidget(self.btn_lock_view)
         
-        toolbar.addWidget(self.lbl_size)
-        toolbar.addWidget(self.slider_size)
+        self.toolbar.addWidget(self.lbl_size)
+        self.toolbar.addWidget(self.slider_size)
         
         if self.is_dm_view:
-            toolbar.addSpacing(15)
+            self.toolbar.addSpacing(15)
             self.btn_fog_toggle = QPushButton(tr("BTN_FOG")); self.btn_fog_toggle.setCheckable(True)
             self.btn_fog_toggle.setStyleSheet("QPushButton:checked { background-color: #d32f2f; color: white; font-weight: bold; }")
             self.btn_fog_toggle.clicked.connect(self.toggle_fog_mode)
-            toolbar.addWidget(self.btn_fog_toggle)
+            self.toolbar.addWidget(self.btn_fog_toggle)
             
             self.lbl_fog_hint = QLabel(tr("LBL_FOG_HINT"))
             self.lbl_fog_hint.setStyleSheet("color: #aaa; font-size: 10px; margin-left: 5px; margin-right: 5px;")
-            toolbar.addWidget(self.lbl_fog_hint)
+            self.toolbar.addWidget(self.lbl_fog_hint)
             
             self.btn_fog_fill = QPushButton(tr("BTN_FOG_FILL")); self.btn_fog_fill.setFixedSize(60, 25)
             self.btn_fog_fill.clicked.connect(self.fill_fog)
-            self.btn_fog_clear = QPushButton(tr("BTN_FOG_CLEAR")); self.btn_fog_clear.setFixedSize(65, 25)
+            self.btn_fog_clear = QPushButton(tr("BTN_FOG_CLEAR")); self.btn_fog_clear.setFixedSize(60, 25)
             self.btn_fog_clear.clicked.connect(self.clear_fog)
-            toolbar.addWidget(self.btn_fog_fill)
-            toolbar.addWidget(self.btn_fog_clear)
+            self.toolbar.addWidget(self.btn_fog_fill)
+            self.toolbar.addWidget(self.btn_fog_clear)
 
-        toolbar.addStretch()
-        layout.addLayout(toolbar)
+        self.toolbar.addStretch()
+        layout.addLayout(self.toolbar)
         
         self.scene = QGraphicsScene(); self.scene.setBackgroundBrush(QBrush(QColor("#111")))
         self.view = BattleMapView(self.scene) 
         self.view.setStyleSheet("border: none;") 
         
-        # --- MODIFIED SIGNAL CONNECTION ---
-        # Instead of connecting directly, we connect to an internal slot to check lock state
         self.view.view_changed_signal.connect(self.on_view_changed_internal)
-        
         self.view.fog_changed_signal.connect(self.on_local_fog_changed)
         
         layout.addWidget(self.view)
 
+    def add_toolbar_widget(self, widget):
+        """Adds a widget to the far right of the toolbar (after stretch)."""
+        self.toolbar.addWidget(widget)
+
     def toggle_view_lock(self, checked):
         self.is_view_locked = checked
         if checked:
-            self.btn_lock_view.setText("🔒")
-            self.btn_lock_view.setStyleSheet("background-color: #d32f2f; color: white;")
+            self.btn_lock_view.setText("🔒"); self.btn_lock_view.setStyleSheet("background-color: #d32f2f; color: white;")
         else:
-            self.btn_lock_view.setText("🔓")
-            self.btn_lock_view.setStyleSheet("")
+            self.btn_lock_view.setText("🔓"); self.btn_lock_view.setStyleSheet("")
 
     def on_view_changed_internal(self, rect):
-        # Only emit sync signal if NOT locked
-        if not self.is_view_locked:
-            self.view_sync_signal.emit(rect)
+        if not self.is_view_locked: self.view_sync_signal.emit(rect)
 
     def get_fog_data_base64(self):
         if not self.fog_item: return None
-        buffer = QBuffer()
-        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+        buffer = QBuffer(); buffer.open(QIODevice.OpenModeFlag.WriteOnly)
         self.fog_item.image.save(buffer, "PNG")
         return base64.b64encode(buffer.data()).decode('utf-8')
+
+    def get_current_map_size(self):
+        """Helper to determine what the actual content size is."""
+        w, h = 1920, 1080
+        if self.map_item and self.map_item.isVisible():
+            r = self.map_item.boundingRect()
+            w, h = r.width(), r.height()
+        elif self.video_item and self.video_item.isVisible():
+            r = self.video_item.boundingRect() # sometimes nativeSize needed
+            if r.width() > 0:
+                w, h = r.width(), r.height()
+        return int(w), int(h)
 
     def load_fog_from_base64(self, b64_str):
         if not b64_str: return
         try:
             data = base64.b64decode(b64_str)
-            img = QImage()
-            img.loadFromData(data, "PNG")
+            img = QImage(); img.loadFromData(data, "PNG")
             
-            if not self.fog_item and self.map_item:
-                self.init_fog_layer(self.map_item.boundingRect().width(), self.map_item.boundingRect().height())
+            target_w, target_h = self.get_current_map_size()
+            
+            # If no fog exists, initialize with saved size OR map size
+            if not self.fog_item:
+                self.init_fog_layer(max(img.width(), target_w), max(img.height(), target_h))
+            
+            # If the loaded fog doesn't match current map, we might need to recreate/resize
+            # But usually we just load what we have. 
+            # If the user clicks "Fill" later, that function will now fix the size.
             
             if self.fog_item:
-                if img.size() != self.fog_item.image.size():
-                    img = img.scaled(self.fog_item.image.size())
+                # If sizes differ drastically, resize current item to match image?
+                # For now, just set the image.
+                if img.size() != self.fog_item.image.size(): 
+                    self.init_fog_layer(img.width(), img.height())
                 
                 self.fog_item.set_fog_image(img)
                 self.on_local_fog_changed(img)
-        except Exception as e:
-            print(f"Fog load error: {e}")
+                
+        except Exception as e: print(f"Fog load error: {e}")
 
     def reset_fog(self):
-        """Removes the fog item from the scene entirely."""
-        if self.fog_item:
-            self.scene.removeItem(self.fog_item)
-            self.fog_item = None
+        if self.fog_item: self.scene.removeItem(self.fog_item); self.fog_item = None
 
     def toggle_fog_mode(self, checked):
         self.view.is_fog_edit_mode = checked
-        if checked:
-            self.view.setCursor(Qt.CursorShape.CrossCursor)
-        else:
-            self.view.setCursor(Qt.CursorShape.ArrowCursor)
+        if checked: self.view.setCursor(Qt.CursorShape.CrossCursor)
+        else: self.view.setCursor(Qt.CursorShape.ArrowCursor)
 
     def init_fog_layer(self, width, height):
         if self.fog_item: self.scene.removeItem(self.fog_item)
@@ -371,12 +392,25 @@ class BattleMapWidget(QWidget):
         self.view.set_fog_item(self.fog_item)
 
     def fill_fog(self):
+        # 1. Determine correct size
+        target_w, target_h = self.get_current_map_size()
+        
+        # 2. Check if current fog item exists and matches size
+        if not self.fog_item or self.fog_item.image.width() != target_w or self.fog_item.image.height() != target_h:
+            self.init_fog_layer(target_w, target_h)
+            
+        # 3. Fill
         if self.fog_item:
             self.fog_item.image.fill(QColor(0, 0, 0, 255))
             self.fog_item.update_pixmap()
             self.on_local_fog_changed(self.fog_item.image)
 
     def clear_fog(self):
+        # Similar logic: Ensure coverage before clearing (though clearing usually implies transparent)
+        target_w, target_h = self.get_current_map_size()
+        if not self.fog_item or self.fog_item.image.width() != target_w or self.fog_item.image.height() != target_h:
+            self.init_fog_layer(target_w, target_h)
+
         if self.fog_item:
             self.fog_item.image.fill(Qt.GlobalColor.transparent)
             self.fog_item.update_pixmap()
@@ -386,44 +420,78 @@ class BattleMapWidget(QWidget):
         self.fog_update_signal.emit(qimage)
 
     def apply_external_fog(self, qimage):
-        if not self.fog_item and self.map_item:
-            rect = self.map_item.boundingRect()
-            self.init_fog_layer(rect.width(), rect.height())
+        if not self.fog_item and qimage:
+            self.init_fog_layer(qimage.width(), qimage.height())
+        elif not self.fog_item:
+            w, h = self.get_current_map_size()
+            self.init_fog_layer(w, h)
         
-        if self.fog_item and qimage:
-            self.fog_item.set_fog_image(qimage)
+        if self.fog_item and qimage: self.fog_item.set_fog_image(qimage)
 
     def fit_map_in_view(self):
-        if self.map_item: self.view.fitInView(self.map_item, Qt.AspectRatioMode.KeepAspectRatio)
+        if self.map_item and self.map_item.isVisible(): 
+            self.view.fitInView(self.map_item, Qt.AspectRatioMode.KeepAspectRatio)
+        elif self.video_item and self.video_item.isVisible():
+            self.view.fitInView(self.video_item, Qt.AspectRatioMode.KeepAspectRatio)
 
-    def apply_view_state(self, rect):
-        self.view.set_view_state(rect)
+    def apply_view_state(self, rect): self.view.set_view_state(rect)
 
     def set_map_image(self, pixmap, path_ref=None):
-        # Even if path is same, if fog is missing (reset), allow re-init
-        if path_ref and path_ref == self.current_map_path and self.map_item: 
-            if not self.fog_item:
-                self.init_fog_layer(self.map_item.boundingRect().width(), self.map_item.boundingRect().height())
-            return
-
         self.current_map_path = path_ref
         
+        # --- CLEANUP PREVIOUS ---
+        if self.map_item: self.map_item.hide()
+        if self.video_item:
+            self.video_item.hide()
+            if self.video_player: self.video_player.stop()
+
+        is_local_video = path_ref and path_ref.endswith(('.mp4', '.webm', '.mkv', '.avi', '.m4v'))
+
+        # --- 1. LOCAL VIDEO FILE ---
+        if is_local_video:
+            if not self.video_player:
+                self.video_player = QMediaPlayer()
+                self.audio_output = QAudioOutput()
+                self.video_player.setAudioOutput(self.audio_output)
+                self.video_item = QGraphicsVideoItem()
+                self.video_item.setZValue(-200)
+                self.scene.addItem(self.video_item)
+                self.video_player.setVideoOutput(self.video_item)
+                self.video_player.setLoops(QMediaPlayer.Loops.Infinite)
+            
+            self.video_item.show()
+            self.video_player.setSource(QUrl.fromLocalFile(path_ref))
+            self.video_player.play()
+            
+            def on_media_status(status):
+                if status == QMediaPlayer.MediaStatus.BufferedMedia or status == QMediaPlayer.MediaStatus.LoadedMedia:
+                    sz = self.video_item.nativeSize()
+                    if not sz.isEmpty():
+                        self.video_item.setSize(sz)
+                        self.scene.setSceneRect(0, 0, sz.width(), sz.height())
+                        # Note: If Fog exists (loaded from saved data), don't overwrite it here
+                        # But if NO fog, use video size
+                        if not self.fog_item: self.init_fog_layer(sz.width(), sz.height())
+                        self.fit_map_in_view()
+            self.video_player.mediaStatusChanged.connect(on_media_status)
+            return
+
+        # --- 2. STATIC IMAGE ---
         if pixmap:
-            if self.map_item: self.scene.removeItem(self.map_item)
-            self.map_item = QGraphicsPixmapItem(pixmap)
-            self.map_item.setZValue(-100)
-            self.map_item.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
-            self.scene.addItem(self.map_item)
+            if not self.map_item:
+                self.map_item = QGraphicsPixmapItem()
+                self.map_item.setZValue(-100)
+                self.map_item.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
+                self.scene.addItem(self.map_item)
+            
+            self.map_item.setPixmap(pixmap)
+            self.map_item.show()
             self.scene.setSceneRect(self.map_item.boundingRect())
             
-            if not self.fog_item:
-                self.init_fog_layer(pixmap.width(), pixmap.height())
-            
+            if not self.fog_item: self.init_fog_layer(pixmap.width(), pixmap.height())
             QTimer.singleShot(50, self.fit_map_in_view)
         else:
-            if self.map_item: self.scene.removeItem(self.map_item)
-            if self.fog_item: self.scene.removeItem(self.fog_item)
-            self.map_item = None; self.fog_item = None; self.current_map_path = None
+            self.current_map_path = None
 
     def change_token_size(self, val):
         self.token_size = val
@@ -441,10 +509,34 @@ class BattleMapWidget(QWidget):
             self.btn_fog_fill.setText(tr("BTN_FOG_FILL"))
             self.btn_fog_clear.setText(tr("BTN_FOG_CLEAR"))
 
-    def update_tokens(self, combatants, current_index, dm_manager, map_path=None, saved_token_size=None):
+    def update_tokens(self, combatants, current_index, dm_manager, map_path=None, saved_token_size=None, fog_data=None):
+        """
+        Updates the map. Arguments allow setting everything in one go.
+        fog_data: Base64 string of saved fog. If provided, it is applied BEFORE tokens are visible.
+        """
         if saved_token_size and saved_token_size != self.token_size:
             self.token_size = saved_token_size; self.slider_size.blockSignals(True); self.slider_size.setValue(saved_token_size); self.slider_size.blockSignals(False)
-        if map_path: pix = QPixmap(map_path) if os.path.exists(map_path) else None; self.set_map_image(pix, map_path)
+        
+        # 1. Update Map Background
+        if map_path != self.current_map_path:
+            if map_path:
+                is_video = map_path.endswith(('.mp4', '.webm', '.mkv', '.avi', '.m4v'))
+                if is_video: self.set_map_image(None, map_path)
+                else:
+                    pix = QPixmap(map_path) if os.path.exists(map_path) else None
+                    self.set_map_image(pix, map_path)
+            else:
+                self.set_map_image(None, None)
+
+        # 2. Update Fog (Priority over tokens to prevent flashing)
+        if fog_data:
+            self.load_fog_from_base64(fog_data)
+        elif map_path and not self.fog_item:
+            # If new map and no fog data, default to full fog (hidden)
+            self.init_fog_layer(1920, 1080) 
+            self.fill_fog()
+
+        # 3. Update Tokens
         incoming_tids = set()
         for i, c in enumerate(combatants):
             tid = c.get("tid") or c.get("eid")
@@ -478,6 +570,7 @@ class BattleMapWidget(QWidget):
                 if x is not None and y is not None: new_token.setPos(x, y)
                 else: offset = len(self.tokens) * (self.token_size + 10); new_token.setPos(50 + offset, 50)
                 new_token.setZValue(100 if is_active else 10); self.scene.addItem(new_token); self.tokens[tid] = new_token
+        
         to_remove = [tid for tid in self.tokens if tid not in incoming_tids]
         for tid in to_remove: self.scene.removeItem(self.tokens[tid]); del self.tokens[tid]
 
@@ -501,8 +594,10 @@ class BattleMapWindow(QMainWindow):
         main_layout.addWidget(self.sidebar, 0)
 
     def retranslate_ui(self): self.setWindowTitle(tr("TITLE_BATTLE_MAP")); self.lbl_title.setText(tr("TITLE_TURN_ORDER")); self.map_widget.retranslate_ui()
-    def update_combat_data(self, combatants, current_index, map_path=None, saved_token_size=None):
-        self.map_widget.update_tokens(combatants, current_index, self.dm, map_path, saved_token_size); self._update_sidebar(combatants, current_index)
+    
+    def update_combat_data(self, combatants, current_index, map_path=None, saved_token_size=None, fog_data=None):
+        self.map_widget.update_tokens(combatants, current_index, self.dm, map_path, saved_token_size, fog_data)
+        self._update_sidebar(combatants, current_index)
     
     def sync_view(self, rect): self.map_widget.apply_view_state(rect)
     
