@@ -252,17 +252,28 @@ class BattleMapWidget(QWidget):
         self.current_map_path = None
         self.fog_item = None
         self.is_dm_view = is_dm_view 
+        self.is_view_locked = False # New state for locking view
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
         toolbar = QHBoxLayout(); toolbar.setContentsMargins(5, 5, 5, 5)
-        self.btn_reset_view = QPushButton("🏠"); self.btn_reset_view.setToolTip(tr("TIP_FIT_VIEW")); self.btn_reset_view.setFixedSize(30, 25); self.btn_reset_view.clicked.connect(self.fit_map_in_view)
+        self.btn_reset_view = QPushButton("🏠"); self.btn_reset_view.setToolTip(tr("TIP_FIT_VIEW")); self.btn_reset_view.setFixedSize(40, 30); self.btn_reset_view.clicked.connect(self.fit_map_in_view)
         
         self.lbl_size = QLabel(tr("LBL_TOKEN_SIZE")); self.lbl_size.setObjectName("toolbarLabel")
         self.slider_size = QSlider(Qt.Orientation.Horizontal); self.slider_size.setMinimum(20); self.slider_size.setMaximum(300); self.slider_size.setValue(self.token_size); self.slider_size.valueChanged.connect(self.change_token_size); self.slider_size.setFixedWidth(120)
         
         toolbar.addWidget(self.btn_reset_view)
+        
+        # --- NEW: LOCK BUTTON (DM ONLY) ---
+        if self.is_dm_view:
+            self.btn_lock_view = QPushButton("🔓")
+            self.btn_lock_view.setFixedSize(40, 30)
+            self.btn_lock_view.setCheckable(True)
+            self.btn_lock_view.setToolTip(tr("BTN_LOCK_VIEW_TOOLTIP") if hasattr(tr, "BTN_LOCK_VIEW_TOOLTIP") else "Lock Player View")
+            self.btn_lock_view.clicked.connect(self.toggle_view_lock)
+            toolbar.addWidget(self.btn_lock_view)
+        
         toolbar.addWidget(self.lbl_size)
         toolbar.addWidget(self.slider_size)
         
@@ -279,7 +290,7 @@ class BattleMapWidget(QWidget):
             
             self.btn_fog_fill = QPushButton(tr("BTN_FOG_FILL")); self.btn_fog_fill.setFixedSize(60, 25)
             self.btn_fog_fill.clicked.connect(self.fill_fog)
-            self.btn_fog_clear = QPushButton(tr("BTN_FOG_CLEAR")); self.btn_fog_clear.setFixedSize(60, 25)
+            self.btn_fog_clear = QPushButton(tr("BTN_FOG_CLEAR")); self.btn_fog_clear.setFixedSize(65, 25)
             self.btn_fog_clear.clicked.connect(self.clear_fog)
             toolbar.addWidget(self.btn_fog_fill)
             toolbar.addWidget(self.btn_fog_clear)
@@ -290,11 +301,28 @@ class BattleMapWidget(QWidget):
         self.scene = QGraphicsScene(); self.scene.setBackgroundBrush(QBrush(QColor("#111")))
         self.view = BattleMapView(self.scene) 
         self.view.setStyleSheet("border: none;") 
-        self.view.view_changed_signal.connect(self.view_sync_signal.emit)
+        
+        # --- MODIFIED SIGNAL CONNECTION ---
+        # Instead of connecting directly, we connect to an internal slot to check lock state
+        self.view.view_changed_signal.connect(self.on_view_changed_internal)
         
         self.view.fog_changed_signal.connect(self.on_local_fog_changed)
         
         layout.addWidget(self.view)
+
+    def toggle_view_lock(self, checked):
+        self.is_view_locked = checked
+        if checked:
+            self.btn_lock_view.setText("🔒")
+            self.btn_lock_view.setStyleSheet("background-color: #d32f2f; color: white;")
+        else:
+            self.btn_lock_view.setText("🔓")
+            self.btn_lock_view.setStyleSheet("")
+
+    def on_view_changed_internal(self, rect):
+        # Only emit sync signal if NOT locked
+        if not self.is_view_locked:
+            self.view_sync_signal.emit(rect)
 
     def get_fog_data_base64(self):
         if not self.fog_item: return None
