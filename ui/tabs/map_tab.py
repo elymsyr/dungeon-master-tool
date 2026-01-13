@@ -6,8 +6,9 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QColorDialog, QCheckBox)
 from PyQt6.QtGui import QPixmap, QColor, QPainter
 from PyQt6.QtCore import Qt, QRectF
-from ui.widgets.map_viewer import MapViewer, MapPinItem, TimelinePinItem
+from ui.widgets.map_viewer import MapViewer, MapPinItem, TimelinePinItem, TimelineConnectionItem
 from ui.dialogs.timeline_entry import TimelineEntryDialog
+from ui.dialogs.entity_selector import EntitySelectorDialog
 from core.locales import tr
 from config import CACHE_DIR
 
@@ -20,16 +21,34 @@ class MapTab(QWidget):
         self.show_timeline = False
         self.pending_parent_id = None
         
-        # ID for the live projection to keep updates consistent
         self.live_map_id = "Live_Map_Projection"
+        self.last_projected_path = None
+        
+        self.active_entity_filters = set()
         
         self.init_ui()
 
     def init_ui(self):
         layout = QVBoxLayout(self); toolbar = QHBoxLayout()
-        self.btn_load_map = QPushButton(tr("BTN_LOAD_MAP")); self.btn_load_map.clicked.connect(self.upload_map_image)
-        self.btn_toggle_timeline = QPushButton(tr("BTN_TOGGLE_TIMELINE", state="OFF")); self.btn_toggle_timeline.setCheckable(True)
+        
+        self.btn_load_map = QPushButton(tr("BTN_LOAD_MAP"))
+        self.btn_load_map.clicked.connect(self.upload_map_image)
+        
+        self.btn_toggle_timeline = QPushButton(tr("BTN_TOGGLE_TIMELINE", state="OFF"))
+        self.btn_toggle_timeline.setCheckable(True)
         self.btn_toggle_timeline.clicked.connect(self.toggle_timeline_mode)
+        
+        # --- FILTER 3: SPECIFIC ENTITY FILTER ---
+        self.btn_filter_entities = QPushButton("🔍 Filter")
+        self.btn_filter_entities.setToolTip("Filter Timeline by specific characters/locations")
+        self.btn_filter_entities.clicked.connect(self.open_entity_filter_dialog)
+        
+        # --- CLEAR FILTER BUTTON (Initially Hidden) ---
+        self.btn_clear_filter = QPushButton("Clear")
+        self.btn_clear_filter.setToolTip("Clear Entity Filter")
+        self.btn_clear_filter.setVisible(False)
+        self.btn_clear_filter.setStyleSheet("color: #ef5350; font-weight: bold;")
+        self.btn_clear_filter.clicked.connect(self.clear_entity_filter)
         
         # --- FILTER 1: TIMELINE (Show Non-Player) ---
         self.check_timeline_filter = QCheckBox(tr("LBL_SHOW_NON_PLAYER") if hasattr(tr, "LBL_SHOW_NON_PLAYER") else "Show Non-Player Timeline")
@@ -46,7 +65,17 @@ class MapTab(QWidget):
         self.btn_show_map_pl = QPushButton(tr("BTN_PROJECT_MAP")); self.btn_show_map_pl.setObjectName("primaryBtn")
         self.btn_show_map_pl.clicked.connect(self.push_map_to_player)
         
-        for w in [self.btn_load_map, self.btn_toggle_timeline, self.check_timeline_filter, self.check_show_locations]: 
+        # ADD WIDGETS IN ORDER
+        widgets = [
+            self.btn_load_map, 
+            self.btn_toggle_timeline, 
+            self.btn_filter_entities,
+            self.btn_clear_filter, # Added next to filter button
+            self.check_timeline_filter, 
+            self.check_show_locations
+        ]
+        
+        for w in widgets: 
             toolbar.addWidget(w)
         
         toolbar.addStretch(); toolbar.addWidget(self.btn_show_map_pl); layout.addLayout(toolbar)
@@ -57,22 +86,51 @@ class MapTab(QWidget):
         self.map_viewer.pin_moved_signal.connect(self.handle_pin_moved)
         self.map_viewer.timeline_moved_signal.connect(self.handle_timeline_moved)
         self.map_viewer.link_placed_signal.connect(self.handle_quick_link_placement) 
+        self.map_viewer.existing_pin_linked_signal.connect(self.handle_existing_pin_link)
         v_layout.addWidget(self.map_viewer); layout.addWidget(viewer_frame)
 
     def retranslate_ui(self):
         self.btn_load_map.setText(tr("BTN_LOAD_MAP")); self.btn_show_map_pl.setText(tr("BTN_PROJECT_MAP"))
-        st = "ON" if self.show_timeline else "OFF"; self.btn_toggle_timeline.setText(tr("BTN_TOGGLE_TIMELINE", state=st))
+        self.btn_toggle_timeline.setText(tr("BTN_TOGGLE_TIMELINE"))
         self.check_timeline_filter.setText(tr("LBL_SHOW_NON_PLAYER") if hasattr(tr, "LBL_SHOW_NON_PLAYER") else "Show Non-Player Timeline")
         self.check_show_locations.setText(tr("LBL_SHOW_LOCATIONS") if hasattr(tr, "LBL_SHOW_LOCATIONS") else "Show Map Pins")
 
+    def open_entity_filter_dialog(self):
+        dlg = EntitySelectorDialog(self.dm, self)
+        dlg.setWindowTitle("Filter Timeline by Entities")
+        dlg.btn_add.setText("🔍 Filter")
+        
+        if dlg.exec():
+            if dlg.selected_entities:
+                self.active_entity_filters = set(dlg.selected_entities)
+                self.btn_filter_entities.setText(f"🔍 Filter ({len(self.active_entity_filters)})")
+                self.btn_filter_entities.setStyleSheet("background-color: #d32f2f; color: white;") 
+                self.btn_clear_filter.setVisible(True)
+            else:
+                self.clear_entity_filter()
+                return
+            
+            self.apply_filters()
+
+    def clear_entity_filter(self):
+        """Resets the specific entity filter."""
+        self.active_entity_filters = set()
+        self.btn_filter_entities.setText("🔍 Filter")
+        self.btn_filter_entities.setStyleSheet("")
+        self.btn_clear_filter.setVisible(False)
+        self.apply_filters()
+
     def apply_filters(self):
         """
-        Applies visibility logic and auto-updates the projection if active.
+        Applies visibility logic.
+        - Map Pins: Controlled ONLY by 'Show Map Pins'.
+        - Timeline Pins: Controlled by 'Show Non-Player' AND 'Entity Filter'.
         """
         show_non_player_timeline = self.check_timeline_filter.isChecked()
         show_map_pins = self.check_show_locations.isChecked()
         
         entities = self.dm.data["entities"]
+        visible_pin_ids = set() 
         
         def has_player(id_list):
             if not id_list: return False
@@ -81,33 +139,62 @@ class MapTab(QWidget):
                     return True
             return False
 
+        def passes_entity_filter(id_list):
+            if not self.active_entity_filters: 
+                return True
+            if not id_list:
+                return False
+            pin_entities = set(id_list)
+            return not pin_entities.isdisjoint(self.active_entity_filters)
+
+        # PASS 1: Determine Pin Visibility
         for item in self.map_viewer.scene.items():
-            # 1. Timeline Pins
+            
+            # --- 1. TIMELINE PINS ---
             if isinstance(item, TimelinePinItem):
                 pin_data = self.dm.get_timeline_pin(item.pin_id)
                 if pin_data:
                     ids = pin_data.get("entity_ids", [])
                     if not ids and pin_data.get("entity_id"): ids = [pin_data["entity_id"]]
+                    
+                    # A. Check Specific Entity Filter
+                    if not passes_entity_filter(ids):
+                        item.setVisible(False)
+                        continue
+
+                    # B. Check Player/Non-Player Logic
                     is_player_related = has_player(ids)
+                    
                     if is_player_related:
                         item.setVisible(True)
+                        visible_pin_ids.add(item.pin_id)
                     else:
                         item.setVisible(show_non_player_timeline)
+                        if show_non_player_timeline:
+                            visible_pin_ids.add(item.pin_id)
             
-            # 2. Map Pins
+            # --- 2. MAP PINS ---
             elif isinstance(item, MapPinItem):
+                # Map Pins are NOT affected by the Entity Filter, only the general checkbox
                 item.setVisible(show_map_pins)
+
+        # PASS 2: Determine Connection Line Visibility
+        for item in self.map_viewer.scene.items():
+            if isinstance(item, TimelineConnectionItem):
+                if item.start_id in visible_pin_ids and item.end_id in visible_pin_ids:
+                    item.setVisible(True)
+                else:
+                    item.setVisible(False)
 
         # --- AUTO UPDATE PROJECTION ---
         if self.main_window_ref and hasattr(self.main_window_ref, "projection_manager"):
             pm = self.main_window_ref.projection_manager
-            # Update only if the map is already being projected
             if self.live_map_id in pm.thumbnails:
                 self.push_map_to_player()
 
     def toggle_timeline_mode(self):
-        self.show_timeline = self.btn_toggle_timeline.isChecked(); st = "ON" if self.show_timeline else "OFF"
-        self.btn_toggle_timeline.setText(tr("BTN_TOGGLE_TIMELINE", state=st))
+        self.show_timeline = self.btn_toggle_timeline.isChecked()
+        self.btn_toggle_timeline.setText(tr("BTN_TOGGLE_TIMELINE"))
         self.btn_toggle_timeline.setStyleSheet("background-color: #ffb300; color: black; font-weight: bold;" if self.show_timeline else "")
         self.pending_parent_id = None; self.render_map()
 
@@ -158,6 +245,33 @@ class MapTab(QWidget):
         day = parent['day'] if parent else 1; color = parent.get('color') if parent else None
         self.dm.add_timeline_pin(x, y, day=day, note=tr("LBL_NEW_EVENT"), parent_id=self.pending_parent_id, color=color)
         self.pending_parent_id = None; self.render_map()
+
+    def handle_existing_pin_link(self, target_id):
+        if not self.pending_parent_id: return
+        if target_id == self.pending_parent_id: 
+            QMessageBox.warning(self, tr("MSG_WARNING"), "Cannot link a pin to itself.")
+            self.pending_parent_id = None
+            return
+
+        timeline = self.dm.data["map_data"]["timeline"]
+        found = False
+        for p in timeline:
+            if p["id"] == target_id:
+                if "parent_ids" not in p: p["parent_ids"] = []
+                if p.get("parent_id") and p["parent_id"] not in p["parent_ids"]:
+                    p["parent_ids"].append(p["parent_id"])
+                
+                if self.pending_parent_id not in p["parent_ids"]:
+                    p["parent_ids"].append(self.pending_parent_id)
+                    found = True
+                
+                p["parent_id"] = self.pending_parent_id
+                break
+        
+        if found:
+            self.dm.save_data()
+            self.pending_parent_id = None
+            self.render_map()
 
     def handle_new_entity_pin(self, x, y):
         entities = self.dm.data["entities"]
