@@ -2,11 +2,11 @@ import os
 import copy
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QFrame, QPushButton, 
                              QHBoxLayout, QSlider, QComboBox, QGroupBox, QTabWidget,
-                             QGridLayout, QScrollArea)
+                             QGridLayout, QScrollArea, QFileDialog, QInputDialog, QMessageBox)
 from PyQt6.QtCore import Qt, pyqtSignal
 from core.locales import tr
 from core.audio.engine import MusicBrain
-from core.audio.loader import load_all_themes, load_global_library
+from core.audio.loader import load_all_themes, load_global_library, add_to_library
 
 class SoundpadPanel(QWidget):
     theme_loaded_with_shortcuts = pyqtSignal(dict)
@@ -145,7 +145,13 @@ class SoundpadPanel(QWidget):
         self.ambience_layout = QVBoxLayout(content_widget)
         self.ambience_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         scroll.setWidget(content_widget)
+        scroll.setWidget(content_widget)
         layout.addWidget(scroll)
+        
+        # Add Button
+        self.btn_add_ambience = QPushButton("➕ " + tr("BTN_ADD_AMBIENCE"))
+        self.btn_add_ambience.clicked.connect(self.add_new_ambience)
+        layout.addWidget(self.btn_add_ambience)
 
     def _setup_sfx_tab(self):
         layout = QVBoxLayout(self.sfx_tab)
@@ -156,7 +162,13 @@ class SoundpadPanel(QWidget):
         self.sfx_grid_layout = QGridLayout(content_widget)
         self.sfx_grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         scroll.setWidget(content_widget)
+        scroll.setWidget(content_widget)
         layout.addWidget(scroll)
+        
+        # Add Button
+        self.btn_add_sfx = QPushButton("➕ " + tr("BTN_ADD_SFX"))
+        self.btn_add_sfx.clicked.connect(self.add_new_sfx)
+        layout.addWidget(self.btn_add_sfx)
 
     def _build_ambience_slots(self):
         ambience_list = self.global_library.get('ambience', [])
@@ -326,3 +338,57 @@ class SoundpadPanel(QWidget):
         for i, slot in enumerate(self.ambience_slots):
             slot['group'].setTitle(tr("LBL_AMBIENCE_SLOT") + f" {i+1}")
             slot['combo'].setItemText(0, tr("OPT_SILENCE"))
+
+    def add_new_ambience(self):
+        self._add_new_sound('ambience')
+
+    def add_new_sfx(self):
+        self._add_new_sound('sfx')
+
+    def _add_new_sound(self, category):
+        file_path, _ = QFileDialog.getOpenFileName(self, tr("TITLE_SELECT_AUDIO"), "", "Audio Files (*.mp3 *.wav *.ogg *.flac *.m4a)")
+        if not file_path:
+            return
+
+        name, ok = QInputDialog.getText(self, tr("TITLE_ADD_SOUND"), tr("LBL_SOUND_NAME"))
+        if not ok or not name:
+            return
+
+        success, result_or_msg = add_to_library(category, name, file_path)
+        
+        if success:
+            # Reload library
+            self.global_library = load_global_library()
+            self.audio_brain.library = self.global_library
+            
+            if category == 'ambience':
+                self._refresh_ambience_combos()
+            elif category == 'sfx':
+                self._build_sfx_grid() # Rebuild grid
+                
+            QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_SOUND_ADDED"))
+        else:
+            QMessageBox.critical(self, tr("MSG_ERROR"), str(result_or_msg))
+
+    def _refresh_ambience_combos(self):
+        # Save current selections
+        current_selections = []
+        for slot in self.ambience_slots:
+            current_selections.append(slot['combo'].currentData())
+            
+        # Clear and refill
+        ambience_list = self.global_library.get('ambience', [])
+        for slot in self.ambience_slots:
+            slot['combo'].blockSignals(True)
+            slot['combo'].clear()
+            slot['combo'].addItem(tr("OPT_SILENCE"), None)
+            for ambience in ambience_list:
+                slot['combo'].addItem(ambience['name'], ambience['id'])
+            slot['combo'].blockSignals(False)
+            
+        # Restore selections if possible
+        for i, sel_id in enumerate(current_selections):
+            if sel_id:
+                idx = self.ambience_slots[i]['combo'].findData(sel_id)
+                if idx >= 0:
+                    self.ambience_slots[i]['combo'].setCurrentIndex(idx)

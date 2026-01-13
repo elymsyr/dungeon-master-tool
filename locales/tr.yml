@@ -457,3 +457,11 @@ tr:
   TIP_FIT_VIEW: "Haritayı Ekrana Sığdır"
 
   LBL_ALL_DOCS: "Hepsi"
+
+  # Soundpad Additions
+  BTN_ADD_AMBIENCE: "Ortam Sesi Ekle"
+  BTN_ADD_SFX: "Efekt Ekle"
+  TITLE_SELECT_AUDIO: "Ses Dosyası Seç"
+  TITLE_ADD_SOUND: "Ses Ekle"
+  LBL_SOUND_NAME: "Ses Adı:"
+  MSG_SOUND_ADDED: "Ses başarıyla eklendi."

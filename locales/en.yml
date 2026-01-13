@@ -458,3 +458,11 @@ en:
   TIP_FIT_VIEW: "Fit Map to View"
 
   LBL_ALL_DOCS: "All"
+
+  # Soundpad Additions
+  BTN_ADD_AMBIENCE: "Add Ambience"
+  BTN_ADD_SFX: "Add SFX"
+  TITLE_SELECT_AUDIO: "Select Audio File"
+  TITLE_ADD_SOUND: "Add Sound"
+  LBL_SOUND_NAME: "Sound Name:"
+  MSG_SOUND_ADDED: "Sound added successfully."

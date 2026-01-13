@@ -1,5 +1,6 @@
 import os
 import yaml
+import shutil
 from .models import Theme, MusicState, Track, LoopNode
 from config import SOUNDPAD_ROOT
 
@@ -113,3 +114,76 @@ def _parse_theme_file(yaml_path, base_folder):
     except Exception as e:
         print(f"Error parsing theme file '{yaml_path}': {e}")
         return None
+
+def add_to_library(category, name, file_path):
+    """
+    Adds a new sound file to the global library.
+    1. Copies the file to assets/soundpad/imported/
+    2. Updates soundpad_library.yaml
+    """
+    if category not in ['ambience', 'sfx']:
+        return False, "Invalid category"
+
+    # 1. Prepare Destination
+    imported_dir = os.path.join(SOUNDPAD_ROOT, "imported")
+    if not os.path.exists(imported_dir):
+        os.makedirs(imported_dir)
+
+    filename = os.path.basename(file_path)
+    dest_path = os.path.join(imported_dir, filename)
+    
+    # Avoid overwrite by appending number if exists
+    base, ext = os.path.splitext(filename)
+    counter = 1
+    while os.path.exists(dest_path):
+        dest_path = os.path.join(imported_dir, f"{base}_{counter}{ext}")
+        counter += 1
+        
+    try:
+        shutil.copy2(file_path, dest_path)
+    except Exception as e:
+        return False, f"File copy failed: {e}"
+
+    # 2. Update YAML
+    library_file = os.path.join(SOUNDPAD_ROOT, "soundpad_library.yaml")
+    data = {'ambience': [], 'sfx': [], 'shortcuts': {}}
+    
+    if os.path.exists(library_file):
+        try:
+            with open(library_file, "r", encoding="utf-8") as f:
+                loaded = yaml.safe_load(f)
+                if loaded: data = loaded
+        except Exception as e:
+            print(f"Error reading library for update: {e}")
+
+    # Ensure category list exists
+    if category not in data:
+        data[category] = []
+
+    # Relative path from SOUNDPAD_ROOT
+    # dest_path = .../assets/soundpad/imported/file.wav
+    # SOUNDPAD_ROOT = .../assets/soundpad
+    # relative = imported/file.wav
+    rel_path = os.path.relpath(dest_path, SOUNDPAD_ROOT)
+    
+    # Add new entry
+    # Using 'id' as name_timestamp or just uuid could be better, but name slug is simple
+    import time
+    # simple unique id
+    new_id = f"{category}_{int(time.time())}"
+    
+    new_entry = {
+        'id': new_id,
+        'name': name,
+        'file': rel_path # loader uses 'file' then converts to 'files' list
+    }
+    
+    data[category].append(new_entry)
+    
+    try:
+        with open(library_file, "w", encoding="utf-8") as f:
+            yaml.dump(data, f, allow_unicode=True, default_flow_style=False)
+    except Exception as e:
+        return False, f"YAML update failed: {e}"
+        
+    return True, new_entry
