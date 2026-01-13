@@ -30,10 +30,17 @@ class ProjectionThumbnail(QFrame):
         self.lbl_img = QLabel()
         self.lbl_img.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
+        self.update_thumbnail(image_path, pixmap)
+            
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setToolTip("Click to remove from Player Screen")
+        layout.addWidget(self.lbl_img)
+
+    def update_thumbnail(self, image_path, pixmap):
         filename = os.path.basename(image_path)
         
         # Harita kontrolü (İster dosya olsun ister hafıza objesi)
-        if "map_snapshot_" in filename:
+        if "map_snapshot" in filename or "Live_Map" in filename:
             self.lbl_img.setText("MAP")
             self.lbl_img.setStyleSheet("font-weight: bold; color: #ffb74d; font-size: 11px; background: transparent;")
         
@@ -49,10 +56,6 @@ class ProjectionThumbnail(QFrame):
         else:
             self.lbl_img.setText("?")
             self.lbl_img.setStyleSheet("font-size: 10px; color: #aaa;")
-            
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setToolTip("Click to remove from Player Screen")
-        layout.addWidget(self.lbl_img)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -75,7 +78,7 @@ class ProjectionManager(QWidget):
             QWidget#projectionBar {
                 background-color: rgba(0, 0, 0, 0.2);
                 border: 1px dashed rgba(255, 255, 255, 0.3);
-                border-radius: 4px;
+                border-radius: 4px; 
             }
         """
         self.hover_style = """
@@ -127,7 +130,13 @@ class ProjectionManager(QWidget):
         path: Dosya yolu (ID olarak kullanılır).
         pixmap: (Opsiyonel) Eğer varsa diskten okumak yerine bu kullanılır.
         """
-        if path in self.thumbnails: return
+        if path in self.thumbnails: 
+            # UPDATE EXISTING
+            thumb = self.thumbnails[path]
+            thumb.update_thumbnail(path, pixmap)
+            # Re-emit signal so PlayerWindow knows to update its view
+            self.image_added.emit(path, pixmap)
+            return
             
         self.lbl_info.hide()
         

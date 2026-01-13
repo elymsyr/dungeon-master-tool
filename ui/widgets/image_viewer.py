@@ -25,6 +25,7 @@ class ImageViewer(QGraphicsView):
         self.pixmap_item = None
 
     def set_image(self, pixmap):
+        """Initial setup: Loads image and fits to view."""
         self.scene.clear()
         if pixmap and not pixmap.isNull():
             self.pixmap_item = QGraphicsPixmapItem(pixmap)
@@ -35,6 +36,14 @@ class ImageViewer(QGraphicsView):
             self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio) # İlk açılışta sığdır
         else:
             self.pixmap_item = None
+
+    def update_pixmap(self, pixmap):
+        """Updates the image content WITHOUT resetting zoom/pan."""
+        if self.pixmap_item and pixmap and not pixmap.isNull():
+            self.pixmap_item.setPixmap(pixmap)
+        else:
+            # Fallback if scene was empty
+            self.set_image(pixmap)
 
     def wheelEvent(self, event: QWheelEvent):
         # Zoom İşlemi

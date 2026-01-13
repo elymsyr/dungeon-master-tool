@@ -20,7 +20,8 @@ class MapTab(QWidget):
         self.show_timeline = False
         self.pending_parent_id = None
         
-        self.last_projected_path = None
+        # ID for the live projection to keep updates consistent
+        self.live_map_id = "Live_Map_Projection"
         
         self.init_ui()
 
@@ -98,10 +99,10 @@ class MapTab(QWidget):
                 item.setVisible(show_map_pins)
 
         # --- AUTO UPDATE PROJECTION ---
-        # If we have a previously projected map, and it is still in the Projection Manager, update it.
         if self.main_window_ref and hasattr(self.main_window_ref, "projection_manager"):
             pm = self.main_window_ref.projection_manager
-            if self.last_projected_path and self.last_projected_path in pm.thumbnails:
+            # Update only if the map is already being projected
+            if self.live_map_id in pm.thumbnails:
                 self.push_map_to_player()
 
     def toggle_timeline_mode(self):
@@ -207,7 +208,7 @@ class MapTab(QWidget):
 
     def push_map_to_player(self):
         """
-        Projects map to player screen. Uses UUID to avoid filename collisions during rapid auto-updates.
+        Projects map to player screen using a constant ID to allow seamless updates.
         """
         if not self.player_window.isVisible():
             QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_NO_PLAYER_SCREEN"))
@@ -223,16 +224,11 @@ class MapTab(QWidget):
         self.map_viewer.scene.render(painter, target=QRectF(img.rect()), source=rect)
         painter.end()
         
-        # Sanal bir ID (UUID)
-        fake_path = f"map_snapshot_{uuid.uuid4().hex}.png"
+        # CONSTANT ID for live updates
+        fake_path = self.live_map_id
         
         if self.main_window_ref and hasattr(self.main_window_ref, "projection_manager"):
-            # Eğer daha önce bir harita yansıtılmışsa, ekranı kalabalıklaştırmamak için eskisini kaldırıyoruz
-            if self.last_projected_path:
-                self.main_window_ref.projection_manager.remove_image(self.last_projected_path)
-            
-            # Yeni haritayı ekliyoruz
+            # Update via Manager
             self.main_window_ref.projection_manager.add_image(fake_path, pixmap=img)
-            self.last_projected_path = fake_path
         else:
             self.player_window.add_image_to_view(fake_path, pixmap=img)

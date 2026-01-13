@@ -45,12 +45,27 @@ class PlayerWindow(QMainWindow):
         self.active_image_paths = []
 
     def add_image_to_view(self, image_path, pixmap=None):
-        """Ekrana yeni bir resim ekler. Pixmap varsa direkt kullanır."""
+        """Ekrana yeni bir resim ekler. Varsa GÜNCELLER (Zoom bozulmaz)."""
         self.stack.setCurrentIndex(0)
         
+        # --- UPDATE EXISTING LOGIC ---
         if image_path in self.active_image_paths:
-            return
+            # Find the existing widget
+            try:
+                index = self.active_image_paths.index(image_path)
+                item = self.multi_image_layout.itemAt(index)
+                if item and item.widget():
+                    viewer = item.widget()
+                    if isinstance(viewer, ImageViewer) and pixmap:
+                        viewer.update_pixmap(pixmap)
+                        return # Updated successfully, exit
+            except Exception as e:
+                print(f"Error updating existing image view: {e}")
+            # If update failed (e.g., wrong widget type), fall through to create new
+            if image_path in self.active_image_paths:
+                return # Should usually return here if it was just a duplicate add call without pixmap update
 
+        # --- CREATE NEW LOGIC ---
         viewer = ImageViewer()
         
         if pixmap:
