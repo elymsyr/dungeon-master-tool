@@ -17,9 +17,11 @@ class ApiBrowser(QDialog):
         "Race"
     ]
 
-    def __init__(self, data_manager, initial_category, parent=None):
+    def __init__(self, data_manager, initial_category, parent=None, selection_mode=False):
         super().__init__(parent)
         self.dm = data_manager
+        self.selection_mode = selection_mode
+        self.selected_entity_id = None # Return value
         
         # Başlangıç kategorisini doğrula ve ayarla
         self.current_category = "Monster" 
@@ -313,9 +315,20 @@ class ApiBrowser(QDialog):
         if success:
             if isinstance(data_or_id, str):
                 # Veritabanında zaten var (ID döndü)
-                data = self.dm.data["entities"].get(data_or_id)
-                self.btn_import.setEnabled(False)
-                self.btn_import.setText(tr("MSG_EXISTS"))
+                if self.selection_mode:
+                    # Selection mode'da var olanı seçmeye izin ver
+                    self.selected_entity_id = data_or_id # Pre-set (but wait for button click)
+                    self.selected_data = self.dm.data["entities"].get(data_or_id)
+                    self.btn_import.setEnabled(True)
+                    self.btn_import.setText(tr("BTN_SELECT"))
+                    # Button logic override for existing item
+                    try: self.btn_import.clicked.disconnect()
+                    except: pass
+                    self.btn_import.clicked.connect(self.accept)
+                else:
+                    data = self.dm.data["entities"].get(data_or_id)
+                    self.btn_import.setEnabled(False)
+                    self.btn_import.setText(tr("MSG_EXISTS"))
                 self.btn_import_npc.setVisible(False)
             else:
                 # Yeni Veri
@@ -336,23 +349,23 @@ class ApiBrowser(QDialog):
             except: pass
             
             if self.current_category == "NPC":
-                self.btn_import.setText(tr("BTN_IMPORT_NPC"))
+                self.btn_import.setText(tr("BTN_SELECT") if self.selection_mode else tr("BTN_IMPORT_NPC"))
                 self.btn_import.clicked.connect(lambda: self.import_selected(target_type="NPC"))
                 self.btn_import_npc.setVisible(False)
             
             elif self.current_category == "Monster":
-                self.btn_import.setText(tr("BTN_IMPORT"))
+                self.btn_import.setText(tr("BTN_SELECT") if self.selection_mode else tr("BTN_IMPORT"))
                 self.btn_import.clicked.connect(lambda: self.import_selected(target_type=None))
                 
                 # Sadece yeni veriyse "NPC Olarak Al" seçeneği göster
-                if not isinstance(data_or_id, str):
+                if not isinstance(data_or_id, str) and not self.selection_mode:
                     self.btn_import_npc.setVisible(True)
                     self.btn_import_npc.setEnabled(True)
                 else:
                     self.btn_import_npc.setVisible(False)
             else:
                 # Diğerleri (Spell, Equipment vb.)
-                self.btn_import.setText(tr("BTN_IMPORT"))
+                self.btn_import.setText(tr("BTN_SELECT") if self.selection_mode else tr("BTN_IMPORT"))
                 self.btn_import.clicked.connect(lambda: self.import_selected(target_type=None))
                 self.btn_import_npc.setVisible(False)
 
@@ -380,12 +393,18 @@ class ApiBrowser(QDialog):
             QApplication.processEvents()
             
             try:
-                self.dm.import_entity_with_dependencies(self.selected_data, type_override=target_type)
+                new_id = self.dm.import_entity_with_dependencies(self.selected_data, type_override=target_type)
+                
+                if self.selection_mode:
+                    self.selected_entity_id = new_id
+                    self.accept() # Close dialog
+                    return
+
                 QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_IMPORT_SUCCESS_DETAIL", name=self.selected_data['name']))
                 self.load_list() # Buton durumunu güncellemek için listeyi yenile
             except Exception as e:
                 self.btn_import.setEnabled(True)
-                self.btn_import.setText(tr("BTN_IMPORT"))
+                self.btn_import.setText(tr("BTN_SELECT") if self.selection_mode else tr("BTN_IMPORT"))
                 QMessageBox.critical(self, tr("MSG_ERROR"), f"Error: {str(e)}")
 
     def on_source_changed(self):

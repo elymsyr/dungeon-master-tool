@@ -1,10 +1,10 @@
 ENTITY_SCHEMAS = {
     "NPC": [
-        ("LBL_RACE", "text", None),
-        ("LBL_CLASS", "text", None),
+        ("LBL_RACE", "entity_select", "Race"),
+        ("LBL_CLASS", "entity_select", "Class"),
         ("LBL_LEVEL", "text", None), 
         ("LBL_ATTITUDE", "combo", ["LBL_ATTR_FRIENDLY", "LBL_ATTR_NEUTRAL", "LBL_ATTR_HOSTILE"]),
-        ("LBL_ATTR_LOCATION", "text", None)
+        ("LBL_ATTR_LOCATION", "entity_select", "Location")
     ],
     "Monster": [
         ("LBL_CR", "text", None),
@@ -47,8 +47,8 @@ ENTITY_SCHEMAS = {
         ("LBL_ENVIRONMENT", "text", None)
     ],
     "Player": [
-        ("LBL_CLASS", "text", None), 
-        ("LBL_RACE", "text", None), 
+        ("LBL_CLASS", "entity_select", "Class"), 
+        ("LBL_RACE", "entity_select", "Race"), 
         ("LBL_LEVEL", "text", None)
     ],
     "Quest": [
@@ -62,7 +62,8 @@ ENTITY_SCHEMAS = {
     ],
     "Status Effect": [
         ("LBL_DURATION_TURNS", "text", None),  # Tur Süresi (Örn: 3 Rounds)
-        ("LBL_EFFECT_TYPE", "combo", ["LBL_TYPE_BUFF", "LBL_TYPE_DEBUFF", "LBL_TYPE_CONDITION"])
+        ("LBL_EFFECT_TYPE", "combo", ["LBL_TYPE_BUFF", "LBL_TYPE_DEBUFF", "LBL_TYPE_CONDITION"]),
+        ("LBL_LINKED_CONDITION", "entity_select", "Condition")
     ],
     "Feat": [
         ("LBL_PREREQUISITE", "text", None)
@@ -145,7 +146,8 @@ PROPERTY_MAP = {
     "Tool Proficiencies": "LBL_TOOL_PROFICIENCIES",
     "Languages": "LBL_LANGUAGES",
     "Equipment": "LBL_EQUIPMENT",
-    "Effects": "LBL_EFFECTS"
+    "Effects": "LBL_EFFECTS",
+    "Linked Condition": "LBL_LINKED_CONDITION"
 }
 
 def get_default_entity_structure(entity_type="NPC"):
