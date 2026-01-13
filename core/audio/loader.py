@@ -1,5 +1,6 @@
 import os
 import yaml
+import shutil
 from .models import Theme, MusicState, Track, LoopNode
 from config import SOUNDPAD_ROOT
 
@@ -113,3 +114,137 @@ def _parse_theme_file(yaml_path, base_folder):
     except Exception as e:
         print(f"Error parsing theme file '{yaml_path}': {e}")
         return None
+
+def add_to_library(category, name, file_path):
+    """
+    Adds a new sound file to the global library.
+    1. Copies the file to assets/soundpad/imported/
+    2. Updates soundpad_library.yaml
+    """
+    if category not in ['ambience', 'sfx']:
+        return False, "Invalid category"
+
+    # 1. Prepare Destination
+    imported_dir = os.path.join(SOUNDPAD_ROOT, "imported")
+    if not os.path.exists(imported_dir):
+        os.makedirs(imported_dir)
+
+    filename = os.path.basename(file_path)
+    dest_path = os.path.join(imported_dir, filename)
+    
+    # Avoid overwrite by appending number if exists
+    base, ext = os.path.splitext(filename)
+    counter = 1
+    while os.path.exists(dest_path):
+        dest_path = os.path.join(imported_dir, f"{base}_{counter}{ext}")
+        counter += 1
+        
+    try:
+        shutil.copy2(file_path, dest_path)
+    except Exception as e:
+        return False, f"File copy failed: {e}"
+
+    # 2. Update YAML
+    library_file = os.path.join(SOUNDPAD_ROOT, "soundpad_library.yaml")
+    data = {'ambience': [], 'sfx': [], 'shortcuts': {}}
+    
+    if os.path.exists(library_file):
+        try:
+            with open(library_file, "r", encoding="utf-8") as f:
+                loaded = yaml.safe_load(f)
+                if loaded: data = loaded
+        except Exception as e:
+            print(f"Error reading library for update: {e}")
+
+    # Ensure category list exists
+    if category not in data:
+        data[category] = []
+
+    # Relative path from SOUNDPAD_ROOT
+    # dest_path = .../assets/soundpad/imported/file.wav
+    # SOUNDPAD_ROOT = .../assets/soundpad
+    # relative = imported/file.wav
+    rel_path = os.path.relpath(dest_path, SOUNDPAD_ROOT)
+    
+    # Add new entry
+    # Using 'id' as name_timestamp or just uuid could be better, but name slug is simple
+    import time
+    # simple unique id
+    new_id = f"{category}_{int(time.time())}"
+    
+    new_entry = {
+        'id': new_id,
+        'name': name,
+        'file': rel_path # loader uses 'file' then converts to 'files' list
+    }
+    
+    data[category].append(new_entry)
+    
+    try:
+        with open(library_file, "w", encoding="utf-8") as f:
+            yaml.dump(data, f, allow_unicode=True, default_flow_style=False)
+    except Exception as e:
+        return False, f"YAML update failed: {e}"
+        
+    return True, new_entry
+
+def create_theme(name, t_id, state_map):
+    """
+    Creates a new theme directory and yaml file.
+    name: Display Name (e.g. "Dark Forest")
+    t_id: Directory Name (e.g. "dark_forest")
+    state_map: { 
+        'normal': { 'base': 'path/to/file.wav', 'level1': '...' },
+        'combat': { ... }
+    }
+    """
+    if not name or not t_id or not state_map:
+        return False, "Missing info"
+        
+    theme_dir = os.path.join(SOUNDPAD_ROOT, t_id)
+    if os.path.exists(theme_dir):
+        return False, "Theme ID already exists"
+        
+    try:
+        os.makedirs(theme_dir)
+        
+        # Build YAML structure
+        yaml_states = {}
+        
+        for state_name, tracks in state_map.items():
+            state_data = {'tracks': {}}
+            
+            for track_key, src_path in tracks.items():
+                if not src_path or not os.path.exists(src_path): 
+                    continue
+                    
+                # Copy file
+                # Rename logic: {state}_{track}_{filename}
+                ext = os.path.splitext(src_path)[1]
+                new_filename = f"{state_name}_{track_key}{ext}"
+                dest_path = os.path.join(theme_dir, new_filename)
+                
+                shutil.copy2(src_path, dest_path)
+                
+                # Add to yaml data
+                # Simplest structure: list of single file with repeat 0
+                state_data['tracks'][track_key] = [
+                    {'file': new_filename, 'repeat': 0}
+                ]
+            
+            yaml_states[state_name] = state_data
+            
+        theme_data = {
+            'id': t_id,
+            'name': name,
+            'states': yaml_states
+        }
+        
+        yaml_path = os.path.join(theme_dir, "theme.yaml")
+        with open(yaml_path, "w", encoding="utf-8") as f:
+            yaml.dump(theme_data, f, allow_unicode=True, default_flow_style=False)
+            
+        return True, theme_dir
+        
+    except Exception as e:
+        return False, str(e)

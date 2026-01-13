@@ -458,3 +458,24 @@ en:
   TIP_FIT_VIEW: "Fit Map to View"
 
   LBL_ALL_DOCS: "All"
+
+  # Soundpad Additions
+  BTN_ADD_AMBIENCE: "Add Ambience"
+  BTN_ADD_SFX: "Add SFX"
+  TITLE_SELECT_AUDIO: "Select Audio File"
+  TITLE_ADD_SOUND: "Add Sound"
+  LBL_SOUND_NAME: "Sound Name:"
+  LBL_SOUND_NAME: "Sound Name:"
+  MSG_SOUND_ADDED: "Sound added successfully."
+
+  # Theme Builder
+  TITLE_THEME_BUILDER: "Theme Builder"
+  LBL_THEME_NAME: "Theme Name"
+  LBL_THEME_ID: "Theme ID (Folder)"
+  LBL_STATES: "States"
+  LBL_TRACKS: "Tracks (Intensity)"
+  BTN_CREATE_THEME: "Create Theme"
+  TITLE_ADD_STATE: "Add State"
+  LBL_STATE_NAME: "State Name"
+  MSG_THEME_CREATED: "Theme created successfully!"
+  MSG_NO_FILE: "No file selected..."
