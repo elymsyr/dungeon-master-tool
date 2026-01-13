@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, 
                              QLabel, QPushButton, QGroupBox, QInputDialog, 
-                             QComboBox, QMessageBox, QTabWidget)
-from PyQt6.QtCore import QDateTime
+                             QComboBox, QMessageBox, QTabWidget, QSplitter)
+from PyQt6.QtCore import QDateTime, Qt
 from core.locales import tr
 from ui.widgets.combat_tracker import CombatTracker
 from ui.widgets.markdown_editor import MarkdownEditor
@@ -26,19 +26,23 @@ class SessionTab(QWidget):
             self.load_session()
 
     def init_ui(self):
-        layout = QHBoxLayout(self)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.main_splitter.setHandleWidth(4)
 
-        left_layout = QVBoxLayout()
+        # --- LEFT PANEL (Combat Tracker) ---
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.setContentsMargins(5, 5, 5, 5)
+        
+        # CHANGED: Allow resizing small
+        left_widget.setMinimumWidth(100)
+        
         self.combat_tracker = CombatTracker(self.dm)
-        
-        # --- KEY CONNECTIONS ---
-        # 1. Attach handler so CombatTracker can save fog just before switching encounters
         self.combat_tracker.set_fog_save_handler(self.save_fog_for_encounter)
-        
-        # 2. When data changes, FIRST refresh the map/fog to the new encounter
         self.combat_tracker.data_changed_signal.connect(self.refresh_embedded_map)
-        
-        # 3. THEN auto-save the session state (now safe because map is updated)
         self.combat_tracker.data_changed_signal.connect(self.auto_save)
         
         left_layout.addWidget(QLabel(tr("TITLE_COMBAT")))
@@ -52,7 +56,14 @@ class SessionTab(QWidget):
             dice_layout.addWidget(btn)
         left_layout.addWidget(dice_group)
         
-        right_layout = QVBoxLayout()
+        # --- RIGHT PANEL (Session Controls + Map) ---
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+        right_layout.setContentsMargins(5, 5, 5, 5)
+        
+        # CHANGED: Allow resizing small
+        right_widget.setMinimumWidth(100)
+        
         session_control = QHBoxLayout()
         self.combo_sessions = QComboBox()
         self.refresh_session_list()
@@ -102,10 +113,8 @@ class SessionTab(QWidget):
         self.embedded_map.view_sync_signal.connect(self.combat_tracker.sync_map_view_to_external)
         self.embedded_map.fog_update_signal.connect(self.combat_tracker.sync_fog_to_external)
         
-        # When fog changes, save immediately
         self.embedded_map.fog_update_signal.connect(lambda: self.save_session(show_msg=False))
         
-        # --- Add Custom Buttons to BattleMap Toolbar ---
         self.btn_load_map = QPushButton(tr("BTN_LOAD_MAP") if hasattr(tr, "BTN_LOAD_MAP") else "Load Map")
         self.btn_load_map.setObjectName("primaryBtn")
         self.btn_load_map.clicked.connect(self.combat_tracker.load_map_dialog)
@@ -116,7 +125,6 @@ class SessionTab(QWidget):
         
         self.embedded_map.add_toolbar_widget(self.btn_load_map)
         self.embedded_map.add_toolbar_widget(self.btn_open_external)
-        # -----------------------------------------------
         
         self.bottom_tabs.addTab(self.tab_dm_notes, "📝 " + tr("LBL_NOTES"))
         self.bottom_tabs.addTab(self.embedded_map, "🗺️ " + tr("TITLE_BATTLE_MAP"))
@@ -127,18 +135,21 @@ class SessionTab(QWidget):
         right_layout.addLayout(log_input_layout)
         right_layout.addWidget(self.bottom_tabs, 2) 
 
-        layout.addLayout(left_layout, 2)
-        layout.addLayout(right_layout, 3)
+        self.main_splitter.addWidget(left_widget)
+        self.main_splitter.addWidget(right_widget)
+        
+        self.main_splitter.setSizes([400, 800])
+        self.main_splitter.setCollapsible(0, False)
+        
+        main_layout.addWidget(self.main_splitter)
 
     def save_fog_for_encounter(self, encounter_id):
-        """Called by CombatTracker right BEFORE switching encounter ID."""
         if encounter_id in self.combat_tracker.encounters:
             fog_b64 = self.embedded_map.get_fog_data_base64()
             if fog_b64:
                 self.combat_tracker.encounters[encounter_id]["fog_data"] = fog_b64
 
     def refresh_embedded_map(self):
-        """Loads map and fog for the CURRENT encounter ID."""
         if not self.combat_tracker.current_encounter_id: return
         enc = self.combat_tracker.encounters.get(self.combat_tracker.current_encounter_id)
         if not enc: return
@@ -172,7 +183,6 @@ class SessionTab(QWidget):
             if show_msg: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_CREATE_SESSION_FIRST"))
             return
         
-        # Save current fog to current ID
         if self.combat_tracker.current_encounter_id:
             self.save_fog_for_encounter(self.combat_tracker.current_encounter_id)
         
@@ -203,7 +213,6 @@ class SessionTab(QWidget):
             
             self.refresh_embedded_map()
 
-    # --- Standard Methods ---
     def roll_dice(self, sides):
         result = random.randint(1, sides)
         self.log_message(tr("MSG_ROLLED_DICE", sides=sides, result=result))
