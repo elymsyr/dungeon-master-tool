@@ -409,21 +409,22 @@ class BattleMapWidget(QWidget):
 
     def apply_view_state(self, rect): self.view.set_view_state(rect)
 
-    def _process_youtube_url(self, url):
-        if "youtube.com" in url or "youtu.be" in url:
-            if "embed" not in url:
-                video_id = ""
-                if "v=" in url:
-                    try: video_id = url.split("v=")[1].split("&")[0]
-                    except: pass
-                elif "youtu.be/" in url:
-                    try: video_id = url.split("youtu.be/")[1].split("?")[0]
-                    except: pass
-                
-                if video_id:
-                    # Added mute=1 to help with autoplay policies
-                    return f"https://www.youtube.com/embed/{video_id}?autoplay=1&mute=1&controls=0&loop=1&playlist={video_id}&modestbranding=1"
-        return url
+    def _extract_youtube_id(self, url):
+        """Extracts YouTube ID from various URL formats."""
+        url_str = str(url)
+        video_id = ""
+        
+        if "v=" in url_str:
+            try: video_id = url_str.split("v=")[1].split("&")[0]
+            except: pass
+        elif "youtu.be/" in url_str:
+            try: video_id = url_str.split("youtu.be/")[1].split("?")[0]
+            except: pass
+        elif "embed/" in url_str:
+            try: video_id = url_str.split("embed/")[1].split("?")[0]
+            except: pass
+            
+        return video_id
 
     def set_map_image(self, pixmap, path_ref=None):
         self.current_map_path = path_ref
@@ -432,6 +433,7 @@ class BattleMapWidget(QWidget):
         if self.map_item: self.map_item.hide()
         if self.web_proxy:
             self.web_proxy.hide()
+            # Önceki içeriği temizle ama WebEngine'i yok etme (performans için)
             self.web_view.setUrl(QUrl("about:blank"))
         if self.video_item:
             self.video_item.hide()
@@ -447,6 +449,8 @@ class BattleMapWidget(QWidget):
                 settings = self.web_view.settings()
                 settings.setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, True)
                 settings.setAttribute(QWebEngineSettings.WebAttribute.PlaybackRequiresUserGesture, False)
+                settings.setAttribute(QWebEngineSettings.WebAttribute.JavascriptEnabled, True)
+                settings.setAttribute(QWebEngineSettings.WebAttribute.LocalStorageEnabled, True)
                 self.web_view.setAttribute(Qt.WidgetAttribute.WA_DontCreateNativeAncestors)
                 self.web_view.resize(1920, 1080)
                 self.web_proxy = QGraphicsProxyWidget()
@@ -457,10 +461,44 @@ class BattleMapWidget(QWidget):
             self.web_proxy.show()
             self.web_proxy.setGeometry(QRectF(0, 0, 1920, 1080))
             
-            final_url = self._process_youtube_url(path_ref)
-            self.web_view.setUrl(QUrl(final_url))
+            # YOUTUBE ÖZEL İŞLEMİ (HTML EMBED)
+            if "youtube.com" in path_ref or "youtu.be" in path_ref:
+                video_id = self._extract_youtube_id(path_ref)
+                if video_id:
+                    # Origin/Referer problemini aşmak için HTML + BaseURL kullanıyoruz
+                    # 'iv_load_policy=3' -> Annotations kapalı
+                    # 'rel=0' -> İlgili videolar kapalı (daha temiz)
+                    # 'modestbranding=1' -> Logo minimal
+                    embed_url = f"https://www.youtube.com/embed/{video_id}?autoplay=1&mute=1&controls=0&loop=1&playlist={video_id}&modestbranding=1&iv_load_policy=3&rel=0&showinfo=0"
+                    
+                    html_content = f"""
+                    <!DOCTYPE html>
+                    <html style="width:100%; height:100%; margin:0; padding:0; overflow:hidden; background-color:black;">
+                    <body style="width:100%; height:100%; margin:0; padding:0;">
+                        <iframe 
+                            id="player" 
+                            type="text/html" 
+                            width="100%" 
+                            height="100%" 
+                            src="{embed_url}" 
+                            frameborder="0" 
+                            allow="autoplay; encrypted-media" 
+                            allowfullscreen>
+                        </iframe>
+                    </body>
+                    </html>
+                    """
+                    # BaseURL olarak youtube.com vererek "Origin" hatasını (153/150) çözüyoruz.
+                    self.web_view.setHtml(html_content, baseUrl=QUrl("https://www.youtube.com"))
+                    
+                    self.scene.setSceneRect(0, 0, 1920, 1080)
+                    if not self.fog_item: self.init_fog_layer(1920, 1080)
+                    QTimer.singleShot(800, self.fit_map_in_view)
+                    return
+
+            # Diğer Web Siteleri
+            self.web_view.setUrl(QUrl(path_ref))
             self.scene.setSceneRect(0, 0, 1920, 1080)
-            
             if not self.fog_item: self.init_fog_layer(1920, 1080)
             QTimer.singleShot(500, self.fit_map_in_view)
             return
@@ -486,10 +524,11 @@ class BattleMapWidget(QWidget):
             def on_media_status(status):
                 if status == QMediaPlayer.MediaStatus.BufferedMedia or status == QMediaPlayer.MediaStatus.LoadedMedia:
                     sz = self.video_item.nativeSize()
-                    self.video_item.setSize(sz)
-                    self.scene.setSceneRect(0, 0, sz.width(), sz.height())
-                    if not self.fog_item: self.init_fog_layer(sz.width(), sz.height())
-                    self.fit_map_in_view()
+                    if not sz.isEmpty():
+                        self.video_item.setSize(sz)
+                        self.scene.setSceneRect(0, 0, sz.width(), sz.height())
+                        if not self.fog_item: self.init_fog_layer(sz.width(), sz.height())
+                        self.fit_map_in_view()
                     
             self.video_player.mediaStatusChanged.connect(on_media_status)
             return
@@ -532,16 +571,20 @@ class BattleMapWidget(QWidget):
         if saved_token_size and saved_token_size != self.token_size:
             self.token_size = saved_token_size; self.slider_size.blockSignals(True); self.slider_size.setValue(saved_token_size); self.slider_size.blockSignals(False)
         
-        # Determine media type for map_path
-        if map_path:
-            is_url = map_path.startswith("http")
-            is_video = map_path.endswith(('.mp4', '.webm', '.mkv'))
-            
-            if is_url or is_video:
-                self.set_map_image(None, map_path)
+        # --- FIXED: Only load map if path has CHANGED ---
+        if map_path != self.current_map_path:
+            if map_path:
+                is_url = map_path.startswith("http")
+                is_video = map_path.endswith(('.mp4', '.webm', '.mkv', '.avi', '.m4v'))
+                
+                if is_url or is_video:
+                    self.set_map_image(None, map_path)
+                else:
+                    pix = QPixmap(map_path) if os.path.exists(map_path) else None
+                    self.set_map_image(pix, map_path)
             else:
-                pix = QPixmap(map_path) if os.path.exists(map_path) else None
-                self.set_map_image(pix, map_path)
+                self.set_map_image(None, None)
+        # ------------------------------------------------
         
         incoming_tids = set()
         for i, c in enumerate(combatants):
