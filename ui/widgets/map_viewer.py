@@ -81,8 +81,11 @@ class MapPinItem(QGraphicsEllipseItem):
         self.setToolTip(tooltip); self.setZValue(10); self.setCursor(Qt.CursorShape.PointingHandCursor); self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton: self._show_menu(event.screenPos()); event.accept()
-        else: super().mousePressEvent(event)
+        if event.button() == Qt.MouseButton.LeftButton: 
+            self._show_menu(event.screenPos())
+            event.accept()
+        else: 
+            super().mousePressEvent(event)
 
     def contextMenuEvent(self, event): self._show_menu(event.screenPos())
 
@@ -113,17 +116,24 @@ class MapViewer(QGraphicsView):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.scene = QGraphicsScene(self); self.setScene(self.scene)
-        self.setRenderHint(QPainter.RenderHint.Antialiasing); self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-        self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag); self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        self.scene = QGraphicsScene(self)
+        self.setScene(self.scene)
+        self.setRenderHint(QPainter.RenderHint.Antialiasing)
+        self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+        self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setBackgroundBrush(QBrush(QColor("#111")))
         self.map_item = None
         self.is_moving_pin = False; self.moving_pin_id = None; self.moving_pin_type = None
         self.is_link_mode = False 
 
     def load_map(self, pixmap):
-        self.scene.clear(); self.map_item = QGraphicsPixmapItem(pixmap); self.map_item.setZValue(0); self.scene.addItem(self.map_item)
-        self.setSceneRect(self.map_item.boundingRect()); self.cancel_move_mode()
+        self.scene.clear()
+        self.map_item = QGraphicsPixmapItem(pixmap)
+        self.map_item.setZValue(0)
+        self.scene.addItem(self.map_item)
+        self.setSceneRect(self.map_item.boundingRect())
+        self.cancel_move_mode()
 
     def add_pin_object(self, pin_item): self.scene.addItem(pin_item)
     def add_timeline_object(self, pin_item): self.scene.addItem(pin_item)
@@ -158,8 +168,11 @@ class MapViewer(QGraphicsView):
                     self.scene.addItem(conn_item)
 
     def start_move_mode(self, pin_id, p_type="entity"):
-        self.is_moving_pin = True; self.moving_pin_id = pin_id; self.moving_pin_type = p_type
-        self.viewport().setCursor(Qt.CursorShape.CrossCursor); self.setDragMode(QGraphicsView.DragMode.NoDrag)
+        self.is_moving_pin = True
+        self.moving_pin_id = pin_id
+        self.moving_pin_type = p_type
+        self.viewport().setCursor(Qt.CursorShape.CrossCursor)
+        self.setDragMode(QGraphicsView.DragMode.NoDrag)
 
     def start_link_mode(self):
         """Hızlı bağlantı modunu başlatır (Mouse Crosshair olur)."""
@@ -168,8 +181,11 @@ class MapViewer(QGraphicsView):
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
 
     def cancel_move_mode(self):
-        self.is_moving_pin = False; self.is_link_mode = False; self.moving_pin_id = None
-        self.viewport().setCursor(Qt.CursorShape.ArrowCursor); self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+        self.is_moving_pin = False
+        self.is_link_mode = False
+        self.moving_pin_id = None
+        self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+        self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
 
     def mousePressEvent(self, event):
         # BAĞLANTI MODUNDA TIKLAMA DENETİMİ
@@ -205,12 +221,18 @@ class MapViewer(QGraphicsView):
         z = 1.15 if event.angleDelta().y() > 0 else 1/1.15; self.scale(z, z)
 
     def contextMenuEvent(self, event):
-        if self.is_moving_pin or self.is_link_mode: self.cancel_move_mode(); return
+        if self.is_moving_pin or self.is_link_mode: 
+            self.cancel_move_mode()
+            return
         item = self.itemAt(event.pos())
-        if item and (isinstance(item, TimelinePinItem) or isinstance(item, MapPinItem)): super().contextMenuEvent(event); return
+        if item and (isinstance(item, TimelinePinItem) or isinstance(item, MapPinItem)): 
+            super().contextMenuEvent(event)
+            return
         if not self.map_item: return
-        menu = QMenu(); menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; }")
-        act_add = QAction(tr("MENU_CTX_PIN"), self); menu.addAction(act_add)
+        menu = QMenu()
+        menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; }")
+        act_add = QAction(tr("MENU_CTX_PIN"), self)
+        menu.addAction(act_add)
         scene_pos = self.mapToScene(event.pos())
         if self.map_item.boundingRect().contains(scene_pos) and menu.exec(event.globalPos()) == act_add:
             self.pin_created_signal.emit(scene_pos.x(), scene_pos.y())

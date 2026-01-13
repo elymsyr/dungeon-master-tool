@@ -108,11 +108,16 @@ class Dnd5eApiSource(ApiSource):
         return None, tr("MSG_SEARCH_NOT_FOUND")
 
     def parse_dispatcher(self, category, data):
-        if category in ["Monster", "NPC"]: return self.parse_monster(data)
-        elif category == "Spell": return self.parse_spell(data)
-        elif category == "Equipment": return self.parse_equipment(data)
-        elif category == "Class": return self.parse_class(data)
-        elif category == "Race": return self.parse_race(data)
+        if category in ["Monster", "NPC"]:
+            return self.parse_monster(data)
+        elif category == "Spell":
+            return self.parse_spell(data)
+        elif category == "Equipment":
+            return self.parse_equipment(data)
+        elif category == "Class":
+            return self.parse_class(data)
+        elif category == "Race":
+            return self.parse_race(data)
         return {}
 
     def parse_monster(self, data):

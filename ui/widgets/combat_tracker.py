@@ -29,8 +29,12 @@ class ConditionIcon(QWidget):
 
     def __init__(self, name, icon_path, duration=0, max_duration=0):
         super().__init__()
-        self.name = name; self.icon_path = icon_path; self.duration = int(duration); self.max_duration = int(max_duration)
-        self.setFixedSize(24, 24); self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.name = name
+        self.icon_path = icon_path
+        self.duration = int(duration)
+        self.max_duration = int(max_duration)
+        self.setFixedSize(24, 24)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setToolTip(f"{name} ({self.duration}/{self.max_duration} Turns)")
 
     def paintEvent(self, event):
@@ -43,14 +47,23 @@ class ConditionIcon(QWidget):
             painter.setClipping(False); painter.setBrush(QBrush(QColor(0, 0, 0, 200))); painter.setPen(Qt.PenStyle.NoPen); painter.drawRoundedRect(0, 14, 24, 10, 2, 2)
             painter.setPen(Qt.GlobalColor.white); font = painter.font(); font.setPixelSize(8); font.setBold(True); painter.setFont(font); painter.drawText(QRect(0, 14, 24, 10), Qt.AlignmentFlag.AlignCenter, f"{self.duration}")
 
-    def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.RightButton:
-            menu = QMenu(self); del_act = QAction("❌ Kaldır", self); del_act.triggered.connect(lambda: self.removed.emit(self.name)); menu.addAction(del_act); menu.exec(event.globalPos())
+            menu = QMenu(self)
+            del_act = QAction("❌ Kaldır", self)
+            del_act.triggered.connect(lambda: self.removed.emit(self.name))
+            menu.addAction(del_act)
+            menu.exec(event.globalPos())
 
 class ConditionsWidget(QWidget):
     conditionsChanged = pyqtSignal(); clicked = pyqtSignal()
     def __init__(self, parent=None):
-        super().__init__(parent); self.layout = QHBoxLayout(self); self.layout.setContentsMargins(2, 2, 2, 2); self.layout.setSpacing(2); self.layout.addStretch(); self.active_conditions = []; self.setCursor(Qt.CursorShape.PointingHandCursor)
+        super().__init__(parent)
+        self.layout = QHBoxLayout(self)
+        self.layout.setContentsMargins(2, 2, 2, 2)
+        self.layout.setSpacing(2)
+        self.layout.addStretch()
+        self.active_conditions = []
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             if not isinstance(self.childAt(event.pos()), ConditionIcon): self.clicked.emit()
@@ -66,8 +79,15 @@ class ConditionsWidget(QWidget):
             self.layout.insertWidget(self.layout.count() - 1, icon_widget)
     def add_condition(self, name, icon_path, max_turns):
         for c in self.active_conditions:
-            if c["name"] == name: c["duration"] = max_turns; c["max_duration"] = max_turns; self.set_conditions(self.active_conditions); self.conditionsChanged.emit(); return
-        self.active_conditions.append({"name": name, "icon": icon_path, "duration": max_turns, "max_duration": max_turns}); self.set_conditions(self.active_conditions); self.conditionsChanged.emit()
+            if c["name"] == name: 
+                c["duration"] = max_turns
+                c["max_duration"] = max_turns
+                self.set_conditions(self.active_conditions)
+                self.conditionsChanged.emit()
+                return
+        self.active_conditions.append({"name": name, "icon": icon_path, "duration": max_turns, "max_duration": max_turns})
+        self.set_conditions(self.active_conditions)
+        self.conditionsChanged.emit()
     def remove_condition(self, name):
         self.active_conditions = [c for c in self.active_conditions if c["name"] != name]; self.set_conditions(self.active_conditions); self.conditionsChanged.emit()
     def tick_conditions(self):
@@ -190,60 +210,120 @@ class CombatTracker(QWidget):
 
     def __init__(self, data_manager):
         super().__init__()
-        self.dm = data_manager; self.battle_map_window = None; self.loading = False; self.encounters = {}; self.current_encounter_id = None
+        self.dm = data_manager
+        self.battle_map_window = None
+        self.loading = False
+        self.encounters = {}
+        self.current_encounter_id = None
         self.fog_save_handler = None 
-        self.create_encounter("Default Encounter"); self.init_ui()
+        self.create_encounter("Default Encounter")
+        self.init_ui()
 
     def set_fog_save_handler(self, handler): self.fog_save_handler = handler
 
     def init_ui(self):
         layout = QVBoxLayout(self)
         enc_layout = QHBoxLayout()
-        self.combo_encounters = QComboBox(); self.combo_encounters.currentIndexChanged.connect(self.switch_encounter); self.combo_encounters.setMinimumWidth(200)
-        self.btn_new_enc = QPushButton("➕"); self.btn_new_enc.setFixedWidth(40); self.btn_new_enc.clicked.connect(self.prompt_new_encounter)
-        self.btn_rename_enc = QPushButton("✏️"); self.btn_rename_enc.setFixedWidth(40); self.btn_rename_enc.clicked.connect(self.rename_encounter)
-        self.btn_del_enc = QPushButton("🗑️"); self.btn_del_enc.setFixedWidth(40); self.btn_del_enc.clicked.connect(self.delete_encounter); self.btn_del_enc.setObjectName("dangerBtn")
-        enc_layout.addWidget(QLabel(tr("LBL_ENCOUNTER_PREFIX"))); enc_layout.addWidget(self.combo_encounters); enc_layout.addWidget(self.btn_new_enc); enc_layout.addWidget(self.btn_rename_enc); enc_layout.addWidget(self.btn_del_enc)
+        self.combo_encounters = QComboBox()
+        self.combo_encounters.currentIndexChanged.connect(self.switch_encounter)
+        self.combo_encounters.setMinimumWidth(200)
+        self.btn_new_enc = QPushButton("➕")
+        self.btn_new_enc.setFixedWidth(40)
+        self.btn_new_enc.clicked.connect(self.prompt_new_encounter)
+        self.btn_rename_enc = QPushButton("✏️")
+        self.btn_rename_enc.setFixedWidth(40)
+        self.btn_rename_enc.clicked.connect(self.rename_encounter)
+        self.btn_del_enc = QPushButton("🗑️")
+        self.btn_del_enc.setFixedWidth(40)
+        self.btn_del_enc.clicked.connect(self.delete_encounter)
+        self.btn_del_enc.setObjectName("dangerBtn")
+        enc_layout.addWidget(QLabel(tr("LBL_ENCOUNTER_PREFIX")))
+        enc_layout.addWidget(self.combo_encounters)
+        enc_layout.addWidget(self.btn_new_enc)
+        enc_layout.addWidget(self.btn_rename_enc)
+        enc_layout.addWidget(self.btn_del_enc)
         layout.addLayout(enc_layout)
 
-        self.table = QTableWidget(); self.table.setColumnCount(5); self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch); self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
-        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows); self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.table.customContextMenuRequested.connect(self.open_context_menu); self.table.itemChanged.connect(self.on_data_changed); self.table.cellDoubleClicked.connect(self.on_cell_double_clicked); self.table.setSortingEnabled(False)
+        self.table = QTableWidget()
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self.open_context_menu)
+        self.table.itemChanged.connect(self.on_data_changed)
+        self.table.cellDoubleClicked.connect(self.on_cell_double_clicked)
+        self.table.setSortingEnabled(False)
         layout.addWidget(self.table)
 
         q_lo = QHBoxLayout()
-        self.inp_quick_name = QLineEdit(); self.inp_quick_name.setPlaceholderText(tr("HEADER_NAME"))
-        self.inp_quick_init = QLineEdit(); self.inp_quick_init.setPlaceholderText(tr("LBL_INIT")); self.inp_quick_init.setMaximumWidth(50)
-        self.inp_quick_hp = QLineEdit(); self.inp_quick_hp.setPlaceholderText(tr("LBL_HP")); self.inp_quick_hp.setMaximumWidth(50)
-        self.btn_quick_add = QPushButton(tr("BTN_QUICK_ADD")); self.btn_quick_add.clicked.connect(self.quick_add)
-        q_lo.addWidget(self.inp_quick_name, 3); q_lo.addWidget(self.inp_quick_init, 1); q_lo.addWidget(self.inp_quick_hp, 1); q_lo.addWidget(self.btn_quick_add, 1)
+        self.inp_quick_name = QLineEdit()
+        self.inp_quick_name.setPlaceholderText(tr("HEADER_NAME"))
+        self.inp_quick_init = QLineEdit()
+        self.inp_quick_init.setPlaceholderText(tr("LBL_INIT"))
+        self.inp_quick_init.setMaximumWidth(50)
+        self.inp_quick_hp = QLineEdit()
+        self.inp_quick_hp.setPlaceholderText(tr("LBL_HP"))
+        self.inp_quick_hp.setMaximumWidth(50)
+        self.btn_quick_add = QPushButton(tr("BTN_QUICK_ADD"))
+        self.btn_quick_add.clicked.connect(self.quick_add)
+        q_lo.addWidget(self.inp_quick_name, 3)
+        q_lo.addWidget(self.inp_quick_init, 1)
+        q_lo.addWidget(self.inp_quick_hp, 1)
+        q_lo.addWidget(self.btn_quick_add, 1)
         layout.addLayout(q_lo)
 
         # Removed 'Open Battle Map' button from here
         btn_layout = QHBoxLayout()
-        self.lbl_round = QLabel(f"{tr('LBL_ROUND_PREFIX')}1"); self.lbl_round.setObjectName("headerLabel"); self.lbl_round.setStyleSheet("font-size: 16px; font-weight: bold; margin-right: 10px;")
-        self.btn_next_turn = QPushButton(tr("BTN_NEXT_TURN")); self.btn_next_turn.setObjectName("actionBtn"); self.btn_next_turn.clicked.connect(self.next_turn)
+        self.lbl_round = QLabel(f"{tr('LBL_ROUND_PREFIX')}1")
+        self.lbl_round.setObjectName("headerLabel")
+        self.lbl_round.setStyleSheet("font-size: 16px; font-weight: bold; margin-right: 10px;")
+        self.btn_next_turn = QPushButton(tr("BTN_NEXT_TURN"))
+        self.btn_next_turn.setObjectName("actionBtn")
+        self.btn_next_turn.clicked.connect(self.next_turn)
         
         btn_layout.addWidget(self.lbl_round)
         btn_layout.addWidget(self.btn_next_turn)
         layout.addLayout(btn_layout)
         
         btn_layout2 = QHBoxLayout()
-        self.btn_add = QPushButton(tr("BTN_ADD")); self.btn_add.clicked.connect(self.add_combatant_dialog)
-        self.btn_add_players = QPushButton(tr("BTN_ADD_PLAYERS")); self.btn_add_players.clicked.connect(self.add_all_players)
-        self.btn_roll = QPushButton(tr("BTN_ROLL_INIT")); self.btn_roll.clicked.connect(self.roll_initiatives)
-        self.btn_clear_all = QPushButton(tr("BTN_CLEAR_ALL")); self.btn_clear_all.clicked.connect(self.clear_tracker); self.btn_clear_all.setObjectName("dangerBtn")
-        btn_layout2.addWidget(self.btn_add); btn_layout2.addWidget(self.btn_add_players); btn_layout2.addWidget(self.btn_roll); btn_layout2.addWidget(self.btn_clear_all)
+        self.btn_add = QPushButton(tr("BTN_ADD"))
+        self.btn_add.clicked.connect(self.add_combatant_dialog)
+        self.btn_add_players = QPushButton(tr("BTN_ADD_PLAYERS"))
+        self.btn_add_players.clicked.connect(self.add_all_players)
+        self.btn_roll = QPushButton(tr("BTN_ROLL_INIT"))
+        self.btn_roll.clicked.connect(self.roll_initiatives)
+        self.btn_clear_all = QPushButton(tr("BTN_CLEAR_ALL"))
+        self.btn_clear_all.clicked.connect(self.clear_tracker)
+        self.btn_clear_all.setObjectName("dangerBtn")
+        btn_layout2.addWidget(self.btn_add)
+        btn_layout2.addWidget(self.btn_add_players)
+        btn_layout2.addWidget(self.btn_roll)
+        btn_layout2.addWidget(self.btn_clear_all)
         layout.addLayout(btn_layout2)
         self.refresh_encounter_combo()
 
     def create_encounter(self, name):
-        eid = str(uuid.uuid4()); self.encounters[eid] = {"id":eid, "name":name, "combatants":[], "map_path":None, "token_size":50, "turn_index":-1, "round":1, "token_positions":{}}; self.current_encounter_id = eid; return eid
+        eid = str(uuid.uuid4())
+        self.encounters[eid] = {
+            "id": eid, 
+            "name": name, 
+            "combatants": [], 
+            "map_path": None, 
+            "token_size": 50, 
+            "turn_index": -1, 
+            "round": 1, 
+            "token_positions": {}
+        }
+        self.current_encounter_id = eid
+        return eid
     
     def prompt_new_encounter(self): 
-        n,ok = QInputDialog.getText(self, tr("TITLE_NEW_ENC"), tr("LBL_ENC_NAME")); 
-        if ok and n: self.create_encounter(n); self.refresh_encounter_combo()
+        n, ok = QInputDialog.getText(self, tr("TITLE_NEW_ENC"), tr("LBL_ENC_NAME"))
+        if ok and n: 
+            self.create_encounter(n)
+            self.refresh_encounter_combo()
     
     def rename_encounter(self):
         if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return

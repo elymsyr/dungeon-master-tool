@@ -8,9 +8,9 @@ class EntitySelectorDialog(QDialog):
     def __init__(self, data_manager, parent=None):
         super().__init__(parent)
         self.dm = data_manager
-        self.selected_entities = [] # Seçilenlerin ID listesi
+        self.selected_entities = [] # Selected ID list
         
-        self.setWindowTitle("Savaşa Varlık Ekle")
+        self.setWindowTitle("Add Entity to Combat")
         self.resize(700, 500)
         self.setStyleSheet("background-color: #1e1e1e; color: white;")
         
@@ -20,20 +20,20 @@ class EntitySelectorDialog(QDialog):
     def init_ui(self):
         layout = QVBoxLayout(self)
         
-        # Arama
+        # Search
         self.inp_search = QLineEdit()
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
         self.inp_search.setStyleSheet("padding: 8px; background-color: #333; border: 1px solid #555;")
         self.inp_search.textChanged.connect(self.filter_list)
         layout.addWidget(self.inp_search)
         
-        # Tablo
+        # Table
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("LBL_TYPE"), "HP", "AC", "Init Bonus"])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection) # ÇOKLU SEÇİM
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection) # MULTI SELECT
         self.table.setStyleSheet("""
             QTableWidget { background-color: #252526; border: 1px solid #444; gridline-color: #444; }
             QTableWidget::item:selected { background-color: #2e7d32; color: white; }
@@ -41,7 +41,7 @@ class EntitySelectorDialog(QDialog):
         """)
         layout.addWidget(self.table)
         
-        # Butonlar
+        # Buttons
         btn_layout = QHBoxLayout()
         self.btn_cancel = QPushButton(tr("BTN_CANCEL"))
         self.btn_cancel.clicked.connect(self.reject)
@@ -63,28 +63,28 @@ class EntitySelectorDialog(QDialog):
         row = 0
         for eid, data in entities.items():
             etype = data.get("type", "NPC")
-            # Sadece savaşa girebilecekleri listele
+            # List only those who can enter combat
             if etype not in ["NPC", "Monster", "Player"]:
                 continue
                 
             self.table.insertRow(row)
             
-            # Verileri çek
+            # Fetch Data
             name = data.get("name", "Unknown")
             c_stats = data.get("combat_stats", {})
             hp = str(c_stats.get("hp", "-"))
             ac = str(c_stats.get("ac", "-"))
             
-            # İnisiyatif Bonusu Hesapla (DEX mod + manuel bonus)
+            # Calculate Initiative Bonus (DEX mod + manual bonus)
             dex = int(data.get("stats", {}).get("DEX", 10))
             dex_mod = (dex - 10) // 2
             extra = int(c_stats.get("initiative") or 0)
             total_bonus = dex_mod + extra
             bonus_str = f"+{total_bonus}" if total_bonus >= 0 else str(total_bonus)
             
-            # Tabloya yaz
+            # Write to Table
             item_name = QTableWidgetItem(name)
-            item_name.setData(Qt.ItemDataRole.UserRole, eid) # ID sakla
+            item_name.setData(Qt.ItemDataRole.UserRole, eid) # Store ID
             
             self.table.setItem(row, 0, item_name)
             self.table.setItem(row, 1, QTableWidgetItem(etype))

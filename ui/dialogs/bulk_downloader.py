@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from config import BASE_DIR, API_BASE_URL
 from core.locales import tr
 
-# Kütüphane deposu
+# Library repository
 LIBRARY_DIR = os.path.join(BASE_DIR, "cache", "library")
 
 class DownloadWorker(QThread):
@@ -20,9 +20,9 @@ class DownloadWorker(QThread):
         super().__init__()
         self.is_running = True
         
-        # İndirilecek tüm kategoriler ve API uç noktaları (Endpoints)
-        # Not: 'equipment' endpoint'i; Weapons, Armor, Adventuring Gear, Tools ve Mounts'u kapsar.
-        # 'magic-items' ise tüm büyülü eşyaları kapsar. Bu ikisi toplam %100 eşya kapsamı sağlar.
+        # Categories to download and API endpoints
+        # Note: 'equipment' endpoint covers Weapons, Armor, Adventuring Gear, Tools and Mounts.
+        # 'magic-items' covers all magic items. These two provide 100% item coverage.
         self.categories = {
             "monsters": tr("CAT_MONSTERS_PL"),
             "spells": tr("CAT_SPELLS_PL"),
@@ -35,7 +35,7 @@ class DownloadWorker(QThread):
     def run(self):
         self.log_signal.emit(tr("LOG_STARTING"))
         
-        # 1. Klasörleri Hazırla
+        # 1. Prepare Folders
         lib_img_dir = os.path.join(LIBRARY_DIR, "images")
         for endpoint in self.categories.keys():
             path = os.path.join(LIBRARY_DIR, endpoint)
@@ -44,7 +44,7 @@ class DownloadWorker(QThread):
 
         session = requests.Session()
         
-        # Adım 1: Tüm Listeleri (Index) Çek
+        # Step 1: Fetch All Lists (Index)
         lists_to_process = {}
         total_items_to_download = 0
         
@@ -58,13 +58,13 @@ class DownloadWorker(QThread):
                     items = resp.json().get("results", [])
                     lists_to_process[endpoint] = items
                     total_items_to_download += len(items)
-                    self._save_index(endpoint, items) # Indexleri cache'e kaydet
+                    self._save_index(endpoint, items) # Save indexes to cache
                 else:
                     self.log_signal.emit(f"❌ Error: {endpoint} list failed.")
             except Exception as e:
                 self.log_signal.emit(f"❌ Conn Error: {str(e)}")
 
-        # Adım 2: Detayları İndir (SADECE JSON - RESİMLER İSTEK ÜZERİNE İNECEK)
+        # Step 2: Download Details (JSON ONLY - IMAGES ON DEMAND)
         current_count = 0
         for endpoint, items in lists_to_process.items():
             folder_path = os.path.join(LIBRARY_DIR, endpoint)
@@ -76,7 +76,7 @@ class DownloadWorker(QThread):
                 index = item["index"]
                 file_path = os.path.join(folder_path, f"{index}.json")
                 
-                # Eğer dosya zaten varsa atla
+                # Skip if file already exists
                 if os.path.exists(file_path):
                     current_count += 1
                     if current_count % 10 == 0: self._update_progress(current_count, total_items_to_download)
@@ -88,11 +88,11 @@ class DownloadWorker(QThread):
                     if resp.status_code == 200:
                         detail_data = resp.json()
                         
-                        # JSON'ı kaydet
+                        # Save JSON
                         with open(file_path, "w", encoding="utf-8") as f:
                             json.dump(detail_data, f, indent=4)
                     
-                    time.sleep(0.02) # API limitlerine takılmamak için (Resim yok, hızlı geçebiliriz)
+                    time.sleep(0.02) # To avoid hitting API limits (No images, can go fast)
                 except Exception as e:
                     self.log_signal.emit(f"⚠️ Error {index}: {str(e)}")
 
@@ -108,9 +108,9 @@ class DownloadWorker(QThread):
 
     def _save_index(self, endpoint, new_items):
         """
-        API'den gelen listeyi 'reference_indexes.json' dosyasına kaydeder.
-        ÖNEMLİ: 'equipment' ve 'magic-items' kategorilerini 'Eşya (Equipment)' altında birleştirir.
-        Böylece çevrimdışı aramada hepsi tek listede çıkar.
+        Saves the list from API to 'reference_indexes.json'.
+        IMPORTANT: Merges 'equipment' and 'magic-items' categories under 'Eşya (Equipment)'.
+        So they appear in a single list in offline search.
         """
         index_file = os.path.join(BASE_DIR, "cache", "reference_indexes.json")
         full_index = {}
@@ -123,27 +123,27 @@ class DownloadWorker(QThread):
             except:
                 full_index = {}
 
-        # Bizim uygulamanın kullandığı kategori anahtarları
+        # Category keys used by our application
         key_map = {
             "monsters": "Canavar",
             "spells": "Büyü (Spell)",
             "equipment": "Eşya (Equipment)",
-            "magic-items": "Eşya (Equipment)", # DİKKAT: İkisini de aynı yere kaydediyoruz
+            "magic-items": "Eşya (Equipment)", # NOTE: Saving both to the same place
             "classes": "Sınıf (Class)",
             "races": "Irk (Race)"
         }
         
         app_key = key_map.get(endpoint)
         if app_key:
-            # Eğer bu kategori zaten varsa, üzerine yazma mantığı
+            # If this category exists, overwrite logic
             if app_key == "Eşya (Equipment)":
-                # Equipment ve Magic Items birleştirme mantığı
+                # Logic to merge Equipment and Magic Items
                 existing_list = full_index.get(app_key, [])
                 
-                # Mevcut listedeki indexleri (ID) bir set'e at ki duplicate olmasın
+                # Put existing indexes (ID) into a set to avoid duplicates
                 existing_ids = {i["index"] for i in existing_list}
                 
-                # Yeni gelenleri ekle
+                # Add new ones
                 for item in new_items:
                     if item["index"] not in existing_ids:
                         existing_list.append(item)
@@ -151,10 +151,10 @@ class DownloadWorker(QThread):
                 
                 full_index[app_key] = existing_list
             else:
-                # Diğer kategoriler için direkt overwrite (güncel liste)
+                # Direct overwrite for other categories (current list)
                 full_index[app_key] = new_items
 
-        # Dosyayı kaydet
+        # Save file
         try:
             with open(index_file, "w", encoding="utf-8") as f:
                 json.dump(full_index, f, indent=4)
@@ -177,13 +177,13 @@ class BulkDownloadDialog(QDialog):
     def init_ui(self):
         layout = QVBoxLayout(self)
         
-        # Bilgi Etiketi
+        # Info Label
         lbl_info = QLabel(tr("LBL_DOWNLOADER_DESC"))
         lbl_info.setWordWrap(True)
         lbl_info.setStyleSheet("color: #e0e0e0; margin-bottom: 10px;")
         layout.addWidget(lbl_info)
         
-        # İlerleme Çubuğu
+        # Progress Bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(0)
         self.progress_bar.setStyleSheet("""
@@ -202,7 +202,7 @@ class BulkDownloadDialog(QDialog):
         """)
         layout.addWidget(self.progress_bar)
         
-        # Log Penceresi
+        # Log Window
         self.txt_log = QTextEdit()
         self.txt_log.setReadOnly(True)
         self.txt_log.setStyleSheet("""
@@ -214,7 +214,7 @@ class BulkDownloadDialog(QDialog):
         """)
         layout.addWidget(self.txt_log)
         
-        # Başlat Butonu
+        # Start Button
         self.btn_start = QPushButton(tr("BTN_START_DOWNLOAD"))
         self.btn_start.setStyleSheet("""
             QPushButton {
@@ -247,7 +247,7 @@ class BulkDownloadDialog(QDialog):
 
     def update_log(self, text):
         self.txt_log.append(text)
-        # Otomatik en alta kaydır
+        # Auto scroll to bottom
         sb = self.txt_log.verticalScrollBar()
         sb.setValue(sb.maximum())
 
