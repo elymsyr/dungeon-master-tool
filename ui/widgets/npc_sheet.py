@@ -3,8 +3,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout,
                              QLabel, QGroupBox, QPushButton, QScrollArea, QFrame, 
                              QListWidget, QFileDialog, QMessageBox, QStyle, QListWidgetItem, 
                              QApplication)
-from PyQt6.QtCore import Qt, QUrl, pyqtSignal
-from PyQt6.QtGui import QDesktopServices, QPixmap, QKeySequence, QShortcut
+from PyQt6.QtCore import Qt, QUrl, pyqtSignal, QSize
+from PyQt6.QtGui import QDesktopServices, QPixmap, QKeySequence, QShortcut, QIcon
 from ui.widgets.aspect_ratio_label import AspectRatioLabel
 from ui.widgets.markdown_editor import MarkdownEditor 
 from ui.workers import ImageDownloadWorker
@@ -30,7 +30,8 @@ class NpcSheet(QWidget):
         self.image_list = []
         self.current_img_index = 0
         self.linked_spell_ids = []     
-        self.linked_item_ids = []      
+        self.linked_item_ids = []
+        self.battlemap_list = [] # NEW: Stores battlemap paths for Locations
         self.image_worker = None       
         
         self.is_dirty = False
@@ -145,8 +146,8 @@ class NpcSheet(QWidget):
         # --- FULL WIDTH DESCRIPTION (Moved out of top_layout) ---
         self.content_layout.addWidget(QLabel(f"<b>{tr('LBL_DESC')} (Public Info)</b>"))
         self.inp_desc = MarkdownEditor()
-        self.inp_desc.set_data_manager(self.dm) # EKLE
-        self.inp_desc.entity_link_clicked.connect(self.request_open_entity.emit) # EKLE
+        self.inp_desc.set_data_manager(self.dm) 
+        self.inp_desc.entity_link_clicked.connect(self.request_open_entity.emit) 
         self.inp_desc.setMinimumHeight(180)
         self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
         self.content_layout.addWidget(self.inp_desc)
@@ -163,6 +164,10 @@ class NpcSheet(QWidget):
         self.tab_features = QWidget(); self.setup_features_tab(); self.tabs.addTab(self.tab_features, tr("TAB_ACTIONS"))
         self.tab_inventory = QWidget(); self.setup_inventory_tab(); self.tabs.addTab(self.tab_inventory, tr("TAB_INV"))
         self.tab_docs = QWidget(); self.setup_docs_tab(); self.tabs.addTab(self.tab_docs, tr("TAB_DOCS"))
+        
+        # --- NEW BATTLEMAP TAB ---
+        self.tab_battlemaps = QWidget(); self.setup_battlemap_tab(); self.tabs.addTab(self.tab_battlemaps, "Battlemaps")
+        
         self.content_layout.addWidget(self.tabs)
         
         # DM Notes
@@ -170,8 +175,8 @@ class NpcSheet(QWidget):
         self.grp_dm_notes.setStyleSheet("QGroupBox { border: 1px solid #d32f2f; color: #e57373; font-weight: bold; }")
         dm_notes_layout = QVBoxLayout(self.grp_dm_notes)
         self.inp_dm_notes = MarkdownEditor()
-        self.inp_dm_notes.set_data_manager(self.dm) # EKLE
-        self.inp_dm_notes.entity_link_clicked.connect(self.request_open_entity.emit) # EKLE
+        self.inp_dm_notes.set_data_manager(self.dm) 
+        self.inp_dm_notes.entity_link_clicked.connect(self.request_open_entity.emit) 
         self.inp_dm_notes.setPlaceholderText("Hidden from players... (Markdown supported)")
         self.inp_dm_notes.setMinimumHeight(120)
         dm_notes_layout.addWidget(self.inp_dm_notes)
@@ -192,8 +197,230 @@ class NpcSheet(QWidget):
         self.update_ui_by_type(self.inp_type.currentData())
         self._connect_change_signals()
 
+    def setup_battlemap_tab(self):
+        layout = QVBoxLayout(self.tab_battlemaps)
+        
+        lbl_info = QLabel("Add images to be used as Battlemaps in Combat Tracker.")
+        lbl_info.setStyleSheet("color: #888; font-style: italic;")
+        layout.addWidget(lbl_info)
+        
+        # Buttons
+        h_btn = QHBoxLayout()
+        self.btn_add_map = QPushButton(tr("BTN_ADD"))
+        self.btn_add_map.clicked.connect(self.add_battlemap_dialog)
+        self.btn_remove_map = QPushButton(tr("BTN_REMOVE"))
+        self.btn_remove_map.clicked.connect(self.remove_selected_battlemap)
+        
+        h_btn.addWidget(self.btn_add_map)
+        h_btn.addWidget(self.btn_remove_map)
+        h_btn.addStretch()
+        layout.addLayout(h_btn)
+        
+        # List
+        self.list_battlemaps = QListWidget()
+        self.list_battlemaps.setViewMode(QListWidget.ViewMode.IconMode)
+        self.list_battlemaps.setIconSize(QSize(120, 120))
+        self.list_battlemaps.setResizeMode(QListWidget.ResizeMode.Adjust)
+        self.list_battlemaps.setSpacing(10)
+        layout.addWidget(self.list_battlemaps)
+
+    def add_battlemap_dialog(self):
+        # Allow multiple files
+        files, _ = QFileDialog.getOpenFileNames(self, "Select Battlemaps", "", "Images (*.png *.jpg *.jpeg *.bmp)")
+        if files:
+            for f in files:
+                rel_path = self.dm.import_image(f)
+                if rel_path:
+                    self.battlemap_list.append(rel_path)
+            self._render_battlemap_list()
+            self.mark_as_dirty()
+
+    def remove_selected_battlemap(self):
+        row = self.list_battlemaps.currentRow()
+        if row >= 0:
+            del self.battlemap_list[row]
+            self._render_battlemap_list()
+            self.mark_as_dirty()
+
+    def _render_battlemap_list(self):
+        self.list_battlemaps.clear()
+        for path in self.battlemap_list:
+            full_path = self.dm.get_full_path(path)
+            name = os.path.basename(path)
+            
+            icon = QIcon()
+            if full_path and os.path.exists(full_path):
+                pix = QPixmap(full_path).scaled(120, 120, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                icon = QIcon(pix)
+            
+            item = QListWidgetItem(icon, name)
+            item.setData(Qt.ItemDataRole.UserRole, path)
+            self.list_battlemaps.addItem(item)
+
+    # ... (Rest of existing methods: add_feature_card, _connect_change_signals, etc.) ...
+
+    def update_ui_by_type(self, category_name):
+        self.build_dynamic_form(category_name)
+        is_npc_like = category_name in ["NPC", "Monster"]
+        is_player = category_name == "Player"
+        is_lore = category_name == "Lore"
+        is_status = category_name == "Status Effect"
+        is_location = category_name == "Location"
+        
+        # Location Residents Logic
+        if category_name == "Location":
+            self.list_residents.clear()
+            my_id = self.property("entity_id")
+            if my_id:
+                for eid, ent in self.dm.data["entities"].items():
+                    loc_ref = ent.get("location_id") or ent.get("attributes", {}).get("LBL_ATTR_LOCATION")
+                    if loc_ref == my_id:
+                        item = QListWidgetItem(f"{ent['name']} ({ent['type']})")
+                        item.setData(Qt.ItemDataRole.UserRole, eid)
+                        self.list_residents.addItem(item)
+
+        self.lbl_location.setVisible(is_npc_like or is_player); self.combo_location.setVisible(is_npc_like or is_player)
+        self.lbl_residents.setVisible(category_name == "Location"); self.list_residents.setVisible(category_name == "Location")
+        
+        # Tabs Visibility
+        self.tabs.setTabVisible(0, is_npc_like) # Stats
+        self.tabs.setTabVisible(1, is_npc_like) # Spells
+        self.tabs.setTabVisible(2, is_npc_like) # Actions
+        self.tabs.setTabVisible(3, is_npc_like) # Inventory
+        self.tabs.setTabVisible(4, is_lore or is_player or is_status or is_location) # Docs (Available for most)
+        
+        # Battlemap Tab Visibility (Only for Locations)
+        idx_battlemap = self.tabs.indexOf(self.tab_battlemaps)
+        if idx_battlemap != -1:
+            self.tabs.setTabVisible(idx_battlemap, is_location)
+
+        if is_player: 
+             if self.grp_combat_stats.parent() == self.tab_stats: self.tab_stats.layout().removeWidget(self.grp_combat_stats); self.content_layout.insertWidget(self.content_layout.indexOf(self.tabs), self.grp_combat_stats)
+             self.grp_combat_stats.setVisible(True)
+        elif is_status: self.grp_combat_stats.setVisible(False)
+        else:
+             if self.grp_combat_stats.parent() != self.tab_stats: self.content_layout.removeWidget(self.grp_combat_stats); self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
+             self.grp_combat_stats.setVisible(is_npc_like)
+
+    # ... (Other methods) ...
+
+    def populate_sheet(self, data):
+        # ... (Existing populate logic) ...
+        self.refresh_reference_combos()
+        self.inp_name.setText(data.get("name", ""))
+        self.inp_source.setText(data.get("source", "")) 
+        curr_type = data.get("type", "NPC")
+        idx = self.inp_type.findData(curr_type)
+        self.inp_type.setCurrentIndex(idx if idx >= 0 else 0)
+        self.inp_tags.setText(", ".join(data.get("tags", [])))
+        self.inp_desc.setText(data.get("description", ""))
+        self.inp_dm_notes.setText(data.get("dm_notes", ""))
+        
+        # ... (Stats population) ...
+        loc_val = data.get("location_id") or data.get("attributes", {}).get("LBL_ATTR_LOCATION")
+        if loc_val:
+            idx = self.combo_location.findData(loc_val)
+            if idx >= 0: self.combo_location.setCurrentIndex(idx)
+            else: self.combo_location.setCurrentText(str(loc_val))
+        else:
+            self.combo_location.setCurrentIndex(0)
+
+        stats = data.get("stats", {})
+        for k, v in self.stats_inputs.items(): v.setText(str(stats.get(k, 10))); self._update_modifier(k, v.text())
+        
+        c = data.get("combat_stats", {})
+        self.inp_hp.setText(str(c.get("hp", ""))); self.inp_max_hp.setText(str(c.get("max_hp", "")))
+        self.inp_ac.setText(str(c.get("ac", ""))); self.inp_speed.setText(str(c.get("speed", ""))); self.inp_init.setText(str(c.get("initiative", "")))
+        
+        self.inp_saves.setText(data.get("saving_throws", "")); self.inp_skills.setText(data.get("skills", ""))
+        self.inp_vuln.setText(data.get("damage_vulnerabilities", "")); self.inp_resist.setText(data.get("damage_resistances", ""))
+        self.inp_dmg_immune.setText(data.get("damage_immunities", "")); self.inp_cond_immune.setText(data.get("condition_immunities", ""))
+        self.inp_prof.setText(str(data.get("proficiency_bonus", ""))); self.inp_pp.setText(str(data.get("passive_perception", "")))
+
+        self.update_ui_by_type(curr_type)
+        attrs = data.get("attributes", {})
+        for label_key, widget in self.dynamic_inputs.items():
+            val = attrs.get(label_key, "")
+            if isinstance(widget, QComboBox):
+                ix = widget.findData(val); 
+                if ix >= 0: widget.setCurrentIndex(ix)
+                else: widget.setCurrentText(str(val))
+            else: widget.setText(str(val))
+
+        self.clear_all_cards()
+        for k, container in [("traits", self.trait_container), ("actions", self.action_container), ("reactions", self.reaction_container), ("legendary_actions", self.legendary_container), ("custom_spells", self.custom_spell_container), ("inventory", self.inventory_container)]:
+            for item in data.get(k, []): self.add_feature_card(container, item.get("name"), item.get("desc"))
+
+        self.linked_spell_ids = data.get("spells", [])
+        self._render_linked_list(self.list_assigned_spells, self.linked_spell_ids)
+        self.linked_item_ids = data.get("equipment_ids", [])
+        self._render_linked_list(self.list_assigned_items, self.linked_item_ids)
+
+        self.image_list = data.get("images", [])
+        if not self.image_list and data.get("image_path"): self.image_list = [data.get("image_path")]
+        
+        # --- NEW: POPULATE BATTLEMAPS ---
+        self.battlemap_list = data.get("battlemaps", [])
+        self._render_battlemap_list()
+        # --------------------------------
+
+        remote_url = data.get("_remote_image_url")
+        if not self.image_list and remote_url:
+            self.lbl_image.setPlaceholderText(tr("MSG_DOWNLOADING_IMAGE")); self.lbl_image.setPixmap(None); self.lbl_img_counter.setText("-")
+            self._start_lazy_image_download(remote_url, data.get("name", "entity"))
+        else:
+            self.current_img_index = 0; self.update_image_display()
+
+        self.list_pdfs.clear()
+        for pdf in data.get("pdfs", []): self.list_pdfs.addItem(pdf)
+        self.is_dirty = False
+
+    def collect_data_from_sheet(self):
+        if not self.inp_name.text(): return None
+        # ... (Nested helpers same as before) ...
+        def get_cards(container):
+            res = []
+            for i in range(container.dynamic_area.count()):
+                w = container.dynamic_area.itemAt(i).widget()
+                if w: 
+                    res.append({"name": w.inp_title.text(), "desc": w.inp_desc.toPlainText()})
+            return res
+        
+        loc_id = self.combo_location.currentData()
+        loc_text = self.combo_location.currentText()
+        final_loc = loc_id if (loc_id and self.combo_location.currentIndex() > 0) else loc_text.strip()
+
+        data = {
+            "name": self.inp_name.text(), 
+            "type": self.inp_type.currentText(),
+            "source": self.inp_source.text(),
+            "tags": [t.strip() for t in self.inp_tags.text().split(",") if t.strip()],
+            "description": self.inp_desc.toPlainText(), 
+            "dm_notes": self.inp_dm_notes.toPlainText(),
+            "images": self.image_list,
+            
+            # --- SAVE BATTLEMAPS ---
+            "battlemaps": self.battlemap_list,
+            # -----------------------
+            
+            "location_id": final_loc,
+            "stats": {k: int(v.text() or 10) for k, v in self.stats_inputs.items()},
+            "combat_stats": {"hp": self.inp_hp.text(), "max_hp": self.inp_max_hp.text(), "ac": self.inp_ac.text(), "speed": self.inp_speed.text(), "initiative": self.inp_init.text()},
+            "saving_throws": self.inp_saves.text(), "skills": self.inp_skills.text(),
+            "damage_vulnerabilities": self.inp_vuln.text(), "damage_resistances": self.inp_resist.text(),
+            "damage_immunities": self.inp_dmg_immune.text(), "condition_immunities": self.inp_cond_immune.text(),
+            "proficiency_bonus": self.inp_prof.text(), "passive_perception": self.inp_pp.text(),
+            "attributes": {l: (w.currentText() if isinstance(w, QComboBox) else w.text()) for l, w in self.dynamic_inputs.items()},
+            "traits": get_cards(self.trait_container), "actions": get_cards(self.action_container),
+            "reactions": get_cards(self.reaction_container), "legendary_actions": get_cards(self.legendary_container),
+            "inventory": get_cards(self.inventory_container), "custom_spells": get_cards(self.custom_spell_container),
+            "spells": self.linked_spell_ids, "equipment_ids": self.linked_item_ids,
+            "pdfs": [self.list_pdfs.item(i).text() for i in range(self.list_pdfs.count())]
+        }
+        return data
+
+    # ... (Rest of existing methods like add_feature_card, add_btn_to_section, etc.) ...
     def add_feature_card(self, group, name="", desc="", ph_title=None, ph_desc=None):
-        """Adds a feature card with a Title and a Markdown Body (Notes area)."""
         self.mark_as_dirty()
         if ph_title is None: ph_title = tr("LBL_TITLE_PH")
         if ph_desc is None: ph_desc = tr("LBL_DETAILS_PH")
@@ -218,12 +445,11 @@ class NpcSheet(QWidget):
         h_header.addWidget(btn_del)
         l.addLayout(h_header)
         
-        # --- NOTES AREA (MARKDOWN) FOR EACH CARD ---
         d = MarkdownEditor(text=desc)
-        d.set_data_manager(self.dm) # EKLE
-        d.entity_link_clicked.connect(self.request_open_entity.emit) # EKLE
+        d.set_data_manager(self.dm) 
+        d.entity_link_clicked.connect(self.request_open_entity.emit)
         d.setPlaceholderText(ph_desc)
-        d.setMinimumHeight(120) # Height for card body
+        d.setMinimumHeight(120) 
         d.textChanged.connect(self.mark_as_dirty)
         l.addWidget(d)
         
@@ -442,36 +668,6 @@ class NpcSheet(QWidget):
         cat_key = self.inp_type.itemData(index)
         if cat_key: self.update_ui_by_type(cat_key)
 
-    def update_ui_by_type(self, category_name):
-        self.build_dynamic_form(category_name)
-        is_npc_like = category_name in ["NPC", "Monster"]
-        is_player = category_name == "Player"
-        is_lore = category_name == "Lore"
-        is_status = category_name == "Status Effect"
-        
-        if category_name == "Location":
-            self.list_residents.clear()
-            my_id = self.property("entity_id")
-            if my_id:
-                for eid, ent in self.dm.data["entities"].items():
-                    loc_ref = ent.get("location_id") or ent.get("attributes", {}).get("LBL_ATTR_LOCATION")
-                    if loc_ref == my_id:
-                        item = QListWidgetItem(f"{ent['name']} ({ent['type']})")
-                        item.setData(Qt.ItemDataRole.UserRole, eid)
-                        self.list_residents.addItem(item)
-
-        self.lbl_location.setVisible(is_npc_like or is_player); self.combo_location.setVisible(is_npc_like or is_player)
-        self.lbl_residents.setVisible(category_name == "Location"); self.list_residents.setVisible(category_name == "Location")
-        self.tabs.setTabVisible(0, is_npc_like); self.tabs.setTabVisible(1, is_npc_like); self.tabs.setTabVisible(2, is_npc_like); self.tabs.setTabVisible(3, is_npc_like)
-        self.tabs.setTabVisible(4, is_lore or is_player or is_status)
-        if is_player: 
-             if self.grp_combat_stats.parent() == self.tab_stats: self.tab_stats.layout().removeWidget(self.grp_combat_stats); self.content_layout.insertWidget(self.content_layout.indexOf(self.tabs), self.grp_combat_stats)
-             self.grp_combat_stats.setVisible(True)
-        elif is_status: self.grp_combat_stats.setVisible(False)
-        else:
-             if self.grp_combat_stats.parent() != self.tab_stats: self.content_layout.removeWidget(self.grp_combat_stats); self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
-             self.grp_combat_stats.setVisible(is_npc_like)
-
     def build_dynamic_form(self, category_name):
         while self.layout_dynamic.rowCount() > 0: self.layout_dynamic.removeRow(0)
         self.dynamic_inputs = {} 
@@ -488,23 +684,12 @@ class NpcSheet(QWidget):
                 widget.currentIndexChanged.connect(self.mark_as_dirty)
             
             elif dtype == "entity_select":
-                # Dynamic Entity Selector (Unified)
                 widget = QComboBox(); widget.setEditable(True)
-                widget.addItem("-", "") # Default empty
-                
-                # We will populate this via a lazy/unified method
-                # to keep the UI responsive and include API items.
-                
-                # Store target type in property for the populate method
+                widget.addItem("-", "") 
                 widget.setProperty("target_type", options)
-                
-                # Initial Populate (Local only first, API later/async?)
                 self._populate_unified_combo(options, widget)
-                
-                # Connect signals
                 widget.activated.connect(lambda idx, w=widget: self._on_unified_selection(idx, w))
                 widget.editTextChanged.connect(self.mark_as_dirty)
-                
                 self.layout_dynamic.addRow(f"{tr(label_key)}:", widget); self.dynamic_inputs[label_key] = widget
 
             else: 
@@ -515,221 +700,56 @@ class NpcSheet(QWidget):
     def _populate_unified_combo(self, category, widget):
         widget.clear()
         widget.addItem("-", "")
-        
         candidates = []
-        
-        # 1. Local Entities
         for eid, ent in self.dm.data["entities"].items():
             if ent.get("type") == category:
-                candidates.append({
-                    "name": ent.get("name", "Unnamed"),
-                    "id": eid,
-                    "is_local": True,
-                    "source": "Local"
-                })
-
-        # 2. Remote/Cached Entities
+                candidates.append({"name": ent.get("name", "Unnamed"), "id": eid, "is_local": True, "source": "Local"})
         remote_cat = category
         if category == "Condition": remote_cat = "Condition" 
         elif category == "Location": remote_cat = None 
-        
         if remote_cat:
             try:
-                # Fetch ALL pages logic
-                # For performance, maybe limit to first 3 pages or 150 items if too slow? 
-                # But requirement is "all". Open5e standard limit is 50. 
-                # We will loop until 'next' is None, but with a safety circuit breaker (e.g. 10 pages)
-                # to prevent UI freeze if not threaded.
-                # Ideally this should be threaded, but for now we do synchronous with processEvents
-                # or just fetch page 1-3. 
-                # Let's try fetching up to 300 items (6 pages).
-                
-                page = 1
-                max_pages = 10 
-                
+                page = 1; max_pages = 10 
                 while page <= max_pages:
                     cache_data = self.dm.get_api_index(remote_cat, page=page)
                     results = cache_data.get("results", []) if isinstance(cache_data, dict) else []
-                    
                     if not results: break
-                    
                     source_label = self.dm.api_client.current_source_key.upper()
                     if source_label == "DND5E": source_label = "SRD 5e"
-                    
                     for item in results:
-                        candidates.append({
-                            "name": item.get("name", "Unknown"),
-                            "id": item.get("index") or item.get("slug"), 
-                            "is_local": False,
-                            "source": source_label,
-                            "raw_data": item 
-                        })
-                    
-                    if isinstance(cache_data, dict) and not cache_data.get("next"):
-                        break
-                    
+                        candidates.append({"name": item.get("name", "Unknown"), "id": item.get("index") or item.get("slug"), "is_local": False, "source": source_label, "raw_data": item})
+                    if isinstance(cache_data, dict) and not cache_data.get("next"): break
                     page += 1
-                    QApplication.processEvents() # Keep UI responsive
-
-            except Exception as e:
-                print(f"Unified Pop Error: {e}")
-
-        # Sort combined list
+                    QApplication.processEvents() 
+            except Exception as e: print(f"Unified Pop Error: {e}")
         candidates.sort(key=lambda x: x["name"])
-        
         for cand in candidates:
             display = cand["name"]
-            if not cand["is_local"]:
-                display = f"☁️ {cand['name']} [{cand['source']}]"
-            
+            if not cand["is_local"]: display = f"☁️ {cand['name']} [{cand['source']}]"
             widget.addItem(display, cand["name"]) 
-            
-            # Store full metadata in UserRole
             idx = widget.count() - 1
             widget.setItemData(idx, cand, Qt.ItemDataRole.UserRole)
 
     def _on_unified_selection(self, index, widget):
         data = widget.itemData(index, Qt.ItemDataRole.UserRole)
         if not data: return
-        
         if not data["is_local"]:
-            # CACHE ONLY - NO IMPORT
-            # Show ephemeral status
             original_text = widget.itemText(index)
             widget.setItemText(index, f"⏳ {tr('MSG_LOADING')}...")
             QApplication.processEvents()
-            
             target_type = widget.property("target_type")
-            
             try:
-                # 1. Fetch Details (This saves to cache automatically in DataManager)
                 success, parsed_or_msg = self.dm.fetch_details_from_api(target_type, data["id"])
-                
                 if success:
-                    # 2. Update Dropdown Text
-                    # Remove cloud icon to indicate it is "resolved" locally (even if just cached)
-                    # Or keep some indicator? User asked for "load them into dropdown menu"
-                    # "we shouldn't have to import those things... let us keep them in the cache"
-                    # We will update text to just Name.
                     widget.setItemText(index, data["name"])
-                    
-                    # 3. Trigger Save (The name string is saved to the entity)
                     self.mark_as_dirty()
-                    
-                    # Optional: User might want to know it succeeded?
-                    # But seamless is better. 
-                
                 else:
                     widget.setItemText(index, original_text)
                     QMessageBox.warning(self, tr("MSG_ERROR"), parsed_or_msg)
-
             except Exception as e:
                 widget.setItemText(index, original_text)
                 QMessageBox.critical(self, tr("MSG_ERROR"), f"Error: {e}")
-        else:
-            self.mark_as_dirty()
-
-    def populate_sheet(self, data):
-        self.refresh_reference_combos()
-        self.inp_name.setText(data.get("name", ""))
-        self.inp_source.setText(data.get("source", "")) 
-        curr_type = data.get("type", "NPC")
-        idx = self.inp_type.findData(curr_type)
-        self.inp_type.setCurrentIndex(idx if idx >= 0 else 0)
-        self.inp_tags.setText(", ".join(data.get("tags", [])))
-        self.inp_desc.setText(data.get("description", ""))
-        self.inp_dm_notes.setText(data.get("dm_notes", ""))
-        
-        loc_val = data.get("location_id") or data.get("attributes", {}).get("LBL_ATTR_LOCATION")
-        if loc_val:
-            idx = self.combo_location.findData(loc_val)
-            if idx >= 0: self.combo_location.setCurrentIndex(idx)
-            else: self.combo_location.setCurrentText(str(loc_val))
-        else:
-            self.combo_location.setCurrentIndex(0)
-
-        stats = data.get("stats", {})
-        for k, v in self.stats_inputs.items(): v.setText(str(stats.get(k, 10))); self._update_modifier(k, v.text())
-        
-        c = data.get("combat_stats", {})
-        self.inp_hp.setText(str(c.get("hp", ""))); self.inp_max_hp.setText(str(c.get("max_hp", "")))
-        self.inp_ac.setText(str(c.get("ac", ""))); self.inp_speed.setText(str(c.get("speed", ""))); self.inp_init.setText(str(c.get("initiative", "")))
-        
-        self.inp_saves.setText(data.get("saving_throws", "")); self.inp_skills.setText(data.get("skills", ""))
-        self.inp_vuln.setText(data.get("damage_vulnerabilities", "")); self.inp_resist.setText(data.get("damage_resistances", ""))
-        self.inp_dmg_immune.setText(data.get("damage_immunities", "")); self.inp_cond_immune.setText(data.get("condition_immunities", ""))
-        self.inp_prof.setText(str(data.get("proficiency_bonus", ""))); self.inp_pp.setText(str(data.get("passive_perception", "")))
-
-        self.update_ui_by_type(curr_type)
-        attrs = data.get("attributes", {})
-        for label_key, widget in self.dynamic_inputs.items():
-            val = attrs.get(label_key, "")
-            if isinstance(widget, QComboBox):
-                ix = widget.findData(val); 
-                if ix >= 0: widget.setCurrentIndex(ix)
-                else: widget.setCurrentText(str(val))
-            else: widget.setText(str(val))
-
-        self.clear_all_cards()
-        for k, container in [("traits", self.trait_container), ("actions", self.action_container), ("reactions", self.reaction_container), ("legendary_actions", self.legendary_container), ("custom_spells", self.custom_spell_container), ("inventory", self.inventory_container)]:
-            for item in data.get(k, []): self.add_feature_card(container, item.get("name"), item.get("desc"))
-
-        self.linked_spell_ids = data.get("spells", [])
-        self._render_linked_list(self.list_assigned_spells, self.linked_spell_ids)
-        self.linked_item_ids = data.get("equipment_ids", [])
-        self._render_linked_list(self.list_assigned_items, self.linked_item_ids)
-
-        self.image_list = data.get("images", [])
-        if not self.image_list and data.get("image_path"): self.image_list = [data.get("image_path")]
-        remote_url = data.get("_remote_image_url")
-        
-        if not self.image_list and remote_url:
-            self.lbl_image.setPlaceholderText(tr("MSG_DOWNLOADING_IMAGE")); self.lbl_image.setPixmap(None); self.lbl_img_counter.setText("-")
-            self._start_lazy_image_download(remote_url, data.get("name", "entity"))
-        else:
-            self.current_img_index = 0; self.update_image_display()
-
-        self.list_pdfs.clear()
-        for pdf in data.get("pdfs", []): self.list_pdfs.addItem(pdf)
-        self.is_dirty = False
-
-    def collect_data_from_sheet(self):
-        if not self.inp_name.text(): return None
-        def get_cards(container):
-            res = []
-            for i in range(container.dynamic_area.count()):
-                w = container.dynamic_area.itemAt(i).widget()
-                if w: 
-                    res.append({"name": w.inp_title.text(), "desc": w.inp_desc.toPlainText()})
-            return res
-        
-        loc_id = self.combo_location.currentData()
-        loc_text = self.combo_location.currentText()
-        final_loc = loc_id if (loc_id and self.combo_location.currentIndex() > 0) else loc_text.strip()
-
-        data = {
-            "name": self.inp_name.text(), 
-            "type": self.inp_type.currentText(),
-            "source": self.inp_source.text(),
-            "tags": [t.strip() for t in self.inp_tags.text().split(",") if t.strip()],
-            "description": self.inp_desc.toPlainText(), 
-            "dm_notes": self.inp_dm_notes.toPlainText(),
-            "images": self.image_list, 
-            "location_id": final_loc,
-            "stats": {k: int(v.text() or 10) for k, v in self.stats_inputs.items()},
-            "combat_stats": {"hp": self.inp_hp.text(), "max_hp": self.inp_max_hp.text(), "ac": self.inp_ac.text(), "speed": self.inp_speed.text(), "initiative": self.inp_init.text()},
-            "saving_throws": self.inp_saves.text(), "skills": self.inp_skills.text(),
-            "damage_vulnerabilities": self.inp_vuln.text(), "damage_resistances": self.inp_resist.text(),
-            "damage_immunities": self.inp_dmg_immune.text(), "condition_immunities": self.inp_cond_immune.text(),
-            "proficiency_bonus": self.inp_prof.text(), "passive_perception": self.inp_pp.text(),
-            "attributes": {l: (w.currentText() if isinstance(w, QComboBox) else w.text()) for l, w in self.dynamic_inputs.items()},
-            "traits": get_cards(self.trait_container), "actions": get_cards(self.action_container),
-            "reactions": get_cards(self.reaction_container), "legendary_actions": get_cards(self.legendary_container),
-            "inventory": get_cards(self.inventory_container), "custom_spells": get_cards(self.custom_spell_container),
-            "spells": self.linked_spell_ids, "equipment_ids": self.linked_item_ids,
-            "pdfs": [self.list_pdfs.item(i).text() for i in range(self.list_pdfs.count())]
-        }
-        return data
+        else: self.mark_as_dirty()
 
     def _start_lazy_image_download(self, url, name):
         safe_name = "".join([c for c in name if c.isalnum()]).lower()
@@ -773,7 +793,6 @@ class NpcSheet(QWidget):
         p = self.dm.get_full_path(self.image_list[self.current_img_index])
         
         if p and os.path.exists(p): 
-            # setPixmap metoduna path parametresini de veriyoruz
             self.lbl_image.setPixmap(QPixmap(p), path=p) 
         else: 
             self.lbl_image.setPixmap(None, path=None)

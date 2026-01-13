@@ -425,7 +425,7 @@ tr:
   LBL_SOURCE: "Kaynak:"
   CAT_MAGIC_ITEM: "Büyülü Eşya"
 
-  BTN_TOGGLE_TIMELINE: "⏳ Zaman Çizelgesi: %{state}"
+  BTN_TOGGLE_TIMELINE: "⏳ Zaman Çizelgesi"
   MENU_LINK_NEW: "🔗 Buna Bağlı Yeni Ekle"
   MENU_EDIT_TIMELINE: "✏️ Düzenle (Gün/Not)"
   MENU_CHANGE_COLOR: "🎨 Renk Değiştir"
