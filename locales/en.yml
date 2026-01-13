@@ -426,7 +426,7 @@ en:
   LBL_SOURCE: "Source:"
   CAT_MAGIC_ITEM: "Magic Item"
 
-  BTN_TOGGLE_TIMELINE: "⏳ Timeline: %{state}"
+  BTN_TOGGLE_TIMELINE: "⏳ Timeline"
   MENU_LINK_NEW: "🔗 Add Linked Event"
   MENU_EDIT_TIMELINE: "✏️ Edit (Day/Note)"
   MENU_CHANGE_COLOR: "🎨 Change Color"
