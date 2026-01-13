@@ -14,7 +14,9 @@ class SoundpadPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedWidth(350)
+        # CHANGED: Reduced minimum width to 240 to fit smaller screens better
+        self.setMinimumWidth(240)
+        self.setMaximumWidth(400)
         self.setObjectName("soundpadContainer")
         
         # Load global library and start audio engine
