@@ -1,7 +1,8 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, 
                              QLineEdit, QTextEdit, QComboBox, QTabWidget, 
                              QLabel, QGroupBox, QPushButton, QScrollArea, QFrame, 
-                             QListWidget, QFileDialog, QMessageBox, QStyle, QListWidgetItem)
+                             QListWidget, QFileDialog, QMessageBox, QStyle, QListWidgetItem, 
+                             QApplication)
 from PyQt6.QtCore import Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QDesktopServices, QPixmap, QKeySequence, QShortcut
 from ui.widgets.aspect_ratio_label import AspectRatioLabel
@@ -11,6 +12,8 @@ from core.models import ENTITY_SCHEMAS
 from core.locales import tr
 from config import CACHE_DIR
 import os
+from PyQt6.QtWidgets import QToolButton 
+from ui.dialogs.api_browser import ApiBrowser
 
 class NpcSheet(QWidget):
     # --- SIGNALS ---
@@ -475,6 +478,7 @@ class NpcSheet(QWidget):
         schema = ENTITY_SCHEMAS.get(category_name, [])
         cat_trans = tr(f"CAT_{category_name.upper()}") if category_name in ENTITY_SCHEMAS else category_name
         self.grp_dynamic.setTitle(f"{cat_trans} {tr('LBL_PROPERTIES')}")
+        
         for label_key, dtype, options in schema:
             if dtype == "combo":
                 widget = QComboBox(); widget.setEditable(True)
@@ -482,10 +486,148 @@ class NpcSheet(QWidget):
                     for opt in options: widget.addItem(tr(opt) if str(opt).startswith("LBL_") else opt, opt)
                 widget.editTextChanged.connect(self.mark_as_dirty) 
                 widget.currentIndexChanged.connect(self.mark_as_dirty)
+            
+            elif dtype == "entity_select":
+                # Dynamic Entity Selector (Unified)
+                widget = QComboBox(); widget.setEditable(True)
+                widget.addItem("-", "") # Default empty
+                
+                # We will populate this via a lazy/unified method
+                # to keep the UI responsive and include API items.
+                
+                # Store target type in property for the populate method
+                widget.setProperty("target_type", options)
+                
+                # Initial Populate (Local only first, API later/async?)
+                self._populate_unified_combo(options, widget)
+                
+                # Connect signals
+                widget.activated.connect(lambda idx, w=widget: self._on_unified_selection(idx, w))
+                widget.editTextChanged.connect(self.mark_as_dirty)
+                
+                self.layout_dynamic.addRow(f"{tr(label_key)}:", widget); self.dynamic_inputs[label_key] = widget
+
             else: 
                 widget = QLineEdit()
                 widget.textChanged.connect(self.mark_as_dirty)
-            self.layout_dynamic.addRow(f"{tr(label_key)}:", widget); self.dynamic_inputs[label_key] = widget
+                self.layout_dynamic.addRow(f"{tr(label_key)}:", widget); self.dynamic_inputs[label_key] = widget
+
+    def _populate_unified_combo(self, category, widget):
+        widget.clear()
+        widget.addItem("-", "")
+        
+        candidates = []
+        
+        # 1. Local Entities
+        for eid, ent in self.dm.data["entities"].items():
+            if ent.get("type") == category:
+                candidates.append({
+                    "name": ent.get("name", "Unnamed"),
+                    "id": eid,
+                    "is_local": True,
+                    "source": "Local"
+                })
+
+        # 2. Remote/Cached Entities
+        remote_cat = category
+        if category == "Condition": remote_cat = "Condition" 
+        elif category == "Location": remote_cat = None 
+        
+        if remote_cat:
+            try:
+                # Fetch ALL pages logic
+                # For performance, maybe limit to first 3 pages or 150 items if too slow? 
+                # But requirement is "all". Open5e standard limit is 50. 
+                # We will loop until 'next' is None, but with a safety circuit breaker (e.g. 10 pages)
+                # to prevent UI freeze if not threaded.
+                # Ideally this should be threaded, but for now we do synchronous with processEvents
+                # or just fetch page 1-3. 
+                # Let's try fetching up to 300 items (6 pages).
+                
+                page = 1
+                max_pages = 10 
+                
+                while page <= max_pages:
+                    cache_data = self.dm.get_api_index(remote_cat, page=page)
+                    results = cache_data.get("results", []) if isinstance(cache_data, dict) else []
+                    
+                    if not results: break
+                    
+                    source_label = self.dm.api_client.current_source_key.upper()
+                    if source_label == "DND5E": source_label = "SRD 5e"
+                    
+                    for item in results:
+                        candidates.append({
+                            "name": item.get("name", "Unknown"),
+                            "id": item.get("index") or item.get("slug"), 
+                            "is_local": False,
+                            "source": source_label,
+                            "raw_data": item 
+                        })
+                    
+                    if isinstance(cache_data, dict) and not cache_data.get("next"):
+                        break
+                    
+                    page += 1
+                    QApplication.processEvents() # Keep UI responsive
+
+            except Exception as e:
+                print(f"Unified Pop Error: {e}")
+
+        # Sort combined list
+        candidates.sort(key=lambda x: x["name"])
+        
+        for cand in candidates:
+            display = cand["name"]
+            if not cand["is_local"]:
+                display = f"☁️ {cand['name']} [{cand['source']}]"
+            
+            widget.addItem(display, cand["name"]) 
+            
+            # Store full metadata in UserRole
+            idx = widget.count() - 1
+            widget.setItemData(idx, cand, Qt.ItemDataRole.UserRole)
+
+    def _on_unified_selection(self, index, widget):
+        data = widget.itemData(index, Qt.ItemDataRole.UserRole)
+        if not data: return
+        
+        if not data["is_local"]:
+            # CACHE ONLY - NO IMPORT
+            # Show ephemeral status
+            original_text = widget.itemText(index)
+            widget.setItemText(index, f"⏳ {tr('MSG_LOADING')}...")
+            QApplication.processEvents()
+            
+            target_type = widget.property("target_type")
+            
+            try:
+                # 1. Fetch Details (This saves to cache automatically in DataManager)
+                success, parsed_or_msg = self.dm.fetch_details_from_api(target_type, data["id"])
+                
+                if success:
+                    # 2. Update Dropdown Text
+                    # Remove cloud icon to indicate it is "resolved" locally (even if just cached)
+                    # Or keep some indicator? User asked for "load them into dropdown menu"
+                    # "we shouldn't have to import those things... let us keep them in the cache"
+                    # We will update text to just Name.
+                    widget.setItemText(index, data["name"])
+                    
+                    # 3. Trigger Save (The name string is saved to the entity)
+                    self.mark_as_dirty()
+                    
+                    # Optional: User might want to know it succeeded?
+                    # But seamless is better. 
+                
+                else:
+                    widget.setItemText(index, original_text)
+                    QMessageBox.warning(self, tr("MSG_ERROR"), parsed_or_msg)
+
+            except Exception as e:
+                widget.setItemText(index, original_text)
+                QMessageBox.critical(self, tr("MSG_ERROR"), f"Error: {e}")
+        else:
+            self.mark_as_dirty()
 
     def populate_sheet(self, data):
         self.refresh_reference_combos()
