@@ -15,13 +15,14 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 
 ## ✨ Key Features
 
-*   **Dynamic Player Screen:** Drag & drop multiple images (NPCs, Maps, Items) to the projection bar to create an instant **split-screen view** for players.
+*   **Dynamic Player Screen:** Drag & drop multiple images (NPCs, Maps, Items) to the projection bar to create an instant **second split-screen view** for players.
 *   **Fog of War:** Interactive masking on the Battle Map. Draw fog to hide secrets and erase it to reveal rooms as players explore.
-*   **Embedded Battle Map:** Move tokens, manage combat, and sync views without leaving the session log.
-*   **Adaptive Soundpad:** Layered music system with intensity sliders (Base -> Low -> High) and instant SFX.
-*   **Story Timeline:** Map-based tracker with **branching paths**, travel lines, and session-linked events.
-*   **5e Database:** Integrated browser and bulk downloader for Monsters, Spells, and Items.
-*   **Portable & Offline:** No installation or internet required. Runs entirely from a USB drive.
+*   **Embedded Battle Map:** Move tokens, manage combat, and sync views without leaving the session log and control the second battlemap screen for playeres.
+*   **Adaptive Soundpad:** Layered music system with intensity sliders (Base -> Low -> High) with ambiences and instant SFX.
+*   **Story Timeline:** Map-based tracker with **branching paths**, travel lines, and session-linked events. Implement NPC or Monster stories using timeline pins and hide them from players.
+*   **System Agnostic:** While optimized for 5e, you can play **any TTRPG** (Pathfinder, OSR, Homebrew) by creating custom entity cards or using "Handwritten" notes without code. Please create an issue if you want more sources :)
+*   **Multi-Source Database:** Integrated browser with **SRD 5e** and **Open5e** support. Instantly fetch Monsters, Spells, Feats, Backgrounds and more.
+*   **Portable & Offline:** No installation or internet required.
 
 ## 🗺️ Roadmap
 
@@ -37,10 +38,11 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 - [x] **Advanced Linking and Mentioning:** Support linking entities on any text in the app.
 - [x] **Multi-Window:** Advanced support for projecting to specific/multiple player screens.
 - [x] **Campaign Notes:** Rich text editor, linking, and better folder organization for DM notes.
+- [x] **More Sources:** Open5E API is connected.
 
 ### 🚧 In Progress / Planned
 - [ ] **Random Creator:** Random creator for NPCs, NPC names, battles and more...
-- [ ] **More Sources and Prebuild Worlds:** We're planning to add more entities from other sources like 5E 2024, Forgotten Realms and else... Also adding custom design prebuild worlds to help newbies.
+- [ ] **Prebuild Worlds:** We're planning to add more entities from other sources and custom design prebuild worlds to help newbies.
 - [ ] **Soundpad:** Better soundpad and songs. Currently, the songs are uploaded only for test purposes.
 - [ ] **Integrations:** Support for D&D Beyond, Obsidian, and other tools.
 - [ ] **Custom World Pre-build:** Creating custom pre-build worlds and creating fast worlds.
@@ -147,3 +149,8 @@ python main.py
 
 ## ⚠️ Disclaimer
 This project is currently in **Alpha**. Expect frequent updates and occasional bugs. Backup your world data regularly!
+
+## ✏️ Credits
+
+- [DND 5E SRD API](https://www.dnd5eapi.co/)
+- [Open5E](https://open5e.com/)
