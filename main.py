@@ -3,7 +3,7 @@ import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QTabWidget, QVBoxLayout, 
                              QWidget, QMessageBox, QFileDialog, QHBoxLayout, 
-                             QPushButton, QLabel, QComboBox)
+                             QPushButton, QLabel, QComboBox, QSplitter)
 from PyQt6.QtGui import QShortcut, QKeySequence 
 from config import STYLESHEET, load_theme
 from core.data_manager import DataManager
@@ -107,7 +107,10 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(toolbar)
         # ---------------------
 
-        content_layout = QHBoxLayout()
+        # --- CHANGED: Use QSplitter instead of QHBoxLayout for content ---
+        self.content_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.content_splitter.setHandleWidth(4)
+        
         self.tabs = QTabWidget()
         self.db_tab = DatabaseTab(self.data_manager, self.player_window)
         self.tabs.addTab(self.db_tab, tr("TAB_DB"))
@@ -120,9 +123,17 @@ class MainWindow(QMainWindow):
         self.soundpad_panel.setVisible(False)
         self.soundpad_panel.theme_loaded_with_shortcuts.connect(self.setup_soundpad_shortcuts)
         
-        content_layout.addWidget(self.tabs, 1)
-        content_layout.addWidget(self.soundpad_panel, 0)
-        main_layout.addLayout(content_layout)
+        self.content_splitter.addWidget(self.tabs)
+        self.content_splitter.addWidget(self.soundpad_panel)
+        
+        # Set stretch factors: Tabs get all extra space
+        self.content_splitter.setStretchFactor(0, 1)
+        self.content_splitter.setStretchFactor(1, 0)
+        
+        # Ensure Soundpad can be fully collapsed/hidden by the layout engine if needed
+        self.content_splitter.setCollapsible(1, True)
+        
+        main_layout.addWidget(self.content_splitter)
 
         self.session_tab.txt_log.entity_link_clicked.connect(self.db_tab.open_entity_tab)
         self.session_tab.txt_notes.entity_link_clicked.connect(self.db_tab.open_entity_tab)
@@ -179,6 +190,7 @@ class MainWindow(QMainWindow):
     def toggle_soundpad(self):
         """Toggles the visibility of the soundpad panel."""
         is_visible = self.soundpad_panel.isVisible()
+        # With QSplitter, setVisible works correctly to hide/show the pane
         self.soundpad_panel.setVisible(not is_visible)
         self.btn_toggle_sound.setChecked(not is_visible)
     
