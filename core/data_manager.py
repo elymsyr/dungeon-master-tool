@@ -94,7 +94,14 @@ class DataManager:
 
     def get_api_index(self, category):
         if category in self.reference_cache: return self.reference_cache[category]
-        data = self.api_client.get_list(category)
+        response = self.api_client.get_list(category)
+        
+        # Handle new format {"results": [], "count": ...}
+        if isinstance(response, dict) and "results" in response:
+            data = response["results"]
+        else:
+            data = response
+
         if data:
             self.reference_cache[category] = data
             self._save_reference_cache()
