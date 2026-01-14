@@ -528,6 +528,7 @@ class BattleMapWidget(QWidget):
             if not self.video_player:
                 self.video_player = QMediaPlayer()
                 self.audio_output = QAudioOutput()
+                self.audio_output.setVolume(0) # Mute video by default
                 self.video_player.setAudioOutput(self.audio_output)
                 self.video_item = QGraphicsVideoItem()
                 self.video_item.setZValue(-200)
