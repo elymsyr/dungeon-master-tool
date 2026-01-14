@@ -5,11 +5,11 @@ import time
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QProgressBar, 
                              QPushButton, QTextEdit, QMessageBox)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from config import BASE_DIR, API_BASE_URL
+from config import BASE_DIR, API_BASE_URL, CACHE_DIR
 from core.locales import tr
 
 # Library repository
-LIBRARY_DIR = os.path.join(BASE_DIR, "cache", "library")
+LIBRARY_DIR = os.path.join(CACHE_DIR, "library")
 
 class DownloadWorker(QThread):
     progress_signal = pyqtSignal(int)
@@ -112,7 +112,7 @@ class DownloadWorker(QThread):
         IMPORTANT: Merges 'equipment' and 'magic-items' categories under 'Eşya (Equipment)'.
         So they appear in a single list in offline search.
         """
-        index_file = os.path.join(BASE_DIR, "cache", "reference_indexes.json")
+        index_file = os.path.join(CACHE_DIR, "reference_indexes.json")
         full_index = {}
         
         # Mevcut index dosyasını oku
@@ -160,6 +160,14 @@ class DownloadWorker(QThread):
                 json.dump(full_index, f, indent=4)
         except Exception as e:
             print(f"Index kayıt hatası: {e}")
+
+        # Invalidate msgpack cache so DataManager reloads from JSON
+        dat_file = os.path.join(CACHE_DIR, "reference_indexes.dat")
+        if os.path.exists(dat_file):
+            try:
+                os.remove(dat_file)
+            except Exception as ex:
+                print(f"Cache invalidation error: {ex}")
 
     def stop(self):
         self.is_running = False
