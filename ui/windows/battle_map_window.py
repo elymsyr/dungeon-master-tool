@@ -512,6 +512,15 @@ class BattleMapWidget(QWidget):
                 # Use delay to ensure layout settling, similar to image
                 QTimer.singleShot(50, self.fit_map_in_view)
 
+    def _on_video_native_size_changed(self, size):
+        """Handle video resize when native size signal fires."""
+        if not size.isEmpty():
+            self.video_item.setSize(size)
+            self.scene.setSceneRect(0, 0, size.width(), size.height())
+            if not self.fog_item: 
+                self.init_fog_layer(size.width(), size.height())
+            self.fit_map_in_view()
+
     def set_map_image(self, pixmap, path_ref=None):
         self.current_map_path = path_ref
         
@@ -537,6 +546,7 @@ class BattleMapWidget(QWidget):
                 self.video_player.setLoops(QMediaPlayer.Loops.Infinite)
                 # CONNECT SIGNAL ONCE DURING CREATION
                 self.video_player.mediaStatusChanged.connect(self._on_video_status_changed)
+                self.video_item.nativeSizeChanged.connect(self._on_video_native_size_changed)
             
             self.video_item.show()
             self.video_player.setSource(QUrl.fromLocalFile(path_ref))
