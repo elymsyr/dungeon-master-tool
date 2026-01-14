@@ -555,9 +555,19 @@ class DataManager:
         search_text = search_text.lower()
         cats = [category] if category in self.reference_cache else list(self.reference_cache.keys())
         for c in cats:
-            for item in self.reference_cache.get(c, []):
-                if len(search_text) < 2 or search_text in item["name"].lower():
-                    results.append({"id": f"lib_{c}_{item['index']}", "name": item["name"], "type": c, "is_library": True, "index": item["index"]})
+            data = self.reference_cache.get(c)
+            # Fix: Only search in lists (Bulk Data). Skip dicts (API Page Cache).
+            if not isinstance(data, list):
+                continue
+
+            for item in data:
+                if not isinstance(item, dict): continue
+                
+                # Check match
+                if len(search_text) < 2 or search_text in item.get("name", "").lower():
+                     idx = item.get("index") or item.get("slug")
+                     if idx:
+                        results.append({"id": f"lib_{c}_{idx}", "name": item["name"], "type": c, "is_library": True, "index": idx})
         return results
     
     def get_all_entity_mentions(self):
