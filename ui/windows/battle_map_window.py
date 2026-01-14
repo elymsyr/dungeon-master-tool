@@ -100,7 +100,8 @@ class BattleMapView(QGraphicsView):
     def set_fog_item(self, item):
         self.fog_item = item
 
-    def _emit_view_state(self):
+    def emit_view_state(self):
+        """Public method to emit current view rect."""
         if self._programmatic_change: return
         viewport_rect = self.viewport().rect()
         scene_rect = self.mapToScene(viewport_rect).boundingRect()
@@ -113,7 +114,7 @@ class BattleMapView(QGraphicsView):
             self.scale(zoom_in, zoom_in)
         else: 
             self.scale(zoom_out, zoom_out)
-        self._emit_view_state()
+        self.emit_view_state()
 
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.MiddleButton:
@@ -144,7 +145,7 @@ class BattleMapView(QGraphicsView):
             self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - delta.x())
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
             event.accept()
-            self._emit_view_state()
+            self.emit_view_state()
             return
 
         if self._is_drawing_fog:
@@ -492,8 +493,24 @@ class BattleMapWidget(QWidget):
             self.view.fitInView(self.map_item, Qt.AspectRatioMode.KeepAspectRatio)
         elif self.video_item and self.video_item.isVisible():
             self.view.fitInView(self.video_item, Qt.AspectRatioMode.KeepAspectRatio)
+        
+        # Explicitly emit view state to sync linked windows
+        self.view.emit_view_state()
 
     def apply_view_state(self, rect): self.view.set_view_state(rect)
+
+    def _on_video_status_changed(self, status):
+        """Handle video resize when metadata is loaded."""
+        if status == QMediaPlayer.MediaStatus.BufferedMedia or status == QMediaPlayer.MediaStatus.LoadedMedia:
+            sz = self.video_item.nativeSize()
+            if not sz.isEmpty():
+                self.video_item.setSize(sz)
+                self.scene.setSceneRect(0, 0, sz.width(), sz.height())
+                # Note: If Fog exists (loaded from saved data), don't overwrite it here
+                # But if NO fog, use video size
+                if not self.fog_item: self.init_fog_layer(sz.width(), sz.height())
+                # Use delay to ensure layout settling, similar to image
+                QTimer.singleShot(50, self.fit_map_in_view)
 
     def set_map_image(self, pixmap, path_ref=None):
         self.current_map_path = path_ref
@@ -517,22 +534,12 @@ class BattleMapWidget(QWidget):
                 self.scene.addItem(self.video_item)
                 self.video_player.setVideoOutput(self.video_item)
                 self.video_player.setLoops(QMediaPlayer.Loops.Infinite)
+                # CONNECT SIGNAL ONCE DURING CREATION
+                self.video_player.mediaStatusChanged.connect(self._on_video_status_changed)
             
             self.video_item.show()
             self.video_player.setSource(QUrl.fromLocalFile(path_ref))
             self.video_player.play()
-            
-            def on_media_status(status):
-                if status == QMediaPlayer.MediaStatus.BufferedMedia or status == QMediaPlayer.MediaStatus.LoadedMedia:
-                    sz = self.video_item.nativeSize()
-                    if not sz.isEmpty():
-                        self.video_item.setSize(sz)
-                        self.scene.setSceneRect(0, 0, sz.width(), sz.height())
-                        # Note: If Fog exists (loaded from saved data), don't overwrite it here
-                        # But if NO fog, use video size
-                        if not self.fog_item: self.init_fog_layer(sz.width(), sz.height())
-                        self.fit_map_in_view()
-            self.video_player.mediaStatusChanged.connect(on_media_status)
             return
 
         # --- 2. STATIC IMAGE ---
