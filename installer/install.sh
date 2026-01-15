@@ -28,31 +28,34 @@ source venv/bin/activate
 
 # 3. Install Python dependencies
 echo "Installing Python dependencies..."
-pip install --upgrade pip
-pip install -r requirements.txt
+./venv/bin/pip install --upgrade pip
+./venv/bin/pip install -r requirements.txt
 
 # 4. Create a launcher script
 echo "Creating launcher script..."
 cat <<EOF > run.sh
 #!/bin/bash
-source venv/bin/activate
-python3 main.py
+DIR="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
+cd "\$DIR"
+"\$DIR/venv/bin/python" "\$DIR/main.py"
 EOF
 chmod +x run.sh
 
 # 5. Optional Desktop Entry
 read -p "Do you want to create a desktop entry? (y/n) " -n 1 -r
 echo
-if [[ \$REPLY =~ ^[Yy]\$ ]]; then
-    APP_PATH=\$(pwd)
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    APP_PATH=$(pwd)
     mkdir -p ~/.local/share/applications
     cat <<EOF > ~/.local/share/applications/dungeon-master-tool.desktop
 [Desktop Entry]
 Name=Dungeon Master Tool
-Exec=\$APP_PATH/run.sh
-Icon=\$APP_PATH/assets/icon.png
+Exec=$APP_PATH/run.sh
+Icon=$APP_PATH/assets/icon.png
+Path=$APP_PATH
 Type=Application
 Categories=Game;RolePlaying;
+Terminal=false
 EOF
     echo "Desktop entry created at ~/.local/share/applications/dungeon-master-tool.desktop"
 fi
