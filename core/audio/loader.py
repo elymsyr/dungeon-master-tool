@@ -188,6 +188,43 @@ def add_to_library(category, name, file_path):
         
     return True, new_entry
 
+def remove_from_library(category, sound_id):
+    """
+    Removes a sound from the global library by its ID.
+    DoesNotExist logic is handled by caller or just returns success if already gone.
+    """
+    if category not in ['ambience', 'sfx']:
+        return False, "Invalid category"
+
+    library_file = os.path.join(SOUNDPAD_ROOT, "soundpad_library.yaml")
+    if not os.path.exists(library_file):
+        return False, "Library file not found"
+
+    try:
+        with open(library_file, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+            if not data: data = {'ambience': [], 'sfx': [], 'shortcuts': {}}
+    except Exception as e:
+        return False, f"Error reading library: {e}"
+
+    if category not in data:
+        return False, f"Category {category} not in data"
+
+    # Find and remove the entry
+    original_len = len(data[category])
+    data[category] = [item for item in data[category] if item.get('id') != sound_id]
+    
+    if len(data[category]) == original_len:
+        return False, "Sound ID not found"
+
+    try:
+        with open(library_file, "w", encoding="utf-8") as f:
+            yaml.dump(data, f, allow_unicode=True, default_flow_style=False)
+    except Exception as e:
+        return False, f"YAML update failed: {e}"
+
+    return True, "Sound removed"
+
 def create_theme(name, t_id, state_map):
     """
     Creates a new theme directory and yaml file.

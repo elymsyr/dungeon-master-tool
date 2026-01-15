@@ -918,7 +918,7 @@ class NpcSheet(QWidget):
             self.lbl_image.setPixmap(None)
 
     def add_image_dialog(self):
-        f, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_IMG"), "", "Images (*.png *.jpg)")
+        f, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_IMG"), "", "Images (*.png *.jpg *.jpeg *.webp *.bmp)")
         if f: 
             p = self.dm.import_image(f)
             if p: 

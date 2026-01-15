@@ -479,3 +479,11 @@ en:
   LBL_STATE_NAME: "State Name"
   MSG_THEME_CREATED: "Theme created successfully!"
   MSG_NO_FILE: "No file selected..."
+  # SFX Removal
+  BTN_REMOVE_SFX: "Remove SFX"
+  TITLE_REMOVE_SFX: "Remove SFX"
+  LBL_SELECT_SFX: "Select SFX to remove:"
+  MSG_CONFIRM_REMOVE_SFX: "Are you sure you want to remove '%{name}'?"
+  MSG_SFX_REMOVED: "SFX removed successfully."
+  MSG_NO_SFX_TO_REMOVE: "No SFX sounds found to remove."
+  TITLE_CONFIRM: "Confirm Action"
