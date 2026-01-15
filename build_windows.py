@@ -37,6 +37,7 @@ params = [
     '--hidden-import=i18n',
     '--hidden-import=yaml',
     '--hidden-import=json',
+    '--icon=assets/icon.png',
 ]
 
 print(f"--- Building {APP_NAME} for Windows ---")

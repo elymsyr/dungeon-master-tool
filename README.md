@@ -110,3 +110,4 @@ This project is currently in **Alpha**. Expect frequent updates and occasional b
 
 - [DND 5E SRD API](https://www.dnd5eapi.co/)
 - [Open5E](https://open5e.com/)
+- <a href="https://www.flaticon.com/free-icons/mage" title="mage icons">Mage icons created by David Carapinha - Flaticon</a>
