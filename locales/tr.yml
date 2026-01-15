@@ -478,3 +478,11 @@ tr:
   LBL_STATE_NAME: "Durum Adı"
   MSG_THEME_CREATED: "Tema başarıyla oluşturuldu!"
   MSG_NO_FILE: "Dosya seçilmedi..."
+  # SFX Removal
+  BTN_REMOVE_SFX: "Efekt Sil"
+  TITLE_REMOVE_SFX: "Efekt Sil"
+  LBL_SELECT_SFX: "Silinecek efekti seçin:"
+  MSG_CONFIRM_REMOVE_SFX: "'%{name}' efektini silmek istediğinize emin misiniz?"
+  MSG_SFX_REMOVED: "Efekt başarıyla silindi."
+  MSG_NO_SFX_TO_REMOVE: "Silinecek efekt bulunamadı."
+  TITLE_CONFIRM: "Eylemi Onayla"

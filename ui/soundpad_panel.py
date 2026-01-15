@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QFrame, QPushButton,
 from PyQt6.QtCore import Qt, pyqtSignal
 from core.locales import tr
 from core.audio.engine import MusicBrain
-from core.audio.loader import load_all_themes, load_global_library, add_to_library, create_theme
+from core.audio.loader import load_all_themes, load_global_library, add_to_library, create_theme, remove_from_library
 from ui.dialogs.theme_builder import ThemeBuilderDialog
 
 class SoundpadPanel(QWidget):
@@ -176,10 +176,17 @@ class SoundpadPanel(QWidget):
         scroll.setWidget(content_widget)
         layout.addWidget(scroll)
         
-        # Add Button
         self.btn_add_sfx = QPushButton("➕ " + tr("BTN_ADD_SFX"))
         self.btn_add_sfx.clicked.connect(self.add_new_sfx)
-        layout.addWidget(self.btn_add_sfx)
+        
+        self.btn_remove_sfx = QPushButton("🗑️ " + tr("BTN_REMOVE_SFX"))
+        self.btn_remove_sfx.setObjectName("dangerBtn")
+        self.btn_remove_sfx.clicked.connect(self.remove_sfx_dialog)
+        
+        h_sfx_btns = QHBoxLayout()
+        h_sfx_btns.addWidget(self.btn_add_sfx)
+        h_sfx_btns.addWidget(self.btn_remove_sfx)
+        layout.addLayout(h_sfx_btns)
 
     def _build_ambience_slots(self):
         ambience_list = self.global_library.get('ambience', [])
@@ -205,6 +212,12 @@ class SoundpadPanel(QWidget):
             slider.valueChanged.connect(lambda value, s_idx=i: self._on_ambience_volume_change(s_idx, value))
 
     def _build_sfx_grid(self):
+        # Clear existing buttons
+        while self.sfx_grid_layout.count():
+            item = self.sfx_grid_layout.takeAt(0)
+            if item.widget(): item.widget().deleteLater()
+        self.sfx_buttons = {}
+
         sfx_list = self.global_library.get('sfx', [])
         row, col = 0, 0
         for sfx in sfx_list:
@@ -355,6 +368,31 @@ class SoundpadPanel(QWidget):
 
     def add_new_sfx(self):
         self._add_new_sound('sfx')
+
+    def remove_sfx_dialog(self):
+        sfx_list = self.global_library.get('sfx', [])
+        if not sfx_list:
+            QMessageBox.information(self, tr("MSG_INFO"), tr("MSG_NO_SFX_TO_REMOVE"))
+            return
+
+        names = [s['name'] for s in sfx_list]
+        name, ok = QInputDialog.getItem(self, tr("TITLE_REMOVE_SFX"), tr("LBL_SELECT_SFX"), names, 0, False)
+        
+        if ok and name:
+            # Find ID
+            sfx_id = next((s['id'] for s in sfx_list if s['name'] == name), None)
+            if sfx_id:
+                confirm = QMessageBox.question(self, tr("TITLE_CONFIRM"), tr("MSG_CONFIRM_REMOVE_SFX").format(name=name),
+                                               QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                if confirm == QMessageBox.StandardButton.Yes:
+                    success, msg = remove_from_library('sfx', sfx_id)
+                    if success:
+                        self.global_library = load_global_library()
+                        self.audio_brain.library = self.global_library
+                        self._build_sfx_grid()
+                        QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_SFX_REMOVED"))
+                    else:
+                        QMessageBox.warning(self, tr("MSG_ERROR"), msg)
 
     def _add_new_sound(self, category):
         file_path, _ = QFileDialog.getOpenFileName(self, tr("TITLE_SELECT_AUDIO"), "", "Audio Files (*.mp3 *.wav *.ogg *.flac *.m4a)")
