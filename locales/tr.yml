@@ -255,6 +255,7 @@ tr:
 # --- YENİ EKLENENLER ---
   TITLE_SELECT_WORLD: "Dünya Seç"
   LBL_SELECT_WORLD_TITLE: "🔮 Dünya Seçimi"
+  BTN_SWITCH_WORLD: "Dünya Değiştir"
   PH_NEW_WORLD_NAME: "Yeni Dünya Adı..."
   BTN_LOAD: "Yükle"
   BTN_CREATE: "Oluştur"
