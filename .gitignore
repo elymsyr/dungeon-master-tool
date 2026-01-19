@@ -10,7 +10,7 @@ build/
 output.txt
 # C extensions
 *.so
-
+run.sh
 # Distribution / packaging
 .Python
 build/
