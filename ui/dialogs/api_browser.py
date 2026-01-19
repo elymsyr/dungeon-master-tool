@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QLineEdit, QPushButton, QLabel, QTextEdit, 
                              QMessageBox, QListWidgetItem, QSplitter, QWidget, 
                              QApplication, QComboBox, QStyle)
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from ui.workers import ApiListWorker, ApiSearchWorker
 from ui.dialogs.bulk_downloader import BulkDownloadDialog
 from core.locales import tr
@@ -42,6 +42,12 @@ class ApiBrowser(QDialog):
         self.next_page_url = None
         self.prev_page_url = None 
         
+        self.last_server_search = ""
+        self.search_timer = QTimer()
+        self.search_timer.setSingleShot(True)
+        self.search_timer.setInterval(600) # 600ms debounce
+        self.search_timer.timeout.connect(self.on_search_timer_timeout)
+
         self.setWindowTitle(tr("TITLE_API"))
         self.resize(1000, 650)
         
@@ -82,7 +88,9 @@ class ApiBrowser(QDialog):
         # 2. Search Box
         self.inp_filter = QLineEdit()
         self.inp_filter.setPlaceholderText(tr("LBL_SEARCH_API"))
-        self.inp_filter.textChanged.connect(self.filter_list)
+        self.inp_filter.setPlaceholderText(tr("LBL_SEARCH_API"))
+        self.inp_filter.textChanged.connect(self.on_text_changed)
+        self.inp_filter.returnPressed.connect(self.on_search_submit)
         
         # 3. Bulk Download Button (Active only for D&D 5e)
         self.btn_bulk = QPushButton()
@@ -203,6 +211,18 @@ class ApiBrowser(QDialog):
         if self.combo_doc.isVisible():
             doc_slug = self.combo_doc.currentData()
             if doc_slug: filters["document__slug"] = doc_slug
+        
+        # Search logic
+        query = self.inp_filter.text().strip()
+        # If triggered by timer or Enter, OR if we have a query and are just paging, use it.
+        # But we must distinguish between "User typed" (wait for timer) and "User changed page" (keep search).
+        # Simply: if text box has text, we should search with it, UNLESS we want to allow local filtering only.
+        # With auto-search, text box always implies search intent.
+        if query:
+            filters["search"] = query
+            self.last_server_search = query.lower()
+        else:
+            self.last_server_search = ""
             
         self.list_worker = ApiListWorker(self.dm, self.current_category, page=self.current_page, filters=filters, parent=self)
         self.list_worker.finished.connect(self.on_list_loaded)
@@ -279,11 +299,39 @@ class ApiBrowser(QDialog):
         self.btn_prev.setEnabled(bool(self.prev_page_url))
         self.btn_next.setEnabled(bool(self.next_page_url))
         
+    def on_search_submit(self):
+        """Called when Enter is pressed."""
+        self.search_timer.stop()
+        self.current_page = 1
+        self.load_list()
+
+    def on_search_timer_timeout(self):
+        """Called when debounce timer expires."""
+        self.current_page = 1
+        self.load_list()
+
+    def on_text_changed(self, text):
+        """Handle user typing: start debounce timer and local filter."""
+        self.search_timer.start()
+        self.filter_list()
+
     def filter_list(self):
         query = self.inp_filter.text().lower()
+        
+        # NOTE: Do NOT start timer here, as this function is called by on_list_loaded too.
+        
         self.list_widget.clear()
         
         if not self.full_list: return
+
+        # If the current list exactly matches the last server search, show all (bypass local name filter)
+        # This allows "Bone Swarm" to show up for "skel"
+        if self.last_server_search and query == self.last_server_search:
+             for item in self.full_list:
+                list_item = QListWidgetItem(item["name"])
+                list_item.setData(Qt.ItemDataRole.UserRole, item["index"])
+                self.list_widget.addItem(list_item)
+             return
 
         for item in self.full_list:
             if query in item["name"].lower():
