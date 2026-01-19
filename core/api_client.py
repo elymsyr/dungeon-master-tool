@@ -62,7 +62,12 @@ class Dnd5eApiSource(ApiSource):
                 return {"results": l1 + l2, "count": len(l1)+len(l2), "next": None, "previous": None}
             return {"results": [], "count": 0, "next": None, "previous": None}
         
-        results = self._fetch_all(endpoint)
+        if filters and filters.get("search"):
+            search_query = filters["search"].lower()
+            results = [x for x in self._fetch_all(endpoint) if search_query in x.get("name", "").lower()]
+        else:
+            results = self._fetch_all(endpoint)
+            
         return {"results": results, "count": len(results), "next": None, "previous": None}
 
     def _fetch_all(self, endpoint):
@@ -384,7 +389,7 @@ class Open5eApiSource(ApiSource):
         # Base URL
         url = f"{self.BASE_URL}/{endpoint}/?format=json&limit=50&page={page}"
         
-        # Apply Filters (specifically 'document__slug')
+        # Apply Filters (specifically 'document__slug' and 'search')
         if filters and isinstance(filters, dict):
             for k, v in filters.items():
                 if v: url += f"&{k}={v}"
