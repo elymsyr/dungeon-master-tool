@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QStackedWidget, Q
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QPixmap
 from ui.widgets.image_viewer import ImageViewer
+from PyQt6.QtGui import QImageReader
 
 class PlayerWindow(QMainWindow):
     def __init__(self):
@@ -72,8 +73,19 @@ class PlayerWindow(QMainWindow):
             # From memory (Map etc.)
             viewer.set_image(pixmap)
         else:
-            # Read from file (Drag & Drop)
-            loaded_pix = QPixmap(image_path)
+            # Use QImageReader for better format support (especially WebP)
+            reader = QImageReader(image_path)
+            if reader.canRead():
+                image = reader.read()
+                if not image.isNull():
+                    loaded_pix = QPixmap.fromImage(image)
+                else:
+                    # Fallback to direct QPixmap loading
+                    loaded_pix = QPixmap(image_path)
+            else:
+                # Fallback to direct QPixmap loading
+                loaded_pix = QPixmap(image_path)
+            
             viewer.set_image(loaded_pix)
         
         self.multi_image_layout.addWidget(viewer)

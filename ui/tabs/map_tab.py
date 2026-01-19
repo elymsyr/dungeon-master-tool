@@ -209,7 +209,7 @@ class MapTab(QWidget):
         self.render_map()
 
     def upload_map_image(self):
-        fname, _ = QFileDialog.getOpenFileName(self, tr("MSG_SELECT_MAP"), "", "Images (*.png *.jpg *.jpeg)")
+        fname, _ = QFileDialog.getOpenFileName(self, tr("MSG_SELECT_MAP"), "", "Images (*.png *.jpg *.jpeg *.webp)")
         if fname: 
             self.dm.set_map_image(self.dm.import_image(fname))
             self.render_map()
