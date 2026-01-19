@@ -259,6 +259,7 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app = QApplication(sys.argv)
+    
     dm = DataManager()
     selector = CampaignSelector(dm)
     if selector.exec():

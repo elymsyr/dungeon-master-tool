@@ -486,3 +486,4 @@ tr:
   MSG_SFX_REMOVED: "Efekt başarıyla silindi."
   MSG_NO_SFX_TO_REMOVE: "Silinecek efekt bulunamadı."
   TITLE_CONFIRM: "Eylemi Onayla"
+LBL_SEARCH_DATABASE: Veritabanında ara (otomatik)...

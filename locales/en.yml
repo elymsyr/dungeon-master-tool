@@ -487,3 +487,4 @@ en:
   MSG_SFX_REMOVED: "SFX removed successfully."
   MSG_NO_SFX_TO_REMOVE: "No SFX sounds found to remove."
   TITLE_CONFIRM: "Confirm Action"
+LBL_SEARCH_DATABASE: Search database (auto-search enabled)...
