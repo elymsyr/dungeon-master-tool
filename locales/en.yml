@@ -256,6 +256,7 @@ en:
 # --- NEW ADDITIONS ---
   TITLE_SELECT_WORLD: "Select World"
   LBL_SELECT_WORLD_TITLE: "🔮 Select World"
+  BTN_SWITCH_WORLD: "Switch World"
   PH_NEW_WORLD_NAME: "New World Name..."
   BTN_LOAD: "Load"
   BTN_CREATE: "Create"
