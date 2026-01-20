@@ -81,13 +81,26 @@ You no longer need to edit YAML files manually! Use the new **Theme Builder** in
 
 ### Option 1: Executable (Recommended)
 1.  Go to the **Releases** page.
-2.  Download the latest `.zip` (Windows) or `.tar.gz` (Linux).
-3.  Run it! Your campaign data saves locally in the application folder.
+2.  Download the latest `.zip` (Windows).
+3.  Extract it and run it! Your campaign data saves locally in the application folder.
 
-### Option 2: From Source
+### Option 2: From Source (Linux & Advanced Users)
+#### Linux (Automated)
 ```bash
 git clone https://github.com/elymsyr/dungeon-master-tool.git
 cd dungeon-master-tool
+# For Debian/Ubuntu/Fedora/Generic:
+bash installer/install.sh
+# For Arch Linux:
+bash installer/install-arch.sh
+```
+
+#### Windows (Manual)
+```bash
+git clone https://github.com/elymsyr/dungeon-master-tool.git
+cd dungeon-master-tool
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
 python main.py
 ```
@@ -113,3 +126,4 @@ This project is currently in **Alpha**. Expect frequent updates and occasional b
 
 - [DND 5E SRD API](https://www.dnd5eapi.co/)
 - [Open5E](https://open5e.com/)
+- <a href="https://www.flaticon.com/free-icons/mage" title="mage icons">Mage icons created by David Carapinha - Flaticon</a>
