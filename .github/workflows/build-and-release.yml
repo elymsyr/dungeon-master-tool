@@ -18,8 +18,7 @@ jobs:
     
     strategy:
       matrix:
-        # Ubuntu 20.04 provides better binary compatibility for Linux
-        os: [ubuntu-20.04, windows-latest]
+        os: [windows-latest]
 
     steps:
       - name: Checkout code
@@ -35,44 +34,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # --- LINUX BUILD ---
-      - name: Build Application (Linux)
-        if: matrix.os == 'ubuntu-20.04'
-        run: python build_linux.py
-
-      - name: Archive Linux Artifact (tar.gz)
-        if: matrix.os == 'ubuntu-20.04'
-        run: |
-          # Compress the dist/DungeonMasterTool folder while preserving permissions
-          tar -czvf DungeonMasterTool-Linux.tar.gz -C dist DungeonMasterTool
-
       # --- WINDOWS BUILD ---
       - name: Build Application (Windows)
-        if: matrix.os == 'windows-latest'
         run: python build_windows.py
 
       - name: Archive Windows Artifact (zip)
-        if: matrix.os == 'windows-latest'
         run: |
           # Use PowerShell to zip the distribution folder
           Compress-Archive -Path dist\DungeonMasterTool -DestinationPath DungeonMasterTool-Windows.zip
-
-      # --- ARTIFACT PATH RESOLUTION ---
-      - name: Determine Artifact Path
-        id: set_artifact
-        shell: bash
-        run: |
-          if [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
-            echo "path=DungeonMasterTool-Linux.tar.gz" >> $GITHUB_OUTPUT
-          else
-            echo "path=DungeonMasterTool-Windows.zip" >> $GITHUB_OUTPUT
-          fi
 
       # --- RELEASE UPLOAD ---
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ${{ steps.set_artifact.outputs.path }}
+          files: DungeonMasterTool-Windows.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
