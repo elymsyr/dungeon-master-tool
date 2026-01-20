@@ -47,6 +47,9 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 
 ### 🚧 In Progress / Planned
 - [ ] **Random Creator:** Random creator for NPCs, NPC names, battles and more...
+- [ ] **Notes and Mindmap:** Quick notes and note mind map. Also notes on map.
+- [ ] **Image to Note:** Image to note transformer.
+- [ ] **Battlemap:** Better battle map visualizations and features.
 - [ ] **Prebuild Worlds:** We're planning to add more entities from other sources and custom design prebuild worlds to help newbies.
 - [ ] **Soundpad:** Better soundpad and songs. Currently, the songs are uploaded only for test purposes.
 - [ ] **Integrations:** Support for D&D Beyond, Obsidian, and other tools.
