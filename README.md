@@ -92,7 +92,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-<!-- ## 📸 Screenshots
+## 📸 Screenshots (Pictures are from v0.5) (Resimler versiyon 5'ten kalma)
 <p align="center">
   <img src="media/main_0.png" width="100%" alt="Player Map View" />
   <img src="media/main_1.png" width="100%" alt="Entity Stat Block" />
@@ -104,7 +104,7 @@ python main.py
   <img src="media/battlemap.png" width="100%" alt="Entity Stat Block" />
   <img src="media/bulk.png" width="100%" alt="Entity Stat Block" />
   <img src="media/api.png" width="100%" alt="Entity Stat Block" />
-</p> -->
+</p>
 
 ## ⚠️ Disclaimer
 This project is currently in **Alpha**. Expect frequent updates and occasional bugs. Backup your world data regularly!
