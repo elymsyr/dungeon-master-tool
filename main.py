@@ -3,7 +3,7 @@ import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QTabWidget, QVBoxLayout, 
                              QWidget, QMessageBox, QFileDialog, QHBoxLayout, 
-                             QPushButton, QLabel, QComboBox, QSplitter)
+                             QPushButton, QLabel, QComboBox, QSplitter, QStyle)
 from PyQt6.QtGui import QShortcut, QKeySequence 
 from config import STYLESHEET, load_theme
 from core.data_manager import DataManager
@@ -64,6 +64,10 @@ class MainWindow(QMainWindow):
         self.lbl_campaign.setObjectName("toolbarLabel")
         self.lbl_campaign.setStyleSheet("font-weight: bold; margin-right: 10px;")
 
+        self.btn_switch_world = QPushButton(tr("BTN_SWITCH_WORLD"))
+        self.btn_switch_world.setToolTip(tr("BTN_SWITCH_WORLD"))
+        self.btn_switch_world.clicked.connect(self.switch_world)
+
         # --- PROJECTION MANAGER (HEADER INTEGRATION) ---
         self.projection_manager = ProjectionManager()
         self.projection_manager.setVisible(False) 
@@ -94,6 +98,7 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(self.btn_toggle_sound)
         toolbar.addSpacing(10)
         toolbar.addWidget(self.lbl_campaign)
+
         
         # INSERT PROJECTION MANAGER HERE (Next to Campaign Name)
         toolbar.addWidget(self.projection_manager)
@@ -103,6 +108,8 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(self.combo_lang)
         toolbar.addWidget(self.lbl_theme)
         toolbar.addWidget(self.combo_theme)
+        toolbar.addWidget(self.btn_switch_world)
+
         
         main_layout.addLayout(toolbar)
         # ---------------------
@@ -256,14 +263,35 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, tr("MSG_ERROR"), tr("MSG_FILE_WRITE_ERROR", error=str(e)))
 
+    def switch_world(self):
+        """Sets flag to switch world and closes window."""
+        self.switch_world_requested = True
+        self.close()
+
 if __name__ == "__main__":
     QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app = QApplication(sys.argv)
+    
     dm = DataManager()
-    selector = CampaignSelector(dm)
-    if selector.exec():
-        window = MainWindow(dm)
-        window.show()
-        sys.exit(app.exec())
-    else:
-        sys.exit()
+    
+    while True:
+        selector = CampaignSelector(dm)
+        if selector.exec():
+            # Create/Re-create window
+            window = MainWindow(dm)
+            window.show()
+            app.exec()
+            
+            # Check if restart requested
+            if getattr(window, "switch_world_requested", False):
+                # Clean up old window explicitly if needed, although python gc handles it
+                # Logic: window closed, loop continues, selector shows again.
+                continue
+            else:
+                # Normal close
+                break
+        else:
+            # Selector cancelled
+            break
+            
+    sys.exit()

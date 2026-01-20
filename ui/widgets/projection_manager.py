@@ -121,7 +121,7 @@ class ProjectionManager(QWidget):
         elif event.mimeData().hasText():
             image_path = event.mimeData().text()
             
-        if image_path and os.path.exists(image_path) and image_path.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
+        if image_path and os.path.exists(image_path) and image_path.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.webp')):
             self.add_image(image_path)
             event.acceptProposedAction()
 
