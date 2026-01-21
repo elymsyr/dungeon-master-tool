@@ -15,7 +15,7 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 
 ---
 
-# 📣 Feedback & Communication / Geri Bildirim ve İletişim
+## 📣 Feedback & Communication / Geri Bildirim ve İletişim
 
 🇹🇷 **Türkçe**
 
