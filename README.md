@@ -15,6 +15,66 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 
 ---
 
+# 📣 Feedback & Communication / Geri Bildirim ve İletişim
+
+🇹🇷 **Türkçe**
+
+Bu proje aktif olarak geliştirilmektedir ve kullanıcı geri bildirimi benim için çok değerlidir.  
+Uygulama ile ilgili **öneri, bug bildirimi, şikayet, soru veya genel geri bildirimlerinizi** paylaşmaktan lütfen çekinmeyin.
+
+Aşağıdaki kanallardan size en uygun olanı kullanabilirsiniz:
+
+- 🐛 **GitHub Issues (önerilen)**  
+  Bug bildirimleri, özellik istekleri ve teknik konular için:  
+  👉 https://github.com/elymsyr/dungeon-master-tool
+
+- 📩 **E-posta**  
+  Daha özel veya uzun geri bildirimler için:  
+  - orhun868@gmail.com  
+  - orhunerenyalcinkaya@gmail.com
+
+- 📸 **Instagram**  
+  Hızlı mesajlar, fikirler veya proje hakkında sohbet için:  
+  👉 https://www.instagram.com/erenorhun
+
+- 💼 **LinkedIn**  
+  Profesyonel iletişim, işbirliği veya proje hakkında konuşmak için:  
+  👉 https://www.linkedin.com/in/orhuneren
+
+Her geri bildirimi okuyorum ve projeyi daha iyi hale getirmek için değerlendiriyorum.  
+Katkınız için teşekkürler! 🙏
+
+---
+
+🇬🇧 **English**
+
+This project is under active development, and user feedback is extremely valuable to me.  
+Please feel free to share **feature requests, bug reports, complaints, questions, or any kind of feedback**.
+
+You can reach out through any of the following channels:
+
+- 🐛 **GitHub Issues (recommended)**  
+  For bug reports, feature requests, and technical discussions:  
+  👉 https://github.com/elymsyr/dungeon-master-tool
+
+- 📩 **Email**  
+  For more detailed or private feedback:  
+  - orhun868@gmail.com  
+  - orhunerenyalcinkaya@gmail.com
+
+- 📸 **Instagram**  
+  For quick messages, ideas, or casual discussion about the project:  
+  👉 https://www.instagram.com/erenorhun
+
+- 💼 **LinkedIn**  
+  For professional contact, collaboration, or project-related discussions:  
+  👉 https://www.linkedin.com/in/orhuneren
+
+I carefully read all feedback and use it to improve the project continuously.  
+Thank you for your support! 🙏
+
+---
+
 ## ✨ Key Features
 
 *   **Dynamic Player Screen:** Drag & drop multiple images (NPCs, Maps, Items) to the projection bar to create an instant **second split-screen view** for players.
