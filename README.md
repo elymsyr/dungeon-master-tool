@@ -7,9 +7,11 @@
 **A portable, offline-first DM tool designed for dual-monitor setups.**  
 Manage combat, track branching timelines, and project a rich campaign wiki to your players seamlessly.
 
+[📥 Download Latest for Windows](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.6.5/DungeonMasterTool-Windows.zip)
+
 [📥 Download Latest Release](https://github.com/elymsyr/dungeon-master-tool/releases)
 
-> ✨ **v0.6.0 Update:** Now featuring Multi-Image Projection, Drag & Drop workflow, Video Maps, and a fully integrated Fog of War system!
+> ✨ **v0.6.5 Update:** Now featuring Multi-Image Projection, Drag & Drop workflow, Video Maps, and a fully integrated Fog of War system!
 
 ---
 
