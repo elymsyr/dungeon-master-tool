@@ -116,6 +116,7 @@ Thank you for your support! 🙏
 - [ ] **Soundpad:** Better soundpad and songs. Currently, the songs are uploaded only for test purposes.
 - [ ] **Integrations:** Support for D&D Beyond, Obsidian, and other tools.
 - [ ] **Custom World Pre-build:** Creating custom pre-build worlds and creating fast worlds.
+- [ ] **Online Experience:** After developing all the features and focusing on quality of automated gameplay, I am planning to create an online experience. The local servers for users and offline gameplay will still be free. However, ready-to-use servers will probably require subscription.
 
 ## 🎮 Feature Guide
 
