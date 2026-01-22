@@ -10,15 +10,13 @@ class AspectRatioLabel(QLabel):
         self.setMinimumSize(100, 100)
         self.setStyleSheet("border: 2px dashed #444; background-color: #222; border-radius: 8px; color: #888;")
         self._pixmap = None
-        self._image_path = None  # Resim yolunu saklamak için
+        self._image_path = None 
         self._placeholder_text = tr("LBL_NO_IMAGE")
-        
-        # Sürükleme için değişkenler
-        self.drag_start_position = None
+        self._drag_start_pos = None
 
     def setPixmap(self, pixmap, path=None):
         self._pixmap = pixmap
-        self._image_path = path # Yolu kaydet
+        self._image_path = path 
         self.update_image()
 
     def setPlaceholderText(self, text):
@@ -37,34 +35,35 @@ class AspectRatioLabel(QLabel):
             super().setPixmap(QPixmap())
             self.setText(self._placeholder_text)
 
-    # --- DRAG & DROP BAŞLATMA ---
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.drag_start_position = event.pos()
+        if event.button() == Qt.MouseButton.LeftButton and self._image_path:
+            self._drag_start_pos = event.pos()
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        if not (event.buttons() & Qt.MouseButton.LeftButton):
+        if not (event.buttons() & Qt.MouseButton.LeftButton) or not self._drag_start_pos or not self._image_path:
+            super().mouseMoveEvent(event)
             return
-        if not self.drag_start_position:
+
+        if (event.pos() - self._drag_start_pos).manhattanLength() < QApplication.startDragDistance():
+            super().mouseMoveEvent(event)
             return
-        if (event.pos() - self.drag_start_position).manhattanLength() < QApplication.startDragDistance():
-            return
+
+        drag = QDrag(self)
+        mime_data = QMimeData()
         
-        # Eğer resim yolu varsa sürüklemeyi başlat
-        if self._image_path:
-            drag = QDrag(self)
-            mime_data = QMimeData()
-            
-            # Dosya yolunu URL olarak ekle (Standart dosya sürükleme formatı)
-            mime_data.setUrls([QUrl.fromLocalFile(self._image_path)])
-            # Ayrıca text olarak da ekle (Yedek)
-            mime_data.setText(self._image_path)
-            
-            drag.setMimeData(mime_data)
-            
-            # Sürüklerken görünen hayalet resim
-            if self._pixmap:
-                drag.setPixmap(self._pixmap.scaled(64, 64, Qt.AspectRatioMode.KeepAspectRatio))
-                
-            drag.exec(Qt.DropAction.CopyAction)
+        # Path as text for ProjectionManager
+        mime_data.setText(self._image_path)
+        # Path as URL for general compatibility
+        mime_data.setUrls([QUrl.fromLocalFile(self._image_path)])
+        
+        drag.setMimeData(mime_data)
+        
+        # Drag preview
+        if self._pixmap:
+            preview = self._pixmap.scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            drag.setPixmap(preview)
+            drag.setHotSpot(QPoint(preview.width() // 2, preview.height() // 2))
+
+        drag.exec(Qt.DropAction.CopyAction)
+        self._drag_start_pos = None

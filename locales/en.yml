@@ -1,9 +1,23 @@
 en:
-  BTN_SAVE: "Save"
-  BTN_DELETE: "Delete"
+  LBL_ICON_SAVE: "💾"
+  LBL_ICON_DELETE: "🗑️"
+  LBL_ICON_ADD: "➕"
+  LBL_ICON_REMOVE: "❌"
+  LBL_ICON_HOME: "🏠"
+  LBL_ICON_LOCK: "🔒"
+  LBL_ICON_UNLOCK: "🔓"
+  LBL_ICON_EDIT: "✏️"
+  LBL_ICON_SEARCH: "🔍"
+  LBL_ICON_EYE: "👁️"
+  LBL_ICON_LINK: "🔗"
+  LBL_ICON_PIN: "📍"
+  LBL_ICON_MAP: "🗺️"
+  LBL_ICON_SESSION: "📝"
+  BTN_SAVE: "💾 Save"
+  BTN_DELETE: "🗑️ Delete"
   BTN_CANCEL: "Cancel"
-  BTN_ADD: "Add"
-  BTN_REMOVE: "Remove"
+  BTN_ADD: "➕ Add"
+  BTN_REMOVE: "❌ Remove"
   BTN_IMPORT: "Import"
   BTN_IMPORT_NPC: "Import as NPC"
   BTN_CLOSE: "Close"
@@ -28,9 +42,9 @@ en:
   MSG_SELECT_ENTITY: "Select Entity:"
   MSG_NO_ENTITY_FOR_PIN: "No suitable entity found to pin."
   MSG_DELETE_PIN: "Remove this pin?"
-  MENU_INSPECT: "Inspect"
-  MENU_MOVE: "Move"
-  MENU_DELETE: "Delete"
+  MENU_INSPECT: "🔍 Inspect"
+  MENU_MOVE: "✋ Move"
+  MENU_DELETE: "🗑️ Delete"
   TITLE_DOWNLOADER: "Bulk Downloader"
   LBL_SELECT_CATS: "Select Categories:"
   BTN_START_DOWNLOAD: "Start Download"
@@ -158,8 +172,18 @@ en:
   THEME_OCEAN: "Ocean"
   THEME_FROST: "Frost"
   THEME_AMETHYST: "Amethyst"
-
+  
   LBL_NO_IMAGE: "No Image"
+  LBL_ICON_FILTER: "🔍"
+  MENU_ADD_WORKSPACE: "🔲 Add Workspace"
+  MENU_RENAME_WORKSPACE: "✏️ Rename Workspace"
+  MENU_PICK_COLOR: "🎨 Pick Color"
+  LBL_WORKSPACE: "Workspace"
+  BTN_SEE_ALL: "See All"
+  BTN_WORKSPACES: "Workspaces"
+  TIP_SEE_ALL: "Show all workspaces"
+  MSG_WORKSPACE_NAME: "Workspace Name"
+  MSG_ENTER_WS_NAME: "Enter workspace name:"
 
   # Bulk Downloader
   TITLE_DOWNLOADER: "Bulk Database Downloader"
@@ -263,9 +287,11 @@ en:
   MSG_SELECT_WORLD_WARN: "Please select a world."
   MSG_NAME_EMPTY: "Name cannot be empty."
   MSG_WORLD_EXISTS: "A world with this name already exists."
-  TITLE_PLAYER_VIEW: "Player View - Second Screen"
+  
+  TITLE_PLAYER_VIEW: "Player Second Screen"
   MSG_NOT_FOUND: "Not Found."
   MSG_ERROR_OCCURRED: "Error occurred: %{error}"
+  
   TITLE_ADD_COMBAT: "Add Entity to Combat"
   PH_SEARCH_NAME_TAG: "Search Name or Tag..."
   LBL_TYPE_ALL: "All"
@@ -296,16 +322,6 @@ en:
   CAT_MAGIC_ITEMS_ALL: "All Magic Items"
   CAT_CLASSES_PL: "Classes"
   CAT_RACES_PL: "Races"
-  # --- FINAL LOCALIZATION ADDITIONS ---
-  # Campaign Selector
-  TITLE_SELECT_WORLD: "Select World"
-  LBL_SELECT_WORLD_TITLE: "🔮 Select World"
-  PH_NEW_WORLD_NAME: "New World Name..."
-  BTN_LOAD: "Load"
-  BTN_CREATE: "Create"
-  MSG_SELECT_WORLD_WARN: "Please select a world."
-  MSG_NAME_EMPTY: "Name cannot be empty."
-  MSG_WORLD_EXISTS: "A world with this name already exists."
   
   # Combat Tracker & Encounter
   LBL_ENCOUNTER_PREFIX: "Encounter:"
@@ -322,46 +338,7 @@ en:
   LBL_ROUND_PREFIX: "Round: "
   BTN_BATTLE_MAP: "🗺️ Battle Map"
   
-  # Encounter Selector Dialog
-  TITLE_ADD_COMBAT: "Add Entity to Combat"
-  PH_SEARCH_NAME_TAG: "Search Name or Tag..."
-  LBL_TYPE_ALL: "All"
-  HEADER_INIT_BONUS: "Init Bonus"
-  HEADER_ID: "ID"
-  LBL_ADD_COUNT: "Count to Add:"
-  BTN_ADD_SELECTED: "✅ Add Selected"
-  NAME_UNKNOWN: "Unknown"
-  NAME_UNNAMED: "Unnamed"
-  
-  # Export / Main Window
-  TITLE_EXPORT: "Save List"
-  FILE_FILTER_TXT: "Text Files (*.txt)"
-  MSG_EXPORT_SUCCESS: "List exported successfully."
-  MSG_FILE_WRITE_ERROR: "Could not write file:\n%{error}"
-  TXT_EXPORT_HEADER: "DUNGEON MASTER - ENTITY LIST"
-  TXT_EXPORT_WORLD: "World: "
-  TXT_EXPORT_NO_DATA: "No entities recorded yet."
-  TXT_EXPORT_TAGS: "   Tags: "
-  TXT_EXPORT_DESC: "   Desc: "
-  
-  # Categories (Plurals for Dialogs)
-  CAT_MONSTERS_PL: "Monsters"
-  CAT_SPELLS_PL: "Spells"
-  CAT_EQUIPMENT_ALL: "All Equipment"
-  CAT_MAGIC_ITEMS_ALL: "All Magic Items"
-  CAT_CLASSES_PL: "Classes"
-  CAT_RACES_PL: "Races"
-  
-  # HP Editing
-  TITLE_EDIT_HP: "Edit HP"
-  LBL_NEW_HP: "New HP:"
-  
-  # Context Menus
-  MENU_CTX_INSPECT: "🔍 Inspect"
-  MENU_CTX_MOVE: "✋ Move"
-  MENU_CTX_DELETE: "🗑️ Delete"
-  MENU_CTX_PIN: "📍 Add Pin Here"
-# --- STATUS EFFECT ---
+  # --- STATUS EFFECT ---
   CAT_STATUS_EFFECT: "Status Effect"
   LBL_DURATION_TURNS: "Duration (Turns)"
   LBL_EFFECT_TYPE: "Effect Type"
@@ -378,6 +355,7 @@ en:
   MSG_FOUND_MAGIC_ITEM: "Magic Item found."
   MSG_SEARCH_SUCCESS: "Success."
   MSG_SEARCH_NOT_FOUND: "Not found."
+  MSG_INFO: "Info"
   
   # Combat Tracker Context Menu
   MENU_STD_CONDITIONS: "Standard Conditions"
@@ -394,7 +372,6 @@ en:
   LBL_GENERAL_CAT: "General"
   
   # Missing Categories used in logic
-  CAT_STATUS_EFFECT: "Status Effect"
   CAT_LORE: "Lore"
   CAT_QUEST: "Quest"
   CAT_LOCATION: "Location"
@@ -466,7 +443,6 @@ en:
   TITLE_SELECT_AUDIO: "Select Audio File"
   TITLE_ADD_SOUND: "Add Sound"
   LBL_SOUND_NAME: "Sound Name:"
-  LBL_SOUND_NAME: "Sound Name:"
   MSG_SOUND_ADDED: "Sound added successfully."
 
   # Theme Builder
@@ -488,4 +464,77 @@ en:
   MSG_SFX_REMOVED: "SFX removed successfully."
   MSG_NO_SFX_TO_REMOVE: "No SFX sounds found to remove."
   TITLE_CONFIRM: "Confirm Action"
-LBL_SEARCH_DATABASE: Search database (auto-search enabled)...
+  LBL_SEARCH_DATABASE: Search database (auto-search enabled)...
+
+  # Mind Map & Canvas
+  TAB_MIND_MAP: "Mind Map"
+  BTN_ZOOM_IN: "Zoom In"
+  BTN_ZOOM_OUT: "Zoom Out"
+  BTN_CENTER: "Center"
+  BTN_FIT: "See All"
+  TIP_ZOOM_IN: "Zoom In"
+  TIP_ZOOM_OUT: "Zoom Out"
+  TIP_CENTER: "Go to Center (0,0)"
+  TIP_FIT: "Fit all content to screen"
+  LBL_SAVED: "💾 Saved"
+  LBL_EDITING: "✏️ Editing..."
+  MSG_NO_IMAGE_PROJ: "This entity has no image to project."
+  MENU_ADD_NOTE: "📝 Add Note"
+  MENU_ADD_IMAGE: "🖼️ Add Image"
+  MENU_DELETE_LINK: "❌ Delete Link"
+  MENU_PROJECT: "👁️ Project"
+  MENU_CONNECT: "🔗 Connect"
+
+  # Projection Manager
+  LBL_MAP_THUMB: "MAP"
+  LBL_DROP_HINT: "Drop to Project"
+  TIP_REMOVE_PROJECTION: "Click to remove from Player Screen"
+
+  # Conditions
+  COND_BLINDED: "Blinded"
+  COND_CHARMED: "Charmed"
+  COND_DEAFENED: "Deafened"
+  COND_FRIGHTENED: "Frightened"
+  COND_GRAPPLED: "Grappled"
+  COND_INCAPACITATED: "Incapacitated"
+  COND_INVISIBLE: "Invisible"
+  COND_PARALYZED: "Paralyzed"
+  COND_PETRIFIED: "Petrified"
+  COND_POISONED: "Poisoned"
+  COND_PRONE: "Prone"
+  COND_RESTRAINED: "Restrained"
+  COND_STUNNED: "Stunned"
+  COND_UNCONSCIOUS: "Unconscious"
+  COND_EXHAUSTION: "Exhaustion"
+  MENU_REMOVE_CONDITION: "❌ Remove"
+
+  # Map Tab Filters
+  BTN_FILTER: "Filter"
+  BTN_CLEAR: "Clear"
+  TIP_FILTER_ENTITY: "Filter Timeline by specific characters/locations"
+  TIP_CLEAR_FILTER: "Clear Entity Filter"
+  LBL_SHOW_NON_PLAYER: "Show Non-Player Timeline"
+  LBL_SHOW_LOCATIONS: "Show Map Pins"
+  TITLE_FILTER_TIMELINE: "Filter Timeline by Entities"
+  MSG_DROP_IMPORT_FIRST: "Please import this item to your world first."
+  MSG_LINK_SELF_ERR: "Cannot link a pin to itself."
+
+  # NPC Sheet & General
+  PH_SEARCH_SPELL: "Search spells..."
+  PH_SEARCH_ITEM: "Search items..."
+  PH_DM_NOTES: "Hidden from players... (Markdown supported)"
+  TAB_BATTLEMAPS: "Battlemaps"
+  LBL_BATTLEMAP_HELP: "Add images or videos for Combat Tracker."
+  BTN_ADD_MEDIA: "Add Media"
+  TITLE_SELECT_MEDIA: "Select Battlemaps"
+  SUFFIX_VIDEO: "(Video)"
+
+  # Session Tab
+  PH_QUICK_LOG: "Quick log entry..."
+
+  # Theme Builder
+  PH_THEME_NAME: "e.g. Dark Forest"
+  PH_THEME_ID: "e.g. dark_forest"
+
+  # Battle Map Window
+  BTN_LOCK_VIEW_TOOLTIP: "Lock Player View"

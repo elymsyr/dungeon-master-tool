@@ -4,15 +4,18 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QTableWidget,
 from PyQt6.QtCore import Qt
 from core.locales import tr
 
+from core.theme_manager import ThemeManager
+
 class EntitySelectorDialog(QDialog):
     def __init__(self, data_manager, parent=None):
         super().__init__(parent)
         self.dm = data_manager
         self.selected_entities = [] # Selected ID list
         
-        self.setWindowTitle("Add Entity to Combat")
+        self.setWindowTitle(tr("TITLE_ADD_COMBAT"))
         self.resize(700, 500)
-        self.setStyleSheet("background-color: #1e1e1e; color: white;")
+        p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+        self.setStyleSheet(f"background-color: {p.get('ui_bg', '#1e1e1e')}; color: {p.get('ui_text', 'white')};")
         
         self.init_ui()
         self.load_data()
@@ -23,21 +26,24 @@ class EntitySelectorDialog(QDialog):
         # Search
         self.inp_search = QLineEdit()
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
-        self.inp_search.setStyleSheet("padding: 8px; background-color: #333; border: 1px solid #555;")
+        p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+        self.inp_search.setStyleSheet(f"padding: 8px; background-color: {p.get('ui_bg_dark', '#333')}; border: 1px solid {p.get('ui_border', '#555')};")
         self.inp_search.textChanged.connect(self.filter_list)
         layout.addWidget(self.inp_search)
         
         # Table
         self.table = QTableWidget()
+        self.table = QTableWidget()
         self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("LBL_TYPE"), "HP", "AC", "Init Bonus"])
+        self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("LBL_TYPE"), "HP", "AC", tr("HEADER_INIT_BONUS")])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection) # MULTI SELECT
-        self.table.setStyleSheet("""
-            QTableWidget { background-color: #252526; border: 1px solid #444; gridline-color: #444; }
-            QTableWidget::item:selected { background-color: #2e7d32; color: white; }
-            QHeaderView::section { background-color: #333; padding: 4px; border: 1px solid #444; }
+        p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+        self.table.setStyleSheet(f"""
+            QTableWidget {{ background-color: {p.get('ui_bg', '#252526')}; border: 1px solid {p.get('ui_border', '#444')}; gridline-color: {p.get('ui_border', '#444')}; }}
+            QTableWidget::item:selected {{ background-color: {p.get('hp_bar_full', '#2e7d32')}; color: white; }}
+            QHeaderView::section {{ background-color: {p.get('ui_bg_dark', '#333')}; padding: 4px; border: 1px solid {p.get('ui_border', '#444')}; }}
         """)
         layout.addWidget(self.table)
         

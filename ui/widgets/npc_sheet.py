@@ -11,6 +11,7 @@ from ui.workers import ImageDownloadWorker
 from core.models import ENTITY_SCHEMAS
 from core.locales import tr
 from config import CACHE_DIR
+from core.theme_manager import ThemeManager
 import os
 from PyQt6.QtWidgets import QToolButton 
 from ui.dialogs.api_browser import ApiBrowser
@@ -18,7 +19,7 @@ from ui.dialogs.api_browser import ApiBrowser
 class NpcSheet(QWidget):
     # --- SIGNALS ---
     request_open_entity = pyqtSignal(str)   # Navigate to linked card
-    data_changed = pyqtSignal()             # Data modified (for unsaved changes indicator)
+    data_changed = pyqtSignal()             # Data modified
     save_requested = pyqtSignal()           # Save triggered (Ctrl+S or Button)
 
     def __init__(self, data_manager):
@@ -35,12 +36,43 @@ class NpcSheet(QWidget):
         self.image_worker = None       
         
         self.is_dirty = False
+        self.is_embedded = False
+        from core.theme_manager import ThemeManager
+        self.current_palette = ThemeManager.get_palette(self.dm.current_theme)
         
         self.init_ui()
         
         # Ctrl+S Shortcut
         self.shortcut_save = QShortcut(QKeySequence("Ctrl+S"), self)
         self.shortcut_save.activated.connect(self.emit_save_request)
+
+    def set_embedded_mode(self, enabled: bool):
+        self.is_embedded = enabled
+        self.btn_save.setVisible(not enabled)
+        self.btn_delete.setVisible(not enabled)
+        if enabled:
+            # Markdown editörlerini şeffaf moda geçir
+            self.inp_desc.set_transparent_mode(True)
+            self.inp_dm_notes.set_transparent_mode(True)
+
+    def refresh_theme(self, palette):
+        """Tüm alt bileşenlerin (Markdown editörleri dahil) temasını günceller."""
+        self.current_palette = palette
+        self.inp_desc.refresh_theme(palette)
+        self.inp_dm_notes.refresh_theme(palette)
+        
+        # Dinamik özellik kartlarındaki editörleri güncelle
+        for container in [self.trait_container, self.action_container, self.reaction_container, 
+                          self.legendary_container, self.inventory_container, self.custom_spell_container]:
+            for i in range(container.dynamic_area.count()):
+                widget = container.dynamic_area.itemAt(i).widget()
+                if widget and hasattr(widget, "inp_desc"):
+                    widget.inp_desc.refresh_theme(palette)
+        
+        # DM Notes stilini güncelle
+        border_col = palette.get("dm_note_border", "#d32f2f")
+        title_col = palette.get("dm_note_title", "#e57373")
+        self.grp_dm_notes.setStyleSheet(f"QGroupBox {{ border: 1px solid {border_col}; color: {title_col}; font-weight: bold; }}")
 
     def init_ui(self):
         main_layout = QVBoxLayout(self)
@@ -55,6 +87,7 @@ class NpcSheet(QWidget):
         self.content_widget.setObjectName("sheetContainer")
         self.content_widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         
+        # QSS ile çatışmaması için stil ayarı
         self.content_widget.setStyleSheet("""
             QLineEdit, QPlainTextEdit {
                 background-color: transparent;
@@ -63,7 +96,7 @@ class NpcSheet(QWidget):
 
         self.content_layout = QVBoxLayout(self.content_widget)
         
-        # --- TOP SECTION (Image & Metadata Side-by-Side) ---
+        # --- TOP SECTION (Image & Metadata) ---
         top_layout = QHBoxLayout()
         
         # Image Column (Left)
@@ -126,7 +159,6 @@ class NpcSheet(QWidget):
         self.combo_location.setEditable(True) 
         self.combo_location.setPlaceholderText("Select or Write...")
         self.lbl_location = QLabel(tr("LBL_LOCATION"))
-        
         self.list_residents = QListWidget()
         self.list_residents.setMaximumHeight(80)
         self.list_residents.itemDoubleClicked.connect(self._on_linked_item_dbl_click)
@@ -143,8 +175,8 @@ class NpcSheet(QWidget):
         top_layout.addLayout(info_layout, 1) 
         self.content_layout.addLayout(top_layout)
 
-        # --- FULL WIDTH DESCRIPTION ---
-        self.content_layout.addWidget(QLabel(f"<b>{tr('LBL_DESC')} (Public Info)</b>"))
+        # --- DESCRIPTION ---
+        self.content_layout.addWidget(QLabel(f"<b>{tr('LBL_DESC')}</b>"))
         self.inp_desc = MarkdownEditor()
         self.inp_desc.set_data_manager(self.dm) 
         self.inp_desc.entity_link_clicked.connect(self.request_open_entity.emit) 
@@ -157,7 +189,6 @@ class NpcSheet(QWidget):
         self.layout_dynamic = QFormLayout(self.grp_dynamic)
         self.content_layout.addWidget(self.grp_dynamic)
 
-        # Tabs
         # Tabs
         self.tabs = QTabWidget()
         self.tab_stats = QWidget()
@@ -180,22 +211,20 @@ class NpcSheet(QWidget):
         self.setup_docs_tab()
         self.tabs.addTab(self.tab_docs, tr("TAB_DOCS"))
         
-        # --- NEW BATTLEMAP TAB ---
-        # --- NEW BATTLEMAP TAB ---
         self.tab_battlemaps = QWidget()
         self.setup_battlemap_tab()
-        self.tabs.addTab(self.tab_battlemaps, "Battlemaps")
+        self.tabs.addTab(self.tab_battlemaps, tr("TAB_BATTLEMAPS"))
         
         self.content_layout.addWidget(self.tabs)
         
         # DM Notes
-        self.grp_dm_notes = QGroupBox("🕵️ DM Notes (Private)")
-        self.grp_dm_notes.setStyleSheet("QGroupBox { border: 1px solid #d32f2f; color: #e57373; font-weight: bold; }")
+        self.grp_dm_notes = QGroupBox(f"{tr('LBL_ICON_EDIT')} {tr('LBL_NOTES')} (Private)")
+        self.grp_dm_notes.setStyleSheet(f"QGroupBox {{ border: 1px solid {self.current_palette.get('dm_note_border', '#d32f2f')}; color: {self.current_palette.get('dm_note_title', '#e57373')}; font-weight: bold; }}")
         dm_notes_layout = QVBoxLayout(self.grp_dm_notes)
         self.inp_dm_notes = MarkdownEditor()
         self.inp_dm_notes.set_data_manager(self.dm) 
         self.inp_dm_notes.entity_link_clicked.connect(self.request_open_entity.emit) 
-        self.inp_dm_notes.setPlaceholderText("Hidden from players... (Markdown supported)")
+        self.inp_dm_notes.setPlaceholderText(tr("PH_DM_NOTES"))
         self.inp_dm_notes.setMinimumHeight(120)
         dm_notes_layout.addWidget(self.inp_dm_notes)
         self.content_layout.addWidget(self.grp_dm_notes)
@@ -220,146 +249,56 @@ class NpcSheet(QWidget):
         self.update_ui_by_type(self.inp_type.currentData())
         self._connect_change_signals()
 
-    def setup_battlemap_tab(self):
-        layout = QVBoxLayout(self.tab_battlemaps)
+    # --- HELPER: FEATURE CARD CREATION ---
+    def add_feature_card(self, group, name="", desc="", ph_title=None, ph_desc=None):
+        self.mark_as_dirty()
+        if ph_title is None: ph_title = tr("LBL_TITLE_PH")
+        if ph_desc is None: ph_desc = tr("LBL_DETAILS_PH")
         
-        lbl_info = QLabel("Add images or videos for Combat Tracker.")
-        lbl_info.setStyleSheet("color: #888; font-style: italic;")
-        layout.addWidget(lbl_info)
+        card = QFrame()
+        card.setProperty("class", "featureCard")
+        l = QVBoxLayout(card)
         
-        # Buttons
-        h_btn = QHBoxLayout()
-        self.btn_add_map = QPushButton("Add Media")
-        self.btn_add_map.clicked.connect(self.add_battlemap_dialog)
+        h_header = QHBoxLayout()
+        t = QLineEdit(name)
+        t.setPlaceholderText(ph_title)
+        t.setStyleSheet("font-weight: bold; border:none; font-size: 14px;")
+        t.textChanged.connect(self.mark_as_dirty)
         
-        self.btn_remove_map = QPushButton(tr("BTN_REMOVE"))
-        self.btn_remove_map.clicked.connect(self.remove_selected_battlemap)
+        btn_del = QPushButton()
+        btn_del.setFixedSize(24,24)
+        btn_del.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton))
+        btn_del.setStyleSheet("background: transparent; border: none;")
+        btn_del.clicked.connect(lambda: [group.dynamic_area.removeWidget(card), card.deleteLater(), self.mark_as_dirty()])
         
-        h_btn.addWidget(self.btn_add_map)
-        h_btn.addWidget(self.btn_remove_map)
-        h_btn.addStretch()
-        layout.addLayout(h_btn)
+        h_header.addWidget(t)
+        h_header.addWidget(btn_del)
+        l.addLayout(h_header)
         
-        # List
-        self.list_battlemaps = QListWidget()
-        self.list_battlemaps.setViewMode(QListWidget.ViewMode.IconMode)
-        self.list_battlemaps.setIconSize(QSize(120, 120))
-        self.list_battlemaps.setResizeMode(QListWidget.ResizeMode.Adjust)
-        self.list_battlemaps.setSpacing(10)
-        layout.addWidget(self.list_battlemaps)
-
-    def add_battlemap_dialog(self):
-        # Allow multiple files AND VIDEO FORMATS
-        files, _ = QFileDialog.getOpenFileNames(
-            self, 
-            "Select Battlemaps", 
-            "", 
-            "Media (*.png *.jpg *.jpeg *.bmp *.mp4 *.webm *.mkv *.m4v *.avi)"
-        )
-        if files:
-            for f in files:
-                rel_path = self.dm.import_image(f)
-                if rel_path:
-                    self.battlemap_list.append(rel_path)
-            self._render_battlemap_list()
-            self.mark_as_dirty()
-
-    def remove_selected_battlemap(self):
-        row = self.list_battlemaps.currentRow()
-        if row >= 0:
-            del self.battlemap_list[row]
-            self._render_battlemap_list()
-            self.mark_as_dirty()
-
-    def _render_battlemap_list(self):
-        self.list_battlemaps.clear()
+        # Markdown Editor for Description
+        d = MarkdownEditor(text=desc)
+        d.set_data_manager(self.dm) 
+        d.entity_link_clicked.connect(self.request_open_entity.emit)
+        d.setPlaceholderText(ph_desc)
+        d.setMinimumHeight(120) 
+        d.textChanged.connect(self.mark_as_dirty)
         
-        video_exts = {'.mp4', '.webm', '.mkv', '.m4v', '.avi', '.mov'}
-        
-        for path in self.battlemap_list:
-            # Skip HTTP links completely as requested
-            if path.startswith("http"): continue
-                
-            display_name = os.path.basename(path)
-            icon = None
+        # Eğer embedded moddaysa yeni eklenen karta da stili uygula
+        if self.is_embedded:
+            d.set_transparent_mode(True)
             
-            full_path = self.dm.get_full_path(path)
-            if not full_path or not os.path.exists(full_path): continue
-            
-            # Check extension for Video vs Image
-            ext = os.path.splitext(full_path)[1].lower()
-            
-            if ext in video_exts:
-                # Use a Play Icon for videos
-                icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay)
-                display_name = f"{display_name} (Video)"
-            else:
-                # It's an image, create thumbnail
-                pix = QPixmap(full_path).scaled(120, 120, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                icon = QIcon(pix)
-            
-            # Create Item
-            if icon:
-                item = QListWidgetItem(icon, display_name)
-                item.setData(Qt.ItemDataRole.UserRole, path)
-                item.setToolTip(path)
-                self.list_battlemaps.addItem(item)
-
-    # ... (Rest of existing methods: add_feature_card, _connect_change_signals, etc.) ...
-
-    def update_ui_by_type(self, category_name):
-        self.build_dynamic_form(category_name)
-        is_npc_like = category_name in ["NPC", "Monster"]
-        is_player = category_name == "Player"
-        is_lore = category_name == "Lore"
-        is_status = category_name == "Status Effect"
-        is_location = category_name == "Location"
+        l.addWidget(d)
         
-        # Location Residents Logic
-        if category_name == "Location":
-            self.list_residents.clear()
-            my_id = self.property("entity_id")
-            if my_id:
-                for eid, ent in self.dm.data["entities"].items():
-                    loc_ref = ent.get("location_id") or ent.get("attributes", {}).get("LBL_ATTR_LOCATION")
-                    if loc_ref == my_id:
-                        item = QListWidgetItem(f"{ent['name']} ({ent['type']})")
-                        item.setData(Qt.ItemDataRole.UserRole, eid)
-                        self.list_residents.addItem(item)
+        group.dynamic_area.addWidget(card)
+        card.inp_title = t
+        card.inp_desc = d
 
-        self.lbl_location.setVisible(is_npc_like or is_player)
-        self.combo_location.setVisible(is_npc_like or is_player)
-        self.lbl_residents.setVisible(category_name == "Location")
-        self.list_residents.setVisible(category_name == "Location")
-        
-        # Tabs Visibility
-        self.tabs.setTabVisible(0, is_npc_like) # Stats
-        self.tabs.setTabVisible(1, is_npc_like) # Spells
-        self.tabs.setTabVisible(2, is_npc_like) # Actions
-        self.tabs.setTabVisible(3, is_npc_like) # Inventory
-        self.tabs.setTabVisible(4, is_lore or is_player or is_status or is_location) # Docs
-        
-        # Battlemap Tab Visibility
-        idx_battlemap = self.tabs.indexOf(self.tab_battlemaps)
-        if idx_battlemap != -1:
-            self.tabs.setTabVisible(idx_battlemap, is_location)
-
-        if is_player: 
-             if self.grp_combat_stats.parent() == self.tab_stats: 
-                 self.tab_stats.layout().removeWidget(self.grp_combat_stats)
-                 self.content_layout.insertWidget(self.content_layout.indexOf(self.tabs), self.grp_combat_stats)
-             self.grp_combat_stats.setVisible(True)
-        elif is_status: self.grp_combat_stats.setVisible(False)
-        else:
-             if self.grp_combat_stats.parent() != self.tab_stats: 
-                 self.content_layout.removeWidget(self.grp_combat_stats)
-                 self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
-             self.grp_combat_stats.setVisible(is_npc_like)
-
-    # ... (Other methods) ...
-
+    # ... (Diğer metodlar aynı: setup_tabs, populate_sheet, collect_data vb.) ...
+    
+    # Kodu kısaltmak için diğer metodların aynı kaldığını varsayıyorum. 
+    # populate_sheet içinde "set_embedded_mode" kullanıldığında editörlerin güncellendiğinden emin olmalıyız.
+    
     def populate_sheet(self, data):
-        # ... (Existing populate logic) ...
         self.refresh_reference_combos()
         self.inp_name.setText(data.get("name", ""))
         self.inp_source.setText(data.get("source", "")) 
@@ -426,10 +365,8 @@ class NpcSheet(QWidget):
         self.image_list = data.get("images", [])
         if not self.image_list and data.get("image_path"): self.image_list = [data.get("image_path")]
         
-        # --- POPULATE BATTLEMAPS ---
         self.battlemap_list = data.get("battlemaps", [])
         self._render_battlemap_list()
-        # ---------------------------
 
         remote_url = data.get("_remote_image_url")
         if not self.image_list and remote_url:
@@ -445,9 +382,11 @@ class NpcSheet(QWidget):
         for pdf in data.get("pdfs", []): self.list_pdfs.addItem(pdf)
         self.is_dirty = False
 
+    # ... collect_data_from_sheet ve diğer helperlar ...
+    
     def collect_data_from_sheet(self):
         if not self.inp_name.text(): return None
-        # ... (Nested helpers same as before) ...
+        
         def get_cards(container):
             res = []
             for i in range(container.dynamic_area.count()):
@@ -468,11 +407,7 @@ class NpcSheet(QWidget):
             "description": self.inp_desc.toPlainText(), 
             "dm_notes": self.inp_dm_notes.toPlainText(),
             "images": self.image_list,
-            
-            # --- SAVE BATTLEMAPS ---
             "battlemaps": self.battlemap_list,
-            # -----------------------
-            
             "location_id": final_loc,
             "stats": {k: int(v.text() or 10) for k, v in self.stats_inputs.items()},
             "combat_stats": {"hp": self.inp_hp.text(), "max_hp": self.inp_max_hp.text(), "ac": self.inp_ac.text(), "speed": self.inp_speed.text(), "initiative": self.inp_init.text()},
@@ -488,43 +423,6 @@ class NpcSheet(QWidget):
             "pdfs": [self.list_pdfs.item(i).text() for i in range(self.list_pdfs.count())]
         }
         return data
-
-    def add_feature_card(self, group, name="", desc="", ph_title=None, ph_desc=None):
-        self.mark_as_dirty()
-        if ph_title is None: ph_title = tr("LBL_TITLE_PH")
-        if ph_desc is None: ph_desc = tr("LBL_DETAILS_PH")
-        
-        card = QFrame()
-        card.setProperty("class", "featureCard")
-        l = QVBoxLayout(card)
-        
-        h_header = QHBoxLayout()
-        t = QLineEdit(name)
-        t.setPlaceholderText(ph_title)
-        t.setStyleSheet("font-weight: bold; border:none; font-size: 14px;")
-        t.textChanged.connect(self.mark_as_dirty)
-        
-        btn_del = QPushButton()
-        btn_del.setFixedSize(24,24)
-        btn_del.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton))
-        btn_del.setStyleSheet("background: transparent; border: none;")
-        btn_del.clicked.connect(lambda: [group.dynamic_area.removeWidget(card), card.deleteLater(), self.mark_as_dirty()])
-        
-        h_header.addWidget(t)
-        h_header.addWidget(btn_del)
-        l.addLayout(h_header)
-        
-        d = MarkdownEditor(text=desc)
-        d.set_data_manager(self.dm) 
-        d.entity_link_clicked.connect(self.request_open_entity.emit)
-        d.setPlaceholderText(ph_desc)
-        d.setMinimumHeight(120) 
-        d.textChanged.connect(self.mark_as_dirty)
-        l.addWidget(d)
-        
-        group.dynamic_area.addWidget(card)
-        card.inp_title = t
-        card.inp_desc = d
 
     def _connect_change_signals(self):
         inputs = [
@@ -556,11 +454,10 @@ class NpcSheet(QWidget):
         self.combo_location.clear()
         self.combo_all_spells.clear()
         self.combo_all_items.clear()
-        self.combo_location.addItem("-", None) 
         for eid, ent in self.dm.data["entities"].items():
             etype = ent.get("type")
             name = ent.get("name", "Unnamed")
-            if etype == "Location": self.combo_location.addItem(f"📍 {name}", eid)
+            if etype == "Location": self.combo_location.addItem(f"{tr('LBL_ICON_PIN')} {name}", eid)
             elif etype == "Spell":
                 level = ent.get("attributes", {}).get("LBL_LEVEL", "?")
                 self.combo_all_spells.addItem(f"{name} (Lv {level})", eid)
@@ -636,8 +533,8 @@ class NpcSheet(QWidget):
         try:
             val = int(text_value); mod = (val - 10) // 2; sign = "+" if mod >= 0 else ""
             self.stats_modifiers[stat_key].setText(f"{sign}{mod}")
-            if mod > 0: self.stats_modifiers[stat_key].setStyleSheet("color: #4caf50; font-weight: bold;")
-            else: self.stats_modifiers[stat_key].setStyleSheet("color: #aaa; font-weight: normal;")
+            if mod > 0: self.stats_modifiers[stat_key].setStyleSheet(f"color: {self.current_palette.get('hp_bar_full', '#4caf50')}; font-weight: bold;")
+            else: self.stats_modifiers[stat_key].setStyleSheet(f"color: {self.current_palette.get('html_dim', '#aaa')}; font-weight: normal;")
         except ValueError: self.stats_modifiers[stat_key].setText("-")
 
     def setup_spells_tab(self):
@@ -742,6 +639,80 @@ class NpcSheet(QWidget):
         v.addLayout(h_action)
         layout.addWidget(self.grp_pdf)
         layout.addStretch()
+
+    def setup_battlemap_tab(self):
+        layout = QVBoxLayout(self.tab_battlemaps)
+        
+        lbl_info = QLabel(tr("LBL_BATTLEMAP_HELP"))
+        lbl_info.setStyleSheet(f"color: {self.current_palette.get('html_dim', '#888')}; font-style: italic;")
+        layout.addWidget(lbl_info)
+        
+        h_btn = QHBoxLayout()
+        self.btn_add_map = QPushButton(tr("BTN_ADD_MEDIA"))
+        self.btn_add_map.clicked.connect(self.add_battlemap_dialog)
+        
+        self.btn_remove_map = QPushButton(tr("BTN_REMOVE"))
+        self.btn_remove_map.clicked.connect(self.remove_selected_battlemap)
+        
+        h_btn.addWidget(self.btn_add_map)
+        h_btn.addWidget(self.btn_remove_map)
+        h_btn.addStretch()
+        layout.addLayout(h_btn)
+        
+        self.list_battlemaps = QListWidget()
+        self.list_battlemaps.setViewMode(QListWidget.ViewMode.IconMode)
+        self.list_battlemaps.setIconSize(QSize(120, 120))
+        self.list_battlemaps.setResizeMode(QListWidget.ResizeMode.Adjust)
+        self.list_battlemaps.setSpacing(10)
+        layout.addWidget(self.list_battlemaps)
+
+    def add_battlemap_dialog(self):
+        files, _ = QFileDialog.getOpenFileNames(
+            self, 
+            "Select Battlemaps", 
+            "", 
+            "Media (*.png *.jpg *.jpeg *.bmp *.mp4 *.webm *.mkv *.m4v *.avi)"
+        )
+        if files:
+            for f in files:
+                rel_path = self.dm.import_image(f)
+                if rel_path:
+                    self.battlemap_list.append(rel_path)
+            self._render_battlemap_list()
+            self.mark_as_dirty()
+
+    def remove_selected_battlemap(self):
+        row = self.list_battlemaps.currentRow()
+        if row >= 0:
+            del self.battlemap_list[row]
+            self._render_battlemap_list()
+            self.mark_as_dirty()
+
+    def _render_battlemap_list(self):
+        self.list_battlemaps.clear()
+        video_exts = {'.mp4', '.webm', '.mkv', '.m4v', '.avi', '.mov'}
+        
+        for path in self.battlemap_list:
+            if path.startswith("http"): continue
+                
+            display_name = os.path.basename(path)
+            icon = None
+            full_path = self.dm.get_full_path(path)
+            if not full_path or not os.path.exists(full_path): continue
+            
+            ext = os.path.splitext(full_path)[1].lower()
+            if ext in video_exts:
+                icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay)
+                display_name = f"{display_name} {tr('SUFFIX_VIDEO')}"
+            else:
+                pix = QPixmap(full_path).scaled(120, 120, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                icon = QIcon(pix)
+            
+            if icon:
+                item = QListWidgetItem(icon, display_name)
+                item.setData(Qt.ItemDataRole.UserRole, path)
+                item.setToolTip(path)
+                self.list_battlemaps.addItem(item)
 
     def _on_linked_item_dbl_click(self, item):
         eid = item.data(Qt.ItemDataRole.UserRole)
@@ -974,3 +945,50 @@ class NpcSheet(QWidget):
                 if d and txt in d.get("pdfs",[]): d["pdfs"].remove(txt); self.dm.save_entity(eid, d)
     def open_pdf_folder(self):
         d = os.path.join(self.dm.current_campaign_path, "assets"); os.makedirs(d, exist_ok=True); QDesktopServices.openUrl(QUrl.fromLocalFile(d))
+
+    def update_ui_by_type(self, category_name):
+        self.build_dynamic_form(category_name)
+        is_npc_like = category_name in ["NPC", "Monster"]
+        is_player = category_name == "Player"
+        is_lore = category_name == "Lore"
+        is_status = category_name == "Status Effect"
+        is_location = category_name == "Location"
+        
+        # Location Residents Logic
+        if category_name == "Location":
+            self.list_residents.clear()
+            my_id = self.property("entity_id")
+            if my_id:
+                for eid, ent in self.dm.data["entities"].items():
+                    loc_ref = ent.get("location_id") or ent.get("attributes", {}).get("LBL_ATTR_LOCATION")
+                    if loc_ref == my_id:
+                        item = QListWidgetItem(f"{ent['name']} ({ent['type']})")
+                        item.setData(Qt.ItemDataRole.UserRole, eid)
+                        self.list_residents.addItem(item)
+
+        self.lbl_location.setVisible(is_npc_like or is_player)
+        self.combo_location.setVisible(is_npc_like or is_player)
+        self.lbl_residents.setVisible(category_name == "Location")
+        self.list_residents.setVisible(category_name == "Location")
+        
+        self.tabs.setTabVisible(0, is_npc_like) # Stats
+        self.tabs.setTabVisible(1, is_npc_like) # Spells
+        self.tabs.setTabVisible(2, is_npc_like) # Actions
+        self.tabs.setTabVisible(3, is_npc_like) # Inventory
+        self.tabs.setTabVisible(4, is_lore or is_player or is_status or is_location) # Docs
+        
+        idx_battlemap = self.tabs.indexOf(self.tab_battlemaps)
+        if idx_battlemap != -1:
+            self.tabs.setTabVisible(idx_battlemap, is_location)
+
+        if is_player: 
+             if self.grp_combat_stats.parent() == self.tab_stats: 
+                 self.tab_stats.layout().removeWidget(self.grp_combat_stats)
+                 self.content_layout.insertWidget(self.content_layout.indexOf(self.tabs), self.grp_combat_stats)
+             self.grp_combat_stats.setVisible(True)
+        elif is_status: self.grp_combat_stats.setVisible(False)
+        else:
+             if self.grp_combat_stats.parent() != self.tab_stats: 
+                 self.content_layout.removeWidget(self.grp_combat_stats)
+                 self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
+             self.grp_combat_stats.setVisible(is_npc_like)
