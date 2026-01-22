@@ -18,7 +18,7 @@ from ui.dialogs.api_browser import ApiBrowser
 class NpcSheet(QWidget):
     # --- SIGNALS ---
     request_open_entity = pyqtSignal(str)   # Navigate to linked card
-    data_changed = pyqtSignal()             # Data modified (for unsaved changes indicator)
+    data_changed = pyqtSignal()             # Data modified
     save_requested = pyqtSignal()           # Save triggered (Ctrl+S or Button)
 
     def __init__(self, data_manager):
@@ -35,12 +35,32 @@ class NpcSheet(QWidget):
         self.image_worker = None       
         
         self.is_dirty = False
+        self.is_embedded = False  # YENİ: Gömülü mod bayrağı
         
         self.init_ui()
         
         # Ctrl+S Shortcut
         self.shortcut_save = QShortcut(QKeySequence("Ctrl+S"), self)
         self.shortcut_save.activated.connect(self.emit_save_request)
+
+    def set_embedded_mode(self, enabled: bool):
+        """
+        Mind Map gibi yerlerde kartın nasıl davranacağını ayarlar.
+        Enabled ise: Kaydet/Sil butonları gizlenir, otomatik kayıt için sinyal beklenir.
+        """
+        self.is_embedded = enabled
+        
+        # Butonları gizle/göster
+        self.btn_save.setVisible(not enabled)
+        self.btn_delete.setVisible(not enabled)
+        
+        # Gerekirse PDF veya Battlemap butonlarını da gizleyebilirsin
+        # Şimdilik sadece ana butonları gizliyoruz
+        
+        if enabled:
+            # Gömülü modda arka planı biraz daha şeffaf veya farklı yapabiliriz
+            # self.content_widget.setStyleSheet("background-color: rgba(30, 30, 30, 200);")
+            pass
 
     def init_ui(self):
         main_layout = QVBoxLayout(self)
@@ -158,7 +178,6 @@ class NpcSheet(QWidget):
         self.content_layout.addWidget(self.grp_dynamic)
 
         # Tabs
-        # Tabs
         self.tabs = QTabWidget()
         self.tab_stats = QWidget()
         self.setup_stats_tab()
@@ -180,8 +199,6 @@ class NpcSheet(QWidget):
         self.setup_docs_tab()
         self.tabs.addTab(self.tab_docs, tr("TAB_DOCS"))
         
-        # --- NEW BATTLEMAP TAB ---
-        # --- NEW BATTLEMAP TAB ---
         self.tab_battlemaps = QWidget()
         self.setup_battlemap_tab()
         self.tabs.addTab(self.tab_battlemaps, "Battlemaps")
@@ -220,6 +237,8 @@ class NpcSheet(QWidget):
         self.update_ui_by_type(self.inp_type.currentData())
         self._connect_change_signals()
 
+    # ... (Geri kalan tüm metodlar aynı kalacak: setup_tabs, populate_sheet, collect_data vb.) ...
+    
     def setup_battlemap_tab(self):
         layout = QVBoxLayout(self.tab_battlemaps)
         
@@ -305,8 +324,6 @@ class NpcSheet(QWidget):
                 item.setToolTip(path)
                 self.list_battlemaps.addItem(item)
 
-    # ... (Rest of existing methods: add_feature_card, _connect_change_signals, etc.) ...
-
     def update_ui_by_type(self, category_name):
         self.build_dynamic_form(category_name)
         is_npc_like = category_name in ["NPC", "Monster"]
@@ -356,10 +373,7 @@ class NpcSheet(QWidget):
                  self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
              self.grp_combat_stats.setVisible(is_npc_like)
 
-    # ... (Other methods) ...
-
     def populate_sheet(self, data):
-        # ... (Existing populate logic) ...
         self.refresh_reference_combos()
         self.inp_name.setText(data.get("name", ""))
         self.inp_source.setText(data.get("source", "")) 
@@ -447,7 +461,7 @@ class NpcSheet(QWidget):
 
     def collect_data_from_sheet(self):
         if not self.inp_name.text(): return None
-        # ... (Nested helpers same as before) ...
+        
         def get_cards(container):
             res = []
             for i in range(container.dynamic_area.count()):

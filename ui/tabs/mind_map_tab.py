@@ -52,17 +52,11 @@ class CustomGraphicsView(QGraphicsView):
             super().contextMenuEvent(event)
 
     def wheelEvent(self, event):
-        # 1. İmlecin altındaki item'ı bul
         item = self.itemAt(event.position().toPoint())
-        
-        # 2. Eğer bir Proxy Widget (yani Editor veya NpcSheet) ise
         if isinstance(item, QGraphicsProxyWidget):
-            # Olayı yoksayarak alt widget'a (ScrollArea) gitmesini sağla
             event.ignore()
-            # return super().wheelEvent(event) # Gerekirse açılabilir ama ignore yeterli olmalı
             return 
         
-        # 3. Boşluktaysa veya Proxy olmayan bir şeydeyse ZOOM yap
         zoom_in = 1.15
         zoom_out = 1 / 1.15
         if event.angleDelta().y() > 0: self.scale(zoom_in, zoom_in)
@@ -81,23 +75,51 @@ class CustomGraphicsView(QGraphicsView):
         event.accept()
 
 class FloatingControls(QWidget):
-    def __init__(self, view_ref, parent=None):
+    def __init__(self, view_ref, parent_tab, parent=None):
         super().__init__(parent)
         self.view = view_ref
+        self.parent_tab = parent_tab
+        
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0); layout.setSpacing(5)
-        self.btn_in = self._create_btn("➕", lambda: self.view.scale(1.2, 1.2), "Yakınlaş")
-        self.btn_out = self._create_btn("➖", lambda: self.view.scale(1/1.2, 1/1.2), "Uzaklaş")
-        self.btn_center = self._create_btn("🎯", lambda: self.view.centerOn(0, 0), "Merkeze Git")
-        layout.addWidget(self.btn_in); layout.addWidget(self.btn_out); layout.addWidget(self.btn_center)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8) # Butonlar arası boşluk
+        
+        # Butonlar (Text based, wider)
+        self.btn_in = self._create_btn("Zoom In", lambda: self.view.scale(1.2, 1.2), "Yakınlaş")
+        self.btn_out = self._create_btn("Zoom Out", lambda: self.view.scale(1/1.2, 1/1.2), "Uzaklaş")
+        self.btn_center = self._create_btn("Center", lambda: self.view.centerOn(0, 0), "Merkeze Git (0,0)")
+        self.btn_fit = self._create_btn("See All", self.parent_tab.fit_all_content, "Tümünü Ekrana Sığdır")
+        
+        layout.addWidget(self.btn_in)
+        layout.addWidget(self.btn_out)
+        layout.addWidget(self.btn_center)
+        layout.addWidget(self.btn_fit)
+        
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
     def _create_btn(self, text, func, tip):
         btn = QPushButton(text)
-        btn.setFixedSize(36, 36)
+        btn.setFixedSize(80, 30) # Daha geniş, daha kısa
         btn.setToolTip(tip)
         btn.clicked.connect(func)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn.setStyleSheet("QPushButton { background-color: rgba(40, 40, 40, 220); color: #ddd; border: 1px solid #555; border-radius: 18px; font-weight: bold; font-size: 16px; } QPushButton:hover { background-color: #42a5f5; border-color: #42a5f5; color: white; }")
+        # CSS ile kompakt ve şık görünüm
+        btn.setStyleSheet("""
+            QPushButton { 
+                background-color: rgba(40, 40, 40, 230); 
+                color: #eee; 
+                border: 1px solid #555; 
+                border-radius: 6px; 
+                font-size: 11px; 
+                font-weight: bold;
+                font-family: 'Segoe UI', sans-serif;
+            } 
+            QPushButton:hover { 
+                background-color: #42a5f5; 
+                border-color: #42a5f5; 
+                color: white; 
+            }
+        """)
         return btn
 
 class MindMapTab(QWidget):
@@ -112,10 +134,18 @@ class MindMapTab(QWidget):
         self.pending_connection_source = None
         self.current_map_id = "default"
         
+        # Harita Layoutu için Autosave
         self.autosave_timer = QTimer()
         self.autosave_timer.setSingleShot(True)
         self.autosave_timer.setInterval(2000) 
         self.autosave_timer.timeout.connect(self.save_map_data_silent)
+        
+        # Entity İçeriği için Autosave (Debounce)
+        self.entity_autosave_timer = QTimer()
+        self.entity_autosave_timer.setSingleShot(True)
+        self.entity_autosave_timer.setInterval(1000) # 1 saniye bekle
+        self.entity_autosave_timer.timeout.connect(self.process_pending_entity_saves)
+        self.pending_entity_saves = set() # {sheet_ref}
         
         self.init_ui()
         self.load_map_data()
@@ -123,9 +153,6 @@ class MindMapTab(QWidget):
     def init_ui(self):
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0); main_layout.setSpacing(0)
-        
-        # Sidebar kaldırıldı (Global Sidebar kullanılıyor)
-        # Sadece Canvas alanı var
         
         canvas_container = QWidget()
         canvas_layout = QVBoxLayout(canvas_container)
@@ -137,9 +164,12 @@ class MindMapTab(QWidget):
         self.view = CustomGraphicsView(self.scene, self)
         canvas_layout.addWidget(self.view)
         
-        self.floating_controls = FloatingControls(self.view, self.view)
+        # Floating Controls'a 'self' (tab) referansını gönderiyoruz ki fit_all_content'e erişsin
+        self.floating_controls = FloatingControls(self.view, self, self.view)
+        
         overlay_layout = QGridLayout(self.view)
         overlay_layout.setContentsMargins(0, 0, 20, 20)
+        # Sağ altta duracak
         overlay_layout.addWidget(self.floating_controls, 1, 1, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
         
         self.lbl_save_status = QPushButton("💾 Saved", self.view)
@@ -149,6 +179,14 @@ class MindMapTab(QWidget):
         overlay_layout.addWidget(self.lbl_save_status, 0, 1, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
 
         main_layout.addWidget(canvas_container)
+
+    def fit_all_content(self):
+        """Sahnedeki tüm öğeleri ekrana sığdırır."""
+        items_rect = self.scene.itemsBoundingRect()
+        if items_rect.isEmpty():
+            return
+        # Biraz kenar boşluğu bırakarak sığdır
+        self.view.fitInView(items_rect, Qt.AspectRatioMode.KeepAspectRatio)
 
     # --- PROJECTION LOGIC ---
     def handle_projection_request(self, node):
@@ -220,7 +258,6 @@ class MindMapTab(QWidget):
         editor = MarkdownEditor(text=content, placeholder="Not al...")
         editor.set_data_manager(self.dm)
         editor.textChanged.connect(self.trigger_autosave)
-        # Şeffaf mod ve Gömülü mod
         editor.set_mind_map_style() 
         
         node = self.create_node_base(node_id, editor, x, y, w, h, "note")
@@ -237,13 +274,18 @@ class MindMapTab(QWidget):
     def create_entity_node(self, eid, x, y, w=550, h=700): 
         if eid not in self.dm.data["entities"]: return
         ent_data = self.dm.data["entities"][eid]
+        
         sheet = NpcSheet(self.dm)
         sheet.setProperty("entity_id", eid)
         sheet.populate_sheet(ent_data)
-        def inner_save():
-            d = sheet.collect_data_from_sheet()
-            if d: self.dm.save_entity(eid, d)
-        sheet.save_requested.connect(inner_save)
+        
+        # --- FAZ 2 DEĞİŞİKLİĞİ: Gömülü Mod ve Otomatik Kayıt ---
+        sheet.set_embedded_mode(True)
+        
+        # Değişiklik olduğunda kuyruğa ekle ve zamanlayıcıyı başlat
+        sheet.data_changed.connect(lambda: self.schedule_entity_autosave(sheet))
+        # -------------------------------------------------------
+        
         sheet.setStyleSheet("""
             QWidget#sheetContainer { background-color: #2b2b2b; }
             QLineEdit, QTextEdit, QPlainTextEdit { background-color: #1e1e1e; border: 1px solid #444; color: #eee; }
@@ -251,6 +293,39 @@ class MindMapTab(QWidget):
         """)
         node = self.create_node_base(None, sheet, x, y, w, h, "entity", {"eid": eid})
         return node
+
+    # --- AUTO-SAVE LOGIC FOR ENTITIES ---
+    def schedule_entity_autosave(self, sheet):
+        self.pending_entity_saves.add(sheet)
+        self.lbl_save_status.setText("✏️ Editing...")
+        self.lbl_save_status.setStyleSheet("background: rgba(0, 0, 0, 100); color: #ffb74d; border-radius: 4px; border: none; font-size: 11px;")
+        self.entity_autosave_timer.start()
+
+    def process_pending_entity_saves(self):
+        """Kuyruktaki tüm entity kartlarını kaydeder."""
+        for sheet in list(self.pending_entity_saves):
+            try:
+                # Sheet kapanmış veya silinmiş olabilir, kontrol et
+                if not sheet.isVisible() and not sheet.parent(): 
+                    continue
+                    
+                eid = sheet.property("entity_id")
+                data = sheet.collect_data_from_sheet()
+                
+                if eid and data:
+                    self.dm.save_entity(eid, data)
+                    sheet.is_dirty = False
+            except RuntimeError:
+                # C++ object silinmişse
+                pass
+            except Exception as e:
+                print(f"Auto-save error for {eid}: {e}")
+                
+        self.pending_entity_saves.clear()
+        
+        # Görsel geri bildirim
+        self.lbl_save_status.setText("💾 Saved")
+        self.lbl_save_status.setStyleSheet("background: rgba(0, 0, 0, 100); color: #81c784; border-radius: 4px; border: none; font-size: 11px;")
 
     # --- CONNECTIONS & SAVE/LOAD ---
     def handle_connection_request(self, node):
@@ -268,9 +343,18 @@ class MindMapTab(QWidget):
         for conn in self.connections:
             if (conn.start_node == node1 and conn.end_node == node2) or \
                (conn.start_node == node2 and conn.end_node == node1): return
-        line = ConnectionLine(node1, node2)
+        
+        # Bağlantı çizgisine delete callback'i veriyoruz
+        line = ConnectionLine(node1, node2, on_delete_callback=self.delete_connection)
         self.scene.addItem(line)
         self.connections.append(line)
+
+    def delete_connection(self, connection_item):
+        """Bağlantı çizgisini sahneden ve listeden siler."""
+        if connection_item in self.connections:
+            self.scene.removeItem(connection_item)
+            self.connections.remove(connection_item)
+            self.trigger_autosave()
 
     def update_connections(self):
         for conn in self.connections: conn.update_position()
