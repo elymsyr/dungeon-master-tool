@@ -110,12 +110,14 @@ class FloatingControls(QWidget):
         self.btn_in = self._create_btn(tr("BTN_ZOOM_IN"), lambda: self.view.scale(1.2, 1.2), tr("TIP_ZOOM_IN"))
         self.btn_out = self._create_btn(tr("BTN_ZOOM_OUT"), lambda: self.view.scale(1/1.2, 1/1.2), tr("TIP_ZOOM_OUT"))
         self.btn_center = self._create_btn(tr("BTN_CENTER"), lambda: self.view.centerOn(0, 0), tr("TIP_CENTER"))
-        self.btn_fit = self._create_btn(tr("BTN_FIT"), self.parent_tab.fit_all_content, tr("TIP_FIT"))
+        self.btn_see_all = self._create_btn(tr("BTN_SEE_ALL"), self.parent_tab.see_all_workspaces, tr("TIP_SEE_ALL"))
+        self.btn_ws_list = self._create_btn(tr("BTN_WORKSPACES"), self.show_workspace_menu, tr("BTN_WORKSPACES"))
         
         layout.addWidget(self.btn_in)
         layout.addWidget(self.btn_out)
         layout.addWidget(self.btn_center)
-        layout.addWidget(self.btn_fit)
+        layout.addWidget(self.btn_see_all)
+        layout.addWidget(self.btn_ws_list)
         
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.update_style()
@@ -126,7 +128,8 @@ class FloatingControls(QWidget):
         self.btn_in.setText(tr("BTN_ZOOM_IN")); self.btn_in.setToolTip(tr("TIP_ZOOM_IN"))
         self.btn_out.setText(tr("BTN_ZOOM_OUT")); self.btn_out.setToolTip(tr("TIP_ZOOM_OUT"))
         self.btn_center.setText(tr("BTN_CENTER")); self.btn_center.setToolTip(tr("TIP_CENTER"))
-        self.btn_fit.setText(tr("BTN_FIT")); self.btn_fit.setToolTip(tr("TIP_FIT"))
+        self.btn_see_all.setText(tr("BTN_SEE_ALL")); self.btn_see_all.setToolTip(tr("TIP_SEE_ALL"))
+        self.btn_ws_list.setText(tr("BTN_WORKSPACES")); self.btn_ws_list.setToolTip(tr("BTN_WORKSPACES"))
         self.update_style()
 
     def update_style(self):
@@ -152,12 +155,29 @@ class FloatingControls(QWidget):
                 color: white; 
             }}
         """
-        for btn in [self.btn_in, self.btn_out, self.btn_center, self.btn_fit]:
+        for btn in [self.btn_in, self.btn_out, self.btn_center, self.btn_see_all, self.btn_ws_list]:
             btn.setStyleSheet(style)
+
+    def show_workspace_menu(self):
+        menu = QMenu(self)
+        p = self.current_palette
+        menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; font-size: 14px; padding: 5px; }} QMenu::item {{ padding: 5px 20px; }} QMenu::item:selected {{ background-color: {p.get('ui_floating_hover_bg', '#42a5f5')}; }}")
+        
+        if not self.parent_tab.workspaces:
+            act = QAction(tr("LBL_NO_ITEMS"), menu)
+            act.setEnabled(False)
+            menu.addAction(act)
+        else:
+            for ws in self.parent_tab.workspaces.values():
+                act = QAction(f"🔲 {ws.name}", menu)
+                act.triggered.connect(lambda checked, w=ws: self.parent_tab.zoom_to_workspace(w))
+                menu.addAction(act)
+        
+        menu.exec(self.btn_ws_list.mapToGlobal(self.btn_ws_list.rect().bottomLeft()))
 
     def _create_btn(self, text, func, tip):
         btn = QPushButton(text)
-        btn.setFixedSize(80, 30)
+        btn.setFixedSize(100, 30)
         btn.setToolTip(tip)
         btn.clicked.connect(func)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -172,15 +192,16 @@ class MindMapTab(QWidget):
         
         self.nodes = {} 
         self.connections = [] 
+        self.workspaces = {}
         self.pending_connection_source = None
         self.current_map_id = "default"
         
-        self.autosave_timer = QTimer()
+        self.autosave_timer = QTimer(self)
         self.autosave_timer.setSingleShot(True)
         self.autosave_timer.setInterval(2000) 
         self.autosave_timer.timeout.connect(self.save_map_data_silent)
         
-        self.entity_autosave_timer = QTimer()
+        self.entity_autosave_timer = QTimer(self)
         self.entity_autosave_timer.setSingleShot(True)
         self.entity_autosave_timer.setInterval(1000)
         self.entity_autosave_timer.timeout.connect(self.process_pending_entity_saves)
@@ -217,7 +238,7 @@ class MindMapTab(QWidget):
         overlay_layout.addWidget(self.floating_controls, 1, 1, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
         
         self.lbl_save_status = QPushButton(tr("LBL_SAVED"), self.view)
-        self.lbl_save_status.setFixedSize(80, 25)
+        self.lbl_save_status.setFixedSize(120, 25)
         self.lbl_save_status.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         overlay_layout.addWidget(self.lbl_save_status, 0, 1, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
 
@@ -301,8 +322,12 @@ class MindMapTab(QWidget):
         act_img = QAction(tr('MENU_ADD_IMAGE'), self)
         act_img.triggered.connect(lambda: self.add_image_at_pos(scene_pos))
         
+        act_ws = QAction(tr('MENU_ADD_WORKSPACE'), self)
+        act_ws.triggered.connect(lambda: self.create_workspace_node(None, "New Workspace", scene_pos.x(), scene_pos.y()))
+        
         menu.addAction(act_note)
         menu.addAction(act_img)
+        menu.addAction(act_ws)
         menu.exec(global_pos)
 
     def add_image_at_pos(self, scene_pos):
@@ -334,6 +359,55 @@ class MindMapTab(QWidget):
         
         self.trigger_autosave()
         return node
+
+    def create_workspace_node(self, ws_id, name, x, y, w=800, h=600, color="#42a5f5"):
+        from ui.widgets.mind_map_items import WorkspaceItem
+        ws = WorkspaceItem(ws_id, name, w, h, color)
+        ws.setPos(x, y)
+        
+        ws.positionChanged.connect(self.trigger_autosave)
+        ws.sizeChanged.connect(self.trigger_autosave)
+        ws.workspaceDeleted.connect(self.delete_workspace)
+        ws.workspaceRenamed.connect(self.rename_workspace)
+        ws.workspaceColorChanged.connect(self.change_workspace_color)
+        
+        self.scene.addItem(ws)
+        self.workspaces[ws.ws_id] = ws
+        self.trigger_autosave()
+        return ws
+
+    def delete_workspace(self, ws_id):
+        if ws_id in self.workspaces:
+            ws = self.workspaces[ws_id]
+            self.scene.removeItem(ws)
+            del self.workspaces[ws_id]
+            self.trigger_autosave()
+
+    def rename_workspace(self, ws_id, name):
+        if ws_id in self.workspaces:
+            self.workspaces[ws_id].name = name
+            self.workspaces[ws_id].update()
+            self.trigger_autosave()
+
+    def change_workspace_color(self, ws_id, color_str):
+        if ws_id in self.workspaces:
+            self.workspaces[ws_id].color = QColor(color_str)
+            self.workspaces[ws_id].update()
+            self.trigger_autosave()
+
+    def zoom_to_workspace(self, ws):
+        self.view.fitInView(ws.sceneBoundingRect(), Qt.AspectRatioMode.KeepAspectRatio)
+
+    def see_all_workspaces(self):
+        if not self.workspaces:
+            self.fit_all_content()
+            return
+        
+        rect = QRectF()
+        for ws in self.workspaces.values():
+            rect = rect.united(ws.sceneBoundingRect())
+        
+        self.view.fitInView(rect, Qt.AspectRatioMode.KeepAspectRatio)
 
     def create_note_node(self, node_id, x, y, w, h, content):
         editor = MarkdownEditor(text=content, placeholder="Not al...")
@@ -445,12 +519,16 @@ class MindMapTab(QWidget):
             self.trigger_autosave()
 
     def trigger_autosave(self):
+        try:
+            if not self.autosave_timer: return
+        except RuntimeError: return # Object might be deleted
+        
         palette = ThemeManager.get_palette(self.dm.current_theme)
         self._update_save_status_style(palette, is_editing=True)
         self.autosave_timer.start()
 
     def save_map_data_silent(self):
-        map_data = {"nodes": [], "connections": []}
+        map_data = {"nodes": [], "connections": [], "workspaces": []}
         for nid, node in self.nodes.items():
             node_data = {
                 "id": nid, "type": node.node_type,
@@ -469,6 +547,15 @@ class MindMapTab(QWidget):
             "y": center.y(),
             "zoom": self.view.transform().m11()
         }
+        
+        for ws_id, ws in self.workspaces.items():
+            ws_data = {
+                "id": ws_id, "name": ws.name,
+                "x": ws.pos().x(), "y": ws.pos().y(),
+                "w": ws.width, "h": ws.height,
+                "color": ws.color.name()
+            }
+            map_data["workspaces"].append(ws_data)
         
         for conn in self.connections:
             map_data["connections"].append({"from": conn.start_node.node_id, "to": conn.end_node.node_id})
@@ -506,6 +593,16 @@ class MindMapTab(QWidget):
         for c_data in map_data.get("connections", []):
             n1 = self.nodes.get(c_data["from"]); n2 = self.nodes.get(c_data["to"])
             if n1 and n2: self.create_connection(n1, n2)
+
+        for ws_data in map_data.get("workspaces", []):
+            try:
+                self.create_workspace_node(
+                    ws_data["id"], ws_data["name"],
+                    ws_data["x"], ws_data["y"],
+                    ws_data["w"], ws_data["h"],
+                    ws_data.get("color", "#42a5f5")
+                )
+            except Exception as e: print(f"Workspace load error: {e}")
 
         # Restore viewport state
         vp = map_data.get("viewport")

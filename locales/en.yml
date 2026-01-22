@@ -175,6 +175,15 @@ en:
   
   LBL_NO_IMAGE: "No Image"
   LBL_ICON_FILTER: "🔍"
+  MENU_ADD_WORKSPACE: "🔲 Add Workspace"
+  MENU_RENAME_WORKSPACE: "✏️ Rename Workspace"
+  MENU_PICK_COLOR: "🎨 Pick Color"
+  LBL_WORKSPACE: "Workspace"
+  BTN_SEE_ALL: "See All"
+  BTN_WORKSPACES: "Workspaces"
+  TIP_SEE_ALL: "Show all workspaces"
+  MSG_WORKSPACE_NAME: "Workspace Name"
+  MSG_ENTER_WS_NAME: "Enter workspace name:"
 
   # Bulk Downloader
   TITLE_DOWNLOADER: "Bulk Database Downloader"
