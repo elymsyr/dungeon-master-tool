@@ -82,6 +82,7 @@ class CustomGraphicsView(QGraphicsView):
         zoom_out = 1 / 1.15
         if event.angleDelta().y() > 0: self.scale(zoom_in, zoom_in)
         else: self.scale(zoom_out, zoom_out)
+        self.parent_tab.trigger_autosave()
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasText(): event.accept()
@@ -205,6 +206,8 @@ class MindMapTab(QWidget):
         self.scene.setSceneRect(-100000, -100000, 200000, 200000)
         
         self.view = CustomGraphicsView(self.scene, self)
+        self.view.horizontalScrollBar().valueChanged.connect(lambda _: self.trigger_autosave())
+        self.view.verticalScrollBar().valueChanged.connect(lambda _: self.trigger_autosave())
         canvas_layout.addWidget(self.view)
         
         self.floating_controls = FloatingControls(self.view, self, self.view)
@@ -459,6 +462,14 @@ class MindMapTab(QWidget):
                 if isinstance(editor, MarkdownEditor): node_data["content"] = editor.toPlainText()
             map_data["nodes"].append(node_data)
         
+        # Save viewport state
+        center = self.view.mapToScene(self.view.viewport().rect().center())
+        map_data["viewport"] = {
+            "x": center.x(),
+            "y": center.y(),
+            "zoom": self.view.transform().m11()
+        }
+        
         for conn in self.connections:
             map_data["connections"].append({"from": conn.start_node.node_id, "to": conn.end_node.node_id})
             
@@ -495,3 +506,16 @@ class MindMapTab(QWidget):
         for c_data in map_data.get("connections", []):
             n1 = self.nodes.get(c_data["from"]); n2 = self.nodes.get(c_data["to"])
             if n1 and n2: self.create_connection(n1, n2)
+
+        # Restore viewport state
+        vp = map_data.get("viewport")
+        if vp:
+            # Set zoom
+            zoom = vp.get("zoom", 1.0)
+            transform = self.view.transform()
+            transform.setMatrix(zoom, transform.m12(), transform.m13(),
+                                transform.m21(), zoom, transform.m23(),
+                                transform.m31(), transform.m32(), transform.m33())
+            self.view.setTransform(transform)
+            # Center view
+            self.view.centerOn(vp.get("x", 0), vp.get("y", 0))
