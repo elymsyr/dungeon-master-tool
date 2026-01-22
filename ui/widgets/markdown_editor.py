@@ -59,7 +59,47 @@ class ClickableTextBrowser(QTextBrowser):
         event.ignore() 
 
 class PropagatingTextEdit(QTextEdit):
-    pass
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)
+        self.dm = None  # DataManager referansı
+
+    def set_data_manager(self, dm):
+        self.dm = dm
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+        else:
+            super().dragEnterEvent(event)
+
+    def dropEvent(self, event):
+        if event.mimeData().hasText():
+            text = event.mimeData().text()
+            
+            # 1. Kontrol: Bu bir Entity ID mi?
+            # DataManager referansı varsa ve ID entities içinde mevcutsa
+            if self.dm and text in self.dm.data.get("entities", {}):
+                entity = self.dm.data["entities"][text]
+                entity_name = entity.get("name", "Unknown")
+                
+                # Mention Formatı: [@Name](entity://ID)
+                formatted_text = f"[@{entity_name}](entity://{text}) "
+                
+                # İmleci bırakılan yere taşı ve metni ekle
+                cursor = self.cursorForPosition(event.position().toPoint())
+                cursor.insertText(formatted_text)
+                
+                # Odaklan
+                self.setTextCursor(cursor)
+                self.setFocus()
+                
+                event.acceptProposedAction()
+            else:
+                # Normal metin sürükleme işlemi (Standart davranış)
+                super().dropEvent(event)
+        else:
+            super().dropEvent(event)
 
 class MarkdownEditor(QWidget):
     textChanged = pyqtSignal()
@@ -164,7 +204,10 @@ class MarkdownEditor(QWidget):
         self.setStyleSheet(style)
         self.update_view_content()
 
-    def set_data_manager(self, dm): self.dm = dm
+    def set_data_manager(self, dm): 
+        self.dm = dm
+        # Editöre de DataManager referansını ver (Drag&Drop için)
+        self.editor.set_data_manager(dm)
 
     def switch_to_edit_mode(self):
         self.btn_toggle.setChecked(True)
