@@ -24,6 +24,30 @@ def clean_stat_value(value, default=10):
         return int(digits) if digits else default
     except: return default
 
+# --- SÜRÜKLENEBİLİR TABLO SINIFI ---
+class DraggableCombatTable(QTableWidget):
+    """Sürüklenen Entity'leri kabul eden özel tablo."""
+    entity_dropped = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+        else:
+            super().dragEnterEvent(event)
+
+    def dragMoveEvent(self, event):
+        event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        eid = event.mimeData().text()
+        # Sinyali gönder, CombatTracker bunu yakalayıp ekleme yapacak
+        self.entity_dropped.emit(eid)
+        event.acceptProposedAction()
+
 class ConditionIcon(QWidget):
     removed = pyqtSignal(str) 
 
@@ -244,7 +268,8 @@ class CombatTracker(QWidget):
         enc_layout.addWidget(self.btn_del_enc)
         layout.addLayout(enc_layout)
 
-        self.table = QTableWidget()
+        # Tablo sınıfı güncellendi: DraggableCombatTable
+        self.table = DraggableCombatTable()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
@@ -255,6 +280,10 @@ class CombatTracker(QWidget):
         self.table.itemChanged.connect(self.on_data_changed)
         self.table.cellDoubleClicked.connect(self.on_cell_double_clicked)
         self.table.setSortingEnabled(False)
+        
+        # Sinyal bağlantısı: Sürüklenen ID'yi ekle
+        self.table.entity_dropped.connect(self.handle_drop_import)
+        
         layout.addWidget(self.table)
 
         q_lo = QHBoxLayout()
@@ -274,7 +303,6 @@ class CombatTracker(QWidget):
         q_lo.addWidget(self.btn_quick_add, 1)
         layout.addLayout(q_lo)
 
-        # Removed 'Open Battle Map' button from here
         btn_layout = QHBoxLayout()
         self.lbl_round = QLabel(f"{tr('LBL_ROUND_PREFIX')}1")
         self.lbl_round.setObjectName("headerLabel")
@@ -303,6 +331,19 @@ class CombatTracker(QWidget):
         btn_layout2.addWidget(self.btn_clear_all)
         layout.addLayout(btn_layout2)
         self.refresh_encounter_combo()
+
+    def handle_drop_import(self, eid):
+        """Dışarıdan (Sidebar) sürüklenen entity'i ekler."""
+        # Kütüphane ID'si ise önce import edilmesi gerekir
+        if eid.startswith("lib_"):
+            QMessageBox.information(self, tr("MSG_INFO"), "Please double-click library items to import them to your world first.")
+            return
+
+        if eid in self.dm.data["entities"]:
+            ent = self.dm.data["entities"][eid]
+            if ent.get("type") in ["NPC", "Monster", "Player"]:
+                self.add_row_from_entity(eid)
+                self._sort_and_refresh()
 
     def create_encounter(self, name):
         eid = str(uuid.uuid4())
@@ -547,11 +588,9 @@ class CombatTracker(QWidget):
         self.refresh_ui_from_current_encounter(); self.combo_encounters.blockSignals(False); self.loading=False
     
     def load_combat_data(self, data):
-        """Compatibility method for legacy session data (list of combatants)."""
         self.load_session_state({"combatants": data})
 
     def load_map_dialog(self):
-        """Exposed method to load map for current encounter."""
         if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
         enc = self.encounters[self.current_encounter_id]
         
@@ -569,7 +608,6 @@ class CombatTracker(QWidget):
                 self.refresh_battle_map(force_map_reload=True)
 
     def open_battle_map(self):
-        """Opens external window. Does NOT prompt for map."""
         if self.battle_map_window and self.battle_map_window.isVisible(): 
             self.battle_map_window.raise_()
             self.battle_map_window.activateWindow()
