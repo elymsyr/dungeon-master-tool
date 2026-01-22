@@ -3,10 +3,11 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetIte
                              QMenu, QMessageBox, QFrame, QLineEdit, QFileDialog, 
                              QDialog, QListWidget, QListWidgetItem, QLabel, 
                              QAbstractItemView, QProgressBar, QSlider, QComboBox, 
-                             QScrollArea, QStyle)
+                             QScrollArea, QStyle, QApplication)
 from PyQt6.QtGui import QAction, QColor, QBrush, QCursor, QIcon, QPixmap, QPainter, QPainterPath
 from PyQt6.QtCore import Qt, pyqtSignal, QSize, QUrl, QRect
 from core.locales import tr
+from core.theme_manager import ThemeManager
 from ui.windows.battle_map_window import BattleMapWindow
 from ui.dialogs.encounter_selector import EncounterSelectionDialog
 import random
@@ -23,6 +24,25 @@ def clean_stat_value(value, default=10):
         digits = ''.join(filter(str.isdigit, first_part))
         return int(digits) if digits else default
     except: return default
+
+# Standart Durum Listesi (Key olarak İngilizce kalmalı, UI'da çevrilmeli)
+CONDITIONS_MAP = {
+    "Blinded": "COND_BLINDED",
+    "Charmed": "COND_CHARMED",
+    "Deafened": "COND_DEAFENED",
+    "Frightened": "COND_FRIGHTENED",
+    "Grappled": "COND_GRAPPLED",
+    "Incapacitated": "COND_INCAPACITATED",
+    "Invisible": "COND_INVISIBLE",
+    "Paralyzed": "COND_PARALYZED",
+    "Petrified": "COND_PETRIFIED",
+    "Poisoned": "COND_POISONED",
+    "Prone": "COND_PRONE",
+    "Restrained": "COND_RESTRAINED",
+    "Stunned": "COND_STUNNED",
+    "Unconscious": "COND_UNCONSCIOUS",
+    "Exhaustion": "COND_EXHAUSTION"
+}
 
 # --- SÜRÜKLENEBİLİR TABLO SINIFI ---
 class DraggableCombatTable(QTableWidget):
@@ -51,35 +71,76 @@ class DraggableCombatTable(QTableWidget):
 class ConditionIcon(QWidget):
     removed = pyqtSignal(str) 
 
-    def __init__(self, name, icon_path, duration=0, max_duration=0):
+    def __init__(self, name, icon_path, duration=0, max_duration=0, palette=None):
         super().__init__()
         self.name = name
         self.icon_path = icon_path
         self.duration = int(duration)
         self.max_duration = int(max_duration)
+        self.current_palette = palette if palette else ThemeManager.get_palette("dark")
+        
         self.setFixedSize(24, 24)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setToolTip(f"{name} ({self.duration}/{self.max_duration} Turns)")
 
-    def paintEvent(self, event):
-        painter = QPainter(self); painter.setRenderHint(QPainter.RenderHint.Antialiasing); path = QPainterPath(); path.addEllipse(1, 1, 22, 22); painter.setClipPath(path)
-        if self.icon_path and os.path.exists(self.icon_path): painter.drawPixmap(0, 0, 24, 24, QPixmap(self.icon_path))
-        else:
-            painter.setBrush(QBrush(QColor("#5c6bc0"))); painter.drawRect(0, 0, 24, 24); painter.setPen(Qt.GlobalColor.white)
-            font = painter.font(); font.setPixelSize(10); font.setBold(True); painter.setFont(font); painter.drawText(QRect(0, 0, 24, 24), Qt.AlignmentFlag.AlignCenter, self.name[:2].upper())
-        if self.max_duration > 0:
-            painter.setClipping(False); painter.setBrush(QBrush(QColor(0, 0, 0, 200))); painter.setPen(Qt.PenStyle.NoPen); painter.drawRoundedRect(0, 14, 24, 10, 2, 2)
-            painter.setPen(Qt.GlobalColor.white); font = painter.font(); font.setPixelSize(8); font.setBold(True); painter.setFont(font); painter.drawText(QRect(0, 14, 24, 10), Qt.AlignmentFlag.AlignCenter, f"{self.duration}")
+    def update_theme(self, palette):
+        self.current_palette = palette
+        self.update()
 
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        path = QPainterPath()
+        path.addEllipse(1, 1, 22, 22)
+        painter.setClipPath(path)
+        
+        if self.icon_path and os.path.exists(self.icon_path): 
+            painter.drawPixmap(0, 0, 24, 24, QPixmap(self.icon_path))
+        else:
+            # Temadan renk al
+            bg_color = self.current_palette.get("condition_default_bg", "#5c6bc0")
+            txt_color = self.current_palette.get("condition_text", "#ffffff")
+            
+            painter.setBrush(QBrush(QColor(bg_color)))
+            painter.drawRect(0, 0, 24, 24)
+            painter.setPen(QColor(txt_color))
+            
+            font = painter.font()
+            font.setPixelSize(10)
+            font.setBold(True)
+            painter.setFont(font)
+            painter.drawText(QRect(0, 0, 24, 24), Qt.AlignmentFlag.AlignCenter, self.name[:2].upper())
+            
+        if self.max_duration > 0:
+            dur_bg = self.current_palette.get("condition_duration_bg", "rgba(0, 0, 0, 200)")
+            painter.setClipping(False)
+            painter.setBrush(QBrush(QColor(dur_bg)))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRoundedRect(0, 14, 24, 10, 2, 2)
+            
+            painter.setPen(Qt.GlobalColor.white)
+            font = painter.font()
+            font.setPixelSize(8)
+            font.setBold(True)
+            painter.setFont(font)
+            painter.drawText(QRect(0, 14, 24, 10), Qt.AlignmentFlag.AlignCenter, f"{self.duration}")
+
+    def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.RightButton:
             menu = QMenu(self)
-            del_act = QAction("❌ Kaldır", self)
+            # Stil ver
+            p = self.current_palette
+            menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }}")
+            
+            del_act = QAction("❌ " + tr("MENU_REMOVE_CONDITION"), self)
             del_act.triggered.connect(lambda: self.removed.emit(self.name))
             menu.addAction(del_act)
             menu.exec(event.globalPos())
 
 class ConditionsWidget(QWidget):
-    conditionsChanged = pyqtSignal(); clicked = pyqtSignal()
+    conditionsChanged = pyqtSignal()
+    clicked = pyqtSignal()
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.layout = QHBoxLayout(self)
@@ -87,20 +148,47 @@ class ConditionsWidget(QWidget):
         self.layout.setSpacing(2)
         self.layout.addStretch()
         self.active_conditions = []
+        self.current_palette = ThemeManager.get_palette("dark")
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def update_theme(self, palette):
+        self.current_palette = palette
+        # Tüm çocuk iconları güncelle
+        for i in range(self.layout.count()):
+            item = self.layout.itemAt(i)
+            if item.widget() and isinstance(item.widget(), ConditionIcon):
+                item.widget().update_theme(palette)
+
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            if not isinstance(self.childAt(event.pos()), ConditionIcon): self.clicked.emit()
+            # İcona tıklanmadıysa sinyali gönder (menü açmak için)
+            if not isinstance(self.childAt(event.pos()), ConditionIcon): 
+                self.clicked.emit()
         super().mousePressEvent(event)
+
     def set_conditions(self, conditions_list):
+        # Mevcut ikonları temizle (layout.takeAt(0) -> Spacer item, onu koru veya yeniden ekle)
+        # Spacer en başta (index 0) duruyor çünkü addStretch başta çağrıldı.
+        # Ancak addWidget sona ekler. Spacer index 0'da.
+        # Biz sondan eklediğimiz için layout sırası: [Spacer, Icon1, Icon2...]
+        
         while self.layout.count() > 1: 
-            item = self.layout.takeAt(0)
-            if item.widget(): item.widget().deleteLater()
+            item = self.layout.takeAt(1) # 0. index Spacer
+            if item.widget(): 
+                item.widget().deleteLater()
+                
         self.active_conditions = conditions_list
         for cond in conditions_list:
-            icon_widget = ConditionIcon(cond["name"], cond.get("icon"), cond.get("duration"), cond.get("max_duration"))
+            icon_widget = ConditionIcon(
+                cond["name"], 
+                cond.get("icon"), 
+                cond.get("duration"), 
+                cond.get("max_duration"),
+                self.current_palette
+            )
             icon_widget.removed.connect(self.remove_condition)
-            self.layout.insertWidget(self.layout.count() - 1, icon_widget)
+            self.layout.addWidget(icon_widget)
+
     def add_condition(self, name, icon_path, max_turns):
         for c in self.active_conditions:
             if c["name"] == name: 
@@ -112,8 +200,12 @@ class ConditionsWidget(QWidget):
         self.active_conditions.append({"name": name, "icon": icon_path, "duration": max_turns, "max_duration": max_turns})
         self.set_conditions(self.active_conditions)
         self.conditionsChanged.emit()
+
     def remove_condition(self, name):
-        self.active_conditions = [c for c in self.active_conditions if c["name"] != name]; self.set_conditions(self.active_conditions); self.conditionsChanged.emit()
+        self.active_conditions = [c for c in self.active_conditions if c["name"] != name]
+        self.set_conditions(self.active_conditions)
+        self.conditionsChanged.emit()
+
     def tick_conditions(self):
         remaining = []
         for c in self.active_conditions:
@@ -121,27 +213,86 @@ class ConditionsWidget(QWidget):
                 c["duration"] -= 1; 
                 if c["duration"] > 0: remaining.append(c)
             else: remaining.append(c)
-        self.active_conditions = remaining; self.set_conditions(self.active_conditions); self.conditionsChanged.emit()
+        self.active_conditions = remaining
+        self.set_conditions(self.active_conditions)
+        self.conditionsChanged.emit()
 
 class HpBarWidget(QWidget):
     hpChanged = pyqtSignal(int)
-    def __init__(self, current_hp, max_hp):
-        super().__init__(); self.current = int(current_hp); self.max_val = int(max_hp) if int(max_hp) > 0 else 1
-        l = QHBoxLayout(self); l.setContentsMargins(0, 2, 0, 2); l.setSpacing(2)
-        b_m = QPushButton("-"); b_m.setFixedSize(20, 20); b_m.setCursor(Qt.CursorShape.PointingHandCursor); b_m.setStyleSheet("QPushButton { background-color: #c62828; color: white; border: none; border-radius: 3px; font-weight: bold; } QPushButton:hover { background-color: #d32f2f; }"); b_m.clicked.connect(self.decrease_hp)
-        self.bar = QProgressBar(); self.bar.setRange(0, self.max_val); self.bar.setValue(self.current); self.bar.setTextVisible(True); self.bar.setFormat(f"%v / {self.max_val}"); self.bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    
+    def __init__(self, current_hp, max_hp, palette=None):
+        super().__init__()
+        self.current_palette = palette if palette else ThemeManager.get_palette("dark")
+        self.current = int(current_hp)
+        self.max_val = int(max_hp) if int(max_hp) > 0 else 1
+        
+        l = QHBoxLayout(self)
+        l.setContentsMargins(0, 2, 0, 2)
+        l.setSpacing(2)
+        
+        b_m = QPushButton("-")
+        b_m.setFixedSize(20, 20)
+        b_m.setCursor(Qt.CursorShape.PointingHandCursor)
+        # Butonlar için şimdilik sabit renkler (Okunabilirlik için)
+        b_m.setStyleSheet("QPushButton { background-color: #c62828; color: white; border: none; border-radius: 3px; font-weight: bold; } QPushButton:hover { background-color: #d32f2f; }")
+        b_m.clicked.connect(self.decrease_hp)
+        
+        self.bar = QProgressBar()
+        self.bar.setRange(0, self.max_val)
+        self.bar.setValue(self.current)
+        self.bar.setTextVisible(True)
+        self.bar.setFormat(f"%v / {self.max_val}")
+        self.bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
         self.update_color()
-        b_p = QPushButton("+"); b_p.setFixedSize(20, 20); b_p.setCursor(Qt.CursorShape.PointingHandCursor); b_p.setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border: none; border-radius: 3px; font-weight: bold; } QPushButton:hover { background-color: #388e3c; }"); b_p.clicked.connect(self.increase_hp)
-        l.addWidget(b_m); l.addWidget(self.bar, 1); l.addWidget(b_p)
+        
+        b_p = QPushButton("+")
+        b_p.setFixedSize(20, 20)
+        b_p.setCursor(Qt.CursorShape.PointingHandCursor)
+        b_p.setStyleSheet("QPushButton { background-color: #2e7d32; color: white; border: none; border-radius: 3px; font-weight: bold; } QPushButton:hover { background-color: #388e3c; }")
+        b_p.clicked.connect(self.increase_hp)
+        
+        l.addWidget(b_m)
+        l.addWidget(self.bar, 1)
+        l.addWidget(b_p)
+
+    def update_theme(self, palette):
+        self.current_palette = palette
+        self.update_color()
+
     def update_color(self):
         r = self.current / self.max_val if self.max_val > 0 else 0
-        c = "#2e7d32" if r > 0.5 else "#fbc02d" if r > 0.2 else "#c62828"
-        self.bar.setStyleSheet(f"QProgressBar::chunk {{ background-color: {c}; }} QProgressBar {{ color: white; border: 1px solid #555; border-radius: 3px; background: rgba(0,0,0,0.3); }}")
-    def update_hp(self, new_hp): self.current = int(new_hp); self.bar.setValue(self.current); self.bar.setFormat(f"{self.current} / {self.max_val}"); self.update_color(); self.hpChanged.emit(self.current)
+        p = self.current_palette
+        
+        if r > 0.5:
+            c = p.get("hp_bar_high", "#2e7d32")
+        elif r > 0.2:
+            c = p.get("hp_bar_med", "#fbc02d")
+        else:
+            c = p.get("hp_bar_low", "#c62828")
+            
+        bg = p.get("hp_widget_bg", "rgba(0,0,0,0.3)")
+        border = p.get("ui_floating_border", "#555") # Kenarlık için genel bir renk kullan
+        
+        self.bar.setStyleSheet(f"""
+            QProgressBar::chunk {{ background-color: {c}; }} 
+            QProgressBar {{ 
+                color: white; 
+                border: 1px solid {border}; 
+                border-radius: 3px; 
+                background: {bg}; 
+            }}
+        """)
+
+    def update_hp(self, new_hp): 
+        self.current = int(new_hp)
+        self.bar.setValue(self.current)
+        self.bar.setFormat(f"{self.current} / {self.max_val}")
+        self.update_color()
+        self.hpChanged.emit(self.current)
+        
     def decrease_hp(self): self.update_hp(self.current - 1)
     def increase_hp(self): self.update_hp(self.current + 1)
-
-CONDITIONS = ["Blinded", "Charmed", "Deafened", "Frightened", "Grappled", "Incapacitated", "Invisible", "Paralyzed", "Petrified", "Poisoned", "Prone", "Restrained", "Stunned", "Unconscious", "Exhaustion"]
 
 class NumericTableWidgetItem(QTableWidgetItem):
     def __lt__(self, other):
@@ -164,7 +315,9 @@ class MapSelectorDialog(QDialog):
 
     def init_ui(self):
         l = QVBoxLayout(self)
-        lbl = QLabel(tr("LBL_SAVED_MAPS")); lbl.setObjectName("toolbarLabel"); l.addWidget(lbl)
+        lbl = QLabel(tr("LBL_SAVED_MAPS"))
+        lbl.setObjectName("toolbarLabel")
+        l.addWidget(lbl)
         
         self.lw = QListWidget()
         self.lw.setViewMode(QListWidget.ViewMode.IconMode)
@@ -184,7 +337,10 @@ class MapSelectorDialog(QDialog):
         b2.setObjectName("primaryBtn")
         b2.clicked.connect(self.select_existing)
         
-        h.addWidget(b1); h.addStretch(); h.addWidget(b2); l.addLayout(h)
+        h.addWidget(b1)
+        h.addStretch()
+        h.addWidget(b2)
+        l.addLayout(h)
 
     def load_locations(self):
         self.lw.clear()
@@ -219,7 +375,9 @@ class MapSelectorDialog(QDialog):
 
     def select_existing(self):
         current = self.lw.currentItem()
-        if not current: QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_MAP_FROM_LIST")); return
+        if not current: 
+            QMessageBox.warning(self, tr("MSG_WARNING"), tr("MSG_SELECT_MAP_FROM_LIST"))
+            return
         img_path = current.data(Qt.ItemDataRole.UserRole)
         self.selected_file = img_path
         self.accept()
@@ -240,10 +398,35 @@ class CombatTracker(QWidget):
         self.encounters = {}
         self.current_encounter_id = None
         self.fog_save_handler = None 
+        
+        # Tema için başlangıç değeri
+        self.current_palette = ThemeManager.get_palette(self.dm.current_theme)
+        
         self.create_encounter("Default Encounter")
         self.init_ui()
 
     def set_fog_save_handler(self, handler): self.fog_save_handler = handler
+
+    def refresh_theme(self, palette):
+        """
+        Main Window'dan gelen tema değişikliğini çocuk bileşenlere iletir.
+        """
+        self.current_palette = palette
+        
+        # Tablo içindeki Widget'ları güncelle (HpBar ve Conditions)
+        for row in range(self.table.rowCount()):
+            # HP Bar
+            hp_w = self.table.cellWidget(row, 3)
+            if hp_w and isinstance(hp_w, HpBarWidget):
+                hp_w.update_theme(palette)
+            
+            # Conditions Widget
+            cond_w = self.table.cellWidget(row, 4)
+            if cond_w and isinstance(cond_w, ConditionsWidget):
+                cond_w.update_theme(palette)
+                
+        # Tablo seçim rengini güncelle
+        self.update_highlights()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
@@ -253,12 +436,15 @@ class CombatTracker(QWidget):
         self.combo_encounters.setMinimumWidth(200)
         self.btn_new_enc = QPushButton("➕")
         self.btn_new_enc.setFixedWidth(40)
+        self.btn_new_enc.setToolTip(tr("TIP_NEW_ENC"))
         self.btn_new_enc.clicked.connect(self.prompt_new_encounter)
         self.btn_rename_enc = QPushButton("✏️")
         self.btn_rename_enc.setFixedWidth(40)
+        self.btn_rename_enc.setToolTip(tr("TIP_RENAME_ENC"))
         self.btn_rename_enc.clicked.connect(self.rename_encounter)
         self.btn_del_enc = QPushButton("🗑️")
         self.btn_del_enc.setFixedWidth(40)
+        self.btn_del_enc.setToolTip(tr("TIP_DEL_ENC"))
         self.btn_del_enc.clicked.connect(self.delete_encounter)
         self.btn_del_enc.setObjectName("dangerBtn")
         enc_layout.addWidget(QLabel(tr("LBL_ENCOUNTER_PREFIX")))
@@ -268,7 +454,7 @@ class CombatTracker(QWidget):
         enc_layout.addWidget(self.btn_del_enc)
         layout.addLayout(enc_layout)
 
-        # Tablo sınıfı güncellendi: DraggableCombatTable
+        # Tablo sınıfı: DraggableCombatTable
         self.table = DraggableCombatTable()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
@@ -334,9 +520,8 @@ class CombatTracker(QWidget):
 
     def handle_drop_import(self, eid):
         """Dışarıdan (Sidebar) sürüklenen entity'i ekler."""
-        # Kütüphane ID'si ise önce import edilmesi gerekir
         if eid.startswith("lib_"):
-            QMessageBox.information(self, tr("MSG_INFO"), "Please double-click library items to import them to your world first.")
+            QMessageBox.information(self, tr("MSG_INFO"), tr("MSG_DROP_IMPORT_FIRST"))
             return
 
         if eid in self.dm.data["entities"]:
@@ -403,28 +588,63 @@ class CombatTracker(QWidget):
     def add_direct_row(self, name, init, ac, hp, conditions_data, eid, init_bonus=0, tid=None):
         if not tid: tid = str(uuid.uuid4())
         self.table.blockSignals(True); row = self.table.rowCount(); self.table.insertRow(row)
+        
         self.table.setItem(row, 0, QTableWidgetItem(name))
-        it_init = NumericTableWidgetItem(str(init)); it_init.setData(Qt.ItemDataRole.UserRole, eid); it_init.setData(Qt.ItemDataRole.UserRole+1, tid); self.table.setItem(row, 1, it_init)
+        
+        it_init = NumericTableWidgetItem(str(init))
+        it_init.setData(Qt.ItemDataRole.UserRole, eid)
+        it_init.setData(Qt.ItemDataRole.UserRole+1, tid)
+        self.table.setItem(row, 1, it_init)
+        
         self.table.setItem(row, 2, NumericTableWidgetItem(str(clean_stat_value(ac))))
+        
         cur = clean_stat_value(hp); mx = cur
         if eid and eid in self.dm.data["entities"]:
              try: db_max = clean_stat_value(self.dm.data["entities"][eid]["combat_stats"]["max_hp"]); mx = db_max if db_max >= cur else cur
              except: pass
-        hp_w = HpBarWidget(cur, mx); hp_w.hpChanged.connect(lambda v, w=hp_w: self.on_widget_hp_changed(w, v)); self.table.setCellWidget(row, 3, hp_w); self.table.setItem(row, 3, NumericTableWidgetItem(str(cur))) 
-        cond_w = ConditionsWidget(); cond_w.clicked.connect(lambda w=cond_w: self.open_condition_menu_for_widget(w))
-        if isinstance(conditions_data, str) and conditions_data: conditions_data = [{"name": c.strip(), "icon": None, "duration": 0, "max_duration": 0} for c in conditions_data.split(",")]
-        elif not isinstance(conditions_data, list): conditions_data = []
-        cond_w.set_conditions(conditions_data); cond_w.conditionsChanged.connect(self.data_changed_signal.emit); self.table.setCellWidget(row, 4, cond_w)
-        self.table.blockSignals(False); self.data_changed_signal.emit()
+        
+        # HP Widget (Tema ile)
+        hp_w = HpBarWidget(cur, mx, self.current_palette)
+        hp_w.hpChanged.connect(lambda v, w=hp_w: self.on_widget_hp_changed(w, v))
+        self.table.setCellWidget(row, 3, hp_w)
+        self.table.setItem(row, 3, NumericTableWidgetItem(str(cur))) 
+        
+        # Conditions Widget (Tema ile)
+        cond_w = ConditionsWidget()
+        cond_w.update_theme(self.current_palette)
+        cond_w.clicked.connect(lambda w=cond_w: self.open_condition_menu_for_widget(w))
+        
+        if isinstance(conditions_data, str) and conditions_data: 
+            conditions_data = [{"name": c.strip(), "icon": None, "duration": 0, "max_duration": 0} for c in conditions_data.split(",")]
+        elif not isinstance(conditions_data, list): 
+            conditions_data = []
+            
+        cond_w.set_conditions(conditions_data)
+        cond_w.conditionsChanged.connect(self.data_changed_signal.emit)
+        self.table.setCellWidget(row, 4, cond_w)
+        
+        self.table.blockSignals(False)
+        self.data_changed_signal.emit()
 
     def open_condition_menu_for_widget(self, widget):
         index = self.table.indexAt(widget.pos())
         if not index.isValid(): return
-        row = index.row(); menu = QMenu(self); menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #007acc; }")
+        row = index.row()
+        
+        menu = QMenu(self)
+        # Menü Stili
+        p = self.current_palette
+        menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }} QMenu::item:selected {{ background-color: {p.get('line_selected', '#007acc')}; }}")
+        
         std_menu = menu.addMenu(tr("MENU_STD_CONDITIONS"))
-        for cond in CONDITIONS: action = QAction(cond, self); action.triggered.connect(lambda checked, r=row, n=cond: self.add_condition_to_row(r, n, None, 0)); std_menu.addAction(action)
+        for en_key, trans_key in CONDITIONS_MAP.items(): 
+            action = QAction(tr(trans_key), self)
+            action.triggered.connect(lambda checked, r=row, n=en_key: self.add_condition_to_row(r, n, None, 0))
+            std_menu.addAction(action)
+            
         menu.addSeparator()
         custom_effects = [e for e in self.dm.data["entities"].values() if e.get("type") == "Status Effect"]
+        
         if custom_effects:
             lbl = menu.addAction(tr("MENU_SAVED_EFFECTS")); lbl.setEnabled(False)
             for eff in custom_effects:
@@ -437,7 +657,9 @@ class CombatTracker(QWidget):
                 action = QAction(eff_name, self); 
                 if icon_path: action.setIcon(QIcon(icon_path))
                 action.triggered.connect(lambda checked, r=row, n=eff_name, p=icon_path, d=duration: self.add_condition_to_row(r, n, p, d)); menu.addAction(action)
-        else: no_act = menu.addAction(tr("MSG_NO_SAVED_EFFECTS")); no_act.setEnabled(False)
+        else: 
+            no_act = menu.addAction(tr("MSG_NO_SAVED_EFFECTS")); no_act.setEnabled(False)
+            
         menu.exec(QCursor.pos())
 
     def refresh_ui_from_current_encounter(self):
@@ -474,15 +696,24 @@ class CombatTracker(QWidget):
         self.update_highlights(); self.refresh_battle_map(); self.loading = False; self.data_changed_signal.emit()
 
     def update_highlights(self):
+        """
+        Sırası gelen satırı renklendirir. Renk ThemeManager'dan alınır.
+        """
         if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
         idx = self.encounters[self.current_encounter_id]["turn_index"]
+        
+        # Temadan renk al, alpha ekle
+        active_color = QColor(self.current_palette.get("token_border_active", "#ffb74d"))
+        active_color.setAlpha(100) # Saydamlık
+        brush = QBrush(active_color)
+        
         self.table.blockSignals(True)
         for r in range(self.table.rowCount()):
              for c in range(self.table.columnCount()):
                   if self.table.item(r, c): self.table.item(r, c).setBackground(QBrush(Qt.BrushStyle.NoBrush))
         if 0 <= idx < self.table.rowCount():
              for c in range(self.table.columnCount()):
-                  if self.table.item(idx, c): self.table.item(idx, c).setBackground(QBrush(QColor(100, 149, 237, 100)))
+                  if self.table.item(idx, c): self.table.item(idx, c).setBackground(brush)
         self.table.blockSignals(False)
 
     def _sort_and_refresh(self):
@@ -504,8 +735,16 @@ class CombatTracker(QWidget):
         row = self.table.rowAt(pos.y()); 
         if row == -1: return
         menu = QMenu()
+        # Menü Stili
+        p = self.current_palette
+        menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }}")
+        
         add_cond_menu = menu.addMenu("🩸 " + tr("MENU_ADD_COND"))
-        for c in CONDITIONS: a = QAction(c, self); a.triggered.connect(lambda ch, n=c: self.add_condition_to_row(row, n, None, 0)); add_cond_menu.addAction(a)
+        for en_key, trans_key in CONDITIONS_MAP.items(): 
+            a = QAction(tr(trans_key), self)
+            a.triggered.connect(lambda ch, n=en_key: self.add_condition_to_row(row, n, None, 0))
+            add_cond_menu.addAction(a)
+            
         add_cond_menu.addSeparator()
         custom_effects = [e for e in self.dm.data["entities"].values() if e.get("type") == "Status Effect"]
         for eff in custom_effects:
@@ -515,6 +754,7 @@ class CombatTracker(QWidget):
             a = QAction(eff["name"], self); 
             if p: a.setIcon(QIcon(p))
             a.triggered.connect(lambda ch, n=eff["name"], p=p, d=d: self.add_condition_to_row(row, n, p, d)); add_cond_menu.addAction(a)
+        
         menu.addSeparator()
         del_act = QAction("❌ " + tr("MENU_REMOVE_COMBAT"), self); del_act.triggered.connect(lambda: self.delete_row(row)); menu.addAction(del_act)
         menu.exec(self.table.viewport().mapToGlobal(pos))
@@ -597,7 +837,7 @@ class CombatTracker(QWidget):
         d = MapSelectorDialog(self.dm, self)
         if d.exec():
             if d.is_new_import: 
-                f, _ = QFileDialog.getOpenFileName(self, "Select", "", "Media (*.png *.jpg *.jpeg *.mp4 *.webm *.mkv *.m4v)")
+                f, _ = QFileDialog.getOpenFileName(self, "Select", "", "Media (*.png *.jpg *.jpeg *.mp4 *.webm *.mkv *.m4v *.avi)")
                 if f: 
                     enc["map_path"] = self.dm.import_image(f)
             elif d.selected_file: 
@@ -664,5 +904,10 @@ class CombatTracker(QWidget):
     def retranslate_ui(self):
         self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
         self.inp_quick_name.setPlaceholderText(tr("HEADER_NAME")); self.btn_quick_add.setText(tr("BTN_QUICK_ADD")); self.btn_next_turn.setText(tr("BTN_NEXT_TURN")); self.btn_add.setText(tr("BTN_ADD")); self.btn_add_players.setText(tr("BTN_ADD_PLAYERS")); self.btn_roll.setText(tr("BTN_ROLL_INIT")); self.btn_clear_all.setText(tr("BTN_CLEAR_ALL"))
+        
+        self.btn_new_enc.setToolTip(tr("TIP_NEW_ENC"))
+        self.btn_rename_enc.setToolTip(tr("TIP_RENAME_ENC"))
+        self.btn_del_enc.setToolTip(tr("TIP_DEL_ENC"))
+        
         if self.current_encounter_id and self.current_encounter_id in self.encounters: self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{self.encounters[self.current_encounter_id].get('round', 1)}")
         if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.retranslate_ui(); self.refresh_battle_map()

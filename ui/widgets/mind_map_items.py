@@ -5,6 +5,7 @@ from PyQt6.QtGui import (QBrush, QColor, QPen, QPainter, QPainterPath,
                          QCursor, QAction, QFont)
 from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF
 from core.theme_manager import ThemeManager
+from core.locales import tr
 
 class ResizeHandle(QGraphicsRectItem):
     """
@@ -20,6 +21,9 @@ class ResizeHandle(QGraphicsRectItem):
         self.setBrush(QBrush(Qt.GlobalColor.transparent))
         self.setPen(QPen(Qt.PenStyle.NoPen))
         self.is_hovered = False
+        
+        # Başlangıç paleti (Render sırasında güncel paleti parent'tan alacak)
+        self.handle_color = QColor(66, 165, 245, 180) # Default fallback
 
     def hoverEnterEvent(self, event):
         self.is_hovered = True
@@ -34,11 +38,21 @@ class ResizeHandle(QGraphicsRectItem):
     def paint(self, painter, option, widget=None):
         painter.setPen(Qt.PenStyle.NoPen)
         
-        # Tema rengine göre uyarlanabilir ama şimdilik standart gri/mavi iyidir
-        if self.is_hovered:
-            painter.setBrush(QBrush(QColor(66, 165, 245, 180))) 
+        # Rengi parent node'un paletinden çekmeye çalış, yoksa ThemeManager'dan al
+        if hasattr(self.parent_node, 'current_palette'):
+            color_str = self.parent_node.current_palette.get("ui_resize_handle", "rgba(66, 165, 245, 180)")
+            color = QColor(color_str)
         else:
-            painter.setBrush(QBrush(QColor(128, 128, 128, 100)))
+            color = self.handle_color
+
+        if self.is_hovered:
+            painter.setBrush(QBrush(color)) 
+        else:
+            # Fallback for inactive state from palette
+            inactive_str = "rgba(128, 128, 128, 100)"
+            if hasattr(self.parent_node, 'current_palette'):
+                inactive_str = self.parent_node.current_palette.get("ui_resize_handle_inactive", "rgba(128, 128, 128, 100)")
+            painter.setBrush(QBrush(QColor(inactive_str)))
         
         r = self.rect()
         path = QPainterPath()
@@ -108,7 +122,7 @@ class ConnectionLine(QGraphicsPathItem):
         self.selected_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
         self.selected_pen.setStyle(Qt.PenStyle.DashLine)
         
-        # Mevcut duruma göre kalemi ayarla (seçili mi değil mi paint'te bakılıyor ama varsayılanı set edelim)
+        # Mevcut duruma göre kalemi ayarla
         self.setPen(self.default_pen)
 
     def update_position(self):
@@ -131,10 +145,9 @@ class ConnectionLine(QGraphicsPathItem):
 
     def contextMenuEvent(self, event):
         menu = QMenu()
-        # Menü stili basit kalsın, QSS'den etkilenir
         menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #555; }")
         
-        action_delete = QAction("❌ Bağı Sil", menu)
+        action_delete = QAction(tr("MENU_DELETE_LINK"), menu)
         action_delete.triggered.connect(lambda: self.on_delete_callback(self) if self.on_delete_callback else None)
         
         menu.addAction(action_delete)
@@ -290,18 +303,18 @@ class MindMapNode(QGraphicsObject):
         menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #555; }")
         
         if self.node_type in ["image", "entity"]:
-            action_project = QAction("👁️ Yansıt (Project)", menu)
+            action_project = QAction(tr('MENU_PROJECT'), menu)
             action_project.triggered.connect(lambda: self.requestProjection.emit(self))
             menu.addAction(action_project)
             menu.addSeparator()
 
-        action_connect = QAction("🔗 Bağlantı Kur", menu)
+        action_connect = QAction(tr('MENU_CONNECT'), menu)
         action_connect.triggered.connect(lambda: self.requestConnection.emit(self))
         menu.addAction(action_connect)
         
         menu.addSeparator()
         
-        action_delete = QAction("🗑️ Sil", menu)
+        action_delete = QAction(tr('BTN_DELETE'), menu)
         action_delete.triggered.connect(lambda: self.nodeDeleted.emit(self.node_id))
         menu.addAction(action_delete)
         

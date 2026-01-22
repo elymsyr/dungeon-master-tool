@@ -11,7 +11,7 @@ from ui.workers import ImageDownloadWorker
 from core.models import ENTITY_SCHEMAS
 from core.locales import tr
 from config import CACHE_DIR
-from core.theme_manager import ThemeManager # YENİ IMPORT
+from core.theme_manager import ThemeManager
 import os
 from PyQt6.QtWidgets import QToolButton 
 from ui.dialogs.api_browser import ApiBrowser
@@ -37,6 +37,8 @@ class NpcSheet(QWidget):
         
         self.is_dirty = False
         self.is_embedded = False
+        from core.theme_manager import ThemeManager
+        self.current_palette = ThemeManager.get_palette(self.dm.current_theme)
         
         self.init_ui()
         
@@ -45,47 +47,32 @@ class NpcSheet(QWidget):
         self.shortcut_save.activated.connect(self.emit_save_request)
 
     def set_embedded_mode(self, enabled: bool):
-        """
-        Mind Map gibi yerlerde kartın nasıl davranacağını ayarlar.
-        """
         self.is_embedded = enabled
         self.btn_save.setVisible(not enabled)
         self.btn_delete.setVisible(not enabled)
-        
         if enabled:
-            # Gömülü modda editörlerin arka planını şeffaf yap
+            # Markdown editörlerini şeffaf moda geçir
             self.inp_desc.set_transparent_mode(True)
             self.inp_dm_notes.set_transparent_mode(True)
 
     def refresh_theme(self, palette):
-        """
-        Dışarıdan (MindMapNode veya TabManager) tema değişikliği geldiğinde çağrılır.
-        İçindeki tüm Markdown editörlerine yeni paleti iletir.
-        """
-        # Ana editörler
+        """Tüm alt bileşenlerin (Markdown editörleri dahil) temasını günceller."""
+        self.current_palette = palette
         self.inp_desc.refresh_theme(palette)
         self.inp_dm_notes.refresh_theme(palette)
         
-        # Dinamik kartlar içindeki editörler (Traits, Actions, vb.)
-        containers = [
-            self.trait_container, 
-            self.action_container, 
-            self.reaction_container, 
-            self.legendary_container, 
-            self.inventory_container, 
-            self.custom_spell_container
-        ]
-        
-        for container in containers:
-            layout = container.dynamic_area
-            for i in range(layout.count()):
-                item = layout.itemAt(i)
-                if not item: continue
-                
-                widget = item.widget() # QFrame (Card)
+        # Dinamik özellik kartlarındaki editörleri güncelle
+        for container in [self.trait_container, self.action_container, self.reaction_container, 
+                          self.legendary_container, self.inventory_container, self.custom_spell_container]:
+            for i in range(container.dynamic_area.count()):
+                widget = container.dynamic_area.itemAt(i).widget()
                 if widget and hasattr(widget, "inp_desc"):
-                    # Feature Card içindeki MarkdownEditor
                     widget.inp_desc.refresh_theme(palette)
+        
+        # DM Notes stilini güncelle
+        border_col = palette.get("dm_note_border", "#d32f2f")
+        title_col = palette.get("dm_note_title", "#e57373")
+        self.grp_dm_notes.setStyleSheet(f"QGroupBox {{ border: 1px solid {border_col}; color: {title_col}; font-weight: bold; }}")
 
     def init_ui(self):
         main_layout = QVBoxLayout(self)
@@ -172,7 +159,6 @@ class NpcSheet(QWidget):
         self.combo_location.setEditable(True) 
         self.combo_location.setPlaceholderText("Select or Write...")
         self.lbl_location = QLabel(tr("LBL_LOCATION"))
-        
         self.list_residents = QListWidget()
         self.list_residents.setMaximumHeight(80)
         self.list_residents.itemDoubleClicked.connect(self._on_linked_item_dbl_click)
@@ -190,7 +176,7 @@ class NpcSheet(QWidget):
         self.content_layout.addLayout(top_layout)
 
         # --- DESCRIPTION ---
-        self.content_layout.addWidget(QLabel(f"<b>{tr('LBL_DESC')} (Public Info)</b>"))
+        self.content_layout.addWidget(QLabel(f"<b>{tr('LBL_DESC')}</b>"))
         self.inp_desc = MarkdownEditor()
         self.inp_desc.set_data_manager(self.dm) 
         self.inp_desc.entity_link_clicked.connect(self.request_open_entity.emit) 
@@ -227,18 +213,18 @@ class NpcSheet(QWidget):
         
         self.tab_battlemaps = QWidget()
         self.setup_battlemap_tab()
-        self.tabs.addTab(self.tab_battlemaps, "Battlemaps")
+        self.tabs.addTab(self.tab_battlemaps, tr("TAB_BATTLEMAPS"))
         
         self.content_layout.addWidget(self.tabs)
         
         # DM Notes
-        self.grp_dm_notes = QGroupBox("🕵️ DM Notes (Private)")
-        self.grp_dm_notes.setStyleSheet("QGroupBox { border: 1px solid #d32f2f; color: #e57373; font-weight: bold; }")
+        self.grp_dm_notes = QGroupBox(f"{tr('LBL_ICON_EDIT')} {tr('LBL_NOTES')} (Private)")
+        self.grp_dm_notes.setStyleSheet(f"QGroupBox {{ border: 1px solid {self.current_palette.get('dm_note_border', '#d32f2f')}; color: {self.current_palette.get('dm_note_title', '#e57373')}; font-weight: bold; }}")
         dm_notes_layout = QVBoxLayout(self.grp_dm_notes)
         self.inp_dm_notes = MarkdownEditor()
         self.inp_dm_notes.set_data_manager(self.dm) 
         self.inp_dm_notes.entity_link_clicked.connect(self.request_open_entity.emit) 
-        self.inp_dm_notes.setPlaceholderText("Hidden from players... (Markdown supported)")
+        self.inp_dm_notes.setPlaceholderText(tr("PH_DM_NOTES"))
         self.inp_dm_notes.setMinimumHeight(120)
         dm_notes_layout.addWidget(self.inp_dm_notes)
         self.content_layout.addWidget(self.grp_dm_notes)
@@ -468,11 +454,10 @@ class NpcSheet(QWidget):
         self.combo_location.clear()
         self.combo_all_spells.clear()
         self.combo_all_items.clear()
-        self.combo_location.addItem("-", None) 
         for eid, ent in self.dm.data["entities"].items():
             etype = ent.get("type")
             name = ent.get("name", "Unnamed")
-            if etype == "Location": self.combo_location.addItem(f"📍 {name}", eid)
+            if etype == "Location": self.combo_location.addItem(f"{tr('LBL_ICON_PIN')} {name}", eid)
             elif etype == "Spell":
                 level = ent.get("attributes", {}).get("LBL_LEVEL", "?")
                 self.combo_all_spells.addItem(f"{name} (Lv {level})", eid)
@@ -548,8 +533,8 @@ class NpcSheet(QWidget):
         try:
             val = int(text_value); mod = (val - 10) // 2; sign = "+" if mod >= 0 else ""
             self.stats_modifiers[stat_key].setText(f"{sign}{mod}")
-            if mod > 0: self.stats_modifiers[stat_key].setStyleSheet("color: #4caf50; font-weight: bold;")
-            else: self.stats_modifiers[stat_key].setStyleSheet("color: #aaa; font-weight: normal;")
+            if mod > 0: self.stats_modifiers[stat_key].setStyleSheet(f"color: {self.current_palette.get('hp_bar_full', '#4caf50')}; font-weight: bold;")
+            else: self.stats_modifiers[stat_key].setStyleSheet(f"color: {self.current_palette.get('html_dim', '#aaa')}; font-weight: normal;")
         except ValueError: self.stats_modifiers[stat_key].setText("-")
 
     def setup_spells_tab(self):
@@ -658,12 +643,12 @@ class NpcSheet(QWidget):
     def setup_battlemap_tab(self):
         layout = QVBoxLayout(self.tab_battlemaps)
         
-        lbl_info = QLabel("Add images or videos for Combat Tracker.")
-        lbl_info.setStyleSheet("color: #888; font-style: italic;")
+        lbl_info = QLabel(tr("LBL_BATTLEMAP_HELP"))
+        lbl_info.setStyleSheet(f"color: {self.current_palette.get('html_dim', '#888')}; font-style: italic;")
         layout.addWidget(lbl_info)
         
         h_btn = QHBoxLayout()
-        self.btn_add_map = QPushButton("Add Media")
+        self.btn_add_map = QPushButton(tr("BTN_ADD_MEDIA"))
         self.btn_add_map.clicked.connect(self.add_battlemap_dialog)
         
         self.btn_remove_map = QPushButton(tr("BTN_REMOVE"))
@@ -718,7 +703,7 @@ class NpcSheet(QWidget):
             ext = os.path.splitext(full_path)[1].lower()
             if ext in video_exts:
                 icon = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay)
-                display_name = f"{display_name} (Video)"
+                display_name = f"{display_name} {tr('SUFFIX_VIDEO')}"
             else:
                 pix = QPixmap(full_path).scaled(120, 120, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
                 icon = QIcon(pix)

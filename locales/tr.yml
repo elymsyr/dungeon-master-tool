@@ -1,9 +1,23 @@
 tr:
-  BTN_SAVE: "Kaydet"
-  BTN_DELETE: "Sil"
+  LBL_ICON_SAVE: "💾"
+  LBL_ICON_DELETE: "🗑️"
+  LBL_ICON_ADD: "➕"
+  LBL_ICON_REMOVE: "❌"
+  LBL_ICON_HOME: "🏠"
+  LBL_ICON_LOCK: "🔒"
+  LBL_ICON_UNLOCK: "🔓"
+  LBL_ICON_EDIT: "✏️"
+  LBL_ICON_SEARCH: "🔍"
+  LBL_ICON_EYE: "👁️"
+  LBL_ICON_LINK: "🔗"
+  LBL_ICON_PIN: "📍"
+  LBL_ICON_MAP: "🗺️"
+  LBL_ICON_SESSION: "📝"
+  BTN_SAVE: "💾 Kaydet"
+  BTN_DELETE: "🗑️ Sil"
   BTN_CANCEL: "İptal"
-  BTN_ADD: "Ekle"
-  BTN_REMOVE: "Kaldır"
+  BTN_ADD: "➕ Ekle"
+  BTN_REMOVE: "❌ Kaldır"
   BTN_IMPORT: "İçe Aktar"
   BTN_IMPORT_NPC: "NPC Olarak İçe Aktar"
   BTN_CLOSE: "Kapat"
@@ -28,9 +42,9 @@ tr:
   MSG_SELECT_ENTITY: "Varlık Seç:"
   MSG_NO_ENTITY_FOR_PIN: "Haritaya eklenebilecek uygun bir varlık bulunamadı."
   MSG_DELETE_PIN: "Bu pini kaldırmak istiyor musun?"
-  MENU_INSPECT: "İncele"
-  MENU_MOVE: "Taşı"
-  MENU_DELETE: "Sil"
+  MENU_INSPECT: "🔍 İncele"
+  MENU_MOVE: "✋ Taşı"
+  MENU_DELETE: "🗑️ Sil"
   TITLE_DOWNLOADER: "Toplu İndirici"
   LBL_SELECT_CATS: "Kategorileri Seç:"
   BTN_START_DOWNLOAD: "İndirmeyi Başlat"
@@ -159,6 +173,7 @@ tr:
   THEME_AMETHYST: "Ametist"
 
   LBL_NO_IMAGE: "Resim Yok"
+  LBL_ICON_FILTER: "🔍"
 
   # Bulk Downloader
   TITLE_DOWNLOADER: "Toplu Veritabanı İndirici"
@@ -295,16 +310,6 @@ tr:
   CAT_MAGIC_ITEMS_ALL: "Tüm Büyülü Eşyalar"
   CAT_CLASSES_PL: "Sınıflar"
   CAT_RACES_PL: "Irklar"
-  # --- SON LOKALİZASYON EKLEMELERİ ---
-  # Campaign Selector
-  TITLE_SELECT_WORLD: "Dünya Seç"
-  LBL_SELECT_WORLD_TITLE: "🔮 Dünya Seçimi"
-  PH_NEW_WORLD_NAME: "Yeni Dünya Adı..."
-  BTN_LOAD: "Yükle"
-  BTN_CREATE: "Oluştur"
-  MSG_SELECT_WORLD_WARN: "Lütfen bir dünya seçin."
-  MSG_NAME_EMPTY: "İsim boş olamaz."
-  MSG_WORLD_EXISTS: "Bu isimde bir dünya zaten var."
   
   # Combat Tracker & Encounter
   LBL_ENCOUNTER_PREFIX: "Karşılaşma:"
@@ -321,45 +326,6 @@ tr:
   LBL_ROUND_PREFIX: "Tur: "
   BTN_BATTLE_MAP: "🗺️ Savaş Haritası"
   
-  # Encounter Selector Dialog
-  TITLE_ADD_COMBAT: "Savaşa Varlık Ekle"
-  PH_SEARCH_NAME_TAG: "İsim veya Etiket Ara..."
-  LBL_TYPE_ALL: "Tümü"
-  HEADER_INIT_BONUS: "İnisiyatif Bonusu"
-  HEADER_ID: "ID"
-  LBL_ADD_COUNT: "Eklenecek Adet:"
-  BTN_ADD_SELECTED: "✅ Seçilenleri Ekle"
-  NAME_UNKNOWN: "Bilinmeyen"
-  NAME_UNNAMED: "İsimsiz"
-  
-  # Export / Main Window
-  TITLE_EXPORT: "Listeyi Kaydet"
-  FILE_FILTER_TXT: "Metin Dosyaları (*.txt)"
-  MSG_EXPORT_SUCCESS: "Liste başarıyla dışa aktarıldı."
-  MSG_FILE_WRITE_ERROR: "Dosya yazılamadı:\n%{error}"
-  TXT_EXPORT_HEADER: "ZİNDAN EFENDİSİ - VARLIK LİSTESİ"
-  TXT_EXPORT_WORLD: "Dünya: "
-  TXT_EXPORT_NO_DATA: "Henüz kaydedilmiş varlık yok."
-  TXT_EXPORT_TAGS: "   Etiketler: "
-  TXT_EXPORT_DESC: "   Açıklama: "
-  
-  # Categories (Plurals for Dialogs)
-  CAT_MONSTERS_PL: "Canavarlar"
-  CAT_SPELLS_PL: "Büyüler"
-  CAT_EQUIPMENT_ALL: "Tüm Teçhizat"
-  CAT_MAGIC_ITEMS_ALL: "Tüm Büyülü Eşyalar"
-  CAT_CLASSES_PL: "Sınıflar"
-  CAT_RACES_PL: "Irklar"
-  
-  # HP Editing
-  TITLE_EDIT_HP: "Can Düzenle"
-  LBL_NEW_HP: "Yeni Can (HP):"
-  
-  # Context Menus
-  MENU_CTX_INSPECT: "🔍 İncele"
-  MENU_CTX_MOVE: "✋ Taşı"
-  MENU_CTX_DELETE: "🗑️ Sil"
-  MENU_CTX_PIN: "📍 Buraya Pin Ekle"
   # --- DURUM ETKİSİ ---
   CAT_STATUS_EFFECT: "Durum Etkisi"
   LBL_DURATION_TURNS: "Süre (Tur)"
@@ -377,6 +343,7 @@ tr:
   MSG_FOUND_MAGIC_ITEM: "Büyülü Eşya bulundu."
   MSG_SEARCH_SUCCESS: "Başarılı."
   MSG_SEARCH_NOT_FOUND: "Bulunamadı."
+  MSG_INFO: "Bilgi"
 
   # Combat Tracker Sağ Tık Menüsü
   MENU_STD_CONDITIONS: "Standart Durumlar"
@@ -465,7 +432,6 @@ tr:
   TITLE_SELECT_AUDIO: "Ses Dosyası Seç"
   TITLE_ADD_SOUND: "Ses Ekle"
   LBL_SOUND_NAME: "Ses Adı:"
-  LBL_SOUND_NAME: "Ses Adı:"
   MSG_SOUND_ADDED: "Ses başarıyla eklendi."
 
   # Theme Builder
@@ -489,5 +455,75 @@ tr:
   TITLE_CONFIRM: "Eylemi Onayla"
   LBL_SEARCH_DATABASE: Veritabanında ara (otomatik)...
 
-  # Mind Map
-  TAB_MIND_MAP: "Notlar"
+  # Zihin Haritası & Tuval
+  TAB_MIND_MAP: "Zihin Haritası"
+  BTN_ZOOM_IN: "Yakınlaş"
+  BTN_ZOOM_OUT: "Uzaklaş"
+  BTN_CENTER: "Merkez"
+  BTN_FIT: "Sığdır"
+  TIP_ZOOM_IN: "Yakınlaş"
+  TIP_ZOOM_OUT: "Uzaklaş"
+  TIP_CENTER: "Merkeze Git (0,0)"
+  TIP_FIT: "Tüm içeriği ekrana sığdır"
+  LBL_SAVED: "💾 Kaydedildi"
+  LBL_EDITING: "✏️ Düzenleniyor..."
+  MSG_NO_IMAGE_PROJ: "Bu varlığın yansıtılacak bir resmi yok."
+  MENU_ADD_NOTE: "📝 Not Ekle"
+  MENU_ADD_IMAGE: "🖼️ Resim Ekle"
+  MENU_DELETE_LINK: "❌ Bağı Sil"
+  MENU_PROJECT: "👁️ Yansıt"
+  MENU_CONNECT: "🔗 Bağlantı Kur"
+
+  # Projeksiyon Yöneticisi
+  LBL_MAP_THUMB: "HRT"
+  LBL_DROP_HINT: "Yansıtmak için Bırak"
+  TIP_REMOVE_PROJECTION: "Oyuncu ekranından kaldırmak için tıkla"
+
+  # Durumlar (Conditions)
+  COND_BLINDED: "Kör (Blinded)"
+  COND_CHARMED: "Büyülenmiş (Charmed)"
+  COND_DEAFENED: "Sağır (Deafened)"
+  COND_FRIGHTENED: "Korkmuş (Frightened)"
+  COND_GRAPPLED: "Kavranmış (Grappled)"
+  COND_INCAPACITATED: "Etkisiz (Incapacitated)"
+  COND_INVISIBLE: "Görünmez (Invisible)"
+  COND_PARALYZED: "Felç (Paralyzed)"
+  COND_PETRIFIED: "Taşlaşmış (Petrified)"
+  COND_POISONED: "Zehirlenmiş (Poisoned)"
+  COND_PRONE: "Yere Yıkık (Prone)"
+  COND_RESTRAINED: "Kısıtlanmış (Restrained)"
+  COND_STUNNED: "Sersemlemiş (Stunned)"
+  COND_UNCONSCIOUS: "Baygın (Unconscious)"
+  COND_EXHAUSTION: "Yorgunluk (Exhaustion)"
+  MENU_REMOVE_CONDITION: "❌ Kaldır"
+
+  # Harita Sekmesi Filtreleri
+  BTN_FILTER: "Filtre"
+  BTN_CLEAR: "Temizle"
+  TIP_FILTER_ENTITY: "Zaman çizelgesini karakter/konuma göre filtrele"
+  TIP_CLEAR_FILTER: "Filtreyi Temizle"
+  LBL_SHOW_NON_PLAYER: "Oyuncu Olmayanları Göster"
+  LBL_SHOW_LOCATIONS: "Harita Pinlerini Göster"
+  TITLE_FILTER_TIMELINE: "Zaman Çizelgesini Filtrele"
+  MSG_DROP_IMPORT_FIRST: "Lütfen önce bu öğeyi dünyanıza aktarın."
+  MSG_LINK_SELF_ERR: "Bir pin kendisine bağlanamaz."
+
+  # NPC Kartı & Genel
+  PH_SEARCH_SPELL: "Büyü ara..."
+  PH_SEARCH_ITEM: "Eşya ara..."
+  PH_DM_NOTES: "Oyunculardan gizli... (Markdown destekli)"
+  TAB_BATTLEMAPS: "Savaş Haritaları"
+  LBL_BATTLEMAP_HELP: "Savaş ekranı için resim veya video ekleyin."
+  BTN_ADD_MEDIA: "Medya Ekle"
+  TITLE_SELECT_MEDIA: "Savaş Haritası Seç"
+  SUFFIX_VIDEO: "(Video)"
+
+  # Oturum Sekmesi
+  PH_QUICK_LOG: "Hızlı log girişi..."
+
+  # Tema Oluşturucu
+  PH_THEME_NAME: "örn. Karanlık Orman"
+  PH_THEME_ID: "örn. karanlik_orman"
+
+  # Savaş Haritası Penceresi
+  BTN_LOCK_VIEW_TOOLTIP: "Oyuncu Ekranını Kilitle"

@@ -1,0 +1,136 @@
+Kod tabanını detaylıca inceledim. Aşağıda, tema sistemine henüz entegre edilmemiş (hardcoded renk kullanan) alanlar ve yerelleştirilmemiş (İngilizce/Türkçe çevirisi eksik olan) metinlerin tam listesini bulabilirsiniz.
+
+Bu liste herhangi bir kod değişikliği içermemektedir, sadece tespit raporudur.
+
+---
+
+### 1. Eksik Temalar ve Renk Yönetimi (Hardcoded Colors)
+
+Aşağıdaki bileşenler `ThemeManager` veya `.qss` dosyalarından renk almak yerine kod içinde sabit renk tanımlarına sahiptir.
+
+#### **A. Mind Map & Canvas (Notlar)**
+*   **`ui/widgets/mind_map_items.py` > `ResizeHandle`:**
+    *   Hover rengi: `QColor(66, 165, 245, 180)` (Mavi) olarak sabit.
+    *   Normal renk: `QColor(128, 128, 128, 100)` (Gri) olarak sabit.
+*   **`ui/tabs/mind_map_tab.py` > `FloatingControls`:**
+    *   Arka plan: `rgba(40, 40, 40, 230)` olarak sabit string CSS kullanıyor.
+    *   Kenarlık: `#555`.
+*   **`ui/tabs/mind_map_tab.py` > `lbl_save_status` (Autosave Indicator):**
+    *   Arka plan: `rgba(0, 0, 0, 100)` olarak sabit.
+    *   Yazı rengi: `#81c784` (Yeşil) ve `#ffb74d` (Turuncu) olarak sabit.
+
+#### **B. Projection Manager (Header Bar)**
+*   **`ui/widgets/projection_manager.py` > `ProjectionThumbnail`:**
+    *   Arka plan: `#333`.
+    *   Kenarlık: `#555` ve Hover'da `#ff5555`.
+    *   "MAP" yazı rengi: `#ffb74d`.
+    *   "?" yazı rengi: `#aaa`.
+*   **`ui/widgets/projection_manager.py` > `ProjectionManager` (Drop Zone):**
+    *   Varsayılan stil: `rgba(0, 0, 0, 0.2)` arka plan, `rgba(255, 255, 255, 0.3)` kenarlık.
+    *   Hover stili: `rgba(50, 150, 250, 0.2)` arka plan, `#42a5f5` kenarlık.
+
+#### **C. Combat Tracker**
+*   **`ui/widgets/combat_tracker.py` > `ConditionIcon`:**
+    *   Resim yoksa varsayılan fırça: `#5c6bc0` (Mavi).
+    *   Süre sayacı arka planı: `QColor(0, 0, 0, 200)`.
+*   **`ui/widgets/combat_tracker.py` > `HpBarWidget`:**
+    *   Bar renkleri (Green/Yellow/Red): `#2e7d32`, `#fbc02d`, `#c62828` kod içinde `update_color` metodunda sabit.
+    *   Arka plan: `rgba(0,0,0,0.3)`.
+    *   Butonlar (+/-): Sabit `#c62828` ve `#2e7d32`.
+*   **`ui/widgets/combat_tracker.py` > `BattleMapWindow` > `SidebarConditionIcon`:**
+    *   Varsayılan fırça: `#5c6bc0`.
+    *   Süre arka planı: `QColor(0, 0, 0, 200)`.
+
+#### **D. Battle Map Viewer (Harita & Tokenlar)**
+*   **`ui/windows/battle_map_window.py` > `BattleMapView` (Fog Edit):**
+    *   Geçici çizim çizgisi (Temp Path): `Qt.GlobalColor.yellow`.
+    *   Ekleme modu kalemi: `Qt.GlobalColor.red`.
+    *   Silme modu kalemi: `Qt.GlobalColor.green`.
+*   **`ui/windows/battle_map_window.py` > `BattleTokenItem`:**
+    *   Varsayılan (resimsiz) fırça: `#444`.
+    *   Token kenarlık renkleri: `#bdbdbd` (Nötr), `#ffb74d` (Aktif), `#4caf50` (Oyuncu), `#ef5350` (Düşman), `#42a5f5` (Dost). Bunlar kod içinde sabit.
+*   **`ui/widgets/map_viewer.py` > `TimelinePinItem`:**
+    *   Varsayılan renkler: `#42a5f5` (Mavi) veya `#ffb300` (Turuncu).
+*   **`ui/widgets/map_viewer.py` > `MapPinItem`:**
+    *   Varsayılan renkler: `#007acc`, `#ff9800`, `#2e7d32`, `#d32f2f`, `#4caf50` (Varlık tipine göre sabit).
+
+#### **E. NPC Sheet**
+*   **`ui/widgets/npc_sheet.py` > `grp_dm_notes`:**
+    *   Kenarlık: `1px solid #d32f2f`.
+    *   Başlık rengi: `#e57373`.
+
+---
+
+### 2. Eksik Lokalizasyonlar (Missing translations)
+
+Aşağıdaki metinler kod içinde "string" olarak yazılmıştır ve `tr("KEY")` yapısına alınmamıştır.
+
+#### **Dosya: `ui/widgets/projection_manager.py`**
+*   `"MAP"` -> Thumbnail üzerindeki yazı.
+*   `"📥 Drop to Project"` -> Sürükle bırak alanındaki talimat.
+*   `"Click to remove from Player Screen"` -> Tooltip.
+
+#### **Dosya: `ui/tabs/mind_map_tab.py`**
+*   `"Zoom In"`, `"Zoom Out"`, `"Center"`, `"See All"` -> Floating control butonları.
+*   `"Yakınlaş"`, `"Uzaklaş"`, `"Merkeze Git (0,0)"`, `"Tümünü Ekrana Sığdır"` -> Tooltipler.
+*   `"💾 Saved"`, `"✏️ Editing..."` -> Kayıt durumu göstergesi.
+*   `"Bilgi"`, `"Bu varlığın gösterilecek bir resmi yok."` -> Projeksiyon hatası (MessageBox).
+*   `"📝 Not Ekle"`, `"🖼️ Resim Ekle"` -> Canvas sağ tık menüsü.
+*   `"Resim Seç"` -> File dialog başlığı.
+
+#### **Dosya: `ui/widgets/mind_map_items.py`**
+*   `"❌ Bağı Sil"` -> Bağlantı çizgisi sağ tık menüsü.
+*   `"👁️ Yansıt (Project)"` -> Node sağ tık menüsü.
+*   `"🔗 Bağlantı Kur"` -> Node sağ tık menüsü.
+*   `"🗑️ Sil"` -> Node sağ tık menüsü.
+
+#### **Dosya: `ui/widgets/combat_tracker.py`**
+*   `CONDITIONS` listesi (`"Blinded"`, `"Charmed"`, vb.) -> Tamamı İngilizce string listesi olarak tanımlı.
+*   `"Select"` -> `load_map_dialog` içindeki dosya seçim başlığı.
+*   `"❌ Kaldır"` -> ConditionIcon sağ tık menüsü.
+
+#### **Dosya: `ui/widgets/map_viewer.py`**
+*   `"📝 Not Ekle"`, `"🖼️ Resim Ekle"` -> Context menu (Eğer MindMap ile ortak kullanılmıyorsa). Not: `MapViewer` içinde `act_add = QAction(tr("MENU_CTX_PIN"), self)` var ama diğerleri eksik olabilir.
+
+#### **Dosya: `ui/tabs/session_tab.py`**
+*   `"Hızlı log ekle..."` -> Placeholder text.
+
+#### **Dosya: `ui/widgets/npc_sheet.py`**
+*   `"0/0"` -> Resim sayacı başlangıcı.
+*   `"SRD 5e, Custom, etc."` -> Source input placeholder.
+*   `"Select or Write..."` -> Location combo placeholder.
+*   `"(Public Info)"` -> Description label'ında parantez içi bilgi.
+*   `"Battlemaps"` -> Tab başlığı.
+*   `"Add images or videos for Combat Tracker."` -> Battlemap tab açıklama etiketi.
+*   `"Add Media"` -> Battlemap ekleme butonu.
+*   `"Select Battlemaps"` -> File dialog başlığı.
+*   `"(Video)"` -> Dosya listesinde video eki.
+*   `"Search spells..."` -> Spell combo placeholder.
+*   `"Search items..."` -> Inventory combo placeholder.
+*   `"Hidden from players... (Markdown supported)"` -> DM Notes placeholder.
+*   `"Saved"` -> `lbl_save_status` içindeki text.
+*   `"Editing..."` -> `lbl_save_status` içindeki text.
+
+#### **Dosya: `ui/tabs/map_tab.py`**
+*   `"🔍 Filter"` -> Buton metni.
+*   `"Filter Timeline by specific characters/locations"` -> Tooltip.
+*   `"Clear"` -> Buton metni.
+*   `"Clear Entity Filter"` -> Tooltip.
+*   `"Show Non-Player Timeline"` -> Checkbox (tr kontrolü var ama fallback string ingilizce).
+*   `"Show Map Pins"` -> Checkbox (tr kontrolü var ama fallback string ingilizce).
+*   `"Filter Timeline by Entities"` -> Dialog başlığı.
+*   `"Please import this item to your world first."` -> Drop handler mesajı.
+*   `"Cannot link a pin to itself."` -> Hata mesajı.
+
+#### **Dosya: `ui/dialogs/theme_builder.py`**
+*   `"e.g. Dark Forest"` -> Placeholder.
+*   `"e.g. dark_forest"` -> Placeholder.
+
+#### **Dosya: `ui/player_window.py`**
+*   `"Player View - Second Screen"` -> Window Title.
+
+#### **Dosya: `ui/dialogs/entity_selector.py`**
+*   `"Add Entity to Combat"` -> Window Title.
+*   `"HP"`, `"AC"`, `"Init Bonus"` -> Tablo başlıkları (Bazıları tr ile alınmış, bazıları hardcoded olabilir).
+
+Bu analiz, stil ve dil dosyalarındaki eksiklikleri gidermek için bir temel oluşturacaktır. Düzeltme aşamasına geçmek için talimatınızı bekliyorum.

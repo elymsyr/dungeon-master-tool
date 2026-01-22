@@ -11,6 +11,7 @@ from PyQt6.QtMultimediaWidgets import QGraphicsVideoItem
 from core.locales import tr
 import os
 import base64
+from core.theme_manager import ThemeManager
 
 # --- FOG OF WAR LAYER ---
 class FogItem(QGraphicsPixmapItem):
@@ -228,7 +229,8 @@ class SidebarConditionIcon(QWidget):
         if self.icon_path and os.path.exists(self.icon_path): 
             painter.drawPixmap(0, 0, 20, 20, QPixmap(self.icon_path))
         else:
-            painter.setBrush(QBrush(QColor("#5c6bc0")))
+            p = ThemeManager.get_palette(self.dm.current_theme if hasattr(self, 'dm') else "dark")
+            painter.setBrush(QBrush(QColor(p.get("condition_default_bg", "#5c6bc0"))))
             painter.drawRect(0, 0, 20, 20)
             painter.setPen(Qt.GlobalColor.white)
             font = painter.font()
@@ -305,10 +307,12 @@ class BattleMapWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         
         # --- TOOLBAR SETUP ---
+        p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
         self.toolbar = QHBoxLayout()
         self.toolbar.setContentsMargins(5, 5, 5, 5)
         
-        self.btn_reset_view = QPushButton("🏠")
+        self.btn_reset_view = QPushButton(tr("LBL_ICON_HOME"))
+
         self.btn_reset_view.setToolTip(tr("TIP_FIT_VIEW"))
         self.btn_reset_view.setFixedSize(30, 25)
         self.btn_reset_view.clicked.connect(self.fit_map_in_view)
@@ -325,7 +329,8 @@ class BattleMapWidget(QWidget):
         self.toolbar.addWidget(self.btn_reset_view)
         
         if self.is_dm_view:
-            self.btn_lock_view = QPushButton("🔓")
+            self.btn_lock_view = QPushButton(tr("LBL_ICON_UNLOCK"))
+
             self.btn_lock_view.setFixedSize(30, 25)
             self.btn_lock_view.setCheckable(True)
             self.btn_lock_view.setToolTip(tr("BTN_LOCK_VIEW_TOOLTIP") if hasattr(tr, "BTN_LOCK_VIEW_TOOLTIP") else "Lock Player View")
@@ -339,12 +344,13 @@ class BattleMapWidget(QWidget):
             self.toolbar.addSpacing(15)
             self.btn_fog_toggle = QPushButton(tr("BTN_FOG"))
             self.btn_fog_toggle.setCheckable(True)
-            self.btn_fog_toggle.setStyleSheet("QPushButton:checked { background-color: #d32f2f; color: white; font-weight: bold; }")
+            self.btn_fog_toggle.setStyleSheet(f"QPushButton:checked {{ background-color: {p.get('hp_bar_low', '#d32f2f')}; color: white; font-weight: bold; }}")
+
             self.btn_fog_toggle.clicked.connect(self.toggle_fog_mode)
             self.toolbar.addWidget(self.btn_fog_toggle)
             
             self.lbl_fog_hint = QLabel(tr("LBL_FOG_HINT"))
-            self.lbl_fog_hint.setStyleSheet("color: #aaa; font-size: 10px; margin-left: 5px; margin-right: 5px;")
+            self.lbl_fog_hint.setStyleSheet(f"color: {p.get('html_dim', '#aaa')}; font-size: 10px; margin-left: 5px; margin-right: 5px;")
             self.toolbar.addWidget(self.lbl_fog_hint)
             
             self.btn_fog_fill = QPushButton(tr("BTN_FOG_FILL"))
@@ -375,11 +381,12 @@ class BattleMapWidget(QWidget):
 
     def toggle_view_lock(self, checked):
         self.is_view_locked = checked
+        p = ThemeManager.get_palette(self.dm.current_theme if hasattr(self, 'dm') else "dark")
         if checked:
-            self.btn_lock_view.setText("🔒")
-            self.btn_lock_view.setStyleSheet("background-color: #d32f2f; color: white;")
+            self.btn_lock_view.setText(tr("LBL_ICON_LOCK"))
+            self.btn_lock_view.setStyleSheet(f"background-color: {p.get('hp_bar_low', '#d32f2f')}; color: white;")
         else:
-            self.btn_lock_view.setText("🔓")
+            self.btn_lock_view.setText(tr("LBL_ICON_UNLOCK"))
             self.btn_lock_view.setStyleSheet("")
 
     def on_view_changed_internal(self, rect):

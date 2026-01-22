@@ -10,6 +10,7 @@ from ui.widgets.map_viewer import MapViewer, MapPinItem, TimelinePinItem, Timeli
 from ui.dialogs.timeline_entry import TimelineEntryDialog
 from ui.dialogs.entity_selector import EntitySelectorDialog
 from core.locales import tr
+from core.theme_manager import ThemeManager
 from config import CACHE_DIR
 
 class MapTab(QWidget):
@@ -39,14 +40,15 @@ class MapTab(QWidget):
         self.btn_toggle_timeline.setCheckable(True)
         self.btn_toggle_timeline.clicked.connect(self.toggle_timeline_mode)
         
-        self.btn_filter_entities = QPushButton("🔍 Filter")
-        self.btn_filter_entities.setToolTip("Filter Timeline by specific characters/locations")
+        self.btn_filter_entities = QPushButton(f"{tr('LBL_ICON_FILTER')} {tr('LBL_FILTER')}")
+        self.btn_filter_entities.setToolTip(tr("TIP_FILTER_ENTITY"))
         self.btn_filter_entities.clicked.connect(self.open_entity_filter_dialog)
         
-        self.btn_clear_filter = QPushButton("Clear")
-        self.btn_clear_filter.setToolTip("Clear Entity Filter")
+        self.btn_clear_filter = QPushButton(tr("BTN_CLEAR"))
+        self.btn_clear_filter.setToolTip(tr("TIP_CLEAR_FILTER"))
         self.btn_clear_filter.setVisible(False)
-        self.btn_clear_filter.setStyleSheet("color: #ef5350; font-weight: bold;")
+        p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+        self.btn_clear_filter.setStyleSheet(f"color: {p.get('hp_bar_low', '#ef5350')}; font-weight: bold;")
         self.btn_clear_filter.clicked.connect(self.clear_entity_filter)
         
         self.check_timeline_filter = QCheckBox(tr("LBL_SHOW_NON_PLAYER") if hasattr(tr, "LBL_SHOW_NON_PLAYER") else "Show Non-Player Timeline")
@@ -107,14 +109,15 @@ class MapTab(QWidget):
         if dlg.exec():
             if dlg.selected_entities:
                 self.active_entity_filters = set(dlg.selected_entities)
-                self.btn_filter_entities.setText(f"🔍 Filter ({len(self.active_entity_filters)})")
-                self.btn_filter_entities.setStyleSheet("background-color: #d32f2f; color: white;") 
+                self.btn_filter_entities.setText(f"{tr('LBL_ICON_FILTER')} {tr('LBL_FILTER')} ({len(self.active_entity_filters)})")
+                p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+                self.btn_filter_entities.setStyleSheet(f"background-color: {p.get('hp_bar_low', '#d32f2f')}; color: white;") 
                 self.btn_clear_filter.setVisible(True)
             else: self.clear_entity_filter(); return
             self.apply_filters()
 
     def clear_entity_filter(self):
-        self.active_entity_filters = set(); self.btn_filter_entities.setText("🔍 Filter"); self.btn_filter_entities.setStyleSheet(""); self.btn_clear_filter.setVisible(False); self.apply_filters()
+        self.active_entity_filters = set(); self.btn_filter_entities.setText(f"{tr('LBL_ICON_FILTER')} {tr('LBL_FILTER')}"); self.btn_filter_entities.setStyleSheet(""); self.btn_clear_filter.setVisible(False); self.apply_filters()
 
     def apply_filters(self):
         show_non_player_timeline = self.check_timeline_filter.isChecked()
@@ -152,7 +155,8 @@ class MapTab(QWidget):
     def toggle_timeline_mode(self):
         self.show_timeline = self.btn_toggle_timeline.isChecked()
         self.btn_toggle_timeline.setText(tr("BTN_TOGGLE_TIMELINE"))
-        self.btn_toggle_timeline.setStyleSheet("background-color: #ffb300; color: black; font-weight: bold;" if self.show_timeline else "")
+        p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+        self.btn_toggle_timeline.setStyleSheet(f"background-color: {p.get('hp_bar_med', '#ffb300')}; color: black; font-weight: bold;" if self.show_timeline else "")
         self.pending_parent_id = None; self.render_map()
 
     def upload_map_image(self):
@@ -169,11 +173,12 @@ class MapTab(QWidget):
                 ent = entities[pin["entity_id"]]
                 col = pin.get("color")
                 if not col:
-                    col = "#007acc"
-                    if ent["type"] == "NPC": col = "#ff9800"
-                    elif ent["type"] == "Location": col = "#2e7d32"
-                    elif ent["type"] == "Monster": col = "#d32f2f"
-                    elif ent["type"] == "Player": col = "#4caf50"
+                    p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+                    col = p.get("condition_default_bg", "#007acc")
+                    if ent["type"] == "NPC": col = p.get("hp_bar_med", "#ff9800")
+                    elif ent["type"] == "Location": col = p.get("hp_bar_full", "#2e7d32")
+                    elif ent["type"] == "Monster": col = p.get("hp_bar_low", "#d32f2f")
+                    elif ent["type"] == "Player": col = p.get("token_border_player", "#4caf50")
                 pin_item = MapPinItem(pin["x"], pin["y"], 24, col, pin.get("id", str(uuid.uuid4())), pin["entity_id"], ent["name"], pin.get("note", ""), self.on_pin_action)
                 self.map_viewer.add_pin_object(pin_item)
         if self.show_timeline:
