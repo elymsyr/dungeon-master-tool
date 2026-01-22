@@ -6,6 +6,7 @@ from PyQt6.QtGui import (QBrush, QColor, QPen, QPainter, QPainterPath,
 from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF, QTimer
 
 class ConnectionLine(QGraphicsPathItem):
+    """(Değişiklik yok)"""
     def __init__(self, start_node, end_node):
         super().__init__()
         self.start_node = start_node
@@ -125,6 +126,14 @@ class MindMapNode(QGraphicsObject):
             event.accept()
         else:
             super().mousePressEvent(event)
+    
+    # --- Çift Tıklama Düzeltmesi ---
+    def mouseDoubleClickEvent(self, event):
+        if self.node_type == "note":
+            widget = self.proxy.widget()
+            if hasattr(widget, "switch_to_edit_mode"):
+                widget.switch_to_edit_mode()
+        super().mouseDoubleClickEvent(event)
 
     def mouseMoveEvent(self, event):
         if self.is_resizing:
@@ -145,12 +154,7 @@ class MindMapNode(QGraphicsObject):
             self.is_resizing = False
             self.setCursor(Qt.CursorShape.ArrowCursor)
             self.sizeChanged.emit()
-        
-        # --- FIX: Use QTimer.singleShot to avoid Segfault ---
-        # Because the slot might modify the scene or open windows, 
-        # doing it directly inside the event handler can be unsafe.
-        QTimer.singleShot(0, lambda: self.nodeReleased.emit(self))
-        
+        self.nodeReleased.emit(self)
         super().mouseReleaseEvent(event)
 
     def contextMenuEvent(self, event):
