@@ -319,3 +319,138 @@ class MindMapNode(QGraphicsObject):
         menu.addAction(action_delete)
         
         menu.exec(event.screenPos())
+
+
+class WorkspaceItem(QGraphicsObject):
+    positionChanged = pyqtSignal()
+    sizeChanged = pyqtSignal()
+    workspaceDeleted = pyqtSignal(str)
+    workspaceRenamed = pyqtSignal(str, str)
+    workspaceColorChanged = pyqtSignal(str, str)
+
+    def __init__(self, ws_id, name, w=800, h=600, color="#42a5f5"):
+        super().__init__()
+        self.ws_id = ws_id if ws_id else str(uuid.uuid4())
+        self.name = name
+        self.width = float(w)
+        self.height = float(h)
+        self.color = QColor(color)
+        self.is_resizing = False
+        self.is_moving = False
+        self.last_mouse_pos = QPointF()
+        
+        self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable | 
+                      QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
+        
+        self.resize_handle = ResizeHandle(self)
+        self.update_layout()
+        self.setZValue(-5) # Background layer
+
+    def update_layout(self):
+        h_size = 20
+        self.resize_handle.setRect(0, 0, h_size, h_size)
+        self.resize_handle.setPos(self.width - h_size, self.height - h_size)
+
+    def boundingRect(self):
+        return QRectF(0, 0, self.width, self.height)
+
+    def paint(self, painter, option, widget=None):
+        rect = self.boundingRect()
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # Dashed Border
+        pen = QPen(self.color, 3)
+        pen.setStyle(Qt.PenStyle.DashLine)
+        if self.isSelected():
+            pen.setWidth(5)
+        painter.setPen(pen)
+        painter.setBrush(QBrush(QColor(self.color.red(), self.color.green(), self.color.blue(), 20)))
+        painter.drawRect(rect)
+        
+        # Label
+        painter.setPen(self.color)
+        font = QFont("Segoe UI", 12, QFont.Weight.Bold)
+        painter.setFont(font)
+        painter.drawText(QRectF(5, 5, self.width - 10, 30), Qt.AlignmentFlag.AlignLeft, self.name)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.MiddleButton:
+            self.is_moving = True
+            self.last_mouse_pos = event.scenePos()
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            event.accept()
+        elif event.button() == Qt.MouseButton.LeftButton:
+            # Sol tıkı kabul etme ki canvas (ScrollHandDrag) çalışsın
+            event.ignore()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self.is_moving:
+            delta = event.scenePos() - self.last_mouse_pos
+            self.setPos(self.pos() + delta)
+            self.last_mouse_pos = event.scenePos()
+            self.positionChanged.emit()
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.MiddleButton:
+            self.is_moving = False
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+            event.accept()
+        else:
+            super().mouseReleaseEvent(event)
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
+            self.positionChanged.emit()
+        return super().itemChange(change, value)
+
+    def start_resizing(self):
+        self.is_resizing = True
+    
+    def do_resize(self, scene_pos):
+        local_pos = self.mapFromScene(scene_pos)
+        self.prepareGeometryChange()
+        self.width = max(200.0, local_pos.x())
+        self.height = max(150.0, local_pos.y())
+        self.update_layout()
+        self.sizeChanged.emit()
+
+    def stop_resizing(self):
+        self.is_resizing = False
+        self.sizeChanged.emit()
+
+    def contextMenuEvent(self, event):
+        from PyQt6.QtWidgets import QInputDialog, QColorDialog
+        menu = QMenu()
+        menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #555; }")
+        
+        action_rename = QAction(tr('MENU_RENAME_WORKSPACE'), menu)
+        action_rename.triggered.connect(self._on_rename)
+        
+        action_color = QAction(tr('MENU_PICK_COLOR'), menu)
+        action_color.triggered.connect(self._on_color_pick)
+        
+        action_delete = QAction(tr('BTN_DELETE'), menu)
+        action_delete.triggered.connect(lambda: self.workspaceDeleted.emit(self.ws_id))
+        
+        menu.addAction(action_rename)
+        menu.addAction(action_color)
+        menu.addSeparator()
+        menu.addAction(action_delete)
+        menu.exec(event.screenPos())
+
+    def _on_rename(self):
+        from PyQt6.QtWidgets import QInputDialog
+        name, ok = QInputDialog.getText(None, tr("MSG_WORKSPACE_NAME"), tr("MSG_ENTER_WS_NAME"), text=self.name)
+        if ok and name:
+            self.workspaceRenamed.emit(self.ws_id, name)
+
+    def _on_color_pick(self):
+        from PyQt6.QtWidgets import QColorDialog
+        color = QColorDialog.getColor(self.color, None, tr("MENU_PICK_COLOR"))
+        if color.isValid():
+            self.workspaceColorChanged.emit(self.ws_id, color.name())

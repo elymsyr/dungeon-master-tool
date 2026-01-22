@@ -174,6 +174,15 @@ tr:
 
   LBL_NO_IMAGE: "Resim Yok"
   LBL_ICON_FILTER: "🔍"
+  MENU_ADD_WORKSPACE: "🔲 Çalışma Alanı Ekle"
+  MENU_RENAME_WORKSPACE: "✏️ Alanı Yeniden Adlandır"
+  MENU_PICK_COLOR: "🎨 Renk Seç"
+  LBL_WORKSPACE: "Çalışma Alanı"
+  BTN_SEE_ALL: "Tümünü Gör"
+  BTN_WORKSPACES: "Alanlar"
+  TIP_SEE_ALL: "Tüm çalışma alanlarını göster"
+  MSG_WORKSPACE_NAME: "Çalışma Alanı Adı"
+  MSG_ENTER_WS_NAME: "Çalışma alanı ismini girin:"
 
   # Bulk Downloader
   TITLE_DOWNLOADER: "Toplu Veritabanı İndirici"
