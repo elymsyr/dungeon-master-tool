@@ -28,20 +28,34 @@ class MentionPopup(QListWidget):
 class ClickableTextBrowser(QTextBrowser):
     doubleClicked = pyqtSignal()
     
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.embedded_mode = False # Mind Map modu için bayrak
+
     def mouseDoubleClickEvent(self, event):
-        # Bu sinyal MarkdownEditor tarafından yakalanacak
-        self.doubleClicked.emit()
-        # Olayı burada tüketiyoruz ki Node tekrar işlemeye çalışmasın
-        event.accept()
+        if self.embedded_mode:
+            # Mind Map'te Node işlemi yapması için olayı yoksay
+            event.ignore()
+        else:
+            # Normal modda sinyali gönder
+            self.doubleClicked.emit()
+            event.accept()
 
     def mousePressEvent(self, event):
         anchor = self.anchorAt(event.pos())
         if anchor:
             super().mousePressEvent(event)
+            return
+
+        if self.embedded_mode:
+            # Mind Map'te sürükleme yapabilmek için olayı yoksay
+            event.ignore()
         else:
-            event.ignore() 
+            # Normal modda metin seçimi için kabul et
+            super().mousePressEvent(event)
 
     def contextMenuEvent(self, event):
+        # Sağ tık her zaman yoksayılır (Mind Map menüsü veya Standart menü engeli)
         event.ignore() 
 
 class PropagatingTextEdit(QTextEdit):
@@ -55,6 +69,7 @@ class MarkdownEditor(QWidget):
         super().__init__(parent)
         self.dm = None
         self.mention_start_pos = -1
+        self.is_transparent_mode = False
         
         self.popup = MentionPopup(self)
         self.popup.selected.connect(self.insert_mention)
@@ -63,6 +78,7 @@ class MarkdownEditor(QWidget):
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.setObjectName("mdContainer")
+        
         self.stack = QStackedWidget(self)
         self.stack.setObjectName("mdStack")
         
@@ -100,7 +116,12 @@ class MarkdownEditor(QWidget):
             self.btn_toggle.setChecked(True)
             self.toggle_mode()
 
+    def set_embedded_mode(self, enabled):
+        """Mind Map içinde kullanılıyorsa True yap."""
+        self.viewer.embedded_mode = enabled
+
     def apply_default_style(self):
+        self.is_transparent_mode = False
         style = """
             QTextEdit#mdEditor, QTextBrowser#mdViewer {
                 border: 1px solid rgba(128, 128, 128, 0.3);
@@ -118,8 +139,11 @@ class MarkdownEditor(QWidget):
             }
         """
         self.setStyleSheet(style)
+        self.update_view_content()
 
     def set_mind_map_style(self):
+        self.is_transparent_mode = True
+        self.set_embedded_mode(True) # Önemli: Tıklama davranışını değiştir
         style = """
             QTextEdit#mdEditor, QTextBrowser#mdViewer {
                 background-color: transparent;
@@ -138,11 +162,16 @@ class MarkdownEditor(QWidget):
             QPushButton:hover { background-color: rgba(0,0,0,0.2); }
         """
         self.setStyleSheet(style)
+        self.update_view_content()
 
     def set_data_manager(self, dm): self.dm = dm
 
     def switch_to_edit_mode(self):
         self.btn_toggle.setChecked(True)
+        self.toggle_mode()
+
+    def switch_to_view_mode(self):
+        self.btn_toggle.setChecked(False)
         self.toggle_mode()
 
     def eventFilter(self, obj, event):
@@ -158,11 +187,10 @@ class MarkdownEditor(QWidget):
                 elif key == Qt.Key.Key_Escape:
                     self.popup.hide(); return True
         
-        # Shift+Enter ile Kaydetme
+        # Shift+Enter ile Kaydetme ve Çıkma
         if obj is self.editor and event.type() == QEvent.Type.KeyPress:
             if event.key() == Qt.Key.Key_Return and (event.modifiers() & Qt.KeyboardModifier.ShiftModifier):
-                self.btn_toggle.setChecked(False)
-                self.toggle_mode()
+                self.switch_to_view_mode()
                 return True
 
         return super().eventFilter(obj, event)
@@ -201,16 +229,30 @@ class MarkdownEditor(QWidget):
             self.stack.setCurrentIndex(0)
             self.editor.setFocus()
         else:
-            raw_text = self.editor.toPlainText()
-            html_content = markdown.markdown(raw_text, extensions=['extra', 'nl2br'])
-            is_dark_text = "color: #212121" in self.styleSheet()
-            c_text = "#212121" if is_dark_text else "#e0e0e0"
-            c_link = "#1565c0" if is_dark_text else "#42a5f5"
-            c_high = "#d84315" if is_dark_text else "#ffb74d"
-            styled_html = f"<style>body {{ font-family: 'Segoe UI'; font-size: 14px; color: {c_text}; margin: 0; padding: 0; }} a {{ color: {c_link}; text-decoration: none; font-weight: bold; }} h1, h2, h3 {{ color: {c_high}; margin: 5px 0; font-weight: bold; }} p {{ margin: 5px 0; }} ul {{ margin: 0; padding-left: 20px; }} </style>{html_content}"
-            self.viewer.setHtml(styled_html)
+            self.update_view_content()
             self.stack.setCurrentIndex(1)
         self.btn_toggle.raise_()
+
+    def update_view_content(self):
+        raw_text = self.editor.toPlainText()
+        html_content = markdown.markdown(raw_text, extensions=['extra', 'nl2br'])
+        
+        # Renk Kontrolü
+        c_text = "#212121" if self.is_transparent_mode else "#e0e0e0"
+        c_link = "#1565c0" if self.is_transparent_mode else "#42a5f5"
+        c_high = "#d84315" if self.is_transparent_mode else "#ffb74d"
+        
+        styled_html = f"""
+        <style>
+            body {{ font-family: 'Segoe UI'; font-size: 14px; color: {c_text}; margin: 0; padding: 0; }} 
+            a {{ color: {c_link}; text-decoration: none; font-weight: bold; }} 
+            h1, h2, h3 {{ color: {c_high}; margin: 5px 0; font-weight: bold; }} 
+            p {{ margin: 5px 0; }} 
+            ul {{ margin: 0; padding-left: 20px; }} 
+        </style>
+        {html_content}
+        """
+        self.viewer.setHtml(styled_html)
 
     def toPlainText(self): return self.editor.toPlainText()
     def setText(self, text):

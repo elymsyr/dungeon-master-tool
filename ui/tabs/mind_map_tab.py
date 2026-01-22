@@ -53,22 +53,11 @@ class CustomGraphicsView(QGraphicsView):
             super().contextMenuEvent(event)
 
     def wheelEvent(self, event):
-        # Eğer bir proxy widget üzerindeyse (örn: NpcSheet scrollbar) zoom yapma
         item = self.itemAt(event.position().toPoint())
         if isinstance(item, QGraphicsProxyWidget):
-            # Widget'ın scroll'unu kullanması için olayı yoksay
-            # Ancak ProxyWidget, NpcSheet'in tamamını kapladığı için,
-            # sadece scroll area üzerindeyken mi yoksaymalıyız?
-            # En temizi: Proxy widget event'i kullanırsa zoom çalışmaz.
-            # Şimdilik direkt ignore edelim, böylece alttaki widget'a gider.
             event.ignore()
-            # Scroll eventini manuel olarak widget'a göndermek gerekebilir
-            # Ama ignore edince Qt otomatik olarak parent'a (View) değil, child'a iletir mi?
-            # QGraphicsView'de ignore, event'in parent widget'a gitmesini sağlar.
-            # Burada amacımız event'i Scene'deki item'a göndermek.
             return super().wheelEvent(event) 
         
-        # Boşluktaysa Zoom
         zoom_in = 1.15
         zoom_out = 1 / 1.15
         if event.angleDelta().y() > 0: self.scale(zoom_in, zoom_in)
@@ -98,7 +87,6 @@ class FloatingControls(QWidget):
         self.btn_center = self._create_btn("🎯", lambda: self.view.centerOn(0, 0), "Merkeze Git")
         layout.addWidget(self.btn_in); layout.addWidget(self.btn_out); layout.addWidget(self.btn_center)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-
     def _create_btn(self, text, func, tip):
         btn = QPushButton(text)
         btn.setFixedSize(36, 36)
@@ -168,13 +156,6 @@ class MindMapTab(QWidget):
         self.lbl_save_status.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         overlay_layout.addWidget(self.lbl_save_status, 0, 1, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
 
-        # Drop Hint (Her zaman yazsın, ama gizli başlasın)
-        self.proj_hint = QPushButton("📤 Drop to Project", self.view)
-        self.proj_hint.setStyleSheet("background-color: rgba(66, 165, 245, 0.9); color: white; font-weight: bold; border-radius: 0 0 10px 10px; border: 1px solid #1e88e5;")
-        self.proj_hint.setFixedSize(200, 40)
-        self.proj_hint.hide()
-        overlay_layout.addWidget(self.proj_hint, 0, 1, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
-
         splitter.addWidget(sidebar)
         splitter.addWidget(canvas_container)
         splitter.setSizes([220, 800])
@@ -183,27 +164,10 @@ class MindMapTab(QWidget):
         main_layout.addWidget(splitter)
 
     # --- PROJECTION LOGIC ---
-    def handle_node_move(self, node):
-        """Node sürüklenirken çalışır (Drop zone görseli)."""
-        view_pos = self.view.mapFromScene(node.scenePos())
-        threshold = 100 # Üstten 100px
-        if view_pos.y() < threshold:
-            self.proj_hint.show()
-            self.proj_hint.setStyleSheet("background-color: rgba(239, 83, 80, 0.9); color: white; font-weight: bold; border-radius: 0 0 10px 10px;") # Kırmızılaşsın (Active)
-        else:
-            self.proj_hint.hide()
-
-    def handle_node_release(self, node):
-        """Node serbest bırakıldığında çalışır."""
-        self.proj_hint.hide()
-        view_pos = self.view.mapFromScene(node.scenePos())
-        threshold = 100
-        
-        if view_pos.y() < threshold:
-            self.project_node_content(node)
+    def handle_projection_request(self, node):
+        self.project_node_content(node)
 
     def project_node_content(self, node):
-        # Player Window açık değilse aç
         if self.main_window_ref and not self.main_window_ref.player_window.isVisible():
             self.main_window_ref.toggle_player_window()
 
@@ -223,7 +187,6 @@ class MindMapTab(QWidget):
                     QMessageBox.information(self, "Bilgi", "Bu varlığın gösterilecek bir resmi yok.")
 
         if full_path and self.main_window_ref:
-            # ProjectionManager'a ekle (Üst bara)
             self.main_window_ref.projection_manager.add_image(full_path)
 
     # --- REFRESH & CREATE ---
@@ -272,20 +235,14 @@ class MindMapTab(QWidget):
         node.positionChanged.connect(self.trigger_autosave)
         node.sizeChanged.connect(self.trigger_autosave)
         
-        # Canlı takip ve Bırakma
-        node.nodeMoved.connect(self.handle_node_move)
-        node.nodeReleased.connect(self.handle_node_release)
-        node.requestProjection.connect(self.handle_projection_request) # Sağ tık menüsü için
+        # nodeReleased sinyali artık kullanılmıyor (Drop to Project yok)
+        node.requestProjection.connect(self.handle_projection_request) 
         
         self.scene.addItem(node)
         self.nodes[node.node_id] = node
         
         self.trigger_autosave()
         return node
-
-    def handle_projection_request(self, node):
-        # Sağ tık menüsünden tetiklenirse direkt yansıt
-        self.project_node_content(node)
 
     def create_note_node(self, node_id, x, y, w, h, content):
         editor = MarkdownEditor(text=content, placeholder="Not al...")
@@ -303,7 +260,7 @@ class MindMapTab(QWidget):
         node = self.create_node_base(node_id, lbl, x, y, w, h, "image", {"path": path})
         return node
 
-    def create_entity_node(self, eid, x, y, w=500, h=600):
+    def create_entity_node(self, eid, x, y, w=550, h=700): 
         if eid not in self.dm.data["entities"]: return
         ent_data = self.dm.data["entities"][eid]
         sheet = NpcSheet(self.dm)
