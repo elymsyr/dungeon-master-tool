@@ -8,6 +8,7 @@ from config import WORLDS_DIR, BASE_DIR, CACHE_DIR, load_theme
 from core.models import get_default_entity_structure, SCHEMA_MAP, PROPERTY_MAP
 from core.api_client import DndApiClient
 from core.locales import set_language
+from core.locales import tr
 
 LIBRARY_DIR = os.path.join(CACHE_DIR, "library")
 # We will use .dat (MsgPack) for library cache, but .json support remains
@@ -27,7 +28,8 @@ class DataManager:
             "entities": {}, 
             "map_data": {"image_path": "", "pins": [], "timeline": []},
             "sessions": [],
-            "last_active_session_id": None
+            "last_active_session_id": None,
+            "mind_maps": {}  # YENİ: Mind Map verileri için alan
         }
         self.api_client = DndApiClient()
         self.reference_cache = {}
@@ -109,10 +111,6 @@ class DataManager:
         # We cache the WHOLE response dict for paginated sources to preserve next/prev links offline
         data_to_cache = response
         
-        # Backward compatibility check for methods expecting just a list (if any)
-        # But get_api_index callers likely need to know about pagination now.
-        # However, ApiBrowser.load_list calls this.
-        
         if data_to_cache:
             self.reference_cache[cache_key] = data_to_cache
             self._save_reference_cache()
@@ -172,6 +170,10 @@ class DataManager:
             self.data["map_data"]["timeline"] = []
         if "last_active_session_id" not in self.data:
             self.data["last_active_session_id"] = None
+        
+        # YENİ: Mind Map Veri Yapısı Kontrolü
+        if "mind_maps" not in self.data:
+            self.data["mind_maps"] = {}
         
         if not self.data["sessions"]:
             new_sid = str(uuid.uuid4())
@@ -252,7 +254,8 @@ class DataManager:
                 "world_name": world_name, "entities": {}, 
                 "map_data": {"image_path": "", "pins": [], "timeline": []},
                 "sessions": [{"id": first_sid, "name": "Session 0", "date": "Bugün", "notes": "", "logs": "", "combatants": []}],
-                "last_active_session_id": first_sid
+                "last_active_session_id": first_sid,
+                "mind_maps": {}  # YENİ
             }
             self.current_campaign_path = folder
             self.save_data()
