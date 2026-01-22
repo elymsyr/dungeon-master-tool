@@ -24,11 +24,11 @@ class ThemeBuilderDialog(QDialog):
         # --- TOP: Metadata ---
         form_meta = QFormLayout()
         self.txt_name = QLineEdit()
-        self.txt_name.setPlaceholderText("e.g. Dark Forest")
+        self.txt_name.setPlaceholderText(tr("PH_THEME_NAME"))
         self.txt_name.textChanged.connect(self._generate_id)
         
         self.txt_id = QLineEdit()
-        self.txt_id.setPlaceholderText("e.g. dark_forest")
+        self.txt_id.setPlaceholderText(tr("PH_THEME_ID"))
         
         form_meta.addRow(tr("LBL_THEME_NAME"), self.txt_name)
         form_meta.addRow(tr("LBL_THEME_ID"), self.txt_id)
@@ -45,9 +45,9 @@ class ThemeBuilderDialog(QDialog):
         left_layout.addWidget(self.list_states)
         
         btn_layout = QHBoxLayout()
-        self.btn_add_state = QPushButton("+")
+        self.btn_add_state = QPushButton(tr("LBL_ICON_ADD"))
         self.btn_add_state.clicked.connect(self._add_state)
-        self.btn_del_state = QPushButton("-")
+        self.btn_del_state = QPushButton(tr("LBL_ICON_REMOVE"))
         self.btn_del_state.clicked.connect(self._del_state)
         btn_layout.addWidget(self.btn_add_state)
         btn_layout.addWidget(self.btn_del_state)
@@ -77,12 +77,12 @@ class ThemeBuilderDialog(QDialog):
             txt.setReadOnly(True)
             txt.setPlaceholderText(tr("MSG_NO_FILE"))
             
-            btn = QPushButton("📂")
+            btn = QPushButton(tr("LBL_ICON_SEARCH")) # Folder icon placeholder
             btn.setFixedSize(30, 25)
             # Use default arg to capture key
             btn.clicked.connect(lambda _, k=key: self._browse_file(k))
             
-            btn_clear = QPushButton("❌")
+            btn_clear = QPushButton(tr("LBL_ICON_REMOVE"))
             btn_clear.setFixedSize(30, 25)
             btn_clear.clicked.connect(lambda _, k=key: self._clear_file(k))
             

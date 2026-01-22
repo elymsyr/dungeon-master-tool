@@ -36,14 +36,6 @@ class MindMapScene(QGraphicsScene):
         
         # Grid rengini paletten al
         grid_rgba = self.current_palette.get("grid_color", "rgba(255, 255, 255, 10)")
-        # Eğer string "rgba(...)" formatındaysa QColor bunu direkt anlamayabilir, 
-        # ancak QColor("#hex") formatı kesin çalışır. 
-        # ThemeManager'da renkleri QColor'ın anlayacağı formatta (Hex veya isim) tutmak en iyisidir.
-        # Eğer rgba fonksiyonu string olarak geliyorsa burada manuel parse gerekebilir 
-        # ama QColor kurucusu genellikle CSS formatlarını destekler.
-        # Güvenlik için ThemeManager'da renkleri Hex ve Alpha kanalı olarak tutmak daha iyidir.
-        # Şimdilik QColor(string) deniyoruz.
-        
         grid_color = QColor(grid_rgba)
         if not grid_color.isValid():
             grid_color = QColor(255, 255, 255, 10) # Fallback
@@ -108,15 +100,16 @@ class FloatingControls(QWidget):
         super().__init__(parent)
         self.view = view_ref
         self.parent_tab = parent_tab
+        self.current_palette = ThemeManager.get_palette("dark")
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
         
-        self.btn_in = self._create_btn("Zoom In", lambda: self.view.scale(1.2, 1.2), "Yakınlaş")
-        self.btn_out = self._create_btn("Zoom Out", lambda: self.view.scale(1/1.2, 1/1.2), "Uzaklaş")
-        self.btn_center = self._create_btn("Center", lambda: self.view.centerOn(0, 0), "Merkeze Git (0,0)")
-        self.btn_fit = self._create_btn("See All", self.parent_tab.fit_all_content, "Tümünü Ekrana Sığdır")
+        self.btn_in = self._create_btn(tr("BTN_ZOOM_IN"), lambda: self.view.scale(1.2, 1.2), tr("TIP_ZOOM_IN"))
+        self.btn_out = self._create_btn(tr("BTN_ZOOM_OUT"), lambda: self.view.scale(1/1.2, 1/1.2), tr("TIP_ZOOM_OUT"))
+        self.btn_center = self._create_btn(tr("BTN_CENTER"), lambda: self.view.centerOn(0, 0), tr("TIP_CENTER"))
+        self.btn_fit = self._create_btn(tr("BTN_FIT"), self.parent_tab.fit_all_content, tr("TIP_FIT"))
         
         layout.addWidget(self.btn_in)
         layout.addWidget(self.btn_out)
@@ -124,6 +117,42 @@ class FloatingControls(QWidget):
         layout.addWidget(self.btn_fit)
         
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.update_style()
+
+    def update_theme(self, palette):
+        self.current_palette = palette
+        # Buton metinlerini güncelle (Dil değiştiyse)
+        self.btn_in.setText(tr("BTN_ZOOM_IN")); self.btn_in.setToolTip(tr("TIP_ZOOM_IN"))
+        self.btn_out.setText(tr("BTN_ZOOM_OUT")); self.btn_out.setToolTip(tr("TIP_ZOOM_OUT"))
+        self.btn_center.setText(tr("BTN_CENTER")); self.btn_center.setToolTip(tr("TIP_CENTER"))
+        self.btn_fit.setText(tr("BTN_FIT")); self.btn_fit.setToolTip(tr("TIP_FIT"))
+        self.update_style()
+
+    def update_style(self):
+        p = self.current_palette
+        bg = p.get("ui_floating_bg", "rgba(40, 40, 40, 230)")
+        border = p.get("ui_floating_border", "#555")
+        text = p.get("ui_floating_text", "#eee")
+        hover_bg = p.get("ui_floating_hover_bg", "#42a5f5")
+        
+        style = f"""
+            QPushButton {{ 
+                background-color: {bg}; 
+                color: {text}; 
+                border: 1px solid {border}; 
+                border-radius: 6px; 
+                font-size: 11px; 
+                font-weight: bold;
+                font-family: 'Segoe UI', sans-serif;
+            }} 
+            QPushButton:hover {{ 
+                background-color: {hover_bg}; 
+                border-color: {hover_bg}; 
+                color: white; 
+            }}
+        """
+        for btn in [self.btn_in, self.btn_out, self.btn_center, self.btn_fit]:
+            btn.setStyleSheet(style)
 
     def _create_btn(self, text, func, tip):
         btn = QPushButton(text)
@@ -131,22 +160,6 @@ class FloatingControls(QWidget):
         btn.setToolTip(tip)
         btn.clicked.connect(func)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn.setStyleSheet("""
-            QPushButton { 
-                background-color: rgba(40, 40, 40, 230); 
-                color: #eee; 
-                border: 1px solid #555; 
-                border-radius: 6px; 
-                font-size: 11px; 
-                font-weight: bold;
-                font-family: 'Segoe UI', sans-serif;
-            } 
-            QPushButton:hover { 
-                background-color: #42a5f5; 
-                border-color: #42a5f5; 
-                color: white; 
-            }
-        """)
         return btn
 
 class MindMapTab(QWidget):
@@ -200,9 +213,8 @@ class MindMapTab(QWidget):
         overlay_layout.setContentsMargins(0, 0, 20, 20)
         overlay_layout.addWidget(self.floating_controls, 1, 1, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
         
-        self.lbl_save_status = QPushButton("💾 Saved", self.view)
+        self.lbl_save_status = QPushButton(tr("LBL_SAVED"), self.view)
         self.lbl_save_status.setFixedSize(80, 25)
-        self.lbl_save_status.setStyleSheet("background: rgba(0, 0, 0, 100); color: #81c784; border-radius: 4px; border: none; font-size: 11px;")
         self.lbl_save_status.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         overlay_layout.addWidget(self.lbl_save_status, 0, 1, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
 
@@ -218,13 +230,31 @@ class MindMapTab(QWidget):
         # 1. Sahne Arka Planı
         self.scene.set_palette(palette)
         
-        # 2. Mevcut Node'lar
+        # 2. Yüzen Kontroller (Zoom)
+        self.floating_controls.update_theme(palette)
+        
+        # 3. Kayıt Göstergesi
+        self._update_save_status_style(palette, is_editing=False)
+        
+        # 4. Mevcut Node'lar
         for node in self.nodes.values():
             node.update_theme(palette)
             
-        # 3. Bağlantılar
+        # 5. Bağlantılar
         for conn in self.connections:
             conn.update_theme(palette)
+
+    def _update_save_status_style(self, palette, is_editing):
+        bg = palette.get("ui_autosave_bg", "rgba(0, 0, 0, 100)")
+        if is_editing:
+            color = palette.get("ui_autosave_text_editing", "#ffb74d")
+            text = tr('LBL_EDITING')
+        else:
+            color = palette.get("ui_autosave_text_saved", "#81c784")
+            text = tr('LBL_SAVED')
+            
+        self.lbl_save_status.setText(text)
+        self.lbl_save_status.setStyleSheet(f"background: {bg}; color: {color}; border-radius: 4px; border: none; font-size: 11px;")
 
     def fit_all_content(self):
         items_rect = self.scene.itemsBoundingRect()
@@ -252,19 +282,20 @@ class MindMapTab(QWidget):
                 if img_path:
                     full_path = self.dm.get_full_path(img_path)
                 else:
-                    QMessageBox.information(self, "Bilgi", "Bu varlığın gösterilecek bir resmi yok.")
+                    QMessageBox.information(self, tr("MSG_WARNING"), tr("MSG_NO_IMAGE_PROJ"))
 
         if full_path and self.main_window_ref:
             self.main_window_ref.projection_manager.add_image(full_path)
 
     def show_canvas_context_menu(self, global_pos, scene_pos):
         menu = QMenu()
-        menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; font-size: 14px; padding: 5px; } QMenu::item { padding: 5px 20px; } QMenu::item:selected { background-color: #42a5f5; }")
+        p = ThemeManager.get_palette(self.dm.current_theme)
+        menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; font-size: 14px; padding: 5px; }} QMenu::item {{ padding: 5px 20px; }} QMenu::item:selected {{ background-color: {p.get('ui_floating_hover_bg', '#42a5f5')}; }}")
         
-        act_note = QAction("📝 Not Ekle", self)
+        act_note = QAction(tr('MENU_ADD_NOTE'), self)
         act_note.triggered.connect(lambda: self.create_note_node(None, scene_pos.x(), scene_pos.y(), 250, 200, ""))
         
-        act_img = QAction("🖼️ Resim Ekle", self)
+        act_img = QAction(tr('MENU_ADD_IMAGE'), self)
         act_img.triggered.connect(lambda: self.add_image_at_pos(scene_pos))
         
         menu.addAction(act_note)
@@ -273,7 +304,7 @@ class MindMapTab(QWidget):
 
     def add_image_at_pos(self, scene_pos):
         from PyQt6.QtWidgets import QFileDialog
-        f, _ = QFileDialog.getOpenFileName(self, "Resim Seç", "", "Images (*.png *.jpg *.jpeg *.webp)")
+        f, _ = QFileDialog.getOpenFileName(self, tr("BTN_SELECT_IMG"), "", "Images (*.png *.jpg *.jpeg *.webp)")
         if f:
             path = self.dm.import_image(f)
             self.create_image_node(None, scene_pos.x(), scene_pos.y(), 300, 300, path)
@@ -305,7 +336,10 @@ class MindMapTab(QWidget):
         editor = MarkdownEditor(text=content, placeholder="Not al...")
         editor.set_data_manager(self.dm)
         editor.textChanged.connect(self.trigger_autosave)
-        editor.set_mind_map_style() 
+        editor.set_mind_map_style()
+        
+        # Editöre de temayı ilk açılışta bildir (MindMapNode handle ediyor ama garanti olsun)
+        editor.refresh_theme(ThemeManager.get_palette(self.dm.current_theme))
         
         node = self.create_node_base(node_id, editor, x, y, w, h, "note")
         return node
@@ -327,11 +361,12 @@ class MindMapTab(QWidget):
         sheet.populate_sheet(ent_data)
         sheet.set_embedded_mode(True)
         
+        # Entity Sheet temayı ilk açılışta almalı
+        sheet.refresh_theme(ThemeManager.get_palette(self.dm.current_theme))
+        
         sheet.data_changed.connect(lambda: self.schedule_entity_autosave(sheet))
         
-        # NpcSheet stili: ThemeManager bunu handle edebilir ama QSS de lazım.
-        # Burada basitçe sabit renkleri siliyoruz, çünkü MindMapNode artık arka plan rengini çiziyor.
-        # Ancak Sheet içindeki inputların şeffaf olması gerekir.
+        # NpcSheet dış kabuğu şeffaf olmalı
         sheet.setStyleSheet("""
             QWidget#sheetContainer { background-color: transparent; }
             QLineEdit, QTextEdit, QPlainTextEdit { background-color: rgba(0,0,0,0.2); border: 1px solid rgba(128,128,128,0.3); }
@@ -342,8 +377,8 @@ class MindMapTab(QWidget):
 
     def schedule_entity_autosave(self, sheet):
         self.pending_entity_saves.add(sheet)
-        self.lbl_save_status.setText("✏️ Editing...")
-        self.lbl_save_status.setStyleSheet("background: rgba(0, 0, 0, 100); color: #ffb74d; border-radius: 4px; border: none; font-size: 11px;")
+        palette = ThemeManager.get_palette(self.dm.current_theme)
+        self._update_save_status_style(palette, is_editing=True)
         self.entity_autosave_timer.start()
 
     def process_pending_entity_saves(self):
@@ -357,8 +392,9 @@ class MindMapTab(QWidget):
                     sheet.is_dirty = False
             except: pass
         self.pending_entity_saves.clear()
-        self.lbl_save_status.setText("💾 Saved")
-        self.lbl_save_status.setStyleSheet("background: rgba(0, 0, 0, 100); color: #81c784; border-radius: 4px; border: none; font-size: 11px;")
+        
+        palette = ThemeManager.get_palette(self.dm.current_theme)
+        self._update_save_status_style(palette, is_editing=False)
 
     def handle_connection_request(self, node):
         if not self.pending_connection_source:
@@ -406,8 +442,8 @@ class MindMapTab(QWidget):
             self.trigger_autosave()
 
     def trigger_autosave(self):
-        self.lbl_save_status.setText("✏️ Editing...")
-        self.lbl_save_status.setStyleSheet("background: rgba(0, 0, 0, 100); color: #ffb74d; border-radius: 4px; border: none; font-size: 11px;")
+        palette = ThemeManager.get_palette(self.dm.current_theme)
+        self._update_save_status_style(palette, is_editing=True)
         self.autosave_timer.start()
 
     def save_map_data_silent(self):
@@ -430,8 +466,8 @@ class MindMapTab(QWidget):
         self.dm.data["mind_maps"][self.current_map_id] = map_data
         self.dm.save_data()
         
-        self.lbl_save_status.setText("💾 Saved")
-        self.lbl_save_status.setStyleSheet("background: rgba(0, 0, 0, 100); color: #81c784; border-radius: 4px; border: none; font-size: 11px;")
+        palette = ThemeManager.get_palette(self.dm.current_theme)
+        self._update_save_status_style(palette, is_editing=False)
 
     def load_map_data(self):
         self.scene.clear(); self.nodes = {}; self.connections = []

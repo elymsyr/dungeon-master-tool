@@ -5,6 +5,7 @@ from PyQt6.QtGui import (QPixmap, QBrush, QColor, QPen, QAction, QPainter,
                          QWheelEvent, QCursor, QPainterPath, QFont)
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF
 from core.locales import tr
+from core.theme_manager import ThemeManager
 
 class TimelineConnectionItem(QGraphicsPathItem):
     def __init__(self, path, color, start_id, end_id):
@@ -24,7 +25,11 @@ class TimelinePinItem(QGraphicsRectItem):
         self.entity_name = entity_name
         self.session_id = session_id
         self.callback_action = callback_action
-        final_color = color if color else ("#42a5f5" if entity_name else "#ffb300")
+        if not color:
+            p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+            final_color = p.get("condition_default_bg", "#42a5f5") if entity_name else p.get("hp_bar_med", "#ffb300")
+        else:
+            final_color = color
         self.setBrush(QBrush(QColor(final_color)))
         pen = QPen(Qt.GlobalColor.white if self.session_id else Qt.GlobalColor.black, 2)
         self.setPen(pen)
@@ -44,9 +49,10 @@ class TimelinePinItem(QGraphicsRectItem):
 
     def contextMenuEvent(self, event):
         menu = QMenu()
-        menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; }")
+        p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+        menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }}")
         if self.session_id:
-            act_go = QAction("📜 " + tr("MENU_GOTO_SESSION"), menu)
+            act_go = QAction(tr("MENU_GOTO_SESSION"), menu)
             act_go.triggered.connect(lambda: self.callback_action("goto_session", self))
             menu.addAction(act_go); menu.addSeparator()
         
@@ -72,7 +78,7 @@ class MapPinItem(QGraphicsEllipseItem):
         self.pin_id = pin_id; self.entity_id = entity_id; self.name = name; self.note = note; self.callback_action = callback_action 
         self.setBrush(QBrush(QColor(color)))
         self.setPen(QPen(Qt.GlobalColor.white, 2))
-        tooltip = name + (f"\n📝 {note}" if note else "")
+        tooltip = name + (f"\n{tr('LBL_ICON_EDIT')} {note}" if note else "")
         self.setToolTip(tooltip); self.setZValue(10); self.setCursor(Qt.CursorShape.PointingHandCursor); self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
 
     def mousePressEvent(self, event):
@@ -86,7 +92,8 @@ class MapPinItem(QGraphicsEllipseItem):
 
     def _show_menu(self, pos):
         menu = QMenu()
-        menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; }")
+        p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+        menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }}")
         act_inspect = QAction(tr("MENU_CTX_INSPECT"), menu)
         act_note = QAction(tr("MENU_EDIT_NOTE"), menu)
         act_color = QAction(tr("MENU_CHANGE_COLOR"), menu)
@@ -173,7 +180,8 @@ class MapViewer(QGraphicsView):
                 if pid in coords:
                     start_pt = coords[pid]; end_pt = (pin["x"], pin["y"])
                     path = QPainterPath(); path.moveTo(start_pt[0], start_pt[1]); path.lineTo(end_pt[0], end_pt[1])
-                    conn_item = TimelineConnectionItem(path, "#ffb300", start_id=pid, end_id=pin["id"])
+                    p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+                    conn_item = TimelineConnectionItem(path, p.get("hp_bar_med", "#ffb300"), start_id=pid, end_id=pin["id"])
                     self.scene.addItem(conn_item)
 
     def start_move_mode(self, pin_id, p_type="entity"):
@@ -216,7 +224,9 @@ class MapViewer(QGraphicsView):
         if item and (isinstance(item, TimelinePinItem) or isinstance(item, MapPinItem)): 
             super().contextMenuEvent(event); return
         if not self.map_item: return
-        menu = QMenu(); menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; }")
+        menu = QMenu(); 
+        p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+        menu.setStyleSheet(f"QMenu {{ background-color: f'{p.get('ui_floating_bg', '#333')}'; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }}")
         act_add = QAction(tr("MENU_CTX_PIN"), self); menu.addAction(act_add)
         scene_pos = self.mapToScene(event.pos())
         if self.map_item.boundingRect().contains(scene_pos) and menu.exec(event.globalPos()) == act_add:
