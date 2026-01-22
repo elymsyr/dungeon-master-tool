@@ -5,7 +5,6 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGraphicsView,
 from PyQt6.QtGui import QBrush, QColor, QPainter, QCursor, QPen, QPixmap, QAction
 from PyQt6.QtCore import Qt, QRectF, QPointF, QTimer
 
-from ui.tabs.database_tab import DraggableListWidget, EntityListItemWidget
 from ui.widgets.markdown_editor import MarkdownEditor
 from ui.widgets.npc_sheet import NpcSheet
 from ui.widgets.aspect_ratio_label import AspectRatioLabel
@@ -53,11 +52,17 @@ class CustomGraphicsView(QGraphicsView):
             super().contextMenuEvent(event)
 
     def wheelEvent(self, event):
+        # 1. İmlecin altındaki item'ı bul
         item = self.itemAt(event.position().toPoint())
-        if isinstance(item, QGraphicsProxyWidget):
-            event.ignore()
-            return super().wheelEvent(event) 
         
+        # 2. Eğer bir Proxy Widget (yani Editor veya NpcSheet) ise
+        if isinstance(item, QGraphicsProxyWidget):
+            # Olayı yoksayarak alt widget'a (ScrollArea) gitmesini sağla
+            event.ignore()
+            # return super().wheelEvent(event) # Gerekirse açılabilir ama ignore yeterli olmalı
+            return 
+        
+        # 3. Boşluktaysa veya Proxy olmayan bir şeydeyse ZOOM yap
         zoom_in = 1.15
         zoom_out = 1 / 1.15
         if event.angleDelta().y() > 0: self.scale(zoom_in, zoom_in)
@@ -76,7 +81,6 @@ class CustomGraphicsView(QGraphicsView):
         event.accept()
 
 class FloatingControls(QWidget):
-    """(Değişiklik yok)"""
     def __init__(self, view_ref, parent=None):
         super().__init__(parent)
         self.view = view_ref
@@ -120,28 +124,16 @@ class MindMapTab(QWidget):
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0); main_layout.setSpacing(0)
         
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        
-        sidebar = QWidget()
-        sidebar_layout = QVBoxLayout(sidebar)
-        sidebar_layout.setContentsMargins(0, 0, 0, 0)
-        self.list_widget = DraggableListWidget()
-        self.list_widget.setStyleSheet("QListWidget { border: none; border-right: 1px solid #333; background-color: #222; }")
-        sidebar_header = QFrame()
-        sidebar_header.setStyleSheet("background-color: #2b2b2b; border-bottom: 1px solid #333;")
-        sh_layout = QHBoxLayout(sidebar_header)
-        btn_refresh = QPushButton("🔄 Load")
-        btn_refresh.clicked.connect(self.refresh_entity_list)
-        sh_layout.addWidget(btn_refresh)
-        sidebar_layout.addWidget(sidebar_header)
-        sidebar_layout.addWidget(self.list_widget)
-        self.refresh_entity_list()
+        # Sidebar kaldırıldı (Global Sidebar kullanılıyor)
+        # Sadece Canvas alanı var
         
         canvas_container = QWidget()
         canvas_layout = QVBoxLayout(canvas_container)
         canvas_layout.setContentsMargins(0, 0, 0, 0); canvas_layout.setSpacing(0)
+        
         self.scene = MindMapScene()
         self.scene.setSceneRect(-100000, -100000, 200000, 200000)
+        
         self.view = CustomGraphicsView(self.scene, self)
         canvas_layout.addWidget(self.view)
         
@@ -156,12 +148,7 @@ class MindMapTab(QWidget):
         self.lbl_save_status.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         overlay_layout.addWidget(self.lbl_save_status, 0, 1, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
 
-        splitter.addWidget(sidebar)
-        splitter.addWidget(canvas_container)
-        splitter.setSizes([220, 800])
-        splitter.setCollapsible(0, True)
-        
-        main_layout.addWidget(splitter)
+        main_layout.addWidget(canvas_container)
 
     # --- PROJECTION LOGIC ---
     def handle_projection_request(self, node):
@@ -188,20 +175,6 @@ class MindMapTab(QWidget):
 
         if full_path and self.main_window_ref:
             self.main_window_ref.projection_manager.add_image(full_path)
-
-    # --- REFRESH & CREATE ---
-    def refresh_entity_list(self):
-        self.list_widget.clear()
-        for eid, data in self.dm.data["entities"].items():
-            name = data.get("name", "Unknown")
-            cat = data.get("type", "NPC")
-            item = EntityListItemWidget(name, cat)
-            from PyQt6.QtWidgets import QListWidgetItem
-            l_item = QListWidgetItem()
-            l_item.setSizeHint(item.sizeHint())
-            l_item.setData(Qt.ItemDataRole.UserRole, eid)
-            self.list_widget.addItem(l_item)
-            self.list_widget.setItemWidget(l_item, item)
 
     def show_canvas_context_menu(self, global_pos, scene_pos):
         menu = QMenu()
@@ -235,7 +208,6 @@ class MindMapTab(QWidget):
         node.positionChanged.connect(self.trigger_autosave)
         node.sizeChanged.connect(self.trigger_autosave)
         
-        # nodeReleased sinyali artık kullanılmıyor (Drop to Project yok)
         node.requestProjection.connect(self.handle_projection_request) 
         
         self.scene.addItem(node)
@@ -248,7 +220,9 @@ class MindMapTab(QWidget):
         editor = MarkdownEditor(text=content, placeholder="Not al...")
         editor.set_data_manager(self.dm)
         editor.textChanged.connect(self.trigger_autosave)
-        editor.set_mind_map_style()
+        # Şeffaf mod ve Gömülü mod
+        editor.set_mind_map_style() 
+        
         node = self.create_node_base(node_id, editor, x, y, w, h, "note")
         return node
 
@@ -278,7 +252,7 @@ class MindMapTab(QWidget):
         node = self.create_node_base(None, sheet, x, y, w, h, "entity", {"eid": eid})
         return node
 
-    # ... (Geri kalan connection, delete, save, load metodları aynı) ...
+    # --- CONNECTIONS & SAVE/LOAD ---
     def handle_connection_request(self, node):
         if not self.pending_connection_source:
             self.pending_connection_source = node

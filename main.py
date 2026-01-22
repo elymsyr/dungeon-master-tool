@@ -16,6 +16,7 @@ from core.locales import tr
 from ui.soundpad_panel import SoundpadPanel
 from ui.widgets.projection_manager import ProjectionManager
 from ui.tabs.mind_map_tab import MindMapTab
+from ui.widgets.entity_sidebar import EntitySidebar
 
 class MainWindow(QMainWindow):
     def __init__(self, data_manager):
@@ -115,33 +116,54 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(toolbar)
         # ---------------------
 
-        # --- CHANGED: Use QSplitter instead of QHBoxLayout for content ---
+        # --- ANA İÇERİK YAPISI (SPLITTER) ---
+        # [ Sidebar | [ Tabs ] | Soundpad ]
+        
         self.content_splitter = QSplitter(Qt.Orientation.Horizontal)
         self.content_splitter.setHandleWidth(4)
         
+        # 1. SOL PANEL: Global Entity Sidebar
+        self.entity_sidebar = EntitySidebar(self.data_manager)
+        self.entity_sidebar.item_double_clicked.connect(self.on_entity_selected)
+        
+        self.content_splitter.addWidget(self.entity_sidebar)
+        
+        # 2. ORTA PANEL: Sekmeler
         self.tabs = QTabWidget()
+        
         self.db_tab = DatabaseTab(self.data_manager, self.player_window)
         self.tabs.addTab(self.db_tab, tr("TAB_DB"))
+        
         self.mind_map_tab = MindMapTab(self.data_manager, main_window_ref=self)
         self.tabs.addTab(self.mind_map_tab, tr("TAB_MIND_MAP"))
+        
         self.map_tab = MapTab(self.data_manager, self.player_window, self) 
         self.tabs.addTab(self.map_tab, tr("TAB_MAP")) 
+        
         self.session_tab = SessionTab(self.data_manager)
         self.tabs.addTab(self.session_tab, tr("TAB_SESSION"))
         
+        self.content_splitter.addWidget(self.tabs)
+        
+        # 3. SAĞ PANEL: Soundpad
         self.soundpad_panel = SoundpadPanel()
         self.soundpad_panel.setVisible(False)
         self.soundpad_panel.theme_loaded_with_shortcuts.connect(self.setup_soundpad_shortcuts)
         
-        self.content_splitter.addWidget(self.tabs)
         self.content_splitter.addWidget(self.soundpad_panel)
         
-        # Set stretch factors: Tabs get all extra space
-        self.content_splitter.setStretchFactor(0, 1)
-        self.content_splitter.setStretchFactor(1, 0)
+        # Set stretch factors and sizes
+        # Sidebar: 0 (Fixed-ish), Tabs: 1 (Expand), Soundpad: 0
+        self.content_splitter.setStretchFactor(0, 0)
+        self.content_splitter.setStretchFactor(1, 1)
+        self.content_splitter.setStretchFactor(2, 0)
         
-        # Ensure Soundpad can be fully collapsed/hidden by the layout engine if needed
-        self.content_splitter.setCollapsible(1, True)
+        # Sidebar ve Soundpad tamamen kapanabilir
+        self.content_splitter.setCollapsible(0, True)
+        self.content_splitter.setCollapsible(2, True)
+        
+        # Başlangıç boyutları (Sidebar: 300px, Tabs: Geniş, Soundpad: 0/Gizli)
+        self.content_splitter.setSizes([300, 1000, 0])
         
         main_layout.addWidget(self.content_splitter)
 
@@ -182,12 +204,16 @@ class MainWindow(QMainWindow):
         self.btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
         self.lbl_campaign.setText(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
         self.tabs.setTabText(0, tr("TAB_DB"))
-        self.tabs.setTabText(1, tr("TAB_MAP"))
-        self.tabs.setTabText(2, tr("TAB_SESSION"))
+        self.tabs.setTabText(1, tr("TAB_MIND_MAP")) # Yeni Tab
+        self.tabs.setTabText(2, tr("TAB_MAP"))
+        self.tabs.setTabText(3, tr("TAB_SESSION"))
+        
         if hasattr(self.db_tab, "retranslate_ui"): self.db_tab.retranslate_ui()
         if hasattr(self.map_tab, "retranslate_ui"): self.map_tab.retranslate_ui()
         if hasattr(self.session_tab, "retranslate_ui"): self.session_tab.retranslate_ui()
         if hasattr(self.soundpad_panel, "retranslate_ui"): self.soundpad_panel.retranslate_ui()
+        if hasattr(self.entity_sidebar, "retranslate_ui"): self.entity_sidebar.retranslate_ui()
+        
         self.lbl_theme.setText(tr("LBL_THEME"))
         for i, (_, display_name) in enumerate(self.theme_list):
             self.combo_theme.setItemText(i, tr(display_name) if display_name.startswith("THEME_") else display_name)
@@ -203,6 +229,18 @@ class MainWindow(QMainWindow):
         # With QSplitter, setVisible works correctly to hide/show the pane
         self.soundpad_panel.setVisible(not is_visible)
         self.btn_toggle_sound.setChecked(not is_visible)
+        
+        # Eğer görünür oluyorsa, soundpad için biraz yer açmaya çalışabiliriz
+        if not is_visible:
+            sizes = self.content_splitter.sizes()
+            # Eğer soundpad kapalıysa (size=0), ona yer aç (örn: 300px)
+            if sizes[-1] == 0:
+                new_size = 300
+                total = sum(sizes)
+                # Diğerlerinden kıs
+                sizes[1] -= new_size
+                sizes[-1] = new_size
+                self.content_splitter.setSizes(sizes)
     
     def change_theme(self, index):
         """Changes the application theme."""
@@ -270,6 +308,21 @@ class MainWindow(QMainWindow):
         """Sets flag to switch world and closes window."""
         self.switch_world_requested = True
         self.close()
+
+    def on_entity_selected(self, eid):
+        """Sidebar'dan bir öğeye çift tıklandığında aktif sekmeye göre işlem yap."""
+        current_idx = self.tabs.currentIndex()
+        current_widget = self.tabs.widget(current_idx)
+        
+        # Eğer aktif sekme DatabaseTab ise, orada kartı aç
+        if current_widget == self.db_tab:
+            self.db_tab.open_entity_tab(eid)
+            
+        # Diğer sekmelerdeyken (Map, Session, MindMap) otomatik olarak Database sekmesine geçip kartı aç
+        # Mind Map'te direkt node oluşturmak yerine kart açmayı tercih ettik (daha az kafa karıştırıcı)
+        else:
+            self.tabs.setCurrentWidget(self.db_tab)
+            self.db_tab.open_entity_tab(eid)
 
 if __name__ == "__main__":
     QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
