@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QStackedWidget, QTextBrowser, QHBoxLayout
 from PyQt6.QtCore import Qt, QUrl
+from core.theme_manager import ThemeManager
 from PyQt6.QtGui import QPixmap
 from ui.widgets.image_viewer import ImageViewer
 from PyQt6.QtGui import QImageReader
@@ -27,14 +28,15 @@ class PlayerWindow(QMainWindow):
         
         # PAGE 1: CHARACTER SHEET
         self.stat_viewer = QTextBrowser()
-        self.stat_viewer.setStyleSheet("""
-            QTextBrowser {
-                background-color: #1a1a1a;
-                color: #e0e0e0;
+        p = ThemeManager.get_palette("dark") # Default
+        self.stat_viewer.setStyleSheet(f"""
+            QTextBrowser {{
+                background-color: {p.get('markdown_bg', '#1a1a1a')};
+                color: {p.get('markdown_text', '#e0e0e0')};
                 border: none;
                 padding: 20px;
                 font-family: 'Segoe UI', serif;
-            }
+            }}
         """)
         self.stack.addWidget(self.stat_viewer)
 
@@ -127,7 +129,8 @@ class PlayerWindow(QMainWindow):
         if self.pdf_viewer is None:
             from PyQt6.QtWebEngineWidgets import QWebEngineView
             self.pdf_viewer = QWebEngineView()
-            self.pdf_viewer.setStyleSheet("background-color: #333;")
+            p = ThemeManager.get_palette("dark")
+            self.pdf_viewer.setStyleSheet(f"background-color: {p.get('ui_bg_dark', '#333')};")
             self.stack.addWidget(self.pdf_viewer)
             self.pdf_viewer_index = self.stack.count() - 1
             self.pdf_viewer.settings().setAttribute(self.pdf_viewer.settings().WebAttribute.PluginsEnabled, True)

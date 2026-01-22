@@ -5,20 +5,16 @@ from PyQt6.QtGui import (QPixmap, QBrush, QColor, QPen, QAction, QPainter,
                          QWheelEvent, QCursor, QPainterPath, QFont)
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRectF
 from core.locales import tr
+from core.theme_manager import ThemeManager
 
 class TimelineConnectionItem(QGraphicsPathItem):
-    """
-    Represents the dashed line between two timeline pins.
-    Stores IDs to allow filtering logic to hide the line if an endpoint is hidden.
-    """
     def __init__(self, path, color, start_id, end_id):
         super().__init__(path)
         self.start_id = start_id
         self.end_id = end_id
-        
         pen = QPen(QColor(color), 3, Qt.PenStyle.DashLine)
         self.setPen(pen)
-        self.setZValue(15) # Below pins (20), above map (0)
+        self.setZValue(15) 
 
 class TimelinePinItem(QGraphicsRectItem):
     def __init__(self, x, y, day, note, pin_id, entity_name, color, session_id, callback_action):
@@ -29,7 +25,11 @@ class TimelinePinItem(QGraphicsRectItem):
         self.entity_name = entity_name
         self.session_id = session_id
         self.callback_action = callback_action
-        final_color = color if color else ("#42a5f5" if entity_name else "#ffb300")
+        if not color:
+            p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+            final_color = p.get("condition_default_bg", "#42a5f5") if entity_name else p.get("hp_bar_med", "#ffb300")
+        else:
+            final_color = color
         self.setBrush(QBrush(QColor(final_color)))
         pen = QPen(Qt.GlobalColor.white if self.session_id else Qt.GlobalColor.black, 2)
         self.setPen(pen)
@@ -49,9 +49,10 @@ class TimelinePinItem(QGraphicsRectItem):
 
     def contextMenuEvent(self, event):
         menu = QMenu()
-        menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; }")
+        p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+        menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }}")
         if self.session_id:
-            act_go = QAction("📜 " + tr("MENU_GOTO_SESSION"), menu)
+            act_go = QAction(tr("MENU_GOTO_SESSION"), menu)
             act_go.triggered.connect(lambda: self.callback_action("goto_session", self))
             menu.addAction(act_go); menu.addSeparator()
         
@@ -77,7 +78,7 @@ class MapPinItem(QGraphicsEllipseItem):
         self.pin_id = pin_id; self.entity_id = entity_id; self.name = name; self.note = note; self.callback_action = callback_action 
         self.setBrush(QBrush(QColor(color)))
         self.setPen(QPen(Qt.GlobalColor.white, 2))
-        tooltip = name + (f"\n📝 {note}" if note else "")
+        tooltip = name + (f"\n{tr('LBL_ICON_EDIT')} {note}" if note else "")
         self.setToolTip(tooltip); self.setZValue(10); self.setCursor(Qt.CursorShape.PointingHandCursor); self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
 
     def mousePressEvent(self, event):
@@ -91,7 +92,8 @@ class MapPinItem(QGraphicsEllipseItem):
 
     def _show_menu(self, pos):
         menu = QMenu()
-        menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; }")
+        p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+        menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }}")
         act_inspect = QAction(tr("MENU_CTX_INSPECT"), menu)
         act_note = QAction(tr("MENU_EDIT_NOTE"), menu)
         act_color = QAction(tr("MENU_CHANGE_COLOR"), menu)
@@ -111,8 +113,10 @@ class MapViewer(QGraphicsView):
     pin_created_signal = pyqtSignal(float, float)
     pin_moved_signal = pyqtSignal(str, float, float)
     timeline_moved_signal = pyqtSignal(str, float, float)
-    link_placed_signal = pyqtSignal(float, float) # Connect to new point
-    existing_pin_linked_signal = pyqtSignal(str)  # Connect to existing pin (ID)
+    link_placed_signal = pyqtSignal(float, float) 
+    existing_pin_linked_signal = pyqtSignal(str)
+    # YENİ SİNYAL: Dışarıdan bırakılan entity
+    entity_id_dropped_signal = pyqtSignal(str, float, float)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -123,9 +127,33 @@ class MapViewer(QGraphicsView):
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setBackgroundBrush(QBrush(QColor("#111")))
+        self.setAcceptDrops(True) # Drop kabul et
         self.map_item = None
         self.is_moving_pin = False; self.moving_pin_id = None; self.moving_pin_type = None
         self.is_link_mode = False 
+
+    # --- DRAG & DROP HANDLING ---
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+        else:
+            super().dragEnterEvent(event)
+
+    def dragMoveEvent(self, event):
+        event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        if event.mimeData().hasText():
+            eid = event.mimeData().text()
+            # Mouse pozisyonunu sahne koordinatına çevir
+            scene_pos = self.mapToScene(event.position().toPoint())
+            
+            # Harita alanının içinde mi kontrol et
+            if self.map_item and self.map_item.boundingRect().contains(scene_pos):
+                self.entity_id_dropped_signal.emit(eid, scene_pos.x(), scene_pos.y())
+                event.acceptProposedAction()
+        else:
+            super().dropEvent(event)
 
     def load_map(self, pixmap):
         self.scene.clear()
@@ -141,74 +169,43 @@ class MapViewer(QGraphicsView):
     def draw_timeline_connections(self, timeline_data):
         coords = {p["id"]: (p["x"], p["y"]) for p in timeline_data}
         for pin in timeline_data:
-            # Collect all parents
             parents = []
             if pin.get("parent_ids"):
                 parents.extend(pin["parent_ids"])
-            
-            # Legacy Single ID (Add if not in list)
             legacy_parent = pin.get("parent_id")
             if legacy_parent and legacy_parent not in parents:
                 parents.append(legacy_parent)
-            
-            # Remove duplicates
             parents = list(set(parents))
-
-            # Draw a line for each parent
             for pid in parents:
                 if pid in coords:
-                    start_pt = coords[pid]
-                    end_pt = (pin["x"], pin["y"])
-                    path = QPainterPath()
-                    path.moveTo(start_pt[0], start_pt[1])
-                    path.lineTo(end_pt[0], end_pt[1])
-                    
-                    # USE THE NEW CLASS HERE
-                    conn_item = TimelineConnectionItem(path, "#ffb300", start_id=pid, end_id=pin["id"])
+                    start_pt = coords[pid]; end_pt = (pin["x"], pin["y"])
+                    path = QPainterPath(); path.moveTo(start_pt[0], start_pt[1]); path.lineTo(end_pt[0], end_pt[1])
+                    p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+                    conn_item = TimelineConnectionItem(path, p.get("hp_bar_med", "#ffb300"), start_id=pid, end_id=pin["id"])
                     self.scene.addItem(conn_item)
 
     def start_move_mode(self, pin_id, p_type="entity"):
-        self.is_moving_pin = True
-        self.moving_pin_id = pin_id
-        self.moving_pin_type = p_type
-        self.viewport().setCursor(Qt.CursorShape.CrossCursor)
-        self.setDragMode(QGraphicsView.DragMode.NoDrag)
+        self.is_moving_pin = True; self.moving_pin_id = pin_id; self.moving_pin_type = p_type
+        self.viewport().setCursor(Qt.CursorShape.CrossCursor); self.setDragMode(QGraphicsView.DragMode.NoDrag)
 
     def start_link_mode(self):
-        """Hızlı bağlantı modunu başlatır (Mouse Crosshair olur)."""
-        self.is_link_mode = True
-        self.viewport().setCursor(Qt.CursorShape.CrossCursor)
-        self.setDragMode(QGraphicsView.DragMode.NoDrag)
+        self.is_link_mode = True; self.viewport().setCursor(Qt.CursorShape.CrossCursor); self.setDragMode(QGraphicsView.DragMode.NoDrag)
 
     def cancel_move_mode(self):
-        self.is_moving_pin = False
-        self.is_link_mode = False
-        self.moving_pin_id = None
-        self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
-        self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+        self.is_moving_pin = False; self.is_link_mode = False; self.moving_pin_id = None
+        self.viewport().setCursor(Qt.CursorShape.ArrowCursor); self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
 
     def mousePressEvent(self, event):
-        # BAĞLANTI MODUNDA TIKLAMA DENETİMİ
         if self.is_link_mode:
             if event.button() == Qt.MouseButton.LeftButton:
-                # 1. Check if we clicked an EXISTING timeline item first
                 item = self.itemAt(event.pos())
                 if isinstance(item, TimelinePinItem):
-                    self.existing_pin_linked_signal.emit(item.pin_id)
-                    self.cancel_move_mode()
-                    return
-
-                # 2. If not, treat as placing a NEW pin
+                    self.existing_pin_linked_signal.emit(item.pin_id); self.cancel_move_mode(); return
                 scene_pos = self.mapToScene(event.pos())
                 if self.map_item and self.map_item.boundingRect().contains(scene_pos):
-                    self.link_placed_signal.emit(scene_pos.x(), scene_pos.y())
-                    self.cancel_move_mode()
-                    return
+                    self.link_placed_signal.emit(scene_pos.x(), scene_pos.y()); self.cancel_move_mode(); return
             elif event.button() == Qt.MouseButton.RightButton:
-                self.cancel_move_mode()
-                return
-
-        # STANDART TAŞIMA MODU
+                self.cancel_move_mode(); return
         if self.is_moving_pin and event.button() == Qt.MouseButton.LeftButton:
             scene_pos = self.mapToScene(event.pos())
             if self.map_item and self.map_item.boundingRect().contains(scene_pos):
@@ -222,17 +219,15 @@ class MapViewer(QGraphicsView):
 
     def contextMenuEvent(self, event):
         if self.is_moving_pin or self.is_link_mode: 
-            self.cancel_move_mode()
-            return
+            self.cancel_move_mode(); return
         item = self.itemAt(event.pos())
         if item and (isinstance(item, TimelinePinItem) or isinstance(item, MapPinItem)): 
-            super().contextMenuEvent(event)
-            return
+            super().contextMenuEvent(event); return
         if not self.map_item: return
-        menu = QMenu()
-        menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; }")
-        act_add = QAction(tr("MENU_CTX_PIN"), self)
-        menu.addAction(act_add)
+        menu = QMenu(); 
+        p = ThemeManager.get_palette(ThemeManager.get_active_theme() if hasattr(ThemeManager, 'get_active_theme') else "dark")
+        menu.setStyleSheet(f"QMenu {{ background-color: f'{p.get('ui_floating_bg', '#333')}'; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }}")
+        act_add = QAction(tr("MENU_CTX_PIN"), self); menu.addAction(act_add)
         scene_pos = self.mapToScene(event.pos())
         if self.map_item.boundingRect().contains(scene_pos) and menu.exec(event.globalPos()) == act_add:
             self.pin_created_signal.emit(scene_pos.x(), scene_pos.y())
