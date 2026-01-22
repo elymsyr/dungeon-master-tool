@@ -4,25 +4,47 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, QTextBrowser,
 from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QEvent
 from PyQt6.QtGui import QTextCursor, QDesktopServices
 import markdown
+from core.theme_manager import ThemeManager
 
 class MentionPopup(QListWidget):
     selected = pyqtSignal(str, str)
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.ToolTip | Qt.WindowType.FramelessWindowHint)
-        self.setFixedWidth(250); self.setMaximumHeight(200)
+        self.setFixedWidth(250)
+        self.setMaximumHeight(200)
         self.itemClicked.connect(self.on_item_clicked)
-        self.setStyleSheet("QListWidget { border: 1px solid #444; background-color: #252526; color: #ccc; outline: none; } QListWidget::item { padding: 5px; } QListWidget::item:selected { background-color: #094771; color: white; }")
+        self.setStyleSheet("""
+            QListWidget { 
+                border: 1px solid #444; 
+                background-color: #252526; 
+                color: #ccc; 
+                outline: none; 
+            } 
+            QListWidget::item { padding: 5px; } 
+            QListWidget::item:selected { background-color: #094771; color: white; }
+        """)
         self.all_mentions = []
-    def set_items(self, mentions): self.all_mentions = mentions; self.update_filter("")
+
+    def set_items(self, mentions):
+        self.all_mentions = mentions
+        self.update_filter("")
+
     def update_filter(self, query):
-        self.clear(); query = query.lower()
+        self.clear()
+        query = query.lower()
         for m in self.all_mentions:
             if not query or query in m['name'].lower():
-                item = QListWidgetItem(f"{m['name']}"); item.setData(Qt.ItemDataRole.UserRole, m['id']); self.addItem(item)
-        if self.count() > 0: self.setCurrentRow(0)
+                item = QListWidgetItem(f"{m['name']}")
+                item.setData(Qt.ItemDataRole.UserRole, m['id'])
+                self.addItem(item)
+        if self.count() > 0:
+            self.setCurrentRow(0)
+
     def on_item_clicked(self, item):
-        if item: self.selected.emit(item.text(), item.data(Qt.ItemDataRole.UserRole))
+        if item:
+            self.selected.emit(item.text(), item.data(Qt.ItemDataRole.UserRole))
         self.hide()
 
 class ClickableTextBrowser(QTextBrowser):
@@ -111,6 +133,9 @@ class MarkdownEditor(QWidget):
         self.mention_start_pos = -1
         self.is_transparent_mode = False
         
+        # Varsayılan paleti al (Dark)
+        self.current_palette = ThemeManager.get_palette("dark")
+        
         self.popup = MentionPopup(self)
         self.popup.selected.connect(self.insert_mention)
         
@@ -147,7 +172,8 @@ class MarkdownEditor(QWidget):
         self.btn_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_toggle.clicked.connect(self.toggle_mode)
         
-        self.apply_default_style()
+        # İlk stil uygulaması
+        self.apply_styles()
 
         if text.strip():
             self.btn_toggle.setChecked(False)
@@ -160,53 +186,96 @@ class MarkdownEditor(QWidget):
         """Mind Map içinde kullanılıyorsa True yap."""
         self.viewer.embedded_mode = enabled
 
-    def apply_default_style(self):
-        self.is_transparent_mode = False
-        style = """
-            QTextEdit#mdEditor, QTextBrowser#mdViewer {
-                border: 1px solid rgba(128, 128, 128, 0.3);
+    def set_transparent_mode(self, enabled):
+        """MindMap gibi yerlerde şeffaf arka plan kullanmak için."""
+        self.is_transparent_mode = enabled
+        self.apply_styles()
+
+    def set_mind_map_style(self):
+        """Legacy compatibility wrapper."""
+        self.set_embedded_mode(True)
+        self.set_transparent_mode(True)
+
+    def refresh_theme(self, palette):
+        """Dışarıdan (MindMapNode veya Main Window) tema değiştiğinde çağrılır."""
+        self.current_palette = palette
+        self.apply_styles()
+
+    def apply_styles(self):
+        """Aktif palet ve moda (şeffaf/normal) göre stili uygular."""
+        p = self.current_palette
+        
+        if self.is_transparent_mode:
+            # Mind Map Modu: Arka plan şeffaf
+            bg_color = "transparent"
+            border = "none"
+            # Not kağıdı üzerindeki yazı rengi paletten gelir
+            text_color = p.get("node_text", "#000000") 
+            # Editörde buton arka planı
+            btn_bg = "rgba(0,0,0,0.1)"
+        else:
+            # Standart Mod (Sheet içi): Arka plan hafif koyu/açık
+            bg_color = "rgba(0, 0, 0, 0.2)"
+            # Eğer canvas background çok açıksa (Light/Frost), text edit arka planını biraz daha koyult
+            if p.get("canvas_bg", "#000000").startswith("#f"): 
+                 bg_color = "rgba(255, 255, 255, 0.6)"
+            
+            border = "1px solid rgba(128, 128, 128, 0.3)"
+            text_color = p.get("html_text", "#e0e0e0")
+            btn_bg = "rgba(60,60,60,0.8)"
+
+        style = f"""
+            QTextEdit#mdEditor, QTextBrowser#mdViewer {{
+                background-color: {bg_color};
+                border: {border};
                 border-radius: 4px;
                 padding: 10px;
-                background-color: rgba(0, 0, 0, 0.2);
-                color: #e0e0e0;
+                color: {text_color};
                 font-family: 'Segoe UI', sans-serif;
                 font-size: 14px;
-            }
-            QPushButton {
-                background-color: rgba(60,60,60,0.8);
+            }}
+            QPushButton {{
+                background-color: {btn_bg};
                 border: none;
                 border-radius: 3px;
-            }
+                color: {text_color};
+            }}
+            QPushButton:hover {{ background-color: rgba(128,128,128,0.3); }}
         """
         self.setStyleSheet(style)
         self.update_view_content()
 
-    def set_mind_map_style(self):
-        self.is_transparent_mode = True
-        self.set_embedded_mode(True) # Önemli: Tıklama davranışını değiştir
-        style = """
-            QTextEdit#mdEditor, QTextBrowser#mdViewer {
-                background-color: transparent;
-                border: none;
-                padding: 15px;
-                color: #212121;
-                font-family: 'Segoe UI', sans-serif;
-                font-size: 14px;
-            }
-            QPushButton {
-                background-color: rgba(0,0,0,0.1); 
-                border: none; 
-                border-radius: 3px;
-                color: #212121;
-            }
-            QPushButton:hover { background-color: rgba(0,0,0,0.2); }
+    def update_view_content(self):
+        raw_text = self.editor.toPlainText()
+        html_content = markdown.markdown(raw_text, extensions=['extra', 'nl2br'])
+        
+        p = self.current_palette
+        
+        # Renkleri paletten al
+        if self.is_transparent_mode:
+            c_text = p.get("node_text", "#000000")
+            c_link = p.get("html_link", "#1565c0") # Mind Map üzerinde linkler
+            c_head = p.get("html_header", "#d84315")
+        else:
+            c_text = p.get("html_text", "#e0e0e0")
+            c_link = p.get("html_link", "#42a5f5")
+            c_head = p.get("html_header", "#ffb74d")
+        
+        styled_html = f"""
+        <style>
+            body {{ font-family: 'Segoe UI'; font-size: 14px; color: {c_text}; margin: 0; padding: 0; }} 
+            a {{ color: {c_link}; text-decoration: none; font-weight: bold; }} 
+            h1, h2, h3 {{ color: {c_head}; margin: 5px 0; font-weight: bold; }} 
+            p {{ margin: 5px 0; }} 
+            ul {{ margin: 0; padding-left: 20px; }} 
+            code {{ background-color: rgba(128,128,128,0.3); padding: 2px 4px; border-radius: 3px; }}
+        </style>
+        {html_content}
         """
-        self.setStyleSheet(style)
-        self.update_view_content()
+        self.viewer.setHtml(styled_html)
 
     def set_data_manager(self, dm): 
         self.dm = dm
-        # Editöre de DataManager referansını ver (Drag&Drop için)
         self.editor.set_data_manager(dm)
 
     def switch_to_edit_mode(self):
@@ -222,13 +291,18 @@ class MarkdownEditor(QWidget):
             if event.type() == QEvent.Type.KeyPress:
                 key = event.key()
                 if key == Qt.Key.Key_Up:
-                    self.popup.setCurrentRow(max(0, self.popup.currentRow() - 1)); return True
+                    self.popup.setCurrentRow(max(0, self.popup.currentRow() - 1))
+                    return True
                 elif key == Qt.Key.Key_Down:
-                    self.popup.setCurrentRow(min(self.popup.count() - 1, self.popup.currentRow() + 1)); return True
+                    self.popup.setCurrentRow(min(self.popup.count() - 1, self.popup.currentRow() + 1))
+                    return True
                 elif key in [Qt.Key.Key_Enter, Qt.Key.Key_Return, Qt.Key.Key_Tab]:
-                    if self.popup.currentItem(): self.popup.on_item_clicked(self.popup.currentItem()); return True
+                    if self.popup.currentItem(): 
+                        self.popup.on_item_clicked(self.popup.currentItem())
+                    return True
                 elif key == Qt.Key.Key_Escape:
-                    self.popup.hide(); return True
+                    self.popup.hide()
+                    return True
         
         # Shift+Enter ile Kaydetme ve Çıkma
         if obj is self.editor and event.type() == QEvent.Type.KeyPress:
@@ -241,26 +315,74 @@ class MarkdownEditor(QWidget):
     def _on_text_changed(self):
         self.textChanged.emit()
         if not self.dm: return
-        cursor = self.editor.textCursor(); pos = cursor.position(); cursor.select(QTextCursor.SelectionType.LineUnderCursor); line_text = cursor.selectedText()
+        
+        cursor = self.editor.textCursor()
+        cursor.select(QTextCursor.SelectionType.LineUnderCursor)
+        line_text = cursor.selectedText()
+        
         idx = line_text.rfind("@")
         if idx != -1:
             query = line_text[idx+1:]
-            if " " in query: self.popup.hide(); return
+            if " " in query: 
+                self.popup.hide()
+                return
+            
+            # Start position needs to be calculated relative to document
+            # But here we just track logic, simpler is:
             self.mention_start_pos = cursor.selectionStart() + idx
-            if not self.popup.isVisible(): self.popup.set_items(self.dm.get_all_entity_mentions()); self._show_mention_popup()
+            
+            if not self.popup.isVisible(): 
+                self.popup.set_items(self.dm.get_all_entity_mentions())
+                self._show_mention_popup()
+            
             self.popup.update_filter(query)
-        else: self.popup.hide()
+        else: 
+            self.popup.hide()
 
     def _show_mention_popup(self):
-        cursor_rect = self.editor.cursorRect(); global_pos = self.editor.mapToGlobal(cursor_rect.bottomLeft()); self.popup.move(global_pos + QPoint(0, 5)); self.popup.show()
+        cursor_rect = self.editor.cursorRect()
+        global_pos = self.editor.mapToGlobal(cursor_rect.bottomLeft())
+        self.popup.move(global_pos + QPoint(0, 5))
+        self.popup.show()
 
     def insert_mention(self, name, eid):
-        cursor = self.editor.textCursor(); cursor.setPosition(self.mention_start_pos, QTextCursor.MoveMode.KeepAnchor); cursor.removeSelectedText()
-        link = f"[@{name}](entity://{eid})"; cursor.insertText(link); self.editor.setFocus()
+        cursor = self.editor.textCursor()
+        # Select text from @ to current position to replace it
+        # Note: logic here simplifies "replace whatever was typed after @"
+        cursor.select(QTextCursor.SelectionType.WordUnderCursor) # Simple fallback
+        # Better approach: rely on stored mention_start_pos if valid, 
+        # but for robustness let's just insert at cursor for now if complex.
+        # Re-implementing original robust logic:
+        
+        # Move cursor to end of current word/selection
+        # Then we need to backspace the query. 
+        # But simpler: Just insert the Markdown link.
+        
+        # Let's assume user just finished typing '@something'
+        # We need to replace '@something' with '[@Name](entity://ID)'
+        
+        # Clear selection first
+        cursor.select(QTextCursor.SelectionType.LineUnderCursor)
+        line_text = cursor.selectedText()
+        at_index = line_text.rfind("@")
+        
+        if at_index != -1:
+            # Move cursor to @ position
+            cursor.movePosition(QTextCursor.MoveOperation.StartOfLine)
+            cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.MoveAnchor, at_index)
+            # Select until end of line (or current cursor pos)
+            cursor.movePosition(QTextCursor.MoveOperation.EndOfLine, QTextCursor.MoveMode.KeepAnchor)
+            # Replace
+            link = f"[@{name}](entity://{eid}) "
+            cursor.insertText(link)
+        
+        self.editor.setFocus()
 
     def _on_link_clicked(self, url):
-        if url.scheme() == "entity": self.entity_link_clicked.emit(url.host())
-        else: QDesktopServices.openUrl(url)
+        if url.scheme() == "entity": 
+            self.entity_link_clicked.emit(url.host())
+        else: 
+            QDesktopServices.openUrl(url)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -276,32 +398,13 @@ class MarkdownEditor(QWidget):
             self.stack.setCurrentIndex(1)
         self.btn_toggle.raise_()
 
-    def update_view_content(self):
-        raw_text = self.editor.toPlainText()
-        html_content = markdown.markdown(raw_text, extensions=['extra', 'nl2br'])
-        
-        # Renk Kontrolü
-        c_text = "#212121" if self.is_transparent_mode else "#e0e0e0"
-        c_link = "#1565c0" if self.is_transparent_mode else "#42a5f5"
-        c_high = "#d84315" if self.is_transparent_mode else "#ffb74d"
-        
-        styled_html = f"""
-        <style>
-            body {{ font-family: 'Segoe UI'; font-size: 14px; color: {c_text}; margin: 0; padding: 0; }} 
-            a {{ color: {c_link}; text-decoration: none; font-weight: bold; }} 
-            h1, h2, h3 {{ color: {c_high}; margin: 5px 0; font-weight: bold; }} 
-            p {{ margin: 5px 0; }} 
-            ul {{ margin: 0; padding-left: 20px; }} 
-        </style>
-        {html_content}
-        """
-        self.viewer.setHtml(styled_html)
-
     def toPlainText(self): return self.editor.toPlainText()
+    
     def setText(self, text):
         self.editor.setText(text if text else "")
         self.btn_toggle.setChecked(False)
         self.toggle_mode()
+        
     def setPlaceholderText(self, text): self.editor.setPlaceholderText(text)
     def setMinimumHeight(self, h): self.stack.setMinimumHeight(h); return super().setMinimumHeight(h)
     def setMaximumHeight(self, h): self.stack.setMaximumHeight(h); return super().setMaximumHeight(h)

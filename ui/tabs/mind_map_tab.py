@@ -10,16 +10,44 @@ from ui.widgets.npc_sheet import NpcSheet
 from ui.widgets.aspect_ratio_label import AspectRatioLabel
 from ui.widgets.mind_map_items import MindMapNode, ConnectionLine
 from core.locales import tr
+from core.theme_manager import ThemeManager
 
 class MindMapScene(QGraphicsScene):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setBackgroundBrush(QBrush(QColor("#181818")))
+        # Başlangıçta varsayılan palet (Dark)
+        self.current_palette = ThemeManager.get_palette("dark")
+        self.apply_palette_bg()
         self.grid_mode = True
+
+    def set_palette(self, palette):
+        """Temayı günceller."""
+        self.current_palette = palette
+        self.apply_palette_bg()
+        self.update() # Redraw trigger
+
+    def apply_palette_bg(self):
+        bg_color = self.current_palette.get("canvas_bg", "#181818")
+        self.setBackgroundBrush(QBrush(QColor(bg_color)))
 
     def drawBackground(self, painter, rect):
         super().drawBackground(painter, rect)
         if not self.grid_mode: return
+        
+        # Grid rengini paletten al
+        grid_rgba = self.current_palette.get("grid_color", "rgba(255, 255, 255, 10)")
+        # Eğer string "rgba(...)" formatındaysa QColor bunu direkt anlamayabilir, 
+        # ancak QColor("#hex") formatı kesin çalışır. 
+        # ThemeManager'da renkleri QColor'ın anlayacağı formatta (Hex veya isim) tutmak en iyisidir.
+        # Eğer rgba fonksiyonu string olarak geliyorsa burada manuel parse gerekebilir 
+        # ama QColor kurucusu genellikle CSS formatlarını destekler.
+        # Güvenlik için ThemeManager'da renkleri Hex ve Alpha kanalı olarak tutmak daha iyidir.
+        # Şimdilik QColor(string) deniyoruz.
+        
+        grid_color = QColor(grid_rgba)
+        if not grid_color.isValid():
+            grid_color = QColor(255, 255, 255, 10) # Fallback
+
         grid_size = 40
         left = int(rect.left()) - (int(rect.left()) % grid_size)
         top = int(rect.top()) - (int(rect.top()) % grid_size)
@@ -27,7 +55,8 @@ class MindMapScene(QGraphicsScene):
         for x in range(left, int(rect.right()), grid_size):
             for y in range(top, int(rect.bottom()), grid_size):
                 points.append(QPointF(x, y))
-        painter.setPen(QPen(QColor(255, 255, 255, 10), 2)) 
+        
+        painter.setPen(QPen(grid_color, 2)) 
         painter.drawPoints(points)
 
 class CustomGraphicsView(QGraphicsView):
@@ -82,9 +111,8 @@ class FloatingControls(QWidget):
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8) # Butonlar arası boşluk
+        layout.setSpacing(8)
         
-        # Butonlar (Text based, wider)
         self.btn_in = self._create_btn("Zoom In", lambda: self.view.scale(1.2, 1.2), "Yakınlaş")
         self.btn_out = self._create_btn("Zoom Out", lambda: self.view.scale(1/1.2, 1/1.2), "Uzaklaş")
         self.btn_center = self._create_btn("Center", lambda: self.view.centerOn(0, 0), "Merkeze Git (0,0)")
@@ -99,11 +127,10 @@ class FloatingControls(QWidget):
 
     def _create_btn(self, text, func, tip):
         btn = QPushButton(text)
-        btn.setFixedSize(80, 30) # Daha geniş, daha kısa
+        btn.setFixedSize(80, 30)
         btn.setToolTip(tip)
         btn.clicked.connect(func)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        # CSS ile kompakt ve şık görünüm
         btn.setStyleSheet("""
             QPushButton { 
                 background-color: rgba(40, 40, 40, 230); 
@@ -134,20 +161,23 @@ class MindMapTab(QWidget):
         self.pending_connection_source = None
         self.current_map_id = "default"
         
-        # Harita Layoutu için Autosave
         self.autosave_timer = QTimer()
         self.autosave_timer.setSingleShot(True)
         self.autosave_timer.setInterval(2000) 
         self.autosave_timer.timeout.connect(self.save_map_data_silent)
         
-        # Entity İçeriği için Autosave (Debounce)
         self.entity_autosave_timer = QTimer()
         self.entity_autosave_timer.setSingleShot(True)
-        self.entity_autosave_timer.setInterval(1000) # 1 saniye bekle
+        self.entity_autosave_timer.setInterval(1000)
         self.entity_autosave_timer.timeout.connect(self.process_pending_entity_saves)
-        self.pending_entity_saves = set() # {sheet_ref}
+        self.pending_entity_saves = set()
         
         self.init_ui()
+        
+        # Tema başlangıcı
+        current_theme = self.dm.current_theme # "dark", "ocean" vb.
+        self.apply_theme(current_theme)
+        
         self.load_map_data()
 
     def init_ui(self):
@@ -164,12 +194,10 @@ class MindMapTab(QWidget):
         self.view = CustomGraphicsView(self.scene, self)
         canvas_layout.addWidget(self.view)
         
-        # Floating Controls'a 'self' (tab) referansını gönderiyoruz ki fit_all_content'e erişsin
         self.floating_controls = FloatingControls(self.view, self, self.view)
         
         overlay_layout = QGridLayout(self.view)
         overlay_layout.setContentsMargins(0, 0, 20, 20)
-        # Sağ altta duracak
         overlay_layout.addWidget(self.floating_controls, 1, 1, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
         
         self.lbl_save_status = QPushButton("💾 Saved", self.view)
@@ -180,15 +208,30 @@ class MindMapTab(QWidget):
 
         main_layout.addWidget(canvas_container)
 
+    def apply_theme(self, theme_name):
+        """
+        Main Window tarafından çağrılır.
+        Tüm sahne ve öğelerin rengini ThemeManager'dan çekilen palete göre günceller.
+        """
+        palette = ThemeManager.get_palette(theme_name)
+        
+        # 1. Sahne Arka Planı
+        self.scene.set_palette(palette)
+        
+        # 2. Mevcut Node'lar
+        for node in self.nodes.values():
+            node.update_theme(palette)
+            
+        # 3. Bağlantılar
+        for conn in self.connections:
+            conn.update_theme(palette)
+
     def fit_all_content(self):
-        """Sahnedeki tüm öğeleri ekrana sığdırır."""
         items_rect = self.scene.itemsBoundingRect()
         if items_rect.isEmpty():
             return
-        # Biraz kenar boşluğu bırakarak sığdır
         self.view.fitInView(items_rect, Qt.AspectRatioMode.KeepAspectRatio)
 
-    # --- PROJECTION LOGIC ---
     def handle_projection_request(self, node):
         self.project_node_content(node)
 
@@ -235,10 +278,14 @@ class MindMapTab(QWidget):
             path = self.dm.import_image(f)
             self.create_image_node(None, scene_pos.x(), scene_pos.y(), 300, 300, path)
 
-    # --- NODE CREATION ---
     def create_node_base(self, node_id, widget, x, y, w, h, node_type, extra_data=None):
         node = MindMapNode(node_id, widget, w, h, node_type, extra_data)
         node.setPos(x, y)
+        
+        # Node'u oluştururken mevcut temayı uygula
+        current_theme_name = self.dm.current_theme
+        node.update_theme(ThemeManager.get_palette(current_theme_name))
+        
         node.requestConnection.connect(self.handle_connection_request)
         node.nodeDeleted.connect(self.delete_node)
         
@@ -278,23 +325,21 @@ class MindMapTab(QWidget):
         sheet = NpcSheet(self.dm)
         sheet.setProperty("entity_id", eid)
         sheet.populate_sheet(ent_data)
-        
-        # --- FAZ 2 DEĞİŞİKLİĞİ: Gömülü Mod ve Otomatik Kayıt ---
         sheet.set_embedded_mode(True)
         
-        # Değişiklik olduğunda kuyruğa ekle ve zamanlayıcıyı başlat
         sheet.data_changed.connect(lambda: self.schedule_entity_autosave(sheet))
-        # -------------------------------------------------------
         
+        # NpcSheet stili: ThemeManager bunu handle edebilir ama QSS de lazım.
+        # Burada basitçe sabit renkleri siliyoruz, çünkü MindMapNode artık arka plan rengini çiziyor.
+        # Ancak Sheet içindeki inputların şeffaf olması gerekir.
         sheet.setStyleSheet("""
-            QWidget#sheetContainer { background-color: #2b2b2b; }
-            QLineEdit, QTextEdit, QPlainTextEdit { background-color: #1e1e1e; border: 1px solid #444; color: #eee; }
-            QLabel { color: #eee; }
+            QWidget#sheetContainer { background-color: transparent; }
+            QLineEdit, QTextEdit, QPlainTextEdit { background-color: rgba(0,0,0,0.2); border: 1px solid rgba(128,128,128,0.3); }
         """)
+        
         node = self.create_node_base(None, sheet, x, y, w, h, "entity", {"eid": eid})
         return node
 
-    # --- AUTO-SAVE LOGIC FOR ENTITIES ---
     def schedule_entity_autosave(self, sheet):
         self.pending_entity_saves.add(sheet)
         self.lbl_save_status.setText("✏️ Editing...")
@@ -302,32 +347,19 @@ class MindMapTab(QWidget):
         self.entity_autosave_timer.start()
 
     def process_pending_entity_saves(self):
-        """Kuyruktaki tüm entity kartlarını kaydeder."""
         for sheet in list(self.pending_entity_saves):
             try:
-                # Sheet kapanmış veya silinmiş olabilir, kontrol et
-                if not sheet.isVisible() and not sheet.parent(): 
-                    continue
-                    
+                if not sheet.isVisible() and not sheet.parent(): continue
                 eid = sheet.property("entity_id")
                 data = sheet.collect_data_from_sheet()
-                
                 if eid and data:
                     self.dm.save_entity(eid, data)
                     sheet.is_dirty = False
-            except RuntimeError:
-                # C++ object silinmişse
-                pass
-            except Exception as e:
-                print(f"Auto-save error for {eid}: {e}")
-                
+            except: pass
         self.pending_entity_saves.clear()
-        
-        # Görsel geri bildirim
         self.lbl_save_status.setText("💾 Saved")
         self.lbl_save_status.setStyleSheet("background: rgba(0, 0, 0, 100); color: #81c784; border-radius: 4px; border: none; font-size: 11px;")
 
-    # --- CONNECTIONS & SAVE/LOAD ---
     def handle_connection_request(self, node):
         if not self.pending_connection_source:
             self.pending_connection_source = node
@@ -344,13 +376,16 @@ class MindMapTab(QWidget):
             if (conn.start_node == node1 and conn.end_node == node2) or \
                (conn.start_node == node2 and conn.end_node == node1): return
         
-        # Bağlantı çizgisine delete callback'i veriyoruz
         line = ConnectionLine(node1, node2, on_delete_callback=self.delete_connection)
+        
+        # Bağlantı çizgisi oluştururken temayı uygula
+        current_theme_name = self.dm.current_theme
+        line.update_theme(ThemeManager.get_palette(current_theme_name))
+        
         self.scene.addItem(line)
         self.connections.append(line)
 
     def delete_connection(self, connection_item):
-        """Bağlantı çizgisini sahneden ve listeden siler."""
         if connection_item in self.connections:
             self.scene.removeItem(connection_item)
             self.connections.remove(connection_item)
