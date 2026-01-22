@@ -15,6 +15,7 @@ from ui.campaign_selector import CampaignSelector
 from core.locales import tr
 from ui.soundpad_panel import SoundpadPanel
 from ui.widgets.projection_manager import ProjectionManager
+from ui.tabs.mind_map_tab import MindMapTab
 
 class MainWindow(QMainWindow):
     def __init__(self, data_manager):
@@ -121,6 +122,8 @@ class MainWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.db_tab = DatabaseTab(self.data_manager, self.player_window)
         self.tabs.addTab(self.db_tab, tr("TAB_DB"))
+        self.mind_map_tab = MindMapTab(self.data_manager)
+        self.tabs.addTab(self.mind_map_tab, tr("TAB_MIND_MAP"))
         self.map_tab = MapTab(self.data_manager, self.player_window, self) 
         self.tabs.addTab(self.map_tab, tr("TAB_MAP")) 
         self.session_tab = SessionTab(self.data_manager)
