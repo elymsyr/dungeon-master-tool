@@ -11,7 +11,7 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 
 [📥 Download Latest Release](https://github.com/elymsyr/dungeon-master-tool/releases)
 
-> ✨ **v0.6.5 Update:** Now featuring Multi-Image Projection, Drag & Drop workflow, Video Maps, and a fully integrated Fog of War system!
+> ✨ **v0.7.0 Update:** Introducing the **Mind Map** for plot tracking, **Workspaces** for better organization, and a fully overhauled **Theme & Localization** system!
 
 ---
 
@@ -81,11 +81,12 @@ Thank you for your support! 🙏
 *   **Fog of War:** Interactive masking on the Battle Map. Draw fog to hide secrets and erase it to reveal rooms as players explore. **Persists per encounter.**
 *   **Animated Battle Maps:** Support for local video files (`.mp4`, `.webm`) to create immersive, moving battlegrounds.
 *   **Embedded Battle Map:** Move tokens, manage combat, and sync views without leaving the session log. Control the second battlemap screen for players with a single click.
-*   **Adaptive Soundpad:** Layered music system with intensity sliders (Base -> Low -> High) with ambiences and instant SFX. **Now supports importing your own Sounds and Themes directly from the app!**
+*   **Story Mind Map:** An infinite canvas to link notes, images, and NPCs. Create **Workspaces** to group your plots and navigate massive campaigns with ease.
+*   **Adaptive Soundpad:** Layered music system with intensity sliders (Base -> Low -> High), ambiences, and instant SFX. **Now supports importing your own Sounds and Themes directly from the app!**
+*   **System Agnostic & Multi-Source:** Integrated browser with **SRD 5e** and **Open5e** support. Switch between English and Turkish or create custom entities for any TTRPG system.
+*   **Theming Engine:** Choose from various premium themes (Parchment, Midnight, Emerald, Frost, etc.) that adapt the entire application’s look and feel.
 *   **Story Timeline:** Map-based tracker with **branching paths**, travel lines, and session-linked events. Implement NPC or Monster stories using timeline pins and hide them from players.
-*   **System Agnostic:** While optimized for 5e, you can play **any TTRPG** (Pathfinder, OSR, Homebrew) by creating custom entity cards or using "Handwritten" notes without code. Please create an issue if you want more sources :)
-*   **Multi-Source Database:** Integrated browser with **SRD 5e** and **Open5e** support. Instantly fetch Monsters, Spells, Feats, Backgrounds and more.
-*   **Portable & Offline:** No installation or internet required.
+*   **Portable & Offline:** No installation or internet required. Campaign data is stored locally.
 
 ## 🗺️ Roadmap
 
@@ -105,11 +106,14 @@ Thank you for your support! 🙏
 - [x] **More Sources:** Open5E API is connected.
 - [x] **Battlemap View Lock and Toggle:** Toggle player view and lock map movement for player's battlemap screen.
 - [x] **In-App Soundpad Import:** Add single sounds and create full themes directly from the UI.
+- [x] **Mind Map & Workspaces:** Infinite canvas for linking entities and notes with regional organization.
+- [x] **Global Localization:** Support for Multiple Languages (English & Turkish).
+- [x] **Extended Theme System:** Over 10+ high-quality themes with system-wide consistency.
+- [x] **Persistence:** Viewport states, positions, and zoom levels are saved per campaign.
 
 
 ### 🚧 In Progress / Planned
 - [ ] **Random Creator:** Random creator for NPCs, NPC names, battles and more...
-- [ ] **Notes and Mindmap:** Quick notes and note mind map. Also notes on map.
 - [ ] **Image to Note:** Image to note transformer.
 - [ ] **Battlemap:** Better battle map visualizations and features.
 - [ ] **Prebuild Worlds:** We're planning to add more entities from other sources and custom design prebuild worlds to help newbies.
@@ -135,6 +139,13 @@ Thank you for your support! 🙏
 4.  **Reveal Area:** Hold **Right Click** and draw a shape to clear the fog.
 5.  **Persistence:** Fog state is saved automatically for each unique encounter ID in the Combat Tracker.
 6.  **Fill/Clear:** Use the toolbar buttons to instantly fill the whole map with fog or clear it.
+
+### 🧠 Using the Mind Map
+1.  **Infinite Canvas:** Use **Right-Click** on any empty space to add Notes, Images (from local files), or link existing NPCs.
+2.  **Navigation:** Use **Left Click + Mouse Move** to pan the camera. Scroll to zoom.
+3.  **Workspaces:** Right-click to "Add Workspace". Use them to group related nodes. Move workspaces with the **Middle Mouse Button**.
+4.  **Auto-Save:** All node positions, zoom levels, and workspace layouts are saved automatically as you work.
+5.  **Quick Links:** Use the "See All" button in the bottom floating controls to jump back to your workspaces or nodes.
 
 ## 🎵 Customizing Soundpad
 
