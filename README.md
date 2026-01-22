@@ -184,12 +184,12 @@ python main.py
   <img src="media/main_0.png" width="100%" alt="Player Map View" />
   <img src="media/main_1.png" width="100%" alt="Entity Stat Block" />
   <img src="media/main_2.png" width="100%" alt="Entity Stat Block" />
+  <img src="media/mind_0.png" width="100%" alt="Entity Stat Block" />
   <img src="media/map_0.png" width="100%" alt="Entity Stat Block" />
   <img src="media/map_1.png" width="100%" alt="Entity Stat Block" />
   <img src="media/session_0.png" width="100%" alt="Entity Stat Block" />
   <img src="media/session_1.png" width="100%" alt="Entity Stat Block" />
   <img src="media/battlemap.png" width="100%" alt="Entity Stat Block" />
-  <img src="media/bulk.png" width="100%" alt="Entity Stat Block" />
   <img src="media/api.png" width="100%" alt="Entity Stat Block" />
 </p>
 
