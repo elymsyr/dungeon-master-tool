@@ -122,7 +122,7 @@ class MainWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.db_tab = DatabaseTab(self.data_manager, self.player_window)
         self.tabs.addTab(self.db_tab, tr("TAB_DB"))
-        self.mind_map_tab = MindMapTab(self.data_manager)
+        self.mind_map_tab = MindMapTab(self.data_manager, main_window_ref=self)
         self.tabs.addTab(self.mind_map_tab, tr("TAB_MIND_MAP"))
         self.map_tab = MapTab(self.data_manager, self.player_window, self) 
         self.tabs.addTab(self.map_tab, tr("TAB_MAP")) 
