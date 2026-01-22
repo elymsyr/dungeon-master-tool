@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import QLabel
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QLabel, QApplication
+from PyQt6.QtGui import QPixmap, QDrag
+from PyQt6.QtCore import Qt, QMimeData, QPoint, QUrl
 from core.locales import tr
 
 class AspectRatioLabel(QLabel):
@@ -12,6 +12,7 @@ class AspectRatioLabel(QLabel):
         self._pixmap = None
         self._image_path = None 
         self._placeholder_text = tr("LBL_NO_IMAGE")
+        self._drag_start_pos = None
 
     def setPixmap(self, pixmap, path=None):
         self._pixmap = pixmap
@@ -33,5 +34,36 @@ class AspectRatioLabel(QLabel):
         else:
             super().setPixmap(QPixmap())
             self.setText(self._placeholder_text)
-            
-    # Remove custom mouse events to let the parent MindMapNode handle movement
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton and self._image_path:
+            self._drag_start_pos = event.pos()
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if not (event.buttons() & Qt.MouseButton.LeftButton) or not self._drag_start_pos or not self._image_path:
+            super().mouseMoveEvent(event)
+            return
+
+        if (event.pos() - self._drag_start_pos).manhattanLength() < QApplication.startDragDistance():
+            super().mouseMoveEvent(event)
+            return
+
+        drag = QDrag(self)
+        mime_data = QMimeData()
+        
+        # Path as text for ProjectionManager
+        mime_data.setText(self._image_path)
+        # Path as URL for general compatibility
+        mime_data.setUrls([QUrl.fromLocalFile(self._image_path)])
+        
+        drag.setMimeData(mime_data)
+        
+        # Drag preview
+        if self._pixmap:
+            preview = self._pixmap.scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            drag.setPixmap(preview)
+            drag.setHotSpot(QPoint(preview.width() // 2, preview.height() // 2))
+
+        drag.exec(Qt.DropAction.CopyAction)
+        self._drag_start_pos = None
