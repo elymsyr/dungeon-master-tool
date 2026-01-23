@@ -15,6 +15,11 @@ Manage combat, track branching timelines, and project a rich campaign wiki to yo
 
 > ✨ **v0.7.0 Update:** Introducing the **Mind Map** for plot tracking, **Workspaces** for better organization, and a fully overhauled **Theme & Localization** system!
 
+> 📢 **Developer Note:**
+> You can find the current high-priority tasks and known bugs in the **[TODO.md](TODO.md)** file.
+>
+> Due to personal time constraints, updates might be a bit slower recently. However, I am doing my best to stick to the roadmap and implement the planned features whenever I can. Thank you for your understanding!
+
 ---
 
 ## ✨ Key Features
