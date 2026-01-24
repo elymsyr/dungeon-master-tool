@@ -11,7 +11,7 @@
   <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-Windows.zip">
     <img src="https://img.shields.io/badge/Download-Windows_x64-blue?style=for-the-badge&logo=windows" alt="Download Windows" />
   </a>
-  <a href="https://github.com/elymsyr/dungeon-master-tool/releases">
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-Linux.zip">
     <img src="https://img.shields.io/badge/Download-Linux-orange?style=for-the-badge&logo=linux" alt="Download Linux" />
   </a>
   <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-MacOS.zip">
