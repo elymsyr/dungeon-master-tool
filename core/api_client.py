@@ -491,6 +491,10 @@ class Open5eApiSource(ApiSource):
         }
 
     def _get_source_str(self, data):
+        # Eğer DataManager tarafından meta veri enjekte edildiyse onu kullan
+        if "_meta_source" in data:
+            return data["_meta_source"]
+            
         doc = data.get("document__title") or data.get("document", {}).get("title", "")
         return f"Open5e - {doc}" if doc else "Open5e"
 
@@ -670,4 +674,14 @@ class DndApiClient:
         return self.current_source.download_image_bytes(full_url)
 
     def parse_dispatcher(self, category, data):
-        return self.current_source.parse_dispatcher(category, data)
+        # Önce ilgili kaynağın (dnd5e/open5e) kendi parse işlemini yap
+        result = self.current_source.parse_dispatcher(category, data)
+        
+        # Klasör yapısı için API anahtarını (dnd5e/open5e) ekle
+        result["api_source"] = self.current_source_key
+        
+        # Eğer Ham veride DataManager tarafından zorlanmış bir kaynak ismi varsa, onu kullan
+        if "_meta_source" in data:
+            result["source"] = data["_meta_source"]
+            
+        return result
