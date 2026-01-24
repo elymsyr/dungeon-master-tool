@@ -8,27 +8,21 @@ from PyQt6.QtGui import QDrag, QAction
 
 from core.models import ENTITY_SCHEMAS
 from core.locales import tr
-# ESKİ: from ui.dialogs.api_browser import ApiBrowser
-# YENİ: Import Window
 from ui.dialogs.import_window import ImportWindow
 
 # --- YARDIMCI SINIFLAR ---
 
 class EntityListItemWidget(QWidget):
-    """
-    Listede her bir entity'nin nasıl görüneceğini belirleyen widget.
-    (İsim, Kategori, Kaynak bilgisi gösterir)
-    """
     def __init__(self, name, raw_category, source=None, parent=None):
         super().__init__(parent)
         self.setObjectName("entityItem") 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
-        layout.setSpacing(2)
+        layout.setContentsMargins(5, 2, 5, 2) # Daha sıkışık liste görünümü
+        layout.setSpacing(0)
         
         lbl_name = QLabel(name)
         lbl_name.setObjectName("entityName")
-        lbl_name.setStyleSheet("font-size: 14px; font-weight: bold; background-color: transparent;")
+        lbl_name.setStyleSheet("font-size: 13px; font-weight: bold; background-color: transparent;")
         
         meta_layout = QHBoxLayout()
         meta_layout.setContentsMargins(0, 0, 0, 0)
@@ -36,13 +30,13 @@ class EntityListItemWidget(QWidget):
         display_cat = self.translate_category(raw_category)
         lbl_cat = QLabel(display_cat)
         lbl_cat.setObjectName("entityCat")
-        lbl_cat.setStyleSheet("font-size: 11px; font-style: italic; background-color: transparent; color: #888;")
+        lbl_cat.setStyleSheet("font-size: 10px; font-style: italic; background-color: transparent; color: #888;")
         
         meta_layout.addWidget(lbl_cat)
         
         if source:
             lbl_source = QLabel(f"[{source}]")
-            lbl_source.setStyleSheet("font-size: 10px; color: #666; background-color: transparent;")
+            lbl_source.setStyleSheet("font-size: 9px; color: #666; background-color: transparent;")
             lbl_source.setAlignment(Qt.AlignmentFlag.AlignRight)
             meta_layout.addWidget(lbl_source)
         else:
@@ -55,41 +49,24 @@ class EntityListItemWidget(QWidget):
         key_map = {
             "monster": "CAT_MONSTER", "monsters": "CAT_MONSTER", "canavar": "CAT_MONSTER",
             "spell": "CAT_SPELL", "spells": "CAT_SPELL", "büyü (spell)": "CAT_SPELL",
-            "npc": "CAT_NPC",
-            "equipment": "CAT_EQUIPMENT", "eşya (equipment)": "CAT_EQUIPMENT",
-            "magic-items": "CAT_EQUIPMENT",
-            "class": "CAT_CLASS", "classes": "CAT_CLASS", "sınıf (class)": "CAT_CLASS",
-            "race": "CAT_RACE", "races": "CAT_RACE", "irk (race)": "CAT_RACE",
-            "location": "CAT_LOCATION", "mekan": "CAT_LOCATION",
-            "player": "CAT_PLAYER", "oyuncu": "CAT_PLAYER"
+            "npc": "CAT_NPC", "equipment": "CAT_EQUIPMENT", "magic-items": "CAT_EQUIPMENT",
+            "class": "CAT_CLASS", "race": "CAT_RACE", "location": "CAT_LOCATION", "player": "CAT_PLAYER"
         }
         raw_lower = str(raw_cat).lower()
-        if raw_lower in key_map:
-            return tr(key_map[raw_lower])
-        
-        for schema_key in ENTITY_SCHEMAS.keys():
-            if schema_key.lower() == raw_lower:
-                return tr(f"CAT_{schema_key.upper().replace(' ', '_')}")
-                
+        if raw_lower in key_map: return tr(key_map[raw_lower])
         return str(raw_cat).title()
 
 class DraggableListWidget(QListWidget):
-    """
-    Sürüklenebilir öğeleri destekleyen liste.
-    """
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setDragEnabled(True)
-
     def startDrag(self, supportedActions):
         item = self.currentItem()
         if not item: return
         eid = item.data(Qt.ItemDataRole.UserRole)
         if not eid: return
-        
         mime = QMimeData()
         mime.setText(str(eid))
-        
         drag = QDrag(self)
         drag.setMimeData(mime)
         drag.exec(Qt.DropAction.CopyAction)
@@ -97,86 +74,106 @@ class DraggableListWidget(QListWidget):
 # --- ANA SIDEBAR CLASS ---
 
 class EntitySidebar(QWidget):
-    item_double_clicked = pyqtSignal(str) # entity_id
+    item_double_clicked = pyqtSignal(str) 
 
     def __init__(self, data_manager, parent=None):
         super().__init__(parent)
         self.dm = data_manager
         self.active_categories = set()
         self.active_sources = set()
-        self.available_sources = set()
         
         self.setMinimumWidth(250)
-        self.setMaximumWidth(400)
+        self.setMaximumWidth(350)
         
         self.init_ui()
         self.refresh_list()
 
     def init_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(5, 5, 5, 5)
+        main_layout.setSpacing(5)
         
-        # Arama
+        # --- ÜST KISIM: ARAMA VE FİLTRE ---
+        header_layout = QHBoxLayout()
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(2)
+
         self.inp_search = QLineEdit()
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
+        self.inp_search.setFixedHeight(28)
         self.inp_search.textChanged.connect(self.refresh_list)
         
-        # Filtre Butonu (Checkbox kaldırıldı)
-        filter_layout = QHBoxLayout()
         self.btn_filter = QToolButton()
-        self.btn_filter.setText(f" {tr('LBL_FILTER')}")
         self.btn_filter.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogListView))
         self.btn_filter.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        self.btn_filter.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        self.btn_filter.setFixedHeight(32)
-        # Menüyü hazırla
+        self.btn_filter.setFixedSize(30, 28)
+        
+        # Filtre Menüsü (Stabilite ayarları eklendi)
         self.filter_menu = QMenu(self.btn_filter)
-        self.filter_menu.setStyleSheet("QMenu { border: 1px solid rgba(100, 100, 100, 0.5); border-radius: 6px; padding: 5px; }")
+        self.filter_menu.setStyleSheet("""
+            QMenu { border: 1px solid #444; padding: 2px; }
+            QMenu::separator { height: 1px; background: #444; margin: 5px 0px; }
+        """)
         self.btn_filter.setMenu(self.filter_menu)
         self.filter_menu.aboutToShow.connect(self.update_filter_menu)
         
-        self.refresh_filter_button_style()
+        header_layout.addWidget(self.inp_search, 1)
+        header_layout.addWidget(self.btn_filter)
+        main_layout.addLayout(header_layout)
         
-        filter_layout.addWidget(self.btn_filter)
-        
-        # Import Butonu (Eski API Browser)
-        self.btn_import = QPushButton("📥 " + (tr("BTN_IMPORT_DATA") if hasattr(tr, "BTN_IMPORT_DATA") else "Import Data"))
-        self.btn_import.clicked.connect(self.open_import_window)
-        
-        # Liste
+        # --- ORTA KISIM: LİSTE ---
         self.list_widget = DraggableListWidget()
         self.list_widget.itemDoubleClicked.connect(self.on_item_double_clicked)
+        main_layout.addWidget(self.list_widget)
         
-        # Yeni Ekle Butonu
-        self.btn_add = QPushButton(tr("BTN_NEW_ENTITY"))
+        # --- ALT KISIM: BUTONLAR ---
+        btn_layout = QHBoxLayout()
+        btn_layout.setContentsMargins(0, 0, 0, 0)
+        btn_layout.setSpacing(5)
+        
+        self.btn_import = QPushButton("📥 " + tr("BTN_IMPORT"))
+        self.btn_import.setFixedHeight(30)
+        self.btn_import.clicked.connect(self.open_import_window)
+        
+        self.btn_add = QPushButton("➕ " + tr("BTN_ADD"))
         self.btn_add.setObjectName("successBtn")
+        self.btn_add.setFixedHeight(30)
         self.btn_add.clicked.connect(self.create_new_entity)
         
-        # Layout Yerleşimi
-        layout.addWidget(self.inp_search)
-        layout.addLayout(filter_layout)
-        layout.addWidget(self.btn_import)
-        layout.addWidget(self.list_widget)
-        layout.addWidget(self.btn_add)
+        btn_layout.addWidget(self.btn_import, 1)
+        btn_layout.addWidget(self.btn_add, 1)
+        main_layout.addLayout(btn_layout)
 
     def update_filter_menu(self):
         self.filter_menu.clear()
         
         container = QWidget()
-        container.setObjectName("filterMenuContainer")
+        # Margin/Padding zıplamasını engellemek için Layout ayarları
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(8, 5, 8, 5) # Sabit padding
+        layout.setSpacing(0) # İç elemanlar arası boşluk sıfır
+        
+        # Stil sabitleme
         container.setStyleSheet("""
-            QWidget { background: transparent; outline: none; border: none; }
-            QCheckBox { padding: 6px; spacing: 8px; border-radius: 4px; }
+            QCheckBox { 
+                padding: 4px; 
+                margin: 0px; 
+                background: transparent;
+            }
             QCheckBox:hover { background-color: rgba(255, 255, 255, 0.1); }
+            QLabel#menuHeader { 
+                font-weight: bold; 
+                margin-top: 5px; 
+                margin-bottom: 2px; 
+                color: #aaa;
+                font-size: 10px;
+                text-transform: uppercase;
+            }
         """)
         
-        layout = QVBoxLayout(container)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(2)
-        
-        # Kategori Başlığı
+        # Kategoriler Bölümü
         lbl_cat = QLabel(tr("LBL_TYPE"))
-        lbl_cat.setStyleSheet("font-weight: bold; margin-bottom: 4px; border: none;")
+        lbl_cat.setObjectName("menuHeader")
         layout.addWidget(lbl_cat)
         
         categories = sorted(list(ENTITY_SCHEMAS.keys()) + ["NPC", "Monster"])
@@ -190,31 +187,28 @@ class EntitySidebar(QWidget):
             
             chk = QCheckBox(display_text)
             chk.setChecked(cat in self.active_categories)
-            chk.setCursor(Qt.CursorShape.PointingHandCursor)
+            # Tıklanınca menünün kapanmasını engellemek ve veriyi tutmak için
             chk.toggled.connect(lambda checked, c=cat: self.toggle_category_filter(c, checked))
             layout.addWidget(chk)
             
-        # Kaynaklar (Source)
-        self.available_sources.clear()
+        # Kaynaklar Bölümü
+        available_sources = set()
         for ent in self.dm.data["entities"].values():
-            src = ent.get("source")
-            if src: self.available_sources.add(src)
+            if ent.get("source"): available_sources.add(ent.get("source"))
             
-        if self.available_sources:
+        if available_sources:
             line = QFrame()
             line.setFrameShape(QFrame.Shape.HLine)
-            line.setFrameShadow(QFrame.Shadow.Sunken)
-            line.setStyleSheet("background-color: rgba(128, 128, 128, 0.5); border: none; margin-top: 8px; margin-bottom: 8px;")
+            line.setStyleSheet("background: #444; margin: 5px 0px;")
             layout.addWidget(line)
             
             lbl_src = QLabel(tr("LBL_SOURCE"))
-            lbl_src.setStyleSheet("font-weight: bold; margin-bottom: 4px; border: none;")
+            lbl_src.setObjectName("menuHeader")
             layout.addWidget(lbl_src)
             
-            for src in sorted(self.available_sources):
+            for src in sorted(available_sources):
                 chk = QCheckBox(src)
                 chk.setChecked(src in self.active_sources)
-                chk.setCursor(Qt.CursorShape.PointingHandCursor)
                 chk.toggled.connect(lambda checked, s=src: self.toggle_source_filter(s, checked))
                 layout.addWidget(chk)
         
@@ -248,21 +242,16 @@ class EntitySidebar(QWidget):
 
     def refresh_filter_button_style(self):
         count = len(self.active_categories) + len(self.active_sources)
-        base_style = "QToolButton { border: none; border-radius: 4px; padding: 0px 5px; background-color: transparent; min-height: 20px; max-height: 20px; margin: 0px; } QToolButton::menu-indicator { image: none; width: 0px; } QToolButton:hover { background-color: rgba(255, 255, 255, 0.1); } QToolButton:pressed { background-color: rgba(0, 0, 0, 0.2); }"
         if count > 0:
-            self.btn_filter.setText(f" {tr('LBL_FILTER')} ({count})")
-            self.btn_filter.setStyleSheet(base_style + " QToolButton { font-weight: bold; color: palette(highlight); }")
+            self.btn_filter.setStyleSheet("background-color: palette(highlight); border-radius: 4px;")
         else:
-            self.btn_filter.setText(f" {tr('LBL_FILTER')}")
-            self.btn_filter.setStyleSheet(base_style + " QToolButton { font-weight: normal; color: palette(text); }")
+            self.btn_filter.setStyleSheet("")
 
     def normalize_type(self, t):
         t = str(t).lower()
-        if t in ["canavar", "monster", "monsters"]: return "monster"
+        if t in ["canavar", "monster"]: return "monster"
         if "spell" in t or "büyü" in t: return "spell"
         if "equipment" in t or "eşya" in t: return "equipment"
-        if "class" in t or "sınıf" in t: return "class"
-        if "race" in t or "irk" in t: return "race"
         if "location" in t or "mekan" in t: return "location"
         if "player" in t or "oyuncu" in t: return "player"
         return t
@@ -272,7 +261,6 @@ class EntitySidebar(QWidget):
         text = self.inp_search.text().lower()
         norm_active_cats = {self.normalize_type(c) for c in self.active_categories}
         
-        # Sadece Yerel Varlıklar
         for eid, data in self.dm.data["entities"].items():
             name = data.get("name", "")
             raw_type = data.get("type", "NPC")
@@ -281,9 +269,7 @@ class EntitySidebar(QWidget):
             
             if norm_active_cats and norm_type not in norm_active_cats: continue
             if self.active_sources and source not in self.active_sources: continue
-            
-            search_content = f"{name} {data.get('tags', [])} {raw_type}".lower()
-            if text and text not in search_content: continue
+            if text and text not in f"{name} {raw_type}".lower(): continue
             
             item = QListWidgetItem(self.list_widget)
             item.setData(Qt.ItemDataRole.UserRole, eid)
@@ -297,18 +283,18 @@ class EntitySidebar(QWidget):
 
     def create_new_entity(self):
         self.clear_filters() 
-        default_data = {"name": "Yeni Varlık", "type": "NPC"}
+        default_data = {"name": tr("NAME_UNNAMED"), "type": "NPC"}
         new_id = self.dm.save_entity(None, default_data)
         self.refresh_list()
         self.item_double_clicked.emit(new_id)
 
     def open_import_window(self):
         dlg = ImportWindow(self.dm, self)
+        dlg.entity_imported.connect(self.refresh_list)
         if dlg.exec():
             self.refresh_list()
 
     def retranslate_ui(self):
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
-        self.refresh_filter_button_style() 
-        self.btn_import.setText("📥 " + (tr("BTN_IMPORT_DATA") if hasattr(tr, "BTN_IMPORT_DATA") else "Import Data"))
-        self.btn_add.setText(tr("BTN_NEW_ENTITY"))
+        self.btn_import.setText("📥 " + tr("BTN_IMPORT"))
+        self.btn_add.setText("➕ " + tr("BTN_ADD"))

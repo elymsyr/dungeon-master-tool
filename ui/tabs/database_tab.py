@@ -1,7 +1,7 @@
 import os
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QSplitter, QMessageBox, 
                              QTabWidget)
-from PyQt6.QtCore import Qt, QEvent
+from PyQt6.QtCore import Qt, QEvent, pyqtSignal
 from PyQt6.QtGui import QKeySequence, QShortcut
 
 from ui.widgets.npc_sheet import NpcSheet
@@ -78,6 +78,7 @@ class EntityTabWidget(QTabWidget):
 
 
 class DatabaseTab(QWidget):
+    entity_deleted = pyqtSignal() # YENİ: Silme işlemini haber veren sinyal
     """
     Sadece sağ taraftaki çalışma alanını (İki bölmeli kart sistemi) yönetir.
     Sol taraftaki liste artık Global Sidebar'da.
@@ -232,7 +233,8 @@ class DatabaseTab(QWidget):
         if QMessageBox.question(self, tr("BTN_DELETE"), tr("MSG_CONFIRM_DELETE")) == QMessageBox.StandardButton.Yes:
             self.dm.delete_entity(eid)
             self._close_sheet_tab(sheet)
-            # Sidebar yenilemesi main window üzerinden olur veya otomatik olur.
+            # SİNYALİ YAYINLA
+            self.entity_deleted.emit() 
 
     def _close_sheet_tab(self, sheet):
         for manager in [self.tab_manager_left, self.tab_manager_right]:

@@ -299,15 +299,25 @@ class NpcSheet(QWidget):
     # populate_sheet içinde "set_embedded_mode" kullanıldığında editörlerin güncellendiğinden emin olmalıyız.
     
     def populate_sheet(self, data):
+        # Karmaşık verileri (dict/list) metne çeviren yardımcı fonksiyon
+        def safe_str(val):
+            if val is None: return ""
+            if isinstance(val, dict):
+                return ", ".join([f"{k}: {v}" for k, v in val.items()])
+            if isinstance(val, list):
+                return ", ".join([str(x) for x in val])
+            return str(val)
+
         self.refresh_reference_combos()
-        self.inp_name.setText(data.get("name", ""))
-        self.inp_source.setText(data.get("source", "")) 
+        self.inp_name.setText(safe_str(data.get("name", "")))
+        self.inp_source.setText(safe_str(data.get("source", ""))) 
         curr_type = data.get("type", "NPC")
         idx = self.inp_type.findData(curr_type)
         self.inp_type.setCurrentIndex(idx if idx >= 0 else 0)
-        self.inp_tags.setText(", ".join(data.get("tags", [])))
-        self.inp_desc.setText(data.get("description", ""))
-        self.inp_dm_notes.setText(data.get("dm_notes", ""))
+        tags = data.get("tags", [])
+        self.inp_tags.setText(", ".join(tags) if isinstance(tags, list) else safe_str(tags))
+        self.inp_desc.setText(safe_str(data.get("description", "")))
+        self.inp_dm_notes.setText(safe_str(data.get("dm_notes", "")))
         
         loc_val = data.get("location_id") or data.get("attributes", {}).get("LBL_ATTR_LOCATION")
         if loc_val:
@@ -325,20 +335,20 @@ class NpcSheet(QWidget):
             self._update_modifier(k, v.text())
         
         c = data.get("combat_stats", {})
-        self.inp_hp.setText(str(c.get("hp", "")))
-        self.inp_max_hp.setText(str(c.get("max_hp", "")))
-        self.inp_ac.setText(str(c.get("ac", "")))
-        self.inp_speed.setText(str(c.get("speed", "")))
-        self.inp_init.setText(str(c.get("initiative", "")))
+        self.inp_hp.setText(safe_str(c.get("hp", "")))
+        self.inp_max_hp.setText(safe_str(c.get("max_hp", "")))
+        self.inp_ac.setText(safe_str(c.get("ac", "")))
+        self.inp_speed.setText(safe_str(c.get("speed", "")))
+        self.inp_init.setText(safe_str(c.get("initiative", "")))
         
-        self.inp_saves.setText(data.get("saving_throws", ""))
-        self.inp_skills.setText(data.get("skills", ""))
-        self.inp_vuln.setText(data.get("damage_vulnerabilities", ""))
-        self.inp_resist.setText(data.get("damage_resistances", ""))
-        self.inp_dmg_immune.setText(data.get("damage_immunities", ""))
-        self.inp_cond_immune.setText(data.get("condition_immunities", ""))
-        self.inp_prof.setText(str(data.get("proficiency_bonus", "")))
-        self.inp_pp.setText(str(data.get("passive_perception", "")))
+        self.inp_saves.setText(safe_str(data.get("saving_throws", "")))
+        self.inp_skills.setText(safe_str(data.get("skills", "")))
+        self.inp_vuln.setText(safe_str(data.get("damage_vulnerabilities", "")))
+        self.inp_resist.setText(safe_str(data.get("damage_resistances", "")))
+        self.inp_dmg_immune.setText(safe_str(data.get("damage_immunities", "")))
+        self.inp_cond_immune.setText(safe_str(data.get("condition_immunities", "")))
+        self.inp_prof.setText(safe_str(data.get("proficiency_bonus", "")))
+        self.inp_pp.setText(safe_str(data.get("passive_perception", "")))
 
         self.update_ui_by_type(curr_type)
         attrs = data.get("attributes", {})
@@ -346,16 +356,15 @@ class NpcSheet(QWidget):
             val = attrs.get(label_key, "")
             if isinstance(widget, QComboBox):
                 ix = widget.findData(val)
-                if ix >= 0: 
-                    widget.setCurrentIndex(ix)
-                else: 
-                    widget.setCurrentText(str(val))
+                if ix >= 0: widget.setCurrentIndex(ix)
+                else: widget.setCurrentText(safe_str(val))
             else: 
-                widget.setText(str(val))
+                widget.setText(safe_str(val))
 
         self.clear_all_cards()
         for k, container in [("traits", self.trait_container), ("actions", self.action_container), ("reactions", self.reaction_container), ("legendary_actions", self.legendary_container), ("custom_spells", self.custom_spell_container), ("inventory", self.inventory_container)]:
-            for item in data.get(k, []): self.add_feature_card(container, item.get("name"), item.get("desc"))
+            for item in (data.get(k) or []): 
+                self.add_feature_card(container, safe_str(item.get("name")), safe_str(item.get("desc")))
 
         self.linked_spell_ids = data.get("spells", [])
         self._render_linked_list(self.list_assigned_spells, self.linked_spell_ids)

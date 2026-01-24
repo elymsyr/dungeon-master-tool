@@ -200,6 +200,10 @@ class LocalLibraryTab(QWidget):
                 type_override = None 
                 self.dm.import_entity_with_dependencies(self.selected_file_data, type_override)
                 QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_IMPORTED"))
+                
+                # SİNYALİ TETİKLE
+                self.parent_window.entity_imported.emit() 
+                
                 if self.parent_window.selection_mode:
                     self.parent_window.accept()
             except Exception as e:
@@ -368,6 +372,10 @@ class OnlineApiTab(QWidget):
             try:
                 self.dm.import_entity_with_dependencies(self.selected_data)
                 QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_IMPORTED"))
+                
+                # SİNYALİ TETİKLE
+                self.parent_window.entity_imported.emit()
+                
                 if self.parent_window.selection_mode: self.parent_window.accept()
             except Exception as e:
                 QMessageBox.critical(self, tr("MSG_ERROR"), str(e))
@@ -375,6 +383,8 @@ class OnlineApiTab(QWidget):
 
 # --- MAIN DIALOG ---
 class ImportWindow(QDialog):
+    entity_imported = pyqtSignal() # YENİ: Başarılı import sinyali
+
     def __init__(self, data_manager, parent=None, selection_mode=False):
         super().__init__(parent)
         self.setWindowTitle("Import Center")
