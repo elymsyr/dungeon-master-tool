@@ -2,7 +2,7 @@ name: Cross-Platform Build and Release
 
 on:
   release:
-    types: [published] # Taslak halindeki release yayınlandığında tetiklenir
+    types: [published]
 
 permissions:
   contents: write
@@ -14,14 +14,14 @@ jobs:
     env:
       PYTHONUTF8: 1
     strategy:
-      fail-fast: false # Bir platform hata verirse diğerlerini durdurma
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
             artifact_name: Windows
-          - os: ubuntu-22.04 # Daha eski sistemlerle uyumluluk için 22.04
+          - os: ubuntu-22.04
             artifact_name: Linux
-          - os: macos-latest    # Intel/Apple Silicon uyumluluğu için macos-latest
+          - os: macos-latest
             artifact_name: MacOS
 
     steps:
@@ -32,24 +32,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: 'pip' # Bağımlılıkları önbelleğe alarak hızlandırır
+          cache: 'pip'
 
       - name: Install System Dependencies (Linux Only)
         if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libegl1-mesa \
-            libxcb-xinerama0 \
-            libxcb-cursor0 \
-            libxcb-icccm4 \
-            libxcb-image0 \
-            libxcb-keysyms1 \
-            libxcb-render-util0 \
-            libxcb-shape0 \
-            libxcb-xfixes0 \
-            libasound2 \
-            zip
+            libegl1-mesa libxcb-xinerama0 libxcb-cursor0 libxcb-icccm4 \
+            libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
+            libxcb-shape0 libxcb-xfixes0 libasound2 zip
 
       - name: Install Python Dependencies
         run: |
@@ -76,13 +68,15 @@ jobs:
       - name: Archive MacOS Artifact
         if: matrix.os == 'macos-latest'
         run: |
-          zip -r DungeonMasterTool-MacOS.zip dist/DungeonMasterTool
+          # MacOS için .app paketini ziple ve sembolik bağları (-y) koru
+          # Bu adım struct is NULL hatasını önlemek için kritiktir.
+          cd dist
+          zip -r -y ../DungeonMasterTool-MacOS.zip DungeonMasterTool.app
 
       # --- RELEASE'E EKLEME ---
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          # Mevcut release'e dosyaları ekler
           files: DungeonMasterTool-${{ matrix.artifact_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
