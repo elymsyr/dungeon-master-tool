@@ -21,7 +21,7 @@ jobs:
             artifact_name: Windows
           - os: ubuntu-20.04 # Daha eski sistemlerle uyumluluk için 20.04
             artifact_name: Linux
-          - os: macos-13    # Intel/Apple Silicon uyumluluğu için macos-13
+          - os: macos-latest    # Intel/Apple Silicon uyumluluğu için macos-latest
             artifact_name: MacOS
 
     steps:
@@ -58,7 +58,7 @@ jobs:
           pip install pyinstaller
 
       - name: Run Build Script
-        run: python installers/build.py
+        run: python installer/build.py
 
       # --- ARŞİVLEME ---
       
@@ -74,7 +74,7 @@ jobs:
           zip -r DungeonMasterTool-Linux.zip dist/DungeonMasterTool
 
       - name: Archive MacOS Artifact
-        if: matrix.os == 'macos-13'
+        if: matrix.os == 'macos-latest'
         run: |
           zip -r DungeonMasterTool-MacOS.zip dist/DungeonMasterTool
 
