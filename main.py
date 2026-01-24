@@ -153,6 +153,9 @@ class MainWindow(QMainWindow):
         
         main_layout.addWidget(self.content_splitter)
 
+        # Database sekmesinde bir şey silinirse sidebar listesini yenile
+        self.db_tab.entity_deleted.connect(self.entity_sidebar.refresh_list)
+
         self.session_tab.txt_log.entity_link_clicked.connect(self.db_tab.open_entity_tab)
         self.session_tab.txt_notes.entity_link_clicked.connect(self.db_tab.open_entity_tab)
         

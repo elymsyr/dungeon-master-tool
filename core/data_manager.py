@@ -413,7 +413,8 @@ class DataManager:
     def delete_entity(self, eid):
         if eid in self.data["entities"]:
             del self.data["entities"][eid]
-            self.save_data()
+            # Kaydetmeyi unutma
+            self.save_data() 
 
     def fetch_from_api(self, category, query):
         for eid, ent in self.data["entities"].items():
