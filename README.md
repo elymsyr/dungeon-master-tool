@@ -14,7 +14,7 @@
   <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-Linux.zip">
     <img src="https://img.shields.io/badge/Download-Linux-orange?style=for-the-badge&logo=linux" alt="Download Linux" />
   </a>
-  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-MacOS.zip">
+  <a href="#macos-installation">
     <img src="https://img.shields.io/badge/Download-MacOS-orange?style=for-the-badge&logo=apple" alt="Download MacOS" />
   </a>
   <br>
@@ -88,14 +88,14 @@
 ## 🚀 Installation
 
 ### 🪟 Windows
-1. Download `DungeonMasterTool-Windows.zip`.
+1. Download `DungeonMasterTool-Windows.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-Windows.zip).
 2. Extract the folder and run `DungeonMasterTool.exe`.
 
 ### 🐧 Linux
 
 #### Preferred
 
-1. Download `DungeonMasterTool-Linux.zip`.
+1. Download `DungeonMasterTool-Linux.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-Linux.zip).
 2. Extract the folder and run `DungeonMasterTool`.
 
 #### Manual
