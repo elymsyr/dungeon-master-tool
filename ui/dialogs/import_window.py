@@ -125,9 +125,9 @@ class LocalLibraryTab(QWidget):
                 cat_item = QTreeWidgetItem(source_item)
                 # Basit çeviri mapping
                 cat_map_tr = {
-                    "monsters": "Canavarlar", "spells": "Büyüler", 
-                    "equipment": "Ekipman", "classes": "Sınıflar", "races": "Irklar",
-                    "magic-items": "Büyülü Eşyalar"
+                    "monsters": tr("CAT_MONSTERS_PL"), "spells": tr("CAT_SPELLS_PL"), 
+                    "equipment": tr("CAT_EQUIPMENT_ALL"), "classes": tr("CAT_CLASSES_PL"), "races": tr("CAT_RACES_PL"),
+                    "magic-items": tr("CAT_MAGIC_ITEMS_ALL")
                 }
                 cat_text = cat_map_tr.get(cat, cat.title())
                 
@@ -212,20 +212,20 @@ class LocalLibraryTab(QWidget):
                 
                 # Önizleme metnini oluştur (Hata kontrolü eklenmiş)
                 if isinstance(parsed, dict):
-                    src = parsed.get('source') or content.get('_meta_source') or "Unknown Source"
+                    src = parsed.get('source') or content.get('_meta_source') or tr("NAME_UNKNOWN")
                     type_ = parsed.get('type') or api_cat
-                    desc = parsed.get('description') or "No description provided."
+                    desc = parsed.get('description') or tr("LBL_FAILED_LOAD_DATA")
                     
                     self.lbl_name.setText(parsed.get('name', item.text(0)))
-                    preview_txt = f"<b>Source:</b> {src}<br><b>Type:</b> {type_}<br><hr>{desc}"
+                    preview_txt = f"<b>{tr('LBL_SOURCE')}</b> {src}<br><b>{tr('LBL_TYPE')}</b> {type_}<br><hr>{desc}"
                 else:
                     self.lbl_name.setText(item.text(0))
-                    preview_txt = f"<b>Raw Data Preview:</b><br><hr>{str(content)[:500]}..."
+                    preview_txt = f"<b>{tr('LBL_ERROR_READING_FILE')}:</b><br><hr>{str(content)[:500]}..."
 
                 self.txt_preview.setHtml(preview_txt)
                 self.btn_import.setEnabled(True)
         except Exception as e:
-            self.lbl_name.setText("Error Reading File")
+            self.lbl_name.setText(tr("LBL_ERROR_READING_FILE"))
             self.txt_preview.setText(f"Error: {e}")
             self.btn_import.setEnabled(False)
 
@@ -365,7 +365,7 @@ class OnlineApiTab(QWidget):
         self.lbl_page.setText(str(self.current_page))
         
         if not items:
-            self.list_widget.addItem("No results.")
+            self.list_widget.addItem(tr("LBL_NO_RESULTS"))
             return
             
         for i in items:
@@ -396,14 +396,14 @@ class OnlineApiTab(QWidget):
             self.lbl_name.setText(data.get("name", "Unknown"))
             
             # Kaynak bilgisini güvenli bir şekilde al
-            src = data.get("source") or data.get("_meta_source", "Unknown")
-            desc = data.get("description", "No description available.")
+            src = data.get("source") or data.get("_meta_source", tr("NAME_UNKNOWN"))
+            desc = data.get("description", tr("LBL_FAILED_LOAD_DATA"))
             
-            self.txt_desc.setHtml(f"<b>Source:</b> {src}<br><hr>{desc}")
+            self.txt_desc.setHtml(f"<b>{tr('LBL_SOURCE')}</b> {src}<br><hr>{desc}")
             self.btn_import.setEnabled(True)
         else:
-            self.lbl_name.setText("Error")
-            self.txt_desc.setText(msg if msg else "Failed to load data.")
+            self.lbl_name.setText(tr("MSG_ERROR"))
+            self.txt_desc.setText(msg if msg else tr("LBL_FAILED_LOAD_DATA"))
 
     def import_selected(self):
         if hasattr(self, 'selected_data'):
@@ -425,7 +425,7 @@ class ImportWindow(QDialog):
 
     def __init__(self, data_manager, parent=None, selection_mode=False):
         super().__init__(parent)
-        self.setWindowTitle("Import Center")
+        self.setWindowTitle(tr("TITLE_IMPORT_CENTER"))
         self.resize(1000, 700)
         self.selection_mode = selection_mode
         self.selected_id = None
@@ -437,8 +437,8 @@ class ImportWindow(QDialog):
         self.tab_local = LocalLibraryTab(data_manager, self)
         self.tab_file = QWidget() # Placeholder
         
-        self.tabs.addTab(self.tab_online, "☁️ API Search (Online)")
-        self.tabs.addTab(self.tab_local, "📚 Local Library (Offline)")
-        self.tabs.addTab(self.tab_file, "📂 File Import (Coming Soon)")
+        self.tabs.addTab(self.tab_online, tr("TAB_API_SEARCH"))
+        self.tabs.addTab(self.tab_local, tr("TAB_LOCAL_LIB"))
+        self.tabs.addTab(self.tab_file, tr("TAB_FILE_IMPORT"))
         
         layout.addWidget(self.tabs)

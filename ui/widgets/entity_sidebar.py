@@ -249,12 +249,13 @@ class EntitySidebar(QWidget):
 
     def normalize_type(self, t):
         t = str(t).lower()
-        if t in ["canavar", "monster"]: return "monster"
-        if "spell" in t or "büyü" in t: return "spell"
-        if "equipment" in t or "eşya" in t: return "equipment"
-        if "location" in t or "mekan" in t: return "location"
-        if "player" in t or "oyuncu" in t: return "player"
-        return t
+        key_map = {
+            "monster": "monster", "monsters": "monster", "canavar": "monster",
+            "spell": "spell", "spells": "spell", "büyü (spell)": "spell",
+            "npc": "npc", "equipment": "equipment", "magic-items": "equipment",
+            "class": "class", "race": "race", "location": "location", "player": "player"
+        }
+        return key_map.get(t, t)
 
     def refresh_list(self):
         self.list_widget.clear()
@@ -263,7 +264,7 @@ class EntitySidebar(QWidget):
         
         for eid, data in self.dm.data["entities"].items():
             name = data.get("name", "")
-            raw_type = data.get("type", "NPC")
+            raw_type = data.get("type", tr("CAT_NPC"))
             norm_type = self.normalize_type(raw_type)
             source = data.get("source", "")
             

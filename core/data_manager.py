@@ -152,12 +152,12 @@ class DataManager:
                 # JSON'dan yüklendiyse, bir sonraki sefere hızlı açılması için DAT olarak kaydet
                 self.current_campaign_path = folder
                 self.save_data() 
-                print("MIGRATION: Converted JSON campaign to MsgPack.")
+                print(tr("MSG_MIGRATION_CONVERTED"))
             except Exception as e:
                 return False, f"JSON Load Error: {str(e)}"
 
         if not loaded:
-            return False, "Kayıt dosyası bulunamadı (data.dat veya data.json)."
+            return False, tr("MSG_FILE_NOT_FOUND_DB")
 
         # --- Veri Bütünlüğü Kontrolleri ---
         if "sessions" not in self.data:
@@ -178,7 +178,7 @@ class DataManager:
         if not self.data["sessions"]:
             new_sid = str(uuid.uuid4())
             default_session = {
-                "id": new_sid, "name": "Default Session", "date": "Bugün", 
+                "id": new_sid, "name": "Default Session", "date": tr("MSG_TODAY"), 
                 "notes": "", "logs": "", "combatants": []
             }
             self.data["sessions"].append(default_session)
@@ -213,7 +213,7 @@ class DataManager:
 
         # Güncel halini hızlı formatta kaydet
         self.save_data()
-        return True, "Yüklendi"
+        return True, tr("MSG_YUKLENDI")
 
     def _fix_absolute_paths(self):
         if not self.current_campaign_path: return
@@ -242,7 +242,7 @@ class DataManager:
                     ent["image_path"] = rel_path
                     changed = True
         
-        if changed: print("🔧 Absolute paths fixed and assets copied.")
+        if changed: print(tr("MSG_ABSOLUTE_PATHS_FIXED"))
 
     def create_campaign(self, world_name):
         folder = os.path.join(WORLDS_DIR, world_name)
@@ -253,13 +253,13 @@ class DataManager:
             self.data = {
                 "world_name": world_name, "entities": {}, 
                 "map_data": {"image_path": "", "pins": [], "timeline": []},
-                "sessions": [{"id": first_sid, "name": "Session 0", "date": "Bugün", "notes": "", "logs": "", "combatants": []}],
+                "sessions": [{"id": first_sid, "name": "Session 0", "date": tr("MSG_TODAY"), "notes": "", "logs": "", "combatants": []}],
                 "last_active_session_id": first_sid,
                 "mind_maps": {}  # YENİ
             }
             self.current_campaign_path = folder
             self.save_data()
-            return True, "Oluşturuldu"
+            return True, tr("MSG_OLUSTURULDU")
         except Exception as e: return False, str(e)
 
     def save_data(self):
@@ -274,7 +274,7 @@ class DataManager:
 
     def create_session(self, name):
         session_id = str(uuid.uuid4())
-        new_session = {"id": session_id, "name": name, "date": "Bugün", "notes": "", "logs": "", "combatants": []}
+        new_session = {"id": session_id, "name": name, "date": tr("MSG_TODAY"), "notes": "", "logs": "", "combatants": []}
         if "sessions" not in self.data: self.data["sessions"] = []
         self.data["sessions"].append(new_session)
         self.set_active_session(session_id)
@@ -309,7 +309,7 @@ class DataManager:
             eid = str(uuid.uuid4())
         
         if auto_source_update:
-            world_name = self.data.get("world_name", "Unknown World")
+            world_name = self.data.get("world_name", tr("NAME_UNKNOWN"))
             current_source = data.get("source", "")
             
             if world_name:
@@ -435,15 +435,15 @@ class DataManager:
     def fetch_from_api(self, category, query):
         for eid, ent in self.data["entities"].items():
             if ent["name"].lower() == query.lower() and ent["type"] == category:
-                return True, "Veritabanında zaten var.", eid
+                return True, tr("MSG_DATABASE_EXISTS"), eid
         success, local_data = self.fetch_details_from_api(category, query)
         if success and local_data:
              if category in ["Monster", "NPC"]: local_data = self._resolve_dependencies(local_data)
-             return True, "Cache'den yüklendi.", local_data
+             return True, tr("MSG_LOADED_FROM_CACHE"), local_data
         parsed_data, msg = self.api_client.search(category, query)
         if not parsed_data: return False, msg, None
         if category in ["Monster", "NPC"] and isinstance(parsed_data, dict): parsed_data = self._resolve_dependencies(parsed_data)
-        return True, "API'den çekildi.", parsed_data
+        return True, tr("MSG_FETCHED_FROM_API"), parsed_data
 
     def import_entity_with_dependencies(self, data, type_override=None):
         if type_override: data["type"] = type_override

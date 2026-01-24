@@ -60,9 +60,9 @@ class DownloadWorker(QThread):
                     total_items_to_download += len(items)
                     self._save_index(endpoint, items) # Save indexes to cache
                 else:
-                    self.log_signal.emit(f"❌ Error: {endpoint} list failed.")
+                    self.log_signal.emit(tr("LOG_ERROR_LIST_FAILED", endpoint=endpoint))
             except Exception as e:
-                self.log_signal.emit(f"❌ Conn Error: {str(e)}")
+                self.log_signal.emit(tr("LOG_CONN_ERROR_DETAIL", error=str(e)))
 
         # Step 2: Download Details (JSON ONLY - IMAGES ON DEMAND)
         current_count = 0
@@ -94,7 +94,7 @@ class DownloadWorker(QThread):
                     
                     time.sleep(0.02) # To avoid hitting API limits (No images, can go fast)
                 except Exception as e:
-                    self.log_signal.emit(f"⚠️ Error {index}: {str(e)}")
+                    self.log_signal.emit(tr("LOG_ERROR_ITEM_DETAIL", index=index, error=str(e)))
 
                 current_count += 1
                 if current_count % 5 == 0: self._update_progress(current_count, total_items_to_download)
@@ -125,18 +125,18 @@ class DownloadWorker(QThread):
 
         # Category keys used by our application
         key_map = {
-            "monsters": "Canavar",
-            "spells": "Büyü (Spell)",
-            "equipment": "Eşya (Equipment)",
-            "magic-items": "Eşya (Equipment)", # NOTE: Saving both to the same place
-            "classes": "Sınıf (Class)",
-            "races": "Irk (Race)"
+            "monsters": tr("CAT_MONSTER"),
+            "spells": tr("CAT_SPELL"),
+            "equipment": tr("CAT_EQUIPMENT"),
+            "magic-items": tr("CAT_EQUIPMENT"), # NOTE: Saving both to the same place
+            "classes": tr("CAT_CLASS"),
+            "races": tr("CAT_RACE")
         }
         
         app_key = key_map.get(endpoint)
         if app_key:
             # If this category exists, overwrite logic
-            if app_key == "Eşya (Equipment)":
+            if app_key == tr("CAT_EQUIPMENT"):
                 # Logic to merge Equipment and Magic Items
                 existing_list = full_index.get(app_key, [])
                 
@@ -159,7 +159,7 @@ class DownloadWorker(QThread):
             with open(index_file, "w", encoding="utf-8") as f:
                 json.dump(full_index, f, indent=4)
         except Exception as e:
-            print(f"Index kayıt hatası: {e}")
+            print(tr("MSG_INDEX_SAVE_ERROR", error=str(e)))
 
         # Invalidate msgpack cache so DataManager reloads from JSON
         dat_file = os.path.join(CACHE_DIR, "reference_indexes.dat")
@@ -167,7 +167,7 @@ class DownloadWorker(QThread):
             try:
                 os.remove(dat_file)
             except Exception as ex:
-                print(f"Cache invalidation error: {ex}")
+                print(tr("MSG_CACHE_INVALIDATION_ERROR", error=str(ex)))
 
     def stop(self):
         self.is_running = False

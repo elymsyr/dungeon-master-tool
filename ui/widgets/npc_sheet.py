@@ -149,7 +149,7 @@ class NpcSheet(QWidget):
         self.inp_type.currentIndexChanged.connect(self._on_type_index_changed)
         
         self.inp_source = QLineEdit()
-        self.inp_source.setPlaceholderText("SRD 5e, Custom, etc.")
+        self.inp_source.setPlaceholderText(tr("LBL_SOURCE_PH"))
         self.inp_source.setReadOnly(True)
         
         self.inp_tags = QLineEdit()
@@ -157,7 +157,7 @@ class NpcSheet(QWidget):
         
         self.combo_location = QComboBox()
         self.combo_location.setEditable(True) 
-        self.combo_location.setPlaceholderText("Select or Write...")
+        self.combo_location.setPlaceholderText(tr("PH_LOCATION_SELECT"))
         self.lbl_location = QLabel(tr("LBL_LOCATION"))
         self.list_residents = QListWidget()
         self.list_residents.setMaximumHeight(80)
@@ -218,7 +218,7 @@ class NpcSheet(QWidget):
         self.content_layout.addWidget(self.tabs)
         
         # DM Notes
-        self.grp_dm_notes = QGroupBox(f"{tr('LBL_ICON_EDIT')} {tr('LBL_NOTES')} (Private)")
+        self.grp_dm_notes = QGroupBox(f"{tr('LBL_ICON_EDIT')} {tr('LBL_NOTES')} {tr('LBL_PRIVATE')}")
         self.grp_dm_notes.setStyleSheet(f"QGroupBox {{ border: 1px solid {self.current_palette.get('dm_note_border', '#d32f2f')}; color: {self.current_palette.get('dm_note_title', '#e57373')}; font-weight: bold; }}")
         dm_notes_layout = QVBoxLayout(self.grp_dm_notes)
         self.inp_dm_notes = MarkdownEditor()
@@ -465,13 +465,13 @@ class NpcSheet(QWidget):
         self.combo_all_items.clear()
         for eid, ent in self.dm.data["entities"].items():
             etype = ent.get("type")
-            name = ent.get("name", "Unnamed")
+            name = ent.get("name", tr("NAME_UNNAMED"))
             if etype == "Location": self.combo_location.addItem(f"{tr('LBL_ICON_PIN')} {name}", eid)
             elif etype == "Spell":
                 level = ent.get("attributes", {}).get("LBL_LEVEL", "?")
                 self.combo_all_spells.addItem(f"{name} (Lv {level})", eid)
             elif etype == "Equipment":
-                cat = ent.get("attributes", {}).get("LBL_CATEGORY", "Item")
+                cat = ent.get("attributes", {}).get("LBL_CATEGORY", tr("CAT_EQUIPMENT"))
                 self.combo_all_items.addItem(f"{name} ({cat})", eid)
 
     def setup_stats_tab(self):
@@ -553,7 +553,7 @@ class NpcSheet(QWidget):
         h = QHBoxLayout()
         self.combo_all_spells = QComboBox()
         self.combo_all_spells.setEditable(True)
-        self.combo_all_spells.setPlaceholderText("Search spells...")
+        self.combo_all_spells.setPlaceholderText(tr("PH_SEARCH_SPELL"))
         self.btn_add_spell_link = QPushButton(tr("BTN_ADD"))
         self.btn_add_spell_link.setObjectName("successBtn")
         self.btn_add_spell_link.clicked.connect(self.add_linked_spell)
@@ -582,7 +582,7 @@ class NpcSheet(QWidget):
         h = QHBoxLayout()
         self.combo_all_items = QComboBox()
         self.combo_all_items.setEditable(True)
-        self.combo_all_items.setPlaceholderText("Search items...")
+        self.combo_all_items.setPlaceholderText(tr("PH_SEARCH_ITEM"))
         self.btn_add_item_link = QPushButton(tr("BTN_ADD"))
         self.btn_add_item_link.setObjectName("successBtn")
         self.btn_add_item_link.clicked.connect(self.add_linked_item)
@@ -678,7 +678,7 @@ class NpcSheet(QWidget):
     def add_battlemap_dialog(self):
         files, _ = QFileDialog.getOpenFileNames(
             self, 
-            "Select Battlemaps", 
+            tr("TITLE_SELECT_MEDIA"), 
             "", 
             "Media (*.png *.jpg *.jpeg *.bmp *.mp4 *.webm *.mkv *.m4v *.avi)"
         )
@@ -761,7 +761,7 @@ class NpcSheet(QWidget):
         list_widget.clear()
         for eid in id_list:
             ent = self.dm.data["entities"].get(eid)
-            name = ent.get("name", "Unknown") if ent else "Removed Item"
+            name = ent.get("name", tr("NAME_UNKNOWN")) if ent else tr("LBL_REMOVED_ITEM")
             extra = ""
             if ent:
                 if ent.get("type") == "Spell": extra = f" (Lv {ent.get('attributes',{}).get('LBL_LEVEL','?')})"
@@ -829,7 +829,7 @@ class NpcSheet(QWidget):
         candidates = []
         for eid, ent in self.dm.data["entities"].items():
             if ent.get("type") == category:
-                candidates.append({"name": ent.get("name", "Unnamed"), "id": eid, "is_local": True, "source": "Local"})
+                candidates.append({"name": ent.get("name", tr("NAME_UNNAMED")), "id": eid, "is_local": True, "source": tr("LBL_LOCAL")})
         remote_cat = category
         if category == "Condition": remote_cat = "Condition" 
         elif category == "Location": remote_cat = None 
@@ -843,7 +843,7 @@ class NpcSheet(QWidget):
                     source_label = self.dm.api_client.current_source_key.upper()
                     if source_label == "DND5E": source_label = "SRD 5e"
                     for item in results:
-                        candidates.append({"name": item.get("name", "Unknown"), "id": item.get("index") or item.get("slug"), "is_local": False, "source": source_label, "raw_data": item})
+                        candidates.append({"name": item.get("name", tr("NAME_UNKNOWN")), "id": item.get("index") or item.get("slug"), "is_local": False, "source": source_label, "raw_data": item})
                     if isinstance(cache_data, dict) and not cache_data.get("next"): break
                     page += 1
                     QApplication.processEvents() 
