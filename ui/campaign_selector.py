@@ -58,10 +58,11 @@ class CampaignSelector(QDialog):
         lang_layout = QHBoxLayout()
         self.lbl_lang = QLabel(tr("LBL_LANGUAGE"))
         self.combo_lang = QComboBox()
-        self.combo_lang.addItems(["English", "Türkçe"])
+        self.combo_lang.addItems(["English", "Türkçe", "Deutsch", "Français"])
         
         current_lang = self.dm.settings.get("language", "EN")
-        self.combo_lang.setCurrentIndex(1 if current_lang == "TR" else 0)
+        lang_map = {"EN": 0, "TR": 1, "DE": 2, "FR": 3}
+        self.combo_lang.setCurrentIndex(lang_map.get(current_lang.upper(), 0))
         self.combo_lang.currentIndexChanged.connect(self.change_language)
         
         lang_layout.addStretch()
@@ -72,7 +73,8 @@ class CampaignSelector(QDialog):
         self.update_texts()
 
     def change_language(self, index):
-        code = "TR" if index == 1 else "EN"
+        codes = ["EN", "TR", "DE", "FR"]
+        code = codes[index] if index < len(codes) else "EN"
         self.dm.save_settings({"language": code})
         self.update_texts()
 

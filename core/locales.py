@@ -12,8 +12,9 @@ i18n.set("fallback", "en")
 
 def set_language(lang_code):
     """Sets the current language."""
-    if lang_code.upper() == "TR":
-        i18n.set("locale", "tr")
+    lang = lang_code.lower()
+    if lang in ["tr", "de", "fr"]:
+        i18n.set("locale", lang)
     else:
         i18n.set("locale", "en")
 
