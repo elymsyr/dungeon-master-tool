@@ -357,7 +357,16 @@ class DataManager:
         # 1. Kaynak bazlı klasör yapısı (varsayılan dnd5e)
         source_key = self.api_client.current_source_key
         # category names are mapped to folders
-        folder_map = {"Monster": "monsters", "NPC": "monsters", "Spell": "spells", "Equipment": "equipment", "Class": "classes", "Race": "races"}
+        folder_map = {
+            "Monster": "monsters", "NPC": "monsters", "Canavar": "monsters",
+            "Spell": "spells", "Büyü (Spell)": "spells",
+            "Equipment": "equipment", "Eşya (Equipment)": "equipment",
+            "Class": "classes", "Sınıf (Class)": "classes",
+            "Race": "races", "Irk (Race)": "races",
+            "Magic Item": "magic-items", "MagicItem": "magic-items",
+            "Feat": "feats", "Condition": "conditions", "Background": "backgrounds",
+            "Weapon": "weapons", "Armor": "armor"
+        }
         folder = folder_map.get(category)
         
         if folder:

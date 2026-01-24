@@ -481,13 +481,16 @@ class Open5eApiSource(ApiSource):
         return self.parse_generic(category, data)
 
     def parse_generic(self, category, data):
+        # Open5e'de açıklama 'desc' içindedir. Eğer liste ise birleştir.
         desc = data.get("desc", data.get("description", ""))
+        if isinstance(desc, list): desc = "\n".join(desc)
+        
         return {
-            "name": data.get("name"),
+            "name": data.get("name", "Unknown"),
             "type": category,
             "description": desc,
             "source": self._get_source_str(data),
-            "attributes": {}
+            "attributes": data.get("attributes", {}) # Varsa öznitelikleri al
         }
 
     def _get_source_str(self, data):
@@ -509,10 +512,14 @@ class Open5eApiSource(ApiSource):
             if not action_list: return []
             return [{"name": a.get("name", "Action"), "desc": a.get("desc", "")} for a in action_list]
 
+        desc = data.get("desc", "")
+        if not desc: desc = data.get("description", "")
+        if isinstance(desc, list): desc = "\n".join(desc)
+
         return {
             "name": data.get("name"),
             "type": "Monster",
-            "description": data.get("desc", "") + f"\n\n{data.get('legendary_desc', '')}",
+            "description": desc + f"\n\n{data.get('legendary_desc', '')}",
             "source": self._get_source_str(data),
             "tags": [data.get("type", ""), data.get("size", ""), data.get("subtype", "")],
             "image_path": "", # Open5e rarely has images directly or uses img_main
