@@ -306,11 +306,6 @@ class EntitySidebar(QWidget):
                     if norm_active_cats and norm_res_cat not in norm_active_cats: continue
                     
                     item = QListWidgetItem(self.list_widget)
-                    # API ID formatı: lib_{category}_{index}
-                    # category'i İngilizce çoğul (api endpoint) formatına çevirmemiz gerekebilir
-                    # Ancak DataManager.search_in_library zaten düzgün tip döndürüyor.
-                    # MindMap veya Database bunu parse ederken dikkat etmeli.
-                    
                     # Güvenli kategori dönüşümü
                     safe_cat = res_cat.lower()
                     if safe_cat == "monster": safe_cat = "monsters"
@@ -330,6 +325,10 @@ class EntitySidebar(QWidget):
         self.item_double_clicked.emit(eid)
 
     def create_new_entity(self):
+        # --- FIX #47: Filtreleri temizle ki yeni öğe görünsün ---
+        self.clear_filters() 
+        # --------------------------------------------------------
+        
         default_data = {"name": "Yeni Varlık", "type": "NPC"}
         new_id = self.dm.save_entity(None, default_data)
         self.refresh_list()
