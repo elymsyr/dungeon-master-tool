@@ -175,23 +175,35 @@ class LocalLibraryTab(QWidget):
                 raw_content = f.read().strip()
                 if not raw_content: raise ValueError("File is empty")
                 
-                # JSON yükle
                 content = json.loads(raw_content)
                 
-                # Eğer content hala bir string ise (çift encode edilmişse) bir kez daha çöz
-                if isinstance(content, str):
-                    content = json.loads(content)
+                # --- DEEP UNPACK: Veri gerçek bir sözlük olana kadar çöz ---
+                for _ in range(3): # Max 3 katman derinlik kontrolü
+                    if isinstance(content, str):
+                        try:
+                            content = json.loads(content)
+                        except:
+                            break
+                    else:
+                        break
                 
                 if not isinstance(content, dict):
-                    raise ValueError(f"JSON content is {type(content)}, expected dict")
+                    raise ValueError(f"Invalid data format: {type(content)}")
 
                 self.selected_file_data = content
                 
-                # Kategori belirleme
+                # Klasör isimlerini sistemdeki karşılıklarına map ediyoruz
                 cat_map = {
-                    "monsters": "Monster", "spells": "Spell", "equipment": "Equipment", 
-                    "classes": "Class", "races": "Race", "magic-items": "Magic Item",
-                    "feats": "Feat", "conditions": "Condition", "weapons": "Weapon"
+                    "monsters": "Monster", 
+                    "spells": "Spell", 
+                    "equipment": "Equipment", 
+                    "magic-items": "Equipment", # Magic Item'lar da Equipment şemasına girer
+                    "weapons": "Equipment",     # Silahlar -> Equipment
+                    "armor": "Equipment",       # Zırhlar -> Equipment
+                    "classes": "Class", 
+                    "races": "Race",
+                    "feats": "Feat", 
+                    "conditions": "Condition"
                 }
                 api_cat = cat_map.get(data["cat"], "Monster")
                 

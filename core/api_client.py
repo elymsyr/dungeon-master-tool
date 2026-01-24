@@ -1,4 +1,5 @@
 import requests
+import json
 from config import API_BASE_URL
 from core.locales import tr
 
@@ -574,17 +575,17 @@ class Open5eApiSource(ApiSource):
         }
     
     def parse_item(self, data):
-        # Magic Items, Weapons, Armor
+        # Open5e'den gelen Armor, Weapon veya Magic Item verilerini 
+        # her zaman 'Equipment' tipine zorluyoruz.
         return {
-            "name": data.get("name"),
-            "type": "Equipment",
-            "description": data.get("desc", ""),
+            "name": data.get("name", "Unknown Item"),
+            "type": "Equipment", # Burası 'Armor' veya 'Weapon' kalırsa sistem NPC sanabilir
+            "description": data.get("desc", data.get("description", "")),
             "source": self._get_source_str(data),
             "tags": [data.get("type", ""), data.get("rarity", "")],
             "attributes": {
                 "LBL_RARITY": data.get("rarity", ""),
                 "LBL_ATTUNEMENT": data.get("requires_attunement", ""),
-                # Open5e specific fields
                 "Category": data.get("category", ""),
                 "Cost": data.get("cost", ""),
                 "Weight": data.get("weight", "")
@@ -681,14 +682,25 @@ class DndApiClient:
         return self.current_source.download_image_bytes(full_url)
 
     def parse_dispatcher(self, category, data):
-        # Önce ilgili kaynağın (dnd5e/open5e) kendi parse işlemini yap
+        # --- GÜVENLİK DUVARI: Verinin sözlük olduğundan emin ol ---
+        if isinstance(data, str):
+            try:
+                data = json.loads(data)
+            except:
+                return {"name": "Parse Error", "type": category, "description": str(data)}
+
+        # İlgili kaynağın (dnd5e/open5e) parse işlemini yap
         result = self.current_source.parse_dispatcher(category, data)
         
-        # Klasör yapısı için API anahtarını (dnd5e/open5e) ekle
-        result["api_source"] = self.current_source_key
+        # Eğer sonuç sözlük değilse (hata payı)
+        if not isinstance(result, dict):
+            result = {"name": "Data Error", "type": category, "description": str(result)}
+
+        # Kaynak bilgilerini işle
+        result["api_source"] = getattr(self, "current_source_key", "unknown")
         
         # Eğer Ham veride DataManager tarafından zorlanmış bir kaynak ismi varsa, onu kullan
-        if "_meta_source" in data:
+        if isinstance(data, dict) and "_meta_source" in data:
             result["source"] = data["_meta_source"]
             
         return result
