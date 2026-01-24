@@ -49,18 +49,7 @@
 
 ---
 
-## 🚀 Quick Start
-
-### 1. Installation
-*   **Windows:** [Download the .zip](https://github.com/elymsyr/dungeon-master-tool/releases/latest), extract, and run `DungeonMasterTool.exe`.
-*   **Linux:** Run the automated installer:
-    ```bash
-    git clone https://github.com/elymsyr/dungeon-master-tool.git
-    cd dungeon-master-tool
-    bash installer/install.sh  # (Use install-arch.sh for Arch)
-    ```
-
-### 2. Core Features Guide
+## 🚀 Core Features Guide
 *   **📺 Project to Players:** Click **"Toggle Player Screen"**. Drag any image (NPC/Map) to the "Drop to Project" bar at the top.
 *   **🌫️ Fog of War:** In the **Session Tab**, click **"Fog"**. Left-click to hide, Right-click to reveal.
 *   **🧠 Mind Map:** Right-click on the canvas to add Nodes or Workspaces. Middle-click to pan.
