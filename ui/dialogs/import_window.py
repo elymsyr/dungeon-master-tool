@@ -169,29 +169,52 @@ class LocalLibraryTab(QWidget):
             return
             
         self.selected_file_path = data["path"]
-        self.lbl_name.setText(item.text(0))
         
         try:
             with open(self.selected_file_path, "r", encoding="utf-8") as f:
-                content = json.load(f)
+                raw_content = f.read().strip()
+                if not raw_content: raise ValueError("File is empty")
+                
+                # JSON yükle
+                content = json.loads(raw_content)
+                
+                # Eğer content hala bir string ise (çift encode edilmişse) bir kez daha çöz
+                if isinstance(content, str):
+                    content = json.loads(content)
+                
+                if not isinstance(content, dict):
+                    raise ValueError(f"JSON content is {type(content)}, expected dict")
+
                 self.selected_file_data = content
                 
-                # API Client mantığıyla parse et
-                cat_map = {"monsters": "Monster", "spells": "Spell", "equipment": "Equipment", "classes": "Class", "races": "Race", "magic-items": "Magic Item"}
-                api_cat = cat_map.get(data["cat"], data["cat"].title())
+                # Kategori belirleme
+                cat_map = {
+                    "monsters": "Monster", "spells": "Spell", "equipment": "Equipment", 
+                    "classes": "Class", "races": "Race", "magic-items": "Magic Item",
+                    "feats": "Feat", "conditions": "Condition", "weapons": "Weapon"
+                }
+                api_cat = cat_map.get(data["cat"], "Monster")
                 
-                # Parse dispatcher'ı kullan (formatlı veri için)
+                # Veriyi parse et
                 parsed = self.dm.api_client.parse_dispatcher(api_cat, content)
                 
-                preview_txt = f"Source: {parsed.get('source', 'Unknown')}\n"
-                preview_txt += f"Type: {parsed.get('type')}\n\n"
-                preview_txt += parsed.get('description', 'No description available.')
-                
-                self.txt_preview.setText(preview_txt)
+                # Önizleme metnini oluştur (Hata kontrolü eklenmiş)
+                if isinstance(parsed, dict):
+                    src = parsed.get('source') or content.get('_meta_source') or "Unknown Source"
+                    type_ = parsed.get('type') or api_cat
+                    desc = parsed.get('description') or "No description provided."
+                    
+                    self.lbl_name.setText(parsed.get('name', item.text(0)))
+                    preview_txt = f"<b>Source:</b> {src}<br><b>Type:</b> {type_}<br><hr>{desc}"
+                else:
+                    self.lbl_name.setText(item.text(0))
+                    preview_txt = f"<b>Raw Data Preview:</b><br><hr>{str(content)[:500]}..."
+
+                self.txt_preview.setHtml(preview_txt)
                 self.btn_import.setEnabled(True)
-                
         except Exception as e:
-            self.txt_preview.setText(f"Error reading file: {e}")
+            self.lbl_name.setText("Error Reading File")
+            self.txt_preview.setText(f"Error: {e}")
             self.btn_import.setEnabled(False)
 
     def import_selected(self):
@@ -334,11 +357,12 @@ class OnlineApiTab(QWidget):
             return
             
         for i in items:
-            # --- FIX: addItem returns None, so create Item first ---
+            # Önce öğeyi oluşturuyoruz
             list_item = QListWidgetItem(i["name"])
+            # Veriyi öğeye set ediyoruz
             list_item.setData(Qt.ItemDataRole.UserRole, i["index"])
+            # Öğeyi listeye ekliyoruz
             self.list_widget.addItem(list_item)
-            # -------------------------------------------------------
 
     def prev_page(self): self.current_page -= 1; self.load_list()
     def next_page(self): self.current_page += 1; self.load_list()
@@ -355,17 +379,19 @@ class OnlineApiTab(QWidget):
         self.detail_worker.start()
 
     def on_detail_loaded(self, success, data, msg):
-        if success:
+        if success and isinstance(data, dict):
             self.selected_data = data
-            self.lbl_name.setText(data["name"])
+            self.lbl_name.setText(data.get("name", "Unknown"))
+            
+            # Kaynak bilgisini güvenli bir şekilde al
             src = data.get("source") or data.get("_meta_source", "Unknown")
-            desc = f"<b>Source:</b> {src}<br><hr>"
-            desc += data.get("description", "")
-            self.txt_desc.setHtml(desc)
+            desc = data.get("description", "No description available.")
+            
+            self.txt_desc.setHtml(f"<b>Source:</b> {src}<br><hr>{desc}")
             self.btn_import.setEnabled(True)
         else:
             self.lbl_name.setText("Error")
-            self.txt_desc.setText(msg)
+            self.txt_desc.setText(msg if msg else "Failed to load data.")
 
     def import_selected(self):
         if hasattr(self, 'selected_data'):
