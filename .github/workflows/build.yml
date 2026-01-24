@@ -19,7 +19,7 @@ jobs:
         include:
           - os: windows-latest
             artifact_name: Windows
-          - os: ubuntu-20.04 # Daha eski sistemlerle uyumluluk için 20.04
+          - os: ubuntu-22.04 # Daha eski sistemlerle uyumluluk için 22.04
             artifact_name: Linux
           - os: macos-latest    # Intel/Apple Silicon uyumluluğu için macos-latest
             artifact_name: MacOS
@@ -35,7 +35,7 @@ jobs:
           cache: 'pip' # Bağımlılıkları önbelleğe alarak hızlandırır
 
       - name: Install System Dependencies (Linux Only)
-        if: matrix.os == 'ubuntu-20.04'
+        if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -69,7 +69,7 @@ jobs:
           Compress-Archive -Path dist/DungeonMasterTool -DestinationPath DungeonMasterTool-Windows.zip
 
       - name: Archive Linux Artifact
-        if: matrix.os == 'ubuntu-20.04'
+        if: matrix.os == 'ubuntu-22.04'
         run: |
           zip -r DungeonMasterTool-Linux.zip dist/DungeonMasterTool
 
