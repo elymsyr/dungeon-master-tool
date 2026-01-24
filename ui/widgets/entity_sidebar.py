@@ -8,7 +8,9 @@ from PyQt6.QtGui import QDrag, QAction
 
 from core.models import ENTITY_SCHEMAS
 from core.locales import tr
-from ui.dialogs.api_browser import ApiBrowser
+# ESKİ: from ui.dialogs.api_browser import ApiBrowser
+# YENİ: Import Window
+from ui.dialogs.import_window import ImportWindow
 
 # --- YARDIMCI SINIFLAR ---
 
@@ -119,7 +121,7 @@ class EntitySidebar(QWidget):
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
         self.inp_search.textChanged.connect(self.refresh_list)
         
-        # Filtre Butonu ve Checkbox
+        # Filtre Butonu (Checkbox kaldırıldı)
         filter_layout = QHBoxLayout()
         self.btn_filter = QToolButton()
         self.btn_filter.setText(f" {tr('LBL_FILTER')}")
@@ -135,16 +137,11 @@ class EntitySidebar(QWidget):
         
         self.refresh_filter_button_style()
         
-        self.check_show_library = QCheckBox(tr("LBL_CHECK_LIBRARY"))
-        self.check_show_library.setChecked(True)
-        self.check_show_library.stateChanged.connect(self.refresh_list)
-        
         filter_layout.addWidget(self.btn_filter)
-        filter_layout.addWidget(self.check_show_library)
         
-        # API Butonu
-        self.btn_browser = QPushButton(tr("BTN_API_BROWSER"))
-        self.btn_browser.clicked.connect(self.open_api_browser)
+        # Import Butonu (Eski API Browser)
+        self.btn_import = QPushButton("📥 " + (tr("BTN_IMPORT_DATA") if hasattr(tr, "BTN_IMPORT_DATA") else "Import Data"))
+        self.btn_import.clicked.connect(self.open_import_window)
         
         # Liste
         self.list_widget = DraggableListWidget()
@@ -158,7 +155,7 @@ class EntitySidebar(QWidget):
         # Layout Yerleşimi
         layout.addWidget(self.inp_search)
         layout.addLayout(filter_layout)
-        layout.addWidget(self.btn_browser)
+        layout.addWidget(self.btn_import)
         layout.addWidget(self.list_widget)
         layout.addWidget(self.btn_add)
 
@@ -275,7 +272,7 @@ class EntitySidebar(QWidget):
         text = self.inp_search.text().lower()
         norm_active_cats = {self.normalize_type(c) for c in self.active_categories}
         
-        # 1. Yerel Varlıklar
+        # Sadece Yerel Varlıklar
         for eid, data in self.dm.data["entities"].items():
             name = data.get("name", "")
             raw_type = data.get("type", "NPC")
@@ -293,62 +290,25 @@ class EntitySidebar(QWidget):
             widget = EntityListItemWidget(name, raw_type, source)
             item.setSizeHint(widget.sizeHint())
             self.list_widget.setItemWidget(item, widget)
-            
-        # 2. Kütüphane Sonuçları (API Cache)
-        if self.check_show_library.isChecked() and not self.active_sources:
-            if len(text) > 2 or self.active_categories:
-                lib_results = self.dm.search_in_library(None, text)
-                for res in lib_results:
-                    if "index" not in res: continue
-                    res_cat = res["type"]
-                    norm_res_cat = self.normalize_type(res_cat)
-                    
-                    if norm_active_cats and norm_res_cat not in norm_active_cats: continue
-                    
-                    item = QListWidgetItem(self.list_widget)
-                    # Güvenli kategori dönüşümü
-                    safe_cat = res_cat.lower()
-                    if safe_cat == "monster": safe_cat = "monsters"
-                    elif safe_cat == "spell": safe_cat = "spells"
-                    elif safe_cat == "class": safe_cat = "classes"
-                    elif safe_cat == "race": safe_cat = "races"
-                    
-                    safe_id = f"lib_{safe_cat}_{res['index']}"
-                    item.setData(Qt.ItemDataRole.UserRole, safe_id)
-                    
-                    widget = EntityListItemWidget("📚 " + res["name"], res_cat, "SRD 5e")
-                    item.setSizeHint(widget.sizeHint())
-                    self.list_widget.setItemWidget(item, widget)
 
     def on_item_double_clicked(self, item):
         eid = item.data(Qt.ItemDataRole.UserRole)
         self.item_double_clicked.emit(eid)
 
     def create_new_entity(self):
-        # --- FIX #47: Filtreleri temizle ki yeni öğe görünsün ---
         self.clear_filters() 
-        # --------------------------------------------------------
-        
         default_data = {"name": "Yeni Varlık", "type": "NPC"}
         new_id = self.dm.save_entity(None, default_data)
         self.refresh_list()
         self.item_double_clicked.emit(new_id)
 
-    def open_api_browser(self):
-        # Varsayılan olarak Monster veya ilk aktif kategoriyle aç
-        target_cat = "Monster"
-        if self.active_categories:
-            first = list(self.active_categories)[0]
-            # Basit eşleştirme
-            if first in ["NPC", "Monster"]: target_cat = "Monster"
-            elif first in ["Spell", "Equipment", "Class", "Race"]: target_cat = first
-            
-        if ApiBrowser(self.dm, target_cat, self).exec():
+    def open_import_window(self):
+        dlg = ImportWindow(self.dm, self)
+        if dlg.exec():
             self.refresh_list()
 
     def retranslate_ui(self):
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
         self.refresh_filter_button_style() 
-        self.check_show_library.setText(tr("LBL_CHECK_LIBRARY"))
-        self.btn_browser.setText(tr("BTN_API_BROWSER"))
+        self.btn_import.setText("📥 " + (tr("BTN_IMPORT_DATA") if hasattr(tr, "BTN_IMPORT_DATA") else "Import Data"))
         self.btn_add.setText(tr("BTN_NEW_ENTITY"))

@@ -379,18 +379,34 @@ class DataManager:
         raw_data = self.api_client.get_details(category, index_name)
         
         if raw_data:
-            # 4. Cache'e Kaydet
+            # --- METADATA ENJECTION (YENİ) ---
+            # Ham verinin içine kaynak bilgisini gömüyoruz.
+            raw_data["_meta_api_key"] = source_key
+            
+            # İnsan tarafından okunabilir kaynak ismi oluştur
+            if source_key == "dnd5e":
+                raw_data["_meta_source"] = "SRD 5e"
+            elif source_key == "open5e":
+                # Open5e döküman başlığını almaya çalış, yoksa Open5e yaz
+                doc_title = raw_data.get("document__title") or raw_data.get("document", {}).get("title", "Open5e")
+                raw_data["_meta_source"] = doc_title
+            # ---------------------------------
+
             if folder:
+                # Mevcut seçili kaynağın klasörüne kaydet
+                base_lib = os.path.join(LIBRARY_DIR, source_key, folder)
                 try:
                     if not os.path.exists(base_lib): os.makedirs(base_lib)
-                    with open(local_path, "w", encoding="utf-8") as f:
+                    safe_index = index_name.lower().replace(" ", "-")
+                    local_path = os.path.join(base_lib, f"{safe_index}.json")
+                    
+                    # Metadata eklenmiş ham veriyi kaydet
+                    with open(local_path, "w", encoding="utf-8") as f: 
                         json.dump(raw_data, f, indent=2)
-                except Exception as e:
-                    print(f"Cache Write Error: {e}")
+                    print(f"[DEBUG] Fetched and SAVED (with Meta) to: {local_path}")
+                except: pass
             
-            # 5. Parse Et ve Dön
-            parsed_data = self.api_client.parse_dispatcher(category, raw_data)
-            return True, parsed_data
+            return True, self.api_client.parse_dispatcher(category, raw_data)
             
         return False, tr("MSG_SEARCH_NOT_FOUND")
 
