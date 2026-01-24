@@ -6,8 +6,9 @@
   <b>A portable, offline-first DM tool designed for dual-monitor setups.</b>
   <br>
   <i>Manage combat, track timelines, and project a rich campaign wiki seamlessly.</i>
-  <br>
-  <br>
+  <br><br>
+  ✨  <a href="https://elymsyr.github.io/">Check out our over-engineered amazing website here!</a> ✨
+  <br><br>
   <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-Windows.zip">
     <img src="https://img.shields.io/badge/Download-Windows_x64-blue?style=for-the-badge&logo=windows" alt="Download Windows" />
   </a>
