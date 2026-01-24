@@ -361,11 +361,10 @@ class DataManager:
             "Monster": "monsters", "NPC": "monsters", "Canavar": "monsters",
             "Spell": "spells", "Büyü (Spell)": "spells",
             "Equipment": "equipment", "Eşya (Equipment)": "equipment",
-            "Class": "classes", "Sınıf (Class)": "classes",
-            "Race": "races", "Irk (Race)": "races",
+            "Weapon": "weapons", "Armor": "armor", # EKLEMELER
+            "Class": "classes", "Race": "races",
             "Magic Item": "magic-items", "MagicItem": "magic-items",
-            "Feat": "feats", "Condition": "conditions", "Background": "backgrounds",
-            "Weapon": "weapons", "Armor": "armor"
+            "Feat": "feats", "Condition": "conditions", "Background": "backgrounds"
         }
         folder = folder_map.get(category)
         
@@ -406,14 +405,22 @@ class DataManager:
                 base_lib = os.path.join(LIBRARY_DIR, source_key, folder)
                 try:
                     if not os.path.exists(base_lib): os.makedirs(base_lib)
+                    
+                    # --- FIX: raw_data eğer string ise önce dict'e çevir ---
+                    save_content = raw_data
+                    if isinstance(save_content, str):
+                        try: save_content = json.loads(save_content)
+                        except: pass
+
                     safe_index = index_name.lower().replace(" ", "-")
                     local_path = os.path.join(base_lib, f"{safe_index}.json")
                     
-                    # Metadata eklenmiş ham veriyi kaydet
-                    with open(local_path, "w", encoding="utf-8") as f: 
-                        json.dump(raw_data, f, indent=2)
-                    print(f"[DEBUG] Fetched and SAVED (with Meta) to: {local_path}")
-                except: pass
+                    # ensure_ascii=False ile Türkçe karakterleri koru, düzgün JSON yaz
+                    with open(local_path, "w", encoding="utf-8") as f:
+                        json.dump(save_content, f, indent=2, ensure_ascii=False)
+                    print(f"[DEBUG] Validated and Saved to: {local_path}")
+                except Exception as e:
+                    print(f"Cache Write Error: {e}")
             
             return True, self.api_client.parse_dispatcher(category, raw_data)
             
