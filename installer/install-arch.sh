@@ -1,29 +1,44 @@
 #!/bin/bash
 
-# Simple Installer for Dungeon Master Tool (Arch Linux)
+# Dungeon Master Tool - Arch Linux Installer
 
 set -e
 
 echo "--- Dungeon Master Tool Arch Linux Installer ---"
 
-# 1. Update and install system dependencies
-echo "Installing/Updating system dependencies via pacman..."
+# Scriptin bulunduğu klasörü al (installer klasörü)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Proje kök dizinine çık
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+
+echo "Project Root: $ROOT_DIR"
+
+# 1. System Dependencies
+# 'xcb-util-xinerama' kaldırıldı.
+# 'qt6-imageformats' eklendi (Resim desteği için kritik).
+# 'tk' eklendi (Python tkinter bazen gerekebiliyor).
+echo "Installing system dependencies..."
 sudo pacman -S --needed --noconfirm python python-pip \
     xcb-util-cursor xcb-util-wm xcb-util-image xcb-util-keysyms \
-    xcb-util-renderutil xcb-util-xinerama libxkbcommon-x11 \
-    nss alsa-lib mesa
+    xcb-util-renderutil libxkbcommon-x11 \
+    nss alsa-lib mesa qt6-imageformats tk
 
-# 2. Set up virtual environment
-echo "Setting up virtual environment..."
-python -m venv venv
+# 2. Virtual Environment
+echo "Setting up virtual environment in $ROOT_DIR..."
+cd "$ROOT_DIR"
+if [ ! -d "venv" ]; then
+    python -m venv venv
+fi
 source venv/bin/activate
 
-# 3. Install Python dependencies
-echo "Installing Python dependencies..."
+# 3. Python Dependencies
+echo "Installing Python requirements..."
+# pip'i güncelle
 ./venv/bin/pip install --upgrade pip
+# requirements.txt'yi kök dizinden oku
 ./venv/bin/pip install -r requirements.txt
 
-# 4. Create a launcher script
+# 4. Launcher Script
 echo "Creating launcher script..."
 cat <<EOF > run.sh
 #!/bin/bash
@@ -33,24 +48,22 @@ cd "\$DIR"
 EOF
 chmod +x run.sh
 
-# 5. Optional Desktop Entry
-read -p "Do you want to create a desktop entry? (y/n) " -n 1 -r
+# 5. Desktop Entry
+read -p "Create desktop entry? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    APP_PATH=$(pwd)
     mkdir -p ~/.local/share/applications
     cat <<EOF > ~/.local/share/applications/dungeon-master-tool.desktop
 [Desktop Entry]
 Name=Dungeon Master Tool
-Exec=$APP_PATH/run.sh
-Icon=$APP_PATH/assets/icon.png
-Path=$APP_PATH
+Exec=$ROOT_DIR/run.sh
+Icon=$ROOT_DIR/assets/icon.png
+Path=$ROOT_DIR
 Type=Application
 Categories=Game;RolePlaying;
 Terminal=false
 EOF
-    echo "Desktop entry created at ~/.local/share/applications/dungeon-master-tool.desktop"
+    echo "Desktop entry created!"
 fi
 
-echo "--- Installation Complete ---"
-echo "You can now run the tool using './run.sh'"
+echo "--- Installation Complete! Run with ./run.sh ---"

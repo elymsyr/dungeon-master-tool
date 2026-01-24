@@ -14,7 +14,6 @@ class SoundpadPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        # CHANGED: Reduced minimum width to 240 to fit smaller screens better
         self.setMinimumWidth(240)
         self.setMaximumWidth(400)
         self.setObjectName("soundpadContainer")
@@ -36,6 +35,9 @@ class SoundpadPanel(QWidget):
         self._build_ambience_slots()
         self._build_sfx_grid()
         
+        # Initial Master Volume Set (Varsayılan %50)
+        self.audio_brain.set_master_volume(0.5)
+        
         # Emit default shortcuts
         self.theme_loaded_with_shortcuts.emit(self.global_library.get('shortcuts', {}))
 
@@ -43,7 +45,6 @@ class SoundpadPanel(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
         
-        # Title
         # Title
         self.lbl_title = QLabel(tr("TITLE_SOUNDPAD"))
         self.lbl_title.setObjectName("headerLabel")
@@ -53,7 +54,6 @@ class SoundpadPanel(QWidget):
         # Tabs
         self.tabs = QTabWidget()
         main_layout.addWidget(self.tabs, 1)
-        
         
         self.music_tab = QWidget()
         self.ambience_tab = QWidget()
@@ -77,7 +77,7 @@ class SoundpadPanel(QWidget):
         
         self.slider_vol = QSlider(Qt.Orientation.Horizontal)
         self.slider_vol.setRange(0, 100)
-        self.slider_vol.setValue(50)
+        self.slider_vol.setValue(50) # Start at 50%
         self.slider_vol.valueChanged.connect(self.change_master_volume)
         vol_layout.addWidget(self.slider_vol)
         global_layout.addLayout(vol_layout)
@@ -98,20 +98,13 @@ class SoundpadPanel(QWidget):
 
     def _setup_music_tab(self):
         layout = QVBoxLayout(self.music_tab)
-        if not self.themes:
-            self.lbl_no_themes = QLabel(tr("MSG_NO_THEMES"))
-            layout.addWidget(self.lbl_no_themes)
-            return
-
+        
+        # Tema Seçimi
         theme_layout = QHBoxLayout()
         self.combo_themes = QComboBox()
         self.combo_themes.addItem(tr("COMBO_SELECT_THEME"), None)
         for tid, theme in self.themes.items():
             self.combo_themes.addItem(theme.name, tid)
-        
-        self.btn_load_theme = QPushButton("📂 " + tr("BTN_LOAD_THEME"))
-        self.btn_load_theme.setObjectName("primaryBtn")
-        self.btn_load_theme.clicked.connect(self.load_selected_theme)
         
         self.btn_load_theme = QPushButton("📂 " + tr("BTN_LOAD_THEME"))
         self.btn_load_theme.setObjectName("primaryBtn")
@@ -125,11 +118,17 @@ class SoundpadPanel(QWidget):
         theme_layout.addWidget(self.btn_create_theme)
         layout.addLayout(theme_layout)
 
+        if not self.themes:
+            self.lbl_no_themes = QLabel(tr("MSG_NO_THEMES"))
+            layout.addWidget(self.lbl_no_themes)
+
+        # Durum Butonları (State Buttons)
         self.grp_states = QGroupBox(tr("GRP_MUSIC_STATE"))
         self.layout_states = QVBoxLayout(self.grp_states)
         self.grp_states.setVisible(False)
         layout.addWidget(self.grp_states)
 
+        # Yoğunluk (Intensity) Slider
         self.grp_intensity = QGroupBox(tr("GRP_INTENSITY"))
         v_int = QVBoxLayout(self.grp_intensity)
         self.slider_intensity = QSlider(Qt.Orientation.Horizontal)
@@ -156,10 +155,8 @@ class SoundpadPanel(QWidget):
         self.ambience_layout = QVBoxLayout(content_widget)
         self.ambience_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         scroll.setWidget(content_widget)
-        scroll.setWidget(content_widget)
         layout.addWidget(scroll)
         
-        # Add Button
         self.btn_add_ambience = QPushButton("➕ " + tr("BTN_ADD_AMBIENCE"))
         self.btn_add_ambience.clicked.connect(self.add_new_ambience)
         layout.addWidget(self.btn_add_ambience)
@@ -172,7 +169,6 @@ class SoundpadPanel(QWidget):
         content_widget = QWidget()
         self.sfx_grid_layout = QGridLayout(content_widget)
         self.sfx_grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        scroll.setWidget(content_widget)
         scroll.setWidget(content_widget)
         layout.addWidget(scroll)
         
@@ -199,9 +195,10 @@ class SoundpadPanel(QWidget):
             for ambience in ambience_list:
                 combo.addItem(ambience['name'], ambience['id'])
             
+            # Bireysel slot ses seviyesi (0-100)
             slider = QSlider(Qt.Orientation.Horizontal)
             slider.setRange(0, 100)
-            slider.setValue(70)
+            slider.setValue(70) # Default 70%
             
             self.ambience_slots.append({'group': slot_box, 'combo': combo, 'slider': slider})
             slot_layout.addWidget(combo)
@@ -212,7 +209,6 @@ class SoundpadPanel(QWidget):
             slider.valueChanged.connect(lambda value, s_idx=i: self._on_ambience_volume_change(s_idx, value))
 
     def _build_sfx_grid(self):
-        # Clear existing buttons
         while self.sfx_grid_layout.count():
             item = self.sfx_grid_layout.takeAt(0)
             if item.widget(): item.widget().deleteLater()
@@ -240,8 +236,6 @@ class SoundpadPanel(QWidget):
             
         self.state_buttons = {} 
         for state_name in self.current_theme.states.keys():
-            # State names usually stay as they are (data identifiers), 
-            # but you could title() them.
             btn = QPushButton(state_name.title())
             btn.setCheckable(True)
             btn.clicked.connect(lambda _, s=state_name: self.on_state_clicked(s))
@@ -293,10 +287,13 @@ class SoundpadPanel(QWidget):
         slot = self.ambience_slots[slot_index]
         ambience_id = slot['combo'].currentData()
         volume = slot['slider'].value()
+        # Engine'e ID ve Volume (0-100) gönderiyoruz
         self.audio_brain.play_ambience(slot_index, ambience_id, volume)
 
     def _on_ambience_volume_change(self, slot_index, volume):
-        self.audio_brain.set_ambience_volume(slot_index, volume)
+        # Slider değiştiğinde engine'e yeni seviyeyi bildir
+        # (Engine bunu 0.0-1.0'a çevirip Master ile çarpacak)
+        self.audio_brain.set_ambience_volume(slot_index, volume / 100.0)
 
     def play_sfx(self, sfx_id):
         self.audio_brain.play_sfx(sfx_id)
@@ -316,6 +313,8 @@ class SoundpadPanel(QWidget):
             self.load_selected_theme()
 
     def change_master_volume(self, value):
+        # FIX #47: Master volume değişikliğini motora ilet
+        # Engine artık bu değeri kullanarak Müzik, Ambiyans ve SFX'i güncelleyecek.
         self.audio_brain.set_master_volume(value / 100.0)
 
     def change_intensity(self, value):
@@ -330,11 +329,6 @@ class SoundpadPanel(QWidget):
         self.audio_brain.set_intensity(value)
 
     def retranslate_ui(self):
-        """
-        Updates texts when language changes dynamically.
-        Note: Ambience Slots and SFX buttons might need a fuller redraw 
-        if their 'names' depend on locale, but here we update static UI elements.
-        """
         self.lbl_title.setText(tr("TITLE_SOUNDPAD"))
         self.tabs.setTabText(0, tr("TAB_MUSIC"))
         self.tabs.setTabText(1, tr("TAB_AMBIENCE"))
@@ -348,17 +342,13 @@ class SoundpadPanel(QWidget):
         if hasattr(self, 'lbl_no_themes'):
             self.lbl_no_themes.setText(tr("MSG_NO_THEMES"))
         
-        # Update combo box placeholder (item 0)
         self.combo_themes.setItemText(0, tr("COMBO_SELECT_THEME"))
         self.btn_load_theme.setText("📂 " + tr("BTN_LOAD_THEME"))
         
         self.grp_states.setTitle(tr("GRP_MUSIC_STATE"))
         self.grp_intensity.setTitle(tr("GRP_INTENSITY"))
-        
-        # Update current intensity label based on slider value
         self.change_intensity(self.slider_intensity.value())
         
-        # Update Ambience Group Titles and Combo placeholder
         for i, slot in enumerate(self.ambience_slots):
             slot['group'].setTitle(tr("LBL_AMBIENCE_SLOT") + f" {i+1}")
             slot['combo'].setItemText(0, tr("OPT_SILENCE"))
@@ -379,7 +369,6 @@ class SoundpadPanel(QWidget):
         name, ok = QInputDialog.getItem(self, tr("TITLE_REMOVE_SFX"), tr("LBL_SELECT_SFX"), names, 0, False)
         
         if ok and name:
-            # Find ID
             sfx_id = next((s['id'] for s in sfx_list if s['name'] == name), None)
             if sfx_id:
                 confirm = QMessageBox.question(self, tr("TITLE_CONFIRM"), tr("MSG_CONFIRM_REMOVE_SFX").format(name=name),
@@ -396,36 +385,27 @@ class SoundpadPanel(QWidget):
 
     def _add_new_sound(self, category):
         file_path, _ = QFileDialog.getOpenFileName(self, tr("TITLE_SELECT_AUDIO"), "", "Audio Files (*.mp3 *.wav *.ogg *.flac *.m4a)")
-        if not file_path:
-            return
+        if not file_path: return
 
         name, ok = QInputDialog.getText(self, tr("TITLE_ADD_SOUND"), tr("LBL_SOUND_NAME"))
-        if not ok or not name:
-            return
+        if not ok or not name: return
 
         success, result_or_msg = add_to_library(category, name, file_path)
         
         if success:
-            # Reload library
             self.global_library = load_global_library()
             self.audio_brain.library = self.global_library
-            
-            if category == 'ambience':
-                self._refresh_ambience_combos()
-            elif category == 'sfx':
-                self._build_sfx_grid() # Rebuild grid
-                
+            if category == 'ambience': self._refresh_ambience_combos()
+            elif category == 'sfx': self._build_sfx_grid()
             QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_SOUND_ADDED"))
         else:
             QMessageBox.critical(self, tr("MSG_ERROR"), str(result_or_msg))
 
     def _refresh_ambience_combos(self):
-        # Save current selections
         current_selections = []
         for slot in self.ambience_slots:
             current_selections.append(slot['combo'].currentData())
             
-        # Clear and refill
         ambience_list = self.global_library.get('ambience', [])
         for slot in self.ambience_slots:
             slot['combo'].blockSignals(True)
@@ -435,31 +415,23 @@ class SoundpadPanel(QWidget):
                 slot['combo'].addItem(ambience['name'], ambience['id'])
             slot['combo'].blockSignals(False)
             
-        # Restore selections if possible
         for i, sel_id in enumerate(current_selections):
             if sel_id:
                 idx = self.ambience_slots[i]['combo'].findData(sel_id)
-                if idx >= 0:
-                    self.ambience_slots[i]['combo'].setCurrentIndex(idx)
+                if idx >= 0: self.ambience_slots[i]['combo'].setCurrentIndex(idx)
 
     def open_theme_builder(self):
         dlg = ThemeBuilderDialog(self)
         if dlg.exec():
             data = dlg.get_data()
             success, result = create_theme(data['name'], data['id'], data['map'])
-            
             if success:
                 QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_THEME_CREATED"))
-                # Reload themes
                 self.themes = load_all_themes()
-                
-                # Update Combo
                 self.combo_themes.clear()
                 self.combo_themes.addItem(tr("COMBO_SELECT_THEME"), None)
                 for tid, theme in self.themes.items():
                     self.combo_themes.addItem(theme.name, tid)
-                    
-                # Select new theme
                 idx = self.combo_themes.findData(data['id'])
                 if idx >= 0:
                     self.combo_themes.setCurrentIndex(idx)
