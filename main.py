@@ -81,9 +81,10 @@ class MainWindow(QMainWindow):
 
         # Right side controls
         self.combo_lang = QComboBox()
-        self.combo_lang.addItems(["English", "Türkçe"])
+        self.combo_lang.addItems(["English", "Türkçe", "Deutsch", "Français"])
         current_lang = self.data_manager.settings.get("language", "EN")
-        self.combo_lang.setCurrentIndex(1 if current_lang == "TR" else 0)
+        lang_map = {"EN": 0, "TR": 1, "DE": 2, "FR": 3}
+        self.combo_lang.setCurrentIndex(lang_map.get(current_lang.upper(), 0))
         self.combo_lang.currentIndexChanged.connect(self.change_language)
         
         self.lbl_theme = QLabel(tr("LBL_THEME"))
@@ -206,7 +207,9 @@ class MainWindow(QMainWindow):
             self.combo_theme.setItemText(i, tr(display_name) if display_name.startswith("THEME_") else display_name)
 
     def change_language(self, index):
-        self.data_manager.save_settings({"language": "TR" if index == 1 else "EN"})
+        codes = ["EN", "TR", "DE", "FR"]
+        code = codes[index] if index < len(codes) else "EN"
+        self.data_manager.save_settings({"language": code})
         self.retranslate_ui()
     
     def toggle_soundpad(self):

@@ -19,8 +19,8 @@
     - [ ] Add support for "mid-length" transition sounds between loops.
 
 ## 🌍 Localization
-- [ ] **French Support:** Add `fr.yml` locale file (AI-translated initially).
-- [ ] **German Support:** Add `de.yml` locale file.
+- [x] **French Support:** Add `fr.yml` locale file (AI-translated initially).
+- [x] **German Support:** Add `de.yml` locale file.
 - [ ] **Source Integration:** Plan for importing French/German SRD sources provided by the community.
 
 ## 🛠️ System Agnostic & Customization (Major Overhaul)
