@@ -22,6 +22,10 @@
   <img src="https://img.shields.io/badge/Status-Alpha-blue" />
   <img src="https://img.shields.io/badge/License-MIT-green" />
   <img src="https://img.shields.io/badge/Python-3.10+-yellow" />
+  <br>
+  <b>Supported Languages:</b>
+  <br>
+  🇺🇸 English | 🇹🇷 Türkçe | 🇩🇪 Deutsch | 🇫🇷 Français
 </p>
 
 ---
@@ -81,6 +85,47 @@
 
 ---
 
+## 🚀 Installation
+
+### 🪟 Windows
+1. Download `DungeonMasterTool-Windows.zip`.
+2. Extract the folder and run `DungeonMasterTool.exe`.
+
+### 🐧 Linux
+
+#### Preferred
+
+1. Download `DungeonMasterTool-Linux.zip`.
+2. Extract the folder and run `DungeonMasterTool`.
+
+#### Manual
+
+```bash
+git clone https://github.com/elymsyr/dungeon-master-tool.git
+cd dungeon-master-tool
+bash installer/install.sh  # (Use install-arch.sh for Arch Linux)
+./run.sh
+```
+
+<div id="macos-installation"></div>
+
+### 🍎 MacOS Installation & Security Note
+Since this is an open-source project and not signed with an official Apple Developer account, you need to manually bypass the "unverified developer" warning.
+
+**[Click here to download DungeonMasterTool-MacOS.zip](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-MacOS.zip)**
+
+**Steps to run the app:**
+
+1. **Extract** the downloaded `.zip` file.
+2. Drag `DungeonMasterTool.app` to your **Applications** folder.
+3. Open **Terminal** (Cmd + Space, type 'Terminal') and run the following command to remove the quarantine flag:
+   ```bash
+   sudo xattr -rd com.apple.quarantine /Applications/DungeonMasterTool.app
+   ```
+4. **Launch:** You can now open the app from your Applications or Launchpad.
+
+---
+
 ## 📸 Gallery
 
 <p align="center">
@@ -111,4 +156,4 @@
 ## ✏️ Credits
 *   [DND 5E SRD API](https://www.dnd5eapi.co/)
 *   [Open5E](https://open5e.com/)
-*   *Mage icons created by David Carapinha - Flaticon*
+*   <a href="https://www.flaticon.com/free-icons/sorcery" title="sorcery icons">Sorcery icons created by David Carapinha - Flaticon</a>
