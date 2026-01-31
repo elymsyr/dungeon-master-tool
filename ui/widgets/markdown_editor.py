@@ -189,6 +189,7 @@ class MarkdownEditor(QWidget):
     def set_transparent_mode(self, enabled):
         """MindMap gibi yerlerde şeffaf arka plan kullanmak için."""
         self.is_transparent_mode = enabled
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, enabled)
         self.apply_styles()
 
     def set_mind_map_style(self):
@@ -204,6 +205,8 @@ class MarkdownEditor(QWidget):
     def apply_styles(self):
         """Aktif palet ve moda (şeffaf/normal) göre stili uygular."""
         p = self.current_palette
+        
+        container_bg = "transparent" # Default container bg
         
         if self.is_transparent_mode:
             # Mind Map Modu: Arka plan şeffaf
@@ -225,6 +228,9 @@ class MarkdownEditor(QWidget):
             btn_bg = "rgba(60,60,60,0.8)"
 
         style = f"""
+            QWidget#mdContainer {{
+                background: {container_bg};
+            }}
             QTextEdit#mdEditor, QTextBrowser#mdViewer {{
                 background-color: {bg_color};
                 border: {border};
