@@ -567,3 +567,5 @@ en:
   MSG_MIGRATION_CONVERTED: "MIGRATION: Converted JSON campaign to MsgPack."
   MSG_FILE_NOT_FOUND_DB: "Database file not found (data.dat or data.json)."
   MSG_ABSOLUTE_PATHS_FIXED: "🔧 Absolute paths fixed and assets copied."
+  MSG_ERR_NO_WRITE_PERMISSION: "❌ Write permission denied: Cache folder is read-only."
+  MSG_CACHE_WRITE_ERROR: "Failed to write to cache. (USB/Disk might be read-only)."

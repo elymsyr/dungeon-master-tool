@@ -520,7 +520,7 @@ class MindMapTab(QWidget):
 
     def trigger_autosave(self):
         try:
-            if not self.autosave_timer: return
+            if not hasattr(self, 'autosave_timer') or not self.autosave_timer: return
         except RuntimeError: return # Object might be deleted
         
         palette = ThemeManager.get_palette(self.dm.current_theme)

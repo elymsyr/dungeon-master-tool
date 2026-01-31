@@ -2,6 +2,7 @@
 
 ## 🚨 Critical Bugs & Fixes
 - [x] **Fix Mindmap Note Visibility (#50):** Fixed text visibility issue in mindmap notes by setting the MarkdownEditor background to transparent, ensuring proper contrast in both light and dark modes.
+- [x] **Fix API Downloads on USB (#51):** Added write permission checks and error handling for read-only environments (e.g., USB drives), ensuring the app warns users instead of crashing or failing silently.
 
 
 ## ⚡ Immediate Improvements & UI

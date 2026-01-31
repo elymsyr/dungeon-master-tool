@@ -42,6 +42,17 @@ class DownloadWorker(QThread):
             if not os.path.exists(path): os.makedirs(path)
         if not os.path.exists(lib_img_dir): os.makedirs(lib_img_dir)
 
+        # 1.5 CHECK PERMISSIONS
+        try:
+            test_file = os.path.join(LIBRARY_DIR, ".perm_test")
+            with open(test_file, "w") as f: f.write("ok")
+            os.remove(test_file)
+        except Exception as e:
+            self.log_signal.emit(tr("MSG_ERR_NO_WRITE_PERMISSION"))
+            self.log_signal.emit(f"Error: {str(e)}")
+            self.finished_signal.emit()
+            return
+
         session = requests.Session()
         
         # Step 1: Fetch All Lists (Index)
