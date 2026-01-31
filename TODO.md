@@ -1,13 +1,8 @@
 # 📝 To-Do List & Roadmap
 
 ## 🚨 Critical Bugs & Fixes
-- [x] **Fix API File Access (#48):** Resolve "file not found" error when accessing downloaded monsters/spells from the API Browser.
-- [x] **Fix UI Refresh Issue (#47):** Filtered menus in the sidebar do not update immediately after adding an entity; requires switching filters to refresh.
-- [x] **Fix Soundpad Master Volume (#47):** The master volume slider in the Soundpad panel is currently non-functional.
-- [x] **Fix Arch Linux Installer (#46):**
-    - [x] Remove `xcb-util-xinerama` from `install-arch.sh` (package not in AUR).
-    - [x] Update script to handle `requirements.txt` path correctly (script needs to run from root or detect path).
-    - [x] Investigate and fix map image loading issues (PNG/WEBP/JPG) on Arch (likely missing `qt6-imageformats` or similar dependency).
+- [x] **Fix Mindmap Note Visibility (#50):** Fixed text visibility issue in mindmap notes by setting the MarkdownEditor background to transparent, ensuring proper contrast in both light and dark modes.
+
 
 ## ⚡ Immediate Improvements & UI
 - [ ] **GM Player Screen Control:** Add a specific edit/control view for the GM to manage the Player Window more effectively.
