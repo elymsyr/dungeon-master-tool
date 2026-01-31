@@ -565,3 +565,5 @@ tr:
   MSG_MIGRATION_CONVERTED: "MİGRASYON: JSON kampanya MsgPack'e dönüştürüldü."
   MSG_FILE_NOT_FOUND_DB: "Kayıt dosyası bulunamadı (data.dat veya data.json)."
   MSG_ABSOLUTE_PATHS_FIXED: "🔧 Mutlak yollar düzeltildi ve varlıklar kopyalandı."
+  MSG_ERR_NO_WRITE_PERMISSION: "❌ Yazma izni reddedildi: Önbellek klasörü salt okunur."
+  MSG_CACHE_WRITE_ERROR: "Önbelleğe yazılamadı (USB/Disk salt okunur olabilir)."

@@ -363,6 +363,14 @@ class ApiBrowser(QDialog):
         self.list_widget.setEnabled(True)
         
         if success:
+            # Show Cache Warning if present (Append to status or toast)
+            if msg and tr("MSG_CACHE_WRITE_ERROR") in msg:
+                 # Non-blocking visual cue. For now, simple QMessageBox or modify label
+                 # Using MessageBox might be too intrusive every time, but necessary for "USB Read Only" feedback.
+                 # Let's check if it's strictly the error key
+                 self.lbl_name.setText(self.lbl_name.text() + " ⚠️ Offline Cache Failed")
+                 # Optional: Status bar showing msg
+
             if isinstance(data_or_id, str):
                 if self.selection_mode:
                     self.selected_entity_id = data_or_id
@@ -392,6 +400,10 @@ class ApiBrowser(QDialog):
             self.selected_data = data
             self.lbl_name.setText(data.get("name"))
             
+            # --- SHOW WARNING IN DESCRIPTION IF AVAILABLE ---
+            if isinstance(data, dict) and "_warning" in data:
+                 QMessageBox.warning(self, tr("MSG_WARNING"), data["_warning"])
+
             try: 
                 self.btn_import.clicked.disconnect()
             except: 

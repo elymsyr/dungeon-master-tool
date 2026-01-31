@@ -353,6 +353,19 @@ class DataManager:
                 else: new_id = self.save_entity(None, sub_data, should_save=False, auto_source_update=False); existing_map[ent_name] = new_id
                 if new_id not in main_data[target_list_key]: main_data[target_list_key].append(new_id)
 
+    def check_write_permissions(self):
+        """Checks if the cache directory is writable."""
+        if not os.path.exists(CACHE_DIR):
+            try:
+                os.makedirs(CACHE_DIR)
+            except OSError:
+                return False, tr("MSG_ERR_NO_WRITE_PERMISSION")
+        
+        if not os.access(CACHE_DIR, os.W_OK):
+             return False, tr("MSG_ERR_NO_WRITE_PERMISSION")
+        
+        return True, ""
+
     def fetch_details_from_api(self, category, index_name, local_only=False):
         # 1. Kaynak bazlı klasör yapısı (varsayılan dnd5e)
         source_key = self.api_client.current_source_key
@@ -399,6 +412,9 @@ class DataManager:
                 doc_title = raw_data.get("document__title") or raw_data.get("document", {}).get("title", "Open5e")
                 raw_data["_meta_source"] = doc_title
             # ---------------------------------
+            
+            # Return Data Prepare
+            parsed_result = self.api_client.parse_dispatcher(category, raw_data)
 
             if folder:
                 # Mevcut seçili kaynağın klasörüne kaydet
@@ -421,8 +437,11 @@ class DataManager:
                     print(f"[DEBUG] Validated and Saved to: {local_path}")
                 except Exception as e:
                     print(f"Cache Write Error: {e}")
+                    # UI'ya bir uyarı mesajı ekle ama veriyi döndür (Crash olmaması için)
+                    if isinstance(parsed_result, dict):
+                        parsed_result["_warning"] = tr("MSG_CACHE_WRITE_ERROR")
             
-            return True, self.api_client.parse_dispatcher(category, raw_data)
+            return True, parsed_result
             
         return False, tr("MSG_SEARCH_NOT_FOUND")
 
@@ -439,7 +458,14 @@ class DataManager:
         success, local_data = self.fetch_details_from_api(category, query)
         if success and local_data:
              if category in ["Monster", "NPC"]: local_data = self._resolve_dependencies(local_data)
-             return True, tr("MSG_LOADED_FROM_CACHE"), local_data
+             
+             # Eğer cache yazma hatası varsa mesajı ilet
+             msg = tr("MSG_LOADED_FROM_CACHE")
+             if isinstance(local_data, dict) and "_warning" in local_data:
+                 msg += f"\n({local_data.pop('_warning')})"
+             
+             return True, msg, local_data
+             
         parsed_data, msg = self.api_client.search(category, query)
         if not parsed_data: return False, msg, None
         if category in ["Monster", "NPC"] and isinstance(parsed_data, dict): parsed_data = self._resolve_dependencies(parsed_data)

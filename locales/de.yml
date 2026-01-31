@@ -567,3 +567,5 @@ de:
   MSG_MIGRATION_CONVERTED: "MIGRATION: JSON-Kampagne in MsgPack konvertiert."
   MSG_FILE_NOT_FOUND_DB: "Datenbankdatei nicht gefunden (data.dat oder data.json)."
   MSG_ABSOLUTE_PATHS_FIXED: "🔧 Absolute Pfade korrigiert und Assets kopiert."
+  MSG_ERR_NO_WRITE_PERMISSION: "❌ Schreibberechtigung verweigert: Cache-Ordner ist schreibgeschützt."
+  MSG_CACHE_WRITE_ERROR: "Fehler beim Schreiben in den Cache (USB/Festplatte ist möglicherweise schreibgeschützt)."

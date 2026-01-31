@@ -567,3 +567,5 @@ fr:
   MSG_MIGRATION_CONVERTED: "MIGRATION : Campagne JSON convertie en MsgPack."
   MSG_FILE_NOT_FOUND_DB: "Fichier base de données introuvable (data.dat ou data.json)."
   MSG_ABSOLUTE_PATHS_FIXED: "🔧 Chemins absolus corrigés et assets copiés."
+  MSG_ERR_NO_WRITE_PERMISSION: "❌ Permission d'écriture refusée : Le dossier Cache est en lecture seule."
+  MSG_CACHE_WRITE_ERROR: "Échec de l'écriture dans le cache (USB/Disque peut être en lecture seule)."
