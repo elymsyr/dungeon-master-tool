@@ -43,13 +43,11 @@ class DownloadWorker(QThread):
         if not os.path.exists(lib_img_dir): os.makedirs(lib_img_dir)
 
         # 1.5 CHECK PERMISSIONS
-        try:
-            test_file = os.path.join(LIBRARY_DIR, ".perm_test")
-            with open(test_file, "w") as f: f.write("ok")
-            os.remove(test_file)
-        except Exception as e:
+        # 1.5 CHECK PERMISSIONS
+        # Optimization: Use os.access instead of creating a test file
+        # This prevents issues on some USB drives where creating dotfiles fails
+        if not os.access(LIBRARY_DIR, os.W_OK):
             self.log_signal.emit(tr("MSG_ERR_NO_WRITE_PERMISSION"))
-            self.log_signal.emit(f"Error: {str(e)}")
             self.finished_signal.emit()
             return
 
