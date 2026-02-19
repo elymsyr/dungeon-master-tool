@@ -9,10 +9,10 @@
   <br><br>
   ✨  <a href="https://elymsyr.github.io/">Check out our over-engineered amazing website here!</a> ✨
   <br><br>
-  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-Windows.zip">
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.5/DungeonMasterTool-Windows.zip">
     <img src="https://img.shields.io/badge/Download-Windows_x64-blue?style=for-the-badge&logo=windows" alt="Download Windows" />
   </a>
-  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-Linux.zip">
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.5/DungeonMasterTool-Linux.zip">
     <img src="https://img.shields.io/badge/Download-Linux-orange?style=for-the-badge&logo=linux" alt="Download Linux" />
   </a>
   <a href="#macos-installation">
@@ -78,14 +78,14 @@
 ## 🚀 Installation
 
 ### 🪟 Windows
-1. Download `DungeonMasterTool-Windows.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-Windows.zip).
+1. Download `DungeonMasterTool-Windows.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.5/DungeonMasterTool-Windows.zip).
 2. Extract the folder and run `DungeonMasterTool.exe`.
 
 ### 🐧 Linux
 
 #### Preferred
 
-1. Download `DungeonMasterTool-Linux.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-Linux.zip).
+1. Download `DungeonMasterTool-Linux.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.5/DungeonMasterTool-Linux.zip).
 2. Extract the folder and run `DungeonMasterTool`.
 
 #### Manual
@@ -102,7 +102,7 @@ bash installer/install.sh  # (Use install-arch.sh for Arch Linux)
 ### 🍎 MacOS Installation & Security Note
 Since this is an open-source project and not signed with an official Apple Developer account, you need to manually bypass the "unverified developer" warning.
 
-**[Click here to download DungeonMasterTool-MacOS.zip](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.3/DungeonMasterTool-MacOS.zip)**
+**[Click here to download DungeonMasterTool-MacOS.zip](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.5/DungeonMasterTool-MacOS.zip)**
 
 **Steps to run the app:**
 
