@@ -55,18 +55,49 @@ class DevIpcBridge(QObject):
         if not self._poll_timer.isActive():
             self._poll_timer.start()
 
+    def _failed_payload(self, error, details, *, changed_paths=None, last_world=None):
+        return {
+            "ok": False,
+            "status": HotReloadManager.OUTCOME_FAILED,
+            "error": str(error),
+            "details": details,
+            "last_world": last_world,
+            "changed_paths": list(changed_paths or []),
+            "duration_ms": 0,
+        }
+
+    def _normalize_payload(self, payload):
+        if not isinstance(payload, dict):
+            return self._failed_payload("Invalid hot reload result payload.", repr(payload))
+
+        if "status" not in payload:
+            payload["status"] = (
+                HotReloadManager.OUTCOME_APPLIED
+                if payload.get("ok")
+                else HotReloadManager.OUTCOME_FAILED
+            )
+
+        payload.setdefault("ok", payload["status"] in {
+            HotReloadManager.OUTCOME_APPLIED,
+            HotReloadManager.OUTCOME_NO_OP,
+        })
+        payload.setdefault("error", None)
+        payload.setdefault("details", "")
+        payload.setdefault("last_world", self.window.data_manager.data.get("world_name") if self.window else None)
+        payload.setdefault("changed_paths", [])
+        payload.setdefault("duration_ms", 0)
+        return payload
+
     def _handle_hot_reload(self, changed_paths):
         if self.window is None or self.hot_reload_manager is None:
-            return {
-                "ok": False,
-                "error": "No active window attached.",
-                "details": "Dev bridge has not attached to a main window yet.",
-                "last_world": None,
-            }
+            return self._failed_payload(
+                "No active window attached.",
+                "Dev bridge has not attached to a main window yet.",
+                changed_paths=changed_paths,
+            )
 
         result = self.hot_reload_manager.attempt_hot_reload(changed_paths)
-        result["last_world"] = self.window.data_manager.data.get("world_name")
-        return result
+        return self._normalize_payload(result)
 
     def _poll_once(self):
         if self.connection is None:
@@ -79,12 +110,10 @@ class DevIpcBridge(QObject):
             payload = self.connection.recv()
             if not isinstance(payload, dict):
                 self.connection.send(
-                    {
-                        "ok": False,
-                        "error": "Invalid IPC payload",
-                        "details": repr(payload),
-                        "last_world": None,
-                    }
+                    self._failed_payload(
+                        "Invalid IPC payload",
+                        repr(payload),
+                    )
                 )
                 return
 
@@ -92,14 +121,16 @@ class DevIpcBridge(QObject):
             if cmd == "hot_reload":
                 response = self._handle_hot_reload(payload.get("changed_paths", []))
             else:
-                response = {
-                    "ok": False,
-                    "error": f"Unknown IPC command: {cmd}",
-                    "details": "Supported commands: hot_reload",
-                    "last_world": self.window.data_manager.data.get("world_name")
-                    if self.window
-                    else None,
-                }
+                response = self._failed_payload(
+                    f"Unknown IPC command: {cmd}",
+                    "Supported commands: hot_reload",
+                    changed_paths=payload.get("changed_paths", []),
+                    last_world=(
+                        self.window.data_manager.data.get("world_name")
+                        if self.window
+                        else None
+                    ),
+                )
 
             self.connection.send(response)
         except Exception as exc:
@@ -107,14 +138,15 @@ class DevIpcBridge(QObject):
             if self.connection is not None:
                 try:
                     self.connection.send(
-                        {
-                            "ok": False,
-                            "error": str(exc),
-                            "details": traceback.format_exc(),
-                            "last_world": self.window.data_manager.data.get("world_name")
-                            if self.window
-                            else None,
-                        }
+                        self._failed_payload(
+                            str(exc),
+                            traceback.format_exc(),
+                            last_world=(
+                                self.window.data_manager.data.get("world_name")
+                                if self.window
+                                else None
+                            ),
+                        )
                     )
                 except Exception:
                     pass

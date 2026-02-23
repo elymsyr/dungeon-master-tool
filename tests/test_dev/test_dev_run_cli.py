@@ -40,9 +40,13 @@ def test_parse_args_rejects_incompatible_flags():
 def test_should_watch_file_filters_patterns_and_excluded_dirs(tmp_path):
     root = tmp_path
     included = root / "ui" / "tabs" / "map_tab.py"
-    excluded = root / ".git" / "hooks" / "post-commit.py"
+    excluded_git = root / ".git" / "hooks" / "post-commit.py"
+    excluded_cache = root / "cache" / "settings.json"
+    excluded_worlds = root / "worlds" / "my_world" / "data.json"
     ignored_ext = root / "README.md"
 
     assert should_watch_file(included, root, ["*.py", "*.qss"]) is True
-    assert should_watch_file(excluded, root, ["*.py", "*.qss"]) is False
+    assert should_watch_file(excluded_git, root, ["*.py", "*.qss"]) is False
+    assert should_watch_file(excluded_cache, root, ["*.json"]) is False
+    assert should_watch_file(excluded_worlds, root, ["*.json"]) is False
     assert should_watch_file(ignored_ext, root, ["*.py", "*.qss"]) is False

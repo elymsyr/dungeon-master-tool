@@ -17,6 +17,12 @@ except ImportError:  # pragma: no cover - validated via runtime message
     watch = None
 
 
+STATUS_APPLIED = "APPLIED"
+STATUS_NO_OP = "NO_OP"
+STATUS_RESTART_REQUIRED = "RESTART_REQUIRED"
+STATUS_FAILED = "FAILED"
+STATUS_BUSY = "BUSY"
+
 DEFAULT_PATTERNS = "*.py,*.ui,*.qss,*.json,*.yaml,*.yml"
 DEFAULT_DEBOUNCE_MS = 300
 DEFAULT_EXCLUDED_DIRS = {
@@ -30,6 +36,8 @@ DEFAULT_EXCLUDED_DIRS = {
     ".pytest_cache",
     ".ruff_cache",
     "node_modules",
+    "cache",
+    "worlds",
 }
 
 
@@ -102,7 +110,8 @@ def should_watch_file(
         return False
 
     rel_path = Path(rel)
-    if any(part in set(excluded_dirs) for part in rel_path.parts):
+    excluded = set(excluded_dirs)
+    if any(part in excluded for part in rel_path.parts):
         return False
 
     name = rel_path.name
@@ -124,6 +133,7 @@ class DevSupervisor:
         self.child_proc = None
         self.child_conn = None
         self.auth_token = ""
+        self._pending_changes: set[str] = set()
 
     def _open_listener(self):
         self.auth_token = secrets.token_hex(16)
@@ -221,38 +231,89 @@ class DevSupervisor:
         if self.child_proc and self.child_proc.poll() is not None:
             print("[dev] restart failed; waiting for next change")
 
-    def _send_hot_reload(self, changed_paths: List[str]):
+    def _compute_hot_reload_timeout(self, changed_paths: List[str]) -> float:
+        return min(45.0, 8.0 + 2.0 * len(changed_paths))
+
+    def _status_from_response(self, response: dict) -> str:
+        status = response.get("status")
+        if status in {
+            STATUS_APPLIED,
+            STATUS_NO_OP,
+            STATUS_RESTART_REQUIRED,
+            STATUS_FAILED,
+            STATUS_BUSY,
+        }:
+            return status
+
+        if response.get("ok"):
+            return STATUS_APPLIED
+
+        err = str(response.get("error", "")).lower()
+        if "restart required" in err:
+            return STATUS_RESTART_REQUIRED
+        if "busy" in err:
+            return STATUS_BUSY
+        return STATUS_FAILED
+
+    def _send_hot_reload(self, changed_paths: List[str], timeout_sec: float):
         if self.child_conn is None:
             return {
                 "ok": False,
+                "status": STATUS_FAILED,
                 "error": "Dev bridge is not connected.",
                 "details": "",
+                "last_world": None,
+                "changed_paths": list(changed_paths),
+                "duration_ms": 0,
             }
 
         try:
             self.child_conn.send({"cmd": "hot_reload", "changed_paths": changed_paths})
 
-            deadline = time.time() + 20.0
+            deadline = time.time() + timeout_sec
             while time.time() < deadline:
                 if self.child_proc and self.child_proc.poll() is not None:
                     return {
                         "ok": False,
+                        "status": STATUS_FAILED,
                         "error": "Application process exited while waiting for reload response.",
                         "details": "",
+                        "last_world": None,
+                        "changed_paths": list(changed_paths),
+                        "duration_ms": 0,
                     }
                 if self.child_conn.poll(0.2):
-                    return self.child_conn.recv()
+                    response = self.child_conn.recv()
+                    if isinstance(response, dict):
+                        return response
+                    return {
+                        "ok": False,
+                        "status": STATUS_FAILED,
+                        "error": "Invalid hot reload response payload.",
+                        "details": repr(response),
+                        "last_world": None,
+                        "changed_paths": list(changed_paths),
+                        "duration_ms": 0,
+                    }
 
             return {
                 "ok": False,
+                "status": STATUS_FAILED,
                 "error": "Timed out waiting for hot reload response.",
                 "details": "",
+                "last_world": None,
+                "changed_paths": list(changed_paths),
+                "duration_ms": 0,
             }
         except Exception as exc:
             return {
                 "ok": False,
+                "status": STATUS_FAILED,
                 "error": str(exc),
                 "details": "Hot reload IPC send/recv failed.",
+                "last_world": None,
+                "changed_paths": list(changed_paths),
+                "duration_ms": 0,
             }
 
     def _ensure_child_for_change(self):
@@ -261,29 +322,57 @@ class DevSupervisor:
             self.start_child()
 
     def handle_changes(self, changed_paths: List[str]):
+        self._pending_changes.update(changed_paths)
         self._ensure_child_for_change()
 
         if self.args.restart_only:
+            self._pending_changes.clear()
             self.restart_child()
             return
 
-        print("[dev] attempting hot reload...")
-        response = self._send_hot_reload(changed_paths)
-        if response.get("last_world"):
-            self.last_world = response["last_world"]
-
-        if response.get("ok"):
-            # Child logs the per-module and success lines.
+        if not self._pending_changes:
             return
 
-        print(f"[dev] hot reload failed: {response.get('error', 'unknown error')}")
-        if response.get("details"):
-            print(response["details"])
+        batch = sorted(self._pending_changes)
+        self._pending_changes.clear()
 
-        if self.args.no_restart:
+        attempt = 0
+        while attempt < 2:
+            attempt += 1
+            timeout_sec = self._compute_hot_reload_timeout(batch)
+            print("[dev] attempting hot reload...")
+            response = self._send_hot_reload(batch, timeout_sec=timeout_sec)
+
+            if response.get("last_world"):
+                self.last_world = response["last_world"]
+
+            status = self._status_from_response(response)
+
+            if status in {STATUS_APPLIED, STATUS_NO_OP}:
+                return
+
+            if status == STATUS_BUSY:
+                if attempt == 1:
+                    print("[dev] hot reload busy; retrying once with coalesced changes...")
+                    self._pending_changes.update(batch)
+                    time.sleep(0.2)
+                    batch = sorted(self._pending_changes)
+                    self._pending_changes.clear()
+                    continue
+
+                print("[dev] hot reload still busy; deferring changes to next file event.")
+                self._pending_changes.update(batch)
+                return
+
+            print(f"[dev] hot reload failed: {response.get('error', 'unknown error')}")
+            if response.get("details"):
+                print(response["details"])
+
+            if self.args.no_restart:
+                return
+
+            self.restart_child()
             return
-
-        self.restart_child()
 
     def _filter_changes(self, raw_changes: Iterable[Tuple[object, str]]) -> List[str]:
         changed = []

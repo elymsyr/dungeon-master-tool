@@ -126,7 +126,6 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(self.current_stylesheet)
         if hasattr(self.player_window, "update_theme"):
             self.player_window.update_theme(self.current_stylesheet)
-        self.retranslate_ui()
 
     def init_ui(self):
         root_factory_module = self._load_root_factory_module(reload_module=False)
