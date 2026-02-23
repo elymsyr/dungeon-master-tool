@@ -569,3 +569,5 @@ en:
   MSG_ABSOLUTE_PATHS_FIXED: "🔧 Absolute paths fixed and assets copied."
   MSG_ERR_NO_WRITE_PERMISSION: "❌ Write permission denied: Cache folder is read-only."
   MSG_CACHE_WRITE_ERROR: "Failed to write to cache. (USB/Disk might be read-only)."
+  MSG_DATA_ROOT_FALLBACK: "Portable data folder is not writable. Worlds and cache will be stored here instead:\n%{path}"
+  TT_DATA_ROOT_ACTIVE: "Active data folder: %{path}"

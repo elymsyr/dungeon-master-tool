@@ -569,3 +569,5 @@ de:
   MSG_ABSOLUTE_PATHS_FIXED: "🔧 Absolute Pfade korrigiert und Assets kopiert."
   MSG_ERR_NO_WRITE_PERMISSION: "❌ Schreibberechtigung verweigert: Cache-Ordner ist schreibgeschützt."
   MSG_CACHE_WRITE_ERROR: "Fehler beim Schreiben in den Cache (USB/Festplatte ist möglicherweise schreibgeschützt)."
+  MSG_DATA_ROOT_FALLBACK: "Der portable Datenordner ist nicht beschreibbar. Welten und Cache werden stattdessen hier gespeichert:\n%{path}"
+  TT_DATA_ROOT_ACTIVE: "Aktiver Datenordner: %{path}"

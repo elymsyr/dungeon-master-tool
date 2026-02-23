@@ -4,11 +4,12 @@ import os
 import json
 import shutil
 import msgpack  # ADDED FOR FAST FORMAT
-from config import WORLDS_DIR, BASE_DIR, CACHE_DIR, load_theme
+from config import WORLDS_DIR, BASE_DIR, CACHE_DIR, load_theme, probe_write_access
 from core.models import get_default_entity_structure, SCHEMA_MAP, PROPERTY_MAP
 from core.api_client import DndApiClient
 from core.locales import set_language
 from core.locales import tr
+from core.library_fs import migrate_legacy_layout, scan_library_tree, search_library_tree
 
 LIBRARY_DIR = os.path.join(CACHE_DIR, "library")
 # We will use .dat (MsgPack) for library cache, but .json support remains
@@ -33,6 +34,8 @@ class DataManager:
         }
         self.api_client = DndApiClient()
         self.reference_cache = {}
+        self.library_tree = {}
+        self.library_migration_report = {}
         
         if not os.path.exists(WORLDS_DIR):
             os.makedirs(WORLDS_DIR)
@@ -43,6 +46,8 @@ class DataManager:
         """Loads library index. Tries fast format (.dat) first."""
         if not os.path.exists(CACHE_DIR):
             os.makedirs(CACHE_DIR)
+
+        self.reference_cache = {}
         
         # 1. Hızlı format var mı?
         if os.path.exists(CACHE_FILE_DAT):
@@ -50,21 +55,20 @@ class DataManager:
                 with open(CACHE_FILE_DAT, "rb") as f:
                     # raw=False: Load as String instead of Byte
                     self.reference_cache = msgpack.unpack(f, raw=False)
-                return
             except Exception as e:
                 print(f"Cache DAT load error: {e}")
-
-        # 2. Yoksa eski JSON var mı?
-        if os.path.exists(CACHE_FILE_JSON):
-            try:
-                with open(CACHE_FILE_JSON, "r", encoding="utf-8") as f: 
-                    self.reference_cache = json.load(f)
-                # If JSON found, convert to fast format immediately and save
-                self._save_reference_cache()
-            except: 
                 self.reference_cache = {}
-        else: 
-            self.reference_cache = {}
+
+        # 2. DAT yoksa/eskiyse JSON fallback
+        if not self.reference_cache and os.path.exists(CACHE_FILE_JSON):
+            try:
+                with open(CACHE_FILE_JSON, "r", encoding="utf-8") as f:
+                    self.reference_cache = json.load(f)
+                self._save_reference_cache()
+            except Exception:
+                self.reference_cache = {}
+
+        self.refresh_library_catalog()
 
     def _save_reference_cache(self):
         """Kütüphane indeksini MsgPack (.dat) olarak kaydeder."""
@@ -74,6 +78,31 @@ class DataManager:
                 msgpack.pack(self.reference_cache, f)
         except Exception as e:
             print(f"Cache save error: {e}")
+
+    def refresh_library_catalog(self):
+        """Migrates legacy cache layout and refreshes in-memory file catalog."""
+        try:
+            self.library_migration_report = migrate_legacy_layout(CACHE_DIR, default_source="dnd5e")
+        except Exception as e:
+            self.library_migration_report = {"errors": [str(e)]}
+            print(f"Library migration error: {e}")
+
+        try:
+            self.library_tree = scan_library_tree(CACHE_DIR, default_source="dnd5e")
+        except Exception as e:
+            self.library_tree = {}
+            print(f"Library scan error: {e}")
+
+    def search_library_catalog(self, query, normalized_categories=None, source=None):
+        """Searches local offline library files from canonical+legacy cache folders."""
+        if not self.library_tree:
+            self.refresh_library_catalog()
+        return search_library_tree(
+            self.library_tree,
+            query=query,
+            normalized_categories=normalized_categories,
+            source=source,
+        )
 
     def load_settings(self):
         # Ayarlar küçük olduğu için ve elle düzenlenebildiği için JSON kalması daha iyi
@@ -355,15 +384,8 @@ class DataManager:
 
     def check_write_permissions(self):
         """Checks if the cache directory is writable."""
-        if not os.path.exists(CACHE_DIR):
-            try:
-                os.makedirs(CACHE_DIR)
-            except OSError:
-                return False, tr("MSG_ERR_NO_WRITE_PERMISSION")
-        
-        if not os.access(CACHE_DIR, os.W_OK):
-             return False, tr("MSG_ERR_NO_WRITE_PERMISSION")
-        
+        if not probe_write_access(CACHE_DIR):
+            return False, tr("MSG_ERR_NO_WRITE_PERMISSION")
         return True, ""
 
     def fetch_details_from_api(self, category, index_name, local_only=False):
@@ -382,17 +404,26 @@ class DataManager:
         folder = folder_map.get(category)
         
         if folder:
-            # Örnek: cache/library/open5e/monsters/aboleth.json
-            base_lib = os.path.join(LIBRARY_DIR, source_key, folder)
-            local_path = os.path.join(base_lib, f"{index_name}.json")
-            
-            # 2. Önce Cache Kontrolü
-            if os.path.exists(local_path):
-                try:
-                    with open(local_path, "r", encoding="utf-8") as f: raw = json.load(f)
-                    parsed = self.api_client.parse_dispatcher(category, raw)
-                    return True, parsed
-                except Exception as e: print(f"DEBUG: Cache Read Error ({index_name}): {e}")
+            safe_index = str(index_name).lower().replace(" ", "-")
+            candidate_bases = [
+                os.path.join(LIBRARY_DIR, source_key, folder),  # canonical
+                os.path.join(LIBRARY_DIR, folder),              # legacy fallback
+            ]
+            candidate_names = [f"{index_name}.json", f"{safe_index}.json"]
+
+            # 2. Önce Cache Kontrolü (canonical + legacy)
+            for base_lib in candidate_bases:
+                for name in candidate_names:
+                    local_path = os.path.join(base_lib, name)
+                    if not os.path.exists(local_path):
+                        continue
+                    try:
+                        with open(local_path, "r", encoding="utf-8") as f:
+                            raw = json.load(f)
+                        parsed = self.api_client.parse_dispatcher(category, raw)
+                        return True, parsed
+                    except Exception as e:
+                        print(f"DEBUG: Cache Read Error ({index_name}): {e}")
         
         if local_only: return False, "Not in local cache."
 
@@ -435,6 +466,7 @@ class DataManager:
                     with open(local_path, "w", encoding="utf-8") as f:
                         json.dump(save_content, f, indent=2, ensure_ascii=False)
                     print(f"[DEBUG] Validated and Saved to: {local_path}")
+                    self.refresh_library_catalog()
                 except Exception as e:
                     print(f"Cache Write Error: {e}")
                     # UI'ya bir uyarı mesajı ekle ama veriyi döndür (Crash olmaması için)
@@ -613,23 +645,28 @@ class DataManager:
             self.save_data()
 
     def search_in_library(self, category, search_text):
-        results = []
-        search_text = search_text.lower()
-        cats = [category] if category in self.reference_cache else list(self.reference_cache.keys())
-        for c in cats:
-            data = self.reference_cache.get(c)
-            # Fix: Only search in lists (Bulk Data). Skip dicts (API Page Cache).
-            if not isinstance(data, list):
-                continue
+        normalized = None
+        if category:
+            normalized = {str(category).lower().rstrip("s")}
 
-            for item in data:
-                if not isinstance(item, dict): continue
-                
-                # Check match
-                if len(search_text) < 2 or search_text in item.get("name", "").lower():
-                     idx = item.get("index") or item.get("slug")
-                     if idx:
-                        results.append({"id": f"lib_{c}_{idx}", "name": item["name"], "type": c, "is_library": True, "index": idx})
+        rows = self.search_library_catalog(
+            query=search_text,
+            normalized_categories=normalized,
+        )
+
+        results = []
+        for row in rows:
+            results.append(
+                {
+                    "id": f"lib_{row['category']}_{row['index']}",
+                    "name": row["display_name"],
+                    "type": row["category"],
+                    "is_library": True,
+                    "index": row["index"],
+                    "source": row["source"],
+                    "path": row["path"],
+                }
+            )
         return results
     
     def get_all_entity_mentions(self):
