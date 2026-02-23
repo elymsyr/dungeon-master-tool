@@ -116,6 +116,62 @@ Since this is an open-source project and not signed with an official Apple Devel
 
 ---
 
+## 🛠️ Developer Hot Reload
+
+### Install (Dev)
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+### Run
+
+```bash
+python dev_run.py
+```
+
+Optional flags:
+
+- `--path <dir>`: watch/run from a specific root (default is repo root)
+- `--patterns "*.py,*.ui,*.qss,*.json,*.yaml,*.yml"`: override watched patterns
+- `--debounce-ms 300`: debounce window for change bursts
+- `--no-restart`: disable fallback auto-restart when hot reload fails
+- `--restart-only`: disable in-process hot reload, restart on every change
+
+### What Reloads Live
+
+- `.py`: changed modules are reloaded with `importlib.reload()`, then root UI is rebuilt in-process
+- `.qss`: active stylesheet is reapplied live (no restart)
+- `.ui`, `.json`, `.yaml`, `.yml`: root UI is rebuilt in-process
+- `locales/*.yml` / `locales/*.yaml`: UI is retranslated after rebuild
+
+### Fallback Behavior
+
+- Hot reload is attempted first.
+- If it fails and `--no-restart` is not set, dev runner gracefully restarts the app.
+- In dev mode, restart tries to reopen the last active world automatically.
+
+### Known Limitations
+
+- State preservation is best-effort (tab index/splitter/soundpad visibility). Deep widget state may reset.
+- If startup fails (for example syntax error), supervisor waits for the next file change before retry.
+- Production startup is unchanged (`python main.py` does not enable dev hot reload).
+
+### Manual Test Plan
+
+1. Run `python dev_run.py`.
+2. Modify a `.qss` file in `themes/` and save.
+3. Confirm styling updates in the running app without closing it.
+4. Modify a UI python file such as `ui/tabs/map_tab.py`.
+5. Confirm UI rebuild happens while the app process stays alive.
+6. Introduce a syntax error in a loaded python module and save.
+7. Confirm hot reload fails and the app auto-restarts.
+8. Confirm app reopens the last world in dev mode after restart.
+9. Fix the syntax error and save.
+10. Confirm hot reload succeeds again.
+
+---
+
 ## 📸 Gallery
 
 <p align="center">
