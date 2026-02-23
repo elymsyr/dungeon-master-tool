@@ -1,7 +1,9 @@
 import importlib
-import traceback
 from pathlib import Path
 import sys
+import threading
+import time
+import traceback
 from typing import Dict, Iterable, List, Set
 
 from config import load_theme
@@ -10,7 +12,14 @@ from config import load_theme
 class HotReloadManager:
     """In-process development hot reload coordinator."""
 
+    OUTCOME_APPLIED = "APPLIED"
+    OUTCOME_NO_OP = "NO_OP"
+    OUTCOME_RESTART_REQUIRED = "RESTART_REQUIRED"
+    OUTCOME_FAILED = "FAILED"
+    OUTCOME_BUSY = "BUSY"
+
     WATCHED_EXTENSIONS = {".py", ".ui", ".qss", ".json", ".yaml", ".yml"}
+
     STABLE_MODULES = {
         "__main__",
         "__mp_main__",
@@ -20,11 +29,24 @@ class HotReloadManager:
     }
     STABLE_PREFIXES = ("core.dev.",)
 
+    RESTART_REQUIRED_FILES = {"main.py", "dev_run.py"}
+    RESTART_REQUIRED_PREFIXES = ("core/dev/",)
+
+    REQUIRED_WINDOW_ATTRS = (
+        "tabs",
+        "db_tab",
+        "map_tab",
+        "session_tab",
+        "entity_sidebar",
+        "soundpad_panel",
+    )
+
     def __init__(self, window, project_root: Path | None = None):
         self.window = window
         self.project_root = (
             project_root.resolve() if project_root else Path(__file__).resolve().parents[2]
         )
+        self._reload_lock = threading.Lock()
 
     @staticmethod
     def module_name_from_path(relative_path: str) -> str:
@@ -79,13 +101,14 @@ class HotReloadManager:
         for changed in changed_paths:
             candidate = Path(changed)
             if not candidate.is_absolute():
-                candidate = (self.project_root / candidate)
+                candidate = self.project_root / candidate
             resolved = candidate.resolve()
 
             try:
                 rel = resolved.relative_to(self.project_root).as_posix()
             except ValueError:
                 rel = resolved.as_posix()
+
             normalized.append(rel)
 
         return sorted(set(normalized))
@@ -106,8 +129,19 @@ class HotReloadManager:
             return True
         return any(module_name.startswith(prefix) for prefix in self.STABLE_PREFIXES)
 
+    def _requires_restart(self, changed_py_paths: Iterable[str]) -> bool:
+        for path in changed_py_paths:
+            norm = Path(path).as_posix()
+            if norm in self.RESTART_REQUIRED_FILES:
+                return True
+            if any(norm.startswith(prefix) for prefix in self.RESTART_REQUIRED_PREFIXES):
+                return True
+        return False
+
     def _collect_reload_targets(
-        self, changed_modules: Iterable[str], changed_py_paths: Iterable[str]
+        self,
+        changed_modules: Iterable[str],
+        changed_py_paths: Iterable[str],
     ) -> List[str]:
         changed_modules = sorted(set(changed_modules))
         changed_files_abs = {
@@ -171,9 +205,7 @@ class HotReloadManager:
 
             module_spec = getattr(module_obj, "__spec__", None)
             if module_spec is None or getattr(module_spec, "loader", None) is None:
-                print(
-                    f"[dev] skipping reload (missing spec/loader): {module_name}"
-                )
+                print(f"[dev] skipping reload (missing spec/loader): {module_name}")
                 continue
 
             print(f"[dev] reloading module: {module_name}")
@@ -188,32 +220,97 @@ class HotReloadManager:
         if hasattr(self.window.player_window, "update_theme"):
             self.window.player_window.update_theme(stylesheet)
 
+    def _validate_window_health(self):
+        if self.window.centralWidget() is None:
+            raise RuntimeError("Hot reload health check failed: central widget is missing.")
+
+        for attr in self.REQUIRED_WINDOW_ATTRS:
+            if not hasattr(self.window, attr):
+                raise RuntimeError(
+                    f"Hot reload health check failed: missing window attribute '{attr}'."
+                )
+            if getattr(self.window, attr) is None:
+                raise RuntimeError(
+                    f"Hot reload health check failed: window attribute '{attr}' is None."
+                )
+
+        tabs = self.window.tabs
+        if not hasattr(tabs, "count"):
+            raise RuntimeError("Hot reload health check failed: tabs has no count().")
+        if tabs.count() < 4:
+            raise RuntimeError(
+                f"Hot reload health check failed: expected >=4 tabs, got {tabs.count()}."
+            )
+
+    def _build_result(
+        self,
+        *,
+        ok: bool,
+        status: str,
+        changed_paths: List[str],
+        started_at: float,
+        error: str | None = None,
+        details: str = "",
+    ) -> Dict[str, object]:
+        duration_ms = int((time.monotonic() - started_at) * 1000)
+        return {
+            "ok": ok,
+            "status": status,
+            "error": error,
+            "details": details,
+            "last_world": self.window.data_manager.data.get("world_name"),
+            "changed_paths": list(changed_paths),
+            "duration_ms": duration_ms,
+        }
+
     def attempt_hot_reload(self, changed_paths: Iterable[str]) -> Dict[str, object]:
+        started_at = time.monotonic()
         normalized_paths = self._normalize_changed_paths(changed_paths)
-        classified = self.classify_paths(normalized_paths)
 
-        # main.py is the stable shell module in dev mode; restart is required for edits there.
-        if any(Path(path).as_posix() == "main.py" for path in classified["python"]):
-            return {
-                "ok": False,
-                "error": "main.py changed; restart required for stable shell updates.",
-                "details": "The dev hot-reload shell keeps main.py stable in-process.",
-                "last_world": self.window.data_manager.data.get("world_name"),
-            }
-
-        needs_rebuild = bool(
-            classified["python"]
-            or classified["ui"]
-            or classified["data"]
-        )
-        has_qss = bool(classified["qss"])
-
-        if not needs_rebuild and not has_qss:
-            return {"ok": True, "details": "No relevant changes.", "last_world": self.window.data_manager.data.get("world_name")}
-
-        print("[dev] attempting hot reload...")
+        if not self._reload_lock.acquire(blocking=False):
+            return self._build_result(
+                ok=False,
+                status=self.OUTCOME_BUSY,
+                changed_paths=normalized_paths,
+                started_at=started_at,
+                error="Hot reload already in progress.",
+                details="Skipped overlapping reload request.",
+            )
 
         try:
+            classified = self.classify_paths(normalized_paths)
+
+            if self._requires_restart(classified["python"]):
+                return self._build_result(
+                    ok=False,
+                    status=self.OUTCOME_RESTART_REQUIRED,
+                    changed_paths=normalized_paths,
+                    started_at=started_at,
+                    error=(
+                        "Shell/dev infrastructure changed; restart required "
+                        "(main.py, dev_run.py, or core/dev/*)."
+                    ),
+                    details="The dev hot-reload shell keeps these modules stable in-process.",
+                )
+
+            needs_rebuild = bool(
+                classified["python"]
+                or classified["ui"]
+                or classified["data"]
+            )
+            has_qss = bool(classified["qss"])
+
+            if not needs_rebuild and not has_qss:
+                return self._build_result(
+                    ok=True,
+                    status=self.OUTCOME_NO_OP,
+                    changed_paths=normalized_paths,
+                    started_at=started_at,
+                    details="No relevant changes.",
+                )
+
+            print("[dev] attempting hot reload...")
+
             if classified["python"]:
                 self._reload_python_modules(classified["python"])
 
@@ -223,22 +320,29 @@ class HotReloadManager:
             if needs_rebuild:
                 print("[dev] rebuilding root widget...")
                 self.window.rebuild_root_widget(reload_main_root_module=True)
+                self._validate_window_health()
 
             if classified["locales"] and hasattr(self.window, "retranslate_ui"):
                 self.window.retranslate_ui()
 
             print("[dev] hot reload successful")
-            return {
-                "ok": True,
-                "details": "Hot reload successful.",
-                "last_world": self.window.data_manager.data.get("world_name"),
-            }
+            return self._build_result(
+                ok=True,
+                status=self.OUTCOME_APPLIED,
+                changed_paths=normalized_paths,
+                started_at=started_at,
+                details="Hot reload successful.",
+            )
         except Exception as exc:
             tb_text = traceback.format_exc()
             print(f"[dev] hot reload failed: {exc}")
-            return {
-                "ok": False,
-                "error": str(exc),
-                "details": tb_text,
-                "last_world": self.window.data_manager.data.get("world_name"),
-            }
+            return self._build_result(
+                ok=False,
+                status=self.OUTCOME_FAILED,
+                changed_paths=normalized_paths,
+                started_at=started_at,
+                error=str(exc),
+                details=tb_text,
+            )
+        finally:
+            self._reload_lock.release()

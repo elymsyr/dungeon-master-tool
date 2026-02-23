@@ -145,17 +145,36 @@ Optional flags:
 - `.ui`, `.json`, `.yaml`, `.yml`: root UI is rebuilt in-process
 - `locales/*.yml` / `locales/*.yaml`: UI is retranslated after rebuild
 
+Restart-required boundaries:
+
+- `main.py`
+- `dev_run.py`
+- any file under `core/dev/`
+
 ### Fallback Behavior
 
 - Hot reload is attempted first.
 - If it fails and `--no-restart` is not set, dev runner gracefully restarts the app.
 - In dev mode, restart tries to reopen the last active world automatically.
+- Reload status values are explicit: `APPLIED`, `NO_OP`, `RESTART_REQUIRED`, `FAILED`, `BUSY`.
+- `BUSY` retries once in-process with a coalesced change set; additional retries wait for the next change event.
+
+Outcome troubleshooting:
+
+| Status | Meaning | Default Supervisor Action |
+| :--- | :--- | :--- |
+| `APPLIED` | Reload + optional rebuild succeeded | Continue |
+| `NO_OP` | No actionable files in batch | Continue |
+| `RESTART_REQUIRED` | Stable-shell/dev infra changed | Restart (unless `--no-restart`) |
+| `FAILED` | Reload/rebuild/health-check failed | Restart (unless `--no-restart`) |
+| `BUSY` | Another reload in progress | Retry once, then defer |
 
 ### Known Limitations
 
 - State preservation is best-effort (tab index/splitter/soundpad visibility). Deep widget state may reset.
 - If startup fails (for example syntax error), supervisor waits for the next file change before retry.
 - Production startup is unchanged (`python main.py` does not enable dev hot reload).
+- App-write directories `cache/` and `worlds/` are excluded from watch to avoid self-trigger reload loops.
 
 ### Manual Test Plan
 

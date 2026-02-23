@@ -31,7 +31,7 @@ def create_root_widget(main_window):
     toolbar = QHBoxLayout()
     toolbar.setContentsMargins(5, 5, 5, 5)
 
-    btn_toggle_player = QPushButton(tr('"BTN_PLAYER_SCREEN"'))
+    btn_toggle_player = QPushButton(tr("BTN_PLAYER_SCREEN"))
     btn_toggle_player.setCheckable(True)
     btn_toggle_player.setObjectName("primaryBtn")
     btn_toggle_player.clicked.connect(main_window.toggle_player_window)
