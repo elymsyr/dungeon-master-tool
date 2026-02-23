@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from config import DATA_ROOT
 from core.locales import tr
 from ui.soundpad_panel import SoundpadPanel
 from ui.tabs.database_tab import DatabaseTab
@@ -48,6 +49,7 @@ def create_root_widget(main_window):
     lbl_campaign = QLabel(f"{tr('LBL_CAMPAIGN')} {data_manager.data.get('world_name')}")
     lbl_campaign.setObjectName("toolbarLabel")
     lbl_campaign.setStyleSheet("font-weight: bold; margin-right: 10px;")
+    lbl_campaign.setToolTip(tr("TT_DATA_ROOT_ACTIVE", path=DATA_ROOT))
 
     btn_switch_world = QPushButton(tr("BTN_SWITCH_WORLD"))
     btn_switch_world.setToolTip(tr("BTN_SWITCH_WORLD"))

@@ -125,6 +125,11 @@ class EntitySidebar(QWidget):
         self.list_widget = DraggableListWidget()
         self.list_widget.itemDoubleClicked.connect(self.on_item_double_clicked)
         main_layout.addWidget(self.list_widget)
+
+        self.check_show_library = QCheckBox(tr("LBL_CHECK_LIBRARY"))
+        self.check_show_library.setChecked(True)
+        self.check_show_library.toggled.connect(self.refresh_list)
+        main_layout.addWidget(self.check_show_library)
         
         # --- ALT KISIM: BUTONLAR ---
         btn_layout = QHBoxLayout()
@@ -278,6 +283,31 @@ class EntitySidebar(QWidget):
             item.setSizeHint(widget.sizeHint())
             self.list_widget.setItemWidget(item, widget)
 
+        # Offline library rows are opt-in and only shown when query/filter narrows results.
+        if self.check_show_library.isChecked() and not self.active_sources:
+            if len(text) >= 2 or norm_active_cats:
+                lib_rows = self.dm.search_library_catalog(
+                    query=text,
+                    normalized_categories=norm_active_cats if norm_active_cats else None,
+                )
+
+                for row in lib_rows:
+                    category = row.get("category")
+                    index = row.get("index")
+                    if not category or not index:
+                        continue
+
+                    list_item = QListWidgetItem(self.list_widget)
+                    list_item.setData(Qt.ItemDataRole.UserRole, f"lib_{category}_{index}")
+                    source_label = f"Offline {row.get('source', 'dnd5e').upper()}"
+                    widget = EntityListItemWidget(
+                        "📚 " + row.get("display_name", index),
+                        category,
+                        source_label,
+                    )
+                    list_item.setSizeHint(widget.sizeHint())
+                    self.list_widget.setItemWidget(list_item, widget)
+
     def on_item_double_clicked(self, item):
         eid = item.data(Qt.ItemDataRole.UserRole)
         self.item_double_clicked.emit(eid)
@@ -299,3 +329,4 @@ class EntitySidebar(QWidget):
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
         self.btn_import.setText("📥 " + tr("BTN_IMPORT"))
         self.btn_add.setText("➕ " + tr("BTN_ADD"))
+        self.check_show_library.setText(tr("LBL_CHECK_LIBRARY"))

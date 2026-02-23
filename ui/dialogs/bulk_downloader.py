@@ -5,11 +5,12 @@ import time
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QProgressBar, 
                              QPushButton, QTextEdit, QMessageBox)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from config import BASE_DIR, API_BASE_URL, CACHE_DIR
+from config import API_BASE_URL, CACHE_DIR, probe_write_access
 from core.locales import tr
 
 # Library repository
 LIBRARY_DIR = os.path.join(CACHE_DIR, "library")
+LIBRARY_SOURCE_DIR = os.path.join(LIBRARY_DIR, "dnd5e")
 
 class DownloadWorker(QThread):
     progress_signal = pyqtSignal(int)
@@ -38,15 +39,12 @@ class DownloadWorker(QThread):
         # 1. Prepare Folders
         lib_img_dir = os.path.join(LIBRARY_DIR, "images")
         for endpoint in self.categories.keys():
-            path = os.path.join(LIBRARY_DIR, endpoint)
+            path = os.path.join(LIBRARY_SOURCE_DIR, endpoint)
             if not os.path.exists(path): os.makedirs(path)
         if not os.path.exists(lib_img_dir): os.makedirs(lib_img_dir)
 
-        # 1.5 CHECK PERMISSIONS
-        # 1.5 CHECK PERMISSIONS
-        # Optimization: Use os.access instead of creating a test file
-        # This prevents issues on some USB drives where creating dotfiles fails
-        if not os.access(LIBRARY_DIR, os.W_OK):
+        # 1.5 CHECK PERMISSIONS (real write probe)
+        if not probe_write_access(LIBRARY_SOURCE_DIR):
             self.log_signal.emit(tr("MSG_ERR_NO_WRITE_PERMISSION"))
             self.finished_signal.emit()
             return
@@ -76,7 +74,7 @@ class DownloadWorker(QThread):
         # Step 2: Download Details (JSON ONLY - IMAGES ON DEMAND)
         current_count = 0
         for endpoint, items in lists_to_process.items():
-            folder_path = os.path.join(LIBRARY_DIR, endpoint)
+            folder_path = os.path.join(LIBRARY_SOURCE_DIR, endpoint)
             label = self.categories[endpoint]
             self.log_signal.emit(tr("LOG_DOWNLOADING", label=label, count=len(items)))
             
