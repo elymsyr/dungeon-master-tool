@@ -21,10 +21,11 @@ from ui.player_window import PlayerWindow
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, data_manager):
+    def __init__(self, data_manager, dev_mode=False):
         super().__init__()
         self.data_manager = data_manager
-        self.player_window = PlayerWindow()
+        self.dev_mode = dev_mode
+        self.player_window = PlayerWindow(dev_mode=self.dev_mode)
 
         self.theme_list = [
             ("dark", "THEME_DARK"),
@@ -40,7 +41,10 @@ class MainWindow(QMainWindow):
             ("amethyst", "THEME_AMETHYST"),
         ]
 
-        self.setWindowTitle(f"DM Tool - {self.data_manager.data.get('world_name', 'Bilinmiyor')}")
+        base_title = f"DM Tool - {self.data_manager.data.get('world_name', 'Bilinmiyor')}"
+        if self.dev_mode:
+            base_title = f"[DEV] {base_title}"
+        self.setWindowTitle(base_title)
         self.setGeometry(100, 100, 1400, 900)
 
         self.current_stylesheet = load_theme(self.data_manager.current_theme)
@@ -333,7 +337,7 @@ def run_application(
             if not selector.exec():
                 break
 
-        window = MainWindow(dm)
+        window = MainWindow(dm, dev_mode=(os.getenv("DM_DEV_CHILD") == "1"))
         if dev_bridge is not None:
             dev_bridge.attach(window)
 
