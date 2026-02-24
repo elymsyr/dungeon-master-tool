@@ -1,166 +1,140 @@
-from os import environ
+import importlib
+import os
 import sys
+from typing import Any, Dict, Optional
+
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QTabWidget, QVBoxLayout, 
-                             QWidget, QMessageBox, QFileDialog, QHBoxLayout, 
-                             QPushButton, QLabel, QComboBox, QSplitter, QStyle)
-from PyQt6.QtGui import QShortcut, QKeySequence 
-from config import STYLESHEET, load_theme
+from PyQt6.QtGui import QKeySequence, QShortcut
+from PyQt6.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QMainWindow,
+    QMessageBox,
+)
+
+from config import load_theme
 from core.data_manager import DataManager
-from ui.player_window import PlayerWindow
-from ui.tabs.database_tab import DatabaseTab
-from ui.tabs.map_tab import MapTab
-from ui.tabs.session_tab import SessionTab
-from ui.campaign_selector import CampaignSelector
 from core.locales import tr
-from ui.soundpad_panel import SoundpadPanel
-from ui.widgets.projection_manager import ProjectionManager
-from ui.tabs.mind_map_tab import MindMapTab
-from ui.widgets.entity_sidebar import EntitySidebar
-# YENİ IMPORT
-from core.theme_manager import ThemeManager 
+from core.theme_manager import ThemeManager
+from ui.campaign_selector import CampaignSelector
+from ui.player_window import PlayerWindow
+
 
 class MainWindow(QMainWindow):
-    def __init__(self, data_manager):
+    def __init__(self, data_manager, dev_mode=False):
         super().__init__()
         self.data_manager = data_manager
-        self.player_window = PlayerWindow()
-        
+        self.dev_mode = dev_mode
+        self.player_window = PlayerWindow(dev_mode=self.dev_mode)
+
         self.theme_list = [
-            ("dark", "THEME_DARK"), ("light", "THEME_LIGHT"), ("baldur", "Baldur's Gate"),
-            ("discord", "Discord"), ("grim", "Grim (Dark)"), ("midnight", "THEME_MIDNIGHT"),
-            ("emerald", "THEME_EMERALD"), ("parchment", "THEME_PARCHMENT"), ("ocean", "THEME_OCEAN"),
-            ("frost", "THEME_FROST"), ("amethyst", "THEME_AMETHYST")
+            ("dark", "THEME_DARK"),
+            ("light", "THEME_LIGHT"),
+            ("baldur", "Baldur's Gate"),
+            ("discord", "Discord"),
+            ("grim", "Grim (Dark)"),
+            ("midnight", "THEME_MIDNIGHT"),
+            ("emerald", "THEME_EMERALD"),
+            ("parchment", "THEME_PARCHMENT"),
+            ("ocean", "THEME_OCEAN"),
+            ("frost", "THEME_FROST"),
+            ("amethyst", "THEME_AMETHYST"),
         ]
-        
-        self.setWindowTitle(f"DM Tool - {self.data_manager.data.get('world_name', 'Bilinmiyor')}")
+
+        base_title = f"DM Tool - {self.data_manager.data.get('world_name', 'Bilinmiyor')}"
+        if self.dev_mode:
+            base_title = f"[DEV] {base_title}"
+        self.setWindowTitle(base_title)
         self.setGeometry(100, 100, 1400, 900)
-        
-        # Başlangıç teması (QSS)
+
         self.current_stylesheet = load_theme(self.data_manager.current_theme)
         self.setStyleSheet(self.current_stylesheet)
-        
+
         self.active_shortcuts = []
-        
+
         self.init_ui()
 
+    def _load_root_factory_module(self, reload_module: bool = False):
+        module = importlib.import_module("ui.main_root")
+        if reload_module:
+            module = importlib.reload(module)
+        return module
+
+    def _apply_root_bundle(self, bundle: Dict[str, Any]):
+        old_central = self.centralWidget()
+        self.setCentralWidget(bundle["central_widget"])
+
+        for name, value in bundle.items():
+            if name == "central_widget":
+                continue
+            setattr(self, name, value)
+
+        if old_central is not None and old_central is not self.centralWidget():
+            old_central.deleteLater()
+
+    def _capture_reload_state(self) -> Dict[str, Any]:
+        state = {
+            "geometry": self.saveGeometry(),
+            "tab_index": None,
+            "splitter_sizes": None,
+            "soundpad_visible": False,
+            "soundpad_checked": False,
+        }
+
+        if hasattr(self, "tabs"):
+            state["tab_index"] = self.tabs.currentIndex()
+        if hasattr(self, "content_splitter"):
+            state["splitter_sizes"] = self.content_splitter.sizes()
+        if hasattr(self, "soundpad_panel"):
+            state["soundpad_visible"] = self.soundpad_panel.isVisible()
+        if hasattr(self, "btn_toggle_sound"):
+            state["soundpad_checked"] = self.btn_toggle_sound.isChecked()
+
+        return state
+
+    def _restore_reload_state(self, state: Dict[str, Any]):
+        if state.get("geometry") is not None:
+            self.restoreGeometry(state["geometry"])
+
+        if state.get("splitter_sizes") and hasattr(self, "content_splitter"):
+            current_sizes = self.content_splitter.sizes()
+            if len(current_sizes) == len(state["splitter_sizes"]):
+                self.content_splitter.setSizes(state["splitter_sizes"])
+
+        if hasattr(self, "soundpad_panel"):
+            visible = bool(state.get("soundpad_visible", False))
+            self.soundpad_panel.setVisible(visible)
+            if hasattr(self, "btn_toggle_sound"):
+                self.btn_toggle_sound.setChecked(
+                    bool(state.get("soundpad_checked", visible))
+                )
+
+        if state.get("tab_index") is not None and hasattr(self, "tabs"):
+            tab_index = int(state["tab_index"])
+            if 0 <= tab_index < self.tabs.count():
+                self.tabs.setCurrentIndex(tab_index)
+
+    def rebuild_root_widget(self, reload_main_root_module: bool = True):
+        state = self._capture_reload_state()
+
+        root_factory_module = self._load_root_factory_module(
+            reload_module=reload_main_root_module
+        )
+        bundle = root_factory_module.create_root_widget(self)
+        self._apply_root_bundle(bundle)
+
+        self._restore_reload_state(state)
+
+        # Re-apply theme and translated labels after rebuilding widgets.
+        self.current_stylesheet = load_theme(self.data_manager.current_theme)
+        self.setStyleSheet(self.current_stylesheet)
+        if hasattr(self.player_window, "update_theme"):
+            self.player_window.update_theme(self.current_stylesheet)
+
     def init_ui(self):
-        central = QWidget()
-        self.setCentralWidget(central)
-        main_layout = QVBoxLayout(central)
-        
-        # --- TOOLBAR SETUP ---
-        toolbar = QHBoxLayout()
-        toolbar.setContentsMargins(5, 5, 5, 5) 
-        
-        self.btn_toggle_player = QPushButton(tr("BTN_PLAYER_SCREEN"))
-        self.btn_toggle_player.setCheckable(True)
-        self.btn_toggle_player.setObjectName("primaryBtn")
-        self.btn_toggle_player.clicked.connect(self.toggle_player_window)
-        self.btn_export_txt = QPushButton(tr("BTN_EXPORT"))
-        self.btn_export_txt.setObjectName("successBtn")
-        self.btn_export_txt.clicked.connect(self.export_entities_to_txt)
-        self.btn_toggle_sound = QPushButton("🔊")
-        self.btn_toggle_sound.setCheckable(True)
-        self.btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
-        self.btn_toggle_sound.clicked.connect(self.toggle_soundpad)
-        
-        self.lbl_campaign = QLabel(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
-        self.lbl_campaign.setObjectName("toolbarLabel")
-        self.lbl_campaign.setStyleSheet("font-weight: bold; margin-right: 10px;")
-
-        self.btn_switch_world = QPushButton(tr("BTN_SWITCH_WORLD"))
-        self.btn_switch_world.setToolTip(tr("BTN_SWITCH_WORLD"))
-        self.btn_switch_world.clicked.connect(self.switch_world)
-
-        # --- PROJECTION MANAGER (HEADER INTEGRATION) ---
-        self.projection_manager = ProjectionManager()
-        self.projection_manager.setVisible(False) 
-        self.projection_manager.image_added.connect(self.player_window.add_image_to_view)
-        self.projection_manager.image_removed.connect(self.player_window.remove_image_from_view)
-
-        # Right side controls
-        self.combo_lang = QComboBox()
-        self.combo_lang.addItems(["English", "Türkçe", "Deutsch", "Français"])
-        current_lang = self.data_manager.settings.get("language", "EN")
-        lang_map = {"EN": 0, "TR": 1, "DE": 2, "FR": 3}
-        self.combo_lang.setCurrentIndex(lang_map.get(current_lang.upper(), 0))
-        self.combo_lang.currentIndexChanged.connect(self.change_language)
-        
-        self.lbl_theme = QLabel(tr("LBL_THEME"))
-        self.lbl_theme.setObjectName("toolbarLabel")
-        self.combo_theme = QComboBox()
-        for _, display_name in self.theme_list:
-            self.combo_theme.addItem(tr(display_name) if display_name.startswith("THEME_") else display_name)
-        
-        current_theme_code = self.data_manager.current_theme
-        index_to_select = next((i for i, (code, _) in enumerate(self.theme_list) if code == current_theme_code), 0)
-        self.combo_theme.setCurrentIndex(index_to_select)
-        self.combo_theme.currentIndexChanged.connect(self.change_theme)
-        
-        # Adding widgets to toolbar
-        toolbar.addWidget(self.btn_toggle_player)
-        toolbar.addWidget(self.btn_export_txt)
-        toolbar.addWidget(self.btn_toggle_sound)
-        toolbar.addSpacing(10)
-        toolbar.addWidget(self.lbl_campaign)
-        toolbar.addWidget(self.projection_manager)
-        toolbar.addStretch() 
-        toolbar.addWidget(self.combo_lang)
-        toolbar.addWidget(self.lbl_theme)
-        toolbar.addWidget(self.combo_theme)
-        toolbar.addWidget(self.btn_switch_world)
-        
-        main_layout.addLayout(toolbar)
-
-        # --- ANA İÇERİK YAPISI (SPLITTER) ---
-        self.content_splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.content_splitter.setHandleWidth(4)
-        
-        # 1. SOL PANEL: Global Entity Sidebar
-        self.entity_sidebar = EntitySidebar(self.data_manager)
-        self.entity_sidebar.item_double_clicked.connect(self.on_entity_selected)
-        self.content_splitter.addWidget(self.entity_sidebar)
-        
-        # 2. ORTA PANEL: Sekmeler
-        self.tabs = QTabWidget()
-        
-        self.db_tab = DatabaseTab(self.data_manager, self.player_window)
-        self.tabs.addTab(self.db_tab, tr("TAB_DB"))
-        
-        self.mind_map_tab = MindMapTab(self.data_manager, main_window_ref=self)
-        self.tabs.addTab(self.mind_map_tab, tr("TAB_MIND_MAP"))
-        
-        self.map_tab = MapTab(self.data_manager, self.player_window, self) 
-        self.tabs.addTab(self.map_tab, tr("TAB_MAP")) 
-        
-        self.session_tab = SessionTab(self.data_manager)
-        self.tabs.addTab(self.session_tab, tr("TAB_SESSION"))
-        
-        self.content_splitter.addWidget(self.tabs)
-        
-        # 3. SAĞ PANEL: Soundpad
-        self.soundpad_panel = SoundpadPanel()
-        self.soundpad_panel.setVisible(False)
-        self.soundpad_panel.theme_loaded_with_shortcuts.connect(self.setup_soundpad_shortcuts)
-        self.content_splitter.addWidget(self.soundpad_panel)
-        
-        self.content_splitter.setStretchFactor(0, 0)
-        self.content_splitter.setStretchFactor(1, 1)
-        self.content_splitter.setStretchFactor(2, 0)
-        self.content_splitter.setCollapsible(0, True)
-        self.content_splitter.setCollapsible(2, True)
-        self.content_splitter.setSizes([300, 1000, 0])
-        
-        main_layout.addWidget(self.content_splitter)
-
-        # Database sekmesinde bir şey silinirse sidebar listesini yenile
-        self.db_tab.entity_deleted.connect(self.entity_sidebar.refresh_list)
-
-        self.session_tab.txt_log.entity_link_clicked.connect(self.db_tab.open_entity_tab)
-        self.session_tab.txt_notes.entity_link_clicked.connect(self.db_tab.open_entity_tab)
-        
-        self.map_tab.render_map()
+        root_factory_module = self._load_root_factory_module(reload_module=False)
+        bundle = root_factory_module.create_root_widget(self)
+        self._apply_root_bundle(bundle)
         self.retranslate_ui()
 
     def setup_soundpad_shortcuts(self, shortcuts_map):
@@ -178,40 +152,50 @@ class MainWindow(QMainWindow):
             sc = QShortcut(QKeySequence(stop_ambience_key), self)
             sc.activated.connect(self.soundpad_panel.stop_ambience)
             self.active_shortcuts.append(sc)
-            
+
         if sfx_shortcuts := shortcuts_map.get("play_sfx", {}):
             for sfx_id, key_sequence in sfx_shortcuts.items():
                 if key_sequence and sfx_id in self.soundpad_panel.sfx_buttons:
                     sc = QShortcut(QKeySequence(key_sequence), self)
-                    sc.activated.connect(lambda s_id=sfx_id: self.soundpad_panel.play_sfx(s_id))
+                    sc.activated.connect(
+                        lambda s_id=sfx_id: self.soundpad_panel.play_sfx(s_id)
+                    )
                     self.active_shortcuts.append(sc)
-    
+
     def retranslate_ui(self):
         self.btn_toggle_player.setText(tr("BTN_PLAYER_SCREEN"))
         self.btn_export_txt.setText(tr("BTN_EXPORT"))
         self.btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
-        self.lbl_campaign.setText(f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}")
+        self.lbl_campaign.setText(
+            f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}"
+        )
         self.tabs.setTabText(0, tr("TAB_DB"))
-        self.tabs.setTabText(1, tr("TAB_MIND_MAP")) 
+        self.tabs.setTabText(1, tr("TAB_MIND_MAP"))
         self.tabs.setTabText(2, tr("TAB_MAP"))
         self.tabs.setTabText(3, tr("TAB_SESSION"))
-        
-        if hasattr(self.db_tab, "retranslate_ui"): self.db_tab.retranslate_ui()
-        if hasattr(self.map_tab, "retranslate_ui"): self.map_tab.retranslate_ui()
-        if hasattr(self.session_tab, "retranslate_ui"): self.session_tab.retranslate_ui()
-        if hasattr(self.soundpad_panel, "retranslate_ui"): self.soundpad_panel.retranslate_ui()
-        if hasattr(self.entity_sidebar, "retranslate_ui"): self.entity_sidebar.retranslate_ui()
-        
+
+        if hasattr(self.db_tab, "retranslate_ui"):
+            self.db_tab.retranslate_ui()
+        if hasattr(self.map_tab, "retranslate_ui"):
+            self.map_tab.retranslate_ui()
+        if hasattr(self.session_tab, "retranslate_ui"):
+            self.session_tab.retranslate_ui()
+        if hasattr(self.soundpad_panel, "retranslate_ui"):
+            self.soundpad_panel.retranslate_ui()
+        if hasattr(self.entity_sidebar, "retranslate_ui"):
+            self.entity_sidebar.retranslate_ui()
+
         self.lbl_theme.setText(tr("LBL_THEME"))
         for i, (_, display_name) in enumerate(self.theme_list):
-            self.combo_theme.setItemText(i, tr(display_name) if display_name.startswith("THEME_") else display_name)
+            text = tr(display_name) if display_name.startswith("THEME_") else display_name
+            self.combo_theme.setItemText(i, text)
 
     def change_language(self, index):
         codes = ["EN", "TR", "DE", "FR"]
         code = codes[index] if index < len(codes) else "EN"
         self.data_manager.save_settings({"language": code})
         self.retranslate_ui()
-    
+
     def toggle_soundpad(self):
         is_visible = self.soundpad_panel.isVisible()
         self.soundpad_panel.setVisible(not is_visible)
@@ -223,66 +207,62 @@ class MainWindow(QMainWindow):
                 sizes[1] -= new_size
                 sizes[-1] = new_size
                 self.content_splitter.setSizes(sizes)
-    
+
     def change_theme(self, index):
-        """
-        Themes now update both QSS and Graphics View Palettes.
-        """
         if 0 <= index < len(self.theme_list):
             theme_name = self.theme_list[index][0]
             self.data_manager.save_settings({"theme": theme_name})
-            
-            # 1. Update QSS (Widgets)
+
             self.current_stylesheet = load_theme(theme_name)
             self.setStyleSheet(self.current_stylesheet)
-            if hasattr(self.player_window, "update_theme"): 
+            if hasattr(self.player_window, "update_theme"):
                 self.player_window.update_theme(self.current_stylesheet)
-            
-            # 2. Update Graphics Views (Mind Map, Markdown)
-            # Mind Map sekmesi
+
             if hasattr(self.mind_map_tab, "apply_theme"):
                 self.mind_map_tab.apply_theme(theme_name)
-                
-            # Database sekmesindeki açık kartlar (NpcSheet -> MarkdownEditor)
+
             self.refresh_database_tab_themes(theme_name)
 
     def refresh_database_tab_themes(self, theme_name):
-        """Helper to propagate theme changes to Database Tab contents."""
         palette = ThemeManager.get_palette(theme_name)
-        
-        # Left Panel Tabs
+
         for i in range(self.db_tab.tab_manager_left.count()):
             sheet = self.db_tab.tab_manager_left.widget(i)
             if hasattr(sheet, "refresh_theme"):
                 sheet.refresh_theme(palette)
-        
-        # Right Panel Tabs
+
         for i in range(self.db_tab.tab_manager_right.count()):
             sheet = self.db_tab.tab_manager_right.widget(i)
             if hasattr(sheet, "refresh_theme"):
                 sheet.refresh_theme(palette)
 
     def toggle_player_window(self):
-        if self.player_window.isVisible(): 
+        if self.player_window.isVisible():
             self.player_window.hide()
             self.btn_toggle_player.setChecked(False)
             self.projection_manager.setVisible(False)
-        else: 
+        else:
             self.player_window.show()
             self.btn_toggle_player.setChecked(True)
             self.player_window.update_theme(self.current_stylesheet)
             self.projection_manager.setVisible(True)
 
     def export_entities_to_txt(self):
-        path, _ = QFileDialog.getSaveFileName(self, tr("TITLE_EXPORT"), "export.txt", tr("FILE_FILTER_TXT"))
-        if not path: return
+        path, _ = QFileDialog.getSaveFileName(
+            self, tr("TITLE_EXPORT"), "export.txt", tr("FILE_FILTER_TXT")
+        )
+        if not path:
+            return
         try:
             with open(path, "w", encoding="utf-8") as f:
                 f.write(f"{tr('TXT_EXPORT_HEADER')}\n")
-                f.write(f"{tr('TXT_EXPORT_WORLD')}{self.data_manager.data.get('world_name')}\n")
-                f.write("="*50 + "\n\n")
+                f.write(
+                    f"{tr('TXT_EXPORT_WORLD')}{self.data_manager.data.get('world_name')}\n"
+                )
+                f.write("=" * 50 + "\n\n")
                 entities = self.data_manager.data.get("entities", {})
-                if not entities: f.write(f"{tr('TXT_EXPORT_NO_DATA')}\n")
+                if not entities:
+                    f.write(f"{tr('TXT_EXPORT_NO_DATA')}\n")
                 sorted_keys = sorted(entities.keys(), key=lambda k: entities[k].get("name", ""))
                 for i, eid in enumerate(sorted_keys, 1):
                     ent = entities[eid]
@@ -290,18 +270,24 @@ class MainWindow(QMainWindow):
                     type_ = ent.get("type", tr("NAME_UNKNOWN"))
                     tags = ", ".join(ent.get("tags", []))
                     desc = ent.get("description", "").replace("\n", " ")
-                    if len(desc) > 100: desc = desc[:97] + "..."
+                    if len(desc) > 100:
+                        desc = desc[:97] + "..."
                     f.write(f"{i}. {name} ({type_})\n")
-                    if tags: f.write(f"{tr('TXT_EXPORT_TAGS')}{tags}\n")
+                    if tags:
+                        f.write(f"{tr('TXT_EXPORT_TAGS')}{tags}\n")
                     f.write(f"{tr('TXT_EXPORT_DESC')}{desc}\n")
                     c = ent.get("combat_stats", {})
                     if type_ in ["NPC", "Monster", "Player"] and c:
-                        hp = c.get("hp", "-"); ac = c.get("ac", "-"); cr = c.get("cr", "-")
+                        hp = c.get("hp", "-")
+                        ac = c.get("ac", "-")
+                        cr = c.get("cr", "-")
                         f.write(f"   HP: {hp} | AC: {ac} | CR: {cr}\n")
                     f.write("-" * 30 + "\n")
             QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_EXPORT_SUCCESS"))
         except Exception as e:
-            QMessageBox.critical(self, tr("MSG_ERROR"), tr("MSG_FILE_WRITE_ERROR", error=str(e)))
+            QMessageBox.critical(
+                self, tr("MSG_ERROR"), tr("MSG_FILE_WRITE_ERROR", error=str(e))
+            )
 
     def switch_world(self):
         self.switch_world_requested = True
@@ -316,17 +302,68 @@ class MainWindow(QMainWindow):
             self.tabs.setCurrentWidget(self.db_tab)
             self.db_tab.open_entity_tab(eid)
 
-if __name__ == "__main__":
+
+def run_application(
+    dev_bridge=None,
+    dev_last_world: Optional[str] = None,
+):
     QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app = QApplication(sys.argv)
+
+    if dev_bridge is not None:
+        dev_bridge.start()
+        app.aboutToQuit.connect(dev_bridge.close)
+
     dm = DataManager()
+    pending_dev_world = dev_last_world
+
     while True:
-        selector = CampaignSelector(dm)
-        if selector.exec():
-            window = MainWindow(dm)
-            window.show()
-            app.exec()
-            if getattr(window, "switch_world_requested", False): continue
-            else: break
-        else: break
-    sys.exit()
+        campaign_loaded = False
+
+        if pending_dev_world:
+            success, msg = dm.load_campaign_by_name(pending_dev_world)
+            if success:
+                campaign_loaded = True
+                print(f"[dev] auto-loaded world: {pending_dev_world}")
+            else:
+                print(
+                    f"[dev] failed to auto-load world '{pending_dev_world}': {msg}. "
+                    "Opening campaign selector."
+                )
+            pending_dev_world = None
+
+        if not campaign_loaded:
+            selector = CampaignSelector(dm)
+            if not selector.exec():
+                break
+
+        window = MainWindow(dm, dev_mode=(os.getenv("DM_DEV_CHILD") == "1"))
+        if dev_bridge is not None:
+            dev_bridge.attach(window)
+
+        window.show()
+        app.exec()
+
+        if getattr(window, "switch_world_requested", False):
+            continue
+        break
+
+    return 0
+
+
+if __name__ == "__main__":
+    dev_bridge = None
+    dev_last_world = None
+
+    if os.getenv("DM_DEV_CHILD") == "1":
+        dev_last_world = os.getenv("DM_DEV_LAST_WORLD") or None
+        from core.dev.ipc_bridge import DevIpcBridge
+
+        dev_bridge = DevIpcBridge.from_env()
+
+    exit_code = run_application(dev_bridge=dev_bridge, dev_last_world=dev_last_world)
+
+    if dev_bridge is not None:
+        dev_bridge.close()
+
+    sys.exit(exit_code)

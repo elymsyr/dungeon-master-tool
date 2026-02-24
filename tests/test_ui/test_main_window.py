@@ -52,3 +52,15 @@ def test_language_switch_ui(qtbot, initialized_data_manager):
     # Check if a tab text changed (Smoke)
     # TAB_DB in TR is "Veritabanı ve Karakterler"
     assert "Veritabanı" in window.tabs.tabText(0)
+
+
+def test_rebuild_root_widget_smoke(qtbot, initialized_data_manager):
+    """MainWindow should rebuild root UI in-process without closing."""
+    window = MainWindow(initialized_data_manager)
+    qtbot.addWidget(window)
+
+    window.rebuild_root_widget()
+
+    assert window.centralWidget() is not None
+    assert window.tabs is not None
+    assert window.tabs.count() >= 3
