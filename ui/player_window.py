@@ -6,9 +6,12 @@ from ui.widgets.image_viewer import ImageViewer
 from PyQt6.QtGui import QImageReader
 
 class PlayerWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, dev_mode=False):
         super().__init__()
-        self.setWindowTitle("Player View - Second Screen")
+        title = "Player View - Second Screen"
+        if dev_mode:
+            title = f"[DEV] {title}"
+        self.setWindowTitle(title)
         self.resize(800, 600)
         self.setStyleSheet("background-color: black;")
         
