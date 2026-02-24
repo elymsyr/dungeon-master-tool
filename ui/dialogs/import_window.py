@@ -1,4 +1,3 @@
-import os
 import json
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget, 
                              QLineEdit, QPushButton, QLabel, QTextEdit, 
@@ -6,7 +5,6 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QTabWidget, QTreeWidget, QTreeWidgetItem, QHeaderView, QStyle,
                              QListWidgetItem)
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
-from config import CACHE_DIR
 from core.locales import tr
 from ui.workers import ApiListWorker, ApiSearchWorker
 from ui.dialogs.bulk_downloader import BulkDownloadDialog
@@ -16,36 +14,13 @@ class LibraryScanWorker(QThread):
     """Diskteki cache/library klasörünü tarayıp ağaç yapısı çıkarır."""
     finished = pyqtSignal(dict) # { 'dnd5e': {'monsters': [file1, file2...]} }
 
+    def __init__(self, data_manager, parent=None):
+        super().__init__(parent)
+        self.dm = data_manager
+
     def run(self):
-        library_root = os.path.join(CACHE_DIR, "library")
-        tree_data = {}
-        
-        if os.path.exists(library_root):
-            # 1. Kaynaklar (dnd5e, open5e, custom...)
-            sources = [d for d in os.listdir(library_root) if os.path.isdir(os.path.join(library_root, d)) and d != "images"]
-            
-            for source in sources:
-                tree_data[source] = {}
-                source_path = os.path.join(library_root, source)
-                
-                # 2. Kategoriler (monsters, spells...)
-                categories = [d for d in os.listdir(source_path) if os.path.isdir(os.path.join(source_path, d))]
-                
-                for cat in categories:
-                    tree_data[source][cat] = []
-                    cat_path = os.path.join(source_path, cat)
-                    
-                    # 3. Dosyalar (JSON)
-                    try:
-                        files = [f for f in os.listdir(cat_path) if f.endswith(".json")]
-                        # Dosya isminden okunabilir isim türet
-                        for f in files:
-                            display_name = f.replace(".json", "").replace("-", " ").title()
-                            # (Path, DisplayName, ID/Slug)
-                            tree_data[source][cat].append((os.path.join(cat_path, f), display_name, f.replace(".json", "")))
-                    except: pass
-                    
-        self.finished.emit(tree_data)
+        self.dm.refresh_library_catalog()
+        self.finished.emit(self.dm.library_tree)
 
 # --- TAB 1: LOCAL LIBRARY (OFFLINE) ---
 class LocalLibraryTab(QWidget):
@@ -108,7 +83,7 @@ class LocalLibraryTab(QWidget):
     def refresh_library(self):
         self.tree.clear()
         self.tree.setEnabled(False)
-        self.worker = LibraryScanWorker()
+        self.worker = LibraryScanWorker(self.dm, self)
         self.worker.finished.connect(self.on_scan_finished)
         self.worker.start()
 
@@ -116,12 +91,12 @@ class LocalLibraryTab(QWidget):
         self.tree.setEnabled(True)
         self.tree.clear()
         
-        for source, categories in data.items():
+        for source, categories in sorted(data.items()):
             source_item = QTreeWidgetItem(self.tree)
             source_item.setText(0, source.upper())
             source_item.setFlags(source_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
             
-            for cat, files in categories.items():
+            for cat, files in sorted(categories.items()):
                 cat_item = QTreeWidgetItem(source_item)
                 # Basit çeviri mapping
                 cat_map_tr = {
@@ -134,7 +109,10 @@ class LocalLibraryTab(QWidget):
                 cat_item.setText(0, f"{cat_text} ({len(files)})")
                 cat_item.setFlags(cat_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
                 
-                for f_path, f_name, f_slug in files:
+                for entry in files:
+                    f_path = entry.get("path")
+                    f_name = entry.get("display_name") or entry.get("index", "")
+                    f_slug = entry.get("index", "")
                     file_item = QTreeWidgetItem(cat_item)
                     file_item.setText(0, f_name)
                     file_item.setData(0, Qt.ItemDataRole.UserRole, {"path": f_path, "slug": f_slug, "cat": cat})

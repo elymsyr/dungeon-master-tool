@@ -567,3 +567,5 @@ tr:
   MSG_ABSOLUTE_PATHS_FIXED: "🔧 Mutlak yollar düzeltildi ve varlıklar kopyalandı."
   MSG_ERR_NO_WRITE_PERMISSION: "❌ Yazma izni reddedildi: Önbellek klasörü salt okunur."
   MSG_CACHE_WRITE_ERROR: "Önbelleğe yazılamadı (USB/Disk salt okunur olabilir)."
+  MSG_DATA_ROOT_FALLBACK: "Taşınabilir veri klasörü yazılabilir değil. Dünyalar ve önbellek bunun yerine burada saklanacak:\n%{path}"
+  TT_DATA_ROOT_ACTIVE: "Aktif veri klasörü: %{path}"

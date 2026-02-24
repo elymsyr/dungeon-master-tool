@@ -569,3 +569,5 @@ fr:
   MSG_ABSOLUTE_PATHS_FIXED: "🔧 Chemins absolus corrigés et assets copiés."
   MSG_ERR_NO_WRITE_PERMISSION: "❌ Permission d'écriture refusée : Le dossier Cache est en lecture seule."
   MSG_CACHE_WRITE_ERROR: "Échec de l'écriture dans le cache (USB/Disque peut être en lecture seule)."
+  MSG_DATA_ROOT_FALLBACK: "Le dossier de données portable n'est pas accessible en écriture. Les mondes et le cache seront stockés ici :\n%{path}"
+  TT_DATA_ROOT_ACTIVE: "Dossier de données actif : %{path}"
