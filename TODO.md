@@ -8,7 +8,6 @@
 ## ⚡ Immediate Improvements & UI
 - [ ] **GM Player Screen Control:** Add a specific edit/control view for the GM to manage the Player Window more effectively.
 - [ ] **Embedded PDF Viewer:** Implement a native PDF viewer within the application (Session/Docs tab).
-- [ ] **Video Map Volume (#32):** Add a volume slider specifically for animated video maps (`.mp4`, `.webm`) in the Battle Map.
 - [ ] **Standardize UI (#30):** Fix inconsistent button sizes and layouts across the application.
 - [ ] **Soundpad Transitions (#29):**
     - [ ] Make loop switching smoother to avoid audio glitches.
