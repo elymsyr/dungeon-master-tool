@@ -15,10 +15,51 @@ if command -v apt-get >/dev/null; then
         libxcb-render-util0 libxcb-xinerama0 libxcb-xkb1 libxkbcommon-x11-0 \
         libegl1 libopengl0 libgl1-mesa-glx libnss3 libasound2
 elif command -v dnf >/dev/null; then
-    sudo dnf install -y python3 python3-pip \
-        xcb-util-cursor xcb-util-wm xcb-util-image xcb-util-keysyms \
-        xcb-util-renderutil xcb-util-xinerama libxkbcommon-x11 \
-        mesa-libEGL mesa-libGL nss alsa-lib
+    # Core Fedora dependencies must exist; installation should fail if any are unavailable.
+    fedora_core_packages=(
+        python3
+        python3-pip
+        xcb-util-cursor
+        xcb-util-wm
+        xcb-util-image
+        xcb-util-keysyms
+        xcb-util-renderutil
+        libxkbcommon-x11
+        mesa-libEGL
+        mesa-libGL
+        nss
+        alsa-lib
+    )
+
+    # Xinerama helper package naming differs across Fedora versions/repos.
+    fedora_xinerama_candidates=(
+        xcb-util-xinerama
+        xcb-util
+    )
+
+    package_exists_dnf() {
+        local pkg="$1"
+        dnf list --installed "$pkg" >/dev/null 2>&1 || dnf list --available "$pkg" >/dev/null 2>&1
+    }
+
+    fedora_install_packages=("${fedora_core_packages[@]}")
+    xinerama_pkg=""
+
+    for candidate in "${fedora_xinerama_candidates[@]}"; do
+        if package_exists_dnf "$candidate"; then
+            xinerama_pkg="$candidate"
+            break
+        fi
+    done
+
+    if [[ -n "$xinerama_pkg" ]]; then
+        echo "Using Fedora Xinerama package: $xinerama_pkg"
+        fedora_install_packages+=("$xinerama_pkg")
+    else
+        echo "Warning: No Fedora Xinerama helper package found (tried: ${fedora_xinerama_candidates[*]}). Continuing without it."
+    fi
+
+    sudo dnf install -y "${fedora_install_packages[@]}"
 fi
 
 # 2. Set up virtual environment
