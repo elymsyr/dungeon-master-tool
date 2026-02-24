@@ -12,12 +12,14 @@ from PyQt6.QtWidgets import (
     QMessageBox,
 )
 
-from config import load_theme
+from config import DATA_ROOT, DATA_ROOT_MODE, load_theme
 from core.data_manager import DataManager
 from core.locales import tr
 from core.theme_manager import ThemeManager
 from ui.campaign_selector import CampaignSelector
 from ui.player_window import PlayerWindow
+
+_DATA_ROOT_FALLBACK_NOTICE_SHOWN = False
 
 
 class MainWindow(QMainWindow):
@@ -53,6 +55,7 @@ class MainWindow(QMainWindow):
         self.active_shortcuts = []
 
         self.init_ui()
+        self._show_data_root_notice_once()
 
     def _load_root_factory_module(self, reload_module: bool = False):
         module = importlib.import_module("ui.main_root")
@@ -137,6 +140,20 @@ class MainWindow(QMainWindow):
         self._apply_root_bundle(bundle)
         self.retranslate_ui()
 
+    def _show_data_root_notice_once(self):
+        global _DATA_ROOT_FALLBACK_NOTICE_SHOWN
+        if DATA_ROOT_MODE != "fallback":
+            return
+        if _DATA_ROOT_FALLBACK_NOTICE_SHOWN:
+            return
+
+        _DATA_ROOT_FALLBACK_NOTICE_SHOWN = True
+        QMessageBox.information(
+            self,
+            tr("MSG_INFO"),
+            tr("MSG_DATA_ROOT_FALLBACK", path=DATA_ROOT),
+        )
+
     def setup_soundpad_shortcuts(self, shortcuts_map):
         for shortcut in self.active_shortcuts:
             shortcut.setEnabled(False)
@@ -169,6 +186,7 @@ class MainWindow(QMainWindow):
         self.lbl_campaign.setText(
             f"{tr('LBL_CAMPAIGN')} {self.data_manager.data.get('world_name')}"
         )
+        self.lbl_campaign.setToolTip(tr("TT_DATA_ROOT_ACTIVE", path=DATA_ROOT))
         self.tabs.setTabText(0, tr("TAB_DB"))
         self.tabs.setTabText(1, tr("TAB_MIND_MAP"))
         self.tabs.setTabText(2, tr("TAB_MAP"))

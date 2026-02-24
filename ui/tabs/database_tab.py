@@ -120,14 +120,30 @@ class DatabaseTab(QWidget):
         """
         # 1. API ID Kontrolü (lib_...)
         if eid and str(eid).startswith("lib_"):
-            parts = eid.split("_")
+            parts = str(eid).split("_", 2)
+            if len(parts) < 3:
+                return
             raw_cat = parts[1]
+            raw_idx = parts[2]
             # Basit mapping
-            category_map = {"monsters": "Monster", "spells": "Spell", "equipment": "Equipment", "magic-items": "Equipment", "classes": "Class", "races": "Race", "npc": "NPC"}
+            category_map = {
+                "monsters": "Monster",
+                "spells": "Spell",
+                "equipment": "Equipment",
+                "magic-items": "Equipment",
+                "weapons": "Equipment",
+                "armor": "Equipment",
+                "classes": "Class",
+                "races": "Race",
+                "feats": "Feat",
+                "conditions": "Condition",
+                "backgrounds": "Background",
+                "npc": "NPC",
+            }
             target_cat = category_map.get(raw_cat, raw_cat.capitalize())
             
             # Asenkron Worker ile çek
-            self._fetch_and_open_api_entity(target_cat, parts[2], target_panel)
+            self._fetch_and_open_api_entity(target_cat, raw_idx, target_panel)
             return
 
         # 2. Hedef Tab Manager'ı belirle
