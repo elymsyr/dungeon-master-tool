@@ -7,6 +7,9 @@
 
 ## ⚡ Immediate Improvements & UI
 - [ ] **GM Player Screen Control:** Add a specific edit/control view for the GM to manage the Player Window more effectively.
+- [ ] **Single Player Screen:** The battle map view and player view will be on a single window.
+- [ ] **Auto Event Log:** On the Session View Tab, for each combat round, damages and everything should be printed to the event log automatically.
+- [ ] **Free Single Import:** Users should be able to import an entitiy from the import data sources such as spells, items and else, directly into any other entitiy like characters or npcs without needing to import them to the card entity database first.
 - [ ] **Embedded PDF Viewer:** Implement a native PDF viewer within the application (Session/Docs tab).
 - [ ] **Standardize UI (#30):** Fix inconsistent button sizes and layouts across the application.
 - [ ] **Soundpad Transitions (#29):**
