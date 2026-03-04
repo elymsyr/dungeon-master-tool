@@ -21,23 +21,8 @@ Bu geliştirmelerden önce [TODO](../TODO.md) içindeki `Immediate Improvements 
 Sistemin mevcut masaüstü gücünü koruyarak online hale getirilmesi için **Hibrit** bir model önerilmektedir:
 - **DM Uygulaması (Client/Host):** Mevcut PyQt6 uygulaması, server ile haberleşen bir "Master" client rolünü üstlenir.
 - **Backend (API Gateway & WebSocket Server):** FastAPI tabanlı, DM ve Oyuncular arasındaki senkronizasyonu yöneten merkezi bir hub.
-- **Oyuncu Paneli (Web Client):** Oyuncuların herhangi bir kurulum yapmadan tarayıcı üzerinden katılabileceği React veya Vanilla JS tabanlı bir web arayüzü. Bu kısım sonraki aşamalarda kullanılabilir olabilir ancak şuan için yalnızca planlamadan ibaret.
 - **Oyuncu Paneli (QT):** Aynı uygulama üzerinde oyuncu ekranı. DM ekranı ile farklar açıklanmıştır.
 - **Giriş Ekranı (QT):** Artık kullanıcılar uygulamaya giriş yaparken online özellikleri aktif etmek için giriş yapabilecek. Giriş yapıldığında, abonelik durumlarına bağlı olarak DM oalrak oluşturdukları dünyaları ya da oyuncu olarak katıldıkları dünyaları, veya ikisini beraber görebilecek.
-
-## 🔌 Haberleşme Protokolü
-
-### WebSocket Olayları (Sync Events)
-Real-time iletişim için aşağıdaki olay tipleri kullanılacaktır:
-
-| Olay Adı | Gönderen | Açıklama |
-| :--- | :--- | :--- |
-| `SESSION_JOIN` | Oyuncu | DM anahtarı ile oturuma katılma. |
-| `MAP_UPDATE` | DM | Battle map görüntüsü, grid durumu ve Fog of War verisi. |
-| `MINDMAP_SHOW` | DM | Seçilen mind map düğümlerinin oyunculara itilmesi. |
-| `CARD_SEND` | DM | Oyuncuya bir NPC, eşya veya bilgi kartı gönderilmesi. |
-| `AUDIO_SYNC` | DM | Soundmap çalınan müzik ve yoğunluk (intensity) bilgisi. |
-| `DICE_ROLL` | Herkes | Tüm katılımcılara açık zar atma sonuçları. |
 
 ## 👥 Rol Bazlı Ekranlar
 
@@ -59,17 +44,82 @@ QT uygulamasındaki tüm bölgeler oyuncular için aynı şekilde kalacak. Ancak
     - **Tam Ekran Battle View**: DM'in yönettiği harita ve Fog of War.
     - **Player Screen**: DM'in projeksiyon olarak gönderdiği resimler/PDF'ler.
 
+## 🔌 Haberleşme ve Senkronizasyon Detayları
 
-## 💾 Veri Senkronizasyonu ve Güvenlik
+### WebSocket Olay Yapıları (JSON)
 
-- **Asset Hosting:** DM'in yerelindeki resimler, FastAPI üzerinden geçici URL'lerle (S3 veya lokal statik sunucu) oyunculara servis edilir.
-- **State Persistence:** Oyun durumu `data.dat` dosyasında DM tarafında saklanmaya devam eder, ancak anlık "online session" durumu server üzerinde kısa süreli (Redis veya in-memory) tutulur.
-- **Session Keys:** 6 haneli alfa-nümerik rastgele anahtarlar.
-- **Online Backup:** DM tarafından database üzerinde world backup ve load yapılabilmelidir.
+Real-time iletişim için kullanılacak temel veri yapıları:
 
-## 🛠️ Teknoloji Yığını Önerisi
+#### 1. `SESSION_STATE` (DM -> Server -> Oyuncu)
+Oturumun genel durumunu ve bağlı oyuncuları tanımlar.
+```json
+{
+  "event": "SESSION_STATE",
+  "data": {
+    "session_id": "XY1234",
+    "dm_status": "online",
+    "active_players": ["Eren", "Player2"],
+    "current_view": "BATTLE_MAP" 
+  }
+}
+```
 
-- **DM App**: PyQt6 + `websockets` kütüphanesi.
-- **Server**: FastAPI (Python) + Socket.io.
-- **Web App**: React.js + TailwindCSS (Modern ve premium görünüm için).
-- **Deployment**: Dockerize edilmiş server (AWS/DigitalOcean veya DM'in kendi makinesinde Ngrok/Cloudflare Tunnel ile).
+#### 2. `MINDMAP_SYNC` (DM -> Oyuncu)
+DM'in paylaştığı mind map düğümlerini senkronize eder.
+```json
+{
+  "event": "MINDMAP_SYNC",
+  "data": {
+    "node_id": "uuid-1234",
+    "type": "note|entity|image",
+    "content": "Not içeriği veya Entity ID",
+    "position": {"x": 100, "y": 200},
+    "connections": ["uuid-5678"]
+  }
+}
+```
+
+#### 3. `AUDIO_STATE` (DM -> Oyuncu)
+Soundpad durumunu tüm katılımcılarda eşitler.
+```json
+{
+  "event": "AUDIO_STATE",
+  "data": {
+    "theme_id": "dark_forest",
+    "intensity": 2,
+    "master_volume": 0.7,
+    "ambience_slots": [
+      {"id": "birds_id", "volume": 0.5},
+      {"id": null, "volume": 0}
+    ]
+  }
+}
+```
+
+## 🧠 Mind Map Senkronizasyon Mantığı
+
+DM'in `mind_map_tab.py` üzerindeki "Master" görünümü, tüm dünyayı kapsayan geniş bir alandır. Online versiyonda:
+- **Paylaşım (Push):** DM, bir düğüme sağ tıklayıp "Oyuncularla Paylaş" dediğinde, o düğümün tüm içeriği (`extra_data`, `content`, `position`) WebSocket üzerinden oyunculara iletilir.
+- **Player Workspace:** Her oyuncunun kendi "Handout" mind map alanı olur. DM'den gelen öğeler burada belirir.
+- **Interaktivite:** Oyuncular kendilerine gelen öğeleri sürükleyebilir, birbirine bağlayabilir ancak DM'in orjinal düğümlerini silemezler.
+
+## 🎵 Soundpad (Ses) Senkronizasyonu
+
+Ses senkronizasyonu `MusicBrain` sınıfı üzerinden yönetilir:
+- **DM Kontrolü:** DM bir müzik veya ambiyans başlattığında, sadece dosya ID'si ve çalma komutu gönderilir. Dosyalar her oyuncunun yerel `cache` klasöründe yoksa arka planda server üzerinden indirilir.
+- **Anlık Değişimler:** Intensity slider'ı kaydırıldığında, tüm oyuncularda `Crossfade` işlemi aynı anda tetiklenir.
+- **Master Volume:** DM, tüm oyuncuların genel ses seviyesini bir üst limit olarak belirleyebilir (örneğin DM %50 yaparsa, oyuncunun kendi ayarı %100 olsa bile efektif ses %50 olur).
+
+## 💾 Veri ve Varlık (Asset) Yönetimi
+
+- **Proxy Server:** DM'in makinesindeki resimler (ör. `worlds/myworld/images/map.jpg`), FastAPI server üzerinden `http://server-ip/assets/uuid-map-name.jpg` formatında geçici olarak sunulur.
+- **Cache Mechanism:** Oyuncular bir haritayı veya sesi bir kez indirdiğinde yerel depolamaya (IndexedDB veya LocalStorage/File) kaydedilir.
+- **World Backup:** DM, tüm `data.dat` ve assets klasörünü tek tıkla server'a yedekleyebilir veya başka bir makinedeki online oturuma aktarabilir.
+
+## 🛠️ Teknoloji Yığını (Detaylı)
+
+- **DM App**: PyQt6 + `python-socketio` (Client).
+- **Backend**: FastAPI + `python-socketio` (Server) + Redis (Session storage).
+- **QT Player**: 
+    - **QT:** Mevcut uygulamanın kısıtlanmış "Oyuncu Modu" (Standalone Player Client).
+- **Deployment**: `ngrok` entegrasyonu ile "Tek Tıkla Sunucu Başlat" özelliği.
