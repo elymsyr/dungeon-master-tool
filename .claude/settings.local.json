@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find c:Users122oaOneDriveDocumentsdungeon-master-tooldocs -type f -name *.md)",
+      "Bash(grep -E \"\\\\.md$|README\")"
+    ]
+  }
+}

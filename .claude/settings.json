@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /c/Users/122oa/OneDrive/Documents/dungeon-master-tool/*.py)",
+      "Bash(wc -l /c/Users/122oa/OneDrive/Documents/dungeon-master-tool/core/*.py)",
+      "Bash(grep -E \"\\\\.py$|^d\")",
+      "Bash(find /c/Users/122oa/OneDrive/Documents/dungeon-master-tool/core -name \"*.py\" -exec wc -l {})",
+      "Read(//c/Users/122oa/OneDrive/Documents/dungeon-master-tool/**)",
+      "Bash(find /c/Users/122oa/OneDrive/Documents/dungeon-master-tool/ui -name \"*.py\" -exec wc -l {})",
+      "Bash(sort -k2)"
+    ]
+  }
+}

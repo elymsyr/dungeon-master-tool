@@ -1,5 +1,11 @@
 # Dungeon Master Tool — Online Transition: Comprehensive Development Report
 
+> ⚠️ **SUPERSEDED — Kept for historical reference only**
+> This document has been superseded by:
+> - `docs/ONLINE.md` — Online system vision, architecture, and design (authoritative)
+> - `docs/ONLINE_SPRINT.md` — Sprint 3–8 execution plan (authoritative)
+> Do not update this document. Update the superseding documents instead.
+
 > **Document version:** 1.0
 > **Date:** March 16, 2026
 > **Scope:** Architecture, phase plan, security, performance, testing, operations, versioning
