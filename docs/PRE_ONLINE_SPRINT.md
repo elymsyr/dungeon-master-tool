@@ -47,44 +47,40 @@ Both sprints must satisfy the **Stability Gate** defined in `docs/PRE_ONLINE.md 
 
 #### Delivered ✅
 
-| Task | File(s) | Notes |
-|---|---|---|
-| Button size standardization | `ui/widgets/*.py`, QSS theme files | Primary and icon buttons standardized to 32px and 24px heights |
-| GM Screen Control Panel — skeleton | `ui/components/gm_control_panel.py` | Panel exists with placeholder quick-switch buttons; not yet functional |
-| EventManager class created | `core/event_manager.py` | `emit()`, `subscribe()`, `unsubscribe()` implemented; local dispatch only |
-| EventManager wired to DataManager | `core/data_manager.py` | `entity.created`, `entity.updated`, `entity.deleted` events emitting |
-| Module docstrings — core files | `core/data_manager.py`, `core/api_client.py`, `core/models.py` | Added per readability plan |
-| Import organization — core files | `core/data_manager.py`, `core/api_client.py` | Sorted and grouped |
-
-#### Partially Delivered ⚠️
-
-| Task | File(s) | Completion | Carryover |
-|---|---|---|---|
-| GM Screen Control Panel — functional | `ui/components/gm_control_panel.py` | 40% — skeleton only | Move to Sprint 2 backlog |
-| EventManager — session events | `core/data_manager.py` | 50% — combat events not wired | Move to Sprint 2 |
-| Localization pass for new UI strings | `locales/*.yaml` | 60% — EN/TR done, DE/FR pending | Move to Sprint 2 |
+*No Sprint 1 tasks were fully delivered. All planned work carries over to Sprint 2.*
 
 #### Not Started / Dropped ❌
 
 | Task | Reason | Decision |
 |---|---|---|
-| Single Player Window merge | Underestimated scope — requires architectural changes | Move to Sprint 2 as priority item |
-| Soundpad transition smoothing | Deprioritized in favor of EventManager | Backlog (Post-Sprint 2) |
+| EventManager class | Sprint 1 capacity overestimated | Move to Sprint 2 — first priority |
+| EventManager wired to DataManager | Depends on EventManager | Move to Sprint 2 |
+| GM Screen Control Panel — skeleton | Sprint 1 capacity overestimated | Move to Sprint 2 |
+| GM Screen Control Panel — functional | Depends on skeleton | Move to Sprint 2 |
+| Button size standardization | Not implemented in QSS or widget code | Move to Sprint 2 |
+| Module docstrings — core files | Not added to data_manager, api_client, or models | Move to Sprint 2 (readability track) |
+| Import organization — core files | Import order not corrected | Move to Sprint 2 (readability track) |
+| Single Player Window merge | Underestimated scope — requires architectural changes | Move to Sprint 2 |
+| Soundpad transition smoothing | Deprioritized | Backlog (Post-Sprint 2) |
+| Localization pass for new UI strings | No new UI strings to localize (no UI changes completed) | Move to Sprint 2 |
 
 ### 2.2 Sprint 1 Velocity
 
 | Metric | Value |
 |---|---|
 | Story points planned | 34 |
-| Story points completed | 22 |
-| Completion rate | 65% |
-| Carryover points | 12 |
+| Story points completed | 0 |
+| Completion rate | 0% |
+| Carryover points | 34 |
+
+> **Note:** Sprint 1 was spent on project planning, documentation, and architecture design rather than code implementation. All implementation work carries over to Sprint 2. Sprint 2's scope must be realistically adjusted to account for this full carryover.
 
 ### 2.3 Lessons Learned
 
-1. **EventManager integration takes longer than expected.** Wiring all DataManager mutations requires reading every method — allocate 1.5× the initial estimate for integration tasks.
+1. **Planning and documentation take significant time.** The architecture design, documentation creation, and readability audit consumed Sprint 1 entirely — this investment is valuable but must be accounted for in velocity projections.
 2. **Single Player Window is architectural, not cosmetic.** It cannot be done as a UI polish task; it needs dedicated sprint capacity.
-3. **Localization last.** Complete all UI changes before running the localization pass — otherwise strings are added twice.
+3. **EventManager is a prerequisite for everything online.** It must be the first implementation priority in Sprint 2.
+4. **Sprint 2 is overloaded.** With full Sprint 1 carryover plus Sprint 2's original scope, realistic prioritization is critical. Consider extending Sprint 2 or deferring non-essential items.
 
 ---
 
@@ -94,13 +90,25 @@ Sprint 2 runs 10 business days (March 23 to April 3, 2026). This sprint complete
 
 ### 3.1 Sprint 2 Goals
 
-1. Complete GM Screen Control Panel (functional quick-switch)
-2. Merge Battle Map and Projection into a unified Single Player Window
-3. Implement embedded PDF viewer
-4. Create Socket.io client with connection state machine
-5. Draft and validate Event schema v1
-6. Complete EventManager wiring (session + combat events)
-7. Complete DE/FR localization for all Sprint 1 + Sprint 2 UI strings
+> **⚠️ Scope Warning:** Sprint 2 carries over ALL Sprint 1 tasks (34 points) plus its own planned scope. Realistic completion requires strict prioritization. Items marked with ★ are critical-path blockers for Sprint 3.
+
+**Carryover from Sprint 1 (must-do first):**
+1. ★ Create EventManager class (`core/event_manager.py`) — emit, subscribe, unsubscribe
+2. ★ Wire EventManager to DataManager — all entity + session + combat events
+3. Create GM Screen Control Panel skeleton (`ui/components/gm_control_panel.py`)
+
+**Original Sprint 2 scope:**
+4. Complete GM Screen Control Panel (functional quick-switch)
+5. Merge Battle Map and Projection into a unified Single Player Window
+6. Implement embedded PDF viewer
+7. ★ Create Socket.io client with connection state machine
+8. ★ Draft and validate Event schema v1
+9. Complete DE/FR localization for all new UI strings
+
+**Readability track (parallel, lower priority):**
+10. Button size standardization in QSS themes
+11. Module docstrings on core files
+12. Import organization on core files
 
 ### 3.2 Day-by-Day Schedule
 
@@ -108,15 +116,15 @@ Sprint 2 runs 10 business days (March 23 to April 3, 2026). This sprint complete
 
 ---
 
-**Monday, Mar 23 — Sprint kickoff + carryover**
+**Monday, Mar 23 — Sprint kickoff + EventManager creation**
 
 | # | Task | Files | Estimate |
 |---|---|---|---|
-| 1 | EventManager — wire session.created, session.activated | `core/data_manager.py` | 2h |
-| 2 | EventManager — wire combat events (combatant_added, combatant_updated, turn_advanced) | `core/data_manager.py`, `ui/widgets/combat_tracker.py` | 3h |
-| 3 | EventManager — wire projection events (content_set, mode_changed) | `core/data_manager.py` | 1h |
+| 1 | Create EventManager class with emit(), subscribe(), unsubscribe(), subscribe_all() | `core/event_manager.py` (CREATE) | 3h |
+| 2 | Wire EventManager to DataManager — entity events (created, updated, deleted) | `core/data_manager.py` | 2h |
+| 3 | Wire EventManager to DataManager — session events (created, activated) | `core/data_manager.py` | 1h |
 
-**Acceptance:** `EventManager.emit()` is called for all 20 event types listed in `PRE_ONLINE.md §4.3`. Unit tests pass for each event emission.
+**Acceptance:** `EventManager` class exists with full interface. Entity events emit correctly. Unit tests pass for EventManager dispatch and DataManager entity event emission.
 
 ---
 
@@ -137,8 +145,8 @@ Sprint 2 runs 10 business days (March 23 to April 3, 2026). This sprint complete
 
 | # | Task | Files | Estimate |
 |---|---|---|---|
-| 8 | Create `PlayerWindow` class skeleton | `ui/windows/player_window.py` | 2h |
-| 9 | Implement Map Mode in PlayerWindow (migrate from battle_map_window) | `ui/windows/player_window.py`, `ui/windows/battle_map_window.py` | 4h |
+| 8 | Create `PlayerWindow` class skeleton | `ui/player_window.py` | 2h |
+| 9 | Implement Map Mode in PlayerWindow (migrate from battle_map_window) | `ui/player_window.py`, `ui/windows/battle_map_window.py` | 4h |
 
 **Acceptance:** PlayerWindow in Map Mode renders the battle map correctly including fog-of-war. All existing map tests pass.
 
@@ -148,9 +156,9 @@ Sprint 2 runs 10 business days (March 23 to April 3, 2026). This sprint complete
 
 | # | Task | Files | Estimate |
 |---|---|---|---|
-| 10 | Implement Content Mode in PlayerWindow (entity card, image, PDF placeholder) | `ui/windows/player_window.py` | 3h |
-| 11 | Window persistence (position/size/monitor saved in preferences) | `ui/windows/player_window.py`, `config.py` | 2h |
-| 12 | Full-screen toggle (F11 or configurable shortcut) | `ui/windows/player_window.py` | 1h |
+| 10 | Implement Content Mode in PlayerWindow (entity card, image, PDF placeholder) | `ui/player_window.py` | 3h |
+| 11 | Window persistence (position/size/monitor saved in preferences) | `ui/player_window.py`, `config.py` | 2h |
+| 12 | Full-screen toggle (F11 or configurable shortcut) | `ui/player_window.py` | 1h |
 
 **Acceptance:** PlayerWindow Content Mode displays entity stat blocks and images. Window position is restored on next launch.
 
@@ -160,8 +168,8 @@ Sprint 2 runs 10 business days (March 23 to April 3, 2026). This sprint complete
 
 | # | Task | Files | Estimate |
 |---|---|---|---|
-| 13 | Deprecate old projection window; update all references | `ui/windows/projection_manager.py`, `main.py` | 2h |
-| 14 | Add regression tests for PlayerWindow | `tests/test_ui/test_player_window.py` | 3h |
+| 13 | Deprecate old projection window; update all references | `ui/widgets/projection_manager.py`, `main.py` | 2h |
+| 14 | Add regression tests for PlayerWindow | `tests/test_ui/test_player_window.py` | 3h  |
 | 15 | Week 1 integration smoke test | All modified files | 1h |
 
 **Acceptance:** Old projection window is removed or marked deprecated. All 14 regression tests pass. No regressions in map or projection tests.
@@ -216,7 +224,7 @@ Sprint 2 runs 10 business days (March 23 to April 3, 2026). This sprint complete
 |---|---|---|---|
 | 27 | Draft Event schema v1 as Pydantic models | `core/network/events.py` | 3h |
 | 28 | Event envelope: `event_id`, `event_type`, `session_id`, `sender_role`, `timestamp`, `payload` | `core/network/events.py` | included |
-| 29 | DE/FR locale pass for all Sprint 1 + Sprint 2 new strings | `locales/de.yaml`, `locales/fr.yaml` | 2h |
+| 29 | DE/FR locale pass for all Sprint 1 + Sprint 2 new strings | `locales/de.yml`, `locales/fr.yml` | 2h |
 | 30 | Sprint 2 review — all acceptance criteria checked | All files | 1h |
 
 **Acceptance:** All Pydantic event models validate correctly with `pytest`. DE/FR locales have no missing translation keys.
@@ -349,17 +357,18 @@ Files that will be created or significantly modified in Sprint 2:
 
 | Action | File | Description |
 |---|---|---|
-| CREATE | `ui/windows/player_window.py` | New unified Player Window (Map + Content modes) |
+| CREATE | `core/event_manager.py` | EventManager class — central event bus (Sprint 1 carryover) |
+| CREATE | `ui/components/gm_control_panel.py` | GM Screen Control Panel (Sprint 1 carryover) |
+| MODIFY | `ui/player_window.py` | Unified Player Window (Map + Content modes) — file exists, needs extension |
 | CREATE | `ui/widgets/pdf_viewer.py` | Embedded PDF viewer widget |
 | CREATE | `core/network/bridge.py` | NetworkBridge with connection state machine |
 | CREATE | `core/network/events.py` | Event schema v1 Pydantic models |
 | CREATE | `ui/components/connection_status.py` | Connection state badge widget |
 | CREATE | `tests/test_ui/test_player_window.py` | Regression tests for PlayerWindow |
-| MODIFY | `core/data_manager.py` | Wire remaining EventManager event types |
+| MODIFY | `core/data_manager.py` | Wire EventManager event types (all 20 events) |
 | MODIFY | `ui/windows/battle_map_window.py` | Deprecate; migrate functionality to PlayerWindow |
-| MODIFY | `ui/components/gm_control_panel.py` | Complete functional implementation |
 | MODIFY | `requirements.txt` | Add PyMuPDF, python-socketio[client] |
-| MODIFY | `locales/de.yaml`, `locales/fr.yaml` | Sprint 1+2 new string translations |
+| MODIFY | `locales/de.yml`, `locales/fr.yml` | Sprint 1+2 new string translations |
 
 ---
 
