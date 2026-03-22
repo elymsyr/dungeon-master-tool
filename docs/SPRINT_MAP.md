@@ -1,5 +1,11 @@
 # Dungeon Master Tool — Sprint Map and Implementation Guide
 
+> ⚠️ **SUPERSEDED — Kept for historical reference only**
+> This document has been superseded by:
+> - `docs/PRE_ONLINE_SPRINT.md` — Sprint 1–2 pre-online execution plan (authoritative)
+> - `docs/ONLINE_SPRINT.md` — Sprint 3–8 online execution plan (authoritative)
+> Do not update this document. Update the superseding documents instead.
+
 > **Document version:** 1.0
 > **Date:** March 16, 2026
 > **Companion:** `docs/DEVELOPMENT_REPORT.md` (architecture and specifications)
