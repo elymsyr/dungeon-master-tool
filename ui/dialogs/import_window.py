@@ -9,9 +9,9 @@ from core.locales import tr
 from ui.workers import ApiListWorker, ApiSearchWorker
 from ui.dialogs.bulk_downloader import BulkDownloadDialog
 
-# --- WORKER: Cache Tarayıcı ---
+# --- WORKER: Library Cache Scanner ---
 class LibraryScanWorker(QThread):
-    """Diskteki cache/library klasörünü tarayıp ağaç yapısı çıkarır."""
+    """Scans the on-disk cache/library folder and builds a tree structure."""
     finished = pyqtSignal(dict) # { 'dnd5e': {'monsters': [file1, file2...]} }
 
     def __init__(self, data_manager, parent=None):
@@ -98,7 +98,7 @@ class LocalLibraryTab(QWidget):
             
             for cat, files in sorted(categories.items()):
                 cat_item = QTreeWidgetItem(source_item)
-                # Basit çeviri mapping
+                # Simple category label mapping
                 cat_map_tr = {
                     "monsters": tr("CAT_MONSTERS_PL"), "spells": tr("CAT_SPELLS_PL"), 
                     "equipment": tr("CAT_EQUIPMENT_ALL"), "classes": tr("CAT_CLASSES_PL"), "races": tr("CAT_RACES_PL"),
@@ -155,8 +155,8 @@ class LocalLibraryTab(QWidget):
                 
                 content = json.loads(raw_content)
                 
-                # --- DEEP UNPACK: Veri gerçek bir sözlük olana kadar çöz ---
-                for _ in range(3): # Max 3 katman derinlik kontrolü
+                # --- DEEP UNPACK: unwrap nested JSON strings until we have a dict ---
+                for _ in range(3):  # up to 3 nesting levels
                     if isinstance(content, str):
                         try:
                             content = json.loads(content)
@@ -170,25 +170,25 @@ class LocalLibraryTab(QWidget):
 
                 self.selected_file_data = content
                 
-                # Klasör isimlerini sistemdeki karşılıklarına map ediyoruz
+                # Map folder names to the application's category keys
                 cat_map = {
-                    "monsters": "Monster", 
-                    "spells": "Spell", 
-                    "equipment": "Equipment", 
-                    "magic-items": "Equipment", # Magic Item'lar da Equipment şemasına girer
-                    "weapons": "Equipment",     # Silahlar -> Equipment
-                    "armor": "Equipment",       # Zırhlar -> Equipment
-                    "classes": "Class", 
+                    "monsters": "Monster",
+                    "spells": "Spell",
+                    "equipment": "Equipment",
+                    "magic-items": "Equipment",  # Magic Items use the Equipment schema
+                    "weapons": "Equipment",      # Weapons -> Equipment
+                    "armor": "Equipment",        # Armor -> Equipment
+                    "classes": "Class",
                     "races": "Race",
-                    "feats": "Feat", 
+                    "feats": "Feat",
                     "conditions": "Condition"
                 }
                 api_cat = cat_map.get(data["cat"], "Monster")
                 
-                # Veriyi parse et
+                # Parse the data
                 parsed = self.dm.api_client.parse_dispatcher(api_cat, content)
-                
-                # Önizleme metnini oluştur (Hata kontrolü eklenmiş)
+
+                # Build preview text (with error handling)
                 if isinstance(parsed, dict):
                     src = parsed.get('source') or content.get('_meta_source') or tr("NAME_UNKNOWN")
                     type_ = parsed.get('type') or api_cat
@@ -214,9 +214,9 @@ class LocalLibraryTab(QWidget):
                 self.dm.import_entity_with_dependencies(self.selected_file_data, type_override)
                 QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_IMPORTED"))
                 
-                # SİNYALİ TETİKLE
-                self.parent_window.entity_imported.emit() 
-                
+                # Emit the signal
+                self.parent_window.entity_imported.emit()
+
                 if self.parent_window.selection_mode:
                     self.parent_window.accept()
             except Exception as e:
@@ -347,11 +347,8 @@ class OnlineApiTab(QWidget):
             return
             
         for i in items:
-            # Önce öğeyi oluşturuyoruz
             list_item = QListWidgetItem(i["name"])
-            # Veriyi öğeye set ediyoruz
             list_item.setData(Qt.ItemDataRole.UserRole, i["index"])
-            # Öğeyi listeye ekliyoruz
             self.list_widget.addItem(list_item)
 
     def prev_page(self): self.current_page -= 1; self.load_list()
@@ -373,7 +370,7 @@ class OnlineApiTab(QWidget):
             self.selected_data = data
             self.lbl_name.setText(data.get("name", "Unknown"))
             
-            # Kaynak bilgisini güvenli bir şekilde al
+            # Retrieve source info safely
             src = data.get("source") or data.get("_meta_source", tr("NAME_UNKNOWN"))
             desc = data.get("description", tr("LBL_FAILED_LOAD_DATA"))
             
@@ -389,9 +386,9 @@ class OnlineApiTab(QWidget):
                 self.dm.import_entity_with_dependencies(self.selected_data)
                 QMessageBox.information(self, tr("MSG_SUCCESS"), tr("MSG_IMPORTED"))
                 
-                # SİNYALİ TETİKLE
+                # Emit the signal
                 self.parent_window.entity_imported.emit()
-                
+
                 if self.parent_window.selection_mode: self.parent_window.accept()
             except Exception as e:
                 QMessageBox.critical(self, tr("MSG_ERROR"), str(e))
@@ -399,7 +396,7 @@ class OnlineApiTab(QWidget):
 
 # --- MAIN DIALOG ---
 class ImportWindow(QDialog):
-    entity_imported = pyqtSignal() # YENİ: Başarılı import sinyali
+    entity_imported = pyqtSignal()  # Signal emitted on successful import
 
     def __init__(self, data_manager, parent=None, selection_mode=False):
         super().__init__(parent)

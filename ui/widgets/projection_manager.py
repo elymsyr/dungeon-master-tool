@@ -12,8 +12,8 @@ class ProjectionThumbnail(QFrame):
     def __init__(self, image_path, pixmap=None, parent=None):
         super().__init__(parent)
         self.image_path = image_path
-        self._is_map = False # Durum takibi için
-        self.current_palette = ThemeManager.get_palette("dark") # Varsayılan
+        self._is_map = False  # State tracking flag
+        self.current_palette = ThemeManager.get_palette("dark")  # Default palette
 
         # Small size to fit in header
         self.setFixedSize(50, 36)
@@ -25,21 +25,21 @@ class ProjectionThumbnail(QFrame):
         self.lbl_img = QLabel()
         self.lbl_img.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        # İçeriği güncelle
+        # Load content
         self.update_thumbnail(image_path, pixmap)
             
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setToolTip(tr("TIP_REMOVE_PROJECTION"))
         layout.addWidget(self.lbl_img)
         
-        # İlk stil ataması (Daha sonra ebeveyn tarafından update_theme ile güncellenebilir)
+        # Initial style (can be updated later by the parent via update_theme)
         self.apply_style()
 
     def update_theme(self, palette):
-        """Dışarıdan tema değişikliği geldiğinde çağrılır."""
+        """Called when the theme changes externally."""
         self.current_palette = palette
         self.apply_style()
-        # Yazı rengini tekrar uygula (çünkü o da temaya bağlı)
+        # Re-apply text color (also theme-dependent)
         self._apply_text_color()
 
     def apply_style(self):
@@ -64,15 +64,15 @@ class ProjectionThumbnail(QFrame):
     def update_thumbnail(self, image_path, pixmap):
         filename = os.path.basename(image_path)
         
-        # Harita kontrolü (İster dosya olsun ister hafıza objesi)
+        # Map check (whether it's a file path or an in-memory object)
         if "map_snapshot" in filename or "Live_Map" in filename:
             self._is_map = True
             self.lbl_img.setText(tr("LBL_MAP_THUMB"))
-            self.lbl_img.setPixmap(QPixmap()) # Pixmap varsa temizle
+            self.lbl_img.setPixmap(QPixmap())  # Clear any existing pixmap
         
         elif pixmap:
             self._is_map = False
-            # Hafızadan gelen resim varsa direkt kullan
+            # In-memory pixmap: use directly
             scaled = pixmap.scaled(48, 34, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             self.lbl_img.setPixmap(scaled)
             
@@ -89,7 +89,7 @@ class ProjectionThumbnail(QFrame):
         self._apply_text_color()
 
     def _apply_text_color(self):
-        """Duruma göre (Map/Bilinmeyen) yazı rengini temadan uygular."""
+        """Applies the text color from the theme based on state (map / unknown)."""
         if self._is_map:
             color = self.current_palette.get("ui_thumbnail_text_map", "#ffb74d")
             self.lbl_img.setStyleSheet(f"font-weight: bold; color: {color}; font-size: 11px; background: transparent;")
@@ -104,7 +104,7 @@ class ProjectionThumbnail(QFrame):
 
 class ProjectionManager(QWidget):
     """Drop zone that sits inside the main toolbar."""
-    # Sinyal artık (Path, PixmapObject) taşıyor. Pixmap yoksa None gider.
+    # Signal now carries (path, PixmapObject). Pixmap is None if unavailable.
     image_added = pyqtSignal(str, object)
     image_removed = pyqtSignal(str)
 
@@ -115,7 +115,7 @@ class ProjectionManager(QWidget):
         self.setMinimumWidth(120) 
         self.setObjectName("projectionBar")
         
-        # Başlangıç paleti
+        # Initial palette
         self.current_palette = ThemeManager.get_palette("dark")
         
         self.layout = QHBoxLayout(self)
@@ -129,18 +129,18 @@ class ProjectionManager(QWidget):
         
         self.thumbnails = {} 
         
-        # İlk stili uygula
+        # Apply initial style
         self.apply_styles(is_hover=False)
 
     def update_theme(self, palette):
-        """MainWindow tarafından çağrılır. Kendini ve çocuklarını günceller."""
+        """Called by MainWindow to update self and all child thumbnails."""
         self.current_palette = palette
         self.apply_styles(is_hover=False)
-        
-        # Dil değişmiş olabilir, metni güncelle
+
+        # Language may have changed; refresh text
         self.lbl_info.setText(tr("LBL_DROP_HINT"))
-        
-        # Çocuk thumbnail'leri güncelle
+
+        # Update child thumbnails
         for thumb in self.thumbnails.values():
             thumb.update_theme(palette)
 
@@ -192,8 +192,8 @@ class ProjectionManager(QWidget):
 
     def add_image(self, path, pixmap=None):
         """
-        path: Dosya yolu (ID olarak kullanılır).
-        pixmap: (Opsiyonel) Eğer varsa diskten okumak yerine bu kullanılır.
+        path: File path (used as the ID).
+        pixmap: Optional; if provided, this is used instead of reading from disk.
         """
         if path in self.thumbnails: 
             # UPDATE EXISTING
@@ -206,7 +206,7 @@ class ProjectionManager(QWidget):
         self.lbl_info.hide()
         
         thumb = ProjectionThumbnail(path, pixmap=pixmap)
-        # Yeni eklenen thumbnail'e mevcut temayı uygula
+        # Apply current theme to the newly added thumbnail
         thumb.update_theme(self.current_palette)
         
         thumb.remove_requested.connect(self.remove_image)
@@ -214,7 +214,7 @@ class ProjectionManager(QWidget):
         
         self.thumbnails[path] = thumb
         
-        # Sinyali tetikle: PlayerWindow'a gönder
+        # Emit signal to notify PlayerWindow
         self.image_added.emit(path, pixmap)
         
         self.setMinimumWidth(self.minimumWidth() + 55)

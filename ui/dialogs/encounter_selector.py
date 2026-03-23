@@ -29,7 +29,7 @@ class EncounterSelectionDialog(QDialog):
         self.inp_search.textChanged.connect(self.filter_table)
         
         self.combo_type = QComboBox()
-        self.combo_type.addItem(tr("LBL_TYPE_ALL"), "Tümü")
+        self.combo_type.addItem(tr("LBL_TYPE_ALL"), "all")
         self.combo_type.addItem(tr("CAT_NPC"), "NPC")
         self.combo_type.addItem(tr("CAT_MONSTER"), "Monster") # Value remains 'Monster' as per data
         self.combo_type.addItem(tr("CAT_PLAYER"), "Player")
@@ -171,8 +171,8 @@ class EncounterSelectionDialog(QDialog):
 
     def filter_table(self):
         search_text = self.inp_search.text().lower()
-        # Combo data (Tümü, NPC, Monster, Player)
-        filter_type = self.combo_type.currentData() 
+        # Combo data values: all, NPC, Monster, Player
+        filter_type = self.combo_type.currentData()
         
         # Type mapping map (Relation between data type and filter)
         mapping = {
@@ -188,7 +188,7 @@ class EncounterSelectionDialog(QDialog):
             row_type_text = self.table.item(row, 1).text()
             
             match_text = search_text in row_search_data
-            match_type = (filter_type == "Tümü") or (row_type_text in allowed_types)
+            match_type = (filter_type == "all") or (row_type_text in allowed_types)
             
             self.table.setRowHidden(row, not (match_text and match_type))
 

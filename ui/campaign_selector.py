@@ -1,5 +1,3 @@
-# ui/campaign_selector.py tamamını güncelleyelim:
-
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QListWidget, QPushButton, 
                              QLineEdit, QHBoxLayout, QLabel, QMessageBox, QWidget, QComboBox)
 from core.locales import tr, set_language

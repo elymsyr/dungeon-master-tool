@@ -8,9 +8,7 @@ from core.theme_manager import ThemeManager
 from core.locales import tr
 
 class ResizeHandle(QGraphicsRectItem):
-    """
-    Node'un sağ alt köşesinde duran, boyutlandırma işlemini yöneten özel item.
-    """
+    """Custom item that sits at the bottom-right corner of a node and manages resizing."""
     def __init__(self, parent):
         super().__init__(0, 0, 20, 20, parent)
         self.parent_node = parent
@@ -22,8 +20,8 @@ class ResizeHandle(QGraphicsRectItem):
         self.setPen(QPen(Qt.PenStyle.NoPen))
         self.is_hovered = False
         
-        # Başlangıç paleti (Render sırasında güncel paleti parent'tan alacak)
-        self.handle_color = QColor(66, 165, 245, 180) # Default fallback
+        # Initial palette; will pull the current palette from parent during render
+        self.handle_color = QColor(66, 165, 245, 180)  # Default fallback
 
     def hoverEnterEvent(self, event):
         self.is_hovered = True
@@ -38,7 +36,7 @@ class ResizeHandle(QGraphicsRectItem):
     def paint(self, painter, option, widget=None):
         painter.setPen(Qt.PenStyle.NoPen)
         
-        # Rengi parent node'un paletinden çekmeye çalış, yoksa ThemeManager'dan al
+        # Try to pull color from parent node's palette; fall back to ThemeManager
         if hasattr(self.parent_node, 'current_palette'):
             color_str = self.parent_node.current_palette.get("ui_resize_handle", "rgba(66, 165, 245, 180)")
             color = QColor(color_str)
@@ -93,24 +91,24 @@ class ConnectionLine(QGraphicsPathItem):
         self.setZValue(-2) 
         self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
         
-        # Varsayılan paleti yükle (Dark)
+        # Load the default (dark) palette
         self.current_palette = ThemeManager.get_palette("dark")
         self.apply_theme_colors()
-        
+
         self.update_position()
 
     def update_theme(self, palette):
-        """Dışarıdan tema güncellendiğinde çağrılır."""
+        """Called when the theme is updated externally."""
         self.current_palette = palette
         self.apply_theme_colors()
         self.update()
 
     def apply_theme_colors(self):
-        """Paletteki renkleri kalemlere uygular."""
+        """Applies palette colors to the connection pens."""
         c_normal = QColor(self.current_palette.get("line_color", "#787878"))
         c_select = QColor(self.current_palette.get("line_selected", "#42a5f5"))
         
-        # Opaklık ayarı (biraz transparan kalsın)
+        # Slightly transparent
         c_normal.setAlpha(180)
         
         self.default_pen = QPen(c_normal)
@@ -122,7 +120,7 @@ class ConnectionLine(QGraphicsPathItem):
         self.selected_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
         self.selected_pen.setStyle(Qt.PenStyle.DashLine)
         
-        # Mevcut duruma göre kalemi ayarla
+        # Apply the appropriate pen for the current state
         self.setPen(self.default_pen)
 
     def update_position(self):
@@ -172,10 +170,10 @@ class MindMapNode(QGraphicsObject):
         self.extra_data = extra_data if extra_data else {}
         self.is_resizing = False
         
-        # Varsayılan paleti yükle
+        # Load the default palette
         self.current_palette = ThemeManager.get_palette("dark")
-        
-        # Kenarlık ve Padding Ayarları
+
+        # Border and Padding settings
         if self.node_type == "note":
             self.padding = 0
             self.border_radius = 0
@@ -196,29 +194,29 @@ class MindMapNode(QGraphicsObject):
         self.resize_handle = ResizeHandle(self)
         self.update_layout()
 
-        # Gölge Efekti
+        # Drop Shadow Effect
         self.shadow = QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(20)
         self.shadow.setColor(QColor(0, 0, 0, 100))
         self.shadow.setOffset(5, 5)
         self.setGraphicsEffect(self.shadow)
         
-        # Temayı ilk kez uygula (Widget'a da ilet)
+        # Apply the initial theme (and propagate to the inner widget)
         self.update_theme(self.current_palette)
 
     def update_theme(self, palette):
-        """Temayı günceller ve içindeki Widget'a da bildirir."""
+        """Updates the theme and notifies the embedded widget."""
         self.current_palette = palette
-        
-        # İçindeki widget bir MarkdownEditor veya NpcSheet ise onun temasını güncelle
+
+        # If the inner widget is a MarkdownEditor or NpcSheet, update its theme too
         widget = self.proxy.widget()
         if hasattr(widget, "refresh_theme"):
             widget.refresh_theme(palette)
-            
-        self.update() # Kendini yeniden çiz (paint)
+
+        self.update()  # Trigger repaint
 
     def get_bg_color(self):
-        """Aktif temaya ve node tipine göre arka plan rengini döndürür."""
+        """Returns the background color based on the active theme and node type."""
         if self.node_type == "note":
             return QColor(self.current_palette.get("node_bg_note", "#fff9c4"))
         elif self.node_type == "entity":
@@ -252,9 +250,9 @@ class MindMapNode(QGraphicsObject):
             else: 
                 painter.drawRect(rect)
 
-        # Seçili olma durumu (Mavi çerçeve)
+        # Selection state (blue border)
         if self.isSelected():
-            # Seçim rengini de paletten alabiliriz (line_selected)
+            # Selection color is also sourced from the palette (line_selected)
             sel_color = self.current_palette.get("line_selected", "#42a5f5")
             pen = QPen(QColor(sel_color), 2)
             pen.setJoinStyle(Qt.PenJoinStyle.MiterJoin)
@@ -380,7 +378,7 @@ class WorkspaceItem(QGraphicsObject):
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
             event.accept()
         elif event.button() == Qt.MouseButton.LeftButton:
-            # Sol tıkı kabul etme ki canvas (ScrollHandDrag) çalışsın
+            # Don't accept left clicks so canvas ScrollHandDrag can work
             event.ignore()
         else:
             super().mousePressEvent(event)

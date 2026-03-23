@@ -115,7 +115,7 @@ class MapViewer(QGraphicsView):
     timeline_moved_signal = pyqtSignal(str, float, float)
     link_placed_signal = pyqtSignal(float, float) 
     existing_pin_linked_signal = pyqtSignal(str)
-    # YENİ SİNYAL: Dışarıdan bırakılan entity
+    # NEW SIGNAL: entity dropped onto the map from outside
     entity_id_dropped_signal = pyqtSignal(str, float, float)
 
     def __init__(self, parent=None):
@@ -127,7 +127,7 @@ class MapViewer(QGraphicsView):
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setBackgroundBrush(QBrush(QColor("#111")))
-        self.setAcceptDrops(True) # Drop kabul et
+        self.setAcceptDrops(True)
         self.map_item = None
         self.is_moving_pin = False; self.moving_pin_id = None; self.moving_pin_type = None
         self.is_link_mode = False 
@@ -145,10 +145,10 @@ class MapViewer(QGraphicsView):
     def dropEvent(self, event):
         if event.mimeData().hasText():
             eid = event.mimeData().text()
-            # Mouse pozisyonunu sahne koordinatına çevir
+            # Convert mouse position to scene coordinates
             scene_pos = self.mapToScene(event.position().toPoint())
-            
-            # Harita alanının içinde mi kontrol et
+
+            # Check whether the drop landed inside the map area
             if self.map_item and self.map_item.boundingRect().contains(scene_pos):
                 self.entity_id_dropped_signal.emit(eid, scene_pos.x(), scene_pos.y())
                 event.acceptProposedAction()
