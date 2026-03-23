@@ -3,15 +3,15 @@ from typing import List, Dict
 
 @dataclass
 class LoopNode:
-    """Tek bir ses dosyası ve tekrar sayısı."""
+    """A single audio file with its repeat count."""
     file_path: str
-    repeat_count: int = 0  # 0 = Sonsuz, 1 = Bir kere çal
+    repeat_count: int = 0  # 0 = infinite loop, 1 = play once
 
 @dataclass
 class Track:
     """
-    Intensity kanalı (Örn: 'base', 'level1').
-    Kendi içinde sıralı dosya listesi (sequence) barındırır.
+    Intensity channel (e.g. 'base', 'level1').
+    Holds an ordered sequence of LoopNodes.
     """
     name: str
     sequence: List[LoopNode] = field(default_factory=list)
@@ -19,8 +19,8 @@ class Track:
 @dataclass
 class MusicState:
     """
-    Müzik Durumu/Modu (Örn: 'Normal', 'Combat', 'Victory').
-    İçinde farklı intensity seviyeleri (Track) barındırır.
+    Music State/Mode (e.g. 'Normal', 'Combat', 'Victory').
+    Contains multiple intensity levels (Tracks).
     """
     name: str
     tracks: Dict[str, Track] = field(default_factory=dict)
@@ -28,8 +28,8 @@ class MusicState:
 @dataclass
 class Theme:
     """
-    Ana Tema (Örn: 'Forest').
-    Durumları (States) barındırır.
+    Top-level music theme (e.g. 'Forest').
+    Contains a set of States.
     """
     name: str
     id: str = ""

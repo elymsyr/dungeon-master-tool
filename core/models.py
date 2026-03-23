@@ -152,7 +152,7 @@ PROPERTY_MAP = {
 
 def get_default_entity_structure(entity_type="NPC"):
     return {
-        "name": "Yeni Kayıt",
+        "name": "New Record",
         "type": entity_type,
         "source": "", 
         "description": "",

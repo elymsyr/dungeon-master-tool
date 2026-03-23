@@ -1,28 +1,27 @@
 class ThemeManager:
     """
-    QSS (Qt Style Sheets) tarafından kontrol edilemeyen bileşenler için 
-    (QGraphicsItem, HTML content, Canvas Background, özel çizimler vb.) 
-    renk paletlerini yönetir.
+    Manages color palettes for components that cannot be styled via QSS
+    (QGraphicsItem, HTML content, canvas backgrounds, custom paint, etc.).
     """
-    
-    # --- VARSAYILAN (DARK) PALET ---
+
+    # --- DEFAULT (DARK) PALETTE ---
     DEFAULT_PALETTE = {
         # --- Mind Map & Canvas ---
-        "canvas_bg": "#181818",         # Sonsuz arka plan
-        "grid_color": "#2b2b2b",        # Izgara çizgileri
-        "node_bg_note": "#fff9c4",      # Not kağıdı (Sarımsı)
-        "node_bg_entity": "#2b2b2b",    # Varlık kartı arka planı
-        "node_text": "#212121",         # Not kağıdı üzerindeki yazı
-        "line_color": "#787878",        # Bağlantı çizgileri
-        "line_selected": "#42a5f5",     # Seçili bağlantı çizgisi
-        "ui_resize_handle": "rgba(66, 165, 245, 180)", # Boyutlandırma tutamacı (Aktif)
-        "ui_resize_handle_inactive": "rgba(128, 128, 128, 100)", # Boyutlandırma tutamacı (Pasif)
+        "canvas_bg": "#181818",         # Infinite canvas background
+        "grid_color": "#2b2b2b",        # Grid lines
+        "node_bg_note": "#fff9c4",      # Note card (yellowish)
+        "node_bg_entity": "#2b2b2b",    # Entity card background
+        "node_text": "#212121",         # Text on note card
+        "line_color": "#787878",        # Connection lines
+        "line_selected": "#42a5f5",     # Selected connection line
+        "ui_resize_handle": "rgba(66, 165, 245, 180)", # Resize handle (active)
+        "ui_resize_handle_inactive": "rgba(128, 128, 128, 100)", # Resize handle (inactive)
 
         # --- Markdown Editor (HTML Styles) ---
-        "html_text": "#e0e0e0",         # Normal metin
-        "html_link": "#42a5f5",         # Linkler
-        "html_header": "#ffb74d",       # Başlıklar (H1-H3)
-        "html_code_bg": "rgba(128,128,128,0.3)", # Kod blokları
+        "html_text": "#e0e0e0",         # Body text
+        "html_link": "#42a5f5",         # Hyperlinks
+        "html_header": "#ffb74d",       # Headings (H1-H3)
+        "html_code_bg": "rgba(128,128,128,0.3)", # Code blocks
 
         # --- Floating Controls (Zoom Buttons) ---
         "ui_floating_bg": "rgba(40, 40, 40, 230)",
@@ -33,8 +32,8 @@ class ThemeManager:
 
         # --- Autosave Indicator ---
         "ui_autosave_bg": "rgba(0, 0, 0, 100)",
-        "ui_autosave_text_saved": "#81c784",   # Yeşil
-        "ui_autosave_text_editing": "#ffb74d", # Turuncu
+        "ui_autosave_text_saved": "#81c784",   # Green
+        "ui_autosave_text_editing": "#ffb74d", # Orange
 
         # --- Projection Manager (Header) ---
         "ui_projection_bg": "rgba(0, 0, 0, 0.2)",
@@ -45,23 +44,23 @@ class ThemeManager:
         "ui_thumbnail_border": "#555",
         "ui_thumbnail_text_map": "#ffb74d",
         "ui_thumbnail_text_unknown": "#aaa",
-        "ui_thumbnail_hover_border_remove": "#ff5555", # Silme uyarısı (Kırmızı)
+        "ui_thumbnail_hover_border_remove": "#ff5555", # Remove warning (red)
 
         # --- Combat Tracker & Token Borders ---
-        "token_border_player": "#4caf50",   # Oyuncu (Yeşil)
-        "token_border_hostile": "#ef5350",  # Düşman (Kırmızı)
-        "token_border_friendly": "#42a5f5", # Dost (Mavi)
-        "token_border_neutral": "#bdbdbd",  # Nötr (Gri)
-        "token_border_active": "#ffb74d",   # Sırası Gelen (Turuncu)
+        "token_border_player": "#4caf50",   # Player (green)
+        "token_border_hostile": "#ef5350",  # Hostile (red)
+        "token_border_friendly": "#42a5f5", # Friendly (blue)
+        "token_border_neutral": "#bdbdbd",  # Neutral (grey)
+        "token_border_active": "#ffb74d",   # Active turn (orange)
         
         # --- HP Bar Widget ---
-        "hp_bar_high": "#2e7d32",           # Yüksek Can
-        "hp_bar_med": "#fbc02d",            # Orta Can
-        "hp_bar_low": "#c62828",            # Düşük Can
-        "hp_widget_bg": "rgba(0,0,0,0.3)",  # Arka plan
-        "hp_btn_decrease_bg": "#c62828",    # Azalt butonu
+        "hp_bar_high": "#2e7d32",           # High HP
+        "hp_bar_med": "#fbc02d",            # Medium HP
+        "hp_bar_low": "#c62828",            # Low HP
+        "hp_widget_bg": "rgba(0,0,0,0.3)",  # Background
+        "hp_btn_decrease_bg": "#c62828",    # Decrease button
         "hp_btn_decrease_hover": "#d32f2f",
-        "hp_btn_increase_bg": "#2e7d32",    # Artır butonu
+        "hp_btn_increase_bg": "#2e7d32",    # Increase button
         "hp_btn_increase_hover": "#388e3c",
         
         # --- Condition Icons ---
@@ -70,9 +69,9 @@ class ThemeManager:
         "condition_text": "#ffffff",
 
         # --- Battle Map Editor (Fog & Tools) ---
-        "fog_pen_add": "#000000",           # Siyah (Görünür alan) - Maskeleme mantığına göre değişebilir
-        "fog_pen_remove": "#ffffff",        # Beyaz/Silgi
-        "fog_temp_path": "#ffff00",         # Çizim sırasındaki rehber çizgi (Sarı)
+        "fog_pen_add": "#000000",           # Black (visible area) — may vary by masking logic
+        "fog_pen_remove": "#ffffff",        # White / Eraser
+        "fog_temp_path": "#ffff00",         # Guide line while drawing (yellow)
         
         # --- Map Pins ---
         "pin_npc": "#ff9800",
@@ -88,7 +87,7 @@ class ThemeManager:
         "dm_note_title": "#e57373"
     }
 
-    # --- TEMA TANIMLARI ---
+    # --- PALETTE DEFINITIONS ---
     PALETTES = {
         "dark": DEFAULT_PALETTE.copy(),
         
@@ -274,11 +273,11 @@ class ThemeManager:
 
     @staticmethod
     def get_palette(theme_name):
-        """Verilen tema ismi için renk paletini döner. Bulamazsa Dark döner."""
+        """Returns the color palette for the given theme name. Falls back to dark if not found."""
         base = ThemeManager.DEFAULT_PALETTE.copy()
-        
+
         if theme_name in ThemeManager.PALETTES:
-            # Sadece değişen anahtarları güncelle (Merge)
+            # Merge: only override keys defined in the specific palette
             specific = ThemeManager.PALETTES[theme_name]
             base.update(specific)
             
