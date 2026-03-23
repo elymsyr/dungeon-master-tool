@@ -1,17 +1,59 @@
-from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-                             QLabel, QScrollArea, QFrame, QGraphicsView, 
-                             QGraphicsScene, QGraphicsEllipseItem, QSlider, 
-                             QGraphicsPixmapItem, QPushButton, QCheckBox, 
-                             QGraphicsPathItem, QGraphicsProxyWidget)
-from PyQt6.QtGui import (QPixmap, QColor, QFont, QBrush, QPen, QPainter, 
-                         QPainterPath, QCursor, QWheelEvent, QMouseEvent, QImage, QPolygonF)
-from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF, QTimer, QRect, QPoint, QByteArray, QBuffer, QIODevice, QUrl
-from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PyQt6.QtMultimediaWidgets import QGraphicsVideoItem
-from core.locales import tr
-import os
 import base64
+import logging
+import os
+
+from PyQt6.QtCore import (
+    QBuffer,
+    QByteArray,
+    QIODevice,
+    QPoint,
+    QPointF,
+    QRect,
+    QRectF,
+    Qt,
+    QTimer,
+    QUrl,
+    pyqtSignal,
+)
+from PyQt6.QtGui import (
+    QBrush,
+    QColor,
+    QCursor,
+    QFont,
+    QImage,
+    QMouseEvent,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QPixmap,
+    QPolygonF,
+    QWheelEvent,
+)
+from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
+from PyQt6.QtMultimediaWidgets import QGraphicsVideoItem
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QFrame,
+    QGraphicsEllipseItem,
+    QGraphicsPathItem,
+    QGraphicsPixmapItem,
+    QGraphicsProxyWidget,
+    QGraphicsScene,
+    QGraphicsView,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QPushButton,
+    QScrollArea,
+    QSlider,
+    QVBoxLayout,
+    QWidget,
+)
+
+from core.locales import tr
 from core.theme_manager import ThemeManager
+
+logger = logging.getLogger(__name__)
 
 # --- FOG OF WAR LAYER ---
 class FogItem(QGraphicsPixmapItem):
@@ -436,7 +478,8 @@ class BattleMapWidget(QWidget):
                 self.fog_item.set_fog_image(img)
                 self.on_local_fog_changed(img)
                 
-        except Exception as e: print(f"Fog load error: {e}")
+        except Exception as e:
+            logger.error("Fog load error: %s", e)
 
     def reset_fog(self):
         if self.fog_item: 

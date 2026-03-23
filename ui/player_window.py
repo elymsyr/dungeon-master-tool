@@ -1,9 +1,20 @@
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QStackedWidget, QTextBrowser, QHBoxLayout
+import logging
+
 from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QImageReader, QPixmap
+from PyQt6.QtWidgets import (
+    QHBoxLayout,
+    QMainWindow,
+    QStackedWidget,
+    QTextBrowser,
+    QVBoxLayout,
+    QWidget,
+)
+
 from core.theme_manager import ThemeManager
-from PyQt6.QtGui import QPixmap
 from ui.widgets.image_viewer import ImageViewer
-from PyQt6.QtGui import QImageReader
+
+logger = logging.getLogger(__name__)
 
 class PlayerWindow(QMainWindow):
     def __init__(self, dev_mode=False):
@@ -66,7 +77,7 @@ class PlayerWindow(QMainWindow):
                         viewer.update_pixmap(pixmap)
                         return # Updated successfully, exit
             except Exception as e:
-                print(f"Error updating existing image view: {e}")
+                logger.error("Error updating existing image view: %s", e)
             # If update failed (e.g., wrong widget type), fall through to create new
             if image_path in self.active_image_paths:
                 return # Should usually return here if it was just a duplicate add call without pixmap update

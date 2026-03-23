@@ -1,6 +1,10 @@
+import logging
 import os
+
 import requests
 from PyQt6.QtCore import QThread, pyqtSignal
+
+logger = logging.getLogger(__name__)
 
 class ApiSearchWorker(QThread):
     finished = pyqtSignal(bool, object, str) # success, data, message
@@ -68,5 +72,5 @@ class ImageDownloadWorker(QThread):
             else:
                 self.finished.emit(False, "")
         except Exception as e:
-            print(f"Image download error: {e}")
+            logger.error("Image download error: %s", e)
             self.finished.emit(False, "")

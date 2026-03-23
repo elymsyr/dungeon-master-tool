@@ -1,7 +1,12 @@
-import requests
 import json
+import logging
+
+import requests
+
 from config import API_BASE_URL
 from core.locales import tr
+
+logger = logging.getLogger(__name__)
 
 class ApiSource:
     """Abstract base class for API sources."""
@@ -32,7 +37,7 @@ class ApiSource:
                 return response.content
             return None
         except Exception as e:
-            print(f"Image download error: {e}")
+            logger.error("Image download error: %s", e)
             return None
 
 class Dnd5eApiSource(ApiSource):
@@ -100,7 +105,7 @@ class Dnd5eApiSource(ApiSource):
             
             return None
         except Exception as e:
-            print(f"Dnd5e Details Error: {e}")
+            logger.error("Dnd5e details error: %s", e)
             return None
 
     def search(self, category, query):
@@ -417,7 +422,7 @@ class Open5eApiSource(ApiSource):
                 }
             return {"results": [], "count": 0, "next": None, "previous": None}
         except Exception as e:
-            print(f"Open5e List Error: {e}")
+            logger.error("Open5e list error: %s", e)
             return {"results": [], "count": 0, "next": None, "previous": None}
 
     def get_documents(self):
@@ -431,7 +436,7 @@ class Open5eApiSource(ApiSource):
                 return [(item.get("slug"), item.get("title")) for item in results]
             return []
         except Exception as e:
-            print(f"Open5e Docs Error: {e}")
+            logger.error("Open5e docs error: %s", e)
             return []
 
     def get_details(self, category, index):
@@ -447,7 +452,7 @@ class Open5eApiSource(ApiSource):
                 return response.json()
             return None
         except Exception as e:
-            print(f"Open5e Details Error: {e}")
+            logger.error("Open5e details error: %s", e)
             return None
 
     def search(self, category, query):
