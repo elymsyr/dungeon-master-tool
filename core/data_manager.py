@@ -13,6 +13,7 @@ from core.library_fs import migrate_legacy_layout, scan_library_tree, search_lib
 from core.locales import tr
 from core.models import PROPERTY_MAP, SCHEMA_MAP, get_default_entity_structure
 from core.entity_repository import EntityRepository
+from core.map_data_manager import MapDataManager
 from core.session_repository import SessionRepository
 from core.settings_manager import SettingsManager
 
@@ -51,6 +52,10 @@ class DataManager:
             get_world_name=lambda: self.data.get("world_name", tr("NAME_UNKNOWN")),
         )
         self._session_repo = SessionRepository(
+            get_data=lambda: self.data,
+            save_callback=self.save_data,
+        )
+        self._map_mgr = MapDataManager(
             get_data=lambda: self.data,
             save_callback=self.save_data,
         )
@@ -499,107 +504,42 @@ class DataManager:
         full_path = os.path.normpath(os.path.join(base, clean_rel))
         return full_path
     
-    # --- MAP & TIMELINE ---
+    # --- MAP & TIMELINE (delegated to MapDataManager) ---
     def set_map_image(self, rel: str) -> None:
-        self.data["map_data"]["image_path"] = rel
-        self.save_data()
-    
+        self._map_mgr.set_map_image(rel)
+
     def add_pin(self, x: float, y: float, eid: str, color: str | None = None, note: str = "") -> None:
-        pin_data = {"id": str(uuid.uuid4()), "x": x, "y": y, "entity_id": eid, "color": color, "note": note}
-        self.data["map_data"]["pins"].append(pin_data)
-        self.save_data()
-    
+        self._map_mgr.add_pin(x, y, eid, color=color, note=note)
+
     def update_map_pin(self, pin_id: str, color: str | None = None, note: str | None = None) -> None:
-        for p in self.data["map_data"]["pins"]:
-            if p.get("id") == pin_id:
-                if color is not None: p["color"] = color
-                if note is not None: p["note"] = note
-                break
-        self.save_data()
+        self._map_mgr.update_map_pin(pin_id, color=color, note=note)
 
     def move_pin(self, pid: str, x: float, y: float) -> None:
-        for p in self.data["map_data"]["pins"]:
-             if p.get("id") == pid: p["x"]=x; p["y"]=y; break
-        self.save_data()
-    
+        self._map_mgr.move_pin(pid, x, y)
+
     def remove_specific_pin(self, pid: str) -> None:
-        self.data["map_data"]["pins"] = [p for p in self.data["map_data"]["pins"] if p.get("id") != pid]
-        self.save_data()
+        self._map_mgr.remove_specific_pin(pid)
 
     def add_timeline_pin(self, x: float, y: float, day: int, note: str, parent_id: str | None = None, entity_ids: list | None = None, color: str | None = None, session_id: str | None = None) -> None:
-        pin = {
-            "id": str(uuid.uuid4()),
-            "x": x,
-            "y": y,
-            "day": int(day),
-            "note": note,
-            "parent_id": parent_id,
-            "entity_ids": entity_ids if entity_ids else [],
-            "color": color,
-            "session_id": session_id
-        }
-        if "timeline" not in self.data["map_data"]: self.data["map_data"]["timeline"] = []
-        self.data["map_data"]["timeline"].append(pin)
-        self.data["map_data"]["timeline"].sort(key=lambda k: k['day'])
-        self.save_data()
+        self._map_mgr.add_timeline_pin(x, y, day, note, parent_id=parent_id, entity_ids=entity_ids, color=color, session_id=session_id)
 
     def remove_timeline_pin(self, pin_id: str) -> None:
-        if "timeline" in self.data["map_data"]:
-            self.data["map_data"]["timeline"] = [p for p in self.data["map_data"]["timeline"] if p.get("id") != pin_id]
-            self.save_data()
+        self._map_mgr.remove_timeline_pin(pin_id)
 
     def update_timeline_pin(self, pin_id: str, day: int, note: str, entity_ids: list, session_id: str | None = None) -> None:
-        if "timeline" in self.data["map_data"]:
-            for p in self.data["map_data"]["timeline"]:
-                if p["id"] == pin_id:
-                    p["day"] = int(day)
-                    p["note"] = note
-                    p["entity_ids"] = entity_ids
-                    p["session_id"] = session_id
-                    break
-            self.data["map_data"]["timeline"].sort(key=lambda k: k['day'])
-            self.save_data()
-    
+        self._map_mgr.update_timeline_pin(pin_id, day, note, entity_ids, session_id=session_id)
+
     def update_timeline_pin_visuals(self, pin_id: str, color: str | None = None) -> None:
-        if "timeline" in self.data["map_data"]:
-            for p in self.data["map_data"]["timeline"]:
-                if p["id"] == pin_id:
-                    if color: p["color"] = color
-                    break
-            self.save_data()
+        self._map_mgr.update_timeline_pin_visuals(pin_id, color=color)
 
     def get_timeline_pin(self, pin_id: str) -> dict | None:
-        if "timeline" in self.data["map_data"]:
-            for p in self.data["map_data"]["timeline"]:
-                if p["id"] == pin_id: return p
-        return None
+        return self._map_mgr.get_timeline_pin(pin_id)
 
     def update_timeline_chain_color(self, start_pin_id: str, color: str) -> None:
-        if "timeline" not in self.data["map_data"]: return
-        timeline = self.data["map_data"]["timeline"]
-        adjacency = {p["id"]: [] for p in timeline}
-        for p in timeline:
-            pid = p["id"]; parent = p.get("parent_id")
-            if parent and parent in adjacency:
-                adjacency[pid].append(parent); adjacency[parent].append(pid)
-        connected_ids = set(); queue = [start_pin_id]
-        while queue:
-            current = queue.pop(0)
-            if current in connected_ids: continue
-            connected_ids.add(current)
-            if current in adjacency:
-                for neighbor in adjacency[current]:
-                    if neighbor not in connected_ids: queue.append(neighbor)
-        for p in timeline:
-            if p["id"] in connected_ids: p["color"] = color
-        self.save_data()
+        self._map_mgr.update_timeline_chain_color(start_pin_id, color)
 
     def move_timeline_pin(self, pin_id: str, x: float, y: float) -> None:
-        if "timeline" in self.data["map_data"]:
-            for p in self.data["map_data"]["timeline"]:
-                if p["id"] == pin_id:
-                    p["x"] = x; p["y"] = y; break
-            self.save_data()
+        self._map_mgr.move_timeline_pin(pin_id, x, y)
 
     def search_in_library(self, category: str, search_text: str) -> list[dict]:
         normalized = None
