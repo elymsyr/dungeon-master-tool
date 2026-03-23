@@ -11,7 +11,7 @@ from config import BASE_DIR, CACHE_DIR, WORLDS_DIR, load_theme, probe_write_acce
 from core.api_client import DndApiClient
 from core.library_fs import migrate_legacy_layout, scan_library_tree, search_library_tree
 from core.locales import tr
-from core.models import PROPERTY_MAP, SCHEMA_MAP, get_default_entity_structure
+from core.campaign_manager import CampaignManager
 from core.entity_repository import EntityRepository
 from core.map_data_manager import MapDataManager
 from core.session_repository import SessionRepository
@@ -58,6 +58,13 @@ class DataManager:
         self._map_mgr = MapDataManager(
             get_data=lambda: self.data,
             save_callback=self.save_data,
+        )
+        self._campaign_mgr = CampaignManager(
+            worlds_dir=WORLDS_DIR,
+            on_data_loaded=self._on_campaign_data_loaded,
+            save_callback=self.save_data,
+            import_image=self.import_image,
+            get_campaign_path=lambda: self.current_campaign_path,
         )
 
         if not os.path.exists(WORLDS_DIR):
@@ -158,151 +165,26 @@ class DataManager:
             return data_to_cache
         return []
 
+    def _on_campaign_data_loaded(self, data: dict, path: str) -> None:
+        """Callback invoked by CampaignManager to update data and path on this instance."""
+        self.data = data
+        self.current_campaign_path = path
+
     def get_available_campaigns(self) -> list[str]:
-        if not os.path.exists(WORLDS_DIR): return []
-        return [d for d in os.listdir(WORLDS_DIR) if os.path.isdir(os.path.join(WORLDS_DIR, d))]
+        """Delegates to CampaignManager.get_available."""
+        return self._campaign_mgr.get_available()
 
     def load_campaign_by_name(self, name: str) -> tuple[bool, str]:
-        return self.load_campaign(os.path.join(WORLDS_DIR, name))
+        """Delegates to CampaignManager.load_by_name."""
+        return self._campaign_mgr.load_by_name(name)
 
     def load_campaign(self, folder: str) -> tuple[bool, str]:
-        """
-        Loads the campaign.
-        Checks .dat (MsgPack) first. If not found, checks .json and converts.
-        """
-        json_path = os.path.join(folder, "data.json")
-        dat_path = os.path.join(folder, "data.dat")
-        
-        loaded = False
-        
-        # 1. Try MsgPack (fast format)
-        if os.path.exists(dat_path):
-            try:
-                with open(dat_path, "rb") as f:
-                    self.data = msgpack.unpack(f, raw=False)
-                loaded = True
-            except Exception as e:
-                logger.warning("Error loading DAT file, falling back to JSON: %s", e)
-        
-        # 2. Try JSON if DAT failed or not found
-        if not loaded and os.path.exists(json_path):
-            try:
-                with open(json_path, "r", encoding="utf-8") as f:
-                    self.data = json.load(f)
-                loaded = True
-                # Loaded from JSON: save as DAT for faster loading next time
-                self.current_campaign_path = folder
-                self.save_data() 
-                logger.info(tr("MSG_MIGRATION_CONVERTED"))
-            except Exception as e:
-                return False, f"JSON Load Error: {str(e)}"
-
-        if not loaded:
-            return False, tr("MSG_FILE_NOT_FOUND_DB")
-
-        # --- Data Integrity Checks ---
-        if "sessions" not in self.data:
-            self.data["sessions"] = []
-        if "entities" not in self.data:
-            self.data["entities"] = {}
-        if "map_data" not in self.data:
-            self.data["map_data"] = {"image_path": "", "pins": [], "timeline": []}
-        if "timeline" not in self.data["map_data"]:
-            self.data["map_data"]["timeline"] = []
-        if "last_active_session_id" not in self.data:
-            self.data["last_active_session_id"] = None
-        
-        # NEW: Mind Map data structure check
-        if "mind_maps" not in self.data:
-            self.data["mind_maps"] = {}
-        
-        if not self.data["sessions"]:
-            new_sid = str(uuid.uuid4())
-            default_session = {
-                "id": new_sid, "name": "Default Session", "date": tr("MSG_TODAY"), 
-                "notes": "", "logs": "", "combatants": []
-            }
-            self.data["sessions"].append(default_session)
-            self.data["last_active_session_id"] = new_sid
-        
-        if not self.data["last_active_session_id"] and self.data["sessions"]:
-            self.data["last_active_session_id"] = self.data["sessions"][-1]["id"]
-
-        self.current_campaign_path = folder
-        
-        # --- PATH AND DATA MIGRATION ---
-        self._fix_absolute_paths()
-        
-        for eid, ent in self.data["entities"].items():
-            old_type = ent.get("type", "NPC")
-            if old_type in SCHEMA_MAP: ent["type"] = SCHEMA_MAP[old_type]
-            
-            attrs = ent.get("attributes", {})
-            new_attrs = {}
-            for k, v in attrs.items():
-                new_key = PROPERTY_MAP.get(k, k)
-                new_attrs[new_key] = v
-            ent["attributes"] = new_attrs
-
-            default = get_default_entity_structure(ent.get("type", "NPC"))
-            for key, val in default.items():
-                if key not in ent: ent[key] = val
-            
-            if not ent.get("images") and ent.get("image_path"):
-                ent["images"] = [ent["image_path"]]
-        # -------------------------------
-
-        # Persist the migrated data in fast format
-        self.save_data()
-        return True, tr("MSG_YUKLENDI")
-
-    def _fix_absolute_paths(self):
-        if not self.current_campaign_path: return
-        changed = False
-        assets_dir = os.path.join(self.current_campaign_path, "assets")
-        if not os.path.exists(assets_dir): os.makedirs(assets_dir)
-
-        for eid, ent in self.data["entities"].items():
-            new_images = []
-            for img_path in ent.get("images", []):
-                if os.path.isabs(img_path) and os.path.exists(img_path):
-                    rel_path = self.import_image(img_path)
-                    if rel_path:
-                        new_images.append(rel_path)
-                        changed = True
-                    else:
-                        new_images.append(img_path)
-                else:
-                    new_images.append(img_path)
-            ent["images"] = new_images
-
-            legacy_path = ent.get("image_path")
-            if legacy_path and os.path.isabs(legacy_path) and os.path.exists(legacy_path):
-                rel_path = self.import_image(legacy_path)
-                if rel_path:
-                    ent["image_path"] = rel_path
-                    changed = True
-        
-        if changed:
-            logger.info(tr("MSG_ABSOLUTE_PATHS_FIXED"))
+        """Delegates to CampaignManager.load."""
+        return self._campaign_mgr.load(folder)
 
     def create_campaign(self, world_name: str) -> tuple[bool, str]:
-        folder = os.path.join(WORLDS_DIR, world_name)
-        try:
-            if not os.path.exists(folder): os.makedirs(folder)
-            if not os.path.exists(os.path.join(folder, "assets")): os.makedirs(os.path.join(folder, "assets"))
-            first_sid = str(uuid.uuid4())
-            self.data = {
-                "world_name": world_name, "entities": {}, 
-                "map_data": {"image_path": "", "pins": [], "timeline": []},
-                "sessions": [{"id": first_sid, "name": "Session 0", "date": tr("MSG_TODAY"), "notes": "", "logs": "", "combatants": []}],
-                "last_active_session_id": first_sid,
-                "mind_maps": {}  # NEW
-            }
-            self.current_campaign_path = folder
-            self.save_data()
-            return True, tr("MSG_OLUSTURULDU")
-        except Exception as e: return False, str(e)
+        """Delegates to CampaignManager.create."""
+        return self._campaign_mgr.create(world_name)
 
     def save_data(self) -> None:
         """Saves data in MsgPack (.dat) format. Much faster than JSON."""
