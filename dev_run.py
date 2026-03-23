@@ -427,6 +427,10 @@ class DevSupervisor:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    from core.log_config import setup_logging
+
+    setup_logging(level="DEBUG", console=True)
+
     args = parse_args(argv)
     supervisor = DevSupervisor(args)
     return supervisor.watch_loop()

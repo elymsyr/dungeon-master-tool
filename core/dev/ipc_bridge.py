@@ -1,3 +1,4 @@
+import logging
 import os
 import traceback
 from multiprocessing.connection import Client
@@ -5,6 +6,8 @@ from multiprocessing.connection import Client
 from PyQt6.QtCore import QObject, QTimer
 
 from core.dev.hot_reload_manager import HotReloadManager
+
+logger = logging.getLogger(__name__)
 
 
 class DevIpcBridge(QObject):
@@ -26,13 +29,13 @@ class DevIpcBridge(QObject):
         auth = os.getenv("DM_DEV_IPC_AUTH")
 
         if not host or not port or not auth:
-            print("[dev] IPC bridge disabled: missing connection environment variables")
+            logger.warning("IPC bridge disabled: missing connection environment variables")
             return None
 
         try:
             conn = Client((host, int(port)), authkey=auth.encode("utf-8"))
         except Exception as exc:
-            print(f"[dev] IPC connection failed: {exc}")
+            logger.error("IPC connection failed: %s", exc)
             return None
 
         return cls(conn)
@@ -134,7 +137,7 @@ class DevIpcBridge(QObject):
 
             self.connection.send(response)
         except Exception as exc:
-            print(f"[dev] IPC bridge error: {exc}")
+            logger.error("IPC bridge error: %s", exc)
             if self.connection is not None:
                 try:
                     self.connection.send(

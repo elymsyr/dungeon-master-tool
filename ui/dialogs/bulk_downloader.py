@@ -1,12 +1,24 @@
-import os
 import json
-import requests
+import logging
+import os
 import time
-from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QProgressBar, 
-                             QPushButton, QTextEdit, QMessageBox)
+
+import requests
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtWidgets import (
+    QDialog,
+    QLabel,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+)
+
 from config import API_BASE_URL, CACHE_DIR, probe_write_access
 from core.locales import tr
+
+logger = logging.getLogger(__name__)
 
 # Library repository
 LIBRARY_DIR = os.path.join(CACHE_DIR, "library")
@@ -166,7 +178,7 @@ class DownloadWorker(QThread):
             with open(index_file, "w", encoding="utf-8") as f:
                 json.dump(full_index, f, indent=4)
         except Exception as e:
-            print(tr("MSG_INDEX_SAVE_ERROR", error=str(e)))
+            logger.error(tr("MSG_INDEX_SAVE_ERROR", error=str(e)))
 
         # Invalidate msgpack cache so DataManager reloads from JSON
         dat_file = os.path.join(CACHE_DIR, "reference_indexes.dat")
@@ -174,7 +186,7 @@ class DownloadWorker(QThread):
             try:
                 os.remove(dat_file)
             except Exception as ex:
-                print(tr("MSG_CACHE_INVALIDATION_ERROR", error=str(ex)))
+                logger.error(tr("MSG_CACHE_INVALIDATION_ERROR", error=str(ex)))
 
     def stop(self):
         self.is_running = False

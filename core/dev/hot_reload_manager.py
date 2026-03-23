@@ -1,12 +1,15 @@
 import importlib
-from pathlib import Path
+import logging
 import sys
 import threading
 import time
 import traceback
+from pathlib import Path
 from typing import Dict, Iterable, List, Set
 
 from config import load_theme
+
+logger = logging.getLogger(__name__)
 
 
 class HotReloadManager:
@@ -205,10 +208,10 @@ class HotReloadManager:
 
             module_spec = getattr(module_obj, "__spec__", None)
             if module_spec is None or getattr(module_spec, "loader", None) is None:
-                print(f"[dev] skipping reload (missing spec/loader): {module_name}")
+                logger.debug("Skipping reload (missing spec/loader): %s", module_name)
                 continue
 
-            print(f"[dev] reloading module: {module_name}")
+            logger.debug("Reloading module: %s", module_name)
             importlib.reload(module_obj)
 
     def _reload_stylesheet(self):
@@ -309,7 +312,7 @@ class HotReloadManager:
                     details="No relevant changes.",
                 )
 
-            print("[dev] attempting hot reload...")
+            logger.info("Attempting hot reload...")
 
             if classified["python"]:
                 self._reload_python_modules(classified["python"])
@@ -318,14 +321,14 @@ class HotReloadManager:
                 self._reload_stylesheet()
 
             if needs_rebuild:
-                print("[dev] rebuilding root widget...")
+                logger.info("Rebuilding root widget...")
                 self.window.rebuild_root_widget(reload_main_root_module=True)
                 self._validate_window_health()
 
             if classified["locales"] and hasattr(self.window, "retranslate_ui"):
                 self.window.retranslate_ui()
 
-            print("[dev] hot reload successful")
+            logger.info("Hot reload successful")
             return self._build_result(
                 ok=True,
                 status=self.OUTCOME_APPLIED,
@@ -335,7 +338,7 @@ class HotReloadManager:
             )
         except Exception as exc:
             tb_text = traceback.format_exc()
-            print(f"[dev] hot reload failed: {exc}")
+            logger.error("Hot reload failed: %s", exc)
             return self._build_result(
                 ok=False,
                 status=self.OUTCOME_FAILED,

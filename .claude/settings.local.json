@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(find c:Users122oaOneDriveDocumentsdungeon-master-tooldocs -type f -name *.md)",
-      "Bash(grep -E \"\\\\.md$|README\")"
+      "Bash(grep -E \"\\\\.md$|README\")",
+      "Bash(ls -la /home/eren/GitHub/dungeon-master-tool/*.py)",
+      "Bash(find /home/eren/GitHub/dungeon-master-tool -maxdepth 1 -type f \\\\\\(-name *.json -o -name *.yaml -o -name *.yml -o -name *.txt \\\\\\))",
+      "Bash(wc -l /home/eren/GitHub/dungeon-master-tool/core/*.py /home/eren/GitHub/dungeon-master-tool/ui/*.py)",
+      "Bash(ruff check:*)",
+      "Bash(python3 -m pytest tests/test_core/test_data_manager.py tests/test_core/test_library_fs.py tests/test_core/test_config_paths.py tests/test_dev/ --tb=short -q)"
     ]
   }
 }

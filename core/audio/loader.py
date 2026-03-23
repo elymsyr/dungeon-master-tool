@@ -1,8 +1,14 @@
+import logging
 import os
-import yaml
 import shutil
-from .models import Theme, MusicState, Track, LoopNode
+
+import yaml
+
 from config import SOUNDPAD_ROOT
+
+from .models import LoopNode, MusicState, Theme, Track
+
+logger = logging.getLogger(__name__)
 
 # Taranacak geçerli ses dosyası uzantıları
 AUDIO_EXTENSIONS = {'.wav', '.mp3', '.ogg', '.flac', '.m4a'}
@@ -63,7 +69,7 @@ def load_global_library():
 
         library['shortcuts'] = data.get('shortcuts', {})
     except Exception as e:
-        print(f"Error loading global sound library: {e}")
+        logger.error("Error loading global sound library: %s", e)
     
     return library
 
@@ -112,7 +118,7 @@ def _parse_theme_file(yaml_path, base_folder):
             theme_obj.states[state_name] = state_obj
         return theme_obj
     except Exception as e:
-        print(f"Error parsing theme file '{yaml_path}': {e}")
+        logger.error("Error parsing theme file '%s': %s", yaml_path, e)
         return None
 
 def add_to_library(category, name, file_path):
@@ -154,7 +160,7 @@ def add_to_library(category, name, file_path):
                 loaded = yaml.safe_load(f)
                 if loaded: data = loaded
         except Exception as e:
-            print(f"Error reading library for update: {e}")
+            logger.error("Error reading library for update: %s", e)
 
     # Ensure category list exists
     if category not in data:

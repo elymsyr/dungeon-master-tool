@@ -1,16 +1,32 @@
+import logging
 import uuid
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGraphicsView, 
-                             QGraphicsScene, QPushButton, QSplitter, QFrame, 
-                             QGraphicsItem, QMessageBox, QGridLayout, QMenu, QGraphicsProxyWidget)
-from PyQt6.QtGui import QBrush, QColor, QPainter, QCursor, QPen, QPixmap, QAction
-from PyQt6.QtCore import Qt, QRectF, QPointF, QTimer
 
-from ui.widgets.markdown_editor import MarkdownEditor
-from ui.widgets.npc_sheet import NpcSheet
-from ui.widgets.aspect_ratio_label import AspectRatioLabel
-from ui.widgets.mind_map_items import MindMapNode, ConnectionLine
+from PyQt6.QtCore import QPointF, QRectF, Qt, QTimer
+from PyQt6.QtGui import QAction, QBrush, QColor, QCursor, QPainter, QPen, QPixmap
+from PyQt6.QtWidgets import (
+    QFrame,
+    QGraphicsItem,
+    QGraphicsProxyWidget,
+    QGraphicsScene,
+    QGraphicsView,
+    QGridLayout,
+    QHBoxLayout,
+    QMenu,
+    QMessageBox,
+    QPushButton,
+    QSplitter,
+    QVBoxLayout,
+    QWidget,
+)
+
 from core.locales import tr
 from core.theme_manager import ThemeManager
+from ui.widgets.aspect_ratio_label import AspectRatioLabel
+from ui.widgets.markdown_editor import MarkdownEditor
+from ui.widgets.mind_map_items import ConnectionLine, MindMapNode
+from ui.widgets.npc_sheet import NpcSheet
+
+logger = logging.getLogger(__name__)
 
 class MindMapScene(QGraphicsScene):
     def __init__(self, parent=None):
@@ -588,7 +604,8 @@ class MindMapTab(QWidget):
                             if old_id in self.nodes: del self.nodes[old_id]
                             node.node_id = nid
                             self.nodes[nid] = node
-            except Exception as e: print(f"Node load error: {e}")
+            except Exception as e:
+                logger.error("Node load error: %s", e)
             
         for c_data in map_data.get("connections", []):
             n1 = self.nodes.get(c_data["from"]); n2 = self.nodes.get(c_data["to"])
@@ -602,7 +619,8 @@ class MindMapTab(QWidget):
                     ws_data["w"], ws_data["h"],
                     ws_data.get("color", "#42a5f5")
                 )
-            except Exception as e: print(f"Workspace load error: {e}")
+            except Exception as e:
+                logger.error("Workspace load error: %s", e)
 
         # Restore viewport state
         vp = map_data.get("viewport")

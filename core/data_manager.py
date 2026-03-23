@@ -1,15 +1,19 @@
+import json
+import logging
+import os
+import shutil
 import time
 import uuid
-import os
-import json
-import shutil
-import msgpack  # ADDED FOR FAST FORMAT
-from config import WORLDS_DIR, BASE_DIR, CACHE_DIR, load_theme, probe_write_access
-from core.models import get_default_entity_structure, SCHEMA_MAP, PROPERTY_MAP
+
+import msgpack
+
+from config import BASE_DIR, CACHE_DIR, WORLDS_DIR, load_theme, probe_write_access
 from core.api_client import DndApiClient
-from core.locales import set_language
-from core.locales import tr
 from core.library_fs import migrate_legacy_layout, scan_library_tree, search_library_tree
+from core.locales import set_language, tr
+from core.models import PROPERTY_MAP, SCHEMA_MAP, get_default_entity_structure
+
+logger = logging.getLogger(__name__)
 
 LIBRARY_DIR = os.path.join(CACHE_DIR, "library")
 # We will use .dat (MsgPack) for library cache, but .json support remains
@@ -56,7 +60,7 @@ class DataManager:
                     # raw=False: Load as String instead of Byte
                     self.reference_cache = msgpack.unpack(f, raw=False)
             except Exception as e:
-                print(f"Cache DAT load error: {e}")
+                logger.error("Cache DAT load error: %s", e)
                 self.reference_cache = {}
 
         # 2. DAT yoksa/eskiyse JSON fallback
@@ -77,7 +81,7 @@ class DataManager:
             with open(CACHE_FILE_DAT, "wb") as f: 
                 msgpack.pack(self.reference_cache, f)
         except Exception as e:
-            print(f"Cache save error: {e}")
+            logger.error("Cache save error: %s", e)
 
     def refresh_library_catalog(self):
         """Migrates legacy cache layout and refreshes in-memory file catalog."""
@@ -85,13 +89,13 @@ class DataManager:
             self.library_migration_report = migrate_legacy_layout(CACHE_DIR, default_source="dnd5e")
         except Exception as e:
             self.library_migration_report = {"errors": [str(e)]}
-            print(f"Library migration error: {e}")
+            logger.error("Library migration error: %s", e)
 
         try:
             self.library_tree = scan_library_tree(CACHE_DIR, default_source="dnd5e")
         except Exception as e:
             self.library_tree = {}
-            print(f"Library scan error: {e}")
+            logger.error("Library scan error: %s", e)
 
     def search_library_catalog(self, query, normalized_categories=None, source=None):
         """Searches local offline library files from canonical+legacy cache folders."""
@@ -170,7 +174,7 @@ class DataManager:
                     self.data = msgpack.unpack(f, raw=False)
                 loaded = True
             except Exception as e:
-                print(f"Error loading DAT file, falling back to JSON: {e}")
+                logger.warning("Error loading DAT file, falling back to JSON: %s", e)
         
         # 2. Başarısızsa veya yoksa JSON Dene
         if not loaded and os.path.exists(json_path):
@@ -181,7 +185,7 @@ class DataManager:
                 # JSON'dan yüklendiyse, bir sonraki sefere hızlı açılması için DAT olarak kaydet
                 self.current_campaign_path = folder
                 self.save_data() 
-                print(tr("MSG_MIGRATION_CONVERTED"))
+                logger.info(tr("MSG_MIGRATION_CONVERTED"))
             except Exception as e:
                 return False, f"JSON Load Error: {str(e)}"
 
@@ -271,7 +275,8 @@ class DataManager:
                     ent["image_path"] = rel_path
                     changed = True
         
-        if changed: print(tr("MSG_ABSOLUTE_PATHS_FIXED"))
+        if changed:
+            logger.info(tr("MSG_ABSOLUTE_PATHS_FIXED"))
 
     def create_campaign(self, world_name):
         folder = os.path.join(WORLDS_DIR, world_name)
@@ -299,7 +304,7 @@ class DataManager:
                 with open(dat_path, "wb") as f:
                     msgpack.pack(self.data, f)
             except Exception as e:
-                print(f"CRITICAL SAVE ERROR: {e}")
+                logger.critical("Save error: %s", e)
 
     def create_session(self, name):
         session_id = str(uuid.uuid4())
@@ -423,7 +428,7 @@ class DataManager:
                         parsed = self.api_client.parse_dispatcher(category, raw)
                         return True, parsed
                     except Exception as e:
-                        print(f"DEBUG: Cache Read Error ({index_name}): {e}")
+                        logger.debug("Cache read error (%s): %s", index_name, e)
         
         if local_only: return False, "Not in local cache."
 
@@ -465,10 +470,10 @@ class DataManager:
                     # ensure_ascii=False ile Türkçe karakterleri koru, düzgün JSON yaz
                     with open(local_path, "w", encoding="utf-8") as f:
                         json.dump(save_content, f, indent=2, ensure_ascii=False)
-                    print(f"[DEBUG] Validated and Saved to: {local_path}")
+                    logger.debug("Validated and saved to: %s", local_path)
                     self.refresh_library_catalog()
                 except Exception as e:
-                    print(f"Cache Write Error: {e}")
+                    logger.error("Cache write error: %s", e)
                     # UI'ya bir uyarı mesajı ekle ama veriyi döndür (Crash olmaması için)
                     if isinstance(parsed_result, dict):
                         parsed_result["_warning"] = tr("MSG_CACHE_WRITE_ERROR")
@@ -520,7 +525,9 @@ class DataManager:
             dest = os.path.join(dest_dir, fname)
             shutil.copy2(src, dest)
             return os.path.join("assets", fname)
-        except Exception as e: print(f"Image import error: {e}"); return None
+        except Exception as e:
+            logger.error("Image import error: %s", e)
+            return None
 
     def import_pdf(self, src):
         if not self.current_campaign_path: return None

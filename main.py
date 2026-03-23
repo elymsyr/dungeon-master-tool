@@ -1,4 +1,5 @@
 import importlib
+import logging
 import os
 import sys
 from typing import Any, Dict, Optional
@@ -12,12 +13,15 @@ from PyQt6.QtWidgets import (
     QMessageBox,
 )
 
-from config import DATA_ROOT, DATA_ROOT_MODE, load_theme
+from config import CACHE_DIR, DATA_ROOT, DATA_ROOT_MODE, load_theme
 from core.data_manager import DataManager
 from core.locales import tr
+from core.log_config import setup_logging
 from core.theme_manager import ThemeManager
 from ui.campaign_selector import CampaignSelector
 from ui.player_window import PlayerWindow
+
+logger = logging.getLogger(__name__)
 
 _DATA_ROOT_FALLBACK_NOTICE_SHOWN = False
 
@@ -342,11 +346,12 @@ def run_application(
             success, msg = dm.load_campaign_by_name(pending_dev_world)
             if success:
                 campaign_loaded = True
-                print(f"[dev] auto-loaded world: {pending_dev_world}")
+                logger.info("Auto-loaded world: %s", pending_dev_world)
             else:
-                print(
-                    f"[dev] failed to auto-load world '{pending_dev_world}': {msg}. "
-                    "Opening campaign selector."
+                logger.warning(
+                    "Failed to auto-load world '%s': %s. Opening campaign selector.",
+                    pending_dev_world,
+                    msg,
                 )
             pending_dev_world = None
 
@@ -370,6 +375,11 @@ def run_application(
 
 
 if __name__ == "__main__":
+    setup_logging(
+        level="DEBUG" if os.getenv("DM_DEV_CHILD") == "1" else "INFO",
+        log_dir=str(CACHE_DIR),
+    )
+
     dev_bridge = None
     dev_last_world = None
 

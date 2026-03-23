@@ -1,20 +1,42 @@
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, 
-                             QLineEdit, QTextEdit, QComboBox, QTabWidget, 
-                             QLabel, QGroupBox, QPushButton, QScrollArea, QFrame, 
-                             QListWidget, QFileDialog, QMessageBox, QStyle, QListWidgetItem, 
-                             QApplication, QInputDialog)
-from PyQt6.QtCore import Qt, QUrl, pyqtSignal, QSize
-from PyQt6.QtGui import QDesktopServices, QPixmap, QKeySequence, QShortcut, QIcon
-from ui.widgets.aspect_ratio_label import AspectRatioLabel
-from ui.widgets.markdown_editor import MarkdownEditor 
-from ui.workers import ImageDownloadWorker
-from core.models import ENTITY_SCHEMAS
-from core.locales import tr
-from config import CACHE_DIR
-from core.theme_manager import ThemeManager
+import logging
 import os
-from PyQt6.QtWidgets import QToolButton 
+
+from PyQt6.QtCore import QSize, Qt, QUrl, pyqtSignal
+from PyQt6.QtGui import QDesktopServices, QIcon, QKeySequence, QPixmap, QShortcut
+from PyQt6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QFileDialog,
+    QFormLayout,
+    QFrame,
+    QGroupBox,
+    QHBoxLayout,
+    QInputDialog,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QStyle,
+    QTabWidget,
+    QTextEdit,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+)
+
+from config import CACHE_DIR
+from core.locales import tr
+from core.models import ENTITY_SCHEMAS
+from core.theme_manager import ThemeManager
 from ui.dialogs.api_browser import ApiBrowser
+from ui.widgets.aspect_ratio_label import AspectRatioLabel
+from ui.widgets.markdown_editor import MarkdownEditor
+from ui.workers import ImageDownloadWorker
+
+logger = logging.getLogger(__name__)
 
 class NpcSheet(QWidget):
     # --- SIGNALS ---
@@ -847,7 +869,8 @@ class NpcSheet(QWidget):
                     if isinstance(cache_data, dict) and not cache_data.get("next"): break
                     page += 1
                     QApplication.processEvents() 
-            except Exception as e: print(f"Unified Pop Error: {e}")
+            except Exception as e:
+                logger.error("Unified pop error: %s", e)
         candidates.sort(key=lambda x: x["name"])
         for cand in candidates:
             display = cand["name"]
