@@ -483,7 +483,7 @@ class MindMapTab(QWidget):
                 if eid and data:
                     self.dm.save_entity(eid, data)
                     sheet.is_dirty = False
-            except: pass
+            except Exception: pass
         self.pending_entity_saves.clear()
         
         palette = ThemeManager.get_palette(self.dm.current_theme)

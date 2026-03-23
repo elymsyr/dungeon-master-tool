@@ -89,7 +89,7 @@ class EncounterSelectionDialog(QDialog):
             # Filter only digits (e.g., '14,' -> '14')
             clean_num = ''.join(filter(str.isdigit, first_part))
             return int(clean_num) if clean_num else 0
-        except:
+        except (ValueError, AttributeError):
             return 0
 
     def load_data(self):

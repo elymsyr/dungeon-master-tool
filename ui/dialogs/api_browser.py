@@ -200,9 +200,9 @@ class ApiBrowser(QDialog):
         
         if hasattr(self, 'list_worker') and self.list_worker is not None:
             if self.list_worker.isRunning():
-                try: 
+                try:
                     self.list_worker.finished.disconnect()
-                except: 
+                except RuntimeError:
                     pass
                 self.list_worker.quit()
                 self.list_worker.deleteLater()
@@ -351,7 +351,7 @@ class ApiBrowser(QDialog):
         if hasattr(self, 'detail_worker') and self.detail_worker is not None:
              if self.detail_worker.isRunning():
                  try: self.detail_worker.finished.disconnect()
-                 except: pass
+                 except RuntimeError: pass
                  self.detail_worker.quit()
                  self.detail_worker.deleteLater()
         
@@ -377,9 +377,9 @@ class ApiBrowser(QDialog):
                     self.selected_data = self.dm.data["entities"].get(data_or_id)
                     self.btn_import.setEnabled(True)
                     self.btn_import.setText(tr("BTN_SELECT"))
-                    try: 
+                    try:
                         self.btn_import.clicked.disconnect()
-                    except: 
+                    except RuntimeError:
                         pass
                     self.btn_import.clicked.connect(self.accept)
                 else:
@@ -404,11 +404,11 @@ class ApiBrowser(QDialog):
             if isinstance(data, dict) and "_warning" in data:
                  QMessageBox.warning(self, tr("MSG_WARNING"), data["_warning"])
 
-            try: 
+            try:
                 self.btn_import.clicked.disconnect()
-            except: 
+            except RuntimeError:
                 pass
-            
+
             if self.current_category == "NPC":
                 self.btn_import.setText(tr("BTN_SELECT") if self.selection_mode else tr("BTN_IMPORT_NPC"))
                 self.btn_import.clicked.connect(lambda: self.import_selected(target_type="NPC"))

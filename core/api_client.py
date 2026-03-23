@@ -691,7 +691,7 @@ class DndApiClient:
         if isinstance(data, str):
             try:
                 data = json.loads(data)
-            except:
+            except json.JSONDecodeError:
                 return {"name": "Parse Error", "type": category, "description": str(data)}
 
         # Delegate parsing to the active source (dnd5e/open5e)
