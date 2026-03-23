@@ -661,32 +661,32 @@ class DndApiClient:
     def current_source(self):
         return self.sources[self.current_source_key]
 
-    def set_source(self, key):
+    def set_source(self, key: str) -> None:
         if key in self.sources:
             self.current_source_key = key
 
-    def get_available_sources(self):
+    def get_available_sources(self) -> list[tuple[str, str]]:
         return [("dnd5e", "D&D 5e API (Official SRD)"), ("open5e", "Open5e API (Community)")]
 
-    def get_supported_categories(self):
+    def get_supported_categories(self) -> list[str]:
         return self.current_source.get_supported_categories()
 
-    def get_list(self, category, page=1, filters=None):
+    def get_list(self, category: str, page: int = 1, filters: dict | None = None) -> dict | list:
         return self.current_source.get_list(category, page=page, filters=filters)
 
-    def get_documents(self):
+    def get_documents(self) -> list:
         return self.current_source.get_documents()
 
-    def get_details(self, category, index):
+    def get_details(self, category: str, index: str) -> dict | None:
         return self.current_source.get_details(category, index)
 
-    def search(self, category, query):
+    def search(self, category: str, query: str) -> tuple[dict | None, str]:
         return self.current_source.search(category, query)
 
-    def download_image_bytes(self, full_url):
+    def download_image_bytes(self, full_url: str) -> bytes | None:
         return self.current_source.download_image_bytes(full_url)
 
-    def parse_dispatcher(self, category, data):
+    def parse_dispatcher(self, category: str, data: dict | str) -> dict:
         # --- SAFETY GUARD: ensure data is a dict ---
         if isinstance(data, str):
             try:

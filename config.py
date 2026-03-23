@@ -1,11 +1,12 @@
 import os
 import sys
 import uuid
+from collections.abc import Callable
 
 APP_NAME = "DungeonMasterTool"
 
 
-def get_base_path():
+def get_base_path() -> str:
     """
     Returns the main directory where the application is running.
     In frozen mode, this is the folder containing the executable.
@@ -15,14 +16,14 @@ def get_base_path():
     return os.path.dirname(os.path.abspath(__file__))
 
 
-def get_portable_data_root():
+def get_portable_data_root() -> str:
     """Portable data root (next to executable/repo root)."""
     if getattr(sys, "frozen", False):
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
 
 
-def get_user_data_root(platform_name=None, env_map=None):
+def get_user_data_root(platform_name: str | None = None, env_map: dict | None = None) -> str:
     """Returns an OS-appropriate user data directory for this app."""
     platform_name = platform_name or sys.platform
     env_map = os.environ if env_map is None else env_map
@@ -39,7 +40,7 @@ def get_user_data_root(platform_name=None, env_map=None):
     return os.path.join(base, "dungeon-master-tool")
 
 
-def probe_write_access(directory):
+def probe_write_access(directory: str) -> bool:
     """
     Checks writeability by creating and deleting a short-lived probe file.
     """
@@ -64,7 +65,12 @@ def probe_write_access(directory):
         return False
 
 
-def resolve_data_root(portable_root, env_map=None, platform_name=None, probe=None):
+def resolve_data_root(
+    portable_root: str,
+    env_map: dict | None = None,
+    platform_name: str | None = None,
+    probe: Callable[[str], bool] | None = None,
+) -> tuple[str, str, str]:
     """
     Resolves data root with this priority:
     1) DM_DATA_ROOT env override (if writable)
@@ -135,7 +141,7 @@ for optional_dir in [ASSETS_DIR, SOUNDPAD_ROOT]:
 API_BASE_URL = "https://www.dnd5eapi.co/api"
 
 
-def load_theme(theme_name):
+def load_theme(theme_name: str) -> str:
     """Loads a .qss theme file from the themes directory."""
     path = os.path.join(THEMES_DIR, f"{theme_name}.qss")
     if os.path.exists(path):

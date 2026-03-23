@@ -46,7 +46,7 @@ class DataManager:
         
         self.reload_library_cache()
 
-    def reload_library_cache(self):
+    def reload_library_cache(self) -> None:
         """Loads library index. Tries fast format (.dat) first."""
         if not os.path.exists(CACHE_DIR):
             os.makedirs(CACHE_DIR)
@@ -83,7 +83,7 @@ class DataManager:
         except Exception as e:
             logger.error("Cache save error: %s", e)
 
-    def refresh_library_catalog(self):
+    def refresh_library_catalog(self) -> None:
         """Migrates legacy cache layout and refreshes in-memory file catalog."""
         try:
             self.library_migration_report = migrate_legacy_layout(CACHE_DIR, default_source="dnd5e")
@@ -97,7 +97,7 @@ class DataManager:
             self.library_tree = {}
             logger.error("Library scan error: %s", e)
 
-    def search_library_catalog(self, query, normalized_categories=None, source=None):
+    def search_library_catalog(self, query: str, normalized_categories: set | None = None, source: str | None = None) -> list:
         """Searches local offline library files from canonical+legacy cache folders."""
         if not self.library_tree:
             self.refresh_library_catalog()
@@ -108,7 +108,7 @@ class DataManager:
             source=source,
         )
 
-    def load_settings(self):
+    def load_settings(self) -> dict:
         # Settings are small and human-editable, so plain JSON is preferred here
         path = os.path.join(CACHE_DIR, "settings.json")
         if os.path.exists(path):
@@ -117,7 +117,7 @@ class DataManager:
             except (json.JSONDecodeError, OSError): pass
         return {"language": "EN", "theme": "dark"}
 
-    def save_settings(self, settings):
+    def save_settings(self, settings: dict) -> None:
         path = os.path.join(CACHE_DIR, "settings.json")
         if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
         
@@ -129,7 +129,7 @@ class DataManager:
         set_language(new_settings.get("language", "EN"))
         self.current_theme = new_settings.get("theme", "dark")
 
-    def get_api_index(self, category, page=1, filters=None):
+    def get_api_index(self, category: str, page: int = 1, filters: dict | None = None) -> dict | list:
         # Cache Key Generation
         source = self.api_client.current_source_key
         filter_str = str(sorted(filters.items())) if filters else ""
@@ -150,14 +150,14 @@ class DataManager:
             return data_to_cache
         return []
 
-    def get_available_campaigns(self):
+    def get_available_campaigns(self) -> list[str]:
         if not os.path.exists(WORLDS_DIR): return []
         return [d for d in os.listdir(WORLDS_DIR) if os.path.isdir(os.path.join(WORLDS_DIR, d))]
 
-    def load_campaign_by_name(self, name):
+    def load_campaign_by_name(self, name: str) -> tuple[bool, str]:
         return self.load_campaign(os.path.join(WORLDS_DIR, name))
 
-    def load_campaign(self, folder):
+    def load_campaign(self, folder: str) -> tuple[bool, str]:
         """
         Loads the campaign.
         Checks .dat (MsgPack) first. If not found, checks .json and converts.
@@ -278,7 +278,7 @@ class DataManager:
         if changed:
             logger.info(tr("MSG_ABSOLUTE_PATHS_FIXED"))
 
-    def create_campaign(self, world_name):
+    def create_campaign(self, world_name: str) -> tuple[bool, str]:
         folder = os.path.join(WORLDS_DIR, world_name)
         try:
             if not os.path.exists(folder): os.makedirs(folder)
@@ -296,7 +296,7 @@ class DataManager:
             return True, tr("MSG_OLUSTURULDU")
         except Exception as e: return False, str(e)
 
-    def save_data(self):
+    def save_data(self) -> None:
         """Saves data in MsgPack (.dat) format. Much faster than JSON."""
         if self.current_campaign_path:
             dat_path = os.path.join(self.current_campaign_path, "data.dat")
@@ -306,7 +306,7 @@ class DataManager:
             except Exception as e:
                 logger.critical("Save error: %s", e)
 
-    def create_session(self, name):
+    def create_session(self, name: str) -> str:
         session_id = str(uuid.uuid4())
         new_session = {"id": session_id, "name": name, "date": tr("MSG_TODAY"), "notes": "", "logs": "", "combatants": []}
         if "sessions" not in self.data: self.data["sessions"] = []
@@ -315,13 +315,13 @@ class DataManager:
         self.save_data()
         return session_id
 
-    def get_session(self, session_id):
+    def get_session(self, session_id: str) -> dict | None:
         if "sessions" not in self.data: return None
         for s in self.data["sessions"]:
             if s["id"] == session_id: return s
         return None
 
-    def save_session_data(self, session_id, notes, logs, combatants):
+    def save_session_data(self, session_id: str, notes: str, logs: str, combatants: list) -> None:
         if "sessions" not in self.data: return
         for s in self.data["sessions"]:
             if s["id"] == session_id:
@@ -332,13 +332,13 @@ class DataManager:
                 self.save_data()
                 break
 
-    def set_active_session(self, session_id):
+    def set_active_session(self, session_id: str) -> None:
         self.data["last_active_session_id"] = session_id
 
-    def get_last_active_session_id(self):
+    def get_last_active_session_id(self) -> str | None:
         return self.data.get("last_active_session_id")
 
-    def save_entity(self, eid, data, should_save=True, auto_source_update=True):
+    def save_entity(self, eid: str | None, data: dict, should_save: bool = True, auto_source_update: bool = True) -> str:
         if not eid: 
             eid = str(uuid.uuid4())
         
@@ -361,7 +361,7 @@ class DataManager:
             self.save_data()
         return eid
 
-    def prepare_entity_from_external(self, data, type_override=None):
+    def prepare_entity_from_external(self, data: dict, type_override: str | None = None) -> dict:
         if type_override: data["type"] = type_override
         if not data.get("source"):
             data["source"] = "SRD 5e (2014)" 
@@ -387,13 +387,13 @@ class DataManager:
                 else: new_id = self.save_entity(None, sub_data, should_save=False, auto_source_update=False); existing_map[ent_name] = new_id
                 if new_id not in main_data[target_list_key]: main_data[target_list_key].append(new_id)
 
-    def check_write_permissions(self):
+    def check_write_permissions(self) -> tuple[bool, str]:
         """Checks if the cache directory is writable."""
         if not probe_write_access(CACHE_DIR):
             return False, tr("MSG_ERR_NO_WRITE_PERMISSION")
         return True, ""
 
-    def fetch_details_from_api(self, category, index_name, local_only=False):
+    def fetch_details_from_api(self, category: str, index_name: str, local_only: bool = False) -> tuple[bool, dict | str]:
         # 1. Source-based folder structure (default: dnd5e)
         source_key = self.api_client.current_source_key
         # category names are mapped to folders
@@ -482,12 +482,12 @@ class DataManager:
             
         return False, tr("MSG_SEARCH_NOT_FOUND")
 
-    def delete_entity(self, eid):
+    def delete_entity(self, eid: str) -> None:
         if eid in self.data["entities"]:
             del self.data["entities"][eid]
             self.save_data() 
 
-    def fetch_from_api(self, category, query):
+    def fetch_from_api(self, category: str, query: str) -> tuple[bool, str, dict | str | None]:
         for eid, ent in self.data["entities"].items():
             if ent.get("name", "").lower() == query.lower() and ent.get("type") == category:
                 return True, tr("MSG_DATABASE_EXISTS"), eid
@@ -507,12 +507,12 @@ class DataManager:
         if category in ["Monster", "NPC"] and isinstance(parsed_data, dict): parsed_data = self._resolve_dependencies(parsed_data)
         return True, tr("MSG_FETCHED_FROM_API"), parsed_data
 
-    def import_entity_with_dependencies(self, data, type_override=None):
+    def import_entity_with_dependencies(self, data: dict, type_override: str | None = None) -> str:
         if type_override: data["type"] = type_override
         data = self._resolve_dependencies(data)
         return self.save_entity(None, data, auto_source_update=False)
 
-    def import_image(self, src):
+    def import_image(self, src: str) -> str | None:
         if not self.current_campaign_path: return None
         abs_assets = os.path.abspath(os.path.join(self.current_campaign_path, "assets"))
         abs_src = os.path.abspath(src)
@@ -528,7 +528,7 @@ class DataManager:
             logger.error("Image import error: %s", e)
             return None
 
-    def import_pdf(self, src):
+    def import_pdf(self, src: str) -> str | None:
         if not self.current_campaign_path: return None
         abs_assets = os.path.abspath(os.path.join(self.current_campaign_path, "assets"))
         abs_src = os.path.abspath(src)
@@ -540,7 +540,7 @@ class DataManager:
             return os.path.join("assets", fname)
         except Exception: return None
 
-    def get_full_path(self, rel):
+    def get_full_path(self, rel: str | None) -> str | None:
         if not rel: return None
         if os.path.isabs(rel): return rel
         base = self.current_campaign_path if self.current_campaign_path else BASE_DIR
@@ -549,16 +549,16 @@ class DataManager:
         return full_path
     
     # --- MAP & TIMELINE ---
-    def set_map_image(self, rel):
+    def set_map_image(self, rel: str) -> None:
         self.data["map_data"]["image_path"] = rel
         self.save_data()
     
-    def add_pin(self, x, y, eid, color=None, note=""): 
+    def add_pin(self, x: float, y: float, eid: str, color: str | None = None, note: str = "") -> None:
         pin_data = {"id": str(uuid.uuid4()), "x": x, "y": y, "entity_id": eid, "color": color, "note": note}
         self.data["map_data"]["pins"].append(pin_data)
         self.save_data()
     
-    def update_map_pin(self, pin_id, color=None, note=None):
+    def update_map_pin(self, pin_id: str, color: str | None = None, note: str | None = None) -> None:
         for p in self.data["map_data"]["pins"]:
             if p.get("id") == pin_id:
                 if color is not None: p["color"] = color
@@ -566,16 +566,16 @@ class DataManager:
                 break
         self.save_data()
 
-    def move_pin(self, pid, x, y):
+    def move_pin(self, pid: str, x: float, y: float) -> None:
         for p in self.data["map_data"]["pins"]:
              if p.get("id") == pid: p["x"]=x; p["y"]=y; break
         self.save_data()
     
-    def remove_specific_pin(self, pid):
+    def remove_specific_pin(self, pid: str) -> None:
         self.data["map_data"]["pins"] = [p for p in self.data["map_data"]["pins"] if p.get("id") != pid]
         self.save_data()
 
-    def add_timeline_pin(self, x, y, day, note, parent_id=None, entity_ids=None, color=None, session_id=None):
+    def add_timeline_pin(self, x: float, y: float, day: int, note: str, parent_id: str | None = None, entity_ids: list | None = None, color: str | None = None, session_id: str | None = None) -> None:
         pin = {
             "id": str(uuid.uuid4()),
             "x": x,
@@ -592,12 +592,12 @@ class DataManager:
         self.data["map_data"]["timeline"].sort(key=lambda k: k['day'])
         self.save_data()
 
-    def remove_timeline_pin(self, pin_id):
+    def remove_timeline_pin(self, pin_id: str) -> None:
         if "timeline" in self.data["map_data"]:
             self.data["map_data"]["timeline"] = [p for p in self.data["map_data"]["timeline"] if p.get("id") != pin_id]
             self.save_data()
 
-    def update_timeline_pin(self, pin_id, day, note, entity_ids, session_id=None):
+    def update_timeline_pin(self, pin_id: str, day: int, note: str, entity_ids: list, session_id: str | None = None) -> None:
         if "timeline" in self.data["map_data"]:
             for p in self.data["map_data"]["timeline"]:
                 if p["id"] == pin_id:
@@ -609,7 +609,7 @@ class DataManager:
             self.data["map_data"]["timeline"].sort(key=lambda k: k['day'])
             self.save_data()
     
-    def update_timeline_pin_visuals(self, pin_id, color=None):
+    def update_timeline_pin_visuals(self, pin_id: str, color: str | None = None) -> None:
         if "timeline" in self.data["map_data"]:
             for p in self.data["map_data"]["timeline"]:
                 if p["id"] == pin_id:
@@ -617,13 +617,13 @@ class DataManager:
                     break
             self.save_data()
 
-    def get_timeline_pin(self, pin_id):
+    def get_timeline_pin(self, pin_id: str) -> dict | None:
         if "timeline" in self.data["map_data"]:
             for p in self.data["map_data"]["timeline"]:
                 if p["id"] == pin_id: return p
         return None
 
-    def update_timeline_chain_color(self, start_pin_id, color):
+    def update_timeline_chain_color(self, start_pin_id: str, color: str) -> None:
         if "timeline" not in self.data["map_data"]: return
         timeline = self.data["map_data"]["timeline"]
         adjacency = {p["id"]: [] for p in timeline}
@@ -643,14 +643,14 @@ class DataManager:
             if p["id"] in connected_ids: p["color"] = color
         self.save_data()
 
-    def move_timeline_pin(self, pin_id, x, y):
+    def move_timeline_pin(self, pin_id: str, x: float, y: float) -> None:
         if "timeline" in self.data["map_data"]:
             for p in self.data["map_data"]["timeline"]:
                 if p["id"] == pin_id:
                     p["x"] = x; p["y"] = y; break
             self.save_data()
 
-    def search_in_library(self, category, search_text):
+    def search_in_library(self, category: str, search_text: str) -> list[dict]:
         normalized = None
         if category:
             normalized = {str(category).lower().rstrip("s")}
@@ -675,8 +675,8 @@ class DataManager:
             )
         return results
     
-    def get_all_entity_mentions(self):
-        """@ menüsü için tüm varlıkların isim ve ID'lerini döner."""
+    def get_all_entity_mentions(self) -> list[dict]:
+        """Returns the name and ID of every entity, used for the @ mention menu."""
         mentions = []
         for eid, ent in self.data["entities"].items():
             mentions.append({"id": eid, "name": ent["name"], "type": ent["type"]})
