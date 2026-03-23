@@ -485,7 +485,7 @@ class DataManager:
 
     def fetch_from_api(self, category, query):
         for eid, ent in self.data["entities"].items():
-            if ent["name"].lower() == query.lower() and ent["type"] == category:
+            if ent.get("name", "").lower() == query.lower() and ent.get("type") == category:
                 return True, tr("MSG_DATABASE_EXISTS"), eid
         success, local_data = self.fetch_details_from_api(category, query)
         if success and local_data:

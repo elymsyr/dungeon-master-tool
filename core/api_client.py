@@ -118,7 +118,7 @@ class Dnd5eApiSource(ApiSource):
             return self.parse_monster(data)
         elif category == "Spell":
             return self.parse_spell(data)
-        elif category == "Equipment":
+        elif category in ["Equipment", "Magic Item"]:
             return self.parse_equipment(data)
         elif category == "Class":
             return self.parse_class(data)
