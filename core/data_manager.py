@@ -1,28 +1,21 @@
-import json
 import logging
 import os
 import shutil
-import time
 import uuid
 
 import msgpack
 
-from config import BASE_DIR, CACHE_DIR, WORLDS_DIR, load_theme, probe_write_access
+from config import BASE_DIR, CACHE_DIR, WORLDS_DIR, probe_write_access
 from core.api_client import DndApiClient
-from core.library_fs import migrate_legacy_layout, scan_library_tree, search_library_tree
 from core.locales import tr
 from core.campaign_manager import CampaignManager
 from core.entity_repository import EntityRepository
+from core.library_manager import LibraryManager
 from core.map_data_manager import MapDataManager
 from core.session_repository import SessionRepository
 from core.settings_manager import SettingsManager
 
 logger = logging.getLogger(__name__)
-
-LIBRARY_DIR = os.path.join(CACHE_DIR, "library")
-# We will use .dat (MsgPack) for library cache, but .json support remains
-CACHE_FILE_JSON = os.path.join(CACHE_DIR, "reference_indexes.json")
-CACHE_FILE_DAT = os.path.join(CACHE_DIR, "reference_indexes.dat")
 
 class DataManager:
     def __init__(self):
@@ -41,9 +34,11 @@ class DataManager:
             "mind_maps": {}  # NEW: field for Mind Map data
         }
         self.api_client = DndApiClient()
-        self.reference_cache = {}
-        self.library_tree = {}
-        self.library_migration_report = {}
+
+        self._library_mgr = LibraryManager(
+            cache_dir=CACHE_DIR,
+            api_client=self.api_client,
+        )
 
         self._entity_repo = EntityRepository(
             get_data=lambda: self.data,
@@ -70,69 +65,37 @@ class DataManager:
         if not os.path.exists(WORLDS_DIR):
             os.makedirs(WORLDS_DIR)
 
-        self.reload_library_cache()
+    # ------------------------------------------------------------------
+    # Backward-compat properties for library state attributes
+    # ------------------------------------------------------------------
+
+    @property
+    def reference_cache(self) -> dict:
+        return self._library_mgr.reference_cache
+
+    @property
+    def library_tree(self) -> dict:
+        return self._library_mgr.library_tree
+
+    @property
+    def library_migration_report(self) -> dict:
+        return self._library_mgr.library_migration_report
+
+    # ------------------------------------------------------------------
+    # Library delegates
+    # ------------------------------------------------------------------
 
     def reload_library_cache(self) -> None:
-        """Loads library index. Tries fast format (.dat) first."""
-        if not os.path.exists(CACHE_DIR):
-            os.makedirs(CACHE_DIR)
-
-        self.reference_cache = {}
-        
-        # 1. Fast format available?
-        if os.path.exists(CACHE_FILE_DAT):
-            try:
-                with open(CACHE_FILE_DAT, "rb") as f:
-                    # raw=False: Load as String instead of Byte
-                    self.reference_cache = msgpack.unpack(f, raw=False)
-            except Exception as e:
-                logger.error("Cache DAT load error: %s", e)
-                self.reference_cache = {}
-
-        # 2. Fall back to JSON if DAT is missing or stale
-        if not self.reference_cache and os.path.exists(CACHE_FILE_JSON):
-            try:
-                with open(CACHE_FILE_JSON, "r", encoding="utf-8") as f:
-                    self.reference_cache = json.load(f)
-                self._save_reference_cache()
-            except Exception:
-                self.reference_cache = {}
-
-        self.refresh_library_catalog()
-
-    def _save_reference_cache(self):
-        """Saves the library index as MsgPack (.dat)."""
-        if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
-        try:
-            with open(CACHE_FILE_DAT, "wb") as f: 
-                msgpack.pack(self.reference_cache, f)
-        except Exception as e:
-            logger.error("Cache save error: %s", e)
+        """Delegates to LibraryManager.reload_library_cache."""
+        self._library_mgr.reload_library_cache()
 
     def refresh_library_catalog(self) -> None:
-        """Migrates legacy cache layout and refreshes in-memory file catalog."""
-        try:
-            self.library_migration_report = migrate_legacy_layout(CACHE_DIR, default_source="dnd5e")
-        except Exception as e:
-            self.library_migration_report = {"errors": [str(e)]}
-            logger.error("Library migration error: %s", e)
-
-        try:
-            self.library_tree = scan_library_tree(CACHE_DIR, default_source="dnd5e")
-        except Exception as e:
-            self.library_tree = {}
-            logger.error("Library scan error: %s", e)
+        """Delegates to LibraryManager.refresh_library_catalog."""
+        self._library_mgr.refresh_library_catalog()
 
     def search_library_catalog(self, query: str, normalized_categories: set | None = None, source: str | None = None) -> list:
-        """Searches local offline library files from canonical+legacy cache folders."""
-        if not self.library_tree:
-            self.refresh_library_catalog()
-        return search_library_tree(
-            self.library_tree,
-            query=query,
-            normalized_categories=normalized_categories,
-            source=source,
-        )
+        """Delegates to LibraryManager.search_library_catalog."""
+        return self._library_mgr.search_library_catalog(query, normalized_categories=normalized_categories, source=source)
 
     def load_settings(self) -> dict:
         """Returns the current settings dict (delegates to SettingsManager)."""
@@ -145,25 +108,8 @@ class DataManager:
         self.current_theme = self._settings_mgr.current_theme
 
     def get_api_index(self, category: str, page: int = 1, filters: dict | None = None) -> dict | list:
-        # Cache Key Generation
-        source = self.api_client.current_source_key
-        filter_str = str(sorted(filters.items())) if filters else ""
-        cache_key = f"{source}_{category}_p{page}_{hash(filter_str)}"
-        
-        if cache_key in self.reference_cache: 
-            return self.reference_cache[cache_key]
-            
-        response = self.api_client.get_list(category, page=page, filters=filters)
-        
-        # Handle new format {"results": [], "count": ...}
-        # We cache the WHOLE response dict for paginated sources to preserve next/prev links offline
-        data_to_cache = response
-        
-        if data_to_cache:
-            self.reference_cache[cache_key] = data_to_cache
-            self._save_reference_cache()
-            return data_to_cache
-        return []
+        """Delegates to LibraryManager.get_api_index."""
+        return self._library_mgr.get_api_index(category, page=page, filters=filters)
 
     def _on_campaign_data_loaded(self, data: dict, path: str) -> None:
         """Callback invoked by CampaignManager to update data and path on this instance."""
@@ -231,93 +177,8 @@ class DataManager:
         return True, ""
 
     def fetch_details_from_api(self, category: str, index_name: str, local_only: bool = False) -> tuple[bool, dict | str]:
-        # 1. Source-based folder structure (default: dnd5e)
-        source_key = self.api_client.current_source_key
-        # category names are mapped to folders
-        folder_map = {
-            "Monster": "monsters", "NPC": "monsters", "Canavar": "monsters",
-            "Spell": "spells", "Büyü (Spell)": "spells",
-            "Equipment": "equipment", "Eşya (Equipment)": "equipment",
-            "Weapon": "weapons", "Armor": "armor",  # additions
-            "Class": "classes", "Race": "races",
-            "Magic Item": "magic-items", "MagicItem": "magic-items",
-            "Feat": "feats", "Condition": "conditions", "Background": "backgrounds"
-        }
-        folder = folder_map.get(category)
-        
-        if folder:
-            safe_index = str(index_name).lower().replace(" ", "-")
-            candidate_bases = [
-                os.path.join(LIBRARY_DIR, source_key, folder),  # canonical
-                os.path.join(LIBRARY_DIR, folder),              # legacy fallback
-            ]
-            candidate_names = [f"{index_name}.json", f"{safe_index}.json"]
-
-            # 2. Check cache first (canonical + legacy paths)
-            for base_lib in candidate_bases:
-                for name in candidate_names:
-                    local_path = os.path.join(base_lib, name)
-                    if not os.path.exists(local_path):
-                        continue
-                    try:
-                        with open(local_path, "r", encoding="utf-8") as f:
-                            raw = json.load(f)
-                        parsed = self.api_client.parse_dispatcher(category, raw)
-                        return True, parsed
-                    except Exception as e:
-                        logger.debug("Cache read error (%s): %s", index_name, e)
-        
-        if local_only: return False, "Not in local cache."
-
-        # 3. Fetch from API (get raw data via get_details)
-        raw_data = self.api_client.get_details(category, index_name)
-        
-        if raw_data:
-            # --- METADATA INJECTION ---
-            # Embed source info directly into the raw data.
-            raw_data["_meta_api_key"] = source_key
-
-            # Build a human-readable source name
-            if source_key == "dnd5e":
-                raw_data["_meta_source"] = "SRD 5e"
-            elif source_key == "open5e":
-                # Try to get the Open5e document title; fall back to "Open5e"
-                doc_title = raw_data.get("document__title") or raw_data.get("document", {}).get("title", "Open5e")
-                raw_data["_meta_source"] = doc_title
-            # ---------------------------------
-            
-            # Return Data Prepare
-            parsed_result = self.api_client.parse_dispatcher(category, raw_data)
-
-            if folder:
-                # Save to the currently selected source folder
-                base_lib = os.path.join(LIBRARY_DIR, source_key, folder)
-                try:
-                    if not os.path.exists(base_lib): os.makedirs(base_lib)
-                    
-                    # --- FIX: convert raw_data to dict if it arrived as a string ---
-                    save_content = raw_data
-                    if isinstance(save_content, str):
-                        try: save_content = json.loads(save_content)
-                        except json.JSONDecodeError: pass
-
-                    safe_index = index_name.lower().replace(" ", "-")
-                    local_path = os.path.join(base_lib, f"{safe_index}.json")
-                    
-                    # ensure_ascii=False to preserve non-ASCII chars in well-formed JSON
-                    with open(local_path, "w", encoding="utf-8") as f:
-                        json.dump(save_content, f, indent=2, ensure_ascii=False)
-                    logger.debug("Validated and saved to: %s", local_path)
-                    self.refresh_library_catalog()
-                except Exception as e:
-                    logger.error("Cache write error: %s", e)
-                    # Add a warning to the result but still return data (avoid crash)
-                    if isinstance(parsed_result, dict):
-                        parsed_result["_warning"] = tr("MSG_CACHE_WRITE_ERROR")
-            
-            return True, parsed_result
-            
-        return False, tr("MSG_SEARCH_NOT_FOUND")
+        """Delegates to LibraryManager.fetch_details_from_api."""
+        return self._library_mgr.fetch_details_from_api(category, index_name, local_only=local_only)
 
     def delete_entity(self, eid: str) -> None:
         """Delegates to EntityRepository.delete (public API preserved for callers)."""
@@ -424,29 +285,8 @@ class DataManager:
         self._map_mgr.move_timeline_pin(pin_id, x, y)
 
     def search_in_library(self, category: str, search_text: str) -> list[dict]:
-        normalized = None
-        if category:
-            normalized = {str(category).lower().rstrip("s")}
-
-        rows = self.search_library_catalog(
-            query=search_text,
-            normalized_categories=normalized,
-        )
-
-        results = []
-        for row in rows:
-            results.append(
-                {
-                    "id": f"lib_{row['category']}_{row['index']}",
-                    "name": row["display_name"],
-                    "type": row["category"],
-                    "is_library": True,
-                    "index": row["index"],
-                    "source": row["source"],
-                    "path": row["path"],
-                }
-            )
-        return results
+        """Delegates to LibraryManager.search_in_library."""
+        return self._library_mgr.search_in_library(category, search_text)
     
     def get_all_entity_mentions(self) -> list[dict]:
         """Delegates to EntityRepository.get_all_mentions."""
