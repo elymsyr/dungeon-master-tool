@@ -52,7 +52,7 @@ def build():
         'main.py',
         f'--name={APP_NAME}',
         '--onedir',
-        '--windowed', # MacOS'ta .app bundle oluşturur, Windows'ta konsolu gizler
+        '--windowed',  # Creates .app bundle on macOS; hides the console window on Windows
         '--clean',
         '--noupx',
     ]
@@ -74,8 +74,8 @@ def build():
         print(f"Build failed: {e}")
         sys.exit(1)
 
-    # --- KAYNAK DOSYALARI KOPYALA ---
-    # MacOS .app paketi yapısı farklıdır. Executable 'Contents/MacOS' içindedir.
+    # --- COPY RESOURCE FILES ---
+    # macOS .app bundle has a different layout — the executable is inside 'Contents/MacOS'.
     if sys.platform == "darwin":
         target_dir = os.path.join("dist", f"{APP_NAME}.app", "Contents", "MacOS")
     else:

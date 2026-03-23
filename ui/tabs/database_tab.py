@@ -8,13 +8,13 @@ from ui.widgets.npc_sheet import NpcSheet
 from ui.workers import ApiSearchWorker
 from core.locales import tr
 
-# Sidebar'daki sınıfları artık oradan import etmiyoruz çünkü burada kullanılmıyorlar.
-# Ancak EntityTabWidget bu dosyanın sorumluluğunda.
+# Sidebar classes are no longer imported here as they are unused in this file.
+# EntityTabWidget is managed in this file.
 
 class EntityTabWidget(QTabWidget):
     """
-    Sağ taraftaki sekmeli kart yönetim widget'ı.
-    Sürükle-bırak ile kart açmayı ve kapatmayı destekler.
+    Tabbed card management widget on the right panel.
+    Supports opening and closing cards via drag-and-drop.
     """
     def __init__(self, data_manager, parent_db_tab, panel_id):
         super().__init__()
@@ -24,7 +24,7 @@ class EntityTabWidget(QTabWidget):
         
         self.setTabsClosable(True)
         self.setMovable(True)
-        self.setAcceptDrops(True) # Sürükle bırak kabul et
+        self.setAcceptDrops(True)  # Accept drag-and-drop
         
         self.tabCloseRequested.connect(self.close_tab)
         
@@ -65,7 +65,7 @@ class EntityTabWidget(QTabWidget):
             event.ignore()
         
     def dropEvent(self, event):
-        # Sidebar'dan sürüklenen ID'yi al
+        # Get the ID dragged from the Sidebar
         eid = event.mimeData().text()
         self.parent_db_tab.open_entity_tab(eid, target_panel=self.panel_id)
         event.acceptProposedAction()
@@ -78,10 +78,10 @@ class EntityTabWidget(QTabWidget):
 
 
 class DatabaseTab(QWidget):
-    entity_deleted = pyqtSignal() # YENİ: Silme işlemini haber veren sinyal
+    entity_deleted = pyqtSignal()  # Signal emitted when an entity is deleted
     """
-    Sadece sağ taraftaki çalışma alanını (İki bölmeli kart sistemi) yönetir.
-    Sol taraftaki liste artık Global Sidebar'da.
+    Manages only the right-side workspace (Dual-Panel Card System).
+    The left-side entity list lives in the Global Sidebar.
     """
     def __init__(self, data_manager, player_window):
         super().__init__()
@@ -94,20 +94,20 @@ class DatabaseTab(QWidget):
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Sadece çalışma alanı (İkili Kart Sistemi)
+        # Workspace area only (Dual-Panel Card System)
         self.workspace_splitter = QSplitter(Qt.Orientation.Horizontal)
         
         self.tab_manager_left = EntityTabWidget(self.dm, self, "left")
         self.tab_manager_right = EntityTabWidget(self.dm, self, "right")
         
-        # Boşken tamamen kaybolmamaları için min width
+        # Minimum width to prevent panels from disappearing when empty
         self.tab_manager_left.setMinimumWidth(50)
         self.tab_manager_right.setMinimumWidth(50)
         
         self.workspace_splitter.addWidget(self.tab_manager_left)
         self.workspace_splitter.addWidget(self.tab_manager_right)
         
-        # Başlangıçta eşit böl
+        # Equal split on startup
         self.workspace_splitter.setSizes([500, 500])
         self.workspace_splitter.setCollapsible(0, False)
         
@@ -115,17 +115,17 @@ class DatabaseTab(QWidget):
 
     def open_entity_tab(self, eid, target_panel="left", data=None):
         """
-        Belirtilen ID veya Veri ile yeni bir NpcSheet sekmesi açar.
-        API'den veri çekme mantığı da buradadır.
+        Opens a new NpcSheet tab for the given entity ID or data dict.
+        API fetch logic is also handled here.
         """
-        # 1. API ID Kontrolü (lib_...)
+        # 1. API ID check (lib_...)
         if eid and str(eid).startswith("lib_"):
             parts = str(eid).split("_", 2)
             if len(parts) < 3:
                 return
             raw_cat = parts[1]
             raw_idx = parts[2]
-            # Basit mapping
+            # Simple category mapping
             category_map = {
                 "monsters": "Monster",
                 "spells": "Spell",
@@ -142,14 +142,14 @@ class DatabaseTab(QWidget):
             }
             target_cat = category_map.get(raw_cat, raw_cat.capitalize())
             
-            # Asenkron Worker ile çek
+            # Fetch asynchronously with a Worker
             self._fetch_and_open_api_entity(target_cat, raw_idx, target_panel)
             return
 
-        # 2. Hedef Tab Manager'ı belirle
+        # 2. Determine the target Tab Manager
         target_manager = self.tab_manager_left if target_panel == "left" else self.tab_manager_right
-        
-        # 3. Zaten açıksa o sekmeye odaklan
+
+        # 3. If already open, focus that tab
         if eid:
             for i in range(target_manager.count()):
                 sheet = target_manager.widget(i)
@@ -157,60 +157,60 @@ class DatabaseTab(QWidget):
                     target_manager.setCurrentIndex(i)
                     return
             
-            # Veritabanından veriyi al
+            # Retrieve data from the database
             if not data:
                 data = self.dm.data["entities"].get(eid)
-        
-        if not data: 
-            return # Veri yoksa açma
 
-        # 4. Yeni Sheet Oluştur
+        if not data:
+            return  # No data — do not open
+
+        # 4. Create new Sheet
         new_sheet = NpcSheet(self.dm)
         new_sheet.setProperty("entity_id", eid)
         
-        # Sinyal bağlantıları
-        # İçindeki linklere tıklandığında yine bu fonksiyonu çağır (recursive navigation)
+        # Signal connections
+        # Clicking links inside the sheet calls this function again (recursive navigation)
         new_sheet.request_open_entity.connect(lambda id: self.open_entity_tab(id, target_panel))
         new_sheet.save_requested.connect(lambda: self.save_sheet_data(new_sheet))
         new_sheet.data_changed.connect(lambda: self.mark_tab_unsaved(new_sheet, target_manager))
         
-        # Veriyi doldur
+        # Populate the sheet
         self.populate_sheet(new_sheet, data)
-        
-        # Silme ve Projeksiyon butonları
+
+        # Delete and Projection buttons
         new_sheet.btn_delete.clicked.connect(lambda: self.delete_entity_from_tab(new_sheet))
         new_sheet.btn_project_pdf.clicked.connect(lambda: self.project_entity_pdf(new_sheet))
         
-        # PDF butonları
+        # PDF buttons
         new_sheet.btn_add_pdf.clicked.connect(new_sheet.add_pdf_dialog)
         new_sheet.btn_open_pdf.clicked.connect(new_sheet.open_current_pdf)
         new_sheet.btn_remove_pdf.clicked.connect(new_sheet.remove_current_pdf)
         new_sheet.btn_open_pdf_folder.clicked.connect(new_sheet.open_pdf_folder)
         
-        # Tab Başlığı
+        # Tab title
         icon_char = "👤" if data.get("type") == "NPC" else "🐉" if data.get("type") == "Monster" else "📜"
         tab_title = f"{icon_char} {data.get('name')}"
-        if not eid: tab_title = f"⚠️ {tab_title}" # Kaydedilmemiş
+        if not eid: tab_title = f"⚠️ {tab_title}"  # Unsaved
         
         tab_index = target_manager.addTab(new_sheet, tab_title)
         target_manager.setCurrentIndex(tab_index)
 
     def _fetch_and_open_api_entity(self, cat, idx, target_panel):
-        """API Worker başlatır."""
+        """Starts an API Worker."""
         self.api_worker = ApiSearchWorker(self.dm, cat, idx)
         self.api_worker.finished.connect(lambda s, d, m: self._on_api_fetched(s, d, m, target_panel))
-        # Garbage collection'ı önlemek için referansı tutuyoruz, iş bitince sileriz
+        # Keep a reference to prevent garbage collection; cleared after the job completes
         self.api_worker.finished.connect(lambda: setattr(self, 'api_worker', None))
         self.api_worker.start()
 
     def _on_api_fetched(self, success, data_or_id, msg, target_panel):
         if success:
             if isinstance(data_or_id, dict):
-                # Yeni veri geldi, import formatına hazırla
+                # New data received, prepare in import format
                 processed_data = self.dm.prepare_entity_from_external(data_or_id)
                 self.open_entity_tab(eid=None, target_panel=target_panel, data=processed_data)
             elif isinstance(data_or_id, str):
-                # Zaten varmış, ID döndü
+                # Already exists, ID returned
                 self.open_entity_tab(data_or_id, target_panel)
         else: 
             QMessageBox.warning(self, tr("MSG_ERROR"), msg)
@@ -220,37 +220,34 @@ class DatabaseTab(QWidget):
         data = self.collect_data_from_sheet(sheet)
         if not data: return
         
-        # Kaydet
+        # Save
         new_eid = self.dm.save_entity(eid, data)
         sheet.setProperty("entity_id", new_eid)
         sheet.is_dirty = False
         
-        # Başlığı güncelle
+        # Update the tab title
         updated_data = self.dm.data["entities"][new_eid]
-        sheet.inp_source.setText(updated_data.get("source", "")) # Kaynak bilgisini güncelle
-        
-        # Tab başlığını bul ve güncelle
+        sheet.inp_source.setText(updated_data.get("source", ""))  # Update source field
+
+        # Find and update the tab title
         for manager in [self.tab_manager_left, self.tab_manager_right]:
             idx = manager.indexOf(sheet)
             if idx != -1:
                 icon_char = "👤" if data.get("type") == "NPC" else "🐉"
                 manager.setTabText(idx, f"{icon_char} {data.get('name')}")
-        
-        # Global Listeyi yenilemek için sinyal gönderilebilir ama Sidebar zaten yenilenebilir
-        # Burada sidebar referansımız yok, ama veri değiştiği için sorun yok.
 
     def delete_entity_from_tab(self, sheet):
         eid = sheet.property("entity_id")
         if not eid:
-            # Henüz kaydedilmemiş, sadece kapat
+            # Not yet saved — just close
             self._close_sheet_tab(sheet)
             return
 
         if QMessageBox.question(self, tr("BTN_DELETE"), tr("MSG_CONFIRM_DELETE")) == QMessageBox.StandardButton.Yes:
             self.dm.delete_entity(eid)
             self._close_sheet_tab(sheet)
-            # SİNYALİ YAYINLA
-            self.entity_deleted.emit() 
+            # Emit the signal
+            self.entity_deleted.emit()
 
     def _close_sheet_tab(self, sheet):
         for manager in [self.tab_manager_left, self.tab_manager_right]:

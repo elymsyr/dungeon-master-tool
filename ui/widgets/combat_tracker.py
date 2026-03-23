@@ -25,7 +25,7 @@ def clean_stat_value(value, default=10):
         return int(digits) if digits else default
     except: return default
 
-# Standart Durum Listesi (Key olarak İngilizce kalmalı, UI'da çevrilmeli)
+# Standard Conditions List (keys must stay in English; UI displays translated labels)
 CONDITIONS_MAP = {
     "Blinded": "COND_BLINDED",
     "Charmed": "COND_CHARMED",
@@ -44,9 +44,9 @@ CONDITIONS_MAP = {
     "Exhaustion": "COND_EXHAUSTION"
 }
 
-# --- SÜRÜKLENEBİLİR TABLO SINIFI ---
+# --- DRAGGABLE TABLE CLASS ---
 class DraggableCombatTable(QTableWidget):
-    """Sürüklenen Entity'leri kabul eden özel tablo."""
+    """Custom table that accepts dragged entities."""
     entity_dropped = pyqtSignal(str)
 
     def __init__(self, parent=None):
@@ -64,7 +64,7 @@ class DraggableCombatTable(QTableWidget):
 
     def dropEvent(self, event):
         eid = event.mimeData().text()
-        # Sinyali gönder, CombatTracker bunu yakalayıp ekleme yapacak
+        # Emit signal; CombatTracker will handle the add
         self.entity_dropped.emit(eid)
         event.acceptProposedAction()
 
@@ -153,7 +153,7 @@ class ConditionsWidget(QWidget):
 
     def update_theme(self, palette):
         self.current_palette = palette
-        # Tüm çocuk iconları güncelle
+        # Update all child condition icons
         for i in range(self.layout.count()):
             item = self.layout.itemAt(i)
             if item.widget() and isinstance(item.widget(), ConditionIcon):
@@ -161,19 +161,16 @@ class ConditionsWidget(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            # İcona tıklanmadıysa sinyali gönder (menü açmak için)
+            # If the click wasn't on a condition icon, emit signal (to open menu)
             if not isinstance(self.childAt(event.pos()), ConditionIcon): 
                 self.clicked.emit()
         super().mousePressEvent(event)
 
     def set_conditions(self, conditions_list):
-        # Mevcut ikonları temizle (layout.takeAt(0) -> Spacer item, onu koru veya yeniden ekle)
-        # Spacer en başta (index 0) duruyor çünkü addStretch başta çağrıldı.
-        # Ancak addWidget sona ekler. Spacer index 0'da.
-        # Biz sondan eklediğimiz için layout sırası: [Spacer, Icon1, Icon2...]
-        
-        while self.layout.count() > 1: 
-            item = self.layout.takeAt(1) # 0. index Spacer
+        # Clear existing icons (index 0 is the leading spacer from addStretch, keep it).
+        # Layout order: [Spacer, Icon1, Icon2 ...]
+        while self.layout.count() > 1:
+            item = self.layout.takeAt(1)  # Index 0 is the spacer
             if item.widget(): 
                 item.widget().deleteLater()
                 
@@ -233,7 +230,7 @@ class HpBarWidget(QWidget):
         b_m = QPushButton("-")
         b_m.setFixedSize(20, 20)
         b_m.setCursor(Qt.CursorShape.PointingHandCursor)
-        # Butonlar için şimdilik sabit renkler (Okunabilirlik için)
+        # Hard-coded colors for HP buttons (readability)
         b_m.setStyleSheet("QPushButton { background-color: #c62828; color: white; border: none; border-radius: 3px; font-weight: bold; } QPushButton:hover { background-color: #d32f2f; }")
         b_m.clicked.connect(self.decrease_hp)
         
@@ -272,7 +269,7 @@ class HpBarWidget(QWidget):
             c = p.get("hp_bar_low", "#c62828")
             
         bg = p.get("hp_widget_bg", "rgba(0,0,0,0.3)")
-        border = p.get("ui_floating_border", "#555") # Kenarlık için genel bir renk kullan
+        border = p.get("ui_floating_border", "#555")  # General border color
         
         self.bar.setStyleSheet(f"""
             QProgressBar::chunk {{ background-color: {c}; }} 
@@ -299,7 +296,7 @@ class NumericTableWidgetItem(QTableWidgetItem):
         try: return float(self.data(Qt.ItemDataRole.DisplayRole)) < float(other.data(Qt.ItemDataRole.DisplayRole))
         except: return super().__lt__(other)
 
-# --- MAP SEÇİCİ ---
+# --- MAP SELECTOR ---
 class MapSelectorDialog(QDialog):
     def __init__(self, data_manager, parent=None):
         super().__init__(parent)
@@ -399,7 +396,7 @@ class CombatTracker(QWidget):
         self.current_encounter_id = None
         self.fog_save_handler = None 
         
-        # Tema için başlangıç değeri
+        # Initial theme palette
         self.current_palette = ThemeManager.get_palette(self.dm.current_theme)
         
         self.create_encounter("Default Encounter")
@@ -408,12 +405,10 @@ class CombatTracker(QWidget):
     def set_fog_save_handler(self, handler): self.fog_save_handler = handler
 
     def refresh_theme(self, palette):
-        """
-        Main Window'dan gelen tema değişikliğini çocuk bileşenlere iletir.
-        """
+        """Propagates theme change from the Main Window to all child widgets."""
         self.current_palette = palette
-        
-        # Tablo içindeki Widget'ları güncelle (HpBar ve Conditions)
+
+        # Update widgets inside the table (HpBar and Conditions)
         for row in range(self.table.rowCount()):
             # HP Bar
             hp_w = self.table.cellWidget(row, 3)
@@ -425,7 +420,7 @@ class CombatTracker(QWidget):
             if cond_w and isinstance(cond_w, ConditionsWidget):
                 cond_w.update_theme(palette)
                 
-        # Tablo seçim rengini güncelle
+        # Update row highlight colors
         self.update_highlights()
 
     def init_ui(self):
@@ -454,7 +449,7 @@ class CombatTracker(QWidget):
         enc_layout.addWidget(self.btn_del_enc)
         layout.addLayout(enc_layout)
 
-        # Tablo sınıfı: DraggableCombatTable
+        # Table class: DraggableCombatTable
         self.table = DraggableCombatTable()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
@@ -467,7 +462,7 @@ class CombatTracker(QWidget):
         self.table.cellDoubleClicked.connect(self.on_cell_double_clicked)
         self.table.setSortingEnabled(False)
         
-        # Sinyal bağlantısı: Sürüklenen ID'yi ekle
+        # Signal: add the dropped entity ID
         self.table.entity_dropped.connect(self.handle_drop_import)
         
         layout.addWidget(self.table)
@@ -519,7 +514,7 @@ class CombatTracker(QWidget):
         self.refresh_encounter_combo()
 
     def handle_drop_import(self, eid):
-        """Dışarıdan (Sidebar) sürüklenen entity'i ekler."""
+        """Adds an entity dragged in from the Sidebar."""
         if eid.startswith("lib_"):
             QMessageBox.information(self, tr("MSG_INFO"), tr("MSG_DROP_IMPORT_FIRST"))
             return
@@ -632,7 +627,7 @@ class CombatTracker(QWidget):
         row = index.row()
         
         menu = QMenu(self)
-        # Menü Stili
+        # Menu style
         p = self.current_palette
         menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }} QMenu::item:selected {{ background-color: {p.get('line_selected', '#007acc')}; }}")
         
@@ -696,15 +691,13 @@ class CombatTracker(QWidget):
         self.update_highlights(); self.refresh_battle_map(); self.loading = False; self.data_changed_signal.emit()
 
     def update_highlights(self):
-        """
-        Sırası gelen satırı renklendirir. Renk ThemeManager'dan alınır.
-        """
+        """Highlights the active turn row. Color is sourced from ThemeManager."""
         if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
         idx = self.encounters[self.current_encounter_id]["turn_index"]
-        
-        # Temadan renk al, alpha ekle
+
+        # Get color from theme palette, apply transparency
         active_color = QColor(self.current_palette.get("token_border_active", "#ffb74d"))
-        active_color.setAlpha(100) # Saydamlık
+        active_color.setAlpha(100)  # Transparency
         brush = QBrush(active_color)
         
         self.table.blockSignals(True)
@@ -735,7 +728,7 @@ class CombatTracker(QWidget):
         row = self.table.rowAt(pos.y()); 
         if row == -1: return
         menu = QMenu()
-        # Menü Stili
+        # Menu style
         p = self.current_palette
         menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }}")
         

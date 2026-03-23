@@ -8,16 +8,16 @@ class ImageViewer(QGraphicsView):
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
         
-        # Kaliteli Render Ayarları
+        # High-quality render settings
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-        
-        # Sürükle ve Gez
+
+        # Pan / Scroll
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         
-        # Arka plan (Siyah/Karanlık)
+        # Background (black / dark)
         self.setStyleSheet("background-color: #000; border: none;")
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -29,11 +29,11 @@ class ImageViewer(QGraphicsView):
         self.scene.clear()
         if pixmap and not pixmap.isNull():
             self.pixmap_item = QGraphicsPixmapItem(pixmap)
-            # Kaliteli küçültme/büyütme modu
+            # High-quality scaling mode
             self.pixmap_item.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
             self.scene.addItem(self.pixmap_item)
             self.setSceneRect(self.pixmap_item.boundingRect())
-            self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio) # İlk açılışta sığdır
+            self.fitInView(self.pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)  # Fit on first open
         else:
             self.pixmap_item = None
 

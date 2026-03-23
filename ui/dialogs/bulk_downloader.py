@@ -128,13 +128,13 @@ class DownloadWorker(QThread):
     def _save_index(self, endpoint, new_items):
         """
         Saves the list from API to 'reference_indexes.json'.
-        IMPORTANT: Merges 'equipment' and 'magic-items' categories under 'Eşya (Equipment)'.
-        So they appear in a single list in offline search.
+        IMPORTANT: Merges 'equipment' and 'magic-items' categories under the same Equipment key
+        so they appear in a single list in offline search.
         """
         index_file = os.path.join(CACHE_DIR, "reference_indexes.json")
         full_index = {}
-        
-        # Mevcut index dosyasını oku
+
+        # Read the existing index file
         if os.path.exists(index_file):
             try:
                 with open(index_file, "r", encoding="utf-8") as f:

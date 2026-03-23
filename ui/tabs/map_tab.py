@@ -79,22 +79,22 @@ class MapTab(QWidget):
         self.map_viewer.link_placed_signal.connect(self.handle_quick_link_placement) 
         self.map_viewer.existing_pin_linked_signal.connect(self.handle_existing_pin_link)
         
-        # --- SÜRÜKLE BIRAK BAĞLANTISI ---
+        # --- DRAG-AND-DROP CONNECTION ---
         self.map_viewer.entity_id_dropped_signal.connect(self.handle_external_drop)
         
         v_layout.addWidget(self.map_viewer)
         layout.addWidget(viewer_frame)
 
     def handle_external_drop(self, eid, x, y):
-        """Dışarıdan sürüklenen varlığı doğrudan haritaya Pin olarak ekler."""
+        """Adds an entity dragged from outside directly as a map pin."""
         if eid.startswith("lib_"):
             QMessageBox.information(self, tr("MSG_INFO"), "Please import this item to your world first.")
             return
 
         if eid in self.dm.data["entities"]:
-            # DataManager üzerinden pin ekle
+            # Add pin via DataManager
             self.dm.add_pin(x, y, eid)
-            self.render_map() # Haritayı yenile
+            self.render_map()  # Refresh the map
 
     def retranslate_ui(self):
         self.btn_load_map.setText(tr("BTN_LOAD_MAP"))

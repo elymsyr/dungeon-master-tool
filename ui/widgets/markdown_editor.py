@@ -52,14 +52,14 @@ class ClickableTextBrowser(QTextBrowser):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.embedded_mode = False # Mind Map modu için bayrak
+        self.embedded_mode = False  # Flag for Mind Map embedded mode
 
     def mouseDoubleClickEvent(self, event):
         if self.embedded_mode:
-            # Mind Map'te Node işlemi yapması için olayı yoksay
+            # In Mind Map mode: ignore so node handles the event
             event.ignore()
         else:
-            # Normal modda sinyali gönder
+            # Normal mode: emit signal
             self.doubleClicked.emit()
             event.accept()
 
@@ -70,21 +70,21 @@ class ClickableTextBrowser(QTextBrowser):
             return
 
         if self.embedded_mode:
-            # Mind Map'te sürükleme yapabilmek için olayı yoksay
+            # In Mind Map mode: ignore so drag works on the canvas
             event.ignore()
         else:
-            # Normal modda metin seçimi için kabul et
+            # Normal mode: accept for text selection
             super().mousePressEvent(event)
 
     def contextMenuEvent(self, event):
-        # Sağ tık her zaman yoksayılır (Mind Map menüsü veya Standart menü engeli)
+        # Right-click is always ignored (suppresses both Mind Map menu and default context menu)
         event.ignore() 
 
 class PropagatingTextEdit(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
-        self.dm = None  # DataManager referansı
+        self.dm = None  # DataManager reference
 
     def set_data_manager(self, dm):
         self.dm = dm
@@ -99,16 +99,16 @@ class PropagatingTextEdit(QTextEdit):
         if event.mimeData().hasText():
             text = event.mimeData().text()
             
-            # 1. Kontrol: Bu bir Entity ID mi?
-            # DataManager referansı varsa ve ID entities içinde mevcutsa
+            # 1. Check: is this an Entity ID?
+            # Only process if DataManager is set and the ID exists in entities
             if self.dm and text in self.dm.data.get("entities", {}):
                 entity = self.dm.data["entities"][text]
                 entity_name = entity.get("name", "Unknown")
                 
-                # Mention Formatı: [@Name](entity://ID)
+                # Mention format: [@Name](entity://ID)
                 formatted_text = f"[@{entity_name}](entity://{text}) "
-                
-                # İmleci bırakılan yere taşı ve metni ekle
+
+                # Move cursor to drop position and insert text
                 cursor = self.cursorForPosition(event.position().toPoint())
                 cursor.insertText(formatted_text)
                 
@@ -118,7 +118,7 @@ class PropagatingTextEdit(QTextEdit):
                 
                 event.acceptProposedAction()
             else:
-                # Normal metin sürükleme işlemi (Standart davranış)
+                # Plain text drop: standard behavior
                 super().dropEvent(event)
         else:
             super().dropEvent(event)
@@ -133,7 +133,7 @@ class MarkdownEditor(QWidget):
         self.mention_start_pos = -1
         self.is_transparent_mode = False
         
-        # Varsayılan paleti al (Dark)
+        # Load the default (dark) palette
         self.current_palette = ThemeManager.get_palette("dark")
         
         self.popup = MentionPopup(self)
@@ -172,7 +172,7 @@ class MarkdownEditor(QWidget):
         self.btn_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_toggle.clicked.connect(self.toggle_mode)
         
-        # İlk stil uygulaması
+        # Initial style application
         self.apply_styles()
 
         if text.strip():
@@ -183,11 +183,11 @@ class MarkdownEditor(QWidget):
             self.toggle_mode()
 
     def set_embedded_mode(self, enabled):
-        """Mind Map içinde kullanılıyorsa True yap."""
+        """Set to True when used inside a Mind Map node."""
         self.viewer.embedded_mode = enabled
 
     def set_transparent_mode(self, enabled):
-        """MindMap gibi yerlerde şeffaf arka plan kullanmak için."""
+        """Enables a transparent background, e.g. for Mind Map nodes."""
         self.is_transparent_mode = enabled
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, enabled)
         self.apply_styles()
@@ -198,30 +198,30 @@ class MarkdownEditor(QWidget):
         self.set_transparent_mode(True)
 
     def refresh_theme(self, palette):
-        """Dışarıdan (MindMapNode veya Main Window) tema değiştiğinde çağrılır."""
+        """Called when the theme changes externally (from MindMapNode or Main Window)."""
         self.current_palette = palette
         self.apply_styles()
 
     def apply_styles(self):
-        """Aktif palet ve moda (şeffaf/normal) göre stili uygular."""
+        """Applies styles based on the active palette and mode (transparent / normal)."""
         p = self.current_palette
-        
-        container_bg = "transparent" # Default container bg
-        
+
+        container_bg = "transparent"  # Default container bg
+
         if self.is_transparent_mode:
-            # Mind Map Modu: Arka plan şeffaf
+            # Mind Map mode: transparent background
             bg_color = "transparent"
             border = "none"
-            # Not kağıdı üzerindeki yazı rengi paletten gelir
-            text_color = p.get("node_text", "#000000") 
-            # Editörde buton arka planı
+            # Text color for note card comes from palette
+            text_color = p.get("node_text", "#000000")
+            # Button background inside editor
             btn_bg = "rgba(0,0,0,0.1)"
         else:
-            # Standart Mod (Sheet içi): Arka plan hafif koyu/açık
+            # Standard mode (inside a sheet): slightly dark/light background
             bg_color = "rgba(0, 0, 0, 0.2)"
-            # Eğer canvas background çok açıksa (Light/Frost), text edit arka planını biraz daha koyult
-            if p.get("canvas_bg", "#000000").startswith("#f"): 
-                 bg_color = "rgba(255, 255, 255, 0.6)"
+            # If canvas background is very light (Light/Frost theme), darken the text edit background
+            if p.get("canvas_bg", "#000000").startswith("#f"):
+                bg_color = "rgba(255, 255, 255, 0.6)"
             
             border = "1px solid rgba(128, 128, 128, 0.3)"
             text_color = p.get("html_text", "#e0e0e0")
@@ -257,10 +257,10 @@ class MarkdownEditor(QWidget):
         
         p = self.current_palette
         
-        # Renkleri paletten al
+        # Get colors from palette
         if self.is_transparent_mode:
             c_text = p.get("node_text", "#000000")
-            c_link = p.get("html_link", "#1565c0") # Mind Map üzerinde linkler
+            c_link = p.get("html_link", "#1565c0")  # Links on Mind Map
             c_head = p.get("html_header", "#d84315")
         else:
             c_text = p.get("html_text", "#e0e0e0")
@@ -310,7 +310,7 @@ class MarkdownEditor(QWidget):
                     self.popup.hide()
                     return True
         
-        # Shift+Enter ile Kaydetme ve Çıkma
+        # Shift+Enter: save and exit edit mode
         if obj is self.editor and event.type() == QEvent.Type.KeyPress:
             if event.key() == Qt.Key.Key_Return and (event.modifiers() & Qt.KeyboardModifier.ShiftModifier):
                 self.switch_to_view_mode()

@@ -17,7 +17,7 @@ class EntityListItemWidget(QWidget):
         super().__init__(parent)
         self.setObjectName("entityItem") 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 2, 5, 2) # Daha sıkışık liste görünümü
+        layout.setContentsMargins(5, 2, 5, 2)  # Tighter list item layout
         layout.setSpacing(0)
         
         lbl_name = QLabel(name)
@@ -93,7 +93,7 @@ class EntitySidebar(QWidget):
         main_layout.setContentsMargins(5, 5, 5, 5)
         main_layout.setSpacing(5)
         
-        # --- ÜST KISIM: ARAMA VE FİLTRE ---
+        # --- TOP: SEARCH AND FILTER ---
         header_layout = QHBoxLayout()
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.setSpacing(2)
@@ -108,7 +108,7 @@ class EntitySidebar(QWidget):
         self.btn_filter.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.btn_filter.setFixedSize(30, 28)
         
-        # Filtre Menüsü (Stabilite ayarları eklendi)
+        # Filter Menu (with stability adjustments)
         self.filter_menu = QMenu(self.btn_filter)
         self.filter_menu.setStyleSheet("""
             QMenu { border: 1px solid #444; padding: 2px; }
@@ -121,7 +121,7 @@ class EntitySidebar(QWidget):
         header_layout.addWidget(self.btn_filter)
         main_layout.addLayout(header_layout)
         
-        # --- ORTA KISIM: LİSTE ---
+        # --- MIDDLE: ENTITY LIST ---
         self.list_widget = DraggableListWidget()
         self.list_widget.itemDoubleClicked.connect(self.on_item_double_clicked)
         main_layout.addWidget(self.list_widget)
@@ -131,7 +131,7 @@ class EntitySidebar(QWidget):
         self.check_show_library.toggled.connect(self.refresh_list)
         main_layout.addWidget(self.check_show_library)
         
-        # --- ALT KISIM: BUTONLAR ---
+        # --- BOTTOM: BUTTONS ---
         btn_layout = QHBoxLayout()
         btn_layout.setContentsMargins(0, 0, 0, 0)
         btn_layout.setSpacing(5)
@@ -153,10 +153,10 @@ class EntitySidebar(QWidget):
         self.filter_menu.clear()
         
         container = QWidget()
-        # Margin/Padding zıplamasını engellemek için Layout ayarları
+        # Fixed layout margins to prevent padding jump
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(8, 5, 8, 5) # Sabit padding
-        layout.setSpacing(0) # İç elemanlar arası boşluk sıfır
+        layout.setContentsMargins(8, 5, 8, 5)  # Fixed padding
+        layout.setSpacing(0)  # No spacing between inner elements
         
         # Stil sabitleme
         container.setStyleSheet("""
@@ -176,7 +176,7 @@ class EntitySidebar(QWidget):
             }
         """)
         
-        # Kategoriler Bölümü
+        # Categories section
         lbl_cat = QLabel(tr("LBL_TYPE"))
         lbl_cat.setObjectName("menuHeader")
         layout.addWidget(lbl_cat)
@@ -192,11 +192,11 @@ class EntitySidebar(QWidget):
             
             chk = QCheckBox(display_text)
             chk.setChecked(cat in self.active_categories)
-            # Tıklanınca menünün kapanmasını engellemek ve veriyi tutmak için
+            # Keep menu open and preserve data on toggle
             chk.toggled.connect(lambda checked, c=cat: self.toggle_category_filter(c, checked))
             layout.addWidget(chk)
             
-        # Kaynaklar Bölümü
+        # Sources section
         available_sources = set()
         for ent in self.dm.data["entities"].values():
             if ent.get("source"): available_sources.add(ent.get("source"))

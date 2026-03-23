@@ -31,13 +31,13 @@ logger = logging.getLogger(__name__)
 class MindMapScene(QGraphicsScene):
     def __init__(self, parent=None):
         super().__init__(parent)
-        # Başlangıçta varsayılan palet (Dark)
+        # Initial palette (Dark)
         self.current_palette = ThemeManager.get_palette("dark")
         self.apply_palette_bg()
         self.grid_mode = True
 
     def set_palette(self, palette):
-        """Temayı günceller."""
+        """Updates the theme."""
         self.current_palette = palette
         self.apply_palette_bg()
         self.update() # Redraw trigger
@@ -50,7 +50,7 @@ class MindMapScene(QGraphicsScene):
         super().drawBackground(painter, rect)
         if not self.grid_mode: return
         
-        # Grid rengini paletten al
+        # Get grid color from palette
         grid_rgba = self.current_palette.get("grid_color", "rgba(255, 255, 255, 10)")
         grid_color = QColor(grid_rgba)
         if not grid_color.isValid():
@@ -140,7 +140,7 @@ class FloatingControls(QWidget):
 
     def update_theme(self, palette):
         self.current_palette = palette
-        # Buton metinlerini güncelle (Dil değiştiyse)
+        # Refresh button labels in case the language changed
         self.btn_in.setText(tr("BTN_ZOOM_IN")); self.btn_in.setToolTip(tr("TIP_ZOOM_IN"))
         self.btn_out.setText(tr("BTN_ZOOM_OUT")); self.btn_out.setToolTip(tr("TIP_ZOOM_OUT"))
         self.btn_center.setText(tr("BTN_CENTER")); self.btn_center.setToolTip(tr("TIP_CENTER"))
@@ -225,8 +225,8 @@ class MindMapTab(QWidget):
         
         self.init_ui()
         
-        # Tema başlangıcı
-        current_theme = self.dm.current_theme # "dark", "ocean" vb.
+        # Theme initialization
+        current_theme = self.dm.current_theme  # "dark", "ocean", etc.
         self.apply_theme(current_theme)
         
         self.load_map_data()
@@ -262,25 +262,25 @@ class MindMapTab(QWidget):
 
     def apply_theme(self, theme_name):
         """
-        Main Window tarafından çağrılır.
-        Tüm sahne ve öğelerin rengini ThemeManager'dan çekilen palete göre günceller.
+        Called by the Main Window.
+        Updates all scene and item colors from the ThemeManager palette.
         """
         palette = ThemeManager.get_palette(theme_name)
-        
-        # 1. Sahne Arka Planı
+
+        # 1. Scene background
         self.scene.set_palette(palette)
-        
-        # 2. Yüzen Kontroller (Zoom)
+
+        # 2. Floating controls (Zoom)
         self.floating_controls.update_theme(palette)
-        
-        # 3. Kayıt Göstergesi
+
+        # 3. Save indicator
         self._update_save_status_style(palette, is_editing=False)
-        
-        # 4. Mevcut Node'lar
+
+        # 4. Existing nodes
         for node in self.nodes.values():
             node.update_theme(palette)
-            
-        # 5. Bağlantılar
+
+        # 5. Connections
         for conn in self.connections:
             conn.update_theme(palette)
 
@@ -357,10 +357,10 @@ class MindMapTab(QWidget):
         node = MindMapNode(node_id, widget, w, h, node_type, extra_data)
         node.setPos(x, y)
         
-        # Node'u oluştururken mevcut temayı uygula
+        # Apply the current theme when creating the node
         current_theme_name = self.dm.current_theme
         node.update_theme(ThemeManager.get_palette(current_theme_name))
-        
+
         node.requestConnection.connect(self.handle_connection_request)
         node.nodeDeleted.connect(self.delete_node)
         
@@ -431,7 +431,7 @@ class MindMapTab(QWidget):
         editor.textChanged.connect(self.trigger_autosave)
         editor.set_mind_map_style()
         
-        # Editöre de temayı ilk açılışta bildir (MindMapNode handle ediyor ama garanti olsun)
+        # Notify the editor of the current theme on first open (MindMapNode handles it, but be safe)
         editor.refresh_theme(ThemeManager.get_palette(self.dm.current_theme))
         
         node = self.create_node_base(node_id, editor, x, y, w, h, "note")
@@ -454,12 +454,12 @@ class MindMapTab(QWidget):
         sheet.populate_sheet(ent_data)
         sheet.set_embedded_mode(True)
         
-        # Entity Sheet temayı ilk açılışta almalı
+        # Entity Sheet must receive the current theme on first open
         sheet.refresh_theme(ThemeManager.get_palette(self.dm.current_theme))
         
         sheet.data_changed.connect(lambda: self.schedule_entity_autosave(sheet))
         
-        # NpcSheet dış kabuğu şeffaf olmalı
+        # NpcSheet outer container should be transparent
         sheet.setStyleSheet("""
             QWidget#sheetContainer { background-color: transparent; }
             QLineEdit, QTextEdit, QPlainTextEdit { background-color: rgba(0,0,0,0.2); border: 1px solid rgba(128,128,128,0.3); }
@@ -507,7 +507,7 @@ class MindMapTab(QWidget):
         
         line = ConnectionLine(node1, node2, on_delete_callback=self.delete_connection)
         
-        # Bağlantı çizgisi oluştururken temayı uygula
+        # Apply theme when creating the connection line
         current_theme_name = self.dm.current_theme
         line.update_theme(ThemeManager.get_palette(current_theme_name))
         

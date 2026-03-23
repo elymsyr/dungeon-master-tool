@@ -35,7 +35,7 @@ class SoundpadPanel(QWidget):
         self._build_ambience_slots()
         self._build_sfx_grid()
         
-        # Initial Master Volume Set (Varsayılan %50)
+        # Initial Master Volume Set (default 50%)
         self.audio_brain.set_master_volume(0.5)
         
         # Emit default shortcuts
@@ -99,7 +99,7 @@ class SoundpadPanel(QWidget):
     def _setup_music_tab(self):
         layout = QVBoxLayout(self.music_tab)
         
-        # Tema Seçimi
+        # Theme Selection
         theme_layout = QHBoxLayout()
         self.combo_themes = QComboBox()
         self.combo_themes.addItem(tr("COMBO_SELECT_THEME"), None)
@@ -122,13 +122,13 @@ class SoundpadPanel(QWidget):
             self.lbl_no_themes = QLabel(tr("MSG_NO_THEMES"))
             layout.addWidget(self.lbl_no_themes)
 
-        # Durum Butonları (State Buttons)
+        # State Buttons
         self.grp_states = QGroupBox(tr("GRP_MUSIC_STATE"))
         self.layout_states = QVBoxLayout(self.grp_states)
         self.grp_states.setVisible(False)
         layout.addWidget(self.grp_states)
 
-        # Yoğunluk (Intensity) Slider
+        # Intensity Slider
         self.grp_intensity = QGroupBox(tr("GRP_INTENSITY"))
         v_int = QVBoxLayout(self.grp_intensity)
         self.slider_intensity = QSlider(Qt.Orientation.Horizontal)
@@ -287,12 +287,12 @@ class SoundpadPanel(QWidget):
         slot = self.ambience_slots[slot_index]
         ambience_id = slot['combo'].currentData()
         volume = slot['slider'].value()
-        # Engine'e ID ve Volume (0-100) gönderiyoruz
+        # Send ID and volume (0-100) to the engine
         self.audio_brain.play_ambience(slot_index, ambience_id, volume)
 
     def _on_ambience_volume_change(self, slot_index, volume):
-        # Slider değiştiğinde engine'e yeni seviyeyi bildir
-        # (Engine bunu 0.0-1.0'a çevirip Master ile çarpacak)
+        # Notify the engine of the new level when the slider changes.
+        # (Engine converts to 0.0-1.0 and multiplies by master volume.)
         self.audio_brain.set_ambience_volume(slot_index, volume / 100.0)
 
     def play_sfx(self, sfx_id):
@@ -313,8 +313,8 @@ class SoundpadPanel(QWidget):
             self.load_selected_theme()
 
     def change_master_volume(self, value):
-        # FIX #47: Master volume değişikliğini motora ilet
-        # Engine artık bu değeri kullanarak Müzik, Ambiyans ve SFX'i güncelleyecek.
+        # FIX #47: Forward master volume change to the engine.
+        # Engine will use this value to update Music, Ambience, and SFX.
         self.audio_brain.set_master_volume(value / 100.0)
 
     def change_intensity(self, value):

@@ -253,7 +253,7 @@ class SessionTab(QWidget):
             self.combo_sessions.setCurrentIndex(idx)
             self.load_session()
         else: 
-            QMessageBox.warning(self, tr("MSG_WARNING"), "Oturum bulunamadı veya silinmiş.")
+            QMessageBox.warning(self, tr("MSG_WARNING"), "Session not found or has been deleted.")
     def retranslate_ui(self):
         self.btn_new_session.setText(tr("BTN_NEW_SESSION"))
         self.btn_save_session.setText(tr("BTN_SAVE"))

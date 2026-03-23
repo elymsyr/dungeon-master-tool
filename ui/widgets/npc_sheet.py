@@ -73,17 +73,17 @@ class NpcSheet(QWidget):
         self.btn_save.setVisible(not enabled)
         self.btn_delete.setVisible(not enabled)
         if enabled:
-            # Markdown editörlerini şeffaf moda geçir
+            # Switch Markdown editors to transparent mode
             self.inp_desc.set_transparent_mode(True)
             self.inp_dm_notes.set_transparent_mode(True)
 
     def refresh_theme(self, palette):
-        """Tüm alt bileşenlerin (Markdown editörleri dahil) temasını günceller."""
+        """Updates the theme for all sub-components (including Markdown editors)."""
         self.current_palette = palette
         self.inp_desc.refresh_theme(palette)
         self.inp_dm_notes.refresh_theme(palette)
         
-        # Dinamik özellik kartlarındaki editörleri güncelle
+        # Update editors inside dynamic property cards
         for container in [self.trait_container, self.action_container, self.reaction_container, 
                           self.legendary_container, self.inventory_container, self.custom_spell_container]:
             for i in range(container.dynamic_area.count()):
@@ -91,7 +91,7 @@ class NpcSheet(QWidget):
                 if widget and hasattr(widget, "inp_desc"):
                     widget.inp_desc.refresh_theme(palette)
         
-        # DM Notes stilini güncelle
+        # Update DM Notes style
         border_col = palette.get("dm_note_border", "#d32f2f")
         title_col = palette.get("dm_note_title", "#e57373")
         self.grp_dm_notes.setStyleSheet(f"QGroupBox {{ border: 1px solid {border_col}; color: {title_col}; font-weight: bold; }}")
@@ -109,7 +109,7 @@ class NpcSheet(QWidget):
         self.content_widget.setObjectName("sheetContainer")
         self.content_widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         
-        # QSS ile çatışmaması için stil ayarı
+        # Style override to avoid conflicts with QSS
         self.content_widget.setStyleSheet("""
             QLineEdit, QPlainTextEdit {
                 background-color: transparent;
@@ -305,7 +305,7 @@ class NpcSheet(QWidget):
         d.setMinimumHeight(120) 
         d.textChanged.connect(self.mark_as_dirty)
         
-        # Eğer embedded moddaysa yeni eklenen karta da stili uygula
+        # If in embedded mode, apply transparent style to the new card too
         if self.is_embedded:
             d.set_transparent_mode(True)
             
@@ -315,13 +315,8 @@ class NpcSheet(QWidget):
         card.inp_title = t
         card.inp_desc = d
 
-    # ... (Diğer metodlar aynı: setup_tabs, populate_sheet, collect_data vb.) ...
-    
-    # Kodu kısaltmak için diğer metodların aynı kaldığını varsayıyorum. 
-    # populate_sheet içinde "set_embedded_mode" kullanıldığında editörlerin güncellendiğinden emin olmalıyız.
-    
     def populate_sheet(self, data):
-        # Karmaşık verileri (dict/list) metne çeviren yardımcı fonksiyon
+        # Helper to convert complex values (dict/list) to a display string
         def safe_str(val):
             if val is None: return ""
             if isinstance(val, dict):
