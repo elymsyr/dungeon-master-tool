@@ -18,20 +18,35 @@ from core.settings_manager import SettingsManager
 logger = logging.getLogger(__name__)
 
 class DataManager:
+    """Thin orchestrator / facade that coordinates all data sub-managers.
+
+    Responsibilities kept here:
+    - Instantiate and wire up sub-managers (settings, entity, session, map,
+      campaign, library).
+    - Own ``data`` (the live campaign dict) and ``current_campaign_path``.
+    - ``save_data()`` — persist the campaign dict to disk (MsgPack).
+    - File asset helpers (import_image, import_pdf, get_full_path) that need
+      access to current_campaign_path.
+    - ``fetch_from_api()`` — cross-cutting orchestration across entity store and
+      library fetch.
+
+    All domain logic lives in the focused sub-manager classes.
+    """
+
     def __init__(self):
         self._settings_mgr = SettingsManager(CACHE_DIR)
         self.settings = self._settings_mgr.settings
         self.current_theme = self._settings_mgr.current_theme
-        
+
         self.current_campaign_path = None
-        
+
         self.data = {
-            "world_name": "", 
-            "entities": {}, 
+            "world_name": "",
+            "entities": {},
             "map_data": {"image_path": "", "pins": [], "timeline": []},
             "sessions": [],
             "last_active_session_id": None,
-            "mind_maps": {}  # NEW: field for Mind Map data
+            "mind_maps": {},
         }
         self.api_client = DndApiClient()
 
