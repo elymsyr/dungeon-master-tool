@@ -23,7 +23,7 @@ def clean_stat_value(value, default=10):
         first_part = s_val.split(' ')[0]
         digits = ''.join(filter(str.isdigit, first_part))
         return int(digits) if digits else default
-    except: return default
+    except (ValueError, AttributeError): return default
 
 # Standard Conditions List (keys must stay in English; UI displays translated labels)
 CONDITIONS_MAP = {
@@ -294,7 +294,7 @@ class HpBarWidget(QWidget):
 class NumericTableWidgetItem(QTableWidgetItem):
     def __lt__(self, other):
         try: return float(self.data(Qt.ItemDataRole.DisplayRole)) < float(other.data(Qt.ItemDataRole.DisplayRole))
-        except: return super().__lt__(other)
+        except (ValueError, TypeError): return super().__lt__(other)
 
 # --- MAP SELECTOR ---
 class MapSelectorDialog(QDialog):
@@ -596,7 +596,7 @@ class CombatTracker(QWidget):
         cur = clean_stat_value(hp); mx = cur
         if eid and eid in self.dm.data["entities"]:
              try: db_max = clean_stat_value(self.dm.data["entities"][eid]["combat_stats"]["max_hp"]); mx = db_max if db_max >= cur else cur
-             except: pass
+             except (KeyError, ValueError, TypeError): pass
         
         # HP Widget (Tema ile)
         hp_w = HpBarWidget(cur, mx, self.current_palette)
@@ -648,7 +648,7 @@ class CombatTracker(QWidget):
                     full_path = self.dm.get_full_path(eff["images"][0])
                     if full_path and os.path.exists(full_path): icon_path = full_path
                 try: duration = int(eff.get("attributes", {}).get("LBL_DURATION_TURNS", 0))
-                except: duration = 0
+                except (ValueError, TypeError): duration = 0
                 action = QAction(eff_name, self); 
                 if icon_path: action.setIcon(QIcon(icon_path))
                 action.triggered.connect(lambda checked, r=row, n=eff_name, p=icon_path, d=duration: self.add_condition_to_row(r, n, p, d)); menu.addAction(action)
@@ -743,7 +743,7 @@ class CombatTracker(QWidget):
         for eff in custom_effects:
             p = self.dm.get_full_path(eff["images"][0]) if eff.get("images") else None
             try: d = int(eff.get("attributes", {}).get("LBL_DURATION_TURNS", 0))
-            except: d = 0
+            except (ValueError, TypeError): d = 0
             a = QAction(eff["name"], self); 
             if p: a.setIcon(QIcon(p))
             a.triggered.connect(lambda ch, n=eff["name"], p=p, d=d: self.add_condition_to_row(row, n, p, d)); add_cond_menu.addAction(a)
@@ -789,9 +789,9 @@ class CombatTracker(QWidget):
         d=self.dm.data["entities"].get(eid)
         if d:
             try: m=(int(d["stats"]["DEX"])-10)//2
-            except: m=0
+            except (KeyError, ValueError, TypeError): m=0
             try: m+=clean_stat_value(d["combat_stats"].get("initiative"), 0)
-            except: pass
+            except (KeyError, ValueError, TypeError): pass
             self.add_direct_row(d["name"], random.randint(1,20)+m, d["combat_stats"].get("ac","10"), d["combat_stats"].get("hp","10"), [], eid, m)
     def add_all_players(self):
         ex=[self.table.item(r,1).data(Qt.ItemDataRole.UserRole) for r in range(self.table.rowCount())]

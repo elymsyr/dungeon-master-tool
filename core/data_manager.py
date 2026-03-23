@@ -114,7 +114,7 @@ class DataManager:
         if os.path.exists(path):
             try:
                 with open(path, "r", encoding="utf-8") as f: return json.load(f)
-            except: pass
+            except (json.JSONDecodeError, OSError): pass
         return {"language": "EN", "theme": "dark"}
 
     def save_settings(self, settings):
@@ -462,7 +462,7 @@ class DataManager:
                     save_content = raw_data
                     if isinstance(save_content, str):
                         try: save_content = json.loads(save_content)
-                        except: pass
+                        except json.JSONDecodeError: pass
 
                     safe_index = index_name.lower().replace(" ", "-")
                     local_path = os.path.join(base_lib, f"{safe_index}.json")

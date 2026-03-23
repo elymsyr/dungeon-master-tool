@@ -139,7 +139,7 @@ class DownloadWorker(QThread):
             try:
                 with open(index_file, "r", encoding="utf-8") as f:
                     full_index = json.load(f)
-            except:
+            except (json.JSONDecodeError, OSError):
                 full_index = {}
 
         # Category keys used by our application

@@ -160,7 +160,7 @@ class LocalLibraryTab(QWidget):
                     if isinstance(content, str):
                         try:
                             content = json.loads(content)
-                        except:
+                        except json.JSONDecodeError:
                             break
                     else:
                         break
