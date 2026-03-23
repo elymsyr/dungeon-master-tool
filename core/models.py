@@ -150,7 +150,7 @@ PROPERTY_MAP = {
     "Linked Condition": "LBL_LINKED_CONDITION"
 }
 
-def get_default_entity_structure(entity_type="NPC"):
+def get_default_entity_structure(entity_type: str = "NPC") -> dict:
     return {
         "name": "New Record",
         "type": entity_type,
