@@ -9,7 +9,7 @@ from config import SOUNDPAD_ROOT
 # --- HELPER CLASSES ---
 
 class TrackPlayer(QObject):
-    """Tek bir müzik katmanını (Track) yöneten oynatıcı."""
+    """Player that manages a single music layer (Track)."""
     loop_finished = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -60,7 +60,7 @@ class TrackPlayer(QObject):
         self.last_position = position
 
 class MultiTrackDeck(QObject):
-    """Bir 'State'i (Normal, Combat) yöneten ve katmanları senkronize eden güverte."""
+    """Deck that manages a single State (Normal, Combat) and synchronizes its layers."""
     loop_finished = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -98,13 +98,13 @@ class MultiTrackDeck(QObject):
         self.update_mix()
 
     def update_mix(self):
-        """Hangi katmanların duyulacağını ve ana ses seviyesini ayarlar."""
+        """Updates which layers are audible and sets the master volume level."""
         for pid, player in self.players.items():
-            # Eğer katman aktifse hedef ses deck_volume, değilse 0
+            # Active layers fade to deck_volume; inactive layers fade to 0
             target = self.deck_target_volume if pid in self.active_levels else 0.0
             player.fade_to(target, duration=1500)
 
-# --- ANA SES MOTORU (DÜZELTİLMİŞ) ---
+# --- MAIN AUDIO ENGINE ---
 
 class MusicBrain(QObject):
     state_changed = pyqtSignal(str)
@@ -114,18 +114,18 @@ class MusicBrain(QObject):
         
         self.library = global_library
         
-        # --- FIX #47: Master Volume Yönetimi ---
-        self.master_volume = 0.5  # Genel Ana Ses (0.0 - 1.0)
-        self.music_fade_ratio = 1.0  # Deckler arası geçiş oranı
-        
-        # Ambiyans slotlarının bireysel ses seviyelerini tutar (varsayılan 0.7)
+        # --- FIX #47: Master Volume Management ---
+        self.master_volume = 0.5  # Global master volume (0.0 - 1.0)
+        self.music_fade_ratio = 1.0  # Cross-fade ratio between decks
+
+        # Tracks the individual volume of each ambience slot (default 0.7)
         self.AMBIENCE_PLAYER_COUNT = 4
         self.ambience_slot_volumes = [0.7] * self.AMBIENCE_PLAYER_COUNT
         
         self.anim = QPropertyAnimation(self, b"fade_ratio")
         self.anim.setDuration(2000)
         
-        # Müzik Sistemi
+        # Music System
         self.deck_a = MultiTrackDeck(self)
         self.deck_b = MultiTrackDeck(self)
         self.active_deck = self.deck_a
@@ -162,36 +162,35 @@ class MusicBrain(QObject):
     @fade_ratio.setter
     def fade_ratio(self, val):
         self.music_fade_ratio = val
-        # Deck sesleri = Master * FadeRatio
+        # Deck volume = Master * FadeRatio
         self.active_deck.deck_volume = self.master_volume * val
         self.inactive_deck.deck_volume = self.master_volume * (1.0 - val)
 
     def set_master_volume(self, volume: float):
         """
-        FIX #47: Ana ses değiştiğinde hem müziği hem de ambiyansları günceller.
-        volume: 0.0 ile 1.0 arası float
+        FIX #47: Updates both music decks and ambience when master volume changes.
+        volume: float between 0.0 and 1.0
         """
         self.master_volume = volume
-        
-        # 1. Müzik Decklerini Güncelle
-        # Mevcut fade oranını koruyarak yeni master ile çarp
+
+        # 1. Update Music Decks — preserve current fade ratio
         self.active_deck.deck_volume = self.master_volume * self.music_fade_ratio
         self.inactive_deck.deck_volume = self.master_volume * (1.0 - self.music_fade_ratio)
-        
-        # 2. Ambiyansları Güncelle
+
+        # 2. Update Ambience Players
         for i in range(self.AMBIENCE_PLAYER_COUNT):
             slot_vol = self.ambience_slot_volumes[i]
-            # Final Ses = Slotun Kendi Sesi * Ana Ses
+            # Final volume = slot volume * master volume
             self.ambience_players[i]['output'].setVolume(slot_vol * self.master_volume)
 
     def set_ambience_volume(self, slot_index, volume: float):
         """
-        Belirli bir ambiyans slotunun sesini ayarlar.
+        Sets the volume for a specific ambience slot.
         volume: 0.0 - 1.0
         """
         if 0 <= slot_index < self.AMBIENCE_PLAYER_COUNT:
             self.ambience_slot_volumes[slot_index] = volume
-            # Anında uygula (Master ile çarparak)
+            # Apply immediately (multiplied by master volume)
             final_vol = volume * self.master_volume
             self.ambience_players[slot_index]['output'].setVolume(final_vol)
 
@@ -240,7 +239,7 @@ class MusicBrain(QObject):
         self.active_deck.load_state(state)
         self.active_deck.set_intensity_mask(self._get_mask_for_level(self.current_intensity_level))
         
-        # FIX: Başlangıçta da master volume'u dikkate al
+        # FIX: Apply master volume on initial hard switch too
         self.active_deck.deck_volume = self.master_volume
         self.active_deck.play()
         
@@ -250,11 +249,11 @@ class MusicBrain(QObject):
 
     def play_ambience(self, slot_index, ambience_id, volume_percent):
         """
-        Ambiyans oynatır. volume_percent: 0-100 arası int (UI'dan gelir)
+        Plays an ambience sound. volume_percent: int 0-100 (from UI).
         """
         if not (0 <= slot_index < self.AMBIENCE_PLAYER_COUNT): return
-        
-        # Slot sesini kaydet (0.0 - 1.0)
+
+        # Store slot volume as 0.0 - 1.0 float
         slot_vol_float = volume_percent / 100.0
         self.ambience_slot_volumes[slot_index] = slot_vol_float
         
@@ -278,7 +277,7 @@ class MusicBrain(QObject):
         if os.path.exists(full_path):
             player.setSource(QUrl.fromLocalFile(os.path.abspath(full_path)))
             
-            # FIX: Master volume ile çarpılmış sesi uygula
+            # FIX: Apply volume scaled by master volume
             final_vol = slot_vol_float * self.master_volume
             slot['output'].setVolume(final_vol)
             
@@ -305,7 +304,7 @@ class MusicBrain(QObject):
                 player.mediaStatusChanged.connect(handler)
                 slot['handler'] = handler
                 
-                # FIX: SFX çalarken de Master Volume ile çarp
+                # FIX: Scale SFX volume by master volume too
                 final_vol = volume * self.master_volume
                 slot['output'].setVolume(final_vol)
                 

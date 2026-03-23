@@ -142,7 +142,7 @@ class Dnd5eApiSource(ApiSource):
         else:
             ac_val = str(data.get("armor_class", 10))
 
-        # 2. Hız Parse
+        # 2. Speed parse
         speed_dict = data.get("speed", {})
         speed_str = ", ".join([f"{k.capitalize()} {v}" for k, v in speed_dict.items()])
 
@@ -160,11 +160,11 @@ class Dnd5eApiSource(ApiSource):
                 skill_label = name.replace("Skill:", "").strip()
                 skills.append(f"{skill_label} {sign}{val}")
 
-        # 4. Action/Trait Formatlama Yardımcısı
+        # 4. Action/Trait formatter helper
         def format_actions(action_list):
             return [{"name": a.get("name", "Action"), "desc": a.get("desc", "")} for a in action_list]
 
-        # 5. BAĞIMLILIK TESPİTİ (Büyü ve Ekipman)
+        # 5. DEPENDENCY DETECTION (Spells and Equipment)
         detected_spells = []
         for ability in data.get("special_abilities", []):
             if "spellcasting" in ability:
@@ -178,7 +178,7 @@ class Dnd5eApiSource(ApiSource):
                 url = item.get("equipment", {}).get("url") if isinstance(item, dict) else None
                 if url: detected_equipment.append(url.rstrip("/").split("/")[-1])
 
-        # 6. RESİM URL TESPİTİ
+        # 6. IMAGE URL DETECTION
         local_img = data.get("local_image_path", "")
         remote_image_url = ""
         if not local_img and data.get("image"):
@@ -361,7 +361,7 @@ class Dnd5eApiSource(ApiSource):
         return {"name": data.get("name"), "type": "Class", "description": f"Hit Die: d{data.get('hit_die')}", "source": "SRD 5e (2014)", "attributes": {"LBL_HIT_DIE": f"d{data.get('hit_die')}"}}
 
     def parse_race(self, data):
-        return {"name": data.get("name"), "type": "Race", "description": f"Speed: {data.get('speed')}", "source": "SRD 5e (2014)", "attributes": {"Hız": str(data.get("speed"))}}
+        return {"name": data.get("name"), "type": "Race", "description": f"Speed: {data.get('speed')}", "source": "SRD 5e (2014)", "attributes": {"LBL_SPEED": str(data.get("speed"))}}
 
 
 class Open5eApiSource(ApiSource):
@@ -487,20 +487,20 @@ class Open5eApiSource(ApiSource):
         return self.parse_generic(category, data)
 
     def parse_generic(self, category, data):
-        # Open5e'de açıklama 'desc' içindedir. Eğer liste ise birleştir.
+        # In Open5e, description is in 'desc'. Join if it's a list.
         desc = data.get("desc", data.get("description", ""))
         if isinstance(desc, list): desc = "\n".join(desc)
-        
+
         return {
             "name": data.get("name", "Unknown"),
             "type": category,
             "description": desc,
             "source": self._get_source_str(data),
-            "attributes": data.get("attributes", {}) # Varsa öznitelikleri al
+            "attributes": data.get("attributes", {})  # Pass through any existing attributes
         }
 
     def _get_source_str(self, data):
-        # Eğer DataManager tarafından meta veri enjekte edildiyse onu kullan
+        # Use injected metadata if DataManager embedded it
         if "_meta_source" in data:
             return data["_meta_source"]
             
@@ -687,24 +687,24 @@ class DndApiClient:
         return self.current_source.download_image_bytes(full_url)
 
     def parse_dispatcher(self, category, data):
-        # --- GÜVENLİK DUVARI: Verinin sözlük olduğundan emin ol ---
+        # --- SAFETY GUARD: ensure data is a dict ---
         if isinstance(data, str):
             try:
                 data = json.loads(data)
             except:
                 return {"name": "Parse Error", "type": category, "description": str(data)}
 
-        # İlgili kaynağın (dnd5e/open5e) parse işlemini yap
+        # Delegate parsing to the active source (dnd5e/open5e)
         result = self.current_source.parse_dispatcher(category, data)
-        
-        # Eğer sonuç sözlük değilse (hata payı)
+
+        # Fallback if parse result is not a dict
         if not isinstance(result, dict):
             result = {"name": "Data Error", "type": category, "description": str(result)}
 
-        # Kaynak bilgilerini işle
+        # Attach source metadata
         result["api_source"] = getattr(self, "current_source_key", "unknown")
-        
-        # Eğer Ham veride DataManager tarafından zorlanmış bir kaynak ismi varsa, onu kullan
+
+        # If DataManager injected a forced source name into raw data, use it
         if isinstance(data, dict) and "_meta_source" in data:
             result["source"] = data["_meta_source"]
             

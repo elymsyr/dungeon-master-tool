@@ -34,7 +34,7 @@ class DataManager:
             "map_data": {"image_path": "", "pins": [], "timeline": []},
             "sessions": [],
             "last_active_session_id": None,
-            "mind_maps": {}  # YENİ: Mind Map verileri için alan
+            "mind_maps": {}  # NEW: field for Mind Map data
         }
         self.api_client = DndApiClient()
         self.reference_cache = {}
@@ -53,7 +53,7 @@ class DataManager:
 
         self.reference_cache = {}
         
-        # 1. Hızlı format var mı?
+        # 1. Fast format available?
         if os.path.exists(CACHE_FILE_DAT):
             try:
                 with open(CACHE_FILE_DAT, "rb") as f:
@@ -63,7 +63,7 @@ class DataManager:
                 logger.error("Cache DAT load error: %s", e)
                 self.reference_cache = {}
 
-        # 2. DAT yoksa/eskiyse JSON fallback
+        # 2. Fall back to JSON if DAT is missing or stale
         if not self.reference_cache and os.path.exists(CACHE_FILE_JSON):
             try:
                 with open(CACHE_FILE_JSON, "r", encoding="utf-8") as f:
@@ -75,7 +75,7 @@ class DataManager:
         self.refresh_library_catalog()
 
     def _save_reference_cache(self):
-        """Kütüphane indeksini MsgPack (.dat) olarak kaydeder."""
+        """Saves the library index as MsgPack (.dat)."""
         if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
         try:
             with open(CACHE_FILE_DAT, "wb") as f: 
@@ -109,7 +109,7 @@ class DataManager:
         )
 
     def load_settings(self):
-        # Ayarlar küçük olduğu için ve elle düzenlenebildiği için JSON kalması daha iyi
+        # Settings are small and human-editable, so plain JSON is preferred here
         path = os.path.join(CACHE_DIR, "settings.json")
         if os.path.exists(path):
             try:
@@ -167,7 +167,7 @@ class DataManager:
         
         loaded = False
         
-        # 1. MsgPack (Hızlı Format) Dene
+        # 1. Try MsgPack (fast format)
         if os.path.exists(dat_path):
             try:
                 with open(dat_path, "rb") as f:
@@ -176,13 +176,13 @@ class DataManager:
             except Exception as e:
                 logger.warning("Error loading DAT file, falling back to JSON: %s", e)
         
-        # 2. Başarısızsa veya yoksa JSON Dene
+        # 2. Try JSON if DAT failed or not found
         if not loaded and os.path.exists(json_path):
             try:
                 with open(json_path, "r", encoding="utf-8") as f:
                     self.data = json.load(f)
                 loaded = True
-                # JSON'dan yüklendiyse, bir sonraki sefere hızlı açılması için DAT olarak kaydet
+                # Loaded from JSON: save as DAT for faster loading next time
                 self.current_campaign_path = folder
                 self.save_data() 
                 logger.info(tr("MSG_MIGRATION_CONVERTED"))
@@ -192,7 +192,7 @@ class DataManager:
         if not loaded:
             return False, tr("MSG_FILE_NOT_FOUND_DB")
 
-        # --- Veri Bütünlüğü Kontrolleri ---
+        # --- Data Integrity Checks ---
         if "sessions" not in self.data:
             self.data["sessions"] = []
         if "entities" not in self.data:
@@ -204,7 +204,7 @@ class DataManager:
         if "last_active_session_id" not in self.data:
             self.data["last_active_session_id"] = None
         
-        # YENİ: Mind Map Veri Yapısı Kontrolü
+        # NEW: Mind Map data structure check
         if "mind_maps" not in self.data:
             self.data["mind_maps"] = {}
         
@@ -222,7 +222,7 @@ class DataManager:
 
         self.current_campaign_path = folder
         
-        # --- PATH VE VERİ MİGRASYONU ---
+        # --- PATH AND DATA MIGRATION ---
         self._fix_absolute_paths()
         
         for eid, ent in self.data["entities"].items():
@@ -244,7 +244,7 @@ class DataManager:
                 ent["images"] = [ent["image_path"]]
         # -------------------------------
 
-        # Güncel halini hızlı formatta kaydet
+        # Persist the migrated data in fast format
         self.save_data()
         return True, tr("MSG_YUKLENDI")
 
@@ -289,7 +289,7 @@ class DataManager:
                 "map_data": {"image_path": "", "pins": [], "timeline": []},
                 "sessions": [{"id": first_sid, "name": "Session 0", "date": tr("MSG_TODAY"), "notes": "", "logs": "", "combatants": []}],
                 "last_active_session_id": first_sid,
-                "mind_maps": {}  # YENİ
+                "mind_maps": {}  # NEW
             }
             self.current_campaign_path = folder
             self.save_data()
@@ -394,14 +394,14 @@ class DataManager:
         return True, ""
 
     def fetch_details_from_api(self, category, index_name, local_only=False):
-        # 1. Kaynak bazlı klasör yapısı (varsayılan dnd5e)
+        # 1. Source-based folder structure (default: dnd5e)
         source_key = self.api_client.current_source_key
         # category names are mapped to folders
         folder_map = {
             "Monster": "monsters", "NPC": "monsters", "Canavar": "monsters",
             "Spell": "spells", "Büyü (Spell)": "spells",
             "Equipment": "equipment", "Eşya (Equipment)": "equipment",
-            "Weapon": "weapons", "Armor": "armor", # EKLEMELER
+            "Weapon": "weapons", "Armor": "armor",  # additions
             "Class": "classes", "Race": "races",
             "Magic Item": "magic-items", "MagicItem": "magic-items",
             "Feat": "feats", "Condition": "conditions", "Background": "backgrounds"
@@ -416,7 +416,7 @@ class DataManager:
             ]
             candidate_names = [f"{index_name}.json", f"{safe_index}.json"]
 
-            # 2. Önce Cache Kontrolü (canonical + legacy)
+            # 2. Check cache first (canonical + legacy paths)
             for base_lib in candidate_bases:
                 for name in candidate_names:
                     local_path = os.path.join(base_lib, name)
@@ -432,19 +432,19 @@ class DataManager:
         
         if local_only: return False, "Not in local cache."
 
-        # 3. API'den Çek (get_details ile RAW data al)
+        # 3. Fetch from API (get raw data via get_details)
         raw_data = self.api_client.get_details(category, index_name)
         
         if raw_data:
-            # --- METADATA ENJECTION (YENİ) ---
-            # Ham verinin içine kaynak bilgisini gömüyoruz.
+            # --- METADATA INJECTION ---
+            # Embed source info directly into the raw data.
             raw_data["_meta_api_key"] = source_key
-            
-            # İnsan tarafından okunabilir kaynak ismi oluştur
+
+            # Build a human-readable source name
             if source_key == "dnd5e":
                 raw_data["_meta_source"] = "SRD 5e"
             elif source_key == "open5e":
-                # Open5e döküman başlığını almaya çalış, yoksa Open5e yaz
+                # Try to get the Open5e document title; fall back to "Open5e"
                 doc_title = raw_data.get("document__title") or raw_data.get("document", {}).get("title", "Open5e")
                 raw_data["_meta_source"] = doc_title
             # ---------------------------------
@@ -453,12 +453,12 @@ class DataManager:
             parsed_result = self.api_client.parse_dispatcher(category, raw_data)
 
             if folder:
-                # Mevcut seçili kaynağın klasörüne kaydet
+                # Save to the currently selected source folder
                 base_lib = os.path.join(LIBRARY_DIR, source_key, folder)
                 try:
                     if not os.path.exists(base_lib): os.makedirs(base_lib)
                     
-                    # --- FIX: raw_data eğer string ise önce dict'e çevir ---
+                    # --- FIX: convert raw_data to dict if it arrived as a string ---
                     save_content = raw_data
                     if isinstance(save_content, str):
                         try: save_content = json.loads(save_content)
@@ -467,14 +467,14 @@ class DataManager:
                     safe_index = index_name.lower().replace(" ", "-")
                     local_path = os.path.join(base_lib, f"{safe_index}.json")
                     
-                    # ensure_ascii=False ile Türkçe karakterleri koru, düzgün JSON yaz
+                    # ensure_ascii=False to preserve non-ASCII chars in well-formed JSON
                     with open(local_path, "w", encoding="utf-8") as f:
                         json.dump(save_content, f, indent=2, ensure_ascii=False)
                     logger.debug("Validated and saved to: %s", local_path)
                     self.refresh_library_catalog()
                 except Exception as e:
                     logger.error("Cache write error: %s", e)
-                    # UI'ya bir uyarı mesajı ekle ama veriyi döndür (Crash olmaması için)
+                    # Add a warning to the result but still return data (avoid crash)
                     if isinstance(parsed_result, dict):
                         parsed_result["_warning"] = tr("MSG_CACHE_WRITE_ERROR")
             
@@ -485,7 +485,6 @@ class DataManager:
     def delete_entity(self, eid):
         if eid in self.data["entities"]:
             del self.data["entities"][eid]
-            # Kaydetmeyi unutma
             self.save_data() 
 
     def fetch_from_api(self, category, query):
@@ -496,7 +495,7 @@ class DataManager:
         if success and local_data:
              if category in ["Monster", "NPC"]: local_data = self._resolve_dependencies(local_data)
              
-             # Eğer cache yazma hatası varsa mesajı ilet
+             # Pass along any cache write warning
              msg = tr("MSG_LOADED_FROM_CACHE")
              if isinstance(local_data, dict) and "_warning" in local_data:
                  msg += f"\n({local_data.pop('_warning')})"

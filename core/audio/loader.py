@@ -10,7 +10,7 @@ from .models import LoopNode, MusicState, Theme, Track
 
 logger = logging.getLogger(__name__)
 
-# Taranacak geçerli ses dosyası uzantıları
+# Valid audio file extensions to scan
 AUDIO_EXTENSIONS = {'.wav', '.mp3', '.ogg', '.flac', '.m4a'}
 
 def _find_audio_files(path_fragment):
@@ -21,28 +21,28 @@ def _find_audio_files(path_fragment):
     """
     full_path = os.path.join(SOUNDPAD_ROOT, path_fragment)
     
-    # 1. Eğer yol bir klasör ise
+    # 1. If the path is a directory
     if os.path.isdir(full_path):
         found_files = []
         for filename in os.listdir(full_path):
             if os.path.splitext(filename)[1].lower() in AUDIO_EXTENSIONS:
-                # Klasör içindeki dosyanın göreceli yolunu ekle (örn: sfx/sword-slice/slice-1.wav)
+                # Add relative path of file inside directory (e.g. sfx/sword-slice/slice-1.wav)
                 relative_path = os.path.join(path_fragment, filename)
                 found_files.append(relative_path)
         return found_files
-        
-    # 2. Eğer yol bir dosya ise (uzantısı olsun veya olmasın)
+
+    # 2. If the path is a file (with or without extension)
     else:
-        # Uzantısı yoksa, geçerli uzantıları deneyerek dosyayı bulmaya çalış
+        # No extension: probe each valid extension to find the file
         if not os.path.splitext(full_path)[1]:
             for ext in AUDIO_EXTENSIONS:
                 if os.path.exists(full_path + ext):
                     return [path_fragment + ext]
-        # Uzantısı varsa ve dosya mevcutsa
+        # Has extension and file exists
         elif os.path.exists(full_path):
             return [path_fragment]
-            
-    # Hiçbir şey bulunamadıysa
+
+    # Nothing found
     return []
 
 def load_global_library():
@@ -58,13 +58,13 @@ def load_global_library():
         with open(library_file, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
         
-        # Ambiyans ve SFX listelerini işle
+        # Process ambience and SFX lists
         for sound_type in ['ambience', 'sfx']:
             for item in data.get(sound_type, []):
                 if 'file' in item:
-                    # 'file' anahtarını işle ve 'files' listesine dönüştür
+                    # Expand 'file' key into 'files' list
                     item['files'] = _find_audio_files(item['file'])
-                    del item['file'] # Eski anahtarı sil
+                    del item['file']  # Remove the old key
             library[sound_type] = data.get(sound_type, [])
 
         library['shortcuts'] = data.get('shortcuts', {})
@@ -74,7 +74,7 @@ def load_global_library():
     return library
 
 def load_all_themes():
-    """Müzik temalarını yükler (Bu fonksiyonun mantığı aynı kalır)."""
+    """Loads all music themes from the soundpad directory."""
     themes = {}
     if not os.path.exists(SOUNDPAD_ROOT):
         os.makedirs(SOUNDPAD_ROOT)
