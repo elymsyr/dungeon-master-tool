@@ -12,6 +12,7 @@ from core.api_client import DndApiClient
 from core.library_fs import migrate_legacy_layout, scan_library_tree, search_library_tree
 from core.locales import tr
 from core.models import PROPERTY_MAP, SCHEMA_MAP, get_default_entity_structure
+from core.entity_repository import EntityRepository
 from core.settings_manager import SettingsManager
 
 logger = logging.getLogger(__name__)
@@ -41,10 +42,17 @@ class DataManager:
         self.reference_cache = {}
         self.library_tree = {}
         self.library_migration_report = {}
-        
+
+        self._entity_repo = EntityRepository(
+            get_data=lambda: self.data,
+            save_callback=self.save_data,
+            fetch_details=self.fetch_details_from_api,
+            get_world_name=lambda: self.data.get("world_name", tr("NAME_UNKNOWN")),
+        )
+
         if not os.path.exists(WORLDS_DIR):
             os.makedirs(WORLDS_DIR)
-        
+
         self.reload_library_cache()
 
     def reload_library_cache(self) -> None:
@@ -329,53 +337,12 @@ class DataManager:
         return self.data.get("last_active_session_id")
 
     def save_entity(self, eid: str | None, data: dict, should_save: bool = True, auto_source_update: bool = True) -> str:
-        if not eid: 
-            eid = str(uuid.uuid4())
-        
-        if auto_source_update:
-            world_name = self.data.get("world_name", tr("NAME_UNKNOWN"))
-            current_source = data.get("source", "")
-            
-            if world_name:
-                if not current_source:
-                    data["source"] = world_name
-                elif world_name not in current_source:
-                    data["source"] = f"{current_source} / {world_name}"
-
-        if eid in self.data["entities"]: 
-            self.data["entities"][eid].update(data)
-        else: 
-            self.data["entities"][eid] = data
-        
-        if should_save:
-            self.save_data()
-        return eid
+        """Delegates to EntityRepository.save (public API preserved for callers)."""
+        return self._entity_repo.save(eid, data, should_save=should_save, auto_source_update=auto_source_update)
 
     def prepare_entity_from_external(self, data: dict, type_override: str | None = None) -> dict:
-        if type_override: data["type"] = type_override
-        if not data.get("source"):
-            data["source"] = "SRD 5e (2014)" 
-        data = self._resolve_dependencies(data)
-        return data
-
-    def _resolve_dependencies(self, data):
-        if not isinstance(data, dict): return data
-        detected_spells = data.pop("_detected_spell_indices", [])
-        if detected_spells: self._auto_import_linked_entities(data, detected_spells, "Spell", "spells")
-        detected_equip = data.pop("_detected_equipment_indices", [])
-        if detected_equip: self._auto_import_linked_entities(data, detected_equip, "Equipment", "equipment_ids")
-        return data
-
-    def _auto_import_linked_entities(self, main_data, indices, category, target_list_key):
-        if target_list_key not in main_data: main_data[target_list_key] = []
-        existing_map = {ent.get("name"): eid for eid, ent in self.data["entities"].items() if ent.get("type") == category}
-        for idx in indices:
-            success, sub_data = self.fetch_details_from_api(category, idx)
-            if success:
-                ent_name = sub_data.get("name")
-                if ent_name in existing_map: new_id = existing_map[ent_name]
-                else: new_id = self.save_entity(None, sub_data, should_save=False, auto_source_update=False); existing_map[ent_name] = new_id
-                if new_id not in main_data[target_list_key]: main_data[target_list_key].append(new_id)
+        """Delegates to EntityRepository.prepare_from_external."""
+        return self._entity_repo.prepare_from_external(data, type_override)
 
     def check_write_permissions(self) -> tuple[bool, str]:
         """Checks if the cache directory is writable."""
@@ -473,9 +440,8 @@ class DataManager:
         return False, tr("MSG_SEARCH_NOT_FOUND")
 
     def delete_entity(self, eid: str) -> None:
-        if eid in self.data["entities"]:
-            del self.data["entities"][eid]
-            self.save_data() 
+        """Delegates to EntityRepository.delete (public API preserved for callers)."""
+        self._entity_repo.delete(eid)
 
     def fetch_from_api(self, category: str, query: str) -> tuple[bool, str, dict | str | None]:
         for eid, ent in self.data["entities"].items():
@@ -483,24 +449,26 @@ class DataManager:
                 return True, tr("MSG_DATABASE_EXISTS"), eid
         success, local_data = self.fetch_details_from_api(category, query)
         if success and local_data:
-             if category in ["Monster", "NPC"]: local_data = self._resolve_dependencies(local_data)
-             
-             # Pass along any cache write warning
-             msg = tr("MSG_LOADED_FROM_CACHE")
-             if isinstance(local_data, dict) and "_warning" in local_data:
-                 msg += f"\n({local_data.pop('_warning')})"
-             
-             return True, msg, local_data
-             
+            if category in ["Monster", "NPC"]:
+                local_data = self._entity_repo._resolve_dependencies(local_data)
+
+            # Pass along any cache write warning
+            msg = tr("MSG_LOADED_FROM_CACHE")
+            if isinstance(local_data, dict) and "_warning" in local_data:
+                msg += f"\n({local_data.pop('_warning')})"
+
+            return True, msg, local_data
+
         parsed_data, msg = self.api_client.search(category, query)
-        if not parsed_data: return False, msg, None
-        if category in ["Monster", "NPC"] and isinstance(parsed_data, dict): parsed_data = self._resolve_dependencies(parsed_data)
+        if not parsed_data:
+            return False, msg, None
+        if category in ["Monster", "NPC"] and isinstance(parsed_data, dict):
+            parsed_data = self._entity_repo._resolve_dependencies(parsed_data)
         return True, tr("MSG_FETCHED_FROM_API"), parsed_data
 
     def import_entity_with_dependencies(self, data: dict, type_override: str | None = None) -> str:
-        if type_override: data["type"] = type_override
-        data = self._resolve_dependencies(data)
-        return self.save_entity(None, data, auto_source_update=False)
+        """Delegates to EntityRepository.import_with_dependencies."""
+        return self._entity_repo.import_with_dependencies(data, type_override)
 
     def import_image(self, src: str) -> str | None:
         if not self.current_campaign_path: return None
@@ -666,8 +634,5 @@ class DataManager:
         return results
     
     def get_all_entity_mentions(self) -> list[dict]:
-        """Returns the name and ID of every entity, used for the @ mention menu."""
-        mentions = []
-        for eid, ent in self.data["entities"].items():
-            mentions.append({"id": eid, "name": ent["name"], "type": ent["type"]})
-        return mentions
+        """Delegates to EntityRepository.get_all_mentions."""
+        return self._entity_repo.get_all_mentions()
