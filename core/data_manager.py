@@ -10,8 +10,9 @@ import msgpack
 from config import BASE_DIR, CACHE_DIR, WORLDS_DIR, load_theme, probe_write_access
 from core.api_client import DndApiClient
 from core.library_fs import migrate_legacy_layout, scan_library_tree, search_library_tree
-from core.locales import set_language, tr
+from core.locales import tr
 from core.models import PROPERTY_MAP, SCHEMA_MAP, get_default_entity_structure
+from core.settings_manager import SettingsManager
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +23,9 @@ CACHE_FILE_DAT = os.path.join(CACHE_DIR, "reference_indexes.dat")
 
 class DataManager:
     def __init__(self):
-        self.settings = self.load_settings()
-        set_language(self.settings.get("language", "EN"))
-        self.current_theme = self.settings.get("theme", "dark")
+        self._settings_mgr = SettingsManager(CACHE_DIR)
+        self.settings = self._settings_mgr.settings
+        self.current_theme = self._settings_mgr.current_theme
         
         self.current_campaign_path = None
         
@@ -109,25 +110,14 @@ class DataManager:
         )
 
     def load_settings(self) -> dict:
-        # Settings are small and human-editable, so plain JSON is preferred here
-        path = os.path.join(CACHE_DIR, "settings.json")
-        if os.path.exists(path):
-            try:
-                with open(path, "r", encoding="utf-8") as f: return json.load(f)
-            except (json.JSONDecodeError, OSError): pass
-        return {"language": "EN", "theme": "dark"}
+        """Returns the current settings dict (delegates to SettingsManager)."""
+        return self._settings_mgr.settings
 
     def save_settings(self, settings: dict) -> None:
-        path = os.path.join(CACHE_DIR, "settings.json")
-        if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR)
-        
-        new_settings = self.settings.copy()
-        new_settings.update(settings)
-        
-        with open(path, "w", encoding="utf-8") as f: json.dump(new_settings, f, indent=4)
-        self.settings = new_settings
-        set_language(new_settings.get("language", "EN"))
-        self.current_theme = new_settings.get("theme", "dark")
+        """Merges *settings* into persisted settings (delegates to SettingsManager)."""
+        self._settings_mgr.save(settings)
+        self.settings = self._settings_mgr.settings
+        self.current_theme = self._settings_mgr.current_theme
 
     def get_api_index(self, category: str, page: int = 1, filters: dict | None = None) -> dict | list:
         # Cache Key Generation
