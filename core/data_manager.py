@@ -13,6 +13,7 @@ from core.library_fs import migrate_legacy_layout, scan_library_tree, search_lib
 from core.locales import tr
 from core.models import PROPERTY_MAP, SCHEMA_MAP, get_default_entity_structure
 from core.entity_repository import EntityRepository
+from core.session_repository import SessionRepository
 from core.settings_manager import SettingsManager
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,10 @@ class DataManager:
             save_callback=self.save_data,
             fetch_details=self.fetch_details_from_api,
             get_world_name=lambda: self.data.get("world_name", tr("NAME_UNKNOWN")),
+        )
+        self._session_repo = SessionRepository(
+            get_data=lambda: self.data,
+            save_callback=self.save_data,
         )
 
         if not os.path.exists(WORLDS_DIR):
@@ -305,36 +310,24 @@ class DataManager:
                 logger.critical("Save error: %s", e)
 
     def create_session(self, name: str) -> str:
-        session_id = str(uuid.uuid4())
-        new_session = {"id": session_id, "name": name, "date": tr("MSG_TODAY"), "notes": "", "logs": "", "combatants": []}
-        if "sessions" not in self.data: self.data["sessions"] = []
-        self.data["sessions"].append(new_session)
-        self.set_active_session(session_id)
-        self.save_data()
-        return session_id
+        """Delegates to SessionRepository.create."""
+        return self._session_repo.create(name)
 
     def get_session(self, session_id: str) -> dict | None:
-        if "sessions" not in self.data: return None
-        for s in self.data["sessions"]:
-            if s["id"] == session_id: return s
-        return None
+        """Delegates to SessionRepository.get."""
+        return self._session_repo.get(session_id)
 
     def save_session_data(self, session_id: str, notes: str, logs: str, combatants: list) -> None:
-        if "sessions" not in self.data: return
-        for s in self.data["sessions"]:
-            if s["id"] == session_id:
-                s["notes"] = notes
-                s["logs"] = logs
-                s["combatants"] = combatants
-                self.set_active_session(session_id)
-                self.save_data()
-                break
+        """Delegates to SessionRepository.save_data."""
+        self._session_repo.save_data(session_id, notes, logs, combatants)
 
     def set_active_session(self, session_id: str) -> None:
-        self.data["last_active_session_id"] = session_id
+        """Delegates to SessionRepository.set_active."""
+        self._session_repo.set_active(session_id)
 
     def get_last_active_session_id(self) -> str | None:
-        return self.data.get("last_active_session_id")
+        """Delegates to SessionRepository.get_last_active_id."""
+        return self._session_repo.get_last_active_id()
 
     def save_entity(self, eid: str | None, data: dict, should_save: bool = True, auto_source_update: bool = True) -> str:
         """Delegates to EntityRepository.save (public API preserved for callers)."""
