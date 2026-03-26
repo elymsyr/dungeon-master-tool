@@ -99,6 +99,11 @@ class PdfManagerWidget(QWidget):
     # Public API
     # ------------------------------------------------------------------
 
+    def set_edit_mode(self, enabled: bool) -> None:
+        """Show/hide add and remove buttons based on edit mode."""
+        self.btn_add.setVisible(enabled)
+        self.btn_remove.setVisible(enabled)
+
     def set_entity_id(self, eid: str | None) -> None:
         """Bind the widget to an entity so save-on-add/remove works."""
         self._entity_id = eid

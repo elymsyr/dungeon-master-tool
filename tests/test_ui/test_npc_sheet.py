@@ -105,18 +105,21 @@ def test_initial_embedded_flag_is_false(sheet):
 # ---------------------------------------------------------------------------
 
 
-def test_set_embedded_mode_hides_save_and_delete(sheet):
+def test_set_embedded_mode_hides_all_footer_buttons(sheet):
     sheet.set_embedded_mode(True)
+    assert not sheet.btn_edit.isVisible()
     assert not sheet.btn_save.isVisible()
     assert not sheet.btn_delete.isVisible()
 
 
-def test_set_embedded_mode_shows_save_and_delete_when_disabled(sheet):
+def test_set_embedded_mode_restores_view_mode_when_disabled(sheet):
     sheet.set_embedded_mode(True)
     sheet.set_embedded_mode(False)
-    # isHidden() checks the widget's own flag, independent of ancestor visibility
-    assert not sheet.btn_save.isHidden()
+    # In view mode: btn_edit and btn_delete are visible; edit-mode buttons are hidden
+    assert not sheet.btn_edit.isHidden()
     assert not sheet.btn_delete.isHidden()
+    assert sheet.btn_save.isHidden()
+    assert sheet.btn_done.isHidden()
 
 
 # ---------------------------------------------------------------------------

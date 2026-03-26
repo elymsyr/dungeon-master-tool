@@ -171,6 +171,11 @@ class ImageGalleryWidget(QWidget):
             self.current_img_index = max(0, self.current_img_index - 1)
             self.refresh_display()
 
+    def set_edit_mode(self, enabled: bool) -> None:
+        """Show/hide add and remove buttons based on edit mode."""
+        self.btn_add.setVisible(enabled)
+        self.btn_remove.setVisible(enabled)
+
     def start_lazy_download(self, url: str, name: str) -> None:
         """Start a background download for a remote image URL."""
         safe_name = "".join(c for c in name if c.isalnum()).lower()
