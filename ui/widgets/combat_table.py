@@ -264,10 +264,12 @@ class HpBarWidget(QWidget):
         b_m = QPushButton("-")
         b_m.setFixedSize(20, 20)
         b_m.setCursor(Qt.CursorShape.PointingHandCursor)
+        dec_bg = self.current_palette.get("hp_btn_decrease_bg", "#c62828")
+        dec_hov = self.current_palette.get("hp_btn_decrease_hover", "#d32f2f")
         b_m.setStyleSheet(
-            "QPushButton { background-color: #c62828; color: white; border: none; "
-            "border-radius: 3px; font-weight: bold; } "
-            "QPushButton:hover { background-color: #d32f2f; }"
+            f"QPushButton {{ background-color: {dec_bg}; color: white; border: none;"
+            f" border-radius: 3px; font-weight: bold; }}"
+            f"QPushButton:hover {{ background-color: {dec_hov}; }}"
         )
         b_m.clicked.connect(self.decrease_hp)
 
@@ -282,10 +284,12 @@ class HpBarWidget(QWidget):
         b_p = QPushButton("+")
         b_p.setFixedSize(20, 20)
         b_p.setCursor(Qt.CursorShape.PointingHandCursor)
+        inc_bg = self.current_palette.get("hp_btn_increase_bg", "#2e7d32")
+        inc_hov = self.current_palette.get("hp_btn_increase_hover", "#388e3c")
         b_p.setStyleSheet(
-            "QPushButton { background-color: #2e7d32; color: white; border: none; "
-            "border-radius: 3px; font-weight: bold; } "
-            "QPushButton:hover { background-color: #388e3c; }"
+            f"QPushButton {{ background-color: {inc_bg}; color: white; border: none;"
+            f" border-radius: 3px; font-weight: bold; }}"
+            f"QPushButton:hover {{ background-color: {inc_hov}; }}"
         )
         b_p.clicked.connect(self.increase_hp)
 

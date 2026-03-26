@@ -51,11 +51,15 @@ class EntitySelectorDialog(QDialog):
         btn_layout = QHBoxLayout()
         self.btn_cancel = QPushButton(tr("BTN_CANCEL"))
         self.btn_cancel.clicked.connect(self.reject)
-        self.btn_cancel.setStyleSheet("padding: 10px; background-color: #d32f2f; color: white;")
-        
+        self.btn_cancel.setStyleSheet(
+            f"padding: 10px; background-color: {p.get('danger_btn_bg', '#d32f2f')}; color: white;"
+        )
+
         self.btn_add = QPushButton(tr("BTN_ADD"))
         self.btn_add.clicked.connect(self.add_selected)
-        self.btn_add.setStyleSheet("padding: 10px; background-color: #388e3c; color: white; font-weight: bold;")
+        self.btn_add.setStyleSheet(
+            f"padding: 10px; background-color: {p.get('success_btn_bg', '#388e3c')}; color: white; font-weight: bold;"
+        )
         
         btn_layout.addStretch()
         btn_layout.addWidget(self.btn_cancel)
