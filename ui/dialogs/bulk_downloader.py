@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 
 from config import API_BASE_URL, CACHE_DIR, probe_write_access
 from core.locales import tr
+from core.theme_manager import ThemeManager
 
 logger = logging.getLogger(__name__)
 
@@ -196,67 +197,61 @@ class BulkDownloadDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(tr("TITLE_DOWNLOADER"))
         self.setFixedSize(600, 500)
-        self.setStyleSheet("background-color: #1e1e1e; color: white;")
-        
+
         self.worker = None
         self.init_ui()
+        self.refresh_theme(ThemeManager.get_palette("dark"))
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        
-        # Info Label
-        lbl_info = QLabel(tr("LBL_DOWNLOADER_DESC"))
-        lbl_info.setWordWrap(True)
-        lbl_info.setStyleSheet("color: #e0e0e0; margin-bottom: 10px;")
-        layout.addWidget(lbl_info)
-        
-        # Progress Bar
+
+        self.lbl_info = QLabel(tr("LBL_DOWNLOADER_DESC"))
+        self.lbl_info.setWordWrap(True)
+        layout.addWidget(self.lbl_info)
+
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(0)
-        self.progress_bar.setStyleSheet("""
-            QProgressBar { 
-                border: 2px solid #444; 
-                border-radius: 5px; 
-                text-align: center; 
-                background-color: #222;
-                color: white;
-                height: 25px;
-            }
-            QProgressBar::chunk { 
-                background-color: #2e7d32; 
-                width: 20px; 
-            }
-        """)
         layout.addWidget(self.progress_bar)
-        
-        # Log Window
+
         self.txt_log = QTextEdit()
         self.txt_log.setReadOnly(True)
-        self.txt_log.setStyleSheet("""
-            background-color: #121212; 
-            border: 1px solid #333; 
-            font-family: 'Consolas', monospace; 
-            font-size: 12px; 
-            color: #bbb;
-        """)
         layout.addWidget(self.txt_log)
-        
-        # Start Button
+
         self.btn_start = QPushButton(tr("BTN_START_DOWNLOAD"))
-        self.btn_start.setStyleSheet("""
-            QPushButton {
-                background-color: #0d47a1; 
-                color: white; 
-                padding: 12px; 
-                font-weight: bold; 
-                font-size: 14px;
-                border-radius: 4px;
-            }
-            QPushButton:hover { background-color: #1565c0; }
-            QPushButton:disabled { background-color: #444; color: #888; }
-        """)
         self.btn_start.clicked.connect(self.start_download)
         layout.addWidget(self.btn_start)
+
+    def refresh_theme(self, palette: dict) -> None:
+        """Apply palette-based styling to all theme-sensitive elements."""
+        ui_bg = palette.get("node_bg_entity", "#1e1e1e")
+        ui_text = palette.get("html_text", "#e0e0e0")
+        border = palette.get("sidebar_divider", "#444")
+        bar_bg = palette.get("ui_bg_dark", "#222")
+        bar_chunk = palette.get("hp_bar_high", "#2e7d32")
+        log_bg = palette.get("canvas_bg", "#121212")
+        log_border = palette.get("grid_color", "#333")
+        log_text = palette.get("html_dim", "#bbb")
+        btn_bg = palette.get("pin_default", "#0d47a1")
+        btn_hover = palette.get("line_selected", "#1565c0")
+        btn_dis = palette.get("sidebar_divider", "#444")
+        btn_dis_text = palette.get("sidebar_label_secondary", "#888")
+        self.setStyleSheet(f"background-color: {ui_bg}; color: {ui_text};")
+        self.lbl_info.setStyleSheet(f"color: {ui_text}; margin-bottom: 10px;")
+        self.progress_bar.setStyleSheet(
+            f"QProgressBar {{ border: 2px solid {border}; border-radius: 5px;"
+            f" text-align: center; background-color: {bar_bg}; color: {ui_text}; height: 25px; }}"
+            f"QProgressBar::chunk {{ background-color: {bar_chunk}; width: 20px; }}"
+        )
+        self.txt_log.setStyleSheet(
+            f"background-color: {log_bg}; border: 1px solid {log_border};"
+            f" font-family: 'Consolas', monospace; font-size: 12px; color: {log_text};"
+        )
+        self.btn_start.setStyleSheet(
+            f"QPushButton {{ background-color: {btn_bg}; color: {ui_text};"
+            f" padding: 12px; font-weight: bold; font-size: 14px; border-radius: 4px; }}"
+            f"QPushButton:hover {{ background-color: {btn_hover}; }}"
+            f"QPushButton:disabled {{ background-color: {btn_dis}; color: {btn_dis_text}; }}"
+        )
 
     def start_download(self):
         self.btn_start.setEnabled(False)
