@@ -10,6 +10,7 @@ from core.locales import tr
 from core.theme_manager import ThemeManager
 from ui.dialogs.encounter_selector import EncounterSelectionDialog
 from ui.widgets.combat_model import CombatModel
+from ui.widgets.battle_map_bridge import BattleMapBridge
 import random
 import os
 import uuid
@@ -60,9 +61,11 @@ class CombatTracker(QWidget):
     def __init__(self, data_manager):
         super().__init__()
         self.dm = data_manager
-        self.battle_map_window = None
         self.loading = False
         self._model = CombatModel()
+        self._bridge = BattleMapBridge(self.dm, self)
+        self._bridge.token_moved.connect(self.on_token_moved_in_map)
+        self._bridge.token_size_changed.connect(self.on_token_size_changed)
         self.fog_save_handler = None
 
         # Initial theme palette
@@ -90,6 +93,11 @@ class CombatTracker(QWidget):
     @current_encounter_id.setter
     def current_encounter_id(self, value: str | None) -> None:
         self._model.current_encounter_id = value
+
+    @property
+    def battle_map_window(self):
+        """Backward-compat: direct access to the underlying BattleMapWindow."""
+        return self._bridge._window
 
     def set_fog_save_handler(self, handler): self.fog_save_handler = handler
 
@@ -248,7 +256,7 @@ class CombatTracker(QWidget):
                 self._save_current_state_to_memory()
             self.current_encounter_id = eid
             self.refresh_ui_from_current_encounter()
-            if self.battle_map_window and self.battle_map_window.isVisible():
+            if self._bridge.is_open():
                 self.refresh_battle_map(force_map_reload=True)
             
     def refresh_encounter_combo(self):
@@ -539,63 +547,52 @@ class CombatTracker(QWidget):
                 enc["map_path"] = d.selected_file
             
             self.data_changed_signal.emit()
-            if self.battle_map_window and self.battle_map_window.isVisible():
+            if self._bridge.is_open():
                 self.refresh_battle_map(force_map_reload=True)
 
     def open_battle_map(self):
-        if self.battle_map_window and self.battle_map_window.isVisible():
-            self.battle_map_window.raise_()
-            self.battle_map_window.activateWindow()
-            return
+        newly_opened = self._bridge.open()
+        if newly_opened:
+            self.refresh_battle_map(force_map_reload=True)
 
-        from ui.windows.battle_map_window import BattleMapWindow
-        self.battle_map_window = BattleMapWindow(self.dm)
-        self.battle_map_window.token_moved_signal.connect(self.on_token_moved_in_map)
-        self.battle_map_window.slider_size.valueChanged.connect(self.on_token_size_changed)
-        self.battle_map_window.show()
-        self.refresh_battle_map(True)
-    
-    def on_token_moved_in_map(self, tid, x, y): 
-        if self.current_encounter_id: 
-            self.encounters[self.current_encounter_id]["token_positions"][tid]=(x,y); self.data_changed_signal.emit()
-            if self.battle_map_window and self.battle_map_window.isVisible(): self.refresh_battle_map(force_map_reload=False)
-            
-    def on_token_size_changed(self, v): 
-        if self.current_encounter_id: 
-            self.encounters[self.current_encounter_id]["token_size"]=v; self.data_changed_signal.emit()
-            if self.battle_map_window and self.battle_map_window.isVisible(): self.refresh_battle_map(force_map_reload=False)
-            
+    def on_token_moved_in_map(self, tid, x, y):
+        if self.current_encounter_id:
+            self.encounters[self.current_encounter_id]["token_positions"][tid] = (x, y)
+            self.data_changed_signal.emit()
+            if self._bridge.is_open():
+                self.refresh_battle_map(force_map_reload=False)
+
+    def on_token_size_changed(self, v):
+        if self.current_encounter_id:
+            self.encounters[self.current_encounter_id]["token_size"] = v
+            self.data_changed_signal.emit()
+            if self._bridge.is_open():
+                self.refresh_battle_map(force_map_reload=False)
+
     def refresh_battle_map(self, force_map_reload=False):
-        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
-        enc=self.encounters[self.current_encounter_id]; self._save_current_state_to_memory()
-        
-        raw_path = enc.get("map_path")
-        mp = self.dm.get_full_path(raw_path)
-        
-        cd=[]
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters:
+            return
+        enc = self.encounters[self.current_encounter_id]
+        self._save_current_state_to_memory()
+        mp = self.dm.get_full_path(enc.get("map_path"))
+        cd = []
         for c in enc["combatants"]:
-             t="NPC"; a="LBL_ATTR_NEUTRAL"
-             if c["eid"] in self.dm.data["entities"]:
-                  e=self.dm.data["entities"][c["eid"]]; t=e.get("type","NPC"); a=e.get("attributes",{}).get("LBL_ATTITUDE","LBL_ATTR_NEUTRAL"); 
-                  if t=="Monster": a="LBL_ATTR_HOSTILE"
-             c["type"]=t; c["attitude"]=a; cd.append(c)
-             
-        fog_data = enc.get("fog_data")
-             
-        if self.battle_map_window and self.battle_map_window.isVisible(): 
-            self.battle_map_window.update_combat_data(
-                cd, 
-                enc["turn_index"], 
-                mp, 
-                enc["token_size"],
-                fog_data=fog_data
-            )
-    
+            t = "NPC"; a = "LBL_ATTR_NEUTRAL"
+            if c["eid"] in self.dm.data["entities"]:
+                e = self.dm.data["entities"][c["eid"]]
+                t = e.get("type", "NPC")
+                a = e.get("attributes", {}).get("LBL_ATTITUDE", "LBL_ATTR_NEUTRAL")
+                if t == "Monster":
+                    a = "LBL_ATTR_HOSTILE"
+            c["type"] = t; c["attitude"] = a
+            cd.append(c)
+        self._bridge.update_combat_data(cd, enc["turn_index"], mp, enc["token_size"], fog_data=enc.get("fog_data"))
+
     def sync_map_view_to_external(self, rect):
-        if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.sync_view(rect)
-    
+        self._bridge.sync_view(rect)
+
     def sync_fog_to_external(self, qimage):
-        if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.sync_fog(qimage)
+        self._bridge.sync_fog(qimage)
 
     def retranslate_ui(self):
         self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
@@ -606,4 +603,6 @@ class CombatTracker(QWidget):
         self.btn_del_enc.setToolTip(tr("TIP_DEL_ENC"))
         
         if self.current_encounter_id and self.current_encounter_id in self.encounters: self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{self.encounters[self.current_encounter_id].get('round', 1)}")
-        if self.battle_map_window and self.battle_map_window.isVisible(): self.battle_map_window.retranslate_ui(); self.refresh_battle_map()
+        self._bridge.retranslate()
+        if self._bridge.is_open():
+            self.refresh_battle_map()
