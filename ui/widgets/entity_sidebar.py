@@ -1,42 +1,48 @@
 import os
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QListWidget, 
-                             QPushButton, QLineEdit, QComboBox, QCheckBox, 
-                             QLabel, QStyle, QToolButton, QMenu, QWidgetAction, 
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QListWidget,
+                             QPushButton, QLineEdit, QComboBox, QCheckBox,
+                             QLabel, QStyle, QToolButton, QMenu, QWidgetAction,
                              QFrame, QMessageBox, QListWidgetItem)
 from PyQt6.QtCore import Qt, pyqtSignal, QMimeData, QEvent
 from PyQt6.QtGui import QDrag, QAction
 
 from core.models import ENTITY_SCHEMAS
 from core.locales import tr
+from core.theme_manager import ThemeManager
 from ui.dialogs.import_window import ImportWindow
 
 # --- YARDIMCI SINIFLAR ---
 
 class EntityListItemWidget(QWidget):
-    def __init__(self, name, raw_category, source=None, parent=None):
+    def __init__(self, name, raw_category, source=None, palette=None, parent=None):
         super().__init__(parent)
-        self.setObjectName("entityItem") 
+        p = palette or ThemeManager.get_palette("dark")
+        self.setObjectName("entityItem")
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 2, 5, 2)  # Tighter list item layout
+        layout.setContentsMargins(5, 2, 5, 2)
         layout.setSpacing(0)
-        
+
         lbl_name = QLabel(name)
         lbl_name.setObjectName("entityName")
         lbl_name.setStyleSheet("font-size: 13px; font-weight: bold; background-color: transparent;")
-        
+
         meta_layout = QHBoxLayout()
         meta_layout.setContentsMargins(0, 0, 0, 0)
-        
+
         display_cat = self.translate_category(raw_category)
         lbl_cat = QLabel(display_cat)
         lbl_cat.setObjectName("entityCat")
-        lbl_cat.setStyleSheet("font-size: 10px; font-style: italic; background-color: transparent; color: #888;")
-        
+        cat_color = p.get("sidebar_label_secondary", "#888")
+        lbl_cat.setStyleSheet(
+            f"font-size: 10px; font-style: italic; background-color: transparent; color: {cat_color};"
+        )
+
         meta_layout.addWidget(lbl_cat)
-        
+
         if source:
             lbl_source = QLabel(f"[{source}]")
-            lbl_source.setStyleSheet("font-size: 9px; color: #666; background-color: transparent;")
+            src_color = p.get("sidebar_label_dim", "#666")
+            lbl_source.setStyleSheet(f"font-size: 9px; color: {src_color}; background-color: transparent;")
             lbl_source.setAlignment(Qt.AlignmentFlag.AlignRight)
             meta_layout.addWidget(lbl_source)
         else:
@@ -81,10 +87,11 @@ class EntitySidebar(QWidget):
         self.dm = data_manager
         self.active_categories = set()
         self.active_sources = set()
-        
+        self._palette = ThemeManager.get_palette("dark")
+
         self.setMinimumWidth(250)
         self.setMaximumWidth(350)
-        
+
         self.init_ui()
         self.refresh_list()
 
@@ -110,10 +117,7 @@ class EntitySidebar(QWidget):
         
         # Filter Menu (with stability adjustments)
         self.filter_menu = QMenu(self.btn_filter)
-        self.filter_menu.setStyleSheet("""
-            QMenu { border: 1px solid #444; padding: 2px; }
-            QMenu::separator { height: 1px; background: #444; margin: 5px 0px; }
-        """)
+        self._apply_menu_style()
         self.btn_filter.setMenu(self.filter_menu)
         self.filter_menu.aboutToShow.connect(self.update_filter_menu)
         
@@ -158,22 +162,22 @@ class EntitySidebar(QWidget):
         layout.setContentsMargins(8, 5, 8, 5)  # Fixed padding
         layout.setSpacing(0)  # No spacing between inner elements
         
-        # Stil sabitleme
-        container.setStyleSheet("""
-            QCheckBox { 
-                padding: 4px; 
-                margin: 0px; 
+        hdr_color = self._palette.get("sidebar_label_secondary", "#888")
+        container.setStyleSheet(f"""
+            QCheckBox {{
+                padding: 4px;
+                margin: 0px;
                 background: transparent;
-            }
-            QCheckBox:hover { background-color: rgba(255, 255, 255, 0.1); }
-            QLabel#menuHeader { 
-                font-weight: bold; 
-                margin-top: 5px; 
-                margin-bottom: 2px; 
-                color: #aaa;
+            }}
+            QCheckBox:hover {{ background-color: rgba(255, 255, 255, 0.1); }}
+            QLabel#menuHeader {{
+                font-weight: bold;
+                margin-top: 5px;
+                margin-bottom: 2px;
+                color: {hdr_color};
                 font-size: 10px;
                 text-transform: uppercase;
-            }
+            }}
         """)
         
         # Categories section
@@ -204,7 +208,8 @@ class EntitySidebar(QWidget):
         if available_sources:
             line = QFrame()
             line.setFrameShape(QFrame.Shape.HLine)
-            line.setStyleSheet("background: #444; margin: 5px 0px;")
+            divider_color = self._palette.get("sidebar_divider", "#444")
+            line.setStyleSheet(f"background: {divider_color}; margin: 5px 0px;")
             layout.addWidget(line)
             
             lbl_src = QLabel(tr("LBL_SOURCE"))
@@ -279,7 +284,7 @@ class EntitySidebar(QWidget):
             
             item = QListWidgetItem(self.list_widget)
             item.setData(Qt.ItemDataRole.UserRole, eid)
-            widget = EntityListItemWidget(name, raw_type, source)
+            widget = EntityListItemWidget(name, raw_type, source, palette=self._palette)
             item.setSizeHint(widget.sizeHint())
             self.list_widget.setItemWidget(item, widget)
 
@@ -324,6 +329,19 @@ class EntitySidebar(QWidget):
         dlg.entity_imported.connect(self.refresh_list)
         if dlg.exec():
             self.refresh_list()
+
+    def _apply_menu_style(self) -> None:
+        divider = self._palette.get("sidebar_divider", "#444")
+        self.filter_menu.setStyleSheet(
+            f"QMenu {{ border: 1px solid {divider}; padding: 2px; }}"
+            f"QMenu::separator {{ height: 1px; background: {divider}; margin: 5px 0px; }}"
+        )
+
+    def refresh_theme(self, palette: dict) -> None:
+        """Update palette and repaint all theme-dependent elements."""
+        self._palette = palette
+        self._apply_menu_style()
+        self.refresh_list()
 
     def retranslate_ui(self):
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
