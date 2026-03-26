@@ -9,6 +9,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, QSize, QUrl, QRect
 from core.locales import tr
 from core.theme_manager import ThemeManager
 from ui.dialogs.encounter_selector import EncounterSelectionDialog
+from ui.widgets.combat_model import CombatModel
 import random
 import os
 import uuid
@@ -61,15 +62,34 @@ class CombatTracker(QWidget):
         self.dm = data_manager
         self.battle_map_window = None
         self.loading = False
-        self.encounters = {}
-        self.current_encounter_id = None
-        self.fog_save_handler = None 
-        
+        self._model = CombatModel()
+        self.fog_save_handler = None
+
         # Initial theme palette
         self.current_palette = ThemeManager.get_palette(self.dm.current_theme)
-        
+
         self.create_encounter("Default Encounter")
         self.init_ui()
+
+    # ------------------------------------------------------------------
+    # Encounter state properties — delegate to CombatModel
+    # ------------------------------------------------------------------
+
+    @property
+    def encounters(self) -> dict:
+        return self._model.encounters
+
+    @encounters.setter
+    def encounters(self, value: dict) -> None:
+        self._model.encounters = value
+
+    @property
+    def current_encounter_id(self) -> str | None:
+        return self._model.current_encounter_id
+
+    @current_encounter_id.setter
+    def current_encounter_id(self, value: str | None) -> None:
+        self._model.current_encounter_id = value
 
     def set_fog_save_handler(self, handler): self.fog_save_handler = handler
 
@@ -195,19 +215,7 @@ class CombatTracker(QWidget):
                 self._sort_and_refresh()
 
     def create_encounter(self, name):
-        eid = str(uuid.uuid4())
-        self.encounters[eid] = {
-            "id": eid, 
-            "name": name, 
-            "combatants": [], 
-            "map_path": None, 
-            "token_size": 50, 
-            "turn_index": -1, 
-            "round": 1, 
-            "token_positions": {}
-        }
-        self.current_encounter_id = eid
-        return eid
+        return self._model.create_encounter(name)
     
     def prompt_new_encounter(self): 
         n, ok = QInputDialog.getText(self, tr("TITLE_NEW_ENC"), tr("LBL_ENC_NAME"))
@@ -216,14 +224,19 @@ class CombatTracker(QWidget):
             self.refresh_encounter_combo()
     
     def rename_encounter(self):
-        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
-        n,ok = QInputDialog.getText(self, tr("TITLE_RENAME_ENC"), tr("LBL_NEW_NAME"), text=self.encounters[self.current_encounter_id]["name"])
-        if ok and n: self.encounters[self.current_encounter_id]["name"] = n; self.refresh_encounter_combo()
-    
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters:
+            return
+        n, ok = QInputDialog.getText(self, tr("TITLE_RENAME_ENC"), tr("LBL_NEW_NAME"), text=self.encounters[self.current_encounter_id]["name"])
+        if ok and n:
+            self._model.rename(self.current_encounter_id, n)
+            self.refresh_encounter_combo()
+
     def delete_encounter(self):
-        if len(self.encounters) <= 1: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_LAST_ENC_DELETE")); return
-        if QMessageBox.question(self, tr("TITLE_DELETE"), tr("MSG_CONFIRM_ENC_DELETE"), QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No)==QMessageBox.StandardButton.Yes: 
-            del self.encounters[self.current_encounter_id]
+        if len(self.encounters) <= 1:
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_LAST_ENC_DELETE"))
+            return
+        if QMessageBox.question(self, tr("TITLE_DELETE"), tr("MSG_CONFIRM_ENC_DELETE"), QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
+            self._model.delete(self.current_encounter_id)
             self.refresh_encounter_combo()
     
     def switch_encounter(self, idx): 
@@ -350,14 +363,23 @@ class CombatTracker(QWidget):
         enc["combatants"] = combatants
 
     def next_turn(self):
-        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
-        enc = self.encounters[self.current_encounter_id]; count = self.table.rowCount()
-        if count == 0: return
-        self.loading = True; enc["turn_index"] += 1
-        if enc["turn_index"] >= count: enc["turn_index"] = 0; enc["round"] += 1; self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{enc['round']}")
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters:
+            return
+        count = self.table.rowCount()
+        if count == 0:
+            return
+        self.loading = True
+        new_round = self._model.advance_turn(count)
+        enc = self.encounters[self.current_encounter_id]
+        if new_round:
+            self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{enc['round']}")
         w = self.table.cellWidget(enc["turn_index"], 4)
-        if w: w.tick_conditions()
-        self.update_highlights(); self.refresh_battle_map(); self.loading = False; self.data_changed_signal.emit()
+        if w:
+            w.tick_conditions()
+        self.update_highlights()
+        self.refresh_battle_map()
+        self.loading = False
+        self.data_changed_signal.emit()
 
     def update_highlights(self):
         """Highlights the active turn row. Color is sourced from ThemeManager."""
@@ -479,15 +501,26 @@ class CombatTracker(QWidget):
              enc = self.encounters[self.current_encounter_id]
              if enc["turn_index"] >= r: enc["turn_index"] = max(0, enc["turn_index"]-1)
         self.update_highlights(); self.refresh_battle_map(); self.data_changed_signal.emit()
-    def get_session_state(self): self._save_current_state_to_memory(); return {"encounters": self.encounters, "current_encounter_id": self.current_encounter_id}
+    def get_session_state(self):
+        self._save_current_state_to_memory()
+        return self._model.to_dict()
+
     def load_session_state(self, d):
-        self.loading=True; self.combo_encounters.blockSignals(True); self.combo_encounters.clear()
-        if "encounters" in d: self.encounters=d["encounters"]; tid=d.get("current_encounter_id")
-        else: eid=str(uuid.uuid4()); self.encounters={eid:{"id":eid,"name":"Legacy","combatants":d.get("combatants",[]),"round":1,"turn_index":-1,"token_positions":{},"token_size":50}}; tid=eid
-        for k,v in self.encounters.items(): self.combo_encounters.addItem(v["name"], k)
-        if tid and tid in self.encounters: self.combo_encounters.setCurrentIndex(self.combo_encounters.findData(tid)); self.current_encounter_id=tid
-        else: self.combo_encounters.setCurrentIndex(0); self.current_encounter_id=self.combo_encounters.itemData(0)
-        self.refresh_ui_from_current_encounter(); self.combo_encounters.blockSignals(False); self.loading=False
+        self.loading = True
+        self.combo_encounters.blockSignals(True)
+        self.combo_encounters.clear()
+        self._model.load(d)
+        for k, v in self.encounters.items():
+            self.combo_encounters.addItem(v["name"], k)
+        idx = self.combo_encounters.findData(self.current_encounter_id)
+        if idx >= 0:
+            self.combo_encounters.setCurrentIndex(idx)
+        else:
+            self.combo_encounters.setCurrentIndex(0)
+            self.current_encounter_id = self.combo_encounters.itemData(0)
+        self.refresh_ui_from_current_encounter()
+        self.combo_encounters.blockSignals(False)
+        self.loading = False
     
     def load_combat_data(self, data):
         self.load_session_state({"combatants": data})
