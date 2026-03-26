@@ -62,6 +62,9 @@ class NpcSheet(QWidget):
 
         self.is_dirty = False
         self.is_embedded = False
+        self.is_edit_mode: bool = False
+        self._snapshot: dict | None = None
+        self._add_feature_buttons: list[QPushButton] = []
         self.current_palette = ThemeManager.get_palette(self.dm.current_theme)
 
         # Create sub-widgets before init_ui so they can be embedded
@@ -92,10 +95,21 @@ class NpcSheet(QWidget):
         self.combo_all_items = self.item_widget.combo_all
         self.lbl_image = self.image_gallery.lbl_image
         self.lbl_img_counter = self.image_gallery.lbl_counter
+        self.btn_project_pdf = self.pdf_manager.btn_project
+        self.btn_add_pdf = self.pdf_manager.btn_add
+        self.btn_open_pdf = self.pdf_manager.btn_open
+        self.btn_remove_pdf = self.pdf_manager.btn_remove
+        self.btn_open_pdf_folder = self.pdf_manager.btn_open_folder
 
         # Ctrl+S shortcut
         self.shortcut_save = QShortcut(QKeySequence("Ctrl+S"), self)
         self.shortcut_save.activated.connect(self.emit_save_request)
+
+        self.shortcut_edit = QShortcut(QKeySequence("Ctrl+E"), self)
+        self.shortcut_edit.activated.connect(self._toggle_edit_mode)
+
+        self.shortcut_escape = QShortcut(QKeySequence("Escape"), self)
+        self.shortcut_escape.activated.connect(self._on_escape)
 
     # ------------------------------------------------------------------
     # Backward-compat properties — image gallery
@@ -143,11 +157,113 @@ class NpcSheet(QWidget):
 
     def set_embedded_mode(self, enabled: bool) -> None:
         self.is_embedded = enabled
-        self.btn_save.setVisible(not enabled)
-        self.btn_delete.setVisible(not enabled)
         if enabled:
+            for btn in [self.btn_edit, self.btn_discard, self.btn_save, self.btn_done, self.btn_delete]:
+                btn.setVisible(False)
             self.inp_desc.set_transparent_mode(True)
             self.inp_dm_notes.set_transparent_mode(True)
+        else:
+            self._apply_edit_mode_ui(self.is_edit_mode)
+
+    # ------------------------------------------------------------------
+    # Edit mode
+    # ------------------------------------------------------------------
+
+    def set_edit_mode(self, enabled: bool) -> None:
+        """Switch between view (read-only) and edit mode."""
+        if enabled == self.is_edit_mode:
+            return
+        if enabled:
+            self._snapshot = self.collect_data_from_sheet() or {}
+        else:
+            if self.is_dirty:
+                self.emit_save_request()
+        self.is_edit_mode = enabled
+        self._apply_edit_mode_ui(enabled)
+
+    def _toggle_edit_mode(self) -> None:
+        self.set_edit_mode(not self.is_edit_mode)
+
+    def _on_escape(self) -> None:
+        if self.is_edit_mode:
+            self._discard_edits()
+
+    def _discard_edits(self) -> None:
+        """Revert all changes made since entering edit mode."""
+        if self._snapshot is not None:
+            self.populate_sheet(self._snapshot)
+        self._snapshot = None
+        self.is_edit_mode = False
+        self._apply_edit_mode_ui(False)
+        self.is_dirty = False
+
+    def _apply_edit_mode_ui(self, editing: bool) -> None:
+        """Set all inputs to editable or read-only and toggle UI elements."""
+        ro = not editing
+
+        # --- QLineEdit fields ---
+        for w in [
+            self.inp_name, self.inp_tags, self.inp_hp, self.inp_max_hp,
+            self.inp_ac, self.inp_speed, self.inp_prof, self.inp_pp,
+            self.inp_init, self.inp_saves, self.inp_skills,
+            self.inp_vuln, self.inp_resist, self.inp_dmg_immune, self.inp_cond_immune,
+        ]:
+            w.setReadOnly(ro)
+        for w in self.stats_inputs.values():
+            w.setReadOnly(ro)
+
+        # --- QComboBox fields ---
+        self.inp_type.setEnabled(editing)
+        self.combo_location.setEnabled(editing)
+
+        # --- Dynamic type-specific inputs ---
+        for w in self.dynamic_inputs.values():
+            if isinstance(w, QLineEdit):
+                w.setReadOnly(ro)
+            else:
+                w.setEnabled(editing)
+
+        # --- MarkdownEditor fields ---
+        if ro:
+            self.inp_desc.switch_to_view_mode()
+            self.inp_dm_notes.switch_to_view_mode()
+
+        # --- Feature cards ---
+        for container in [
+            self.trait_container, self.action_container, self.reaction_container,
+            self.legendary_container, self.inventory_container, self.custom_spell_container,
+        ]:
+            for i in range(container.dynamic_area.count()):
+                card = container.dynamic_area.itemAt(i).widget()
+                if card is None:
+                    continue
+                if hasattr(card, "inp_title"):
+                    card.inp_title.setReadOnly(ro)
+                if ro and hasattr(card, "inp_desc"):
+                    card.inp_desc.switch_to_view_mode()
+                if hasattr(card, "btn_del"):
+                    card.btn_del.setVisible(editing)
+
+        # --- "Add" feature buttons ---
+        for btn in self._add_feature_buttons:
+            btn.setVisible(editing)
+
+        # --- Sub-widgets ---
+        self.image_gallery.set_edit_mode(editing)
+        self.pdf_manager.set_edit_mode(editing)
+        self.spell_widget.set_edit_mode(editing)
+        self.item_widget.set_edit_mode(editing)
+
+        # --- Battlemap add/remove buttons ---
+        self.btn_add_map.setVisible(editing)
+        self.btn_remove_map.setVisible(editing)
+
+        # --- Footer ---
+        self.btn_edit.setVisible(not editing)
+        self.btn_done.setVisible(editing)
+        self.btn_save.setVisible(editing)
+        self.btn_discard.setVisible(editing)
+        self.btn_delete.setVisible(True)
 
     def refresh_theme(self, palette) -> None:
         """Update the theme for all sub-components (including Markdown editors)."""
@@ -306,19 +422,40 @@ class NpcSheet(QWidget):
         # Footer buttons
         btn_layout = QHBoxLayout()
         btn_layout.setContentsMargins(10, 10, 10, 10)
+
+        self.btn_discard = QPushButton(tr("BTN_DISCARD"))
+        self.btn_discard.setObjectName("dangerBtn")
+        self.btn_discard.clicked.connect(self._discard_edits)
+        self.btn_discard.setVisible(False)
+
+        self.btn_save = QPushButton(tr("BTN_SAVE"))
+        self.btn_save.setObjectName("successBtn")
+        self.btn_save.clicked.connect(self.emit_save_request)
+        self.btn_save.setVisible(False)
+
+        self.btn_done = QPushButton(tr("BTN_DONE"))
+        self.btn_done.setObjectName("primaryBtn")
+        self.btn_done.clicked.connect(lambda: self.set_edit_mode(False))
+        self.btn_done.setVisible(False)
+
+        self.btn_edit = QPushButton(tr("BTN_EDIT"))
+        self.btn_edit.setObjectName("primaryBtn")
+        self.btn_edit.clicked.connect(lambda: self.set_edit_mode(True))
+
         self.btn_delete = QPushButton(tr("BTN_DELETE"))
         self.btn_delete.setObjectName("dangerBtn")
-        self.btn_save = QPushButton(tr("BTN_SAVE"))
-        self.btn_save.setObjectName("primaryBtn")
-        self.btn_save.clicked.connect(self.emit_save_request)
 
+        btn_layout.addWidget(self.btn_discard)
         btn_layout.addStretch()
-        btn_layout.addWidget(self.btn_delete)
         btn_layout.addWidget(self.btn_save)
+        btn_layout.addWidget(self.btn_done)
+        btn_layout.addWidget(self.btn_edit)
+        btn_layout.addWidget(self.btn_delete)
         main_layout.addLayout(btn_layout)
 
         self.update_ui_by_type(self.inp_type.currentData())
         self._connect_change_signals()
+        self._apply_edit_mode_ui(False)
 
     # ------------------------------------------------------------------
     # Feature card helper
@@ -373,6 +510,7 @@ class NpcSheet(QWidget):
         group.dynamic_area.addWidget(card)
         card.inp_title = t
         card.inp_desc = d
+        card.btn_del = btn_del
 
     # ------------------------------------------------------------------
     # Data binding
@@ -483,6 +621,8 @@ class NpcSheet(QWidget):
 
         self.pdf_manager.set_pdfs(data.get("pdfs", []))
         self.is_dirty = False
+        self.is_edit_mode = False
+        self._apply_edit_mode_ui(False)
 
     def collect_data_from_sheet(self) -> dict | None:
         if not self.inp_name.text():
@@ -916,6 +1056,7 @@ class NpcSheet(QWidget):
         btn.clicked.connect(lambda: self.add_feature_card(container))
         btn.setObjectName("successBtn")
         container.layout().insertWidget(0, btn)
+        self._add_feature_buttons.append(btn)
 
     def clear_all_cards(self) -> None:
         for g in [

@@ -104,6 +104,12 @@ class LinkedEntityWidget(QWidget):
     # Public API
     # ------------------------------------------------------------------
 
+    def set_edit_mode(self, enabled: bool) -> None:
+        """Show/hide add and remove buttons; enable/disable combo in edit mode."""
+        self.btn_add.setVisible(enabled)
+        self.btn_remove.setVisible(enabled)
+        self.combo_all.setEnabled(enabled)
+
     def populate_available(self) -> None:
         """Populate the combo box with entities matching ``_entity_type``."""
         self.combo_all.clear()
