@@ -1,11 +1,33 @@
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, 
-                             QHBoxLayout, QPushButton, QHeaderView, QInputDialog, 
-                             QMenu, QMessageBox, QFrame, QLineEdit, QFileDialog, 
-                             QDialog, QListWidget, QListWidgetItem, QLabel, 
-                             QAbstractItemView, QProgressBar, QSlider, QComboBox, 
-                             QScrollArea, QStyle, QApplication)
-from PyQt6.QtGui import QAction, QColor, QBrush, QCursor, QIcon, QPixmap, QPainter, QPainterPath
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QUrl, QRect
+"""CombatTracker — encounter management widget for the Session tab.
+
+Orchestrates DraggableCombatTable (ui), CombatModel (state), and
+BattleMapBridge (external window) to drive the full combat flow:
+adding combatants, rolling initiatives, advancing turns, and syncing
+to the battle-map display.
+"""
+
+import logging
+
+from PyQt6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QHeaderView,
+    QInputDialog,
+    QMenu,
+    QMessageBox,
+    QLineEdit,
+    QFileDialog,
+    QLabel,
+    QComboBox,
+    QTableWidget,
+    QTableWidgetItem,
+)
+from PyQt6.QtGui import QAction, QColor, QBrush, QCursor, QIcon
+from PyQt6.QtCore import Qt, pyqtSignal
+
+logger = logging.getLogger(__name__)
 from core.locales import tr
 from core.theme_manager import ThemeManager
 from ui.dialogs.encounter_selector import EncounterSelectionDialog
@@ -47,7 +69,6 @@ CONDITIONS_MAP = {
 
 from ui.widgets.combat_table import (
     DraggableCombatTable,
-    ConditionIcon,
     ConditionsWidget,
     HpBarWidget,
     NumericTableWidgetItem,
