@@ -248,6 +248,11 @@ class MainWindow(QMainWindow):
     def refresh_database_tab_themes(self, theme_name):
         palette = ThemeManager.get_palette(theme_name)
 
+        # Refresh the EntityTabWidget tab bars themselves
+        self.db_tab.tab_manager_left.refresh_theme(palette)
+        self.db_tab.tab_manager_right.refresh_theme(palette)
+
+        # Refresh each open NpcSheet card
         for i in range(self.db_tab.tab_manager_left.count()):
             sheet = self.db_tab.tab_manager_left.widget(i)
             if hasattr(sheet, "refresh_theme"):
@@ -257,6 +262,10 @@ class MainWindow(QMainWindow):
             sheet = self.db_tab.tab_manager_right.widget(i)
             if hasattr(sheet, "refresh_theme"):
                 sheet.refresh_theme(palette)
+
+        # Refresh the entity sidebar
+        if hasattr(self, "entity_sidebar"):
+            self.entity_sidebar.refresh_theme(palette)
 
     def toggle_player_window(self):
         if self.player_window.isVisible():
