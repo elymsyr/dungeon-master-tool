@@ -1,5 +1,5 @@
 import os
-from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QSplitter, QMessageBox, 
+from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QSplitter, QMessageBox,
                              QTabWidget)
 from PyQt6.QtCore import Qt, QEvent, pyqtSignal
 from PyQt6.QtGui import QKeySequence, QShortcut
@@ -7,6 +7,7 @@ from PyQt6.QtGui import QKeySequence, QShortcut
 from ui.widgets.npc_sheet import NpcSheet
 from ui.workers import ApiSearchWorker
 from core.locales import tr
+from core.theme_manager import ThemeManager
 
 # Sidebar classes are no longer imported here as they are unused in this file.
 # EntityTabWidget is managed in this file.
@@ -35,12 +36,24 @@ class EntityTabWidget(QTabWidget):
         # --- MOUSE MIDDLE CLICK TRACKING ---
         self.tabBar().installEventFilter(self)
 
-        self.setStyleSheet("""
-            QTabWidget::pane { border: 1px solid #444; background-color: #1e1e1e; }
-            QTabBar::tab { background: #2d2d2d; color: #aaa; padding: 8px 15px; margin-right: 2px; }
-            QTabBar::tab:selected { background: #1e1e1e; color: white; border-top: 2px solid #007acc; font-weight: bold; }
-            QTabBar::tab:hover { background: #3e3e3e; }
-        """)
+        self.refresh_theme(ThemeManager.get_palette("dark"))
+
+    def refresh_theme(self, palette: dict) -> None:
+        """Reapply tab styling using the given palette."""
+        border = palette.get("sidebar_divider", "#444")
+        tab_bg = palette.get("tab_bg", "#2d2d2d")
+        tab_active = palette.get("tab_active_bg", "#1e1e1e")
+        tab_hover = palette.get("tab_hover_bg", "#3e3e3e")
+        tab_text = palette.get("tab_text", "#aaa")
+        tab_active_text = palette.get("tab_active_text", "white")
+        indicator = palette.get("tab_indicator", "#007acc")
+        self.setStyleSheet(
+            f"QTabWidget::pane {{ border: 1px solid {border}; background-color: {tab_active}; }}"
+            f"QTabBar::tab {{ background: {tab_bg}; color: {tab_text}; padding: 8px 15px; margin-right: 2px; }}"
+            f"QTabBar::tab:selected {{ background: {tab_active}; color: {tab_active_text};"
+            f" border-top: 2px solid {indicator}; font-weight: bold; }}"
+            f"QTabBar::tab:hover {{ background: {tab_hover}; }}"
+        )
 
     def close_current_tab(self):
         """Closes the active tab."""
