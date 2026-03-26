@@ -67,8 +67,12 @@ class MapTab(QWidget):
         for w in widgets: toolbar.addWidget(w)
         toolbar.addStretch(); toolbar.addWidget(self.btn_show_map_pl); layout.addLayout(toolbar)
         
+        _p = ThemeManager.DEFAULT_PALETTE
         viewer_frame = QFrame()
-        viewer_frame.setStyleSheet("background-color: #111; border: 1px solid #444;")
+        viewer_frame.setStyleSheet(
+            f"background-color: {_p.get('canvas_bg', '#181818')};"
+            f" border: 1px solid {_p.get('sidebar_divider', '#444')};"
+        )
         v_layout = QVBoxLayout(viewer_frame); v_layout.setContentsMargins(0,0,0,0)
         
         self.map_viewer = MapViewer()
