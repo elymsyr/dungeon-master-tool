@@ -84,7 +84,31 @@ class ThemeManager:
 
         # --- DM Notes (Secret) ---
         "dm_note_border": "#d32f2f",
-        "dm_note_title": "#e57373"
+        "dm_note_title": "#e57373",
+
+        # --- Entity Sidebar ---
+        "sidebar_label_secondary": "#888",   # Category / secondary label text
+        "sidebar_label_dim": "#666",         # Source / dimmed label text
+        "sidebar_divider": "#444",           # Horizontal divider lines
+        "sidebar_filter_bg": "#3a3a3a",      # Filter button background
+
+        # --- Tab Bars (database_tab EntityTabWidget) ---
+        "tab_bg": "#2d2d2d",                 # Inactive tab background
+        "tab_active_bg": "#1e1e1e",          # Selected tab background
+        "tab_hover_bg": "#3e3e3e",           # Tab hover background
+        "tab_text": "#aaa",                  # Inactive tab text
+        "tab_active_text": "white",          # Selected tab text
+        "tab_indicator": "#007acc",          # Active tab indicator / accent
+
+        # --- Action Buttons ---
+        "danger_btn_bg": "#d32f2f",          # Cancel / delete button background
+        "danger_btn_hover": "#c62828",       # Cancel / delete button hover
+        "success_btn_bg": "#388e3c",         # Add / confirm button background
+        "success_btn_hover": "#2e7d32",      # Add / confirm button hover
+
+        # --- Misc ---
+        "html_dim": "#aaa",                  # Dimmed hint text in HTML/labels
+        "map_bg": "#000000",                 # Map/image viewer background
     }
 
     # --- PALETTE DEFINITIONS ---
@@ -102,17 +126,32 @@ class ThemeManager:
             "html_text": "#2d3748",
             "html_link": "#3182ce",
             "html_header": "#2b6cb0",
-            
+
             "ui_floating_bg": "rgba(255, 255, 255, 230)",
             "ui_floating_border": "#cbd5e0",
             "ui_floating_text": "#2d3748",
-            
+
             "ui_projection_bg": "rgba(0, 0, 0, 0.05)",
             "ui_projection_border": "rgba(0, 0, 0, 0.2)",
             "ui_thumbnail_bg": "#edf2f7",
             "ui_thumbnail_border": "#cbd5e0",
-            
+
             "hp_widget_bg": "rgba(0,0,0,0.1)",
+
+            "sidebar_label_secondary": "#666",
+            "sidebar_label_dim": "#888",
+            "sidebar_divider": "#ccc",
+            "sidebar_filter_bg": "#e8e8e8",
+
+            "tab_bg": "#e0e0e0",
+            "tab_active_bg": "#f5f5f5",
+            "tab_hover_bg": "#d0d0d0",
+            "tab_text": "#555",
+            "tab_active_text": "#111",
+            "tab_indicator": "#1565c0",
+
+            "html_dim": "#777",
+            "map_bg": "#222222",
         },
         
         "parchment": {
