@@ -7,7 +7,18 @@
       "Bash(find /home/eren/GitHub/dungeon-master-tool -maxdepth 1 -type f \\\\\\(-name *.json -o -name *.yaml -o -name *.yml -o -name *.txt \\\\\\))",
       "Bash(wc -l /home/eren/GitHub/dungeon-master-tool/core/*.py /home/eren/GitHub/dungeon-master-tool/ui/*.py)",
       "Bash(ruff check:*)",
-      "Bash(python3 -m pytest tests/test_core/test_data_manager.py tests/test_core/test_library_fs.py tests/test_core/test_config_paths.py tests/test_dev/ --tb=short -q)"
+      "Bash(python3 -m pytest tests/test_core/test_data_manager.py tests/test_core/test_library_fs.py tests/test_core/test_config_paths.py tests/test_dev/ --tb=short -q)",
+      "Bash(grep -rn [ğşıöüçİĞŞÖÜÇ] /home/eren/GitHub/dungeon-master-tool/ui --include=*.py)",
+      "Bash(/tmp/turkish_ui_search.sh:*)",
+      "Bash(chmod +x /tmp/turkish_ui_search.sh)",
+      "Bash(/tmp/turkish_ui_search.sh)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(grep -rn --include=*.py -P [x{0080}-x{FFFF}] ui/tabs/mind_map_tab.py ui/tabs/database_tab.py ui/tabs/session_tab.py ui/tabs/map_tab.py ui/dialogs/import_window.py ui/dialogs/encounter_selector.py ui/dialogs/bulk_downloader.py ui/campaign_selector.py installer/build.py)",
+      "Bash(python -m pytest tests/test_core/test_data_manager.py -v --tb=short)",
+      "Bash(python3 -m pytest tests/test_core/test_data_manager.py -v --tb=short)",
+      "Bash(python3 -m pytest tests/ -q --tb=short)",
+      "Bash(python3 -m pytest tests/test_core/test_data_manager.py -q --tb=short)"
     ]
   }
 }
