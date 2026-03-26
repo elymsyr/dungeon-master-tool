@@ -8,7 +8,6 @@ from PyQt6.QtGui import QAction, QColor, QBrush, QCursor, QIcon, QPixmap, QPaint
 from PyQt6.QtCore import Qt, pyqtSignal, QSize, QUrl, QRect
 from core.locales import tr
 from core.theme_manager import ThemeManager
-from ui.windows.battle_map_window import BattleMapWindow
 from ui.dialogs.encounter_selector import EncounterSelectionDialog
 import random
 import os
@@ -841,11 +840,12 @@ class CombatTracker(QWidget):
                 self.refresh_battle_map(force_map_reload=True)
 
     def open_battle_map(self):
-        if self.battle_map_window and self.battle_map_window.isVisible(): 
+        if self.battle_map_window and self.battle_map_window.isVisible():
             self.battle_map_window.raise_()
             self.battle_map_window.activateWindow()
             return
-            
+
+        from ui.windows.battle_map_window import BattleMapWindow
         self.battle_map_window = BattleMapWindow(self.dm)
         self.battle_map_window.token_moved_signal.connect(self.on_token_moved_in_map)
         self.battle_map_window.slider_size.valueChanged.connect(self.on_token_size_changed)
