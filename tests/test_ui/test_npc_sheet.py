@@ -76,7 +76,9 @@ def sheet():
     from ui.widgets.npc_sheet import NpcSheet
 
     ns = NpcSheet(FakeDataManager())
-    return ns
+    yield ns
+    ns.close()
+    ns.deleteLater()
 
 
 # ---------------------------------------------------------------------------
