@@ -24,7 +24,7 @@ class PlayerWindow(QMainWindow):
             title = f"[DEV] {title}"
         self.setWindowTitle(title)
         self.resize(800, 600)
-        self.setStyleSheet("background-color: black;")
+        self.setStyleSheet("background-color: #000;")
         
         central = QWidget()
         self.setCentralWidget(central)

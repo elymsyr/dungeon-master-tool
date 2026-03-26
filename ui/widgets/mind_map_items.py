@@ -143,7 +143,13 @@ class ConnectionLine(QGraphicsPathItem):
 
     def contextMenuEvent(self, event):
         menu = QMenu()
-        menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #555; }")
+        _p = ThemeManager.DEFAULT_PALETTE
+        menu.setStyleSheet(
+            f"QMenu {{ background-color: {_p.get('ui_floating_bg', 'rgba(40,40,40,230)')};"
+            f" color: {_p.get('ui_floating_text', '#eee')};"
+            f" border: 1px solid {_p.get('ui_floating_border', '#555')}; }}"
+            f" QMenu::item:selected {{ background-color: {_p.get('ui_floating_hover_bg', '#555')}; }}"
+        )
         
         action_delete = QAction(tr("MENU_DELETE_LINK"), menu)
         action_delete.triggered.connect(lambda: self.on_delete_callback(self) if self.on_delete_callback else None)
@@ -298,7 +304,13 @@ class MindMapNode(QGraphicsObject):
 
     def contextMenuEvent(self, event):
         menu = QMenu()
-        menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #555; }")
+        _p = ThemeManager.DEFAULT_PALETTE
+        menu.setStyleSheet(
+            f"QMenu {{ background-color: {_p.get('ui_floating_bg', 'rgba(40,40,40,230)')};"
+            f" color: {_p.get('ui_floating_text', '#eee')};"
+            f" border: 1px solid {_p.get('ui_floating_border', '#555')}; }}"
+            f" QMenu::item:selected {{ background-color: {_p.get('ui_floating_hover_bg', '#555')}; }}"
+        )
         
         if self.node_type in ["image", "entity"]:
             action_project = QAction(tr('MENU_PROJECT'), menu)
@@ -424,7 +436,13 @@ class WorkspaceItem(QGraphicsObject):
     def contextMenuEvent(self, event):
         from PyQt6.QtWidgets import QInputDialog, QColorDialog
         menu = QMenu()
-        menu.setStyleSheet("QMenu { background-color: #333; color: white; border: 1px solid #555; } QMenu::item:selected { background-color: #555; }")
+        _p = ThemeManager.DEFAULT_PALETTE
+        menu.setStyleSheet(
+            f"QMenu {{ background-color: {_p.get('ui_floating_bg', 'rgba(40,40,40,230)')};"
+            f" color: {_p.get('ui_floating_text', '#eee')};"
+            f" border: 1px solid {_p.get('ui_floating_border', '#555')}; }}"
+            f" QMenu::item:selected {{ background-color: {_p.get('ui_floating_hover_bg', '#555')}; }}"
+        )
         
         action_rename = QAction(tr('MENU_RENAME_WORKSPACE'), menu)
         action_rename.triggered.connect(self._on_rename)

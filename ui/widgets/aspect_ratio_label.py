@@ -2,13 +2,20 @@ from PyQt6.QtWidgets import QLabel, QApplication
 from PyQt6.QtGui import QPixmap, QDrag
 from PyQt6.QtCore import Qt, QMimeData, QPoint, QUrl
 from core.locales import tr
+from core.theme_manager import ThemeManager
 
 class AspectRatioLabel(QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setMinimumSize(100, 100)
-        self.setStyleSheet("border: 2px dashed #444; background-color: #222; border-radius: 8px; color: #888;")
+        _p = ThemeManager.DEFAULT_PALETTE
+        self.setStyleSheet(
+            f"border: 2px dashed {_p.get('sidebar_divider', '#444')};"
+            f" background-color: {_p.get('node_bg_entity', '#2b2b2b')};"
+            f" border-radius: 8px;"
+            f" color: {_p.get('sidebar_label_secondary', '#888')};"
+        )
         self._pixmap = None
         self._image_path = None 
         self._placeholder_text = tr("LBL_NO_IMAGE")
