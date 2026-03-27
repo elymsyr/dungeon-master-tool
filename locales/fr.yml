@@ -571,3 +571,15 @@ fr:
   MSG_CACHE_WRITE_ERROR: "Échec de l'écriture dans le cache (USB/Disque peut être en lecture seule)."
   MSG_DATA_ROOT_FALLBACK: "Le dossier de données portable n'est pas accessible en écriture. Les mondes et le cache seront stockés ici :\n%{path}"
   TT_DATA_ROOT_ACTIVE: "Dossier de données actif : %{path}"
+
+  # Screen Control Tab
+  TAB_SCREEN: "🖥 Écran"
+  BTN_IMAGE_MODE: "🖼 Écran Images"
+  BTN_BATTLE_MAP_MODE: "⚔ Carte de Combat"
+  BTN_BLACK_SCREEN: "⬛ Écran Noir"
+  BTN_ADD_IMAGE: "🖼️ Ajouter Image"
+  LBL_LAYOUT_SINGLE: "Unique"
+  LBL_LAYOUT_SIDE: "Côte à Côte"
+  LBL_LAYOUT_GRID: "Grille 2×2"
+  LBL_PROJECTIONS: "Projections Actives"
+  BTN_SHOW_BATTLE_MAP: "🗺️ Afficher Carte Combat"

@@ -9,9 +9,10 @@ from ui.windows.battle_map_window import BattleMapWidget
 import random
 
 class SessionTab(QWidget):
-    def __init__(self, data_manager):
+    def __init__(self, data_manager, player_window=None):
         super().__init__()
         self.dm = data_manager
+        self._player_window = player_window
         self.current_session_id = None
         self.init_ui()
         
@@ -40,7 +41,7 @@ class SessionTab(QWidget):
         # CHANGED: Allow resizing small
         left_widget.setMinimumWidth(100)
         
-        self.combat_tracker = CombatTracker(self.dm)
+        self.combat_tracker = CombatTracker(self.dm, self._player_window)
         self.combat_tracker.set_fog_save_handler(self.save_fog_for_encounter)
         self.combat_tracker.data_changed_signal.connect(self.refresh_embedded_map)
         self.combat_tracker.data_changed_signal.connect(self.auto_save)
@@ -119,7 +120,7 @@ class SessionTab(QWidget):
         self.btn_load_map.setObjectName("primaryBtn")
         self.btn_load_map.clicked.connect(self.combat_tracker.load_map_dialog)
         
-        self.btn_open_external = QPushButton(tr("BTN_BATTLE_MAP") if hasattr(tr, "BTN_BATTLE_MAP") else "Open Window")
+        self.btn_open_external = QPushButton(tr("BTN_SHOW_BATTLE_MAP"))
         self.btn_open_external.setObjectName("actionBtn")
         self.btn_open_external.clicked.connect(self.combat_tracker.open_battle_map)
         
@@ -266,7 +267,7 @@ class SessionTab(QWidget):
         self.embedded_map.retranslate_ui()
         if hasattr(self.combat_tracker, "retranslate_ui"): self.combat_tracker.retranslate_ui()
         self.btn_load_map.setText(tr("BTN_LOAD_MAP") if hasattr(tr, "BTN_LOAD_MAP") else "Load Map")
-        self.btn_open_external.setText(tr("BTN_BATTLE_MAP") if hasattr(tr, "BTN_BATTLE_MAP") else "Open Window")
+        self.btn_open_external.setText(tr("BTN_SHOW_BATTLE_MAP"))
 
     def auto_save(self):
         if self.current_session_id: 

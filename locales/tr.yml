@@ -572,3 +572,15 @@ tr:
   MSG_CACHE_WRITE_ERROR: "Önbelleğe yazılamadı (USB/Disk salt okunur olabilir)."
   MSG_DATA_ROOT_FALLBACK: "Taşınabilir veri klasörü yazılabilir değil. Dünyalar ve önbellek bunun yerine burada saklanacak:\n%{path}"
   TT_DATA_ROOT_ACTIVE: "Aktif veri klasörü: %{path}"
+
+  # Screen Control Tab
+  TAB_SCREEN: "🖥 Ekran"
+  BTN_IMAGE_MODE: "🖼 Görsel Ekran"
+  BTN_BATTLE_MAP_MODE: "⚔ Savaş Haritası"
+  BTN_BLACK_SCREEN: "⬛ Siyah Ekran"
+  BTN_ADD_IMAGE: "🖼️ Görsel Ekle"
+  LBL_LAYOUT_SINGLE: "Tekli"
+  LBL_LAYOUT_SIDE: "Yan Yana"
+  LBL_LAYOUT_GRID: "2×2 Izgara"
+  LBL_PROJECTIONS: "Aktif Yansıtmalar"
+  BTN_SHOW_BATTLE_MAP: "🗺️ Savaş Haritasını Göster"
