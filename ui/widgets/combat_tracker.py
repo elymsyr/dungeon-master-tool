@@ -78,6 +78,7 @@ from ui.widgets.combat_table import (
 # --- COMBAT TRACKER ---
 class CombatTracker(QWidget):
     data_changed_signal = pyqtSignal()
+    combat_log = pyqtSignal(str)
 
     def __init__(self, data_manager, player_window=None):
         super().__init__()
@@ -117,8 +118,8 @@ class CombatTracker(QWidget):
 
     @property
     def battle_map_window(self):
-        """Backward-compat: direct access to the underlying BattleMapWindow."""
-        return self._bridge._window
+        """Backward-compat: always returns None (BattleMapWindow is deprecated)."""
+        return self._bridge.battle_map_window
 
     def set_fog_save_handler(self, handler): self.fog_save_handler = handler
 
@@ -327,6 +328,7 @@ class CombatTracker(QWidget):
             
         cond_w.set_conditions(conditions_data)
         cond_w.conditionsChanged.connect(self.data_changed_signal.emit)
+        cond_w.conditionRemoved.connect(lambda n, w=cond_w: self._on_condition_removed(w, n))
         self.table.setCellWidget(row, 4, cond_w)
         
         self.table.blockSignals(False)
@@ -409,6 +411,14 @@ class CombatTracker(QWidget):
         self.refresh_battle_map()
         self.loading = False
         self.data_changed_signal.emit()
+        # Auto-log turn transition
+        turn_idx = enc["turn_index"]
+        name_item = self.table.item(turn_idx, 0)
+        name = name_item.text() if name_item else "?"
+        if new_round:
+            self.combat_log.emit(f"⚔️ Round {enc['round']} — {name}'s turn")
+        else:
+            self.combat_log.emit(f"→ {name}'s turn")
 
     def update_highlights(self):
         """Highlights the active turn row. Color is sourced from ThemeManager."""
@@ -442,7 +452,30 @@ class CombatTracker(QWidget):
 
     def on_widget_hp_changed(self, widget, val):
         idx = self.table.indexAt(widget.pos())
-        if idx.isValid(): self.table.item(idx.row(), 3).setText(str(val)); self._save_current_state_to_memory(); self.refresh_battle_map(); self.data_changed_signal.emit()
+        if not idx.isValid():
+            return
+        row = idx.row()
+        # Capture name and old HP before updating
+        name_item = self.table.item(row, 0)
+        name = name_item.text() if name_item else ""
+        old_hp_item = self.table.item(row, 3)
+        try:
+            old_hp = int(old_hp_item.text()) if old_hp_item else val
+        except (ValueError, TypeError):
+            old_hp = val
+        self.table.item(row, 3).setText(str(val))
+        self._save_current_state_to_memory()
+        self.refresh_battle_map()
+        self.data_changed_signal.emit()
+        # Auto-log HP change
+        if name and old_hp != val:
+            delta = val - old_hp
+            if delta < 0:
+                self.combat_log.emit(f"💔 {name}: {old_hp} → {val} HP ({delta})")
+            else:
+                self.combat_log.emit(f"💚 {name}: {old_hp} → {val} HP (+{delta})")
+            if val <= 0:
+                self.combat_log.emit(f"💀 {name} is defeated!")
 
     def open_context_menu(self, pos):
         row = self.table.rowAt(pos.y()); 
@@ -477,8 +510,19 @@ class CombatTracker(QWidget):
             d, ok = QInputDialog.getInt(self, tr("LBL_DURATION_PROMPT_TITLE"), tr("LBL_DURATION_PROMPT_MSG", name=name), 0, 0, 100)
             if ok: duration = d
         w = self.table.cellWidget(row, 4)
-        if w: w.add_condition(name, icon_path, duration)
+        if w:
+            w.add_condition(name, icon_path, duration)
+            name_item = self.table.item(row, 0)
+            combatant_name = name_item.text() if name_item else "?"
+            self.combat_log.emit(f"🔵 {combatant_name}: {name} applied")
     
+    def _on_condition_removed(self, cond_widget, condition_name):
+        idx = self.table.indexAt(cond_widget.pos())
+        if idx.isValid():
+            name_item = self.table.item(idx.row(), 0)
+            combatant_name = name_item.text() if name_item else "?"
+            self.combat_log.emit(f"🟢 {combatant_name}: {condition_name} removed")
+
     def clear_tracker(self):
         if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
         enc = self.encounters[self.current_encounter_id]
@@ -523,7 +567,16 @@ class CombatTracker(QWidget):
         for r in range(self.table.rowCount()):
              b = self.table.item(r,0).data(Qt.ItemDataRole.UserRole) or 0
              self.table.item(r,1).setText(str(random.randint(1,20)+b))
-        self.table.blockSignals(False); self._sort_and_refresh()
+        self.table.blockSignals(False)
+        self._sort_and_refresh()
+        # Auto-log results (after sort, so order matches combat order)
+        if self.table.rowCount() > 0:
+            parts = []
+            for r in range(self.table.rowCount()):
+                n = self.table.item(r, 0).text() if self.table.item(r, 0) else "?"
+                i = self.table.item(r, 1).text() if self.table.item(r, 1) else "?"
+                parts.append(f"{n} ({i})")
+            self.combat_log.emit("🎲 Initiative rolled: " + ", ".join(parts))
     def delete_row(self, r): 
         self.table.removeRow(r)
         if self.current_encounter_id and self.current_encounter_id in self.encounters:

@@ -45,6 +45,7 @@ class SessionTab(QWidget):
         self.combat_tracker.set_fog_save_handler(self.save_fog_for_encounter)
         self.combat_tracker.data_changed_signal.connect(self.refresh_embedded_map)
         self.combat_tracker.data_changed_signal.connect(self.auto_save)
+        self.combat_tracker.combat_log.connect(self.log_message)
         
         left_layout.addWidget(QLabel(tr("TITLE_COMBAT")))
         left_layout.addWidget(self.combat_tracker)
