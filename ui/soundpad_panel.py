@@ -106,11 +106,11 @@ class SoundpadPanel(QWidget):
         for tid, theme in self.themes.items():
             self.combo_themes.addItem(theme.name, tid)
         
-        self.btn_load_theme = QPushButton("📂 " + tr("BTN_LOAD_THEME"))
+        self.btn_load_theme = QPushButton(tr("BTN_LOAD_THEME"))
         self.btn_load_theme.setObjectName("primaryBtn")
         self.btn_load_theme.clicked.connect(self.load_selected_theme)
         
-        self.btn_create_theme = QPushButton("✨ " + tr("BTN_CREATE_THEME"))
+        self.btn_create_theme = QPushButton(tr("BTN_CREATE_THEME"))
         self.btn_create_theme.clicked.connect(self.open_theme_builder)
         
         theme_layout.addWidget(self.combo_themes, 1)
@@ -157,7 +157,7 @@ class SoundpadPanel(QWidget):
         scroll.setWidget(content_widget)
         layout.addWidget(scroll)
         
-        self.btn_add_ambience = QPushButton("➕ " + tr("BTN_ADD_AMBIENCE"))
+        self.btn_add_ambience = QPushButton(tr("BTN_ADD_AMBIENCE"))
         self.btn_add_ambience.clicked.connect(self.add_new_ambience)
         layout.addWidget(self.btn_add_ambience)
 
@@ -172,10 +172,10 @@ class SoundpadPanel(QWidget):
         scroll.setWidget(content_widget)
         layout.addWidget(scroll)
         
-        self.btn_add_sfx = QPushButton("➕ " + tr("BTN_ADD_SFX"))
+        self.btn_add_sfx = QPushButton(tr("BTN_ADD_SFX"))
         self.btn_add_sfx.clicked.connect(self.add_new_sfx)
-        
-        self.btn_remove_sfx = QPushButton("🗑️ " + tr("BTN_REMOVE_SFX"))
+
+        self.btn_remove_sfx = QPushButton(tr("BTN_REMOVE_SFX"))
         self.btn_remove_sfx.setObjectName("dangerBtn")
         self.btn_remove_sfx.clicked.connect(self.remove_sfx_dialog)
         
@@ -343,7 +343,7 @@ class SoundpadPanel(QWidget):
             self.lbl_no_themes.setText(tr("MSG_NO_THEMES"))
         
         self.combo_themes.setItemText(0, tr("COMBO_SELECT_THEME"))
-        self.btn_load_theme.setText("📂 " + tr("BTN_LOAD_THEME"))
+        self.btn_load_theme.setText(tr("BTN_LOAD_THEME"))
         
         self.grp_states.setTitle(tr("GRP_MUSIC_STATE"))
         self.grp_intensity.setTitle(tr("GRP_INTENSITY"))

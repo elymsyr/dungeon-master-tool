@@ -1,5 +1,5 @@
 /* === AMETHYST THEME (FIXED) === */
-QWidget { background-color: #211a26; color: #f3e5f5; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+QWidget { background-color: #211a26; color: #f3e5f5; font-family: 'Segoe UI', sans-serif; font-size: 13px; }
 QMainWindow, QDialog, QScrollArea { background-color: #211a26; border: none; }
 QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #2d2436; }
 
@@ -27,7 +27,9 @@ QPushButton {
     color: #f3e5f5;
     border: 1px solid #6a1b9a;
     border-radius: 4px;
-    padding: 6px 12px;
+    padding: 4px 10px;
+    min-height: 22px;
+    min-width: 30px;
 }
 QPushButton:hover { background-color: #6a1b9a; }
 

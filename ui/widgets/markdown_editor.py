@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, QTextBrowser, 
-                             QPushButton, QStackedWidget, QListWidget, QListWidgetItem, 
-                             QSizePolicy)
+from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QTextEdit, QTextBrowser,
+                             QPushButton, QStackedWidget, QListWidget, QListWidgetItem,
+                             QSizePolicy, QStyle)
 from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QEvent
 from PyQt6.QtGui import QTextCursor, QDesktopServices
 import markdown
@@ -166,7 +166,8 @@ class MarkdownEditor(QWidget):
         self.stack.addWidget(self.viewer)
         self.main_layout.addWidget(self.stack)
         
-        self.btn_toggle = QPushButton("✏️", self)
+        self.btn_toggle = QPushButton(self)
+        self.btn_toggle.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView))
         self.btn_toggle.setFixedSize(24, 24)
         self.btn_toggle.setCheckable(True)
         self.btn_toggle.setCursor(Qt.CursorShape.PointingHandCursor)

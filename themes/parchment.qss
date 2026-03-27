@@ -1,5 +1,5 @@
 /* === PARCHMENT THEME (FIXED) === */
-QWidget { background-color: #dccdb5; color: #3e2723; font-family: 'Georgia', serif; font-size: 14px; }
+QWidget { background-color: #dccdb5; color: #3e2723; font-family: 'Georgia', serif; font-size: 13px; }
 QMainWindow, QDialog, QScrollArea { background-color: #dccdb5; border: none; }
 QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #e5dace; }
 
@@ -33,8 +33,10 @@ QPushButton {
     color: #4e342e; /* Koyu kahve yazı */
     border: 1px solid #a1887f; /* Bronz sınır */
     border-radius: 4px;
-    padding: 6px 12px;
+    padding: 4px 10px;
     font-weight: bold;
+    min-height: 22px;
+    min-width: 30px;
 }
 QPushButton:hover { background-color: #d7ccc8; border-color: #8d6e63; }
 

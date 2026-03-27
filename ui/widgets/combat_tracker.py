@@ -9,6 +9,7 @@ to the battle-map display.
 import logging
 
 from PyQt6.QtWidgets import (
+    QApplication,
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
@@ -21,6 +22,7 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QLabel,
     QComboBox,
+    QStyle,
     QTableWidget,
     QTableWidgetItem,
 )
@@ -148,16 +150,19 @@ class CombatTracker(QWidget):
         self.combo_encounters = QComboBox()
         self.combo_encounters.currentIndexChanged.connect(self.switch_encounter)
         self.combo_encounters.setMinimumWidth(200)
-        self.btn_new_enc = QPushButton("➕")
-        self.btn_new_enc.setFixedWidth(40)
+        _style = QApplication.style()
+        self.btn_new_enc = QPushButton()
+        self.btn_new_enc.setIcon(_style.standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder))
+        self.btn_new_enc.setFixedSize(28, 26)
         self.btn_new_enc.setToolTip(tr("TIP_NEW_ENC"))
         self.btn_new_enc.clicked.connect(self.prompt_new_encounter)
-        self.btn_rename_enc = QPushButton("✏️")
-        self.btn_rename_enc.setFixedWidth(40)
+        self.btn_rename_enc = QPushButton(tr("BTN_EDIT"))
+        self.btn_rename_enc.setFixedSize(44, 26)
         self.btn_rename_enc.setToolTip(tr("TIP_RENAME_ENC"))
         self.btn_rename_enc.clicked.connect(self.rename_encounter)
-        self.btn_del_enc = QPushButton("🗑️")
-        self.btn_del_enc.setFixedWidth(40)
+        self.btn_del_enc = QPushButton()
+        self.btn_del_enc.setIcon(_style.standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        self.btn_del_enc.setFixedSize(28, 26)
         self.btn_del_enc.setToolTip(tr("TIP_DEL_ENC"))
         self.btn_del_enc.clicked.connect(self.delete_encounter)
         self.btn_del_enc.setObjectName("dangerBtn")

@@ -1,10 +1,12 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
+    QApplication,
     QComboBox,
     QHBoxLayout,
     QLabel,
     QPushButton,
     QSplitter,
+    QStyle,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -41,13 +43,17 @@ def create_root_widget(main_window):
     btn_export_txt.setObjectName("successBtn")
     btn_export_txt.clicked.connect(main_window.export_entities_to_txt)
 
-    btn_toggle_sound = QPushButton("🔊")
+    style = QApplication.style()
+    btn_toggle_sound = QPushButton()
+    btn_toggle_sound.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
+    btn_toggle_sound.setFixedSize(28, 26)
     btn_toggle_sound.setCheckable(True)
     btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
     btn_toggle_sound.clicked.connect(main_window.toggle_soundpad)
 
-    btn_edit_mode = QPushButton("✏️")
-    btn_edit_mode.setToolTip(tr("BTN_EDIT"))
+    btn_edit_mode = QPushButton(tr("BTN_EDIT"))
+    btn_edit_mode.setCheckable(True)
+    btn_edit_mode.setFixedSize(44, 26)
     btn_edit_mode.clicked.connect(main_window.toggle_active_edit_mode)
 
     lbl_campaign = QLabel(f"{tr('LBL_CAMPAIGN')} {data_manager.data.get('world_name')}")
