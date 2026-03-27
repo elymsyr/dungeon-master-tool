@@ -344,6 +344,7 @@ class BattleMapWidget(QWidget):
         self.video_player = None
         self.video_item = None
         self.audio_output = None
+        self._pending_video_path = None  # deferred until widget is visible
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -571,6 +572,17 @@ class BattleMapWidget(QWidget):
                 self.init_fog_layer(size.width(), size.height())
             self.fit_map_in_view()
 
+    def showEvent(self, event):
+        """Load any deferred video map now that the widget is visible."""
+        super().showEvent(event)
+        if self._pending_video_path:
+            path = self._pending_video_path
+            self._pending_video_path = None
+            self.set_map_image(None, path)
+            # nativeSizeChanged fires async; if it doesn't fire (e.g. codec
+            # issues), this timer ensures fit_map_in_view is still called.
+            QTimer.singleShot(400, self.fit_map_in_view)
+
     def set_map_image(self, pixmap, path_ref=None):
         self.current_map_path = path_ref
         
@@ -648,11 +660,19 @@ class BattleMapWidget(QWidget):
         if map_path != self.current_map_path:
             if map_path:
                 is_video = map_path.endswith(('.mp4', '.webm', '.mkv', '.avi', '.m4v'))
-                if is_video: self.set_map_image(None, map_path)
+                if is_video:
+                    if self.isVisible():
+                        self.set_map_image(None, map_path)
+                    else:
+                        # Defer video loading until widget is shown to avoid
+                        # VA-API hardware decoder crashes when widget is hidden
+                        self._pending_video_path = map_path
+                        self.current_map_path = map_path
                 else:
                     pix = QPixmap(map_path) if os.path.exists(map_path) else None
                     self.set_map_image(pix, map_path)
             else:
+                self._pending_video_path = None
                 self.set_map_image(None, None)
 
         # 2. Update Fog (Priority over tokens to prevent flashing)

@@ -205,7 +205,6 @@ class MainWindow(QMainWindow):
         self.tabs.setTabText(1, tr("TAB_MIND_MAP"))
         self.tabs.setTabText(2, tr("TAB_MAP"))
         self.tabs.setTabText(3, tr("TAB_SESSION"))
-        self.tabs.setTabText(4, tr("TAB_SCREEN"))
 
         if hasattr(self.db_tab, "retranslate_ui"):
             self.db_tab.retranslate_ui()
@@ -213,8 +212,6 @@ class MainWindow(QMainWindow):
             self.map_tab.retranslate_ui()
         if hasattr(self.session_tab, "retranslate_ui"):
             self.session_tab.retranslate_ui()
-        if hasattr(self, "screen_tab") and hasattr(self.screen_tab, "retranslate_ui"):
-            self.screen_tab.retranslate_ui()
         if hasattr(self.soundpad_panel, "retranslate_ui"):
             self.soundpad_panel.retranslate_ui()
         if hasattr(self.entity_sidebar, "retranslate_ui"):
@@ -351,6 +348,9 @@ def run_application(
     dev_bridge=None,
     dev_last_world: Optional[str] = None,
 ):
+    # Force VA-API software decode to avoid hardware-accelerated decode
+    # failures (invalid VAEntryPoint) on systems with incomplete VA-API support.
+    os.environ.setdefault("LIBVA_DRIVER_NAME", "null")
     QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app = QApplication(sys.argv)
 

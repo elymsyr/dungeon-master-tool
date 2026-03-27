@@ -572,14 +572,12 @@ de:
   MSG_DATA_ROOT_FALLBACK: "Der portable Datenordner ist nicht beschreibbar. Welten und Cache werden stattdessen hier gespeichert:\n%{path}"
   TT_DATA_ROOT_ACTIVE: "Aktiver Datenordner: %{path}"
 
-  # Screen Control Tab
-  TAB_SCREEN: "🖥 Bildschirm"
-  BTN_IMAGE_MODE: "🖼 Bildschirm"
-  BTN_BATTLE_MAP_MODE: "⚔ Kampfkarte"
-  BTN_BLACK_SCREEN: "⬛ Schwarzer Bildschirm"
-  BTN_ADD_IMAGE: "🖼️ Bild Hinzufügen"
+  # Player Screen (Session Tab)
+  TAB_PLAYER_SCREEN: "Spielerbildschirm"
+  BTN_SHOW_SCREEN: "Bildschirm Anzeigen"
+  BTN_EMPTY_SCREEN: "Bildschirm Leeren"
+  BTN_ADD_IMAGE: "Bild Hinzufügen"
   LBL_LAYOUT_SINGLE: "Einzeln"
   LBL_LAYOUT_SIDE: "Nebeneinander"
   LBL_LAYOUT_GRID: "2×2 Raster"
-  LBL_PROJECTIONS: "Aktive Projektionen"
-  BTN_SHOW_BATTLE_MAP: "🗺️ Kampfkarte Anzeigen"
+  BTN_SHOW_BATTLE_MAP: "Kampfkarte Anzeigen"

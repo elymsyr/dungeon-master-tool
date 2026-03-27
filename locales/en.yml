@@ -575,14 +575,12 @@ en:
   MSG_DATA_ROOT_FALLBACK: "Portable data folder is not writable. Worlds and cache will be stored here instead:\n%{path}"
   TT_DATA_ROOT_ACTIVE: "Active data folder: %{path}"
 
-  # Screen Control Tab
-  TAB_SCREEN: "🖥 Screen"
-  BTN_IMAGE_MODE: "🖼 Image Screen"
-  BTN_BATTLE_MAP_MODE: "⚔ Battle Map"
-  BTN_BLACK_SCREEN: "⬛ Black Screen"
-  BTN_ADD_IMAGE: "🖼️ Add Image"
+  # Player Screen (Session Tab)
+  TAB_PLAYER_SCREEN: "Player Screen"
+  BTN_SHOW_SCREEN: "Show Screen"
+  BTN_EMPTY_SCREEN: "Empty Screen"
+  BTN_ADD_IMAGE: "Add Image"
   LBL_LAYOUT_SINGLE: "Single"
   LBL_LAYOUT_SIDE: "Side by Side"
   LBL_LAYOUT_GRID: "2×2 Grid"
-  LBL_PROJECTIONS: "Active Projections"
-  BTN_SHOW_BATTLE_MAP: "🗺️ Show Battle Map"
+  BTN_SHOW_BATTLE_MAP: "Show Battle Map"
