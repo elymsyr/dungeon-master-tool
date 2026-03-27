@@ -105,10 +105,8 @@ class NpcSheet(QWidget):
         self.shortcut_save = QShortcut(QKeySequence("Ctrl+S"), self)
         self.shortcut_save.activated.connect(self.emit_save_request)
 
-        self.shortcut_edit = QShortcut(QKeySequence("Ctrl+E"), self)
-        self.shortcut_edit.activated.connect(self._toggle_edit_mode)
-
         self.shortcut_escape = QShortcut(QKeySequence("Escape"), self)
+        self.shortcut_escape.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         self.shortcut_escape.activated.connect(self._on_escape)
 
     # ------------------------------------------------------------------

@@ -144,6 +144,16 @@ class MainWindow(QMainWindow):
         self._apply_root_bundle(bundle)
         self.retranslate_ui()
 
+        self._shortcut_edit_mode = QShortcut(QKeySequence("Ctrl+E"), self)
+        self._shortcut_edit_mode.activated.connect(self.toggle_active_edit_mode)
+
+    def toggle_active_edit_mode(self):
+        """Toggle edit mode on the currently active entity card."""
+        if hasattr(self, "db_tab"):
+            sheet = self.db_tab.get_active_sheet()
+            if sheet:
+                sheet._toggle_edit_mode()
+
     def _show_data_root_notice_once(self):
         global _DATA_ROOT_FALLBACK_NOTICE_SHOWN
         if DATA_ROOT_MODE != "fallback":

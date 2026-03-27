@@ -264,9 +264,23 @@ class DatabaseTab(QWidget):
 
     def _close_sheet_tab(self, sheet):
         for manager in [self.tab_manager_left, self.tab_manager_right]:
-            idx = manager.indexOf(sheet) 
-            if idx != -1: 
+            idx = manager.indexOf(sheet)
+            if idx != -1:
                 manager.removeTab(idx)
+
+    def get_active_sheet(self):
+        """Return the currently focused NpcSheet, or fall back to the active tab."""
+        from PyQt6.QtWidgets import QApplication
+        w = QApplication.focusWidget()
+        while w:
+            if isinstance(w, NpcSheet):
+                return w
+            w = w.parentWidget()
+        for manager in [self.tab_manager_left, self.tab_manager_right]:
+            sheet = manager.currentWidget()
+            if isinstance(sheet, NpcSheet):
+                return sheet
+        return None
 
     def mark_tab_unsaved(self, sheet, manager):
         idx = manager.indexOf(sheet)
