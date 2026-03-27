@@ -1,5 +1,5 @@
 /* === MIDNIGHT THEME (FIXED) === */
-QWidget { background-color: #121212; color: #b0bec5; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+QWidget { background-color: #121212; color: #b0bec5; font-family: 'Segoe UI', sans-serif; font-size: 13px; }
 QMainWindow, QDialog, QScrollArea { background-color: #121212; border: none; }
 QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #000000; }
 
@@ -32,7 +32,9 @@ QPushButton {
     color: #e0e0e0;
     border: 1px solid #333;
     border-radius: 4px;
-    padding: 6px 12px;
+    padding: 4px 10px;
+    min-height: 22px;
+    min-width: 30px;
 }
 QPushButton:hover { background-color: #333; border-color: #651fff; }
 

@@ -1,5 +1,5 @@
 /* === GRIM THEME (FIXED) === */
-QWidget { background-color: #1c1c1c; color: #d7d7d7; font-family: 'Georgia', serif; font-size: 14px; }
+QWidget { background-color: #1c1c1c; color: #d7d7d7; font-family: 'Georgia', serif; font-size: 13px; }
 QMainWindow, QDialog, QScrollArea { background-color: #1c1c1c; border: none; }
 QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #262626; }
 
@@ -33,10 +33,12 @@ QPushButton {
     color: #ccc;
     border: 1px solid #555;
     border-radius: 2px;
-    padding: 6px 12px;
+    padding: 4px 10px;
     text-transform: uppercase;
     font-weight: bold;
     letter-spacing: 1px;
+    min-height: 22px;
+    min-width: 30px;
 }
 QPushButton:hover { background-color: #444; border-color: #a63a28; }
 

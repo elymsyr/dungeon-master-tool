@@ -1,5 +1,5 @@
 /* === EMERALD THEME (FIXED) === */
-QWidget { background-color: #051e12; color: #e8f5e9; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+QWidget { background-color: #051e12; color: #e8f5e9; font-family: 'Segoe UI', sans-serif; font-size: 13px; }
 QMainWindow, QDialog, QScrollArea { background-color: #051e12; border: none; }
 QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #0a2718; }
 
@@ -27,7 +27,9 @@ QPushButton {
     color: #e8f5e9;
     border: 1px solid #2e7d32;
     border-radius: 4px;
-    padding: 6px 12px;
+    padding: 4px 10px;
+    min-height: 22px;
+    min-width: 30px;
 }
 QPushButton:hover { background-color: #2e7d32; }
 

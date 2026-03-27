@@ -140,11 +140,11 @@ class EntitySidebar(QWidget):
         btn_layout.setContentsMargins(0, 0, 0, 0)
         btn_layout.setSpacing(5)
         
-        self.btn_import = QPushButton("📥 " + tr("BTN_IMPORT"))
+        self.btn_import = QPushButton(tr("BTN_IMPORT"))
         self.btn_import.setFixedHeight(30)
         self.btn_import.clicked.connect(self.open_import_window)
-        
-        self.btn_add = QPushButton("➕ " + tr("BTN_ADD"))
+
+        self.btn_add = QPushButton(tr("BTN_ADD"))
         self.btn_add.setObjectName("successBtn")
         self.btn_add.setFixedHeight(30)
         self.btn_add.clicked.connect(self.create_new_entity)
@@ -345,6 +345,6 @@ class EntitySidebar(QWidget):
 
     def retranslate_ui(self):
         self.inp_search.setPlaceholderText(tr("LBL_SEARCH"))
-        self.btn_import.setText("📥 " + tr("BTN_IMPORT"))
-        self.btn_add.setText("➕ " + tr("BTN_ADD"))
+        self.btn_import.setText(tr("BTN_IMPORT"))
+        self.btn_add.setText(tr("BTN_ADD"))
         self.check_show_library.setText(tr("LBL_CHECK_LIBRARY"))

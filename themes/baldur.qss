@@ -1,5 +1,5 @@
 /* === BALDUR THEME (FIXED) === */
-QWidget { background-color: #110b09; color: #c8b696; font-family: 'Segoe UI', serif; font-size: 14px; }
+QWidget { background-color: #110b09; color: #c8b696; font-family: 'Segoe UI', serif; font-size: 13px; }
 QMainWindow, QDialog, QScrollArea { background-color: #110b09; border: none; }
 QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #1a120b; }
 
@@ -33,9 +33,11 @@ QPushButton {
     color: #c8b696; /* Kemik Rengi */
     border: 1px solid #4a3b2a; /* Bronz Çerçeve */
     border-radius: 2px; /* Keskin */
-    padding: 6px 12px;
+    padding: 4px 10px;
     font-family: serif;
     font-weight: bold;
+    min-height: 22px;
+    min-width: 30px;
 }
 QPushButton:hover {
     background-color: #3e3226;

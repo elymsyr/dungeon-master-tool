@@ -1,5 +1,5 @@
 /* === OCEAN THEME (FIXED) === */
-QWidget { background-color: #0f1b26; color: #e0f7fa; font-family: 'Segoe UI', sans-serif; font-size: 14px; }
+QWidget { background-color: #0f1b26; color: #e0f7fa; font-family: 'Segoe UI', sans-serif; font-size: 13px; }
 QMainWindow, QDialog, QScrollArea { background-color: #0f1b26; border: none; }
 QWidget#sheetContainer, QWidget#sidebarContainer, QScrollArea#mainScroll, QScrollArea#sidebarScroll { background-color: #162533; }
 
@@ -21,7 +21,7 @@ QFrame[class="combatCard"][active="true"] { background-color: #263238; border: 1
 
 QListWidget, QTableWidget { background-color: #0a131a; color: #e0f7fa; border: 1px solid #37474f; }
 QListWidget::item:selected { background-color: #00acc1; color: white; }
-QPushButton { background-color: #263238; color: #e0f7fa; border: 1px solid #455a64; border-radius: 4px; padding: 6px 12px; }
+QPushButton { background-color: #263238; color: #e0f7fa; border: 1px solid #455a64; border-radius: 4px; padding: 4px 10px; min-height: 22px; min-width: 30px; }
 QPushButton:hover { background-color: #37474f; border-color: #4dd0e1; }
 QPushButton#primaryBtn { background-color: #00bcd4; color: black; border: none; font-weight: bold; }
 QPushButton#successBtn { background-color: #00897b; color: white; border: none; }

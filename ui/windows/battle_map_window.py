@@ -32,6 +32,7 @@ from PyQt6.QtGui import (
 from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PyQt6.QtMultimediaWidgets import QGraphicsVideoItem
 from PyQt6.QtWidgets import (
+    QApplication,
     QCheckBox,
     QFrame,
     QGraphicsEllipseItem,
@@ -46,6 +47,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSlider,
+    QStyle,
     QVBoxLayout,
     QWidget,
 )
@@ -354,10 +356,11 @@ class BattleMapWidget(QWidget):
         self.toolbar = QHBoxLayout()
         self.toolbar.setContentsMargins(5, 5, 5, 5)
         
-        self.btn_reset_view = QPushButton(tr("LBL_ICON_HOME"))
-
+        _style = QApplication.style()
+        self.btn_reset_view = QPushButton()
+        self.btn_reset_view.setIcon(_style.standardIcon(QStyle.StandardPixmap.SP_BrowserReload))
         self.btn_reset_view.setToolTip(tr("TIP_FIT_VIEW"))
-        self.btn_reset_view.setFixedSize(30, 25)
+        self.btn_reset_view.setFixedSize(28, 26)
         self.btn_reset_view.clicked.connect(self.fit_map_in_view)
         
         self.lbl_size = QLabel(tr("LBL_TOKEN_SIZE"))
@@ -372,9 +375,8 @@ class BattleMapWidget(QWidget):
         self.toolbar.addWidget(self.btn_reset_view)
         
         if self.is_dm_view:
-            self.btn_lock_view = QPushButton(tr("LBL_ICON_UNLOCK"))
-
-            self.btn_lock_view.setFixedSize(30, 25)
+            self.btn_lock_view = QPushButton(tr("BTN_UNLOCK_VIEW"))
+            self.btn_lock_view.setFixedSize(54, 26)
             self.btn_lock_view.setCheckable(True)
             self.btn_lock_view.setToolTip(tr("BTN_LOCK_VIEW_TOOLTIP") if hasattr(tr, "BTN_LOCK_VIEW_TOOLTIP") else "Lock Player View")
             self.btn_lock_view.clicked.connect(self.toggle_view_lock)
@@ -426,10 +428,10 @@ class BattleMapWidget(QWidget):
         self.is_view_locked = checked
         p = ThemeManager.get_palette(self.dm.current_theme if hasattr(self, 'dm') else "dark")
         if checked:
-            self.btn_lock_view.setText(tr("LBL_ICON_LOCK"))
+            self.btn_lock_view.setText(tr("BTN_LOCK_VIEW"))
             self.btn_lock_view.setStyleSheet(f"background-color: {p.get('hp_bar_low', '#d32f2f')}; color: white;")
         else:
-            self.btn_lock_view.setText(tr("LBL_ICON_UNLOCK"))
+            self.btn_lock_view.setText(tr("BTN_UNLOCK_VIEW"))
             self.btn_lock_view.setStyleSheet("")
 
     def on_view_changed_internal(self, rect):

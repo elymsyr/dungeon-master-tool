@@ -131,8 +131,8 @@ class SessionTab(QWidget):
         
         self.player_screen_widget = PlayerScreenWidget(self._player_window)
 
-        self.bottom_tabs.addTab(self.tab_dm_notes, f"{tr('LBL_ICON_SESSION')} {tr('LBL_NOTES')}")
-        self.bottom_tabs.addTab(self.embedded_map, f"{tr('LBL_ICON_MAP')} {tr('TITLE_BATTLE_MAP')}")
+        self.bottom_tabs.addTab(self.tab_dm_notes, tr('LBL_NOTES'))
+        self.bottom_tabs.addTab(self.embedded_map, tr('TITLE_BATTLE_MAP'))
         self.bottom_tabs.addTab(self.player_screen_widget, tr("TAB_PLAYER_SCREEN"))
         self.bottom_tabs.currentChanged.connect(self._on_bottom_tab_changed)
 
@@ -289,8 +289,8 @@ class SessionTab(QWidget):
         self.txt_log.setPlaceholderText(tr("LBL_EVENT_LOG_PH"))
         self.btn_add_log.setText(tr("BTN_ADD_LOG"))
         self.txt_notes.setPlaceholderText(tr("LBL_NOTES"))
-        self.bottom_tabs.setTabText(0, f"{tr('LBL_ICON_SESSION')} {tr('LBL_NOTES')}")
-        self.bottom_tabs.setTabText(1, f"{tr('LBL_ICON_MAP')} {tr('TITLE_BATTLE_MAP')}")
+        self.bottom_tabs.setTabText(0, tr('LBL_NOTES'))
+        self.bottom_tabs.setTabText(1, tr('TITLE_BATTLE_MAP'))
         self.bottom_tabs.setTabText(2, tr("TAB_PLAYER_SCREEN"))
         self.embedded_map.retranslate_ui()
         if hasattr(self.player_screen_widget, "retranslate_ui"):
