@@ -46,6 +46,10 @@ def create_root_widget(main_window):
     btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
     btn_toggle_sound.clicked.connect(main_window.toggle_soundpad)
 
+    btn_edit_mode = QPushButton("✏️")
+    btn_edit_mode.setToolTip(tr("BTN_EDIT"))
+    btn_edit_mode.clicked.connect(main_window.toggle_active_edit_mode)
+
     lbl_campaign = QLabel(f"{tr('LBL_CAMPAIGN')} {data_manager.data.get('world_name')}")
     lbl_campaign.setObjectName("toolbarLabel")
     lbl_campaign.setStyleSheet("font-weight: bold; margin-right: 10px;")
@@ -86,6 +90,7 @@ def create_root_widget(main_window):
     toolbar.addWidget(btn_toggle_player)
     toolbar.addWidget(btn_export_txt)
     toolbar.addWidget(btn_toggle_sound)
+    toolbar.addWidget(btn_edit_mode)
     toolbar.addSpacing(10)
     toolbar.addWidget(lbl_campaign)
     toolbar.addWidget(projection_manager)
@@ -159,4 +164,5 @@ def create_root_widget(main_window):
         "map_tab": map_tab,
         "session_tab": session_tab,
         "soundpad_panel": soundpad_panel,
+        "btn_edit_mode": btn_edit_mode,
     }
