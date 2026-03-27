@@ -160,6 +160,7 @@ class ConditionsWidget(QWidget):
     """Row of ConditionIcon badges for a single combatant table row."""
 
     conditionsChanged = pyqtSignal()
+    conditionRemoved = pyqtSignal(str)
     clicked = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -227,6 +228,7 @@ class ConditionsWidget(QWidget):
         ]
         self.set_conditions(self.active_conditions)
         self.conditionsChanged.emit()
+        self.conditionRemoved.emit(name)
 
     def tick_conditions(self) -> None:
         remaining = []
