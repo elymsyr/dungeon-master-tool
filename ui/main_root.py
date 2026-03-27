@@ -16,6 +16,7 @@ from ui.soundpad_panel import SoundpadPanel
 from ui.tabs.database_tab import DatabaseTab
 from ui.tabs.map_tab import MapTab
 from ui.tabs.mind_map_tab import MindMapTab
+from ui.tabs.screen_tab import ScreenTab
 from ui.tabs.session_tab import SessionTab
 from ui.widgets.entity_sidebar import EntitySidebar
 from ui.widgets.projection_manager import ProjectionManager
@@ -120,8 +121,11 @@ def create_root_widget(main_window):
     map_tab = MapTab(data_manager, player_window, main_window)
     tabs.addTab(map_tab, tr("TAB_MAP"))
 
-    session_tab = SessionTab(data_manager)
+    session_tab = SessionTab(data_manager, player_window)
     tabs.addTab(session_tab, tr("TAB_SESSION"))
+
+    screen_tab = ScreenTab(player_window, data_manager)
+    tabs.addTab(screen_tab, tr("TAB_SCREEN"))
 
     content_splitter.addWidget(tabs)
 
@@ -163,6 +167,7 @@ def create_root_widget(main_window):
         "mind_map_tab": mind_map_tab,
         "map_tab": map_tab,
         "session_tab": session_tab,
+        "screen_tab": screen_tab,
         "soundpad_panel": soundpad_panel,
         "btn_edit_mode": btn_edit_mode,
     }

@@ -205,6 +205,7 @@ class MainWindow(QMainWindow):
         self.tabs.setTabText(1, tr("TAB_MIND_MAP"))
         self.tabs.setTabText(2, tr("TAB_MAP"))
         self.tabs.setTabText(3, tr("TAB_SESSION"))
+        self.tabs.setTabText(4, tr("TAB_SCREEN"))
 
         if hasattr(self.db_tab, "retranslate_ui"):
             self.db_tab.retranslate_ui()
@@ -212,6 +213,8 @@ class MainWindow(QMainWindow):
             self.map_tab.retranslate_ui()
         if hasattr(self.session_tab, "retranslate_ui"):
             self.session_tab.retranslate_ui()
+        if hasattr(self, "screen_tab") and hasattr(self.screen_tab, "retranslate_ui"):
+            self.screen_tab.retranslate_ui()
         if hasattr(self.soundpad_panel, "retranslate_ui"):
             self.soundpad_panel.retranslate_ui()
         if hasattr(self.entity_sidebar, "retranslate_ui"):

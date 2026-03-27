@@ -79,12 +79,12 @@ from ui.widgets.combat_table import (
 class CombatTracker(QWidget):
     data_changed_signal = pyqtSignal()
 
-    def __init__(self, data_manager):
+    def __init__(self, data_manager, player_window=None):
         super().__init__()
         self.dm = data_manager
         self.loading = False
         self._model = CombatModel()
-        self._bridge = BattleMapBridge(self.dm, self)
+        self._bridge = BattleMapBridge(self.dm, player_window, self)
         self._bridge.token_moved.connect(self.on_token_moved_in_map)
         self._bridge.token_size_changed.connect(self.on_token_size_changed)
         self.fog_save_handler = None
