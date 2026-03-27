@@ -573,14 +573,12 @@ tr:
   MSG_DATA_ROOT_FALLBACK: "Taşınabilir veri klasörü yazılabilir değil. Dünyalar ve önbellek bunun yerine burada saklanacak:\n%{path}"
   TT_DATA_ROOT_ACTIVE: "Aktif veri klasörü: %{path}"
 
-  # Screen Control Tab
-  TAB_SCREEN: "🖥 Ekran"
-  BTN_IMAGE_MODE: "🖼 Görsel Ekran"
-  BTN_BATTLE_MAP_MODE: "⚔ Savaş Haritası"
-  BTN_BLACK_SCREEN: "⬛ Siyah Ekran"
-  BTN_ADD_IMAGE: "🖼️ Görsel Ekle"
+  # Player Screen (Session Tab)
+  TAB_PLAYER_SCREEN: "Oyuncu Ekranı"
+  BTN_SHOW_SCREEN: "Ekranı Göster"
+  BTN_EMPTY_SCREEN: "Ekranı Boşalt"
+  BTN_ADD_IMAGE: "Görsel Ekle"
   LBL_LAYOUT_SINGLE: "Tekli"
   LBL_LAYOUT_SIDE: "Yan Yana"
   LBL_LAYOUT_GRID: "2×2 Izgara"
-  LBL_PROJECTIONS: "Aktif Yansıtmalar"
-  BTN_SHOW_BATTLE_MAP: "🗺️ Savaş Haritasını Göster"
+  BTN_SHOW_BATTLE_MAP: "Savaş Haritasını Göster"

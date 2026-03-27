@@ -69,8 +69,12 @@ class BattleMapBridge(QObject):
         token_size: int,
         fog_data=None,
     ) -> None:
-        """Push current combat state to the battle map page."""
-        if self._pw is None:
+        """Push current combat state to the battle map page.
+
+        Skips the update when the player window is not visible to avoid
+        loading video/media assets (and potential VA-API crashes) at startup.
+        """
+        if self._pw is None or not self._pw.isVisible():
             return
         self._pw.update_battle_map(
             combatants, turn_index, self._dm, map_path, token_size, fog_data=fog_data

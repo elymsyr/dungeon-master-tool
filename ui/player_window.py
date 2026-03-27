@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 from core.locales import tr
 from core.theme_manager import ThemeManager
 from ui.widgets.image_viewer import ImageViewer
+from ui.windows.battle_map_window import SidebarConditionIcon
 
 logger = logging.getLogger(__name__)
 
@@ -239,11 +240,19 @@ class PlayerWindow(QMainWindow):
                 row_cond_layout.setContentsMargins(0, 2, 0, 0)
                 row_cond_layout.setSpacing(3)
                 for cond in conditions:
-                    cond_lbl = QLabel(f"[{cond}]")
-                    cond_lbl.setStyleSheet(
-                        "color: #e57373; font-size: 10px; border: none; background: transparent;"
-                    )
-                    row_cond_layout.addWidget(cond_lbl)
+                    if isinstance(cond, dict):
+                        icon_widget = SidebarConditionIcon(
+                            cond.get("name", "?"),
+                            cond.get("icon"),
+                            cond.get("duration", 0),
+                        )
+                        row_cond_layout.addWidget(icon_widget)
+                    else:
+                        cond_lbl = QLabel(f"[{cond}]")
+                        cond_lbl.setStyleSheet(
+                            "color: #e57373; font-size: 10px; border: none; background: transparent;"
+                        )
+                        row_cond_layout.addWidget(cond_lbl)
                 row_cond_layout.addStretch()
                 card_layout.addWidget(row_cond)
 
@@ -259,7 +268,15 @@ class PlayerWindow(QMainWindow):
         self._rebuild_image_page()
 
     def _rebuild_image_page(self) -> None:
-        """Rebuild the image layout container without destroying ImageViewers."""
+        """Rebuild the image layout container without destroying ImageViewers.
+
+        Layout is determined automatically by count:
+          1       → single (full area)
+          2–3     → single row (horizontal splitter)
+          4+      → 2-row grid
+        """
+        import math
+
         # Un-parent all viewers so they survive container deletion
         for v in self.active_viewers:
             v.setParent(None)
@@ -271,38 +288,32 @@ class PlayerWindow(QMainWindow):
                 item.widget().deleteLater()
         self._image_layout_container = None
 
-        mode = self._image_layout_mode
         viewers = self.active_viewers
+        n = len(viewers)
 
-        if not viewers:
+        if n == 0:
             container = QWidget(self.multi_image_widget)
-        elif len(viewers) == 1 or mode == "single":
+        elif n == 1:
             container = QWidget(self.multi_image_widget)
             vlayout = QVBoxLayout(container)
             vlayout.setContentsMargins(0, 0, 0, 0)
             vlayout.addWidget(viewers[0])
             viewers[0].show()
-            for v in viewers[1:]:
-                v.setParent(container)
-                v.hide()
-        elif mode == "grid":
+        elif n <= 3:
+            container = QSplitter(Qt.Orientation.Horizontal, self.multi_image_widget)
+            container.setHandleWidth(4)
+            for v in viewers:
+                v.show()
+                container.addWidget(v)
+        else:
+            cols = math.ceil(n / 2)
             container = QWidget(self.multi_image_widget)
             gl = QGridLayout(container)
             gl.setContentsMargins(0, 0, 0, 0)
             gl.setSpacing(2)
             for i, v in enumerate(viewers):
                 v.show()
-                if i < 4:
-                    gl.addWidget(v, i // 2, i % 2)
-                else:
-                    v.setParent(container)
-                    v.hide()
-        else:  # "side_by_side" (default)
-            container = QSplitter(Qt.Orientation.Horizontal, self.multi_image_widget)
-            container.setHandleWidth(4)
-            for v in viewers:
-                v.show()
-                container.addWidget(v)
+                gl.addWidget(v, i // cols, i % cols)
 
         self._image_layout_container = container
         self._multi_image_vbox.addWidget(container)

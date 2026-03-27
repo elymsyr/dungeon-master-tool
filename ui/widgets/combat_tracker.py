@@ -625,9 +625,8 @@ class CombatTracker(QWidget):
                 self.refresh_battle_map(force_map_reload=True)
 
     def open_battle_map(self):
-        newly_opened = self._bridge.open()
-        if newly_opened:
-            self.refresh_battle_map(force_map_reload=True)
+        self._bridge.open()
+        self.refresh_battle_map(force_map_reload=True)
 
     def on_token_moved_in_map(self, tid, x, y):
         if self.current_encounter_id:

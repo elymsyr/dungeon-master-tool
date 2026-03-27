@@ -5,6 +5,7 @@ from PyQt6.QtCore import QDateTime, Qt
 from core.locales import tr
 from ui.widgets.combat_tracker import CombatTracker
 from ui.widgets.markdown_editor import MarkdownEditor
+from ui.widgets.player_screen_widget import PlayerScreenWidget
 from ui.windows.battle_map_window import BattleMapWidget
 import random
 
@@ -128,14 +129,35 @@ class SessionTab(QWidget):
         self.embedded_map.add_toolbar_widget(self.btn_load_map)
         self.embedded_map.add_toolbar_widget(self.btn_open_external)
         
+        self.player_screen_widget = PlayerScreenWidget(self._player_window)
+
         self.bottom_tabs.addTab(self.tab_dm_notes, f"{tr('LBL_ICON_SESSION')} {tr('LBL_NOTES')}")
         self.bottom_tabs.addTab(self.embedded_map, f"{tr('LBL_ICON_MAP')} {tr('TITLE_BATTLE_MAP')}")
+        self.bottom_tabs.addTab(self.player_screen_widget, tr("TAB_PLAYER_SCREEN"))
+        self.bottom_tabs.currentChanged.connect(self._on_bottom_tab_changed)
+
+        # Wrap log area in a widget so it can be a splitter child
+        log_widget = QWidget()
+        log_layout = QVBoxLayout(log_widget)
+        log_layout.setContentsMargins(0, 0, 0, 0)
+        log_layout.setSpacing(4)
+        log_layout.addWidget(QLabel(tr("LBL_LOG")))
+        log_layout.addWidget(self.txt_log)
+        log_input_widget = QWidget()
+        log_input_widget_layout = QHBoxLayout(log_input_widget)
+        log_input_widget_layout.setContentsMargins(0, 0, 0, 0)
+        log_input_widget_layout.addWidget(self.inp_log_entry)
+        log_input_widget_layout.addWidget(self.btn_add_log)
+        log_layout.addWidget(log_input_widget)
+
+        self.right_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.right_splitter.setHandleWidth(4)
+        self.right_splitter.addWidget(log_widget)
+        self.right_splitter.addWidget(self.bottom_tabs)
+        self.right_splitter.setSizes([300, 400])
 
         right_layout.addLayout(session_control)
-        right_layout.addWidget(QLabel(tr("LBL_LOG")))
-        right_layout.addWidget(self.txt_log, 1) 
-        right_layout.addLayout(log_input_layout)
-        right_layout.addWidget(self.bottom_tabs, 2) 
+        right_layout.addWidget(self.right_splitter, 1)
 
         self.main_splitter.addWidget(left_widget)
         self.main_splitter.addWidget(right_widget)
@@ -150,6 +172,10 @@ class SessionTab(QWidget):
             fog_b64 = self.embedded_map.get_fog_data_base64()
             if fog_b64:
                 self.combat_tracker.encounters[encounter_id]["fog_data"] = fog_b64
+
+    def _on_bottom_tab_changed(self, index: int) -> None:
+        if index == 1:  # Battle Map tab
+            self.refresh_embedded_map()
 
     def refresh_embedded_map(self):
         if not self.combat_tracker.current_encounter_id: return
@@ -265,7 +291,10 @@ class SessionTab(QWidget):
         self.txt_notes.setPlaceholderText(tr("LBL_NOTES"))
         self.bottom_tabs.setTabText(0, f"{tr('LBL_ICON_SESSION')} {tr('LBL_NOTES')}")
         self.bottom_tabs.setTabText(1, f"{tr('LBL_ICON_MAP')} {tr('TITLE_BATTLE_MAP')}")
+        self.bottom_tabs.setTabText(2, tr("TAB_PLAYER_SCREEN"))
         self.embedded_map.retranslate_ui()
+        if hasattr(self.player_screen_widget, "retranslate_ui"):
+            self.player_screen_widget.retranslate_ui()
         if hasattr(self.combat_tracker, "retranslate_ui"): self.combat_tracker.retranslate_ui()
         self.btn_load_map.setText(tr("BTN_LOAD_MAP") if hasattr(tr, "BTN_LOAD_MAP") else "Load Map")
         self.btn_open_external.setText(tr("BTN_SHOW_BATTLE_MAP"))

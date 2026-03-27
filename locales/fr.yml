@@ -572,14 +572,12 @@ fr:
   MSG_DATA_ROOT_FALLBACK: "Le dossier de données portable n'est pas accessible en écriture. Les mondes et le cache seront stockés ici :\n%{path}"
   TT_DATA_ROOT_ACTIVE: "Dossier de données actif : %{path}"
 
-  # Screen Control Tab
-  TAB_SCREEN: "🖥 Écran"
-  BTN_IMAGE_MODE: "🖼 Écran Images"
-  BTN_BATTLE_MAP_MODE: "⚔ Carte de Combat"
-  BTN_BLACK_SCREEN: "⬛ Écran Noir"
-  BTN_ADD_IMAGE: "🖼️ Ajouter Image"
+  # Player Screen (Session Tab)
+  TAB_PLAYER_SCREEN: "Écran Joueur"
+  BTN_SHOW_SCREEN: "Afficher Écran"
+  BTN_EMPTY_SCREEN: "Vider Écran"
+  BTN_ADD_IMAGE: "Ajouter Image"
   LBL_LAYOUT_SINGLE: "Unique"
   LBL_LAYOUT_SIDE: "Côte à Côte"
   LBL_LAYOUT_GRID: "Grille 2×2"
-  LBL_PROJECTIONS: "Projections Actives"
-  BTN_SHOW_BATTLE_MAP: "🗺️ Afficher Carte Combat"
+  BTN_SHOW_BATTLE_MAP: "Afficher Carte Combat"
