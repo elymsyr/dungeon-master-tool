@@ -34,6 +34,7 @@
 
 > 📢 **Developer Note:**
 > You can find current priorities and known bugs in **[TODO.md](TODO.md)**.
+> Latest post-release updates are tracked in **[docs/LATEST_CHANGES.md](docs/LATEST_CHANGES.md)**.
 >
 > *Due to personal time constraints, updates might be slower recently. However, I am doing my best to stick to the roadmap and implement planned features. Thank you for your support!*
 
@@ -83,6 +84,15 @@
 - [ ] **Online:** Hosted servers for remote play.
 
 ---
+
+## 🆕 What's New Since v0.8.2 (Unreleased)
+
+- **Faster app startup path** by deferring expensive UI work until needed.
+- **Lazy Soundpad initialization**: the audio panel is now created on first use instead of at initial window boot.
+- **Deferred map rendering**: map drawing now happens when the Map tab is first opened, not during root UI construction.
+- **Soundpad shortcut compatibility** was preserved with lazy-loading-aware handlers.
+
+See full details: **[docs/LATEST_CHANGES.md](docs/LATEST_CHANGES.md)**.
 
 ## 🆕 What's New in v0.8.2
 
