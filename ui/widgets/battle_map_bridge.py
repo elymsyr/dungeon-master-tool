@@ -108,6 +108,14 @@ class BattleMapBridge(QObject):
         if self._pw is not None and hasattr(self._pw, "battle_widget"):
             self._pw.battle_widget.apply_external_fog(qimage)
 
+    def sync_annotation(self, qimage) -> None:
+        if self._pw is not None and hasattr(self._pw, "battle_widget"):
+            self._pw.battle_widget.apply_external_annotation(qimage)
+
+    def sync_measurement(self, qimage) -> None:
+        if self._pw is not None and hasattr(self._pw, "battle_widget"):
+            self._pw.battle_widget.apply_external_measurement(qimage)
+
     # ------------------------------------------------------------------
     # Retranslation
     # ------------------------------------------------------------------

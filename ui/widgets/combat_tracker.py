@@ -688,6 +688,12 @@ class CombatTracker(QWidget):
     def sync_fog_to_external(self, qimage):
         self._bridge.sync_fog(qimage)
 
+    def sync_annotation_to_external(self, qimage):
+        self._bridge.sync_annotation(qimage)
+
+    def sync_measurement_to_external(self, qimage):
+        self._bridge.sync_measurement(qimage)
+
     def retranslate_ui(self):
         self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
         self.inp_quick_name.setPlaceholderText(tr("HEADER_NAME")); self.btn_quick_add.setText(tr("BTN_QUICK_ADD")); self.btn_next_turn.setText(tr("BTN_NEXT_TURN")); self.btn_add.setText(tr("BTN_ADD")); self.btn_add_players.setText(tr("BTN_ADD_PLAYERS")); self.btn_roll.setText(tr("BTN_ROLL_INIT")); self.btn_clear_all.setText(tr("BTN_CLEAR_ALL"))

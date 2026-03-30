@@ -598,6 +598,7 @@ fr:
   TOOL_FOG_ADD: "Brouillard"
   TOOL_FOG_ERASE: "Effacer"
   BTN_CLEAR_DRAW: "Effacer Dessin"
+  BTN_CLEAR_RULERS: "Effacer Règles"
   MENU_TOKEN_RESIZE: "Redimensionner Jeton"
   TIP_TOKEN_RESIZE: "Clic droit sur un jeton pour le redimensionner"
   LBL_DIST_FT: "%1 pi (%2 cases)"

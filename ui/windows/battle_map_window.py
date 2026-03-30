@@ -134,6 +134,7 @@ class GridItem(QGraphicsItem):
         self.setZValue(50)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, False)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
+        self.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
 
     def boundingRect(self):
         return QRectF(0, 0, self._width, self._height)
@@ -175,6 +176,7 @@ class MeasurementOverlayItem(QGraphicsItem):
         self._feet_per_cell = 5
         self._visible = False
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, False)
+        self.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
 
     def boundingRect(self):
@@ -278,6 +280,7 @@ class BattleMapView(QGraphicsView):
     view_changed_signal = pyqtSignal(QRectF)
     fog_changed_signal = pyqtSignal(object)
     annotation_changed_signal = pyqtSignal(object)
+    measurement_changed_signal = pyqtSignal()
 
     def __init__(self, scene, parent=None):
         super().__init__(scene, parent)
@@ -313,7 +316,9 @@ class BattleMapView(QGraphicsView):
         # Measurement overlay
         self.measure_overlay: MeasurementOverlayItem | None = None
         self._measure_start: QPointF | None = None
+        self._measure_end: QPointF | None = None
         self._is_measuring = False
+        self._persistent_measurements: list = []  # list[MeasurementOverlayItem]
 
         # Temp path for fog visual feedback
         self._temp_path_item = QGraphicsPathItem()
@@ -326,14 +331,14 @@ class BattleMapView(QGraphicsView):
         self.tool_mode = mode
         # Update cursor
         cursors = {
-            TOOL_NAVIGATE:  Qt.CursorShape.ArrowCursor,
+            TOOL_NAVIGATE:  Qt.CursorShape.OpenHandCursor,
             TOOL_RULER:     Qt.CursorShape.CrossCursor,
             TOOL_CIRCLE:    Qt.CursorShape.CrossCursor,
             TOOL_DRAW:      Qt.CursorShape.CrossCursor,
             TOOL_FOG_ADD:   Qt.CursorShape.CrossCursor,
             TOOL_FOG_ERASE: Qt.CursorShape.CrossCursor,
         }
-        self.setCursor(cursors.get(mode, Qt.CursorShape.ArrowCursor))
+        self.setCursor(cursors.get(mode, Qt.CursorShape.OpenHandCursor))
         # Clear measurement when leaving measurement modes
         if mode not in (TOOL_RULER, TOOL_CIRCLE) and self.measure_overlay:
             self.measure_overlay.clear()
@@ -405,6 +410,28 @@ class BattleMapView(QGraphicsView):
                 event.accept()
                 return
 
+        elif self.tool_mode == TOOL_NAVIGATE and event.button() == Qt.MouseButton.LeftButton:
+            # Delete persistent measurement if clicked
+            for item in self.scene().items(scene_pos):
+                if isinstance(item, MeasurementOverlayItem) and getattr(item, 'is_persistent', False):
+                    self.scene().removeItem(item)
+                    if item in self._persistent_measurements:
+                        self._persistent_measurements.remove(item)
+                    self.measurement_changed_signal.emit()
+                    event.accept()
+                    return
+            # Pan when clicking empty space; let super() handle clicks on movable tokens
+            has_movable = any(
+                item.flags() & QGraphicsItem.GraphicsItemFlag.ItemIsMovable
+                for item in self.scene().items(scene_pos)
+            )
+            if not has_movable:
+                self._is_panning = True
+                self._pan_start_pos = event.pos()
+                self.setCursor(Qt.CursorShape.ClosedHandCursor)
+                event.accept()
+                return
+
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent):
@@ -425,6 +452,7 @@ class BattleMapView(QGraphicsView):
             return
 
         if self._is_measuring and self._measure_start and self.measure_overlay:
+            self._measure_end = scene_pos
             self.measure_overlay.set_measurement(
                 self.tool_mode, self._measure_start, scene_pos,
                 self.grid_cell_size, self.feet_per_cell
@@ -446,7 +474,7 @@ class BattleMapView(QGraphicsView):
             self.setCursor(
                 Qt.CursorShape.CrossCursor
                 if self.tool_mode != TOOL_NAVIGATE
-                else Qt.CursorShape.ArrowCursor
+                else Qt.CursorShape.OpenHandCursor
             )
             event.accept()
             return
@@ -456,9 +484,26 @@ class BattleMapView(QGraphicsView):
             event.accept()
             return
 
+        if self._is_panning and event.button() == Qt.MouseButton.LeftButton:
+            self._is_panning = False
+            self.setCursor(Qt.CursorShape.OpenHandCursor)
+            event.accept()
+            return
+
         if self._is_measuring:
             self._is_measuring = False
-            # Leave overlay visible
+            if self._measure_start and self._measure_end:
+                frozen = MeasurementOverlayItem()
+                frozen.is_persistent = True
+                frozen.set_measurement(
+                    self.tool_mode, self._measure_start, self._measure_end,
+                    self.grid_cell_size, self.feet_per_cell,
+                )
+                self.scene().addItem(frozen)
+                self._persistent_measurements.append(frozen)
+            self.measure_overlay.clear()
+            self._measure_end = None
+            self.measurement_changed_signal.emit()
             event.accept()
             return
 
@@ -650,6 +695,7 @@ class BattleMapWidget(QWidget):
     view_sync_signal = pyqtSignal(QRectF)
     fog_update_signal = pyqtSignal(object)
     annotation_update_signal = pyqtSignal(object)
+    measurement_update_signal = pyqtSignal(object)
 
     def __init__(self, parent=None, is_dm_view=False):
         super().__init__(parent)
@@ -659,6 +705,7 @@ class BattleMapWidget(QWidget):
         self.current_map_path = None
         self.fog_item = None
         self.annotation_item: QGraphicsPixmapItem | None = None
+        self.measurement_display_item: QGraphicsPixmapItem | None = None
         self.grid_item: GridItem | None = None
         self.grid_snap = False
         self.grid_cell_size = 50
@@ -726,72 +773,104 @@ class BattleMapWidget(QWidget):
             self._tool_group = QButtonGroup(self)
             self._tool_group.setExclusive(True)
 
+            _TOOL_BTN_STYLE = (
+                "QPushButton { border: 1px solid #555; border-radius: 3px; padding: 0 6px; }"
+                " QPushButton:checked { background-color: #2563eb; color: #fff; border: 1px solid #1d4ed8; }"
+                " QPushButton:hover:!checked { background-color: #3a5a8a; }"
+            )
+
             def _tool_btn(key, mode):
                 b = QPushButton(tr(key))
                 b.setCheckable(True)
                 b.setFixedHeight(26)
+                b.setStyleSheet(_TOOL_BTN_STYLE)
                 b.clicked.connect(lambda: self._set_tool(mode))
                 self._tool_group.addButton(b)
                 self.toolbar2.addWidget(b)
                 return b
 
+            def _sep():
+                f = QFrame()
+                f.setFrameShape(QFrame.Shape.VLine)
+                f.setStyleSheet("color: #555; margin: 2px 3px;")
+                self.toolbar2.addWidget(f)
+
             self.btn_tool_navigate = _tool_btn("TOOL_NAVIGATE", TOOL_NAVIGATE)
+            _sep()
             self.btn_tool_ruler    = _tool_btn("TOOL_RULER",    TOOL_RULER)
             self.btn_tool_circle   = _tool_btn("TOOL_CIRCLE",   TOOL_CIRCLE)
+            _sep()
             self.btn_tool_draw     = _tool_btn("TOOL_DRAW",     TOOL_DRAW)
+            _sep()
             self.btn_tool_fog_add  = _tool_btn("TOOL_FOG_ADD",  TOOL_FOG_ADD)
-            self.btn_tool_fog_erase= _tool_btn("TOOL_FOG_ERASE",TOOL_FOG_ERASE)
             self.btn_tool_navigate.setChecked(True)
 
-            self.toolbar2.addSpacing(6)
+            _ACTION_BTN_STYLE = (
+                "QPushButton { border: 1px solid #555; border-radius: 3px; padding: 0 6px;"
+                " min-height: 26px; max-height: 26px; }"
+            )
+            _GRID_BTN_STYLE = (
+                "QPushButton { border: 1px solid #555; border-radius: 3px; padding: 0 6px;"
+                " min-height: 26px; max-height: 26px; }"
+                " QPushButton:checked { background-color: #2563eb; color: #fff; border: 1px solid #1d4ed8; }"
+            )
+            _SPINBOX_STYLE = "QSpinBox { min-height: 26px; max-height: 26px; }"
+
+            _sep()
             self.btn_fog_fill = QPushButton(tr("BTN_FOG_FILL"))
-            self.btn_fog_fill.setFixedHeight(26)
+            self.btn_fog_fill.setStyleSheet(_ACTION_BTN_STYLE)
             self.btn_fog_fill.clicked.connect(self.fill_fog)
             self.btn_fog_clear = QPushButton(tr("BTN_FOG_CLEAR"))
-            self.btn_fog_clear.setFixedHeight(26)
+            self.btn_fog_clear.setStyleSheet(_ACTION_BTN_STYLE)
             self.btn_fog_clear.clicked.connect(self.clear_fog)
             self.btn_clear_draw = QPushButton(tr("BTN_CLEAR_DRAW"))
-            self.btn_clear_draw.setFixedHeight(26)
+            self.btn_clear_draw.setStyleSheet(_ACTION_BTN_STYLE)
             self.btn_clear_draw.clicked.connect(self.clear_annotation)
+            self.btn_clear_rulers = QPushButton(tr("BTN_CLEAR_RULERS"))
+            self.btn_clear_rulers.setStyleSheet(_ACTION_BTN_STYLE)
+            self.btn_clear_rulers.clicked.connect(self.clear_measurements)
             self.toolbar2.addWidget(self.btn_fog_fill)
             self.toolbar2.addWidget(self.btn_fog_clear)
             self.toolbar2.addWidget(self.btn_clear_draw)
+            self.toolbar2.addWidget(self.btn_clear_rulers)
 
-            self.toolbar2.addSpacing(8)
             # --- GRID CONTROLS ---
+            _sep()
             self.btn_grid_toggle = QPushButton(tr("BTN_GRID"))
             self.btn_grid_toggle.setCheckable(True)
-            self.btn_grid_toggle.setFixedHeight(26)
+            self.btn_grid_toggle.setStyleSheet(_GRID_BTN_STYLE)
             self.btn_grid_toggle.clicked.connect(self._on_grid_toggle)
             self.toolbar2.addWidget(self.btn_grid_toggle)
 
             self.lbl_grid_cell = QLabel(tr("LBL_GRID_CELL_SIZE"))
             self.lbl_grid_cell.setObjectName("toolbarLabel")
+            self.lbl_grid_cell.setFixedHeight(26)
             self.toolbar2.addWidget(self.lbl_grid_cell)
 
             self.spin_grid_size = QSpinBox()
             self.spin_grid_size.setRange(10, 300)
             self.spin_grid_size.setValue(50)
             self.spin_grid_size.setFixedWidth(56)
-            self.spin_grid_size.setFixedHeight(26)
+            self.spin_grid_size.setStyleSheet(_SPINBOX_STYLE)
             self.spin_grid_size.valueChanged.connect(self._on_grid_size_changed)
             self.toolbar2.addWidget(self.spin_grid_size)
 
             self.btn_grid_snap = QPushButton(tr("BTN_GRID_SNAP"))
             self.btn_grid_snap.setCheckable(True)
-            self.btn_grid_snap.setFixedHeight(26)
+            self.btn_grid_snap.setStyleSheet(_GRID_BTN_STYLE)
             self.btn_grid_snap.clicked.connect(self._on_snap_toggle)
             self.toolbar2.addWidget(self.btn_grid_snap)
 
             self.lbl_feet = QLabel(tr("LBL_FEET_PER_CELL"))
             self.lbl_feet.setObjectName("toolbarLabel")
+            self.lbl_feet.setFixedHeight(26)
             self.toolbar2.addWidget(self.lbl_feet)
 
             self.spin_feet = QSpinBox()
             self.spin_feet.setRange(1, 100)
             self.spin_feet.setValue(5)
             self.spin_feet.setFixedWidth(48)
-            self.spin_feet.setFixedHeight(26)
+            self.spin_feet.setStyleSheet(_SPINBOX_STYLE)
             self.spin_feet.valueChanged.connect(self._on_feet_changed)
             self.toolbar2.addWidget(self.spin_feet)
 
@@ -808,6 +887,7 @@ class BattleMapWidget(QWidget):
         self.view.view_changed_signal.connect(self.on_view_changed_internal)
         self.view.fog_changed_signal.connect(self.on_local_fog_changed)
         self.view.annotation_changed_signal.connect(self.on_local_annotation_changed)
+        self.view.measurement_changed_signal.connect(self._on_measurement_changed)
 
         # Measurement overlay (shared, always in scene)
         self._measure_overlay = MeasurementOverlayItem()
@@ -893,6 +973,7 @@ class BattleMapWidget(QWidget):
         img.fill(Qt.GlobalColor.transparent)
         pix_item = QGraphicsPixmapItem(QPixmap.fromImage(img))
         pix_item.setZValue(75)
+        pix_item.setAcceptedMouseButtons(Qt.MouseButton.NoButton)  # don't block clicks
         self.scene.addItem(pix_item)
         self.annotation_item = pix_item
         self.view.set_annotation_item(pix_item, img)
@@ -904,6 +985,48 @@ class BattleMapWidget(QWidget):
                 img.fill(Qt.GlobalColor.transparent)
                 self.annotation_item.setPixmap(QPixmap.fromImage(img))
                 self.on_local_annotation_changed(img)
+
+    def clear_measurements(self):
+        for item in list(self.view._persistent_measurements):
+            self.scene.removeItem(item)
+        self.view._persistent_measurements.clear()
+        if self.view.measure_overlay:
+            self.view.measure_overlay.clear()
+        self._on_measurement_changed()
+
+    def _on_measurement_changed(self):
+        scene_rect = self.scene.sceneRect()
+        if scene_rect.isEmpty():
+            return
+        w = max(1, int(scene_rect.width()))
+        h = max(1, int(scene_rect.height()))
+        img = QImage(w, h, QImage.Format.Format_ARGB32)
+        img.fill(Qt.GlobalColor.transparent)
+        if self.view._persistent_measurements:
+            painter = QPainter(img)
+            painter.translate(-scene_rect.x(), -scene_rect.y())
+            for item in self.view._persistent_measurements:
+                item.paint(painter, None, None)
+            painter.end()
+        self.measurement_update_signal.emit(img)
+
+    def apply_external_measurement(self, qimage):
+        if qimage is None:
+            return
+        scene_rect = self.scene.sceneRect()
+        if scene_rect.isEmpty():
+            return
+        if self.measurement_display_item is None:
+            pix_item = QGraphicsPixmapItem()
+            pix_item.setZValue(145)
+            pix_item.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+            self.scene.addItem(pix_item)
+            self.measurement_display_item = pix_item
+        self.measurement_display_item.setPos(scene_rect.topLeft())
+        if not qimage.isNull():
+            self.measurement_display_item.setPixmap(QPixmap.fromImage(qimage))
+        else:
+            self.measurement_display_item.setPixmap(QPixmap())
 
     def on_local_annotation_changed(self, qimage):
         self.annotation_update_signal.emit(qimage)
@@ -1026,6 +1149,16 @@ class BattleMapWidget(QWidget):
 
     def on_local_fog_changed(self, qimage):
         self.fog_update_signal.emit(qimage)
+
+    def apply_external_annotation(self, qimage):
+        if qimage is None or qimage.isNull():
+            return
+        img_copy = qimage.copy()
+        if not self.annotation_item:
+            self._init_annotation_layer(img_copy.width(), img_copy.height())
+        if self.annotation_item:
+            self.annotation_item.setPixmap(QPixmap.fromImage(img_copy))
+            self.view._annot_img = img_copy
 
     def apply_external_fog(self, qimage):
         if not self.fog_item and qimage:
@@ -1161,10 +1294,10 @@ class BattleMapWidget(QWidget):
             self.btn_tool_circle.setText(tr("TOOL_CIRCLE"))
             self.btn_tool_draw.setText(tr("TOOL_DRAW"))
             self.btn_tool_fog_add.setText(tr("TOOL_FOG_ADD"))
-            self.btn_tool_fog_erase.setText(tr("TOOL_FOG_ERASE"))
             self.btn_fog_fill.setText(tr("BTN_FOG_FILL"))
             self.btn_fog_clear.setText(tr("BTN_FOG_CLEAR"))
             self.btn_clear_draw.setText(tr("BTN_CLEAR_DRAW"))
+            self.btn_clear_rulers.setText(tr("BTN_CLEAR_RULERS"))
             self.btn_grid_toggle.setText(tr("BTN_GRID"))
             self.lbl_grid_cell.setText(tr("LBL_GRID_CELL_SIZE"))
             self.btn_grid_snap.setText(tr("BTN_GRID_SNAP"))

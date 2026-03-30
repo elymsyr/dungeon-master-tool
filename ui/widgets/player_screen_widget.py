@@ -113,6 +113,9 @@ class PlayerScreenWidget(QWidget):
             container.setHandleWidth(4)
             for i in range(n):
                 container.addWidget(self._make_viewer(i))
+            container.splitterMoved.connect(
+                lambda pos, idx, s=container: self._sync_splitter_to_player(s)
+            )
         else:
             cols = math.ceil(n / 2)
             container = QWidget()
@@ -150,6 +153,16 @@ class PlayerScreenWidget(QWidget):
         """Mirror a preview viewer's zoom/pan to the corresponding player window viewer."""
         if self._pw is not None and index < len(self._pw.active_viewers):
             self._pw.active_viewers[index].apply_view_state(transform, h_scroll, v_scroll)
+
+    def _sync_splitter_to_player(self, preview_splitter: QSplitter) -> None:
+        """Push preview splitter sizes to the player window's image layout splitter."""
+        if self._pw is None:
+            return
+        pw_container = self._pw._image_layout_container
+        if isinstance(pw_container, QSplitter):
+            sizes = preview_splitter.sizes()
+            if len(pw_container.sizes()) == len(sizes):
+                pw_container.setSizes(sizes)
 
     # ------------------------------------------------------------------
     # Show / Empty screen
