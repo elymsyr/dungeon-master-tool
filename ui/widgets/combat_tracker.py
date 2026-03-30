@@ -675,6 +675,31 @@ class CombatTracker(QWidget):
             enc.setdefault("token_size_overrides", {})[tid] = size
             self.data_changed_signal.emit()
 
+    def on_grid_settings_changed(self, grid_size: int, grid_visible: bool, grid_snap: bool, feet_per_cell: int):
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters:
+            return
+        enc = self.encounters[self.current_encounter_id]
+        changed = False
+
+        if enc.get("grid_size", 50) != grid_size:
+            enc["grid_size"] = grid_size
+            changed = True
+        if enc.get("grid_visible", False) != grid_visible:
+            enc["grid_visible"] = grid_visible
+            changed = True
+        if enc.get("grid_snap", False) != grid_snap:
+            enc["grid_snap"] = grid_snap
+            changed = True
+        if enc.get("feet_per_cell", 5) != feet_per_cell:
+            enc["feet_per_cell"] = feet_per_cell
+            changed = True
+
+        if not changed:
+            return
+        self.data_changed_signal.emit()
+        if self._bridge.is_open():
+            self.refresh_battle_map(force_map_reload=False)
+
     def refresh_battle_map(self, force_map_reload=False):
         if not self.current_encounter_id or self.current_encounter_id not in self.encounters:
             return
