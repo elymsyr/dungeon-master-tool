@@ -1,10 +1,11 @@
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, 
                              QLabel, QPushButton, QGroupBox, QInputDialog, 
-                             QComboBox, QMessageBox, QTabWidget, QSplitter)
+                             QComboBox, QMessageBox, QTabWidget, QSplitter, QStackedWidget)
 from PyQt6.QtCore import QDateTime, Qt
 from core.locales import tr
 from ui.widgets.combat_tracker import CombatTracker
 from ui.widgets.markdown_editor import MarkdownEditor
+from ui.widgets.npc_sheet import NpcSheet
 from ui.widgets.player_screen_widget import PlayerScreenWidget
 from ui.windows.battle_map_window import BattleMapWidget
 import random
@@ -47,6 +48,10 @@ class SessionTab(QWidget):
         self.combat_tracker.data_changed_signal.connect(self.refresh_embedded_map)
         self.combat_tracker.data_changed_signal.connect(self.auto_save)
         self.combat_tracker.combat_log.connect(self.log_message)
+        self.combat_tracker.combatant_selected.connect(self._on_combatant_selected)
+        self.combat_tracker.view_entity_requested.connect(
+            lambda: self.bottom_tabs.setCurrentWidget(self._entity_stack)
+        )
         
         left_layout.addWidget(QLabel(tr("TITLE_COMBAT")))
         left_layout.addWidget(self.combat_tracker)
@@ -102,6 +107,15 @@ class SessionTab(QWidget):
         log_input_layout.addWidget(self.btn_add_log)
 
         self.bottom_tabs = QTabWidget()
+        # Entity stats panel (read-only NpcSheet)
+        self._entity_stack = QStackedWidget()
+        self._entity_placeholder = QLabel(tr("LBL_SELECT_COMBATANT"))
+        self._entity_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._entity_npc_sheet = NpcSheet(self.dm)
+        self._entity_npc_sheet.set_edit_mode(False)
+        self._entity_stack.addWidget(self._entity_placeholder)      # index 0
+        self._entity_stack.addWidget(self._entity_npc_sheet)        # index 1
+
         self.tab_dm_notes = QWidget()
         notes_layout = QVBoxLayout(self.tab_dm_notes)
         notes_layout.setContentsMargins(0, 0, 0, 0)
@@ -136,6 +150,7 @@ class SessionTab(QWidget):
         self.bottom_tabs.addTab(self.tab_dm_notes, tr('LBL_NOTES'))
         self.bottom_tabs.addTab(self.embedded_map, tr('TITLE_BATTLE_MAP'))
         self.bottom_tabs.addTab(self.player_screen_widget, tr("TAB_PLAYER_SCREEN"))
+        self.bottom_tabs.addTab(self._entity_stack, tr("TAB_ENTITY_STATS"))
         self.bottom_tabs.currentChanged.connect(self._on_bottom_tab_changed)
 
         # Wrap log area in a widget so it can be a splitter child
@@ -181,6 +196,14 @@ class SessionTab(QWidget):
     def _on_bottom_tab_changed(self, index: int) -> None:
         if index == 1:  # Battle Map tab
             self.refresh_embedded_map()
+
+    def _on_combatant_selected(self, eid: str):
+        if eid and eid in self.dm.data["entities"]:
+            self._entity_npc_sheet.populate_sheet(self.dm.data["entities"][eid])
+            self._entity_npc_sheet.set_edit_mode(False)
+            self._entity_stack.setCurrentIndex(1)
+        else:
+            self._entity_stack.setCurrentIndex(0)
 
     def refresh_embedded_map(self):
         if not self.combat_tracker.current_encounter_id: return
@@ -303,6 +326,8 @@ class SessionTab(QWidget):
         self.bottom_tabs.setTabText(0, tr('LBL_NOTES'))
         self.bottom_tabs.setTabText(1, tr('TITLE_BATTLE_MAP'))
         self.bottom_tabs.setTabText(2, tr("TAB_PLAYER_SCREEN"))
+        self.bottom_tabs.setTabText(3, tr("TAB_ENTITY_STATS"))
+        self._entity_placeholder.setText(tr("LBL_SELECT_COMBATANT"))
         self.embedded_map.retranslate_ui()
         if hasattr(self.player_screen_widget, "retranslate_ui"):
             self.player_screen_widget.retranslate_ui()

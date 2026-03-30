@@ -81,6 +81,8 @@ from ui.widgets.combat_table import (
 class CombatTracker(QWidget):
     data_changed_signal = pyqtSignal()
     combat_log = pyqtSignal(str)
+    combatant_selected = pyqtSignal(str)   # eid or "" on row selection changes
+    view_entity_requested = pyqtSignal()   # explicit "View Stats" context-menu action
 
     def __init__(self, data_manager, player_window=None):
         super().__init__()
@@ -189,6 +191,7 @@ class CombatTracker(QWidget):
         
         # Signal: add the dropped entity ID
         self.table.entity_dropped.connect(self.handle_drop_import)
+        self.table.itemSelectionChanged.connect(self._on_row_selection_changed)
         
         layout.addWidget(self.table)
 
@@ -249,6 +252,15 @@ class CombatTracker(QWidget):
             if ent.get("type") in ["NPC", "Monster", "Player"]:
                 self.add_row_from_entity(eid)
                 self._sort_and_refresh()
+
+    def _on_row_selection_changed(self):
+        row = self.table.currentRow()
+        if row < 0:
+            self.combatant_selected.emit("")
+            return
+        init_item = self.table.item(row, 1)
+        eid = init_item.data(Qt.ItemDataRole.UserRole) if init_item else ""
+        self.combatant_selected.emit(eid or "")
 
     def create_encounter(self, name):
         return self._model.create_encounter(name)
@@ -486,10 +498,19 @@ class CombatTracker(QWidget):
     def open_context_menu(self, pos):
         row = self.table.rowAt(pos.y()); 
         if row == -1: return
+        self.table.selectRow(row)
         menu = QMenu()
+        init_item = self.table.item(row, 1)
+        eid = init_item.data(Qt.ItemDataRole.UserRole) if init_item else None
         # Menu style
         p = self.current_palette
         menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }}")
+
+        if eid and eid in self.dm.data["entities"]:
+            view_act = QAction("👁 " + tr("MENU_VIEW_STATS"), self)
+            view_act.triggered.connect(self.view_entity_requested.emit)
+            menu.addAction(view_act)
+            menu.addSeparator()
         
         add_cond_menu = menu.addMenu("🩸 " + tr("MENU_ADD_COND"))
         for en_key, trans_key in CONDITIONS_MAP.items(): 
@@ -500,12 +521,12 @@ class CombatTracker(QWidget):
         add_cond_menu.addSeparator()
         custom_effects = [e for e in self.dm.data["entities"].values() if e.get("type") == "Status Effect"]
         for eff in custom_effects:
-            p = self.dm.get_full_path(eff["images"][0]) if eff.get("images") else None
+            icon_path = self.dm.get_full_path(eff["images"][0]) if eff.get("images") else None
             try: d = int(eff.get("attributes", {}).get("LBL_DURATION_TURNS", 0))
             except (ValueError, TypeError): d = 0
             a = QAction(eff["name"], self); 
-            if p: a.setIcon(QIcon(p))
-            a.triggered.connect(lambda ch, n=eff["name"], p=p, d=d: self.add_condition_to_row(row, n, p, d)); add_cond_menu.addAction(a)
+            if icon_path: a.setIcon(QIcon(icon_path))
+            a.triggered.connect(lambda ch, n=eff["name"], p=icon_path, d=d: self.add_condition_to_row(row, n, p, d)); add_cond_menu.addAction(a)
         
         menu.addSeparator()
         del_act = QAction("❌ " + tr("MENU_REMOVE_COMBAT"), self); del_act.triggered.connect(lambda: self.delete_row(row)); menu.addAction(del_act)
