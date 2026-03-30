@@ -601,6 +601,7 @@ en:
   TOOL_FOG_ADD: "Fog"
   TOOL_FOG_ERASE: "Erase"
   BTN_CLEAR_DRAW: "Clear Draw"
+  BTN_CLEAR_RULERS: "Clear Rulers"
   MENU_TOKEN_RESIZE: "Set Token Size"
   TIP_TOKEN_RESIZE: "Right-click a token to resize it individually"
   LBL_DIST_FT: "%1 ft (%2 sq)"

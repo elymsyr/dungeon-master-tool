@@ -598,6 +598,7 @@ de:
   TOOL_FOG_ADD: "Nebel"
   TOOL_FOG_ERASE: "Löschen"
   BTN_CLEAR_DRAW: "Zeichnung Löschen"
+  BTN_CLEAR_RULERS: "Linien Löschen"
   MENU_TOKEN_RESIZE: "Token Größe Anpassen"
   TIP_TOKEN_RESIZE: "Rechtsklick auf Token zum individuellen Skalieren"
   LBL_DIST_FT: "%1 Fuß (%2 Felder)"

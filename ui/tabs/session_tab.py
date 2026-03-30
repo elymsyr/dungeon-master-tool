@@ -115,7 +115,9 @@ class SessionTab(QWidget):
         self.embedded_map.token_size_changed_signal.connect(self.combat_tracker.on_token_size_changed)
         self.embedded_map.view_sync_signal.connect(self.combat_tracker.sync_map_view_to_external)
         self.embedded_map.fog_update_signal.connect(self.combat_tracker.sync_fog_to_external)
-        
+        self.embedded_map.annotation_update_signal.connect(self.combat_tracker.sync_annotation_to_external)
+        self.embedded_map.measurement_update_signal.connect(self.combat_tracker.sync_measurement_to_external)
+
         self.embedded_map.fog_update_signal.connect(lambda: self.save_session(show_msg=False))
         
         self.btn_load_map = QPushButton(tr("BTN_LOAD_MAP") if hasattr(tr, "BTN_LOAD_MAP") else "Load Map")

@@ -599,6 +599,7 @@ tr:
   TOOL_FOG_ADD: "Sis"
   TOOL_FOG_ERASE: "Sil"
   BTN_CLEAR_DRAW: "Çizimi Temizle"
+  BTN_CLEAR_RULERS: "Ölçümleri Temizle"
   MENU_TOKEN_RESIZE: "Token Boyutunu Ayarla"
   TIP_TOKEN_RESIZE: "Tokenı ayrı boyutlandırmak için sağ tıklayın"
   LBL_DIST_FT: "%1 ft (%2 kare)"
