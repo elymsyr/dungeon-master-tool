@@ -21,6 +21,7 @@ from core.log_config import setup_logging
 from core.theme_manager import ThemeManager
 from ui.campaign_selector import CampaignSelector
 from ui.player_window import PlayerWindow
+from ui.soundpad_panel import SoundpadPanel
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,7 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(self.current_stylesheet)
 
         self.active_shortcuts = []
+        self._map_tab_rendered_once = False
 
         self.init_ui()
         self._show_data_root_notice_once()
@@ -120,6 +122,8 @@ class MainWindow(QMainWindow):
 
         if hasattr(self, "soundpad_panel"):
             visible = bool(state.get("soundpad_visible", False))
+            if visible:
+                self._ensure_soundpad_panel()
             self.soundpad_panel.setVisible(visible)
             if hasattr(self, "btn_toggle_sound"):
                 self.btn_toggle_sound.setChecked(
@@ -152,6 +156,7 @@ class MainWindow(QMainWindow):
         self._apply_root_bundle(bundle)
 
         self._restore_reload_state(state)
+        self._post_root_setup()
 
         # Re-apply theme and translated labels after rebuilding widgets.
         self.current_stylesheet = load_theme(self.data_manager.current_theme)
@@ -213,6 +218,8 @@ class MainWindow(QMainWindow):
 
         visible = ui.get("soundpad_visible", False)
         if hasattr(self, "soundpad_panel"):
+            if visible:
+                self._ensure_soundpad_panel()
             self.soundpad_panel.setVisible(visible)
             if hasattr(self, "btn_toggle_sound"):
                 self.btn_toggle_sound.setChecked(visible)
@@ -256,9 +263,49 @@ class MainWindow(QMainWindow):
         self._apply_root_bundle(bundle)
         self.retranslate_ui()
         self._restore_ui_state_from_settings()
+        self._post_root_setup()
 
         self._shortcut_edit_mode = QShortcut(QKeySequence("Ctrl+E"), self)
         self._shortcut_edit_mode.activated.connect(self.toggle_active_edit_mode)
+
+    def _post_root_setup(self):
+        self._map_tab_rendered_once = False
+        if hasattr(self, "tabs"):
+            self.tabs.currentChanged.connect(self._on_main_tab_changed)
+            self._on_main_tab_changed(self.tabs.currentIndex())
+
+    def _on_main_tab_changed(self, index: int):
+        if not hasattr(self, "tabs") or not hasattr(self, "map_tab"):
+            return
+        if not (0 <= index < self.tabs.count()):
+            return
+        if self.tabs.widget(index) is self.map_tab and not self._map_tab_rendered_once:
+            self.map_tab.render_map()
+            self._map_tab_rendered_once = True
+
+    def _ensure_soundpad_panel(self):
+        panel = getattr(self, "soundpad_panel", None)
+        if isinstance(panel, SoundpadPanel):
+            return panel
+        if panel is None or not hasattr(self, "content_splitter"):
+            return panel
+
+        visible = panel.isVisible()
+        index = self.content_splitter.indexOf(panel)
+        if index < 0:
+            index = self.content_splitter.count() - 1
+
+        real_panel = SoundpadPanel()
+        real_panel.setVisible(visible)
+        real_panel.theme_loaded_with_shortcuts.connect(self.setup_soundpad_shortcuts)
+        self.setup_soundpad_shortcuts(real_panel.global_library.get("shortcuts", {}))
+
+        old_panel = self.content_splitter.replaceWidget(index, real_panel)
+        if old_panel is not None and old_panel is not real_panel:
+            old_panel.deleteLater()
+
+        self.soundpad_panel = real_panel
+        return real_panel
 
     def toggle_active_edit_mode(self):
         """Toggle edit mode on the currently active entity card."""
@@ -289,22 +336,37 @@ class MainWindow(QMainWindow):
 
         if stop_all_key := shortcuts_map.get("stop_all"):
             sc = QShortcut(QKeySequence(stop_all_key), self)
-            sc.activated.connect(self.soundpad_panel.stop_all)
+            sc.activated.connect(self._soundpad_stop_all)
             self.active_shortcuts.append(sc)
 
         if stop_ambience_key := shortcuts_map.get("stop_ambience"):
             sc = QShortcut(QKeySequence(stop_ambience_key), self)
-            sc.activated.connect(self.soundpad_panel.stop_ambience)
+            sc.activated.connect(self._soundpad_stop_ambience)
             self.active_shortcuts.append(sc)
 
         if sfx_shortcuts := shortcuts_map.get("play_sfx", {}):
             for sfx_id, key_sequence in sfx_shortcuts.items():
-                if key_sequence and sfx_id in self.soundpad_panel.sfx_buttons:
+                if key_sequence:
                     sc = QShortcut(QKeySequence(key_sequence), self)
                     sc.activated.connect(
-                        lambda s_id=sfx_id: self.soundpad_panel.play_sfx(s_id)
+                        lambda s_id=sfx_id: self._soundpad_play_sfx(s_id)
                     )
                     self.active_shortcuts.append(sc)
+
+    def _soundpad_stop_all(self):
+        panel = self._ensure_soundpad_panel()
+        if panel:
+            panel.stop_all()
+
+    def _soundpad_stop_ambience(self):
+        panel = self._ensure_soundpad_panel()
+        if panel:
+            panel.stop_ambience()
+
+    def _soundpad_play_sfx(self, sfx_id):
+        panel = self._ensure_soundpad_panel()
+        if panel:
+            panel.play_sfx(sfx_id)
 
     def retranslate_ui(self):
         self.btn_toggle_player.setText(tr("BTN_PLAYER_SCREEN"))
@@ -342,8 +404,12 @@ class MainWindow(QMainWindow):
         self.retranslate_ui()
 
     def toggle_soundpad(self):
-        is_visible = self.soundpad_panel.isVisible()
-        self.soundpad_panel.setVisible(not is_visible)
+        panel = self._ensure_soundpad_panel()
+        if panel is None:
+            return
+
+        is_visible = panel.isVisible()
+        panel.setVisible(not is_visible)
         self.btn_toggle_sound.setChecked(not is_visible)
         if not is_visible:
             sizes = self.content_splitter.sizes()
