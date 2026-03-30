@@ -9,10 +9,10 @@
   <br><br>
   ✨  <a href="https://elymsyr.github.io/">Check out our over-engineered amazing website here!</a> ✨
   <br><br>
-  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.7/DungeonMasterTool-Windows.zip">
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.0/DungeonMasterTool-Windows.zip">
     <img src="https://img.shields.io/badge/Download-Windows_x64-blue?style=for-the-badge&logo=windows" alt="Download Windows" />
   </a>
-  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.7/DungeonMasterTool-Linux.zip">
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.0/DungeonMasterTool-Linux.zip">
     <img src="https://img.shields.io/badge/Download-Linux-orange?style=for-the-badge&logo=linux" alt="Download Linux" />
   </a>
   <a href="#macos-installation">
@@ -21,6 +21,7 @@
   <br>
   <br>
   <img src="https://img.shields.io/badge/Status-Alpha-blue" />
+  <img src="https://img.shields.io/badge/Version-v0.8.0-blueviolet" />
   <img src="https://img.shields.io/badge/License-MIT-green" />
   <img src="https://img.shields.io/badge/Python-3.10+-yellow" />
   <br>
@@ -42,29 +43,37 @@
 
 | 📺 **Dynamic Projection** | 🌫️ **Fog of War** | 🧠 **Mind Map** |
 |:---:|:---:|:---:|
-| Drag & drop images to project instantly to a second screen. | Draw fog to hide secrets on the battle map. Persists per encounter. | Infinite canvas to link notes, NPCs, and create story workspaces. |
+| Drag & drop images to project instantly to a second screen. | Draw fog to hide secrets on the battle map. Left-click adds, right-click erases. | Infinite canvas with Level-of-Detail rendering — stays smooth even with dozens of nodes. |
 
 | 🎵 **Adaptive Audio** | ⚔️ **Combat Tracker** | 🌍 **System Agnostic** |
 |:---:|:---:|:---:|
-| Layered music with intensity sliders. Create custom themes easily. | Manage initiative, HP, and conditions integrated with the map. | Built-in 5e SRD/Open5e browser, but adaptable to any system. |
+| Layered music with intensity sliders. Create custom themes easily. | Manage initiative, HP, and conditions. Combat events auto-log to the session event log. | Built-in 5e SRD/Open5e browser, but adaptable to any system. |
 
 ---
 
 ## 🚀 Core Features Guide
-*   **📺 Project to Players:** Click **"Toggle Player Screen"**. Drag any image (NPC/Map) to the "Drop to Project" bar at the top.
-*   **🌫️ Fog of War:** In the **Session Tab**, click **"Fog"**. Left-click to hide, Right-click to reveal.
-*   **🧠 Mind Map:** Right-click on the canvas to add Nodes or Workspaces. Middle-click to pan.
-*   **🎵 Soundpad:** Open the panel, select a theme (e.g., "Forest"), and use the **Intensity Slider** to shift music dynamically.
+
+- **📺 Project to Players:** Click **"Toggle Player Screen"**. Drag any image (NPC/Map) to the "Drop to Project" bar at the top.
+- **🗺️ Battle Map:** Load a map image (up to 1 GB decoded). The toolbar is split into four groups:
+  - **Navigate** — pan the map; click any ruler or circle to delete it
+  - **Ruler / Circle** — draw persistent distance/area measurements displayed in feet; stack as many as you want; **Clear Rulers** removes all at once
+  - **Draw** — free-hand annotation brush; **Clear Draw** erases all drawings
+  - **Fog** — left-click to add fog, right-click to erase; **Fill Fog** / **Clear Fog** for quick resets
+- **📡 Player Screen Sync:** Every tool — fog, drawings, rulers, circles — renders on the player screen (second monitor) in real time. Clearing via the action buttons also clears the player view instantly.
+- **🧠 Mind Map:** Right-click on the canvas to add Notes, Images, or Workspaces. Middle-click to pan. Zoom out freely — the LOD system keeps it smooth.
+- **🎵 Soundpad:** Open the panel, select a theme (e.g., "Forest"), and use the **Intensity Slider** to shift music dynamically.
 
 ---
 
 ## 🗺️ Roadmap & Status
 
 ### ✅ Ready to Use
-- [x] **Projector:** Multi-image split view & Battle Map sync.
-- [x] **Maps:** Video map support (`.mp4`), Fog of War, Grid.
+- [x] **Projector:** Multi-image split view & Battle Map sync to player screen.
+- [x] **Battle Map:** Fog of War, Grid, persistent Rulers & Circles, Draw tool — all synced to the second screen.
+- [x] **Combat Tracker:** Initiative, HP, conditions, and auto event logging.
+- [x] **Mind Map:** Infinite canvas with LOD rendering, workspaces, entity nodes, and image nodes.
 - [x] **Campaign:** Rich text notes, binary storage (`.dat`), Timeline tracker.
-- [x] **Customization:** Theme Engine (10+ themes), English/Turkish localization.
+- [x] **Customization:** Theme Engine (10+ themes), 4-language localization (EN/TR/DE/FR).
 - [x] **Audio:** Custom Soundpad with Theme Builder.
 
 ### 🚧 Coming Soon
@@ -75,17 +84,28 @@
 
 ---
 
+## 🆕 What's New in v0.8.0
+
+- **Battle Map overhaul** — persistent rulers (distance) and circles (radius area) with feet display, free-hand draw tool, unified fog (left=add, right=erase), all tools sync to player screen live; Navigate mode click deletes individual measurements; Clear Rulers / Clear Draw action buttons; large image support up to 1 GB
+- **Mind Map LOD** — three-zone level-of-detail system keeps the canvas smooth at any zoom level; template mode shows readable node labels that scale with zoom
+- **Unified player window** — battle map and player screen merged into one window
+- **Auto event log** — combat events (damage, healing, conditions, rounds) are logged automatically
+- **Global edit mode** — `Ctrl+E` or toolbar button toggles inline editing on any entity card
+- **Full palette theming** — all UI components now respect the active theme; no more hardcoded colors
+
+---
+
 ## 🚀 Installation
 
 ### 🪟 Windows
-1. Download `DungeonMasterTool-Windows.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.7/DungeonMasterTool-Windows.zip).
+1. Download `DungeonMasterTool-Windows.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.0/DungeonMasterTool-Windows.zip).
 2. Extract the folder and run `DungeonMasterTool.exe`.
 
 ### 🐧 Linux
 
 #### Preferred
 
-1. Download `DungeonMasterTool-Linux.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.7/DungeonMasterTool-Linux.zip).
+1. Download `DungeonMasterTool-Linux.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.0/DungeonMasterTool-Linux.zip).
 2. Extract the folder and run `DungeonMasterTool`.
 
 #### Manual
@@ -102,7 +122,7 @@ bash installer/install.sh  # (Use install-arch.sh for Arch Linux)
 ### 🍎 MacOS Installation & Security Note
 Since this is an open-source project and not signed with an official Apple Developer account, you need to manually bypass the "unverified developer" warning.
 
-**[Click here to download DungeonMasterTool-MacOS.zip](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.7.7/DungeonMasterTool-MacOS.zip)**
+**[Click here to download DungeonMasterTool-MacOS.zip](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.0/DungeonMasterTool-MacOS.zip)**
 
 **Steps to run the app:**
 
@@ -206,7 +226,7 @@ Outcome troubleshooting:
 
 ## 📣 Feedback / İletişim
 
-**I read every piece of feedback.** Whether it's a bug report or a feature request, please reach out!  
+**I read every piece of feedback.** Whether it's a bug report or a feature request, please reach out!
 *Her geri bildirimi okuyorum. Hata bildirimi veya özellik isteği için lütfen ulaşın!*
 
 | Platform | Link / Contact |
