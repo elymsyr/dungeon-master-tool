@@ -814,7 +814,14 @@ class BattleMapWidget(QWidget):
                 " min-height: 26px; max-height: 26px; }"
                 " QPushButton:checked { background-color: #2563eb; color: #fff; border: 1px solid #1d4ed8; }"
             )
-            _SPINBOX_STYLE = "QSpinBox { min-height: 26px; max-height: 26px; }"
+            _SPINBOX_STYLE = (
+                "QSpinBox { border: 1px solid #555; border-radius: 3px;"
+                " padding: 0px 2px; margin: 0px; min-height: 0px; }"
+                " QSpinBox::up-button { subcontrol-origin: border;"
+                " subcontrol-position: top right; width: 14px; height: 12px; }"
+                " QSpinBox::down-button { subcontrol-origin: border;"
+                " subcontrol-position: bottom right; width: 14px; height: 12px; }"
+            )
 
             _sep()
             self.btn_fog_fill = QPushButton(tr("BTN_FOG_FILL"))
@@ -851,6 +858,7 @@ class BattleMapWidget(QWidget):
             self.spin_grid_size.setRange(10, 300)
             self.spin_grid_size.setValue(50)
             self.spin_grid_size.setFixedWidth(56)
+            self.spin_grid_size.setFixedHeight(26)
             self.spin_grid_size.setStyleSheet(_SPINBOX_STYLE)
             self.spin_grid_size.valueChanged.connect(self._on_grid_size_changed)
             self.toolbar2.addWidget(self.spin_grid_size)
@@ -870,6 +878,7 @@ class BattleMapWidget(QWidget):
             self.spin_feet.setRange(1, 100)
             self.spin_feet.setValue(5)
             self.spin_feet.setFixedWidth(48)
+            self.spin_feet.setFixedHeight(26)
             self.spin_feet.setStyleSheet(_SPINBOX_STYLE)
             self.spin_feet.valueChanged.connect(self._on_feet_changed)
             self.toolbar2.addWidget(self.spin_feet)
