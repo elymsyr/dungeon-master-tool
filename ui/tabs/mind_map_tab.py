@@ -48,24 +48,38 @@ class MindMapScene(QGraphicsScene):
 
     def drawBackground(self, painter, rect):
         super().drawBackground(painter, rect)
-        if not self.grid_mode: return
-        
+        if not self.grid_mode:
+            return
+
+        # Skip grid at very low zoom — too many dots, too expensive
+        views = self.views()
+        if views:
+            zoom = views[0].transform().m11()
+            if zoom < 0.15:
+                return
+            # At low zoom, increase grid spacing to reduce dot count
+            grid_size = 40 if zoom >= 0.4 else int(40 / zoom * 0.4)
+        else:
+            grid_size = 40
+
         # Get grid color from palette
         grid_rgba = self.current_palette.get("grid_color", "rgba(255, 255, 255, 10)")
         grid_color = QColor(grid_rgba)
         if not grid_color.isValid():
-            grid_color = QColor(255, 255, 255, 10) # Fallback
+            grid_color = QColor(255, 255, 255, 10)  # Fallback
 
-        grid_size = 40
         left = int(rect.left()) - (int(rect.left()) % grid_size)
         top = int(rect.top()) - (int(rect.top()) % grid_size)
         points = []
         for x in range(left, int(rect.right()), grid_size):
             for y in range(top, int(rect.bottom()), grid_size):
                 points.append(QPointF(x, y))
-        
-        painter.setPen(QPen(grid_color, 2)) 
+
+        painter.setPen(QPen(grid_color, 2))
         painter.drawPoints(points)
+
+_LOD_THRESHOLD = 0.2  # below this zoom level, switch nodes to template rendering
+
 
 class CustomGraphicsView(QGraphicsView):
     def __init__(self, scene, parent_tab):
@@ -88,16 +102,32 @@ class CustomGraphicsView(QGraphicsView):
         else:
             super().contextMenuEvent(event)
 
+    def zoom_in(self):
+        self.scale(1.2, 1.2)
+        self._update_node_lod()
+
+    def zoom_out(self):
+        self.scale(1 / 1.2, 1 / 1.2)
+        self._update_node_lod()
+
+    def _update_node_lod(self):
+        zoom = self.transform().m11()
+        for node in self.parent_tab.nodes.values():
+            node.set_detail_level(zoom)
+
     def wheelEvent(self, event):
         item = self.itemAt(event.position().toPoint())
         if isinstance(item, QGraphicsProxyWidget):
             event.ignore()
-            return 
-        
+            return
+
         zoom_in = 1.15
         zoom_out = 1 / 1.15
-        if event.angleDelta().y() > 0: self.scale(zoom_in, zoom_in)
-        else: self.scale(zoom_out, zoom_out)
+        if event.angleDelta().y() > 0:
+            self.scale(zoom_in, zoom_in)
+        else:
+            self.scale(zoom_out, zoom_out)
+        self._update_node_lod()
         self.parent_tab.trigger_autosave()
 
     def dragEnterEvent(self, event):
@@ -123,8 +153,8 @@ class FloatingControls(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
         
-        self.btn_in = self._create_btn(tr("BTN_ZOOM_IN"), lambda: self.view.scale(1.2, 1.2), tr("TIP_ZOOM_IN"))
-        self.btn_out = self._create_btn(tr("BTN_ZOOM_OUT"), lambda: self.view.scale(1/1.2, 1/1.2), tr("TIP_ZOOM_OUT"))
+        self.btn_in = self._create_btn(tr("BTN_ZOOM_IN"), self.view.zoom_in, tr("TIP_ZOOM_IN"))
+        self.btn_out = self._create_btn(tr("BTN_ZOOM_OUT"), self.view.zoom_out, tr("TIP_ZOOM_OUT"))
         self.btn_center = self._create_btn(tr("BTN_CENTER"), lambda: self.view.centerOn(0, 0), tr("TIP_CENTER"))
         self.btn_see_all = self._create_btn(tr("BTN_SEE_ALL"), self.parent_tab.see_all_workspaces, tr("TIP_SEE_ALL"))
         self.btn_ws_list = self._create_btn(tr("BTN_WORKSPACES"), self.show_workspace_menu, tr("BTN_WORKSPACES"))
@@ -430,19 +460,24 @@ class MindMapTab(QWidget):
         editor.set_data_manager(self.dm)
         editor.textChanged.connect(self.trigger_autosave)
         editor.set_mind_map_style()
-        
+
         # Notify the editor of the current theme on first open (MindMapNode handles it, but be safe)
         editor.refresh_theme(ThemeManager.get_palette(self.dm.current_theme))
-        
+
         node = self.create_node_base(node_id, editor, x, y, w, h, "note")
+        first_line = content.strip().split("\n")[0][:40] if content and content.strip() else "Note"
+        node.display_name = first_line
         return node
 
     def create_image_node(self, node_id, x, y, w, h, path):
         lbl = AspectRatioLabel()
-        lbl.setStyleSheet("background: transparent; border: none;") 
+        lbl.setStyleSheet("background: transparent; border: none;")
         full_path = self.dm.get_full_path(path)
-        if full_path: lbl.setPixmap(QPixmap(full_path))
+        if full_path:
+            lbl.setPixmap(QPixmap(full_path))
         node = self.create_node_base(node_id, lbl, x, y, w, h, "image", {"path": path})
+        import os as _os
+        node.display_name = _os.path.splitext(_os.path.basename(path or ""))[0] or "Image"
         return node
 
     def create_entity_node(self, eid, x, y, w=550, h=700): 
@@ -466,6 +501,7 @@ class MindMapTab(QWidget):
         """)
         
         node = self.create_node_base(None, sheet, x, y, w, h, "entity", {"eid": eid})
+        node.display_name = ent_data.get("name", "Entity")
         return node
 
     def schedule_entity_autosave(self, sheet):
@@ -634,3 +670,6 @@ class MindMapTab(QWidget):
             self.view.setTransform(transform)
             # Center view
             self.view.centerOn(vp.get("x", 0), vp.get("y", 0))
+
+        # Apply LOD based on restored zoom level
+        self.view._update_node_lod()
