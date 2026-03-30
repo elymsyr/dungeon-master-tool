@@ -14,13 +14,35 @@ from PyQt6.QtWidgets import (
 
 from config import DATA_ROOT
 from core.locales import tr
-from ui.soundpad_panel import SoundpadPanel
 from ui.tabs.database_tab import DatabaseTab
 from ui.tabs.map_tab import MapTab
 from ui.tabs.mind_map_tab import MindMapTab
 from ui.tabs.session_tab import SessionTab
 from ui.widgets.entity_sidebar import EntitySidebar
 from ui.widgets.projection_manager import ProjectionManager
+
+
+class SoundpadPlaceholder(QWidget):
+    """Lightweight stand-in until the real SoundpadPanel is requested."""
+
+    def __init__(self):
+        super().__init__()
+        self.sfx_buttons = {}
+        self.setMinimumWidth(240)
+        self.setMaximumWidth(400)
+        self.setObjectName("soundpadContainer")
+
+    def stop_all(self):
+        return None
+
+    def stop_ambience(self):
+        return None
+
+    def play_sfx(self, _sfx_id):
+        return None
+
+    def retranslate_ui(self):
+        return None
 
 
 def create_root_widget(main_window):
@@ -131,9 +153,8 @@ def create_root_widget(main_window):
 
     content_splitter.addWidget(tabs)
 
-    soundpad_panel = SoundpadPanel()
+    soundpad_panel = SoundpadPlaceholder()
     soundpad_panel.setVisible(False)
-    soundpad_panel.theme_loaded_with_shortcuts.connect(main_window.setup_soundpad_shortcuts)
     content_splitter.addWidget(soundpad_panel)
 
     content_splitter.setStretchFactor(0, 0)
@@ -148,8 +169,6 @@ def create_root_widget(main_window):
     db_tab.entity_deleted.connect(entity_sidebar.refresh_list)
     session_tab.txt_log.entity_link_clicked.connect(db_tab.open_entity_tab)
     session_tab.txt_notes.entity_link_clicked.connect(db_tab.open_entity_tab)
-
-    map_tab.render_map()
 
     return {
         "central_widget": central,
