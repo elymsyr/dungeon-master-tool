@@ -6,7 +6,7 @@ import sys
 from typing import Any, Dict, Optional
 
 from PyQt6.QtCore import QByteArray, Qt
-from PyQt6.QtGui import QKeySequence, QShortcut
+from PyQt6.QtGui import QImageReader, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -466,6 +466,7 @@ def run_application(
     os.environ.setdefault("LIBVA_DRIVER_NAME", "null")
     QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app = QApplication(sys.argv)
+    QImageReader.setAllocationLimit(1024)  # allow large battle map images up to 2 GB decoded
 
     if dev_bridge is not None:
         dev_bridge.start()
