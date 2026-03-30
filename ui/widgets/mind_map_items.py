@@ -206,9 +206,57 @@ class MindMapNode(QGraphicsObject):
         self.shadow.setColor(QColor(0, 0, 0, 100))
         self.shadow.setOffset(5, 5)
         self.setGraphicsEffect(self.shadow)
-        
+
+        self._full_detail = True  # LOD state
+        self._lod_zone = 0        # 0=full, 1=reduced, 2=template
+        self.display_name = node_type.title()  # set by MindMapTab after creation
+
         # Apply the initial theme (and propagate to the inner widget)
         self.update_theme(self.current_palette)
+
+    def set_detail_level(self, zoom: float):
+        """Three-zone LOD based on current zoom level.
+
+        zone 0 (zoom >= 0.4): full quality — shadow, no cache
+        zone 1 (0.2 <= zoom < 0.4): reduced — no shadow, DeviceCoordinateCache
+        zone 2 (zoom < 0.2): template — proxy hidden, simple rect + label
+        """
+        if zoom >= 0.4:
+            new_zone = 0
+        elif zoom >= 0.1:
+            new_zone = 1
+        else:
+            new_zone = 2
+
+        if self._lod_zone == new_zone:
+            return
+        self._lod_zone = new_zone
+
+        if new_zone == 0:
+            self.proxy.setVisible(True)
+            self.resize_handle.setVisible(True)
+            # Recreate shadow each time: Qt deletes the C++ object on setGraphicsEffect(None)
+            shadow = QGraphicsDropShadowEffect()
+            shadow.setBlurRadius(20)
+            shadow.setColor(QColor(0, 0, 0, 100))
+            shadow.setOffset(5, 5)
+            self.shadow = shadow
+            self.setGraphicsEffect(self.shadow)
+            self.setCacheMode(QGraphicsItem.CacheMode.NoCache)
+            self._full_detail = True
+        elif new_zone == 1:
+            self.proxy.setVisible(True)
+            self.resize_handle.setVisible(True)
+            self.setGraphicsEffect(None)  # drop shadow is expensive
+            self.setCacheMode(QGraphicsItem.CacheMode.DeviceCoordinateCache)
+            self._full_detail = True
+        else:
+            self.proxy.setVisible(False)
+            self.resize_handle.setVisible(False)
+            self.setGraphicsEffect(None)
+            self.setCacheMode(QGraphicsItem.CacheMode.NoCache)
+            self._full_detail = False
+        self.update()
 
     def update_theme(self, palette):
         """Updates the theme and notifies the embedded widget."""
@@ -245,15 +293,47 @@ class MindMapNode(QGraphicsObject):
     def paint(self, painter, option, widget=None):
         rect = self.boundingRect()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        
+
+        if not self._full_detail:
+            # Simplified LOD: solid block + inverse-scaled label
+            bg_color = self.get_bg_color()
+            if bg_color == Qt.GlobalColor.transparent:
+                bg_color = QColor(60, 60, 60, 200)
+            painter.setBrush(QBrush(bg_color))
+            painter.setPen(QPen(QColor("#555"), 1))
+            painter.drawRect(rect)
+
+            # Compute zoom so the font appears ~13px on screen regardless of zoom level
+            views = self.scene().views() if self.scene() else []
+            zoom = views[0].transform().m11() if views else 1.0
+            scene_font_size = max(10, int(13 / max(zoom, 0.01)))
+
+            painter.setPen(QPen(QColor("#ddd")))
+            font = QFont("Segoe UI", scene_font_size, QFont.Weight.Bold)
+            painter.setFont(font)
+            label = getattr(self, "display_name", self.node_type.title())
+            # Allow text to overflow outside the node bounds
+            overflow = scene_font_size * 3
+            text_rect = rect.adjusted(-overflow, -overflow, overflow, overflow)
+            painter.setClipping(False)
+            painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, label)
+            painter.setClipping(True)
+
+            if self.isSelected():
+                sel_color = self.current_palette.get("line_selected", "#42a5f5")
+                painter.setPen(QPen(QColor(sel_color), 2))
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                painter.drawRect(rect)
+            return
+
         bg_color = self.get_bg_color()
-        
+
         if bg_color != Qt.GlobalColor.transparent:
             painter.setBrush(QBrush(bg_color))
             painter.setPen(Qt.PenStyle.NoPen)
-            if self.border_radius > 0: 
+            if self.border_radius > 0:
                 painter.drawRoundedRect(rect, self.border_radius, self.border_radius)
-            else: 
+            else:
                 painter.drawRect(rect)
 
         # Selection state (blue border)
@@ -264,9 +344,9 @@ class MindMapNode(QGraphicsObject):
             pen.setJoinStyle(Qt.PenJoinStyle.MiterJoin)
             painter.setPen(pen)
             painter.setBrush(Qt.BrushStyle.NoBrush)
-            if self.border_radius > 0: 
+            if self.border_radius > 0:
                 painter.drawRoundedRect(rect, self.border_radius, self.border_radius)
-            else: 
+            else:
                 painter.drawRect(rect)
 
     def itemChange(self, change, value):
