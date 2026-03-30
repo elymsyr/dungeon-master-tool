@@ -6,6 +6,9 @@
 - [x] **Fix Battle Map Sync (#52):** Annotations (draw), fog, rulers, and circles now sync correctly to the second screen (player window). Clear Draw also propagates.
 - [x] **Fix Battle Map Erase:** Erase tool now correctly removes drawings; Navigate mode click deletes persistent rulers/circles.
 - [x] **Fix Player Screen Splitter Sync:** Splitter position in the Player Screen tab now reflects on the second screen in real time.
+- [x] **Fix Battle Map Grid/Snap State Reset:** Grid visibility, snap, cell size, and feet-per-cell now persist per encounter and no longer reset after token movement or turn changes.
+- [x] **Fix Second Screen Grid Visibility:** Player/second-screen battle map now initializes and renders the same grid visibility and cell size state as DM view.
+- [x] **Fix Next Turn Slowdown:** Reduced save-time stalls using smart fog/annotation dirty tracking, autosave debounce, and incremental combat log appends.
 
 
 ## ⚡ Immediate Improvements & UI
@@ -18,6 +21,7 @@
 - [x] **Battle Map – Large Image Support:** Images up to 1 GB (decoded) can now be loaded as battle maps via `QImageReader.setAllocationLimit`.
 - [x] **Mind Map – Level of Detail (LOD):** Three-zone LOD system reduces GPU/CPU load when zoomed out: full quality (≥0.4), cached/no-shadow (0.1–0.4), and template mode (<0.1). Grid dots are also skipped or sparsified at low zoom.
 - [x] **Mind Map – Readable Template Labels:** In template mode, node labels (entity name / note first line / image filename) are inverse-scaled so they remain readable at any zoom level and overflow the node bounds.
+- [x] **Mind Map – Undo/Redo Shortcuts:** Added `Ctrl+Z` and `Ctrl+Shift+Z` support for mind map undo/redo, while preserving native text undo/redo behavior inside focused editors.
 - [ ] **GM Player Screen Control:** Add a specific edit/control view for the GM to manage the Player Window more effectively.
 - [ ] **Free Single Import:** Users should be able to import an entity from import data sources (spells, items, etc.) directly into any other entity without needing to import them to the card entity database first.
 - [ ] **Embedded PDF Viewer:** Implement a native PDF viewer within the application (Session/Docs tab).
