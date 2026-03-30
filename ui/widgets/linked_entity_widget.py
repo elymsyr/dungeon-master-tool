@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
 )
 
 from core.locales import tr
+from core.models import ENTITY_SCHEMAS
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,16 @@ class LinkedEntityWidget(QWidget):
     """
 
     linked_ids_changed = pyqtSignal()
+    _SPELL_PROPERTY_KEYS = [key for key, _, _ in ENTITY_SCHEMAS.get("Spell", [])]
+
+    @staticmethod
+    def _short_preview_text(text: str, max_len: int = 260) -> str:
+        cleaned = " ".join(str(text or "").split())
+        if not cleaned:
+            return "-"
+        if len(cleaned) <= max_len:
+            return cleaned
+        return f"{cleaned[: max_len - 3]}..."
 
     def __init__(
         self,
@@ -211,15 +222,19 @@ class LinkedEntityWidget(QWidget):
             name = (
                 ent.get("name", tr("NAME_UNKNOWN")) if ent else tr("LBL_REMOVED_ITEM")
             )
-            extra = self._format_extra(ent) if ent else ""
+            extra = (
+                ""
+                if self._entity_type == "Spell"
+                else (self._format_extra(ent) if ent else "")
+            )
             item = QListWidgetItem()
             item.setData(Qt.ItemDataRole.UserRole, eid)
             self.list_assigned.addItem(item)
-            card = self._build_card_widget(name=name, extra=extra)
+            card = self._build_card_widget(name=name, extra=extra, ent=ent)
             item.setSizeHint(card.sizeHint())
             self.list_assigned.setItemWidget(item, card)
 
-    def _build_card_widget(self, name: str, extra: str) -> QWidget:
+    def _build_card_widget(self, name: str, extra: str, ent: dict | None = None) -> QWidget:
         card = QFrame()
         card.setObjectName("linkedEntityCard")
         card.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
@@ -236,6 +251,23 @@ class LinkedEntityWidget(QWidget):
             lbl_extra = QLabel(extra.strip())
             lbl_extra.setStyleSheet("font-size: 11px; color: #888;")
             layout.addWidget(lbl_extra)
+
+        if self._entity_type == "Spell":
+            attrs = ent.get("attributes", {}) if ent else {}
+            for key in self._SPELL_PROPERTY_KEYS:
+                val = str(attrs.get(key, "")).strip()
+                if not val:
+                    val = "-"
+                detail = QLabel(f"{tr(key)}: {val}")
+                detail.setWordWrap(True)
+                detail.setStyleSheet("font-size: 11px; color: #b0b0b0;")
+                layout.addWidget(detail)
+
+            desc = self._short_preview_text((ent or {}).get("description", ""))
+            lbl_desc = QLabel(f"{tr('LBL_DESC')}: {desc}")
+            lbl_desc.setWordWrap(True)
+            lbl_desc.setStyleSheet("font-size: 11px; color: #b0b0b0;")
+            layout.addWidget(lbl_desc)
 
         card.setStyleSheet(
             "QFrame#linkedEntityCard {"
