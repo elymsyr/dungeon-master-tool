@@ -1,8 +1,9 @@
 import logging
 import uuid
+import copy
 
 from PyQt6.QtCore import QPointF, QRectF, Qt, QTimer
-from PyQt6.QtGui import QAction, QBrush, QColor, QCursor, QPainter, QPen, QPixmap
+from PyQt6.QtGui import QAction, QBrush, QColor, QCursor, QKeySequence, QPainter, QPen, QPixmap, QShortcut
 from PyQt6.QtWidgets import (
     QFrame,
     QGraphicsItem,
@@ -13,8 +14,11 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QMenu,
     QMessageBox,
+    QLineEdit,
+    QPlainTextEdit,
     QPushButton,
     QSplitter,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -241,6 +245,11 @@ class MindMapTab(QWidget):
         self.workspaces = {}
         self.pending_connection_source = None
         self.current_map_id = "default"
+        self._history = []
+        self._history_index = -1
+        self._history_limit = 100
+        self._suspend_autosave = False
+        self._history_restoring = False
         
         self.autosave_timer = QTimer(self)
         self.autosave_timer.setSingleShot(True)
@@ -260,6 +269,7 @@ class MindMapTab(QWidget):
         self.apply_theme(current_theme)
         
         self.load_map_data()
+        self._record_history_snapshot(force=True)
 
     def init_ui(self):
         main_layout = QHBoxLayout(self)
@@ -289,6 +299,132 @@ class MindMapTab(QWidget):
         overlay_layout.addWidget(self.lbl_save_status, 0, 1, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
 
         main_layout.addWidget(canvas_container)
+        self._setup_shortcuts()
+
+    def _setup_shortcuts(self):
+        self.shortcut_undo = QShortcut(QKeySequence("Ctrl+Z"), self)
+        self.shortcut_undo.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.shortcut_undo.activated.connect(self.handle_undo_shortcut)
+
+        self.shortcut_redo = QShortcut(QKeySequence("Ctrl+Shift+Z"), self)
+        self.shortcut_redo.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.shortcut_redo.activated.connect(self.handle_redo_shortcut)
+
+    def _forward_shortcut_to_focused_editor(self, redo=False):
+        focused = self.focusWidget()
+        if isinstance(focused, (QLineEdit, QTextEdit, QPlainTextEdit)):
+            action = focused.redo if redo else focused.undo
+            action()
+            return True
+        return False
+
+    def handle_undo_shortcut(self):
+        if self._forward_shortcut_to_focused_editor(redo=False):
+            return
+        self.undo_mind_map()
+
+    def handle_redo_shortcut(self):
+        if self._forward_shortcut_to_focused_editor(redo=True):
+            return
+        self.redo_mind_map()
+
+    def _serialize_map_data(self):
+        map_data = {"nodes": [], "connections": [], "workspaces": []}
+
+        for nid in sorted(self.nodes):
+            node = self.nodes[nid]
+            node_data = {
+                "id": nid,
+                "type": node.node_type,
+                "x": node.pos().x(),
+                "y": node.pos().y(),
+                "w": node.width,
+                "h": node.height,
+                "extra": copy.deepcopy(node.extra_data),
+            }
+            if node.node_type == "note":
+                editor = node.proxy.widget()
+                if isinstance(editor, MarkdownEditor):
+                    node_data["content"] = editor.toPlainText()
+            map_data["nodes"].append(node_data)
+
+        center = self.view.mapToScene(self.view.viewport().rect().center())
+        map_data["viewport"] = {
+            "x": center.x(),
+            "y": center.y(),
+            "zoom": self.view.transform().m11(),
+        }
+
+        for ws_id in sorted(self.workspaces):
+            ws = self.workspaces[ws_id]
+            ws_data = {
+                "id": ws_id,
+                "name": ws.name,
+                "x": ws.pos().x(),
+                "y": ws.pos().y(),
+                "w": ws.width,
+                "h": ws.height,
+                "color": ws.color.name(),
+            }
+            map_data["workspaces"].append(ws_data)
+
+        for conn in sorted(self.connections, key=lambda c: (c.start_node.node_id, c.end_node.node_id)):
+            map_data["connections"].append({"from": conn.start_node.node_id, "to": conn.end_node.node_id})
+        return map_data
+
+    def _persist_map_data(self, map_data):
+        if "mind_maps" not in self.dm.data:
+            self.dm.data["mind_maps"] = {}
+        self.dm.data["mind_maps"][self.current_map_id] = copy.deepcopy(map_data)
+        self.dm.save_data()
+
+    def _record_history_snapshot(self, snapshot=None, force=False):
+        if self._history_restoring:
+            return
+        snapshot = copy.deepcopy(snapshot) if snapshot is not None else self._serialize_map_data()
+        if self._history and self._history_index >= 0 and not force:
+            if snapshot == self._history[self._history_index]:
+                return
+        if self._history_index < len(self._history) - 1:
+            self._history = self._history[: self._history_index + 1]
+        self._history.append(snapshot)
+        if len(self._history) > self._history_limit:
+            self._history = self._history[-self._history_limit :]
+        self._history_index = len(self._history) - 1
+
+    def _restore_history_state(self):
+        if not (0 <= self._history_index < len(self._history)):
+            return
+        snapshot = copy.deepcopy(self._history[self._history_index])
+        self.autosave_timer.stop()
+        self.entity_autosave_timer.stop()
+        self.pending_entity_saves.clear()
+        self._history_restoring = True
+        self._suspend_autosave = True
+        try:
+            self._load_map_data(snapshot)
+        finally:
+            self._suspend_autosave = False
+            self._history_restoring = False
+        self._persist_map_data(snapshot)
+        palette = ThemeManager.get_palette(self.dm.current_theme)
+        self._update_save_status_style(palette, is_editing=False)
+
+    def undo_mind_map(self):
+        if not self._history:
+            return
+        current = self._serialize_map_data()
+        self._record_history_snapshot(current)
+        if self._history_index <= 0:
+            return
+        self._history_index -= 1
+        self._restore_history_state()
+
+    def redo_mind_map(self):
+        if self._history_index >= len(self._history) - 1:
+            return
+        self._history_index += 1
+        self._restore_history_state()
 
     def apply_theme(self, theme_name):
         """
@@ -574,56 +710,33 @@ class MindMapTab(QWidget):
         try:
             if not hasattr(self, 'autosave_timer') or not self.autosave_timer: return
         except RuntimeError: return # Object might be deleted
+        if self._suspend_autosave or self._history_restoring:
+            return
         
         palette = ThemeManager.get_palette(self.dm.current_theme)
         self._update_save_status_style(palette, is_editing=True)
         self.autosave_timer.start()
 
     def save_map_data_silent(self):
-        map_data = {"nodes": [], "connections": [], "workspaces": []}
-        for nid, node in self.nodes.items():
-            node_data = {
-                "id": nid, "type": node.node_type,
-                "x": node.pos().x(), "y": node.pos().y(), 
-                "w": node.width, "h": node.height, "extra": node.extra_data
-            }
-            if node.node_type == "note":
-                editor = node.proxy.widget()
-                if isinstance(editor, MarkdownEditor): node_data["content"] = editor.toPlainText()
-            map_data["nodes"].append(node_data)
-        
-        # Save viewport state
-        center = self.view.mapToScene(self.view.viewport().rect().center())
-        map_data["viewport"] = {
-            "x": center.x(),
-            "y": center.y(),
-            "zoom": self.view.transform().m11()
-        }
-        
-        for ws_id, ws in self.workspaces.items():
-            ws_data = {
-                "id": ws_id, "name": ws.name,
-                "x": ws.pos().x(), "y": ws.pos().y(),
-                "w": ws.width, "h": ws.height,
-                "color": ws.color.name()
-            }
-            map_data["workspaces"].append(ws_data)
-        
-        for conn in self.connections:
-            map_data["connections"].append({"from": conn.start_node.node_id, "to": conn.end_node.node_id})
-            
-        if "mind_maps" not in self.dm.data: self.dm.data["mind_maps"] = {}
-        self.dm.data["mind_maps"][self.current_map_id] = map_data
-        self.dm.save_data()
+        if self._suspend_autosave:
+            return
+        map_data = self._serialize_map_data()
+        self._persist_map_data(map_data)
+        self._record_history_snapshot(map_data)
         
         palette = ThemeManager.get_palette(self.dm.current_theme)
         self._update_save_status_style(palette, is_editing=False)
 
-    def load_map_data(self):
-        self.scene.clear(); self.nodes = {}; self.connections = []
-        if "mind_maps" not in self.dm.data: return
-        map_data = self.dm.data["mind_maps"].get(self.current_map_id)
-        if not map_data: return
+    def _load_map_data(self, map_data):
+        self.scene.clear()
+        self.nodes = {}
+        self.connections = []
+        self.workspaces = {}
+        self.pending_connection_source = None
+        self.view.setCursor(Qt.CursorShape.ArrowCursor)
+        if not map_data:
+            self.view._update_node_lod()
+            return
         
         for n_data in map_data.get("nodes", []):
             try:
@@ -673,3 +786,13 @@ class MindMapTab(QWidget):
 
         # Apply LOD based on restored zoom level
         self.view._update_node_lod()
+
+    def load_map_data(self):
+        map_data = None
+        if "mind_maps" in self.dm.data:
+            map_data = self.dm.data["mind_maps"].get(self.current_map_id)
+        self._suspend_autosave = True
+        try:
+            self._load_map_data(map_data)
+        finally:
+            self._suspend_autosave = False

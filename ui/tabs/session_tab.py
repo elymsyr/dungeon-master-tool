@@ -1,7 +1,8 @@
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, 
                              QLabel, QPushButton, QGroupBox, QInputDialog, 
                              QComboBox, QMessageBox, QTabWidget, QSplitter, QStackedWidget)
-from PyQt6.QtCore import QDateTime, Qt
+from PyQt6.QtCore import QDateTime, Qt, QTimer
+from PyQt6.QtGui import QTextCursor
 from core.locales import tr
 from ui.widgets.combat_tracker import CombatTracker
 from ui.widgets.markdown_editor import MarkdownEditor
@@ -16,6 +17,12 @@ class SessionTab(QWidget):
         self.dm = data_manager
         self._player_window = player_window
         self.current_session_id = None
+        self.fog_dirty_ids = set()
+        self.annotation_dirty_ids = set()
+        self._autosave_timer = QTimer(self)
+        self._autosave_timer.setSingleShot(True)
+        self._autosave_timer.setInterval(400)
+        self._autosave_timer.timeout.connect(self._perform_debounced_save)
         self.init_ui()
         
         last_sid = self.dm.get_last_active_session_id()
@@ -127,12 +134,13 @@ class SessionTab(QWidget):
         self.embedded_map = BattleMapWidget(is_dm_view=True)
         self.embedded_map.token_moved_signal.connect(self.combat_tracker.on_token_moved_in_map)
         self.embedded_map.token_size_changed_signal.connect(self.combat_tracker.on_token_size_changed)
+        self.embedded_map.grid_settings_changed.connect(self.combat_tracker.on_grid_settings_changed)
         self.embedded_map.view_sync_signal.connect(self.combat_tracker.sync_map_view_to_external)
         self.embedded_map.fog_update_signal.connect(self.combat_tracker.sync_fog_to_external)
         self.embedded_map.annotation_update_signal.connect(self.combat_tracker.sync_annotation_to_external)
         self.embedded_map.measurement_update_signal.connect(self.combat_tracker.sync_measurement_to_external)
-
-        self.embedded_map.fog_update_signal.connect(lambda: self.save_session(show_msg=False))
+        self.embedded_map.fog_update_signal.connect(self._on_embedded_fog_changed)
+        self.embedded_map.annotation_update_signal.connect(self._on_embedded_annotation_changed)
         
         self.btn_load_map = QPushButton(tr("BTN_LOAD_MAP") if hasattr(tr, "BTN_LOAD_MAP") else "Load Map")
         self.btn_load_map.setObjectName("primaryBtn")
@@ -184,14 +192,43 @@ class SessionTab(QWidget):
         
         main_layout.addWidget(self.main_splitter)
 
-    def save_fog_for_encounter(self, encounter_id):
-        if encounter_id in self.combat_tracker.encounters:
+    def _on_embedded_fog_changed(self, _qimage):
+        encounter_id = self.combat_tracker.current_encounter_id
+        if not encounter_id:
+            return
+        self.fog_dirty_ids.add(encounter_id)
+        self.auto_save()
+
+    def _on_embedded_annotation_changed(self, _qimage):
+        encounter_id = self.combat_tracker.current_encounter_id
+        if not encounter_id:
+            return
+        self.annotation_dirty_ids.add(encounter_id)
+        self.auto_save()
+
+    def save_fog_for_encounter(self, encounter_id, force=False):
+        if encounter_id not in self.combat_tracker.encounters:
+            return
+        # Embedded map only holds the currently active encounter layers.
+        if encounter_id != self.combat_tracker.current_encounter_id:
+            return
+
+        should_save_fog = force or encounter_id in self.fog_dirty_ids
+        should_save_annotation = force or encounter_id in self.annotation_dirty_ids
+        if not should_save_fog and not should_save_annotation:
+            return
+
+        if should_save_fog:
             fog_b64 = self.embedded_map.get_fog_data_base64()
             if fog_b64:
                 self.combat_tracker.encounters[encounter_id]["fog_data"] = fog_b64
+            self.fog_dirty_ids.discard(encounter_id)
+
+        if should_save_annotation:
             annot_b64 = self.embedded_map.get_annotation_data_base64()
             if annot_b64:
                 self.combat_tracker.encounters[encounter_id]["annotation_data"] = annot_b64
+            self.annotation_dirty_ids.discard(encounter_id)
 
     def _on_bottom_tab_changed(self, index: int) -> None:
         if index == 1:  # Battle Map tab
@@ -244,9 +281,11 @@ class SessionTab(QWidget):
         if not self.current_session_id:
             if show_msg: QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_CREATE_SESSION_FIRST"))
             return
+        if self._autosave_timer.isActive():
+            self._autosave_timer.stop()
         
         if self.combat_tracker.current_encounter_id:
-            self.save_fog_for_encounter(self.combat_tracker.current_encounter_id)
+            self.save_fog_for_encounter(self.combat_tracker.current_encounter_id, force=show_msg)
         
         logs = self.txt_log.toPlainText()
         notes = self.txt_notes.toPlainText()
@@ -258,6 +297,9 @@ class SessionTab(QWidget):
         if not sid: return
         session_data = self.dm.get_session(sid)
         if session_data:
+            self._autosave_timer.stop()
+            self.fog_dirty_ids.clear()
+            self.annotation_dirty_ids.clear()
             self.current_session_id = sid
             self.dm.set_active_session(sid) 
             self.txt_log.blockSignals(True)
@@ -278,14 +320,23 @@ class SessionTab(QWidget):
     def roll_dice(self, sides):
         result = random.randint(1, sides)
         self.log_message(tr("MSG_ROLLED_DICE", sides=sides, result=result))
+
+    def _append_log_line(self, line: str):
+        editor = self.txt_log.editor
+        cursor = editor.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        if editor.document().characterCount() > 1:
+            cursor.insertText("\n")
+        cursor.insertText(line)
+        editor.setTextCursor(cursor)
+        if self.txt_log.stack.currentIndex() == 1:
+            self.txt_log.update_view_content()
+
     def log_message(self, message):
         timestamp = QDateTime.currentDateTime().toString("HH:mm")
-        current_text = self.txt_log.toPlainText()
         new_line = f"**[{timestamp}]** {message}"
-        if current_text: 
-            self.txt_log.setText(current_text + "\n" + new_line)
-        else: 
-            self.txt_log.setText(new_line)
+        self._append_log_line(new_line)
+
     def add_log(self):
         text = self.inp_log_entry.toPlainText().strip()
         if text: 
@@ -299,6 +350,9 @@ class SessionTab(QWidget):
             idx = self.combo_sessions.findData(sid)
             if idx >= 0: self.combo_sessions.setCurrentIndex(idx)
             self.current_session_id = sid
+            self._autosave_timer.stop()
+            self.fog_dirty_ids.clear()
+            self.annotation_dirty_ids.clear()
             self.txt_log.setText("")
             self.txt_notes.setText("")
             self.combat_tracker.clear_tracker()
@@ -335,6 +389,9 @@ class SessionTab(QWidget):
         self.btn_load_map.setText(tr("BTN_LOAD_MAP") if hasattr(tr, "BTN_LOAD_MAP") else "Load Map")
         self.btn_open_external.setText(tr("BTN_SHOW_BATTLE_MAP"))
 
+    def _perform_debounced_save(self):
+        self.save_session(show_msg=False)
+
     def auto_save(self):
         if self.current_session_id: 
-            self.save_session(show_msg=False)
+            self._autosave_timer.start()

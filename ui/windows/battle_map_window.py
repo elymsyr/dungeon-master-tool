@@ -692,6 +692,7 @@ class BattleMapWidget(QWidget):
     token_moved_signal = pyqtSignal(str, float, float)
     token_size_changed_signal = pyqtSignal(int)
     token_size_override_changed = pyqtSignal(str, int)  # (tid, new_size)
+    grid_settings_changed = pyqtSignal(int, bool, bool, int)  # (grid_size, grid_visible, grid_snap, feet_per_cell)
     view_sync_signal = pyqtSignal(QRectF)
     fog_update_signal = pyqtSignal(object)
     annotation_update_signal = pyqtSignal(object)
@@ -707,10 +708,12 @@ class BattleMapWidget(QWidget):
         self.annotation_item: QGraphicsPixmapItem | None = None
         self.measurement_display_item: QGraphicsPixmapItem | None = None
         self.grid_item: GridItem | None = None
+        self.grid_visible = False
         self.grid_snap = False
         self.grid_cell_size = 50
         self.is_dm_view = is_dm_view
         self.is_view_locked = False
+        self._suppress_grid_settings_signal = False
 
         # --- NATIVE VIDEO PLAYER (Local Files) ---
         self.video_player = None
@@ -921,27 +924,41 @@ class BattleMapWidget(QWidget):
     # ------------------------------------------------------------------
 
     def _on_grid_toggle(self, checked):
+        self.grid_visible = checked
         if self.grid_item:
             self.grid_item.setVisible(checked)
+        self._emit_grid_settings_changed()
 
     def _on_grid_size_changed(self, val):
         self.grid_cell_size = val
         self.view.grid_cell_size = val
         if self.grid_item:
             self.grid_item.set_cell_size(val)
+        self._emit_grid_settings_changed()
 
     def _on_snap_toggle(self, checked):
         self.grid_snap = checked
+        self._emit_grid_settings_changed()
 
     def _on_feet_changed(self, val):
         self.view.feet_per_cell = val
+        self._emit_grid_settings_changed()
+
+    def _emit_grid_settings_changed(self):
+        if not self.is_dm_view or self._suppress_grid_settings_signal:
+            return
+        self.grid_settings_changed.emit(
+            int(self.grid_cell_size),
+            bool(self.grid_visible),
+            bool(self.grid_snap),
+            int(self.view.feet_per_cell),
+        )
 
     def _init_grid(self, w, h):
         if self.grid_item:
             self.scene.removeItem(self.grid_item)
         self.grid_item = GridItem(w, h, self.grid_cell_size)
-        visible = self.btn_grid_toggle.isChecked() if self.is_dm_view else False
-        self.grid_item.setVisible(visible)
+        self.grid_item.setVisible(self.grid_visible)
         self.scene.addItem(self.grid_item)
 
     def _snap_pos(self, pos: QPointF) -> QPointF:
@@ -1199,6 +1216,7 @@ class BattleMapWidget(QWidget):
                 # Note: If Fog exists (loaded from saved data), don't overwrite it here
                 # But if NO fog, use video size
                 if not self.fog_item: self.init_fog_layer(sz.width(), sz.height())
+                self._init_grid(sz.width(), sz.height())
                 # Use delay to ensure layout settling, similar to image
                 QTimer.singleShot(50, self.fit_map_in_view)
 
@@ -1209,6 +1227,7 @@ class BattleMapWidget(QWidget):
             self.scene.setSceneRect(0, 0, size.width(), size.height())
             if not self.fog_item: 
                 self.init_fog_layer(size.width(), size.height())
+            self._init_grid(size.width(), size.height())
             self.fit_map_in_view()
 
     def showEvent(self, event):
@@ -1268,8 +1287,8 @@ class BattleMapWidget(QWidget):
 
             if not self.fog_item:
                 self.init_fog_layer(pixmap.width(), pixmap.height())
+            self._init_grid(pixmap.width(), pixmap.height())
             if self.is_dm_view:
-                self._init_grid(pixmap.width(), pixmap.height())
                 if not self.annotation_item:
                     self._init_annotation_layer(pixmap.width(), pixmap.height())
             QTimer.singleShot(50, self.fit_map_in_view)
@@ -1326,28 +1345,39 @@ class BattleMapWidget(QWidget):
             self.slider_size.setValue(saved_token_size)
             self.slider_size.blockSignals(False)
 
-        # Grid settings
-        if self.is_dm_view:
+        # Grid settings (apply in both DM and player views)
+        self._suppress_grid_settings_signal = True
+        try:
             if grid_size is not None and grid_size != self.grid_cell_size:
                 self.grid_cell_size = grid_size
                 self.view.grid_cell_size = grid_size
-                self.spin_grid_size.blockSignals(True)
-                self.spin_grid_size.setValue(grid_size)
-                self.spin_grid_size.blockSignals(False)
+                if self.is_dm_view:
+                    self.spin_grid_size.blockSignals(True)
+                    self.spin_grid_size.setValue(grid_size)
+                    self.spin_grid_size.blockSignals(False)
                 if self.grid_item:
                     self.grid_item.set_cell_size(grid_size)
+
             if grid_visible is not None:
-                self.btn_grid_toggle.setChecked(grid_visible)
+                self.grid_visible = bool(grid_visible)
+                if self.is_dm_view:
+                    self.btn_grid_toggle.setChecked(self.grid_visible)
                 if self.grid_item:
-                    self.grid_item.setVisible(grid_visible)
+                    self.grid_item.setVisible(self.grid_visible)
+
             if grid_snap is not None:
-                self.grid_snap = grid_snap
-                self.btn_grid_snap.setChecked(grid_snap)
+                self.grid_snap = bool(grid_snap)
+                if self.is_dm_view:
+                    self.btn_grid_snap.setChecked(self.grid_snap)
+
             if feet_per_cell is not None:
                 self.view.feet_per_cell = feet_per_cell
-                self.spin_feet.blockSignals(True)
-                self.spin_feet.setValue(feet_per_cell)
-                self.spin_feet.blockSignals(False)
+                if self.is_dm_view:
+                    self.spin_feet.blockSignals(True)
+                    self.spin_feet.setValue(feet_per_cell)
+                    self.spin_feet.blockSignals(False)
+        finally:
+            self._suppress_grid_settings_signal = False
 
         # 1. Map background
         if map_path != self.current_map_path:
