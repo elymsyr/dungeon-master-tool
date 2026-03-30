@@ -29,6 +29,7 @@ class PlayerWindow(QMainWindow):
     # Forwarded from embedded BattleMapWidget
     battle_token_moved = pyqtSignal(str, float, float)
     battle_token_size_changed = pyqtSignal(int)
+    battle_token_size_override_changed = pyqtSignal(str, int)
     # Emitted whenever an image is added or removed
     projection_changed = pyqtSignal()
 
@@ -111,6 +112,9 @@ class PlayerWindow(QMainWindow):
         self.battle_widget.token_size_changed_signal.connect(
             self.battle_token_size_changed.emit
         )
+        self.battle_widget.token_size_override_changed.connect(
+            self.battle_token_size_override_changed.emit
+        )
         layout.addWidget(self.battle_widget, 3)
 
         # Sidebar (turn order)
@@ -175,10 +179,23 @@ class PlayerWindow(QMainWindow):
         map_path: str | None,
         token_size: int,
         fog_data=None,
+        token_size_overrides=None,
+        grid_size=None,
+        grid_visible=None,
+        grid_snap=None,
+        feet_per_cell=None,
+        annotation_data=None,
     ) -> None:
         """Push combat state to the embedded battle map widget and sidebar."""
         self.battle_widget.update_tokens(
-            combatants, turn_index, dm, map_path, token_size, fog_data=fog_data
+            combatants, turn_index, dm, map_path, token_size,
+            fog_data=fog_data,
+            token_size_overrides=token_size_overrides or {},
+            grid_size=grid_size,
+            grid_visible=grid_visible,
+            grid_snap=grid_snap,
+            feet_per_cell=feet_per_cell,
+            annotation_data=annotation_data,
         )
         self._update_battle_sidebar(combatants, turn_index)
 

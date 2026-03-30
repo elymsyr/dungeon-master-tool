@@ -36,9 +36,15 @@ class CombatModel:
             "combatants": [],
             "map_path": None,
             "token_size": 50,
+            "token_size_overrides": {},
             "turn_index": -1,
             "round": 1,
             "token_positions": {},
+            "grid_size": 50,
+            "grid_visible": False,
+            "grid_snap": False,
+            "feet_per_cell": 5,
+            "annotation_data": None,
         }
         self.current_encounter_id = eid
         return eid
@@ -116,7 +122,13 @@ class CombatModel:
                     "turn_index": -1,
                     "token_positions": {},
                     "token_size": 50,
+                    "token_size_overrides": {},
                     "map_path": None,
+                    "grid_size": 50,
+                    "grid_visible": False,
+                    "grid_snap": False,
+                    "feet_per_cell": 5,
+                    "annotation_data": None,
                 }
             }
             tid = eid

@@ -90,6 +90,7 @@ class CombatTracker(QWidget):
         self._bridge = BattleMapBridge(self.dm, player_window, self)
         self._bridge.token_moved.connect(self.on_token_moved_in_map)
         self._bridge.token_size_changed.connect(self.on_token_size_changed)
+        self._bridge.token_size_override_changed.connect(self.on_token_size_override_changed)
         self.fog_save_handler = None
 
         # Initial theme palette
@@ -647,6 +648,12 @@ class CombatTracker(QWidget):
             if self._bridge.is_open():
                 self.refresh_battle_map(force_map_reload=False)
 
+    def on_token_size_override_changed(self, tid: str, size: int):
+        if self.current_encounter_id:
+            enc = self.encounters[self.current_encounter_id]
+            enc.setdefault("token_size_overrides", {})[tid] = size
+            self.data_changed_signal.emit()
+
     def refresh_battle_map(self, force_map_reload=False):
         if not self.current_encounter_id or self.current_encounter_id not in self.encounters:
             return
@@ -664,7 +671,16 @@ class CombatTracker(QWidget):
                     a = "LBL_ATTR_HOSTILE"
             c["type"] = t; c["attitude"] = a
             cd.append(c)
-        self._bridge.update_combat_data(cd, enc["turn_index"], mp, enc["token_size"], fog_data=enc.get("fog_data"))
+        self._bridge.update_combat_data(
+            cd, enc["turn_index"], mp, enc["token_size"],
+            fog_data=enc.get("fog_data"),
+            token_size_overrides=enc.get("token_size_overrides", {}),
+            grid_size=enc.get("grid_size", 50),
+            grid_visible=enc.get("grid_visible", False),
+            grid_snap=enc.get("grid_snap", False),
+            feet_per_cell=enc.get("feet_per_cell", 5),
+            annotation_data=enc.get("annotation_data"),
+        )
 
     def sync_map_view_to_external(self, rect):
         self._bridge.sync_view(rect)

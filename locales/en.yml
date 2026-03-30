@@ -586,3 +586,22 @@ en:
   LBL_LAYOUT_SIDE: "Side by Side"
   LBL_LAYOUT_GRID: "2×2 Grid"
   BTN_SHOW_BATTLE_MAP: "Show Battle Map"
+
+  # --- BATTLE MAP: GRID ---
+  BTN_GRID: "Grid"
+  BTN_GRID_SNAP: "Snap"
+  LBL_GRID_CELL_SIZE: "Cell:"
+  LBL_FEET_PER_CELL: "ft/cell"
+
+  # --- BATTLE MAP: TOOLKIT ---
+  TOOL_NAVIGATE: "Navigate"
+  TOOL_RULER: "Ruler"
+  TOOL_CIRCLE: "Circle"
+  TOOL_DRAW: "Draw"
+  TOOL_FOG_ADD: "Fog"
+  TOOL_FOG_ERASE: "Erase"
+  BTN_CLEAR_DRAW: "Clear Draw"
+  MENU_TOKEN_RESIZE: "Set Token Size"
+  TIP_TOKEN_RESIZE: "Right-click a token to resize it individually"
+  LBL_DIST_FT: "%1 ft (%2 sq)"
+  LBL_RADIUS_FT: "r = %1 ft"

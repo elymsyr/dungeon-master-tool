@@ -172,6 +172,9 @@ class SessionTab(QWidget):
             fog_b64 = self.embedded_map.get_fog_data_base64()
             if fog_b64:
                 self.combat_tracker.encounters[encounter_id]["fog_data"] = fog_b64
+            annot_b64 = self.embedded_map.get_annotation_data_base64()
+            if annot_b64:
+                self.combat_tracker.encounters[encounter_id]["annotation_data"] = annot_b64
 
     def _on_bottom_tab_changed(self, index: int) -> None:
         if index == 1:  # Battle Map tab
@@ -198,12 +201,18 @@ class SessionTab(QWidget):
         fog_data = enc.get("fog_data")
         
         self.embedded_map.update_tokens(
-            combatants, 
-            enc.get("turn_index", -1), 
-            self.dm, 
-            map_path, 
+            combatants,
+            enc.get("turn_index", -1),
+            self.dm,
+            map_path,
             enc.get("token_size", 50),
-            fog_data=fog_data
+            fog_data=fog_data,
+            token_size_overrides=enc.get("token_size_overrides", {}),
+            grid_size=enc.get("grid_size", 50),
+            grid_visible=enc.get("grid_visible", False),
+            grid_snap=enc.get("grid_snap", False),
+            feet_per_cell=enc.get("feet_per_cell", 5),
+            annotation_data=enc.get("annotation_data"),
         )
 
     def save_session(self, show_msg=False):

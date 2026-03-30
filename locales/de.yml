@@ -583,3 +583,22 @@ de:
   LBL_LAYOUT_SIDE: "Nebeneinander"
   LBL_LAYOUT_GRID: "2×2 Raster"
   BTN_SHOW_BATTLE_MAP: "Kampfkarte Anzeigen"
+
+  # --- BATTLE MAP: RASTER ---
+  BTN_GRID: "Raster"
+  BTN_GRID_SNAP: "Einrasten"
+  LBL_GRID_CELL_SIZE: "Zelle:"
+  LBL_FEET_PER_CELL: "Fuß/Zelle"
+
+  # --- BATTLE MAP: WERKZEUGE ---
+  TOOL_NAVIGATE: "Navigieren"
+  TOOL_RULER: "Lineal"
+  TOOL_CIRCLE: "Kreis"
+  TOOL_DRAW: "Zeichnen"
+  TOOL_FOG_ADD: "Nebel"
+  TOOL_FOG_ERASE: "Löschen"
+  BTN_CLEAR_DRAW: "Zeichnung Löschen"
+  MENU_TOKEN_RESIZE: "Token Größe Anpassen"
+  TIP_TOKEN_RESIZE: "Rechtsklick auf Token zum individuellen Skalieren"
+  LBL_DIST_FT: "%1 Fuß (%2 Felder)"
+  LBL_RADIUS_FT: "r = %1 Fuß"
