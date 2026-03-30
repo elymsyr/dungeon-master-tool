@@ -1,10 +1,11 @@
+import base64
 import importlib
 import logging
 import os
 import sys
 from typing import Any, Dict, Optional
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QByteArray, Qt
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
@@ -96,17 +97,26 @@ class MainWindow(QMainWindow):
             state["soundpad_visible"] = self.soundpad_panel.isVisible()
         if hasattr(self, "btn_toggle_sound"):
             state["soundpad_checked"] = self.btn_toggle_sound.isChecked()
+        if hasattr(self, "session_tab"):
+            st = self.session_tab
+            state["session_main_splitter"]  = st.main_splitter.sizes()
+            state["session_right_splitter"] = st.right_splitter.sizes()
+            state["session_bottom_tab"]     = st.bottom_tabs.currentIndex()
+        if hasattr(self, "db_tab"):
+            state["db_workspace_splitter"] = self.db_tab.workspace_splitter.sizes()
 
         return state
 
     def _restore_reload_state(self, state: Dict[str, Any]):
+        def _apply_sizes(splitter, sizes):
+            if sizes and len(splitter.sizes()) == len(sizes):
+                splitter.setSizes(sizes)
+
         if state.get("geometry") is not None:
             self.restoreGeometry(state["geometry"])
 
-        if state.get("splitter_sizes") and hasattr(self, "content_splitter"):
-            current_sizes = self.content_splitter.sizes()
-            if len(current_sizes) == len(state["splitter_sizes"]):
-                self.content_splitter.setSizes(state["splitter_sizes"])
+        if hasattr(self, "content_splitter"):
+            _apply_sizes(self.content_splitter, state.get("splitter_sizes"))
 
         if hasattr(self, "soundpad_panel"):
             visible = bool(state.get("soundpad_visible", False))
@@ -120,6 +130,17 @@ class MainWindow(QMainWindow):
             tab_index = int(state["tab_index"])
             if 0 <= tab_index < self.tabs.count():
                 self.tabs.setCurrentIndex(tab_index)
+
+        if hasattr(self, "session_tab"):
+            st = self.session_tab
+            _apply_sizes(st.main_splitter,  state.get("session_main_splitter"))
+            _apply_sizes(st.right_splitter, state.get("session_right_splitter"))
+            idx = state.get("session_bottom_tab")
+            if idx is not None and 0 <= idx < st.bottom_tabs.count():
+                st.bottom_tabs.setCurrentIndex(idx)
+
+        if hasattr(self, "db_tab"):
+            _apply_sizes(self.db_tab.workspace_splitter, state.get("db_workspace_splitter"))
 
     def rebuild_root_widget(self, reload_main_root_module: bool = True):
         state = self._capture_reload_state()
@@ -138,11 +159,103 @@ class MainWindow(QMainWindow):
         if hasattr(self.player_window, "update_theme"):
             self.player_window.update_theme(self.current_stylesheet)
 
+    def closeEvent(self, event):
+        state = {}
+        state["geometry"] = base64.b64encode(self.saveGeometry().data()).decode()
+        if hasattr(self, "content_splitter"):
+            state["splitter_sizes"] = self.content_splitter.sizes()
+        if hasattr(self, "tabs"):
+            state["tab_index"] = self.tabs.currentIndex()
+        if hasattr(self, "soundpad_panel"):
+            state["soundpad_visible"] = self.soundpad_panel.isVisible()
+
+        # Session tab layout
+        if hasattr(self, "session_tab"):
+            st = self.session_tab
+            state["session_main_splitter"]  = st.main_splitter.sizes()
+            state["session_right_splitter"] = st.right_splitter.sizes()
+            state["session_bottom_tab"]     = st.bottom_tabs.currentIndex()
+
+        # Database tab layout + open cards
+        if hasattr(self, "db_tab"):
+            state["db_workspace_splitter"] = self.db_tab.workspace_splitter.sizes()
+
+            def _panel_eids(manager):
+                return [
+                    manager.widget(i).property("entity_id")
+                    for i in range(manager.count())
+                    if manager.widget(i) and manager.widget(i).property("entity_id")
+                ]
+
+            state["db_open_left"]   = _panel_eids(self.db_tab.tab_manager_left)
+            state["db_open_right"]  = _panel_eids(self.db_tab.tab_manager_right)
+            state["db_active_left"] = self.db_tab.tab_manager_left.currentIndex()
+            state["db_active_right"]= self.db_tab.tab_manager_right.currentIndex()
+
+        self.data_manager.save_settings({"ui_state": state})
+        super().closeEvent(event)
+
+    def _restore_ui_state_from_settings(self):
+        ui = self.data_manager.settings.get("ui_state", {})
+
+        def _apply_sizes(splitter, sizes):
+            if sizes and len(splitter.sizes()) == len(sizes):
+                splitter.setSizes(sizes)
+
+        if geom := ui.get("geometry"):
+            try:
+                self.restoreGeometry(QByteArray(base64.b64decode(geom)))
+            except Exception:
+                pass
+
+        if hasattr(self, "content_splitter"):
+            _apply_sizes(self.content_splitter, ui.get("splitter_sizes"))
+
+        visible = ui.get("soundpad_visible", False)
+        if hasattr(self, "soundpad_panel"):
+            self.soundpad_panel.setVisible(visible)
+            if hasattr(self, "btn_toggle_sound"):
+                self.btn_toggle_sound.setChecked(visible)
+
+        if (idx := ui.get("tab_index")) is not None and hasattr(self, "tabs"):
+            if 0 <= idx < self.tabs.count():
+                self.tabs.setCurrentIndex(idx)
+
+        # Session tab
+        if hasattr(self, "session_tab"):
+            st = self.session_tab
+            _apply_sizes(st.main_splitter,  ui.get("session_main_splitter"))
+            _apply_sizes(st.right_splitter, ui.get("session_right_splitter"))
+            idx = ui.get("session_bottom_tab")
+            if idx is not None and 0 <= idx < st.bottom_tabs.count():
+                st.bottom_tabs.setCurrentIndex(idx)
+
+        # Database tab
+        if hasattr(self, "db_tab"):
+            _apply_sizes(self.db_tab.workspace_splitter, ui.get("db_workspace_splitter"))
+            for eid in ui.get("db_open_left", []):
+                try:
+                    self.db_tab.open_entity_tab(eid, target_panel="left")
+                except Exception:
+                    pass
+            for eid in ui.get("db_open_right", []):
+                try:
+                    self.db_tab.open_entity_tab(eid, target_panel="right")
+                except Exception:
+                    pass
+            li = ui.get("db_active_left", -1)
+            if li >= 0:
+                self.db_tab.tab_manager_left.setCurrentIndex(li)
+            ri = ui.get("db_active_right", -1)
+            if ri >= 0:
+                self.db_tab.tab_manager_right.setCurrentIndex(ri)
+
     def init_ui(self):
         root_factory_module = self._load_root_factory_module(reload_module=False)
         bundle = root_factory_module.create_root_widget(self)
         self._apply_root_bundle(bundle)
         self.retranslate_ui()
+        self._restore_ui_state_from_settings()
 
         self._shortcut_edit_mode = QShortcut(QKeySequence("Ctrl+E"), self)
         self._shortcut_edit_mode.activated.connect(self.toggle_active_edit_mode)

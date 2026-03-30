@@ -584,3 +584,22 @@ tr:
   LBL_LAYOUT_SIDE: "Yan Yana"
   LBL_LAYOUT_GRID: "2×2 Izgara"
   BTN_SHOW_BATTLE_MAP: "Savaş Haritasını Göster"
+
+  # --- BATTLE MAP: IZGARA ---
+  BTN_GRID: "Izgara"
+  BTN_GRID_SNAP: "Yapış"
+  LBL_GRID_CELL_SIZE: "Hücre:"
+  LBL_FEET_PER_CELL: "fit/hücre"
+
+  # --- BATTLE MAP: ARAÇ KİTİ ---
+  TOOL_NAVIGATE: "Gezin"
+  TOOL_RULER: "Cetvel"
+  TOOL_CIRCLE: "Daire"
+  TOOL_DRAW: "Çiz"
+  TOOL_FOG_ADD: "Sis"
+  TOOL_FOG_ERASE: "Sil"
+  BTN_CLEAR_DRAW: "Çizimi Temizle"
+  MENU_TOKEN_RESIZE: "Token Boyutunu Ayarla"
+  TIP_TOKEN_RESIZE: "Tokenı ayrı boyutlandırmak için sağ tıklayın"
+  LBL_DIST_FT: "%1 ft (%2 kare)"
+  LBL_RADIUS_FT: "r = %1 ft"

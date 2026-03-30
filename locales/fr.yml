@@ -583,3 +583,22 @@ fr:
   LBL_LAYOUT_SIDE: "Côte à Côte"
   LBL_LAYOUT_GRID: "Grille 2×2"
   BTN_SHOW_BATTLE_MAP: "Afficher Carte Combat"
+
+  # --- BATTLE MAP: GRILLE ---
+  BTN_GRID: "Grille"
+  BTN_GRID_SNAP: "Magnétisme"
+  LBL_GRID_CELL_SIZE: "Cellule:"
+  LBL_FEET_PER_CELL: "pi/cellule"
+
+  # --- BATTLE MAP: OUTILS ---
+  TOOL_NAVIGATE: "Naviguer"
+  TOOL_RULER: "Règle"
+  TOOL_CIRCLE: "Cercle"
+  TOOL_DRAW: "Dessiner"
+  TOOL_FOG_ADD: "Brouillard"
+  TOOL_FOG_ERASE: "Effacer"
+  BTN_CLEAR_DRAW: "Effacer Dessin"
+  MENU_TOKEN_RESIZE: "Redimensionner Jeton"
+  TIP_TOKEN_RESIZE: "Clic droit sur un jeton pour le redimensionner"
+  LBL_DIST_FT: "%1 pi (%2 cases)"
+  LBL_RADIUS_FT: "r = %1 pi"
