@@ -245,6 +245,19 @@ class NpcSheet(QWidget):
                         card.inp_desc.switch_to_view_mode()
                     else:
                         card.inp_desc.switch_to_edit_mode()
+                if hasattr(card, "spell_attr_inputs"):
+                    for widget in card.spell_attr_inputs.values():
+                        if isinstance(widget, QLineEdit):
+                            widget.setReadOnly(ro)
+                        else:
+                            widget.setEnabled(editing)
+                if hasattr(card, "spell_attr_box"):
+                    card.spell_attr_box.setVisible(editing)
+                if hasattr(card, "spell_preview_box"):
+                    self._refresh_manual_spell_card_preview(card)
+                    card.spell_preview_box.setVisible(ro)
+                    if hasattr(card, "inp_desc"):
+                        card.inp_desc.setVisible(editing)
                 if hasattr(card, "btn_del"):
                     card.btn_del.setVisible(editing)
 
@@ -312,7 +325,9 @@ class NpcSheet(QWidget):
         self.content_widget.setObjectName("sheetContainer")
         self.content_widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.content_widget.setStyleSheet(
-            "QLineEdit, QPlainTextEdit { background-color: transparent; }"
+            "QLineEdit, QPlainTextEdit, QComboBox { background-color: transparent; }"
+            "QLineEdit[readOnly='true'], QLineEdit:disabled, "
+            "QPlainTextEdit:disabled, QComboBox:disabled { background-color: transparent; }"
         )
 
         self.content_layout = QVBoxLayout(self.content_widget)
@@ -518,6 +533,131 @@ class NpcSheet(QWidget):
         card.inp_title = t
         card.inp_desc = d
         card.btn_del = btn_del
+        return card
+
+    def add_manual_spell_card(
+        self,
+        group,
+        name: str = "",
+        desc: str = "",
+        spell_attrs: dict | None = None,
+    ):
+        card = self.add_feature_card(group, name, desc)
+        attrs = spell_attrs if isinstance(spell_attrs, dict) else {}
+
+        attr_box = QFrame()
+        attr_layout = QFormLayout(attr_box)
+        attr_layout.setContentsMargins(0, 0, 0, 0)
+        attr_layout.setSpacing(4)
+
+        spell_attr_inputs = {}
+        for label_key, dtype, options in ENTITY_SCHEMAS.get("Spell", []):
+            if dtype == "combo":
+                widget = QComboBox()
+                widget.setEditable(True)
+                if options:
+                    for opt in options:
+                        widget.addItem(
+                            tr(opt) if str(opt).startswith("LBL_") else opt, opt
+                        )
+                self._set_combo_value(widget, attrs.get(label_key, ""))
+                widget.editTextChanged.connect(self.mark_as_dirty)
+                widget.currentIndexChanged.connect(self.mark_as_dirty)
+                widget.editTextChanged.connect(
+                    lambda _=None, c=card: self._refresh_manual_spell_card_preview(c)
+                )
+                widget.currentIndexChanged.connect(
+                    lambda _=None, c=card: self._refresh_manual_spell_card_preview(c)
+                )
+            else:
+                widget = QLineEdit(str(attrs.get(label_key, "") or ""))
+                widget.textChanged.connect(self.mark_as_dirty)
+                widget.textChanged.connect(
+                    lambda _=None, c=card: self._refresh_manual_spell_card_preview(c)
+                )
+
+            spell_attr_inputs[label_key] = widget
+            attr_layout.addRow(tr(label_key), widget)
+
+        preview_box = QFrame()
+        preview_layout = QVBoxLayout(preview_box)
+        preview_layout.setContentsMargins(0, 0, 0, 0)
+        preview_layout.setSpacing(2)
+
+        preview_labels = {}
+        for label_key, _, _ in ENTITY_SCHEMAS.get("Spell", []):
+            lbl = QLabel()
+            lbl.setWordWrap(True)
+            lbl.setStyleSheet("font-size: 11px; color: #b0b0b0;")
+            preview_layout.addWidget(lbl)
+            preview_labels[label_key] = lbl
+
+        lbl_desc = QLabel()
+        lbl_desc.setWordWrap(True)
+        lbl_desc.setStyleSheet("font-size: 11px; color: #b0b0b0;")
+        preview_layout.addWidget(lbl_desc)
+
+        card.layout().insertWidget(1, attr_box)
+        card.layout().insertWidget(2, preview_box)
+        card.spell_attr_inputs = spell_attr_inputs
+        card.spell_attr_box = attr_box
+        card.spell_preview_box = preview_box
+        card.spell_preview_labels = preview_labels
+        card.spell_preview_desc = lbl_desc
+        card.inp_title.textChanged.connect(
+            lambda _=None, c=card: self._refresh_manual_spell_card_preview(c)
+        )
+        card.inp_desc.textChanged.connect(
+            lambda _=None, c=card: self._refresh_manual_spell_card_preview(c)
+        )
+        self._refresh_manual_spell_card_preview(card)
+        return card
+
+    @staticmethod
+    def _set_combo_value(combo: QComboBox, value) -> None:
+        text = str(value or "")
+        if not text:
+            return
+
+        idx = combo.findData(text)
+        if idx >= 0:
+            combo.setCurrentIndex(idx)
+            return
+
+        idx = combo.findText(text)
+        if idx >= 0:
+            combo.setCurrentIndex(idx)
+            return
+
+        combo.setCurrentText(text)
+
+    @staticmethod
+    def _short_preview_text(text: str, max_len: int = 260) -> str:
+        cleaned = " ".join(str(text or "").split())
+        if not cleaned:
+            return "-"
+        if len(cleaned) <= max_len:
+            return cleaned
+        return f"{cleaned[: max_len - 3]}..."
+
+    def _refresh_manual_spell_card_preview(self, card) -> None:
+        labels = getattr(card, "spell_preview_labels", {})
+        inputs = getattr(card, "spell_attr_inputs", {})
+        for label_key, lbl in labels.items():
+            input_widget = inputs.get(label_key)
+            if input_widget is None:
+                continue
+            if isinstance(input_widget, QComboBox):
+                raw = input_widget.currentText()
+            else:
+                raw = input_widget.text()
+            lbl.setText(f"{tr(label_key)}: {self._short_preview_text(raw, 120)}")
+
+        desc_label = getattr(card, "spell_preview_desc", None)
+        if desc_label is not None:
+            desc_label.setText(
+                f"{tr('LBL_DESC')}: {self._short_preview_text(card.inp_desc.toPlainText())}"
+            )
 
     # ------------------------------------------------------------------
     # Data binding
@@ -598,7 +738,6 @@ class NpcSheet(QWidget):
             ("actions", self.action_container),
             ("reactions", self.reaction_container),
             ("legendary_actions", self.legendary_container),
-            ("custom_spells", self.custom_spell_container),
             ("inventory", self.inventory_container),
         ]:
             for item in data.get(k) or []:
@@ -607,6 +746,14 @@ class NpcSheet(QWidget):
                     safe_str(item.get("name")),
                     safe_str(item.get("desc")),
                 )
+        for item in data.get("custom_spells") or []:
+            attrs = item.get("attributes")
+            self.add_manual_spell_card(
+                self.custom_spell_container,
+                safe_str(item.get("name")),
+                safe_str(item.get("desc")),
+                attrs if isinstance(attrs, dict) else {},
+            )
 
         # Delegate to sub-widgets
         self.spell_widget.set_linked_ids(data.get("spells", []))
@@ -641,6 +788,30 @@ class NpcSheet(QWidget):
                 w = container.dynamic_area.itemAt(i).widget()
                 if w:
                     res.append({"name": w.inp_title.text(), "desc": w.inp_desc.toPlainText()})
+            return res
+
+        def get_manual_spell_cards(container):
+            res = []
+            for i in range(container.dynamic_area.count()):
+                w = container.dynamic_area.itemAt(i).widget()
+                if not w:
+                    continue
+                attrs = {}
+                for label_key, input_widget in getattr(
+                    w, "spell_attr_inputs", {}
+                ).items():
+                    if isinstance(input_widget, QComboBox):
+                        attrs[label_key] = input_widget.currentText()
+                    else:
+                        attrs[label_key] = input_widget.text()
+
+                res.append(
+                    {
+                        "name": w.inp_title.text(),
+                        "desc": w.inp_desc.toPlainText(),
+                        "attributes": attrs,
+                    }
+                )
             return res
 
         loc_id = self.combo_location.currentData()
@@ -684,7 +855,7 @@ class NpcSheet(QWidget):
             "reactions": get_cards(self.reaction_container),
             "legendary_actions": get_cards(self.legendary_container),
             "inventory": get_cards(self.inventory_container),
-            "custom_spells": get_cards(self.custom_spell_container),
+            "custom_spells": get_manual_spell_cards(self.custom_spell_container),
             "spells": self.spell_widget.get_linked_ids(),
             "equipment_ids": self.item_widget.get_linked_ids(),
             "pdfs": self.pdf_manager.get_pdfs(),
@@ -853,7 +1024,11 @@ class NpcSheet(QWidget):
         layout = QVBoxLayout(self.tab_spells)
         layout.addWidget(self.spell_widget)
         self.custom_spell_container = self._create_section(tr("LBL_MANUAL_SPELLS"))
-        self.add_btn_to_section(self.custom_spell_container, tr("BTN_ADD"))
+        self.add_btn_to_section(
+            self.custom_spell_container,
+            tr("BTN_ADD"),
+            callback=lambda: self.add_manual_spell_card(self.custom_spell_container),
+        )
         layout.addWidget(self.custom_spell_container)
         layout.addStretch()
 
@@ -1060,9 +1235,11 @@ class NpcSheet(QWidget):
         v.addLayout(group.dynamic_area)
         return group
 
-    def add_btn_to_section(self, container, label: str) -> None:
+    def add_btn_to_section(self, container, label: str, callback=None) -> None:
         btn = QPushButton(label)
-        btn.clicked.connect(lambda: self.add_feature_card(container))
+        if callback is None:
+            callback = lambda: self.add_feature_card(container)
+        btn.clicked.connect(callback)
         btn.setObjectName("successBtn")
         container.layout().insertWidget(0, btn)
         self._add_feature_buttons.append(btn)
