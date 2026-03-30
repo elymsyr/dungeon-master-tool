@@ -225,6 +225,9 @@ class NpcSheet(QWidget):
         if ro:
             self.inp_desc.switch_to_view_mode()
             self.inp_dm_notes.switch_to_view_mode()
+        else:
+            self.inp_desc.switch_to_edit_mode()
+            self.inp_dm_notes.switch_to_edit_mode()
 
         # --- Feature cards ---
         for container in [
@@ -237,8 +240,11 @@ class NpcSheet(QWidget):
                     continue
                 if hasattr(card, "inp_title"):
                     card.inp_title.setReadOnly(ro)
-                if ro and hasattr(card, "inp_desc"):
-                    card.inp_desc.switch_to_view_mode()
+                if hasattr(card, "inp_desc"):
+                    if ro:
+                        card.inp_desc.switch_to_view_mode()
+                    else:
+                        card.inp_desc.switch_to_edit_mode()
                 if hasattr(card, "btn_del"):
                     card.btn_del.setVisible(editing)
 
@@ -357,6 +363,7 @@ class NpcSheet(QWidget):
         self.content_layout.addWidget(QLabel(f"<b>{tr('LBL_DESC')}</b>"))
         self.inp_desc = MarkdownEditor()
         self.inp_desc.set_data_manager(self.dm)
+        self.inp_desc.set_toggle_button_visible(False)
         self.inp_desc.entity_link_clicked.connect(self.request_open_entity.emit)
         self.inp_desc.setMinimumHeight(180)
         self.inp_desc.setPlaceholderText(tr("LBL_DESC"))
@@ -408,6 +415,7 @@ class NpcSheet(QWidget):
         dm_notes_layout = QVBoxLayout(self.grp_dm_notes)
         self.inp_dm_notes = MarkdownEditor()
         self.inp_dm_notes.set_data_manager(self.dm)
+        self.inp_dm_notes.set_toggle_button_visible(False)
         self.inp_dm_notes.entity_link_clicked.connect(self.request_open_entity.emit)
         self.inp_dm_notes.setPlaceholderText(tr("PH_DM_NOTES"))
         self.inp_dm_notes.setMinimumHeight(120)
@@ -496,6 +504,7 @@ class NpcSheet(QWidget):
 
         d = MarkdownEditor(text=desc)
         d.set_data_manager(self.dm)
+        d.set_toggle_button_visible(False)
         d.entity_link_clicked.connect(self.request_open_entity.emit)
         d.setPlaceholderText(ph_desc)
         d.setMinimumHeight(120)
@@ -706,8 +715,10 @@ class NpcSheet(QWidget):
         self.image_gallery.btn_remove.clicked.connect(self.mark_as_dirty)
         self.spell_widget.btn_add.clicked.connect(self.mark_as_dirty)
         self.spell_widget.btn_remove.clicked.connect(self.mark_as_dirty)
+        self.spell_widget.linked_ids_changed.connect(self.mark_as_dirty)
         self.item_widget.btn_add.clicked.connect(self.mark_as_dirty)
         self.item_widget.btn_remove.clicked.connect(self.mark_as_dirty)
+        self.item_widget.linked_ids_changed.connect(self.mark_as_dirty)
 
     def mark_as_dirty(self) -> None:
         if not self.is_dirty:
