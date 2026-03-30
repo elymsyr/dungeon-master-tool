@@ -6,11 +6,13 @@ Displays entity names from the DataManager's entity dict.
 
 import logging
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
+    QFrame,
     QGroupBox,
     QHBoxLayout,
+    QLabel,
     QListWidget,
     QListWidgetItem,
     QPushButton,
@@ -33,6 +35,8 @@ class LinkedEntityWidget(QWidget):
     - Remove selected entry from the list.
     - Emit double-click to open a linked entity.
     """
+
+    linked_ids_changed = pyqtSignal()
 
     def __init__(
         self,
@@ -80,12 +84,18 @@ class LinkedEntityWidget(QWidget):
         self.btn_add.setObjectName("successBtn")
         self.btn_add.clicked.connect(self._on_add)
 
+        self.btn_import = QPushButton(f"{tr('BTN_IMPORT')}...")
+        self.btn_import.setObjectName("primaryBtn")
+        self.btn_import.clicked.connect(self._on_import)
+
         h.addWidget(self.combo_all, 3)
         h.addWidget(self.btn_add, 1)
+        h.addWidget(self.btn_import, 1)
         v.addLayout(h)
 
         self.list_assigned = QListWidget()
-        self.list_assigned.setAlternatingRowColors(True)
+        self.list_assigned.setAlternatingRowColors(False)
+        self.list_assigned.setSpacing(6)
         self.list_assigned.setMinimumHeight(200)
         self.list_assigned.itemDoubleClicked.connect(self._on_dbl_click)
         v.addWidget(self.list_assigned)
@@ -107,6 +117,7 @@ class LinkedEntityWidget(QWidget):
     def set_edit_mode(self, enabled: bool) -> None:
         """Show/hide add and remove buttons; enable/disable combo in edit mode."""
         self.btn_add.setVisible(enabled)
+        self.btn_import.setVisible(enabled)
         self.btn_remove.setVisible(enabled)
         self.combo_all.setEnabled(enabled)
 
@@ -140,17 +151,43 @@ class LinkedEntityWidget(QWidget):
         if eid not in self._linked_ids:
             self._linked_ids.append(eid)
             self._render_list()
+            self.linked_ids_changed.emit()
 
     def _on_remove(self) -> None:
         row = self.list_assigned.currentRow()
         if row >= 0:
             del self._linked_ids[row]
             self.list_assigned.takeItem(row)
+            self.linked_ids_changed.emit()
+
+    def _on_import(self) -> None:
+        # Local import avoids circular module import during startup.
+        from ui.dialogs.import_window import ImportWindow
+
+        dlg = ImportWindow(
+            self._dm,
+            parent=self,
+            selection_mode=True,
+            default_category=self._entity_type,
+            expected_type=self._entity_type,
+        )
+        if dlg.exec():
+            self.merge_linked_ids(dlg.imported_entity_ids)
 
     def _on_dbl_click(self, item: QListWidgetItem) -> None:
         eid = item.data(Qt.ItemDataRole.UserRole)
         if eid and self._open_cb:
             self._open_cb(eid)
+
+    def merge_linked_ids(self, incoming_ids: list[str]) -> None:
+        changed = False
+        for eid in incoming_ids:
+            if eid and eid not in self._linked_ids:
+                self._linked_ids.append(eid)
+                changed = True
+        if changed:
+            self._render_list()
+            self.linked_ids_changed.emit()
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -175,6 +212,36 @@ class LinkedEntityWidget(QWidget):
                 ent.get("name", tr("NAME_UNKNOWN")) if ent else tr("LBL_REMOVED_ITEM")
             )
             extra = self._format_extra(ent) if ent else ""
-            item = QListWidgetItem(f"{name}{extra}")
+            item = QListWidgetItem()
             item.setData(Qt.ItemDataRole.UserRole, eid)
             self.list_assigned.addItem(item)
+            card = self._build_card_widget(name=name, extra=extra)
+            item.setSizeHint(card.sizeHint())
+            self.list_assigned.setItemWidget(item, card)
+
+    def _build_card_widget(self, name: str, extra: str) -> QWidget:
+        card = QFrame()
+        card.setObjectName("linkedEntityCard")
+        card.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setSpacing(2)
+
+        lbl_name = QLabel(name)
+        lbl_name.setStyleSheet("font-weight: bold;")
+        layout.addWidget(lbl_name)
+
+        if extra:
+            lbl_extra = QLabel(extra.strip())
+            lbl_extra.setStyleSheet("font-size: 11px; color: #888;")
+            layout.addWidget(lbl_extra)
+
+        card.setStyleSheet(
+            "QFrame#linkedEntityCard {"
+            " border: 1px solid rgba(120, 120, 120, 0.4);"
+            " border-radius: 8px;"
+            " background-color: rgba(120, 120, 120, 0.08);"
+            "}"
+        )
+        return card

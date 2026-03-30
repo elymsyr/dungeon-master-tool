@@ -132,6 +132,8 @@ class MarkdownEditor(QWidget):
         self.dm = None
         self.mention_start_pos = -1
         self.is_transparent_mode = False
+        self._toggle_visible = True
+        self._inline_switch_enabled = True
         
         # Load the default (dark) palette
         self.current_palette = ThemeManager.get_palette("dark")
@@ -160,7 +162,7 @@ class MarkdownEditor(QWidget):
         self.viewer.setObjectName("mdViewer") 
         self.viewer.setOpenExternalLinks(False)
         self.viewer.anchorClicked.connect(self._on_link_clicked)
-        self.viewer.doubleClicked.connect(self.switch_to_edit_mode) 
+        self.viewer.doubleClicked.connect(self._on_viewer_double_clicked)
         
         self.stack.addWidget(self.editor)
         self.stack.addWidget(self.viewer)
@@ -177,11 +179,9 @@ class MarkdownEditor(QWidget):
         self.apply_styles()
 
         if text.strip():
-            self.btn_toggle.setChecked(False)
-            self.toggle_mode()
+            self.switch_to_view_mode()
         else:
-            self.btn_toggle.setChecked(True)
-            self.toggle_mode()
+            self.switch_to_edit_mode()
 
     def set_embedded_mode(self, enabled):
         """Set to True when used inside a Mind Map node."""
@@ -286,12 +286,20 @@ class MarkdownEditor(QWidget):
         self.editor.set_data_manager(dm)
 
     def switch_to_edit_mode(self):
-        self.btn_toggle.setChecked(True)
-        self.toggle_mode()
+        if self._toggle_visible:
+            self.btn_toggle.setChecked(True)
+            self.toggle_mode()
+            return
+        self.stack.setCurrentIndex(0)
+        self.editor.setFocus()
 
     def switch_to_view_mode(self):
-        self.btn_toggle.setChecked(False)
-        self.toggle_mode()
+        if self._toggle_visible:
+            self.btn_toggle.setChecked(False)
+            self.toggle_mode()
+            return
+        self.update_view_content()
+        self.stack.setCurrentIndex(1)
 
     def eventFilter(self, obj, event):
         if hasattr(self, 'popup') and obj is self.editor and self.popup.isVisible():
@@ -314,6 +322,8 @@ class MarkdownEditor(QWidget):
         # Shift+Enter: save and exit edit mode
         if obj is self.editor and event.type() == QEvent.Type.KeyPress:
             if event.key() == Qt.Key.Key_Return and (event.modifiers() & Qt.KeyboardModifier.ShiftModifier):
+                if not self._inline_switch_enabled:
+                    return False
                 self.switch_to_view_mode()
                 return True
 
@@ -391,8 +401,15 @@ class MarkdownEditor(QWidget):
         else: 
             QDesktopServices.openUrl(url)
 
+    def _on_viewer_double_clicked(self):
+        if not self._inline_switch_enabled:
+            return
+        self.switch_to_edit_mode()
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
+        if not self._toggle_visible:
+            return
         self.btn_toggle.move(self.width() - self.btn_toggle.width() - 6, 6)
         self.btn_toggle.raise_()
 
@@ -409,9 +426,17 @@ class MarkdownEditor(QWidget):
     
     def setText(self, text):
         self.editor.setText(text if text else "")
-        self.btn_toggle.setChecked(False)
-        self.toggle_mode()
+        self.switch_to_view_mode()
         
     def setPlaceholderText(self, text): self.editor.setPlaceholderText(text)
     def setMinimumHeight(self, h): self.stack.setMinimumHeight(h); return super().setMinimumHeight(h)
     def setMaximumHeight(self, h): self.stack.setMaximumHeight(h); return super().setMaximumHeight(h)
+
+    def set_toggle_button_visible(self, visible: bool) -> None:
+        self._toggle_visible = visible
+        self.btn_toggle.setVisible(visible)
+        if not visible:
+            self._inline_switch_enabled = False
+
+    def set_inline_switch_enabled(self, enabled: bool) -> None:
+        self._inline_switch_enabled = enabled
