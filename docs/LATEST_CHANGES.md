@@ -11,6 +11,9 @@ This document tracks updates made **after the latest tagged release**.
 ## Included Commits
 
 - `aab98d4` - update
+- (unreleased) Phase 4: EventBus, Global Edit Mode, Soundpad fixes
+
+---
 
 ## Delivered Since v0.8.2
 
@@ -55,25 +58,6 @@ This document tracks updates made **after the latest tagged release**.
 - Reduced Action item description editor height to make the Actions section denser and easier to scan.
 - Added runtime transparent-style enforcement for dynamic property fields (e.g., `Challenge Rating (CR)`, `Attitude`) to improve consistency across theme/state combinations.
 
-## Files Updated in This Window
-
-- `main.py`
-- `ui/main_root.py`
-- `themes/amethyst.qss`
-- `themes/baldur.qss`
-- `themes/dark.qss`
-- `themes/discord.qss`
-- `themes/emerald.qss`
-- `themes/frost.qss`
-- `themes/grim.qss`
-- `themes/light.qss`
-- `themes/midnight.qss`
-- `themes/ocean.qss`
-- `themes/parchment.qss`
-- `ui/widgets/linked_entity_widget.py`
-- `ui/widgets/markdown_editor.py`
-- `ui/widgets/npc_sheet.py`
-
 ### 7) Soundpad Crossfade & Music State Fixes
 
 - Fixed abrupt audio transitions when switching music states in the Soundpad:
@@ -85,10 +69,48 @@ This document tracks updates made **after the latest tagged release**.
   - `audio_brain.state_changed` signal is now connected to `_sync_state_buttons()` in `SoundpadPanel`.
   - When a theme loads and the first state begins playing, the corresponding button is automatically marked as checked.
 
+### 8) Phase 4 — EventBus (Architecture Patterns)
+
+- Introduced `core/event_bus.py`: a lightweight publish-subscribe event bus for cross-cutting application events.
+  - Events use `{domain}.{action}` naming: `entity.deleted`, `entity.created`, `entity.updated`, `theme.changed`, `language.changed`, `edit_mode.changed`.
+  - Error-safe: handler exceptions are logged but do not interrupt other subscribers.
+  - Duplicate subscriptions are prevented by default.
+- `MainWindow` now creates a single `EventBus` instance (`self.event_bus`) on startup and passes it to components via constructors.
+- `DatabaseTab` publishes `entity.deleted` (with `entity_id`) after a confirmed deletion; keeps the existing `entity_deleted` PyQt signal for backward compatibility.
+- `EntitySidebar` subscribes to `entity.deleted`, `entity.created`, and `entity.updated` to refresh its list automatically — no longer requires an explicit signal connection wired in `main_root.py`.
+- `MainWindow.change_theme()` and `change_language()` publish `theme.changed` / `language.changed` events so future subscribers can react without needing manual wiring.
+- Removed the fragile `db_tab.entity_deleted.connect(entity_sidebar.refresh_list)` direct connection from `main_root.py`.
+
+### 9) Global Edit Mode
+
+- `toggle_active_edit_mode()` (`main.py`) is now a true global toggle: flips `MainWindow.global_edit_mode`, updates the toolbar button state, and broadcasts `edit_mode.changed` via EventBus.
+- **Database tab (NpcSheets):** All open NpcSheet cards in both left and right panels switch to edit or view mode simultaneously. Auto-save runs for dirty sheets when edit mode is turned off. Newly opened sheets inherit the current global edit mode on creation.
+- **Session tab:** `txt_log`, `txt_notes` (MarkdownEditors) are locked to view mode when global edit is off (toggle button disabled); `inp_log_entry` (quick log QTextEdit) is read-only. All unlock when global edit is on.
+- **Mind Map:** Note nodes (MarkdownEditor) and entity nodes (NpcSheet) apply the global edit mode on toggle and on creation.
+- All components start in **read-only mode** (edit mode OFF) on app launch.
+
+### 10) Edit Mode Button Redesign
+
+- Replaced the "Edit" text label with a `✏️` emoji; button width reduced from 44px to 30px.
+- Added `objectName("editModeBtn")` with theme-aware `:checked` highlight styles in all 11 QSS theme files — each theme uses its own `primaryBtn` accent color for the active state.
+- Button tooltip still shows the localized `BTN_EDIT` string on hover.
+
+---
+
 ## Files Updated in This Window
 
 - `main.py`
 - `ui/main_root.py`
+- `ui/tabs/database_tab.py`
+- `ui/tabs/session_tab.py`
+- `ui/tabs/mind_map_tab.py`
+- `ui/widgets/entity_sidebar.py`
+- `ui/widgets/linked_entity_widget.py`
+- `ui/widgets/markdown_editor.py`
+- `ui/widgets/npc_sheet.py`
+- `core/audio/engine.py`
+- `core/event_bus.py` (new)
+- `ui/soundpad_panel.py`
 - `themes/amethyst.qss`
 - `themes/baldur.qss`
 - `themes/dark.qss`
@@ -100,20 +122,19 @@ This document tracks updates made **after the latest tagged release**.
 - `themes/midnight.qss`
 - `themes/ocean.qss`
 - `themes/parchment.qss`
-- `ui/widgets/linked_entity_widget.py`
-- `ui/widgets/markdown_editor.py`
-- `ui/widgets/npc_sheet.py`
-- `core/audio/engine.py`
-- `ui/soundpad_panel.py`
+
+---
 
 ## Validation Notes
 
 - Startup path was validated locally with offscreen boot checks.
 - Python syntax compilation passed for touched files:
   - `python3 -m py_compile main.py ui/main_root.py`
-- Recent UI transparency change compiled cleanly:
+- UI transparency change compiled cleanly:
   - `python3 -m py_compile ui/widgets/markdown_editor.py`
-- Spell/Npc sheet updates compiled cleanly:
+- Spell/NPC sheet updates compiled cleanly:
   - `python3 -m py_compile ui/widgets/linked_entity_widget.py ui/widgets/npc_sheet.py`
 - Audio crossfade fix compiled cleanly:
   - `python3 -m py_compile core/audio/engine.py ui/soundpad_panel.py`
+- EventBus + Global Edit Mode compiled cleanly:
+  - `python3 -m py_compile core/event_bus.py main.py ui/main_root.py ui/tabs/database_tab.py ui/tabs/session_tab.py ui/tabs/mind_map_tab.py ui/widgets/entity_sidebar.py`

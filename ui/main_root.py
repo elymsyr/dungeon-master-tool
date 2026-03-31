@@ -49,6 +49,7 @@ def create_root_widget(main_window):
     """Builds the main window root UI tree and returns all key widget refs."""
     data_manager = main_window.data_manager
     player_window = main_window.player_window
+    event_bus = getattr(main_window, "event_bus", None)
 
     central = QWidget()
     main_layout = QVBoxLayout(central)
@@ -73,9 +74,11 @@ def create_root_widget(main_window):
     btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
     btn_toggle_sound.clicked.connect(main_window.toggle_soundpad)
 
-    btn_edit_mode = QPushButton(tr("BTN_EDIT"))
+    btn_edit_mode = QPushButton("✏️")
     btn_edit_mode.setCheckable(True)
-    btn_edit_mode.setFixedSize(44, 26)
+    btn_edit_mode.setFixedSize(30, 26)
+    btn_edit_mode.setObjectName("editModeBtn")
+    btn_edit_mode.setToolTip(tr("BTN_EDIT"))
     btn_edit_mode.clicked.connect(main_window.toggle_active_edit_mode)
 
     lbl_campaign = QLabel(f"{tr('LBL_CAMPAIGN')} {data_manager.data.get('world_name')}")
@@ -133,22 +136,22 @@ def create_root_widget(main_window):
     content_splitter = QSplitter(Qt.Orientation.Horizontal)
     content_splitter.setHandleWidth(4)
 
-    entity_sidebar = EntitySidebar(data_manager)
+    entity_sidebar = EntitySidebar(data_manager, event_bus=event_bus)
     entity_sidebar.item_double_clicked.connect(main_window.on_entity_selected)
     content_splitter.addWidget(entity_sidebar)
 
     tabs = QTabWidget()
 
-    db_tab = DatabaseTab(data_manager, player_window)
+    db_tab = DatabaseTab(data_manager, player_window, event_bus=event_bus)
     tabs.addTab(db_tab, tr("TAB_DB"))
 
-    mind_map_tab = MindMapTab(data_manager, main_window_ref=main_window)
+    mind_map_tab = MindMapTab(data_manager, main_window_ref=main_window, event_bus=event_bus)
     tabs.addTab(mind_map_tab, tr("TAB_MIND_MAP"))
 
     map_tab = MapTab(data_manager, player_window, main_window)
     tabs.addTab(map_tab, tr("TAB_MAP"))
 
-    session_tab = SessionTab(data_manager, player_window)
+    session_tab = SessionTab(data_manager, player_window, event_bus=event_bus)
     tabs.addTab(session_tab, tr("TAB_SESSION"))
 
     content_splitter.addWidget(tabs)
@@ -166,7 +169,7 @@ def create_root_widget(main_window):
 
     main_layout.addWidget(content_splitter)
 
-    db_tab.entity_deleted.connect(entity_sidebar.refresh_list)
+    # entity.deleted → entity_sidebar.refresh_list is now handled via EventBus
     session_tab.txt_log.entity_link_clicked.connect(db_tab.open_entity_tab)
     session_tab.txt_notes.entity_link_clicked.connect(db_tab.open_entity_tab)
 

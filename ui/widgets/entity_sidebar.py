@@ -82,12 +82,17 @@ class DraggableListWidget(QListWidget):
 class EntitySidebar(QWidget):
     item_double_clicked = pyqtSignal(str) 
 
-    def __init__(self, data_manager, parent=None):
+    def __init__(self, data_manager, event_bus=None, parent=None):
         super().__init__(parent)
         self.dm = data_manager
         self.active_categories = set()
         self.active_sources = set()
         self._palette = ThemeManager.get_palette("dark")
+
+        if event_bus:
+            event_bus.subscribe("entity.deleted", lambda **_: self.refresh_list())
+            event_bus.subscribe("entity.created", lambda **_: self.refresh_list())
+            event_bus.subscribe("entity.updated", lambda **_: self.refresh_list())
 
         self.setMinimumWidth(250)
         self.setMaximumWidth(350)
