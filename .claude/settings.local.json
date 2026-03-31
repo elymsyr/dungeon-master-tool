@@ -22,7 +22,10 @@
       "Bash(QT_QPA_PLATFORM=offscreen python3 -m pytest tests/test_ui/test_npc_sheet.py -v)",
       "Bash(QT_QPA_PLATFORM=offscreen python3 -m pytest tests/test_ui/test_combat_tracker.py -v)",
       "Bash(QT_QPA_PLATFORM=offscreen python3 -m pytest tests/test_ui/test_combat_tracker.py -v --timeout=60)",
-      "Bash(QT_QPA_PLATFORM=offscreen python3 -m pytest tests/test_ui/test_combat_tracker.py::test_roll_initiatives_sets_numeric_initiative -v -s)"
+      "Bash(QT_QPA_PLATFORM=offscreen python3 -m pytest tests/test_ui/test_combat_tracker.py::test_roll_initiatives_sets_numeric_initiative -v -s)",
+      "Bash(python3 -m pytest tests/test_core/test_api_client.py -q)",
+      "Bash(python3 -m pytest tests/ -q)",
+      "Bash(python3 -m pytest tests/test_core/ -q)"
     ]
   }
 }
