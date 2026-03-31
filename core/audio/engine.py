@@ -69,13 +69,12 @@ class MultiTrackDeck(QObject):
         self.deck_target_volume = 0.0 
         self.active_levels = ["base"]
 
-    @pyqtProperty(float)
-    def deck_volume(self): return self.deck_target_volume
-    
-    @deck_volume.setter
-    def deck_volume(self, val):
-        self.deck_target_volume = val
-        self.update_mix()
+    def apply_volume_direct(self, deck_vol):
+        """Directly sets player volumes without animation. Used during crossfade."""
+        self.deck_target_volume = deck_vol
+        for pid, player in self.players.items():
+            target = deck_vol if pid in self.active_levels else 0.0
+            player.volume = target
 
     def load_state(self, state: MusicState):
         for p in self.players.values(): p.stop(); p.deleteLater()
@@ -123,7 +122,8 @@ class MusicBrain(QObject):
         self.ambience_slot_volumes = [0.7] * self.AMBIENCE_PLAYER_COUNT
         
         self.anim = QPropertyAnimation(self, b"fade_ratio")
-        self.anim.setDuration(2000)
+        self.anim.setDuration(3000)
+        self.anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
         
         # Music System
         self.deck_a = MultiTrackDeck(self)
@@ -162,9 +162,8 @@ class MusicBrain(QObject):
     @fade_ratio.setter
     def fade_ratio(self, val):
         self.music_fade_ratio = val
-        # Deck volume = Master * FadeRatio
-        self.active_deck.deck_volume = self.master_volume * val
-        self.inactive_deck.deck_volume = self.master_volume * (1.0 - val)
+        self.active_deck.apply_volume_direct(self.master_volume * val)
+        self.inactive_deck.apply_volume_direct(self.master_volume * (1.0 - val))
 
     def set_master_volume(self, volume: float):
         """
@@ -174,8 +173,8 @@ class MusicBrain(QObject):
         self.master_volume = volume
 
         # 1. Update Music Decks — preserve current fade ratio
-        self.active_deck.deck_volume = self.master_volume * self.music_fade_ratio
-        self.inactive_deck.deck_volume = self.master_volume * (1.0 - self.music_fade_ratio)
+        self.active_deck.apply_volume_direct(self.master_volume * self.music_fade_ratio)
+        self.inactive_deck.apply_volume_direct(self.master_volume * (1.0 - self.music_fade_ratio))
 
         # 2. Update Ambience Players
         for i in range(self.AMBIENCE_PLAYER_COUNT):
@@ -207,7 +206,7 @@ class MusicBrain(QObject):
         target_state = self.current_theme.states[state_name]
         self.inactive_deck.load_state(target_state)
         self.inactive_deck.set_intensity_mask(self._get_mask_for_level(self.current_intensity_level))
-        self.inactive_deck.deck_volume = 0.0
+        self.inactive_deck.apply_volume_direct(0.0)
         self.inactive_deck.play()
         
         self.active_deck, self.inactive_deck = self.inactive_deck, self.active_deck
@@ -239,8 +238,7 @@ class MusicBrain(QObject):
         self.active_deck.load_state(state)
         self.active_deck.set_intensity_mask(self._get_mask_for_level(self.current_intensity_level))
         
-        # FIX: Apply master volume on initial hard switch too
-        self.active_deck.deck_volume = self.master_volume
+        self.active_deck.deck_target_volume = self.master_volume
         self.active_deck.play()
         
         self.music_fade_ratio = 1.0
