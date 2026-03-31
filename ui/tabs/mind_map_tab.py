@@ -234,10 +234,13 @@ class FloatingControls(QWidget):
         return btn
 
 class MindMapTab(QWidget):
-    def __init__(self, data_manager, main_window_ref=None):
+    def __init__(self, data_manager, main_window_ref=None, event_bus=None):
         super().__init__()
         self.dm = data_manager
         self.main_window_ref = main_window_ref
+        self._global_edit_mode = False
+        if event_bus:
+            event_bus.subscribe("edit_mode.changed", self._on_edit_mode_changed)
         self.player_window = main_window_ref.player_window if main_window_ref else None
         
         self.nodes = {} 
@@ -426,6 +429,18 @@ class MindMapTab(QWidget):
         self._history_index += 1
         self._restore_history_state()
 
+    def _on_edit_mode_changed(self, enabled: bool, **_):
+        """Apply global edit mode to all note and entity nodes in the mind map."""
+        self._global_edit_mode = enabled
+        for node in self.nodes.values():
+            widget = node.proxy.widget()
+            if isinstance(widget, MarkdownEditor):
+                widget.btn_toggle.setEnabled(enabled)
+                if not enabled:
+                    widget.switch_to_view_mode()
+            elif isinstance(widget, NpcSheet):
+                widget.set_edit_mode(enabled)
+
     def apply_theme(self, theme_name):
         """
         Called by the Main Window.
@@ -600,6 +615,11 @@ class MindMapTab(QWidget):
         # Notify the editor of the current theme on first open (MindMapNode handles it, but be safe)
         editor.refresh_theme(ThemeManager.get_palette(self.dm.current_theme))
 
+        # Apply current global edit mode
+        editor.btn_toggle.setEnabled(self._global_edit_mode)
+        if not self._global_edit_mode and content.strip():
+            editor.switch_to_view_mode()
+
         node = self.create_node_base(node_id, editor, x, y, w, h, "note")
         first_line = content.strip().split("\n")[0][:40] if content and content.strip() else "Note"
         node.display_name = first_line
@@ -624,6 +644,7 @@ class MindMapTab(QWidget):
         sheet.setProperty("entity_id", eid)
         sheet.populate_sheet(ent_data)
         sheet.set_embedded_mode(True)
+        sheet.set_edit_mode(self._global_edit_mode)
         
         # Entity Sheet must receive the current theme on first open
         sheet.refresh_theme(ThemeManager.get_palette(self.dm.current_theme))

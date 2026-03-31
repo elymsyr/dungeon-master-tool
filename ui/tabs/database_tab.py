@@ -96,11 +96,16 @@ class DatabaseTab(QWidget):
     Manages only the right-side workspace (Dual-Panel Card System).
     The left-side entity list lives in the Global Sidebar.
     """
-    def __init__(self, data_manager, player_window):
+    def __init__(self, data_manager, player_window, event_bus=None):
         super().__init__()
         self.dm = data_manager
         self.player_window = player_window
-        
+        self._event_bus = event_bus
+        self._global_edit_mode = False
+
+        if event_bus:
+            event_bus.subscribe("edit_mode.changed", self._on_edit_mode_changed)
+
         self.init_ui()
 
     def init_ui(self):
@@ -208,6 +213,9 @@ class DatabaseTab(QWidget):
         tab_index = target_manager.addTab(new_sheet, tab_title)
         target_manager.setCurrentIndex(tab_index)
 
+        # Apply the current global edit mode to the newly opened sheet
+        new_sheet.set_edit_mode(self._global_edit_mode)
+
     def _fetch_and_open_api_entity(self, cat, idx, target_panel):
         """Starts an API Worker."""
         self.api_worker = ApiSearchWorker(self.dm, cat, idx)
@@ -259,14 +267,26 @@ class DatabaseTab(QWidget):
         if QMessageBox.question(self, tr("BTN_DELETE"), tr("MSG_CONFIRM_DELETE")) == QMessageBox.StandardButton.Yes:
             self.dm.delete_entity(eid)
             self._close_sheet_tab(sheet)
-            # Emit the signal
             self.entity_deleted.emit()
+            if self._event_bus:
+                self._event_bus.publish("entity.deleted", entity_id=eid)
 
     def _close_sheet_tab(self, sheet):
         for manager in [self.tab_manager_left, self.tab_manager_right]:
             idx = manager.indexOf(sheet)
             if idx != -1:
                 manager.removeTab(idx)
+
+    def _on_edit_mode_changed(self, enabled: bool, **_):
+        """Apply global edit mode to all currently open NpcSheets."""
+        self._global_edit_mode = enabled
+        for manager in [self.tab_manager_left, self.tab_manager_right]:
+            for i in range(manager.count()):
+                sheet = manager.widget(i)
+                if isinstance(sheet, NpcSheet):
+                    if not enabled and sheet.is_edit_mode:
+                        self.save_sheet_data(sheet)
+                    sheet.set_edit_mode(enabled)
 
     def get_active_sheet(self):
         """Return the currently focused NpcSheet, or fall back to the active tab."""

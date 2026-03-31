@@ -12,7 +12,7 @@ from ui.windows.battle_map_window import BattleMapWidget
 import random
 
 class SessionTab(QWidget):
-    def __init__(self, data_manager, player_window=None):
+    def __init__(self, data_manager, player_window=None, event_bus=None):
         super().__init__()
         self.dm = data_manager
         self._player_window = player_window
@@ -24,6 +24,9 @@ class SessionTab(QWidget):
         self._autosave_timer.setInterval(400)
         self._autosave_timer.timeout.connect(self._perform_debounced_save)
         self.init_ui()
+        self._apply_edit_mode(False)  # Start in read-only mode
+        if event_bus:
+            event_bus.subscribe("edit_mode.changed", self._apply_edit_mode)
         
         last_sid = self.dm.get_last_active_session_id()
         if last_sid:
@@ -370,6 +373,15 @@ class SessionTab(QWidget):
             self.load_session()
         else: 
             QMessageBox.warning(self, tr("MSG_WARNING"), "Session not found or has been deleted.")
+    def _apply_edit_mode(self, enabled: bool = False, **_):
+        """Apply global edit mode to session text fields."""
+        self.txt_log.btn_toggle.setEnabled(enabled)
+        self.txt_notes.btn_toggle.setEnabled(enabled)
+        if not enabled:
+            self.txt_log.switch_to_view_mode()
+            self.txt_notes.switch_to_view_mode()
+        self.inp_log_entry.setReadOnly(not enabled)
+
     def retranslate_ui(self):
         self.btn_new_session.setText(tr("BTN_NEW_SESSION"))
         self.btn_save_session.setText(tr("BTN_SAVE"))

@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 
 from config import CACHE_DIR, DATA_ROOT, DATA_ROOT_MODE, load_theme
 from core.data_manager import DataManager
+from core.event_bus import EventBus
 from core.locales import tr
 from core.log_config import setup_logging
 from core.theme_manager import ThemeManager
@@ -33,6 +34,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.data_manager = data_manager
         self.dev_mode = dev_mode
+        self.event_bus = EventBus()
+        self.global_edit_mode = False
         self.player_window = PlayerWindow(dev_mode=self.dev_mode)
 
         self.theme_list = [
@@ -308,11 +311,11 @@ class MainWindow(QMainWindow):
         return real_panel
 
     def toggle_active_edit_mode(self):
-        """Toggle edit mode on the currently active entity card."""
-        if hasattr(self, "db_tab"):
-            sheet = self.db_tab.get_active_sheet()
-            if sheet:
-                sheet._toggle_edit_mode()
+        """Toggle global edit mode across all open editors and sheets."""
+        self.global_edit_mode = not self.global_edit_mode
+        if hasattr(self, "btn_edit_mode"):
+            self.btn_edit_mode.setChecked(self.global_edit_mode)
+        self.event_bus.publish("edit_mode.changed", enabled=self.global_edit_mode)
 
     def _show_data_root_notice_once(self):
         global _DATA_ROOT_FALLBACK_NOTICE_SHOWN
@@ -402,6 +405,7 @@ class MainWindow(QMainWindow):
         code = codes[index] if index < len(codes) else "EN"
         self.data_manager.save_settings({"language": code})
         self.retranslate_ui()
+        self.event_bus.publish("language.changed", code=code)
 
     def toggle_soundpad(self):
         panel = self._ensure_soundpad_panel()
@@ -433,6 +437,7 @@ class MainWindow(QMainWindow):
                 self.mind_map_tab.apply_theme(theme_name)
 
             self.refresh_database_tab_themes(theme_name)
+            self.event_bus.publish("theme.changed", theme_name=theme_name, stylesheet=self.current_stylesheet)
 
     def refresh_database_tab_themes(self, theme_name):
         palette = ThemeManager.get_palette(theme_name)

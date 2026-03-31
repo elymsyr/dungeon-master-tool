@@ -133,3 +133,7 @@ QTextBrowser:read-only,
 QComboBox:editable {
     background-color: transparent;
 }
+
+ 0; border: 1px solid #6d4c41; border-radius: 4px; }
+QPushButton#editModeBtn:checked { background-color: #5d4037; border-color: #ffd700; }
+QPushButton#editModeBtn:hover { border-color: #ffd700; }
