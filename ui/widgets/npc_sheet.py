@@ -27,7 +27,6 @@ from PyQt6.QtWidgets import (
     QScrollArea,
     QStyle,
     QTabWidget,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -38,6 +37,10 @@ from core.theme_manager import ThemeManager
 from ui.widgets.image_gallery import ImageGalleryWidget
 from ui.widgets.linked_entity_widget import LinkedEntityWidget
 from ui.widgets.markdown_editor import MarkdownEditor
+from ui.widgets.npc_sheet_actions_tab import NpcSheetActionsTab
+from ui.widgets.npc_sheet_inventory_tab import NpcSheetInventoryTab
+from ui.widgets.npc_sheet_spells_tab import NpcSheetSpellsTab
+from ui.widgets.npc_sheet_stats_tab import NpcSheetStatsTab
 from ui.widgets.pdf_manager import PdfManagerWidget
 
 logger = logging.getLogger(__name__)
@@ -65,17 +68,14 @@ class NpcSheet(QWidget):
         self.dm = data_manager
         self.dynamic_inputs = {}
 
-        # Sub-widget data lists (battlemap stays on NpcSheet; others delegate)
         self.battlemap_list: list[str] = []
-
         self.is_dirty = False
         self.is_embedded = False
         self.is_edit_mode: bool = False
         self._snapshot: dict | None = None
-        self._add_feature_buttons: list[QPushButton] = []
         self.current_palette = ThemeManager.get_palette(self.dm.current_theme)
 
-        # Create sub-widgets before init_ui so they can be embedded
+        # Leaf sub-widgets (shared between NpcSheet and tab sub-widgets)
         self.image_gallery = ImageGalleryWidget(self.dm)
         self.pdf_manager = PdfManagerWidget(self.dm)
         self.spell_widget = LinkedEntityWidget(
@@ -93,9 +93,21 @@ class NpcSheet(QWidget):
             open_entity_callback=self.request_open_entity.emit,
         )
 
+        # Tab sub-widgets
+        self._stats_tab = NpcSheetStatsTab(self.mark_as_dirty, self.current_palette)
+        self._actions_tab = NpcSheetActionsTab(
+            self.dm, self.mark_as_dirty, self.request_open_entity.emit
+        )
+        self._inventory_tab = NpcSheetInventoryTab(
+            self.item_widget, self.dm, self.mark_as_dirty, self.request_open_entity.emit
+        )
+        self._spells_tab = NpcSheetSpellsTab(
+            self.spell_widget, self.dm, self.mark_as_dirty, self.request_open_entity.emit
+        )
+
         self.init_ui()
 
-        # Backward-compat aliases (set after init_ui creates the sub-widget UIs)
+        # Backward-compat aliases — image / pdf / linked entities
         self.list_pdfs = self.pdf_manager.list_pdfs
         self.list_assigned_spells = self.spell_widget.list_assigned
         self.list_assigned_items = self.item_widget.list_assigned
@@ -108,6 +120,34 @@ class NpcSheet(QWidget):
         self.btn_open_pdf = self.pdf_manager.btn_open
         self.btn_remove_pdf = self.pdf_manager.btn_remove
         self.btn_open_pdf_folder = self.pdf_manager.btn_open_folder
+
+        # Backward-compat aliases — stats tab internals
+        self.grp_base_stats = self._stats_tab.grp_base_stats
+        self.grp_combat_stats = self._stats_tab.grp_combat_stats
+        self.grp_defense = self._stats_tab.grp_defense
+        self.stats_inputs = self._stats_tab.stats_inputs
+        self.stats_modifiers = self._stats_tab.stats_modifiers
+        self.inp_hp = self._stats_tab.inp_hp
+        self.inp_max_hp = self._stats_tab.inp_max_hp
+        self.inp_ac = self._stats_tab.inp_ac
+        self.inp_speed = self._stats_tab.inp_speed
+        self.inp_prof = self._stats_tab.inp_prof
+        self.inp_pp = self._stats_tab.inp_pp
+        self.inp_init = self._stats_tab.inp_init
+        self.inp_saves = self._stats_tab.inp_saves
+        self.inp_skills = self._stats_tab.inp_skills
+        self.inp_vuln = self._stats_tab.inp_vuln
+        self.inp_resist = self._stats_tab.inp_resist
+        self.inp_dmg_immune = self._stats_tab.inp_dmg_immune
+        self.inp_cond_immune = self._stats_tab.inp_cond_immune
+
+        # Backward-compat aliases — section containers
+        self.trait_container = self._actions_tab.trait_container
+        self.action_container = self._actions_tab.action_container
+        self.reaction_container = self._actions_tab.reaction_container
+        self.legendary_container = self._actions_tab.legendary_container
+        self.inventory_container = self._inventory_tab.inventory_container
+        self.custom_spell_container = self._spells_tab.custom_spell_container
 
         # Ctrl+S shortcut
         self.shortcut_save = QShortcut(QKeySequence("Ctrl+S"), self)
@@ -163,6 +203,9 @@ class NpcSheet(QWidget):
 
     def set_embedded_mode(self, enabled: bool) -> None:
         self.is_embedded = enabled
+        self._actions_tab.is_embedded = enabled
+        self._inventory_tab.is_embedded = enabled
+        self._spells_tab.is_embedded = enabled
         if enabled:
             for btn in [self.btn_edit, self.btn_discard, self.btn_save, self.btn_done, self.btn_delete]:
                 btn.setVisible(False)
@@ -207,29 +250,22 @@ class NpcSheet(QWidget):
         """Set all inputs to editable or read-only and toggle UI elements."""
         ro = not editing
 
-        # --- QLineEdit fields ---
-        for w in [
-            self.inp_name, self.inp_tags, self.inp_hp, self.inp_max_hp,
-            self.inp_ac, self.inp_speed, self.inp_prof, self.inp_pp,
-            self.inp_init, self.inp_saves, self.inp_skills,
-            self.inp_vuln, self.inp_resist, self.inp_dmg_immune, self.inp_cond_immune,
-        ]:
-            w.setReadOnly(ro)
-        for w in self.stats_inputs.values():
+        # Header QLineEdit fields
+        for w in [self.inp_name, self.inp_tags]:
             w.setReadOnly(ro)
 
-        # --- QComboBox fields ---
+        # QComboBox fields
         self.inp_type.setEnabled(editing)
         self.combo_location.setEnabled(editing)
 
-        # --- Dynamic type-specific inputs ---
+        # Dynamic type-specific inputs
         for w in self.dynamic_inputs.values():
             if isinstance(w, QLineEdit):
                 w.setReadOnly(ro)
             else:
                 w.setEnabled(editing)
 
-        # --- MarkdownEditor fields ---
+        # MarkdownEditor fields
         if ro:
             self.inp_desc.switch_to_view_mode()
             self.inp_dm_notes.switch_to_view_mode()
@@ -237,53 +273,21 @@ class NpcSheet(QWidget):
             self.inp_desc.switch_to_edit_mode()
             self.inp_dm_notes.switch_to_edit_mode()
 
-        # --- Feature cards ---
-        for container in [
-            self.trait_container, self.action_container, self.reaction_container,
-            self.legendary_container, self.inventory_container, self.custom_spell_container,
-        ]:
-            for i in range(container.dynamic_area.count()):
-                card = container.dynamic_area.itemAt(i).widget()
-                if card is None:
-                    continue
-                if hasattr(card, "inp_title"):
-                    card.inp_title.setReadOnly(ro)
-                if hasattr(card, "inp_desc"):
-                    if ro:
-                        card.inp_desc.switch_to_view_mode()
-                    else:
-                        card.inp_desc.switch_to_edit_mode()
-                if hasattr(card, "spell_attr_inputs"):
-                    for widget in card.spell_attr_inputs.values():
-                        if isinstance(widget, QLineEdit):
-                            widget.setReadOnly(ro)
-                        else:
-                            widget.setEnabled(editing)
-                if hasattr(card, "spell_attr_box"):
-                    card.spell_attr_box.setVisible(editing)
-                if hasattr(card, "spell_preview_box"):
-                    self._refresh_manual_spell_card_preview(card)
-                    card.spell_preview_box.setVisible(ro)
-                    if hasattr(card, "inp_desc"):
-                        card.inp_desc.setVisible(editing)
-                if hasattr(card, "btn_del"):
-                    card.btn_del.setVisible(editing)
+        # Delegate to tab sub-widgets
+        self._stats_tab.set_edit_mode(editing)
+        self._actions_tab.set_edit_mode(editing)
+        self._inventory_tab.set_edit_mode(editing)
+        self._spells_tab.set_edit_mode(editing)
 
-        # --- "Add" feature buttons ---
-        for btn in self._add_feature_buttons:
-            btn.setVisible(editing)
-
-        # --- Sub-widgets ---
+        # Other sub-widgets
         self.image_gallery.set_edit_mode(editing)
         self.pdf_manager.set_edit_mode(editing)
-        self.spell_widget.set_edit_mode(editing)
-        self.item_widget.set_edit_mode(editing)
 
-        # --- Battlemap add/remove buttons ---
+        # Battlemap add/remove buttons
         self.btn_add_map.setVisible(editing)
         self.btn_remove_map.setVisible(editing)
 
-        # --- Footer ---
+        # Footer
         self.btn_edit.setVisible(not editing)
         self.btn_done.setVisible(editing)
         self.btn_save.setVisible(editing)
@@ -295,19 +299,10 @@ class NpcSheet(QWidget):
         self.current_palette = palette
         self.inp_desc.refresh_theme(palette)
         self.inp_dm_notes.refresh_theme(palette)
-
-        for container in [
-            self.trait_container,
-            self.action_container,
-            self.reaction_container,
-            self.legendary_container,
-            self.inventory_container,
-            self.custom_spell_container,
-        ]:
-            for i in range(container.dynamic_area.count()):
-                widget = container.dynamic_area.itemAt(i).widget()
-                if widget and hasattr(widget, "inp_desc"):
-                    widget.inp_desc.refresh_theme(palette)
+        self._stats_tab.refresh_theme(palette)
+        self._actions_tab.refresh_theme(palette)
+        self._inventory_tab.refresh_theme(palette)
+        self._spells_tab.refresh_theme(palette)
 
         border_col = palette.get("dm_note_border", "#d32f2f")
         title_col = palette.get("dm_note_title", "#e57373")
@@ -397,23 +392,19 @@ class NpcSheet(QWidget):
         self.layout_dynamic = QFormLayout(self.grp_dynamic)
         self.content_layout.addWidget(self.grp_dynamic)
 
-        # Tabs
+        # Tabs — use sub-widget instances directly
         self.tabs = QTabWidget()
-        self.tab_stats = QWidget()
-        self.setup_stats_tab()
-        self.tabs.addTab(self.tab_stats, tr("TAB_STATS"))
+        self.tab_stats = self._stats_tab
+        self.tabs.addTab(self._stats_tab, tr("TAB_STATS"))
 
-        self.tab_spells = QWidget()
-        self.setup_spells_tab()
-        self.tabs.addTab(self.tab_spells, tr("TAB_SPELLS"))
+        self.tab_spells = self._spells_tab
+        self.tabs.addTab(self._spells_tab, tr("TAB_SPELLS"))
 
-        self.tab_features = QWidget()
-        self.setup_features_tab()
-        self.tabs.addTab(self.tab_features, tr("TAB_ACTIONS"))
+        self.tab_features = self._actions_tab
+        self.tabs.addTab(self._actions_tab, tr("TAB_ACTIONS"))
 
-        self.tab_inventory = QWidget()
-        self.setup_inventory_tab()
-        self.tabs.addTab(self.tab_inventory, tr("TAB_INV"))
+        self.tab_inventory = self._inventory_tab
+        self.tabs.addTab(self._inventory_tab, tr("TAB_INV"))
 
         self.tab_docs = QWidget()
         self.setup_docs_tab()
@@ -488,190 +479,6 @@ class NpcSheet(QWidget):
         self._apply_edit_mode_ui(False)
 
     # ------------------------------------------------------------------
-    # Feature card helper
-    # ------------------------------------------------------------------
-
-    def add_feature_card(self, group, name="", desc="", ph_title=None, ph_desc=None):
-        self.mark_as_dirty()
-        if ph_title is None:
-            ph_title = tr("LBL_TITLE_PH")
-        if ph_desc is None:
-            ph_desc = tr("LBL_DETAILS_PH")
-        desc_min_height = 88 if group is self.action_container else 120
-
-        card = QFrame()
-        card.setProperty("class", "featureCard")
-        l = QVBoxLayout(card)
-
-        h_header = QHBoxLayout()
-        t = QLineEdit(name)
-        t.setPlaceholderText(ph_title)
-        t.setStyleSheet("font-weight: bold; border:none; font-size: 14px;")
-        t.textChanged.connect(self.mark_as_dirty)
-
-        btn_del = QPushButton()
-        btn_del.setFixedSize(24, 24)
-        btn_del.setIcon(
-            self.style().standardIcon(QStyle.StandardPixmap.SP_TitleBarCloseButton)
-        )
-        btn_del.setStyleSheet("background: transparent; border: none;")
-        btn_del.clicked.connect(
-            lambda: [
-                group.dynamic_area.removeWidget(card),
-                card.deleteLater(),
-                self.mark_as_dirty(),
-            ]
-        )
-
-        h_header.addWidget(t)
-        h_header.addWidget(btn_del)
-        l.addLayout(h_header)
-
-        d = MarkdownEditor(text=desc)
-        d.set_data_manager(self.dm)
-        d.set_toggle_button_visible(False)
-        d.entity_link_clicked.connect(self.request_open_entity.emit)
-        d.setPlaceholderText(ph_desc)
-        d.setMinimumHeight(desc_min_height)
-        d.textChanged.connect(self.mark_as_dirty)
-
-        if self.is_embedded:
-            d.set_transparent_mode(True)
-
-        l.addWidget(d)
-        group.dynamic_area.addWidget(card)
-        card.inp_title = t
-        card.inp_desc = d
-        card.btn_del = btn_del
-        return card
-
-    def add_manual_spell_card(
-        self,
-        group,
-        name: str = "",
-        desc: str = "",
-        spell_attrs: dict | None = None,
-    ):
-        card = self.add_feature_card(group, name, desc)
-        attrs = spell_attrs if isinstance(spell_attrs, dict) else {}
-
-        attr_box = QFrame()
-        attr_layout = QFormLayout(attr_box)
-        attr_layout.setContentsMargins(0, 0, 0, 0)
-        attr_layout.setSpacing(4)
-
-        spell_attr_inputs = {}
-        for label_key, dtype, options in ENTITY_SCHEMAS.get("Spell", []):
-            if dtype == "combo":
-                widget = QComboBox()
-                widget.setEditable(True)
-                if options:
-                    for opt in options:
-                        widget.addItem(
-                            tr(opt) if str(opt).startswith("LBL_") else opt, opt
-                        )
-                self._set_combo_value(widget, attrs.get(label_key, ""))
-                widget.editTextChanged.connect(self.mark_as_dirty)
-                widget.currentIndexChanged.connect(self.mark_as_dirty)
-                widget.editTextChanged.connect(
-                    lambda _=None, c=card: self._refresh_manual_spell_card_preview(c)
-                )
-                widget.currentIndexChanged.connect(
-                    lambda _=None, c=card: self._refresh_manual_spell_card_preview(c)
-                )
-                self._force_transparent_combo(widget)
-            else:
-                widget = QLineEdit(str(attrs.get(label_key, "") or ""))
-                widget.textChanged.connect(self.mark_as_dirty)
-                widget.textChanged.connect(
-                    lambda _=None, c=card: self._refresh_manual_spell_card_preview(c)
-                )
-                self._force_transparent_line_edit(widget)
-
-            spell_attr_inputs[label_key] = widget
-            attr_layout.addRow(tr(label_key), widget)
-
-        preview_box = QFrame()
-        preview_layout = QVBoxLayout(preview_box)
-        preview_layout.setContentsMargins(0, 0, 0, 0)
-        preview_layout.setSpacing(2)
-
-        preview_labels = {}
-        for label_key, _, _ in ENTITY_SCHEMAS.get("Spell", []):
-            lbl = QLabel()
-            lbl.setWordWrap(True)
-            lbl.setStyleSheet("font-size: 11px; color: #b0b0b0;")
-            preview_layout.addWidget(lbl)
-            preview_labels[label_key] = lbl
-
-        lbl_desc = QLabel()
-        lbl_desc.setWordWrap(True)
-        lbl_desc.setStyleSheet("font-size: 11px; color: #b0b0b0;")
-        preview_layout.addWidget(lbl_desc)
-
-        card.layout().insertWidget(1, attr_box)
-        card.layout().insertWidget(2, preview_box)
-        card.spell_attr_inputs = spell_attr_inputs
-        card.spell_attr_box = attr_box
-        card.spell_preview_box = preview_box
-        card.spell_preview_labels = preview_labels
-        card.spell_preview_desc = lbl_desc
-        card.inp_title.textChanged.connect(
-            lambda _=None, c=card: self._refresh_manual_spell_card_preview(c)
-        )
-        card.inp_desc.textChanged.connect(
-            lambda _=None, c=card: self._refresh_manual_spell_card_preview(c)
-        )
-        self._refresh_manual_spell_card_preview(card)
-        return card
-
-    @staticmethod
-    def _set_combo_value(combo: QComboBox, value) -> None:
-        text = str(value or "")
-        if not text:
-            return
-
-        idx = combo.findData(text)
-        if idx >= 0:
-            combo.setCurrentIndex(idx)
-            return
-
-        idx = combo.findText(text)
-        if idx >= 0:
-            combo.setCurrentIndex(idx)
-            return
-
-        combo.setCurrentText(text)
-
-    @staticmethod
-    def _short_preview_text(text: str, max_len: int = 260) -> str:
-        cleaned = " ".join(str(text or "").split())
-        if not cleaned:
-            return "-"
-        if len(cleaned) <= max_len:
-            return cleaned
-        return f"{cleaned[: max_len - 3]}..."
-
-    def _refresh_manual_spell_card_preview(self, card) -> None:
-        labels = getattr(card, "spell_preview_labels", {})
-        inputs = getattr(card, "spell_attr_inputs", {})
-        for label_key, lbl in labels.items():
-            input_widget = inputs.get(label_key)
-            if input_widget is None:
-                continue
-            if isinstance(input_widget, QComboBox):
-                raw = input_widget.currentText()
-            else:
-                raw = input_widget.text()
-            lbl.setText(f"{tr(label_key)}: {self._short_preview_text(raw, 120)}")
-
-        desc_label = getattr(card, "spell_preview_desc", None)
-        if desc_label is not None:
-            desc_label.setText(
-                f"{tr('LBL_DESC')}: {self._short_preview_text(card.inp_desc.toPlainText())}"
-            )
-
-    # ------------------------------------------------------------------
     # Data binding
     # ------------------------------------------------------------------
 
@@ -710,27 +517,6 @@ class NpcSheet(QWidget):
         else:
             self.combo_location.setCurrentIndex(0)
 
-        stats = data.get("stats", {})
-        for k, v in self.stats_inputs.items():
-            v.setText(str(stats.get(k, 10)))
-            self._update_modifier(k, v.text())
-
-        c = data.get("combat_stats", {})
-        self.inp_hp.setText(safe_str(c.get("hp", "")))
-        self.inp_max_hp.setText(safe_str(c.get("max_hp", "")))
-        self.inp_ac.setText(safe_str(c.get("ac", "")))
-        self.inp_speed.setText(safe_str(c.get("speed", "")))
-        self.inp_init.setText(safe_str(c.get("initiative", "")))
-
-        self.inp_saves.setText(safe_str(data.get("saving_throws", "")))
-        self.inp_skills.setText(safe_str(data.get("skills", "")))
-        self.inp_vuln.setText(safe_str(data.get("damage_vulnerabilities", "")))
-        self.inp_resist.setText(safe_str(data.get("damage_resistances", "")))
-        self.inp_dmg_immune.setText(safe_str(data.get("damage_immunities", "")))
-        self.inp_cond_immune.setText(safe_str(data.get("condition_immunities", "")))
-        self.inp_prof.setText(safe_str(data.get("proficiency_bonus", "")))
-        self.inp_pp.setText(safe_str(data.get("passive_perception", "")))
-
         self.update_ui_by_type(curr_type)
         attrs = data.get("attributes", {})
         for label_key, widget in self.dynamic_inputs.items():
@@ -744,30 +530,16 @@ class NpcSheet(QWidget):
             else:
                 widget.setText(safe_str(val))
 
-        self.clear_all_cards()
-        for k, container in [
-            ("traits", self.trait_container),
-            ("actions", self.action_container),
-            ("reactions", self.reaction_container),
-            ("legendary_actions", self.legendary_container),
-            ("inventory", self.inventory_container),
-        ]:
-            for item in data.get(k) or []:
-                self.add_feature_card(
-                    container,
-                    safe_str(item.get("name")),
-                    safe_str(item.get("desc")),
-                )
-        for item in data.get("custom_spells") or []:
-            attrs = item.get("attributes")
-            self.add_manual_spell_card(
-                self.custom_spell_container,
-                safe_str(item.get("name")),
-                safe_str(item.get("desc")),
-                attrs if isinstance(attrs, dict) else {},
-            )
+        # Delegate to tab sub-widgets
+        self._stats_tab.populate(data)
+        self._actions_tab.clear_cards()
+        self._actions_tab.populate(data)
+        self._inventory_tab.clear_cards()
+        self._inventory_tab.populate(data)
+        self._spells_tab.clear_cards()
+        self._spells_tab.populate(data)
 
-        # Delegate to sub-widgets
+        # Linked entity sub-widgets
         self.spell_widget.set_linked_ids(data.get("spells", []))
         self.item_widget.set_linked_ids(data.get("equipment_ids", []))
 
@@ -794,45 +566,13 @@ class NpcSheet(QWidget):
         if not self.inp_name.text():
             return None
 
-        def get_cards(container):
-            res = []
-            for i in range(container.dynamic_area.count()):
-                w = container.dynamic_area.itemAt(i).widget()
-                if w:
-                    res.append({"name": w.inp_title.text(), "desc": w.inp_desc.toPlainText()})
-            return res
-
-        def get_manual_spell_cards(container):
-            res = []
-            for i in range(container.dynamic_area.count()):
-                w = container.dynamic_area.itemAt(i).widget()
-                if not w:
-                    continue
-                attrs = {}
-                for label_key, input_widget in getattr(
-                    w, "spell_attr_inputs", {}
-                ).items():
-                    if isinstance(input_widget, QComboBox):
-                        attrs[label_key] = input_widget.currentText()
-                    else:
-                        attrs[label_key] = input_widget.text()
-
-                res.append(
-                    {
-                        "name": w.inp_title.text(),
-                        "desc": w.inp_desc.toPlainText(),
-                        "attributes": attrs,
-                    }
-                )
-            return res
-
         loc_id = self.combo_location.currentData()
         loc_text = self.combo_location.currentText()
         final_loc = (
             loc_id if (loc_id and self.combo_location.currentIndex() > 0) else loc_text.strip()
         )
 
-        return {
+        result = {
             "name": self.inp_name.text(),
             "type": self.inp_type.currentText(),
             "source": self.inp_source.text(),
@@ -842,58 +582,31 @@ class NpcSheet(QWidget):
             "images": self.image_gallery.get_images(),
             "battlemaps": self.battlemap_list,
             "location_id": final_loc,
-            "stats": {k: int(v.text() or 10) for k, v in self.stats_inputs.items()},
-            "combat_stats": {
-                "hp": self.inp_hp.text(),
-                "max_hp": self.inp_max_hp.text(),
-                "ac": self.inp_ac.text(),
-                "speed": self.inp_speed.text(),
-                "initiative": self.inp_init.text(),
-            },
-            "saving_throws": self.inp_saves.text(),
-            "skills": self.inp_skills.text(),
-            "damage_vulnerabilities": self.inp_vuln.text(),
-            "damage_resistances": self.inp_resist.text(),
-            "damage_immunities": self.inp_dmg_immune.text(),
-            "condition_immunities": self.inp_cond_immune.text(),
-            "proficiency_bonus": self.inp_prof.text(),
-            "passive_perception": self.inp_pp.text(),
             "attributes": {
-                l: (w.currentText() if isinstance(w, QComboBox) else w.text())
-                for l, w in self.dynamic_inputs.items()
+                lk: (w.currentText() if isinstance(w, QComboBox) else w.text())
+                for lk, w in self.dynamic_inputs.items()
             },
-            "traits": get_cards(self.trait_container),
-            "actions": get_cards(self.action_container),
-            "reactions": get_cards(self.reaction_container),
-            "legendary_actions": get_cards(self.legendary_container),
-            "inventory": get_cards(self.inventory_container),
-            "custom_spells": get_manual_spell_cards(self.custom_spell_container),
             "spells": self.spell_widget.get_linked_ids(),
             "equipment_ids": self.item_widget.get_linked_ids(),
             "pdfs": self.pdf_manager.get_pdfs(),
         }
+        result.update(self._stats_tab.collect())
+        result.update(self._actions_tab.collect())
+        result.update(self._inventory_tab.collect())
+        result.update(self._spells_tab.collect())
+        return result
 
     def _connect_change_signals(self) -> None:
-        inputs = [
-            self.inp_name, self.inp_tags, self.inp_hp, self.inp_max_hp,
-            self.inp_ac, self.inp_speed, self.inp_prof, self.inp_pp, self.inp_init,
-            self.inp_saves, self.inp_skills, self.inp_vuln, self.inp_resist,
-            self.inp_dmg_immune, self.inp_cond_immune,
-        ]
-        inputs.extend(self.stats_inputs.values())
-        for w in inputs:
-            if isinstance(w, QLineEdit):
-                w.textChanged.connect(self.mark_as_dirty)
-            elif isinstance(w, QTextEdit):
-                w.textChanged.connect(self.mark_as_dirty)
-
+        for w in [self.inp_name, self.inp_tags]:
+            w.textChanged.connect(self.mark_as_dirty)
         self.inp_desc.textChanged.connect(self.mark_as_dirty)
         self.inp_dm_notes.textChanged.connect(self.mark_as_dirty)
         self.inp_type.currentIndexChanged.connect(self.mark_as_dirty)
         self.combo_location.editTextChanged.connect(self.mark_as_dirty)
         self.combo_location.currentIndexChanged.connect(self.mark_as_dirty)
 
-        # Mark dirty when sub-widgets are modified
+        self._stats_tab.connect_dirty_signals(self.mark_as_dirty)
+
         self.image_gallery.btn_add.clicked.connect(self.mark_as_dirty)
         self.image_gallery.btn_remove.clicked.connect(self.mark_as_dirty)
         self.spell_widget.btn_add.clicked.connect(self.mark_as_dirty)
@@ -925,156 +638,6 @@ class NpcSheet(QWidget):
 
         self.spell_widget.populate_available()
         self.item_widget.populate_available()
-
-    # ------------------------------------------------------------------
-    # Stats tab
-    # ------------------------------------------------------------------
-
-    def setup_stats_tab(self) -> None:
-        layout = QVBoxLayout(self.tab_stats)
-        self.grp_base_stats = QGroupBox(tr("GRP_STATS"))
-        l = QHBoxLayout(self.grp_base_stats)
-        self.stats_inputs = {}
-        self.stats_modifiers = {}
-        for s in ["STR", "DEX", "CON", "INT", "WIS", "CHA"]:
-            v = QVBoxLayout()
-            lbl_title = QLabel(s)
-            lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl_title.setStyleSheet("font-weight: bold;")
-            inp = QLineEdit("10")
-            inp.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            inp.setMaximumWidth(50)
-            inp.textChanged.connect(lambda text, key=s: self._update_modifier(key, text))
-            lbl_mod = QLabel("+0")
-            lbl_mod.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl_mod.setProperty("class", "statModifier")
-            self.stats_inputs[s] = inp
-            self.stats_modifiers[s] = lbl_mod
-            v.addWidget(lbl_title)
-            v.addWidget(inp)
-            v.addWidget(lbl_mod)
-            l.addLayout(v)
-        layout.addWidget(self.grp_base_stats)
-
-        self.grp_combat_stats = QGroupBox(tr("GRP_COMBAT"))
-        v_comb = QVBoxLayout(self.grp_combat_stats)
-        self.inp_hp = QLineEdit()
-        self.inp_hp.setPlaceholderText(tr("LBL_HP"))
-        self.inp_max_hp = QLineEdit()
-        self.inp_max_hp.setPlaceholderText(tr("LBL_MAX_HP"))
-        self.inp_ac = QLineEdit()
-        self.inp_ac.setPlaceholderText(tr("HEADER_AC"))
-        self.inp_speed = QLineEdit()
-        self.inp_prof = QLineEdit()
-        self.inp_pp = QLineEdit()
-        self.inp_init = QLineEdit()
-        self.inp_init.setPlaceholderText(tr("LBL_INIT"))
-        r1 = QHBoxLayout()
-        for t, w in [
-            (tr("LBL_MAX_HP"), self.inp_max_hp),
-            (tr("LBL_HP"), self.inp_hp),
-            (tr("HEADER_AC"), self.inp_ac),
-            (tr("LBL_SPEED"), self.inp_speed),
-        ]:
-            v = QVBoxLayout()
-            v.addWidget(QLabel(t))
-            v.addWidget(w)
-            r1.addLayout(v)
-        r2 = QHBoxLayout()
-        for t, w in [
-            (tr("LBL_PROF_BONUS"), self.inp_prof),
-            (tr("LBL_PASSIVE_PERC"), self.inp_pp),
-            (tr("LBL_INIT_BONUS"), self.inp_init),
-        ]:
-            v = QVBoxLayout()
-            v.addWidget(QLabel(t))
-            v.addWidget(w)
-            r2.addLayout(v)
-        v_comb.addLayout(r1)
-        v_comb.addLayout(r2)
-        layout.addWidget(self.grp_combat_stats)
-
-        self.grp_defense = QGroupBox(tr("GRP_DEFENSE"))
-        form3 = QFormLayout(self.grp_defense)
-        self.inp_saves = QLineEdit()
-        self.inp_skills = QLineEdit()
-        self.inp_vuln = QLineEdit()
-        self.inp_resist = QLineEdit()
-        self.inp_dmg_immune = QLineEdit()
-        self.inp_cond_immune = QLineEdit()
-        form3.addRow(tr("LBL_SAVES"), self.inp_saves)
-        form3.addRow(tr("LBL_SKILLS"), self.inp_skills)
-        form3.addRow(tr("LBL_VULN"), self.inp_vuln)
-        form3.addRow(tr("LBL_RESIST"), self.inp_resist)
-        form3.addRow(tr("LBL_DMG_IMMUNE"), self.inp_dmg_immune)
-        form3.addRow(tr("LBL_COND_IMMUNE"), self.inp_cond_immune)
-        layout.addWidget(self.grp_defense)
-        layout.addStretch()
-
-    def _update_modifier(self, stat_key: str, text_value: str) -> None:
-        try:
-            val = int(text_value)
-            mod = (val - 10) // 2
-            sign = "+" if mod >= 0 else ""
-            self.stats_modifiers[stat_key].setText(f"{sign}{mod}")
-            if mod > 0:
-                self.stats_modifiers[stat_key].setStyleSheet(
-                    f"color: {self.current_palette.get('hp_bar_full', '#4caf50')}; font-weight: bold;"
-                )
-            else:
-                self.stats_modifiers[stat_key].setStyleSheet(
-                    f"color: {self.current_palette.get('html_dim', '#aaa')}; font-weight: normal;"
-                )
-        except ValueError:
-            self.stats_modifiers[stat_key].setText("-")
-
-    # ------------------------------------------------------------------
-    # Spells tab — delegates to spell_widget
-    # ------------------------------------------------------------------
-
-    def setup_spells_tab(self) -> None:
-        layout = QVBoxLayout(self.tab_spells)
-        layout.addWidget(self.spell_widget)
-        self.custom_spell_container = self._create_section(tr("LBL_MANUAL_SPELLS"))
-        self.add_btn_to_section(
-            self.custom_spell_container,
-            tr("BTN_ADD"),
-            callback=lambda: self.add_manual_spell_card(self.custom_spell_container),
-        )
-        layout.addWidget(self.custom_spell_container)
-        layout.addStretch()
-
-    # ------------------------------------------------------------------
-    # Inventory tab — delegates to item_widget
-    # ------------------------------------------------------------------
-
-    def setup_inventory_tab(self) -> None:
-        layout = QVBoxLayout(self.tab_inventory)
-        layout.addWidget(self.item_widget)
-        self.inventory_container = self._create_section(tr("GRP_INVENTORY"))
-        self.add_btn_to_section(self.inventory_container, tr("BTN_ADD"))
-        layout.addWidget(self.inventory_container)
-        layout.addStretch()
-
-    # ------------------------------------------------------------------
-    # Features tab
-    # ------------------------------------------------------------------
-
-    def setup_features_tab(self) -> None:
-        layout = QVBoxLayout(self.tab_features)
-        self.trait_container = self._create_section(tr("LBL_TRAITS"))
-        self.add_btn_to_section(self.trait_container, tr("BTN_ADD"))
-        self.action_container = self._create_section(tr("LBL_ACTIONS"))
-        self.add_btn_to_section(self.action_container, tr("BTN_ADD"))
-        self.reaction_container = self._create_section(tr("LBL_REACTIONS"))
-        self.add_btn_to_section(self.reaction_container, tr("BTN_ADD"))
-        self.legendary_container = self._create_section(tr("LBL_LEGENDARY_ACTIONS"))
-        self.add_btn_to_section(self.legendary_container, tr("BTN_ADD"))
-        layout.addWidget(self.trait_container)
-        layout.addWidget(self.action_container)
-        layout.addWidget(self.reaction_container)
-        layout.addWidget(self.legendary_container)
-        layout.addStretch()
 
     # ------------------------------------------------------------------
     # Docs tab — delegates to pdf_manager
@@ -1240,35 +803,10 @@ class NpcSheet(QWidget):
     # Dynamic form (type-driven properties)
     # ------------------------------------------------------------------
 
-    def _create_section(self, title: str):
-        group = QGroupBox(title)
-        v = QVBoxLayout(group)
-        group.dynamic_area = QVBoxLayout()
-        v.addLayout(group.dynamic_area)
-        return group
-
-    def add_btn_to_section(self, container, label: str, callback=None) -> None:
-        btn = QPushButton(label)
-        if callback is None:
-            callback = lambda: self.add_feature_card(container)
-        btn.clicked.connect(callback)
-        btn.setObjectName("successBtn")
-        container.layout().insertWidget(0, btn)
-        self._add_feature_buttons.append(btn)
-
     def clear_all_cards(self) -> None:
-        for g in [
-            self.trait_container,
-            self.action_container,
-            self.reaction_container,
-            self.legendary_container,
-            self.inventory_container,
-            self.custom_spell_container,
-        ]:
-            while g.dynamic_area.count():
-                item = g.dynamic_area.takeAt(0)
-                if item.widget():
-                    item.widget().deleteLater()
+        self._actions_tab.clear_cards()
+        self._inventory_tab.clear_cards()
+        self._spells_tab.clear_cards()
 
     def _on_type_index_changed(self, index: int) -> None:
         cat_key = self.inp_type.itemData(index)
@@ -1328,14 +866,12 @@ class NpcSheet(QWidget):
             if style and not style.endswith(";"):
                 style = f"{style}; "
             widget.setStyleSheet(f"{style}{token}")
-
         pal = widget.palette()
         pal.setColor(QPalette.ColorRole.Base, QColor(0, 0, 0, 0))
         widget.setPalette(pal)
         widget.setAutoFillBackground(False)
 
     def _force_transparent_combo(self, widget: QComboBox) -> None:
-        # Force transparent text area on editable combos (e.g. Attitude field).
         style = widget.styleSheet().strip()
         forced = (
             "QComboBox { background-color: transparent; }"
@@ -1347,18 +883,15 @@ class NpcSheet(QWidget):
             if style and not style.endswith(";"):
                 style = f"{style}; "
             widget.setStyleSheet(f"{style}{forced}")
-
         pal = widget.palette()
         pal.setColor(QPalette.ColorRole.Base, QColor(0, 0, 0, 0))
         widget.setPalette(pal)
         widget.setAutoFillBackground(False)
-
         line_edit = widget.lineEdit()
         if line_edit is not None:
             self._force_transparent_line_edit(line_edit)
 
     def _enforce_transparent_text_fields(self) -> None:
-        # Runtime safeguard: enforce transparent text backgrounds regardless of theme quirks.
         for line_edit in self.content_widget.findChildren(QLineEdit):
             self._force_transparent_line_edit(line_edit)
         for combo in self.content_widget.findChildren(QComboBox):

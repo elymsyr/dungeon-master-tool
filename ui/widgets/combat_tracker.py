@@ -1,108 +1,76 @@
 """CombatTracker — encounter management widget for the Session tab.
 
-Orchestrates DraggableCombatTable (ui), CombatModel (state), and
-BattleMapBridge (external window) to drive the full combat flow:
-adding combatants, rolling initiatives, advancing turns, and syncing
-to the battle-map display.
+Orchestrates:
+  - CombatantListWidget  (table + row interactions)
+  - CombatControlsWidget (encounter selector + turn/action buttons)
+  - CombatModel          (encounter state)
+  - BattleMapBridge      (external battle-map window)
 """
 
 import logging
+import os
+import random
+import uuid
 
 from PyQt6.QtWidgets import (
-    QApplication,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QHeaderView,
-    QInputDialog,
-    QMenu,
-    QMessageBox,
-    QLineEdit,
     QFileDialog,
-    QLabel,
-    QComboBox,
-    QStyle,
-    QTableWidget,
-    QTableWidgetItem,
+    QInputDialog,
+    QMessageBox,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtGui import QAction, QColor, QBrush, QCursor, QIcon
-from PyQt6.QtCore import Qt, pyqtSignal
 
-logger = logging.getLogger(__name__)
 from core.locales import tr
 from core.theme_manager import ThemeManager
 from ui.dialogs.encounter_selector import EncounterSelectionDialog
-from ui.widgets.combat_model import CombatModel
 from ui.widgets.battle_map_bridge import BattleMapBridge
-import random
-import os
-import uuid
+from ui.widgets.combat_combatant_list import CombatantListWidget
+from ui.widgets.combat_controls import CombatControlsWidget
+from ui.widgets.combat_model import CombatModel
+from ui.widgets.combat_table import MapSelectorDialog
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QShortcut
+from PyQt6.QtGui import QKeySequence
 
-# --- YARDIMCILAR ---
-def clean_stat_value(value, default=10):
-    if value is None: return default
+logger = logging.getLogger(__name__)
+
+
+def _clean_stat_value(value, default=10):
+    if value is None:
+        return default
     s_val = str(value).strip()
-    if not s_val: return default
+    if not s_val:
+        return default
     try:
-        first_part = s_val.split(' ')[0]
-        digits = ''.join(filter(str.isdigit, first_part))
+        first_part = s_val.split(" ")[0]
+        digits = "".join(filter(str.isdigit, first_part))
         return int(digits) if digits else default
-    except (ValueError, AttributeError): return default
+    except (ValueError, AttributeError):
+        return default
 
-# Standard Conditions List (keys must stay in English; UI displays translated labels)
-CONDITIONS_MAP = {
-    "Blinded": "COND_BLINDED",
-    "Charmed": "COND_CHARMED",
-    "Deafened": "COND_DEAFENED",
-    "Frightened": "COND_FRIGHTENED",
-    "Grappled": "COND_GRAPPLED",
-    "Incapacitated": "COND_INCAPACITATED",
-    "Invisible": "COND_INVISIBLE",
-    "Paralyzed": "COND_PARALYZED",
-    "Petrified": "COND_PETRIFIED",
-    "Poisoned": "COND_POISONED",
-    "Prone": "COND_PRONE",
-    "Restrained": "COND_RESTRAINED",
-    "Stunned": "COND_STUNNED",
-    "Unconscious": "COND_UNCONSCIOUS",
-    "Exhaustion": "COND_EXHAUSTION"
-}
 
-from ui.widgets.combat_table import (
-    DraggableCombatTable,
-    ConditionsWidget,
-    HpBarWidget,
-    NumericTableWidgetItem,
-    MapSelectorDialog,
-)
-
-# --- COMBAT TRACKER ---
 class CombatTracker(QWidget):
     data_changed_signal = pyqtSignal()
     combat_log = pyqtSignal(str)
-    combatant_selected = pyqtSignal(str)   # eid or "" on row selection changes
-    view_entity_requested = pyqtSignal()   # explicit "View Stats" context-menu action
+    combatant_selected = pyqtSignal(str)
+    view_entity_requested = pyqtSignal()
 
     def __init__(self, data_manager, player_window=None):
         super().__init__()
         self.dm = data_manager
-        self.loading = False
         self._model = CombatModel()
         self._bridge = BattleMapBridge(self.dm, player_window, self)
         self._bridge.token_moved.connect(self.on_token_moved_in_map)
         self._bridge.token_size_changed.connect(self.on_token_size_changed)
         self._bridge.token_size_override_changed.connect(self.on_token_size_override_changed)
         self.fog_save_handler = None
-
-        # Initial theme palette
         self.current_palette = ThemeManager.get_palette(self.dm.current_theme)
 
         self.create_encounter("Default Encounter")
         self.init_ui()
 
     # ------------------------------------------------------------------
-    # Encounter state properties — delegate to CombatModel
+    # CombatModel delegation properties
     # ------------------------------------------------------------------
 
     @property
@@ -123,173 +91,115 @@ class CombatTracker(QWidget):
 
     @property
     def battle_map_window(self):
-        """Backward-compat: always returns None (BattleMapWindow is deprecated)."""
         return self._bridge.battle_map_window
 
-    def set_fog_save_handler(self, handler): self.fog_save_handler = handler
+    # Convenience: expose the inner table for any legacy references
+    @property
+    def table(self):
+        return self._combatant_list.table
 
-    def refresh_theme(self, palette):
-        """Propagates theme change from the Main Window to all child widgets."""
-        self.current_palette = palette
+    def set_fog_save_handler(self, handler):
+        self.fog_save_handler = handler
 
-        # Update widgets inside the table (HpBar and Conditions)
-        for row in range(self.table.rowCount()):
-            # HP Bar
-            hp_w = self.table.cellWidget(row, 3)
-            if hp_w and isinstance(hp_w, HpBarWidget):
-                hp_w.update_theme(palette)
-            
-            # Conditions Widget
-            cond_w = self.table.cellWidget(row, 4)
-            if cond_w and isinstance(cond_w, ConditionsWidget):
-                cond_w.update_theme(palette)
-                
-        # Update row highlight colors
-        self.update_highlights()
+    # ------------------------------------------------------------------
+    # UI setup
+    # ------------------------------------------------------------------
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        enc_layout = QHBoxLayout()
-        self.combo_encounters = QComboBox()
-        self.combo_encounters.currentIndexChanged.connect(self.switch_encounter)
-        self.combo_encounters.setMinimumWidth(200)
-        _style = QApplication.style()
-        self.btn_new_enc = QPushButton()
-        self.btn_new_enc.setIcon(_style.standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder))
-        self.btn_new_enc.setFixedSize(28, 26)
-        self.btn_new_enc.setToolTip(tr("TIP_NEW_ENC"))
-        self.btn_new_enc.clicked.connect(self.prompt_new_encounter)
-        self.btn_rename_enc = QPushButton(tr("BTN_EDIT"))
-        self.btn_rename_enc.setFixedSize(44, 26)
-        self.btn_rename_enc.setToolTip(tr("TIP_RENAME_ENC"))
-        self.btn_rename_enc.clicked.connect(self.rename_encounter)
-        self.btn_del_enc = QPushButton()
-        self.btn_del_enc.setIcon(_style.standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
-        self.btn_del_enc.setFixedSize(28, 26)
-        self.btn_del_enc.setToolTip(tr("TIP_DEL_ENC"))
-        self.btn_del_enc.clicked.connect(self.delete_encounter)
-        self.btn_del_enc.setObjectName("dangerBtn")
-        enc_layout.addWidget(QLabel(tr("LBL_ENCOUNTER_PREFIX")))
-        enc_layout.addWidget(self.combo_encounters)
-        enc_layout.addWidget(self.btn_new_enc)
-        enc_layout.addWidget(self.btn_rename_enc)
-        enc_layout.addWidget(self.btn_del_enc)
-        layout.addLayout(enc_layout)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
 
-        # Table class: DraggableCombatTable
-        self.table = DraggableCombatTable()
-        self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
-        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.table.customContextMenuRequested.connect(self.open_context_menu)
-        self.table.itemChanged.connect(self.on_data_changed)
-        self.table.cellDoubleClicked.connect(self.on_cell_double_clicked)
-        self.table.setSortingEnabled(False)
-        
-        # Signal: add the dropped entity ID
-        self.table.entity_dropped.connect(self.handle_drop_import)
-        self.table.itemSelectionChanged.connect(self._on_row_selection_changed)
-        
-        layout.addWidget(self.table)
+        self._controls = CombatControlsWidget()
+        self._combatant_list = CombatantListWidget(self.dm)
 
-        q_lo = QHBoxLayout()
-        self.inp_quick_name = QLineEdit()
-        self.inp_quick_name.setPlaceholderText(tr("HEADER_NAME"))
-        self.inp_quick_init = QLineEdit()
-        self.inp_quick_init.setPlaceholderText(tr("LBL_INIT"))
-        self.inp_quick_init.setMaximumWidth(50)
-        self.inp_quick_hp = QLineEdit()
-        self.inp_quick_hp.setPlaceholderText(tr("LBL_HP"))
-        self.inp_quick_hp.setMaximumWidth(50)
-        self.btn_quick_add = QPushButton(tr("BTN_QUICK_ADD"))
-        self.btn_quick_add.clicked.connect(self.quick_add)
-        q_lo.addWidget(self.inp_quick_name, 3)
-        q_lo.addWidget(self.inp_quick_init, 1)
-        q_lo.addWidget(self.inp_quick_hp, 1)
-        q_lo.addWidget(self.btn_quick_add, 1)
-        layout.addLayout(q_lo)
+        layout.addWidget(self._controls)
+        layout.addWidget(self._combatant_list, stretch=1)
 
-        btn_layout = QHBoxLayout()
-        self.lbl_round = QLabel(f"{tr('LBL_ROUND_PREFIX')}1")
-        self.lbl_round.setObjectName("headerLabel")
-        self.lbl_round.setStyleSheet("font-size: 16px; font-weight: bold; margin-right: 10px;")
-        self.btn_next_turn = QPushButton(tr("BTN_NEXT_TURN"))
-        self.btn_next_turn.setObjectName("actionBtn")
-        self.btn_next_turn.clicked.connect(self.next_turn)
-        
-        btn_layout.addWidget(self.lbl_round)
-        btn_layout.addWidget(self.btn_next_turn)
-        layout.addLayout(btn_layout)
-        
-        btn_layout2 = QHBoxLayout()
-        self.btn_add = QPushButton(tr("BTN_ADD"))
-        self.btn_add.clicked.connect(self.add_combatant_dialog)
-        self.btn_add_players = QPushButton(tr("BTN_ADD_PLAYERS"))
-        self.btn_add_players.clicked.connect(self.add_all_players)
-        self.btn_roll = QPushButton(tr("BTN_ROLL_INIT"))
-        self.btn_roll.clicked.connect(self.roll_initiatives)
-        self.btn_clear_all = QPushButton(tr("BTN_CLEAR_ALL"))
-        self.btn_clear_all.clicked.connect(self.clear_tracker)
-        self.btn_clear_all.setObjectName("dangerBtn")
-        btn_layout2.addWidget(self.btn_add)
-        btn_layout2.addWidget(self.btn_add_players)
-        btn_layout2.addWidget(self.btn_roll)
-        btn_layout2.addWidget(self.btn_clear_all)
-        layout.addLayout(btn_layout2)
+        # Wire CombatControlsWidget signals
+        self._controls.turn_requested.connect(self.next_turn)
+        self._controls.roll_requested.connect(self.roll_initiatives)
+        self._controls.clear_requested.connect(self.clear_tracker)
+        self._controls.add_combatant_requested.connect(self.add_combatant_dialog)
+        self._controls.add_players_requested.connect(self.add_all_players)
+        self._controls.quick_add_requested.connect(self._on_quick_add)
+        self._controls.new_encounter_requested.connect(self._on_new_encounter)
+        self._controls.rename_encounter_requested.connect(self._on_rename_encounter)
+        self._controls.delete_encounter_confirmed.connect(self._on_delete_encounter)
+        self._controls.encounter_selected.connect(self._on_encounter_selected)
+
+        # Wire CombatantListWidget signals
+        self._combatant_list.row_selected.connect(self.combatant_selected.emit)
+        self._combatant_list.data_modified.connect(self._on_list_data_modified)
+        self._combatant_list.sort_needed.connect(self._sort_and_refresh)
+        self._combatant_list.hp_log.connect(self.combat_log.emit)
+        self._combatant_list.condition_log.connect(self.combat_log.emit)
+        self._combatant_list.drop_accepted.connect(self._on_drop_accepted)
+        self._combatant_list.view_entity_requested.connect(self.view_entity_requested.emit)
+
         self.refresh_encounter_combo()
 
-    def handle_drop_import(self, eid):
-        """Adds an entity dragged in from the Sidebar."""
-        if eid.startswith("lib_"):
-            QMessageBox.information(self, tr("MSG_INFO"), tr("MSG_DROP_IMPORT_FIRST"))
-            return
+    # ------------------------------------------------------------------
+    # Theme & retranslation
+    # ------------------------------------------------------------------
 
-        if eid in self.dm.data["entities"]:
-            ent = self.dm.data["entities"][eid]
-            if ent.get("type") in ["NPC", "Monster", "Player"]:
-                self.add_row_from_entity(eid)
-                self._sort_and_refresh()
+    def refresh_theme(self, palette):
+        self.current_palette = palette
+        self._combatant_list.refresh_theme(palette)
+        self._combatant_list.update_highlights(
+            self.encounters.get(self.current_encounter_id, {}).get("turn_index", -1)
+            if self.current_encounter_id else -1
+        )
 
-    def _on_row_selection_changed(self):
-        row = self.table.currentRow()
-        if row < 0:
-            self.combatant_selected.emit("")
-            return
-        init_item = self.table.item(row, 1)
-        eid = init_item.data(Qt.ItemDataRole.UserRole) if init_item else ""
-        self.combatant_selected.emit(eid or "")
+    def retranslate_ui(self):
+        self._controls.retranslate_ui()
+        self._combatant_list.retranslate_ui()
+        if self.current_encounter_id and self.current_encounter_id in self.encounters:
+            self._controls.update_round(
+                self.encounters[self.current_encounter_id].get("round", 1)
+            )
+        self._bridge.retranslate()
+        if self._bridge.is_open():
+            self.refresh_battle_map()
+
+    # ------------------------------------------------------------------
+    # Encounter management
+    # ------------------------------------------------------------------
 
     def create_encounter(self, name):
         return self._model.create_encounter(name)
-    
-    def prompt_new_encounter(self): 
-        n, ok = QInputDialog.getText(self, tr("TITLE_NEW_ENC"), tr("LBL_ENC_NAME"))
-        if ok and n: 
-            self.create_encounter(n)
-            self.refresh_encounter_combo()
-    
-    def rename_encounter(self):
+
+    def refresh_encounter_combo(self):
+        if not self.encounters:
+            self.create_encounter("Default Encounter")
+        self._controls.rebuild_encounter_combo(self.encounters, self.current_encounter_id)
+        self.refresh_ui_from_current_encounter()
+
+    def _on_new_encounter(self, name: str):
+        self.create_encounter(name)
+        self.refresh_encounter_combo()
+
+    def _on_rename_encounter(self, new_name: str):
         if not self.current_encounter_id or self.current_encounter_id not in self.encounters:
             return
-        n, ok = QInputDialog.getText(self, tr("TITLE_RENAME_ENC"), tr("LBL_NEW_NAME"), text=self.encounters[self.current_encounter_id]["name"])
+        # Re-ask with current name pre-filled (CombatControlsWidget can't do this)
+        current_name = self.encounters[self.current_encounter_id]["name"]
+        n, ok = QInputDialog.getText(
+            self, tr("TITLE_RENAME_ENC"), tr("LBL_NEW_NAME"), text=current_name
+        )
         if ok and n:
             self._model.rename(self.current_encounter_id, n)
             self.refresh_encounter_combo()
 
-    def delete_encounter(self):
+    def _on_delete_encounter(self):
         if len(self.encounters) <= 1:
             QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_LAST_ENC_DELETE"))
             return
-        if QMessageBox.question(self, tr("TITLE_DELETE"), tr("MSG_CONFIRM_ENC_DELETE"), QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
-            self._model.delete(self.current_encounter_id)
-            self.refresh_encounter_combo()
-    
-    def switch_encounter(self, idx): 
-        eid = self.combo_encounters.itemData(idx)
-        if eid and eid in self.encounters: 
+        self._model.delete(self.current_encounter_id)
+        self.refresh_encounter_combo()
+
+    def _on_encounter_selected(self, eid: str):
+        if eid and eid in self.encounters:
             if self.current_encounter_id and self.fog_save_handler:
                 self.fog_save_handler(self.current_encounter_id)
             if self.current_encounter_id in self.encounters:
@@ -298,138 +208,134 @@ class CombatTracker(QWidget):
             self.refresh_ui_from_current_encounter()
             if self._bridge.is_open():
                 self.refresh_battle_map(force_map_reload=True)
-            
-    def refresh_encounter_combo(self):
-        self.combo_encounters.blockSignals(True)
-        self.combo_encounters.clear()
-        if not self.encounters: self.create_encounter("Default Encounter")
-        for eid, e in self.encounters.items(): self.combo_encounters.addItem(e["name"], eid)
-        idx = self.combo_encounters.findData(self.current_encounter_id)
-        if idx >= 0: self.combo_encounters.setCurrentIndex(idx)
-        else: self.combo_encounters.setCurrentIndex(0); self.current_encounter_id = self.combo_encounters.itemData(0)
-        self.combo_encounters.blockSignals(False)
-        self.refresh_ui_from_current_encounter()
+
+    # Backward-compat: kept for any direct callers
+    def switch_encounter(self, idx):
+        eid = self._controls.combo_encounters.itemData(idx)
+        self._on_encounter_selected(eid)
+
+    def rename_encounter(self):
+        self._on_rename_encounter("")
+
+    def delete_encounter(self):
+        if len(self.encounters) <= 1:
+            QMessageBox.warning(self, tr("MSG_ERROR"), tr("MSG_LAST_ENC_DELETE"))
+            return
+        if QMessageBox.question(
+            self, tr("TITLE_DELETE"), tr("MSG_CONFIRM_ENC_DELETE"),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        ) == QMessageBox.StandardButton.Yes:
+            self._on_delete_encounter()
+
+    def prompt_new_encounter(self):
+        n, ok = QInputDialog.getText(self, tr("TITLE_NEW_ENC"), tr("LBL_ENC_NAME"))
+        if ok and n:
+            self._on_new_encounter(n)
+
+    # ------------------------------------------------------------------
+    # Combatant row management
+    # ------------------------------------------------------------------
 
     def add_direct_row(self, name, init, ac, hp, conditions_data, eid, init_bonus=0, tid=None):
-        if not tid: tid = str(uuid.uuid4())
-        self.table.blockSignals(True); row = self.table.rowCount(); self.table.insertRow(row)
-        
-        self.table.setItem(row, 0, QTableWidgetItem(name))
-        
-        it_init = NumericTableWidgetItem(str(init))
-        it_init.setData(Qt.ItemDataRole.UserRole, eid)
-        it_init.setData(Qt.ItemDataRole.UserRole+1, tid)
-        self.table.setItem(row, 1, it_init)
-        
-        self.table.setItem(row, 2, NumericTableWidgetItem(str(clean_stat_value(ac))))
-        
-        cur = clean_stat_value(hp); mx = cur
-        if eid and eid in self.dm.data["entities"]:
-             try: db_max = clean_stat_value(self.dm.data["entities"][eid]["combat_stats"]["max_hp"]); mx = db_max if db_max >= cur else cur
-             except (KeyError, ValueError, TypeError): pass
-        
-        # HP Widget (Tema ile)
-        hp_w = HpBarWidget(cur, mx, self.current_palette)
-        hp_w.hpChanged.connect(lambda v, w=hp_w: self.on_widget_hp_changed(w, v))
-        self.table.setCellWidget(row, 3, hp_w)
-        self.table.setItem(row, 3, NumericTableWidgetItem(str(cur))) 
-        
-        # Conditions Widget (Tema ile)
-        cond_w = ConditionsWidget()
-        cond_w.update_theme(self.current_palette)
-        cond_w.clicked.connect(lambda w=cond_w: self.open_condition_menu_for_widget(w))
-        
-        if isinstance(conditions_data, str) and conditions_data: 
-            conditions_data = [{"name": c.strip(), "icon": None, "duration": 0, "max_duration": 0} for c in conditions_data.split(",")]
-        elif not isinstance(conditions_data, list): 
-            conditions_data = []
-            
-        cond_w.set_conditions(conditions_data)
-        cond_w.conditionsChanged.connect(self.data_changed_signal.emit)
-        cond_w.conditionRemoved.connect(lambda n, w=cond_w: self._on_condition_removed(w, n))
-        self.table.setCellWidget(row, 4, cond_w)
-        
-        self.table.blockSignals(False)
+        self._combatant_list.add_direct_row(name, init, ac, hp, conditions_data, eid, init_bonus, tid)
+
+    def _on_drop_accepted(self, eid: str):
+        self.add_row_from_entity(eid)
+        self._sort_and_refresh()
+
+    def add_combatant_dialog(self):
+        d = EncounterSelectionDialog(self.dm, self)
+        if d.exec():
+            for eid in d.selected_entities:
+                self.add_row_from_entity(eid)
+            self._sort_and_refresh()
+
+    def add_row_from_entity(self, eid):
+        d = self.dm.data["entities"].get(eid)
+        if d:
+            try:
+                m = (int(d["stats"]["DEX"]) - 10) // 2
+            except (KeyError, ValueError, TypeError):
+                m = 0
+            try:
+                m += _clean_stat_value(d["combat_stats"].get("initiative"), 0)
+            except (KeyError, ValueError, TypeError):
+                pass
+            self._combatant_list.add_direct_row(
+                d["name"],
+                random.randint(1, 20) + m,
+                d["combat_stats"].get("ac", "10"),
+                d["combat_stats"].get("hp", "10"),
+                [],
+                eid,
+                m,
+            )
+
+    def add_all_players(self):
+        existing = [
+            self.table.item(r, 1).data(Qt.ItemDataRole.UserRole)
+            for r in range(self.table.rowCount())
+        ]
+        for k, v in self.dm.data["entities"].items():
+            if v["type"] == "Player" and k not in existing:
+                self.add_row_from_entity(k)
+        self._sort_and_refresh()
+
+    def delete_row(self, row: int):
+        self._combatant_list.delete_row(row)
+        if self.current_encounter_id and self.current_encounter_id in self.encounters:
+            enc = self.encounters[self.current_encounter_id]
+            if enc["turn_index"] >= row:
+                enc["turn_index"] = max(0, enc["turn_index"] - 1)
+        self._combatant_list.update_highlights(
+            self.encounters[self.current_encounter_id]["turn_index"]
+            if self.current_encounter_id else -1
+        )
+        self.refresh_battle_map()
         self.data_changed_signal.emit()
 
-    def open_condition_menu_for_widget(self, widget):
-        index = self.table.indexAt(widget.pos())
-        if not index.isValid(): return
-        row = index.row()
-        
-        menu = QMenu(self)
-        # Menu style
-        p = self.current_palette
-        menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }} QMenu::item:selected {{ background-color: {p.get('line_selected', '#007acc')}; }}")
-        
-        std_menu = menu.addMenu(tr("MENU_STD_CONDITIONS"))
-        for en_key, trans_key in CONDITIONS_MAP.items(): 
-            action = QAction(tr(trans_key), self)
-            action.triggered.connect(lambda checked, r=row, n=en_key: self.add_condition_to_row(r, n, None, 0))
-            std_menu.addAction(action)
-            
-        menu.addSeparator()
-        custom_effects = [e for e in self.dm.data["entities"].values() if e.get("type") == "Status Effect"]
-        
-        if custom_effects:
-            lbl = menu.addAction(tr("MENU_SAVED_EFFECTS")); lbl.setEnabled(False)
-            for eff in custom_effects:
-                eff_name = eff.get("name", "Bilinmeyen"); icon_path = None
-                if eff.get("images"):
-                    full_path = self.dm.get_full_path(eff["images"][0])
-                    if full_path and os.path.exists(full_path): icon_path = full_path
-                try: duration = int(eff.get("attributes", {}).get("LBL_DURATION_TURNS", 0))
-                except (ValueError, TypeError): duration = 0
-                action = QAction(eff_name, self); 
-                if icon_path: action.setIcon(QIcon(icon_path))
-                action.triggered.connect(lambda checked, r=row, n=eff_name, p=icon_path, d=duration: self.add_condition_to_row(r, n, p, d)); menu.addAction(action)
-        else: 
-            no_act = menu.addAction(tr("MSG_NO_SAVED_EFFECTS")); no_act.setEnabled(False)
-            
-        menu.exec(QCursor.pos())
+    def _on_quick_add(self, name: str, init_text: str, hp_text: str):
+        self._combatant_list.add_direct_row(
+            name,
+            init_text or str(random.randint(1, 20)),
+            "10",
+            hp_text or "10",
+            [],
+            None,
+        )
+        self._sort_and_refresh()
 
-    def refresh_ui_from_current_encounter(self):
-        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: self.table.setRowCount(0); return
-        self.loading = True; self.table.blockSignals(True); self.table.setRowCount(0); enc = self.encounters[self.current_encounter_id]
-        self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{enc.get('round', 1)}")
-        for c in enc.get("combatants", []):
-            tid = c.get("tid") or str(uuid.uuid4())
-            if c.get("x") is not None: enc["token_positions"][tid] = (float(c["x"]), float(c["y"]))
-            self.add_direct_row(c["name"], c["init"], c["ac"], c["hp"], c.get("conditions", []), c["eid"], c.get("bonus", 0), tid)
-        self._sort_and_refresh(); self.table.blockSignals(False); self.loading = False
+    # Quick-add forwarded from old call sites
+    def quick_add(self):
+        name = self._controls.inp_quick_name.text().strip()
+        if name:
+            self._on_quick_add(
+                name,
+                self._controls.inp_quick_init.text(),
+                self._controls.inp_quick_hp.text(),
+            )
+            self._controls.inp_quick_name.clear()
 
-    def _save_current_state_to_memory(self):
-        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
-        enc = self.encounters[self.current_encounter_id]; combatants = []
-        for r in range(self.table.rowCount()):
-            if not self.table.item(r, 0): continue
-            def get_text_safe(col_index, default_val=""): item = self.table.item(r, col_index); return item.text() if item else default_val
-            hp_w = self.table.cellWidget(r, 3); cond_w = self.table.cellWidget(r, 4); tid = None; eid = None
-            item_init = self.table.item(r, 1)
-            if item_init: tid = item_init.data(Qt.ItemDataRole.UserRole + 1); eid = item_init.data(Qt.ItemDataRole.UserRole)
-            if not tid: tid = str(uuid.uuid4())
-            combatants.append({"tid": str(tid), "eid": str(eid) if eid else None, "name": get_text_safe(0, "???"), "init": get_text_safe(1, "0"), "ac": get_text_safe(2, "10"), "hp": str(hp_w.current) if hp_w else "0", "conditions": cond_w.active_conditions if cond_w else [], "bonus": 0, "x": enc["token_positions"].get(tid, (None,None))[0], "y": enc["token_positions"].get(tid, (None,None))[1]})
-        enc["combatants"] = combatants
+    # ------------------------------------------------------------------
+    # Turn & round management
+    # ------------------------------------------------------------------
 
     def next_turn(self):
         if not self.current_encounter_id or self.current_encounter_id not in self.encounters:
             return
-        count = self.table.rowCount()
+        count = self._combatant_list.row_count()
         if count == 0:
             return
-        self.loading = True
+        self._combatant_list.set_loading(True)
         new_round = self._model.advance_turn(count)
         enc = self.encounters[self.current_encounter_id]
         if new_round:
-            self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{enc['round']}")
-        w = self.table.cellWidget(enc["turn_index"], 4)
-        if w:
-            w.tick_conditions()
-        self.update_highlights()
+            self._controls.update_round(enc["round"])
+        self._combatant_list.tick_conditions_at(enc["turn_index"])
+        self._combatant_list.update_highlights(enc["turn_index"])
         self.refresh_battle_map()
-        self.loading = False
+        self._combatant_list.set_loading(False)
         self.data_changed_signal.emit()
-        # Auto-log turn transition
         turn_idx = enc["turn_index"]
         name_item = self.table.item(turn_idx, 0)
         name = name_item.text() if name_item else "?"
@@ -438,165 +344,13 @@ class CombatTracker(QWidget):
         else:
             self.combat_log.emit(f"→ {name}'s turn")
 
-    def update_highlights(self):
-        """Highlights the active turn row. Color is sourced from ThemeManager."""
-        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
-        idx = self.encounters[self.current_encounter_id]["turn_index"]
-
-        # Get color from theme palette, apply transparency
-        active_color = QColor(self.current_palette.get("token_border_active", "#ffb74d"))
-        active_color.setAlpha(100)  # Transparency
-        brush = QBrush(active_color)
-        
-        self.table.blockSignals(True)
-        for r in range(self.table.rowCount()):
-             for c in range(self.table.columnCount()):
-                  if self.table.item(r, c): self.table.item(r, c).setBackground(QBrush(Qt.BrushStyle.NoBrush))
-        if 0 <= idx < self.table.rowCount():
-             for c in range(self.table.columnCount()):
-                  if self.table.item(idx, c): self.table.item(idx, c).setBackground(brush)
-        self.table.blockSignals(False)
-
-    def _sort_and_refresh(self):
-        if not self.current_encounter_id: return
-        enc = self.encounters[self.current_encounter_id]; cur_tid = None
-        if 0 <= enc["turn_index"] < self.table.rowCount(): cur_tid = self.table.item(enc["turn_index"], 1).data(Qt.ItemDataRole.UserRole+1)
-        self.table.blockSignals(True); self.table.sortItems(1, Qt.SortOrder.DescendingOrder); self.table.blockSignals(False)
-        if cur_tid:
-             for r in range(self.table.rowCount()):
-                  if self.table.item(r, 1).data(Qt.ItemDataRole.UserRole+1) == cur_tid: enc["turn_index"] = r; break
-        self.update_highlights(); self.refresh_battle_map(); 
-        if not self.loading: self.data_changed_signal.emit()
-
-    def on_widget_hp_changed(self, widget, val):
-        idx = self.table.indexAt(widget.pos())
-        if not idx.isValid():
-            return
-        row = idx.row()
-        # Capture name and old HP before updating
-        name_item = self.table.item(row, 0)
-        name = name_item.text() if name_item else ""
-        old_hp_item = self.table.item(row, 3)
-        try:
-            old_hp = int(old_hp_item.text()) if old_hp_item else val
-        except (ValueError, TypeError):
-            old_hp = val
-        self.table.item(row, 3).setText(str(val))
-        self._save_current_state_to_memory()
-        self.refresh_battle_map()
-        self.data_changed_signal.emit()
-        # Auto-log HP change
-        if name and old_hp != val:
-            delta = val - old_hp
-            if delta < 0:
-                self.combat_log.emit(f"💔 {name}: {old_hp} → {val} HP ({delta})")
-            else:
-                self.combat_log.emit(f"💚 {name}: {old_hp} → {val} HP (+{delta})")
-            if val <= 0:
-                self.combat_log.emit(f"💀 {name} is defeated!")
-
-    def open_context_menu(self, pos):
-        row = self.table.rowAt(pos.y()); 
-        if row == -1: return
-        self.table.selectRow(row)
-        menu = QMenu()
-        init_item = self.table.item(row, 1)
-        eid = init_item.data(Qt.ItemDataRole.UserRole) if init_item else None
-        # Menu style
-        p = self.current_palette
-        menu.setStyleSheet(f"QMenu {{ background-color: {p.get('ui_floating_bg', '#333')}; color: {p.get('ui_floating_text', '#eee')}; border: 1px solid {p.get('ui_floating_border', '#555')}; }}")
-
-        if eid and eid in self.dm.data["entities"]:
-            view_act = QAction("👁 " + tr("MENU_VIEW_STATS"), self)
-            view_act.triggered.connect(self.view_entity_requested.emit)
-            menu.addAction(view_act)
-            menu.addSeparator()
-        
-        add_cond_menu = menu.addMenu("🩸 " + tr("MENU_ADD_COND"))
-        for en_key, trans_key in CONDITIONS_MAP.items(): 
-            a = QAction(tr(trans_key), self)
-            a.triggered.connect(lambda ch, n=en_key: self.add_condition_to_row(row, n, None, 0))
-            add_cond_menu.addAction(a)
-            
-        add_cond_menu.addSeparator()
-        custom_effects = [e for e in self.dm.data["entities"].values() if e.get("type") == "Status Effect"]
-        for eff in custom_effects:
-            icon_path = self.dm.get_full_path(eff["images"][0]) if eff.get("images") else None
-            try: d = int(eff.get("attributes", {}).get("LBL_DURATION_TURNS", 0))
-            except (ValueError, TypeError): d = 0
-            a = QAction(eff["name"], self); 
-            if icon_path: a.setIcon(QIcon(icon_path))
-            a.triggered.connect(lambda ch, n=eff["name"], p=icon_path, d=d: self.add_condition_to_row(row, n, p, d)); add_cond_menu.addAction(a)
-        
-        menu.addSeparator()
-        del_act = QAction("❌ " + tr("MENU_REMOVE_COMBAT"), self); del_act.triggered.connect(lambda: self.delete_row(row)); menu.addAction(del_act)
-        menu.exec(self.table.viewport().mapToGlobal(pos))
-
-    def add_condition_to_row(self, row, name, icon_path, duration):
-        if duration == 0:
-            d, ok = QInputDialog.getInt(self, tr("LBL_DURATION_PROMPT_TITLE"), tr("LBL_DURATION_PROMPT_MSG", name=name), 0, 0, 100)
-            if ok: duration = d
-        w = self.table.cellWidget(row, 4)
-        if w:
-            w.add_condition(name, icon_path, duration)
-            name_item = self.table.item(row, 0)
-            combatant_name = name_item.text() if name_item else "?"
-            self.combat_log.emit(f"🔵 {combatant_name}: {name} applied")
-    
-    def _on_condition_removed(self, cond_widget, condition_name):
-        idx = self.table.indexAt(cond_widget.pos())
-        if idx.isValid():
-            name_item = self.table.item(idx.row(), 0)
-            combatant_name = name_item.text() if name_item else "?"
-            self.combat_log.emit(f"🟢 {combatant_name}: {condition_name} removed")
-
-    def clear_tracker(self):
-        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
-        enc = self.encounters[self.current_encounter_id]
-        self.table.setRowCount(0); enc["combatants"] = []; enc["token_positions"] = {}; enc["turn_index"] = -1; enc["round"] = 1; enc["map_path"] = None 
-        self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}1")
-        self.refresh_battle_map(force_map_reload=True) 
-        if not self.loading: self.data_changed_signal.emit()
-
-    def on_cell_double_clicked(self, r, c): 
-        if c==3: 
-            w=self.table.cellWidget(r,3); 
-            if w: 
-                v,ok=QInputDialog.getInt(self, tr("TITLE_EDIT_HP"), tr("LBL_NEW_HP"), w.current, 0, 9999)
-                if ok: w.update_hp(v)
-    def on_data_changed(self, i): 
-        if self.loading: return
-        if i.column()==1: self._sort_and_refresh()
-        else: self._save_current_state_to_memory(); self.data_changed_signal.emit()
-    def quick_add(self):
-        n=self.inp_quick_name.text().strip(); 
-        if n: self.add_direct_row(n, self.inp_quick_init.text() or str(random.randint(1,20)), "10", self.inp_quick_hp.text() or "10", [], None); self.inp_quick_name.clear(); self._sort_and_refresh()
-    def add_combatant_dialog(self):
-        d=EncounterSelectionDialog(self.dm, self)
-        if d.exec(): 
-            for eid in d.selected_entities: self.add_row_from_entity(eid)
-            self._sort_and_refresh()
-    def add_row_from_entity(self, eid):
-        d=self.dm.data["entities"].get(eid)
-        if d:
-            try: m=(int(d["stats"]["DEX"])-10)//2
-            except (KeyError, ValueError, TypeError): m=0
-            try: m+=clean_stat_value(d["combat_stats"].get("initiative"), 0)
-            except (KeyError, ValueError, TypeError): pass
-            self.add_direct_row(d["name"], random.randint(1,20)+m, d["combat_stats"].get("ac","10"), d["combat_stats"].get("hp","10"), [], eid, m)
-    def add_all_players(self):
-        ex=[self.table.item(r,1).data(Qt.ItemDataRole.UserRole) for r in range(self.table.rowCount())]
-        for k,v in self.dm.data["entities"].items(): 
-            if v["type"]=="Player" and k not in ex: self.add_row_from_entity(k)
-        self._sort_and_refresh()
     def roll_initiatives(self):
         self.table.blockSignals(True)
         for r in range(self.table.rowCount()):
-             b = self.table.item(r,0).data(Qt.ItemDataRole.UserRole) or 0
-             self.table.item(r,1).setText(str(random.randint(1,20)+b))
+            b = self.table.item(r, 0).data(Qt.ItemDataRole.UserRole) or 0
+            self.table.item(r, 1).setText(str(random.randint(1, 20) + b))
         self.table.blockSignals(False)
         self._sort_and_refresh()
-        # Auto-log results (after sort, so order matches combat order)
         if self.table.rowCount() > 0:
             parts = []
             for r in range(self.table.rowCount()):
@@ -604,49 +358,129 @@ class CombatTracker(QWidget):
                 i = self.table.item(r, 1).text() if self.table.item(r, 1) else "?"
                 parts.append(f"{n} ({i})")
             self.combat_log.emit("🎲 Initiative rolled: " + ", ".join(parts))
-    def delete_row(self, r): 
-        self.table.removeRow(r)
+
+    def _sort_and_refresh(self):
+        if not self.current_encounter_id:
+            return
+        enc = self.encounters[self.current_encounter_id]
+        cur_tid = self._combatant_list.get_tid_at_turn_index(enc["turn_index"])
+        self._combatant_list.sort_by_initiative()
+        if cur_tid:
+            new_row = self._combatant_list.find_row_for_tid(cur_tid)
+            if new_row >= 0:
+                enc["turn_index"] = new_row
+        self._combatant_list.update_highlights(enc["turn_index"])
+        self.refresh_battle_map()
+        if not self._combatant_list._loading:
+            self.data_changed_signal.emit()
+
+    def update_highlights(self):
+        """Public compat: delegates to the list widget."""
         if self.current_encounter_id and self.current_encounter_id in self.encounters:
-             enc = self.encounters[self.current_encounter_id]
-             if enc["turn_index"] >= r: enc["turn_index"] = max(0, enc["turn_index"]-1)
-        self.update_highlights(); self.refresh_battle_map(); self.data_changed_signal.emit()
+            self._combatant_list.update_highlights(
+                self.encounters[self.current_encounter_id]["turn_index"]
+            )
+
+    # ------------------------------------------------------------------
+    # State persistence
+    # ------------------------------------------------------------------
+
+    def _save_current_state_to_memory(self):
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters:
+            return
+        enc = self.encounters[self.current_encounter_id]
+        rows = self._combatant_list.get_rows_data()
+        for row in rows:
+            tid = row.get("tid")
+            pos = enc["token_positions"].get(tid, (None, None))
+            row["x"] = pos[0]
+            row["y"] = pos[1]
+        enc["combatants"] = rows
+
+    def refresh_ui_from_current_encounter(self):
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters:
+            self._combatant_list.clear_rows()
+            return
+        self._combatant_list.set_loading(True)
+        self.table.blockSignals(True)
+        self._combatant_list.clear_rows()
+        enc = self.encounters[self.current_encounter_id]
+        self._controls.update_round(enc.get("round", 1))
+        for c in enc.get("combatants", []):
+            tid = c.get("tid") or str(uuid.uuid4())
+            if c.get("x") is not None:
+                enc["token_positions"][tid] = (float(c["x"]), float(c["y"]))
+            self._combatant_list.add_direct_row(
+                c["name"], c["init"], c["ac"], c["hp"],
+                c.get("conditions", []), c["eid"], c.get("bonus", 0), tid,
+            )
+        self._sort_and_refresh()
+        self.table.blockSignals(False)
+        self._combatant_list.set_loading(False)
+
     def get_session_state(self):
         self._save_current_state_to_memory()
         return self._model.to_dict()
 
     def load_session_state(self, d):
-        self.loading = True
-        self.combo_encounters.blockSignals(True)
-        self.combo_encounters.clear()
+        self._combatant_list.set_loading(True)
         self._model.load(d)
-        for k, v in self.encounters.items():
-            self.combo_encounters.addItem(v["name"], k)
-        idx = self.combo_encounters.findData(self.current_encounter_id)
-        if idx >= 0:
-            self.combo_encounters.setCurrentIndex(idx)
-        else:
-            self.combo_encounters.setCurrentIndex(0)
-            self.current_encounter_id = self.combo_encounters.itemData(0)
+        self._controls.rebuild_encounter_combo(self.encounters, self.current_encounter_id)
         self.refresh_ui_from_current_encounter()
-        self.combo_encounters.blockSignals(False)
-        self.loading = False
-    
+        self._combatant_list.set_loading(False)
+
     def load_combat_data(self, data):
         self.load_session_state({"combatants": data})
 
-    def load_map_dialog(self):
-        if not self.current_encounter_id or self.current_encounter_id not in self.encounters: return
+    def clear_tracker(self):
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters:
+            return
         enc = self.encounters[self.current_encounter_id]
-        
+        self._combatant_list.clear_rows()
+        enc["combatants"] = []
+        enc["token_positions"] = {}
+        enc["turn_index"] = -1
+        enc["round"] = 1
+        enc["map_path"] = None
+        self._controls.update_round(1)
+        self.refresh_battle_map(force_map_reload=True)
+        if not self._combatant_list._loading:
+            self.data_changed_signal.emit()
+
+    def _on_list_data_modified(self):
+        self._save_current_state_to_memory()
+        self.refresh_battle_map()
+        self.data_changed_signal.emit()
+
+    # Condition menu forwarded from old call sites
+    def add_condition_to_row(self, row, name, icon_path, duration):
+        self._combatant_list.add_condition_to_row(row, name, icon_path, duration)
+
+    def open_condition_menu_for_widget(self, widget):
+        self._combatant_list.open_condition_menu_for_widget(widget)
+
+    def open_context_menu(self, pos):
+        self._combatant_list.open_context_menu(pos)
+
+    # ------------------------------------------------------------------
+    # Battle map integration
+    # ------------------------------------------------------------------
+
+    def load_map_dialog(self):
+        if not self.current_encounter_id or self.current_encounter_id not in self.encounters:
+            return
+        enc = self.encounters[self.current_encounter_id]
         d = MapSelectorDialog(self.dm, self)
         if d.exec():
-            if d.is_new_import: 
-                f, _ = QFileDialog.getOpenFileName(self, "Select", "", "Media (*.png *.jpg *.jpeg *.mp4 *.webm *.mkv *.m4v *.avi)")
-                if f: 
+            if d.is_new_import:
+                f, _ = QFileDialog.getOpenFileName(
+                    self, "Select", "",
+                    "Media (*.png *.jpg *.jpeg *.mp4 *.webm *.mkv *.m4v *.avi)"
+                )
+                if f:
                     enc["map_path"] = self.dm.import_image(f)
-            elif d.selected_file: 
+            elif d.selected_file:
                 enc["map_path"] = d.selected_file
-            
             self.data_changed_signal.emit()
             if self._bridge.is_open():
                 self.refresh_battle_map(force_map_reload=True)
@@ -680,20 +514,15 @@ class CombatTracker(QWidget):
             return
         enc = self.encounters[self.current_encounter_id]
         changed = False
-
-        if enc.get("grid_size", 50) != grid_size:
-            enc["grid_size"] = grid_size
-            changed = True
-        if enc.get("grid_visible", False) != grid_visible:
-            enc["grid_visible"] = grid_visible
-            changed = True
-        if enc.get("grid_snap", False) != grid_snap:
-            enc["grid_snap"] = grid_snap
-            changed = True
-        if enc.get("feet_per_cell", 5) != feet_per_cell:
-            enc["feet_per_cell"] = feet_per_cell
-            changed = True
-
+        for key, val in [
+            ("grid_size", grid_size),
+            ("grid_visible", grid_visible),
+            ("grid_snap", grid_snap),
+            ("feet_per_cell", feet_per_cell),
+        ]:
+            if enc.get(key, {"grid_size": 50, "grid_visible": False, "grid_snap": False, "feet_per_cell": 5}[key]) != val:
+                enc[key] = val
+                changed = True
         if not changed:
             return
         self.data_changed_signal.emit()
@@ -708,14 +537,16 @@ class CombatTracker(QWidget):
         mp = self.dm.get_full_path(enc.get("map_path"))
         cd = []
         for c in enc["combatants"]:
-            t = "NPC"; a = "LBL_ATTR_NEUTRAL"
+            t = "NPC"
+            a = "LBL_ATTR_NEUTRAL"
             if c["eid"] in self.dm.data["entities"]:
                 e = self.dm.data["entities"][c["eid"]]
                 t = e.get("type", "NPC")
                 a = e.get("attributes", {}).get("LBL_ATTITUDE", "LBL_ATTR_NEUTRAL")
                 if t == "Monster":
                     a = "LBL_ATTR_HOSTILE"
-            c["type"] = t; c["attitude"] = a
+            c["type"] = t
+            c["attitude"] = a
             cd.append(c)
         self._bridge.update_combat_data(
             cd, enc["turn_index"], mp, enc["token_size"],
@@ -740,15 +571,62 @@ class CombatTracker(QWidget):
     def sync_measurement_to_external(self, qimage):
         self._bridge.sync_measurement(qimage)
 
-    def retranslate_ui(self):
-        self.table.setHorizontalHeaderLabels([tr("HEADER_NAME"), tr("HEADER_INIT"), tr("HEADER_AC"), tr("HEADER_HP"), tr("HEADER_COND")])
-        self.inp_quick_name.setPlaceholderText(tr("HEADER_NAME")); self.btn_quick_add.setText(tr("BTN_QUICK_ADD")); self.btn_next_turn.setText(tr("BTN_NEXT_TURN")); self.btn_add.setText(tr("BTN_ADD")); self.btn_add_players.setText(tr("BTN_ADD_PLAYERS")); self.btn_roll.setText(tr("BTN_ROLL_INIT")); self.btn_clear_all.setText(tr("BTN_CLEAR_ALL"))
-        
-        self.btn_new_enc.setToolTip(tr("TIP_NEW_ENC"))
-        self.btn_rename_enc.setToolTip(tr("TIP_RENAME_ENC"))
-        self.btn_del_enc.setToolTip(tr("TIP_DEL_ENC"))
-        
-        if self.current_encounter_id and self.current_encounter_id in self.encounters: self.lbl_round.setText(f"{tr('LBL_ROUND_PREFIX')}{self.encounters[self.current_encounter_id].get('round', 1)}")
-        self._bridge.retranslate()
-        if self._bridge.is_open():
-            self.refresh_battle_map()
+    # ------------------------------------------------------------------
+    # Compat: expose combo/label directly used by some callers
+    # ------------------------------------------------------------------
+
+    @property
+    def combo_encounters(self):
+        return self._controls.combo_encounters
+
+    @property
+    def lbl_round(self):
+        return self._controls.lbl_round
+
+    @property
+    def btn_next_turn(self):
+        return self._controls.btn_next_turn
+
+    @property
+    def btn_add(self):
+        return self._controls.btn_add
+
+    @property
+    def btn_add_players(self):
+        return self._controls.btn_add_players
+
+    @property
+    def btn_roll(self):
+        return self._controls.btn_roll
+
+    @property
+    def btn_clear_all(self):
+        return self._controls.btn_clear_all
+
+    @property
+    def inp_quick_name(self):
+        return self._controls.inp_quick_name
+
+    @property
+    def inp_quick_init(self):
+        return self._controls.inp_quick_init
+
+    @property
+    def inp_quick_hp(self):
+        return self._controls.inp_quick_hp
+
+    @property
+    def btn_quick_add(self):
+        return self._controls.btn_quick_add
+
+    @property
+    def btn_new_enc(self):
+        return self._controls.btn_new_enc
+
+    @property
+    def btn_rename_enc(self):
+        return self._controls.btn_rename_enc
+
+    @property
+    def btn_del_enc(self):
+        return self._controls.btn_del_enc
