@@ -107,7 +107,9 @@ class LinkedEntityWidget(QWidget):
         self.list_assigned = QListWidget()
         self.list_assigned.setAlternatingRowColors(False)
         self.list_assigned.setSpacing(6)
-        self.list_assigned.setMinimumHeight(200)
+        self.list_assigned.setMinimumHeight(
+            320 if self._entity_type == "Spell" else 200
+        )
         self.list_assigned.itemDoubleClicked.connect(self._on_dbl_click)
         v.addWidget(self.list_assigned)
 
