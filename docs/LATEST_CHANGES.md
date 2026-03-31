@@ -74,6 +74,38 @@ This document tracks updates made **after the latest tagged release**.
 - `ui/widgets/markdown_editor.py`
 - `ui/widgets/npc_sheet.py`
 
+### 7) Soundpad Crossfade & Music State Fixes
+
+- Fixed abrupt audio transitions when switching music states in the Soundpad:
+  - Root cause: the `fade_ratio` QPropertyAnimation was calling `deck_volume` setter on every frame (~16ms), which restarted a 1500ms per-player fade animation on each tick — effectively preventing any volume change.
+  - Added `apply_volume_direct()` to `MultiTrackDeck`: sets player volumes directly without spawning per-player animations. Used exclusively during crossfade and master volume changes.
+  - `update_mix()` / `fade_to(1500ms)` is now reserved for intensity layer transitions only (its intended use case).
+  - Crossfade duration increased from 2000ms to 3000ms; easing curve changed to `InOutCubic` for a smoother S-curve blend.
+- Fixed active music state button not highlighting on initial theme load:
+  - `audio_brain.state_changed` signal is now connected to `_sync_state_buttons()` in `SoundpadPanel`.
+  - When a theme loads and the first state begins playing, the corresponding button is automatically marked as checked.
+
+## Files Updated in This Window
+
+- `main.py`
+- `ui/main_root.py`
+- `themes/amethyst.qss`
+- `themes/baldur.qss`
+- `themes/dark.qss`
+- `themes/discord.qss`
+- `themes/emerald.qss`
+- `themes/frost.qss`
+- `themes/grim.qss`
+- `themes/light.qss`
+- `themes/midnight.qss`
+- `themes/ocean.qss`
+- `themes/parchment.qss`
+- `ui/widgets/linked_entity_widget.py`
+- `ui/widgets/markdown_editor.py`
+- `ui/widgets/npc_sheet.py`
+- `core/audio/engine.py`
+- `ui/soundpad_panel.py`
+
 ## Validation Notes
 
 - Startup path was validated locally with offscreen boot checks.
@@ -83,3 +115,5 @@ This document tracks updates made **after the latest tagged release**.
   - `python3 -m py_compile ui/widgets/markdown_editor.py`
 - Spell/Npc sheet updates compiled cleanly:
   - `python3 -m py_compile ui/widgets/linked_entity_widget.py ui/widgets/npc_sheet.py`
+- Audio crossfade fix compiled cleanly:
+  - `python3 -m py_compile core/audio/engine.py ui/soundpad_panel.py`

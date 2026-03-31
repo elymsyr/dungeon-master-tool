@@ -21,6 +21,7 @@ class SoundpadPanel(QWidget):
         # Load global library and start audio engine
         self.global_library = load_global_library()
         self.audio_brain = MusicBrain(self.global_library)
+        self.audio_brain.state_changed.connect(self._sync_state_buttons)
         
         # Load music themes
         self.themes = load_all_themes()
@@ -278,8 +279,13 @@ class SoundpadPanel(QWidget):
                 final_shortcuts[key] = value
         return final_shortcuts
 
+    def _sync_state_buttons(self, state_name):
+        for name, btn in getattr(self, 'state_buttons', {}).items():
+            btn.setChecked(name == state_name)
+
     def on_state_clicked(self, state_name):
         self.audio_brain.queue_state(state_name)
+        # Immediate visual feedback (will be confirmed via state_changed signal)
         for name, btn in self.state_buttons.items():
             btn.setChecked(name == state_name)
 
