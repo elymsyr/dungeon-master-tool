@@ -58,3 +58,29 @@
 - [ ] **Online Experience:**
     - [ ] Develop a sync system for online play.
     - [ ] Hosted servers (Subscription model) vs Local hosting (Free).
+
+---
+
+## 📋 Changelog
+
+### v0.8.3 — Architecture & UX
+
+- **Global Edit Mode:** A single ✏️ toolbar toggle now locks or unlocks all text inputs app-wide (NpcSheet cards, session log, DM notes, mind map notes/entities). All components start read-only; turning edit off auto-saves dirty sheets.
+- **EventBus (Phase 4):** Introduced `core/event_bus.py` — a lightweight pub-sub bus for cross-cutting events (`entity.deleted`, `theme.changed`, `language.changed`, `edit_mode.changed`). Replaces fragile direct signal chains.
+- **Soundpad crossfade fix:** Fixed abrupt music-state transitions caused by per-player fade animations being reset every frame. Crossfade is now driven directly by `fade_ratio` animation (3s, InOutCubic).
+- **Active music state button:** Soundpad state buttons now correctly highlight the currently playing state on initial theme load.
+
+### v0.8.2 — Battle Map & Performance
+
+- **Battle Map Grid/Snap persistence** — grid visibility, snap toggle, cell size, and feet-per-cell now persist per encounter and no longer reset after token movement.
+- **Second Screen grid parity** — player view now renders the same grid visibility and sizing as DM view, and follows current snap settings.
+- **Faster Next Turn** — session autosave now uses smart dirty-checks for fog/annotation (save only when changed) plus a short debounce window to reduce save churn.
+- **Event log performance** — combat log writes are appended incrementally instead of rewriting the full text each turn.
+- **Mind Map shortcuts** — `Ctrl+Z` and `Ctrl+Shift+Z` added for undo/redo.
+
+### v0.8.1 — Session Entity Stats
+
+- **Entity Stats tab in Session** — new bottom-panel tab shows a full read-only NpcSheet for the currently selected combatant.
+- **Live combatant card sync** — selecting any row in the encounter table silently updates the Entity Stats panel.
+- **Right-click "View Stats"** — combat table context menu shortcut to the Entity Stats tab.
+- **Localization** — new strings added in EN/TR/DE/FR.
