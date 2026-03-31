@@ -2,7 +2,15 @@ import logging
 import os
 
 from PyQt6.QtCore import QSize, Qt, QUrl, pyqtSignal
-from PyQt6.QtGui import QDesktopServices, QIcon, QKeySequence, QPixmap, QShortcut
+from PyQt6.QtGui import (
+    QColor,
+    QDesktopServices,
+    QIcon,
+    QKeySequence,
+    QPalette,
+    QPixmap,
+    QShortcut,
+)
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -475,6 +483,7 @@ class NpcSheet(QWidget):
         main_layout.addLayout(btn_layout)
 
         self.update_ui_by_type(self.inp_type.currentData())
+        self._enforce_transparent_text_fields()
         self._connect_change_signals()
         self._apply_edit_mode_ui(False)
 
@@ -488,6 +497,7 @@ class NpcSheet(QWidget):
             ph_title = tr("LBL_TITLE_PH")
         if ph_desc is None:
             ph_desc = tr("LBL_DETAILS_PH")
+        desc_min_height = 88 if group is self.action_container else 120
 
         card = QFrame()
         card.setProperty("class", "featureCard")
@@ -522,7 +532,7 @@ class NpcSheet(QWidget):
         d.set_toggle_button_visible(False)
         d.entity_link_clicked.connect(self.request_open_entity.emit)
         d.setPlaceholderText(ph_desc)
-        d.setMinimumHeight(120)
+        d.setMinimumHeight(desc_min_height)
         d.textChanged.connect(self.mark_as_dirty)
 
         if self.is_embedded:
@@ -569,12 +579,14 @@ class NpcSheet(QWidget):
                 widget.currentIndexChanged.connect(
                     lambda _=None, c=card: self._refresh_manual_spell_card_preview(c)
                 )
+                self._force_transparent_combo(widget)
             else:
                 widget = QLineEdit(str(attrs.get(label_key, "") or ""))
                 widget.textChanged.connect(self.mark_as_dirty)
                 widget.textChanged.connect(
                     lambda _=None, c=card: self._refresh_manual_spell_card_preview(c)
                 )
+                self._force_transparent_line_edit(widget)
 
             spell_attr_inputs[label_key] = widget
             attr_layout.addRow(tr(label_key), widget)
@@ -1284,6 +1296,7 @@ class NpcSheet(QWidget):
                         widget.addItem(tr(opt) if str(opt).startswith("LBL_") else opt, opt)
                 widget.editTextChanged.connect(self.mark_as_dirty)
                 widget.currentIndexChanged.connect(self.mark_as_dirty)
+                self._force_transparent_combo(widget)
 
             elif dtype == "entity_select":
                 widget = QComboBox()
@@ -1295,6 +1308,7 @@ class NpcSheet(QWidget):
                     lambda idx, w=widget: self._on_unified_selection(idx, w)
                 )
                 widget.editTextChanged.connect(self.mark_as_dirty)
+                self._force_transparent_combo(widget)
                 self.layout_dynamic.addRow(f"{tr(label_key)}:", widget)
                 self.dynamic_inputs[label_key] = widget
                 continue  # skip the generic addRow below
@@ -1302,9 +1316,53 @@ class NpcSheet(QWidget):
             else:
                 widget = QLineEdit()
                 widget.textChanged.connect(self.mark_as_dirty)
+                self._force_transparent_line_edit(widget)
 
             self.layout_dynamic.addRow(f"{tr(label_key)}:", widget)
             self.dynamic_inputs[label_key] = widget
+
+    def _force_transparent_line_edit(self, widget: QLineEdit) -> None:
+        style = widget.styleSheet().strip()
+        token = "background-color: transparent;"
+        if token not in style:
+            if style and not style.endswith(";"):
+                style = f"{style}; "
+            widget.setStyleSheet(f"{style}{token}")
+
+        pal = widget.palette()
+        pal.setColor(QPalette.ColorRole.Base, QColor(0, 0, 0, 0))
+        widget.setPalette(pal)
+        widget.setAutoFillBackground(False)
+
+    def _force_transparent_combo(self, widget: QComboBox) -> None:
+        # Force transparent text area on editable combos (e.g. Attitude field).
+        style = widget.styleSheet().strip()
+        forced = (
+            "QComboBox { background-color: transparent; }"
+            "QComboBox:editable { background-color: transparent; }"
+            "QComboBox::drop-down { background-color: transparent; border: none; }"
+            "QComboBox::down-arrow { background: transparent; }"
+        )
+        if forced not in style:
+            if style and not style.endswith(";"):
+                style = f"{style}; "
+            widget.setStyleSheet(f"{style}{forced}")
+
+        pal = widget.palette()
+        pal.setColor(QPalette.ColorRole.Base, QColor(0, 0, 0, 0))
+        widget.setPalette(pal)
+        widget.setAutoFillBackground(False)
+
+        line_edit = widget.lineEdit()
+        if line_edit is not None:
+            self._force_transparent_line_edit(line_edit)
+
+    def _enforce_transparent_text_fields(self) -> None:
+        # Runtime safeguard: enforce transparent text backgrounds regardless of theme quirks.
+        for line_edit in self.content_widget.findChildren(QLineEdit):
+            self._force_transparent_line_edit(line_edit)
+        for combo in self.content_widget.findChildren(QComboBox):
+            self._force_transparent_combo(combo)
 
     def _populate_unified_combo(self, category: str, widget: QComboBox) -> None:
         widget.clear()
@@ -1435,3 +1493,5 @@ class NpcSheet(QWidget):
                 self.content_layout.removeWidget(self.grp_combat_stats)
                 self.tab_stats.layout().insertWidget(1, self.grp_combat_stats)
             self.grp_combat_stats.setVisible(is_npc_like)
+
+        self._enforce_transparent_text_fields()

@@ -218,12 +218,8 @@ class MarkdownEditor(QWidget):
             # Button background inside editor
             btn_bg = "rgba(0,0,0,0.1)"
         else:
-            # Standard mode (inside a sheet): slightly dark/light background
-            bg_color = "rgba(0, 0, 0, 0.2)"
-            # If canvas background is very light (Light/Frost theme), darken the text edit background
-            if p.get("canvas_bg", "#000000").startswith("#f"):
-                bg_color = "rgba(255, 255, 255, 0.6)"
-            
+            # Standard mode (inside a sheet): transparent text backgrounds
+            bg_color = "transparent"
             border = "1px solid rgba(128, 128, 128, 0.3)"
             text_color = p.get("html_text", "#e0e0e0")
             btn_bg = "rgba(60,60,60,0.8)"

@@ -32,13 +32,54 @@ This document tracks updates made **after the latest tagged release**.
 
 - Post-rebuild wiring now reattaches tab-based lazy hooks so behavior remains consistent in dev hot-reload and normal boot flows.
 
+### 4) Transparent Text Background Pass (UI Consistency)
+
+- Applied a global text-input transparency override in all shipped themes:
+  - `QLineEdit`, `QTextEdit`, `QPlainTextEdit`, `QTextBrowser`, `QSpinBox`, `QComboBox` and related read-only/disabled/focus states now use transparent backgrounds.
+- Updated Markdown editor styling to keep text areas transparent in standard sheet mode as well.
+- Goal: remove visible background mismatches across edit/view states in forms (including NPC property/combat-like entry areas).
+
+### 5) Spell Cards & Manual Spell UX Improvements
+
+- Linked Spell entries now render as richer cards:
+  - show full spell properties (level, school, casting time, range, duration, components)
+  - include description preview on the card.
+- Manual Spell flow was expanded:
+  - supports filling all core spell properties in addition to title/description
+  - keeps property data in `custom_spells[].attributes`
+  - view mode shows manual spells in a compact card-style preview (properties + description), edit mode keeps full editable inputs.
+
+### 6) NPC Sheet Layout & Field Rendering Refinements
+
+- Increased Spell list area height for better visibility in the Spells tab.
+- Reduced Action item description editor height to make the Actions section denser and easier to scan.
+- Added runtime transparent-style enforcement for dynamic property fields (e.g., `Challenge Rating (CR)`, `Attitude`) to improve consistency across theme/state combinations.
+
 ## Files Updated in This Window
 
 - `main.py`
 - `ui/main_root.py`
+- `themes/amethyst.qss`
+- `themes/baldur.qss`
+- `themes/dark.qss`
+- `themes/discord.qss`
+- `themes/emerald.qss`
+- `themes/frost.qss`
+- `themes/grim.qss`
+- `themes/light.qss`
+- `themes/midnight.qss`
+- `themes/ocean.qss`
+- `themes/parchment.qss`
+- `ui/widgets/linked_entity_widget.py`
+- `ui/widgets/markdown_editor.py`
+- `ui/widgets/npc_sheet.py`
 
 ## Validation Notes
 
 - Startup path was validated locally with offscreen boot checks.
 - Python syntax compilation passed for touched files:
   - `python3 -m py_compile main.py ui/main_root.py`
+- Recent UI transparency change compiled cleanly:
+  - `python3 -m py_compile ui/widgets/markdown_editor.py`
+- Spell/Npc sheet updates compiled cleanly:
+  - `python3 -m py_compile ui/widgets/linked_entity_widget.py ui/widgets/npc_sheet.py`

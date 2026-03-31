@@ -82,3 +82,44 @@ QLabel#entityCat {
     background-color: transparent;
     font-style: italic;
 }
+/* TRANSPARENT_TEXT_BG_OVERRIDE */
+QLineEdit,
+QTextEdit,
+QPlainTextEdit,
+QTextBrowser,
+QSpinBox,
+QComboBox,
+QDateEdit,
+QTimeEdit,
+QDateTimeEdit,
+QAbstractSpinBox {
+    background-color: transparent;
+}
+
+QLineEdit:focus,
+QTextEdit:focus,
+QPlainTextEdit:focus,
+QTextBrowser:focus,
+QSpinBox:focus,
+QComboBox:focus,
+QDateEdit:focus,
+QTimeEdit:focus,
+QDateTimeEdit:focus,
+QAbstractSpinBox:focus,
+QLineEdit:disabled,
+QTextEdit:disabled,
+QPlainTextEdit:disabled,
+QTextBrowser:disabled,
+QSpinBox:disabled,
+QComboBox:disabled,
+QDateEdit:disabled,
+QTimeEdit:disabled,
+QDateTimeEdit:disabled,
+QAbstractSpinBox:disabled,
+QLineEdit:read-only,
+QTextEdit:read-only,
+QPlainTextEdit:read-only,
+QTextBrowser:read-only,
+QComboBox:editable {
+    background-color: transparent;
+}
