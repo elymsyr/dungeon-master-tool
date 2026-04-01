@@ -118,8 +118,7 @@ class CombatControlsWidget(QWidget):
         # --- Round / Next Turn row ---
         btn_layout = QHBoxLayout()
         self.lbl_round = QLabel(f"{tr('LBL_ROUND_PREFIX')}1")
-        self.lbl_round.setObjectName("headerLabel")
-        self.lbl_round.setStyleSheet("font-size: 16px; font-weight: bold; margin-right: 10px;")
+        self.lbl_round.setObjectName("roundLabel")
         self.btn_next_turn = QPushButton(tr("BTN_NEXT_TURN"))
         self.btn_next_turn.setObjectName("actionBtn")
         self.btn_next_turn.clicked.connect(self.turn_requested.emit)

@@ -246,7 +246,7 @@ class LinkedEntityWidget(QWidget):
         layout.setSpacing(2)
 
         lbl_name = QLabel(name)
-        lbl_name.setStyleSheet("font-weight: bold;")
+        lbl_name.setObjectName("linkedEntityName")
         layout.addWidget(lbl_name)
 
         if extra:
@@ -271,11 +271,4 @@ class LinkedEntityWidget(QWidget):
             lbl_desc.setStyleSheet("font-size: 11px; color: #b0b0b0;")
             layout.addWidget(lbl_desc)
 
-        card.setStyleSheet(
-            "QFrame#linkedEntityCard {"
-            " border: 1px solid rgba(120, 120, 120, 0.4);"
-            " border-radius: 8px;"
-            " background-color: rgba(120, 120, 120, 0.08);"
-            "}"
-        )
         return card

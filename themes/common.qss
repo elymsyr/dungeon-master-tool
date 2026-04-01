@@ -1,0 +1,55 @@
+/* ===================================================
+   common.qss — theme-agnostic structural styles
+   Appended to every theme by load_theme() so rules
+   here work across all themes without per-theme
+   duplication.  Use object-name selectors only.
+   =================================================== */
+
+/* --- Combat tracker round counter --- */
+QLabel#roundLabel {
+    font-size: 16px;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+/* --- Feature card inline title editor --- */
+QLineEdit#featureCardTitle {
+    font-weight: bold;
+    border: none;
+    font-size: 14px;
+}
+
+/* --- Stat abbreviation labels (STR, DEX, …) --- */
+QLabel#statAbbrev {
+    font-weight: bold;
+}
+
+/* --- Linked entity card name --- */
+QLabel#linkedEntityName {
+    font-weight: bold;
+}
+
+/* --- Linked entity card frame --- */
+QFrame#linkedEntityCard {
+    border: 1px solid rgba(120, 120, 120, 0.4);
+    border-radius: 8px;
+    background-color: rgba(120, 120, 120, 0.08);
+}
+
+/* --- Timeline entry quick-add buttons --- */
+QPushButton#timelineQuickBtn {
+    font-size: 11px;
+}
+
+/* --- Import dialog title label --- */
+QLabel#importTitle {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* --- Editable combo inner QLineEdit: prevent double-padding --- */
+QComboBox QLineEdit {
+    padding: 0px;
+    border: none;
+    border-radius: 0px;
+}

@@ -105,23 +105,7 @@ class NpcSheet(QWidget):
             self.spell_widget, self.dm, self.mark_as_dirty, self.request_open_entity.emit
         )
 
-        self.init_ui()
-
-        # Backward-compat aliases — image / pdf / linked entities
-        self.list_pdfs = self.pdf_manager.list_pdfs
-        self.list_assigned_spells = self.spell_widget.list_assigned
-        self.list_assigned_items = self.item_widget.list_assigned
-        self.combo_all_spells = self.spell_widget.combo_all
-        self.combo_all_items = self.item_widget.combo_all
-        self.lbl_image = self.image_gallery.lbl_image
-        self.lbl_img_counter = self.image_gallery.lbl_counter
-        self.btn_project_pdf = self.pdf_manager.btn_project
-        self.btn_add_pdf = self.pdf_manager.btn_add
-        self.btn_open_pdf = self.pdf_manager.btn_open
-        self.btn_remove_pdf = self.pdf_manager.btn_remove
-        self.btn_open_pdf_folder = self.pdf_manager.btn_open_folder
-
-        # Backward-compat aliases — stats tab internals
+        # Backward-compat aliases — stats tab internals (needed by update_ui_by_type inside init_ui)
         self.grp_base_stats = self._stats_tab.grp_base_stats
         self.grp_combat_stats = self._stats_tab.grp_combat_stats
         self.grp_defense = self._stats_tab.grp_defense
@@ -148,6 +132,22 @@ class NpcSheet(QWidget):
         self.legendary_container = self._actions_tab.legendary_container
         self.inventory_container = self._inventory_tab.inventory_container
         self.custom_spell_container = self._spells_tab.custom_spell_container
+
+        self.init_ui()
+
+        # Backward-compat aliases — image / pdf / linked entities
+        self.list_pdfs = self.pdf_manager.list_pdfs
+        self.list_assigned_spells = self.spell_widget.list_assigned
+        self.list_assigned_items = self.item_widget.list_assigned
+        self.combo_all_spells = self.spell_widget.combo_all
+        self.combo_all_items = self.item_widget.combo_all
+        self.lbl_image = self.image_gallery.lbl_image
+        self.lbl_img_counter = self.image_gallery.lbl_counter
+        self.btn_project_pdf = self.pdf_manager.btn_project
+        self.btn_add_pdf = self.pdf_manager.btn_add
+        self.btn_open_pdf = self.pdf_manager.btn_open
+        self.btn_remove_pdf = self.pdf_manager.btn_remove
+        self.btn_open_pdf_folder = self.pdf_manager.btn_open_folder
 
         # Ctrl+S shortcut
         self.shortcut_save = QShortcut(QKeySequence("Ctrl+S"), self)
