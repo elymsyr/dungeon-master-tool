@@ -18,6 +18,7 @@ from config import CACHE_DIR, DATA_ROOT, DATA_ROOT_MODE, load_theme
 from core.data_manager import DataManager
 from core.event_bus import EventBus
 from core.locales import tr
+from core.network.bridge import NetworkBridge
 from core.log_config import setup_logging
 from core.theme_manager import ThemeManager
 from ui.campaign_selector import CampaignSelector
@@ -36,6 +37,7 @@ class MainWindow(QMainWindow):
         self.dev_mode = dev_mode
         self.event_bus = EventBus()
         self.data_manager.set_event_bus(self.event_bus)
+        self.network_bridge = NetworkBridge(self.event_bus)
         self.global_edit_mode = False
         self.player_window = PlayerWindow(dev_mode=self.dev_mode)
 
@@ -271,6 +273,10 @@ class MainWindow(QMainWindow):
 
         self._shortcut_edit_mode = QShortcut(QKeySequence("Ctrl+E"), self)
         self._shortcut_edit_mode.activated.connect(self.toggle_active_edit_mode)
+
+        from ui.components.connection_status import ConnectionStatusBadge
+        self._connection_badge = ConnectionStatusBadge(self.network_bridge)
+        self.statusBar().addPermanentWidget(self._connection_badge)
 
     def _post_root_setup(self):
         self._map_tab_rendered_once = False

@@ -87,6 +87,7 @@ class NpcSheetInventoryTab(QWidget):
             btn.setVisible(enabled)
 
     def refresh_theme(self, palette: dict) -> None:
+        self.item_widget.refresh_theme(palette)
         for i in range(self.inventory_container.dynamic_area.count()):
             w = self.inventory_container.dynamic_area.itemAt(i).widget()
             if w and hasattr(w, "inp_desc"):

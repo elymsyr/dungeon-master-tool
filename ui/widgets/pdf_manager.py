@@ -10,12 +10,14 @@ import os
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
+    QAbstractScrollArea,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
     QListWidget,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QStyle,
     QVBoxLayout,
     QWidget,
@@ -41,6 +43,7 @@ class PdfManagerWidget(QWidget):
         super().__init__(parent)
         self._dm = data_manager
         self._entity_id: str | None = None
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         self._build_ui()
 
     # ------------------------------------------------------------------
@@ -50,36 +53,17 @@ class PdfManagerWidget(QWidget):
     def _build_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         grp = QGroupBox(tr("GRP_PDF"))
+        grp.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         v = QVBoxLayout(grp)
+        v.setSpacing(4)
 
         h_btn = QHBoxLayout()
         self.btn_add = QPushButton(tr("BTN_ADD"))
         self.btn_add.setObjectName("successBtn")
         self.btn_add.clicked.connect(self.add_pdf_dialog)
-
-        self.btn_open_folder = QPushButton()
-        self.btn_open_folder.setIcon(
-            self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon)
-        )
-        self.btn_open_folder.clicked.connect(self.open_pdf_folder)
-
-        h_btn.addWidget(self.btn_add, 3)
-        h_btn.addWidget(self.btn_open_folder, 1)
-        v.addLayout(h_btn)
-
-        self.list_pdfs = QListWidget()
-        self.list_pdfs.setAlternatingRowColors(True)
-        v.addWidget(self.list_pdfs)
-
-        h_action = QHBoxLayout()
-        self.btn_open = QPushButton(tr("BTN_OPEN_PDF"))
-        self.btn_open.setObjectName("primaryBtn")
-        self.btn_open.clicked.connect(self.open_current_pdf)
-
-        self.btn_project = QPushButton(tr("BTN_PROJECT_PDF"))
-        self.btn_project.setObjectName("actionBtn")
 
         self.btn_remove = QPushButton(tr("BTN_REMOVE"))
         self.btn_remove.setIcon(
@@ -88,10 +72,19 @@ class PdfManagerWidget(QWidget):
         self.btn_remove.setObjectName("dangerBtn")
         self.btn_remove.clicked.connect(self.remove_current_pdf)
 
-        h_action.addWidget(self.btn_open)
-        h_action.addWidget(self.btn_project)
-        h_action.addWidget(self.btn_remove)
-        v.addLayout(h_action)
+        h_btn.addWidget(self.btn_add, 3)
+        h_btn.addWidget(self.btn_remove, 1)
+        v.addLayout(h_btn)
+
+        self.list_pdfs = QListWidget()
+        self.list_pdfs.setAlternatingRowColors(True)
+        self.list_pdfs.setSizeAdjustPolicy(
+            QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents
+        )
+        self.list_pdfs.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum
+        )
+        v.addWidget(self.list_pdfs)
 
         layout.addWidget(grp)
 
@@ -113,6 +106,7 @@ class PdfManagerWidget(QWidget):
         self.list_pdfs.clear()
         for pdf in pdfs:
             self.list_pdfs.addItem(pdf)
+        self._fit_list_height()
 
     def get_pdfs(self) -> list[str]:
         """Return the current list of relative PDF paths."""
@@ -125,6 +119,17 @@ class PdfManagerWidget(QWidget):
     # Slots
     # ------------------------------------------------------------------
 
+    def _fit_list_height(self) -> None:
+        count = self.list_pdfs.count()
+        if count == 0:
+            self.list_pdfs.setFixedHeight(0)
+            return
+        total = sum(
+            self.list_pdfs.sizeHintForRow(i) for i in range(count)
+        )
+        total += 2 * self.list_pdfs.frameWidth()
+        self.list_pdfs.setFixedHeight(total)
+
     def add_pdf_dialog(self) -> None:
         f, _ = QFileDialog.getOpenFileName(
             self, tr("BTN_SELECT_PDF"), "", "PDF (*.pdf)"
@@ -135,6 +140,7 @@ class PdfManagerWidget(QWidget):
         if not rel:
             return
         self.list_pdfs.addItem(rel)
+        self._fit_list_height()
         if self._entity_id:
             entity = self._dm.data["entities"].get(self._entity_id)
             if entity:
@@ -167,6 +173,7 @@ class PdfManagerWidget(QWidget):
             return
         txt = item.text()
         self.list_pdfs.takeItem(self.list_pdfs.row(item))
+        self._fit_list_height()
         if self._entity_id:
             entity = self._dm.data["entities"].get(self._entity_id)
             if entity and txt in entity.get("pdfs", []):

@@ -195,15 +195,8 @@ class DatabaseTab(QWidget):
         # Populate the sheet
         self.populate_sheet(new_sheet, data)
 
-        # Delete and Projection buttons
+        # Delete button
         new_sheet.btn_delete.clicked.connect(lambda: self.delete_entity_from_tab(new_sheet))
-        new_sheet.btn_project_pdf.clicked.connect(lambda: self.project_entity_pdf(new_sheet))
-        
-        # PDF buttons
-        new_sheet.btn_add_pdf.clicked.connect(new_sheet.add_pdf_dialog)
-        new_sheet.btn_open_pdf.clicked.connect(new_sheet.open_current_pdf)
-        new_sheet.btn_remove_pdf.clicked.connect(new_sheet.remove_current_pdf)
-        new_sheet.btn_open_pdf_folder.clicked.connect(new_sheet.open_pdf_folder)
         
         # Tab title
         icon_char = "👤" if data.get("type") == "NPC" else "🐉" if data.get("type") == "Monster" else "📜"
