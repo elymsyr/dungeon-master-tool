@@ -43,7 +43,8 @@
       "Bash(find /home/eren/GitHub/dungeon-master-tool -name \"*.py\" -exec grep -l \"encounter\\\\|Initiative\\\\|turn\" {} \\\\;)",
       "Bash(xargs ls:*)",
       "Bash(find /home/eren/GitHub/dungeon-master-tool -name \"*.py\" -exec grep -l \"soundpad\\\\|Soundpad\\\\|audio\\\\|Audio\" {} \\\\;)",
-      "Bash(find /home/eren/GitHub/dungeon-master-tool/ui/windows -type f -name \"*.py\" -exec basename {} \\\\;)"
+      "Bash(find /home/eren/GitHub/dungeon-master-tool/ui/windows -type f -name \"*.py\" -exec basename {} \\\\;)",
+      "Bash(flutter --version)"
     ]
   }
 }
