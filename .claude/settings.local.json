@@ -37,7 +37,13 @@
       "WebFetch(domain:www.qt.io)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:www.riverbankcomputing.com)",
-      "WebFetch(domain:forum.pythonguis.com)"
+      "WebFetch(domain:forum.pythonguis.com)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx\\)$\")",
+      "Bash(python3 -c \"import sys; sys.path.insert\\(0, '/home/eren/GitHub/dungeon-master-tool'\\); from PyQt6.QtWidgets import QGraphicsItem; attrs = [attr for attr in dir\\(QGraphicsItem.GraphicsItemFlag\\) if 'Item' in attr]; print\\('\\\\n'.join\\(sorted\\(set\\(attrs\\)\\)\\)\\)\")",
+      "Bash(find /home/eren/GitHub/dungeon-master-tool -name \"*.py\" -exec grep -l \"encounter\\\\|Initiative\\\\|turn\" {} \\\\;)",
+      "Bash(xargs ls:*)",
+      "Bash(find /home/eren/GitHub/dungeon-master-tool -name \"*.py\" -exec grep -l \"soundpad\\\\|Soundpad\\\\|audio\\\\|Audio\" {} \\\\;)",
+      "Bash(find /home/eren/GitHub/dungeon-master-tool/ui/windows -type f -name \"*.py\" -exec basename {} \\\\;)"
     ]
   }
 }
