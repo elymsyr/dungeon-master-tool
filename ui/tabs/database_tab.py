@@ -91,7 +91,8 @@ class EntityTabWidget(QTabWidget):
 
 
 class DatabaseTab(QWidget):
-    entity_deleted = pyqtSignal()  # Signal emitted when an entity is deleted
+    entity_deleted = pyqtSignal()
+    pdf_project_requested = pyqtSignal(str)
     """
     Manages only the right-side workspace (Dual-Panel Card System).
     The left-side entity list lives in the Global Sidebar.
@@ -191,6 +192,7 @@ class DatabaseTab(QWidget):
         new_sheet.request_open_entity.connect(lambda id: self.open_entity_tab(id, target_panel))
         new_sheet.save_requested.connect(lambda: self.save_sheet_data(new_sheet))
         new_sheet.data_changed.connect(lambda: self.mark_tab_unsaved(new_sheet, target_manager))
+        new_sheet.pdf_manager.project_requested.connect(self.pdf_project_requested.emit)
         
         # Populate the sheet
         self.populate_sheet(new_sheet, data)

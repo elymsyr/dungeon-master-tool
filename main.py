@@ -283,6 +283,8 @@ class MainWindow(QMainWindow):
         if hasattr(self, "tabs"):
             self.tabs.currentChanged.connect(self._on_main_tab_changed)
             self._on_main_tab_changed(self.tabs.currentIndex())
+        if hasattr(self, "db_tab"):
+            self.db_tab.pdf_project_requested.connect(self.show_pdf_in_panel)
 
     def _on_main_tab_changed(self, index: int):
         if not hasattr(self, "tabs") or not hasattr(self, "map_tab"):
@@ -414,20 +416,69 @@ class MainWindow(QMainWindow):
         self.retranslate_ui()
         self.event_bus.publish("language.changed", code=code)
 
+    def _close_right_panel(self, panel_attr: str, btn_attr: str):
+        """Hide a right-side panel and uncheck its toggle button."""
+        panel = getattr(self, panel_attr, None)
+        if panel and panel.isVisible():
+            panel.setVisible(False)
+        btn = getattr(self, btn_attr, None)
+        if btn:
+            btn.setChecked(False)
+
+    def toggle_pdf_panel(self):
+        panel = getattr(self, "pdf_panel", None)
+        if panel is None:
+            return
+        is_visible = panel.isVisible()
+        if not is_visible:
+            self._close_right_panel("soundpad_panel", "btn_toggle_sound")
+        panel.setVisible(not is_visible)
+        if hasattr(self, "btn_toggle_pdf"):
+            self.btn_toggle_pdf.setChecked(not is_visible)
+        if not is_visible:
+            sizes = self.content_splitter.sizes()
+            pdf_idx = self.content_splitter.indexOf(panel)
+            if pdf_idx >= 0 and sizes[pdf_idx] == 0:
+                new_size = 400
+                sizes[1] -= new_size
+                sizes[pdf_idx] = new_size
+                self.content_splitter.setSizes(sizes)
+
+    def show_pdf_in_panel(self, path: str):
+        """Open the PDF panel and display the given PDF file."""
+        panel = getattr(self, "pdf_panel", None)
+        if panel is None:
+            return
+        self._close_right_panel("soundpad_panel", "btn_toggle_sound")
+        panel.setVisible(True)
+        if hasattr(self, "btn_toggle_pdf"):
+            self.btn_toggle_pdf.setChecked(True)
+        sizes = self.content_splitter.sizes()
+        pdf_idx = self.content_splitter.indexOf(panel)
+        if pdf_idx >= 0 and sizes[pdf_idx] == 0:
+            new_size = 400
+            sizes[1] -= new_size
+            sizes[pdf_idx] = new_size
+            self.content_splitter.setSizes(sizes)
+        panel.show_pdf(path)
+
     def toggle_soundpad(self):
         panel = self._ensure_soundpad_panel()
         if panel is None:
             return
 
         is_visible = panel.isVisible()
+        if not is_visible:
+            self._close_right_panel("pdf_panel", "btn_toggle_pdf")
         panel.setVisible(not is_visible)
         self.btn_toggle_sound.setChecked(not is_visible)
         if not is_visible:
             sizes = self.content_splitter.sizes()
-            if sizes[-1] == 0:
+            sp_idx = self.content_splitter.indexOf(panel)
+            if sp_idx >= 0 and sizes[sp_idx] == 0:
                 new_size = 300
                 sizes[1] -= new_size
-                sizes[-1] = new_size
+                sizes[sp_idx] = new_size
                 self.content_splitter.setSizes(sizes)
 
     def change_theme(self, index):

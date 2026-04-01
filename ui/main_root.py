@@ -18,6 +18,7 @@ from ui.tabs.database_tab import DatabaseTab
 from ui.tabs.map_tab import MapTab
 from ui.tabs.mind_map_tab import MindMapTab
 from ui.tabs.session_tab import SessionTab
+from ui.pdf_panel import PdfPanel
 from ui.widgets.entity_sidebar import EntitySidebar
 from ui.widgets.projection_manager import ProjectionManager
 
@@ -74,9 +75,15 @@ def create_root_widget(main_window):
     btn_toggle_sound.setToolTip(tr("BTN_TOGGLE_SOUNDPAD"))
     btn_toggle_sound.clicked.connect(main_window.toggle_soundpad)
 
-    btn_edit_mode = QPushButton("✏️")
+    btn_toggle_pdf = QPushButton()
+    btn_toggle_pdf.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_FileIcon))
+    btn_toggle_pdf.setFixedSize(28, 28)
+    btn_toggle_pdf.setCheckable(True)
+    btn_toggle_pdf.setToolTip(tr("BTN_TOGGLE_PDF_PANEL"))
+    btn_toggle_pdf.clicked.connect(main_window.toggle_pdf_panel)
+
+    btn_edit_mode = QPushButton(f"✏️ {tr('BTN_EDIT')}")
     btn_edit_mode.setCheckable(True)
-    btn_edit_mode.setFixedSize(28, 28)
     btn_edit_mode.setObjectName("editModeBtn")
     btn_edit_mode.setToolTip(tr("BTN_EDIT"))
     btn_edit_mode.clicked.connect(main_window.toggle_active_edit_mode)
@@ -121,6 +128,7 @@ def create_root_widget(main_window):
     toolbar.addWidget(btn_toggle_player)
     toolbar.addWidget(btn_export_txt)
     toolbar.addWidget(btn_toggle_sound)
+    toolbar.addWidget(btn_toggle_pdf)
     toolbar.addWidget(btn_edit_mode)
     toolbar.addSpacing(10)
     toolbar.addWidget(lbl_campaign)
@@ -160,12 +168,18 @@ def create_root_widget(main_window):
     soundpad_panel.setVisible(False)
     content_splitter.addWidget(soundpad_panel)
 
+    pdf_panel = PdfPanel()
+    pdf_panel.setVisible(False)
+    content_splitter.addWidget(pdf_panel)
+
     content_splitter.setStretchFactor(0, 0)
     content_splitter.setStretchFactor(1, 1)
     content_splitter.setStretchFactor(2, 0)
+    content_splitter.setStretchFactor(3, 0)
     content_splitter.setCollapsible(0, True)
     content_splitter.setCollapsible(2, True)
-    content_splitter.setSizes([300, 1000, 0])
+    content_splitter.setCollapsible(3, True)
+    content_splitter.setSizes([300, 1000, 0, 0])
 
     main_layout.addWidget(content_splitter)
 
@@ -192,5 +206,7 @@ def create_root_widget(main_window):
         "map_tab": map_tab,
         "session_tab": session_tab,
         "soundpad_panel": soundpad_panel,
+        "pdf_panel": pdf_panel,
+        "btn_toggle_pdf": btn_toggle_pdf,
         "btn_edit_mode": btn_edit_mode,
     }

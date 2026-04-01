@@ -75,13 +75,6 @@ QPushButton#hpDecreaseBtn, QPushButton#hpIncreaseBtn {
     color: white;
 }
 
-/* --- Edit mode toggle --- */
-QPushButton#editModeBtn {
-    min-width: 0px;
-    min-height: 0px;
-    padding: 2px;
-}
-
 /* --- Timeline entry quick-add buttons --- */
 QPushButton#timelineQuickBtn {
     font-size: 11px;
