@@ -1,0 +1,57 @@
+name: dungeon_master_tool
+description: "D&D Dungeon Master Tool — Schema-driven campaign management for tabletop RPGs."
+publish_to: 'none'
+version: 2.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Immutable Models
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+
+  # Storage
+  msgpack_dart: ^1.0.1
+  shared_preferences: ^2.5.3
+  path_provider: ^2.1.5
+  path: ^1.9.1
+
+  # Routing
+  go_router: ^14.8.1
+
+  # UI
+  cupertino_icons: ^1.0.8
+  window_manager: ^0.4.3
+
+  # Utilities
+  uuid: ^4.5.1
+  intl: any
+  logger: ^2.5.0
+  collection: ^1.19.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # Code Generation
+  build_runner: ^2.4.15
+  freezed: ^3.0.0
+  riverpod_generator: ^2.6.3
+  json_serializable: ^6.9.4
+  custom_lint: ^0.7.5
+  riverpod_lint: ^2.6.3
+
+flutter:
+  uses-material-design: true
+  generate: true

@@ -1,0 +1,21 @@
+{
+  "@@locale": "tr",
+  "appTitle": "Dungeon Master Aracı",
+  "btnSave": "Kaydet",
+  "btnCancel": "İptal",
+  "btnDelete": "Sil",
+  "btnCreate": "Oluştur",
+  "btnImport": "İçe Aktar",
+  "btnExport": "Dışa Aktar",
+  "lblNewCampaign": "Yeni Kampanya",
+  "lblSelectCampaign": "Kampanya Seç",
+  "lblWorldName": "Dünya Adı",
+  "lblSearch": "Ara",
+  "lblSettings": "Ayarlar",
+  "lblTheme": "Tema",
+  "lblLanguage": "Dil",
+  "tabDatabase": "Veritabanı",
+  "tabSession": "Oturum",
+  "tabMindMap": "Zihin Haritası",
+  "tabMap": "Harita"
+}
