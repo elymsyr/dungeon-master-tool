@@ -46,6 +46,40 @@ This document tracks updates made **after the latest tagged release**.
   - `ui/dialogs/timeline_entry.py` — `timelineQuickBtn`
   - `ui/dialogs/import_window.py` — `importTitle`
 
+### Phase 3 — UI Consistency (IMPROVEMENT_ROADMAP.md)
+
+#### Theme Background Color Fix ✅
+- All 11 theme `.qss` files: `QComboBox` and `QSpinBox` added to `featureCard` transparent rule
+- `themes/common.qss`: `QLabel`, `QListWidget`, `:focus` transparency rules added for `#sheetContainer`
+- Fixes visible background mismatch on Name/Type/Source fields, Challenge Rating, spell contents across all themes
+
+#### Spells Tab Refactoring ✅
+- Manual spells section (`LBL_MANUAL_SPELLS` QGroupBox) removed entirely
+- `ui/dialogs/manual_spell_dialog.py` created — dialog with spell fields + "Save to database" checkbox
+- `LinkedEntityWidget` extended with custom entry API (`add_custom_entry`, `get_custom_entries`, etc.)
+- `Manual Add` button added to spells list header (emits `manual_add_requested` signal)
+- Custom (inline) spells now render in the same list as DB-linked spells
+- `npc_sheet_spells_tab.py` completely rewritten — simplified to ~80 LOC from ~257 LOC
+
+#### Height/Width Auto-Sizing ✅
+- `list_residents`: removed `setMaximumHeight(80)`, added auto-fit height pattern
+- `list_battlemaps`, `list_pdfs`: size policy changed from `Preferred` to `Expanding`
+- `LinkedEntityWidget`: QGroupBox and QListWidget → `Expanding` horizontal policy
+- Horizontal scrollbar disabled, word wrap enabled on linked entity lists
+- `make_section()` in helpers: `Preferred` → `Expanding`
+
+#### Button Standardization ✅
+- HP +/- buttons: inline `setStyleSheet()` removed, themed via QSS objectNames (`hpDecreaseBtn`/`hpIncreaseBtn`)
+- HP button colors added to all 11 theme files (theme-appropriate red/green)
+- `compactBtn` class added to `common.qss` for small icon-only buttons
+- Emoji buttons replaced with Qt standard icons:
+  - `screen_tab.py`: ↑/↓ → `SP_ArrowUp`/`SP_ArrowDown`
+  - `pdf_viewer.py`: ◀/▶ → `SP_ArrowBack`/`SP_ArrowForward`
+  - `api_browser.py`, `import_window.py`: </> → `SP_ArrowBack`/`SP_ArrowForward`
+- Combat controls: `btn_quick_add` → `successBtn`, `btn_add` → `successBtn`, `btn_add_players` → `primaryBtn`, `btn_roll` → `primaryBtn`
+- All small icon buttons standardized to 28×28
+- Combat table: Init/AC columns `ResizeToContents`, HP/Conditions `Stretch`, Init/AC cells center-aligned
+
 ### Bug Fixes
 
 - **NpcSheet startup crash** (`AttributeError: 'NpcSheet' object has no attribute 'grp_combat_stats'`):
@@ -68,25 +102,82 @@ This document tracks updates made **after the latest tagged release**.
 | `core/api/field_mappers.py` | YENİ |
 | `core/api/entity_parser.py` | YENİ |
 | `core/api_client.py` | backward-compat facade |
-| `ui/widgets/npc_sheet.py` | decompose + orchestrator |
+| `ui/widgets/npc_sheet.py` | decompose + orchestrator + transparency fix + height fix |
 | `ui/widgets/npc_sheet_stats_tab.py` | YENİ |
 | `ui/widgets/npc_sheet_actions_tab.py` | YENİ |
 | `ui/widgets/npc_sheet_inventory_tab.py` | YENİ |
-| `ui/widgets/npc_sheet_spells_tab.py` | YENİ |
-| `ui/widgets/npc_sheet_helpers.py` | YENİ |
+| `ui/widgets/npc_sheet_spells_tab.py` | YENİ → complete rewrite (manual spells removed) |
+| `ui/widgets/npc_sheet_helpers.py` | YENİ + Expanding size policy |
 | `ui/widgets/combat_tracker.py` | thin coordinator |
-| `ui/widgets/combat_combatant_list.py` | YENİ |
-| `ui/widgets/combat_controls.py` | YENİ |
+| `ui/widgets/combat_combatant_list.py` | YENİ + column resize + text alignment |
+| `ui/widgets/combat_controls.py` | YENİ + objectNames + button sizes |
+| `ui/widgets/combat_table.py` | HP buttons themed via QSS, progress bar styling |
+| `ui/widgets/linked_entity_widget.py` | CSS cleanup + custom entries + manual add + width fix |
+| `ui/widgets/pdf_manager.py` | Expanding size policy |
+| `ui/widgets/pdf_viewer.py` | YENİ + emoji→icon |
 | `ui/presenters/__init__.py` | YENİ |
 | `ui/presenters/combat_presenter.py` | YENİ |
 | `ui/presenters/npc_presenter.py` | YENİ |
-| `themes/common.qss` | YENİ |
-| `config.py` | `load_theme()` güncellendi |
-| `ui/widgets/linked_entity_widget.py` | CSS cleanup |
+| `ui/dialogs/manual_spell_dialog.py` | YENİ |
+| `ui/dialogs/api_browser.py` | CSS cleanup + emoji→icon |
+| `ui/dialogs/import_window.py` | CSS cleanup + emoji→icon |
 | `ui/dialogs/timeline_entry.py` | CSS cleanup |
-| `ui/dialogs/import_window.py` | CSS cleanup |
-| `ui/tabs/session_tab.py` | edit mode fix |
+| `ui/tabs/screen_tab.py` | edit mode fix + emoji→icon |
 | `ui/tabs/mind_map_tab.py` | edit mode fix |
+| `ui/main_root.py` | button sizes standardized |
+| `themes/common.qss` | YENİ + sheetContainer transparency + compactBtn + HP btn rules |
+| `themes/dark.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
+| `themes/midnight.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
+| `themes/amethyst.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
+| `themes/light.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
+| `themes/baldur.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
+| `themes/discord.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
+| `themes/emerald.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
+| `themes/frost.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
+| `themes/grim.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
+| `themes/ocean.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
+| `themes/parchment.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
+| `config.py` | `load_theme()` güncellendi |
+| `locales/en.yml` | BTN_MANUAL_ADD, TITLE_MANUAL_SPELL, LBL_SAVE_TO_DB |
+| `locales/tr.yml` | BTN_MANUAL_ADD, TITLE_MANUAL_SPELL, LBL_SAVE_TO_DB |
+| `locales/de.yml` | BTN_MANUAL_ADD, TITLE_MANUAL_SPELL, LBL_SAVE_TO_DB |
+| `locales/fr.yml` | BTN_MANUAL_ADD, TITLE_MANUAL_SPELL, LBL_SAVE_TO_DB |
+
+---
+
+## Roadmap Completion Summary
+
+### IMPROVEMENT_ROADMAP.md
+
+| Phase | Status | Tamamlanma |
+|-------|--------|-----------|
+| Phase 1: Foundation | TAMAMLANDI | 100% |
+| Phase 2: God Class Decomposition | TAMAMLANDI | 100% |
+| Phase 3: UI Consistency | TAMAMLANDI | 100% |
+| Phase 4: Architecture Patterns | TAMAMLANDI | 95% (ui/components/ minimal) |
+| Phase 5: Testing & Documentation | DEVAM EDİYOR | 70% (13 test, coverage doğrulanmadı) |
+
+### PRE_ONLINE.md
+
+| Task | Status |
+|------|--------|
+| Task 1: GM Player Screen Control Panel | TAMAMLANDI |
+| Task 2: Single Player Screen Window | TAMAMLANDI |
+| Task 3: Auto Event Log During Combat | KISMİ |
+| Task 4: Free Single Import | TAMAMLANDI |
+| Task 5: Embedded PDF Viewer | TAMAMLANDI |
+| Task 6: UI Standardization | TAMAMLANDI |
+| Task 7: Soundpad Transition Smoothing | BAŞLANMADI |
+| EventManager local dispatch | TAMAMLANDI (core/event_bus.py) |
+| Socket.io client skeleton | KISMİ (bridge.py hazır, socket.io bekleniyor) |
+
+### Kalan İşler
+
+1. **Soundpad crossfade** (PRE_ONLINE Task 7) — henüz başlanmadı
+2. **Socket.io client** — bridge skeleton hazır, gerçek socket.io entegrasyonu bekleniyor
+3. **Test coverage doğrulama** — pytest-cov ile >=60% hedefi kontrol edilmeli
+4. **Module docstrings** — eski dosyalarda eksik
+5. **Auto Event Log genişletme** — combat log mevcut ama tam spec karşılanmamış
 
 ---
 
