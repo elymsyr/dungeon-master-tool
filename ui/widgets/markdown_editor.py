@@ -15,17 +15,25 @@ class MentionPopup(QListWidget):
         self.setFixedWidth(250)
         self.setMaximumHeight(200)
         self.itemClicked.connect(self.on_item_clicked)
-        self.setStyleSheet("""
-            QListWidget { 
-                border: 1px solid #444; 
-                background-color: #252526; 
-                color: #ccc; 
-                outline: none; 
-            } 
-            QListWidget::item { padding: 5px; } 
-            QListWidget::item:selected { background-color: #094771; color: white; }
-        """)
+        self.refresh_theme(ThemeManager.get_palette("dark"))
         self.all_mentions = []
+
+    def refresh_theme(self, palette: dict) -> None:
+        bg = palette.get("ui_popup_bg", "#252526")
+        border = palette.get("ui_popup_border", "#444")
+        text = palette.get("ui_popup_text", "#ccc")
+        sel = palette.get("ui_popup_selected", "#094771")
+        self.setStyleSheet(f"""
+            QListWidget {{
+                border: 1px solid {border};
+                background-color: {bg};
+                color: {text};
+                outline: none;
+            }}
+            QListWidget::item {{ padding: 5px; }}
+            QListWidget::item:selected {{ background-color: {sel}; color: white; }}
+        """)
+
 
     def set_items(self, mentions):
         self.all_mentions = mentions
@@ -246,6 +254,7 @@ class MarkdownEditor(QWidget):
             QPushButton:hover {{ background-color: rgba(128,128,128,0.3); }}
         """
         self.setStyleSheet(style)
+        self.popup.refresh_theme(p)
         self.update_view_content()
 
     def update_view_content(self):

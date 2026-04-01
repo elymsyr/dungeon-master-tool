@@ -53,3 +53,71 @@ QComboBox QLineEdit {
     border: none;
     border-radius: 0px;
 }
+
+/* --- Entity sidebar item labels --- */
+QLabel#entityName {
+    font-size: 13px;
+    font-weight: bold;
+    background-color: transparent;
+}
+QLabel#entityCat {
+    font-size: 10px;
+    font-style: italic;
+    background-color: transparent;
+}
+QLabel#entitySource {
+    font-size: 9px;
+    background-color: transparent;
+}
+
+/* --- Battle map toolbar buttons --- */
+QWidget#toolbarWidget QPushButton {
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: 0 6px;
+    min-height: 26px;
+    max-height: 26px;
+}
+QWidget#toolbarWidget QPushButton:checked {
+    background-color: #2563eb;
+    color: #fff;
+    border-color: #1d4ed8;
+}
+QWidget#toolbarWidget QPushButton:hover:!checked {
+    background-color: #3a5a8a;
+}
+QWidget#toolbarWidget QSpinBox {
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: 0px 2px;
+    margin: 0px;
+    min-height: 0px;
+}
+QWidget#toolbarWidget QSpinBox::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    width: 14px;
+    height: 12px;
+}
+QWidget#toolbarWidget QSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    width: 14px;
+    height: 12px;
+}
+QFrame#bmToolSep {
+    color: #555;
+    margin: 2px 3px;
+}
+
+/* --- Battle map sidebar token labels --- */
+QLabel#bmTokenName {
+    font-weight: bold;
+    border: none;
+    background: transparent;
+}
+QLabel#bmTokenHp {
+    border: none;
+    background: transparent;
+    font-style: italic;
+}

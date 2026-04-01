@@ -106,6 +106,12 @@ class ThemeManager:
         "success_btn_bg": "#388e3c",         # Add / confirm button background
         "success_btn_hover": "#2e7d32",      # Add / confirm button hover
 
+        # --- Mention / Autocomplete Popup ---
+        "ui_popup_bg": "#252526",            # Popup background (opaque)
+        "ui_popup_border": "#444",           # Popup border
+        "ui_popup_text": "#ccc",             # Popup item text
+        "ui_popup_selected": "#094771",      # Popup selected item background
+
         # --- Misc ---
         "html_dim": "#aaa",                  # Dimmed hint text in HTML/labels
         "map_bg": "#000000",                 # Map/image viewer background
@@ -152,6 +158,11 @@ class ThemeManager:
 
             "html_dim": "#777",
             "map_bg": "#222222",
+
+            "ui_popup_bg": "#ffffff",
+            "ui_popup_border": "#cbd5e0",
+            "ui_popup_text": "#2d3748",
+            "ui_popup_selected": "#bee3f8",
         },
         
         "parchment": {

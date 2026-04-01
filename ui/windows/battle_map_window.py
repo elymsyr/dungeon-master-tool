@@ -776,17 +776,10 @@ class BattleMapWidget(QWidget):
             self._tool_group = QButtonGroup(self)
             self._tool_group.setExclusive(True)
 
-            _TOOL_BTN_STYLE = (
-                "QPushButton { border: 1px solid #555; border-radius: 3px; padding: 0 6px; }"
-                " QPushButton:checked { background-color: #2563eb; color: #fff; border: 1px solid #1d4ed8; }"
-                " QPushButton:hover:!checked { background-color: #3a5a8a; }"
-            )
-
             def _tool_btn(key, mode):
                 b = QPushButton(tr(key))
                 b.setCheckable(True)
                 b.setFixedHeight(26)
-                b.setStyleSheet(_TOOL_BTN_STYLE)
                 b.clicked.connect(lambda: self._set_tool(mode))
                 self._tool_group.addButton(b)
                 self.toolbar2.addWidget(b)
@@ -795,7 +788,7 @@ class BattleMapWidget(QWidget):
             def _sep():
                 f = QFrame()
                 f.setFrameShape(QFrame.Shape.VLine)
-                f.setStyleSheet("color: #555; margin: 2px 3px;")
+                f.setObjectName("bmToolSep")
                 self.toolbar2.addWidget(f)
 
             self.btn_tool_navigate = _tool_btn("TOOL_NAVIGATE", TOOL_NAVIGATE)
@@ -808,36 +801,14 @@ class BattleMapWidget(QWidget):
             self.btn_tool_fog_add  = _tool_btn("TOOL_FOG_ADD",  TOOL_FOG_ADD)
             self.btn_tool_navigate.setChecked(True)
 
-            _ACTION_BTN_STYLE = (
-                "QPushButton { border: 1px solid #555; border-radius: 3px; padding: 0 6px;"
-                " min-height: 26px; max-height: 26px; }"
-            )
-            _GRID_BTN_STYLE = (
-                "QPushButton { border: 1px solid #555; border-radius: 3px; padding: 0 6px;"
-                " min-height: 26px; max-height: 26px; }"
-                " QPushButton:checked { background-color: #2563eb; color: #fff; border: 1px solid #1d4ed8; }"
-            )
-            _SPINBOX_STYLE = (
-                "QSpinBox { border: 1px solid #555; border-radius: 3px;"
-                " padding: 0px 2px; margin: 0px; min-height: 0px; }"
-                " QSpinBox::up-button { subcontrol-origin: border;"
-                " subcontrol-position: top right; width: 14px; height: 12px; }"
-                " QSpinBox::down-button { subcontrol-origin: border;"
-                " subcontrol-position: bottom right; width: 14px; height: 12px; }"
-            )
-
             _sep()
             self.btn_fog_fill = QPushButton(tr("BTN_FOG_FILL"))
-            self.btn_fog_fill.setStyleSheet(_ACTION_BTN_STYLE)
             self.btn_fog_fill.clicked.connect(self.fill_fog)
             self.btn_fog_clear = QPushButton(tr("BTN_FOG_CLEAR"))
-            self.btn_fog_clear.setStyleSheet(_ACTION_BTN_STYLE)
             self.btn_fog_clear.clicked.connect(self.clear_fog)
             self.btn_clear_draw = QPushButton(tr("BTN_CLEAR_DRAW"))
-            self.btn_clear_draw.setStyleSheet(_ACTION_BTN_STYLE)
             self.btn_clear_draw.clicked.connect(self.clear_annotation)
             self.btn_clear_rulers = QPushButton(tr("BTN_CLEAR_RULERS"))
-            self.btn_clear_rulers.setStyleSheet(_ACTION_BTN_STYLE)
             self.btn_clear_rulers.clicked.connect(self.clear_measurements)
             self.toolbar2.addWidget(self.btn_fog_fill)
             self.toolbar2.addWidget(self.btn_fog_clear)
@@ -848,7 +819,6 @@ class BattleMapWidget(QWidget):
             _sep()
             self.btn_grid_toggle = QPushButton(tr("BTN_GRID"))
             self.btn_grid_toggle.setCheckable(True)
-            self.btn_grid_toggle.setStyleSheet(_GRID_BTN_STYLE)
             self.btn_grid_toggle.clicked.connect(self._on_grid_toggle)
             self.toolbar2.addWidget(self.btn_grid_toggle)
 
@@ -862,13 +832,11 @@ class BattleMapWidget(QWidget):
             self.spin_grid_size.setValue(50)
             self.spin_grid_size.setFixedWidth(56)
             self.spin_grid_size.setFixedHeight(26)
-            self.spin_grid_size.setStyleSheet(_SPINBOX_STYLE)
             self.spin_grid_size.valueChanged.connect(self._on_grid_size_changed)
             self.toolbar2.addWidget(self.spin_grid_size)
 
             self.btn_grid_snap = QPushButton(tr("BTN_GRID_SNAP"))
             self.btn_grid_snap.setCheckable(True)
-            self.btn_grid_snap.setStyleSheet(_GRID_BTN_STYLE)
             self.btn_grid_snap.clicked.connect(self._on_snap_toggle)
             self.toolbar2.addWidget(self.btn_grid_snap)
 
@@ -882,7 +850,6 @@ class BattleMapWidget(QWidget):
             self.spin_feet.setValue(5)
             self.spin_feet.setFixedWidth(48)
             self.spin_feet.setFixedHeight(26)
-            self.spin_feet.setStyleSheet(_SPINBOX_STYLE)
             self.spin_feet.valueChanged.connect(self._on_feet_changed)
             self.toolbar2.addWidget(self.spin_feet)
 
@@ -1566,10 +1533,10 @@ class BattleMapWindow(QMainWindow):
             row_header_layout.setContentsMargins(0, 0, 0, 0)
             row_header_layout.setSpacing(5)
             lbl_name = QLabel(name)
-            lbl_name.setStyleSheet("font-weight: bold; border: none; background: transparent;")
+            lbl_name.setObjectName("bmTokenName")
             hp_txt = tr("LBL_HP_SIDEBAR", hp=hp) if is_player else tr("LBL_HP_UNKNOWN")
             lbl_hp = QLabel(hp_txt)
-            lbl_hp.setStyleSheet("border: none; background: transparent; font-style: italic;")
+            lbl_hp.setObjectName("bmTokenHp")
             row_header_layout.addWidget(lbl_name, 1)
             row_header_layout.addWidget(lbl_hp, 0)
             card_main_layout.addWidget(row_header)
