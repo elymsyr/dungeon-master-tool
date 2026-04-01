@@ -350,11 +350,213 @@ dungeon_master_tool/
 
 ---
 
-## 3. Entity Veri Modelleri
+## 3. Schema-Driven Entity Sistemi
 
-### 3.1 Temel Entity Yapısı
+> **Temel Prensip:** Flutter uygulaması 1. günden itibaren schema-driven mimari ile inşa edilir. Mevcut 15 hardcoded entity tipi, "D&D 5e (Default)" world template'i olarak gömülü gelir. Kullanıcılar yeni kategori ve alan ekleyebilir, şablonları `.dmt-template` olarak dışa/içe aktarabilir.
 
-Mevcut Python'daki `get_default_entity_structure()` (kaynak: `core/models.py:153-198`) birebir port edilecek:
+Kaynak tasarım: `docs/pre-online/PRE_ONLINE_DEVELOPMENT_GUIDE.md` — Initiative B
+
+### 3.1 WorldSchema — Üst Düzey Şema
+
+Her kampanya bir `WorldSchema` taşır. Schema, entity kategorilerini, alan tanımlarını ve encounter layout'larını tanımlar.
+
+```dart
+@freezed
+class WorldSchema with _$WorldSchema {
+  const factory WorldSchema({
+    required String schemaId,
+    @Default('D&D 5e (Default)') String name,
+    @Default('1.0.0') String version,
+    String? baseSystem,                         // "dnd5e", "pathfinder", "gurps", null (custom)
+    @Default('') String description,
+    @Default([]) List<EntityCategorySchema> categories,
+    @Default([]) List<EncounterLayout> encounterLayouts,
+    @Default({}) Map<String, dynamic> metadata,
+    required String createdAt,
+    required String updatedAt,
+  }) = _WorldSchema;
+
+  factory WorldSchema.fromJson(Map<String, dynamic> json) => _$WorldSchemaFromJson(json);
+}
+```
+
+### 3.2 EntityCategorySchema — Kategori Tanımı
+
+Her entity tipi (NPC, Monster, Spell, vb.) bir `EntityCategorySchema` olarak tanımlanır. Kullanıcılar yeni kategoriler oluşturabilir (ör. Faction, Relic, Vehicle, Deity).
+
+```dart
+@freezed
+class EntityCategorySchema with _$EntityCategorySchema {
+  const factory EntityCategorySchema({
+    required String categoryId,               // UUID, stabil tanımlayıcı
+    required String schemaId,                 // Parent WorldSchema referansı
+    required String name,                     // Gösterim adı (kullanıcı düzenleyebilir)
+    required String slug,                     // Internal ID (oluşturulunca sabit, değişmez)
+    @Default('') String icon,                 // İkon tanımlayıcı veya path
+    @Default('#808080') String color,         // Hex renk (UI aksanları için)
+    @Default(false) bool isBuiltin,           // true = varsayılan D&D 5e kategorisi
+    @Default(false) bool isArchived,          // true = oluşturma UI'dan gizli
+    @Default(0) int orderIndex,               // Sidebar/dialog sıralama
+    @Default([]) List<FieldSchema> fields,    // Sıralı alan tanımları
+    required String createdAt,
+    required String updatedAt,
+  }) = _EntityCategorySchema;
+
+  factory EntityCategorySchema.fromJson(Map<String, dynamic> json) =>
+      _$EntityCategorySchemaFromJson(json);
+}
+```
+
+**Davranış kuralları:**
+- Built-in kategoriler (`isBuiltin=true`) yeniden adlandırılabilir ve arşivlenebilir ama silinemez
+- Custom kategoriler, referans eden entity yoksa tamamen silinebilir
+- `slug` ilk `name`'den deterministic slugify ile üretilir, sonra asla değişmez
+- Kategori isimleri bir world schema içinde benzersiz olmalı
+
+### 3.3 FieldSchema — Alan Tanımı
+
+Her alan zengin tip desteği, validation kuralları ve görünürlük kontrolü ile tanımlanır.
+
+```dart
+@freezed
+class FieldSchema with _$FieldSchema {
+  const factory FieldSchema({
+    required String fieldId,                  // UUID
+    required String categoryId,               // Parent kategori referansı
+    required String fieldKey,                 // Internal key (auto-generated, immutable)
+    required String label,                    // Gösterim etiketi (düzenlenebilir)
+    required FieldType fieldType,             // Alan tipi enum
+    @Default(false) bool required_,           // Zorunlu alan mı
+    @Default(null) dynamic defaultValue,      // Yeni entity'ler için varsayılan değer
+    @Default('') String placeholder,          // Boş alan placeholder
+    @Default('') String helpText,             // Tooltip yardım metni
+    @Default(FieldValidation()) FieldValidation validation,
+    @Default(FieldVisibility.shared) FieldVisibility visibility,
+    @Default(0) int orderIndex,               // Kategori içi sıralama
+    @Default(false) bool isBuiltin,           // true = varsayılan alan
+    required String createdAt,
+    required String updatedAt,
+  }) = _FieldSchema;
+
+  factory FieldSchema.fromJson(Map<String, dynamic> json) => _$FieldSchemaFromJson(json);
+}
+```
+
+### 3.4 FieldType — 16 Desteklenen Alan Tipi
+
+```dart
+enum FieldType {
+  text,           // Tek satır metin (QLineEdit karşılığı)
+  textarea,       // Çok satırlı metin
+  markdown,       // MarkdownEditor ile zengin metin
+  integer,        // Tam sayı
+  float_,         // Ondalık sayı
+  boolean_,       // Checkbox
+  enum_,          // Dropdown (combo karşılığı) — önceden tanımlı seçenekler
+  date,           // Tarih seçici
+  image,          // Görsel dosya referansı
+  file,           // Genel dosya referansı
+  relation,       // Başka entity'ye referans (entity_select karşılığı)
+  tagList,        // Metin etiketleri listesi
+  statBlock,      // Ability score bloğu (STR/DEX/CON/INT/WIS/CHA — veya custom)
+  combatStats,    // HP, AC, Speed, CR, XP, Initiative bloğu
+  actionList,     // İsimli aksiyon listesi (traits, actions, reactions, legendary)
+  spellList,      // Spell referansları listesi
+}
+```
+
+**Mevcut Python → Flutter alan tipi eşleştirme:**
+
+| Python widget_type | Flutter FieldType | Açıklama |
+|---|---|---|
+| `"text"` | `FieldType.text` | Tek satır metin |
+| `"combo"` | `FieldType.enum_` | Dropdown, allowedValues |
+| `"entity_select"` | `FieldType.relation` | Entity referansı, allowedTypes |
+
+### 3.5 FieldValidation ve FieldVisibility
+
+```dart
+@freezed
+class FieldValidation with _$FieldValidation {
+  const factory FieldValidation({
+    double? minValue,                           // Numeric tipler için
+    double? maxValue,
+    int? minLength,                             // Text tipler için
+    int? maxLength,
+    String? pattern,                            // Regex pattern (text)
+    List<String>? allowedValues,                // enum tipi için seçenekler
+    List<String>? allowedTypes,                 // relation tipi için (kategori slug'ları)
+    List<String>? allowedExtensions,            // file/image tipi için
+    String? customMessage,                      // Hata mesajı override
+  }) = _FieldValidation;
+
+  factory FieldValidation.fromJson(Map<String, dynamic> json) =>
+      _$FieldValidationFromJson(json);
+}
+
+enum FieldVisibility {
+  shared,         // DM ve player'lar görebilir (online modda)
+  dmOnly,         // Sadece DM görebilir
+  private_,       // Sadece entity sahibi görebilir (gelecekte)
+}
+```
+
+### 3.6 EncounterLayout — Configurable Combat Tracker
+
+Mevcut hardcoded combat tracker kolonları (name, HP, AC, initiative, conditions) yerine, schema-driven konfigürasyon:
+
+```dart
+@freezed
+class EncounterLayout with _$EncounterLayout {
+  const factory EncounterLayout({
+    required String layoutId,
+    required String schemaId,
+    @Default('Standard D&D') String name,
+    @Default([]) List<EncounterColumn> columns,
+    @Default([]) List<SortRule> sortRules,
+    @Default([]) List<DerivedStat> derivedStats,
+  }) = _EncounterLayout;
+
+  factory EncounterLayout.fromJson(Map<String, dynamic> json) =>
+      _$EncounterLayoutFromJson(json);
+}
+
+@freezed
+class EncounterColumn with _$EncounterColumn {
+  const factory EncounterColumn({
+    required String fieldKey,             // FieldSchema.fieldKey veya built-in key
+    required String displayLabel,
+    @Default(0) int width,                // 0 = auto
+    @Default(false) bool isEditable,      // Combat sırasında düzenlenebilir mi
+    @Default('{value}') String formatTemplate,
+  }) = _EncounterColumn;
+
+  factory EncounterColumn.fromJson(Map<String, dynamic> json) =>
+      _$EncounterColumnFromJson(json);
+}
+
+@freezed
+class SortRule with _$SortRule {
+  const factory SortRule({
+    required String fieldKey,
+    @Default('desc') String direction,
+    @Default(0) int priority,
+  }) = _SortRule;
+
+  factory SortRule.fromJson(Map<String, dynamic> json) => _$SortRuleFromJson(json);
+}
+```
+
+**Built-in encounter kolonları** (schema'dan bağımsız, her zaman mevcut):
+- `name` — Entity adı (her zaman ilk)
+- `initiative` — Initiative roll (varsayılan sıralama kolonu)
+- `hp` / `max_hp` — Hit points
+- `ac` — Armor class
+- `conditions` — Aktif condition listesi
+
+### 3.7 Entity Veri Modeli — Schema-Driven
+
+Entity artık hardcoded alanlar taşımaz. Tüm veriler `fields` map'inde, schema'ya göre saklanır:
 
 ```dart
 @freezed
@@ -362,204 +564,311 @@ class Entity with _$Entity {
   const factory Entity({
     required String id,
     @Default('New Record') String name,
-    @Default('NPC') String type,
+    required String categorySlug,                    // WorldSchema'daki kategori slug'ı
     @Default('') String source,
     @Default('') String description,
     @Default([]) List<String> images,
     @Default('') String imagePath,
-    @Default([]) List<String> battlemaps,
     @Default([]) List<String> tags,
-    @Default({}) Map<String, dynamic> attributes,
-
-    // Stats
-    @Default(EntityStats()) EntityStats stats,
-    @Default(CombatStats()) CombatStats combatStats,
-
-    // Lists
-    @Default([]) List<EntityAction> traits,
-    @Default([]) List<EntityAction> actions,
-    @Default([]) List<EntityAction> reactions,
-    @Default([]) List<EntityAction> legendaryActions,
-
-    // Spells
-    @Default([]) List<String> spells,           // Linked spell entity ID'leri
-    @Default([]) List<Map<String, dynamic>> customSpells,  // Inline spell verileri
-
-    // Inventory
-    @Default([]) List<String> equipmentIds,     // Linked equipment entity ID'leri
-    @Default([]) List<Map<String, dynamic>> inventory,     // Inline inventory
-
-    // Documents
+    @Default('') String dmNotes,
     @Default([]) List<String> pdfs,
     String? locationId,
 
-    @Default('') String dmNotes,
-
-    // Advanced Stats
-    @Default('') String savingThrows,
-    @Default('') String damageVulnerabilities,
-    @Default('') String damageResistances,
-    @Default('') String damageImmunities,
-    @Default('') String conditionImmunities,
-    @Default('') String proficiencyBonus,
-    @Default('') String passivePerception,
-    @Default('') String skills,
+    /// Schema-driven alanlar.
+    /// Key = FieldSchema.fieldKey, Value = alan değeri.
+    /// FieldType'a göre value tipi değişir:
+    ///   text/textarea/markdown → String
+    ///   integer → int
+    ///   float → double
+    ///   boolean → bool
+    ///   enum → String (seçili değer)
+    ///   relation → String (hedef entity ID)
+    ///   tagList → List<String>
+    ///   statBlock → Map<String, int> (ör. {"STR": 10, "DEX": 14, ...})
+    ///   combatStats → Map<String, String> (ör. {"hp": "45", "ac": "16", ...})
+    ///   actionList → List<Map<String, String>> (ör. [{"name": "...", "desc": "..."}])
+    ///   spellList → List<String> (spell entity ID'leri)
+    ///   image → String (dosya path)
+    ///   file → String (dosya path)
+    ///   date → String (ISO 8601)
+    @Default({}) Map<String, dynamic> fields,
   }) = _Entity;
 
   factory Entity.fromJson(Map<String, dynamic> json) => _$EntityFromJson(json);
 }
+```
 
-@freezed
-class EntityStats with _$EntityStats {
-  const factory EntityStats({
-    @Default(10) int str,
-    @Default(10) int dex,
-    @Default(10) int con,
-    @Default(10) int int_,
-    @Default(10) int wis,
-    @Default(10) int cha,
-  }) = _EntityStats;
+### 3.8 Default D&D 5e Schema — Gömülü Varsayılan
 
-  factory EntityStats.fromJson(Map<String, dynamic> json) => _$EntityStatsFromJson(json);
-}
+Mevcut 15 entity tipi, uygulama ile birlikte gelen "D&D 5e (Default)" template olarak tanımlanır. Yeni kampanya oluşturulduğunda bu schema otomatik uygulanır.
 
-@freezed
-class CombatStats with _$CombatStats {
-  const factory CombatStats({
-    @Default('') String hp,
-    @Default('') String maxHp,
-    @Default('') String ac,
-    @Default('') String speed,
-    @Default('') String cr,
-    @Default('') String xp,
-    @Default('') String initiative,
-  }) = _CombatStats;
+```dart
+/// Mevcut Python ENTITY_SCHEMAS + get_default_entity_structure() yapısından
+/// otomatik üretilen varsayılan D&D 5e WorldSchema.
+WorldSchema generateDefaultDnd5eSchema() {
+  final now = DateTime.now().toUtc().toIso8601String();
+  final schemaId = const Uuid().v4();
 
-  factory CombatStats.fromJson(Map<String, dynamic> json) => _$CombatStatsFromJson(json);
+  return WorldSchema(
+    schemaId: schemaId,
+    name: 'D&D 5e (Default)',
+    version: '1.0.0',
+    baseSystem: 'dnd5e',
+    description: 'Built-in D&D 5e entity model with 15 categories.',
+    categories: _buildDefaultCategories(schemaId, now),
+    encounterLayouts: [_buildDefaultEncounterLayout(schemaId)],
+    createdAt: now,
+    updatedAt: now,
+  );
 }
 ```
 
-### 3.2 Entity Tipi Şemaları (ENTITY_SCHEMAS)
+**Varsayılan 15 Kategori ve Alanları:**
 
-15 entity tipi ve her birinin özel alanları (kaynak: `core/models.py:1-83`):
+| Kategori | Slug | Renk | Özel Alanlar | Ortak Alanlar |
+|---|---|---|---|---|
+| **NPC** | `npc` | `#ff9800` | Race(relation), Class(relation), Level(text), Attitude(enum), Location(relation) | statBlock, combatStats, actionList, spellList, markdown description, images, pdfs, dmNotes |
+| **Monster** | `monster` | `#d32f2f` | CR(text), Attack Type(text) | statBlock, combatStats, actionList, spellList, markdown description, images, pdfs, dmNotes |
+| **Player** | `player` | `#4caf50` | Class(relation), Race(relation), Level(text) | statBlock, combatStats, actionList, spellList, markdown description, images, pdfs, dmNotes |
+| **Spell** | `spell` | `#7b1fa2` | Level(enum:Cantrip-9), School(text), Casting Time(text), Range(text), Duration(text), Components(text) | markdown description |
+| **Equipment** | `equipment` | `#795548` | Category(text), Rarity(text), Attunement(text), Cost(text), Weight(text), Damage Dice(text), Damage Type(text), Range(text), AC(text), Requirements(text), Properties(text) | markdown description |
+| **Class** | `class` | `#1976d2` | Hit Die(text), Main Stats(text), Proficiencies(text) | markdown description |
+| **Race** | `race` | `#00897b` | Speed(text), Size(enum:Small/Medium/Large), Alignment(text), Language(text) | markdown description |
+| **Location** | `location` | `#2e7d32` | Danger Level(enum:Safe/Low/Medium/High), Environment(text) | markdown description, images |
+| **Quest** | `quest` | `#f57c00` | Status(enum:Not Started/Active/Completed), Giver(text), Reward(text) | markdown description |
+| **Lore** | `lore` | `#5c6bc0` | Category(enum:History/Geography/Religion/Culture/Other), Secret Info(text) | markdown description |
+| **Status Effect** | `status-effect` | `#e91e63` | Duration Turns(text), Effect Type(enum:Buff/Debuff/Condition), Linked Condition(relation) | markdown description |
+| **Feat** | `feat` | `#ff7043` | Prerequisite(text) | markdown description |
+| **Background** | `background` | `#8d6e63` | Skill Proficiencies(text), Tool Proficiencies(text), Languages(text), Equipment(text) | markdown description |
+| **Plane** | `plane` | `#26c6da` | Type(text) | markdown description |
+| **Condition** | `condition` | `#ab47bc` | Effects(text) | markdown description |
+
+**Ortak alanlar (NPC/Monster/Player'a özel olarak schema'da tanımlanır):**
+- `statBlock` → `{"STR": 10, "DEX": 10, "CON": 10, "INT": 10, "WIS": 10, "CHA": 10}`
+- `combatStats` → `{"hp": "", "max_hp": "", "ac": "", "speed": "", "cr": "", "xp": "", "initiative": ""}`
+- `actionList` (x4) → traits, actions, reactions, legendary_actions
+- `spellList` → linked spell entity ID'leri
+
+### 3.9 FieldWidgetFactory — Schema-Driven UI Rendering
+
+Entity card UI, hardcoded widget'lar yerine `FieldWidgetFactory` pattern ile render edilir:
 
 ```dart
-/// Her entity tipinin ek özel alanlarını tanımlar.
-/// Python'daki ENTITY_SCHEMAS dict'inin karşılığı.
-enum FieldType { text, combo, entitySelect }
+class FieldWidgetFactory {
+  static const Map<FieldType, Widget Function(FieldSchema, dynamic, WidgetRef)> _widgetMap = {
+    FieldType.text: TextFieldWidget.new,
+    FieldType.textarea: TextAreaFieldWidget.new,
+    FieldType.markdown: MarkdownFieldWidget.new,
+    FieldType.integer: IntegerFieldWidget.new,
+    FieldType.float_: FloatFieldWidget.new,
+    FieldType.boolean_: BooleanFieldWidget.new,
+    FieldType.enum_: EnumFieldWidget.new,
+    FieldType.date: DateFieldWidget.new,
+    FieldType.image: ImageFieldWidget.new,
+    FieldType.file: FileFieldWidget.new,
+    FieldType.relation: RelationFieldWidget.new,
+    FieldType.tagList: TagListFieldWidget.new,
+    FieldType.statBlock: StatBlockFieldWidget.new,
+    FieldType.combatStats: CombatStatsFieldWidget.new,
+    FieldType.actionList: ActionListFieldWidget.new,
+    FieldType.spellList: SpellListFieldWidget.new,
+  };
 
-class SchemaField {
-  final String labelKey;     // Lokalizasyon anahtarı (ör. "LBL_RACE")
-  final FieldType type;
-  final dynamic options;     // combo: List<String>, entitySelect: String (hedef entity tipi), text: null
-
-  const SchemaField(this.labelKey, this.type, this.options);
+  static Widget create(FieldSchema schema, dynamic value, WidgetRef ref) {
+    final builder = _widgetMap[schema.fieldType];
+    if (builder == null) return FallbackTextWidget(schema: schema, value: value);
+    return builder(schema, value, ref);
+  }
 }
-
-const Map<String, List<SchemaField>> entitySchemas = {
-  'NPC': [
-    SchemaField('LBL_RACE', FieldType.entitySelect, 'Race'),
-    SchemaField('LBL_CLASS', FieldType.entitySelect, 'Class'),
-    SchemaField('LBL_LEVEL', FieldType.text, null),
-    SchemaField('LBL_ATTITUDE', FieldType.combo, ['LBL_ATTR_FRIENDLY', 'LBL_ATTR_NEUTRAL', 'LBL_ATTR_HOSTILE']),
-    SchemaField('LBL_ATTR_LOCATION', FieldType.entitySelect, 'Location'),
-  ],
-  'Monster': [
-    SchemaField('LBL_CR', FieldType.text, null),
-    SchemaField('LBL_ATTACK_TYPE', FieldType.text, null),
-  ],
-  'Spell': [
-    SchemaField('LBL_LEVEL', FieldType.combo, ['Cantrip', '1', '2', '3', '4', '5', '6', '7', '8', '9']),
-    SchemaField('LBL_SCHOOL', FieldType.text, null),
-    SchemaField('LBL_CASTING_TIME', FieldType.text, null),
-    SchemaField('LBL_RANGE', FieldType.text, null),
-    SchemaField('LBL_DURATION', FieldType.text, null),
-    SchemaField('LBL_COMPONENTS', FieldType.text, null),
-  ],
-  'Equipment': [
-    SchemaField('LBL_CATEGORY', FieldType.text, null),
-    SchemaField('LBL_RARITY', FieldType.text, null),
-    SchemaField('LBL_ATTUNEMENT', FieldType.text, null),
-    SchemaField('LBL_COST', FieldType.text, null),
-    SchemaField('LBL_WEIGHT', FieldType.text, null),
-    SchemaField('LBL_DAMAGE_DICE', FieldType.text, null),
-    SchemaField('LBL_DAMAGE_TYPE', FieldType.text, null),
-    SchemaField('LBL_RANGE', FieldType.text, null),
-    SchemaField('LBL_AC', FieldType.text, null),
-    SchemaField('LBL_REQUIREMENTS', FieldType.text, null),
-    SchemaField('LBL_PROPERTIES', FieldType.text, null),
-  ],
-  'Class': [
-    SchemaField('LBL_HIT_DIE', FieldType.text, null),
-    SchemaField('LBL_MAIN_STATS', FieldType.text, null),
-    SchemaField('LBL_PROFICIENCIES', FieldType.text, null),
-  ],
-  'Race': [
-    SchemaField('LBL_SPEED', FieldType.text, null),
-    SchemaField('LBL_SIZE', FieldType.combo, ['Small', 'Medium', 'Large']),
-    SchemaField('LBL_ALIGNMENT', FieldType.text, null),
-    SchemaField('LBL_LANGUAGE', FieldType.text, null),
-  ],
-  'Location': [
-    SchemaField('LBL_DANGER_LEVEL', FieldType.combo, ['LBL_DANGER_SAFE', 'LBL_DANGER_LOW', 'LBL_DANGER_MEDIUM', 'LBL_DANGER_HIGH']),
-    SchemaField('LBL_ENVIRONMENT', FieldType.text, null),
-  ],
-  'Player': [
-    SchemaField('LBL_CLASS', FieldType.entitySelect, 'Class'),
-    SchemaField('LBL_RACE', FieldType.entitySelect, 'Race'),
-    SchemaField('LBL_LEVEL', FieldType.text, null),
-  ],
-  'Quest': [
-    SchemaField('LBL_STATUS', FieldType.combo, ['LBL_STATUS_NOT_STARTED', 'LBL_STATUS_ACTIVE', 'LBL_STATUS_COMPLETED']),
-    SchemaField('LBL_GIVER', FieldType.text, null),
-    SchemaField('LBL_REWARD', FieldType.text, null),
-  ],
-  'Lore': [
-    SchemaField('LBL_CATEGORY', FieldType.combo, ['LBL_LORE_HISTORY', 'LBL_LORE_GEOGRAPHY', 'LBL_LORE_RELIGION', 'LBL_LORE_CULTURE', 'LBL_LORE_OTHER']),
-    SchemaField('LBL_SECRET_INFO', FieldType.text, null),
-  ],
-  'Status Effect': [
-    SchemaField('LBL_DURATION_TURNS', FieldType.text, null),
-    SchemaField('LBL_EFFECT_TYPE', FieldType.combo, ['LBL_TYPE_BUFF', 'LBL_TYPE_DEBUFF', 'LBL_TYPE_CONDITION']),
-    SchemaField('LBL_LINKED_CONDITION', FieldType.entitySelect, 'Condition'),
-  ],
-  'Feat': [
-    SchemaField('LBL_PREREQUISITE', FieldType.text, null),
-  ],
-  'Background': [
-    SchemaField('LBL_SKILL_PROFICIENCIES', FieldType.text, null),
-    SchemaField('LBL_TOOL_PROFICIENCIES', FieldType.text, null),
-    SchemaField('LBL_LANGUAGES', FieldType.text, null),
-    SchemaField('LBL_EQUIPMENT', FieldType.text, null),
-  ],
-  'Plane': [
-    SchemaField('LBL_TYPE', FieldType.text, null),
-  ],
-  'Condition': [
-    SchemaField('LBL_EFFECTS', FieldType.text, null),
-  ],
-};
 ```
 
-### 3.3 Legacy Uyumluluk
+**Her field widget:**
+1. Constructor'da `FieldSchema` + mevcut değer alır
+2. Uygun input kontrolünü render eder
+3. Değer değişince `onChanged` callback ile bildirir
+4. Schema'dan validation kurallarını uygular, hata mesajı gösterir
+5. Edit mode'a uyar (readOnly toggle)
+6. `FieldVisibility`'ye göre DM-only alanları gizler/gösterir
 
-Mevcut Türkçe → İngilizce migration map'leri (kaynak: `core/models.py:86-151`) `lib/data/models/legacy_maps.dart` dosyasında tutulacak:
+### 3.10 Entity Card Rendering Akışı
+
+**Mevcut Python (hardcoded):**
+```
+NpcSheet.load_entity(entity_data)
+  → Hardcoded: QLineEdit for "name"
+  → Hardcoded: create combo for "attitude"
+  → Hardcoded: ENTITY_SCHEMAS[type]'dan text/combo/entity_select
+  → Hardcoded: stat block widget
+  → Hardcoded: action list widgets
+```
+
+**Yeni Flutter (schema-driven):**
+```
+EntityCard.build(entity, categorySchema)
+  → For each field in categorySchema.fields (ordered by orderIndex):
+       → FieldWidgetFactory.create(field, entity.fields[field.fieldKey])
+       → Widget render edilir
+       → onChange → entity.fields[field.fieldKey] güncellenir
+```
 
 ```dart
-/// Eski Türkçe entity tip isimlerinden İngilizce'ye dönüşüm.
+class EntityCard extends ConsumerWidget {
+  final Entity entity;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final schema = ref.watch(worldSchemaProvider);
+    final category = schema.categories.firstWhere(
+      (c) => c.slug == entity.categorySlug,
+    );
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Üst: Görsel + metadata (name, category, source, tags)
+          _EntityHeader(entity: entity, category: category),
+
+          // Description (markdown)
+          _DescriptionSection(entity: entity),
+
+          // Schema-driven dynamic fields
+          for (final field in category.fields.sortedBy((f) => f.orderIndex))
+            FieldWidgetFactory.create(
+              field,
+              entity.fields[field.fieldKey],
+              ref,
+            ),
+
+          // DM Notes
+          _DmNotesSection(entity: entity),
+        ],
+      ),
+    );
+  }
+}
+```
+
+### 3.11 Template Studio — Şema Düzenleme UI
+
+Kullanıcıların world schema'yı düzenleyebildiği dialog:
+
+```
+Template Studio Dialog (900x700 min)
+┌──────────────┬───────────────────────────────────────┐
+│ Categories   │ Category: NPC                          │
+│ ┌──────────┐ │ ┌─────────────────────────────────────┐│
+│ │ NPC      │ │ │ Name: [NPC          ]  Icon: [🧙]  ││
+│ │ Monster  │ │ │ Color: [#ff9800]                    ││
+│ │ Spell    │ │ ├─────────────────────────────────────┤│
+│ │ Equip.   │ │ │ Fields:                             ││
+│ │ Class    │ │ │ # | Label     | Type     | Req | V  ││
+│ │ Race     │ │ │ 1 | Race      | relation | ✗   | S  ││
+│ │ Location │ │ │ 2 | Class     | relation | ✗   | S  ││
+│ │ Player   │ │ │ 3 | Level     | text     | ✗   | S  ││
+│ │ Quest    │ │ │ 4 | Attitude  | enum     | ✗   | S  ││
+│ │ ...      │ │ │ 5 | Stats     | statBlock| ✗   | S  ││
+│ ├──────────┤ │ │ [+ Add Field]                       ││
+│ │[+New Cat]│ │ ├─────────────────────────────────────┤│
+│ │[Archive] │ │ │ Field Editor (expanded):             ││
+│ │[Delete]  │ │ │ Label: [Race]  Key: race (readonly) ││
+│ └──────────┘ │ │ Type: [relation ▾]  Required: [ ]   ││
+│              │ │ Allowed types: [Race]                ││
+│              │ │ Visibility: [Shared ▾]               ││
+│              │ └─────────────────────────────────────┘│
+│              │ [Save] [Export Template] [Import]       │
+└──────────────┴───────────────────────────────────────┘
+```
+
+### 3.12 Template Paketleme — .dmt-template
+
+World template'ler `.dmt-template` ZIP arşivleri olarak dışa/içe aktarılır:
+
+```
+my-template.dmt-template (ZIP)
+├── manifest.json               # Versiyon, yazar, uyumluluk, checksum
+├── schema/
+│   ├── world_schema.json       # Root WorldSchema
+│   ├── categories/
+│   │   ├── npc.json
+│   │   ├── monster.json
+│   │   ├── custom_faction.json # Kullanıcı-tanımlı tipler
+│   │   └── ...
+│   └── encounter_layouts/
+│       └── default.json
+├── assets/
+│   ├── icons/                  # Kategori ikonları
+│   └── previews/               # Template önizleme görseli
+└── README.md (opsiyonel)
+```
+
+### 3.13 Legacy Kampanya Migration
+
+Mevcut Python kampanyaları (`world_schema` alanı olmayan) otomatik migrate edilir:
+
+1. **Tespit:** `data["world_schema"]` anahtarı yoksa migration tetiklenir
+2. **Backup:** `data.dat` → `data.dat.pre-schema-migration.bak`
+3. **Schema üret:** `generateDefaultDnd5eSchema()` ile varsayılan D&D 5e schema
+4. **Entity'leri map'le:** Her entity'nin `type` → category slug, `attributes` → `fields`
+5. **Türkçe legacy:** `SCHEMA_MAP` + `PROPERTY_MAP` ile TR→EN dönüşüm
+6. **Kaydet:** Güncellenmiş veri + `world_schema` ile disk'e yaz
+7. **Doğrula:** Yeniden yükle, veri kaybı olmadığını kontrol et
+
+```dart
+// lib/data/models/legacy_maps.dart
 const Map<String, String> schemaMap = {
-  'Canavar': 'Monster',
-  'Büyü (Spell)': 'Spell',
-  'Eşya (Equipment)': 'Equipment',
-  // ... tüm 14 mapping
+  'Canavar': 'monster', 'Büyü (Spell)': 'spell',
+  'Eşya (Equipment)': 'equipment', 'Sınıf (Class)': 'class',
+  'Irk (Race)': 'race', 'Mekan': 'location', 'Oyuncu': 'player',
+  'Görev': 'quest', 'Lore': 'lore', 'Durum Etkisi': 'status-effect',
+  'Feat': 'feat', 'Background': 'background', 'Plane': 'plane',
+  'Condition': 'condition',
 };
 
-/// Eski Türkçe alan etiketlerinden lokalizasyon anahtarlarına dönüşüm.
 const Map<String, String> propertyMap = {
-  'Irk': 'LBL_RACE',
-  'Sınıf': 'LBL_CLASS',
+  'Irk': 'race', 'Sınıf': 'class_', 'Seviye': 'level',
+  'Tavır': 'attitude', 'Konum': 'location',
   // ... tüm 30+ mapping
 };
+```
+
+### 3.14 Proje Yapısı Güncellemesi (Schema Dosyaları)
+
+```
+lib/domain/entities/schema/
+├── world_schema.dart              # WorldSchema Freezed class
+├── entity_category_schema.dart    # EntityCategorySchema Freezed class
+├── field_schema.dart              # FieldSchema + FieldType + FieldValidation + FieldVisibility
+├── encounter_layout.dart          # EncounterLayout + EncounterColumn + SortRule + DerivedStat
+├── default_dnd5e_schema.dart      # generateDefaultDnd5eSchema() fonksiyonu
+└── template_io.dart               # .dmt-template ZIP import/export
+
+lib/data/schema/
+├── schema_migration.dart          # Legacy kampanya → schema migration
+└── legacy_maps.dart               # SCHEMA_MAP + PROPERTY_MAP (TR→EN)
+
+lib/presentation/widgets/field_widgets/
+├── field_widget_factory.dart      # FieldWidgetFactory
+├── text_field_widget.dart         # FieldType.text
+├── textarea_field_widget.dart     # FieldType.textarea
+├── markdown_field_widget.dart     # FieldType.markdown
+├── integer_field_widget.dart      # FieldType.integer
+├── float_field_widget.dart        # FieldType.float_
+├── boolean_field_widget.dart      # FieldType.boolean_
+├── enum_field_widget.dart         # FieldType.enum_ (dropdown)
+├── date_field_widget.dart         # FieldType.date
+├── image_field_widget.dart        # FieldType.image
+├── file_field_widget.dart         # FieldType.file
+├── relation_field_widget.dart     # FieldType.relation (entity selector)
+├── tag_list_field_widget.dart     # FieldType.tagList
+├── stat_block_field_widget.dart   # FieldType.statBlock (ability scores)
+├── combat_stats_field_widget.dart # FieldType.combatStats (HP/AC/Speed/...)
+├── action_list_field_widget.dart  # FieldType.actionList
+├── spell_list_field_widget.dart   # FieldType.spellList
+└── fallback_text_widget.dart      # Bilinmeyen tip fallback
+
+lib/presentation/dialogs/
+├── template_studio_dialog.dart    # Template Studio (schema düzenleme)
+└── encounter_column_dialog.dart   # Combat tracker kolon konfigürasyonu
 ```
 
 ---
@@ -1100,6 +1409,7 @@ class Encounter with _$Encounter {
     @Default(1) int round,
     @Default({}) Map<String, Offset> tokenPositions,
     @Default(GridState()) GridState gridState,
+    String? encounterLayoutId,  // WorldSchema'daki EncounterLayout referansı
     // Fog ve annotation verileri ayrı yönetilir (büyük blob'lar)
   }) = _Encounter;
 
@@ -1174,29 +1484,42 @@ class CombatNotifier extends _$CombatNotifier {
 }
 ```
 
-### 6.5 Combat Table UI
+### 6.5 Combat Table UI — Schema-Driven Kolonlar
+
+Combat tracker kolonları artık `EncounterLayout`'tan okunur. Built-in kolonlar (name, initiative, hp, ac, conditions) her zaman mevcuttur; ek kolonlar schema'dan gelir.
 
 ```dart
 class CombatTable extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final combatants = ref.watch(combatProvider.select((s) => s.sortedCombatants));
+    final combatState = ref.watch(combatProvider);
+    final encounter = combatState.currentEncounter;
     final palette = Theme.of(context).extension<DmToolColors>()!;
 
+    // Schema-driven encounter layout
+    final schema = ref.watch(worldSchemaProvider);
+    final layout = schema.encounterLayouts.firstWhere(
+      (l) => l.layoutId == encounter?.encounterLayoutId,
+      orElse: () => schema.encounterLayouts.first, // Default layout
+    );
+
     return ReorderableListView.builder(
-      itemCount: combatants.length,
-      onReorder: (oldIndex, newIndex) => ref.read(combatProvider.notifier).reorder(oldIndex, newIndex),
+      itemCount: encounter?.combatants.length ?? 0,
+      onReorder: (oldIndex, newIndex) =>
+        ref.read(combatProvider.notifier).reorder(oldIndex, newIndex),
       itemBuilder: (context, index) {
-        final c = combatants[index];
-        final isActive = index == ref.watch(combatProvider).currentEncounter?.turnIndex;
+        final c = encounter!.combatants[index];
+        final isActive = index == encounter.turnIndex;
 
         return ListTile(
           key: ValueKey(c.id),
           tileColor: isActive ? palette.tokenBorderActive.withOpacity(0.1) : null,
-          leading: Text('${c.init}', style: TextStyle(fontWeight: FontWeight.bold)),
+          leading: Text('${c.init}', style: const TextStyle(fontWeight: FontWeight.bold)),
           title: Text(c.name),
           subtitle: Row(children: [
-            Text('AC: ${c.ac}'),
+            // Schema-driven kolonlar
+            for (final col in layout.columns)
+              _buildColumnWidget(col, c, palette),
             const SizedBox(width: 8),
             Expanded(child: HpBar(hp: c.hp, maxHp: c.maxHp, palette: palette)),
           ]),
@@ -1209,6 +1532,12 @@ class CombatTable extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Widget _buildColumnWidget(EncounterColumn col, Combatant c, DmToolColors palette) {
+    // Built-in keys: "name", "initiative", "hp", "ac", "conditions"
+    // Custom keys: FieldSchema.fieldKey → entity.fields[key] üzerinden oku
+    // ...
   }
 }
 ```
