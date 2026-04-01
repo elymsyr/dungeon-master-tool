@@ -9,10 +9,10 @@
   <br><br>
   ✨  <a href="https://elymsyr.github.io/">Check out our over-engineered amazing website here!</a> ✨
   <br><br>
-  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.3/DungeonMasterTool-Windows.zip">
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.4/DungeonMasterTool-Windows.zip">
     <img src="https://img.shields.io/badge/Download-Windows_x64-blue?style=for-the-badge&logo=windows" alt="Download Windows" />
   </a>
-  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.3/DungeonMasterTool-Linux.zip">
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.4/DungeonMasterTool-Linux.zip">
     <img src="https://img.shields.io/badge/Download-Linux-orange?style=for-the-badge&logo=linux" alt="Download Linux" />
   </a>
   <a href="#macos-installation">
@@ -21,7 +21,7 @@
   <br>
   <br>
   <img src="https://img.shields.io/badge/Status-Alpha-blue" />
-  <img src="https://img.shields.io/badge/Version-v0.8.3-blueviolet" />
+  <img src="https://img.shields.io/badge/Version-v0.8.4-blueviolet" />
   <img src="https://img.shields.io/badge/License-MIT-green" />
   <img src="https://img.shields.io/badge/Python-3.10+-yellow" />
   <br>
@@ -84,11 +84,13 @@
 
 ---
 
-## 🆕 What's New in v0.8.3
+## 🆕 What's New in v0.8.4
 
-- **Global Edit Mode** — a single ✏️ toolbar button locks/unlocks all text inputs app-wide.
-- **EventBus** — cross-component events replace fragile direct signal chains (Phase 4 architecture).
-- **Soundpad fixes** — smooth music-state crossfades and correct active-state button highlighting.
+- **Architecture overhaul** — NpcSheet, CombatTracker, and API client decomposed into focused sub-modules. MVP/Presenter layer added.
+- **Right-side PDF Panel** — view entity PDFs in a collapsible side panel (mutually exclusive with soundpad).
+- **Spells tab refactoring** — manual spells replaced with a dialog; linked and custom spells in a unified list.
+- **Theme & button polish** — background color fixes across all 11 themes, HP buttons themed via QSS, emoji buttons replaced with icons, combat table columns auto-sized.
+- **Battle map toolbar** — DM tools split into two rows for better readability across themes.
 
 See the full version history in **[TODO.md → Changelog](TODO.md#-changelog)**.
 
@@ -97,14 +99,14 @@ See the full version history in **[TODO.md → Changelog](TODO.md#-changelog)**.
 ## 🚀 Installation
 
 ### 🪟 Windows
-1. Download `DungeonMasterTool-Windows.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.3/DungeonMasterTool-Windows.zip).
+1. Download `DungeonMasterTool-Windows.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.4/DungeonMasterTool-Windows.zip).
 2. Extract the folder and run `DungeonMasterTool.exe`.
 
 ### 🐧 Linux
 
 #### Preferred
 
-1. Download `DungeonMasterTool-Linux.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.3/DungeonMasterTool-Linux.zip).
+1. Download `DungeonMasterTool-Linux.zip` [here](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.4/DungeonMasterTool-Linux.zip).
 2. Extract the folder and run `DungeonMasterTool`.
 
 #### Manual
@@ -121,7 +123,7 @@ bash installer/install.sh  # (Use install-arch.sh for Arch Linux)
 ### 🍎 MacOS Installation & Security Note
 Since this is an open-source project and not signed with an official Apple Developer account, you need to manually bypass the "unverified developer" warning.
 
-**[Click here to download DungeonMasterTool-MacOS.zip](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.3/DungeonMasterTool-MacOS.zip)**
+**[Click here to download DungeonMasterTool-MacOS.zip](https://github.com/elymsyr/dungeon-master-tool/releases/download/alpha-v0.8.4/DungeonMasterTool-MacOS.zip)**
 
 **Steps to run the app:**
 

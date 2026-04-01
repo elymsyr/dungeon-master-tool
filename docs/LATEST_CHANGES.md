@@ -80,6 +80,27 @@ This document tracks updates made **after the latest tagged release**.
 - All small icon buttons standardized to 28×28
 - Combat table: Init/AC columns `ResizeToContents`, HP/Conditions `Stretch`, Init/AC cells center-aligned
 
+#### Battle Map Toolbar Layout ✅
+- DM toolbar split from 1 row into 2 rows: tools+actions (Row 2), grid controls (Row 3)
+- Tool/action buttons get full row width — text no longer clipped in some themes
+
+#### Right-Side PDF Panel ✅
+- `ui/pdf_panel.py` created — collapsible right-side PDF viewer panel (like soundpad)
+- `PdfViewerWidget` lazy-loaded on first use
+- Toggle button (file icon) added to main toolbar
+- Soundpad and PDF panel are mutually exclusive — opening one closes the other
+- `pdf_manager.py`: "Project PDF" button added with `project_requested` signal
+- Signal chain: pdf_manager → DatabaseTab → MainWindow → pdf_panel
+- PDF list: horizontal scrollbar disabled, long names elide with `…`
+
+#### PDF Viewer Improvements ✅
+- Middle-mouse button drag to pan/scroll PDF pages
+- Removed "Folder…" button — only "Open…" remains
+- Arrow emoji buttons replaced with Qt standard icons (previous session)
+
+#### Toolbar Edit Button Fix ✅
+- Edit mode button: removed `setFixedSize(28,28)`, added text label `"✏️ Edit"` for consistent sizing with other toolbar buttons
+
 ### Bug Fixes
 
 - **NpcSheet startup crash** (`AttributeError: 'NpcSheet' object has no attribute 'grp_combat_stats'`):
@@ -113,8 +134,9 @@ This document tracks updates made **after the latest tagged release**.
 | `ui/widgets/combat_controls.py` | YENİ + objectNames + button sizes |
 | `ui/widgets/combat_table.py` | HP buttons themed via QSS, progress bar styling |
 | `ui/widgets/linked_entity_widget.py` | CSS cleanup + custom entries + manual add + width fix |
-| `ui/widgets/pdf_manager.py` | Expanding size policy |
-| `ui/widgets/pdf_viewer.py` | YENİ + emoji→icon |
+| `ui/widgets/pdf_manager.py` | Expanding size policy + Project PDF button + elide mode |
+| `ui/widgets/pdf_viewer.py` | YENİ + emoji→icon + middle-mouse drag + Folder btn removed |
+| `ui/pdf_panel.py` | YENİ — right-side collapsible PDF viewer panel |
 | `ui/presenters/__init__.py` | YENİ |
 | `ui/presenters/combat_presenter.py` | YENİ |
 | `ui/presenters/npc_presenter.py` | YENİ |
@@ -124,7 +146,9 @@ This document tracks updates made **after the latest tagged release**.
 | `ui/dialogs/timeline_entry.py` | CSS cleanup |
 | `ui/tabs/screen_tab.py` | edit mode fix + emoji→icon |
 | `ui/tabs/mind_map_tab.py` | edit mode fix |
-| `ui/main_root.py` | button sizes standardized |
+| `ui/main_root.py` | button sizes + PDF panel + toggle btn + edit btn text |
+| `ui/tabs/database_tab.py` | pdf_project_requested signal + connection |
+| `ui/windows/battle_map_window.py` | toolbar split into 2 DM rows |
 | `themes/common.qss` | YENİ + sheetContainer transparency + compactBtn + HP btn rules |
 | `themes/dark.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
 | `themes/midnight.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
@@ -138,10 +162,11 @@ This document tracks updates made **after the latest tagged release**.
 | `themes/ocean.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
 | `themes/parchment.qss` | featureCard QComboBox/QSpinBox + HP btn colors |
 | `config.py` | `load_theme()` güncellendi |
-| `locales/en.yml` | BTN_MANUAL_ADD, TITLE_MANUAL_SPELL, LBL_SAVE_TO_DB |
-| `locales/tr.yml` | BTN_MANUAL_ADD, TITLE_MANUAL_SPELL, LBL_SAVE_TO_DB |
-| `locales/de.yml` | BTN_MANUAL_ADD, TITLE_MANUAL_SPELL, LBL_SAVE_TO_DB |
-| `locales/fr.yml` | BTN_MANUAL_ADD, TITLE_MANUAL_SPELL, LBL_SAVE_TO_DB |
+| `main.py` | toggle_pdf_panel + show_pdf_in_panel + mutual exclusion |
+| `locales/en.yml` | +BTN_MANUAL_ADD, TITLE_MANUAL_SPELL, LBL_SAVE_TO_DB, BTN_PROJECT_PDF, BTN_TOGGLE_PDF_PANEL, LBL_PDF_PANEL_EMPTY |
+| `locales/tr.yml` | +BTN_MANUAL_ADD, TITLE_MANUAL_SPELL, LBL_SAVE_TO_DB, BTN_PROJECT_PDF, BTN_TOGGLE_PDF_PANEL, LBL_PDF_PANEL_EMPTY |
+| `locales/de.yml` | +BTN_MANUAL_ADD, TITLE_MANUAL_SPELL, LBL_SAVE_TO_DB, BTN_PROJECT_PDF, BTN_TOGGLE_PDF_PANEL, LBL_PDF_PANEL_EMPTY |
+| `locales/fr.yml` | +BTN_MANUAL_ADD, TITLE_MANUAL_SPELL, LBL_SAVE_TO_DB, BTN_PROJECT_PDF, BTN_TOGGLE_PDF_PANEL, LBL_PDF_PANEL_EMPTY |
 
 ---
 

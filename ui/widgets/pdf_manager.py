@@ -7,7 +7,7 @@ Delegates file I/O to the DataManager via dependency injection.
 import logging
 import os
 
-from PyQt6.QtCore import QUrl
+from PyQt6.QtCore import Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QAbstractScrollArea,
@@ -35,9 +35,11 @@ class PdfManagerWidget(QWidget):
     - Show the list of attached PDFs.
     - Add PDFs via file dialog (delegates import to DataManager).
     - Open the selected PDF with the system viewer.
-    - Open the campaign assets folder in the file manager.
+    - Project the selected PDF to the right-side PDF panel.
     - Remove the selected PDF from the list.
     """
+
+    project_requested = pyqtSignal(str)
 
     def __init__(self, data_manager, parent=None):
         super().__init__(parent)
@@ -65,6 +67,10 @@ class PdfManagerWidget(QWidget):
         self.btn_add.setObjectName("successBtn")
         self.btn_add.clicked.connect(self.add_pdf_dialog)
 
+        self.btn_project = QPushButton(tr("BTN_PROJECT_PDF"))
+        self.btn_project.setObjectName("primaryBtn")
+        self.btn_project.clicked.connect(self._on_project)
+
         self.btn_remove = QPushButton(tr("BTN_REMOVE"))
         self.btn_remove.setIcon(
             self.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)
@@ -72,17 +78,22 @@ class PdfManagerWidget(QWidget):
         self.btn_remove.setObjectName("dangerBtn")
         self.btn_remove.clicked.connect(self.remove_current_pdf)
 
-        h_btn.addWidget(self.btn_add, 3)
+        h_btn.addWidget(self.btn_add, 2)
+        h_btn.addWidget(self.btn_project, 2)
         h_btn.addWidget(self.btn_remove, 1)
         v.addLayout(h_btn)
 
         self.list_pdfs = QListWidget()
         self.list_pdfs.setAlternatingRowColors(True)
+        self.list_pdfs.setTextElideMode(Qt.TextElideMode.ElideMiddle)
         self.list_pdfs.setSizeAdjustPolicy(
             QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents
         )
         self.list_pdfs.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum
+        )
+        self.list_pdfs.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
         v.addWidget(self.list_pdfs)
 
@@ -96,6 +107,7 @@ class PdfManagerWidget(QWidget):
         """Show/hide add and remove buttons based on edit mode."""
         self.btn_add.setVisible(enabled)
         self.btn_remove.setVisible(enabled)
+        self.btn_project.setVisible(True)
 
     def set_entity_id(self, eid: str | None) -> None:
         """Bind the widget to an entity so save-on-add/remove works."""
@@ -149,6 +161,14 @@ class PdfManagerWidget(QWidget):
                     pdfs.append(rel)
                     entity["pdfs"] = pdfs
                     self._dm.save_entity(self._entity_id, entity)
+
+    def _on_project(self) -> None:
+        item = self.list_pdfs.currentItem()
+        if not item:
+            return
+        full = self._dm.get_full_path(item.text())
+        if full and os.path.exists(full):
+            self.project_requested.emit(full)
 
     def open_current_pdf(self) -> None:
         item = self.list_pdfs.currentItem()

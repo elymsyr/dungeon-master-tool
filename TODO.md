@@ -22,9 +22,9 @@
 - [x] **Mind Map – Level of Detail (LOD):** Three-zone LOD system reduces GPU/CPU load when zoomed out: full quality (≥0.4), cached/no-shadow (0.1–0.4), and template mode (<0.1). Grid dots are also skipped or sparsified at low zoom.
 - [x] **Mind Map – Readable Template Labels:** In template mode, node labels (entity name / note first line / image filename) are inverse-scaled so they remain readable at any zoom level and overflow the node bounds.
 - [x] **Mind Map – Undo/Redo Shortcuts:** Added `Ctrl+Z` and `Ctrl+Shift+Z` support for mind map undo/redo, while preserving native text undo/redo behavior inside focused editors.
-- [ ] **GM Player Screen Control:** Add a specific edit/control view for the GM to manage the Player Window more effectively.
-- [ ] **Free Single Import:** Users should be able to import an entity from import data sources (spells, items, etc.) directly into any other entity without needing to import them to the card entity database first.
-- [ ] **Embedded PDF Viewer:** Implement a native PDF viewer within the application (Session/Docs tab).
+- [x] **GM Player Screen Control:** ScreenTab with mode switching for GM to manage the Player Window.
+- [x] **Free Single Import:** Manual Add dialog with "Save to database" checkbox — import spells/items directly into any entity without importing to the database first.
+- [x] **Embedded PDF Viewer:** Native PDF viewer with right-side collapsible panel, middle-mouse drag, zoom controls, and "Project PDF" button on entity cards.
 - [x] **Standardize UI (#30):** Battle map toolbar buttons and spinboxes are now uniform height. Palette-based theming applied across all UI components (sidebar, tabs, action buttons, bulk downloader, etc.).
 - [ ] **Soundpad Transitions (#29):**
     - [ ] Make loop switching smoother to avoid audio glitches.
@@ -62,6 +62,21 @@
 ---
 
 ## 📋 Changelog
+
+### v0.8.4 — Architecture & UI Polish
+
+- **God Class Decomposition (Phase 2):** NpcSheet (1497→530 LOC) split into 5 sub-widgets (stats, actions, inventory, spells, helpers). CombatTracker split into combatant list, controls, and table widgets.
+- **API Client Consolidation (Phase 4):** `core/api/` package with abstract source pattern (`base_source.py`, `dnd5e_source.py`, `open5e_source.py`).
+- **MVP/Presenter Layer (Phase 4):** `ui/presenters/` with combat and NPC presenters.
+- **Right-Side PDF Panel:** Collapsible panel for viewing entity PDFs, mutually exclusive with soundpad. "Project PDF" button on entity Docs tab.
+- **Spells Tab Refactoring:** Manual spells section replaced with ManualSpellDialog + "Save to database" checkbox. Custom and linked spells unified in a single list.
+- **Theme Background Fix:** QComboBox/QSpinBox transparency in featureCards, QLabel/QListWidget transparency in sheetContainer across all 11 themes.
+- **Button Standardization:** HP buttons themed via QSS, emoji→icon replacement (↑↓◀▶<>), `compactBtn` class, combat controls objectNames added.
+- **Combat Table:** Init/AC fit-to-content, HP/Conditions stretch, cells center-aligned, HP bar flat styling.
+- **Height/Width Auto-Sizing:** Removed hard height limits, all containers use `Expanding` + auto-fit patterns.
+- **Battle Map Toolbar:** DM tools split into 2 rows (tools+actions / grid controls).
+- **PDF Viewer:** Middle-mouse drag, Folder button removed, arrow icons standardized.
+- **Inline CSS Cleanup:** `common.qss` expanded to 15+ objectName-based rules, HP button colors per-theme.
 
 ### v0.8.3 — Architecture & UX
 

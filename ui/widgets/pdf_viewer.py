@@ -10,8 +10,8 @@ import logging
 import os
 import tempfile
 
-from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
-from PyQt6.QtGui import QImage, QPixmap
+from PyQt6.QtCore import QPoint, Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import QCursor, QImage, QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -111,10 +111,6 @@ class PdfViewerWidget(QWidget):
         self.btn_open.setFixedWidth(60)
         self.btn_open.clicked.connect(self._open_file_dialog)
 
-        self.btn_open_folder = QPushButton("Folder…")
-        self.btn_open_folder.setFixedWidth(60)
-        self.btn_open_folder.clicked.connect(self._open_folder_dialog)
-
         _style = QApplication.style()
         self.btn_prev = QPushButton()
         self.btn_prev.setIcon(_style.standardIcon(QStyle.StandardPixmap.SP_ArrowBack))
@@ -157,7 +153,6 @@ class PdfViewerWidget(QWidget):
         self.lbl_status.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
         tb_layout.addWidget(self.btn_open)
-        tb_layout.addWidget(self.btn_open_folder)
         tb_layout.addSpacing(4)
         tb_layout.addWidget(self.btn_prev)
         tb_layout.addWidget(self.inp_page)
@@ -180,6 +175,11 @@ class PdfViewerWidget(QWidget):
         self.page_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.page_label.setStyleSheet("background: #1a1a1a;")
         self.scroll.setWidget(self.page_label)
+
+        # Middle-mouse drag state
+        self._dragging = False
+        self._drag_start = QPoint()
+        self.scroll.viewport().installEventFilter(self)
 
         root.addWidget(self.scroll, 1)
 
@@ -345,6 +345,30 @@ class PdfViewerWidget(QWidget):
         if self._doc is not None:
             self._doc.close()
             self._doc = None
+
+    def eventFilter(self, obj, event) -> bool:
+        if obj is self.scroll.viewport():
+            from PyQt6.QtCore import QEvent
+            if event.type() == QEvent.Type.MouseButtonPress and event.button() == Qt.MouseButton.MiddleButton:
+                self._dragging = True
+                self._drag_start = event.globalPosition().toPoint()
+                self.scroll.viewport().setCursor(QCursor(Qt.CursorShape.ClosedHandCursor))
+                return True
+            if event.type() == QEvent.Type.MouseMove and self._dragging:
+                delta = event.globalPosition().toPoint() - self._drag_start
+                self._drag_start = event.globalPosition().toPoint()
+                self.scroll.horizontalScrollBar().setValue(
+                    self.scroll.horizontalScrollBar().value() - delta.x()
+                )
+                self.scroll.verticalScrollBar().setValue(
+                    self.scroll.verticalScrollBar().value() - delta.y()
+                )
+                return True
+            if event.type() == QEvent.Type.MouseButtonRelease and event.button() == Qt.MouseButton.MiddleButton:
+                self._dragging = False
+                self.scroll.viewport().setCursor(QCursor(Qt.CursorShape.ArrowCursor))
+                return True
+        return super().eventFilter(obj, event)
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
