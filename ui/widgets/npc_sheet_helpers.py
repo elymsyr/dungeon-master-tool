@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLineEdit,
     QPushButton,
+    QSizePolicy,
     QVBoxLayout,
     QStyle,
     QApplication,
@@ -22,6 +23,7 @@ from ui.widgets.markdown_editor import MarkdownEditor
 def make_section(title: str) -> QGroupBox:
     """Create a QGroupBox with a dynamic_area QVBoxLayout inside it."""
     group = QGroupBox(title)
+    group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
     v = QVBoxLayout(group)
     group.dynamic_area = QVBoxLayout()
     v.addLayout(group.dynamic_area)

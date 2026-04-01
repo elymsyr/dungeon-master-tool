@@ -24,6 +24,28 @@ QLabel#statAbbrev {
     font-weight: bold;
 }
 
+/* --- Entity sheet — transparent backgrounds within the sheet container --- */
+QWidget#sheetContainer QLineEdit,
+QWidget#sheetContainer QTextEdit,
+QWidget#sheetContainer QPlainTextEdit,
+QWidget#sheetContainer QSpinBox,
+QWidget#sheetContainer QComboBox {
+    background-color: transparent;
+    border: none;
+}
+QWidget#sheetContainer QLineEdit:focus,
+QWidget#sheetContainer QTextEdit:focus,
+QWidget#sheetContainer QComboBox:focus {
+    background-color: transparent;
+}
+QWidget#sheetContainer QLabel {
+    background-color: transparent;
+}
+QWidget#sheetContainer QListWidget {
+    background-color: transparent;
+    border: none;
+}
+
 /* --- Linked entity card name --- */
 QLabel#linkedEntityName {
     font-weight: bold;

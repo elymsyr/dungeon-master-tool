@@ -27,7 +27,11 @@
       "Bash(python3 -m pytest tests/ -q)",
       "Bash(python3 -m pytest tests/test_core/ -q)",
       "Bash(python3 -m py_compile ui/widgets/npc_sheet.py ui/widgets/npc_sheet_stats_tab.py ui/widgets/npc_sheet_actions_tab.py ui/widgets/npc_sheet_inventory_tab.py ui/widgets/npc_sheet_spells_tab.py ui/widgets/npc_sheet_helpers.py ui/widgets/combat_tracker.py ui/widgets/combat_combatant_list.py ui/widgets/combat_controls.py)",
-      "Bash(python3 -m pytest -q)"
+      "Bash(python3 -m pytest -q)",
+      "Bash(grep -E \"QGroupBox.*QLineEdit|QGroupBox.*QComboBox|QGroupBox.*QSpinBox\" themes/*.qss)",
+      "Bash(find . -name \"*.py\" -type f -exec grep -l \"save_entity\\\\|collect_data\" {} \\\\;)",
+      "Bash(grep -E \"\\\\.\\(qss|css\\)$\")",
+      "Bash(grep -n \"spell\\\\|Spell\" /home/eren/GitHub/dungeon-master-tool/themes/*.qss)"
     ]
   }
 }

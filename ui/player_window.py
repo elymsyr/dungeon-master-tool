@@ -1,6 +1,6 @@
 import logging
 
-from PyQt6.QtCore import Qt, QUrl, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QImageReader, QPixmap
 from PyQt6.QtWidgets import (
     QFrame,
@@ -422,25 +422,26 @@ class PlayerWindow(QMainWindow):
 
     def show_pdf(self, pdf_path: str) -> None:
         if self.pdf_viewer is None:
-            from PyQt6.QtWebEngineWidgets import QWebEngineView
+            from ui.widgets.pdf_viewer import PdfViewerWidget
 
-            self.pdf_viewer = QWebEngineView()
-            p = ThemeManager.get_palette("dark")
-            self.pdf_viewer.setStyleSheet(
-                f"background-color: {p.get('ui_bg_dark', '#333')};"
-            )
+            self.pdf_viewer = PdfViewerWidget()
             self.stack.addWidget(self.pdf_viewer)
             self.pdf_viewer_index = self.stack.count() - 1
-            self.pdf_viewer.settings().setAttribute(
-                self.pdf_viewer.settings().WebAttribute.PluginsEnabled, True
-            )
-            self.pdf_viewer.settings().setAttribute(
-                self.pdf_viewer.settings().WebAttribute.PdfViewerEnabled, True
-            )
 
         self.stack.setCurrentWidget(self.pdf_viewer)
-        local_url = QUrl.fromLocalFile(pdf_path)
-        self.pdf_viewer.setUrl(local_url)
+        self.pdf_viewer.load_file(pdf_path)
+
+    def show_pdf_url(self, url: str) -> None:
+        """Display a remote PDF URL in the embedded viewer."""
+        if self.pdf_viewer is None:
+            from ui.widgets.pdf_viewer import PdfViewerWidget
+
+            self.pdf_viewer = PdfViewerWidget()
+            self.stack.addWidget(self.pdf_viewer)
+            self.pdf_viewer_index = self.stack.count() - 1
+
+        self.stack.setCurrentWidget(self.pdf_viewer)
+        self.pdf_viewer.load_url(url)
 
     def update_theme(self, qss: str) -> None:
         self.setStyleSheet(qss)

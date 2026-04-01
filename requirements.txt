@@ -10,3 +10,6 @@ pyinstaller
 msgpack
 markdown
 Pillow
+PyMuPDF>=1.23.0
+python-socketio[client]>=5.11.0
+pydantic>=2.0.0

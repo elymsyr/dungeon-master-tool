@@ -8,6 +8,7 @@ import logging
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
+    QAbstractScrollArea,
     QComboBox,
     QFrame,
     QGroupBox,
@@ -16,6 +17,7 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QPushButton,
+    QSizePolicy,
     QStyle,
     QVBoxLayout,
     QWidget,
@@ -23,6 +25,7 @@ from PyQt6.QtWidgets import (
 
 from core.locales import tr
 from core.models import ENTITY_SCHEMAS
+from core.theme_manager import ThemeManager
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +38,11 @@ class LinkedEntityWidget(QWidget):
     - Append selected entity IDs to the linked list (no duplicates).
     - Remove selected entry from the list.
     - Emit double-click to open a linked entity.
+    - Optionally support inline custom entries (not in DB).
     """
 
     linked_ids_changed = pyqtSignal()
+    manual_add_requested = pyqtSignal()
     _SPELL_PROPERTY_KEYS = [key for key, _, _ in ENTITY_SCHEMAS.get("Spell", [])]
 
     @staticmethod
@@ -71,8 +76,10 @@ class LinkedEntityWidget(QWidget):
         self._entity_type = entity_type
         self._open_cb = open_entity_callback
         self._linked_ids: list[str] = []
+        self._custom_entries: list[dict] = []
         self._group_title = group_title
         self._search_placeholder = search_placeholder
+        self._palette = ThemeManager.get_palette("dark")
         self._build_ui()
 
     # ------------------------------------------------------------------
@@ -84,9 +91,14 @@ class LinkedEntityWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         grp = QGroupBox(self._group_title)
+        grp.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         v = QVBoxLayout(grp)
 
         h = QHBoxLayout()
+        self.btn_manual_add = QPushButton(tr("BTN_MANUAL_ADD"))
+        self.btn_manual_add.setObjectName("actionBtn")
+        self.btn_manual_add.clicked.connect(self.manual_add_requested.emit)
+
         self.combo_all = QComboBox()
         self.combo_all.setEditable(True)
         self.combo_all.setPlaceholderText(self._search_placeholder)
@@ -99,17 +111,27 @@ class LinkedEntityWidget(QWidget):
         self.btn_import.setObjectName("primaryBtn")
         self.btn_import.clicked.connect(self._on_import)
 
+        h.addWidget(self.btn_manual_add, 1)
         h.addWidget(self.combo_all, 3)
         h.addWidget(self.btn_add, 1)
         h.addWidget(self.btn_import, 1)
         v.addLayout(h)
 
         self.list_assigned = QListWidget()
+        self.list_assigned.setObjectName("linkedEntityList")
         self.list_assigned.setAlternatingRowColors(False)
         self.list_assigned.setSpacing(6)
-        self.list_assigned.setMinimumHeight(
-            320 if self._entity_type == "Spell" else 200
+        self.list_assigned.setSizeAdjustPolicy(
+            QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents
         )
+        self.list_assigned.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum
+        )
+        self.list_assigned.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        self.list_assigned.setWordWrap(True)
+        self.list_assigned.setResizeMode(QListWidget.ResizeMode.Adjust)
         self.list_assigned.itemDoubleClicked.connect(self._on_dbl_click)
         v.addWidget(self.list_assigned)
 
@@ -127,8 +149,13 @@ class LinkedEntityWidget(QWidget):
     # Public API
     # ------------------------------------------------------------------
 
+    def refresh_theme(self, palette: dict) -> None:
+        self._palette = palette
+        self._render_list()
+
     def set_edit_mode(self, enabled: bool) -> None:
         """Show/hide add and remove buttons; enable/disable combo in edit mode."""
+        self.btn_manual_add.setVisible(enabled)
         self.btn_add.setVisible(enabled)
         self.btn_import.setVisible(enabled)
         self.btn_remove.setVisible(enabled)
@@ -153,6 +180,24 @@ class LinkedEntityWidget(QWidget):
         """Return the current list of linked entity IDs."""
         return list(self._linked_ids)
 
+    # --- Custom entry API (inline spells not saved to DB) ---
+
+    def add_custom_entry(self, data: dict) -> None:
+        """Add an inline custom entry and refresh the list."""
+        self._custom_entries.append(data)
+        self._render_list()
+        self.linked_ids_changed.emit()
+
+    def get_custom_entries(self) -> list[dict]:
+        return list(self._custom_entries)
+
+    def set_custom_entries(self, entries: list[dict]) -> None:
+        self._custom_entries = list(entries)
+        self._render_list()
+
+    def clear_custom_entries(self) -> None:
+        self._custom_entries.clear()
+
     # ------------------------------------------------------------------
     # Slots
     # ------------------------------------------------------------------
@@ -168,10 +213,18 @@ class LinkedEntityWidget(QWidget):
 
     def _on_remove(self) -> None:
         row = self.list_assigned.currentRow()
-        if row >= 0:
+        if row < 0:
+            return
+        item = self.list_assigned.item(row)
+        data = item.data(Qt.ItemDataRole.UserRole) if item else None
+        if isinstance(data, str) and data.startswith("custom:"):
+            idx = int(data.split(":", 1)[1])
+            if 0 <= idx < len(self._custom_entries):
+                del self._custom_entries[idx]
+        elif row < len(self._linked_ids):
             del self._linked_ids[row]
-            self.list_assigned.takeItem(row)
-            self.linked_ids_changed.emit()
+        self._render_list()
+        self.linked_ids_changed.emit()
 
     def _on_import(self) -> None:
         # Local import avoids circular module import during startup.
@@ -189,7 +242,7 @@ class LinkedEntityWidget(QWidget):
 
     def _on_dbl_click(self, item: QListWidgetItem) -> None:
         eid = item.data(Qt.ItemDataRole.UserRole)
-        if eid and self._open_cb:
+        if eid and not str(eid).startswith("custom:") and self._open_cb:
             self._open_cb(eid)
 
     def merge_linked_ids(self, incoming_ids: list[str]) -> None:
@@ -236,7 +289,41 @@ class LinkedEntityWidget(QWidget):
             item.setSizeHint(card.sizeHint())
             self.list_assigned.setItemWidget(item, card)
 
+        # Render custom (inline) entries after DB-linked ones
+        for idx, entry in enumerate(self._custom_entries):
+            fake_ent = {
+                "name": entry.get("name", ""),
+                "description": entry.get("desc", ""),
+                "attributes": entry.get("attributes", {}),
+            }
+            item = QListWidgetItem()
+            item.setData(Qt.ItemDataRole.UserRole, f"custom:{idx}")
+            self.list_assigned.addItem(item)
+            card = self._build_card_widget(
+                name=fake_ent["name"] or tr("NAME_UNNAMED"),
+                extra="",
+                ent=fake_ent,
+            )
+            item.setSizeHint(card.sizeHint())
+            self.list_assigned.setItemWidget(item, card)
+
+        self._fit_list_height()
+
+    def _fit_list_height(self) -> None:
+        """Set list height to exactly fit its content rows."""
+        count = self.list_assigned.count()
+        if count == 0:
+            self.list_assigned.setFixedHeight(0)
+            return
+        total = 0
+        spacing = self.list_assigned.spacing()
+        for i in range(count):
+            total += self.list_assigned.sizeHintForRow(i) + spacing
+        total += 2 * self.list_assigned.frameWidth()
+        self.list_assigned.setFixedHeight(total)
+
     def _build_card_widget(self, name: str, extra: str, ent: dict | None = None) -> QWidget:
+        dim = self._palette.get("html_dim", "#aaa")
         card = QFrame()
         card.setObjectName("linkedEntityCard")
         card.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
@@ -251,7 +338,7 @@ class LinkedEntityWidget(QWidget):
 
         if extra:
             lbl_extra = QLabel(extra.strip())
-            lbl_extra.setStyleSheet("font-size: 11px; color: #888;")
+            lbl_extra.setStyleSheet(f"font-size: 11px; color: {dim};")
             layout.addWidget(lbl_extra)
 
         if self._entity_type == "Spell":
@@ -262,13 +349,13 @@ class LinkedEntityWidget(QWidget):
                     val = "-"
                 detail = QLabel(f"{tr(key)}: {val}")
                 detail.setWordWrap(True)
-                detail.setStyleSheet("font-size: 11px; color: #b0b0b0;")
+                detail.setStyleSheet(f"font-size: 11px; color: {dim};")
                 layout.addWidget(detail)
 
             desc = self._short_preview_text((ent or {}).get("description", ""))
             lbl_desc = QLabel(f"{tr('LBL_DESC')}: {desc}")
             lbl_desc.setWordWrap(True)
-            lbl_desc.setStyleSheet("font-size: 11px; color: #b0b0b0;")
+            lbl_desc.setStyleSheet(f"font-size: 11px; color: {dim};")
             layout.addWidget(lbl_desc)
 
         return card

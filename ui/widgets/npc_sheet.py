@@ -22,9 +22,11 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QListWidget,
     QListWidgetItem,
+    QAbstractScrollArea,
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
     QStyle,
     QTabWidget,
     QVBoxLayout,
@@ -131,7 +133,6 @@ class NpcSheet(QWidget):
         self.reaction_container = self._actions_tab.reaction_container
         self.legendary_container = self._actions_tab.legendary_container
         self.inventory_container = self._inventory_tab.inventory_container
-        self.custom_spell_container = self._spells_tab.custom_spell_container
 
         self.init_ui()
 
@@ -143,11 +144,8 @@ class NpcSheet(QWidget):
         self.combo_all_items = self.item_widget.combo_all
         self.lbl_image = self.image_gallery.lbl_image
         self.lbl_img_counter = self.image_gallery.lbl_counter
-        self.btn_project_pdf = self.pdf_manager.btn_project
         self.btn_add_pdf = self.pdf_manager.btn_add
-        self.btn_open_pdf = self.pdf_manager.btn_open
         self.btn_remove_pdf = self.pdf_manager.btn_remove
-        self.btn_open_pdf_folder = self.pdf_manager.btn_open_folder
 
         # Ctrl+S shortcut
         self.shortcut_save = QShortcut(QKeySequence("Ctrl+S"), self)
@@ -207,8 +205,7 @@ class NpcSheet(QWidget):
         self._inventory_tab.is_embedded = enabled
         self._spells_tab.is_embedded = enabled
         if enabled:
-            for btn in [self.btn_edit, self.btn_discard, self.btn_save, self.btn_done, self.btn_delete]:
-                btn.setVisible(False)
+            self.btn_delete.setVisible(False)
             self.inp_desc.set_transparent_mode(True)
             self.inp_dm_notes.set_transparent_mode(True)
         else:
@@ -288,10 +285,6 @@ class NpcSheet(QWidget):
         self.btn_remove_map.setVisible(editing)
 
         # Footer
-        self.btn_edit.setVisible(not editing)
-        self.btn_done.setVisible(editing)
-        self.btn_save.setVisible(editing)
-        self.btn_discard.setVisible(editing)
         self.btn_delete.setVisible(True)
 
     def refresh_theme(self, palette) -> None:
@@ -327,11 +320,6 @@ class NpcSheet(QWidget):
         self.content_widget = QWidget()
         self.content_widget.setObjectName("sheetContainer")
         self.content_widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.content_widget.setStyleSheet(
-            "QLineEdit, QPlainTextEdit, QComboBox { background-color: transparent; }"
-            "QLineEdit[readOnly='true'], QLineEdit:disabled, "
-            "QPlainTextEdit:disabled, QComboBox:disabled { background-color: transparent; }"
-        )
 
         self.content_layout = QVBoxLayout(self.content_widget)
 
@@ -363,7 +351,12 @@ class NpcSheet(QWidget):
         self.combo_location.setPlaceholderText(tr("PH_LOCATION_SELECT"))
         self.lbl_location = QLabel(tr("LBL_LOCATION"))
         self.list_residents = QListWidget()
-        self.list_residents.setMaximumHeight(80)
+        self.list_residents.setSizeAdjustPolicy(
+            QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents
+        )
+        self.list_residents.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum
+        )
         self.list_residents.itemDoubleClicked.connect(self._on_linked_item_dbl_click)
         self.lbl_residents = QLabel(tr("LBL_RESIDENTS"))
 
@@ -443,33 +436,10 @@ class NpcSheet(QWidget):
         btn_layout = QHBoxLayout()
         btn_layout.setContentsMargins(10, 10, 10, 10)
 
-        self.btn_discard = QPushButton(tr("BTN_DISCARD"))
-        self.btn_discard.setObjectName("dangerBtn")
-        self.btn_discard.clicked.connect(self._discard_edits)
-        self.btn_discard.setVisible(False)
-
-        self.btn_save = QPushButton(tr("BTN_SAVE"))
-        self.btn_save.setObjectName("successBtn")
-        self.btn_save.clicked.connect(self.emit_save_request)
-        self.btn_save.setVisible(False)
-
-        self.btn_done = QPushButton(tr("BTN_DONE"))
-        self.btn_done.setObjectName("primaryBtn")
-        self.btn_done.clicked.connect(lambda: self.set_edit_mode(False))
-        self.btn_done.setVisible(False)
-
-        self.btn_edit = QPushButton(tr("BTN_EDIT"))
-        self.btn_edit.setObjectName("primaryBtn")
-        self.btn_edit.clicked.connect(lambda: self.set_edit_mode(True))
-
         self.btn_delete = QPushButton(tr("BTN_DELETE"))
         self.btn_delete.setObjectName("dangerBtn")
 
-        btn_layout.addWidget(self.btn_discard)
         btn_layout.addStretch()
-        btn_layout.addWidget(self.btn_save)
-        btn_layout.addWidget(self.btn_done)
-        btn_layout.addWidget(self.btn_edit)
         btn_layout.addWidget(self.btn_delete)
         main_layout.addLayout(btn_layout)
 
@@ -678,7 +648,14 @@ class NpcSheet(QWidget):
         self.list_battlemaps.setIconSize(QSize(120, 120))
         self.list_battlemaps.setResizeMode(QListWidget.ResizeMode.Adjust)
         self.list_battlemaps.setSpacing(10)
+        self.list_battlemaps.setSizeAdjustPolicy(
+            QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents
+        )
+        self.list_battlemaps.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum
+        )
         layout.addWidget(self.list_battlemaps)
+        layout.addStretch()
 
     def add_battlemap_dialog(self) -> None:
         from PyQt6.QtWidgets import QFileDialog
@@ -731,6 +708,34 @@ class NpcSheet(QWidget):
                 item.setData(Qt.ItemDataRole.UserRole, path)
                 item.setToolTip(path)
                 self.list_battlemaps.addItem(item)
+        self._fit_battlemap_list_height()
+
+    def _fit_residents_list_height(self) -> None:
+        count = self.list_residents.count()
+        if count == 0:
+            self.list_residents.setFixedHeight(0)
+            return
+        total = 0
+        spacing = self.list_residents.spacing()
+        for i in range(count):
+            total += self.list_residents.sizeHintForRow(i) + spacing
+        total += 2 * self.list_residents.frameWidth()
+        self.list_residents.setFixedHeight(total)
+
+    def _fit_battlemap_list_height(self) -> None:
+        count = self.list_battlemaps.count()
+        if count == 0:
+            self.list_battlemaps.setFixedHeight(0)
+            return
+        # Icon mode: rows wrap, estimate height from icon size + spacing
+        icon_h = self.list_battlemaps.iconSize().height() + 30  # icon + label
+        spacing = self.list_battlemaps.spacing()
+        w = max(self.list_battlemaps.viewport().width(), 200)
+        item_w = self.list_battlemaps.iconSize().width() + spacing * 2 + 20
+        cols = max(w // item_w, 1)
+        rows = (count + cols - 1) // cols
+        total = rows * (icon_h + spacing) + 2 * self.list_battlemaps.frameWidth()
+        self.list_battlemaps.setFixedHeight(total)
 
     # ------------------------------------------------------------------
     # Linked-entity helpers (thin delegates, keep public API)
@@ -788,16 +793,10 @@ class NpcSheet(QWidget):
         self.pdf_manager.add_pdf_dialog()
         self.mark_as_dirty()
 
-    def open_current_pdf(self) -> None:
-        self.pdf_manager.open_current_pdf()
-
     def remove_current_pdf(self) -> None:
         self.pdf_manager.set_entity_id(self.property("entity_id"))
         self.pdf_manager.remove_current_pdf()
         self.mark_as_dirty()
-
-    def open_pdf_folder(self) -> None:
-        self.pdf_manager.open_pdf_folder()
 
     # ------------------------------------------------------------------
     # Dynamic form (type-driven properties)
@@ -834,7 +833,6 @@ class NpcSheet(QWidget):
                         widget.addItem(tr(opt) if str(opt).startswith("LBL_") else opt, opt)
                 widget.editTextChanged.connect(self.mark_as_dirty)
                 widget.currentIndexChanged.connect(self.mark_as_dirty)
-                self._force_transparent_combo(widget)
 
             elif dtype == "entity_select":
                 widget = QComboBox()
@@ -846,7 +844,6 @@ class NpcSheet(QWidget):
                     lambda idx, w=widget: self._on_unified_selection(idx, w)
                 )
                 widget.editTextChanged.connect(self.mark_as_dirty)
-                self._force_transparent_combo(widget)
                 self.layout_dynamic.addRow(f"{tr(label_key)}:", widget)
                 self.dynamic_inputs[label_key] = widget
                 continue  # skip the generic addRow below
@@ -854,7 +851,6 @@ class NpcSheet(QWidget):
             else:
                 widget = QLineEdit()
                 widget.textChanged.connect(self.mark_as_dirty)
-                self._force_transparent_line_edit(widget)
 
             self.layout_dynamic.addRow(f"{tr(label_key)}:", widget)
             self.dynamic_inputs[label_key] = widget
@@ -896,6 +892,11 @@ class NpcSheet(QWidget):
             self._force_transparent_line_edit(line_edit)
         for combo in self.content_widget.findChildren(QComboBox):
             self._force_transparent_combo(combo)
+        for lw in self.content_widget.findChildren(QListWidget):
+            style = lw.styleSheet().strip()
+            token = "background-color: transparent;"
+            if token not in style:
+                lw.setStyleSheet(f"{style} {token}" if style else token)
 
     def _populate_unified_combo(self, category: str, widget: QComboBox) -> None:
         widget.clear()
@@ -1001,6 +1002,7 @@ class NpcSheet(QWidget):
         self.combo_location.setVisible(is_npc_like or is_player)
         self.lbl_residents.setVisible(category_name == "Location")
         self.list_residents.setVisible(category_name == "Location")
+        self._fit_residents_list_height()
 
         self.tabs.setTabVisible(0, is_npc_like)   # Stats
         self.tabs.setTabVisible(1, is_npc_like)   # Spells

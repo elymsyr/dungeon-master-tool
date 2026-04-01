@@ -14,7 +14,7 @@ QFrame[class="featureCard"] {
     background-color: #1e1e1e; border: 1px solid #3e3e3e; border-left: 4px solid #42a5f5; border-radius: 4px; margin-bottom: 8px;
 }
 /* KART İÇİ TEXTBOX: ŞEFFAF */
-QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit {
+QFrame[class="featureCard"] QLineEdit, QFrame[class="featureCard"] QTextEdit, QFrame[class="featureCard"] QComboBox, QFrame[class="featureCard"] QSpinBox {
     background-color: transparent; border: none; color: #ffffff;
 }
 
@@ -91,48 +91,3 @@ QLabel#entityCat {
     background-color: transparent;
     font-style: italic;
 }
-/* TRANSPARENT_TEXT_BG_OVERRIDE */
-QLineEdit,
-QTextEdit,
-QPlainTextEdit,
-QTextBrowser,
-QSpinBox,
-QComboBox,
-QDateEdit,
-QTimeEdit,
-QDateTimeEdit,
-QAbstractSpinBox {
-    background-color: transparent;
-}
-
-QLineEdit:focus,
-QTextEdit:focus,
-QPlainTextEdit:focus,
-QTextBrowser:focus,
-QSpinBox:focus,
-QComboBox:focus,
-QDateEdit:focus,
-QTimeEdit:focus,
-QDateTimeEdit:focus,
-QAbstractSpinBox:focus,
-QLineEdit:disabled,
-QTextEdit:disabled,
-QPlainTextEdit:disabled,
-QTextBrowser:disabled,
-QSpinBox:disabled,
-QComboBox:disabled,
-QDateEdit:disabled,
-QTimeEdit:disabled,
-QDateTimeEdit:disabled,
-QAbstractSpinBox:disabled,
-QLineEdit:read-only,
-QTextEdit:read-only,
-QPlainTextEdit:read-only,
-QTextBrowser:read-only,
-QComboBox:editable {
-    background-color: transparent;
-}
-
-QPushButton#editModeBtn { font-size: 14px; padding: 4px; border: 1px solid #555; border-radius: 4px; }
-QPushButton#editModeBtn:checked { background-color: #1565c0; border-color: #42a5f5; }
-QPushButton#editModeBtn:hover { border-color: #42a5f5; }
