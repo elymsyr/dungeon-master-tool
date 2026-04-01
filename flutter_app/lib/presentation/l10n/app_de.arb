@@ -1,0 +1,21 @@
+{
+  "@@locale": "de",
+  "appTitle": "Dungeon Master Werkzeug",
+  "btnSave": "Speichern",
+  "btnCancel": "Abbrechen",
+  "btnDelete": "Löschen",
+  "btnCreate": "Erstellen",
+  "btnImport": "Importieren",
+  "btnExport": "Exportieren",
+  "lblNewCampaign": "Neue Kampagne",
+  "lblSelectCampaign": "Kampagne auswählen",
+  "lblWorldName": "Weltname",
+  "lblSearch": "Suche",
+  "lblSettings": "Einstellungen",
+  "lblTheme": "Thema",
+  "lblLanguage": "Sprache",
+  "tabDatabase": "Datenbank",
+  "tabSession": "Sitzung",
+  "tabMindMap": "Mindmap",
+  "tabMap": "Karte"
+}

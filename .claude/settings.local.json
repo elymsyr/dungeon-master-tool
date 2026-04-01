@@ -44,7 +44,16 @@
       "Bash(xargs ls:*)",
       "Bash(find /home/eren/GitHub/dungeon-master-tool -name \"*.py\" -exec grep -l \"soundpad\\\\|Soundpad\\\\|audio\\\\|Audio\" {} \\\\;)",
       "Bash(find /home/eren/GitHub/dungeon-master-tool/ui/windows -type f -name \"*.py\" -exec basename {} \\\\;)",
-      "Bash(flutter --version)"
+      "Bash(flutter --version)",
+      "Read(//home/eren/snap/**)",
+      "Read(//usr/lib/**)",
+      "Read(//opt/**)",
+      "Bash(dpkg -l)",
+      "Bash(snap list:*)",
+      "Bash(apt list:*)",
+      "Bash(sudo apt-get:*)",
+      "Bash(export PATH=\"/home/eren/.flutter-sdk/bin:$PATH\")",
+      "Bash(flutter analyze:*)"
     ]
   }
 }

@@ -1,0 +1,21 @@
+{
+  "@@locale": "fr",
+  "appTitle": "Outil du Maître de Donjon",
+  "btnSave": "Sauvegarder",
+  "btnCancel": "Annuler",
+  "btnDelete": "Supprimer",
+  "btnCreate": "Créer",
+  "btnImport": "Importer",
+  "btnExport": "Exporter",
+  "lblNewCampaign": "Nouvelle Campagne",
+  "lblSelectCampaign": "Sélectionner une Campagne",
+  "lblWorldName": "Nom du Monde",
+  "lblSearch": "Rechercher",
+  "lblSettings": "Paramètres",
+  "lblTheme": "Thème",
+  "lblLanguage": "Langue",
+  "tabDatabase": "Base de données",
+  "tabSession": "Session",
+  "tabMindMap": "Carte mentale",
+  "tabMap": "Carte"
+}
