@@ -260,19 +260,13 @@ class HpBarWidget(QWidget):
         self.max_val = int(max_hp) if int(max_hp) > 0 else 1
 
         l = QHBoxLayout(self)
-        l.setContentsMargins(0, 2, 0, 2)
-        l.setSpacing(2)
+        l.setContentsMargins(2, 4, 2, 4)
+        l.setSpacing(0)
 
         b_m = QPushButton("-")
-        b_m.setFixedSize(20, 20)
+        b_m.setObjectName("hpDecreaseBtn")
+        b_m.setFixedSize(22, 22)
         b_m.setCursor(Qt.CursorShape.PointingHandCursor)
-        dec_bg = self.current_palette.get("hp_btn_decrease_bg", "#c62828")
-        dec_hov = self.current_palette.get("hp_btn_decrease_hover", "#d32f2f")
-        b_m.setStyleSheet(
-            f"QPushButton {{ background-color: {dec_bg}; color: white; border: none;"
-            f" border-radius: 3px; font-weight: bold; }}"
-            f"QPushButton:hover {{ background-color: {dec_hov}; }}"
-        )
         b_m.clicked.connect(self.decrease_hp)
 
         self.bar = QProgressBar()
@@ -281,23 +275,18 @@ class HpBarWidget(QWidget):
         self.bar.setTextVisible(True)
         self.bar.setFormat(f"%v / {self.max_val}")
         self.bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.bar.setFixedHeight(22)
         self.update_color()
 
         b_p = QPushButton("+")
-        b_p.setFixedSize(20, 20)
+        b_p.setObjectName("hpIncreaseBtn")
+        b_p.setFixedSize(22, 22)
         b_p.setCursor(Qt.CursorShape.PointingHandCursor)
-        inc_bg = self.current_palette.get("hp_btn_increase_bg", "#2e7d32")
-        inc_hov = self.current_palette.get("hp_btn_increase_hover", "#388e3c")
-        b_p.setStyleSheet(
-            f"QPushButton {{ background-color: {inc_bg}; color: white; border: none;"
-            f" border-radius: 3px; font-weight: bold; }}"
-            f"QPushButton:hover {{ background-color: {inc_hov}; }}"
-        )
         b_p.clicked.connect(self.increase_hp)
 
-        l.addWidget(b_m)
-        l.addWidget(self.bar, 1)
-        l.addWidget(b_p)
+        l.addWidget(b_m, 0, Qt.AlignmentFlag.AlignVCenter)
+        l.addWidget(self.bar, 1, Qt.AlignmentFlag.AlignVCenter)
+        l.addWidget(b_p, 0, Qt.AlignmentFlag.AlignVCenter)
 
     def update_theme(self, palette):
         self.current_palette = palette
@@ -313,11 +302,10 @@ class HpBarWidget(QWidget):
         else:
             c = p.get("hp_bar_low", "#c62828")
         bg = p.get("hp_widget_bg", "rgba(0,0,0,0.3)")
-        border = p.get("ui_floating_border", "#555")
         self.bar.setStyleSheet(
-            f"QProgressBar::chunk {{ background-color: {c}; }} "
-            f"QProgressBar {{ color: white; border: 1px solid {border}; "
-            f"border-radius: 3px; background: {bg}; }}"
+            f"QProgressBar::chunk {{ background-color: {c}; border-radius: 0px; }} "
+            f"QProgressBar {{ color: white; border: none; "
+            f"border-radius: 0px; background: {bg}; }}"
         )
 
     def update_hp(self, new_hp: int) -> None:

@@ -55,6 +55,11 @@ QPushButton#dangerBtn {
 }
 QPushButton#dangerBtn:hover { background-color: #e53935; }
 
+QPushButton#hpDecreaseBtn { background-color: #c62828; }
+QPushButton#hpDecreaseBtn:hover { background-color: #e53935; }
+QPushButton#hpIncreaseBtn { background-color: #66bb6a; }
+QPushButton#hpIncreaseBtn:hover { background-color: #81c784; }
+
 QPushButton#actionBtn {
     background-color: #ffa726; /* Turuncu */
     color: black;

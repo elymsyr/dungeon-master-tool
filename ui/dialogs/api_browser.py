@@ -96,7 +96,7 @@ class ApiBrowser(QDialog):
         self.btn_bulk = QPushButton()
         self.btn_bulk.setToolTip(tr("BTN_DOWNLOAD_ALL"))
         self.btn_bulk.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowDown))
-        self.btn_bulk.setFixedSize(30, 30)
+        self.btn_bulk.setFixedSize(28, 28)
         self.btn_bulk.clicked.connect(self.open_bulk_downloader)
 
         top_layout.addWidget(QLabel(tr("LBL_SOURCE")))
@@ -127,15 +127,19 @@ class ApiBrowser(QDialog):
         pag_layout = QHBoxLayout(self.pagination_widget)
         pag_layout.setContentsMargins(0, 5, 0, 0)
         
-        self.btn_prev = QPushButton("<")
-        self.btn_prev.setFixedWidth(30)
+        self.btn_prev = QPushButton()
+        self.btn_prev.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowBack))
+        self.btn_prev.setObjectName("compactBtn")
+        self.btn_prev.setFixedSize(28, 28)
         self.btn_prev.clicked.connect(self.prev_page)
         
         self.lbl_page = QLabel("Page 1")
         self.lbl_page.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        self.btn_next = QPushButton(">")
-        self.btn_next.setFixedWidth(30)
+        self.btn_next = QPushButton()
+        self.btn_next.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ArrowForward))
+        self.btn_next.setObjectName("compactBtn")
+        self.btn_next.setFixedSize(28, 28)
         self.btn_next.clicked.connect(self.next_page)
         
         pag_layout.addWidget(self.btn_prev)

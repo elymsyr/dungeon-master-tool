@@ -64,6 +64,11 @@ QPushButton#dangerBtn {
 }
 QPushButton#dangerBtn:hover { background-color: #d32f2f; }
 
+QPushButton#hpDecreaseBtn { background-color: #c62828; }
+QPushButton#hpDecreaseBtn:hover { background-color: #d32f2f; }
+QPushButton#hpIncreaseBtn { background-color: #2e7d32; }
+QPushButton#hpIncreaseBtn:hover { background-color: #388e3c; }
+
 QPushButton#actionBtn {
     background-color: #f9a825; /* Mat Hardal Sarısı */
     color: #1c1c1c; /* Koyu yazı */

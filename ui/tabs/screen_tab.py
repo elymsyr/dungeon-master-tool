@@ -1,12 +1,14 @@
 import os
 
 from PyQt6.QtWidgets import (
+    QApplication,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QListWidget,
     QPushButton,
+    QStyle,
     QVBoxLayout,
     QWidget,
 )
@@ -115,12 +117,17 @@ class ScreenTab(QWidget):
         self.btn_add.setObjectName("successBtn")
         self.btn_add.clicked.connect(self._on_add_image)
 
-        self.btn_move_up = QPushButton("↑")
-        self.btn_move_up.setFixedWidth(32)
+        _style = QApplication.style()
+        self.btn_move_up = QPushButton()
+        self.btn_move_up.setIcon(_style.standardIcon(QStyle.StandardPixmap.SP_ArrowUp))
+        self.btn_move_up.setObjectName("compactBtn")
+        self.btn_move_up.setFixedSize(28, 28)
         self.btn_move_up.clicked.connect(self._on_move_up)
 
-        self.btn_move_down = QPushButton("↓")
-        self.btn_move_down.setFixedWidth(32)
+        self.btn_move_down = QPushButton()
+        self.btn_move_down.setIcon(_style.standardIcon(QStyle.StandardPixmap.SP_ArrowDown))
+        self.btn_move_down.setObjectName("compactBtn")
+        self.btn_move_down.setFixedSize(28, 28)
         self.btn_move_down.clicked.connect(self._on_move_down)
 
         self.btn_remove = QPushButton(tr("BTN_REMOVE"))

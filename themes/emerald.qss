@@ -55,6 +55,11 @@ QPushButton#dangerBtn {
 }
 QPushButton#dangerBtn:hover { background-color: #d32f2f; }
 
+QPushButton#hpDecreaseBtn { background-color: #c62828; }
+QPushButton#hpDecreaseBtn:hover { background-color: #d32f2f; }
+QPushButton#hpIncreaseBtn { background-color: #2e7d32; }
+QPushButton#hpIncreaseBtn:hover { background-color: #388e3c; }
+
 QPushButton#actionBtn {
     background-color: #ff9100; /* Turuncu (Zıt renk) */
     color: black;

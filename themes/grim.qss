@@ -63,6 +63,11 @@ QPushButton#dangerBtn {
 }
 QPushButton#dangerBtn:hover { background-color: #6d3b3b; }
 
+QPushButton#hpDecreaseBtn { background-color: #5c2b2b; }
+QPushButton#hpDecreaseBtn:hover { background-color: #6d3b3b; }
+QPushButton#hpIncreaseBtn { background-color: #3b5c2b; }
+QPushButton#hpIncreaseBtn:hover { background-color: #4b7043; }
+
 QPushButton#actionBtn {
     background-color: #a63a28; /* Pas Rengi */
     color: #1c1c1c;
