@@ -61,6 +61,11 @@ QPushButton#dangerBtn {
 }
 QPushButton#dangerBtn:hover { background-color: #d32f2f; }
 
+QPushButton#hpDecreaseBtn { background-color: #c62828; }
+QPushButton#hpDecreaseBtn:hover { background-color: #d32f2f; }
+QPushButton#hpIncreaseBtn { background-color: #558b2f; }
+QPushButton#hpIncreaseBtn:hover { background-color: #689f38; }
+
 QPushButton#actionBtn {
     background-color: #ff8f00; /* Kehribar */
     color: #3e2723;

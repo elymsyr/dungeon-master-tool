@@ -109,8 +109,12 @@ class CombatantListWidget(QWidget):
             tr("HEADER_HP"), tr("HEADER_COND"),
         ])
         from PyQt6.QtWidgets import QHeaderView, QTableWidget
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.open_context_menu)
@@ -146,9 +150,12 @@ class CombatantListWidget(QWidget):
         it_init = NumericTableWidgetItem(str(init))
         it_init.setData(Qt.ItemDataRole.UserRole, eid)
         it_init.setData(Qt.ItemDataRole.UserRole + 1, tid)
+        it_init.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.table.setItem(row, 1, it_init)
 
-        self.table.setItem(row, 2, NumericTableWidgetItem(str(_clean_stat_value(ac))))
+        it_ac = NumericTableWidgetItem(str(_clean_stat_value(ac)))
+        it_ac.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.table.setItem(row, 2, it_ac)
 
         cur = _clean_stat_value(hp)
         mx = cur

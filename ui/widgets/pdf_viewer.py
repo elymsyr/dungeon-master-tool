@@ -13,6 +13,7 @@ import tempfile
 from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import (
+    QApplication,
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -21,6 +22,7 @@ from PyQt6.QtWidgets import (
     QScrollArea,
     QSizePolicy,
     QSpinBox,
+    QStyle,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -113,8 +115,11 @@ class PdfViewerWidget(QWidget):
         self.btn_open_folder.setFixedWidth(60)
         self.btn_open_folder.clicked.connect(self._open_folder_dialog)
 
-        self.btn_prev = QPushButton("◀")
-        self.btn_prev.setFixedWidth(32)
+        _style = QApplication.style()
+        self.btn_prev = QPushButton()
+        self.btn_prev.setIcon(_style.standardIcon(QStyle.StandardPixmap.SP_ArrowBack))
+        self.btn_prev.setObjectName("compactBtn")
+        self.btn_prev.setFixedSize(28, 28)
         self.btn_prev.clicked.connect(self._prev_page)
 
         self.inp_page = QLineEdit()
@@ -124,8 +129,10 @@ class PdfViewerWidget(QWidget):
 
         self.lbl_total = QLabel("/ 0")
 
-        self.btn_next = QPushButton("▶")
-        self.btn_next.setFixedWidth(32)
+        self.btn_next = QPushButton()
+        self.btn_next.setIcon(_style.standardIcon(QStyle.StandardPixmap.SP_ArrowForward))
+        self.btn_next.setObjectName("compactBtn")
+        self.btn_next.setFixedSize(28, 28)
         self.btn_next.clicked.connect(self._next_page)
 
         self.btn_fit_width = QToolButton()

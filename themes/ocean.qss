@@ -27,6 +27,11 @@ QPushButton#primaryBtn { background-color: #00bcd4; color: black; border: none; 
 QPushButton#successBtn { background-color: #00897b; color: white; border: none; }
 QPushButton#dangerBtn { background-color: #c62828; color: white; border: none; }
 
+QPushButton#hpDecreaseBtn { background-color: #c62828; }
+QPushButton#hpDecreaseBtn:hover { background-color: #d32f2f; }
+QPushButton#hpIncreaseBtn { background-color: #00897b; }
+QPushButton#hpIncreaseBtn:hover { background-color: #26a69a; }
+
 QGroupBox { background-color: transparent; border: 1px solid #37474f; border-radius: 6px; margin-top: 20px; padding-top: 15px; color: #4dd0e1; }
 QTabWidget::pane { border: 1px solid #37474f; background-color: #162533; }
 QTabBar::tab { background-color: #1c2a38; color: #546e7a; padding: 8px 15px; }

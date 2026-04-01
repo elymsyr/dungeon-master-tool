@@ -59,6 +59,11 @@ QPushButton#dangerBtn {
 }
 QPushButton#dangerBtn:hover { background-color: #ff1744; }
 
+QPushButton#hpDecreaseBtn { background-color: #d50000; }
+QPushButton#hpDecreaseBtn:hover { background-color: #ff1744; }
+QPushButton#hpIncreaseBtn { background-color: #00c853; }
+QPushButton#hpIncreaseBtn:hover { background-color: #00e676; }
+
 QPushButton#actionBtn {
     background-color: #ffab00; /* Altın */
     color: black;

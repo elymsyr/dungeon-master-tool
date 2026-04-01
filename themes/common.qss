@@ -58,6 +58,30 @@ QFrame#linkedEntityCard {
     background-color: rgba(120, 120, 120, 0.08);
 }
 
+/* --- Compact icon-only buttons (28×28) --- */
+QPushButton#compactBtn {
+    min-width: 0px;
+    min-height: 0px;
+    padding: 2px;
+    border-radius: 4px;
+}
+
+/* --- HP increase / decrease buttons --- */
+QPushButton#hpDecreaseBtn, QPushButton#hpIncreaseBtn {
+    font-weight: bold;
+    font-size: 16px;
+    border: none;
+    border-radius: 0px;
+    color: white;
+}
+
+/* --- Edit mode toggle --- */
+QPushButton#editModeBtn {
+    min-width: 0px;
+    min-height: 0px;
+    padding: 2px;
+}
+
 /* --- Timeline entry quick-add buttons --- */
 QPushButton#timelineQuickBtn {
     font-size: 11px;

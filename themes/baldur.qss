@@ -65,6 +65,11 @@ QPushButton#dangerBtn {
 }
 QPushButton#dangerBtn:hover { background-color: #a52a2a; }
 
+QPushButton#hpDecreaseBtn { background-color: #8c2323; }
+QPushButton#hpDecreaseBtn:hover { background-color: #a52a2a; }
+QPushButton#hpIncreaseBtn { background-color: #446b28; }
+QPushButton#hpIncreaseBtn:hover { background-color: #558b2f; }
+
 QPushButton#actionBtn {
     background-color: #b88e4a; /* Bronz/Altın */
     color: #1a120b; /* Siyah yazı */

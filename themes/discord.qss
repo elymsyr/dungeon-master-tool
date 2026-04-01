@@ -59,6 +59,11 @@ QPushButton#dangerBtn {
 }
 QPushButton#dangerBtn:hover { background-color: #c03537; }
 
+QPushButton#hpDecreaseBtn { background-color: #ed4245; }
+QPushButton#hpDecreaseBtn:hover { background-color: #c03537; }
+QPushButton#hpIncreaseBtn { background-color: #3ba55c; }
+QPushButton#hpIncreaseBtn:hover { background-color: #2d7d46; }
+
 QPushButton#actionBtn {
     background-color: #faa61a; /* Sarı */
     color: #202225;
