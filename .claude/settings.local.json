@@ -31,7 +31,13 @@
       "Bash(grep -E \"QGroupBox.*QLineEdit|QGroupBox.*QComboBox|QGroupBox.*QSpinBox\" themes/*.qss)",
       "Bash(find . -name \"*.py\" -type f -exec grep -l \"save_entity\\\\|collect_data\" {} \\\\;)",
       "Bash(grep -E \"\\\\.\\(qss|css\\)$\")",
-      "Bash(grep -n \"spell\\\\|Spell\" /home/eren/GitHub/dungeon-master-tool/themes/*.qss)"
+      "Bash(grep -n \"spell\\\\|Spell\" /home/eren/GitHub/dungeon-master-tool/themes/*.qss)",
+      "WebSearch",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:www.qt.io)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.riverbankcomputing.com)",
+      "WebFetch(domain:forum.pythonguis.com)"
     ]
   }
 }
