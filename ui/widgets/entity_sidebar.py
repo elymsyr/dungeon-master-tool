@@ -24,7 +24,6 @@ class EntityListItemWidget(QWidget):
 
         lbl_name = QLabel(name)
         lbl_name.setObjectName("entityName")
-        lbl_name.setStyleSheet("font-size: 13px; font-weight: bold; background-color: transparent;")
 
         meta_layout = QHBoxLayout()
         meta_layout.setContentsMargins(0, 0, 0, 0)
@@ -33,16 +32,15 @@ class EntityListItemWidget(QWidget):
         lbl_cat = QLabel(display_cat)
         lbl_cat.setObjectName("entityCat")
         cat_color = p.get("sidebar_label_secondary", "#888")
-        lbl_cat.setStyleSheet(
-            f"font-size: 10px; font-style: italic; background-color: transparent; color: {cat_color};"
-        )
+        lbl_cat.setStyleSheet(f"color: {cat_color};")
 
         meta_layout.addWidget(lbl_cat)
 
         if source:
             lbl_source = QLabel(f"[{source}]")
+            lbl_source.setObjectName("entitySource")
             src_color = p.get("sidebar_label_dim", "#666")
-            lbl_source.setStyleSheet(f"font-size: 9px; color: {src_color}; background-color: transparent;")
+            lbl_source.setStyleSheet(f"color: {src_color};")
             lbl_source.setAlignment(Qt.AlignmentFlag.AlignRight)
             meta_layout.addWidget(lbl_source)
         else:
