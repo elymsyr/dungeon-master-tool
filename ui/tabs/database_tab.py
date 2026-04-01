@@ -268,8 +268,6 @@ class DatabaseTab(QWidget):
             self.dm.delete_entity(eid)
             self._close_sheet_tab(sheet)
             self.entity_deleted.emit()
-            if self._event_bus:
-                self._event_bus.publish("entity.deleted", entity_id=eid)
 
     def _close_sheet_tab(self, sheet):
         for manager in [self.tab_manager_left, self.tab_manager_right]:

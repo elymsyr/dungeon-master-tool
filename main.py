@@ -35,6 +35,7 @@ class MainWindow(QMainWindow):
         self.data_manager = data_manager
         self.dev_mode = dev_mode
         self.event_bus = EventBus()
+        self.data_manager.set_event_bus(self.event_bus)
         self.global_edit_mode = False
         self.player_window = PlayerWindow(dev_mode=self.dev_mode)
 

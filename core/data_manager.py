@@ -34,6 +34,8 @@ class DataManager:
     """
 
     def __init__(self):
+        self._event_bus = None
+
         self._settings_mgr = SettingsManager(CACHE_DIR)
         self.settings = self._settings_mgr.settings
         self.current_theme = self._settings_mgr.current_theme
@@ -79,6 +81,18 @@ class DataManager:
 
         if not os.path.exists(WORLDS_DIR):
             os.makedirs(WORLDS_DIR)
+
+    # ------------------------------------------------------------------
+    # EventBus wiring
+    # ------------------------------------------------------------------
+
+    def set_event_bus(self, bus) -> None:
+        """Inject the application EventBus after construction."""
+        self._event_bus = bus
+
+    def _publish(self, event: str, **kwargs) -> None:
+        if self._event_bus is not None:
+            self._event_bus.publish(event, **kwargs)
 
     # ------------------------------------------------------------------
     # Backward-compat properties for library state attributes
@@ -141,11 +155,17 @@ class DataManager:
 
     def load_campaign(self, folder: str) -> tuple[bool, str]:
         """Delegates to CampaignManager.load."""
-        return self._campaign_mgr.load(folder)
+        result = self._campaign_mgr.load(folder)
+        if result[0]:
+            self._publish("campaign.loaded", folder=folder)
+        return result
 
     def create_campaign(self, world_name: str) -> tuple[bool, str]:
         """Delegates to CampaignManager.create."""
-        return self._campaign_mgr.create(world_name)
+        result = self._campaign_mgr.create(world_name)
+        if result[0]:
+            self._publish("campaign.created", world_name=world_name)
+        return result
 
     def save_data(self) -> None:
         """Saves data in MsgPack (.dat) format. Much faster than JSON."""
@@ -159,7 +179,9 @@ class DataManager:
 
     def create_session(self, name: str) -> str:
         """Delegates to SessionRepository.create."""
-        return self._session_repo.create(name)
+        session_id = self._session_repo.create(name)
+        self._publish("session.created", session_id=session_id)
+        return session_id
 
     def get_session(self, session_id: str) -> dict | None:
         """Delegates to SessionRepository.get."""
@@ -172,6 +194,7 @@ class DataManager:
     def set_active_session(self, session_id: str) -> None:
         """Delegates to SessionRepository.set_active."""
         self._session_repo.set_active(session_id)
+        self._publish("session.activated", session_id=session_id)
 
     def get_last_active_session_id(self) -> str | None:
         """Delegates to SessionRepository.get_last_active_id."""
@@ -179,7 +202,13 @@ class DataManager:
 
     def save_entity(self, eid: str | None, data: dict, should_save: bool = True, auto_source_update: bool = True) -> str:
         """Delegates to EntityRepository.save (public API preserved for callers)."""
-        return self._entity_repo.save(eid, data, should_save=should_save, auto_source_update=auto_source_update)
+        is_new = eid is None or eid not in self.data.get("entities", {})
+        result_id = self._entity_repo.save(eid, data, should_save=should_save, auto_source_update=auto_source_update)
+        if is_new:
+            self._publish("entity.created", entity_id=result_id)
+        else:
+            self._publish("entity.updated", entity_id=result_id)
+        return result_id
 
     def prepare_entity_from_external(self, data: dict, type_override: str | None = None) -> dict:
         """Delegates to EntityRepository.prepare_from_external."""
@@ -198,6 +227,7 @@ class DataManager:
     def delete_entity(self, eid: str) -> None:
         """Delegates to EntityRepository.delete (public API preserved for callers)."""
         self._entity_repo.delete(eid)
+        self._publish("entity.deleted", entity_id=eid)
 
     def fetch_from_api(self, category: str, query: str) -> tuple[bool, str, dict | str | None]:
         for eid, ent in self.data["entities"].items():
