@@ -766,30 +766,32 @@ class BattleMapWidget(QWidget):
 
         toolbar_vbox.addLayout(self.toolbar)
 
-        # Row 2 (DM only): tool selector + action buttons + grid controls
+        # Row 2 (DM only): tool selector + action buttons
         if self.is_dm_view:
             self.toolbar2 = QHBoxLayout()
-            self.toolbar2.setContentsMargins(5, 2, 5, 3)
+            self.toolbar2.setContentsMargins(5, 2, 5, 1)
             self.toolbar2.setSpacing(4)
 
             # --- TOOL SELECTOR ---
             self._tool_group = QButtonGroup(self)
             self._tool_group.setExclusive(True)
 
-            def _tool_btn(key, mode):
+            def _tool_btn(key, mode, target_layout=None):
+                lay = target_layout if target_layout is not None else self.toolbar2
                 b = QPushButton(tr(key))
                 b.setCheckable(True)
                 b.setFixedHeight(26)
                 b.clicked.connect(lambda: self._set_tool(mode))
                 self._tool_group.addButton(b)
-                self.toolbar2.addWidget(b)
+                lay.addWidget(b)
                 return b
 
-            def _sep():
+            def _sep(target_layout=None):
+                lay = target_layout if target_layout is not None else self.toolbar2
                 f = QFrame()
                 f.setFrameShape(QFrame.Shape.VLine)
                 f.setObjectName("bmToolSep")
-                self.toolbar2.addWidget(f)
+                lay.addWidget(f)
 
             self.btn_tool_navigate = _tool_btn("TOOL_NAVIGATE", TOOL_NAVIGATE)
             _sep()
@@ -815,17 +817,23 @@ class BattleMapWidget(QWidget):
             self.toolbar2.addWidget(self.btn_clear_draw)
             self.toolbar2.addWidget(self.btn_clear_rulers)
 
-            # --- GRID CONTROLS ---
-            _sep()
+            self.toolbar2.addStretch()
+            toolbar_vbox.addLayout(self.toolbar2)
+
+            # Row 3 (DM only): grid controls
+            self.toolbar3 = QHBoxLayout()
+            self.toolbar3.setContentsMargins(5, 1, 5, 3)
+            self.toolbar3.setSpacing(4)
+
             self.btn_grid_toggle = QPushButton(tr("BTN_GRID"))
             self.btn_grid_toggle.setCheckable(True)
             self.btn_grid_toggle.clicked.connect(self._on_grid_toggle)
-            self.toolbar2.addWidget(self.btn_grid_toggle)
+            self.toolbar3.addWidget(self.btn_grid_toggle)
 
             self.lbl_grid_cell = QLabel(tr("LBL_GRID_CELL_SIZE"))
             self.lbl_grid_cell.setObjectName("toolbarLabel")
             self.lbl_grid_cell.setFixedHeight(26)
-            self.toolbar2.addWidget(self.lbl_grid_cell)
+            self.toolbar3.addWidget(self.lbl_grid_cell)
 
             self.spin_grid_size = QSpinBox()
             self.spin_grid_size.setRange(10, 300)
@@ -833,17 +841,19 @@ class BattleMapWidget(QWidget):
             self.spin_grid_size.setFixedWidth(56)
             self.spin_grid_size.setFixedHeight(26)
             self.spin_grid_size.valueChanged.connect(self._on_grid_size_changed)
-            self.toolbar2.addWidget(self.spin_grid_size)
+            self.toolbar3.addWidget(self.spin_grid_size)
+
+            _sep(self.toolbar3)
 
             self.btn_grid_snap = QPushButton(tr("BTN_GRID_SNAP"))
             self.btn_grid_snap.setCheckable(True)
             self.btn_grid_snap.clicked.connect(self._on_snap_toggle)
-            self.toolbar2.addWidget(self.btn_grid_snap)
+            self.toolbar3.addWidget(self.btn_grid_snap)
 
             self.lbl_feet = QLabel(tr("LBL_FEET_PER_CELL"))
             self.lbl_feet.setObjectName("toolbarLabel")
             self.lbl_feet.setFixedHeight(26)
-            self.toolbar2.addWidget(self.lbl_feet)
+            self.toolbar3.addWidget(self.lbl_feet)
 
             self.spin_feet = QSpinBox()
             self.spin_feet.setRange(1, 100)
@@ -851,10 +861,10 @@ class BattleMapWidget(QWidget):
             self.spin_feet.setFixedWidth(48)
             self.spin_feet.setFixedHeight(26)
             self.spin_feet.valueChanged.connect(self._on_feet_changed)
-            self.toolbar2.addWidget(self.spin_feet)
+            self.toolbar3.addWidget(self.spin_feet)
 
-            self.toolbar2.addStretch()
-            toolbar_vbox.addLayout(self.toolbar2)
+            self.toolbar3.addStretch()
+            toolbar_vbox.addLayout(self.toolbar3)
 
         layout.addWidget(toolbar_widget)
 
