@@ -101,6 +101,7 @@ class SessionTab(QWidget):
         session_control.addWidget(self.btn_load_session, 1)
 
         self.txt_log = MarkdownEditor()
+        self.txt_log.set_toggle_button_visible(False)
         self.txt_log.setPlaceholderText(tr("LBL_EVENT_LOG_PH"))
         self.txt_log.textChanged.connect(self.auto_save)
         self.txt_log.set_data_manager(self.dm)
@@ -130,6 +131,7 @@ class SessionTab(QWidget):
         notes_layout = QVBoxLayout(self.tab_dm_notes)
         notes_layout.setContentsMargins(0, 0, 0, 0)
         self.txt_notes = MarkdownEditor()
+        self.txt_notes.set_toggle_button_visible(False)
         self.txt_notes.setPlaceholderText(tr("LBL_NOTES"))
         self.txt_notes.textChanged.connect(self.auto_save)
         notes_layout.addWidget(self.txt_notes)
@@ -375,9 +377,10 @@ class SessionTab(QWidget):
             QMessageBox.warning(self, tr("MSG_WARNING"), "Session not found or has been deleted.")
     def _apply_edit_mode(self, enabled: bool = False, **_):
         """Apply global edit mode to session text fields."""
-        self.txt_log.btn_toggle.setEnabled(enabled)
-        self.txt_notes.btn_toggle.setEnabled(enabled)
-        if not enabled:
+        if enabled:
+            self.txt_log.switch_to_edit_mode()
+            self.txt_notes.switch_to_edit_mode()
+        else:
             self.txt_log.switch_to_view_mode()
             self.txt_notes.switch_to_view_mode()
         self.inp_log_entry.setReadOnly(not enabled)

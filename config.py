@@ -142,12 +142,17 @@ API_BASE_URL = "https://www.dnd5eapi.co/api"
 
 
 def load_theme(theme_name: str) -> str:
-    """Loads a .qss theme file from the themes directory."""
+    """Loads a .qss theme file and appends common.qss structural styles."""
     path = os.path.join(THEMES_DIR, f"{theme_name}.qss")
+    qss = ""
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
-            return f.read()
-    return ""
+            qss = f.read()
+    common_path = os.path.join(THEMES_DIR, "common.qss")
+    if os.path.exists(common_path):
+        with open(common_path, "r", encoding="utf-8") as f:
+            qss += "\n" + f.read()
+    return qss
 
 
 STYLESHEET = load_theme("dark")

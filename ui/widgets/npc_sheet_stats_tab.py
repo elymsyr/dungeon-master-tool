@@ -39,7 +39,7 @@ class NpcSheetStatsTab(QWidget):
             col = QVBoxLayout()
             lbl = QLabel(s)
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl.setStyleSheet("font-weight: bold;")
+            lbl.setObjectName("statAbbrev")
             inp = QLineEdit("10")
             inp.setAlignment(Qt.AlignmentFlag.AlignCenter)
             inp.setMaximumWidth(50)

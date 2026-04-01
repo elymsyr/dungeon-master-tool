@@ -25,7 +25,9 @@
       "Bash(QT_QPA_PLATFORM=offscreen python3 -m pytest tests/test_ui/test_combat_tracker.py::test_roll_initiatives_sets_numeric_initiative -v -s)",
       "Bash(python3 -m pytest tests/test_core/test_api_client.py -q)",
       "Bash(python3 -m pytest tests/ -q)",
-      "Bash(python3 -m pytest tests/test_core/ -q)"
+      "Bash(python3 -m pytest tests/test_core/ -q)",
+      "Bash(python3 -m py_compile ui/widgets/npc_sheet.py ui/widgets/npc_sheet_stats_tab.py ui/widgets/npc_sheet_actions_tab.py ui/widgets/npc_sheet_inventory_tab.py ui/widgets/npc_sheet_spells_tab.py ui/widgets/npc_sheet_helpers.py ui/widgets/combat_tracker.py ui/widgets/combat_combatant_list.py ui/widgets/combat_controls.py)",
+      "Bash(python3 -m pytest -q)"
     ]
   }
 }

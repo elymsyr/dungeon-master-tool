@@ -72,7 +72,7 @@ def create_feature_card(
     h_header = QHBoxLayout()
     t = QLineEdit(name)
     t.setPlaceholderText(ph_title)
-    t.setStyleSheet("font-weight: bold; border:none; font-size: 14px;")
+    t.setObjectName("featureCardTitle")
     t.textChanged.connect(dirty_cb)
 
     _style = QApplication.style()

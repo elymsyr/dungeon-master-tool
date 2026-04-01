@@ -435,8 +435,9 @@ class MindMapTab(QWidget):
         for node in self.nodes.values():
             widget = node.proxy.widget()
             if isinstance(widget, MarkdownEditor):
-                widget.btn_toggle.setEnabled(enabled)
-                if not enabled:
+                if enabled:
+                    widget.switch_to_edit_mode()
+                else:
                     widget.switch_to_view_mode()
             elif isinstance(widget, NpcSheet):
                 widget.set_edit_mode(enabled)
@@ -616,8 +617,10 @@ class MindMapTab(QWidget):
         editor.refresh_theme(ThemeManager.get_palette(self.dm.current_theme))
 
         # Apply current global edit mode
-        editor.btn_toggle.setEnabled(self._global_edit_mode)
-        if not self._global_edit_mode and content.strip():
+        editor.set_toggle_button_visible(False)
+        if self._global_edit_mode:
+            editor.switch_to_edit_mode()
+        elif content.strip():
             editor.switch_to_view_mode()
 
         node = self.create_node_base(node_id, editor, x, y, w, h, "note")

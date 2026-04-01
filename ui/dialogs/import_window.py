@@ -105,7 +105,7 @@ class LocalLibraryTab(QWidget):
 
         right_layout = QVBoxLayout()
         self.lbl_name = QLabel(tr("MSG_NO_SELECTION"))
-        self.lbl_name.setStyleSheet("font-size: 16px; font-weight: bold;")
+        self.lbl_name.setObjectName("importTitle")
 
         self.txt_preview = QTextEdit()
         self.txt_preview.setReadOnly(True)
@@ -415,7 +415,7 @@ class OnlineApiTab(QWidget):
         right_l = QVBoxLayout(right_w)
         right_l.setContentsMargins(5, 0, 0, 0)
         self.lbl_name = QLabel(tr("MSG_NO_SELECTION"))
-        self.lbl_name.setStyleSheet("font-size: 16px; font-weight: bold;")
+        self.lbl_name.setObjectName("importTitle")
         self.txt_desc = QTextEdit()
         self.txt_desc.setReadOnly(True)
 
