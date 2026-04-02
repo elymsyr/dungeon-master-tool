@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../domain/entities/schema/category_rule.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
@@ -320,6 +321,86 @@ class _CategoryEditor extends StatelessWidget {
             }).toList(),
           ),
 
+          // === ENCOUNTER SETTINGS (encounter seçili ise) ===
+          if (category.allowedInSections.contains('encounter')) ...[
+            const SizedBox(height: 12),
+            Text('Encounter Settings', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
+            const SizedBox(height: 6),
+            // Sort + Initiative satırı
+            Row(
+              children: [
+                // Sort field
+                Expanded(
+                  child: _fieldDropdown(
+                    label: 'Sort By',
+                    value: category.encounterSortField,
+                    onChanged: readOnly ? null : (v) => onChanged(category.copyWith(encounterSortField: v ?? '')),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Sort direction
+                SizedBox(
+                  width: 90,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: category.encounterSortDirection,
+                    isDense: true,
+                    decoration: InputDecoration(labelText: 'Dir', labelStyle: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
+                    items: const [
+                      DropdownMenuItem(value: 'desc', child: Text('Desc', style: TextStyle(fontSize: 11))),
+                      DropdownMenuItem(value: 'asc', child: Text('Asc', style: TextStyle(fontSize: 11))),
+                    ],
+                    onChanged: readOnly ? null : (v) => onChanged(category.copyWith(encounterSortDirection: v ?? 'desc')),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                // Initiative field
+                Expanded(
+                  child: _fieldDropdown(
+                    label: 'Initiative Field',
+                    value: category.encounterInitiativeField,
+                    onChanged: readOnly ? null : (v) => onChanged(category.copyWith(encounterInitiativeField: v ?? '')),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Initiative bonus field
+                Expanded(
+                  child: _fieldDropdown(
+                    label: 'Initiative Bonus',
+                    value: category.encounterInitBonusField,
+                    onChanged: readOnly ? null : (v) => onChanged(category.copyWith(encounterInitBonusField: v ?? '')),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            // Display columns
+            Text('Table Columns', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: category.fields.where((f) => !f.isList).map((f) {
+                final isCol = category.encounterColumnKeys.contains(f.fieldKey);
+                return FilterChip(
+                  label: Text(f.label, style: const TextStyle(fontSize: 10)),
+                  selected: isCol,
+                  showCheckmark: false,
+                  visualDensity: VisualDensity.compact,
+                  onSelected: readOnly ? null : (v) {
+                    final updated = v
+                        ? [...category.encounterColumnKeys, f.fieldKey]
+                        : category.encounterColumnKeys.where((k) => k != f.fieldKey).toList();
+                    onChanged(category.copyWith(encounterColumnKeys: updated));
+                  },
+                );
+              }).toList(),
+            ),
+          ],
+
           const SizedBox(height: 12),
 
           // === ADD BUTTONS ===
@@ -403,7 +484,303 @@ class _CategoryEditor extends StatelessWidget {
               ),
             );
           }),
+
+          // === RULES ===
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: Text('Rules', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText))),
+              if (!readOnly)
+                TextButton.icon(
+                  onPressed: () => _addRule(context),
+                  icon: const Icon(Icons.add, size: 14),
+                  label: const Text('Add Rule', style: TextStyle(fontSize: 11)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          if (category.rules.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text('No rules defined', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+            ),
+          ...category.rules.asMap().entries.map((entry) {
+            final i = entry.key;
+            final rule = entry.value;
+            final typeLabel = switch (rule.ruleType) {
+              RuleType.pullField => 'Pull',
+              RuleType.mergeFields => 'Merge',
+              RuleType.conditionalList => 'Conditional',
+            };
+            final opLabel = switch (rule.operation) {
+              RuleOperation.replace => '=',
+              RuleOperation.add => '+',
+              RuleOperation.subtract => '−',
+              RuleOperation.multiply => '×',
+              RuleOperation.appendList => '⊕',
+            };
+            final sourcesText = rule.sources.map((s) => '${s.relationFieldKey}.${s.sourceFieldKey}').join(' $opLabel ');
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: palette.featureCardBorder.withValues(alpha: 0.5))),
+              ),
+              child: Row(
+                children: [
+                  // Enable/disable
+                  SizedBox(
+                    width: 24,
+                    child: Checkbox(
+                      value: rule.enabled,
+                      onChanged: readOnly ? null : (v) {
+                        final updated = List<CategoryRule>.from(category.rules);
+                        updated[i] = rule.copyWith(enabled: v ?? true);
+                        onChanged(category.copyWith(rules: updated));
+                      },
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  // Type badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: BorderRadius.circular(3)),
+                    child: Text(typeLabel, style: TextStyle(fontSize: 9, color: palette.tabText)),
+                  ),
+                  const SizedBox(width: 8),
+                  // Name + sources
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(rule.name, style: TextStyle(fontSize: 12, color: palette.tabActiveText)),
+                        Text(
+                          '$sourcesText → ${rule.targetFieldKey}'
+                          '${rule.matchOnly ? ' [match]' : ' [add]'}'
+                          '${rule.deactivateIfNotEquipped ? ' [equip]' : ''}',
+                          style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Delete
+                  if (!readOnly)
+                    InkWell(
+                      onTap: () {
+                        final updated = List<CategoryRule>.from(category.rules)..removeAt(i);
+                        onChanged(category.copyWith(rules: updated));
+                      },
+                      child: Icon(Icons.close, size: 14, color: palette.sidebarLabelSecondary),
+                    ),
+                ],
+              ),
+            );
+          }),
         ],
+      ),
+    );
+  }
+
+  void _addRule(BuildContext context) {
+    var ruleType = RuleType.pullField;
+    var operation = RuleOperation.replace;
+    var matchOnly = false;
+    var deactivateIfNotEquipped = false;
+    final nameController = TextEditingController();
+    String? sourceRelation;
+    String? sourceField;
+    String? targetField;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          // Relation field'ları (tek referans)
+          final relationFields = category.fields.where((f) => f.fieldType == FieldType.relation && !f.isList).toList();
+          // Liste relation field'ları
+          final listRelationFields = category.fields.where((f) => f.fieldType == FieldType.relation && f.isList).toList();
+          // Tüm relation field'lar
+          final allRelFields = [...relationFields, ...listRelationFields];
+          // Hedef field'lar
+          final targetFields = category.fields.toList();
+
+          // Source relation'ın hedef kategorisindeki field'lar
+          List<FieldSchema> getSourceFields() {
+            if (sourceRelation == null) return [];
+            final rel = category.fields.where((f) => f.fieldKey == sourceRelation);
+            if (rel.isEmpty) return [];
+            final types = rel.first.validation.allowedTypes;
+            if (types == null || types.isEmpty) return [];
+            final targetCat = allCategories.where((c) => c.slug == types.first);
+            if (targetCat.isEmpty) return [];
+            return targetCat.first.fields;
+          }
+
+          return AlertDialog(
+            title: const Text('Add Rule', style: TextStyle(fontSize: 16)),
+            content: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Name
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Rule Name', hintText: 'e.g. Pull speed from Race'),
+                  ),
+                  const SizedBox(height: 12),
+                  // Type
+                  DropdownButtonFormField<RuleType>(
+                    initialValue: ruleType,
+                    decoration: const InputDecoration(labelText: 'Type'),
+                    items: RuleType.values.map((t) => DropdownMenuItem(
+                      value: t,
+                      child: Text(switch (t) {
+                        RuleType.pullField => 'Pull Field (single source → target)',
+                        RuleType.mergeFields => 'Merge Fields (multiple sources → target)',
+                        RuleType.conditionalList => 'Conditional List (list items with active/inactive)',
+                      }, style: const TextStyle(fontSize: 12)),
+                    )).toList(),
+                    onChanged: (v) => setDialogState(() => ruleType = v ?? RuleType.pullField),
+                  ),
+                  const SizedBox(height: 12),
+                  // Source relation
+                  Builder(builder: (_) {
+                    final srcItems = (ruleType == RuleType.conditionalList ? listRelationFields : allRelFields);
+                    final validSrcRel = srcItems.any((f) => f.fieldKey == sourceRelation) ? sourceRelation : null;
+                    if (validSrcRel != sourceRelation) {
+                      // Geçersiz — sıfırla (post-frame)
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (sourceRelation != validSrcRel) setDialogState(() { sourceRelation = validSrcRel; sourceField = null; });
+                      });
+                    }
+                    return DropdownButtonFormField<String>(
+                      key: ValueKey('src_rel_${ruleType}_${srcItems.length}'),
+                      initialValue: validSrcRel,
+                      decoration: const InputDecoration(labelText: 'Source Relation'),
+                      items: srcItems
+                          .map((f) => DropdownMenuItem(value: f.fieldKey, child: Text(f.label, style: const TextStyle(fontSize: 12))))
+                          .toList(),
+                      onChanged: (v) => setDialogState(() { sourceRelation = v; sourceField = null; }),
+                    );
+                  }),
+                  const SizedBox(height: 8),
+                  // Source field (with type info)
+                  Builder(builder: (_) {
+                    final srcFields = getSourceFields();
+                    return DropdownButtonFormField<String>(
+                      key: ValueKey('src_field_$sourceRelation'),
+                      initialValue: srcFields.any((f) => f.fieldKey == sourceField) ? sourceField : null,
+                      decoration: const InputDecoration(labelText: 'Source Field'),
+                      items: srcFields.map((f) {
+                        final typeName = _fieldTypeName(f.fieldType) + (f.isList ? ' []' : '');
+                        return DropdownMenuItem(value: f.fieldKey, child: Text(
+                          '${f.label}  ($typeName)',
+                          style: const TextStyle(fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ));
+                      }).toList(),
+                      onChanged: (v) => setDialogState(() { sourceField = v; targetField = null; }),
+                    );
+                  }),
+                  const SizedBox(height: 8),
+                  // Target field — type uyumlu olanlar
+                  Builder(builder: (_) {
+                    final srcFields = getSourceFields();
+                    final selectedSrc = srcFields.where((f) => f.fieldKey == sourceField);
+                    // Uyumlu hedefler: aynı fieldType veya aynı relation allowedTypes
+                    final compatibleTargets = selectedSrc.isEmpty
+                        ? targetFields
+                        : targetFields.where((t) {
+                            final s = selectedSrc.first;
+                            // relation → relation (aynı allowedTypes)
+                            if (s.fieldType == FieldType.relation && t.fieldType == FieldType.relation) {
+                              final sTypes = s.validation.allowedTypes ?? [];
+                              final tTypes = t.validation.allowedTypes ?? [];
+                              return sTypes.any((st) => tTypes.contains(st));
+                            }
+                            // Aynı tip
+                            if (s.fieldType == t.fieldType) return true;
+                            // Liste → liste (tek → listeye de atanabilir)
+                            if (!s.isList && t.isList && s.fieldType == t.fieldType) return true;
+                            return false;
+                          }).toList();
+
+                    return DropdownButtonFormField<String>(
+                      key: ValueKey('target_$sourceField'),
+                      initialValue: compatibleTargets.any((f) => f.fieldKey == targetField) ? targetField : null,
+                      decoration: const InputDecoration(labelText: 'Target Field (type-compatible)'),
+                      items: compatibleTargets.map((f) {
+                        final typeName = _fieldTypeName(f.fieldType) + (f.isList ? ' []' : '');
+                        return DropdownMenuItem(value: f.fieldKey, child: Text(
+                          '${f.label}  ($typeName)',
+                          style: const TextStyle(fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ));
+                      }).toList(),
+                      onChanged: (v) => setDialogState(() => targetField = v),
+                    );
+                  }),
+                  if (ruleType == RuleType.mergeFields) ...[
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<RuleOperation>(
+                      initialValue: operation,
+                      decoration: const InputDecoration(labelText: 'Operation'),
+                      items: RuleOperation.values.map((o) => DropdownMenuItem(
+                        value: o,
+                        child: Text(switch (o) {
+                          RuleOperation.replace => 'Replace (=)',
+                          RuleOperation.add => 'Add (+)',
+                          RuleOperation.subtract => 'Subtract (−)',
+                          RuleOperation.multiply => 'Multiply (×)',
+                          RuleOperation.appendList => 'Append List (⊕)',
+                        }, style: const TextStyle(fontSize: 12)),
+                      )).toList(),
+                      onChanged: (v) => setDialogState(() => operation = v ?? RuleOperation.replace),
+                    ),
+                  ],
+                  // Match or Add
+                  const SizedBox(height: 8),
+                  _dialogCheckbox('Match only (skip if already exists)', matchOnly,
+                    (v) => setDialogState(() => matchOnly = v)),
+                  // Deactivate if not equipped — sadece equip destekli source varsa
+                  if (sourceRelation != null) Builder(builder: (_) {
+                    final srcField = category.fields.where((f) => f.fieldKey == sourceRelation);
+                    final hasEquip = srcField.isNotEmpty && srcField.first.hasEquip;
+                    if (!hasEquip) return const SizedBox.shrink();
+                    return _dialogCheckbox('Deactivate if source not equipped', deactivateIfNotEquipped,
+                      (v) => setDialogState(() => deactivateIfNotEquipped = v));
+                  }),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              FilledButton(
+                onPressed: sourceRelation != null && sourceField != null && targetField != null
+                    ? () {
+                        final rule = CategoryRule(
+                          ruleId: _uuid.v4(),
+                          name: nameController.text.isEmpty ? 'Rule ${category.rules.length + 1}' : nameController.text,
+                          ruleType: ruleType,
+                          sources: [RuleSource(relationFieldKey: sourceRelation!, sourceFieldKey: sourceField!)],
+                          targetFieldKey: targetField!,
+                          operation: ruleType == RuleType.mergeFields ? operation : RuleOperation.replace,
+                          matchOnly: matchOnly,
+                          deactivateIfNotEquipped: deactivateIfNotEquipped,
+                        );
+                        onChanged(category.copyWith(rules: [...category.rules, rule]));
+                        Navigator.pop(ctx);
+                      }
+                    : null,
+                child: const Text('Add'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -570,12 +947,17 @@ class _CategoryEditor extends StatelessWidget {
                 onChanged: (t) { if (t != null) _updateField(index, field.copyWith(fieldType: t)); },
               ),
               const SizedBox(height: 8),
-              // Checkboxes — List + Filter (filter disabled when isList)
+              // Checkboxes — List + Filter + Equip
               Row(
                 children: [
                   _checkboxRow('List', field.isList, (v) => _updateField(index, field.copyWith(isList: v))),
                   const SizedBox(width: 16),
                   _checkboxRow('Filter', isFilter, canFilter ? (v) => _toggleFilter(field.fieldKey, v) : null),
+                  // Equip — sadece isList + relation field'larda
+                  if (field.isList && field.fieldType == FieldType.relation) ...[
+                    const SizedBox(width: 16),
+                    _checkboxRow('Equip', field.hasEquip, (v) => _updateField(index, field.copyWith(hasEquip: v))),
+                  ],
                 ],
               ),
             ],
@@ -663,6 +1045,47 @@ class _CategoryEditor extends StatelessWidget {
     );
   }
 
+  Widget _dialogCheckbox(String label, bool value, ValueChanged<bool> onChanged) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: InkWell(
+        onTap: () => onChanged(!value),
+        child: Row(
+          children: [
+            SizedBox(width: 20, height: 20, child: Checkbox(
+              value: value,
+              onChanged: (v) => onChanged(v ?? false),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            )),
+            const SizedBox(width: 8),
+            Flexible(child: Text(label, style: const TextStyle(fontSize: 11))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _fieldDropdown({required String label, required String value, required ValueChanged<String?>? onChanged}) {
+    final items = category.fields.where((f) => !f.isList).map((f) =>
+      DropdownMenuItem(value: f.fieldKey, child: Text(f.label, style: const TextStyle(fontSize: 11)))
+    ).toList();
+    final validValue = items.any((i) => i.value == value) ? value : null;
+    return DropdownButtonFormField<String>(
+      initialValue: validValue,
+      isDense: true,
+      isExpanded: true,
+      decoration: InputDecoration(labelText: label, labelStyle: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
+      style: TextStyle(fontSize: 11, color: palette.tabActiveText),
+      dropdownColor: palette.uiPopupBg,
+      items: [
+        const DropdownMenuItem(value: '', child: Text('None', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic))),
+        ...items,
+      ],
+      onChanged: onChanged,
+    );
+  }
+
   void _moveField(int from, int to) {
     final list = List<FieldSchema>.from(category.fields);
     final item = list.removeAt(from);
@@ -701,6 +1124,7 @@ class _CategoryEditor extends StatelessWidget {
     FieldType.tagList => 'Tags',
     FieldType.statBlock => 'Stat Block',
     FieldType.combatStats => 'Combat Stats',
+    FieldType.dice => 'Dice',
   };
 
   IconData _fieldTypeIcon(FieldType t) => switch (t) {
@@ -715,6 +1139,7 @@ class _CategoryEditor extends StatelessWidget {
     FieldType.tagList => Icons.label,
     FieldType.statBlock => Icons.casino,
     FieldType.combatStats => Icons.shield,
+    FieldType.dice => Icons.casino,
   };
 
   Color _parseColor(String hex) {
