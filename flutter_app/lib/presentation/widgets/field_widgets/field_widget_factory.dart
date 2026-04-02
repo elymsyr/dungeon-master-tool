@@ -27,6 +27,7 @@ class FieldWidgetFactory {
       FieldType.relation => _RelationFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.statBlock => _StatBlockFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.combatStats => _CombatStatsFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.dice => _DiceFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.boolean_ => _BooleanFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.tagList => _TagListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       _ => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
@@ -382,7 +383,7 @@ class _GenericListFieldWidget extends StatelessWidget {
   }
 }
 
-// --- REFERENCE LIST — herhangi bir kategoriye referans listesi ---
+// --- REFERENCE LIST — equip destekli kategori referans listesi ---
 class _ReferenceListFieldWidget extends StatelessWidget {
   final FieldSchema schema;
   final dynamic value;
@@ -393,8 +394,12 @@ class _ReferenceListFieldWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ids = (value is List) ? List<String>.from(value as List) : <String>[];
+    // Değer iki formatta olabilir:
+    // 1) List<String> — basit ID listesi (equip yok)
+    // 2) List<Map> — [{id: 'xxx', equipped: true}, ...] (equip var)
+    final items = _parseItems(value);
     final targetTypes = schema.validation.allowedTypes?.join(', ') ?? 'any';
+    final showEquip = schema.hasEquip;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -405,41 +410,100 @@ class _ReferenceListFieldWidget extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text('${schema.label} (${ids.length})', style: Theme.of(context).textTheme.titleSmall)),
+                Expanded(child: Text('${schema.label} (${items.length})', style: Theme.of(context).textTheme.titleSmall)),
                 Text('→ $targetTypes', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline)),
                 if (!readOnly)
                   IconButton(
                     icon: const Icon(Icons.add, size: 18),
                     onPressed: () {
-                      // TODO: Entity selector dialog filtered by allowedTypes
+                      // TODO: Entity selector dialog
                     },
                     visualDensity: VisualDensity.compact,
                   ),
               ],
             ),
-            if (ids.isEmpty)
+            if (items.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text('No items linked', style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12)),
               ),
-            ...ids.map((id) => ListTile(
-                  dense: true,
-                  leading: const Icon(Icons.link, size: 14),
-                  title: Text(id, style: const TextStyle(fontSize: 12)),
-                  trailing: readOnly
-                      ? null
-                      : IconButton(
-                          icon: const Icon(Icons.close, size: 14),
-                          onPressed: () {
-                            ids.remove(id);
-                            onChanged(List<String>.from(ids));
+            ...items.asMap().entries.map((entry) {
+              final i = entry.key;
+              final item = entry.value;
+              final isEquipped = item['equipped'] == true;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Row(
+                  children: [
+                    // Equip toggle
+                    if (showEquip)
+                      SizedBox(
+                        width: 28,
+                        child: IconButton(
+                          icon: Icon(
+                            isEquipped ? Icons.shield : Icons.shield_outlined,
+                            size: 16,
+                            color: isEquipped
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.outline,
+                          ),
+                          tooltip: isEquipped ? 'Equipped' : 'Not equipped',
+                          onPressed: readOnly ? null : () {
+                            items[i] = {...item, 'equipped': !isEquipped};
+                            onChanged(_serializeItems(items, showEquip));
                           },
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
                         ),
-                )),
+                      ),
+                    const Icon(Icons.link, size: 14),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        item['id']?.toString() ?? '',
+                        style: TextStyle(
+                          fontSize: 12,
+                          decoration: showEquip && !isEquipped ? TextDecoration.lineThrough : null,
+                          color: showEquip && !isEquipped
+                              ? Theme.of(context).colorScheme.outline
+                              : null,
+                        ),
+                      ),
+                    ),
+                    if (!readOnly)
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 14),
+                        onPressed: () {
+                          items.removeAt(i);
+                          onChanged(_serializeItems(items, showEquip));
+                        },
+                        visualDensity: VisualDensity.compact,
+                      ),
+                  ],
+                ),
+              );
+            }),
           ],
         ),
       ),
     );
+  }
+
+  /// Değeri [{id, equipped}] formatına parse et.
+  List<Map<String, dynamic>> _parseItems(dynamic value) {
+    if (value is! List) return [];
+    return value.map<Map<String, dynamic>>((e) {
+      if (e is Map) return Map<String, dynamic>.from(e);
+      if (e is String) return {'id': e, 'equipped': false};
+      return {'id': e.toString(), 'equipped': false};
+    }).toList();
+  }
+
+  /// Kaydetme formatına çevir — equip yoksa basit ID listesi, varsa map listesi.
+  dynamic _serializeItems(List<Map<String, dynamic>> items, bool withEquip) {
+    if (!withEquip) return items.map((e) => e['id']).toList();
+    return items;
   }
 }
 
@@ -512,3 +576,32 @@ class _TagListFieldWidget extends StatelessWidget {
     );
   }
 }
+
+// --- DICE (zar notasyonu: 2d6, 1d20+5, 3d8+2) ---
+class _DiceFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  const _DiceFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: TextFormField(
+        initialValue: value?.toString() ?? '',
+        readOnly: readOnly,
+        decoration: InputDecoration(
+          labelText: schema.label,
+          hintText: 'e.g. 2d6+3',
+          isDense: true,
+          prefixIcon: const Icon(Icons.casino, size: 18),
+        ),
+        onChanged: (v) => onChanged(v),
+      ),
+    );
+  }
+}
+

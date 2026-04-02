@@ -58,10 +58,10 @@ void main() {
       expect(levelField.validation.allowedValues, ['Cantrip', '1', '2', '3', '4', '5', '6', '7', '8', '9']);
     });
 
-    test('Equipment has 11 text fields', () {
+    test('Equipment has 12 text fields (including source)', () {
       final eq = schema.categories.firstWhere((c) => c.slug == 'equipment');
       final textFields = eq.fields.where((f) => f.fieldType == FieldType.text);
-      expect(textFields.length, 11);
+      expect(textFields.length, 12);
     });
 
     test('Monster and Player do NOT have creature-only fields', () {
@@ -72,10 +72,10 @@ void main() {
       expect(player.fields.any((f) => f.fieldType == FieldType.statBlock), true);
     });
 
-    test('Condition has only effects text field', () {
+    test('Condition has source + effects text fields', () {
       final cond = schema.categories.firstWhere((c) => c.slug == 'condition');
-      expect(cond.fields.length, 1);
-      expect(cond.fields.first.fieldKey, 'effects');
+      expect(cond.fields.length, 2);
+      expect(cond.fields.map((f) => f.fieldKey).toList(), containsAll(['source', 'effects']));
     });
 
     test('default encounter layout exists', () {

@@ -104,6 +104,7 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>> {
               FieldType.tagList => <String>[],
               FieldType.statBlock => {'STR': 10, 'DEX': 10, 'CON': 10, 'INT': 10, 'WIS': 10, 'CHA': 10},
               FieldType.combatStats => {'hp': '', 'max_hp': '', 'ac': '', 'speed': '', 'cr': '', 'xp': '', 'initiative': ''},
+              FieldType.dice => '',
               _ => null,
             };
           }

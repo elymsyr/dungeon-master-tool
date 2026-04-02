@@ -399,8 +399,8 @@ const _categoryDefs = [
   ]),
 
   _CategoryDef('Action', 'action', '#ef6c00', [
-    _FieldDef('attack_bonus', 'Attack Bonus', FieldType.text),
-    _FieldDef('damage_dice', 'Damage Dice', FieldType.text),
+    _FieldDef('attack_bonus', 'Attack Bonus', FieldType.dice),
+    _FieldDef('damage_dice', 'Damage Dice', FieldType.dice),
     _FieldDef('damage_type', 'Damage Type', FieldType.text),
   ]),
 

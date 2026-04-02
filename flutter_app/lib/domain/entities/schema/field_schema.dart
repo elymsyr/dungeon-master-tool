@@ -22,6 +22,7 @@ enum FieldType {
   tagList,
   statBlock,
   combatStats,
+  dice,           // Zar notasyonu: "2d6", "1d20+5", "3d8+2"
 }
 
 /// Alan görünürlüğü — online modda kimin görebileceğini belirler.
@@ -69,8 +70,7 @@ abstract class FieldSchema with _$FieldSchema {
     @Default(0) int orderIndex,
     @Default(false) bool isBuiltin,
     @Default(false) bool isList,
-    /// Bu alanın hangi uygulama bölümlerinde gösterileceği.
-    /// Boş ise kategori seviyesindeki allowedInSections geçerli.
+    @Default(false) bool hasEquip,   // Liste field'larda equip toggle göster
     @Default([]) List<String> allowedInSections,
     required String createdAt,
     required String updatedAt,
