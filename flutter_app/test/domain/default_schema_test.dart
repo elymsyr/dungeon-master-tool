@@ -6,8 +6,8 @@ void main() {
   late final schema = generateDefaultDnd5eSchema();
 
   group('Default D&D 5e Schema', () {
-    test('generates 15 categories', () {
-      expect(schema.categories.length, 15);
+    test('generates 19 categories', () {
+      expect(schema.categories.length, 19);
     });
 
     test('schema metadata is correct', () {
@@ -28,6 +28,7 @@ void main() {
         'npc', 'monster', 'player', 'spell', 'equipment',
         'class', 'race', 'location', 'quest', 'lore',
         'status-effect', 'feat', 'background', 'plane', 'condition',
+        'trait', 'action', 'reaction', 'legendary-action',
       ]));
     });
 
@@ -37,9 +38,7 @@ void main() {
       expect(fieldTypes, containsAll([
         FieldType.statBlock,
         FieldType.combatStats,
-        FieldType.actionList,
-        FieldType.spellList,
-        FieldType.relation,
+        FieldType.relation,  // actions + spells are now relation type
         FieldType.enum_,
         FieldType.text,
       ]));

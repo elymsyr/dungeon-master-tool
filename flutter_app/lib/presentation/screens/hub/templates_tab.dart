@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../domain/entities/schema/default_dnd5e_schema.dart';
-import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../theme/dm_tool_colors.dart';
+import 'template_editor.dart';
 
 class TemplatesTab extends StatefulWidget {
   const TemplatesTab({super.key});
@@ -13,18 +14,43 @@ class TemplatesTab extends StatefulWidget {
 }
 
 class _TemplatesTabState extends State<TemplatesTab> {
-  WorldSchema? _selectedTemplate;
+  String? _mode;
+  WorldSchema? _activeSchema;
+  final List<WorldSchema> _customTemplates = [];
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final defaultSchema = generateDefaultDnd5eSchema();
 
-    if (_selectedTemplate != null) {
-      return _TemplateDetail(
-        schema: _selectedTemplate!,
-        palette: palette,
-        onBack: () => setState(() => _selectedTemplate = null),
+    if (_mode == 'view' && _activeSchema != null) {
+      return TemplateEditor(
+        initial: _activeSchema,
+        readOnly: true,
+        onBack: () => setState(() { _mode = null; _activeSchema = null; }),
+      );
+    }
+
+    if (_mode == 'edit') {
+      return TemplateEditor(
+        initial: _activeSchema,
+        readOnly: false,
+        onBack: () => setState(() { _mode = null; _activeSchema = null; }),
+        onSave: (schema) {
+          setState(() {
+            final idx = _customTemplates.indexWhere((t) => t.schemaId == schema.schemaId);
+            if (idx >= 0) {
+              _customTemplates[idx] = schema;
+            } else {
+              _customTemplates.add(schema);
+            }
+            _mode = null;
+            _activeSchema = null;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Template saved')),
+          );
+        },
       );
     }
 
@@ -41,27 +67,42 @@ class _TemplatesTabState extends State<TemplatesTab> {
               Text('World templates define entity categories and their fields.', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 16),
 
-              // Default D&D 5e template
               _TemplateCard(
                 schema: defaultSchema,
                 palette: palette,
-                onTap: () => setState(() => _selectedTemplate = defaultSchema),
+                onTap: () => setState(() { _mode = 'view'; _activeSchema = defaultSchema; }),
               ),
+
+              ..._customTemplates.map((schema) => Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: _TemplateCard(
+                  schema: schema,
+                  palette: palette,
+                  isCustom: true,
+                  onTap: () => setState(() { _mode = 'edit'; _activeSchema = schema; }),
+                ),
+              )),
 
               const SizedBox(height: 16),
 
-              // Create template butonu
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Template creation coming soon')),
-                    );
-                  },
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Create Template'),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => setState(() { _mode = 'edit'; _activeSchema = null; }),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('New Empty'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showCopyFromDialog(context, palette, defaultSchema),
+                      icon: const Icon(Icons.copy, size: 18),
+                      label: const Text('Copy From...'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -69,15 +110,65 @@ class _TemplatesTabState extends State<TemplatesTab> {
       ),
     );
   }
+
+  void _showCopyFromDialog(BuildContext context, DmToolColors palette, WorldSchema defaultSchema) {
+    final allTemplates = [defaultSchema, ..._customTemplates];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Copy From Template'),
+        content: SizedBox(
+          width: 300,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: allTemplates.length,
+            itemBuilder: (_, i) {
+              final t = allTemplates[i];
+              return ListTile(
+                leading: Icon(Icons.description, color: palette.featureCardAccent),
+                title: Text(t.name),
+                subtitle: Text('${t.categories.length} categories'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  final now = DateTime.now().toUtc().toIso8601String();
+                  final newId = const Uuid().v4();
+                  final copy = t.copyWith(
+                    schemaId: newId,
+                    name: '${t.name} (Copy)',
+                    createdAt: now,
+                    updatedAt: now,
+                    categories: t.categories.map((c) => c.copyWith(
+                      categoryId: const Uuid().v4(),
+                      schemaId: newId,
+                      isBuiltin: false,
+                      fields: c.fields.map((f) => f.copyWith(
+                        fieldId: const Uuid().v4(),
+                        isBuiltin: false,
+                      )).toList(),
+                    )).toList(),
+                  );
+                  setState(() { _mode = 'edit'; _activeSchema = copy; });
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+        ],
+      ),
+    );
+  }
 }
 
-/// Template kart özeti.
 class _TemplateCard extends StatelessWidget {
   final WorldSchema schema;
   final DmToolColors palette;
   final VoidCallback onTap;
+  final bool isCustom;
 
-  const _TemplateCard({required this.schema, required this.palette, required this.onTap});
+  const _TemplateCard({required this.schema, required this.palette, required this.onTap, this.isCustom = false});
 
   @override
   Widget build(BuildContext context) {
@@ -117,165 +208,5 @@ class _TemplateCard extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// Template detay — kategoriler + alanları expandable listesi.
-class _TemplateDetail extends StatelessWidget {
-  final WorldSchema schema;
-  final DmToolColors palette;
-  final VoidCallback onBack;
-
-  const _TemplateDetail({required this.schema, required this.palette, required this.onBack});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Üst bar
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: palette.featureCardBg,
-            border: Border(bottom: BorderSide(color: palette.featureCardBorder)),
-          ),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, size: 20),
-                onPressed: onBack,
-                visualDensity: VisualDensity.compact,
-              ),
-              const SizedBox(width: 8),
-              Icon(Icons.description, size: 20, color: palette.featureCardAccent),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(schema.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
-              ),
-              Text('v${schema.version}', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
-            ],
-          ),
-        ),
-
-        // Kategori listesi
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: schema.categories.length,
-            itemBuilder: (context, index) {
-              final cat = schema.categories[index];
-              final color = _parseColor(cat.color);
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 4),
-                decoration: BoxDecoration(
-                  color: palette.featureCardBg,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: palette.featureCardBorder),
-                ),
-                child: ExpansionTile(
-                  leading: Container(
-                    width: 8, height: 8,
-                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                  ),
-                  title: Text(cat.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
-                  subtitle: Text(
-                    '${cat.fields.length} fields',
-                    style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary),
-                  ),
-                  tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                  childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  children: cat.fields.map((field) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 24,
-                            child: Icon(_fieldTypeIcon(field.fieldType), size: 14, color: palette.tabText),
-                          ),
-                          Expanded(
-                            flex: 3,
-                            child: Text(field.label, style: TextStyle(fontSize: 12, color: palette.tabActiveText)),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Text(
-                              _fieldTypeName(field.fieldType),
-                              style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary),
-                            ),
-                          ),
-                          if (field.validation.allowedValues != null)
-                            Expanded(
-                              flex: 3,
-                              child: Text(
-                                field.validation.allowedValues!.join(', '),
-                                style: TextStyle(fontSize: 10, color: palette.tabText),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          if (field.validation.allowedTypes != null)
-                            Expanded(
-                              flex: 3,
-                              child: Text(
-                                '→ ${field.validation.allowedTypes!.join(', ')}',
-                                style: TextStyle(fontSize: 10, color: palette.featureCardAccent),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _fieldTypeName(FieldType type) => switch (type) {
-    FieldType.text => 'Text',
-    FieldType.textarea => 'Text Area',
-    FieldType.markdown => 'Markdown',
-    FieldType.integer => 'Integer',
-    FieldType.float_ => 'Float',
-    FieldType.boolean_ => 'Boolean',
-    FieldType.enum_ => 'Enum',
-    FieldType.date => 'Date',
-    FieldType.image => 'Image',
-    FieldType.file => 'File',
-    FieldType.relation => 'Relation',
-    FieldType.tagList => 'Tags',
-    FieldType.statBlock => 'Stat Block',
-    FieldType.combatStats => 'Combat Stats',
-    FieldType.actionList => 'Action List',
-    FieldType.spellList => 'Spell List',
-  };
-
-  IconData _fieldTypeIcon(FieldType type) => switch (type) {
-    FieldType.text || FieldType.textarea || FieldType.markdown => Icons.text_fields,
-    FieldType.integer || FieldType.float_ => Icons.tag,
-    FieldType.boolean_ => Icons.check_box_outlined,
-    FieldType.enum_ => Icons.list,
-    FieldType.date => Icons.calendar_today,
-    FieldType.image => Icons.image,
-    FieldType.file => Icons.attach_file,
-    FieldType.relation => Icons.link,
-    FieldType.tagList => Icons.label,
-    FieldType.statBlock => Icons.casino,
-    FieldType.combatStats => Icons.shield,
-    FieldType.actionList => Icons.bolt,
-    FieldType.spellList => Icons.auto_fix_high,
-  };
-
-  Color _parseColor(String hex) {
-    try {
-      return Color(int.parse('FF${hex.replaceFirst('#', '')}', radix: 16));
-    } catch (_) {
-      return Colors.grey;
-    }
   }
 }

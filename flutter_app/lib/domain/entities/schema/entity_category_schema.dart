@@ -19,6 +19,10 @@ abstract class EntityCategorySchema with _$EntityCategorySchema {
     @Default(false) bool isArchived,
     @Default(0) int orderIndex,
     @Default([]) List<FieldSchema> fields,
+    /// Hangi uygulama bölümlerinde kullanılabilir: 'encounter', 'mindmap', 'worldmap', 'projection'
+    @Default([]) List<String> allowedInSections,
+    /// Sidebar'da filtre olarak gösterilecek alan key'leri (ör. ['rarity', 'level'])
+    @Default([]) List<String> filterFieldKeys,
     required String createdAt,
     required String updatedAt,
   }) = _EntityCategorySchema;

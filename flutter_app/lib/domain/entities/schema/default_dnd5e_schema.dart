@@ -22,6 +22,20 @@ WorldSchema generateDefaultDnd5eSchema() {
     final fields = <FieldSchema>[];
     var fieldIdx = 0;
 
+    // Source alanı — tüm kategorilerde ortak
+    fields.add(FieldSchema(
+      fieldId: _uuid.v4(),
+      categoryId: catId,
+      fieldKey: 'source',
+      label: 'Source',
+      fieldType: FieldType.text,
+      placeholder: 'e.g. PHB, MM, Custom',
+      orderIndex: fieldIdx++,
+      isBuiltin: true,
+      createdAt: now,
+      updatedAt: now,
+    ));
+
     // Tip-spesifik attribute alanları
     for (final f in def.attributes) {
       fields.add(FieldSchema(
@@ -155,13 +169,21 @@ WorldSchema generateDefaultDnd5eSchema() {
     }
 
     if (def.hasActions) {
-      for (final key in ['traits', 'actions', 'reactions', 'legendary_actions']) {
+      const actionFields = [
+        ('traits', 'Trait List', 'trait'),
+        ('actions', 'Action List', 'action'),
+        ('reactions', 'Reaction List', 'reaction'),
+        ('legendary_actions', 'Legendary Action List', 'legendary-action'),
+      ];
+      for (final (key, label, targetSlug) in actionFields) {
         fields.add(FieldSchema(
           fieldId: _uuid.v4(),
           categoryId: catId,
           fieldKey: key,
-          label: _actionLabel(key),
-          fieldType: FieldType.actionList,
+          label: label,
+          fieldType: FieldType.relation,
+          isList: true,
+          validation: FieldValidation(allowedTypes: [targetSlug]),
           orderIndex: fieldIdx++,
           isBuiltin: true,
           createdAt: now,
@@ -175,8 +197,10 @@ WorldSchema generateDefaultDnd5eSchema() {
         fieldId: _uuid.v4(),
         categoryId: catId,
         fieldKey: 'spells',
-        label: 'Spells',
-        fieldType: FieldType.spellList,
+        label: 'Spell List',
+        fieldType: FieldType.relation,
+        isList: true,
+        validation: const FieldValidation(allowedTypes: ['spell']),
         orderIndex: fieldIdx++,
         isBuiltin: true,
         createdAt: now,
@@ -194,6 +218,8 @@ WorldSchema generateDefaultDnd5eSchema() {
       isBuiltin: true,
       orderIndex: orderIdx++,
       fields: fields,
+      allowedInSections: def.sections,
+      filterFieldKeys: def.filters,
       createdAt: now,
       updatedAt: now,
     ));
@@ -230,14 +256,6 @@ EncounterLayout _defaultEncounterLayout(String schemaId) {
   );
 }
 
-String _actionLabel(String key) => switch (key) {
-      'traits' => 'Traits',
-      'actions' => 'Actions',
-      'reactions' => 'Reactions',
-      'legendary_actions' => 'Legendary Actions',
-      _ => key,
-    };
-
 // ---------------------------------------------------------------------------
 // Category Definitions — maps Python ENTITY_SCHEMAS to Dart
 // ---------------------------------------------------------------------------
@@ -259,6 +277,8 @@ class _CategoryDef {
   final bool hasStatBlock;
   final bool hasActions;
   final bool hasSpells;
+  final List<String> sections;
+  final List<String> filters;
 
   const _CategoryDef(
     this.name,
@@ -268,6 +288,8 @@ class _CategoryDef {
     this.hasStatBlock = false,
     this.hasActions = false,
     this.hasSpells = false,
+    this.sections = const ['mindmap'],
+    this.filters = const [],
   });
 }
 
@@ -278,18 +300,21 @@ const _categoryDefs = [
     _FieldDef('level', 'Level', FieldType.text),
     _FieldDef('attitude', 'Attitude', FieldType.enum_, FieldValidation(allowedValues: ['Friendly', 'Neutral', 'Hostile'])),
     _FieldDef('location', 'Location', FieldType.relation, FieldValidation(allowedTypes: ['location'])),
-  ], hasStatBlock: true, hasActions: true, hasSpells: true),
+  ], hasStatBlock: true, hasActions: true, hasSpells: true,
+     sections: ['encounter', 'mindmap', 'worldmap', 'projection'], filters: ['attitude', 'level', 'source']),
 
   _CategoryDef('Monster', 'monster', '#d32f2f', [
     _FieldDef('cr', 'Challenge Rating', FieldType.text),
     _FieldDef('attack_type', 'Attack Type', FieldType.text),
-  ], hasStatBlock: true, hasActions: true, hasSpells: true),
+  ], hasStatBlock: true, hasActions: true, hasSpells: true,
+     sections: ['encounter', 'mindmap', 'worldmap', 'projection'], filters: ['cr', 'attack_type', 'source']),
 
   _CategoryDef('Player', 'player', '#4caf50', [
     _FieldDef('class_', 'Class', FieldType.relation, FieldValidation(allowedTypes: ['class'])),
     _FieldDef('race', 'Race', FieldType.relation, FieldValidation(allowedTypes: ['race'])),
     _FieldDef('level', 'Level', FieldType.text),
-  ], hasStatBlock: true, hasActions: true, hasSpells: true),
+  ], hasStatBlock: true, hasActions: true, hasSpells: true,
+     sections: ['encounter', 'mindmap', 'worldmap', 'projection'], filters: ['level']),
 
   _CategoryDef('Spell', 'spell', '#7b1fa2', [
     _FieldDef('level', 'Level', FieldType.enum_, FieldValidation(allowedValues: ['Cantrip', '1', '2', '3', '4', '5', '6', '7', '8', '9'])),
@@ -298,7 +323,7 @@ const _categoryDefs = [
     _FieldDef('range', 'Range', FieldType.text),
     _FieldDef('duration', 'Duration', FieldType.text),
     _FieldDef('components', 'Components', FieldType.text),
-  ]),
+  ], sections: ['mindmap'], filters: ['level', 'school', 'source']),
 
   _CategoryDef('Equipment', 'equipment', '#795548', [
     _FieldDef('category', 'Category', FieldType.text),
@@ -312,7 +337,7 @@ const _categoryDefs = [
     _FieldDef('ac', 'AC', FieldType.text),
     _FieldDef('requirements', 'Requirements', FieldType.text),
     _FieldDef('properties', 'Properties', FieldType.text),
-  ]),
+  ], sections: ['mindmap'], filters: ['category', 'rarity', 'source']),
 
   _CategoryDef('Class', 'class', '#1976d2', [
     _FieldDef('hit_die', 'Hit Die', FieldType.text),
@@ -330,24 +355,24 @@ const _categoryDefs = [
   _CategoryDef('Location', 'location', '#2e7d32', [
     _FieldDef('danger_level', 'Danger Level', FieldType.enum_, FieldValidation(allowedValues: ['Safe', 'Low', 'Medium', 'High'])),
     _FieldDef('environment', 'Environment', FieldType.text),
-  ]),
+  ], sections: ['worldmap', 'mindmap'], filters: ['danger_level']),
 
   _CategoryDef('Quest', 'quest', '#f57c00', [
     _FieldDef('status', 'Status', FieldType.enum_, FieldValidation(allowedValues: ['Not Started', 'Active', 'Completed'])),
     _FieldDef('giver', 'Quest Giver', FieldType.text),
     _FieldDef('reward', 'Reward', FieldType.text),
-  ]),
+  ], sections: ['mindmap'], filters: ['status']),
 
   _CategoryDef('Lore', 'lore', '#5c6bc0', [
     _FieldDef('category', 'Category', FieldType.enum_, FieldValidation(allowedValues: ['History', 'Geography', 'Religion', 'Culture', 'Other'])),
     _FieldDef('secret_info', 'Secret Info', FieldType.text),
-  ]),
+  ], sections: ['mindmap'], filters: ['category']),
 
   _CategoryDef('Status Effect', 'status-effect', '#e91e63', [
     _FieldDef('duration_turns', 'Duration (Turns)', FieldType.text),
     _FieldDef('effect_type', 'Effect Type', FieldType.enum_, FieldValidation(allowedValues: ['Buff', 'Debuff', 'Condition'])),
     _FieldDef('linked_condition', 'Linked Condition', FieldType.relation, FieldValidation(allowedTypes: ['condition'])),
-  ]),
+  ], sections: ['encounter'], filters: ['effect_type']),
 
   _CategoryDef('Feat', 'feat', '#ff7043', [
     _FieldDef('prerequisite', 'Prerequisite', FieldType.text),
@@ -362,9 +387,28 @@ const _categoryDefs = [
 
   _CategoryDef('Plane', 'plane', '#26c6da', [
     _FieldDef('type', 'Type', FieldType.text),
-  ]),
+  ], sections: ['mindmap', 'worldmap']),
 
   _CategoryDef('Condition', 'condition', '#ab47bc', [
     _FieldDef('effects', 'Effects', FieldType.text),
+  ], sections: ['encounter']),
+
+  // --- Action kategorileri (D&D 5e SRD) ---
+  _CategoryDef('Trait', 'trait', '#78909c', [
+    _FieldDef('usage', 'Usage', FieldType.text),
+  ]),
+
+  _CategoryDef('Action', 'action', '#ef6c00', [
+    _FieldDef('attack_bonus', 'Attack Bonus', FieldType.text),
+    _FieldDef('damage_dice', 'Damage Dice', FieldType.text),
+    _FieldDef('damage_type', 'Damage Type', FieldType.text),
+  ]),
+
+  _CategoryDef('Reaction', 'reaction', '#5e35b1', [
+    _FieldDef('trigger', 'Trigger', FieldType.text),
+  ]),
+
+  _CategoryDef('Legendary Action', 'legendary-action', '#ffd600', [
+    _FieldDef('cost', 'Cost', FieldType.enum_, FieldValidation(allowedValues: ['1', '2', '3'])),
   ]),
 ];

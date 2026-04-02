@@ -90,21 +90,23 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>> {
         if (field.defaultValue != null) {
           defaultFields[field.fieldKey] = field.defaultValue;
         } else {
-          // Tip bazlı boş default
-          defaultFields[field.fieldKey] = switch (field.fieldType) {
-            FieldType.text || FieldType.textarea || FieldType.markdown => '',
-            FieldType.integer => 0,
-            FieldType.float_ => 0.0,
-            FieldType.boolean_ => false,
-            FieldType.enum_ => '',
-            FieldType.relation => '',
-            FieldType.tagList => <String>[],
-            FieldType.statBlock => {'STR': 10, 'DEX': 10, 'CON': 10, 'INT': 10, 'WIS': 10, 'CHA': 10},
-            FieldType.combatStats => {'hp': '', 'max_hp': '', 'ac': '', 'speed': '', 'cr': '', 'xp': '', 'initiative': ''},
-            FieldType.actionList => <Map<String, dynamic>>[],
-            FieldType.spellList => <String>[],
-            _ => null,
-          };
+          // isList → boş liste, değilse tip bazlı tek değer
+          if (field.isList) {
+            defaultFields[field.fieldKey] = <dynamic>[];
+          } else {
+            defaultFields[field.fieldKey] = switch (field.fieldType) {
+              FieldType.text || FieldType.textarea || FieldType.markdown => '',
+              FieldType.integer => 0,
+              FieldType.float_ => 0.0,
+              FieldType.boolean_ => false,
+              FieldType.enum_ => '',
+              FieldType.relation => '',
+              FieldType.tagList => <String>[],
+              FieldType.statBlock => {'STR': 10, 'DEX': 10, 'CON': 10, 'INT': 10, 'WIS': 10, 'CHA': 10},
+              FieldType.combatStats => {'hp': '', 'max_hp': '', 'ac': '', 'speed': '', 'cr': '', 'xp': '', 'initiative': ''},
+              _ => null,
+            };
+          }
         }
       }
     }
