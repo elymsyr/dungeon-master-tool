@@ -24,12 +24,6 @@ abstract class EntityCategorySchema with _$EntityCategorySchema {
     @Default([]) List<String> allowedInSections,
     /// Sidebar'da filtre olarak gösterilecek alan key'leri (ör. ['rarity', 'level'])
     @Default([]) List<String> filterFieldKeys,
-    /// Encounter ayarları
-    @Default('') String encounterSortField,
-    @Default('desc') String encounterSortDirection,
-    @Default('') String encounterInitiativeField,
-    @Default('') String encounterInitBonusField,
-    @Default([]) List<String> encounterColumnKeys,
     /// Template seviyesinde kurallar
     @Default([]) List<CategoryRule> rules,
     required String createdAt,

@@ -68,6 +68,12 @@ final Map<String, DmToolColors> themePalettes = {
   'dark': _dark,
 
   'light': _dark.copyWith(
+    buttonDefaultBg: const Color(0xFFE2E8F0),
+    buttonDefaultText: const Color(0xFF2D3748),
+    buttonHoverBg: const Color(0xFFCBD5E0),
+    buttonPressBg: const Color(0xFFA0AEC0),
+    primaryBtnBg: const Color(0xFF1565C0),
+    primaryBtnText: const Color(0xFFFFFFFF),
     featureCardBg: const Color(0xFFF8F9FA),
     featureCardBorder: const Color(0xFFE2E8F0),
     featureCardAccent: const Color(0xFF3182CE),
@@ -102,6 +108,15 @@ final Map<String, DmToolColors> themePalettes = {
   ) as DmToolColors,
 
   'parchment': _dark.copyWith(
+    useSerif: true,
+    primaryBtnBg: const Color(0xFF5D4037),
+    primaryBtnText: const Color(0xFFFDFBF7),
+    actionBtnBg: const Color(0xFFFF8F00),
+    actionBtnText: const Color(0xFF000000),
+    buttonDefaultBg: const Color(0xFFE5DACE),
+    buttonDefaultText: const Color(0xFF4E342E),
+    buttonHoverBg: const Color(0xFFD7CCC8),
+    buttonPressBg: const Color(0xFFF2EAD0),
     featureCardBg: const Color(0xFFEBDCC6),
     featureCardBorder: const Color(0xFFBCAAA4),
     featureCardAccent: const Color(0xFF795548),
@@ -180,6 +195,19 @@ final Map<String, DmToolColors> themePalettes = {
   ) as DmToolColors,
 
   'discord': _dark.copyWith(
+    borderRadius: 4,
+    cardBorderRadius: 8,
+    buttonPaddingH: 12,
+    buttonPaddingV: 5,
+    useBorders: false,
+    primaryBtnBg: const Color(0xFF5865F2),
+    primaryBtnText: const Color(0xFFFFFFFF),
+    actionBtnBg: const Color(0xFFFAA61A),
+    actionBtnText: const Color(0xFF000000),
+    buttonDefaultBg: const Color(0xFF4F545C),
+    buttonDefaultText: const Color(0xFFFFFFFF),
+    buttonHoverBg: const Color(0xFF5D6269),
+    buttonPressBg: const Color(0xFF40444B),
     featureCardBg: const Color(0xFF2F3136),
     featureCardBorder: Colors.transparent,
     featureCardAccent: const Color(0xFF5865F2),
@@ -198,6 +226,17 @@ final Map<String, DmToolColors> themePalettes = {
   ) as DmToolColors,
 
   'baldur': _dark.copyWith(
+    borderRadius: 2,
+    cardBorderRadius: 2,
+    useSerif: true,
+    primaryBtnBg: const Color(0xFF5D4037),
+    primaryBtnText: const Color(0xFFFFD700),
+    actionBtnBg: const Color(0xFFB88E4A),
+    actionBtnText: const Color(0xFF000000),
+    buttonDefaultBg: const Color(0xFF2D241B),
+    buttonDefaultText: const Color(0xFFC8B696),
+    buttonHoverBg: const Color(0xFF3D2E22),
+    buttonPressBg: const Color(0xFF1A120B),
     featureCardBg: const Color(0xFF241B14),
     featureCardBorder: const Color(0xFF3D2E22),
     featureCardAccent: const Color(0xFFB88E4A),
@@ -217,6 +256,17 @@ final Map<String, DmToolColors> themePalettes = {
   ) as DmToolColors,
 
   'grim': _dark.copyWith(
+    borderRadius: 0,
+    cardBorderRadius: 0,
+    useSerif: true,
+    primaryBtnBg: const Color(0xFF7F2A1E),
+    primaryBtnText: const Color(0xFFFFFFFF),
+    actionBtnBg: const Color(0xFFA63A28),
+    actionBtnText: const Color(0xFF000000),
+    buttonDefaultBg: const Color(0xFF333333),
+    buttonDefaultText: const Color(0xFFE6E6E6),
+    buttonHoverBg: const Color(0xFF444444),
+    buttonPressBg: const Color(0xFF222222),
     featureCardBg: const Color(0xFF3E3B36),
     featureCardBorder: const Color(0xFF111111),
     featureCardAccent: const Color(0xFFA63A28),
@@ -235,6 +285,12 @@ final Map<String, DmToolColors> themePalettes = {
   ) as DmToolColors,
 
   'frost': _dark.copyWith(
+    buttonDefaultBg: const Color(0xFFB2F5EA),
+    buttonDefaultText: const Color(0xFF234E52),
+    buttonHoverBg: const Color(0xFF81E6D9),
+    buttonPressBg: const Color(0xFF4FD1C5),
+    primaryBtnBg: const Color(0xFF00695C),
+    primaryBtnText: const Color(0xFFFFFFFF),
     featureCardBg: const Color(0xFFFFFFFF),
     featureCardBorder: const Color(0xFFB2F5EA),
     featureCardAccent: const Color(0xFF319795),
@@ -279,10 +335,32 @@ ThemeData buildThemeData(String themeName) {
   final isDark = !_lightThemes.contains(themeName);
   final brightness = isDark ? Brightness.dark : Brightness.light;
 
+  final r = BorderRadius.circular(palette.borderRadius);
+  final cr = BorderRadius.circular(palette.cardBorderRadius);
+  final fontFamily = palette.useSerif ? 'Georgia' : null;
+  final borderSide = palette.useBorders ? BorderSide(color: palette.sidebarDivider) : BorderSide.none;
+
+  // Explicit ColorScheme — colorSchemeSeed yerine manual tanım
+  final colorScheme = ColorScheme(
+    brightness: brightness,
+    primary: palette.primaryBtnBg,
+    onPrimary: palette.primaryBtnText,
+    secondary: palette.featureCardAccent,
+    onSecondary: palette.tabActiveText,
+    error: palette.dangerBtnBg,
+    onError: Colors.white,
+    surface: palette.canvasBg,
+    onSurface: palette.tabActiveText,
+    surfaceContainerHighest: palette.featureCardBg,
+    outline: palette.sidebarDivider,
+  );
+
   final base = ThemeData(
     brightness: brightness,
-    colorSchemeSeed: palette.tabIndicator,
+    colorScheme: colorScheme,
     useMaterial3: true,
+    fontFamily: fontFamily,
+    splashFactory: NoSplash.splashFactory,
   );
 
   return base.copyWith(
@@ -297,36 +375,50 @@ ThemeData buildThemeData(String themeName) {
       foregroundColor: palette.tabActiveText,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
+      titleTextStyle: TextStyle(fontFamily: fontFamily, fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText),
     ),
 
     // Card
     cardTheme: base.cardTheme.copyWith(
       color: palette.nodeBgEntity,
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      shape: RoundedRectangleBorder(borderRadius: cr),
       elevation: isDark ? 0 : 1,
       margin: const EdgeInsets.symmetric(vertical: 4),
     ),
 
-    // FilledButton (primary actions)
+    // FilledButton — default gri buton, renkli butonlar explicit style ile
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        backgroundColor: palette.tabIndicator,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.pressed)) return palette.buttonPressBg;
+          if (states.contains(WidgetState.hovered)) return palette.buttonHoverBg;
+          return palette.buttonDefaultBg;
+        }),
+        foregroundColor: WidgetStatePropertyAll(palette.buttonDefaultText),
+        overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+        shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: r)),
+        padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: palette.buttonPaddingH, vertical: palette.buttonPaddingV)),
+        textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 13, fontWeight: FontWeight.w600, fontFamily: fontFamily)),
+        side: palette.useBorders ? WidgetStatePropertyAll(BorderSide(color: palette.sidebarDivider)) : null,
+        elevation: const WidgetStatePropertyAll(0),
       ),
     ),
 
-    // OutlinedButton
+    // OutlinedButton — gri kenarlıklı
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: palette.tabActiveText,
-        side: BorderSide(color: palette.sidebarDivider),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        textStyle: const TextStyle(fontSize: 13),
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.pressed)) return palette.buttonPressBg;
+          if (states.contains(WidgetState.hovered)) return palette.buttonHoverBg;
+          return Colors.transparent;
+        }),
+        foregroundColor: WidgetStatePropertyAll(palette.buttonDefaultText),
+        overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+        side: WidgetStatePropertyAll(borderSide),
+        shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: r)),
+        padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: palette.buttonPaddingH, vertical: palette.buttonPaddingV)),
+        textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 13, fontFamily: fontFamily)),
       ),
     ),
 
@@ -334,8 +426,9 @@ ThemeData buildThemeData(String themeName) {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: palette.htmlLink,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        textStyle: const TextStyle(fontSize: 13),
+        shape: RoundedRectangleBorder(borderRadius: r),
+        textStyle: TextStyle(fontSize: 13, fontFamily: fontFamily),
+        splashFactory: NoSplash.splashFactory,
       ),
     ),
 
@@ -343,7 +436,8 @@ ThemeData buildThemeData(String themeName) {
     iconButtonTheme: IconButtonThemeData(
       style: IconButton.styleFrom(
         foregroundColor: palette.tabText,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        shape: RoundedRectangleBorder(borderRadius: r),
+        splashFactory: NoSplash.splashFactory,
       ),
     ),
 
@@ -353,20 +447,11 @@ ThemeData buildThemeData(String themeName) {
       fillColor: isDark
           ? palette.canvasBg.withValues(alpha: 0.5)
           : palette.nodeBgNote.withValues(alpha: 0.5),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(4),
-        borderSide: BorderSide(color: palette.sidebarDivider),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(4),
-        borderSide: BorderSide(color: palette.sidebarDivider),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(4),
-        borderSide: BorderSide(color: palette.featureCardBorder),
-      ),
-      labelStyle: TextStyle(color: palette.tabText, fontSize: 13),
-      hintStyle: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 13),
+      border: OutlineInputBorder(borderRadius: r, borderSide: borderSide),
+      enabledBorder: OutlineInputBorder(borderRadius: r, borderSide: borderSide),
+      focusedBorder: OutlineInputBorder(borderRadius: r, borderSide: borderSide),
+      labelStyle: TextStyle(color: palette.tabText, fontSize: 13, fontFamily: fontFamily),
+      hintStyle: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 13, fontFamily: fontFamily),
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
     ),
@@ -374,14 +459,14 @@ ThemeData buildThemeData(String themeName) {
     // Chip
     chipTheme: base.chipTheme.copyWith(
       backgroundColor: palette.sidebarFilterBg,
-      labelStyle: TextStyle(color: palette.tabText, fontSize: 11),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      side: BorderSide(color: palette.sidebarDivider),
+      labelStyle: TextStyle(color: palette.tabText, fontSize: 11, fontFamily: fontFamily),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(palette.borderRadius + 8)),
+      side: borderSide,
     ),
 
     // ListTile
     listTileTheme: base.listTileTheme.copyWith(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      shape: RoundedRectangleBorder(borderRadius: r),
       dense: true,
     ),
 
@@ -396,7 +481,8 @@ ThemeData buildThemeData(String themeName) {
     dialogTheme: base.dialogTheme.copyWith(
       backgroundColor: palette.tabActiveBg,
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(palette.cardBorderRadius + 4)),
+      titleTextStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText, fontFamily: fontFamily),
     ),
 
     // NavigationBar (mobile bottom nav)
@@ -418,15 +504,15 @@ ThemeData buildThemeData(String themeName) {
     popupMenuTheme: PopupMenuThemeData(
       color: palette.uiPopupBg,
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      textStyle: TextStyle(color: palette.uiPopupText, fontSize: 13),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(palette.cardBorderRadius)),
+      textStyle: TextStyle(color: palette.uiPopupText, fontSize: 13, fontFamily: fontFamily),
     ),
 
     // SnackBar
     snackBarTheme: SnackBarThemeData(
       backgroundColor: palette.tabBg,
-      contentTextStyle: TextStyle(color: palette.tabActiveText),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      contentTextStyle: TextStyle(color: palette.tabActiveText, fontFamily: fontFamily),
+      shape: RoundedRectangleBorder(borderRadius: r),
       behavior: SnackBarBehavior.floating,
     ),
 
