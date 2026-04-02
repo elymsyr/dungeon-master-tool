@@ -1,0 +1,191 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../application/providers/campaign_provider.dart';
+import '../../../core/config/app_paths.dart';
+import '../../theme/dm_tool_colors.dart';
+import '../main_screen.dart';
+
+class WorldsTab extends ConsumerStatefulWidget {
+  const WorldsTab({super.key});
+
+  @override
+  ConsumerState<WorldsTab> createState() => _WorldsTabState();
+}
+
+class _WorldsTabState extends ConsumerState<WorldsTab> {
+  final _nameController = TextEditingController();
+  int _selectedIndex = -1;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final campaignInfoList = ref.watch(campaignInfoListProvider);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Worlds', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              const SizedBox(height: 4),
+              Text('Select or create a campaign world.', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
+              const SizedBox(height: 16),
+
+              // Kampanya listesi
+              campaignInfoList.when(
+                data: (campaigns) => campaigns.isEmpty
+                    ? Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: palette.featureCardBg,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: palette.featureCardBorder),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'No campaigns found.\n${AppPaths.worldsDir}',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12),
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: campaigns.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 4),
+                        itemBuilder: (context, index) {
+                          final info = campaigns[index];
+                          final isSelected = index == _selectedIndex;
+                          return InkWell(
+                            borderRadius: BorderRadius.circular(4),
+                            onTap: () => setState(() => _selectedIndex = index),
+                            onDoubleTap: () => _loadCampaign(info.name),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: isSelected ? palette.featureCardAccent.withValues(alpha: 0.1) : palette.featureCardBg,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: isSelected ? palette.featureCardAccent : palette.featureCardBorder,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.public, size: 20, color: isSelected ? palette.featureCardAccent : palette.tabText),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(info.name, style: TextStyle(fontSize: 14, color: palette.tabActiveText)),
+                                        const SizedBox(height: 2),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.description, size: 12, color: palette.sidebarLabelSecondary),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              info.templateName,
+                                              style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    Icon(Icons.check, size: 16, color: palette.featureCardAccent),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Text('Error: $e'),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Load butonu
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _selectedIndex >= 0
+                      ? () {
+                          final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
+                          if (_selectedIndex < campaigns.length) _loadCampaign(campaigns[_selectedIndex].name);
+                        }
+                      : null,
+                  icon: const Icon(Icons.folder_open, size: 18),
+                  label: const Text('Load World'),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+              Divider(color: palette.sidebarDivider),
+              const SizedBox(height: 16),
+
+              // Yeni kampanya
+              Text('Create New World', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(hintText: 'World name'),
+                      onSubmitted: (_) => _createCampaign(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: _createCampaign,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Create'),
+                    style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _loadCampaign(String name) async {
+    final success = await ref.read(activeCampaignProvider.notifier).load(name);
+    if (success && mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainScreen()),
+      );
+    }
+  }
+
+  Future<void> _createCampaign() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return;
+    final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
+    if (campaigns.any((c) => c.name == name)) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('World already exists')));
+      return;
+    }
+    final success = await ref.read(activeCampaignProvider.notifier).create(name);
+    if (success && mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainScreen()),
+      );
+    }
+  }
+}

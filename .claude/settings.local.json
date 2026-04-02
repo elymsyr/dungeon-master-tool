@@ -53,7 +53,11 @@
       "Bash(apt list:*)",
       "Bash(sudo apt-get:*)",
       "Bash(export PATH=\"/home/eren/.flutter-sdk/bin:$PATH\")",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(flutter run:*)",
+      "Bash(flutter clean:*)",
+      "Bash(flutter pub:*)",
+      "Bash(flutter test:*)"
     ]
   }
 }
