@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'presentation/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DungeonMasterApp extends StatelessWidget {
+import 'application/providers/locale_provider.dart';
+import 'application/providers/theme_provider.dart';
+import 'presentation/l10n/app_localizations.dart';
+import 'presentation/screens/landing/landing_screen.dart';
+import 'presentation/theme/palettes.dart';
+
+class DungeonMasterApp extends ConsumerWidget {
   const DungeonMasterApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeName = ref.watch(themeProvider);
+    final locale = ref.watch(localeProvider);
+
     return MaterialApp(
       title: 'Dungeon Master Tool',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        colorSchemeSeed: const Color(0xFF42A5F5),
-        useMaterial3: true,
-      ),
-      locale: const Locale('en'),
+      theme: buildThemeData(themeName),
+      locale: locale,
       supportedLocales: const [
         Locale('en'),
         Locale('tr'),
@@ -28,39 +33,7 @@ class DungeonMasterApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const _PlaceholderHome(),
-    );
-  }
-}
-
-class _PlaceholderHome extends StatelessWidget {
-  const _PlaceholderHome();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = L10n.of(context)!;
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.appTitle)),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.castle, size: 64),
-            const SizedBox(height: 16),
-            Text(
-              l10n.appTitle,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'v2.0.0 — Flutter',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-            ),
-          ],
-        ),
-      ),
+      home: const LandingScreen(),
     );
   }
 }

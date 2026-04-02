@@ -1,0 +1,130 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../application/providers/locale_provider.dart';
+import '../../../application/providers/theme_provider.dart';
+import '../../theme/dm_tool_colors.dart';
+import '../../theme/palettes.dart';
+
+class SettingsTab extends ConsumerWidget {
+  const SettingsTab({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final currentTheme = ref.watch(themeProvider);
+    final currentLocale = ref.watch(localeProvider);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- THEME ---
+              Text('Theme', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              const SizedBox(height: 12),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  childAspectRatio: 2.2,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                ),
+                itemCount: themeNames.length,
+                itemBuilder: (context, i) {
+                  final name = themeNames[i];
+                  final p = themePalettes[name]!;
+                  final isSelected = name == currentTheme;
+
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(4),
+                    onTap: () => ref.read(themeProvider.notifier).setTheme(name),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: p.canvasBg,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: isSelected ? p.featureCardAccent : palette.featureCardBorder,
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Renk noktaları
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _dot(p.featureCardAccent),
+                              _dot(p.nodeBgNote),
+                              _dot(p.tokenBorderHostile),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            name[0].toUpperCase() + name.substring(1),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: p.tabActiveText,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 32),
+
+              // --- LANGUAGE ---
+              Text('Language', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              const SizedBox(height: 12),
+              ...['en', 'tr', 'de', 'fr'].map((code) {
+                final label = switch (code) {
+                  'en' => 'English',
+                  'tr' => 'Türkçe',
+                  'de' => 'Deutsch',
+                  'fr' => 'Français',
+                  _ => code,
+                };
+                final isSelected = currentLocale.languageCode == code;
+                return ListTile(
+                  leading: Radio<String>(
+                    value: code,
+                    groupValue: currentLocale.languageCode,
+                    onChanged: (v) {
+                      if (v != null) ref.read(localeProvider.notifier).setLocale(v);
+                    },
+                  ),
+                  title: Text(label, style: TextStyle(
+                    fontSize: 14,
+                    color: palette.tabActiveText,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  )),
+                  onTap: () => ref.read(localeProvider.notifier).setLocale(code),
+                  dense: true,
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dot(Color color) {
+    return Container(
+      width: 10,
+      height: 10,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+}
