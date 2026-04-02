@@ -102,12 +102,22 @@ class RuleEngine {
   /// Döndürülen format: [{value: ..., active: bool, from: entityName}, ...]
   static List<Map<String, dynamic>> _conditionalList(
       Entity entity, CategoryRule rule, Map<String, Entity> all) {
+    // Hedef field'daki mevcut değerleri oku — kullanıcı toggle'larını korumak için
+    final existingItems = <String, bool>{};
+    final targetValue = entity.fields[rule.targetFieldKey];
+    if (targetValue is List) {
+      for (final item in targetValue) {
+        if (item is Map) {
+          existingItems[item['id']?.toString() ?? ''] = item['equipped'] == true;
+        }
+      }
+    }
+
     final result = <Map<String, dynamic>>[];
 
     for (final source in rule.sources) {
       final relValue = entity.fields[source.relationFieldKey];
 
-      // Liste parse — [{id, equipped}] veya [id, id] formatı
       final entries = <_ListEntry>[];
       if (relValue is List) {
         for (final item in relValue) {
@@ -123,15 +133,23 @@ class RuleEngine {
         final related = all[entry.id];
         if (related == null) continue;
 
-        final isActive = rule.deactivateIfNotEquipped ? entry.equipped : true;
+        // Kaynak equipped değilse → deactivate (override edemez)
+        final sourceActive = rule.deactivateIfNotEquipped ? entry.equipped : true;
 
         final sourceValue = related.fields[source.sourceFieldKey];
         if (sourceValue is List) {
           for (final item in sourceValue) {
-            result.add({'value': item, 'active': isActive, 'from': related.name});
+            final itemId = item is Map ? item['id']?.toString() : item?.toString();
+            if (itemId != null && itemId.isNotEmpty) {
+              // Kaynak active değilse → forced inactive
+              // Kaynak active ise → kullanıcının mevcut toggle'ını koru, yoksa true
+              final equipped = sourceActive ? (existingItems[itemId] ?? true) : false;
+              result.add({'id': itemId, 'equipped': equipped, 'from': related.name, '_sourceActive': sourceActive});
+            }
           }
-        } else if (sourceValue != null) {
-          result.add({'value': sourceValue, 'active': isActive, 'from': related.name});
+        } else if (sourceValue is String && sourceValue.isNotEmpty) {
+          final equipped = sourceActive ? (existingItems[sourceValue] ?? true) : false;
+          result.add({'id': sourceValue, 'equipped': equipped, 'from': related.name, '_sourceActive': sourceActive});
         }
       }
     }

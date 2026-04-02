@@ -27,13 +27,8 @@ class DatabaseScreen extends ConsumerStatefulWidget {
 }
 
 class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
-  // Sol panel tab'ları: [(entityId, tabTitle)]
   final List<_TabEntry> _leftTabs = [];
   int _leftActiveIndex = -1;
-
-  // Sağ panel tab'ları
-  final List<_TabEntry> _rightTabs = [];
-  int _rightActiveIndex = -1;
 
   @override
   void didUpdateWidget(DatabaseScreen oldWidget) {
@@ -46,47 +41,25 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
   }
 
   void _openTab(String entityId, {_Panel panel = _Panel.left}) {
-    final tabs = panel == _Panel.left ? _leftTabs : _rightTabs;
-
-    // Zaten açıksa focus et
-    final existing = tabs.indexWhere((t) => t.entityId == entityId);
+    final existing = _leftTabs.indexWhere((t) => t.entityId == entityId);
     if (existing >= 0) {
-      setState(() {
-        if (panel == _Panel.left) {
-          _leftActiveIndex = existing;
-        } else {
-          _rightActiveIndex = existing;
-        }
-      });
+      setState(() => _leftActiveIndex = existing);
       return;
     }
 
-    // Entity adını al
     final entities = ref.read(entityProvider);
     final entity = entities[entityId];
-    final name = entity?.name ?? 'Unknown';
-    final slug = entity?.categorySlug ?? '';
 
     setState(() {
-      tabs.add(_TabEntry(entityId: entityId, title: name, categorySlug: slug));
-      if (panel == _Panel.left) {
-        _leftActiveIndex = tabs.length - 1;
-      } else {
-        _rightActiveIndex = tabs.length - 1;
-      }
+      _leftTabs.add(_TabEntry(entityId: entityId, title: entity?.name ?? 'Unknown', categorySlug: entity?.categorySlug ?? ''));
+      _leftActiveIndex = _leftTabs.length - 1;
     });
   }
 
   void _closeTab(int index, _Panel panel) {
     setState(() {
-      final tabs = panel == _Panel.left ? _leftTabs : _rightTabs;
-      tabs.removeAt(index);
-
-      if (panel == _Panel.left) {
-        if (_leftActiveIndex >= tabs.length) _leftActiveIndex = tabs.length - 1;
-      } else {
-        if (_rightActiveIndex >= tabs.length) _rightActiveIndex = tabs.length - 1;
-      }
+      _leftTabs.removeAt(index);
+      if (_leftActiveIndex >= _leftTabs.length) _leftActiveIndex = _leftTabs.length - 1;
     });
   }
 
@@ -124,67 +97,30 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
       );
     }
 
-    // Desktop/Tablet: dual panel
-    return Row(
-      children: [
-        // Sol panel — DragTarget ile
-        Expanded(
-          child: DragTarget<String>(
-            onAcceptWithDetails: (details) => _openTab(details.data, panel: _Panel.left),
-            builder: (context, candidateData, rejectedData) {
-              return Container(
-                decoration: candidateData.isNotEmpty
-                    ? BoxDecoration(border: Border.all(color: palette.tabIndicator, width: 2))
-                    : null,
-                child: _TabPanel(
-                  tabs: _leftTabs,
-                  activeIndex: _leftActiveIndex,
-                  palette: palette,
-                  editMode: widget.editMode,
-                  schema: schema,
-                  onSelect: (i) => setState(() => _leftActiveIndex = i),
-                  onClose: (i) => _closeTab(i, _Panel.left),
-                ),
-              );
-            },
-          ),
-        ),
-        // Splitter handle
-        MouseRegion(
-          cursor: SystemMouseCursors.resizeColumn,
-          child: Container(
-            width: 4,
-            color: palette.sidebarDivider,
-          ),
-        ),
-        // Sağ panel — DragTarget ile
-        Expanded(
-          child: DragTarget<String>(
-            onAcceptWithDetails: (details) => _openTab(details.data, panel: _Panel.right),
-            builder: (context, candidateData, rejectedData) {
-              return Container(
-                decoration: candidateData.isNotEmpty
-                    ? BoxDecoration(border: Border.all(color: palette.tokenBorderFriendly, width: 2))
-                    : null,
-                child: _TabPanel(
-                  tabs: _rightTabs,
-            activeIndex: _rightActiveIndex,
+    // Tek panel — DragTarget ile
+    return DragTarget<String>(
+      onAcceptWithDetails: (details) => _openTab(details.data, panel: _Panel.left),
+      builder: (context, candidateData, rejectedData) {
+        return Container(
+          decoration: candidateData.isNotEmpty
+              ? BoxDecoration(border: Border.all(color: palette.tabIndicator, width: 2))
+              : null,
+          child: _TabPanel(
+            tabs: _leftTabs,
+            activeIndex: _leftActiveIndex,
             palette: palette,
             editMode: widget.editMode,
             schema: schema,
-                  onSelect: (i) => setState(() => _rightActiveIndex = i),
-                  onClose: (i) => _closeTab(i, _Panel.right),
-                ),
-              );
-            },
+            onSelect: (i) => setState(() => _leftActiveIndex = i),
+            onClose: (i) => _closeTab(i, _Panel.left),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
 
-enum _Panel { left, right }
+enum _Panel { left }
 
 T? _firstWhereOrNull<T>(Iterable<T> items, bool Function(T) test) {
   for (final item in items) {
