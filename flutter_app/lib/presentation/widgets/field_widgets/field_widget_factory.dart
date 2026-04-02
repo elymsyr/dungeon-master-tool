@@ -11,6 +11,14 @@ class FieldWidgetFactory {
     required bool readOnly,
     required ValueChanged<dynamic> onChanged,
   }) {
+    // isList → genel liste widget'ı
+    if (schema.isList) {
+      if (schema.fieldType == FieldType.relation) {
+        return _ReferenceListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged);
+      }
+      return _GenericListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged);
+    }
+
     return switch (schema.fieldType) {
       FieldType.text => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.textarea => _TextAreaFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
@@ -19,8 +27,6 @@ class FieldWidgetFactory {
       FieldType.relation => _RelationFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.statBlock => _StatBlockFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.combatStats => _CombatStatsFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.actionList => _ActionListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.spellList => _SpellListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.boolean_ => _BooleanFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.tagList => _TagListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       _ => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
@@ -294,18 +300,19 @@ class _CombatStatsFieldWidget extends StatelessWidget {
   }
 }
 
-// --- ACTION LIST (Traits, Actions, Reactions, Legendary) ---
-class _ActionListFieldWidget extends StatelessWidget {
+// --- GENERIC LIST — herhangi tipin listesi (text list, integer list, image list...) ---
+class _GenericListFieldWidget extends StatelessWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
-  const _ActionListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _GenericListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
-    final items = (value is List) ? List<Map<String, dynamic>>.from((value as List).map((e) => Map<String, dynamic>.from(e as Map))) : <Map<String, dynamic>>[];
+    final items = (value is List) ? List<String>.from(value.map((e) => e.toString())) : <String>[];
+    final typeName = schema.fieldType.name;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -316,13 +323,14 @@ class _ActionListFieldWidget extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text(schema.label, style: Theme.of(context).textTheme.titleSmall)),
+                Expanded(child: Text('${schema.label} (${items.length})', style: Theme.of(context).textTheme.titleSmall)),
+                Text(typeName, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline)),
                 if (!readOnly)
                   IconButton(
                     icon: const Icon(Icons.add, size: 18),
                     onPressed: () {
-                      items.add({'name': '', 'desc': ''});
-                      onChanged(items);
+                      items.add('');
+                      onChanged(List<String>.from(items));
                     },
                     visualDensity: VisualDensity.compact,
                   ),
@@ -331,57 +339,35 @@ class _ActionListFieldWidget extends StatelessWidget {
             if (items.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text('No ${schema.label.toLowerCase()}', style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12)),
+                child: Text('No items', style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12)),
               ),
             ...items.asMap().entries.map((entry) {
               final i = entry.key;
-              final item = entry.value;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text('${i + 1}.', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outline)),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: Column(
-                        children: [
-                          TextFormField(
-                            initialValue: item['name']?.toString() ?? '',
-                            readOnly: readOnly,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                            decoration: const InputDecoration(
-                              hintText: 'Name',
-                              border: UnderlineInputBorder(),
-                              isDense: true,
-                            ),
-                            onChanged: (v) {
-                              items[i]['name'] = v;
-                              onChanged(List<Map<String, dynamic>>.from(items));
-                            },
-                          ),
-                          TextFormField(
-                            initialValue: item['desc']?.toString() ?? '',
-                            readOnly: readOnly,
-                            maxLines: 2,
-                            style: const TextStyle(fontSize: 12),
-                            decoration: const InputDecoration(
-                              hintText: 'Description',
-                              border: InputBorder.none,
-                              isDense: true,
-                            ),
-                            onChanged: (v) {
-                              items[i]['desc'] = v;
-                              onChanged(List<Map<String, dynamic>>.from(items));
-                            },
-                          ),
-                        ],
+                      child: TextFormField(
+                        initialValue: entry.value,
+                        readOnly: readOnly,
+                        style: const TextStyle(fontSize: 12),
+                        decoration: const InputDecoration(isDense: true, filled: false, border: InputBorder.none),
+                        keyboardType: schema.fieldType == FieldType.integer ? TextInputType.number : null,
+                        onChanged: (v) {
+                          items[i] = v;
+                          onChanged(List<String>.from(items));
+                        },
                       ),
                     ),
                     if (!readOnly)
                       IconButton(
-                        icon: const Icon(Icons.close, size: 16),
+                        icon: const Icon(Icons.close, size: 14),
                         onPressed: () {
                           items.removeAt(i);
-                          onChanged(List<Map<String, dynamic>>.from(items));
+                          onChanged(List<String>.from(items));
                         },
                         visualDensity: VisualDensity.compact,
                       ),
@@ -396,18 +382,19 @@ class _ActionListFieldWidget extends StatelessWidget {
   }
 }
 
-// --- SPELL LIST ---
-class _SpellListFieldWidget extends StatelessWidget {
+// --- REFERENCE LIST — herhangi bir kategoriye referans listesi ---
+class _ReferenceListFieldWidget extends StatelessWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
-  const _SpellListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _ReferenceListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
-    final spellIds = (value is List) ? List<String>.from(value as List) : <String>[];
+    final ids = (value is List) ? List<String>.from(value as List) : <String>[];
+    final targetTypes = schema.validation.allowedTypes?.join(', ') ?? 'any';
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -418,32 +405,34 @@ class _SpellListFieldWidget extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text('${schema.label} (${spellIds.length})', style: Theme.of(context).textTheme.titleSmall)),
+                Expanded(child: Text('${schema.label} (${ids.length})', style: Theme.of(context).textTheme.titleSmall)),
+                Text('→ $targetTypes', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline)),
                 if (!readOnly)
                   IconButton(
                     icon: const Icon(Icons.add, size: 18),
                     onPressed: () {
-                      // TODO: Spell selector dialog
+                      // TODO: Entity selector dialog filtered by allowedTypes
                     },
                     visualDensity: VisualDensity.compact,
                   ),
               ],
             ),
-            if (spellIds.isEmpty)
+            if (ids.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text('No spells linked', style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12)),
+                child: Text('No items linked', style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12)),
               ),
-            ...spellIds.map((id) => ListTile(
+            ...ids.map((id) => ListTile(
                   dense: true,
+                  leading: const Icon(Icons.link, size: 14),
                   title: Text(id, style: const TextStyle(fontSize: 12)),
                   trailing: readOnly
                       ? null
                       : IconButton(
                           icon: const Icon(Icons.close, size: 14),
                           onPressed: () {
-                            spellIds.remove(id);
-                            onChanged(List<String>.from(spellIds));
+                            ids.remove(id);
+                            onChanged(List<String>.from(ids));
                           },
                         ),
                 )),

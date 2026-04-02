@@ -40,6 +40,10 @@ flutter pub get
 ### Linux Desktop (Geliştirme)
 
 ```bash
+export PATH="/home/eren/.flutter-sdk/bin:$PATH" && cd /home/eren/GitHub/dungeon-master-tool/flutter_app && flutter run -d linux
+```
+
+```bash
 flutter run -d linux
 ```
 

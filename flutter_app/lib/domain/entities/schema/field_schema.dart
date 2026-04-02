@@ -3,8 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'field_schema.freezed.dart';
 part 'field_schema.g.dart';
 
-/// Desteklenen alan tipleri — 16 tip.
-/// Python'daki ("text", "combo", "entity_select") → zengin tip sistemi.
+/// Desteklenen alan tipleri — 14 tip.
 enum FieldType {
   text,
   textarea,
@@ -19,12 +18,10 @@ enum FieldType {
   date,
   image,
   file,
-  relation,
+  relation,       // Tek referans veya liste referans (allowedTypes ile hedef kategori belirlenir)
   tagList,
   statBlock,
   combatStats,
-  actionList,
-  spellList,
 }
 
 /// Alan görünürlüğü — online modda kimin görebileceğini belirler.
@@ -71,6 +68,10 @@ abstract class FieldSchema with _$FieldSchema {
     @Default(FieldVisibility.shared) FieldVisibility visibility,
     @Default(0) int orderIndex,
     @Default(false) bool isBuiltin,
+    @Default(false) bool isList,
+    /// Bu alanın hangi uygulama bölümlerinde gösterileceği.
+    /// Boş ise kategori seviyesindeki allowedInSections geçerli.
+    @Default([]) List<String> allowedInSections,
     required String createdAt,
     required String updatedAt,
   }) = _FieldSchema;

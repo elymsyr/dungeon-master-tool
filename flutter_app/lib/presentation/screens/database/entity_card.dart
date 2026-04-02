@@ -249,20 +249,19 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final sortedFields = cat.fields.toList()
       ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
 
-    // Alanları gruplara ayır: basit (text/enum/relation) vs. complex (statBlock/combatStats/actionList/spellList)
+    // Alanları gruplara ayır: basit vs. complex (kendi card'ında gösterilecek)
     final simpleFields = <FieldSchema>[];
     final complexFields = <FieldSchema>[];
 
     for (final field in sortedFields) {
       if (field.visibility == FieldVisibility.private_) continue;
-      switch (field.fieldType) {
-        case FieldType.statBlock:
-        case FieldType.combatStats:
-        case FieldType.actionList:
-        case FieldType.spellList:
-          complexFields.add(field);
-        default:
-          simpleFields.add(field);
+      final isComplex = field.fieldType == FieldType.statBlock ||
+          field.fieldType == FieldType.combatStats ||
+          field.isList;
+      if (isComplex) {
+        complexFields.add(field);
+      } else {
+        simpleFields.add(field);
       }
     }
 

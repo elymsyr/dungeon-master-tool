@@ -57,7 +57,8 @@
       "Bash(flutter run:*)",
       "Bash(flutter clean:*)",
       "Bash(flutter pub:*)",
-      "Bash(flutter test:*)"
+      "Bash(flutter test:*)",
+      "Bash(dart run:*)"
     ]
   }
 }

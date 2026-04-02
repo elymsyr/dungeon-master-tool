@@ -26,7 +26,8 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     (icon: Icons.description, label: 'Templates'),
   ];
 
-  static const _tabContent = [
+  // IndexedStack ile state korunur — tab değişince widget'lar yeniden oluşturulmaz
+  final _tabContent = const [
     SocialTab(),
     SettingsTab(),
     WorldsTab(),
@@ -68,11 +69,19 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                 )).toList(),
               ),
               VerticalDivider(width: 1, color: palette.sidebarDivider),
-              Expanded(child: _tabContent[_tabIndex]),
+              Expanded(
+                child: IndexedStack(
+                  index: _tabIndex,
+                  children: _tabContent,
+                ),
+              ),
             ],
           ),
-        // Mobile: bottom nav
-        ScreenType.phone => _tabContent[_tabIndex],
+        // Mobile: bottom nav — IndexedStack ile state korunur
+        ScreenType.phone => IndexedStack(
+          index: _tabIndex,
+          children: _tabContent,
+        ),
       },
       bottomNavigationBar: screen == ScreenType.phone
           ? NavigationBar(
