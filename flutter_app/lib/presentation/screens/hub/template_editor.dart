@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../domain/entities/schema/category_rule.dart';
+import '../../../domain/entities/schema/encounter_config.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
@@ -38,6 +39,7 @@ class TemplateEditor extends StatefulWidget {
 class _TemplateEditorState extends State<TemplateEditor> {
   late WorldSchema _schema;
   int _selectedCatIndex = 0;
+  bool _showEncounterConfig = false;
 
   @override
   void initState() {
@@ -111,11 +113,32 @@ class _TemplateEditorState extends State<TemplateEditor> {
         Expanded(
           child: Row(
             children: [
-              // Sol: Kategori listesi
+              // Sol: Encounter Settings + Kategori listesi
               SizedBox(
                 width: 200,
                 child: Column(
                   children: [
+                    // Encounter Settings butonu
+                    InkWell(
+                      onTap: () => setState(() { _showEncounterConfig = true; }),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        margin: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+                        decoration: BoxDecoration(
+                          color: _showEncounterConfig ? palette.tabIndicator.withValues(alpha: 0.1) : null,
+                          borderRadius: BorderRadius.circular(4),
+                          border: _showEncounterConfig ? Border.all(color: palette.tabIndicator.withValues(alpha: 0.4)) : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.shield, size: 16, color: _showEncounterConfig ? palette.tabIndicator : palette.tabText),
+                            const SizedBox(width: 8),
+                            Text('Encounter', style: TextStyle(fontSize: 13, color: palette.tabActiveText, fontWeight: _showEncounterConfig ? FontWeight.w600 : FontWeight.normal)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Divider(height: 1, color: palette.sidebarDivider, indent: 8, endIndent: 8),
                     Expanded(
                       child: ListView.builder(
                         padding: const EdgeInsets.all(8),
@@ -127,7 +150,7 @@ class _TemplateEditorState extends State<TemplateEditor> {
 
                           return InkWell(
                             borderRadius: BorderRadius.circular(4),
-                            onTap: () => setState(() => _selectedCatIndex = i),
+                            onTap: () => setState(() { _selectedCatIndex = i; _showEncounterConfig = false; }),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                               margin: const EdgeInsets.only(bottom: 2),
@@ -183,21 +206,30 @@ class _TemplateEditorState extends State<TemplateEditor> {
 
               VerticalDivider(width: 1, color: palette.sidebarDivider),
 
-              // Sağ: Kategori detayı
+              // Sağ: Encounter config VEYA Kategori detayı
               Expanded(
-                child: selectedCat == null
-                    ? Center(child: Text('Select or add a category', style: TextStyle(color: palette.sidebarLabelSecondary)))
-                    : _CategoryEditor(
-                        category: selectedCat,
-                        allCategories: cats,
+                child: _showEncounterConfig
+                    ? _EncounterConfigEditor(
+                        config: _schema.encounterConfig,
                         readOnly: widget.readOnly,
                         palette: palette,
                         onChanged: (updated) => setState(() {
-                          final list = List<EntityCategorySchema>.from(_schema.categories);
-                          list[_selectedCatIndex] = updated;
-                          _schema = _schema.copyWith(categories: list);
+                          _schema = _schema.copyWith(encounterConfig: updated);
                         }),
-                      ),
+                      )
+                    : selectedCat == null
+                        ? Center(child: Text('Select or add a category', style: TextStyle(color: palette.sidebarLabelSecondary)))
+                        : _CategoryEditor(
+                            category: selectedCat,
+                            allCategories: cats,
+                            readOnly: widget.readOnly,
+                            palette: palette,
+                            onChanged: (updated) => setState(() {
+                              final list = List<EntityCategorySchema>.from(_schema.categories);
+                              list[_selectedCatIndex] = updated;
+                              _schema = _schema.copyWith(categories: list);
+                            }),
+                          ),
               ),
             ],
           ),
@@ -323,86 +355,6 @@ class _CategoryEditor extends StatelessWidget {
               );
             }).toList(),
           ),
-
-          // === ENCOUNTER SETTINGS (encounter seçili ise) ===
-          if (category.allowedInSections.contains('encounter')) ...[
-            const SizedBox(height: 12),
-            Text('Encounter Settings', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
-            const SizedBox(height: 6),
-            // Sort + Initiative satırı
-            Row(
-              children: [
-                // Sort field
-                Expanded(
-                  child: _fieldDropdown(
-                    label: 'Sort By',
-                    value: category.encounterSortField,
-                    onChanged: readOnly ? null : (v) => onChanged(category.copyWith(encounterSortField: v ?? '')),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Sort direction
-                SizedBox(
-                  width: 90,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: category.encounterSortDirection,
-                    isDense: true,
-                    decoration: InputDecoration(labelText: 'Dir', labelStyle: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
-                    items: const [
-                      DropdownMenuItem(value: 'desc', child: Text('Desc', style: TextStyle(fontSize: 11))),
-                      DropdownMenuItem(value: 'asc', child: Text('Asc', style: TextStyle(fontSize: 11))),
-                    ],
-                    onChanged: readOnly ? null : (v) => onChanged(category.copyWith(encounterSortDirection: v ?? 'desc')),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                // Initiative field
-                Expanded(
-                  child: _fieldDropdown(
-                    label: 'Initiative Field',
-                    value: category.encounterInitiativeField,
-                    onChanged: readOnly ? null : (v) => onChanged(category.copyWith(encounterInitiativeField: v ?? '')),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Initiative bonus field
-                Expanded(
-                  child: _fieldDropdown(
-                    label: 'Initiative Bonus',
-                    value: category.encounterInitBonusField,
-                    onChanged: readOnly ? null : (v) => onChanged(category.copyWith(encounterInitBonusField: v ?? '')),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            // Display columns
-            Text('Table Columns', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: category.fields.where((f) => !f.isList).map((f) {
-                final isCol = category.encounterColumnKeys.contains(f.fieldKey);
-                return FilterChip(
-                  label: Text(f.label, style: const TextStyle(fontSize: 10)),
-                  selected: isCol,
-                  showCheckmark: false,
-                  visualDensity: VisualDensity.compact,
-                  onSelected: readOnly ? null : (v) {
-                    final updated = v
-                        ? [...category.encounterColumnKeys, f.fieldKey]
-                        : category.encounterColumnKeys.where((k) => k != f.fieldKey).toList();
-                    onChanged(category.copyWith(encounterColumnKeys: updated));
-                  },
-                );
-              }).toList(),
-            ),
-          ],
 
           const SizedBox(height: 12),
 
@@ -1089,25 +1041,6 @@ class _CategoryEditor extends StatelessWidget {
     );
   }
 
-  Widget _fieldDropdown({required String label, required String value, required ValueChanged<String?>? onChanged}) {
-    final items = category.fields.where((f) => !f.isList).map((f) =>
-      DropdownMenuItem(value: f.fieldKey, child: Text(f.label, style: const TextStyle(fontSize: 11)))
-    ).toList();
-    final validValue = items.any((i) => i.value == value) ? value : null;
-    return DropdownButtonFormField<String>(
-      initialValue: validValue,
-      isDense: true,
-      isExpanded: true,
-      decoration: InputDecoration(labelText: label, labelStyle: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
-      style: TextStyle(fontSize: 11, color: palette.tabActiveText),
-      dropdownColor: palette.uiPopupBg,
-      items: [
-        const DropdownMenuItem(value: '', child: Text('None', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic))),
-        ...items,
-      ],
-      onChanged: onChanged,
-    );
-  }
 
   void _moveField(int from, int to) {
     final list = List<FieldSchema>.from(category.fields);
@@ -1172,6 +1105,244 @@ class _CategoryEditor extends StatelessWidget {
 }
 
 /// Renk seçici nokta.
+/// Encounter ayarları editörü — combat stats alanları, kolon yapısı, conditions.
+class _EncounterConfigEditor extends StatelessWidget {
+  final EncounterConfig config;
+  final bool readOnly;
+  final DmToolColors palette;
+  final ValueChanged<EncounterConfig> onChanged;
+
+  const _EncounterConfigEditor({required this.config, required this.readOnly, required this.palette, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Başlık
+          Row(
+            children: [
+              Icon(Icons.shield, size: 20, color: palette.tabIndicator),
+              const SizedBox(width: 8),
+              Text('Encounter Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Field keys
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  initialValue: config.combatStatsFieldKey,
+                  readOnly: readOnly,
+                  decoration: const InputDecoration(labelText: 'Combat Stats Field Key'),
+                  style: const TextStyle(fontSize: 12),
+                  onChanged: (v) => onChanged(config.copyWith(combatStatsFieldKey: v)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  initialValue: config.statBlockFieldKey,
+                  readOnly: readOnly,
+                  decoration: const InputDecoration(labelText: 'Stat Block Field Key'),
+                  style: const TextStyle(fontSize: 12),
+                  onChanged: (v) => onChanged(config.copyWith(statBlockFieldKey: v)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  initialValue: config.initiativeSubField,
+                  readOnly: readOnly,
+                  decoration: const InputDecoration(labelText: 'Initiative Sub-Field'),
+                  style: const TextStyle(fontSize: 12),
+                  onChanged: (v) => onChanged(config.copyWith(initiativeSubField: v)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  initialValue: config.sortBySubField,
+                  readOnly: readOnly,
+                  decoration: const InputDecoration(labelText: 'Sort By'),
+                  style: const TextStyle(fontSize: 12),
+                  onChanged: (v) => onChanged(config.copyWith(sortBySubField: v)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 100,
+                child: DropdownButtonFormField<String>(
+                  initialValue: config.sortDirection,
+                  decoration: const InputDecoration(labelText: 'Dir'),
+                  isExpanded: true,
+                  items: const [
+                    DropdownMenuItem(value: 'desc', child: Text('Desc', style: TextStyle(fontSize: 11))),
+                    DropdownMenuItem(value: 'asc', child: Text('Asc', style: TextStyle(fontSize: 11))),
+                  ],
+                  onChanged: readOnly ? null : (v) => onChanged(config.copyWith(sortDirection: v ?? 'desc')),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // === COLUMNS ===
+          Row(
+            children: [
+              Text('Table Columns', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
+              const Spacer(),
+              if (!readOnly)
+                TextButton.icon(
+                  onPressed: () {
+                    final cols = [...config.columns, const EncounterColumnConfig(subFieldKey: '', label: 'New')];
+                    onChanged(config.copyWith(columns: cols));
+                  },
+                  icon: const Icon(Icons.add, size: 14),
+                  label: const Text('Add Column', style: TextStyle(fontSize: 11)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          // Column header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            color: palette.tabBg,
+            child: Row(
+              children: [
+                if (!readOnly) const SizedBox(width: 40),
+                Expanded(flex: 2, child: Text('Sub-Field Key', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText))),
+                Expanded(flex: 2, child: Text('Label', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText))),
+                SizedBox(width: 50, child: Text('Width', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText), textAlign: TextAlign.center)),
+                SizedBox(width: 40, child: Text('Edit', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText), textAlign: TextAlign.center)),
+                SizedBox(width: 40, child: Text('+/-', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText), textAlign: TextAlign.center)),
+                if (!readOnly) const SizedBox(width: 28),
+              ],
+            ),
+          ),
+          // Column rows
+          ...config.columns.asMap().entries.map((entry) {
+            final i = entry.key;
+            final col = entry.value;
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: palette.featureCardBorder.withValues(alpha: 0.3)))),
+              child: Row(
+                children: [
+                  if (!readOnly)
+                    SizedBox(
+                      width: 40,
+                      child: Row(
+                        children: [
+                          InkWell(
+                            onTap: i > 0 ? () { final l = List<EncounterColumnConfig>.from(config.columns); final item = l.removeAt(i); l.insert(i - 1, item); onChanged(config.copyWith(columns: l)); } : null,
+                            child: Icon(Icons.keyboard_arrow_up, size: 16, color: i > 0 ? palette.tabText : palette.featureCardBorder),
+                          ),
+                          InkWell(
+                            onTap: i < config.columns.length - 1 ? () { final l = List<EncounterColumnConfig>.from(config.columns); final item = l.removeAt(i); l.insert(i + 1, item); onChanged(config.copyWith(columns: l)); } : null,
+                            child: Icon(Icons.keyboard_arrow_down, size: 16, color: i < config.columns.length - 1 ? palette.tabText : palette.featureCardBorder),
+                          ),
+                        ],
+                      ),
+                    ),
+                  Expanded(
+                    flex: 2,
+                    child: readOnly
+                        ? Text(col.subFieldKey, style: const TextStyle(fontSize: 12))
+                        : TextFormField(initialValue: col.subFieldKey, style: const TextStyle(fontSize: 12), decoration: const InputDecoration(border: InputBorder.none, isDense: true, filled: false),
+                            onChanged: (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(subFieldKey: v); onChanged(config.copyWith(columns: l)); }),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: readOnly
+                        ? Text(col.label, style: const TextStyle(fontSize: 12))
+                        : TextFormField(initialValue: col.label, style: const TextStyle(fontSize: 12), decoration: const InputDecoration(border: InputBorder.none, isDense: true, filled: false),
+                            onChanged: (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(label: v); onChanged(config.copyWith(columns: l)); }),
+                  ),
+                  SizedBox(
+                    width: 50,
+                    child: readOnly
+                        ? Text('${col.width}', style: const TextStyle(fontSize: 11), textAlign: TextAlign.center)
+                        : TextFormField(initialValue: '${col.width}', style: const TextStyle(fontSize: 11), textAlign: TextAlign.center, keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(border: InputBorder.none, isDense: true, filled: false),
+                            onChanged: (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(width: int.tryParse(v) ?? 0); onChanged(config.copyWith(columns: l)); }),
+                  ),
+                  SizedBox(width: 40, child: Checkbox(value: col.editable, onChanged: readOnly ? null : (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(editable: v ?? false); onChanged(config.copyWith(columns: l)); }, visualDensity: VisualDensity.compact)),
+                  SizedBox(width: 40, child: Checkbox(value: col.showButtons, onChanged: readOnly ? null : (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(showButtons: v ?? false); onChanged(config.copyWith(columns: l)); }, visualDensity: VisualDensity.compact)),
+                  if (!readOnly)
+                    SizedBox(width: 28, child: IconButton(icon: Icon(Icons.close, size: 14, color: palette.dangerBtnBg), onPressed: () { final l = List<EncounterColumnConfig>.from(config.columns)..removeAt(i); onChanged(config.copyWith(columns: l)); }, visualDensity: VisualDensity.compact)),
+                ],
+              ),
+            );
+          }),
+
+          const SizedBox(height: 20),
+
+          // === CONDITIONS ===
+          Row(
+            children: [
+              Text('Predefined Conditions', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
+              const Spacer(),
+              if (!readOnly)
+                TextButton.icon(
+                  onPressed: () => _addCondition(context),
+                  icon: const Icon(Icons.add, size: 14),
+                  label: const Text('Add', style: TextStyle(fontSize: 11)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: config.conditions.asMap().entries.map((entry) {
+              return Chip(
+                label: Text(entry.value, style: const TextStyle(fontSize: 11)),
+                deleteIcon: readOnly ? null : const Icon(Icons.close, size: 14),
+                onDeleted: readOnly ? null : () {
+                  final l = List<String>.from(config.conditions)..removeAt(entry.key);
+                  onChanged(config.copyWith(conditions: l));
+                },
+                visualDensity: VisualDensity.compact,
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _addCondition(BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add Condition', style: TextStyle(fontSize: 14)),
+        content: TextField(controller: controller, decoration: const InputDecoration(labelText: 'Condition name'), autofocus: true),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(onPressed: () {
+            final name = controller.text.trim();
+            if (name.isNotEmpty) {
+              onChanged(config.copyWith(conditions: [...config.conditions, name]));
+            }
+            Navigator.pop(ctx);
+          }, child: const Text('Add')),
+        ],
+      ),
+    );
+  }
+}
+
 class _ColorDot extends StatelessWidget {
   final Color color;
   final bool readOnly;

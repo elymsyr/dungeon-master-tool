@@ -12,6 +12,7 @@ import '../theme/palettes.dart';
 import '../widgets/entity_sidebar.dart';
 import 'database/database_screen.dart';
 import 'hub/hub_screen.dart';
+import 'session/session_screen.dart';
 
 /// Ana ekran — Python ui/main_root.py karşılığı.
 /// 4 tab (Database, Session, Mind Map, Map) + sidebar + toolbar.
@@ -57,7 +58,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         selectedEntityId: _selectedEntityId,
         onEntitySelected: (id) => setState(() => _selectedEntityId = id),
       ),
-      _PlaceholderTab(title: l10n.tabSession, icon: _tabIcons[1]),
+      const SessionScreen(),
       _PlaceholderTab(title: l10n.tabMindMap, icon: _tabIcons[2]),
       _PlaceholderTab(title: l10n.tabMap, icon: _tabIcons[3]),
     ];

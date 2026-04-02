@@ -90,6 +90,23 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
   final Color featureCardBorder;
   final Color featureCardAccent;   // Sol kenarlık (tek renk, tema accent)
 
+  // --- Style Parameters (tema-spesifik görünüm) ---
+  final double borderRadius;
+  final double cardBorderRadius;
+  final double buttonPaddingH;
+  final double buttonPaddingV;
+  final bool useBorders;
+  final bool useSerif;
+  final Color primaryBtnBg;
+  final Color primaryBtnText;
+  final Color actionBtnBg;
+  final Color actionBtnText;
+  // Default buton renkleri (gri, renkli değil)
+  final Color buttonDefaultBg;
+  final Color buttonDefaultText;
+  final Color buttonHoverBg;
+  final Color buttonPressBg;
+
   // --- Misc ---
   final Color mapBg;
 
@@ -151,6 +168,20 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     required this.featureCardBg,
     required this.featureCardBorder,
     required this.featureCardAccent,
+    this.borderRadius = 4,
+    this.cardBorderRadius = 4,
+    this.buttonPaddingH = 10,
+    this.buttonPaddingV = 4,
+    this.useBorders = true,
+    this.useSerif = false,
+    this.primaryBtnBg = const Color(0xFF1565C0),
+    this.primaryBtnText = Colors.white,
+    this.actionBtnBg = const Color(0xFFF9A825),
+    this.actionBtnText = Colors.black,
+    this.buttonDefaultBg = const Color(0xFF3C3F41),
+    this.buttonDefaultText = const Color(0xFFE0E0E0),
+    this.buttonHoverBg = const Color(0xFF4E5254),
+    this.buttonPressBg = const Color(0xFF2B2B2B),
     required this.mapBg,
   });
 
@@ -213,6 +244,20 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     Color? featureCardBg,
     Color? featureCardBorder,
     Color? featureCardAccent,
+    double? borderRadius,
+    double? cardBorderRadius,
+    double? buttonPaddingH,
+    double? buttonPaddingV,
+    bool? useBorders,
+    bool? useSerif,
+    Color? primaryBtnBg,
+    Color? primaryBtnText,
+    Color? actionBtnBg,
+    Color? actionBtnText,
+    Color? buttonDefaultBg,
+    Color? buttonDefaultText,
+    Color? buttonHoverBg,
+    Color? buttonPressBg,
     Color? mapBg,
   }) {
     return DmToolColors(
@@ -273,6 +318,20 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       featureCardBg: featureCardBg ?? this.featureCardBg,
       featureCardBorder: featureCardBorder ?? this.featureCardBorder,
       featureCardAccent: featureCardAccent ?? this.featureCardAccent,
+      borderRadius: borderRadius ?? this.borderRadius,
+      cardBorderRadius: cardBorderRadius ?? this.cardBorderRadius,
+      buttonPaddingH: buttonPaddingH ?? this.buttonPaddingH,
+      buttonPaddingV: buttonPaddingV ?? this.buttonPaddingV,
+      useBorders: useBorders ?? this.useBorders,
+      useSerif: useSerif ?? this.useSerif,
+      primaryBtnBg: primaryBtnBg ?? this.primaryBtnBg,
+      primaryBtnText: primaryBtnText ?? this.primaryBtnText,
+      actionBtnBg: actionBtnBg ?? this.actionBtnBg,
+      actionBtnText: actionBtnText ?? this.actionBtnText,
+      buttonDefaultBg: buttonDefaultBg ?? this.buttonDefaultBg,
+      buttonDefaultText: buttonDefaultText ?? this.buttonDefaultText,
+      buttonHoverBg: buttonHoverBg ?? this.buttonHoverBg,
+      buttonPressBg: buttonPressBg ?? this.buttonPressBg,
       mapBg: mapBg ?? this.mapBg,
     );
   }
@@ -338,6 +397,20 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       featureCardBg: Color.lerp(featureCardBg, other.featureCardBg, t)!,
       featureCardBorder: Color.lerp(featureCardBorder, other.featureCardBorder, t)!,
       featureCardAccent: Color.lerp(featureCardAccent, other.featureCardAccent, t)!,
+      borderRadius: t < 0.5 ? borderRadius : other.borderRadius,
+      cardBorderRadius: t < 0.5 ? cardBorderRadius : other.cardBorderRadius,
+      buttonPaddingH: t < 0.5 ? buttonPaddingH : other.buttonPaddingH,
+      buttonPaddingV: t < 0.5 ? buttonPaddingV : other.buttonPaddingV,
+      useBorders: t < 0.5 ? useBorders : other.useBorders,
+      useSerif: t < 0.5 ? useSerif : other.useSerif,
+      primaryBtnBg: Color.lerp(primaryBtnBg, other.primaryBtnBg, t)!,
+      primaryBtnText: Color.lerp(primaryBtnText, other.primaryBtnText, t)!,
+      actionBtnBg: Color.lerp(actionBtnBg, other.actionBtnBg, t)!,
+      actionBtnText: Color.lerp(actionBtnText, other.actionBtnText, t)!,
+      buttonDefaultBg: Color.lerp(buttonDefaultBg, other.buttonDefaultBg, t)!,
+      buttonDefaultText: Color.lerp(buttonDefaultText, other.buttonDefaultText, t)!,
+      buttonHoverBg: Color.lerp(buttonHoverBg, other.buttonHoverBg, t)!,
+      buttonPressBg: Color.lerp(buttonPressBg, other.buttonPressBg, t)!,
       mapBg: Color.lerp(mapBg, other.mapBg, t)!,
     );
   }

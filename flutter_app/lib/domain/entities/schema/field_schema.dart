@@ -70,8 +70,11 @@ abstract class FieldSchema with _$FieldSchema {
     @Default(0) int orderIndex,
     @Default(false) bool isBuiltin,
     @Default(false) bool isList,
-    @Default(false) bool hasEquip,   // Liste field'larda equip toggle göster
+    @Default(false) bool hasEquip,
     @Default([]) List<String> allowedInSections,
+    /// combatStats tipi için alt-alan tanımları. Encounter tablosu buradan beslenir.
+    /// Her eleman: {key: 'hp', label: 'HP', type: 'text'|'integer'|'dice'}
+    @Default([]) List<Map<String, String>> subFields,
     required String createdAt,
     required String updatedAt,
   }) = _FieldSchema;

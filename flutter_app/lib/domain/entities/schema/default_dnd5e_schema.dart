@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 
+import 'encounter_config.dart';
 import 'encounter_layout.dart';
 import 'entity_category_schema.dart';
 import 'field_schema.dart';
@@ -76,6 +77,15 @@ WorldSchema generateDefaultDnd5eSchema() {
         label: 'Combat Stats',
         fieldType: FieldType.combatStats,
         defaultValue: const {'hp': '', 'max_hp': '', 'ac': '', 'speed': '', 'cr': '', 'xp': '', 'initiative': ''},
+        subFields: const [
+          {'key': 'hp', 'label': 'HP', 'type': 'integer'},
+          {'key': 'max_hp', 'label': 'Max HP', 'type': 'integer'},
+          {'key': 'ac', 'label': 'AC', 'type': 'integer'},
+          {'key': 'speed', 'label': 'Speed', 'type': 'text'},
+          {'key': 'initiative', 'label': 'Initiative', 'type': 'integer'},
+          {'key': 'cr', 'label': 'CR', 'type': 'text'},
+          {'key': 'xp', 'label': 'XP', 'type': 'integer'},
+        ],
         orderIndex: fieldIdx++,
         isBuiltin: true,
         createdAt: now,
@@ -236,8 +246,30 @@ WorldSchema generateDefaultDnd5eSchema() {
     description: 'Built-in D&D 5e entity model with 15 categories.',
     categories: categories,
     encounterLayouts: [_defaultEncounterLayout(schemaId)],
+    encounterConfig: _defaultEncounterConfig(),
     createdAt: now,
     updatedAt: now,
+  );
+}
+
+EncounterConfig _defaultEncounterConfig() {
+  return const EncounterConfig(
+    combatStatsFieldKey: 'combat_stats',
+    statBlockFieldKey: 'stat_block',
+    initiativeSubField: 'initiative',
+    sortBySubField: 'initiative',
+    sortDirection: 'desc',
+    columns: [
+      EncounterColumnConfig(subFieldKey: 'initiative', label: 'Init', editable: true, width: 40),
+      EncounterColumnConfig(subFieldKey: 'ac', label: 'AC', width: 36),
+      EncounterColumnConfig(subFieldKey: 'hp', label: 'HP', editable: true, showButtons: true, width: 130),
+      EncounterColumnConfig(subFieldKey: 'speed', label: 'Speed', width: 50),
+    ],
+    conditions: [
+      'Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled',
+      'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified', 'Poisoned',
+      'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Exhaustion',
+    ],
   );
 }
 

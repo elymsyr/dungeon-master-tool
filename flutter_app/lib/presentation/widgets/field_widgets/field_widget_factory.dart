@@ -296,15 +296,11 @@ class _CombatStatsFieldWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stats = (value is Map) ? Map<String, dynamic>.from(value as Map) : <String, dynamic>{};
-    const fields = [
-      ('hp', 'HP'),
-      ('max_hp', 'Max HP'),
-      ('ac', 'AC'),
-      ('speed', 'Speed'),
-      ('initiative', 'Init'),
-      ('cr', 'CR'),
-      ('xp', 'XP'),
-    ];
+
+    // subFields varsa ondan al, yoksa default
+    final fields = schema.subFields.isNotEmpty
+        ? schema.subFields.map((sf) => (sf['key'] ?? '', sf['label'] ?? sf['key'] ?? '')).toList()
+        : const [('hp', 'HP'), ('max_hp', 'Max HP'), ('ac', 'AC'), ('speed', 'Speed'), ('initiative', 'Init'), ('cr', 'CR'), ('xp', 'XP')];
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -327,7 +323,7 @@ class _CombatStatsFieldWidget extends StatelessWidget {
                     textAlign: TextAlign.center,
                     decoration: InputDecoration(
                       labelText: f.$2,
-                                  isDense: true,
+                      isDense: true,
                       contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                     ),
                     onChanged: (v) {

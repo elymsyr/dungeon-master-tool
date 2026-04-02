@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'encounter_config.dart';
 import 'encounter_layout.dart';
 import 'entity_category_schema.dart';
 
@@ -18,6 +19,7 @@ abstract class WorldSchema with _$WorldSchema {
     @Default('') String description,
     @Default([]) List<EntityCategorySchema> categories,
     @Default([]) List<EncounterLayout> encounterLayouts,
+    @Default(EncounterConfig()) EncounterConfig encounterConfig,
     @Default({}) Map<String, dynamic> metadata,
     required String createdAt,
     required String updatedAt,
