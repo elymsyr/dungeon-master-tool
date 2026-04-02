@@ -117,7 +117,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
         const SizedBox(height: 4),
         Divider(height: 1, color: palette.sidebarDivider),
 
-        // Entity listesi — iki sütun grid
+        // Entity listesi — tek sütun liste
         Expanded(
           child: filtered.isEmpty
               ? Center(
@@ -126,14 +126,8 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                     style: TextStyle(color: palette.sidebarLabelSecondary),
                   ),
                 )
-              : GridView.builder(
-                  padding: const EdgeInsets.all(8),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 2.8,
-                    crossAxisSpacing: 4,
-                    mainAxisSpacing: 4,
-                  ),
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   itemCount: filtered.length,
                   itemBuilder: (context, index) {
                     final entity = filtered[index];
@@ -150,54 +144,32 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                         borderRadius: BorderRadius.circular(4),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: palette.featureCardBg,
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: color),
-                          ),
-                          child: Text(entity.name, style: const TextStyle(fontSize: 11)),
+                          decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: BorderRadius.circular(4)),
+                          child: Text(entity.name, style: TextStyle(fontSize: 12, color: palette.tabActiveText)),
                         ),
                       ),
                       child: InkWell(
-                        borderRadius: BorderRadius.circular(4),
                         onTap: () => widget.onEntitySelected?.call(entity.id),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: palette.featureCardBg,
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: palette.featureCardBorder),
-                          ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                           child: Row(
                             children: [
-                              Container(
-                                width: 4,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
+                              // Kategori renk noktası
+                              Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                              const SizedBox(width: 8),
+                              // İsim + source
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text(
-                                      entity.name,
-                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: palette.tabActiveText),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ),
-                                    Text(
-                                      cat?.name ?? entity.categorySlug,
-                                      style: TextStyle(fontSize: 9, color: palette.sidebarLabelSecondary),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                                    Text(entity.name, style: TextStyle(fontSize: 13, color: palette.tabActiveText), overflow: TextOverflow.ellipsis),
+                                    if (entity.source.isNotEmpty)
+                                      Text(entity.source, style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary), overflow: TextOverflow.ellipsis),
                                   ],
                                 ),
                               ),
+                              // Kategori adı (sağ)
+                              Text(cat?.name ?? entity.categorySlug, style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
                             ],
                           ),
                         ),

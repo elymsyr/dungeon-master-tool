@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/services/rule_engine.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_schema.dart';
@@ -68,6 +69,16 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final cat = widget.categorySchema;
     final catColor = cat != null ? _parseColor(cat.color) : palette.tabIndicator;
+
+    // Rule engine — computed değerleri hesapla
+    Map<String, dynamic> computedValues = {};
+    if (cat != null && cat.rules.isNotEmpty) {
+      computedValues = RuleEngine.applyRules(
+        entity: entity,
+        category: cat,
+        allEntities: entities,
+      );
+    }
 
     // Controller sync
     if (_nameController.text != entity.name) _nameController.text = entity.name;
@@ -158,7 +169,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
           const SizedBox(height: 8),
 
           // === SCHEMA-DRIVEN FIELDS ===
-          if (cat != null) ..._buildSchemaFields(entity, cat, palette),
+          if (cat != null) ..._buildSchemaFields(entity, cat, palette, computedValues),
 
           const SizedBox(height: 8),
 
@@ -245,7 +256,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     );
   }
 
-  List<Widget> _buildSchemaFields(Entity entity, EntityCategorySchema cat, DmToolColors palette) {
+  List<Widget> _buildSchemaFields(Entity entity, EntityCategorySchema cat, DmToolColors palette, Map<String, dynamic> computed) {
     final sortedFields = cat.fields.toList()
       ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
 
@@ -277,9 +288,11 @@ class _EntityCardState extends ConsumerState<EntityCard> {
               const SizedBox(height: 8),
               ...simpleFields.map((field) => FieldWidgetFactory.create(
                     schema: field,
-                    value: entity.fields[field.fieldKey],
-                    readOnly: widget.readOnly,
+                    value: computed.containsKey(field.fieldKey) ? computed[field.fieldKey] : entity.fields[field.fieldKey],
+                    readOnly: widget.readOnly || computed.containsKey(field.fieldKey),
                     onChanged: (v) => _updateField(field.fieldKey, v),
+                    entities: ref.read(entityProvider),
+                    ref: ref,
                   )),
             ],
           ),
@@ -289,15 +302,40 @@ class _EntityCardState extends ConsumerState<EntityCard> {
         const SizedBox(height: 8),
 
       // Complex alanlar her biri kendi card'ında
-      ...complexFields.map((field) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: FieldWidgetFactory.create(
-              schema: field,
-              value: entity.fields[field.fieldKey],
-              readOnly: widget.readOnly,
-              onChanged: (v) => _updateField(field.fieldKey, v),
-            ),
-          )),
+      ...complexFields.map((field) {
+        final hasComputed = computed.containsKey(field.fieldKey);
+        final fieldValue = hasComputed ? computed[field.fieldKey] : entity.fields[field.fieldKey];
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FieldWidgetFactory.create(
+                schema: field,
+                value: fieldValue,
+                readOnly: hasComputed && !(field.isList && field.fieldType == FieldType.relation) ? true : widget.readOnly,
+                onChanged: (v) => _updateField(field.fieldKey, v),
+                entities: ref.read(entityProvider),
+                ref: ref,
+                computedMode: hasComputed,
+              ),
+              // Computed badge
+              if (hasComputed)
+                Padding(
+                  padding: const EdgeInsets.only(left: 12, top: 2),
+                  child: Row(
+                    children: [
+                      Icon(Icons.auto_fix_high, size: 12, color: palette.sidebarLabelSecondary),
+                      const SizedBox(width: 4),
+                      Text('Auto-filled by rule', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary, fontStyle: FontStyle.italic)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      }),
     ];
   }
 
@@ -311,8 +349,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   }
 }
 
-/// Python QSS featureCard birebir karşılığı:
-/// background + 1px border + 4px sol accent kenarlık + border-radius
+/// Basit section card — arka plan + padding, border yok.
 class _FeatureCard extends StatelessWidget {
   final DmToolColors palette;
   final Widget child;
@@ -329,7 +366,6 @@ class _FeatureCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: palette.featureCardBg,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: palette.featureCardBorder),
       ),
       padding: const EdgeInsets.all(12),
       child: child,

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../dialogs/entity_selector_dialog.dart';
 
 /// Schema-driven field widget factory.
 /// Her FieldType için uygun widget döndürür.
@@ -10,11 +13,14 @@ class FieldWidgetFactory {
     required dynamic value,
     required bool readOnly,
     required ValueChanged<dynamic> onChanged,
+    Map<String, Entity>? entities,
+    WidgetRef? ref,
+    bool computedMode = false,
   }) {
     // isList → genel liste widget'ı
     if (schema.isList) {
       if (schema.fieldType == FieldType.relation) {
-        return _ReferenceListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged);
+        return _ReferenceListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref, computedMode: computedMode);
       }
       return _GenericListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged);
     }
@@ -24,7 +30,7 @@ class FieldWidgetFactory {
       FieldType.textarea => _TextAreaFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.integer => _IntegerFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.enum_ => _EnumFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.relation => _RelationFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.relation => _RelationFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
       FieldType.statBlock => _StatBlockFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.combatStats => _CombatStatsFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.dice => _DiceFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
@@ -146,29 +152,67 @@ class _EnumFieldWidget extends StatelessWidget {
 }
 
 // --- RELATION (Entity Reference) ---
+// --- SINGLE RELATION — entity adı gösteren + selector dialog ---
 class _RelationFieldWidget extends StatelessWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
 
-  const _RelationFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _RelationFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities, this.ref});
 
   @override
   Widget build(BuildContext context) {
     final linkedId = value?.toString() ?? '';
+    final linkedName = (linkedId.isNotEmpty && entities != null) ? entities![linkedId]?.name ?? linkedId : '';
+    final hasValue = linkedId.isNotEmpty;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: TextFormField(
-        initialValue: linkedId,
-        readOnly: readOnly,
+      child: InputDecorator(
         decoration: InputDecoration(
           labelText: schema.label,
-          hintText: 'Entity ID (${schema.validation.allowedTypes?.join(", ") ?? "any"})',
           isDense: true,
-          suffixIcon: const Icon(Icons.link, size: 18),
         ),
-        onChanged: (v) => onChanged(v),
+        child: Row(
+          children: [
+            if (hasValue) ...[
+              const Icon(Icons.link, size: 14),
+              const SizedBox(width: 6),
+              Expanded(child: Text(linkedName, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis)),
+              if (!readOnly)
+                InkWell(
+                  onTap: () => onChanged(''),
+                  child: const Icon(Icons.close, size: 14),
+                ),
+            ] else ...[
+              Expanded(
+                child: Text(
+                  'None',
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outline, fontStyle: FontStyle.italic),
+                ),
+              ),
+            ],
+            if (!readOnly)
+              IconButton(
+                icon: const Icon(Icons.search, size: 18),
+                visualDensity: VisualDensity.compact,
+                onPressed: () async {
+                  if (ref == null) return;
+                  final result = await showEntitySelectorDialog(
+                    context: context,
+                    ref: ref!,
+                    allowedTypes: schema.validation.allowedTypes,
+                  );
+                  if (result != null && result.isNotEmpty) {
+                    onChanged(result.first);
+                  }
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -389,8 +433,11 @@ class _ReferenceListFieldWidget extends StatelessWidget {
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+  final bool computedMode; // true = add/remove yok, equip sadece equipped kaynaklar için
 
-  const _ReferenceListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _ReferenceListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities, this.ref, this.computedMode = false});
 
   @override
   Widget build(BuildContext context) {
@@ -412,11 +459,25 @@ class _ReferenceListFieldWidget extends StatelessWidget {
               children: [
                 Expanded(child: Text('${schema.label} (${items.length})', style: Theme.of(context).textTheme.titleSmall)),
                 Text('→ $targetTypes', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline)),
-                if (!readOnly)
+                if (!readOnly && !computedMode)
                   IconButton(
                     icon: const Icon(Icons.add, size: 18),
-                    onPressed: () {
-                      // TODO: Entity selector dialog
+                    onPressed: () async {
+                      if (ref == null) return;
+                      final existingIds = items.map((e) => e['id']?.toString() ?? '').toList();
+                      final result = await showEntitySelectorDialog(
+                        context: context,
+                        ref: ref!,
+                        allowedTypes: schema.validation.allowedTypes,
+                        multiSelect: true,
+                        excludeIds: existingIds,
+                      );
+                      if (result != null) {
+                        for (final id in result) {
+                          items.add({'id': id, 'equipped': false});
+                        }
+                        onChanged(_serializeItems(items, showEquip));
+                      }
                     },
                     visualDensity: VisualDensity.compact,
                   ),
@@ -437,41 +498,62 @@ class _ReferenceListFieldWidget extends StatelessWidget {
                 child: Row(
                   children: [
                     // Equip toggle
-                    if (showEquip)
+                    if (showEquip || computedMode) ...[
                       SizedBox(
                         width: 28,
-                        child: IconButton(
-                          icon: Icon(
-                            isEquipped ? Icons.shield : Icons.shield_outlined,
-                            size: 16,
-                            color: isEquipped
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.outline,
-                          ),
-                          tooltip: isEquipped ? 'Equipped' : 'Not equipped',
-                          onPressed: readOnly ? null : () {
-                            items[i] = {...item, 'equipped': !isEquipped};
-                            onChanged(_serializeItems(items, showEquip));
-                          },
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                        ),
+                        child: Builder(builder: (context) {
+                          // Computed mode: kaynak not equipped → disabled
+                          final sourceActive = item['_sourceActive'] != false;
+                          final sourceDisabled = computedMode && !sourceActive;
+                          return IconButton(
+                            icon: Icon(
+                              isEquipped ? Icons.shield : Icons.shield_outlined,
+                              size: 16,
+                              color: sourceDisabled
+                                  ? Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)
+                                  : isEquipped
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).colorScheme.outline,
+                            ),
+                            tooltip: sourceDisabled
+                                ? 'Source not equipped'
+                                : isEquipped ? 'Equipped' : 'Not equipped',
+                            onPressed: sourceDisabled ? null : () {
+                              items[i] = {...item, 'equipped': !isEquipped};
+                              onChanged(_serializeItems(items, showEquip || computedMode));
+                            },
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                          );
+                        }),
                       ),
+                    ],
                     const Icon(Icons.link, size: 14),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text(
-                        item['id']?.toString() ?? '',
-                        style: TextStyle(
-                          fontSize: 12,
-                          decoration: showEquip && !isEquipped ? TextDecoration.lineThrough : null,
-                          color: showEquip && !isEquipped
-                              ? Theme.of(context).colorScheme.outline
-                              : null,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _resolveEntityName(item['id']?.toString() ?? ''),
+                            style: TextStyle(
+                              fontSize: 12,
+                              decoration: (showEquip || computedMode) && !isEquipped ? TextDecoration.lineThrough : null,
+                              color: (showEquip || computedMode) && !isEquipped
+                                  ? Theme.of(context).colorScheme.outline
+                                  : null,
+                            ),
+                          ),
+                          if (computedMode && item['from'] != null)
+                            Text(
+                              'from ${item['from']}',
+                              style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.outline),
+                            ),
+                        ],
                       ),
                     ),
-                    if (!readOnly)
+                    if (!readOnly && !computedMode)
                       IconButton(
                         icon: const Icon(Icons.close, size: 14),
                         onPressed: () {
@@ -488,6 +570,11 @@ class _ReferenceListFieldWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _resolveEntityName(String id) {
+    if (id.isEmpty) return '';
+    return entities?[id]?.name ?? id;
   }
 
   /// Değeri [{id, equipped}] formatına parse et.
