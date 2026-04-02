@@ -10,9 +10,12 @@ const _uuid = Uuid();
 /// Mevcut Python ENTITY_SCHEMAS + get_default_entity_structure() yapısından
 /// üretilen varsayılan D&D 5e WorldSchema.
 /// Yeni kampanya oluşturulduğunda bu schema gömülü olarak kullanılır.
+/// Sabit ID — default schema her zaman aynı ID'ye sahip.
+const _defaultSchemaId = 'builtin-dnd5e-default';
+
 WorldSchema generateDefaultDnd5eSchema() {
   final now = DateTime.now().toUtc().toIso8601String();
-  final schemaId = _uuid.v4();
+  const schemaId = _defaultSchemaId;
 
   final categories = <EntityCategorySchema>[];
   var orderIdx = 0;

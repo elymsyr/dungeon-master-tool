@@ -256,12 +256,15 @@ class _CategoryEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // === HEADER: Name + Color + Field count ===
+    return LayoutBuilder(builder: (context, constraints) {
+      final isWide = constraints.maxWidth > 700;
+
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // === HEADER: Name + Color + Field count ===
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -521,78 +524,98 @@ class _CategoryEditor extends StatelessWidget {
             };
             final sourcesText = rule.sources.map((s) => '${s.relationFieldKey}.${s.sourceFieldKey}').join(' $opLabel ');
 
-            return Container(
-              margin: const EdgeInsets.only(bottom: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: palette.featureCardBorder.withValues(alpha: 0.5))),
-              ),
-              child: Row(
-                children: [
-                  // Enable/disable
-                  SizedBox(
-                    width: 24,
-                    child: Checkbox(
-                      value: rule.enabled,
-                      onChanged: readOnly ? null : (v) {
-                        final updated = List<CategoryRule>.from(category.rules);
-                        updated[i] = rule.copyWith(enabled: v ?? true);
-                        onChanged(category.copyWith(rules: updated));
-                      },
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            return InkWell(
+              onTap: readOnly ? null : () => _editRule(context, i, rule),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: palette.featureCardBorder.withValues(alpha: 0.5))),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      child: Checkbox(
+                        value: rule.enabled,
+                        onChanged: readOnly ? null : (v) {
+                          final updated = List<CategoryRule>.from(category.rules);
+                          updated[i] = rule.copyWith(enabled: v ?? true);
+                          onChanged(category.copyWith(rules: updated));
+                        },
+                        visualDensity: VisualDensity.compact,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  // Type badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                    decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: BorderRadius.circular(3)),
-                    child: Text(typeLabel, style: TextStyle(fontSize: 9, color: palette.tabText)),
-                  ),
-                  const SizedBox(width: 8),
-                  // Name + sources
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(rule.name, style: TextStyle(fontSize: 12, color: palette.tabActiveText)),
-                        Text(
-                          '$sourcesText → ${rule.targetFieldKey}'
-                          '${rule.matchOnly ? ' [match]' : ' [add]'}'
-                          '${rule.deactivateIfNotEquipped ? ' [equip]' : ''}',
-                          style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
-                        ),
-                      ],
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: BorderRadius.circular(3)),
+                      child: Text(typeLabel, style: TextStyle(fontSize: 9, color: palette.tabText)),
                     ),
-                  ),
-                  // Delete
-                  if (!readOnly)
-                    InkWell(
-                      onTap: () {
-                        final updated = List<CategoryRule>.from(category.rules)..removeAt(i);
-                        onChanged(category.copyWith(rules: updated));
-                      },
-                      child: Icon(Icons.close, size: 14, color: palette.sidebarLabelSecondary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(rule.name, style: TextStyle(fontSize: 12, color: palette.tabActiveText)),
+                          Text(
+                            '$sourcesText → ${rule.targetFieldKey}'
+                            '${rule.matchOnly ? ' [match]' : ' [add]'}'
+                            '${rule.deactivateIfNotEquipped ? ' [equip]' : ''}',
+                            style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
+                          ),
+                        ],
+                      ),
                     ),
-                ],
+                    if (!readOnly) ...[
+                      InkWell(
+                        onTap: () => _editRule(context, i, rule),
+                        child: Icon(Icons.edit, size: 14, color: palette.sidebarLabelSecondary),
+                      ),
+                      const SizedBox(width: 4),
+                      InkWell(
+                        onTap: () {
+                          final updated = List<CategoryRule>.from(category.rules)..removeAt(i);
+                          onChanged(category.copyWith(rules: updated));
+                        },
+                        child: Icon(Icons.close, size: 14, color: palette.sidebarLabelSecondary),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             );
           }),
         ],
       ),
     );
+    });
+  }
+
+  void _editRule(BuildContext context, int index, CategoryRule existing) {
+    _showRuleDialog(context, existing: existing, onSave: (rule) {
+      final updated = List<CategoryRule>.from(category.rules);
+      updated[index] = rule;
+      onChanged(category.copyWith(rules: updated));
+    });
   }
 
   void _addRule(BuildContext context) {
-    var ruleType = RuleType.pullField;
-    var operation = RuleOperation.replace;
-    var matchOnly = false;
-    var deactivateIfNotEquipped = false;
-    final nameController = TextEditingController();
-    String? sourceRelation;
-    String? sourceField;
-    String? targetField;
+    _showRuleDialog(context, onSave: (rule) {
+      onChanged(category.copyWith(rules: [...category.rules, rule]));
+    });
+  }
+
+  void _showRuleDialog(BuildContext context, {CategoryRule? existing, required ValueChanged<CategoryRule> onSave}) {
+    var ruleType = existing?.ruleType ?? RuleType.pullField;
+    var operation = existing?.operation ?? RuleOperation.replace;
+    var matchOnly = existing?.matchOnly ?? false;
+    var deactivateIfNotEquipped = existing?.deactivateIfNotEquipped ?? false;
+    final nameController = TextEditingController(text: existing?.name ?? '');
+    String? sourceRelation = existing?.sources.isNotEmpty == true ? existing!.sources.first.relationFieldKey : null;
+    String? sourceField = existing?.sources.isNotEmpty == true ? existing!.sources.first.sourceFieldKey : null;
+    String? targetField = existing?.targetFieldKey;
 
     showDialog(
       context: context,
@@ -763,7 +786,7 @@ class _CategoryEditor extends StatelessWidget {
                 onPressed: sourceRelation != null && sourceField != null && targetField != null
                     ? () {
                         final rule = CategoryRule(
-                          ruleId: _uuid.v4(),
+                          ruleId: existing?.ruleId ?? _uuid.v4(),
                           name: nameController.text.isEmpty ? 'Rule ${category.rules.length + 1}' : nameController.text,
                           ruleType: ruleType,
                           sources: [RuleSource(relationFieldKey: sourceRelation!, sourceFieldKey: sourceField!)],
@@ -772,11 +795,11 @@ class _CategoryEditor extends StatelessWidget {
                           matchOnly: matchOnly,
                           deactivateIfNotEquipped: deactivateIfNotEquipped,
                         );
-                        onChanged(category.copyWith(rules: [...category.rules, rule]));
+                        onSave(rule);
                         Navigator.pop(ctx);
                       }
                     : null,
-                child: const Text('Add'),
+                child: Text(existing != null ? 'Save' : 'Add'),
               ),
             ],
           );
