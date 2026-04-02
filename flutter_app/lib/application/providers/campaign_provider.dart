@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import '../../core/config/app_paths.dart';
 import '../../data/datasources/local/campaign_local_ds.dart';
 import '../../data/repositories/campaign_repository_impl.dart';
+import '../../domain/entities/schema/world_schema.dart';
 
 final campaignLocalDsProvider = Provider((_) => CampaignLocalDataSource());
 
@@ -58,9 +59,9 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     }
   }
 
-  Future<bool> create(String worldName) async {
+  Future<bool> create(String worldName, {WorldSchema? template}) async {
     try {
-      await _repo.create(worldName);
+      await _repo.create(worldName, template: template);
       return load(worldName);
     } catch (e, st) {
       debugPrint('Campaign create error: $e\n$st');

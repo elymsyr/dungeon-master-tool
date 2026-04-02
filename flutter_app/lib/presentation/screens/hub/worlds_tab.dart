@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/template_provider.dart';
 import '../../../core/config/app_paths.dart';
+import '../../../domain/entities/schema/world_schema.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../main_screen.dart';
 
@@ -16,6 +18,7 @@ class WorldsTab extends ConsumerStatefulWidget {
 class _WorldsTabState extends ConsumerState<WorldsTab> {
   final _nameController = TextEditingController();
   int _selectedIndex = -1;
+  WorldSchema? _selectedTemplate;
 
   @override
   void dispose() {
@@ -139,6 +142,37 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               // Yeni kampanya
               Text('Create New World', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
               const SizedBox(height: 8),
+              // Template seçici
+              ref.watch(allTemplatesProvider).when(
+                data: (templates) {
+                  if (templates.isEmpty) return const Text('No templates');
+                  _selectedTemplate ??= templates.first;
+                  // initialValue items'da yoksa ilk item'ı seç
+                  final validId = templates.any((t) => t.schemaId == _selectedTemplate?.schemaId)
+                      ? _selectedTemplate!.schemaId
+                      : templates.first.schemaId;
+                  if (validId != _selectedTemplate?.schemaId) _selectedTemplate = templates.first;
+
+                  return DropdownButtonFormField<String>(
+                    key: ValueKey('tmpl_${templates.length}'),
+                    initialValue: validId,
+                    decoration: const InputDecoration(labelText: 'Template'),
+                    items: templates.map((t) => DropdownMenuItem(
+                      value: t.schemaId,
+                      child: Text('${t.name}  (${t.categories.length} cat)', style: const TextStyle(fontSize: 12)),
+                    )).toList(),
+                    onChanged: (id) {
+                      if (id == null) return;
+                      for (final t in templates) {
+                        if (t.schemaId == id) { _selectedTemplate = t; break; }
+                      }
+                    },
+                  );
+                },
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text('Error: $e'),
+              ),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
@@ -181,7 +215,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('World already exists')));
       return;
     }
-    final success = await ref.read(activeCampaignProvider.notifier).create(name);
+    final success = await ref.read(activeCampaignProvider.notifier).create(name, template: _selectedTemplate);
     if (success && mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainScreen()),

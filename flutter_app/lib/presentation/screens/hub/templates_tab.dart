@@ -1,27 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/schema/default_dnd5e_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'template_editor.dart';
 
-class TemplatesTab extends StatefulWidget {
+class TemplatesTab extends ConsumerStatefulWidget {
   const TemplatesTab({super.key});
 
   @override
-  State<TemplatesTab> createState() => _TemplatesTabState();
+  ConsumerState<TemplatesTab> createState() => _TemplatesTabState();
 }
 
-class _TemplatesTabState extends State<TemplatesTab> {
+class _TemplatesTabState extends ConsumerState<TemplatesTab> {
   String? _mode;
   WorldSchema? _activeSchema;
-  final List<WorldSchema> _customTemplates = [];
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final defaultSchema = generateDefaultDnd5eSchema();
+    final customTemplatesAsync = ref.watch(customTemplatesProvider);
 
     if (_mode == 'view' && _activeSchema != null) {
       return TemplateEditor(
@@ -36,20 +38,16 @@ class _TemplatesTabState extends State<TemplatesTab> {
         initial: _activeSchema,
         readOnly: false,
         onBack: () => setState(() { _mode = null; _activeSchema = null; }),
-        onSave: (schema) {
-          setState(() {
-            final idx = _customTemplates.indexWhere((t) => t.schemaId == schema.schemaId);
-            if (idx >= 0) {
-              _customTemplates[idx] = schema;
-            } else {
-              _customTemplates.add(schema);
-            }
-            _mode = null;
-            _activeSchema = null;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Template saved')),
-          );
+        onSave: (schema) async {
+          await ref.read(templateLocalDsProvider).save(schema);
+          ref.invalidate(customTemplatesProvider);
+          ref.invalidate(allTemplatesProvider);
+          if (mounted) {
+            setState(() { _mode = null; _activeSchema = null; });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Template saved')),
+            );
+          }
         },
       );
     }
@@ -67,21 +65,37 @@ class _TemplatesTabState extends State<TemplatesTab> {
               Text('World templates define entity categories and their fields.', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 16),
 
+              // Default template (readonly)
               _TemplateCard(
                 schema: defaultSchema,
                 palette: palette,
                 onTap: () => setState(() { _mode = 'view'; _activeSchema = defaultSchema; }),
               ),
 
-              ..._customTemplates.map((schema) => Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: _TemplateCard(
-                  schema: schema,
-                  palette: palette,
-                  isCustom: true,
-                  onTap: () => setState(() { _mode = 'edit'; _activeSchema = schema; }),
+              // Custom templates
+              customTemplatesAsync.when(
+                data: (templates) => Column(
+                  children: templates.map((schema) => Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _TemplateCard(
+                      schema: schema,
+                      palette: palette,
+                      isCustom: true,
+                      onTap: () => setState(() { _mode = 'edit'; _activeSchema = schema; }),
+                      onDelete: () async {
+                        await ref.read(templateLocalDsProvider).delete(schema.schemaId);
+                        ref.invalidate(customTemplatesProvider);
+                        ref.invalidate(allTemplatesProvider);
+                      },
+                    ),
+                  )).toList(),
                 ),
-              )),
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => Text('Error: $e'),
+              ),
 
               const SizedBox(height: 16),
 
@@ -112,7 +126,8 @@ class _TemplatesTabState extends State<TemplatesTab> {
   }
 
   void _showCopyFromDialog(BuildContext context, DmToolColors palette, WorldSchema defaultSchema) {
-    final allTemplates = [defaultSchema, ..._customTemplates];
+    final customTemplates = ref.read(customTemplatesProvider).valueOrNull ?? [];
+    final allTemplates = [defaultSchema, ...customTemplates];
 
     showDialog(
       context: context,
@@ -167,8 +182,9 @@ class _TemplateCard extends StatelessWidget {
   final DmToolColors palette;
   final VoidCallback onTap;
   final bool isCustom;
+  final VoidCallback? onDelete;
 
-  const _TemplateCard({required this.schema, required this.palette, required this.onTap, this.isCustom = false});
+  const _TemplateCard({required this.schema, required this.palette, required this.onTap, this.isCustom = false, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -186,13 +202,23 @@ class _TemplateCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.description, size: 36, color: palette.featureCardAccent),
+            Icon(Icons.description, size: 36, color: isCustom ? palette.tabIndicator : palette.featureCardAccent),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(schema.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+                  Row(
+                    children: [
+                      Expanded(child: Text(schema.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText))),
+                      if (!isCustom)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: BorderRadius.circular(3)),
+                          child: Text('Built-in', style: TextStyle(fontSize: 9, color: palette.tabText)),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: 2),
                   Text(schema.description, style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
                   const SizedBox(height: 6),
@@ -203,6 +229,29 @@ class _TemplateCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (isCustom && onDelete != null) ...[
+              IconButton(
+                icon: Icon(Icons.delete_outline, size: 18, color: palette.sidebarLabelSecondary),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Delete Template'),
+                      content: Text('Delete "${schema.name}"?'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                        FilledButton(
+                          onPressed: () { Navigator.pop(ctx); onDelete!(); },
+                          style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
             Icon(Icons.chevron_right, color: palette.tabText),
           ],
         ),
