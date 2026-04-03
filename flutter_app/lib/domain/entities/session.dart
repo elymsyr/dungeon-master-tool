@@ -34,6 +34,8 @@ abstract class Encounter with _$Encounter {
     @Default(false) bool gridVisible,
     @Default(false) bool gridSnap,
     @Default(5) int feetPerCell,
+    String? fogData,
+    String? annotationData,
     String? encounterLayoutId,
   }) = _Encounter;
 

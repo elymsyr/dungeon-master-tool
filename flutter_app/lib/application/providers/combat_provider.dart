@@ -399,6 +399,61 @@ class CombatNotifier extends StateNotifier<CombatState> {
   void _log(String message) {
     state = state.copyWith(eventLog: [...state.eventLog, message]);
   }
+
+  // --- Battle Map ---
+
+  void saveMapData({
+    required String encounterId,
+    String? mapPath,
+    Map<String, dynamic>? tokenPositions,
+    Map<String, int>? tokenSizeOverrides,
+    int? tokenSize,
+  }) {
+    final enc = state.encounters.firstWhere((e) => e.id == encounterId, orElse: () => throw StateError('Encounter not found'));
+    _updateEncounter(enc.copyWith(
+      mapPath: mapPath ?? enc.mapPath,
+      tokenPositions: tokenPositions ?? enc.tokenPositions,
+      tokenSizeOverrides: tokenSizeOverrides ?? enc.tokenSizeOverrides,
+      tokenSize: tokenSize ?? enc.tokenSize,
+    ));
+    _saveAndNotify();
+  }
+
+  void saveFogAndAnnotation({
+    required String encounterId,
+    String? fogData,
+    String? annotationData,
+  }) {
+    final enc = state.encounters.firstWhere((e) => e.id == encounterId, orElse: () => throw StateError('Encounter not found'));
+    _updateEncounter(enc.copyWith(
+      fogData: fogData,
+      annotationData: annotationData,
+    ));
+    _saveAndNotify();
+  }
+
+  void updateGridSettings({
+    required String encounterId,
+    required int gridSize,
+    required bool gridVisible,
+    required bool gridSnap,
+    required int feetPerCell,
+  }) {
+    final enc = state.encounters.firstWhere((e) => e.id == encounterId, orElse: () => throw StateError('Encounter not found'));
+    _updateEncounter(enc.copyWith(
+      gridSize: gridSize,
+      gridVisible: gridVisible,
+      gridSnap: gridSnap,
+      feetPerCell: feetPerCell,
+    ));
+    _saveAndNotify();
+  }
+
+  void renameEncounter(String encounterId, String name) {
+    final enc = state.encounters.firstWhere((e) => e.id == encounterId, orElse: () => throw StateError('Encounter not found'));
+    _updateEncounter(enc.copyWith(name: name));
+    _saveAndNotify();
+  }
 }
 
 int _parseInt(dynamic map, String key, int fallback) {

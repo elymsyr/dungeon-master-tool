@@ -14,6 +14,7 @@ import '../../theme/dm_tool_colors.dart';
 import '../../widgets/condition_badge.dart';
 import '../../widgets/hp_bar.dart';
 import '../../widgets/resizable_split.dart';
+import '../battle_map/battle_map_screen.dart';
 
 /// Session tab — Python ui/tabs/session_tab.py birebir karşılığı.
 /// Sol: Combat Tracker + Dice grubu
@@ -388,8 +389,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             style: TextStyle(fontSize: 13, color: palette.htmlText),
           ),
         );
-      case 1: // Battle Map (placeholder)
-        return Center(child: Text('Battle Map\n(Coming next)', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
+      case 1: // Battle Map
+        final enc = ref.watch(combatProvider.select((s) => s.activeEncounter));
+        if (enc == null) return Center(child: Text('No active encounter', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
+        return BattleMapScreen(encounterId: enc.id);
       case 2: // Player Screen (placeholder)
         return Center(child: Text('Player Screen\n(Coming soon)', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
       case 3: // Entity Stats (placeholder)
