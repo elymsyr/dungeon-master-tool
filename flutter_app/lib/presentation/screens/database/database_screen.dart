@@ -202,43 +202,31 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
       onRatioChanged: (r) {
         ref.read(uiStateProvider.notifier).update((s) => s.copyWith(dbSplitterRatio: r));
       },
-      first: DragTarget<String>(
-        onAcceptWithDetails: (details) => _openTab(details.data, panel: _Panel.left),
-        builder: (context, candidateData, rejectedData) {
-          return Container(
-            decoration: candidateData.isNotEmpty
-                ? BoxDecoration(border: Border.all(color: palette.tabIndicator, width: 2))
-                : null,
-            child: _TabPanel(
-              tabs: _leftTabs,
-              activeIndex: _leftActiveIndex,
-              palette: palette,
-              editMode: widget.editMode,
-              schema: schema,
-              onSelect: (i) { setState(() => _leftActiveIndex = i); _persistOpenTabs(); },
-              onClose: (i) => _closeTab(i, _Panel.left),
-            ),
-          );
-        },
+      first: _DragDropZone(
+        highlightColor: palette.tabIndicator,
+        onAccept: (id) => _openTab(id, panel: _Panel.left),
+        child: _TabPanel(
+          tabs: _leftTabs,
+          activeIndex: _leftActiveIndex,
+          palette: palette,
+          editMode: widget.editMode,
+          schema: schema,
+          onSelect: (i) { setState(() => _leftActiveIndex = i); _persistOpenTabs(); },
+          onClose: (i) => _closeTab(i, _Panel.left),
+        ),
       ),
-      second: DragTarget<String>(
-        onAcceptWithDetails: (details) => _openTab(details.data, panel: _Panel.right),
-        builder: (context, candidateData, rejectedData) {
-          return Container(
-            decoration: candidateData.isNotEmpty
-                ? BoxDecoration(border: Border.all(color: palette.tabIndicator, width: 2))
-                : null,
-            child: _TabPanel(
-              tabs: _rightTabs,
-              activeIndex: _rightActiveIndex,
-              palette: palette,
-              editMode: widget.editMode,
-              schema: schema,
-              onSelect: (i) { setState(() => _rightActiveIndex = i); _persistOpenTabs(); },
-              onClose: (i) => _closeTab(i, _Panel.right),
-            ),
-          );
-        },
+      second: _DragDropZone(
+        highlightColor: palette.tabIndicator,
+        onAccept: (id) => _openTab(id, panel: _Panel.right),
+        child: _TabPanel(
+          tabs: _rightTabs,
+          activeIndex: _rightActiveIndex,
+          palette: palette,
+          editMode: widget.editMode,
+          schema: schema,
+          onSelect: (i) { setState(() => _rightActiveIndex = i); _persistOpenTabs(); },
+          onClose: (i) => _closeTab(i, _Panel.right),
+        ),
       ),
     );
   }
@@ -400,6 +388,42 @@ class _TabBar extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// DragTarget wrapper — child'ı drag sırasında rebuild etmez, sadece border gösterir.
+class _DragDropZone extends StatelessWidget {
+  final Color highlightColor;
+  final ValueChanged<String> onAccept;
+  final Widget child;
+
+  const _DragDropZone({
+    required this.highlightColor,
+    required this.onAccept,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DragTarget<String>(
+      onAcceptWithDetails: (details) => onAccept(details.data),
+      builder: (context, candidateData, rejectedData) {
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            child,
+            if (candidateData.isNotEmpty)
+              IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: highlightColor, width: 2),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

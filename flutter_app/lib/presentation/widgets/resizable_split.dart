@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/dm_tool_colors.dart';
 
 /// PyQt QSplitter karşılığı — iki widget arasında sürüklenebilir divider.
-/// ValueNotifier ile sadece boyutlar rebuild olur, child'lar asla rebuild olmaz.
+/// CustomMultiChildLayout ile child'lar rebuild olmaz, sadece boyutları değişir.
 class ResizableSplit extends StatefulWidget {
   final Widget first;
   final Widget second;
@@ -31,81 +31,115 @@ class ResizableSplit extends StatefulWidget {
 }
 
 class ResizableSplitState extends State<ResizableSplit> {
-  late final ValueNotifier<double> _ratioNotifier;
+  late double _ratio;
+  static const _dividerSize = 8.0;
 
   @override
   void initState() {
     super.initState();
-    _ratioNotifier = ValueNotifier(widget.initialRatio.clamp(0.0, 1.0));
+    _ratio = widget.initialRatio.clamp(0.0, 1.0);
   }
 
-  @override
-  void dispose() {
-    _ratioNotifier.dispose();
-    super.dispose();
-  }
-
-  double get ratio => _ratioNotifier.value;
-
-  set ratio(double value) {
-    _ratioNotifier.value = value.clamp(0.0, 1.0);
-  }
+  double get ratio => _ratio;
+  set ratio(double value) => setState(() => _ratio = value.clamp(0.0, 1.0));
 
   @override
   Widget build(BuildContext context) {
-    final isHorizontal = widget.axis == Axis.horizontal;
+    final isH = widget.axis == Axis.horizontal;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final totalSize = isHorizontal ? constraints.maxWidth : constraints.maxHeight;
-        const dividerSize = 8.0;
-        final available = totalSize - dividerSize;
+        final total = isH ? constraints.maxWidth : constraints.maxHeight;
+        final available = total - _dividerSize;
         if (available <= 0) return const SizedBox.shrink();
 
-        return ValueListenableBuilder<double>(
-          valueListenable: _ratioNotifier,
-          builder: (context, ratio, _) {
-            final firstSize = (available * ratio).clamp(
-              widget.minFirstSize,
-              available - widget.minSecondSize,
-            );
-            final secondSize = available - firstSize;
+        // Güvenli boyut hesapla — pencere küçültülünce overflow olmasın
+        final minFirst = widget.minFirstSize.clamp(0.0, available * 0.8);
+        final minSecond = widget.minSecondSize.clamp(0.0, available - minFirst);
+        final firstSize = (available * _ratio).clamp(minFirst, available - minSecond);
+        final secondSize = (available - firstSize).clamp(0.0, available);
 
-            return Flex(
-              direction: widget.axis,
-              children: [
-                SizedBox(
-                  width: isHorizontal ? firstSize : null,
-                  height: isHorizontal ? null : firstSize,
-                  child: widget.first,
-                ),
-                _SplitDivider(
-                  axis: widget.axis,
-                  palette: widget.palette,
-                  onDragUpdate: (delta) {
-                    final d = isHorizontal ? delta.dx : delta.dy;
-                    final newFirst = (firstSize + d).clamp(
-                      widget.minFirstSize,
-                      available - widget.minSecondSize,
-                    );
-                    _ratioNotifier.value = newFirst / available;
-                  },
-                  onDragEnd: () {
-                    widget.onRatioChanged?.call(_ratioNotifier.value);
-                  },
-                ),
-                SizedBox(
-                  width: isHorizontal ? secondSize : null,
-                  height: isHorizontal ? null : secondSize,
-                  child: widget.second,
-                ),
-              ],
-            );
-          },
+        return CustomMultiChildLayout(
+          delegate: _SplitDelegate(
+            axis: widget.axis,
+            firstSize: firstSize,
+            secondSize: secondSize,
+            dividerSize: _dividerSize,
+          ),
+          children: [
+            LayoutId(id: _Slot.first, child: widget.first),
+            LayoutId(
+              id: _Slot.divider,
+              child: _SplitDivider(
+                axis: widget.axis,
+                palette: widget.palette,
+                onDragUpdate: (delta) {
+                  final d = isH ? delta.dx : delta.dy;
+                  final currentFirst = (available * _ratio).clamp(minFirst, available - minSecond);
+                  final newFirst = (currentFirst + d).clamp(minFirst, available - minSecond);
+                  final newRatio = newFirst / available;
+                  if ((newRatio - _ratio).abs() > 0.001) {
+                    setState(() => _ratio = newRatio);
+                  }
+                },
+                onDragEnd: () => widget.onRatioChanged?.call(_ratio),
+              ),
+            ),
+            LayoutId(id: _Slot.second, child: widget.second),
+          ],
         );
       },
     );
   }
+}
+
+enum _Slot { first, divider, second }
+
+class _SplitDelegate extends MultiChildLayoutDelegate {
+  final Axis axis;
+  final double firstSize;
+  final double secondSize;
+  final double dividerSize;
+
+  _SplitDelegate({
+    required this.axis,
+    required this.firstSize,
+    required this.secondSize,
+    required this.dividerSize,
+  });
+
+  @override
+  void performLayout(Size size) {
+    final isH = axis == Axis.horizontal;
+    final cross = isH ? size.height : size.width;
+
+    if (hasChild(_Slot.first)) {
+      layoutChild(_Slot.first, BoxConstraints.tight(
+        isH ? Size(firstSize, cross) : Size(cross, firstSize),
+      ));
+      positionChild(_Slot.first, Offset.zero);
+    }
+
+    if (hasChild(_Slot.divider)) {
+      layoutChild(_Slot.divider, BoxConstraints.tight(
+        isH ? Size(dividerSize, cross) : Size(cross, dividerSize),
+      ));
+      positionChild(_Slot.divider, isH ? Offset(firstSize, 0) : Offset(0, firstSize));
+    }
+
+    if (hasChild(_Slot.second)) {
+      layoutChild(_Slot.second, BoxConstraints.tight(
+        isH ? Size(secondSize, cross) : Size(cross, secondSize),
+      ));
+      positionChild(_Slot.second, isH
+          ? Offset(firstSize + dividerSize, 0)
+          : Offset(0, firstSize + dividerSize));
+    }
+  }
+
+  @override
+  bool shouldRelayout(_SplitDelegate old) =>
+      firstSize != old.firstSize || secondSize != old.secondSize || axis != old.axis;
 }
 
 class _SplitDivider extends StatefulWidget {
@@ -130,29 +164,25 @@ class _SplitDividerState extends State<_SplitDivider> {
 
   @override
   Widget build(BuildContext context) {
-    final isHorizontal = widget.axis == Axis.horizontal;
+    final isH = widget.axis == Axis.horizontal;
 
     return GestureDetector(
-      onHorizontalDragUpdate: isHorizontal ? (d) => widget.onDragUpdate(d.delta) : null,
-      onHorizontalDragEnd: isHorizontal ? (_) => widget.onDragEnd() : null,
-      onVerticalDragUpdate: isHorizontal ? null : (d) => widget.onDragUpdate(d.delta),
-      onVerticalDragEnd: isHorizontal ? null : (_) => widget.onDragEnd(),
+      behavior: HitTestBehavior.opaque,
+      onHorizontalDragUpdate: isH ? (d) => widget.onDragUpdate(d.delta) : null,
+      onHorizontalDragEnd: isH ? (_) => widget.onDragEnd() : null,
+      onVerticalDragUpdate: isH ? null : (d) => widget.onDragUpdate(d.delta),
+      onVerticalDragEnd: isH ? null : (_) => widget.onDragEnd(),
       child: MouseRegion(
-        cursor: isHorizontal ? SystemMouseCursors.resizeColumn : SystemMouseCursors.resizeRow,
+        cursor: isH ? SystemMouseCursors.resizeColumn : SystemMouseCursors.resizeRow,
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
-        child: Container(
-          width: isHorizontal ? 8 : double.infinity,
-          height: isHorizontal ? double.infinity : 8,
-          color: Colors.transparent,
-          child: Center(
-            child: Container(
-              width: isHorizontal ? 1 : double.infinity,
-              height: isHorizontal ? double.infinity : 1,
-              color: _hovered
-                  ? widget.palette.tabIndicator.withValues(alpha: 0.6)
-                  : widget.palette.sidebarDivider,
-            ),
+        child: Center(
+          child: Container(
+            width: isH ? 1 : double.infinity,
+            height: isH ? double.infinity : 1,
+            color: _hovered
+                ? widget.palette.tabIndicator.withValues(alpha: 0.6)
+                : widget.palette.sidebarDivider,
           ),
         ),
       ),
