@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../theme/dm_tool_colors.dart';
-import '../main_screen.dart';
 
 class WorldsTab extends ConsumerStatefulWidget {
   const WorldsTab({super.key});
@@ -248,9 +248,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   Future<void> _loadCampaign(String name) async {
     final success = await ref.read(activeCampaignProvider.notifier).load(name);
     if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainScreen()),
-      );
+      context.go('/main');
     }
   }
 
@@ -264,9 +262,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     }
     final success = await ref.read(activeCampaignProvider.notifier).create(name, template: _selectedTemplate);
     if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainScreen()),
-      );
+      context.go('/main');
     }
   }
 }

@@ -39,6 +39,7 @@ dependencies:
   logger: ^2.5.0
   collection: ^1.19.1
   file_picker: ^10.3.10
+  flutter_markdown: ^0.7.7+1
 
 dev_dependencies:
   flutter_test:

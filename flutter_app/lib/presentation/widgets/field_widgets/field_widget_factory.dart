@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../dialogs/entity_selector_dialog.dart';
+import '../../theme/dm_tool_colors.dart';
 
 /// Schema-driven field widget factory.
 /// Her FieldType için uygun widget döndürür.
@@ -28,6 +30,7 @@ class FieldWidgetFactory {
     return switch (schema.fieldType) {
       FieldType.text => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.textarea => _TextAreaFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.markdown => _MarkdownFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.integer => _IntegerFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.enum_ => _EnumFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.relation => _RelationFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
@@ -89,6 +92,66 @@ class _TextAreaFieldWidget extends StatelessWidget {
         maxLines: 4,
         decoration: InputDecoration(
           labelText: schema.label,
+          isDense: true,
+        ),
+        onChanged: (v) => onChanged(v),
+      ),
+    );
+  }
+}
+
+// --- MARKDOWN ---
+class _MarkdownFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  const _MarkdownFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final text = value?.toString() ?? '';
+    final palette = Theme.of(context).extension<DmToolColors>();
+
+    if (readOnly) {
+      // Read-only: markdown render
+      if (text.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette?.tabText)),
+            const SizedBox(height: 4),
+            MarkdownBody(
+              data: text,
+              selectable: true,
+              styleSheet: MarkdownStyleSheet(
+                p: TextStyle(fontSize: 13, color: palette?.htmlText),
+                h1: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
+                h2: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
+                h3: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
+                code: TextStyle(fontSize: 12, backgroundColor: palette?.htmlCodeBg),
+                a: TextStyle(color: palette?.htmlLink),
+                listBullet: TextStyle(fontSize: 13, color: palette?.htmlText),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Edit mode: text area
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: TextFormField(
+        key: ValueKey('${schema.fieldKey}_md_$value'),
+        initialValue: text,
+        maxLines: null,
+        minLines: 4,
+        decoration: InputDecoration(
+          labelText: '${schema.label} (Markdown)',
           isDense: true,
         ),
         onChanged: (v) => onChanged(v),

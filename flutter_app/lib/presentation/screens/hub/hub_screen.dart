@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/screen_type.dart';
 import '../../theme/dm_tool_colors.dart';
-import '../landing/landing_screen.dart';
 import 'settings_tab.dart';
 import 'social_tab.dart';
 import 'templates_tab.dart';
@@ -43,9 +43,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const LandingScreen()),
-          ),
+          onPressed: () => context.go('/'),
         ),
         title: Row(
           children: [

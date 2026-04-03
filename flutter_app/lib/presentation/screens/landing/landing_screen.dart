@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../theme/dm_tool_colors.dart';
-import '../hub/hub_screen.dart';
 
 class LandingScreen extends ConsumerWidget {
   const LandingScreen({super.key});
@@ -68,9 +68,7 @@ class LandingScreen extends ConsumerWidget {
                   width: 200,
                   height: 48,
                   child: FilledButton(
-                    onPressed: () => Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const HubScreen()),
-                    ),
+                    onPressed: () => context.go('/hub'),
                     style: FilledButton.styleFrom(
                       backgroundColor: palette.featureCardAccent,
                     ),
