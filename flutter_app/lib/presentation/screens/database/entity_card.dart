@@ -301,87 +301,137 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     );
   }
 
+  Widget _buildFieldWidget(FieldSchema field, Entity entity, Map<String, dynamic> computed, DmToolColors palette) {
+    final hasComputed = computed.containsKey(field.fieldKey);
+    final fieldValue = hasComputed ? computed[field.fieldKey] : entity.fields[field.fieldKey];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FieldWidgetFactory.create(
+          schema: field,
+          value: fieldValue,
+          readOnly: hasComputed && !(field.isList && field.fieldType == FieldType.relation) ? true : widget.readOnly,
+          onChanged: (v) => _updateField(field.fieldKey, v),
+          entities: ref.read(entityProvider),
+          ref: ref,
+          computedMode: hasComputed,
+        ),
+        if (hasComputed)
+          Padding(
+            padding: const EdgeInsets.only(left: 12, top: 2),
+            child: Row(
+              children: [
+                Icon(Icons.auto_fix_high, size: 12, color: palette.sidebarLabelSecondary),
+                const SizedBox(width: 4),
+                Text('Auto-filled by rule', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary, fontStyle: FontStyle.italic)),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildGroupGrid(List<FieldSchema> fields, int gridColumns, Entity entity, Map<String, dynamic> computed, DmToolColors palette) {
+    if (gridColumns <= 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: fields.map((f) => _buildFieldWidget(f, entity, computed, palette)).toList(),
+      );
+    }
+
+    // Satır satır böl — her satırdaki field'lar IntrinsicHeight ile eşit yükseklikte
+    final rows = <List<FieldSchema>>[];
+    var colsUsed = 0;
+    var currentRow = <FieldSchema>[];
+    for (final field in fields) {
+      final span = field.gridColumnSpan.clamp(1, gridColumns);
+      if (colsUsed + span > gridColumns && currentRow.isNotEmpty) {
+        rows.add(currentRow);
+        currentRow = [];
+        colsUsed = 0;
+      }
+      currentRow.add(field);
+      colsUsed += span;
+    }
+    if (currentRow.isNotEmpty) rows.add(currentRow);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: rows.map((rowFields) {
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: rowFields.map((field) {
+            final span = field.gridColumnSpan.clamp(1, gridColumns);
+            return Expanded(
+              flex: span,
+              child: _buildFieldWidget(field, entity, computed, palette),
+            );
+          }).toList(),
+        );
+      }).toList(),
+    );
+  }
+
   List<Widget> _buildSchemaFields(Entity entity, EntityCategorySchema cat, DmToolColors palette, Map<String, dynamic> computed) {
-    final sortedFields = cat.fields.toList()
+    final allFields = cat.fields.where((f) => f.visibility != FieldVisibility.private_).toList()
       ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
 
-    // Alanları gruplara ayır: basit vs. complex (kendi card'ında gösterilecek)
-    final simpleFields = <FieldSchema>[];
-    final complexFields = <FieldSchema>[];
+    // Grupsuz field'lar
+    final ungrouped = allFields.where((f) => f.groupId == null).toList();
 
-    for (final field in sortedFields) {
-      if (field.visibility == FieldVisibility.private_) continue;
-      final isComplex = field.fieldType == FieldType.statBlock ||
-          field.fieldType == FieldType.combatStats ||
-          field.isList;
-      if (isComplex) {
-        complexFields.add(field);
-      } else {
-        simpleFields.add(field);
+    // Gruplu field'lar → Map<groupId, List<FieldSchema>>
+    final grouped = <String, List<FieldSchema>>{};
+    for (final f in allFields) {
+      if (f.groupId != null) {
+        (grouped[f.groupId!] ??= []).add(f);
       }
     }
 
-    return [
-      // Basit alanlar bir FeatureCard içinde
-      if (simpleFields.isNotEmpty)
-        _FeatureCard(
-          palette: palette,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Properties', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
-              const SizedBox(height: 8),
-              ...simpleFields.map((field) => FieldWidgetFactory.create(
-                    schema: field,
-                    value: computed.containsKey(field.fieldKey) ? computed[field.fieldKey] : entity.fields[field.fieldKey],
-                    readOnly: widget.readOnly || computed.containsKey(field.fieldKey),
-                    onChanged: (v) => _updateField(field.fieldKey, v),
-                    entities: ref.read(entityProvider),
-                    ref: ref,
-                  )),
-            ],
-          ),
+    // Gruplar sıralı
+    final sortedGroups = cat.fieldGroups.toList()
+      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+
+    final widgets = <Widget>[];
+
+    // Grupsuz field'lar (geriye uyumluluk)
+    if (ungrouped.isNotEmpty) {
+      widgets.add(_FeatureCard(
+        palette: palette,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Properties', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
+            const SizedBox(height: 8),
+            ...ungrouped.map((f) => _buildFieldWidget(f, entity, computed, palette)),
+          ],
         ),
+      ));
+    }
 
-      if (simpleFields.isNotEmpty && complexFields.isNotEmpty)
-        const SizedBox(height: 8),
+    // Gruplar
+    for (final group in sortedGroups) {
+      final groupFields = grouped[group.groupId];
+      if (groupFields == null || groupFields.isEmpty) continue;
 
-      // Complex alanlar her biri kendi card'ında
-      ...complexFields.map((field) {
-        final hasComputed = computed.containsKey(field.fieldKey);
-        final fieldValue = hasComputed ? computed[field.fieldKey] : entity.fields[field.fieldKey];
+      if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 8));
 
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FieldWidgetFactory.create(
-                schema: field,
-                value: fieldValue,
-                readOnly: hasComputed && !(field.isList && field.fieldType == FieldType.relation) ? true : widget.readOnly,
-                onChanged: (v) => _updateField(field.fieldKey, v),
-                entities: ref.read(entityProvider),
-                ref: ref,
-                computedMode: hasComputed,
-              ),
-              // Computed badge
-              if (hasComputed)
-                Padding(
-                  padding: const EdgeInsets.only(left: 12, top: 2),
-                  child: Row(
-                    children: [
-                      Icon(Icons.auto_fix_high, size: 12, color: palette.sidebarLabelSecondary),
-                      const SizedBox(width: 4),
-                      Text('Auto-filled by rule', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary, fontStyle: FontStyle.italic)),
-                    ],
-                  ),
-                ),
+      widgets.add(_FeatureCard(
+        palette: palette,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (group.name.isNotEmpty) ...[
+              Text(group.name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
+              const SizedBox(height: 8),
             ],
-          ),
-        );
-      }),
-    ];
+            _buildGroupGrid(groupFields, group.gridColumns, entity, computed, palette),
+          ],
+        ),
+      ));
+    }
+
+    return widgets;
   }
 
   Color _parseColor(String hex) {

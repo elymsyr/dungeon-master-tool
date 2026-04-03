@@ -341,12 +341,6 @@ class _TabBar extends StatelessWidget {
               margin: const EdgeInsets.only(right: 1),
               decoration: BoxDecoration(
                 color: isActive ? palette.tabActiveBg : palette.tabBg,
-                border: Border(
-                  top: BorderSide(
-                    color: isActive ? catColor : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

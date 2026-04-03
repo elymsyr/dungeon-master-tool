@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'category_rule.dart';
+import 'field_group.dart';
 import 'field_schema.dart';
 
 part 'entity_category_schema.freezed.dart';
@@ -26,6 +27,8 @@ abstract class EntityCategorySchema with _$EntityCategorySchema {
     @Default([]) List<String> filterFieldKeys,
     /// Template seviyesinde kurallar
     @Default([]) List<CategoryRule> rules,
+    /// Alan grupları — field'ları görsel olarak gruplar, grid layout destekler
+    @Default([]) List<FieldGroup> fieldGroups,
     required String createdAt,
     required String updatedAt,
   }) = _EntityCategorySchema;

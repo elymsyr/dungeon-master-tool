@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import 'encounter_config.dart';
 import 'encounter_layout.dart';
 import 'entity_category_schema.dart';
+import 'field_group.dart';
 import 'field_schema.dart';
 import 'world_schema.dart';
 
@@ -13,6 +14,14 @@ const _uuid = Uuid();
 /// Yeni kampanya oluşturulduğunda bu schema gömülü olarak kullanılır.
 /// Sabit ID — default schema her zaman aynı ID'ye sahip.
 const _defaultSchemaId = 'builtin-dnd5e-default';
+
+// Grup ID'leri — deterministik (test edilebilir)
+const _grpAttributes = 'grp-attributes';
+const _grpAbilities = 'grp-abilities';
+const _grpCombat = 'grp-combat';
+const _grpResistances = 'grp-resistances';
+const _grpActions = 'grp-actions';
+const _grpSpells = 'grp-spells';
 
 WorldSchema generateDefaultDnd5eSchema() {
   final now = DateTime.now().toUtc().toIso8601String();
@@ -26,7 +35,7 @@ WorldSchema generateDefaultDnd5eSchema() {
     final fields = <FieldSchema>[];
     var fieldIdx = 0;
 
-    // Source alanı — tüm kategorilerde ortak
+    // Source alanı — tüm kategorilerde ortak (stat block olan kategorilerde attributes grubunda)
     fields.add(FieldSchema(
       fieldId: _uuid.v4(),
       categoryId: catId,
@@ -36,6 +45,7 @@ WorldSchema generateDefaultDnd5eSchema() {
       placeholder: 'e.g. PHB, MM, Custom',
       orderIndex: fieldIdx++,
       isBuiltin: true,
+      groupId: def.hasStatBlock ? _grpAttributes : null,
       createdAt: now,
       updatedAt: now,
     ));
@@ -51,6 +61,7 @@ WorldSchema generateDefaultDnd5eSchema() {
         validation: f.validation ?? const FieldValidation(),
         orderIndex: fieldIdx++,
         isBuiltin: true,
+        groupId: def.hasStatBlock ? _grpAttributes : null,
         createdAt: now,
         updatedAt: now,
       ));
@@ -67,6 +78,7 @@ WorldSchema generateDefaultDnd5eSchema() {
         defaultValue: const {'STR': 10, 'DEX': 10, 'CON': 10, 'INT': 10, 'WIS': 10, 'CHA': 10},
         orderIndex: fieldIdx++,
         isBuiltin: true,
+        groupId: _grpAbilities,
         createdAt: now,
         updatedAt: now,
       ));
@@ -88,97 +100,20 @@ WorldSchema generateDefaultDnd5eSchema() {
         ],
         orderIndex: fieldIdx++,
         isBuiltin: true,
+        groupId: _grpCombat,
+        gridColumnSpan: 2,
         createdAt: now,
         updatedAt: now,
       ));
-      fields.add(FieldSchema(
-        fieldId: _uuid.v4(),
-        categoryId: catId,
-        fieldKey: 'saving_throws',
-        label: 'Saving Throws',
-        fieldType: FieldType.text,
-        orderIndex: fieldIdx++,
-        isBuiltin: true,
-        createdAt: now,
-        updatedAt: now,
-      ));
-      fields.add(FieldSchema(
-        fieldId: _uuid.v4(),
-        categoryId: catId,
-        fieldKey: 'skills',
-        label: 'Skills',
-        fieldType: FieldType.text,
-        orderIndex: fieldIdx++,
-        isBuiltin: true,
-        createdAt: now,
-        updatedAt: now,
-      ));
-      fields.add(FieldSchema(
-        fieldId: _uuid.v4(),
-        categoryId: catId,
-        fieldKey: 'damage_vulnerabilities',
-        label: 'Damage Vulnerabilities',
-        fieldType: FieldType.text,
-        orderIndex: fieldIdx++,
-        isBuiltin: true,
-        createdAt: now,
-        updatedAt: now,
-      ));
-      fields.add(FieldSchema(
-        fieldId: _uuid.v4(),
-        categoryId: catId,
-        fieldKey: 'damage_resistances',
-        label: 'Damage Resistances',
-        fieldType: FieldType.text,
-        orderIndex: fieldIdx++,
-        isBuiltin: true,
-        createdAt: now,
-        updatedAt: now,
-      ));
-      fields.add(FieldSchema(
-        fieldId: _uuid.v4(),
-        categoryId: catId,
-        fieldKey: 'damage_immunities',
-        label: 'Damage Immunities',
-        fieldType: FieldType.text,
-        orderIndex: fieldIdx++,
-        isBuiltin: true,
-        createdAt: now,
-        updatedAt: now,
-      ));
-      fields.add(FieldSchema(
-        fieldId: _uuid.v4(),
-        categoryId: catId,
-        fieldKey: 'condition_immunities',
-        label: 'Condition Immunities',
-        fieldType: FieldType.text,
-        orderIndex: fieldIdx++,
-        isBuiltin: true,
-        createdAt: now,
-        updatedAt: now,
-      ));
-      fields.add(FieldSchema(
-        fieldId: _uuid.v4(),
-        categoryId: catId,
-        fieldKey: 'proficiency_bonus',
-        label: 'Proficiency Bonus',
-        fieldType: FieldType.text,
-        orderIndex: fieldIdx++,
-        isBuiltin: true,
-        createdAt: now,
-        updatedAt: now,
-      ));
-      fields.add(FieldSchema(
-        fieldId: _uuid.v4(),
-        categoryId: catId,
-        fieldKey: 'passive_perception',
-        label: 'Passive Perception',
-        fieldType: FieldType.text,
-        orderIndex: fieldIdx++,
-        isBuiltin: true,
-        createdAt: now,
-        updatedAt: now,
-      ));
+      fields.add(FieldSchema(fieldId: _uuid.v4(), categoryId: catId, fieldKey: 'saving_throws', label: 'Saving Throws', fieldType: FieldType.text, orderIndex: fieldIdx++, isBuiltin: true, groupId: _grpCombat, createdAt: now, updatedAt: now));
+      fields.add(FieldSchema(fieldId: _uuid.v4(), categoryId: catId, fieldKey: 'skills', label: 'Skills', fieldType: FieldType.text, orderIndex: fieldIdx++, isBuiltin: true, groupId: _grpCombat, createdAt: now, updatedAt: now));
+      fields.add(FieldSchema(fieldId: _uuid.v4(), categoryId: catId, fieldKey: 'proficiency_bonus', label: 'Proficiency Bonus', fieldType: FieldType.text, orderIndex: fieldIdx++, isBuiltin: true, groupId: _grpCombat, createdAt: now, updatedAt: now));
+      fields.add(FieldSchema(fieldId: _uuid.v4(), categoryId: catId, fieldKey: 'passive_perception', label: 'Passive Perception', fieldType: FieldType.text, orderIndex: fieldIdx++, isBuiltin: true, groupId: _grpCombat, createdAt: now, updatedAt: now));
+      // Resistances
+      fields.add(FieldSchema(fieldId: _uuid.v4(), categoryId: catId, fieldKey: 'damage_vulnerabilities', label: 'Damage Vulnerabilities', fieldType: FieldType.text, orderIndex: fieldIdx++, isBuiltin: true, groupId: _grpResistances, createdAt: now, updatedAt: now));
+      fields.add(FieldSchema(fieldId: _uuid.v4(), categoryId: catId, fieldKey: 'damage_resistances', label: 'Damage Resistances', fieldType: FieldType.text, orderIndex: fieldIdx++, isBuiltin: true, groupId: _grpResistances, createdAt: now, updatedAt: now));
+      fields.add(FieldSchema(fieldId: _uuid.v4(), categoryId: catId, fieldKey: 'damage_immunities', label: 'Damage Immunities', fieldType: FieldType.text, orderIndex: fieldIdx++, isBuiltin: true, groupId: _grpResistances, createdAt: now, updatedAt: now));
+      fields.add(FieldSchema(fieldId: _uuid.v4(), categoryId: catId, fieldKey: 'condition_immunities', label: 'Condition Immunities', fieldType: FieldType.text, orderIndex: fieldIdx++, isBuiltin: true, groupId: _grpResistances, createdAt: now, updatedAt: now));
     }
 
     if (def.hasActions) {
@@ -199,6 +134,7 @@ WorldSchema generateDefaultDnd5eSchema() {
           validation: FieldValidation(allowedTypes: [targetSlug]),
           orderIndex: fieldIdx++,
           isBuiltin: true,
+          groupId: _grpActions,
           createdAt: now,
           updatedAt: now,
         ));
@@ -216,9 +152,26 @@ WorldSchema generateDefaultDnd5eSchema() {
         validation: const FieldValidation(allowedTypes: ['spell']),
         orderIndex: fieldIdx++,
         isBuiltin: true,
+        groupId: _grpSpells,
         createdAt: now,
         updatedAt: now,
       ));
+    }
+
+    // Grupları oluştur (sadece stat block olan kategoriler için)
+    final groups = <FieldGroup>[];
+    if (def.hasStatBlock) {
+      var gi = 0;
+      groups.addAll([
+        FieldGroup(groupId: _grpAttributes, name: 'Attributes', gridColumns: 2, orderIndex: gi++),
+        FieldGroup(groupId: _grpAbilities, name: 'Ability Scores', gridColumns: 1, orderIndex: gi++),
+        FieldGroup(groupId: _grpCombat, name: 'Combat', gridColumns: 2, orderIndex: gi++),
+        FieldGroup(groupId: _grpResistances, name: 'Resistances', gridColumns: 2, orderIndex: gi++),
+        if (def.hasActions)
+          FieldGroup(groupId: _grpActions, name: 'Actions', gridColumns: 1, orderIndex: gi++),
+        if (def.hasSpells)
+          FieldGroup(groupId: _grpSpells, name: 'Spells', gridColumns: 1, orderIndex: gi++),
+      ]);
     }
 
     categories.add(EntityCategorySchema(
@@ -231,6 +184,7 @@ WorldSchema generateDefaultDnd5eSchema() {
       isBuiltin: true,
       orderIndex: orderIdx++,
       fields: fields,
+      fieldGroups: groups,
       allowedInSections: def.sections,
       filterFieldKeys: def.filters,
       createdAt: now,
