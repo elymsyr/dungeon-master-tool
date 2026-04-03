@@ -39,6 +39,12 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
             .toList() ??
         [];
 
+    // Kategori slug → schema map (O(1) lookup)
+    final catMap = <String, EntityCategorySchema>{};
+    for (final c in categories) {
+      catMap[c.slug] = c;
+    }
+
     // Filtrele
     final filtered = entities.values.where((e) {
       if (_selectedCategory != null && e.categorySlug != _selectedCategory) {
@@ -132,10 +138,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                   cacheExtent: 500,
                   itemBuilder: (context, index) {
                     final entity = filtered[index];
-                    EntityCategorySchema? cat;
-                    for (final c in categories) {
-                      if (c.slug == entity.categorySlug) { cat = c; break; }
-                    }
+                    final cat = catMap[entity.categorySlug];
                     final color = cat != null ? _parseColor(cat.color) : palette.tabText;
 
                     return Draggable<String>(

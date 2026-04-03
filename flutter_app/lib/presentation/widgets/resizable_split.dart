@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../theme/dm_tool_colors.dart';
 
-/// PyQt QSplitter karşılığı — iki widget arasında sürüklenebilir divider.
-/// CustomMultiChildLayout ile child'lar rebuild olmaz, sadece boyutları değişir.
+/// Relayout sinyali — notifyListeners() çağrıldığında
+/// CustomMultiChildLayout RenderObject'u markNeedsLayout() tetikler.
+class _RelayoutNotifier extends ChangeNotifier {
+  void notify() => notifyListeners();
+}
+
+/// PyQt QSplitter karşılığı.
+/// RelayoutNotifier ile drag sırasında build yok — sadece layout pass çalışır.
+/// Parent constraint değişimlerinde (window resize) Flutter zaten relayout yapar.
 class ResizableSplit extends StatefulWidget {
   final Widget first;
   final Widget second;
@@ -31,64 +38,57 @@ class ResizableSplit extends StatefulWidget {
 }
 
 class ResizableSplitState extends State<ResizableSplit> {
-  late double _ratio;
+  late final _RelayoutNotifier _relayout;
+  late final _SplitDelegate _delegate;
   static const _dividerSize = 8.0;
 
   @override
   void initState() {
     super.initState();
-    _ratio = widget.initialRatio.clamp(0.0, 1.0);
+    _relayout = _RelayoutNotifier();
+    _delegate = _SplitDelegate(
+      relayout: _relayout,
+      axis: widget.axis,
+      ratio: widget.initialRatio.clamp(0.0, 1.0),
+      dividerSize: _dividerSize,
+      minFirstSize: widget.minFirstSize,
+      minSecondSize: widget.minSecondSize,
+    );
   }
 
-  double get ratio => _ratio;
-  set ratio(double value) => setState(() => _ratio = value.clamp(0.0, 1.0));
+  @override
+  void dispose() {
+    _relayout.dispose();
+    super.dispose();
+  }
+
+  double get ratio => _delegate.ratio;
+  set ratio(double value) {
+    _delegate.ratio = value.clamp(0.0, 1.0);
+    _relayout.notify();
+  }
 
   @override
   Widget build(BuildContext context) {
     final isH = widget.axis == Axis.horizontal;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final total = isH ? constraints.maxWidth : constraints.maxHeight;
-        final available = total - _dividerSize;
-        if (available <= 0) return const SizedBox.shrink();
-
-        // Güvenli boyut hesapla — pencere küçültülünce overflow olmasın
-        final minFirst = widget.minFirstSize.clamp(0.0, available * 0.8);
-        final minSecond = widget.minSecondSize.clamp(0.0, available - minFirst);
-        final firstSize = (available * _ratio).clamp(minFirst, available - minSecond);
-        final secondSize = (available - firstSize).clamp(0.0, available);
-
-        return CustomMultiChildLayout(
-          delegate: _SplitDelegate(
+    return CustomMultiChildLayout(
+      delegate: _delegate,
+      children: [
+        LayoutId(id: _Slot.first, child: widget.first),
+        LayoutId(
+          id: _Slot.divider,
+          child: _SplitDivider(
             axis: widget.axis,
-            firstSize: firstSize,
-            secondSize: secondSize,
-            dividerSize: _dividerSize,
+            palette: widget.palette,
+            onDragUpdate: (delta) {
+              _delegate.applyDelta(isH ? delta.dx : delta.dy);
+            },
+            onDragEnd: () => widget.onRatioChanged?.call(_delegate.ratio),
           ),
-          children: [
-            LayoutId(id: _Slot.first, child: widget.first),
-            LayoutId(
-              id: _Slot.divider,
-              child: _SplitDivider(
-                axis: widget.axis,
-                palette: widget.palette,
-                onDragUpdate: (delta) {
-                  final d = isH ? delta.dx : delta.dy;
-                  final currentFirst = (available * _ratio).clamp(minFirst, available - minSecond);
-                  final newFirst = (currentFirst + d).clamp(minFirst, available - minSecond);
-                  final newRatio = newFirst / available;
-                  if ((newRatio - _ratio).abs() > 0.001) {
-                    setState(() => _ratio = newRatio);
-                  }
-                },
-                onDragEnd: () => widget.onRatioChanged?.call(_ratio),
-              ),
-            ),
-            LayoutId(id: _Slot.second, child: widget.second),
-          ],
-        );
-      },
+        ),
+        LayoutId(id: _Slot.second, child: widget.second),
+      ],
     );
   }
 }
@@ -96,22 +96,61 @@ class ResizableSplitState extends State<ResizableSplit> {
 enum _Slot { first, divider, second }
 
 class _SplitDelegate extends MultiChildLayoutDelegate {
-  final Axis axis;
-  final double firstSize;
-  final double secondSize;
+  final _RelayoutNotifier _relayout;
+  Axis axis;
+  double ratio;
   final double dividerSize;
+  final double minFirstSize;
+  final double minSecondSize;
 
   _SplitDelegate({
+    required _RelayoutNotifier relayout,
     required this.axis,
-    required this.firstSize,
-    required this.secondSize,
+    required this.ratio,
     required this.dividerSize,
-  });
+    required this.minFirstSize,
+    required this.minSecondSize,
+  })  : _relayout = relayout,
+        super(relayout: relayout); // ← Flutter RenderObject bu Listenable'ı dinler
+
+  void applyDelta(double d) {
+    final available = _lastAvailable;
+    if (available <= 0) return;
+    final minF = minFirstSize.clamp(0.0, available * 0.8);
+    final minS = minSecondSize.clamp(0.0, available - minF);
+    final currentFirst = (available * ratio).clamp(minF, available - minS);
+    final newFirst = (currentFirst + d).clamp(minF, available - minS);
+    final newRatio = newFirst / available;
+    if ((newRatio - ratio).abs() > 0.0005) {
+      ratio = newRatio;
+      _relayout.notify(); // → markNeedsLayout()
+    }
+  }
+
+  double _lastAvailable = 0;
 
   @override
   void performLayout(Size size) {
     final isH = axis == Axis.horizontal;
+    final total = isH ? size.width : size.height;
     final cross = isH ? size.height : size.width;
+    final available = total - dividerSize;
+    _lastAvailable = available > 0 ? available : 0;
+
+    if (available <= 0) {
+      for (final slot in _Slot.values) {
+        if (hasChild(slot)) {
+          layoutChild(slot, const BoxConstraints.tightFor(width: 0, height: 0));
+          positionChild(slot, Offset.zero);
+        }
+      }
+      return;
+    }
+
+    final minF = minFirstSize.clamp(0.0, available * 0.8);
+    final minS = minSecondSize.clamp(0.0, available - minF);
+    final firstSize = (available * ratio).clamp(minF, available - minS);
+    final secondSize = available - firstSize;
 
     if (hasChild(_Slot.first)) {
       layoutChild(_Slot.first, BoxConstraints.tight(
@@ -138,8 +177,7 @@ class _SplitDelegate extends MultiChildLayoutDelegate {
   }
 
   @override
-  bool shouldRelayout(_SplitDelegate old) =>
-      firstSize != old.firstSize || secondSize != old.secondSize || axis != old.axis;
+  bool shouldRelayout(covariant _SplitDelegate old) => true;
 }
 
 class _SplitDivider extends StatefulWidget {

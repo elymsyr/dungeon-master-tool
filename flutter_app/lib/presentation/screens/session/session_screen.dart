@@ -51,23 +51,23 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final combat = ref.watch(combatProvider);
     final screen = getScreenType(context);
 
     // İlk encounter yoksa oluştur
-    if (combat.encounters.isEmpty) {
+    final isEmpty = ref.watch(combatProvider.select((s) => s.encounters.isEmpty));
+    if (isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(combatProvider.notifier).createEncounter('Encounter 1');
       });
     }
 
-    final enc = combat.activeEncounter;
-
     if (screen == ScreenType.phone) {
-      return _buildMobileLayout(palette, combat, enc);
+      final combat = ref.read(combatProvider);
+      return _buildMobileLayout(palette, combat, combat.activeEncounter);
     }
 
-    // Desktop/Tablet: horizontal splitter — sol combat, sağ session controls
+    // Desktop/Tablet: ResizableSplit build sadece 1 kere çalışır.
+    // İçerideki Consumer widget'lar kendi watch'larıyla rebuild olur.
     final uiState = ref.read(uiStateProvider);
     return ResizableSplit(
       axis: Axis.horizontal,
@@ -78,8 +78,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       onRatioChanged: (r) {
         ref.read(uiStateProvider.notifier).update((s) => s.copyWith(sessionMainSplitterRatio: r));
       },
-      first: _buildLeftPanel(palette, combat, enc),
-      second: _buildRightPanel(palette, combat),
+      first: Consumer(builder: (context, ref, _) {
+        final combat = ref.watch(combatProvider);
+        return _buildLeftPanel(palette, combat, combat.activeEncounter);
+      }),
+      second: Consumer(builder: (context, ref, _) {
+        final combat = ref.watch(combatProvider);
+        return _buildRightPanel(palette, combat);
+      }),
     );
   }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -67,12 +68,15 @@ class CombatNotifier extends StateNotifier<CombatState> {
     }
   }
 
+  Timer? _saveTimer;
+
   void _saveAndNotify() {
     final data = _getCampaignData();
     if (data != null) {
       data['combat_state'] = getSessionState();
     }
-    _onChanged();
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(seconds: 2), () => _onChanged());
   }
 
   EncounterConfig get _encounterConfig => _getSchema().encounterConfig;

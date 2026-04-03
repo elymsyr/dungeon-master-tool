@@ -55,6 +55,7 @@ class _TextFieldWidget extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: TextFormField(
+        key: ValueKey('${schema.fieldKey}_text_$value'),
         initialValue: value?.toString() ?? '',
         readOnly: readOnly,
         decoration: InputDecoration(
@@ -82,6 +83,7 @@ class _TextAreaFieldWidget extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: TextFormField(
+        key: ValueKey('${schema.fieldKey}_area_$value'),
         initialValue: value?.toString() ?? '',
         readOnly: readOnly,
         maxLines: 4,
@@ -109,6 +111,7 @@ class _IntegerFieldWidget extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: TextFormField(
+        key: ValueKey('${schema.fieldKey}_int_$value'),
         initialValue: value?.toString() ?? '',
         readOnly: readOnly,
         keyboardType: TextInputType.number,
@@ -255,6 +258,7 @@ class _StatBlockFieldWidget extends StatelessWidget {
                       SizedBox(
                         width: 44,
                         child: TextFormField(
+                          key: ValueKey('sb_${key}_$val'),
                           initialValue: val.toString(),
                           readOnly: readOnly,
                           textAlign: TextAlign.center,
@@ -326,6 +330,7 @@ class _CombatStatsFieldWidget extends StatelessWidget {
                           child: Padding(
                             padding: EdgeInsets.only(right: f != rowFields.last ? 8 : 0),
                             child: TextFormField(
+                              key: ValueKey('cs_${f.$1}_${stats[f.$1]}'),
                               initialValue: stats[f.$1]?.toString() ?? '',
                               readOnly: readOnly,
                               textAlign: TextAlign.center,
@@ -688,6 +693,7 @@ class _DiceFieldWidget extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: TextFormField(
+        key: ValueKey('${schema.fieldKey}_dice_$value'),
         initialValue: value?.toString() ?? '',
         readOnly: readOnly,
         decoration: InputDecoration(

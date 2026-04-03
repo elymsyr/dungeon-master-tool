@@ -65,7 +65,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final campaignName = ref.watch(activeCampaignProvider) ?? '';
+    final campaignName = ref.read(activeCampaignProvider) ?? '';
     final screen = getScreenType(context);
 
     final tabLabels = [
@@ -75,18 +75,21 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       l10n.tabMap,
     ];
 
-    final schema = ref.watch(worldSchemaProvider);
+    final schema = ref.read(worldSchemaProvider);
 
-    final tabContent = [
-      DatabaseScreen(
-        editMode: _editMode,
-        selectedEntityId: _selectedEntityId,
-        onEntitySelected: (id) => setState(() => _selectedEntityId = id),
-      ),
-      const SessionScreen(),
-      _PlaceholderTab(title: l10n.tabMindMap, icon: _tabIcons[2]),
-      _PlaceholderTab(title: l10n.tabMap, icon: _tabIcons[3]),
-    ];
+    final tabStack = IndexedStack(
+      index: _tabIndex,
+      children: [
+        DatabaseScreen(
+          editMode: _editMode,
+          selectedEntityId: _selectedEntityId,
+          onEntitySelected: (id) => setState(() => _selectedEntityId = id),
+        ),
+        const SessionScreen(),
+        _PlaceholderTab(title: l10n.tabMindMap, icon: _tabIcons[2]),
+        _PlaceholderTab(title: l10n.tabMap, icon: _tabIcons[3]),
+      ],
+    );
 
     return Scaffold(
       // --- Toolbar (AppBar) ---
@@ -176,28 +179,20 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         ScreenType.desktop => Row(
             children: [
               // Sol sidebar — collapsible + resizable
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                width: _sidebarOpen ? _sidebarWidth : 0,
-                clipBehavior: Clip.hardEdge,
-                decoration: const BoxDecoration(),
-                child: _sidebarOpen
-                    ? SizedBox(
-                        width: _sidebarWidth,
-                        child: EntitySidebar(
-                          schema: schema,
-                          onEntitySelected: (id) {
-                            setState(() {
-                              _selectedEntityId = id;
-                              _tabIndex = 0;
-                            });
-                            _persistUiState();
-                          },
-                        ),
-                      )
-                    : const SizedBox.shrink(),
-              ),
+              if (_sidebarOpen)
+                SizedBox(
+                  width: _sidebarWidth,
+                  child: EntitySidebar(
+                    schema: schema,
+                    onEntitySelected: (id) {
+                      setState(() {
+                        _selectedEntityId = id;
+                        _tabIndex = 0;
+                      });
+                      _persistUiState();
+                    },
+                  ),
+                ),
               // Sidebar divider with toggle + drag resize
               _SidebarDivider(
                 isOpen: _sidebarOpen,
@@ -253,7 +248,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                       ),
                     ),
                     // Tab content
-                    Expanded(child: tabContent[_tabIndex]),
+                    Expanded(child: tabStack),
                   ],
                 ),
               ),
@@ -276,12 +271,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 ),
               ),
               const VerticalDivider(width: 1),
-              Expanded(child: tabContent[_tabIndex]),
+              Expanded(child: tabStack),
             ],
           ),
 
         // Mobile: BottomNavigationBar
-        ScreenType.phone => tabContent[_tabIndex],
+        ScreenType.phone => tabStack,
       },
 
       // Mobile bottom nav

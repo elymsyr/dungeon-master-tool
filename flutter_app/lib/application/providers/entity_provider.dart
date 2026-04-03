@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -133,6 +135,8 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>> {
     _syncToCampaign();
   }
 
+  Timer? _saveTimer;
+
   void _syncToCampaign() {
     final data = _campaign.data;
     if (data == null) return;
@@ -142,7 +146,9 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>> {
       raw[entry.key] = _entityToMap(entry.value);
     }
     data['entities'] = raw;
-    _campaign.save();
+    // Debounced disk write (500ms)
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(milliseconds: 500), () => _campaign.save());
   }
 
   Map<String, dynamic> _entityToMap(Entity e) {
