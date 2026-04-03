@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -128,6 +129,8 @@ class UiStateNotifier extends StateNotifier<UiState> {
     }
   }
 
+  Timer? _saveTimer;
+
   Future<void> _save() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, jsonEncode(state.toJson()));
@@ -135,7 +138,8 @@ class UiStateNotifier extends StateNotifier<UiState> {
 
   void update(UiState Function(UiState) updater) {
     state = updater(state);
-    _save();
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(seconds: 1), _save);
   }
 }
 
