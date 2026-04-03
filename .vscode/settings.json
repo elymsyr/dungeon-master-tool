@@ -8,5 +8,6 @@
         }
     },
     "python.analysis.typeCheckingMode": "basic",
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "cmake.sourceDirectory": "/home/eren/GitHub/dungeon-master-tool/flutter_app/linux"
 }

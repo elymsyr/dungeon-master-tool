@@ -77,7 +77,10 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
 
   // --- Action Buttons ---
   final Color dangerBtnBg;
+  final Color dangerBtnText;
   final Color successBtnBg;
+  final Color successBtnText;
+  final Color hpBtnText;
 
   // --- Popup ---
   final Color uiPopupBg;
@@ -160,7 +163,10 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     required this.tabActiveText,
     required this.tabIndicator,
     required this.dangerBtnBg,
+    this.dangerBtnText = Colors.white,
     required this.successBtnBg,
+    this.successBtnText = Colors.white,
+    this.hpBtnText = Colors.white,
     required this.uiPopupBg,
     required this.uiPopupBorder,
     required this.uiPopupText,
@@ -236,7 +242,10 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     Color? tabActiveText,
     Color? tabIndicator,
     Color? dangerBtnBg,
+    Color? dangerBtnText,
     Color? successBtnBg,
+    Color? successBtnText,
+    Color? hpBtnText,
     Color? uiPopupBg,
     Color? uiPopupBorder,
     Color? uiPopupText,
@@ -310,7 +319,10 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       tabActiveText: tabActiveText ?? this.tabActiveText,
       tabIndicator: tabIndicator ?? this.tabIndicator,
       dangerBtnBg: dangerBtnBg ?? this.dangerBtnBg,
+      dangerBtnText: dangerBtnText ?? this.dangerBtnText,
       successBtnBg: successBtnBg ?? this.successBtnBg,
+      successBtnText: successBtnText ?? this.successBtnText,
+      hpBtnText: hpBtnText ?? this.hpBtnText,
       uiPopupBg: uiPopupBg ?? this.uiPopupBg,
       uiPopupBorder: uiPopupBorder ?? this.uiPopupBorder,
       uiPopupText: uiPopupText ?? this.uiPopupText,
@@ -389,7 +401,10 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       tabActiveText: Color.lerp(tabActiveText, other.tabActiveText, t)!,
       tabIndicator: Color.lerp(tabIndicator, other.tabIndicator, t)!,
       dangerBtnBg: Color.lerp(dangerBtnBg, other.dangerBtnBg, t)!,
+      dangerBtnText: Color.lerp(dangerBtnText, other.dangerBtnText, t)!,
       successBtnBg: Color.lerp(successBtnBg, other.successBtnBg, t)!,
+      successBtnText: Color.lerp(successBtnText, other.successBtnText, t)!,
+      hpBtnText: Color.lerp(hpBtnText, other.hpBtnText, t)!,
       uiPopupBg: Color.lerp(uiPopupBg, other.uiPopupBg, t)!,
       uiPopupBorder: Color.lerp(uiPopupBorder, other.uiPopupBorder, t)!,
       uiPopupText: Color.lerp(uiPopupText, other.uiPopupText, t)!,

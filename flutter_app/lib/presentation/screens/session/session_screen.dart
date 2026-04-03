@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/combat_provider.dart';
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../domain/entities/schema/encounter_config.dart';
 import '../../../domain/entities/session.dart';
@@ -12,6 +13,7 @@ import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/condition_badge.dart';
 import '../../widgets/hp_bar.dart';
+import '../../widgets/resizable_split.dart';
 
 /// Session tab — Python ui/tabs/session_tab.py birebir karşılığı.
 /// Sol: Combat Tracker + Dice grubu
@@ -24,11 +26,6 @@ class SessionScreen extends ConsumerStatefulWidget {
 }
 
 class _SessionScreenState extends ConsumerState<SessionScreen> {
-  // Quick add controllers
-  final _quickName = TextEditingController();
-  final _quickInit = TextEditingController();
-  final _quickHp = TextEditingController();
-
   // Session
   final _logInputController = TextEditingController();
   final _notesController = TextEditingController();
@@ -39,10 +36,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   final _rng = Random();
 
   @override
+  void initState() {
+    super.initState();
+    _bottomTabIndex = ref.read(uiStateProvider).sessionBottomTab;
+  }
+
+  @override
   void dispose() {
-    _quickName.dispose();
-    _quickInit.dispose();
-    _quickHp.dispose();
     _logInputController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -68,17 +68,18 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
 
     // Desktop/Tablet: horizontal splitter — sol combat, sağ session controls
-    return Row(
-      children: [
-        // SOL: Combat Tracker + Dice
-        SizedBox(
-          width: 400,
-          child: _buildLeftPanel(palette, combat, enc),
-        ),
-        Container(width: 4, color: palette.sidebarDivider),
-        // SAĞ: Session controls + Log + Bottom tabs
-        Expanded(child: _buildRightPanel(palette, combat)),
-      ],
+    final uiState = ref.read(uiStateProvider);
+    return ResizableSplit(
+      axis: Axis.horizontal,
+      initialRatio: uiState.sessionMainSplitterRatio,
+      minFirstSize: 300,
+      minSecondSize: 300,
+      palette: palette,
+      onRatioChanged: (r) {
+        ref.read(uiStateProvider.notifier).update((s) => s.copyWith(sessionMainSplitterRatio: r));
+      },
+      first: _buildLeftPanel(palette, combat, enc),
+      second: _buildRightPanel(palette, combat),
     );
   }
 
@@ -89,149 +90,153 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Başlık
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-          child: Text('Combat', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
-        ),
-
         // === Encounter satırı ===
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
           child: Row(
             children: [
-              Text('Encounter: ', style: TextStyle(fontSize: 12, color: palette.tabText)),
               Expanded(
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: combat.activeEncounterId,
                     isDense: true,
                     isExpanded: true,
-                    style: TextStyle(fontSize: 12, color: palette.tabActiveText),
+                    style: TextStyle(fontSize: 13, color: palette.tabActiveText, fontWeight: FontWeight.w600),
                     dropdownColor: palette.uiPopupBg,
                     items: combat.encounters.map((e) =>
-                      DropdownMenuItem(value: e.id, child: Text(e.name, style: const TextStyle(fontSize: 12)))
+                      DropdownMenuItem(value: e.id, child: Text(e.name, style: const TextStyle(fontSize: 13)))
                     ).toList(),
                     onChanged: (id) { if (id != null) ref.read(combatProvider.notifier).switchEncounter(id); },
                   ),
                 ),
               ),
-              // New encounter
               IconButton(
-                icon: const Icon(Icons.create_new_folder, size: 18),
+                icon: const Icon(Icons.add, size: 20),
                 onPressed: () => ref.read(combatProvider.notifier).createEncounter('Encounter ${combat.encounters.length + 1}'),
-                visualDensity: VisualDensity.compact,
                 tooltip: 'New Encounter',
               ),
-              // Rename
               IconButton(
-                icon: const Icon(Icons.edit, size: 16),
+                icon: const Icon(Icons.edit, size: 18),
                 onPressed: enc == null ? null : () => _renameEncounter(enc),
-                visualDensity: VisualDensity.compact,
                 tooltip: 'Rename',
               ),
-              // Delete
               IconButton(
-                icon: Icon(Icons.delete, size: 16, color: palette.dangerBtnBg),
+                icon: Icon(Icons.delete, size: 18, color: palette.dangerBtnBg),
                 onPressed: combat.encounters.length > 1 && enc != null ? () => ref.read(combatProvider.notifier).deleteEncounter(enc.id) : null,
-                visualDensity: VisualDensity.compact,
-                tooltip: 'Delete Encounter',
+                tooltip: 'Delete',
               ),
             ],
           ),
         ),
 
-        // === Quick-add satırı ===
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-          child: Row(
-            children: [
-              Expanded(flex: 3, child: TextField(controller: _quickName, decoration: const InputDecoration(hintText: 'Name', isDense: true), style: const TextStyle(fontSize: 12), onSubmitted: (_) => _quickAdd())),
-              const SizedBox(width: 4),
-              SizedBox(width: 50, child: TextField(controller: _quickInit, decoration: const InputDecoration(hintText: 'Init', isDense: true), keyboardType: TextInputType.number, style: const TextStyle(fontSize: 12))),
-              const SizedBox(width: 4),
-              SizedBox(width: 50, child: TextField(controller: _quickHp, decoration: const InputDecoration(hintText: 'HP', isDense: true), keyboardType: TextInputType.number, style: const TextStyle(fontSize: 12))),
-              const SizedBox(width: 4),
-              FilledButton(
-                onPressed: _quickAdd,
-                style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, foregroundColor: Colors.white, minimumSize: const Size(0, 32), padding: const EdgeInsets.symmetric(horizontal: 12)),
-                child: const Text('Quick Add', style: TextStyle(fontSize: 11)),
-              ),
-            ],
+        Divider(height: 1, color: palette.sidebarDivider),
+
+        // === Combat tablosu (DragTarget her zaman aktif) ===
+        Expanded(
+          child: DragTarget<String>(
+            onWillAcceptWithDetails: (details) => ref.read(combatProvider.notifier).canAddToEncounter(details.data),
+            onAcceptWithDetails: (details) => ref.read(combatProvider.notifier).addCombatantFromEntity(details.data),
+            builder: (context, candidateData, rejectedData) {
+              return Container(
+                decoration: candidateData.isNotEmpty
+                    ? BoxDecoration(border: Border.all(color: palette.tabIndicator, width: 2))
+                    : null,
+                child: enc == null || enc.combatants.isEmpty
+                    ? Center(child: Text('No combatants\nDrag entities from sidebar or use Quick Add', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12)))
+                    : _buildCombatTable(palette, enc),
+              );
+            },
           ),
         ),
 
-        // === Round/Turn satırı ===
+        Divider(height: 1, color: palette.sidebarDivider),
+
+        // === Alt kontrol çubuğu: Round+NextTurn (sol) | Actions dropdown (sağ) ===
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
+              // Round badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: BorderRadius.circular(4)),
-                child: Text('Round ${enc?.round ?? 1}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: BorderRadius.circular(6)),
+                child: Text('Round ${enc?.round ?? 1}', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               ),
               const SizedBox(width: 8),
-              FilledButton(
+              // Next Turn
+              FilledButton.icon(
                 onPressed: () => ref.read(combatProvider.notifier).nextTurn(),
-                style: FilledButton.styleFrom(backgroundColor: palette.actionBtnBg, foregroundColor: palette.actionBtnText),
-                child: const Text('Next Turn', style: TextStyle(fontSize: 12)),
+                icon: const Icon(Icons.skip_next, size: 20),
+                label: const Text('Next Turn', style: TextStyle(fontSize: 13)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: palette.actionBtnBg,
+                  foregroundColor: palette.actionBtnText,
+                  minimumSize: const Size(0, 40),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+              ),
+              const Spacer(),
+              // Actions dropdown
+              PopupMenuButton<String>(
+                onSelected: (action) {
+                  switch (action) {
+                    case 'quick_add': _showQuickAddDialog();
+                    case 'add': _showAddDialog();
+                    case 'add_players': ref.read(combatProvider.notifier).addAllPlayers();
+                    case 'roll_init': ref.read(combatProvider.notifier).rollInitiatives();
+                    case 'clear_all': ref.read(combatProvider.notifier).clearAll();
+                  }
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(value: 'quick_add', child: _popupItem(Icons.bolt, 'Quick Add', palette.successBtnBg)),
+                  PopupMenuItem(value: 'add', child: _popupItem(Icons.person_add, 'Add from Database', palette.primaryBtnBg)),
+                  PopupMenuItem(value: 'add_players', child: _popupItem(Icons.group_add, 'Add All Players', palette.primaryBtnBg)),
+                  PopupMenuItem(value: 'roll_init', child: _popupItem(Icons.casino, 'Roll Initiative', palette.primaryBtnBg)),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(value: 'clear_all', child: _popupItem(Icons.delete_sweep, 'Clear All', palette.dangerBtnBg)),
+                ],
+                child: FilledButton.icon(
+                  onPressed: null, // PopupMenuButton handles the tap
+                  icon: const Icon(Icons.add_circle_outline, size: 20),
+                  label: const Text('Actions', style: TextStyle(fontSize: 13)),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                ),
               ),
             ],
           ),
         ),
-
-        // === Action butonları satırı ===
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-          child: Row(
-            children: [
-              _styledButton('Add', Icons.add, palette.primaryBtnBg, palette.primaryBtnText, () => _showAddDialog()),
-              const SizedBox(width: 4),
-              _styledButton('Add Players', Icons.group_add, palette.primaryBtnBg, palette.primaryBtnText, () => ref.read(combatProvider.notifier).addAllPlayers()),
-              const SizedBox(width: 4),
-              _styledButton('Roll Init', Icons.casino, palette.primaryBtnBg, palette.primaryBtnText, () => ref.read(combatProvider.notifier).rollInitiatives()),
-              const SizedBox(width: 4),
-              _styledButton('Clear All', Icons.delete_sweep, palette.dangerBtnBg, Colors.white, () => ref.read(combatProvider.notifier).clearAll()),
-            ],
-          ),
-        ),
-
-        Divider(height: 1, color: palette.sidebarDivider),
-
-        // === Combat tablosu ===
-        Expanded(
-          child: enc == null || enc.combatants.isEmpty
-              ? Center(child: Text('No combatants\nDrag entities from sidebar or use Quick Add', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12)))
-              : _buildCombatTable(palette, enc),
-        ),
-
-        Divider(height: 1, color: palette.sidebarDivider),
 
         // === Dice grubu ===
         Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Dice', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: palette.tabText)),
-              const SizedBox(height: 4),
-              Wrap(
-                spacing: 4,
-                children: [4, 6, 8, 10, 12, 20, 100].map((d) =>
-                  OutlinedButton(
-                    onPressed: () {
-                      final roll = _rng.nextInt(d) + 1;
-                      ref.read(combatProvider.notifier).addLog('d$d: $roll');
-                    },
-                    style: OutlinedButton.styleFrom(minimumSize: const Size(0, 28), padding: const EdgeInsets.symmetric(horizontal: 8)),
-                    child: Text('d$d', style: const TextStyle(fontSize: 11)),
-                  ),
-                ).toList(),
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+          child: Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [4, 6, 8, 10, 12, 20, 100].map((d) =>
+              OutlinedButton(
+                onPressed: () {
+                  final roll = _rng.nextInt(d) + 1;
+                  ref.read(combatProvider.notifier).addLog('d$d: $roll');
+                },
+                style: OutlinedButton.styleFrom(minimumSize: const Size(0, 34), padding: const EdgeInsets.symmetric(horizontal: 10)),
+                child: Text('d$d', style: const TextStyle(fontSize: 12)),
               ),
-            ],
+            ).toList(),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _popupItem(IconData icon, String label, Color iconColor) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: iconColor),
+        const SizedBox(width: 10),
+        Text(label, style: const TextStyle(fontSize: 13)),
       ],
     );
   }
@@ -260,74 +265,81 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           ),
         ),
 
-        // Event log + log input (üst bölüm)
+        // Event log (üst) + Bottom tabs (alt) — resizable vertical split
         Expanded(
-          flex: 3,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-                child: Text('Event Log', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
-              ),
-              Expanded(
-                child: combat.eventLog.isEmpty
-                    ? Center(child: Text('No events yet', style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12)))
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        itemCount: combat.eventLog.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 2),
-                            child: Text(combat.eventLog[index], style: TextStyle(fontSize: 12, color: palette.htmlText)),
-                          );
-                        },
-                      ),
-              ),
-              // Log input
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _logInputController,
-                        decoration: const InputDecoration(hintText: 'Quick log entry...', isDense: true),
-                        style: const TextStyle(fontSize: 12),
-                        maxLines: 1,
-                        onSubmitted: (_) => _addLogEntry(),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    FilledButton(
-                      onPressed: _addLogEntry,
-                      style: FilledButton.styleFrom(minimumSize: const Size(0, 32)),
-                      child: const Text('Add Log', style: TextStyle(fontSize: 11)),
-                    ),
-                  ],
+          child: ResizableSplit(
+            axis: Axis.vertical,
+            initialRatio: ref.read(uiStateProvider).sessionRightSplitterRatio,
+            minFirstSize: 100,
+            minSecondSize: 100,
+            palette: palette,
+            onRatioChanged: (r) {
+              ref.read(uiStateProvider.notifier).update((s) => s.copyWith(sessionRightSplitterRatio: r));
+            },
+            first: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                  child: Text('Event Log', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: combat.eventLog.isEmpty
+                      ? Center(child: Text('No events yet', style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12)))
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          itemCount: combat.eventLog.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
+                              child: Text(combat.eventLog[index], style: TextStyle(fontSize: 12, color: palette.htmlText)),
+                            );
+                          },
+                        ),
+                ),
+                // Log input
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _logInputController,
+                          decoration: const InputDecoration(hintText: 'Quick log entry...', isDense: true),
+                          style: const TextStyle(fontSize: 12),
+                          maxLines: 1,
+                          onSubmitted: (_) => _addLogEntry(),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      FilledButton(
+                        onPressed: _addLogEntry,
+                        style: FilledButton.styleFrom(minimumSize: const Size(0, 32)),
+                        child: const Text('Add Log', style: TextStyle(fontSize: 11)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            second: Column(
+              children: [
+                // Bottom tabs (Notes / BattleMap / Player / EntityStats)
+                Container(
+                  color: palette.tabBg,
+                  child: Row(
+                    children: [
+                      _bottomTab('Notes', 0, palette),
+                      _bottomTab('Battle Map', 1, palette),
+                      _bottomTab('Player Screen', 2, palette),
+                      _bottomTab('Entity Stats', 3, palette),
+                    ],
+                  ),
+                ),
+                Expanded(child: _buildBottomTabContent(palette)),
+              ],
+            ),
           ),
-        ),
-
-        Divider(height: 1, color: palette.sidebarDivider),
-
-        // Bottom tabs (Notes / BattleMap / Player / EntityStats)
-        Container(
-          color: palette.tabBg,
-          child: Row(
-            children: [
-              _bottomTab('Notes', 0, palette),
-              _bottomTab('Battle Map', 1, palette),
-              _bottomTab('Player Screen', 2, palette),
-              _bottomTab('Entity Stats', 3, palette),
-            ],
-          ),
-        ),
-        Expanded(
-          flex: 4,
-          child: _buildBottomTabContent(palette),
         ),
       ],
     );
@@ -335,17 +347,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   Widget _bottomTab(String label, int index, DmToolColors palette) {
     final isActive = _bottomTabIndex == index;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _bottomTabIndex = index),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isActive ? palette.tabActiveBg : palette.tabBg,
-            border: Border(bottom: BorderSide(color: isActive ? palette.tabIndicator : Colors.transparent, width: 2)),
-          ),
-          child: Text(label, textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: isActive ? palette.tabActiveText : palette.tabText, fontWeight: isActive ? FontWeight.w600 : FontWeight.normal)),
+    return InkWell(
+      onTap: () {
+        setState(() => _bottomTabIndex = index);
+        ref.read(uiStateProvider.notifier).update((s) => s.copyWith(sessionBottomTab: index));
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+        decoration: BoxDecoration(
+          color: isActive ? palette.tabActiveBg : palette.tabBg,
         ),
+        child: Text(label, style: TextStyle(fontSize: 11, color: isActive ? palette.tabActiveText : palette.tabText, fontWeight: FontWeight.w500)),
       ),
     );
   }
@@ -359,6 +371,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             controller: _notesController,
             maxLines: null,
             expands: true,
+            textAlignVertical: TextAlignVertical.top,
             decoration: InputDecoration(hintText: 'DM notes...', border: InputBorder.none, filled: false, hintStyle: TextStyle(color: palette.sidebarLabelSecondary)),
             style: TextStyle(fontSize: 13, color: palette.htmlText),
           ),
@@ -403,6 +416,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         // Rows
         Expanded(
           child: DragTarget<String>(
+            onWillAcceptWithDetails: (details) => ref.read(combatProvider.notifier).canAddToEncounter(details.data),
             onAcceptWithDetails: (details) => ref.read(combatProvider.notifier).addCombatantFromEntity(details.data),
             builder: (context, candidateData, rejectedData) {
               return Container(
@@ -462,7 +476,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     InkWell(
                       onTap: () => _modifyStat(c, col.subFieldKey, -1, statsMap, cfg),
                       child: Container(width: 22, height: 22, decoration: BoxDecoration(color: palette.hpBtnDecreaseBg, borderRadius: BorderRadius.circular(3)),
-                        child: const Center(child: Text('-', style: TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.bold)))),
+                        child: Center(child: Text('-', style: TextStyle(fontSize: 14, color: palette.hpBtnText, fontWeight: FontWeight.bold)))),
                     ),
                     const SizedBox(width: 2),
                     Expanded(child: HpBar(hp: numVal, maxHp: maxVal > 0 ? maxVal : 1, palette: palette)),
@@ -470,7 +484,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     InkWell(
                       onTap: () => _modifyStat(c, col.subFieldKey, 1, statsMap, cfg),
                       child: Container(width: 22, height: 22, decoration: BoxDecoration(color: palette.hpBtnIncreaseBg, borderRadius: BorderRadius.circular(3)),
-                        child: const Center(child: Text('+', style: TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.bold)))),
+                        child: Center(child: Text('+', style: TextStyle(fontSize: 14, color: palette.hpBtnText, fontWeight: FontWeight.bold)))),
                     ),
                   ],
                 ),
@@ -591,29 +605,153 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // ============================================================
   // HELPERS
   // ============================================================
-  Widget _styledButton(String label, IconData icon, Color bg, Color fg, VoidCallback onPressed) {
-    return Expanded(
-      child: FilledButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 14),
-        label: Text(label, style: const TextStyle(fontSize: 10)),
-        style: FilledButton.styleFrom(
-          backgroundColor: bg,
-          foregroundColor: fg,
-          minimumSize: const Size(0, 28),
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-        ),
+
+  void _showQuickAddDialog() {
+    final schema = ref.read(worldSchemaProvider);
+    final cfg = schema.encounterConfig;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+
+    final nameController = TextEditingController();
+    int quantity = 1;
+    // Dinamik alan controller'ları — encounterConfig columns'dan + max_hp
+    final statControllers = <String, TextEditingController>{};
+    for (final col in cfg.columns) {
+      statControllers[col.subFieldKey] = TextEditingController();
+    }
+    final hasMaxHpColumn = cfg.columns.any((c) => c.subFieldKey == 'max_hp');
+    if (!hasMaxHpColumn) {
+      statControllers['max_hp'] = TextEditingController();
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          return AlertDialog(
+            title: const Text('Quick Add', style: TextStyle(fontSize: 14)),
+            content: SizedBox(
+              width: 340,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Name
+                    TextField(
+                      controller: nameController,
+                      autofocus: true,
+                      decoration: const InputDecoration(labelText: 'Name'),
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    const SizedBox(height: 12),
+                    // Quantity
+                    Row(
+                      children: [
+                        Text('Quantity', style: TextStyle(fontSize: 12, color: palette.tabText)),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.remove, size: 18),
+                          onPressed: quantity > 1
+                              ? () => setDialogState(() => quantity--)
+                              : null,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        Container(
+                          width: 40,
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          decoration: BoxDecoration(
+                            color: palette.featureCardBg,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text('$quantity', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add, size: 18),
+                          onPressed: quantity < 20
+                              ? () => setDialogState(() => quantity++)
+                              : null,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Divider(color: palette.sidebarDivider),
+                    const SizedBox(height: 4),
+                    Text('Combat Stats', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
+                    const SizedBox(height: 8),
+                    // Dinamik stat alanları
+                    ...cfg.columns.map((col) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: TextField(
+                        controller: statControllers[col.subFieldKey],
+                        decoration: InputDecoration(
+                          labelText: col.label,
+                          hintText: col.subFieldKey == 'hp' ? '10' : '0',
+                        ),
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    )),
+                    // Max HP (columns'da yoksa ekstra göster)
+                    if (!hasMaxHpColumn)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: TextField(
+                          controller: statControllers['max_hp'],
+                          decoration: const InputDecoration(
+                            labelText: 'Max HP',
+                            hintText: 'Same as HP if empty',
+                          ),
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              FilledButton.icon(
+                onPressed: () {
+                  final name = nameController.text.trim();
+                  if (name.isEmpty) return;
+
+                  // Stat map oluştur
+                  final stats = <String, String>{};
+                  for (final col in cfg.columns) {
+                    final val = statControllers[col.subFieldKey]?.text.trim() ?? '';
+                    if (val.isNotEmpty) stats[col.subFieldKey] = val;
+                  }
+
+                  // Quantity kadar ekle
+                  final notifier = ref.read(combatProvider.notifier);
+                  if (quantity == 1) {
+                    notifier.addDirectRow(name, stats: stats);
+                  } else {
+                    for (int i = 1; i <= quantity; i++) {
+                      notifier.addDirectRow('$name $i', stats: stats);
+                    }
+                  }
+
+                  Navigator.pop(ctx);
+                },
+                icon: const Icon(Icons.add, size: 16),
+                label: Text('Add${quantity > 1 ? ' ($quantity)' : ''}', style: const TextStyle(fontSize: 12)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: palette.successBtnBg,
+                  foregroundColor: palette.successBtnText,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
-  }
-
-  void _quickAdd() {
-    final name = _quickName.text.trim();
-    if (name.isEmpty) return;
-    ref.read(combatProvider.notifier).addDirectRow(name, int.tryParse(_quickInit.text) ?? 0, int.tryParse(_quickHp.text) ?? 10);
-    _quickName.clear();
-    _quickInit.clear();
-    _quickHp.clear();
   }
 
   void _addLogEntry() {
@@ -642,10 +780,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   void _showAddDialog() async {
+    final combatSlugs = ref.read(combatProvider.notifier).combatCapableSlugs.toList();
     final result = await showEntitySelectorDialog(
       context: context,
       ref: ref,
-      allowedTypes: ['npc', 'monster', 'player'],
+      allowedTypes: combatSlugs,
       multiSelect: true,
     );
     if (result != null) {

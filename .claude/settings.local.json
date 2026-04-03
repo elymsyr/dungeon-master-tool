@@ -58,7 +58,8 @@
       "Bash(flutter clean:*)",
       "Bash(flutter pub:*)",
       "Bash(flutter test:*)",
-      "Bash(dart run:*)"
+      "Bash(dart run:*)",
+      "Bash(find /home/eren/GitHub/dungeon-master-tool/flutter_app -name \"*.dart\" -type f -exec grep -l \"delete.*campaign\\\\|delete.*world\" {} \\\\;)"
     ]
   }
 }

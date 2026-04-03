@@ -192,6 +192,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                   label: Text(l10n.btnCreate),
                   style: FilledButton.styleFrom(
                     backgroundColor: palette.successBtnBg,
+                    foregroundColor: palette.successBtnText,
                     minimumSize: const Size(0, 36),
                   ),
                 ),

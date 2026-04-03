@@ -34,6 +34,8 @@ class CampaignRepository {
     await _localDs.save(path, data);
   }
 
+  Future<void> delete(String campaignName) => _localDs.deleteCampaign(campaignName);
+
   Future<String> create(String worldName, {WorldSchema? template}) async {
     await _localDs.createCampaign(worldName);
 

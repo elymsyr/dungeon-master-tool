@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/resizable_split.dart';
 import 'entity_card.dart';
 
 /// Database tab — Dual-panel tabbed card workspace.
 /// Python ui/tabs/database_tab.py birebir karşılığı:
 /// Sol panel (EntityTabWidget) + Sağ panel (EntityTabWidget), splitter ile.
-/// Her panel birden fazla entity kartını tab olarak açabilir.
 class DatabaseScreen extends ConsumerStatefulWidget {
   final bool editMode;
   final String? selectedEntityId;
@@ -28,40 +29,128 @@ class DatabaseScreen extends ConsumerStatefulWidget {
 
 class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
   final List<_TabEntry> _leftTabs = [];
+  final List<_TabEntry> _rightTabs = [];
   int _leftActiveIndex = -1;
+  int _rightActiveIndex = -1;
 
   @override
   void didUpdateWidget(DatabaseScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Sidebar'dan entity seçildiğinde sol panelde tab aç
     if (widget.selectedEntityId != null &&
         widget.selectedEntityId != oldWidget.selectedEntityId) {
-      _openTab(widget.selectedEntityId!, panel: _Panel.left);
+      // Build sırasında provider değiştirilemez — frame sonrasına ertele
+      final eid = widget.selectedEntityId!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openTab(eid, panel: _Panel.left);
+      });
     }
   }
 
   void _openTab(String entityId, {_Panel panel = _Panel.left}) {
-    final existing = _leftTabs.indexWhere((t) => t.entityId == entityId);
+    final tabs = panel == _Panel.left ? _leftTabs : _rightTabs;
+
+    // Aynı tab zaten açıksa aktif yap
+    final existing = tabs.indexWhere((t) => t.entityId == entityId);
     if (existing >= 0) {
-      setState(() => _leftActiveIndex = existing);
+      setState(() {
+        if (panel == _Panel.left) {
+          _leftActiveIndex = existing;
+        } else {
+          _rightActiveIndex = existing;
+        }
+      });
+      _persistOpenTabs();
+      return;
+    }
+
+    // Diğer panelde de var mı kontrol et (varsa oraya focus)
+    final otherTabs = panel == _Panel.left ? _rightTabs : _leftTabs;
+    final otherExisting = otherTabs.indexWhere((t) => t.entityId == entityId);
+    if (otherExisting >= 0) {
+      setState(() {
+        if (panel == _Panel.left) {
+          _rightActiveIndex = otherExisting;
+        } else {
+          _leftActiveIndex = otherExisting;
+        }
+      });
+      _persistOpenTabs();
       return;
     }
 
     final entities = ref.read(entityProvider);
     final entity = entities[entityId];
+    final schema = ref.read(worldSchemaProvider);
+
+    Color catColor = const Color(0xFF808080);
+    if (entity != null) {
+      final cat = _firstWhereOrNull(schema.categories, (c) => c.slug == entity.categorySlug);
+      if (cat != null) catColor = _parseHexColor(cat.color);
+    }
+
+    final entry = _TabEntry(
+      entityId: entityId,
+      title: entity?.name ?? 'Unknown',
+      categorySlug: entity?.categorySlug ?? '',
+      categoryColor: catColor,
+    );
 
     setState(() {
-      _leftTabs.add(_TabEntry(entityId: entityId, title: entity?.name ?? 'Unknown', categorySlug: entity?.categorySlug ?? ''));
-      _leftActiveIndex = _leftTabs.length - 1;
+      tabs.add(entry);
+      if (panel == _Panel.left) {
+        _leftActiveIndex = _leftTabs.length - 1;
+      } else {
+        _rightActiveIndex = _rightTabs.length - 1;
+      }
     });
+    _persistOpenTabs();
   }
 
   void _closeTab(int index, _Panel panel) {
     setState(() {
-      _leftTabs.removeAt(index);
-      if (_leftActiveIndex >= _leftTabs.length) _leftActiveIndex = _leftTabs.length - 1;
+      if (panel == _Panel.left) {
+        _leftTabs.removeAt(index);
+        if (_leftActiveIndex >= _leftTabs.length) _leftActiveIndex = _leftTabs.length - 1;
+      } else {
+        _rightTabs.removeAt(index);
+        if (_rightActiveIndex >= _rightTabs.length) _rightActiveIndex = _rightTabs.length - 1;
+      }
+    });
+    _persistOpenTabs();
+  }
+
+  void _persistOpenTabs() {
+    Future(() {
+      if (!mounted) return;
+      ref.read(uiStateProvider.notifier).update((s) => s.copyWith(
+        dbOpenLeft: _leftTabs.map((t) => t.entityId).toList(),
+        dbOpenRight: _rightTabs.map((t) => t.entityId).toList(),
+        dbActiveLeft: _leftActiveIndex,
+        dbActiveRight: _rightActiveIndex,
+      ));
     });
   }
+
+  /// Uygulama açılışında UiState'den açık kartları restore et
+  void restoreOpenTabs() {
+    final uiState = ref.read(uiStateProvider);
+    for (final eid in uiState.dbOpenLeft) {
+      _openTab(eid, panel: _Panel.left);
+    }
+    for (final eid in uiState.dbOpenRight) {
+      _openTab(eid, panel: _Panel.right);
+    }
+    setState(() {
+      if (uiState.dbActiveLeft >= 0 && uiState.dbActiveLeft < _leftTabs.length) {
+        _leftActiveIndex = uiState.dbActiveLeft;
+      }
+      if (uiState.dbActiveRight >= 0 && uiState.dbActiveRight < _rightTabs.length) {
+        _rightActiveIndex = uiState.dbActiveRight;
+      }
+    });
+  }
+
+  bool _restored = false;
 
   @override
   Widget build(BuildContext context) {
@@ -69,11 +158,15 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
     final screen = getScreenType(context);
     final schema = ref.watch(worldSchemaProvider);
 
+    // İlk build'de açık kartları restore et
+    if (!_restored) {
+      _restored = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => restoreOpenTabs());
+    }
+
     // Mobile: tek panel
     if (screen == ScreenType.phone) {
-      if (_leftTabs.isEmpty) {
-        return _EmptyPanel(palette: palette);
-      }
+      if (_leftTabs.isEmpty) return _EmptyPanel(palette: palette);
       final active = _leftActiveIndex.clamp(0, _leftTabs.length - 1);
       return Column(
         children: [
@@ -81,7 +174,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
             tabs: _leftTabs,
             activeIndex: active,
             palette: palette,
-            onSelect: (i) => setState(() => _leftActiveIndex = i),
+            onSelect: (i) { setState(() => _leftActiveIndex = i); _persistOpenTabs(); },
             onClose: (i) => _closeTab(i, _Panel.left),
           ),
           Expanded(
@@ -97,30 +190,61 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
       );
     }
 
-    // Tek panel — DragTarget ile
-    return DragTarget<String>(
-      onAcceptWithDetails: (details) => _openTab(details.data, panel: _Panel.left),
-      builder: (context, candidateData, rejectedData) {
-        return Container(
-          decoration: candidateData.isNotEmpty
-              ? BoxDecoration(border: Border.all(color: palette.tabIndicator, width: 2))
-              : null,
-          child: _TabPanel(
-            tabs: _leftTabs,
-            activeIndex: _leftActiveIndex,
-            palette: palette,
-            editMode: widget.editMode,
-            schema: schema,
-            onSelect: (i) => setState(() => _leftActiveIndex = i),
-            onClose: (i) => _closeTab(i, _Panel.left),
-          ),
-        );
+    // Desktop/Tablet: Dual-panel with resizable splitter
+    final uiState = ref.read(uiStateProvider);
+
+    return ResizableSplit(
+      axis: Axis.horizontal,
+      initialRatio: uiState.dbSplitterRatio,
+      minFirstSize: 200,
+      minSecondSize: 200,
+      palette: palette,
+      onRatioChanged: (r) {
+        ref.read(uiStateProvider.notifier).update((s) => s.copyWith(dbSplitterRatio: r));
       },
+      first: DragTarget<String>(
+        onAcceptWithDetails: (details) => _openTab(details.data, panel: _Panel.left),
+        builder: (context, candidateData, rejectedData) {
+          return Container(
+            decoration: candidateData.isNotEmpty
+                ? BoxDecoration(border: Border.all(color: palette.tabIndicator, width: 2))
+                : null,
+            child: _TabPanel(
+              tabs: _leftTabs,
+              activeIndex: _leftActiveIndex,
+              palette: palette,
+              editMode: widget.editMode,
+              schema: schema,
+              onSelect: (i) { setState(() => _leftActiveIndex = i); _persistOpenTabs(); },
+              onClose: (i) => _closeTab(i, _Panel.left),
+            ),
+          );
+        },
+      ),
+      second: DragTarget<String>(
+        onAcceptWithDetails: (details) => _openTab(details.data, panel: _Panel.right),
+        builder: (context, candidateData, rejectedData) {
+          return Container(
+            decoration: candidateData.isNotEmpty
+                ? BoxDecoration(border: Border.all(color: palette.tabIndicator, width: 2))
+                : null,
+            child: _TabPanel(
+              tabs: _rightTabs,
+              activeIndex: _rightActiveIndex,
+              palette: palette,
+              editMode: widget.editMode,
+              schema: schema,
+              onSelect: (i) { setState(() => _rightActiveIndex = i); _persistOpenTabs(); },
+              onClose: (i) => _closeTab(i, _Panel.right),
+            ),
+          );
+        },
+      ),
     );
   }
 }
 
-enum _Panel { left }
+enum _Panel { left, right }
 
 T? _firstWhereOrNull<T>(Iterable<T> items, bool Function(T) test) {
   for (final item in items) {
@@ -133,8 +257,9 @@ class _TabEntry {
   final String entityId;
   final String title;
   final String categorySlug;
+  final Color categoryColor;
 
-  _TabEntry({required this.entityId, required this.title, required this.categorySlug});
+  _TabEntry({required this.entityId, required this.title, required this.categorySlug, required this.categoryColor});
 }
 
 /// Tek bir panel: üstte tab bar, altta entity card.
@@ -189,7 +314,6 @@ class _TabPanel extends ConsumerWidget {
 }
 
 /// Tab bar — Python EntityTabWidget karşılığı.
-/// Kapatılabilir, tıklanabilir tab'lar.
 class _TabBar extends StatelessWidget {
   final List<_TabEntry> tabs;
   final int activeIndex;
@@ -219,11 +343,10 @@ class _TabBar extends StatelessWidget {
         itemBuilder: (context, i) {
           final tab = tabs[i];
           final isActive = i == activeIndex;
-          final catColor = _categoryColor(tab.categorySlug);
+          final catColor = tab.categoryColor;
 
           return GestureDetector(
             onTap: () => onSelect(i),
-            // Orta tık ile kapat
             onTertiaryTapUp: (_) => onClose(i),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -240,17 +363,12 @@ class _TabBar extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Kategori renk noktası
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: BoxDecoration(
-                      color: catColor,
-                      shape: BoxShape.circle,
-                    ),
+                    decoration: BoxDecoration(color: catColor, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 6),
-                  // Tab başlığı
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 140),
                     child: Text(
@@ -264,7 +382,6 @@ class _TabBar extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  // Kapat butonu
                   InkWell(
                     borderRadius: BorderRadius.circular(8),
                     onTap: () => onClose(i),
@@ -285,26 +402,14 @@ class _TabBar extends StatelessWidget {
       ),
     );
   }
+}
 
-  Color _categoryColor(String slug) {
-    const colors = {
-      'npc': Color(0xFFFF9800),
-      'monster': Color(0xFFD32F2F),
-      'player': Color(0xFF4CAF50),
-      'spell': Color(0xFF7B1FA2),
-      'equipment': Color(0xFF795548),
-      'class': Color(0xFF1976D2),
-      'race': Color(0xFF00897B),
-      'location': Color(0xFF2E7D32),
-      'quest': Color(0xFFF57C00),
-      'lore': Color(0xFF5C6BC0),
-      'status-effect': Color(0xFFE91E63),
-      'feat': Color(0xFFFF7043),
-      'background': Color(0xFF8D6E63),
-      'plane': Color(0xFF26C6DA),
-      'condition': Color(0xFFAB47BC),
-    };
-    return colors[slug] ?? const Color(0xFF808080);
+Color _parseHexColor(String hex) {
+  try {
+    final clean = hex.replaceFirst('#', '');
+    return Color(int.parse('FF$clean', radix: 16));
+  } catch (_) {
+    return const Color(0xFF808080);
   }
 }
 

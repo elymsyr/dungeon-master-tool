@@ -143,6 +143,7 @@ class _CampaignSelectorScreenState
                     label: Text(l10n.btnCreate),
                     style: FilledButton.styleFrom(
                       backgroundColor: palette.successBtnBg,
+                      foregroundColor: palette.successBtnText,
                     ),
                   ),
                 ],

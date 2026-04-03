@@ -52,7 +52,28 @@ class CombatNotifier extends StateNotifier<CombatState> {
   final WorldSchema Function() _getSchema;
   final VoidCallback _onChanged;
 
-  CombatNotifier(this._getEntities, this._getSchema, this._onChanged) : super(const CombatState());
+  final Map<String, dynamic>? Function() _getCampaignData;
+
+  CombatNotifier(this._getEntities, this._getSchema, this._onChanged, this._getCampaignData) : super(const CombatState()) {
+    _loadFromCampaign();
+  }
+
+  void _loadFromCampaign() {
+    final data = _getCampaignData();
+    if (data == null) return;
+    final combatData = data['combat_state'];
+    if (combatData is Map) {
+      loadSessionState(Map<String, dynamic>.from(combatData));
+    }
+  }
+
+  void _saveAndNotify() {
+    final data = _getCampaignData();
+    if (data != null) {
+      data['combat_state'] = getSessionState();
+    }
+    _onChanged();
+  }
 
   EncounterConfig get _encounterConfig => _getSchema().encounterConfig;
 
@@ -65,7 +86,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
       activeEncounterId: enc.id,
     );
     _log('New encounter: $name');
-    _onChanged();
+    _saveAndNotify();
   }
 
   void switchEncounter(String eid) {
@@ -77,7 +98,30 @@ class CombatNotifier extends StateNotifier<CombatState> {
     final updated = state.encounters.where((e) => e.id != eid).toList();
     final newActive = state.activeEncounterId == eid ? updated.first.id : state.activeEncounterId;
     state = state.copyWith(encounters: updated, activeEncounterId: newActive);
-    _onChanged();
+    _saveAndNotify();
+  }
+
+  // --- Helpers ---
+
+  /// Combat stats field'ı olan kategori slug'larını döndürür.
+  Set<String> get combatCapableSlugs {
+    final schema = _getSchema();
+    final cfg = _encounterConfig;
+    final slugs = <String>{};
+    for (final cat in schema.categories) {
+      if (cat.fields.any((f) => f.fieldKey == cfg.combatStatsFieldKey)) {
+        slugs.add(cat.slug);
+      }
+    }
+    return slugs;
+  }
+
+  /// Entity'nin encounter'a eklenebilir olup olmadığını kontrol eder.
+  bool canAddToEncounter(String entityId) {
+    final entities = _getEntities();
+    final entity = entities[entityId];
+    if (entity == null) return false;
+    return combatCapableSlugs.contains(entity.categorySlug);
   }
 
   // --- Combatant Management ---
@@ -85,6 +129,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
   void addCombatantFromEntity(String entityId) {
     final enc = state.activeEncounter;
     if (enc == null) return;
+    if (!canAddToEncounter(entityId)) return;
     final entities = _getEntities();
     final entity = entities[entityId];
     if (entity == null) return;
@@ -122,21 +167,27 @@ class CombatNotifier extends StateNotifier<CombatState> {
     _sortByInitiative();
   }
 
-  void addDirectRow(String name, int init, int hp) {
+  void addDirectRow(String name, {Map<String, String> stats = const {}}) {
     final enc = state.activeEncounter;
     if (enc == null) return;
+    final cfg = _encounterConfig;
+
+    final init = int.tryParse(stats[cfg.initiativeSubField] ?? '') ?? 0;
+    final hp = int.tryParse(stats['hp'] ?? '') ?? 10;
+    final maxHp = int.tryParse(stats['max_hp'] ?? '') ?? hp;
+    final ac = int.tryParse(stats['ac'] ?? '') ?? 10;
 
     final combatant = Combatant(
       id: _uuid.v4(),
       name: name,
       init: init,
-      ac: 10,
+      ac: ac,
       hp: hp,
-      maxHp: hp,
+      maxHp: maxHp,
     );
 
     _updateEncounter(enc.copyWith(combatants: [...enc.combatants, combatant]));
-    _log('Added $name (Init: $init, HP: $hp)');
+    _log('Added $name (Init: $init, AC: $ac, HP: $hp/$maxHp)');
     _sortByInitiative();
   }
 
@@ -145,9 +196,10 @@ class CombatNotifier extends StateNotifier<CombatState> {
     if (enc == null) return;
     final entities = _getEntities();
     final existingIds = enc.combatants.map((c) => c.entityId).toSet();
+    final capable = combatCapableSlugs;
 
     for (final entity in entities.values) {
-      if (entity.categorySlug == 'player' && !existingIds.contains(entity.id)) {
+      if (entity.categorySlug == 'player' && capable.contains('player') && !existingIds.contains(entity.id)) {
         addCombatantFromEntity(entity.id);
       }
     }
@@ -158,7 +210,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
     if (enc == null) return;
     final updated = enc.combatants.where((c) => c.id != combatantId).toList();
     _updateEncounter(enc.copyWith(combatants: updated));
-    _onChanged();
+    _saveAndNotify();
   }
 
   void clearAll() {
@@ -166,7 +218,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
     if (enc == null) return;
     _updateEncounter(enc.copyWith(combatants: [], turnIndex: -1, round: 1));
     _log('Combat cleared');
-    _onChanged();
+    _saveAndNotify();
   }
 
   // --- Turn & Round ---
@@ -205,7 +257,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
     } else {
       _log('${current.name}\'s turn');
     }
-    _onChanged();
+    _saveAndNotify();
   }
 
   void rollInitiatives() {
@@ -222,7 +274,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
 
     final summary = rolled.map((c) => '${c.name}(${c.init})').join(', ');
     _log('Initiative: $summary');
-    _onChanged();
+    _saveAndNotify();
   }
 
   // --- HP & Conditions ---
@@ -244,7 +296,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
 
     // Entity card sync — combatStats güncelle
     _syncCombatStatToEntity(combatantId, 'hp', c.hp.toString());
-    _onChanged();
+    _saveAndNotify();
   }
 
   /// Combat stats'taki bir değeri entity'ye de yaz (canlı sync)
@@ -279,7 +331,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
 
     _updateEncounter(enc.copyWith(combatants: updated));
     _log('${updated.firstWhere((c) => c.id == combatantId).name} gains $condName${duration != null ? ' ($duration rounds)' : ''}');
-    _onChanged();
+    _saveAndNotify();
   }
 
   void removeCondition(String combatantId, String condName) {
@@ -292,7 +344,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
     }).toList();
 
     _updateEncounter(enc.copyWith(combatants: updated));
-    _onChanged();
+    _saveAndNotify();
   }
 
   // --- Serialization ---
@@ -301,6 +353,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
     return {
       'encounters': state.encounters.map((e) => e.toJson()).toList(),
       'active_encounter_id': state.activeEncounterId,
+      'event_log': state.eventLog,
     };
   }
 
@@ -309,9 +362,12 @@ class CombatNotifier extends StateNotifier<CombatState> {
       Encounter.fromJson(Map<String, dynamic>.from(e as Map))
     ).toList() ?? [];
 
+    final eventLog = (data['event_log'] as List?)?.cast<String>() ?? const [];
+
     state = state.copyWith(
       encounters: encList,
       activeEncounterId: data['active_encounter_id'] as String? ?? (encList.isNotEmpty ? encList.first.id : null),
+      eventLog: eventLog,
     );
   }
 
@@ -351,5 +407,6 @@ final combatProvider = StateNotifierProvider<CombatNotifier, CombatState>((ref) 
     () => ref.read(entityProvider),
     () => ref.read(worldSchemaProvider),
     () => ref.read(activeCampaignProvider.notifier).save(),
+    () => ref.read(activeCampaignProvider.notifier).data,
   );
 });

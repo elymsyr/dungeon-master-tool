@@ -8,14 +8,20 @@ class AppPaths {
   static late String dataRoot;
   static late String worldsDir;
   static late String cacheDir;
+  static late String trashDir;
 
   static Future<void> initialize() async {
     dataRoot = await _resolveDataRoot();
     worldsDir = p.join(dataRoot, 'worlds');
     cacheDir = p.join(dataRoot, 'cache');
+    trashDir = p.join(dataRoot, '.trash');
 
     await Directory(worldsDir).create(recursive: true);
     await Directory(cacheDir).create(recursive: true);
+    await Directory(trashDir).create(recursive: true);
+
+    // 30 günden eski trash öğelerini temizle
+    await _cleanupTrash();
   }
 
   static Future<String> _resolveDataRoot() async {
@@ -48,6 +54,21 @@ class AppPaths {
       return true;
     } catch (_) {
       return false;
+    }
+  }
+
+  /// 30 günden eski trash öğelerini sil.
+  static Future<void> _cleanupTrash() async {
+    final dir = Directory(trashDir);
+    if (!await dir.exists()) return;
+    final now = DateTime.now();
+    await for (final entry in dir.list()) {
+      try {
+        final stat = await entry.stat();
+        if (now.difference(stat.modified).inDays >= 30) {
+          await entry.delete(recursive: true);
+        }
+      } catch (_) {}
     }
   }
 

@@ -5,6 +5,7 @@ import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/locale_provider.dart';
 import '../../application/providers/theme_provider.dart';
+import '../../application/providers/ui_state_provider.dart';
 import '../../core/utils/screen_type.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
@@ -28,6 +29,30 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   int _tabIndex = 0;
   bool _editMode = false;
   String? _selectedEntityId;
+
+  // Sidebar state
+  bool _sidebarOpen = true;
+  double _sidebarWidth = 280;
+  static const double _minSidebarWidth = 200;
+  static const double _maxSidebarWidth = 450;
+
+  @override
+  void initState() {
+    super.initState();
+    // UiState'den restore et
+    final uiState = ref.read(uiStateProvider);
+    _tabIndex = uiState.mainTabIndex;
+    _sidebarOpen = uiState.sidebarOpen;
+    _sidebarWidth = uiState.sidebarWidth.clamp(_minSidebarWidth, _maxSidebarWidth);
+  }
+
+  void _persistUiState() {
+    ref.read(uiStateProvider.notifier).update((s) => s.copyWith(
+      mainTabIndex: _tabIndex,
+      sidebarOpen: _sidebarOpen,
+      sidebarWidth: _sidebarWidth,
+    ));
+  }
 
   static const _tabIcons = [
     Icons.storage,       // Database
@@ -150,20 +175,43 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         // Desktop: Sidebar (sol) + Tab bar + content (sağ)
         ScreenType.desktop => Row(
             children: [
-              // Sol sidebar — tüm tab'larda ortak
-              SizedBox(
-                width: 280,
-                child: EntitySidebar(
-                  schema: schema,
-                  onEntitySelected: (id) {
-                    setState(() {
-                      _selectedEntityId = id;
-                      _tabIndex = 0; // Database tab'a geç
-                    });
-                  },
-                ),
+              // Sol sidebar — collapsible + resizable
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                width: _sidebarOpen ? _sidebarWidth : 0,
+                clipBehavior: Clip.hardEdge,
+                decoration: const BoxDecoration(),
+                child: _sidebarOpen
+                    ? SizedBox(
+                        width: _sidebarWidth,
+                        child: EntitySidebar(
+                          schema: schema,
+                          onEntitySelected: (id) {
+                            setState(() {
+                              _selectedEntityId = id;
+                              _tabIndex = 0;
+                            });
+                            _persistUiState();
+                          },
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
-              VerticalDivider(width: 1, color: palette.sidebarDivider),
+              // Sidebar divider with toggle + drag resize
+              _SidebarDivider(
+                isOpen: _sidebarOpen,
+                palette: palette,
+                onToggle: () { setState(() => _sidebarOpen = !_sidebarOpen); _persistUiState(); },
+                onDragUpdate: _sidebarOpen
+                    ? (dx) {
+                        setState(() {
+                          _sidebarWidth = (_sidebarWidth + dx).clamp(_minSidebarWidth, _maxSidebarWidth);
+                        });
+                      }
+                    : null,
+                onDragEnd: _sidebarOpen ? () => _persistUiState() : null,
+              ),
               // Sağ: tab bar + tab content
               Expanded(
                 child: Column(
@@ -172,24 +220,18 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                     Container(
                       color: palette.tabBg,
                       child: Row(
-                        children: List.generate(4, (i) {
-                          final isActive = i == _tabIndex;
-                          return Expanded(
-                            child: InkWell(
-                              onTap: () => setState(() => _tabIndex = i),
+                        children: [
+                          ...List.generate(4, (i) {
+                            final isActive = i == _tabIndex;
+                            return InkWell(
+                              onTap: () { setState(() => _tabIndex = i); _persistUiState(); },
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                                 decoration: BoxDecoration(
                                   color: isActive ? palette.tabActiveBg : palette.tabBg,
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: isActive ? palette.tabIndicator : Colors.transparent,
-                                      width: 2,
-                                    ),
-                                  ),
                                 ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(_tabIcons[i], size: 18,
                                       color: isActive ? palette.tabActiveText : palette.tabText),
@@ -197,16 +239,17 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                                     Text(tabLabels[i],
                                       style: TextStyle(
                                         color: isActive ? palette.tabActiveText : palette.tabText,
-                                        fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                                        fontWeight: FontWeight.w500,
                                         fontSize: 13,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ),
-                          );
-                        }),
+                            );
+                          }),
+                          const Spacer(),
+                        ],
                       ),
                     ),
                     // Tab content
@@ -222,8 +265,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             children: [
               NavigationRail(
                 selectedIndex: _tabIndex,
-                onDestinationSelected: (i) =>
-                    setState(() => _tabIndex = i),
+                onDestinationSelected: (i) { setState(() => _tabIndex = i); _persistUiState(); },
                 labelType: NavigationRailLabelType.all,
                 destinations: List.generate(
                   4,
@@ -246,8 +288,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       bottomNavigationBar: screen == ScreenType.phone
           ? NavigationBar(
               selectedIndex: _tabIndex,
-              onDestinationSelected: (i) =>
-                  setState(() => _tabIndex = i),
+              onDestinationSelected: (i) { setState(() => _tabIndex = i); _persistUiState(); },
               destinations: List.generate(
                 4,
                 (i) => NavigationDestination(
@@ -257,6 +298,63 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               ),
             )
           : null,
+    );
+  }
+}
+
+/// Sidebar divider — toggle butonu + sürükleyerek genişletme.
+class _SidebarDivider extends StatefulWidget {
+  final bool isOpen;
+  final DmToolColors palette;
+  final VoidCallback onToggle;
+  final void Function(double dx)? onDragUpdate;
+  final VoidCallback? onDragEnd;
+
+  const _SidebarDivider({
+    required this.isOpen,
+    required this.palette,
+    required this.onToggle,
+    this.onDragUpdate,
+    this.onDragEnd,
+  });
+
+  @override
+  State<_SidebarDivider> createState() => _SidebarDividerState();
+}
+
+class _SidebarDividerState extends State<_SidebarDivider> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onHorizontalDragUpdate: widget.onDragUpdate != null
+          ? (details) => widget.onDragUpdate!(details.delta.dx)
+          : null,
+      onHorizontalDragEnd: widget.onDragEnd != null
+          ? (_) => widget.onDragEnd!()
+          : null,
+      child: MouseRegion(
+        cursor: widget.isOpen ? SystemMouseCursors.resizeColumn : SystemMouseCursors.basic,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: InkWell(
+          onTap: widget.onToggle,
+          child: Container(
+            width: 10,
+            color: Colors.transparent,
+            child: Center(
+              child: Container(
+                width: 1,
+                height: double.infinity,
+                color: _hovered
+                    ? widget.palette.tabIndicator.withValues(alpha: 0.6)
+                    : widget.palette.sidebarDivider,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

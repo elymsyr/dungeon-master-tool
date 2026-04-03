@@ -311,28 +311,42 @@ class _CombatStatsFieldWidget extends StatelessWidget {
           children: [
             Text(schema.label, style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: fields.map((f) {
-                return SizedBox(
-                  width: 80,
-                  child: TextFormField(
-                    initialValue: stats[f.$1]?.toString() ?? '',
-                    readOnly: readOnly,
-                    textAlign: TextAlign.center,
-                    decoration: InputDecoration(
-                      labelText: f.$2,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // Satıra sığan alan sayısını hesapla (min 80px per field + 8px gap)
+                final cols = (constraints.maxWidth / 88).floor().clamp(1, fields.length);
+                final rows = <Widget>[];
+                for (var i = 0; i < fields.length; i += cols) {
+                  final rowFields = fields.sublist(i, (i + cols).clamp(0, fields.length));
+                  rows.add(Padding(
+                    padding: EdgeInsets.only(bottom: i + cols < fields.length ? 8 : 0),
+                    child: Row(
+                      children: rowFields.map((f) {
+                        return Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(right: f != rowFields.last ? 8 : 0),
+                            child: TextFormField(
+                              initialValue: stats[f.$1]?.toString() ?? '',
+                              readOnly: readOnly,
+                              textAlign: TextAlign.center,
+                              decoration: InputDecoration(
+                                labelText: f.$2,
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                              ),
+                              onChanged: (v) {
+                                stats[f.$1] = v;
+                                onChanged(Map<String, dynamic>.from(stats));
+                              },
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                    onChanged: (v) {
-                      stats[f.$1] = v;
-                      onChanged(Map<String, dynamic>.from(stats));
-                    },
-                  ),
-                );
-              }).toList(),
+                  ));
+                }
+                return Column(children: rows);
+              },
             ),
           ],
         ),
