@@ -75,6 +75,10 @@ abstract class FieldSchema with _$FieldSchema {
     /// combatStats tipi için alt-alan tanımları. Encounter tablosu buradan beslenir.
     /// Her eleman: {key: 'hp', label: 'HP', type: 'text'|'integer'|'dice'}
     @Default([]) List<Map<String, String>> subFields,
+    /// Hangi gruba ait (null = grupsuz, üstte render edilir)
+    @Default(null) String? groupId,
+    /// Grid layout'ta kaç sütun kaplar (1 = normal, 2+ = geniş)
+    @Default(1) int gridColumnSpan,
     required String createdAt,
     required String updatedAt,
   }) = _FieldSchema;

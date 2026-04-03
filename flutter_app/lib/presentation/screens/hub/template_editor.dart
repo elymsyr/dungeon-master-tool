@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../../domain/entities/schema/category_rule.dart';
 import '../../../domain/entities/schema/encounter_config.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
+import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -356,6 +357,57 @@ class _CategoryEditor extends StatelessWidget {
                 },
               );
             }).toList(),
+          ),
+
+          const SizedBox(height: 12),
+
+          // === FIELD GROUPS ===
+          Text('Field Groups', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              ...category.fieldGroups.asMap().entries.map((entry) {
+                final gi = entry.key;
+                final group = entry.value;
+                final fieldCount = category.fields.where((f) => f.groupId == group.groupId).length;
+                return InputChip(
+                  label: Text(
+                    '${group.name.isEmpty ? 'Unnamed' : group.name} ($fieldCount) [${group.gridColumns}col]',
+                    style: const TextStyle(fontSize: 10),
+                  ),
+                  deleteIcon: readOnly ? null : const Icon(Icons.close, size: 14),
+                  onDeleted: readOnly ? null : () {
+                    // Gruptaki field'ları ungrouped yap
+                    final updatedFields = category.fields.map((f) =>
+                      f.groupId == group.groupId ? f.copyWith(groupId: null) : f
+                    ).toList();
+                    final updatedGroups = List.of(category.fieldGroups)..removeAt(gi);
+                    onChanged(category.copyWith(fields: updatedFields, fieldGroups: updatedGroups));
+                  },
+                  onPressed: readOnly ? null : () => _editGroup(context, group, (updated) {
+                    final list = List.of(category.fieldGroups);
+                    list[gi] = updated;
+                    onChanged(category.copyWith(fieldGroups: list));
+                  }),
+                );
+              }),
+              if (!readOnly)
+                ActionChip(
+                  avatar: const Icon(Icons.add, size: 14),
+                  label: const Text('Add Group', style: TextStyle(fontSize: 10)),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    final newGroup = FieldGroup(
+                      groupId: _uuid.v4(),
+                      name: 'New Group',
+                      orderIndex: category.fieldGroups.length,
+                    );
+                    onChanged(category.copyWith(fieldGroups: [...category.fieldGroups, newGroup]));
+                  },
+                ),
+            ],
           ),
 
           const SizedBox(height: 12),
@@ -937,6 +989,43 @@ class _CategoryEditor extends StatelessWidget {
                   ],
                 ],
               ),
+              const SizedBox(height: 8),
+              // Group + Column Span
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String?>(
+                      initialValue: field.groupId,
+                      isDense: true,
+                      isExpanded: true,
+                      style: TextStyle(fontSize: 11, color: palette.tabActiveText),
+                      dropdownColor: palette.uiPopupBg,
+                      decoration: InputDecoration(labelText: 'Group', labelStyle: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
+                      items: [
+                        const DropdownMenuItem(value: null, child: Text('Ungrouped', style: TextStyle(fontSize: 11))),
+                        ...category.fieldGroups.map((g) => DropdownMenuItem(
+                          value: g.groupId,
+                          child: Text(g.name.isEmpty ? 'Unnamed' : g.name, style: const TextStyle(fontSize: 11)),
+                        )),
+                      ],
+                      onChanged: (v) => _updateField(index, field.copyWith(groupId: v)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 80,
+                    child: DropdownButtonFormField<int>(
+                      initialValue: field.gridColumnSpan,
+                      isDense: true,
+                      style: TextStyle(fontSize: 11, color: palette.tabActiveText),
+                      dropdownColor: palette.uiPopupBg,
+                      decoration: InputDecoration(labelText: 'Span', labelStyle: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
+                      items: [1, 2, 3, 4].map((c) => DropdownMenuItem(value: c, child: Text('$c', style: const TextStyle(fontSize: 11)))).toList(),
+                      onChanged: (v) { if (v != null) _updateField(index, field.copyWith(gridColumnSpan: v)); },
+                    ),
+                  ),
+                ],
+              ),
             ],
           ],
         ),
@@ -1099,6 +1188,42 @@ class _CategoryEditor extends StatelessWidget {
     FieldType.combatStats => Icons.shield,
     FieldType.dice => Icons.casino,
   };
+
+  void _editGroup(BuildContext context, FieldGroup group, ValueChanged<FieldGroup> onUpdate) {
+    final nameCtrl = TextEditingController(text: group.name);
+    int cols = group.gridColumns;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Edit Group', style: TextStyle(fontSize: 14)),
+          content: SizedBox(
+            width: 300,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Group Name')),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<int>(
+                  value: cols,
+                  decoration: const InputDecoration(labelText: 'Grid Columns'),
+                  items: [1, 2, 3, 4].map((c) => DropdownMenuItem(value: c, child: Text('$c column${c > 1 ? 's' : ''}'))).toList(),
+                  onChanged: (v) { if (v != null) setDialogState(() => cols = v); },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            FilledButton(onPressed: () {
+              Navigator.pop(ctx);
+              onUpdate(group.copyWith(name: nameCtrl.text, gridColumns: cols));
+            }, child: const Text('Save')),
+          ],
+        ),
+      ),
+    );
+  }
 
   Color _parseColor(String hex) {
     try { return Color(int.parse('FF${hex.replaceFirst('#', '')}', radix: 16)); }

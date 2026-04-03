@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -73,7 +74,8 @@ class CombatNotifier extends StateNotifier<CombatState> {
   void _saveAndNotify() {
     final data = _getCampaignData();
     if (data != null) {
-      data['combat_state'] = getSessionState();
+      // Freezed nesnelerini MsgPack uyumlu primitive Map'e çevir
+      data['combat_state'] = jsonDecode(jsonEncode(getSessionState()));
     }
     _saveTimer?.cancel();
     _saveTimer = Timer(const Duration(seconds: 2), () => _onChanged());

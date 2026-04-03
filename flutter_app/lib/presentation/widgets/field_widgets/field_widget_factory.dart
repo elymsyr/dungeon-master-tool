@@ -177,9 +177,11 @@ class _RelationFieldWidget extends StatelessWidget {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: schema.label,
-          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         ),
-        child: Row(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 24),
+          child: Row(
           children: [
             if (hasValue) ...[
               const Icon(Icons.link, size: 14),
@@ -188,21 +190,23 @@ class _RelationFieldWidget extends StatelessWidget {
               if (!readOnly)
                 InkWell(
                   onTap: () => onChanged(''),
-                  child: const Icon(Icons.close, size: 14),
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.close, size: 14),
+                  ),
                 ),
             ] else ...[
               Expanded(
                 child: Text(
                   'None',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outline, fontStyle: FontStyle.italic),
+                  style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outline, fontStyle: FontStyle.italic),
                 ),
               ),
             ],
             if (!readOnly)
-              IconButton(
-                icon: const Icon(Icons.search, size: 18),
-                visualDensity: VisualDensity.compact,
-                onPressed: () async {
+              InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () async {
                   if (ref == null) return;
                   final result = await showEntitySelectorDialog(
                     context: context,
@@ -213,8 +217,13 @@ class _RelationFieldWidget extends StatelessWidget {
                     onChanged(result.first);
                   }
                 },
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.search, size: 16),
+                ),
               ),
           ],
+        ),
         ),
       ),
     );
