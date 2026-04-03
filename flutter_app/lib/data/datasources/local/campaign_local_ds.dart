@@ -95,6 +95,17 @@ class CampaignLocalDataSource {
     return campaignPath;
   }
 
+  /// Kampanyayı .trash/ klasörüne taşı (soft delete, 30 gün sonra otomatik silinir).
+  Future<void> deleteCampaign(String campaignName) async {
+    final campaignPath = p.join(AppPaths.worldsDir, campaignName);
+    final dir = Directory(campaignPath);
+    if (!await dir.exists()) return;
+
+    final trashTarget = p.join(AppPaths.trashDir, '${campaignName}_${DateTime.now().millisecondsSinceEpoch}');
+    await dir.rename(trashTarget);
+    _log.i('Campaign moved to trash: $campaignName');
+  }
+
   /// MsgPack'ten gelen dynamic map'i Map<String, dynamic>'e dönüştür.
   Map<String, dynamic> _toStringKeyMap(dynamic value) {
     if (value is Map) {

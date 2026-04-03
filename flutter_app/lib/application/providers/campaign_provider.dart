@@ -74,6 +74,14 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       await _repo.save(state!, _data!);
     }
   }
+
+  Future<void> delete(String campaignName) async {
+    await _repo.delete(campaignName);
+    if (state == campaignName) {
+      _data = null;
+      state = null;
+    }
+  }
 }
 
 final activeCampaignProvider =

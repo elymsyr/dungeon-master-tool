@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,6 +33,8 @@ class EntityCard extends ConsumerStatefulWidget {
 class _EntityCardState extends ConsumerState<EntityCard> {
   late TextEditingController _nameController;
   late TextEditingController _descController;
+  late TextEditingController _sourceController;
+  late TextEditingController _tagsController;
   late TextEditingController _dmNotesController;
 
   @override
@@ -37,6 +42,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     super.initState();
     _nameController = TextEditingController();
     _descController = TextEditingController();
+    _sourceController = TextEditingController();
+    _tagsController = TextEditingController();
     _dmNotesController = TextEditingController();
   }
 
@@ -44,6 +51,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   void dispose() {
     _nameController.dispose();
     _descController.dispose();
+    _sourceController.dispose();
+    _tagsController.dispose();
     _dmNotesController.dispose();
     super.dispose();
   }
@@ -84,83 +93,119 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     if (_nameController.text != entity.name) _nameController.text = entity.name;
     if (_descController.text != entity.description) _descController.text = entity.description;
     if (_dmNotesController.text != entity.dmNotes) _dmNotesController.text = entity.dmNotes;
+    if (_sourceController.text != entity.source) _sourceController.text = entity.source;
+    final tagsStr = entity.tags.join(', ');
+    if (_tagsController.text != tagsStr) _tagsController.text = tagsStr;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // === HEADER CARD: Kategori + İsim + Source ===
+          // === HEADER: Portre (sol) + İsim/Açıklama (sağ) ===
           _FeatureCard(
             palette: palette,
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Kategori badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: catColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    cat?.name ?? entity.categorySlug,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: catColor),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Entity adı
-                TextFormField(
-                  controller: _nameController,
+                // Sol: Portre resim galerisi
+                _PortraitGallery(
+                  images: [
+                    if (entity.imagePath.isNotEmpty) entity.imagePath,
+                    ...entity.images,
+                  ],
                   readOnly: widget.readOnly,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: palette.tabActiveText,
-                  ),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: 'Entity Name',
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                    filled: false,
-                  ),
-                  onChanged: (v) => ref.read(entityProvider.notifier).update(entity.copyWith(name: v)),
+                  palette: palette,
+                  onImagesChanged: (newImages) {
+                    ref.read(entityProvider.notifier).update(
+                      entity.copyWith(imagePath: '', images: newImages),
+                    );
+                  },
                 ),
-                const SizedBox(height: 4),
-                // Source
-                Text(
-                  entity.source.isNotEmpty ? entity.source : 'Custom',
-                  style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // === DESCRIPTION ===
-          _FeatureCard(
-            palette: palette,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Description', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: _descController,
-                  readOnly: widget.readOnly,
-                  maxLines: 4,
-                  style: TextStyle(fontSize: 13, color: palette.htmlText),
-                  decoration: InputDecoration(
-                    hintText: widget.readOnly ? null : 'Enter description...',
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                    filled: false,
-                    hintStyle: TextStyle(color: palette.sidebarLabelSecondary),
+                const SizedBox(width: 12),
+                // Sağ: İsim, kategori, source, açıklama
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Kategori badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: catColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          cat?.name ?? entity.categorySlug,
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: catColor),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // İsim
+                      TextFormField(
+                        controller: _nameController,
+                        readOnly: widget.readOnly,
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette.tabActiveText),
+                        decoration: InputDecoration(
+                          hintText: 'Entity Name',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        ),
+                        onChanged: (v) => ref.read(entityProvider.notifier).update(entity.copyWith(name: v)),
+                      ),
+                      const SizedBox(height: 10),
+                      // Description
+                      Text('Description', style: TextStyle(fontSize: 11, color: palette.tabText)),
+                      const SizedBox(height: 4),
+                      TextFormField(
+                        controller: _descController,
+                        readOnly: widget.readOnly,
+                        maxLines: null,
+                        minLines: 3,
+                        style: TextStyle(fontSize: 13, color: palette.htmlText),
+                        decoration: InputDecoration(
+                          hintText: widget.readOnly ? null : 'Enter description...',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        ),
+                        onChanged: (v) => ref.read(entityProvider.notifier).update(entity.copyWith(description: v)),
+                      ),
+                      const SizedBox(height: 10),
+                      // Source + Tags yan yana
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _sourceController,
+                              readOnly: widget.readOnly,
+                              style: TextStyle(fontSize: 12, color: palette.htmlText),
+                              decoration: InputDecoration(
+                                labelText: 'Source',
+                                hintText: widget.readOnly ? null : 'e.g. D&D 5e SRD',
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                              ),
+                              onChanged: (v) => ref.read(entityProvider.notifier).update(entity.copyWith(source: v)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _tagsController,
+                              readOnly: widget.readOnly,
+                              style: TextStyle(fontSize: 12, color: palette.htmlText),
+                              decoration: InputDecoration(
+                                labelText: 'Tags',
+                                hintText: widget.readOnly ? null : 'comma separated',
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                              ),
+                              onChanged: (v) {
+                                final tags = v.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
+                                ref.read(entityProvider.notifier).update(entity.copyWith(tags: tags));
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  onChanged: (v) => ref.read(entityProvider.notifier).update(entity.copyWith(description: v)),
                 ),
               ],
             ),
@@ -237,7 +282,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                               ref.read(entityProvider.notifier).delete(entity.id);
                               Navigator.pop(ctx);
                             },
-                            style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg),
+                            style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
                             child: const Text('Delete'),
                           ),
                         ],
@@ -246,7 +291,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                   },
                   icon: const Icon(Icons.delete_outline, size: 16),
                   label: const Text('Delete'),
-                  style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg),
+                  style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
                 ),
               ],
             ),
@@ -346,6 +391,203 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     } catch (_) {
       return Colors.grey;
     }
+  }
+}
+
+/// Portre resim galerisi — 200x260 sabit, hover'da sol/sağ nav, edit modda üstte ekle / altta sil.
+class _PortraitGallery extends StatefulWidget {
+  final List<String> images;
+  final bool readOnly;
+  final DmToolColors palette;
+  final ValueChanged<List<String>> onImagesChanged;
+
+  const _PortraitGallery({
+    required this.images,
+    required this.readOnly,
+    required this.palette,
+    required this.onImagesChanged,
+  });
+
+  @override
+  State<_PortraitGallery> createState() => _PortraitGalleryState();
+}
+
+class _PortraitGalleryState extends State<_PortraitGallery> {
+  int _currentIndex = 0;
+  bool _hovered = false;
+
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final newPaths = result.files
+        .where((f) => f.path != null)
+        .map((f) => f.path!)
+        .toList();
+    widget.onImagesChanged([...widget.images, ...newPaths]);
+  }
+
+  void _removeCurrentImage() {
+    if (widget.images.isEmpty) return;
+    final updated = List<String>.from(widget.images)..removeAt(_currentIndex);
+    if (_currentIndex >= updated.length && updated.isNotEmpty) {
+      _currentIndex = updated.length - 1;
+    }
+    widget.onImagesChanged(updated);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Index clamp
+    if (_currentIndex >= widget.images.length) _currentIndex = widget.images.length - 1;
+    if (_currentIndex < 0) _currentIndex = 0;
+
+    final br = BorderRadius.circular(widget.palette.cardBorderRadius);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Container(
+        width: 200,
+        height: 260,
+        decoration: BoxDecoration(
+          borderRadius: br,
+          border: Border.all(color: widget.palette.featureCardBorder),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Resim veya placeholder
+            widget.images.isNotEmpty
+                ? _buildImage(widget.images[_currentIndex])
+                : _buildPlaceholder(),
+
+            // Hover: hafif overlay
+            if (_hovered && widget.images.isNotEmpty)
+              Container(color: Colors.black.withValues(alpha: 0.08)),
+
+            // Nav: Sol ok
+            if (_hovered && widget.images.length > 1 && _currentIndex > 0)
+              Positioned(
+                left: 4,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _currentIndex--),
+                    child: Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
+                      child: const Icon(Icons.chevron_left, color: Colors.white, size: 18),
+                    ),
+                  ),
+                ),
+              ),
+
+            // Nav: Sağ ok
+            if (_hovered && widget.images.length > 1 && _currentIndex < widget.images.length - 1)
+              Positioned(
+                right: 4,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _currentIndex++),
+                    child: Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
+                      child: const Icon(Icons.chevron_right, color: Colors.white, size: 18),
+                    ),
+                  ),
+                ),
+              ),
+
+            // Sayaç
+            if (widget.images.length > 1)
+              Positioned(
+                bottom: 6,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(color: Colors.black38, borderRadius: BorderRadius.circular(10)),
+                    child: Text(
+                      '${_currentIndex + 1}/${widget.images.length}',
+                      style: const TextStyle(fontSize: 9, color: Colors.white70),
+                    ),
+                  ),
+                ),
+              ),
+
+            // Edit: üstte ekle
+            if (!widget.readOnly && _hovered)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
+                    child: const Icon(Icons.add_photo_alternate, color: Colors.white, size: 14),
+                  ),
+                ),
+              ),
+
+            // Edit: altta sil
+            if (!widget.readOnly && _hovered && widget.images.isNotEmpty)
+              Positioned(
+                top: 4,
+                left: 4,
+                child: GestureDetector(
+                  onTap: _removeCurrentImage,
+                  child: Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
+                    child: Icon(Icons.close, color: widget.palette.dangerBtnBg, size: 14),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImage(String path) {
+    final file = File(path);
+    if (!file.existsSync()) return _buildPlaceholder();
+    return Image.file(
+      file,
+      width: 200,
+      height: 260,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _buildPlaceholder(),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      width: 200,
+      height: 260,
+      color: widget.palette.featureCardBg,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.person_outline, size: 48, color: widget.palette.sidebarLabelSecondary.withValues(alpha: 0.4)),
+          const SizedBox(height: 4),
+          Text('No Image', style: TextStyle(fontSize: 10, color: widget.palette.sidebarLabelSecondary)),
+        ],
+      ),
+    );
   }
 }
 

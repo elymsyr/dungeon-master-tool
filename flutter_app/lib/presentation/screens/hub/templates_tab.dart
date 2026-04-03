@@ -25,13 +25,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
     final defaultSchema = generateDefaultDnd5eSchema();
     final customTemplatesAsync = ref.watch(customTemplatesProvider);
 
-    if (_mode == 'view' && _activeSchema != null) {
-      return TemplateEditor(
-        initial: _activeSchema,
-        readOnly: true,
-        onBack: () => setState(() { _mode = null; _activeSchema = null; }),
-      );
-    }
+    // view mode kaldırıldı — built-in dahil tüm template'ler düzenlenebilir
 
     if (_mode == 'edit') {
       return TemplateEditor(
@@ -65,11 +59,11 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
               Text('World templates define entity categories and their fields.', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 16),
 
-              // Default template (readonly)
+              // Default template (editable)
               _TemplateCard(
                 schema: defaultSchema,
                 palette: palette,
-                onTap: () => setState(() { _mode = 'view'; _activeSchema = defaultSchema; }),
+                onTap: () => setState(() { _mode = 'edit'; _activeSchema = defaultSchema; }),
               ),
 
               // Custom templates
@@ -242,7 +236,7 @@ class _TemplateCard extends StatelessWidget {
                         TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
                         FilledButton(
                           onPressed: () { Navigator.pop(ctx); onDelete!(); },
-                          style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg),
+                          style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
                           child: const Text('Delete'),
                         ),
                       ],

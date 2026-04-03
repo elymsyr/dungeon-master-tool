@@ -120,19 +120,32 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
 
               const SizedBox(height: 12),
 
-              // Load butonu
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _selectedIndex >= 0
-                      ? () {
-                          final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
-                          if (_selectedIndex < campaigns.length) _loadCampaign(campaigns[_selectedIndex].name);
-                        }
-                      : null,
-                  icon: const Icon(Icons.folder_open, size: 18),
-                  label: const Text('Load World'),
-                ),
+              // Load + Delete butonları
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: _selectedIndex >= 0
+                          ? () {
+                              final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
+                              if (_selectedIndex < campaigns.length) _loadCampaign(campaigns[_selectedIndex].name);
+                            }
+                          : null,
+                      icon: const Icon(Icons.folder_open, size: 18),
+                      label: const Text('Load World'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: _selectedIndex >= 0 ? () => _deleteWorld() : null,
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    label: const Text('Delete'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: palette.dangerBtnBg,
+                      foregroundColor: palette.dangerBtnText,
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 24),
@@ -187,13 +200,47 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     onPressed: _createCampaign,
                     icon: const Icon(Icons.add, size: 18),
                     label: const Text('Create'),
-                    style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg),
+                    style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, foregroundColor: palette.successBtnText),
                   ),
                 ],
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _deleteWorld() {
+    final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
+    if (_selectedIndex < 0 || _selectedIndex >= campaigns.length) return;
+    final name = campaigns[_selectedIndex].name;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete World'),
+        content: Text(
+          'Are you sure you want to delete "$name"?\n\n'
+          'The world will be moved to trash and automatically deleted after 30 days.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await ref.read(activeCampaignProvider.notifier).delete(name);
+              ref.invalidate(campaignListProvider);
+              ref.invalidate(campaignInfoListProvider);
+              setState(() => _selectedIndex = -1);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).extension<DmToolColors>()!.dangerBtnBg,
+              foregroundColor: Theme.of(context).extension<DmToolColors>()!.dangerBtnText,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }

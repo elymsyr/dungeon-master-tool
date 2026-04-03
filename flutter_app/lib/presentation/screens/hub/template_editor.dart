@@ -185,10 +185,10 @@ class _TemplateEditorState extends State<TemplateEditor> {
                                 onPressed: _addCategory,
                                 icon: const Icon(Icons.add, size: 16),
                                 label: const Text('Add'),
-                                style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, minimumSize: const Size(0, 32)),
+                                style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, foregroundColor: palette.successBtnText, minimumSize: const Size(0, 32)),
                               ),
                             ),
-                            if (selectedCat != null && !selectedCat.isBuiltin) ...[
+                            if (selectedCat != null) ...[
                               const SizedBox(width: 4),
                               IconButton(
                                 icon: Icon(Icons.delete, size: 18, color: palette.dangerBtnBg),
@@ -220,6 +220,7 @@ class _TemplateEditorState extends State<TemplateEditor> {
                     : selectedCat == null
                         ? Center(child: Text('Select or add a category', style: TextStyle(color: palette.sidebarLabelSecondary)))
                         : _CategoryEditor(
+                            key: ValueKey(selectedCat.categoryId),
                             category: selectedCat,
                             allCategories: cats,
                             readOnly: widget.readOnly,
@@ -279,6 +280,7 @@ class _CategoryEditor extends StatelessWidget {
   final ValueChanged<EntityCategorySchema> onChanged;
 
   const _CategoryEditor({
+    super.key,
     required this.category,
     required this.allCategories,
     required this.readOnly,
@@ -897,7 +899,7 @@ class _CategoryEditor extends StatelessWidget {
                   child: Icon(Icons.filter_alt, size: 11, color: palette.sidebarLabelSecondary),
                 ),
               // Delete
-              if (!readOnly && !field.isBuiltin)
+              if (!readOnly)
                 Padding(
                   padding: const EdgeInsets.only(left: 6),
                   child: InkWell(
