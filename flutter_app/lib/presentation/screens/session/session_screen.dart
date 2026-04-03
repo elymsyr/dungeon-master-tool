@@ -137,13 +137,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             onWillAcceptWithDetails: (details) => ref.read(combatProvider.notifier).canAddToEncounter(details.data),
             onAcceptWithDetails: (details) => ref.read(combatProvider.notifier).addCombatantFromEntity(details.data),
             builder: (context, candidateData, rejectedData) {
-              return Container(
-                decoration: candidateData.isNotEmpty
-                    ? BoxDecoration(border: Border.all(color: palette.tabIndicator, width: 2))
-                    : null,
-                child: enc == null || enc.combatants.isEmpty
-                    ? Center(child: Text('No combatants\nDrag entities from sidebar or use Quick Add', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12)))
-                    : _buildCombatTable(palette, enc),
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  enc == null || enc.combatants.isEmpty
+                      ? Center(child: Text('No combatants\nDrag entities from sidebar or use Quick Add', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12)))
+                      : _buildCombatTable(palette, enc),
+                  if (candidateData.isNotEmpty)
+                    IgnorePointer(
+                      child: Container(
+                        decoration: BoxDecoration(border: Border.all(color: palette.tabIndicator, width: 2)),
+                      ),
+                    ),
+                ],
               );
             },
           ),
@@ -419,14 +425,20 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             onWillAcceptWithDetails: (details) => ref.read(combatProvider.notifier).canAddToEncounter(details.data),
             onAcceptWithDetails: (details) => ref.read(combatProvider.notifier).addCombatantFromEntity(details.data),
             builder: (context, candidateData, rejectedData) {
-              return Container(
-                decoration: candidateData.isNotEmpty
-                    ? BoxDecoration(border: Border.all(color: palette.tabIndicator, width: 2))
-                    : null,
-                child: ListView.builder(
-                  itemCount: enc.combatants.length,
-                  itemBuilder: (context, index) => _buildCombatantRow(palette, enc, index),
-                ),
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  ListView.builder(
+                    itemCount: enc.combatants.length,
+                    itemBuilder: (context, index) => _buildCombatantRow(palette, enc, index),
+                  ),
+                  if (candidateData.isNotEmpty)
+                    IgnorePointer(
+                      child: Container(
+                        decoration: BoxDecoration(border: Border.all(color: palette.tabIndicator, width: 2)),
+                      ),
+                    ),
+                ],
               );
             },
           ),

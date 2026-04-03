@@ -129,6 +129,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   itemCount: filtered.length,
+                  cacheExtent: 500,
                   itemBuilder: (context, index) {
                     final entity = filtered[index];
                     EntityCategorySchema? cat;
@@ -139,13 +140,23 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
 
                     return Draggable<String>(
                       data: entity.id,
+                      dragAnchorStrategy: pointerDragAnchorStrategy,
                       feedback: Material(
-                        elevation: 4,
+                        elevation: 2,
                         borderRadius: BorderRadius.circular(4),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: BorderRadius.circular(4)),
                           child: Text(entity.name, style: TextStyle(fontSize: 12, color: palette.tabActiveText)),
+                        ),
+                      ),
+                      childWhenDragging: Opacity(
+                        opacity: 0.3,
+                        child: InkWell(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                            child: Text(entity.name, style: TextStyle(fontSize: 13, color: palette.tabText)),
+                          ),
                         ),
                       ),
                       child: InkWell(
