@@ -25,9 +25,12 @@ class EntitySidebar extends ConsumerStatefulWidget {
   ConsumerState<EntitySidebar> createState() => _EntitySidebarState();
 }
 
+enum _SortMode { name, category, source }
+
 class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   String _searchQuery = '';
   String? _selectedCategory; // null = tümü
+  _SortMode _sortMode = _SortMode.name;
 
   @override
   Widget build(BuildContext context) {
@@ -45,17 +48,27 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       catMap[c.slug] = c;
     }
 
-    // Filtrele
+    // Filtrele (isim + tag arama)
+    final query = _searchQuery.toLowerCase();
     final filtered = entities.values.where((e) {
-      if (_selectedCategory != null && e.categorySlug != _selectedCategory) {
-        return false;
-      }
-      if (_searchQuery.isNotEmpty) {
-        return e.name.toLowerCase().contains(_searchQuery.toLowerCase());
+      if (_selectedCategory != null && e.categorySlug != _selectedCategory) return false;
+      if (query.isNotEmpty) {
+        final nameMatch = e.name.toLowerCase().contains(query);
+        final tagMatch = e.tags.any((t) => t.toLowerCase().contains(query));
+        final sourceMatch = e.source.toLowerCase().contains(query);
+        if (!nameMatch && !tagMatch && !sourceMatch) return false;
       }
       return true;
     }).toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
+      ..sort((a, b) => switch (_sortMode) {
+        _SortMode.name => a.name.compareTo(b.name),
+        _SortMode.category => a.categorySlug.compareTo(b.categorySlug) != 0
+            ? a.categorySlug.compareTo(b.categorySlug)
+            : a.name.compareTo(b.name),
+        _SortMode.source => a.source.compareTo(b.source) != 0
+            ? a.source.compareTo(b.source)
+            : a.name.compareTo(b.name),
+      });
 
     return Column(
       children: [
@@ -119,6 +132,37 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
               ),
             ),
           ),
+
+        // Sort toggle
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              Text('${filtered.length} entities', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
+              const Spacer(),
+              PopupMenuButton<_SortMode>(
+                initialValue: _sortMode,
+                onSelected: (v) => setState(() => _sortMode = v),
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: _SortMode.name, child: Text('Sort by Name', style: TextStyle(fontSize: 12))),
+                  PopupMenuItem(value: _SortMode.category, child: Text('Sort by Category', style: TextStyle(fontSize: 12))),
+                  PopupMenuItem(value: _SortMode.source, child: Text('Sort by Source', style: TextStyle(fontSize: 12))),
+                ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.sort, size: 14, color: palette.sidebarLabelSecondary),
+                    const SizedBox(width: 2),
+                    Text(
+                      switch (_sortMode) { _SortMode.name => 'Name', _SortMode.category => 'Category', _SortMode.source => 'Source' },
+                      style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
 
         const SizedBox(height: 4),
         Divider(height: 1, color: palette.sidebarDivider),

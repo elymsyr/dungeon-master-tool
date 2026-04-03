@@ -2,12 +2,14 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/services/rule_engine.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
+import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
@@ -153,21 +155,36 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                         onChanged: (v) => ref.read(entityProvider.notifier).update(entity.copyWith(name: v)),
                       ),
                       const SizedBox(height: 10),
-                      // Description
+                      // Description (markdown)
                       Text('Description', style: TextStyle(fontSize: 11, color: palette.tabText)),
                       const SizedBox(height: 4),
-                      TextFormField(
-                        controller: _descController,
-                        readOnly: widget.readOnly,
-                        maxLines: null,
-                        minLines: 3,
-                        style: TextStyle(fontSize: 13, color: palette.htmlText),
-                        decoration: InputDecoration(
-                          hintText: widget.readOnly ? null : 'Enter description...',
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      if (widget.readOnly && entity.description.isNotEmpty)
+                        MarkdownBody(
+                          data: entity.description,
+                          selectable: true,
+                          styleSheet: MarkdownStyleSheet(
+                            p: TextStyle(fontSize: 13, color: palette.htmlText),
+                            h1: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette.htmlHeader),
+                            h2: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.htmlHeader),
+                            h3: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette.htmlHeader),
+                            code: TextStyle(fontSize: 12, backgroundColor: palette.htmlCodeBg),
+                            a: TextStyle(color: palette.htmlLink),
+                            listBullet: TextStyle(fontSize: 13, color: palette.htmlText),
+                          ),
+                        )
+                      else
+                        TextFormField(
+                          controller: _descController,
+                          readOnly: widget.readOnly,
+                          maxLines: null,
+                          minLines: 3,
+                          style: TextStyle(fontSize: 13, color: palette.htmlText),
+                          decoration: InputDecoration(
+                            hintText: 'Markdown supported...',
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          ),
+                          onChanged: (v) => ref.read(entityProvider.notifier).update(entity.copyWith(description: v)),
                         ),
-                        onChanged: (v) => ref.read(entityProvider.notifier).update(entity.copyWith(description: v)),
-                      ),
                       const SizedBox(height: 10),
                       // Source + Tags yan yana
                       Row(
@@ -409,25 +426,17 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       ));
     }
 
-    // Gruplar
+    // Gruplar (collapsible)
     for (final group in sortedGroups) {
       final groupFields = grouped[group.groupId];
       if (groupFields == null || groupFields.isEmpty) continue;
 
       if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 8));
 
-      widgets.add(_FeatureCard(
+      widgets.add(_CollapsibleGroupCard(
+        group: group,
         palette: palette,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (group.name.isNotEmpty) ...[
-              Text(group.name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
-              const SizedBox(height: 8),
-            ],
-            _buildGroupGrid(groupFields, group.gridColumns, entity, computed, palette),
-          ],
-        ),
+        child: _buildGroupGrid(groupFields, group.gridColumns, entity, computed, palette),
       ));
     }
 
@@ -642,6 +651,77 @@ class _PortraitGalleryState extends State<_PortraitGallery> {
 }
 
 /// Basit section card — arka plan + padding, border yok.
+/// Collapsible grup kartı — başlığa tıklayarak açılıp kapanır.
+class _CollapsibleGroupCard extends StatefulWidget {
+  final FieldGroup group;
+  final DmToolColors palette;
+  final Widget child;
+
+  const _CollapsibleGroupCard({
+    required this.group,
+    required this.palette,
+    required this.child,
+  });
+
+  @override
+  State<_CollapsibleGroupCard> createState() => _CollapsibleGroupCardState();
+}
+
+class _CollapsibleGroupCardState extends State<_CollapsibleGroupCard> {
+  late bool _collapsed;
+
+  @override
+  void initState() {
+    super.initState();
+    _collapsed = widget.group.isCollapsed;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: widget.palette.featureCardBg,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Başlık — tıklanabilir
+          if (widget.group.name.isNotEmpty)
+            InkWell(
+              onTap: () => setState(() => _collapsed = !_collapsed),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    Icon(
+                      _collapsed ? Icons.chevron_right : Icons.expand_more,
+                      size: 16,
+                      color: widget.palette.tabText,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      widget.group.name,
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: widget.palette.tabText),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          // İçerik
+          if (!_collapsed)
+            Padding(
+              padding: EdgeInsets.fromLTRB(12, widget.group.name.isEmpty ? 12 : 0, 12, 12),
+              child: widget.child,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _FeatureCard extends StatelessWidget {
   final DmToolColors palette;
   final Widget child;

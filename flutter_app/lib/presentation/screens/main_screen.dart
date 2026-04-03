@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/entity_provider.dart';
@@ -12,7 +13,6 @@ import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
 import '../widgets/entity_sidebar.dart';
 import 'database/database_screen.dart';
-import 'hub/hub_screen.dart';
 import 'session/session_screen.dart';
 
 /// Ana ekran — Python ui/main_root.py karşılığı.
@@ -162,11 +162,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             onPressed: () {
               ref.invalidate(campaignListProvider);
               ref.invalidate(campaignInfoListProvider);
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => const HubScreen(),
-                ),
-              );
+              context.go('/hub');
             },
           ),
           const SizedBox(width: 4),

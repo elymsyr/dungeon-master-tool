@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/locale_provider.dart';
@@ -8,7 +9,6 @@ import '../../../core/config/app_paths.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
-import '../main_screen.dart';
 
 /// Kampanya seçim ekranı — Python ui/campaign_selector.py karşılığı.
 class CampaignSelectorScreen extends ConsumerStatefulWidget {
@@ -218,9 +218,7 @@ class _CampaignSelectorScreenState
     final success =
         await ref.read(activeCampaignProvider.notifier).load(name);
     if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainScreen()),
-      );
+      context.go('/main');
     }
   }
 
@@ -241,9 +239,7 @@ class _CampaignSelectorScreenState
     final success =
         await ref.read(activeCampaignProvider.notifier).create(name);
     if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainScreen()),
-      );
+      context.go('/main');
     }
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/theme_provider.dart';
+import '../../../core/config/app_paths.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
 
@@ -86,6 +87,17 @@ class SettingsTab extends ConsumerWidget {
               // --- LANGUAGE ---
               Text('Language', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               const SizedBox(height: 12),
+              const SizedBox(height: 32),
+
+              // --- DATA PATH ---
+              Text('Data', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              const SizedBox(height: 12),
+              _pathRow('Data Root', AppPaths.dataRoot, palette),
+              _pathRow('Worlds', AppPaths.worldsDir, palette),
+              _pathRow('Cache', AppPaths.cacheDir, palette),
+
+              const SizedBox(height: 32),
+
               ...['en', 'tr', 'de', 'fr'].map((code) {
                 final label = switch (code) {
                   'en' => 'English',
@@ -115,6 +127,18 @@ class SettingsTab extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _pathRow(String label, String path, DmToolColors palette) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          SizedBox(width: 80, child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText))),
+          Expanded(child: Text(path, style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary), overflow: TextOverflow.ellipsis)),
+        ],
       ),
     );
   }

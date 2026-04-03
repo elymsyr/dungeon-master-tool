@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'application/providers/locale_provider.dart';
 import 'application/providers/theme_provider.dart';
 import 'presentation/l10n/app_localizations.dart';
-import 'presentation/screens/landing/landing_screen.dart';
+import 'presentation/router/app_router.dart';
 import 'presentation/theme/palettes.dart';
 
 class DungeonMasterApp extends ConsumerWidget {
@@ -16,7 +16,7 @@ class DungeonMasterApp extends ConsumerWidget {
     final themeName = ref.watch(themeProvider);
     final locale = ref.watch(localeProvider);
 
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Dungeon Master Tool',
       debugShowCheckedModeBanner: false,
       theme: buildThemeData(themeName),
@@ -33,7 +33,7 @@ class DungeonMasterApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const LandingScreen(),
+      routerConfig: appRouter,
     );
   }
 }
