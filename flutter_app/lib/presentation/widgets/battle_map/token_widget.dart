@@ -1,18 +1,22 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../domain/entities/session.dart';
+import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 
-/// Battle map token — local drag tracking for smooth movement.
-/// Position is tracked locally during drag (no notifier updates per frame).
+/// Battle map token — canvas-space positioning.
+///
+/// The parent wraps all tokens in a [Transform] that applies scale + panOffset,
+/// so this widget only deals with canvas-space coordinates and sizes.
+/// During drag, position is tracked locally (no notifier updates per frame).
 /// Only commits final position to parent on pointer-up.
 class TokenWidget extends StatefulWidget {
   final Combatant combatant;
   final int tokenSize;
   final bool isActive;
   final Offset canvasPosition; // from notifier state
-  final double scale;
-  final Offset panOffset;
+  final ValueListenable<ViewTransform> viewTransform; // for drag scale
   final DmToolColors palette;
   final VoidCallback onDragStart;
   final void Function(String id, Offset finalCanvasPos) onDragEnd;
@@ -24,8 +28,7 @@ class TokenWidget extends StatefulWidget {
     required this.tokenSize,
     required this.isActive,
     required this.canvasPosition,
-    required this.scale,
-    required this.panOffset,
+    required this.viewTransform,
     required this.palette,
     required this.onDragStart,
     required this.onDragEnd,
@@ -44,23 +47,14 @@ class _TokenWidgetState extends State<TokenWidget> {
   Offset get _effectiveCanvasPos => _dragCanvasPos ?? widget.canvasPosition;
 
   @override
-  void didUpdateWidget(TokenWidget old) {
-    super.didUpdateWidget(old);
-    // If not dragging, sync to external position (e.g. snap or other updates)
-    if (_dragCanvasPos == null && old.canvasPosition != widget.canvasPosition) {
-      // No local state to clear — widget.canvasPosition is used directly
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final screenSize = widget.tokenSize * widget.scale;
+    final size = widget.tokenSize.toDouble();
     final canvasPos = _effectiveCanvasPos;
-    final screenPos = canvasPos * widget.scale + widget.panOffset;
 
+    // Canvas-space positioning — Transform wrapper handles screen projection
     return Positioned(
-      left: screenPos.dx - screenSize / 2,
-      top: screenPos.dy - screenSize / 2,
+      left: canvasPos.dx - size / 2,
+      top: canvasPos.dy - size / 2,
       child: Listener(
         behavior: HitTestBehavior.opaque,
         onPointerDown: (event) {
@@ -72,7 +66,9 @@ class _TokenWidgetState extends State<TokenWidget> {
           if (_lastPointerPos == null || _dragCanvasPos == null) return;
           final screenDelta = event.position - _lastPointerPos!;
           _lastPointerPos = event.position;
-          final canvasDelta = screenDelta / widget.scale;
+          // Read scale imperatively — no rebuild triggered
+          final scale = widget.viewTransform.value.scale;
+          final canvasDelta = screenDelta / scale;
           setState(() {
             _dragCanvasPos = _dragCanvasPos! + canvasDelta;
           });
@@ -92,8 +88,8 @@ class _TokenWidgetState extends State<TokenWidget> {
         child: GestureDetector(
           onSecondaryTap: () => widget.onResizeRequested(widget.combatant.id),
           child: Container(
-            width: screenSize,
-            height: screenSize,
+            width: size,
+            height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
@@ -107,7 +103,7 @@ class _TokenWidgetState extends State<TokenWidget> {
                   : null,
             ),
             clipBehavior: Clip.antiAlias,
-            child: ClipOval(child: _buildAvatar(screenSize)),
+            child: ClipOval(child: _buildAvatar(size)),
           ),
         ),
       ),

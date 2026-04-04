@@ -54,6 +54,34 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     ));
   }
 
+  void _showMobileSidebar() {
+    final schema = ref.read(worldSchemaProvider);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.3,
+        expand: false,
+        builder: (_, scrollController) => EntitySidebar(
+          schema: schema,
+          onEntitySelected: (id) {
+            Navigator.pop(ctx);
+            setState(() {
+              _selectedEntityId = id;
+              _tabIndex = 0;
+            });
+            _persistUiState();
+          },
+        ),
+      ),
+    );
+  }
+
   static const _tabIcons = [
     Icons.storage,       // Database
     Icons.event_note,    // Session
@@ -274,6 +302,14 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         // Mobile: BottomNavigationBar
         ScreenType.phone => tabStack,
       },
+
+      // FAB for mobile/tablet entity sidebar
+      floatingActionButton: (screen != ScreenType.desktop && _tabIndex == 0)
+          ? FloatingActionButton.small(
+              onPressed: _showMobileSidebar,
+              child: const Icon(Icons.list),
+            )
+          : null,
 
       // Mobile bottom nav
       bottomNavigationBar: screen == ScreenType.phone

@@ -4,6 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 
+typedef _ToolbarState = ({
+  BattleMapTool activeTool,
+  bool gridVisible,
+  bool gridSnap,
+  int gridSize,
+  int feetPerCell,
+  int tokenSize,
+});
+
 /// DM battle map toolbar — 3 rows:
 /// Row 1: View controls (reset, token size slider, map image picker)
 /// Row 2: Tool selector + fog/draw action buttons
@@ -16,7 +25,16 @@ class BattleMapToolbar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final mapState = ref.watch(battleMapProvider(encounterId));
+    // Selective watch — only rebuild when toolbar-relevant fields change,
+    // not on pan/zoom/token moves/fog/annotation/measurements.
+    final tb = ref.watch(battleMapProvider(encounterId).select((s) => (
+      activeTool: s.activeTool,
+      gridVisible: s.gridVisible,
+      gridSnap: s.gridSnap,
+      gridSize: s.gridSize,
+      feetPerCell: s.feetPerCell,
+      tokenSize: s.tokenSize,
+    )));
     final notifier = ref.read(battleMapProvider(encounterId).notifier);
 
     return Container(
@@ -24,11 +42,11 @@ class BattleMapToolbar extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildRow1(context, palette, mapState, notifier),
+          _buildRow1(context, palette, tb, notifier),
           Divider(height: 1, color: palette.sidebarDivider),
-          _buildRow2(context, palette, mapState, notifier),
+          _buildRow2(context, palette, tb, notifier),
           Divider(height: 1, color: palette.sidebarDivider),
-          _buildRow3(context, palette, mapState, notifier),
+          _buildRow3(context, palette, tb, notifier),
         ],
       ),
     );
@@ -38,7 +56,7 @@ class BattleMapToolbar extends ConsumerWidget {
   // Row 1: View + Token Size + Map Picker
   // -------------------------------------------------------------------------
 
-  Widget _buildRow1(BuildContext context, DmToolColors palette, BattleMapState mapState, BattleMapNotifier notifier) {
+  Widget _buildRow1(BuildContext context, DmToolColors palette, _ToolbarState mapState, BattleMapNotifier notifier) {
     return SizedBox(
       height: 36,
       child: Row(
@@ -101,7 +119,7 @@ class BattleMapToolbar extends ConsumerWidget {
   // Row 2: Tool selector + fog/draw actions
   // -------------------------------------------------------------------------
 
-  Widget _buildRow2(BuildContext context, DmToolColors palette, BattleMapState mapState, BattleMapNotifier notifier) {
+  Widget _buildRow2(BuildContext context, DmToolColors palette, _ToolbarState mapState, BattleMapNotifier notifier) {
     return SizedBox(
       height: 36,
       child: Row(
@@ -154,7 +172,7 @@ class BattleMapToolbar extends ConsumerWidget {
   // Row 3: Grid controls
   // -------------------------------------------------------------------------
 
-  Widget _buildRow3(BuildContext context, DmToolColors palette, BattleMapState mapState, BattleMapNotifier notifier) {
+  Widget _buildRow3(BuildContext context, DmToolColors palette, _ToolbarState mapState, BattleMapNotifier notifier) {
     return SizedBox(
       height: 36,
       child: Row(
@@ -268,7 +286,7 @@ class _ToolButton extends StatelessWidget {
   final BattleMapTool tool;
   final IconData icon;
   final String tooltip;
-  final BattleMapState mapState;
+  final _ToolbarState mapState;
   final BattleMapNotifier notifier;
   final DmToolColors palette;
 

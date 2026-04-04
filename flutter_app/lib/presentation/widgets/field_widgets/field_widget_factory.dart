@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,7 +32,7 @@ class FieldWidgetFactory {
     return switch (schema.fieldType) {
       FieldType.text => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.textarea => _TextAreaFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.markdown => _MarkdownFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.markdown => _MarkdownFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
       FieldType.integer => _IntegerFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.enum_ => _EnumFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.relation => _RelationFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
@@ -39,6 +41,9 @@ class FieldWidgetFactory {
       FieldType.dice => _DiceFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.boolean_ => _BooleanFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.tagList => _TagListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.date => _DateFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.image => _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.file => _FileFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       _ => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
     };
   }
@@ -101,60 +106,256 @@ class _TextAreaFieldWidget extends StatelessWidget {
 }
 
 // --- MARKDOWN ---
-class _MarkdownFieldWidget extends StatelessWidget {
+class _MarkdownFieldWidget extends StatefulWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
 
-  const _MarkdownFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _MarkdownFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+    this.ref,
+  });
+
+  @override
+  State<_MarkdownFieldWidget> createState() => _MarkdownFieldWidgetState();
+}
+
+class _MarkdownFieldWidgetState extends State<_MarkdownFieldWidget> {
+  bool _isPreview = false;
+  late TextEditingController _controller;
+  final _focusNode = FocusNode();
+  OverlayEntry? _mentionOverlay;
+  String _mentionQuery = '';
+  int _mentionStart = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value?.toString() ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _MarkdownFieldWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      final newText = widget.value?.toString() ?? '';
+      if (_controller.text != newText) {
+        _controller.text = newText;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    _dismissMentionOverlay();
+    super.dispose();
+  }
+
+  void _dismissMentionOverlay() {
+    _mentionOverlay?.remove();
+    _mentionOverlay = null;
+  }
+
+  void _onTextChanged(String text) {
+    widget.onChanged(text);
+
+    // Check for @mention trigger
+    final cursorPos = _controller.selection.baseOffset;
+    if (cursorPos <= 0) {
+      _dismissMentionOverlay();
+      return;
+    }
+
+    // Find the last @ before cursor
+    final beforeCursor = text.substring(0, cursorPos);
+    final atIndex = beforeCursor.lastIndexOf('@');
+
+    if (atIndex >= 0) {
+      final query = beforeCursor.substring(atIndex + 1);
+      // Only show if no space before @ (or @ is at start) and query has no newlines
+      if (!query.contains('\n') && query.length < 30) {
+        _mentionStart = atIndex;
+        _mentionQuery = query.toLowerCase();
+        _showMentionOverlay();
+        return;
+      }
+    }
+    _dismissMentionOverlay();
+  }
+
+  void _showMentionOverlay() {
+    _dismissMentionOverlay();
+    final entities = widget.entities;
+    if (entities == null || entities.isEmpty) return;
+
+    final filtered = entities.values
+        .where((e) => e.name.toLowerCase().contains(_mentionQuery))
+        .take(8)
+        .toList();
+    if (filtered.isEmpty) {
+      return;
+    }
+
+    final overlay = Overlay.of(context);
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+    final offset = renderBox.localToGlobal(Offset.zero);
+
+    _mentionOverlay = OverlayEntry(
+      builder: (ctx) => Positioned(
+        left: offset.dx,
+        top: offset.dy + renderBox.size.height,
+        width: renderBox.size.width.clamp(200, 400),
+        child: Material(
+          elevation: 8,
+          borderRadius: BorderRadius.circular(4),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 200),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: filtered.length,
+              itemBuilder: (_, i) {
+                final entity = filtered[i];
+                return ListTile(
+                  dense: true,
+                  title: Text(entity.name, style: const TextStyle(fontSize: 13)),
+                  subtitle: Text(entity.categorySlug, style: const TextStyle(fontSize: 10)),
+                  onTap: () => _insertMention(entity.id, entity.name),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    overlay.insert(_mentionOverlay!);
+  }
+
+  void _insertMention(String entityId, String entityName) {
+    _dismissMentionOverlay();
+    final text = _controller.text;
+    final cursorPos = _controller.selection.baseOffset;
+    final mention = '@[$entityName](entity:$entityId)';
+    final newText = text.substring(0, _mentionStart) + mention + text.substring(cursorPos);
+    _controller.text = newText;
+    final newCursor = _mentionStart + mention.length;
+    _controller.selection = TextSelection.collapsed(offset: newCursor);
+    widget.onChanged(newText);
+  }
+
+  MarkdownStyleSheet _styleSheet(DmToolColors? palette) {
+    return MarkdownStyleSheet(
+      p: TextStyle(fontSize: 13, color: palette?.htmlText),
+      h1: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
+      h2: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
+      h3: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
+      code: TextStyle(fontSize: 12, backgroundColor: palette?.htmlCodeBg),
+      a: TextStyle(color: palette?.htmlLink),
+      listBullet: TextStyle(fontSize: 13, color: palette?.htmlText),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final text = value?.toString() ?? '';
     final palette = Theme.of(context).extension<DmToolColors>();
 
-    if (readOnly) {
-      // Read-only: markdown render
+    if (widget.readOnly) {
+      final text = widget.value?.toString() ?? '';
       if (text.isEmpty) return const SizedBox.shrink();
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette?.tabText)),
+            Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette?.tabText)),
             const SizedBox(height: 4),
             MarkdownBody(
               data: text,
               selectable: true,
-              styleSheet: MarkdownStyleSheet(
-                p: TextStyle(fontSize: 13, color: palette?.htmlText),
-                h1: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
-                h2: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
-                h3: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
-                code: TextStyle(fontSize: 12, backgroundColor: palette?.htmlCodeBg),
-                a: TextStyle(color: palette?.htmlLink),
-                listBullet: TextStyle(fontSize: 13, color: palette?.htmlText),
-              ),
+              styleSheet: _styleSheet(palette),
+              onTapLink: (text, href, title) {
+                // Handle entity: links
+                if (href != null && href.startsWith('entity:')) {
+                  // Entity navigation could be handled here
+                }
+              },
             ),
           ],
         ),
       );
     }
 
-    // Edit mode: text area
+    // Edit mode with toggle
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: TextFormField(
-        key: ValueKey('${schema.fieldKey}_md_$value'),
-        initialValue: text,
-        maxLines: null,
-        minLines: 4,
-        decoration: InputDecoration(
-          labelText: '${schema.label} (Markdown)',
-          isDense: true,
-        ),
-        onChanged: (v) => onChanged(v),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Edit/Preview toggle
+          Row(
+            children: [
+              Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette?.tabText)),
+              const Spacer(),
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: false, label: Text('Edit', style: TextStyle(fontSize: 11))),
+                  ButtonSegment(value: true, label: Text('Preview', style: TextStyle(fontSize: 11))),
+                ],
+                selected: {_isPreview},
+                onSelectionChanged: (v) => setState(() => _isPreview = v.first),
+                style: ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          if (_isPreview)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                border: Border.all(color: palette?.featureCardBorder ?? Colors.grey),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              constraints: const BoxConstraints(minHeight: 100),
+              child: _controller.text.isEmpty
+                  ? Text('Nothing to preview', style: TextStyle(color: palette?.sidebarLabelSecondary, fontSize: 12, fontStyle: FontStyle.italic))
+                  : MarkdownBody(
+                      data: _controller.text,
+                      selectable: true,
+                      styleSheet: _styleSheet(palette),
+                      onTapLink: (text, href, title) {
+                        if (href != null && href.startsWith('entity:')) {
+                          // Entity navigation
+                        }
+                      },
+                    ),
+            )
+          else
+            TextField(
+              controller: _controller,
+              focusNode: _focusNode,
+              maxLines: null,
+              minLines: 4,
+              decoration: InputDecoration(
+                hintText: 'Markdown supported. Use @ to mention entities.',
+                isDense: true,
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: _onTextChanged,
+            ),
+        ],
       ),
     );
   }
@@ -701,6 +902,245 @@ class _BooleanFieldWidget extends StatelessWidget {
   }
 }
 
+// --- IMAGE GALLERY ---
+class _ImageFieldWidget extends StatefulWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  const _ImageFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+
+  @override
+  State<_ImageFieldWidget> createState() => _ImageFieldWidgetState();
+}
+
+class _ImageFieldWidgetState extends State<_ImageFieldWidget> {
+  int _currentIndex = 0;
+
+  List<String> get _images {
+    if (widget.value is List) return List<String>.from(widget.value as List);
+    if (widget.value is String && (widget.value as String).isNotEmpty) return [widget.value as String];
+    return [];
+  }
+
+  Future<void> _pickImages() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final newPaths = result.files.where((f) => f.path != null).map((f) => f.path!).toList();
+    widget.onChanged([..._images, ...newPaths]);
+  }
+
+  void _removeImage(int index) {
+    final updated = List<String>.from(_images)..removeAt(index);
+    if (_currentIndex >= updated.length && updated.isNotEmpty) {
+      _currentIndex = updated.length - 1;
+    }
+    widget.onChanged(updated);
+  }
+
+  void _showFullScreen(BuildContext context, String imagePath) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: Image.file(File(imagePath), fit: BoxFit.contain),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final images = _images;
+    if (_currentIndex >= images.length) _currentIndex = images.isEmpty ? 0 : images.length - 1;
+
+    final palette = Theme.of(context).extension<DmToolColors>();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: widget.schema.label,
+          isDense: true,
+          border: const OutlineInputBorder(),
+        ),
+        child: Column(
+          children: [
+            if (images.isNotEmpty) ...[
+              // Image display with navigation
+              SizedBox(
+                height: 180,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () => _showFullScreen(context, images[_currentIndex]),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: Image.file(
+                          File(images[_currentIndex]),
+                          fit: BoxFit.contain,
+                          width: double.infinity,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: palette?.canvasBg ?? Colors.grey.shade800,
+                            child: Center(child: Icon(Icons.broken_image, color: palette?.sidebarLabelSecondary)),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Navigation arrows
+                    if (images.length > 1) ...[
+                      Positioned(
+                        left: 4,
+                        child: IconButton(
+                          icon: const Icon(Icons.chevron_left, color: Colors.white70),
+                          onPressed: () => setState(() => _currentIndex = (_currentIndex - 1).clamp(0, images.length - 1)),
+                        ),
+                      ),
+                      Positioned(
+                        right: 4,
+                        child: IconButton(
+                          icon: const Icon(Icons.chevron_right, color: Colors.white70),
+                          onPressed: () => setState(() => _currentIndex = (_currentIndex + 1).clamp(0, images.length - 1)),
+                        ),
+                      ),
+                    ],
+                    // Counter badge
+                    if (images.length > 1)
+                      Positioned(
+                        bottom: 4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${_currentIndex + 1}/${images.length}',
+                            style: const TextStyle(color: Colors.white, fontSize: 11),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+            ],
+            // Action buttons
+            if (!widget.readOnly)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (images.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: () => _removeImage(_currentIndex),
+                      icon: const Icon(Icons.delete, size: 16),
+                      label: const Text('Remove', style: TextStyle(fontSize: 12)),
+                    ),
+                  TextButton.icon(
+                    onPressed: _pickImages,
+                    icon: const Icon(Icons.add_photo_alternate, size: 16),
+                    label: const Text('Add Image', style: TextStyle(fontSize: 12)),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- FILE (PDF) ---
+class _FileFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  const _FileFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final files = (value is List) ? List<String>.from(value as List) : <String>[];
+    final palette = Theme.of(context).extension<DmToolColors>();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: schema.label,
+          isDense: true,
+          border: const OutlineInputBorder(),
+        ),
+        child: Column(
+          children: [
+            if (files.isNotEmpty)
+              ...files.asMap().entries.map((entry) {
+                final i = entry.key;
+                final path = entry.value;
+                final fileName = path.split('/').last.split('\\').last;
+                return ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.picture_as_pdf, size: 20, color: palette?.tokenBorderHostile ?? Colors.red),
+                  title: Text(fileName, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
+                  trailing: readOnly
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.close, size: 16),
+                          onPressed: () {
+                            final updated = List<String>.from(files)..removeAt(i);
+                            onChanged(updated);
+                          },
+                        ),
+                );
+              }),
+            if (!readOnly)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () async {
+                    final allowed = schema.validation.allowedExtensions;
+                    final result = await FilePicker.platform.pickFiles(
+                      type: allowed != null && allowed.isNotEmpty ? FileType.custom : FileType.any,
+                      allowedExtensions: allowed != null && allowed.isNotEmpty ? allowed : null,
+                      allowMultiple: true,
+                    );
+                    if (result == null || result.files.isEmpty) return;
+                    final newPaths = result.files.where((f) => f.path != null).map((f) => f.path!).toList();
+                    onChanged([...files, ...newPaths]);
+                  },
+                  icon: const Icon(Icons.attach_file, size: 16),
+                  label: const Text('Add File', style: TextStyle(fontSize: 12)),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // --- TAG LIST ---
 class _TagListFieldWidget extends StatelessWidget {
   final FieldSchema schema;
@@ -739,12 +1179,82 @@ class _TagListFieldWidget extends StatelessWidget {
             if (!readOnly)
               ActionChip(
                 label: const Icon(Icons.add, size: 14),
-                onPressed: () {
-                  // TODO: Tag input dialog
+                onPressed: () async {
+                  final controller = TextEditingController();
+                  final result = await showDialog<String>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Add Tag'),
+                      content: TextField(
+                        controller: controller,
+                        autofocus: true,
+                        decoration: const InputDecoration(hintText: 'Tag name (comma separated)'),
+                        onSubmitted: (v) => Navigator.of(ctx).pop(v),
+                      ),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+                        TextButton(onPressed: () => Navigator.of(ctx).pop(controller.text), child: const Text('Add')),
+                      ],
+                    ),
+                  );
+                  if (result != null && result.trim().isNotEmpty) {
+                    final newTags = result.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
+                    onChanged([...tags, ...newTags]);
+                  }
                 },
                 visualDensity: VisualDensity.compact,
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- DATE ---
+class _DateFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  const _DateFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = value?.toString() ?? '';
+    DateTime? parsed;
+    try {
+      if (dateStr.isNotEmpty) parsed = DateTime.parse(dateStr);
+    } catch (_) {}
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: TextFormField(
+        key: ValueKey('${schema.fieldKey}_date_$value'),
+        initialValue: parsed != null
+            ? '${parsed.year}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}'
+            : dateStr,
+        readOnly: true,
+        decoration: InputDecoration(
+          labelText: schema.label,
+          isDense: true,
+          suffixIcon: readOnly
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.calendar_today, size: 18),
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: parsed ?? DateTime.now(),
+                      firstDate: DateTime(1000),
+                      lastDate: DateTime(9999),
+                    );
+                    if (picked != null) {
+                      onChanged(picked.toIso8601String().split('T').first);
+                    }
+                  },
+                ),
         ),
       ),
     );

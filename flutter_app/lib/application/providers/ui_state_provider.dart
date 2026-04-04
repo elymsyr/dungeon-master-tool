@@ -30,6 +30,9 @@ class UiState {
   final String themeName;
   final String localeCode;
 
+  // Volume
+  final double volume;
+
   const UiState({
     this.mainTabIndex = 0,
     this.sidebarOpen = true,
@@ -44,6 +47,7 @@ class UiState {
     this.sessionBottomTab = 0,
     this.themeName = 'dark',
     this.localeCode = 'en',
+    this.volume = 1.0,
   });
 
   UiState copyWith({
@@ -60,6 +64,7 @@ class UiState {
     int? sessionBottomTab,
     String? themeName,
     String? localeCode,
+    double? volume,
   }) {
     return UiState(
       mainTabIndex: mainTabIndex ?? this.mainTabIndex,
@@ -75,6 +80,7 @@ class UiState {
       sessionBottomTab: sessionBottomTab ?? this.sessionBottomTab,
       themeName: themeName ?? this.themeName,
       localeCode: localeCode ?? this.localeCode,
+      volume: volume ?? this.volume,
     );
   }
 
@@ -92,6 +98,7 @@ class UiState {
     'sessionBottomTab': sessionBottomTab,
     'themeName': themeName,
     'localeCode': localeCode,
+    'volume': volume,
   };
 
   factory UiState.fromJson(Map<String, dynamic> json) {
@@ -109,6 +116,7 @@ class UiState {
       sessionBottomTab: json['sessionBottomTab'] as int? ?? 0,
       themeName: json['themeName'] as String? ?? 'dark',
       localeCode: json['localeCode'] as String? ?? 'en',
+      volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
     );
   }
 }

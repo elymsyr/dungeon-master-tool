@@ -51,9 +51,12 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final mapState = ref.watch(battleMapProvider(widget.encounterId));
     final notifier = ref.read(battleMapProvider(widget.encounterId).notifier);
-    final encounter = ref.watch(combatProvider.select((s) => s.activeEncounter));
+
+    // Only watch activeTool for gesture routing — scale/panOffset live in viewTransform
+    final activeTool = ref.watch(
+      battleMapProvider(widget.encounterId).select((s) => s.activeTool),
+    );
 
     return Column(
       children: [
@@ -74,26 +77,29 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
               },
               child: GestureDetector(
               // Navigate tool: scale gesture handles both pan and pinch-zoom
-              onScaleStart: (!_tokenDragActive && mapState.activeTool == BattleMapTool.navigate)
+              onScaleStart: (!_tokenDragActive && activeTool == BattleMapTool.navigate)
                   ? notifier.onScaleStart
                   : null,
-              onScaleUpdate: (!_tokenDragActive && mapState.activeTool == BattleMapTool.navigate)
+              onScaleUpdate: (!_tokenDragActive && activeTool == BattleMapTool.navigate)
                   ? notifier.onScaleUpdate
+                  : null,
+              onScaleEnd: (!_tokenDragActive && activeTool == BattleMapTool.navigate)
+                  ? (_) => notifier.onScaleEnd()
                   : null,
 
               // Drawing tools: pan gesture
-              onPanStart: (!_tokenDragActive && mapState.activeTool != BattleMapTool.navigate)
-                  ? (details) => _handlePanStart(details.localPosition, notifier, mapState)
+              onPanStart: (!_tokenDragActive && activeTool != BattleMapTool.navigate)
+                  ? (details) => _handlePanStart(details.localPosition, notifier, activeTool)
                   : null,
-              onPanUpdate: (!_tokenDragActive && mapState.activeTool != BattleMapTool.navigate)
-                  ? (details) => _handlePanUpdate(details.localPosition, notifier, mapState)
+              onPanUpdate: (!_tokenDragActive && activeTool != BattleMapTool.navigate)
+                  ? (details) => _handlePanUpdate(details.localPosition, notifier, activeTool)
                   : null,
-              onPanEnd: (!_tokenDragActive && mapState.activeTool != BattleMapTool.navigate)
-                  ? (_) => _handlePanEnd(notifier, mapState)
+              onPanEnd: (!_tokenDragActive && activeTool != BattleMapTool.navigate)
+                  ? (_) => _handlePanEnd(notifier, activeTool)
                   : null,
 
               // Navigate: tap to delete measurement at point
-              onTapUp: mapState.activeTool == BattleMapTool.navigate
+              onTapUp: activeTool == BattleMapTool.navigate
                   ? (details) {
                       final canvas = notifier.screenToCanvas(details.localPosition);
                       notifier.deleteMeasurementAt(canvas);
@@ -107,45 +113,29 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                     // Dark background
                     ColoredBox(color: palette.canvasBg),
 
-                    // Layers 1-6 via CustomPaint
-                    CustomPaint(
-                      size: canvasSize,
-                      painter: BattleMapPainter(
-                        mapState: mapState,
-                        palette: palette,
-                        isDmView: true,
-                        currentPath: notifier.currentPath,
-                        currentColor: notifier.currentColor,
-                        currentWidth: notifier.currentWidth,
-                        currentIsErase: notifier.currentIsErase,
-                      ),
-                    ),
+                    // Layers 1-6 via CustomPaint (repaint driven by Listenable)
+                    Consumer(builder: (context, ref, _) {
+                      final mapState = ref.watch(battleMapProvider(widget.encounterId));
+                      return RepaintBoundary(
+                        child: CustomPaint(
+                          size: canvasSize,
+                          painter: BattleMapPainter(
+                            mapState: mapState,
+                            viewTransform: notifier.viewTransform,
+                            strokeTick: notifier.strokeTick,
+                            palette: palette,
+                            isDmView: true,
+                            currentPath: notifier.currentPath,
+                            currentColor: notifier.currentColor,
+                            currentWidth: notifier.currentWidth,
+                            currentIsErase: notifier.currentIsErase,
+                          ),
+                        ),
+                      );
+                    }),
 
-                    // Token layer (widget stack — above CustomPaint)
-                    if (encounter != null)
-                      ...encounter.combatants.map((c) {
-                        final pos = mapState.tokenPositions[c.id];
-                        if (pos == null) return const SizedBox.shrink();
-                        return TokenWidget(
-                          key: ValueKey('token_${c.id}'),
-                          combatant: c,
-                          tokenSize: mapState.tokenSizeOverrides[c.id] ?? mapState.tokenSize,
-                          isActive: encounter.combatants.indexOf(c) == encounter.turnIndex,
-                          canvasPosition: pos,
-                          scale: mapState.scale,
-                          panOffset: mapState.panOffset,
-                          palette: palette,
-                          onDragStart: () => setState(() => _tokenDragActive = true),
-                          onDragEnd: (id, finalCanvasPos) {
-                            setState(() => _tokenDragActive = false);
-                            // Commit final position to notifier
-                            notifier.moveToken(id, finalCanvasPos);
-                            if (mapState.gridSnap) notifier.snapTokenToGrid(id);
-                            notifier.persistTokenPositions();
-                          },
-                          onResizeRequested: (id) => _showResizeDialog(id, mapState, notifier),
-                        );
-                      }),
+                    // Token layer — Transform wrapper applies canvas→screen projection
+                    _buildTokenLayer(palette, notifier),
                   ],
                 ),
               ),
@@ -158,12 +148,63 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   }
 
   // -------------------------------------------------------------------------
+  // Token layer with Transform wrapper
+  // -------------------------------------------------------------------------
+
+  Widget _buildTokenLayer(DmToolColors palette, BattleMapNotifier notifier) {
+    final encounter = ref.watch(combatProvider.select((s) => s.activeEncounter));
+    if (encounter == null) return const SizedBox.shrink();
+
+    final mapState = ref.watch(battleMapProvider(widget.encounterId));
+
+    return ValueListenableBuilder<ViewTransform>(
+      valueListenable: notifier.viewTransform,
+      builder: (context, vt, child) {
+        return Transform(
+          transform: Matrix4.identity()
+            ..translateByDouble(vt.panOffset.dx, vt.panOffset.dy, 0, 1)
+            ..scaleByDouble(vt.scale, vt.scale, 1, 1),
+          child: child,
+        );
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ...encounter.combatants.indexed.map((indexed) {
+            final (index, c) = indexed;
+            final pos = mapState.tokenPositions[c.id];
+            if (pos == null) return const SizedBox.shrink();
+            return TokenWidget(
+              key: ValueKey('token_${c.id}'),
+              combatant: c,
+              tokenSize: mapState.tokenSizeOverrides[c.id] ?? mapState.tokenSize,
+              isActive: index == encounter.turnIndex,
+              canvasPosition: pos,
+              viewTransform: notifier.viewTransform,
+              palette: palette,
+              onDragStart: () => setState(() => _tokenDragActive = true),
+              onDragEnd: (id, finalCanvasPos) {
+                setState(() => _tokenDragActive = false);
+                // Commit final position to notifier
+                notifier.moveToken(id, finalCanvasPos);
+                if (mapState.gridSnap) notifier.snapTokenToGrid(id);
+                notifier.persistTokenPositions();
+              },
+              onResizeRequested: (id) => _showResizeDialog(id, mapState, notifier),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
   // Gesture dispatch for drawing tools
   // -------------------------------------------------------------------------
 
-  void _handlePanStart(Offset localPos, BattleMapNotifier notifier, BattleMapState mapState) {
+  void _handlePanStart(Offset localPos, BattleMapNotifier notifier, BattleMapTool activeTool) {
     final canvas = notifier.screenToCanvas(localPos);
-    switch (mapState.activeTool) {
+    switch (activeTool) {
       case BattleMapTool.fogAdd:
       case BattleMapTool.fogErase:
         notifier.startFogDraft(canvas);
@@ -177,9 +218,9 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
     }
   }
 
-  void _handlePanUpdate(Offset localPos, BattleMapNotifier notifier, BattleMapState mapState) {
+  void _handlePanUpdate(Offset localPos, BattleMapNotifier notifier, BattleMapTool activeTool) {
     final canvas = notifier.screenToCanvas(localPos);
-    switch (mapState.activeTool) {
+    switch (activeTool) {
       case BattleMapTool.fogAdd:
       case BattleMapTool.fogErase:
         notifier.continueFogDraft(canvas);
@@ -193,8 +234,8 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
     }
   }
 
-  Future<void> _handlePanEnd(BattleMapNotifier notifier, BattleMapState mapState) async {
-    switch (mapState.activeTool) {
+  Future<void> _handlePanEnd(BattleMapNotifier notifier, BattleMapTool activeTool) async {
+    switch (activeTool) {
       case BattleMapTool.fogAdd:
       case BattleMapTool.fogErase:
         await notifier.commitFogDraft();
