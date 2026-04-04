@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/combat_provider.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../../core/utils/screen_type.dart';
+import '../../widgets/battle_map/battle_map_mobile_toolbar.dart';
 import '../../widgets/battle_map/battle_map_toolbar.dart';
 import '../../widgets/battle_map/token_widget.dart';
 import 'battle_map_notifier.dart';
@@ -58,10 +60,12 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
       battleMapProvider(widget.encounterId).select((s) => s.activeTool),
     );
 
+    final phone = isPhone(context);
+
     return Column(
       children: [
-        // Toolbar (DM view only)
-        BattleMapToolbar(encounterId: widget.encounterId),
+        // Toolbar (DM view only) — desktop/tablet gets the full horizontal toolbar
+        if (!phone) BattleMapToolbar(encounterId: widget.encounterId),
 
         // Canvas area
         Expanded(
@@ -143,6 +147,9 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
             );  // Listener
           }),
         ),
+
+        // Mobile: compact bottom toolbar with expand-to-sheet
+        if (phone) BattleMapMobileToolbar(encounterId: widget.encounterId),
       ],
     );
   }
