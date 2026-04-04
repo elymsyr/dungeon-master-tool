@@ -23,17 +23,17 @@
 
 ## 0. Güncel Durum (Nisan 2026)
 
-> Son güncelleme: **2026-04-04** | Branch: `flutter` | ~105 Dart dosyası, ~250 KB kaynak kod | 52 test (7 test dosyası)
+> Son güncelleme: **2026-04-04** | Branch: `flutter` | 110 Dart dosyası (99 lib + 11 test) | ~26K satır kod | 158 test (11 test dosyası)
 
 ### Genel İlerleme
 
 | Sprint | Konu | Tamamlanma | Notlar |
 |--------|------|-----------|--------|
 | Sprint 0 | Proje Kurulumu & Foundation | **%100 ✅** | Schema migration, legacy maps, settings repository dahil tamamlandı |
-| Sprint 1 | Schema-Driven Entity Card & FieldWidgetFactory | **~%95** | Tüm widget'lar + mobile sidebar tam; sadece widget testleri (1.17) eksik |
-| Sprint 2 | Advanced Widgets + Template Studio | **~%90** | Tüm field widget'lar (Markdown, Image, File, Tag, Date) + ImportDialog + EntityParser tam; sadece widget testleri (2.13) eksik |
-| Sprint 3 | Session + Combat Tracker | **~%95** | Mobile layout, EncounterColumnDialog, DiceRoller mobile, Entity Stats tam; sadece combat testleri (3.17) eksik |
-| Sprint 4 | Battle Map | **~%95** | 6 katman, tüm araçlar, performans optimizasyonu (ViewTransform, selective watch, viewport clipping) tam; mobile toolbar bottom sheet (4.15) eksik |
+| Sprint 1 | Schema-Driven Entity Card & FieldWidgetFactory | **%100 ✅** | Tüm widget'lar + mobile sidebar + unit/widget testleri tam |
+| Sprint 2 | Advanced Widgets + Template Studio | **%100 ✅** | Tüm field widget'lar + ImportDialog + EntityParser + widget testleri tam |
+| Sprint 3 | Session + Combat Tracker | **%100 ✅** | Mobile layout, combat testleri (51 test), DiceRoller, Entity Stats tam |
+| Sprint 4 | Battle Map | **%100 ✅** | 6 katman, tüm araçlar, performans optimizasyonu, mobile toolbar tam |
 | Sprint 5 | Mind Map + World Map | **~%0** | `mind_map/` ve `map/` klasörleri boş — hiç başlanmadı |
 | Sprint 6 | Soundpad + PDF + Polish | **~%5** | Sadece tema/dil altyapısı var; AudioEngine, SoundpadPanel, PDF viewer yok |
 | Sprint 7 | Dual Screen + Mobile Adaptation | **~%0** | Başlanmadı |
@@ -83,7 +83,10 @@
 **Testler:**
 - ✅ `default_schema_test.dart`, `entity_test.dart`, `field_group_test.dart`, `widget_test.dart`
 - ✅ `schema_migration_test.dart`, `entity_parser_test.dart`, `combat_state_test.dart`
-- 📊 Toplam: 52 test, 7 test dosyası, 616 satır test kodu
+- ✅ `campaign_test.dart`, `mind_map_test.dart` (domain entity roundtrip)
+- ✅ `combat_provider_test.dart` (51 test — encounter, combatant, turn, HP, conditions, serialization)
+- ✅ `field_widget_factory_test.dart` (34 test — text, textarea, integer, boolean, enum, statBlock, dice)
+- 📊 Toplam: 158 test, 11 test dosyası
 
 ### Eksik / Sıradaki Öncelikler
 
@@ -93,11 +96,7 @@
 | 🔴 Yüksek | World Map screen + pin sistemi | Sprint 5 |
 | 🔴 Yüksek | `AudioEngine` + `SoundpadPanel` | Sprint 6 |
 | 🔴 Yüksek | `PdfViewerWidget` (pdfrx) | Sprint 6 |
-| 🟠 Orta | Battle map mobile toolbar (bottom sheet) | Sprint 4 kalan |
-| 🟠 Orta | `NpcSheet` alt tab klasörü (`npc_sheet/`) | Sprint 1 refactor |
-| 🟡 Düşük | Widget testleri (FieldWidget + TemplateStudio) | Sprint 2 kalan |
-| 🟡 Düşük | Combat testleri | Sprint 3 kalan |
-| 🟡 Düşük | Entity CRUD + FieldWidget unit/widget testleri | Sprint 1 kalan |
+| 🟡 Düşük | `NpcSheet` alt tab klasörü (`npc_sheet/`) | Sprint 1 refactor |
 | 🟡 Düşük | Dual Screen / Player Window (`screen/` boş) | Sprint 7 |
 | ⚪ Beklemede | API browser + bulk downloader | Sprint 8 |
 | ⚪ Beklemede | Online (NetworkBridge, sunucu, WebRTC) | Sprint 9–11 |
@@ -652,7 +651,7 @@ class ScreenShareService {
 
 ---
 
-### Sprint 1 — Schema-Driven Entity Card & FieldWidgetFactory (Gün 11-20) · `~%95 TAMAMLANDI`
+### Sprint 1 — Schema-Driven Entity Card & FieldWidgetFactory (Gün 11-20) · `%100 TAMAMLANDI ✅`
 
 **Hedef:** Schema-driven entity card rendering, FieldWidgetFactory, sidebar. Entity card'lar hardcoded değil, WorldSchema'dan dinamik olarak üretilir.
 
@@ -674,7 +673,7 @@ class ScreenShareService {
 | 1.14 | ~~`DatabaseScreen` — Desktop dual-panel~~ ✅ | 3s | `database_screen.dart` (460 satır) tam |
 | 1.15 | ~~Global Edit Mode toggle~~ ✅ | 2s | `ui_state_provider.dart` içinde |
 | 1.16 | ~~DM Notes section~~ ✅ | 1s | `entity_card.dart` içinde kırmızı kenarlıklı kutu |
-| 1.17 | Entity CRUD + FieldWidget unit/widget testleri ❌ | 3s | Test yazılmadı |
+| 1.17 | ~~Entity CRUD + FieldWidget unit/widget testleri~~ ✅ | 3s | `campaign_test.dart`, `mind_map_test.dart`, `field_widget_factory_test.dart` |
 | **Toplam** | | **47s** | |
 
 **Sprint 1 Doğrulama:**
@@ -686,7 +685,7 @@ class ScreenShareService {
 
 ---
 
-### Sprint 2 — Advanced Widgets + Template Studio (Gün 21-30) · `~%90 TAMAMLANDI`
+### Sprint 2 — Advanced Widgets + Template Studio (Gün 21-30) · `%100 TAMAMLANDI ✅`
 
 **Hedef:** Kalan field widget'ları, MarkdownEditor, ImageGallery, Template Studio.
 
@@ -704,7 +703,7 @@ class ScreenShareService {
 | 2.10 | ~~**`TemplateStudioDialog`** — Field yönetimi~~ ✅ | 4s | `template_editor.dart` içinde tam |
 | 2.11 | ~~**`TemplateStudioDialog`** — Field editor~~ ✅ | 3s | Tüm FieldSchema alanları düzenlenebilir |
 | 2.12 | ~~**Template I/O** — `.dmt-template` export/import~~ ✅ | 3s | `template_local_ds.dart` ile çalışır |
-| 2.13 | Widget test'leri (FieldWidgets + TemplateStudio) ❌ | 2s | Test yazılmadı |
+| 2.13 | ~~Widget test'leri (FieldWidgets + TemplateStudio)~~ ✅ | 2s | `field_widget_factory_test.dart` (34 test) |
 | **Toplam** | | **35s** | |
 
 **Sprint 2 Doğrulama:**
@@ -716,7 +715,7 @@ class ScreenShareService {
 
 ---
 
-### Sprint 3 — Session + Combat Tracker (Gün 31-40) · `~%95 TAMAMLANDI`
+### Sprint 3 — Session + Combat Tracker (Gün 31-40) · `%100 TAMAMLANDI ✅`
 
 **Hedef:** Tam savaş yönetimi, oturum takibi, dice roller.
 
@@ -739,14 +738,14 @@ class ScreenShareService {
 | 3.14 | ~~Session notes~~ ✅ | 1s | `session_screen.dart` içinde notes kaydedilir |
 | 3.15 | ~~Session autosave~~ ✅ | 1s | Debounce çalışır |
 | 3.16 | ~~Entity Stats tab~~ ✅ | 2s | `_buildMobileEntityStats()` — combatant seçimi → entity detayı |
-| 3.17 | Combat test'leri ❌ | 2s | Test yazılmadı |
+| 3.17 | ~~Combat test'leri~~ ✅ | 2s | `combat_provider_test.dart` (51 test) |
 | **Toplam** | | **38s** | |
 
 **Sprint 3 Doğrulama:** Tam combat encounter oynanabilir. Initiative, HP, conditions çalışır. Combat tracker kolonları EncounterLayout'tan okunur. Custom field kolonu eklenebilir. Desktop + mobile layout doğru. Auto event log yazılır.
 
 ---
 
-### Sprint 4 — Battle Map (Gün 41-50) · `~%95 TAMAMLANDI`
+### Sprint 4 — Battle Map (Gün 41-50) · `%100 TAMAMLANDI ✅`
 
 **Hedef:** 6 katmanlı canvas, fog, araçlar, token'lar.
 
@@ -773,7 +772,7 @@ class ScreenShareService {
 | 4.12 | ~~DrawTool + EraseTool~~ ✅ | 2s | Freehand çizim + silme |
 | 4.13 | ~~FogTool (add/erase)~~ ✅ | 2s | Polygon fog add/erase çalışır |
 | 4.14 | ~~Battle map toolbar — Desktop (2 satır)~~ ✅ | 2s | `battle_map_toolbar.dart` (381 satır) tam |
-| 4.15 | Battle map toolbar — Mobile (bottom sheet) ❌ | 2s | `tools/` klasörü boş, eksik |
+| 4.15 | ~~Battle map toolbar — Mobile (bottom sheet)~~ ✅ | 2s | `battle_map_mobile_toolbar.dart` — mini toolbar + 3-tab bottom sheet |
 | 4.16 | ~~Fog/annotation/measurement persistence~~ ✅ | 2s | Base64 encode/decode ile persist |
 | 4.17 | ~~Büyük görsel desteği~~ ✅ | 1s | `_loadImageFromFile` + async yükleme |
 | 4.18 | ~~Scroll zoom (mouse wheel)~~ ✅ | 1s | `Listener` + `zoomAtPoint` eklendi (2026-04-04) |
