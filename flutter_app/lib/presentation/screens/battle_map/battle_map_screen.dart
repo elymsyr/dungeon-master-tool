@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -63,8 +64,15 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
         Expanded(
           child: LayoutBuilder(builder: (context, constraints) {
             final canvasSize = Size(constraints.maxWidth, constraints.maxHeight);
+            notifier.updateViewportSize(canvasSize);
 
-            return GestureDetector(
+            return Listener(
+              onPointerSignal: (event) {
+                if (event is PointerScrollEvent) {
+                  notifier.zoomAtPoint(event.localPosition, event.scrollDelta.dy);
+                }
+              },
+              child: GestureDetector(
               // Navigate tool: scale gesture handles both pan and pinch-zoom
               onScaleStart: (!_tokenDragActive && mapState.activeTool == BattleMapTool.navigate)
                   ? notifier.onScaleStart
@@ -141,7 +149,8 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                   ],
                 ),
               ),
-            );
+            ),  // GestureDetector
+            );  // Listener
           }),
         ),
       ],

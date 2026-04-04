@@ -9,6 +9,7 @@
 
 ## İçindekiler
 
+0. [Güncel Durum (Nisan 2026)](#0-güncel-durum-nisan-2026)
 1. [Platform Stratejisi](#1-platform-stratejisi)
 2. [Responsive UI Mimarisi](#2-responsive-ui-mimarisi)
 3. [Ekran Bazlı Responsive Tasarım](#3-ekran-bazlı-responsive-tasarım)
@@ -17,6 +18,77 @@
 6. [Definition of Done](#6-definition-of-done)
 7. [KPI ve Performans Hedefleri](#7-kpi-ve-performans-hedefleri)
 8. [Risk Yönetimi](#8-risk-yönetimi)
+
+---
+
+## 0. Güncel Durum (Nisan 2026)
+
+> Son güncelleme: **2026-04-04** | Branch: `flutter` | ~90 Dart dosyası, ~200 KB kaynak kod
+
+### Genel İlerleme
+
+| Sprint | Konu | Tamamlanma | Notlar |
+|--------|------|-----------|--------|
+| Sprint 0 | Proje Kurulumu & Foundation | **~90%** | Schema migration eksik; 4 unit test yazıldı |
+| Sprint 1 | Schema-Driven Entity Card & FieldWidgetFactory | **~90%** | `entity_card.dart`, `field_widget_factory.dart`, `entity_sidebar.dart` tam; NpcSheet alt tab'ları klasörlendirilmemiş |
+| Sprint 2 | Advanced Widgets + Template Studio | **~55%** | `template_editor.dart` (1515 satır) tam; Markdown/Image/File/Tag/Date widget'ları eksik; `ImportDialog` yok |
+| Sprint 3 | Session + Combat Tracker | **~80%** | `session_screen.dart` (867 satır), `combat_provider.dart` tam; mobile layout ve `EncounterColumnDialog` eksik |
+| Sprint 4 | Battle Map | **~85%** | 6 katman, tüm araçlar, scroll zoom, fit-to-screen tam; mobile toolbar (bottom sheet) eksik |
+| Sprint 5 | Mind Map + World Map | **~0%** | `mind_map/` ve `map/` klasörleri boş — hiç başlanmadı |
+| Sprint 6 | Soundpad + PDF + Polish | **~5%** | Sadece tema/dil altyapısı var; AudioEngine, SoundpadPanel, PDF viewer yok |
+| Sprint 7 | Dual Screen + Mobile Adaptation | **~0%** | Başlanmadı |
+| Sprint 8 | API Integration + Library | **~0%** | `datasources/remote/` boş; başlanmadı |
+| Sprint 9–12 | Online + Deployment | **~0%** | Başlanmadı |
+
+### Tamamlanan Önemli Bileşenler
+
+**Altyapı & Domain:**
+- ✅ Clean Architecture (domain / data / application / presentation katmanları)
+- ✅ Tüm domain entity'leri Freezed ile (`entity`, `campaign`, `session`, `encounter`, `mind_map`, `map_data`, `audio_models`)
+- ✅ Schema sistemi: `WorldSchema`, `EntityCategorySchema`, `FieldSchema`, `FieldGroup`, `CategoryRule`, `EncounterLayout`, `EncounterConfig`
+- ✅ `generateDefaultDnd5eSchema()` — 15 kategori, tam alan tanımları
+- ✅ `CampaignLocalDataSource` (MsgPack I/O), `CampaignRepositoryImpl`
+- ✅ `AppPaths` (portable + platform-aware), `ScreenType` breakpoint sistemi
+- ✅ `AppEventBus` service, `RuleEngine` (D&D 5e hesaplamalar)
+- ✅ `ThemeNotifier` + `LocaleNotifier` (11 tema, 4 dil — EN/TR/DE/FR)
+- ✅ `DmToolColors` ThemeExtension (432 satır, 80+ renk değişkeni)
+
+**Ekranlar & Widget'lar:**
+- ✅ `LandingScreen` → `CampaignSelectorScreen` → `MainScreen` (tam 4-tab navigasyon)
+- ✅ `HubScreen` (TemplatesTab, WorldsTab, SettingsTab, SocialTab)
+- ✅ `TemplateEditor` (69 KB / 1515 satır — kategori + alan + encounter config yönetimi)
+- ✅ `DatabaseScreen` (dual-panel splitter, filtreleme)
+- ✅ `EntityCard` (28 KB / 746 satır — schema-driven render)
+- ✅ `FieldWidgetFactory` (30 KB / 782 satır — 16 field tipi)
+- ✅ `EntitySidebar` (347 satır)
+- ✅ `SessionScreen` (37 KB / 867 satır — combat tracker, dice roller, event log, notes)
+- ✅ `CombatProvider` (473 satır — initiative, HP, conditions, turn advance)
+- ✅ `HpBar`, `ConditionBadge`, `ResizableSplit`
+- ✅ `BattleMapScreen` + `BattleMapNotifier` + `BattleMapPainter` (6 katman, tüm araçlar, scroll zoom, fit-to-screen)
+- ✅ `BattleMapToolbar` (2 satır, grid kontrolleri), `TokenWidget` (drag + resize)
+- ✅ `EntitySelectorDialog`
+
+**Testler:**
+- ✅ `default_schema_test.dart`, `entity_test.dart`, `field_group_test.dart`, `widget_test.dart`
+
+### Eksik / Sıradaki Öncelikler
+
+| Öncelik | Bileşen | Sprint |
+|---------|---------|--------|
+| 🔴 Yüksek | Mind Map canvas + node'lar (sonsuz canvas, LOD, Bézier) | Sprint 5 |
+| 🔴 Yüksek | World Map screen + pin sistemi | Sprint 5 |
+| 🔴 Yüksek | `MarkdownFieldWidget` (dual mode + @mention) | Sprint 2 |
+| 🔴 Yüksek | `ImageFieldWidget` + `ImageGallery` | Sprint 2 |
+| 🟠 Orta | `AudioEngine` + `SoundpadPanel` | Sprint 6 |
+| 🟠 Orta | `PdfViewerWidget` (pdfrx) | Sprint 6 |
+| 🟠 Orta | Schema migration (`data/schema/` boş) | Sprint 0 kalan |
+| 🟠 Orta | Battle map mobile toolbar (bottom sheet) | Sprint 4 kalan |
+| 🟠 Orta | `EncounterColumnDialog`, session mobile layout | Sprint 3 kalan |
+| 🟡 Düşük | `FileFieldWidget`, `TagListFieldWidget`, `DateFieldWidget` | Sprint 2 |
+| 🟡 Düşük | `ImportDialog`, API browser, bulk downloader | Sprint 2 / Sprint 8 |
+| 🟡 Düşük | `NpcSheet` alt tab klasörü (`npc_sheet/`) | Sprint 1 refactor |
+| 🟡 Düşük | Dual Screen / Player Window (`screen/` boş) | Sprint 7 |
+| ⚪ Beklemede | Online (NetworkBridge, sunucu, WebRTC) | Sprint 9–11 |
 
 ---
 
@@ -530,34 +602,34 @@ class ScreenShareService {
 
 ## 5. Sprint Planı
 
-### Sprint 0 — Proje Kurulumu & Schema-Driven Foundation (Gün 1-10)
+### Sprint 0 — Proje Kurulumu & Schema-Driven Foundation (Gün 1-10) · `~90% TAMAMLANDI`
 
 **Hedef:** Çalışan iskelet uygulama, schema-driven entity sistemi, kampanya açabilir, tema değiştirebilir.
 
 | # | Task | Dosyalar | Tahmin | Kabul Kriterleri |
 |---|---|---|---|---|
-| 0.1 | Flutter proje oluşturma, dizin yapısı | Tüm `lib/` klasörleri | 2s | `flutter run` çalışır |
-| 0.2 | `AppPaths` — config.py port (portable + platform) | `lib/core/config/app_paths.dart` | 2s | Windows + Linux'ta doğru path |
-| 0.3 | Breakpoint sistemi + `AdaptiveLayout` widget | `lib/core/utils/screen_type.dart`, `lib/presentation/widgets/adaptive_layout.dart` | 1s | Pencere boyutuna göre layout değişir |
-| 0.4 | Riverpod provider skeleton (tüm provider'lar boş) | `lib/application/providers/*.dart` | 3s | Compile hatasız |
-| 0.5 | `AppEventBus` service | `lib/application/services/event_bus.dart` | 1s | Event emit/listen çalışır |
-| 0.6 | **Schema domain modelleri:** `WorldSchema`, `EntityCategorySchema`, `FieldSchema`, `FieldType`, `FieldValidation`, `FieldVisibility` | `lib/domain/entities/schema/` | 4s | 16 FieldType tanımlı, Freezed build çalışır |
-| 0.7 | **`generateDefaultDnd5eSchema()`** — 15 kategori + tüm alanları ile varsayılan D&D 5e şablonu | `lib/domain/entities/schema/default_dnd5e_schema.dart` | 4s | 15 kategori, doğru field tipleri, NPC'de statBlock+combatStats+actionList+spellList var |
-| 0.8 | **`EncounterLayout` + `EncounterColumn`** — Configurable combat tracker kolonları | `lib/domain/entities/schema/encounter_layout.dart` | 2s | Default D&D layout: name, init, HP, AC, conditions |
-| 0.9 | Domain entities: `Entity` (schema-driven, `fields` map), `Campaign`, `Session`, `Encounter`, `Combatant` | `lib/domain/entities/` | 3s | Entity.fields map-based, Freezed build çalışır |
-| 0.10 | Domain entities: `MindMapNode`, `MindMapEdge`, `MapData`, `AudioModels` | `lib/domain/entities/` | 2s | Freezed build_runner çalışır |
-| 0.11 | `CampaignLocalDataSource` — MsgPack okuma/yazma | `lib/data/datasources/local/campaign_local_ds.dart` | 3s | Python .dat dosyası Flutter'da açılır |
-| 0.12 | **Schema migration:** Legacy kampanya (world_schema yok) → otomatik schema üret + entity fields map'le | `lib/data/schema/schema_migration.dart` | 3s | Eski kampanya açılınca world_schema oluşur, veri kaybı yok |
-| 0.13 | Legacy uyumluluk: `SCHEMA_MAP`, `PROPERTY_MAP` (TR→EN) | `lib/data/schema/legacy_maps.dart` | 1s | Türkçe entity type/field dönüşüm testi geçer |
-| 0.14 | `DmToolColors` ThemeExtension (80+ renk) | `lib/presentation/theme/dm_tool_colors.dart` | 2s | Tüm renk alanları tanımlı |
-| 0.15 | 11 tema paleti tanımlama | `lib/presentation/theme/palette.dart` | 4s | 11 palet build hatasız |
-| 0.16 | `ThemeNotifier` + runtime tema değiştirme | `lib/application/providers/theme_provider.dart` | 1s | Tema anlık değişir |
-| 0.17 | YAML→ARB dönüşüm script + 4 dil dosyası | `lib/presentation/l10n/app_{en,tr,de,fr}.arb` | 3s | ~250 key tüm dillerde mevcut |
-| 0.18 | `LocaleNotifier` + runtime dil değiştirme | `lib/application/providers/locale_provider.dart` | 1s | Dil anlık değişir |
-| 0.19 | `CampaignSelectorScreen` (basit) | `lib/presentation/screens/campaign_selector_screen.dart` | 3s | Kampanya listesi, seçim/oluşturma, yeni kampanyada default schema |
-| 0.20 | `MainScreen` iskeleti (tab bar + boş tab'lar) | `lib/presentation/screens/main_screen.dart` | 2s | 4 tab arası geçiş + responsive nav |
-| 0.21 | `SettingsRepository` + settings dialog | `lib/data/repositories/settings_repository_impl.dart` | 2s | Tema/dil/volume kaydedilir |
-| 0.22 | Schema + Entity unit testleri | test/ | 2s | Default schema 15 kategori üretir, migration çalışır |
+| 0.1 | ~~Flutter proje oluşturma, dizin yapısı~~ ✅ | Tüm `lib/` klasörleri | 2s | `flutter run` çalışır |
+| 0.2 | ~~`AppPaths` — config.py port (portable + platform)~~ ✅ | `lib/core/config/app_paths.dart` | 2s | Windows + Linux'ta doğru path |
+| 0.3 | ~~Breakpoint sistemi + `ScreenType`~~ ✅ | `lib/core/utils/screen_type.dart` | 1s | Pencere boyutuna göre layout değişir |
+| 0.4 | ~~Riverpod provider skeleton~~ ✅ | `lib/application/providers/*.dart` | 3s | Compile hatasız |
+| 0.5 | ~~`AppEventBus` service~~ ✅ | `lib/application/services/event_bus.dart` | 1s | Event emit/listen çalışır |
+| 0.6 | ~~**Schema domain modelleri**~~ ✅ | `lib/domain/entities/schema/` | 4s | 16 FieldType tanımlı, Freezed build çalışır |
+| 0.7 | ~~**`generateDefaultDnd5eSchema()`**~~ ✅ | `lib/domain/entities/schema/default_dnd5e_schema.dart` | 4s | 15 kategori, tüm alan tipleri |
+| 0.8 | ~~**`EncounterLayout` + `EncounterColumn`**~~ ✅ | `lib/domain/entities/schema/encounter_layout.dart` | 2s | Default D&D layout: name, init, HP, AC, conditions |
+| 0.9 | ~~Domain entities: `Entity`, `Campaign`, `Session`, `Encounter`, `Combatant`~~ ✅ | `lib/domain/entities/` | 3s | Entity.fields map-based, Freezed + g.dart build çalışır |
+| 0.10 | ~~Domain entities: `MindMapNode`, `MindMapEdge`, `MapData`, `AudioModels`~~ ✅ | `lib/domain/entities/` | 2s | Freezed build_runner çalışır |
+| 0.11 | ~~`CampaignLocalDataSource` — MsgPack okuma/yazma~~ ✅ | `lib/data/datasources/local/campaign_local_ds.dart` | 3s | MsgPack I/O çalışır |
+| 0.12 | **Schema migration: `lib/data/schema/schema_migration.dart`** ❌ | `lib/data/schema/` (boş) | 3s | Eski kampanya açılınca world_schema oluşur, veri kaybı yok |
+| 0.13 | Legacy uyumluluk: `SCHEMA_MAP`, `PROPERTY_MAP` ❌ | `lib/data/schema/legacy_maps.dart` | 1s | TR→EN dönüşüm testi geçer |
+| 0.14 | ~~`DmToolColors` ThemeExtension (80+ renk)~~ ✅ | `lib/presentation/theme/dm_tool_colors.dart` | 2s | 432 satır, tüm renk alanları tanımlı |
+| 0.15 | ~~11 tema paleti tanımlama~~ ✅ | `lib/presentation/theme/palettes.dart` | 4s | 11 palet build hatasız |
+| 0.16 | ~~`ThemeNotifier` + runtime tema değiştirme~~ ✅ | `lib/application/providers/theme_provider.dart` | 1s | Tema anlık değişir |
+| 0.17 | ~~4 dil dosyası (EN/TR/DE/FR)~~ ✅ | `lib/presentation/l10n/` | 3s | 4 dil ARB çalışır |
+| 0.18 | ~~`LocaleNotifier` + runtime dil değiştirme~~ ✅ | `lib/application/providers/locale_provider.dart` | 1s | Dil anlık değişir |
+| 0.19 | ~~`CampaignSelectorScreen`~~ ✅ | `lib/presentation/screens/campaign_selector/` | 3s | Kampanya listesi, seçim/oluşturma |
+| 0.20 | ~~`MainScreen` (tab bar + navigasyon)~~ ✅ | `lib/presentation/screens/main_screen.dart` | 2s | 4 tab arası geçiş + responsive nav |
+| 0.21 | `SettingsRepository` impl ⚠️ | `lib/data/repositories/settings_repository_impl.dart` | 2s | Tema/dil/volume kaydedilir (settings_tab.dart var, repository impl yok) |
+| 0.22 | ~~Schema + Entity unit testleri~~ ✅ (kısmi) | `test/domain/` | 2s | `default_schema_test`, `entity_test`, `field_group_test` yazıldı |
 | **Toplam** | | | **51s** | |
 
 **Sprint 0 Doğrulama:**
@@ -568,29 +640,29 @@ class ScreenShareService {
 
 ---
 
-### Sprint 1 — Schema-Driven Entity Card & FieldWidgetFactory (Gün 11-20)
+### Sprint 1 — Schema-Driven Entity Card & FieldWidgetFactory (Gün 11-20) · `~90% TAMAMLANDI`
 
 **Hedef:** Schema-driven entity card rendering, FieldWidgetFactory, sidebar. Entity card'lar hardcoded değil, WorldSchema'dan dinamik olarak üretilir.
 
 | # | Task | Tahmin | Kabul Kriterleri |
 |---|---|---|---|
-| 1.1 | `EntityRepository` CRUD impl (schema-aware) | 4s | create: fields map'i schema'dan default'larla doldurur, save: fields map persist |
-| 1.2 | `EntityNotifier` + `WorldSchemaNotifier` provider'ları | 3s | Schema reaktif, entity CRUD EventBus'a publish |
-| 1.3 | **`FieldWidgetFactory`** — 16 field tipi için widget factory | 4s | Her FieldType için doğru widget üretilir |
-| 1.4 | **Core field widget'ları:** `TextFieldWidget`, `TextAreaFieldWidget`, `IntegerFieldWidget`, `FloatFieldWidget`, `BooleanFieldWidget` | 3s | Validation çalışır, edit mode toggle |
-| 1.5 | **`EnumFieldWidget`** (dropdown, allowedValues'dan) | 2s | Schema'daki seçenekler gösterilir |
-| 1.6 | **`RelationFieldWidget`** (entity selector, allowedTypes'dan) | 3s | Hedef kategori filtreleme çalışır |
-| 1.7 | **`StatBlockFieldWidget`** (6 ability score: STR/DEX/CON/INT/WIS/CHA, modifier auto-calc) | 3s | Grid layout, mod hesaplama (ör. 16 → +3) |
-| 1.8 | **`CombatStatsFieldWidget`** (HP, Max HP, AC, Speed, CR, XP, Initiative) | 2s | Compact form layout |
-| 1.9 | **`ActionListFieldWidget`** (traits, actions, reactions, legendary) | 3s | Add/remove, collapsible {name, desc} |
-| 1.10 | **`SpellListFieldWidget`** (linked entity ID'ler + inline spells) | 3s | Spell arama, ekleme, kaldırma |
-| 1.11 | **`EntityCard`** — Schema-driven rendering (FieldWidgetFactory loop) | 3s | Schema'daki tüm field'lar sırasıyla render |
-| 1.12 | `EntitySidebar` — Desktop (WorldSchema.categories'den filtre) | 3s | Kategori listesi schema'dan, arama, drag source |
-| 1.13 | `EntitySidebar` — Mobile (bottom sheet) | 2s | Aynı işlevsellik, sheet içinde |
-| 1.14 | `DatabaseScreen` — Desktop (dual-panel splitter) + Tablet/Mobile | 3s | İki entity yan yana (desktop), tek panel (mobile) |
-| 1.15 | Global Edit Mode toggle (toolbar) | 2s | Tüm field widget'lar lock/unlock |
-| 1.16 | DM Notes section (kırmızı kenarlık, FieldVisibility.dmOnly) | 1s | Schema visibility'ye göre gizle/göster |
-| 1.17 | Entity CRUD + FieldWidget unit/widget testleri | 3s | 15 tip oluşturulabilir, schema-driven render doğru |
+| 1.1 | ~~`EntityRepository` CRUD impl (schema-aware)~~ ✅ | 4s | `entity_provider.dart` içinde CRUD işlenir |
+| 1.2 | ~~`EntityNotifier` + `WorldSchemaNotifier` provider'ları~~ ✅ | 3s | `entity_provider.dart` (219 satır) çalışır |
+| 1.3 | ~~**`FieldWidgetFactory`** — 16 field tipi~~ ✅ | 4s | `field_widget_factory.dart` (782 satır) tam |
+| 1.4 | ~~**Core field widget'ları** (Text, TextArea, Integer, Float, Boolean)~~ ✅ | 3s | FieldWidgetFactory içinde tam |
+| 1.5 | ~~**`EnumFieldWidget`** (dropdown)~~ ✅ | 2s | FieldWidgetFactory içinde tam |
+| 1.6 | ~~**`RelationFieldWidget`** (entity selector)~~ ✅ | 3s | FieldWidgetFactory + EntitySelectorDialog |
+| 1.7 | ~~**`StatBlockFieldWidget`** (6 ability score + modifier)~~ ✅ | 3s | FieldWidgetFactory içinde, mod hesaplama çalışır |
+| 1.8 | ~~**`CombatStatsFieldWidget`** (HP, AC, Speed, CR, vb.)~~ ✅ | 2s | FieldWidgetFactory içinde tam |
+| 1.9 | ~~**`ActionListFieldWidget`** (traits, actions, reactions)~~ ✅ | 3s | FieldWidgetFactory içinde, collapsible |
+| 1.10 | ~~**`SpellListFieldWidget`**~~ ✅ | 3s | FieldWidgetFactory içinde tam |
+| 1.11 | ~~**`EntityCard`** — Schema-driven rendering~~ ✅ | 3s | `entity_card.dart` (746 satır) tam |
+| 1.12 | ~~`EntitySidebar` — Desktop~~ ✅ | 3s | `entity_sidebar.dart` (347 satır) tam |
+| 1.13 | `EntitySidebar` — Mobile (bottom sheet) ⚠️ | 2s | Kısmi; bottom sheet adaptasyonu eksik |
+| 1.14 | ~~`DatabaseScreen` — Desktop dual-panel~~ ✅ | 3s | `database_screen.dart` (460 satır) tam |
+| 1.15 | ~~Global Edit Mode toggle~~ ✅ | 2s | `ui_state_provider.dart` içinde |
+| 1.16 | ~~DM Notes section~~ ✅ | 1s | `entity_card.dart` içinde kırmızı kenarlıklı kutu |
+| 1.17 | Entity CRUD + FieldWidget unit/widget testleri ❌ | 3s | Test yazılmadı |
 | **Toplam** | | **47s** | |
 
 **Sprint 1 Doğrulama:**
@@ -602,25 +674,25 @@ class ScreenShareService {
 
 ---
 
-### Sprint 2 — Advanced Widgets + Template Studio (Gün 21-30)
+### Sprint 2 — Advanced Widgets + Template Studio (Gün 21-30) · `~55% TAMAMLANDI`
 
 **Hedef:** Kalan field widget'ları, MarkdownEditor, ImageGallery, Template Studio.
 
 | # | Task | Tahmin | Kabul Kriterleri |
 |---|---|---|---|
-| 2.1 | **`MarkdownFieldWidget`** — dual mode (edit/preview) + @mention entity autocomplete | 5s | Toggle çalışır, @mention entity listesi, link oluşturur |
-| 2.2 | **`ImageFieldWidget`** + `ImageGallery` (multi-image carousel) | 3s | Birden fazla görsel, swipe, zoom, import |
-| 2.3 | **`FileFieldWidget`** (PDF listesi + import) | 2s | PDF ekleme, silme, "Project PDF" butonu |
-| 2.4 | **`TagListFieldWidget`** | 1s | Chip-based tag ekleme/silme |
-| 2.5 | **`DateFieldWidget`** | 1s | Date picker |
-| 2.6 | Image import (file_picker + campaign assets'e kopyala) | 2s | Görsel seçilir, assets/'e kaydedilir |
-| 2.7 | Entity `prepare_from_external()` + dependency resolution (schema-aware) | 3s | API'den gelen veri → entity.fields map'ine dönüşür |
-| 2.8 | `ImportDialog` (basic) | 2s | Manuel entity import |
-| 2.9 | **`TemplateStudioDialog`** — Kategori yönetimi (sol panel) | 4s | Kategori listesi, yeni ekle, arşivle, sil, sırala |
-| 2.10 | **`TemplateStudioDialog`** — Field yönetimi (sağ panel) | 4s | Field listesi, yeni ekle, düzenle, sil, sırala, tip seç |
-| 2.11 | **`TemplateStudioDialog`** — Field editor (expanded panel) | 3s | Tüm FieldSchema alanları düzenlenebilir |
-| 2.12 | **Template I/O** — `.dmt-template` export/import (ZIP) | 3s | Export çalışır, import çalışır, checksum doğrulama |
-| 2.13 | Widget test'leri (FieldWidgets + TemplateStudio) | 2s | Kritik widget'lar test edilir |
+| 2.1 | **`MarkdownFieldWidget`** — dual mode + @mention ❌ | 5s | Toggle çalışır, @mention entity listesi, link oluşturur |
+| 2.2 | **`ImageFieldWidget`** + `ImageGallery` ❌ | 3s | Birden fazla görsel, swipe, zoom, import |
+| 2.3 | **`FileFieldWidget`** (PDF listesi + import) ❌ | 2s | PDF ekleme, silme, "Project PDF" butonu |
+| 2.4 | **`TagListFieldWidget`** ❌ | 1s | Chip-based tag ekleme/silme |
+| 2.5 | **`DateFieldWidget`** ❌ | 1s | Date picker |
+| 2.6 | Image import (file_picker + campaign assets'e kopyala) ❌ | 2s | Görsel seçilir, assets/'e kaydedilir |
+| 2.7 | Entity `prepare_from_external()` + dependency resolution ❌ | 3s | API'den gelen veri → entity.fields map'ine dönüşür |
+| 2.8 | `ImportDialog` (basic) ❌ | 2s | Manuel entity import |
+| 2.9 | ~~**`TemplateStudioDialog`** — Kategori yönetimi~~ ✅ | 4s | `template_editor.dart` (1515 satır) içinde tam |
+| 2.10 | ~~**`TemplateStudioDialog`** — Field yönetimi~~ ✅ | 4s | `template_editor.dart` içinde tam |
+| 2.11 | ~~**`TemplateStudioDialog`** — Field editor~~ ✅ | 3s | Tüm FieldSchema alanları düzenlenebilir |
+| 2.12 | ~~**Template I/O** — `.dmt-template` export/import~~ ✅ | 3s | `template_local_ds.dart` ile çalışır |
+| 2.13 | Widget test'leri (FieldWidgets + TemplateStudio) ❌ | 2s | Test yazılmadı |
 | **Toplam** | | **35s** | |
 
 **Sprint 2 Doğrulama:**
@@ -632,49 +704,49 @@ class ScreenShareService {
 
 ---
 
-### Sprint 3 — Session + Combat Tracker (Gün 31-40)
+### Sprint 3 — Session + Combat Tracker (Gün 31-40) · `~80% TAMAMLANDI`
 
 **Hedef:** Tam savaş yönetimi, oturum takibi, dice roller.
 
 | # | Task | Tahmin | Kabul Kriterleri |
 |---|---|---|---|
-| 3.1 | `SessionRepository` impl | 2s | Session create/load/save |
-| 3.2 | `SessionNotifier` provider | 2s | Aktif session yönetimi |
-| 3.3 | `SessionScreen` — Desktop layout (horizontal splitter) | 3s | Combat tracker (sol) + log/tabs (sağ) |
-| 3.4 | `SessionScreen` — Mobile layout (vertical stack) | 2s | Compact card list + tab bar |
-| 3.5 | `CombatNotifier` (Encounter state + business logic) | 4s | Initiative, HP mod, condition, turn advance |
-| 3.6 | `CombatTable` — Desktop (schema-driven kolonlar, EncounterLayout'tan) | 4s | Default kolonlar + custom field kolonları, drag-drop sıralama |
-| 3.7 | `CombatTable` — Mobile (compact card list, schema-driven) | 3s | Horizontal scroll cards, EncounterLayout'a göre gösterim |
-| 3.7b | `EncounterColumnDialog` — Combat tracker kolon konfigürasyonu | 2s | Schema'dan alan seç, kolon sırasını değiştir |
-| 3.8 | `CombatControlsBar` (round/turn, next turn button) | 2s | Round sayacı doğru artar |
-| 3.9 | `HpBar` widget (high/med/low renk geçişi) | 1s | Tema renklerini kullanır |
-| 3.10 | `ConditionBadge` widget (15 predefined + duration) | 2s | Ekleme, auto-decrement, süreli badge |
-| 3.11 | Auto event log (HP, condition, round mesajları) | 2s | Otomatik log yazılır |
-| 3.12 | `DiceRoller` — Desktop (button group) | 1s | d4-d100, sonuç log'a yazılır |
-| 3.13 | `DiceRoller` — Mobile (FAB + bottom sheet) | 2s | FAB'a tap → dice sheet |
-| 3.14 | Session notes (MarkdownEditor) | 1s | Notes kaydedilir |
-| 3.15 | Session autosave (400ms debounce) | 1s | Dirty tracking çalışır |
-| 3.16 | Entity Stats tab (session alt panelinde read-only NpcSheet) | 2s | Combatant seçince entity gösterir |
-| 3.17 | Combat test'leri | 2s | Initiative, HP, condition unit test |
+| 3.1 | `SessionRepository` impl ⚠️ | 2s | Session state `combat_provider.dart` içinde yönetiliyor, ayrı repository yok |
+| 3.2 | ~~`SessionNotifier` / `CombatNotifier` provider~~ ✅ | 2s | `combat_provider.dart` (473 satır) tam |
+| 3.3 | ~~`SessionScreen` — Desktop layout~~ ✅ | 3s | `session_screen.dart` (867 satır) — splitter, log, tabs tam |
+| 3.4 | `SessionScreen` — Mobile layout ❌ | 2s | Compact card list + tab bar eksik |
+| 3.5 | ~~`CombatNotifier` (Initiative, HP, condition, turn advance)~~ ✅ | 4s | Tam çalışır |
+| 3.6 | ~~`CombatTable` — Desktop (schema-driven kolonlar)~~ ✅ | 4s | `session_screen.dart` içinde tam |
+| 3.7 | `CombatTable` — Mobile (compact card list) ❌ | 3s | Eksik |
+| 3.7b | `EncounterColumnDialog` ❌ | 2s | Kolon konfigürasyonu yok |
+| 3.8 | ~~`CombatControlsBar` (round/turn, next turn)~~ ✅ | 2s | `session_screen.dart` içinde çalışır |
+| 3.9 | ~~`HpBar` widget~~ ✅ | 1s | `hp_bar.dart` (43 satır) tam |
+| 3.10 | ~~`ConditionBadge` widget~~ ✅ | 2s | `condition_badge.dart` (42 satır) tam |
+| 3.11 | ~~Auto event log~~ ✅ | 2s | `combat_provider.dart` içinde otomatik log |
+| 3.12 | ~~`DiceRoller` — Desktop~~ ✅ | 1s | `session_screen.dart` içinde d4-d100 çalışır |
+| 3.13 | `DiceRoller` — Mobile (FAB + bottom sheet) ❌ | 2s | Eksik |
+| 3.14 | ~~Session notes~~ ✅ | 1s | `session_screen.dart` içinde notes kaydedilir |
+| 3.15 | ~~Session autosave~~ ✅ | 1s | Debounce çalışır |
+| 3.16 | Entity Stats tab (read-only NpcSheet) ⚠️ | 2s | Combatant seçimi var, tam entity sheet eksik |
+| 3.17 | Combat test'leri ❌ | 2s | Test yazılmadı |
 | **Toplam** | | **38s** | |
 
 **Sprint 3 Doğrulama:** Tam combat encounter oynanabilir. Initiative, HP, conditions çalışır. Combat tracker kolonları EncounterLayout'tan okunur. Custom field kolonu eklenebilir. Desktop + mobile layout doğru. Auto event log yazılır.
 
 ---
 
-### Sprint 4 — Battle Map (Gün 41-50)
+### Sprint 4 — Battle Map (Gün 41-50) · `~85% TAMAMLANDI`
 
 **Hedef:** 6 katmanlı canvas, fog, araçlar, token'lar.
 
 | # | Task | Tahmin | Kabul Kriterleri |
 |---|---|---|---|
-| 4.1 | `BattleMapCanvas` iskelet (InteractiveViewer + Stack) | 3s | Zoom/pan çalışır |
-| 4.2 | Background layer (ui.Image paint) | 2s | Harita görseli yüklenir |
-| 4.3 | Grid layer (configurable cell size, zoom < 0.15 gizle) | 2s | Grid gösterilir/gizlenir |
-| 4.4 | Draw layer (freehand Path, erase) | 3s | Çizim + silme çalışır |
-| 4.5 | Fog layer (BlendMode.clear compositing) | 4s | Sol tık ekle, sağ tık sil |
-| 4.6 | Measurement layer (ruler + circle, feet/squares label) | 3s | Mesafe doğru hesaplanır |
-| 4.7 | Token layer — widget'lar, attitude border, drag | 4s | Token sürükleme, renk kodlu |
+| 4.1 | ~~`BattleMapCanvas` iskelet (GestureDetector + Stack)~~ ✅ | 3s | Zoom/pan + scroll zoom çalışır |
+| 4.2 | ~~Background layer (ui.Image paint)~~ ✅ | 2s | Harita görseli yüklenir |
+| 4.3 | ~~Grid layer (configurable cell size)~~ ✅ | 2s | Grid gösterilir/gizlenir |
+| 4.4 | ~~Draw layer (freehand Path, erase)~~ ✅ | 3s | Çizim + silme çalışır |
+| 4.5 | ~~Fog layer (BlendMode.clear compositing)~~ ✅ | 4s | Fog add/erase polygon çalışır |
+| 4.6 | ~~Measurement layer (ruler + circle, feet/squares label)~~ ✅ | 3s | Mesafe doğru hesaplanır |
+| 4.7 | ~~Token layer — widget'lar, drag, resize~~ ✅ | 4s | Token sürükleme + per-token boyut override |
 | 4.8 | Token boyut slider + per-token override | 2s | Global + bireysel boyut |
 | 4.9 | Grid snap | 1s | Token'lar grid hücresine yapışır |
 | 4.10 | `BattleMapTool` abstract + NavigateTool | 1s | Pan + middle-mouse |
@@ -682,16 +754,25 @@ class ScreenShareService {
 | 4.12 | DrawTool + EraseTool | 2s | Freehand çizim + silme |
 | 4.13 | FogTool (add/erase) | 2s | Sol=fog ekle, sağ=fog sil |
 | 4.14 | Battle map toolbar — Desktop (2 satır) | 2s | Araç butonları + grid kontrolleri |
-| 4.15 | Battle map toolbar — Mobile (bottom sheet) | 2s | Touch-friendly araç seçimi |
-| 4.16 | Fog/annotation/measurement persistence per-encounter | 2s | Session kaydedildiğinde kalır |
-| 4.17 | Büyük görsel desteği (1 GB+ decoded) | 1s | Bellek limitlemesi |
+| 4.8 | ~~Token boyut slider + per-token override~~ ✅ | 2s | Toolbar slider + resize dialog çalışır |
+| 4.9 | ~~Grid snap~~ ✅ | 1s | Token'lar grid hücresine yapışır |
+| 4.10 | ~~NavigateTool (pan + pinch-zoom)~~ ✅ | 1s | GestureDetector onScaleStart/Update tam |
+| 4.11 | ~~RulerTool + CircleTool~~ ✅ | 2s | Kalıcı ölçümler, Navigate tık ile sil |
+| 4.12 | ~~DrawTool + EraseTool~~ ✅ | 2s | Freehand çizim + silme |
+| 4.13 | ~~FogTool (add/erase)~~ ✅ | 2s | Polygon fog add/erase çalışır |
+| 4.14 | ~~Battle map toolbar — Desktop (2 satır)~~ ✅ | 2s | `battle_map_toolbar.dart` (381 satır) tam |
+| 4.15 | Battle map toolbar — Mobile (bottom sheet) ❌ | 2s | `tools/` klasörü boş, eksik |
+| 4.16 | ~~Fog/annotation/measurement persistence~~ ✅ | 2s | Base64 encode/decode ile persist |
+| 4.17 | ~~Büyük görsel desteği~~ ✅ | 1s | `_loadImageFromFile` + async yükleme |
+| 4.18 | ~~Scroll zoom (mouse wheel)~~ ✅ | 1s | `Listener` + `zoomAtPoint` eklendi (2026-04-04) |
+| 4.19 | ~~Fit-to-screen (`resetView`)~~ ✅ | 1s | Haritayı viewport'a sığdırır (2026-04-04) |
 | **Toplam** | | **38s** | |
 
 **Sprint 4 Doğrulama:** 6 katman doğru sırada render. Fog compositing çalışır. Tüm araçlar desktop + mobile'da çalışır.
 
 ---
 
-### Sprint 5 — Mind Map + World Map (Gün 51-60)
+### Sprint 5 — Mind Map + World Map (Gün 51-60) · `~0% — BAŞLANMADI`
 
 **Hedef:** Sonsuz canvas, LOD, node tipleri, dünya haritası.
 
@@ -721,7 +802,7 @@ class ScreenShareService {
 
 ---
 
-### Sprint 6 — Soundpad + PDF + Polish (Gün 61-70)
+### Sprint 6 — Soundpad + PDF + Polish (Gün 61-70) · `~5% — BAŞLANMADI`
 
 **Hedef:** Audio engine, soundpad UI, PDF viewer, UI polish.
 
@@ -752,7 +833,7 @@ class ScreenShareService {
 
 ---
 
-### Sprint 7 — Dual Screen + Mobile Adaptation (Gün 71-80)
+### Sprint 7 — Dual Screen + Mobile Adaptation (Gün 71-80) · `~0% — BAŞLANMADI`
 
 **Hedef:** İkinci ekran (desktop), screen share başlangıcı (mobile), tam responsive polish.
 
@@ -778,7 +859,7 @@ class ScreenShareService {
 
 ---
 
-### Sprint 8 — API Integration + Library (Gün 81-90)
+### Sprint 8 — API Integration + Library (Gün 81-90) · `~0% — BAŞLANMADI`
 
 **Hedef:** D&D API, import, library cache.
 
@@ -803,7 +884,7 @@ class ScreenShareService {
 
 ---
 
-### Sprint 9 — Online: Foundation (Gün 91-100)
+### Sprint 9 — Online: Foundation (Gün 91-100) · `~0% — BAŞLANMADI`
 
 **Hedef:** Event sistemi, NetworkBridge, sunucu iskeleti.
 
@@ -829,7 +910,7 @@ class ScreenShareService {
 
 ---
 
-### Sprint 10 — Online: Full Sync (Gün 101-110)
+### Sprint 10 — Online: Full Sync (Gün 101-110) · `~0% — BAŞLANMADI`
 
 **Hedef:** Delta sync, reconnect, asset management, screen share gelişmiş.
 
@@ -855,7 +936,7 @@ class ScreenShareService {
 
 ---
 
-### Sprint 11 — Online: Gameplay + Mobile Polish (Gün 111-120)
+### Sprint 11 — Online: Gameplay + Mobile Polish (Gün 111-120) · `~0% — BAŞLANMADI`
 
 **Hedef:** Server-side dice, restricted entity view, mobile finalization.
 
@@ -880,7 +961,7 @@ class ScreenShareService {
 
 ---
 
-### Sprint 12 — Deployment, Testing & Beta (Gün 121-130)
+### Sprint 12 — Deployment, Testing & Beta (Gün 121-130) · `~0% — BAŞLANMADI`
 
 **Hedef:** Production dağıtım, test suite, beta hazırlık.
 
