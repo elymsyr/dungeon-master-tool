@@ -18,6 +18,7 @@ abstract class MindMapNode with _$MindMapNode {
     String? imageUrl,
     @Default('') String content,
     @Default({}) Map<String, dynamic> style,
+    @Default('#42a5f5') String color,
   }) = _MindMapNode;
 
   factory MindMapNode.fromJson(Map<String, dynamic> json) =>

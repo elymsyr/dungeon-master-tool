@@ -13,6 +13,8 @@ import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
 import '../widgets/entity_sidebar.dart';
 import 'database/database_screen.dart';
+import 'map/world_map_screen.dart';
+import 'mind_map/mind_map_screen.dart';
 import 'session/session_screen.dart';
 
 /// Ana ekran — Python ui/main_root.py karşılığı.
@@ -114,8 +116,25 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           onEntitySelected: (id) => setState(() => _selectedEntityId = id),
         ),
         const SessionScreen(),
-        _PlaceholderTab(title: l10n.tabMindMap, icon: _tabIcons[2]),
-        _PlaceholderTab(title: l10n.tabMap, icon: _tabIcons[3]),
+        MindMapScreen(
+          editMode: _editMode,
+          onOpenEntity: (entityId) {
+            setState(() {
+              _selectedEntityId = entityId;
+              _tabIndex = 0;
+            });
+            _persistUiState();
+          },
+        ),
+        WorldMapScreen(
+          onOpenEntity: (entityId) {
+            setState(() {
+              _selectedEntityId = entityId;
+              _tabIndex = 0;
+            });
+            _persistUiState();
+          },
+        ),
       ],
     );
 
@@ -381,40 +400,6 @@ class _SidebarDividerState extends State<_SidebarDivider> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Placeholder tab content — Sprint 1'de gerçek widget'larla değişecek.
-class _PlaceholderTab extends StatelessWidget {
-  final String title;
-  final IconData icon;
-
-  const _PlaceholderTab({required this.title, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 64, color: Theme.of(context).colorScheme.outline),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Coming in Sprint 1',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-          ),
-        ],
       ),
     );
   }

@@ -32,9 +32,30 @@ abstract class MapPin with _$MapPin {
     @Default('') String label,
     @Default('default') String pinType,
     String? entityId,
+    @Default('') String note,
+    @Default('') String color,
     @Default({}) Map<String, dynamic> style,
   }) = _MapPin;
 
   factory MapPin.fromJson(Map<String, dynamic> json) =>
       _$MapPinFromJson(json);
+}
+
+/// Timeline pin — day-based event marker on the map.
+@freezed
+abstract class TimelinePin with _$TimelinePin {
+  const factory TimelinePin({
+    required String id,
+    @Default(0) double x,
+    @Default(0) double y,
+    @Default(1) int day,
+    @Default('') String note,
+    @Default([]) List<String> entityIds,
+    String? sessionId,
+    @Default([]) List<String> parentIds,
+    @Default('#42a5f5') String color,
+  }) = _TimelinePin;
+
+  factory TimelinePin.fromJson(Map<String, dynamic> json) =>
+      _$TimelinePinFromJson(json);
 }
