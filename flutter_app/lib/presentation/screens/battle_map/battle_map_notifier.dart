@@ -179,6 +179,9 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   Offset _focalBase = Offset.zero;
   Offset _panBase = Offset.zero;
 
+  // Viewport size (updated from LayoutBuilder — not part of state)
+  Size _viewportSize = Size.zero;
+
   // Debounced auto-save
   Timer? _autoSaveTimer;
 
@@ -269,8 +272,34 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     );
   }
 
+  void updateViewportSize(Size size) {
+    _viewportSize = size;
+  }
+
+  /// Zoom in/out centred on [focalPoint] (screen coords). [scrollDelta] > 0 = zoom out.
+  void zoomAtPoint(Offset focalPoint, double scrollDelta) {
+    const factor = 1.12;
+    final scaleFactor = scrollDelta < 0 ? factor : 1.0 / factor;
+    final newScale = (state.scale * scaleFactor).clamp(0.08, 10.0);
+    final focalCanvas = (focalPoint - state.panOffset) / state.scale;
+    final newPan = focalPoint - focalCanvas * newScale;
+    state = state.copyWith(scale: newScale, panOffset: newPan);
+  }
+
+  /// Fit the background image (or reset to 1× if none) inside the viewport.
   void resetView() {
-    state = state.copyWith(scale: 1.0, panOffset: Offset.zero);
+    final img = state.backgroundImage;
+    if (img == null || _viewportSize == Size.zero) {
+      state = state.copyWith(scale: 1.0, panOffset: Offset.zero);
+      return;
+    }
+    final scale = ((_viewportSize.width / img.width) < (_viewportSize.height / img.height)
+            ? _viewportSize.width / img.width
+            : _viewportSize.height / img.height)
+        .clamp(0.08, 10.0);
+    final panX = (_viewportSize.width - img.width * scale) / 2;
+    final panY = (_viewportSize.height - img.height * scale) / 2;
+    state = state.copyWith(scale: scale, panOffset: Offset(panX, panY));
   }
 
   // -------------------------------------------------------------------------
