@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -12,8 +13,12 @@ import 'battle_map_notifier.dart';
 /// 4. Fog (pre-rendered ui.Image with BlendMode.clear for revealed areas)
 /// 5. Fog draft (polygon outline preview)
 /// 6. Measurements (ruler/circle — drawn in screen-space after canvas.restore)
+///
+/// Repaint is driven by [viewTransform] and [strokeTick] Listenables
+/// so that pan/zoom and in-progress strokes bypass widget rebuilds entirely.
 class BattleMapPainter extends CustomPainter {
   final BattleMapState mapState;
+  final ValueNotifier<ViewTransform> viewTransform;
   final DmToolColors palette;
   final bool isDmView;
 
@@ -23,56 +28,60 @@ class BattleMapPainter extends CustomPainter {
   final double currentWidth;
   final bool currentIsErase;
 
-  const BattleMapPainter({
+  BattleMapPainter({
     required this.mapState,
+    required this.viewTransform,
     required this.palette,
     required this.isDmView,
+    required ValueNotifier<int> strokeTick,
     this.currentPath,
     this.currentColor = Colors.red,
     this.currentWidth = 4.0,
     this.currentIsErase = false,
-  });
+  }) : super(repaint: Listenable.merge([viewTransform, strokeTick]));
 
   @override
   void paint(Canvas canvas, Size size) {
+    final vt = viewTransform.value;
+
     // ---- Apply view transform ----
     canvas.save();
-    canvas.translate(mapState.panOffset.dx, mapState.panOffset.dy);
-    canvas.scale(mapState.scale);
+    canvas.translate(vt.panOffset.dx, vt.panOffset.dy);
+    canvas.scale(vt.scale);
 
     // Layer 1: Background
-    _paintBackground(canvas, size);
+    _paintBackground(canvas, size, vt);
 
-    // Layer 2: Grid
-    if (mapState.gridVisible) _paintGrid(canvas, size);
+    // Layer 2: Grid (viewport-clipped)
+    if (mapState.gridVisible) _paintGrid(canvas, size, vt);
 
     // Layer 3: Annotation
-    _paintAnnotation(canvas, size);
+    _paintAnnotation(canvas, size, vt);
 
     // Layer 4: Fog
     _paintFog(canvas);
 
     // Layer 5: Fog draft
-    if (mapState.fogDraftPoints.length > 1) _paintFogDraft(canvas);
+    if (mapState.fogDraftPoints.length > 1) _paintFogDraft(canvas, vt);
 
     canvas.restore();
 
     // Layer 6: Measurements (screen-space — not affected by pan/zoom)
-    _paintMeasurements(canvas);
+    _paintMeasurements(canvas, vt);
   }
 
   // ---------------------------------------------------------------------------
   // Layer 1 — Background
   // ---------------------------------------------------------------------------
 
-  void _paintBackground(Canvas canvas, Size screenSize) {
+  void _paintBackground(Canvas canvas, Size screenSize, ViewTransform vt) {
     final img = mapState.backgroundImage;
     if (img != null) {
       canvas.drawImage(img, Offset.zero, Paint()..filterQuality = FilterQuality.medium);
     } else {
       // Dark fallback covering the visible viewport
-      final viewW = screenSize.width / mapState.scale;
-      final viewH = screenSize.height / mapState.scale;
+      final viewW = screenSize.width / vt.scale;
+      final viewH = screenSize.height / vt.scale;
       canvas.drawRect(
         Rect.fromLTWH(0, 0, viewW, viewH),
         Paint()..color = const Color(0xFF111111),
@@ -81,26 +90,43 @@ class BattleMapPainter extends CustomPainter {
   }
 
   // ---------------------------------------------------------------------------
-  // Layer 2 — Grid
+  // Layer 2 — Grid (viewport-clipped for performance)
   // ---------------------------------------------------------------------------
 
-  void _paintGrid(Canvas canvas, Size screenSize) {
+  void _paintGrid(Canvas canvas, Size screenSize, ViewTransform vt) {
     final gs = mapState.gridSize.toDouble();
     // Cosmetic pen: 1px regardless of zoom level
     final paint = Paint()
       ..color = const Color(0x37FFFFFF) // 55/255 alpha — matches Python
-      ..strokeWidth = 1.0 / mapState.scale
+      ..strokeWidth = 1.0 / vt.scale
       ..style = PaintingStyle.stroke;
 
     final img = mapState.backgroundImage;
-    final w = img != null ? img.width.toDouble() : screenSize.width / mapState.scale;
-    final h = img != null ? img.height.toDouble() : screenSize.height / mapState.scale;
+    final canvasW = img != null ? img.width.toDouble() : screenSize.width / vt.scale;
+    final canvasH = img != null ? img.height.toDouble() : screenSize.height / vt.scale;
 
-    for (double x = 0; x <= w + gs; x += gs) {
-      canvas.drawLine(Offset(x, 0), Offset(x, h), paint);
+    // Visible viewport in canvas-space
+    final visibleLeft = -vt.panOffset.dx / vt.scale;
+    final visibleTop = -vt.panOffset.dy / vt.scale;
+    final visibleRight = visibleLeft + screenSize.width / vt.scale;
+    final visibleBottom = visibleTop + screenSize.height / vt.scale;
+
+    // Clamp to canvas bounds with one cell margin
+    final startX = math.max(0.0, (visibleLeft / gs).floor() * gs);
+    final endX = math.min(canvasW + gs, (visibleRight / gs).ceil() * gs + gs);
+    final startY = math.max(0.0, (visibleTop / gs).floor() * gs);
+    final endY = math.min(canvasH + gs, (visibleBottom / gs).ceil() * gs + gs);
+
+    final yTop = math.max(0.0, startY);
+    final yBot = math.min(canvasH, endY);
+    final xLeft = math.max(0.0, startX);
+    final xRight = math.min(canvasW, endX);
+
+    for (double x = startX; x <= endX && x <= canvasW; x += gs) {
+      canvas.drawLine(Offset(x, yTop), Offset(x, yBot), paint);
     }
-    for (double y = 0; y <= h + gs; y += gs) {
-      canvas.drawLine(Offset(0, y), Offset(w, y), paint);
+    for (double y = startY; y <= endY && y <= canvasH; y += gs) {
+      canvas.drawLine(Offset(xLeft, y), Offset(xRight, y), paint);
     }
   }
 
@@ -108,10 +134,10 @@ class BattleMapPainter extends CustomPainter {
   // Layer 3 — Annotation
   // ---------------------------------------------------------------------------
 
-  void _paintAnnotation(Canvas canvas, Size screenSize) {
+  void _paintAnnotation(Canvas canvas, Size screenSize, ViewTransform vt) {
     final img = mapState.backgroundImage;
-    final w = img != null ? img.width.toDouble() : screenSize.width / mapState.scale;
-    final h = img != null ? img.height.toDouble() : screenSize.height / mapState.scale;
+    final w = img != null ? img.width.toDouble() : screenSize.width / vt.scale;
+    final h = img != null ? img.height.toDouble() : screenSize.height / vt.scale;
     final bounds = Rect.fromLTWH(0, 0, w, h);
 
     canvas.saveLayer(bounds, Paint());
@@ -180,7 +206,7 @@ class BattleMapPainter extends CustomPainter {
   // Layer 5 — Fog draft preview
   // ---------------------------------------------------------------------------
 
-  void _paintFogDraft(Canvas canvas) {
+  void _paintFogDraft(Canvas canvas, ViewTransform vt) {
     final pts = mapState.fogDraftPoints;
     if (pts.length < 2) return;
 
@@ -196,7 +222,7 @@ class BattleMapPainter extends CustomPainter {
         ..color = isErase
             ? const Color(0xFF00FF88).withValues(alpha: 0.7)
             : const Color(0xFFFF3333).withValues(alpha: 0.7)
-        ..strokeWidth = 2.0 / mapState.scale
+        ..strokeWidth = 2.0 / vt.scale
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
@@ -206,27 +232,27 @@ class BattleMapPainter extends CustomPainter {
   // Layer 6 — Measurements (screen-space)
   // ---------------------------------------------------------------------------
 
-  void _paintMeasurements(Canvas canvas) {
+  void _paintMeasurements(Canvas canvas, ViewTransform vt) {
     final all = [
       ...mapState.persistentMeasurements,
       if (mapState.activeMeasurement != null) mapState.activeMeasurement!,
     ];
 
     for (final m in all) {
-      final sStart = _toScreen(m.start);
-      final sEnd = _toScreen(m.end);
+      final sStart = _toScreen(m.start, vt);
+      final sEnd = _toScreen(m.end, vt);
       if (m.type == BattleMapTool.ruler) {
-        _drawRuler(canvas, sStart, sEnd);
+        _drawRuler(canvas, sStart, sEnd, vt);
       } else {
-        _drawCircle(canvas, sStart, sEnd);
+        _drawCircle(canvas, sStart, sEnd, vt);
       }
     }
   }
 
-  Offset _toScreen(Offset canvasPt) =>
-      canvasPt * mapState.scale + mapState.panOffset;
+  Offset _toScreen(Offset canvasPt, ViewTransform vt) =>
+      canvasPt * vt.scale + vt.panOffset;
 
-  void _drawRuler(Canvas canvas, Offset s, Offset e) {
+  void _drawRuler(Canvas canvas, Offset s, Offset e, ViewTransform vt) {
     final linePaint = Paint()
       ..color = const Color(0xFFFFDC32)
       ..strokeWidth = 2.5
@@ -236,14 +262,14 @@ class BattleMapPainter extends CustomPainter {
     canvas.drawCircle(s, 4, Paint()..color = const Color(0xFFFFDC32));
     canvas.drawCircle(e, 4, Paint()..color = const Color(0xFFFFDC32));
 
-    final dist = (e - s).distance / mapState.scale;
+    final dist = (e - s).distance / vt.scale;
     final squares = dist / mapState.gridSize;
     final feet = squares * mapState.feetPerCell;
     final label = '${feet.toStringAsFixed(0)} ft (${squares.toStringAsFixed(1)} sq)';
     _drawLabel(canvas, (s + e) / 2 - const Offset(0, 14), label);
   }
 
-  void _drawCircle(Canvas canvas, Offset center, Offset edge) {
+  void _drawCircle(Canvas canvas, Offset center, Offset edge, ViewTransform vt) {
     final r = (edge - center).distance;
     final paint = Paint()
       ..color = const Color(0xFF50C8FF)
@@ -253,7 +279,7 @@ class BattleMapPainter extends CustomPainter {
     canvas.drawCircle(center, r, paint);
     canvas.drawCircle(center, 4, Paint()..color = const Color(0xFF50C8FF));
 
-    final rCanvas = r / mapState.scale;
+    final rCanvas = r / vt.scale;
     final feet = (rCanvas / mapState.gridSize) * mapState.feetPerCell;
     _drawLabel(canvas, center - Offset(0, r + 16), 'r = ${feet.toStringAsFixed(0)} ft');
   }
@@ -276,9 +302,10 @@ class BattleMapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(BattleMapPainter old) {
+    // View transform and stroke tick are handled by the repaint Listenable,
+    // so we only check state changes that require a full repaint.
     return old.mapState != mapState ||
         old.isDmView != isDmView ||
-        old.currentPath != currentPath ||
         old.currentColor != currentColor;
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/theme_provider.dart';
+import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/config/app_paths.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
@@ -87,6 +88,32 @@ class SettingsTab extends ConsumerWidget {
               // --- LANGUAGE ---
               Text('Language', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               const SizedBox(height: 12),
+              const SizedBox(height: 32),
+
+              // --- VOLUME ---
+              Text('Volume', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.volume_down, color: palette.tabText, size: 20),
+                  Expanded(
+                    child: Slider(
+                      value: ref.watch(uiStateProvider).volume,
+                      onChanged: (v) => ref.read(uiStateProvider.notifier).update((s) => s.copyWith(volume: v)),
+                    ),
+                  ),
+                  Icon(Icons.volume_up, color: palette.tabText, size: 20),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 40,
+                    child: Text(
+                      '${(ref.watch(uiStateProvider).volume * 100).round()}%',
+                      style: TextStyle(fontSize: 12, color: palette.tabText),
+                    ),
+                  ),
+                ],
+              ),
+
               const SizedBox(height: 32),
 
               // --- DATA PATH ---

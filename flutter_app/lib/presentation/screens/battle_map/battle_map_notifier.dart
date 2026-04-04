@@ -50,14 +50,20 @@ class MeasurementMark {
 }
 
 // ---------------------------------------------------------------------------
+// View transform (lightweight — bypasses Riverpod for 60fps updates)
+// ---------------------------------------------------------------------------
+
+class ViewTransform {
+  final double scale;
+  final Offset panOffset;
+  const ViewTransform({this.scale = 1.0, this.panOffset = Offset.zero});
+}
+
+// ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
 
 class BattleMapState {
-  // View transform
-  final double scale;
-  final Offset panOffset;
-
   // Tool
   final BattleMapTool activeTool;
 
@@ -91,8 +97,6 @@ class BattleMapState {
   final Map<String, int> tokenSizeOverrides;
 
   const BattleMapState({
-    this.scale = 1.0,
-    this.panOffset = Offset.zero,
     this.activeTool = BattleMapTool.navigate,
     this.backgroundImage,
     this.mapPath,
@@ -112,8 +116,6 @@ class BattleMapState {
   });
 
   BattleMapState copyWith({
-    double? scale,
-    Offset? panOffset,
     BattleMapTool? activeTool,
     ui.Image? backgroundImage,
     String? mapPath,
@@ -138,8 +140,6 @@ class BattleMapState {
     bool clearBackgroundImage = false,
   }) {
     return BattleMapState(
-      scale: scale ?? this.scale,
-      panOffset: panOffset ?? this.panOffset,
       activeTool: activeTool ?? this.activeTool,
       backgroundImage: clearBackgroundImage ? null : (backgroundImage ?? this.backgroundImage),
       mapPath: clearMapPath ? null : (mapPath ?? this.mapPath),
@@ -168,6 +168,14 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   final String encounterId;
   final Ref _ref;
 
+  // Lightweight view transform — updated at 60fps without Riverpod overhead.
+  // CustomPainter and tokens listen to this directly via repaint / ValueListenableBuilder.
+  final ValueNotifier<ViewTransform> viewTransform =
+      ValueNotifier<ViewTransform>(const ViewTransform());
+
+  // Lightweight repaint signal for in-progress annotation strokes.
+  final ValueNotifier<int> strokeTick = ValueNotifier<int>(0);
+
   // In-progress annotation stroke — mutable, NOT in state
   Path? _currentPath;
   Color _currentColor = Colors.red;
@@ -186,6 +194,14 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   Timer? _autoSaveTimer;
 
   BattleMapNotifier(this.encounterId, this._ref) : super(const BattleMapState());
+
+  @override
+  void dispose() {
+    _autoSaveTimer?.cancel();
+    viewTransform.dispose();
+    strokeTick.dispose();
+    super.dispose();
+  }
 
   // -------------------------------------------------------------------------
   // Init
@@ -249,27 +265,33 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   }
 
   // -------------------------------------------------------------------------
-  // View transform
+  // View transform (updates viewTransform ValueNotifier — no Riverpod state)
   // -------------------------------------------------------------------------
 
   void onScaleStart(ScaleStartDetails details) {
-    _scaleBase = state.scale;
+    final vt = viewTransform.value;
+    _scaleBase = vt.scale;
     _focalBase = details.focalPoint;
-    _panBase = state.panOffset;
+    _panBase = vt.panOffset;
   }
 
   void onScaleUpdate(ScaleUpdateDetails details) {
     final scaleFactor = (details.scale * _scaleBase).clamp(0.08, 10.0);
     // Pan delta from focal point movement
-    final panDelta = details.focalPoint - _focalBase;
     // Zoom around focal point
     final focalCanvas = (_focalBase - _panBase) / _scaleBase;
     final newPan = details.focalPoint - focalCanvas * scaleFactor;
+    final panDelta = details.focalPoint - _focalBase;
 
-    state = state.copyWith(
+    viewTransform.value = ViewTransform(
       scale: scaleFactor,
       panOffset: details.pointerCount >= 2 ? newPan : _panBase + panDelta,
     );
+  }
+
+  /// Call at gesture end to sync viewTransform back to a debounced auto-save.
+  void onScaleEnd() {
+    _debouncedAutoSave();
   }
 
   void updateViewportSize(Size size) {
@@ -280,17 +302,19 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   void zoomAtPoint(Offset focalPoint, double scrollDelta) {
     const factor = 1.12;
     final scaleFactor = scrollDelta < 0 ? factor : 1.0 / factor;
-    final newScale = (state.scale * scaleFactor).clamp(0.08, 10.0);
-    final focalCanvas = (focalPoint - state.panOffset) / state.scale;
+    final vt = viewTransform.value;
+    final newScale = (vt.scale * scaleFactor).clamp(0.08, 10.0);
+    final focalCanvas = (focalPoint - vt.panOffset) / vt.scale;
     final newPan = focalPoint - focalCanvas * newScale;
-    state = state.copyWith(scale: newScale, panOffset: newPan);
+    viewTransform.value = ViewTransform(scale: newScale, panOffset: newPan);
+    _debouncedAutoSave();
   }
 
   /// Fit the background image (or reset to 1× if none) inside the viewport.
   void resetView() {
     final img = state.backgroundImage;
     if (img == null || _viewportSize == Size.zero) {
-      state = state.copyWith(scale: 1.0, panOffset: Offset.zero);
+      viewTransform.value = const ViewTransform();
       return;
     }
     final scale = ((_viewportSize.width / img.width) < (_viewportSize.height / img.height)
@@ -299,7 +323,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
         .clamp(0.08, 10.0);
     final panX = (_viewportSize.width - img.width * scale) / 2;
     final panY = (_viewportSize.height - img.height * scale) / 2;
-    state = state.copyWith(scale: scale, panOffset: Offset(panX, panY));
+    viewTransform.value = ViewTransform(scale: scale, panOffset: Offset(panX, panY));
   }
 
   // -------------------------------------------------------------------------
@@ -451,8 +475,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   void continueAnnotationStroke(Offset pt) {
     if (_currentPath == null) return;
     _currentPath!.lineTo(pt.dx, pt.dy);
-    // Trigger rebuild by copying strokes (in-progress path rendered by painter via notifier reference)
-    state = state.copyWith(strokes: state.strokes); // force repaint
+    strokeTick.value++; // lightweight repaint — no Riverpod rebuild
   }
 
   void endAnnotationStroke() {
@@ -715,15 +738,17 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   }
 
   // -------------------------------------------------------------------------
-  // Coordinate conversion
+  // Coordinate conversion (reads viewTransform directly)
   // -------------------------------------------------------------------------
 
   Offset screenToCanvas(Offset screenPt) {
-    return (screenPt - state.panOffset) / state.scale;
+    final vt = viewTransform.value;
+    return (screenPt - vt.panOffset) / vt.scale;
   }
 
   Offset canvasToScreen(Offset canvasPt) {
-    return canvasPt * state.scale + state.panOffset;
+    final vt = viewTransform.value;
+    return canvasPt * vt.scale + vt.panOffset;
   }
 
   // -------------------------------------------------------------------------

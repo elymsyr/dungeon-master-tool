@@ -6,6 +6,7 @@ import '../../core/config/app_paths.dart';
 import '../../domain/entities/schema/default_dnd5e_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../datasources/local/campaign_local_ds.dart';
+import '../schema/schema_migration.dart';
 
 /// Kampanya CRUD operasyonları.
 class CampaignRepository {
@@ -19,11 +20,10 @@ class CampaignRepository {
     final path = p.join(AppPaths.worldsDir, campaignName);
     final data = await _localDs.load(path);
 
-    // Schema migration: world_schema yoksa default üret
-    if (!data.containsKey('world_schema')) {
-      final schema = generateDefaultDnd5eSchema();
-      // Freezed nesnelerini temiz Map'e çevir (MsgPack uyumlu)
-    data['world_schema'] = jsonDecode(jsonEncode(schema.toJson()));
+    // Legacy migration: world_schema yoksa oluştur + entity verilerini dönüştür
+    if (SchemaMigration.migrate(data)) {
+      // Migration yapıldıysa kaydet (sonraki açılışlarda tekrar çalışmasın)
+      await _localDs.save(path, data);
     }
 
     return data;

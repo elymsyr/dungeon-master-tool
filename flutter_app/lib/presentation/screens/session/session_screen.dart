@@ -33,6 +33,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   // Bottom tabs
   int _bottomTabIndex = 0;
+  String? _selectedCombatantId;
 
   final _rng = Random();
 
@@ -395,8 +396,105 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         return BattleMapScreen(encounterId: enc.id);
       case 2: // Player Screen (placeholder)
         return Center(child: Text('Player Screen\n(Coming soon)', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
-      case 3: // Entity Stats (placeholder)
-        return Center(child: Text('Select a combatant\nto view stats', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
+      case 3: // Entity Stats
+        if (_selectedCombatantId == null) {
+          return Center(child: Text('Select a combatant\nto view stats', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
+        }
+        final entities = ref.watch(entityProvider);
+        final entity = entities[_selectedCombatantId];
+        if (entity == null) {
+          return Center(child: Text('Entity not found', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
+        }
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Text(entity.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              Text(entity.categorySlug.toUpperCase(), style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary, letterSpacing: 1)),
+              if (entity.source.isNotEmpty)
+                Text('Source: ${entity.source}', style: TextStyle(fontSize: 11, color: palette.tabText)),
+              if (entity.description.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(entity.description, style: TextStyle(fontSize: 12, color: palette.htmlText)),
+              ],
+              const SizedBox(height: 8),
+              // Fields
+              ...entity.fields.entries.map((e) {
+                final val = e.value;
+                if (val == null) return const SizedBox.shrink();
+                if (val is Map) {
+                  // Stat block or combat stats
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(e.key, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
+                        const SizedBox(height: 2),
+                        Wrap(
+                          spacing: 8,
+                          children: val.entries.map((s) => Chip(
+                            label: Text('${s.key}: ${s.value}', style: const TextStyle(fontSize: 10)),
+                            visualDensity: VisualDensity.compact,
+                          )).toList(),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                if (val is List) {
+                  if (val.isEmpty) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(e.key, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
+                        ...val.map((item) => Padding(
+                          padding: const EdgeInsets.only(left: 8, top: 2),
+                          child: Text('- ${item is Map ? (item['name'] ?? item.toString()) : item}', style: TextStyle(fontSize: 11, color: palette.htmlText)),
+                        )),
+                      ],
+                    ),
+                  );
+                }
+                final strVal = val.toString();
+                if (strVal.isEmpty) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 120, child: Text(e.key, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: palette.tabText))),
+                      Expanded(child: Text(strVal, style: TextStyle(fontSize: 11, color: palette.htmlText))),
+                    ],
+                  ),
+                );
+              }),
+              // DM Notes
+              if (entity.dmNotes.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: palette.tokenBorderHostile.withValues(alpha: 0.3)),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('DM Notes', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: palette.tokenBorderHostile)),
+                      const SizedBox(height: 4),
+                      Text(entity.dmNotes, style: TextStyle(fontSize: 12, color: palette.htmlText)),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
       default:
         return const SizedBox.shrink();
     }
@@ -439,7 +537,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 children: [
                   ListView.builder(
                     itemCount: enc.combatants.length,
-                    itemBuilder: (context, index) => _buildCombatantRow(palette, enc, index),
+                    itemBuilder: (context, index) => _CombatantRow(
+                      combatant: enc.combatants[index],
+                      index: index,
+                      turnIndex: enc.turnIndex,
+                      palette: palette,
+                      onTap: (entityId) => setState(() {
+                        _selectedCombatantId = entityId;
+                        _bottomTabIndex = 3;
+                        ref.read(uiStateProvider.notifier).update((s) => s.copyWith(sessionBottomTab: 3));
+                      }),
+                      onModifyStat: (c, subKey, delta, stats, cfg) => _modifyStat(c, subKey, delta, stats, cfg),
+                      onShowAddCondition: (combatantId, conditions) => _showAddConditionDialog(combatantId, conditions),
+                    ),
                   ),
                   if (candidateData.isNotEmpty)
                     IgnorePointer(
@@ -453,103 +563,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildCombatantRow(DmToolColors palette, Encounter enc, int index) {
-    final c = enc.combatants[index];
-    final isActive = index == enc.turnIndex;
-    final schema = ref.read(worldSchemaProvider);
-    final cfg = schema.encounterConfig;
-
-    // Entity'den canlı combatStats oku
-    final entities = ref.watch(entityProvider);
-    final entity = c.entityId != null ? entities[c.entityId] : null;
-    final combatStats = entity?.fields[cfg.combatStatsFieldKey];
-    final statsMap = combatStats is Map ? Map<String, dynamic>.from(combatStats) : <String, dynamic>{};
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: isActive ? palette.tokenBorderActive.withValues(alpha: 0.08) : null,
-        border: Border(
-          left: isActive ? BorderSide(color: palette.tokenBorderActive, width: 3) : BorderSide.none,
-          bottom: BorderSide(color: palette.featureCardBorder.withValues(alpha: 0.3)),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Name
-          Expanded(flex: 2, child: Text(c.name, style: TextStyle(fontSize: 13, color: palette.tabActiveText, fontWeight: isActive ? FontWeight.w600 : FontWeight.normal), overflow: TextOverflow.ellipsis)),
-          // Dynamic columns from encounterConfig
-          ...cfg.columns.map((col) {
-            final val = statsMap[col.subFieldKey]?.toString() ?? '';
-
-            if (col.showButtons) {
-              // HP-style column: − bar +
-              final numVal = int.tryParse(val) ?? 0;
-              final maxKey = 'max_${col.subFieldKey}';
-              final maxVal = int.tryParse(statsMap[maxKey]?.toString() ?? '') ?? numVal;
-              return SizedBox(
-                width: col.width > 0 ? col.width.toDouble() : 130,
-                child: Row(
-                  children: [
-                    InkWell(
-                      onTap: () => _modifyStat(c, col.subFieldKey, -1, statsMap, cfg),
-                      child: Container(width: 22, height: 22, decoration: BoxDecoration(color: palette.hpBtnDecreaseBg, borderRadius: BorderRadius.circular(3)),
-                        child: Center(child: Text('-', style: TextStyle(fontSize: 14, color: palette.hpBtnText, fontWeight: FontWeight.bold)))),
-                    ),
-                    const SizedBox(width: 2),
-                    Expanded(child: HpBar(hp: numVal, maxHp: maxVal > 0 ? maxVal : 1, palette: palette)),
-                    const SizedBox(width: 2),
-                    InkWell(
-                      onTap: () => _modifyStat(c, col.subFieldKey, 1, statsMap, cfg),
-                      child: Container(width: 22, height: 22, decoration: BoxDecoration(color: palette.hpBtnIncreaseBg, borderRadius: BorderRadius.circular(3)),
-                        child: Center(child: Text('+', style: TextStyle(fontSize: 14, color: palette.hpBtnText, fontWeight: FontWeight.bold)))),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            // Normal column
-            return SizedBox(
-              width: col.width > 0 ? col.width.toDouble() : 60,
-              child: Text(val, style: TextStyle(fontSize: 12, color: palette.tabActiveText, fontWeight: col.subFieldKey == cfg.initiativeSubField ? FontWeight.bold : FontWeight.normal), textAlign: TextAlign.center),
-            );
-          }),
-          const SizedBox(width: 8),
-          // Conditions
-          Expanded(
-            flex: 2,
-            child: Wrap(
-              spacing: 2,
-              runSpacing: 2,
-              children: [
-                ...c.conditions.map((cond) => ConditionBadge(
-                  condition: cond,
-                  palette: palette,
-                  onRemove: () => ref.read(combatProvider.notifier).removeCondition(c.id, cond.name),
-                )),
-                InkWell(
-                  onTap: () => _showAddConditionDialog(c.id, cfg.conditions),
-                  child: Container(
-                    width: 24, height: 24,
-                    decoration: BoxDecoration(border: Border.all(color: palette.sidebarDivider), borderRadius: BorderRadius.circular(12)),
-                    child: Icon(Icons.add, size: 12, color: palette.sidebarLabelSecondary),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Delete
-          IconButton(
-            icon: Icon(Icons.close, size: 14, color: palette.sidebarLabelSecondary),
-            onPressed: () => ref.read(combatProvider.notifier).deleteCombatant(c.id),
-            visualDensity: VisualDensity.compact,
-          ),
-        ],
-      ),
     );
   }
 
@@ -585,41 +598,233 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // MOBILE LAYOUT
   // ============================================================
   Widget _buildMobileLayout(DmToolColors palette, CombatState combat, Encounter? enc) {
-    return Column(
-      children: [
-        // Encounter + Round bar
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          color: palette.tabBg,
-          child: Row(
+    return Scaffold(
+      body: Column(
+        children: [
+          // Encounter selector + Round bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            color: palette.tabBg,
+            child: Row(
+              children: [
+                // Encounter dropdown
+                Expanded(
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: combat.activeEncounterId,
+                      isDense: true,
+                      isExpanded: true,
+                      style: TextStyle(fontSize: 12, color: palette.tabActiveText),
+                      dropdownColor: palette.uiPopupBg,
+                      items: combat.encounters.map((e) =>
+                        DropdownMenuItem(value: e.id, child: Text(e.name, style: const TextStyle(fontSize: 12)))
+                      ).toList(),
+                      onChanged: (id) { if (id != null) ref.read(combatProvider.notifier).switchEncounter(id); },
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                // Round badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: BorderRadius.circular(4)),
+                  child: Text('R${enc?.round ?? 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+                ),
+                const SizedBox(width: 4),
+                // Next Turn
+                FilledButton(
+                  onPressed: () => ref.read(combatProvider.notifier).nextTurn(),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  child: const Text('Next', style: TextStyle(fontSize: 11)),
+                ),
+                // Actions menu
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, size: 20),
+                  onSelected: (action) {
+                    switch (action) {
+                      case 'quick_add': _showQuickAddDialog();
+                      case 'add': _showAddDialog();
+                      case 'add_players': ref.read(combatProvider.notifier).addAllPlayers();
+                      case 'roll_init': ref.read(combatProvider.notifier).rollInitiatives();
+                    }
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(value: 'quick_add', child: Text('Quick Add', style: TextStyle(fontSize: 12))),
+                    PopupMenuItem(value: 'add', child: Text('Add from Database', style: TextStyle(fontSize: 12))),
+                    PopupMenuItem(value: 'add_players', child: Text('Add All Players', style: TextStyle(fontSize: 12))),
+                    PopupMenuItem(value: 'roll_init', child: Text('Roll Initiative', style: TextStyle(fontSize: 12))),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Combat card list
+          Expanded(
+            child: enc != null && enc.combatants.isNotEmpty
+                ? _buildMobileCombatList(palette, enc)
+                : Center(child: Text('No combatants', style: TextStyle(color: palette.sidebarLabelSecondary))),
+          ),
+          // Bottom tabs
+          Container(
+            color: palette.tabBg,
+            child: Row(children: [
+              _bottomTab('Log', 0, palette),
+              _bottomTab('Notes', 1, palette),
+              _bottomTab('Stats', 3, palette),
+            ]),
+          ),
+          SizedBox(
+            height: 150,
+            child: switch (_bottomTabIndex) {
+              0 => ListView.builder(
+                padding: const EdgeInsets.all(8),
+                itemCount: combat.eventLog.length,
+                itemBuilder: (_, i) => Text(combat.eventLog[i], style: TextStyle(fontSize: 11, color: palette.htmlText)),
+              ),
+              1 => Padding(
+                padding: const EdgeInsets.all(8),
+                child: TextField(controller: _notesController, maxLines: null, expands: true, decoration: const InputDecoration(hintText: 'Notes...', border: InputBorder.none, filled: false), style: const TextStyle(fontSize: 12)),
+              ),
+              _ => _buildMobileEntityStats(palette),
+            },
+          ),
+        ],
+      ),
+      // Dice FAB
+      floatingActionButton: FloatingActionButton(
+        mini: true,
+        onPressed: () => _showDiceBottomSheet(palette),
+        child: const Icon(Icons.casino),
+      ),
+    );
+  }
+
+  Widget _buildMobileCombatList(DmToolColors palette, Encounter enc) {
+    final entities = ref.watch(entityProvider);
+    final schema = ref.read(worldSchemaProvider);
+    final cfg = schema.encounterConfig;
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      itemCount: enc.combatants.length,
+      itemBuilder: (context, index) {
+        final c = enc.combatants[index];
+        final entity = c.entityId != null ? entities[c.entityId] : null;
+        final combatStats = entity?.fields[cfg.combatStatsFieldKey];
+        final statsMap = combatStats is Map ? Map<String, dynamic>.from(combatStats) : <String, dynamic>{};
+
+        return _MobileCombatCard(
+          combatant: c,
+          isActive: index == enc.turnIndex,
+          palette: palette,
+          config: cfg,
+          statsMap: statsMap,
+          onTap: () => setState(() {
+            _selectedCombatantId = c.entityId;
+            _bottomTabIndex = 3;
+          }),
+          onModifyStat: (subKey, delta) => _modifyStat(c, subKey, delta, statsMap, cfg),
+          onDelete: () => ref.read(combatProvider.notifier).deleteCombatant(c.id),
+          onAddCondition: (id) => _showAddConditionDialog(id, cfg.conditions),
+          onRemoveCondition: (id, name) => ref.read(combatProvider.notifier).removeCondition(id, name),
+        );
+      },
+    );
+  }
+
+  void _showDiceBottomSheet(DmToolColors palette) {
+    int? lastRoll;
+    String? lastDie;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Round ${enc?.round ?? 1}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
-              const Spacer(),
-              FilledButton(onPressed: () => ref.read(combatProvider.notifier).nextTurn(), child: const Text('Next Turn', style: TextStyle(fontSize: 11))),
+              if (lastRoll != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    '$lastDie: $lastRoll',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: palette.tabActiveText),
+                  ),
+                ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [4, 6, 8, 10, 12, 20, 100].map((d) =>
+                  SizedBox(
+                    width: 72,
+                    height: 48,
+                    child: FilledButton(
+                      onPressed: () {
+                        final roll = _rng.nextInt(d) + 1;
+                        ref.read(combatProvider.notifier).addLog('d$d: $roll');
+                        setSheetState(() {
+                          lastRoll = roll;
+                          lastDie = 'd$d';
+                        });
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: palette.featureCardBg,
+                        foregroundColor: palette.tabActiveText,
+                      ),
+                      child: Text('d$d', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ).toList(),
+              ),
+              const SizedBox(height: 8),
             ],
           ),
         ),
-        // Combat table
-        Expanded(child: enc != null && enc.combatants.isNotEmpty ? _buildCombatTable(palette, enc) : Center(child: Text('No combatants', style: TextStyle(color: palette.sidebarLabelSecondary)))),
-        // Log + Notes tabs
-        Container(
-          color: palette.tabBg,
-          child: Row(children: [_bottomTab('Log', 0, palette), _bottomTab('Notes', 1, palette)]),
-        ),
-        SizedBox(
-          height: 150,
-          child: _bottomTabIndex == 0
-              ? ListView.builder(
-                  padding: const EdgeInsets.all(8),
-                  itemCount: combat.eventLog.length,
-                  itemBuilder: (_, i) => Text(combat.eventLog[i], style: TextStyle(fontSize: 11, color: palette.htmlText)),
-                )
-              : Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: TextField(controller: _notesController, maxLines: null, expands: true, decoration: const InputDecoration(hintText: 'Notes...', border: InputBorder.none, filled: false), style: const TextStyle(fontSize: 12)),
-                ),
-        ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildMobileEntityStats(DmToolColors palette) {
+    if (_selectedCombatantId == null) {
+      return Center(child: Text('Tap a combatant to view stats', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)));
+    }
+    final entities = ref.watch(entityProvider);
+    final entity = entities[_selectedCombatantId];
+    if (entity == null) {
+      return Center(child: Text('Entity not found', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)));
+    }
+    // Simple stats view
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(entity.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+          Text(entity.categorySlug, style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+          if (entity.description.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(entity.description, style: TextStyle(fontSize: 12, color: palette.htmlText), maxLines: 3, overflow: TextOverflow.ellipsis),
+          ],
+          ...entity.fields.entries.where((e) => e.value != null && e.value.toString().isNotEmpty && e.value is! Map && e.value is! List).map(
+            (e) => Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Row(
+                children: [
+                  SizedBox(width: 100, child: Text(e.key, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: palette.tabText))),
+                  Expanded(child: Text(e.value.toString(), style: TextStyle(fontSize: 11, color: palette.htmlText), overflow: TextOverflow.ellipsis)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -861,6 +1066,272 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             Navigator.pop(ctx);
           }, child: const Text('Add Custom')),
         ],
+      ),
+    );
+  }
+}
+
+/// Compact mobile combat card showing combatant stats in a card layout.
+class _MobileCombatCard extends StatelessWidget {
+  final Combatant combatant;
+  final bool isActive;
+  final DmToolColors palette;
+  final EncounterConfig config;
+  final Map<String, dynamic> statsMap;
+  final VoidCallback onTap;
+  final void Function(String subKey, int delta) onModifyStat;
+  final VoidCallback onDelete;
+  final void Function(String combatantId) onAddCondition;
+  final void Function(String combatantId, String conditionName) onRemoveCondition;
+
+  const _MobileCombatCard({
+    required this.combatant,
+    required this.isActive,
+    required this.palette,
+    required this.config,
+    required this.statsMap,
+    required this.onTap,
+    required this.onModifyStat,
+    required this.onDelete,
+    required this.onAddCondition,
+    required this.onRemoveCondition,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hp = int.tryParse(statsMap['hp']?.toString() ?? '') ?? 0;
+    final maxHp = int.tryParse(statsMap['max_hp']?.toString() ?? '') ?? (hp > 0 ? hp : 1);
+    final ac = statsMap['ac']?.toString() ?? '-';
+    final init = statsMap[config.initiativeSubField]?.toString() ?? '-';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isActive ? palette.tokenBorderActive.withValues(alpha: 0.08) : palette.featureCardBg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isActive ? palette.tokenBorderActive : palette.featureCardBorder,
+            width: isActive ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top row: Name + Init badge + AC + delete
+            Row(
+              children: [
+                // Initiative badge
+                Container(
+                  width: 28, height: 28,
+                  decoration: BoxDecoration(
+                    color: palette.tabBg,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Center(
+                    child: Text(init, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Name
+                Expanded(
+                  child: Text(
+                    combatant.name,
+                    style: TextStyle(fontSize: 14, fontWeight: isActive ? FontWeight.bold : FontWeight.w500, color: palette.tabActiveText),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                // AC badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: palette.tabBg,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.shield, size: 12, color: palette.tabText),
+                      const SizedBox(width: 2),
+                      Text(ac, style: TextStyle(fontSize: 11, color: palette.tabActiveText, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                // Delete
+                GestureDetector(
+                  onTap: onDelete,
+                  child: Icon(Icons.close, size: 16, color: palette.sidebarLabelSecondary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            // HP bar with +/- buttons
+            Row(
+              children: [
+                InkWell(
+                  onTap: () => onModifyStat('hp', -1),
+                  child: Container(
+                    width: 28, height: 28,
+                    decoration: BoxDecoration(color: palette.hpBtnDecreaseBg, borderRadius: BorderRadius.circular(4)),
+                    child: Center(child: Text('-', style: TextStyle(fontSize: 16, color: palette.hpBtnText, fontWeight: FontWeight.bold))),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(child: HpBar(hp: hp, maxHp: maxHp > 0 ? maxHp : 1, palette: palette)),
+                const SizedBox(width: 4),
+                InkWell(
+                  onTap: () => onModifyStat('hp', 1),
+                  child: Container(
+                    width: 28, height: 28,
+                    decoration: BoxDecoration(color: palette.hpBtnIncreaseBg, borderRadius: BorderRadius.circular(4)),
+                    child: Center(child: Text('+', style: TextStyle(fontSize: 16, color: palette.hpBtnText, fontWeight: FontWeight.bold))),
+                  ),
+                ),
+              ],
+            ),
+            // Conditions
+            if (combatant.conditions.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 4,
+                runSpacing: 2,
+                children: combatant.conditions.map((cond) => ConditionBadge(
+                  condition: cond,
+                  palette: palette,
+                  onRemove: () => onRemoveCondition(combatant.id, cond.name),
+                )).toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Extracted combatant row — own ConsumerWidget so entity watch is per-row.
+// Only rebuilds when THIS combatant's entity changes, not all entities.
+// =============================================================================
+
+class _CombatantRow extends ConsumerWidget {
+  final Combatant combatant;
+  final int index;
+  final int turnIndex;
+  final DmToolColors palette;
+  final void Function(String? entityId) onTap;
+  final void Function(Combatant c, String subKey, int delta, Map<String, dynamic> stats, EncounterConfig cfg) onModifyStat;
+  final void Function(String combatantId, List<String> conditions) onShowAddCondition;
+
+  const _CombatantRow({
+    required this.combatant,
+    required this.index,
+    required this.turnIndex,
+    required this.palette,
+    required this.onTap,
+    required this.onModifyStat,
+    required this.onShowAddCondition,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = combatant;
+    final isActive = index == turnIndex;
+    final schema = ref.read(worldSchemaProvider);
+    final cfg = schema.encounterConfig;
+
+    // Selective watch — only this combatant's entity
+    final entity = c.entityId != null
+        ? ref.watch(entityProvider.select((m) => m[c.entityId]))
+        : null;
+    final combatStats = entity?.fields[cfg.combatStatsFieldKey];
+    final statsMap = combatStats is Map ? Map<String, dynamic>.from(combatStats) : <String, dynamic>{};
+
+    return GestureDetector(
+      onTap: () => onTap(c.entityId),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: isActive ? palette.tokenBorderActive.withValues(alpha: 0.08) : null,
+          border: Border(
+            left: isActive ? BorderSide(color: palette.tokenBorderActive, width: 3) : BorderSide.none,
+            bottom: BorderSide(color: palette.featureCardBorder.withValues(alpha: 0.3)),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Name
+            Expanded(flex: 2, child: Text(c.name, style: TextStyle(fontSize: 13, color: palette.tabActiveText, fontWeight: isActive ? FontWeight.w600 : FontWeight.normal), overflow: TextOverflow.ellipsis)),
+            // Dynamic columns from encounterConfig
+            ...cfg.columns.map((col) {
+              final val = statsMap[col.subFieldKey]?.toString() ?? '';
+
+              if (col.showButtons) {
+                final numVal = int.tryParse(val) ?? 0;
+                final maxKey = 'max_${col.subFieldKey}';
+                final maxVal = int.tryParse(statsMap[maxKey]?.toString() ?? '') ?? numVal;
+                return SizedBox(
+                  width: col.width > 0 ? col.width.toDouble() : 130,
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () => onModifyStat(c, col.subFieldKey, -1, statsMap, cfg),
+                        child: Container(width: 22, height: 22, decoration: BoxDecoration(color: palette.hpBtnDecreaseBg, borderRadius: BorderRadius.circular(3)),
+                          child: Center(child: Text('-', style: TextStyle(fontSize: 14, color: palette.hpBtnText, fontWeight: FontWeight.bold)))),
+                      ),
+                      const SizedBox(width: 2),
+                      Expanded(child: HpBar(hp: numVal, maxHp: maxVal > 0 ? maxVal : 1, palette: palette)),
+                      const SizedBox(width: 2),
+                      InkWell(
+                        onTap: () => onModifyStat(c, col.subFieldKey, 1, statsMap, cfg),
+                        child: Container(width: 22, height: 22, decoration: BoxDecoration(color: palette.hpBtnIncreaseBg, borderRadius: BorderRadius.circular(3)),
+                          child: Center(child: Text('+', style: TextStyle(fontSize: 14, color: palette.hpBtnText, fontWeight: FontWeight.bold)))),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return SizedBox(
+                width: col.width > 0 ? col.width.toDouble() : 60,
+                child: Text(val, style: TextStyle(fontSize: 12, color: palette.tabActiveText, fontWeight: col.subFieldKey == cfg.initiativeSubField ? FontWeight.bold : FontWeight.normal), textAlign: TextAlign.center),
+              );
+            }),
+            const SizedBox(width: 8),
+            // Conditions
+            Expanded(
+              flex: 2,
+              child: Wrap(
+                spacing: 2,
+                runSpacing: 2,
+                children: [
+                  ...c.conditions.map((cond) => ConditionBadge(
+                    condition: cond,
+                    palette: palette,
+                    onRemove: () => ref.read(combatProvider.notifier).removeCondition(c.id, cond.name),
+                  )),
+                  InkWell(
+                    onTap: () => onShowAddCondition(c.id, cfg.conditions),
+                    child: Container(
+                      width: 24, height: 24,
+                      decoration: BoxDecoration(border: Border.all(color: palette.sidebarDivider), borderRadius: BorderRadius.circular(12)),
+                      child: Icon(Icons.add, size: 12, color: palette.sidebarLabelSecondary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Delete
+            IconButton(
+              icon: Icon(Icons.close, size: 14, color: palette.sidebarLabelSecondary),
+              onPressed: () => ref.read(combatProvider.notifier).deleteCombatant(c.id),
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
       ),
     );
   }
