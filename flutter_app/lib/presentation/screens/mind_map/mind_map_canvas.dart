@@ -196,8 +196,10 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas> {
     final lodZone = notifier.lodZone;
     final entities = ref.watch(entityProvider);
 
-    // Compute viewport rect in canvas-space for culling
-    final viewportRect = _computeViewportRect(notifier);
+    // Compute viewport rect in canvas-space for culling.
+    // Inflate generously so nodes near edges aren't culled when
+    // the child widget is cached across viewTransform changes.
+    final viewportRect = _computeViewportRect(notifier).inflate(500);
 
     return _UnboundedStack(
       clipBehavior: Clip.none,

@@ -76,6 +76,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                     activeEpochIndex: mapState.activeEpochIndex,
                     epochNames: notifier.epochNames,
                     palette: palette,
+                    startLabel: mapState.epochStartLabel,
+                    endLabel: mapState.epochEndLabel,
                     onSwitchEpoch: notifier.switchEpoch,
                     onAddWaypoint: (insertIdx) =>
                         _showAddWaypointDialog(insertIdx, notifier, palette),
@@ -83,6 +85,9 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                         _showDeleteWaypointDialog(wpIdx, notifier, palette),
                     onRenameWaypoint: (wpIdx) =>
                         _showRenameWaypointDialog(wpIdx, notifier, palette),
+                    onRenameBoundary: (s, e) =>
+                        notifier.updateEpochBoundaryLabels(
+                            startLabel: s, endLabel: e),
                   ),
                 ),
             ],
@@ -106,10 +111,14 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         (t) => mapState.hiddenPinTypes.contains(t));
 
     return Container(
-      height: 36,
+      width: double.infinity,
       color: palette.tabBg,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      child: Wrap(
+        spacing: 0,
+        runSpacing: 2,
+        alignment: WrapAlignment.start,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           // Pick map image
           _ToolbarButton(
@@ -154,11 +163,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 child: Icon(
-                  switch (mapState.pinSize) {
-                    PinSize.small => Icons.circle,
-                    PinSize.medium => Icons.circle,
-                    PinSize.large => Icons.circle,
-                  },
+                  Icons.circle,
                   size: switch (mapState.pinSize) {
                     PinSize.small => 8,
                     PinSize.medium => 12,
@@ -233,7 +238,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               borderRadius: BorderRadius.circular(4),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Icon(Icons.add, size: 16, color: palette.tabText),
+                child: Icon(Icons.add, size: 14, color: palette.tabText),
               ),
             ),
           ),
@@ -244,7 +249,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               borderRadius: BorderRadius.circular(4),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Icon(Icons.remove, size: 16, color: palette.tabText),
+                child: Icon(Icons.remove, size: 14, color: palette.tabText),
               ),
             ),
           ),
@@ -255,7 +260,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               borderRadius: BorderRadius.circular(4),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Icon(Icons.fit_screen, size: 16, color: palette.tabText),
+                child: Icon(Icons.fit_screen, size: 14, color: palette.tabText),
               ),
             ),
           ),
@@ -284,21 +289,24 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                 mapState.activeEpochIndex, notifier, palette),
           ),
 
-          const Spacer(),
-
           // Status text
           if (mapState.isLinkMode)
-            Text('Click pin to link · Click empty to create · Esc to cancel',
-              style: TextStyle(fontSize: 10, color: Colors.amber.withValues(alpha: 0.8)))
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text('Click pin to link · Click empty to create · Esc to cancel',
+                style: TextStyle(fontSize: 10, color: Colors.amber.withValues(alpha: 0.8))),
+            )
           else
-            Text(
-              'Double-click to place pin · Drag to pan · Scroll to zoom',
-              style: TextStyle(
-                fontSize: 10,
-                color: palette.tabText.withValues(alpha: 0.4),
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                'Double-click to place pin · Drag to pan · Scroll to zoom',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: palette.tabText.withValues(alpha: 0.4),
+                ),
               ),
             ),
-          const SizedBox(width: 8),
         ],
       ),
     );
@@ -1310,87 +1318,97 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
     final size = _boxSize;
     final half = size / 2;
 
+    final isDragging = _dragOffset != null;
+
+    final container = Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(
+          color: _isDragOver
+              ? Colors.yellowAccent
+              : pin.sessionId != null
+                  ? Colors.white
+                  : Colors.black54,
+          width: _isDragOver ? 3 : 1.5,
+        ),
+        boxShadow: const [
+          BoxShadow(color: Colors.black38, blurRadius: 3),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '${pin.day}',
+        style: TextStyle(
+          fontSize: _fontSize,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+    );
+
     return Positioned(
       left: x - half,
       top: y - half,
-      child: DragTarget<String>(
-        onWillAcceptWithDetails: (_) => widget.onEntityDrop != null,
-        onAcceptWithDetails: (details) {
-          setState(() => _isDragOver = false);
-          widget.onEntityDrop?.call(details.data);
-        },
-        onMove: (_) {
-          if (!_isDragOver) setState(() => _isDragOver = true);
-        },
-        onLeave: (_) {
-          if (_isDragOver) setState(() => _isDragOver = false);
-        },
-        builder: (context, candidateData, _) {
-          final pinWidget = GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: widget.onTap,
-            onSecondaryTapUp: (d) =>
-                _showContextMenu(context, d.globalPosition),
-            onPanStart: (d) {
-              _dragStart = d.globalPosition;
-              _pinStartPos = Offset(pin.x, pin.y);
-            },
-            onPanUpdate: (d) {
-              if (_dragStart == null || _pinStartPos == null) return;
-              final scale = widget.notifier.viewTransform.value.scale;
-              final delta = (d.globalPosition - _dragStart!) / scale;
-              setState(() => _dragOffset = _pinStartPos! + delta);
-            },
-            onPanEnd: (_) {
-              if (_dragOffset != null) {
-                widget.notifier.updateTimelinePin(pin.id,
-                    pos: _dragOffset!);
-              }
-              _dragStart = null;
-              _pinStartPos = null;
-              _dragOffset = null;
-            },
-            child: MouseRegion(
-              onEnter: (_) => setState(() => _isHovered = true),
-              onExit: (_) => setState(() => _isHovered = false),
-              child: Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(3),
-                  border: Border.all(
-                    color: _isDragOver
-                        ? Colors.yellowAccent
-                        : pin.sessionId != null
-                            ? Colors.white
-                            : Colors.black54,
-                    width: _isDragOver ? 3 : 1.5,
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            DragTarget<String>(
+              onWillAcceptWithDetails: (_) => widget.onEntityDrop != null,
+              onAcceptWithDetails: (details) {
+                setState(() => _isDragOver = false);
+                widget.onEntityDrop?.call(details.data);
+              },
+              onMove: (_) {
+                if (!_isDragOver) setState(() => _isDragOver = true);
+              },
+              onLeave: (_) {
+                if (_isDragOver) setState(() => _isDragOver = false);
+              },
+              builder: (context, candidateData, _) {
+                return MouseRegion(
+                  onEnter: (_) {
+                    if (!isDragging) setState(() => _isHovered = true);
+                  },
+                  onExit: (_) => setState(() => _isHovered = false),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: widget.onTap,
+                    onSecondaryTapUp: (d) =>
+                        _showContextMenu(context, d.globalPosition),
+                    onPanStart: (d) {
+                      _dragStart = d.globalPosition;
+                      _pinStartPos = Offset(pin.x, pin.y);
+                      setState(() => _isHovered = false);
+                    },
+                    onPanUpdate: (d) {
+                      if (_dragStart == null || _pinStartPos == null) return;
+                      final scale =
+                          widget.notifier.viewTransform.value.scale;
+                      final delta = (d.globalPosition - _dragStart!) / scale;
+                      setState(() => _dragOffset = _pinStartPos! + delta);
+                    },
+                    onPanEnd: (_) {
+                      if (_dragOffset != null) {
+                        widget.notifier.updateTimelinePin(pin.id,
+                            pos: _dragOffset!);
+                      }
+                      _dragStart = null;
+                      _pinStartPos = null;
+                      _dragOffset = null;
+                    },
+                    child: container,
                   ),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black38, blurRadius: 3),
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '${pin.day}',
-                  style: TextStyle(
-                    fontSize: _fontSize,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+                );
+              },
             ),
-          );
-
-          // Rich hover card
-          if (!_isHovered) return pinWidget;
-
-          return Stack(
-            clipBehavior: Clip.none,
-            children: [
-              pinWidget,
+            // Hover card — outside DragTarget so it doesn't affect layout
+            if (_isHovered && !isDragging)
               Positioned(
                 left: size + 6,
                 top: -4,
@@ -1398,9 +1416,8 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
                   child: _buildHoverCard(palette, pin),
                 ),
               ),
-            ],
-          );
-        },
+          ],
+        ),
       ),
     );
   }

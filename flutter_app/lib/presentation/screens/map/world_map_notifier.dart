@@ -58,6 +58,8 @@ class WorldMapState {
   final List<MapEpoch> epochs;
   final List<EpochWaypoint> waypoints;
   final int activeEpochIndex;
+  final String epochStartLabel;
+  final String epochEndLabel;
 
   const WorldMapState({
     this.imagePath = '',
@@ -76,6 +78,8 @@ class WorldMapState {
     this.epochs = const [],
     this.waypoints = const [],
     this.activeEpochIndex = 0,
+    this.epochStartLabel = 'Start',
+    this.epochEndLabel = 'End',
   });
 
   WorldMapState copyWith({
@@ -97,6 +101,8 @@ class WorldMapState {
     List<MapEpoch>? epochs,
     List<EpochWaypoint>? waypoints,
     int? activeEpochIndex,
+    String? epochStartLabel,
+    String? epochEndLabel,
   }) {
     return WorldMapState(
       imagePath: imagePath ?? this.imagePath,
@@ -115,6 +121,8 @@ class WorldMapState {
       epochs: epochs ?? this.epochs,
       waypoints: waypoints ?? this.waypoints,
       activeEpochIndex: activeEpochIndex ?? this.activeEpochIndex,
+      epochStartLabel: epochStartLabel ?? this.epochStartLabel,
+      epochEndLabel: epochEndLabel ?? this.epochEndLabel,
     );
   }
 
@@ -136,14 +144,16 @@ class WorldMapState {
           pendingParentId == other.pendingParentId &&
           epochs == other.epochs &&
           waypoints == other.waypoints &&
-          activeEpochIndex == other.activeEpochIndex;
+          activeEpochIndex == other.activeEpochIndex &&
+          epochStartLabel == other.epochStartLabel &&
+          epochEndLabel == other.epochEndLabel;
 
   @override
   int get hashCode => Object.hash(
         imagePath, pins, timelinePins, hiddenPinTypes, pinSize,
         showTimeline, showMapPins, showNonPlayerTimeline,
         activeEntityFilters, movingPinId, isLinkMode, pendingParentId,
-        epochs, waypoints, activeEpochIndex,
+        epochs, waypoints, activeEpochIndex, epochStartLabel, epochEndLabel,
       );
 }
 
@@ -235,6 +245,8 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
     final pinSizeStr = data['pin_size'] as String?;
     final pinSize = PinSize.values.where((e) => e.name == pinSizeStr).firstOrNull
         ?? PinSize.medium;
+    final epochStartLabel = data['epoch_start_label'] as String? ?? 'Start';
+    final epochEndLabel = data['epoch_end_label'] as String? ?? 'End';
 
     final active = epochs[activeIdx];
     state = WorldMapState(
@@ -245,6 +257,8 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
       waypoints: waypoints,
       activeEpochIndex: activeIdx,
       pinSize: pinSize,
+      epochStartLabel: epochStartLabel,
+      epochEndLabel: epochEndLabel,
     );
   }
 
@@ -321,6 +335,8 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
           .map((w) => {'id': w.id, 'label': w.label})
           .toList(),
       'active_epoch_index': state.activeEpochIndex,
+      'epoch_start_label': state.epochStartLabel,
+      'epoch_end_label': state.epochEndLabel,
       'pin_size': state.pinSize.name,
     };
     await campaign.save();
@@ -369,9 +385,12 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
     final wps = state.waypoints;
     final names = <String>[];
     for (int i = 0; i < state.epochs.length; i++) {
-      final left = i == 0 ? 'Start' : _waypointDisplayLabel(wps[i - 1]);
-      final right =
-          i >= wps.length ? 'End' : _waypointDisplayLabel(wps[i]);
+      final left = i == 0
+          ? state.epochStartLabel
+          : _waypointDisplayLabel(wps[i - 1]);
+      final right = i >= wps.length
+          ? state.epochEndLabel
+          : _waypointDisplayLabel(wps[i]);
       names.add('$left \u2013 $right');
     }
     return names;
@@ -535,6 +554,15 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
     final updated = List<EpochWaypoint>.from(state.waypoints);
     updated[wpIndex] = updated[wpIndex].copyWith(label: label);
     state = state.copyWith(waypoints: updated);
+    _debouncedSave();
+  }
+
+  /// Updates the Start / End boundary labels.
+  void updateEpochBoundaryLabels({String? startLabel, String? endLabel}) {
+    state = state.copyWith(
+      epochStartLabel: startLabel,
+      epochEndLabel: endLabel,
+    );
     _debouncedSave();
   }
 
