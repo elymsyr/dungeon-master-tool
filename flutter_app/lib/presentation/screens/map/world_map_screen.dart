@@ -11,6 +11,8 @@ import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../theme/dm_tool_colors.dart';
+import 'epoch_scroll_bar.dart';
+import 'epoch_waypoint_dialog.dart';
 import 'timeline_entry_dialog.dart';
 import 'world_map_notifier.dart';
 
@@ -60,7 +62,32 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     return Column(
       children: [
         _buildToolbar(palette, notifier, mapState),
-        Expanded(child: _buildCanvas(palette, notifier, mapState)),
+        Expanded(
+          child: Stack(
+            children: [
+              _buildCanvas(palette, notifier, mapState),
+              if (mapState.epochs.length > 1)
+                Positioned(
+                  left: 16,
+                  bottom: 16,
+                  child: EpochScrollBar(
+                    epochs: mapState.epochs,
+                    waypoints: mapState.waypoints,
+                    activeEpochIndex: mapState.activeEpochIndex,
+                    epochNames: notifier.epochNames,
+                    palette: palette,
+                    onSwitchEpoch: notifier.switchEpoch,
+                    onAddWaypoint: (insertIdx) =>
+                        _showAddWaypointDialog(insertIdx, notifier, palette),
+                    onDeleteWaypoint: (wpIdx) =>
+                        _showDeleteWaypointDialog(wpIdx, notifier, palette),
+                    onRenameWaypoint: (wpIdx) =>
+                        _showRenameWaypointDialog(wpIdx, notifier, palette),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -218,6 +245,20 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             onTap: () => _projectMap(palette),
           ),
 
+          _VertDiv(palette: palette),
+
+          // Epochs
+          _ToolbarButton(
+            icon: Icons.timeline,
+            label: mapState.epochs.length > 1
+                ? 'Epochs (${mapState.epochs.length})'
+                : 'Epochs',
+            palette: palette,
+            highlight: mapState.epochs.length > 1,
+            onTap: () => _showAddWaypointDialog(
+                mapState.activeEpochIndex, notifier, palette),
+          ),
+
           const Spacer(),
 
           // Status text
@@ -367,6 +408,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                   onEditNote: () => _showEditPinNoteDialog(pin, notifier, palette),
                   onChangeColor: () => _showPinColorPicker(pin, notifier, palette),
                   onDelete: () => notifier.deletePin(pin.id),
+                  onCopyToEpoch: mapState.epochs.length > 1
+                      ? () => _showCopyToEpochDialog(
+                          notifier, palette, pinId: pin.id)
+                      : null,
                 ),
               ),
 
@@ -395,6 +440,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                   onDelete: () => notifier.deleteTimelinePin(pin.id),
                   onEntityDrop: (entityId) =>
                       _onEntityDropOnTimelinePin(context, pin, entityId, notifier),
+                  onCopyToEpoch: mapState.epochs.length > 1
+                      ? () => _showCopyToEpochDialog(
+                          notifier, palette, timelinePinId: pin.id)
+                      : null,
                 ),
               ),
             ],
@@ -687,6 +736,79 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     });
   }
 
+  // -------------------------------------------------------------------------
+  // Epoch dialogs
+  // -------------------------------------------------------------------------
+
+  void _showAddWaypointDialog(
+      int insertIndex, WorldMapNotifier notifier, DmToolColors palette) {
+    showDialog<AddWaypointResult>(
+      context: context,
+      builder: (ctx) => AddWaypointDialog(palette: palette),
+    ).then((result) {
+      if (result == null) return;
+      notifier.addWaypoint(
+        insertIndex,
+        result.label,
+        copyPins: result.copyPins,
+        copyTimelinePins: result.copyTimelinePins,
+      );
+    });
+  }
+
+  void _showDeleteWaypointDialog(
+      int wpIndex, WorldMapNotifier notifier, DmToolColors palette) {
+    final mapState = ref.read(worldMapProvider);
+    final label = mapState.waypoints[wpIndex].label;
+    showDialog<EpochMergeStrategy>(
+      context: context,
+      builder: (ctx) =>
+          DeleteWaypointDialog(palette: palette, waypointLabel: label),
+    ).then((strategy) {
+      if (strategy == null) return;
+      notifier.deleteWaypoint(wpIndex, strategy);
+    });
+  }
+
+  void _showRenameWaypointDialog(
+      int wpIndex, WorldMapNotifier notifier, DmToolColors palette) {
+    final mapState = ref.read(worldMapProvider);
+    final current = mapState.waypoints[wpIndex].label;
+    showDialog<String>(
+      context: context,
+      builder: (ctx) =>
+          RenameWaypointDialog(palette: palette, currentLabel: current),
+    ).then((newLabel) {
+      if (newLabel == null) return;
+      notifier.updateWaypointLabel(wpIndex, newLabel);
+    });
+  }
+
+  void _showCopyToEpochDialog(
+    WorldMapNotifier notifier,
+    DmToolColors palette, {
+    String? pinId,
+    String? timelinePinId,
+  }) {
+    final mapState = ref.read(worldMapProvider);
+    if (mapState.epochs.length <= 1) return;
+    showDialog<int>(
+      context: context,
+      builder: (ctx) => CopyToEpochDialog(
+        palette: palette,
+        epochNames: notifier.epochNames,
+        currentEpochIndex: mapState.activeEpochIndex,
+      ),
+    ).then((targetIdx) {
+      if (targetIdx == null) return;
+      if (pinId != null) {
+        notifier.copyPinToEpoch(pinId, targetIdx);
+      } else if (timelinePinId != null) {
+        notifier.copyTimelinePinToEpoch(timelinePinId, targetIdx);
+      }
+    });
+  }
+
   void _showPinDetail(
     BuildContext context,
     MapPin pin,
@@ -919,6 +1041,7 @@ class _DraggablePin extends StatefulWidget {
   final VoidCallback? onEditNote;
   final VoidCallback? onChangeColor;
   final VoidCallback? onDelete;
+  final VoidCallback? onCopyToEpoch;
 
   const _DraggablePin({
     super.key,
@@ -930,6 +1053,7 @@ class _DraggablePin extends StatefulWidget {
     this.onEditNote,
     this.onChangeColor,
     this.onDelete,
+    this.onCopyToEpoch,
   });
 
   @override
@@ -1012,6 +1136,13 @@ class _DraggablePinState extends State<_DraggablePin> {
         value: 'change_color',
         child: _menuRow(Icons.palette, 'Change Color', palette),
       ),
+      if (widget.onCopyToEpoch != null) ...[
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: 'copy_to_epoch',
+          child: _menuRow(Icons.copy, 'Copy to Epoch...', palette),
+        ),
+      ],
       const PopupMenuDivider(),
       PopupMenuItem(
         value: 'delete',
@@ -1034,6 +1165,8 @@ class _DraggablePinState extends State<_DraggablePin> {
           widget.onEditNote?.call();
         case 'change_color':
           widget.onChangeColor?.call();
+        case 'copy_to_epoch':
+          widget.onCopyToEpoch?.call();
         case 'delete':
           widget.onDelete?.call();
       }
@@ -1058,6 +1191,7 @@ class _DraggableTimelinePin extends StatefulWidget {
   final VoidCallback? onDelete;
   final void Function(String entityId)? onEntityDrop;
   final Map<String, String> entityNames;
+  final VoidCallback? onCopyToEpoch;
 
   const _DraggableTimelinePin({
     super.key,
@@ -1072,6 +1206,7 @@ class _DraggableTimelinePin extends StatefulWidget {
     this.onChangeColor,
     this.onDelete,
     this.onEntityDrop,
+    this.onCopyToEpoch,
     this.entityNames = const {},
   });
 
@@ -1216,6 +1351,13 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
         child:
             _menuRow(Icons.palette, 'Change Color (chain)', palette),
       ),
+      if (widget.onCopyToEpoch != null) ...[
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: 'copy_to_epoch',
+          child: _menuRow(Icons.copy, 'Copy to Epoch...', palette),
+        ),
+      ],
       const PopupMenuDivider(),
       PopupMenuItem(
         value: 'delete',
@@ -1240,6 +1382,8 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
           widget.onEdit?.call();
         case 'change_color':
           widget.onChangeColor?.call();
+        case 'copy_to_epoch':
+          widget.onCopyToEpoch?.call();
         case 'delete':
           widget.onDelete?.call();
       }

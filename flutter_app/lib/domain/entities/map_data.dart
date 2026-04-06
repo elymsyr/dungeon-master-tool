@@ -59,3 +59,29 @@ abstract class TimelinePin with _$TimelinePin {
   factory TimelinePin.fromJson(Map<String, dynamic> json) =>
       _$TimelinePinFromJson(json);
 }
+
+/// A single epoch (time segment) with its own map image, pins, and timeline.
+@freezed
+abstract class MapEpoch with _$MapEpoch {
+  const factory MapEpoch({
+    required String id,
+    @Default('') String imagePath,
+    @Default([]) List<MapPin> pins,
+    @Default([]) List<TimelinePin> timelinePins,
+  }) = _MapEpoch;
+
+  factory MapEpoch.fromJson(Map<String, dynamic> json) =>
+      _$MapEpochFromJson(json);
+}
+
+/// A waypoint marker separating two epochs on the epoch scroll bar.
+@freezed
+abstract class EpochWaypoint with _$EpochWaypoint {
+  const factory EpochWaypoint({
+    required String id,
+    @Default('') String label,
+  }) = _EpochWaypoint;
+
+  factory EpochWaypoint.fromJson(Map<String, dynamic> json) =>
+      _$EpochWaypointFromJson(json);
+}
