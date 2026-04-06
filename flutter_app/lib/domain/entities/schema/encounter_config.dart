@@ -21,6 +21,7 @@ abstract class EncounterColumnConfig with _$EncounterColumnConfig {
 abstract class EncounterConfig with _$EncounterConfig {
   const factory EncounterConfig({
     @Default('combat_stats') String combatStatsFieldKey,
+    @Default('condition_stats') String conditionStatsFieldKey,
     @Default('stat_block') String statBlockFieldKey,
     @Default('initiative') String initiativeSubField,
     @Default('initiative') String sortBySubField,

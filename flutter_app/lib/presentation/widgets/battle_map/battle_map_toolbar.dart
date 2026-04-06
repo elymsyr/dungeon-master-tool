@@ -11,6 +11,8 @@ typedef _ToolbarState = ({
   int gridSize,
   int feetPerCell,
   int tokenSize,
+  int canvasWidth,
+  int canvasHeight,
 });
 
 /// DM battle map toolbar — 3 rows:
@@ -34,6 +36,8 @@ class BattleMapToolbar extends ConsumerWidget {
       gridSize: s.gridSize,
       feetPerCell: s.feetPerCell,
       tokenSize: s.tokenSize,
+      canvasWidth: s.canvasWidth,
+      canvasHeight: s.canvasHeight,
     )));
     final notifier = ref.read(battleMapProvider(encounterId).notifier);
 
@@ -198,17 +202,20 @@ class BattleMapToolbar extends ConsumerWidget {
             ],
           ),
           const SizedBox(width: 12),
-          // Grid size
-          Text('Cell:', style: TextStyle(fontSize: 12, color: palette.tabText)),
+          // Grid columns x rows
+          Text('Grid:', style: TextStyle(fontSize: 12, color: palette.tabText)),
           const SizedBox(width: 4),
-          _SpinBox(
-            value: mapState.gridSize,
-            min: 10,
-            max: 300,
+          _DoubleSpinBox(
+            value: mapState.canvasWidth / mapState.gridSize,
+            min: 1,
+            max: 200,
             palette: palette,
-            onChanged: notifier.setGridSize,
+            onChanged: (cols) => notifier.setGridColumns(cols),
           ),
-          Text('px', style: TextStyle(fontSize: 11, color: palette.tabText.withValues(alpha: 0.6))),
+          Text(
+            ' x ${(mapState.canvasHeight / mapState.gridSize).toStringAsFixed(1)}',
+            style: TextStyle(fontSize: 11, color: palette.tabText.withValues(alpha: 0.6)),
+          ),
           const SizedBox(width: 12),
           // Snap toggle
           Row(
@@ -366,6 +373,56 @@ class _SpinBox extends StatelessWidget {
           _SpinBtn(
             icon: Icons.add,
             onPressed: value < max ? () => onChanged(value + 1) : null,
+            palette: palette,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DoubleSpinBox extends StatelessWidget {
+  final double value;
+  final double min;
+  final double max;
+  final DmToolColors palette;
+  final void Function(double) onChanged;
+
+  const _DoubleSpinBox({
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.palette,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 24,
+      decoration: BoxDecoration(
+        border: Border.all(color: palette.sidebarDivider),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _SpinBtn(
+            icon: Icons.remove,
+            onPressed: value > min ? () => onChanged((value - 1).clamp(min, max)) : null,
+            palette: palette,
+          ),
+          Container(
+            width: 44,
+            alignment: Alignment.center,
+            child: Text(
+              value.toStringAsFixed(1),
+              style: TextStyle(fontSize: 11, color: palette.tabActiveText),
+            ),
+          ),
+          _SpinBtn(
+            icon: Icons.add,
+            onPressed: value < max ? () => onChanged((value + 1).clamp(min, max)) : null,
             palette: palette,
           ),
         ],

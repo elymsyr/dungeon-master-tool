@@ -548,7 +548,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                         ref.read(uiStateProvider.notifier).update((s) => s.copyWith(sessionBottomTab: 3));
                       }),
                       onModifyStat: (c, subKey, delta, stats, cfg) => _modifyStat(c, subKey, delta, stats, cfg),
-                      onShowAddCondition: (combatantId, conditions) => _showAddConditionDialog(combatantId, conditions),
+                      onShowAddCondition: (combatantId, _) => _showAddConditionDialog(combatantId),
                     ),
                   ),
                   if (candidateData.isNotEmpty)
@@ -728,7 +728,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           }),
           onModifyStat: (subKey, delta) => _modifyStat(c, subKey, delta, statsMap, cfg),
           onDelete: () => ref.read(combatProvider.notifier).deleteCombatant(c.id),
-          onAddCondition: (id) => _showAddConditionDialog(id, cfg.conditions),
+          onAddCondition: (id) => _showAddConditionDialog(id),
           onRemoveCondition: (id, name) => ref.read(combatProvider.notifier).removeCondition(id, name),
         );
       },
@@ -1020,38 +1020,63 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
   }
 
-  void _showAddConditionDialog(String combatantId, [List<String> predefined = const []]) {
+  void _showAddConditionDialog(String combatantId) {
     final nameController = TextEditingController();
     final durationController = TextEditingController();
+
+    // Find condition entities (those with conditionStats field)
+    final schema = ref.read(worldSchemaProvider);
+    final cfg = schema.encounterConfig;
+    final conditionSlugs = <String>{};
+    for (final cat in schema.categories) {
+      if (cat.fields.any((f) => f.fieldKey == cfg.conditionStatsFieldKey)) {
+        conditionSlugs.add(cat.slug);
+      }
+    }
+    final entities = ref.read(entityProvider);
+    final conditionEntities = entities.values
+        .where((e) => conditionSlugs.contains(e.categorySlug))
+        .toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Add Condition', style: TextStyle(fontSize: 14)),
         content: SizedBox(
-          width: 300,
+          width: 340,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Predefined conditions
-              if (predefined.isNotEmpty) ...[
-                Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: predefined.map((name) => ActionChip(
-                    label: Text(name, style: const TextStyle(fontSize: 10)),
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () {
-                      ref.read(combatProvider.notifier).addCondition(combatantId, name, null);
-                      Navigator.pop(ctx);
-                    },
-                  )).toList(),
+              // Entity-based conditions
+              if (conditionEntities.isNotEmpty) ...[
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: SingleChildScrollView(
+                    child: Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: conditionEntities.map((e) {
+                        final stats = e.fields[cfg.conditionStatsFieldKey];
+                        final defaultDuration = stats is Map ? int.tryParse('${stats['default_duration'] ?? ''}') : null;
+                        return ActionChip(
+                          label: Text(e.name, style: const TextStyle(fontSize: 10)),
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () {
+                            ref.read(combatProvider.notifier).addCondition(combatantId, e.name, defaultDuration);
+                            Navigator.pop(ctx);
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 const Divider(),
                 const SizedBox(height: 8),
               ],
               // Custom condition
-              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Custom Condition'), autofocus: predefined.isEmpty),
+              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Custom Condition'), autofocus: conditionEntities.isEmpty),
               const SizedBox(height: 8),
               TextField(controller: durationController, decoration: const InputDecoration(labelText: 'Duration (rounds, optional)'), keyboardType: TextInputType.number),
             ],

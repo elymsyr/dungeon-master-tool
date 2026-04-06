@@ -22,6 +22,7 @@ const _grpCombat = 'grp-combat';
 const _grpResistances = 'grp-resistances';
 const _grpActions = 'grp-actions';
 const _grpSpells = 'grp-spells';
+const _grpConditionStats = 'grp-condition-stats';
 
 WorldSchema generateDefaultDnd5eSchema() {
   final now = DateTime.now().toUtc().toIso8601String();
@@ -158,7 +159,27 @@ WorldSchema generateDefaultDnd5eSchema() {
       ));
     }
 
-    // Grupları oluştur (sadece stat block olan kategoriler için)
+    if (def.hasConditionStats) {
+      fields.add(FieldSchema(
+        fieldId: _uuid.v4(),
+        categoryId: catId,
+        fieldKey: 'condition_stats',
+        label: 'Condition Stats',
+        fieldType: FieldType.conditionStats,
+        defaultValue: const {'default_duration': ''},
+        subFields: const [
+          {'key': 'default_duration', 'label': 'Default Duration (turns)', 'type': 'integer'},
+        ],
+        orderIndex: fieldIdx++,
+        isBuiltin: true,
+        groupId: _grpConditionStats,
+        gridColumnSpan: 2,
+        createdAt: now,
+        updatedAt: now,
+      ));
+    }
+
+    // Grupları oluştur
     final groups = <FieldGroup>[];
     if (def.hasStatBlock) {
       var gi = 0;
@@ -172,6 +193,14 @@ WorldSchema generateDefaultDnd5eSchema() {
         if (def.hasSpells)
           FieldGroup(groupId: _grpSpells, name: 'Spells', gridColumns: 1, orderIndex: gi++),
       ]);
+    }
+    if (def.hasConditionStats) {
+      groups.add(FieldGroup(
+        groupId: _grpConditionStats,
+        name: 'Condition Stats',
+        gridColumns: 2,
+        orderIndex: groups.length,
+      ));
     }
 
     categories.add(EntityCategorySchema(
@@ -209,6 +238,7 @@ WorldSchema generateDefaultDnd5eSchema() {
 EncounterConfig _defaultEncounterConfig() {
   return const EncounterConfig(
     combatStatsFieldKey: 'combat_stats',
+    conditionStatsFieldKey: 'condition_stats',
     statBlockFieldKey: 'stat_block',
     initiativeSubField: 'initiative',
     sortBySubField: 'initiative',
@@ -266,6 +296,7 @@ class _CategoryDef {
   final bool hasStatBlock;
   final bool hasActions;
   final bool hasSpells;
+  final bool hasConditionStats;
   final List<String> sections;
   final List<String> filters;
 
@@ -277,6 +308,7 @@ class _CategoryDef {
     this.hasStatBlock = false,
     this.hasActions = false,
     this.hasSpells = false,
+    this.hasConditionStats = false,
     this.sections = const ['mindmap'],
     this.filters = const [],
   });
@@ -380,7 +412,7 @@ const _categoryDefs = [
 
   _CategoryDef('Condition', 'condition', '#ab47bc', [
     _FieldDef('effects', 'Effects', FieldType.text),
-  ], sections: ['encounter']),
+  ], hasConditionStats: true, sections: ['encounter']),
 
   // --- Action kategorileri (D&D 5e SRD) ---
   _CategoryDef('Trait', 'trait', '#78909c', [

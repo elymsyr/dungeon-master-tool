@@ -1171,6 +1171,7 @@ class _CategoryEditor extends StatelessWidget {
     FieldType.tagList => 'Tags',
     FieldType.statBlock => 'Stat Block',
     FieldType.combatStats => 'Combat Stats',
+    FieldType.conditionStats => 'Condition Stats',
     FieldType.dice => 'Dice',
   };
 
@@ -1186,6 +1187,7 @@ class _CategoryEditor extends StatelessWidget {
     FieldType.tagList => Icons.label,
     FieldType.statBlock => Icons.casino,
     FieldType.combatStats => Icons.shield,
+    FieldType.conditionStats => Icons.flash_on,
     FieldType.dice => Icons.casino,
   };
 
@@ -1414,60 +1416,28 @@ class _EncounterConfigEditor extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // === CONDITIONS ===
+          // Condition Stats field key
           Row(
             children: [
-              Text('Predefined Conditions', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
-              const Spacer(),
-              if (!readOnly)
-                TextButton.icon(
-                  onPressed: () => _addCondition(context),
-                  icon: const Icon(Icons.add, size: 14),
-                  label: const Text('Add', style: TextStyle(fontSize: 11)),
-                ),
+              Text('Condition Stats', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
             ],
           ),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            children: config.conditions.asMap().entries.map((entry) {
-              return Chip(
-                label: Text(entry.value, style: const TextStyle(fontSize: 11)),
-                deleteIcon: readOnly ? null : const Icon(Icons.close, size: 14),
-                onDeleted: readOnly ? null : () {
-                  final l = List<String>.from(config.conditions)..removeAt(entry.key);
-                  onChanged(config.copyWith(conditions: l));
-                },
-                visualDensity: VisualDensity.compact,
-              );
-            }).toList(),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: 300,
+            child: TextFormField(
+              initialValue: config.conditionStatsFieldKey,
+              readOnly: readOnly,
+              decoration: const InputDecoration(labelText: 'Condition Stats Field Key'),
+              style: const TextStyle(fontSize: 12),
+              onChanged: (v) => onChanged(config.copyWith(conditionStatsFieldKey: v)),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _addCondition(BuildContext context) {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add Condition', style: TextStyle(fontSize: 14)),
-        content: TextField(controller: controller, decoration: const InputDecoration(labelText: 'Condition name'), autofocus: true),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(onPressed: () {
-            final name = controller.text.trim();
-            if (name.isNotEmpty) {
-              onChanged(config.copyWith(conditions: [...config.conditions, name]));
-            }
-            Navigator.pop(ctx);
-          }, child: const Text('Add')),
-        ],
-      ),
-    );
-  }
 }
 
 class _ColorDot extends StatelessWidget {

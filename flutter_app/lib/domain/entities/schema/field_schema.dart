@@ -22,6 +22,7 @@ enum FieldType {
   tagList,
   statBlock,
   combatStats,
+  conditionStats,
   dice,           // Zar notasyonu: "2d6", "1d20+5", "3d8+2"
 }
 
