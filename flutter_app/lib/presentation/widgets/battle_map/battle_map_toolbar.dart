@@ -264,15 +264,12 @@ class _ToolbarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(4),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-          child: Icon(icon, size: 18, color: palette.tabText),
-        ),
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        child: Icon(icon, size: 18, color: palette.tabText),
       ),
     );
   }
@@ -302,23 +299,20 @@ class _ToolButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = mapState.activeTool == tool;
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: () => notifier.setTool(tool),
-        borderRadius: BorderRadius.circular(4),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-          decoration: BoxDecoration(
-            color: isActive ? palette.tabIndicator.withValues(alpha: 0.2) : null,
-            borderRadius: BorderRadius.circular(4),
-            border: isActive ? Border.all(color: palette.tabIndicator, width: 1) : null,
-          ),
-          child: Icon(
-            icon,
-            size: 18,
-            color: isActive ? palette.tabIndicator : palette.tabText,
-          ),
+    return InkWell(
+      onTap: () => notifier.setTool(tool),
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+        decoration: BoxDecoration(
+          color: isActive ? palette.tabIndicator.withValues(alpha: 0.2) : null,
+          borderRadius: BorderRadius.circular(4),
+          border: isActive ? Border.all(color: palette.tabIndicator, width: 1) : null,
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: isActive ? palette.tabIndicator : palette.tabText,
         ),
       ),
     );

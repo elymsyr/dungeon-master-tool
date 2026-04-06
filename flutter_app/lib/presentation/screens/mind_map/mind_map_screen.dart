@@ -25,10 +25,16 @@ class MindMapScreen extends ConsumerStatefulWidget {
 }
 
 class _MindMapScreenState extends ConsumerState<MindMapScreen> {
+  late final MindMapNotifier _notifier;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _init());
+    _notifier = ref.read(mindMapProvider.notifier);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _init();
+    });
   }
 
   void _init() {
@@ -38,12 +44,12 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
     final defaultMap = Map<String, dynamic>.from(
       mindMaps['default'] as Map? ?? {},
     );
-    ref.read(mindMapProvider.notifier).init(defaultMap);
+    _notifier.init(defaultMap);
   }
 
   @override
   void dispose() {
-    unawaited(ref.read(mindMapProvider.notifier).save());
+    unawaited(_notifier.save());
     super.dispose();
   }
 
@@ -209,14 +215,12 @@ class _FloatingButtonState extends State<_FloatingButton> {
   @override
   Widget build(BuildContext context) {
     final palette = widget.palette;
-    return Tooltip(
-      message: widget.tooltip,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          onTap: widget.onPressed,
-          child: Container(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onPressed,
+        child: Container(
             width: 36,
             height: 36,
             decoration: BoxDecoration(
@@ -233,7 +237,6 @@ class _FloatingButtonState extends State<_FloatingButton> {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
