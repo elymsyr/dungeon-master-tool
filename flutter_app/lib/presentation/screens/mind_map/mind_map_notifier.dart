@@ -628,7 +628,7 @@ class MindMapNotifier extends StateNotifier<MindMapState> {
       final src = nodeMap[edge.sourceId];
       final tgt = nodeMap[edge.targetId];
       if (src == null || tgt == null) continue;
-      final d = _distToQuadBezier(point, src, tgt);
+      final d = _distToCubicBezier(point, src, tgt);
       if (d < bestDist) {
         bestDist = d;
         bestId = edge.id;
@@ -637,24 +637,36 @@ class MindMapNotifier extends StateNotifier<MindMapState> {
     return bestId;
   }
 
-  /// Approximate distance from [p] to a quadratic bezier arc from [a] to [b]
-  /// with the same perpendicular-offset control point used by the painter.
-  static double _distToQuadBezier(Offset p, Offset a, Offset b) {
-    final mid = (a + b) / 2;
-    final diff = b - a;
-    final dist = diff.distance.clamp(1.0, double.infinity);
-    final perpX = -diff.dy / dist;
-    final perpY = diff.dx / dist;
-    final bulge = dist * 0.15;
-    final ctrl = Offset(mid.dx + perpX * bulge, mid.dy + perpY * bulge);
+  /// Approximate distance from [p] to a cubic bezier S-curve from [a] to [b]
+  /// matching the painter's `_bezierPath` logic.
+  static double _distToCubicBezier(Offset p, Offset a, Offset b) {
+    final dx = (b.dx - a.dx).abs();
+    final dy = (b.dy - a.dy).abs();
+    final spread = (math.max(dx, dy) * 0.4).clamp(30.0, 200.0);
+    final horizontal = dx >= dy;
 
-    // Sample 12 points along the curve and return min distance
+    final c1 = Offset(
+      horizontal ? a.dx + spread : a.dx,
+      horizontal ? a.dy : a.dy + spread,
+    );
+    final c2 = Offset(
+      horizontal ? b.dx - spread : b.dx,
+      horizontal ? b.dy : b.dy - spread,
+    );
+
+    // Sample 16 points along the cubic curve
     double minDist = double.infinity;
-    for (int i = 0; i <= 12; i++) {
-      final t = i / 12.0;
+    for (int i = 0; i <= 16; i++) {
+      final t = i / 16.0;
       final u = 1 - t;
-      final x = u * u * a.dx + 2 * u * t * ctrl.dx + t * t * b.dx;
-      final y = u * u * a.dy + 2 * u * t * ctrl.dy + t * t * b.dy;
+      final x = u * u * u * a.dx +
+          3 * u * u * t * c1.dx +
+          3 * u * t * t * c2.dx +
+          t * t * t * b.dx;
+      final y = u * u * u * a.dy +
+          3 * u * u * t * c1.dy +
+          3 * u * t * t * c2.dy +
+          t * t * t * b.dy;
       final d = math.sqrt((p.dx - x) * (p.dx - x) + (p.dy - y) * (p.dy - y));
       if (d < minDist) minDist = d;
     }

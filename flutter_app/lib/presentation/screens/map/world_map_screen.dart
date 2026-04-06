@@ -378,6 +378,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                   palette: palette,
                   notifier: notifier,
                   isLinkMode: mapState.isLinkMode,
+                  entityNames: _entityNameMap(pin.entityIds),
                   onTap: () {
                     if (mapState.isLinkMode) {
                       notifier.handleLinkToExisting(pin.id);
@@ -392,6 +393,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                   onChangeColor: () =>
                       _showTimelineColorPicker(pin, notifier, palette),
                   onDelete: () => notifier.deleteTimelinePin(pin.id),
+                  onEntityDrop: (entityId) =>
+                      _onEntityDropOnTimelinePin(context, pin, entityId, notifier),
                 ),
               ),
             ],
@@ -476,6 +479,41 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     final canvasPos = notifier.screenToCanvas(localPos);
     notifier.addPin(canvasPos,
         entityId: entityId, label: entity.name, pinType: pinType);
+  }
+
+  void _onEntityDropOnTimelinePin(
+    BuildContext context,
+    TimelinePin pin,
+    String entityId,
+    WorldMapNotifier notifier,
+  ) {
+    if (pin.entityIds.contains(entityId)) return;
+
+    final entities = ref.read(entityProvider);
+    final entity = entities[entityId];
+    if (entity == null) return;
+
+    final schema = ref.read(worldSchemaProvider);
+    final category = schema.categories
+        .where((c) => c.slug == entity.categorySlug)
+        .firstOrNull;
+    if (category == null ||
+        !category.allowedInSections.contains('worldmap')) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                '${entity.name} (${entity.categorySlug}) is not allowed on the world map'),
+          ),
+        );
+      }
+      return;
+    }
+
+    notifier.updateTimelinePin(
+      pin.id,
+      entityIds: [...pin.entityIds, entityId],
+    );
   }
 
   /// Map category slug → pin type for display/filtering.
@@ -564,6 +602,15 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     );
   }
 
+  /// Build entityId → name map for display in dialogs.
+  Map<String, String> _entityNameMap(List<String> entityIds) {
+    final entities = ref.read(entityProvider);
+    return {
+      for (final eid in entityIds)
+        eid: entities[eid]?.name ?? eid,
+    };
+  }
+
   /// Add a connected timeline pin: copies entities + session from parent,
   /// opens the timeline entry dialog pre-filled.
   void _addConnectedTimeline(
@@ -581,11 +628,13 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     );
     showDialog<TimelinePin>(
       context: context,
-      builder: (ctx) =>
-          TimelineEntryDialog(palette: palette, existing: prefilled),
+      builder: (ctx) => TimelineEntryDialog(
+        palette: palette,
+        existing: prefilled,
+        entityNames: _entityNameMap(prefilled.entityIds),
+      ),
     ).then((result) {
       if (result == null) return;
-      // Use the parent's canvas position with offset
       notifier.addTimelinePin(
         Offset(parent.x + 40, parent.y + 40),
         day: result.day,
@@ -620,7 +669,11 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
       TimelinePin pin, WorldMapNotifier notifier, DmToolColors palette) {
     showDialog<TimelinePin>(
       context: context,
-      builder: (ctx) => TimelineEntryDialog(palette: palette, existing: pin),
+      builder: (ctx) => TimelineEntryDialog(
+        palette: palette,
+        existing: pin,
+        entityNames: _entityNameMap(pin.entityIds),
+      ),
     ).then((result) {
       if (result == null) return;
       notifier.updateTimelinePin(
@@ -1003,6 +1056,8 @@ class _DraggableTimelinePin extends StatefulWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onChangeColor;
   final VoidCallback? onDelete;
+  final void Function(String entityId)? onEntityDrop;
+  final Map<String, String> entityNames;
 
   const _DraggableTimelinePin({
     super.key,
@@ -1016,6 +1071,8 @@ class _DraggableTimelinePin extends StatefulWidget {
     this.onEdit,
     this.onChangeColor,
     this.onDelete,
+    this.onEntityDrop,
+    this.entityNames = const {},
   });
 
   @override
@@ -1026,6 +1083,7 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
   Offset? _dragStart;
   Offset? _pinStartPos;
   Offset? _dragOffset;
+  bool _isDragOver = false;
 
   @override
   Widget build(BuildContext context) {
@@ -1039,58 +1097,76 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
     return Positioned(
       left: x - 14,
       top: y - 14,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        onSecondaryTapUp: (d) =>
-            _showContextMenu(context, d.globalPosition),
-        onPanStart: (d) {
-          _dragStart = d.globalPosition;
-          _pinStartPos = Offset(pin.x, pin.y);
+      child: DragTarget<String>(
+        onWillAcceptWithDetails: (_) => widget.onEntityDrop != null,
+        onAcceptWithDetails: (details) {
+          setState(() => _isDragOver = false);
+          widget.onEntityDrop?.call(details.data);
         },
-        onPanUpdate: (d) {
-          if (_dragStart == null || _pinStartPos == null) return;
-          final scale = widget.notifier.viewTransform.value.scale;
-          final delta = (d.globalPosition - _dragStart!) / scale;
-          setState(() => _dragOffset = _pinStartPos! + delta);
+        onMove: (_) {
+          if (!_isDragOver) setState(() => _isDragOver = true);
         },
-        onPanEnd: (_) {
-          if (_dragOffset != null) {
-            widget.notifier.updateTimelinePin(pin.id,
-                pos: _dragOffset!);
-          }
-          _dragStart = null;
-          _pinStartPos = null;
-          _dragOffset = null;
+        onLeave: (_) {
+          if (_isDragOver) setState(() => _isDragOver = false);
         },
-        child: Tooltip(
-          message: _tooltipText(),
-          child: Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(
-                color:
-                    pin.sessionId != null ? Colors.white : Colors.black54,
-                width: 2,
+        builder: (context, candidateData, _) {
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onTap,
+            onSecondaryTapUp: (d) =>
+                _showContextMenu(context, d.globalPosition),
+            onPanStart: (d) {
+              _dragStart = d.globalPosition;
+              _pinStartPos = Offset(pin.x, pin.y);
+            },
+            onPanUpdate: (d) {
+              if (_dragStart == null || _pinStartPos == null) return;
+              final scale = widget.notifier.viewTransform.value.scale;
+              final delta = (d.globalPosition - _dragStart!) / scale;
+              setState(() => _dragOffset = _pinStartPos! + delta);
+            },
+            onPanEnd: (_) {
+              if (_dragOffset != null) {
+                widget.notifier.updateTimelinePin(pin.id,
+                    pos: _dragOffset!);
+              }
+              _dragStart = null;
+              _pinStartPos = null;
+              _dragOffset = null;
+            },
+            child: Tooltip(
+              message: _tooltipText(),
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: _isDragOver
+                        ? Colors.yellowAccent
+                        : pin.sessionId != null
+                            ? Colors.white
+                            : Colors.black54,
+                    width: _isDragOver ? 3 : 2,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black38, blurRadius: 3),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '${pin.day}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-              boxShadow: const [
-                BoxShadow(color: Colors.black38, blurRadius: 3),
-              ],
             ),
-            alignment: Alignment.center,
-            child: Text(
-              '${pin.day}',
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -1099,6 +1175,11 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
     final parts = <String>[];
     parts.add('Day ${widget.pin.day}');
     if (widget.pin.note.isNotEmpty) parts.add(widget.pin.note);
+    if (widget.entityNames.isNotEmpty) {
+      for (final name in widget.entityNames.values) {
+        parts.add('• $name');
+      }
+    }
     if (widget.pin.sessionId != null) parts.add('(linked)');
     return parts.join('\n');
   }

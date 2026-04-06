@@ -1,30 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../application/providers/entity_provider.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../theme/dm_tool_colors.dart';
 
 /// Dialog for creating / editing a timeline pin.
 ///
 /// Returns a [TimelinePin] on save, or null on cancel.
-class TimelineEntryDialog extends ConsumerStatefulWidget {
+class TimelineEntryDialog extends StatefulWidget {
   final DmToolColors palette;
   final TimelinePin? existing; // null = create mode
+  /// Entity id → display name, used to show chips for linked entities.
+  final Map<String, String> entityNames;
 
   const TimelineEntryDialog({
     super.key,
     required this.palette,
     this.existing,
+    this.entityNames = const {},
   });
 
   @override
-  ConsumerState<TimelineEntryDialog> createState() =>
-      _TimelineEntryDialogState();
+  State<TimelineEntryDialog> createState() => _TimelineEntryDialogState();
 }
 
-class _TimelineEntryDialogState extends ConsumerState<TimelineEntryDialog> {
+class _TimelineEntryDialogState extends State<TimelineEntryDialog> {
   late TextEditingController _dayCtrl;
   late TextEditingController _noteCtrl;
   late List<String> _selectedEntityIds;
@@ -52,27 +52,9 @@ class _TimelineEntryDialogState extends ConsumerState<TimelineEntryDialog> {
     super.dispose();
   }
 
-  /// Returns only entities whose category has 'worldmap' in allowedInSections.
-  Map<String, dynamic> _worldmapEntities() {
-    final entities = ref.read(entityProvider);
-    final schema = ref.read(worldSchemaProvider);
-    final allowedSlugs = schema.categories
-        .where((c) => c.allowedInSections.contains('worldmap'))
-        .map((c) => c.slug)
-        .toSet();
-    final filtered = <String, dynamic>{};
-    for (final entry in entities.entries) {
-      if (allowedSlugs.contains(entry.value.categorySlug)) {
-        filtered[entry.key] = entry.value;
-      }
-    }
-    return filtered;
-  }
-
   @override
   Widget build(BuildContext context) {
     final palette = widget.palette;
-    final entities = _worldmapEntities();
     final isEdit = widget.existing != null;
 
     return AlertDialog(
@@ -125,18 +107,46 @@ class _TimelineEntryDialogState extends ConsumerState<TimelineEntryDialog> {
                   isDense: true,
                 ),
               ),
-              const SizedBox(height: 12),
-
-              // Entity selection
-              Text(
-                'Entities',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: palette.uiFloatingText.withValues(alpha: 0.6),
+              // Linked entities (view / remove only)
+              if (_selectedEntityIds.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Entities',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: palette.uiFloatingText.withValues(alpha: 0.6),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              _buildEntityChips(palette, entities),
+                const SizedBox(height: 6),
+                ..._selectedEntityIds.map((eid) {
+                  final name = widget.entityNames[eid] ?? eid;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: palette.uiFloatingText,
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () => setState(
+                              () => _selectedEntityIds.remove(eid)),
+                          child: Icon(Icons.close,
+                              size: 14,
+                              color: palette.uiFloatingText
+                                  .withValues(alpha: 0.5)),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
               const SizedBox(height: 12),
 
               // Color
@@ -187,97 +197,6 @@ class _TimelineEntryDialogState extends ConsumerState<TimelineEntryDialog> {
         ),
       ],
     );
-  }
-
-  Widget _buildEntityChips(
-      DmToolColors palette, Map<String, dynamic> entities) {
-    if (entities.isEmpty) {
-      return Text(
-        'No entities available',
-        style: TextStyle(
-            fontSize: 10,
-            color: palette.uiFloatingText.withValues(alpha: 0.4)),
-      );
-    }
-
-    // Show selected + a button to add more
-    return Wrap(
-      spacing: 4,
-      runSpacing: 4,
-      children: [
-        ..._selectedEntityIds.map((eid) {
-          final entity = entities[eid];
-          final name = entity != null ? (entity.name as String? ?? eid) : eid;
-          return Chip(
-            label: Text(name,
-                style: TextStyle(
-                    fontSize: 10, color: palette.uiFloatingText)),
-            deleteIcon: Icon(Icons.close, size: 14),
-            onDeleted: () => setState(
-                () => _selectedEntityIds.remove(eid)),
-            backgroundColor: palette.uiFloatingBg,
-            side: BorderSide(color: palette.uiFloatingBorder),
-          );
-        }),
-        ActionChip(
-          label: Text('+ Add Entity',
-              style: TextStyle(
-                  fontSize: 10, color: palette.tabIndicator)),
-          onPressed: () => _showEntitySelector(entities),
-          backgroundColor: palette.uiFloatingBg,
-          side: BorderSide(color: palette.tabIndicator.withValues(alpha: 0.4)),
-        ),
-      ],
-    );
-  }
-
-  void _showEntitySelector(Map<String, dynamic> entities) {
-    final available = entities.entries
-        .where((e) => !_selectedEntityIds.contains(e.key))
-        .toList();
-    if (available.isEmpty) return;
-
-    final palette = widget.palette;
-    showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: palette.uiFloatingBg,
-        title: Text('Select Entity',
-            style: TextStyle(
-                fontSize: 14, color: palette.uiFloatingText)),
-        content: SizedBox(
-          width: 300,
-          height: 300,
-          child: ListView.builder(
-            itemCount: available.length,
-            itemBuilder: (_, i) {
-              final entry = available[i];
-              final entity = entry.value;
-              final name = entity.name as String? ?? entry.key;
-              final type = entity.type as String? ?? '';
-              return ListTile(
-                dense: true,
-                title: Text(name,
-                    style: TextStyle(
-                        fontSize: 12, color: palette.uiFloatingText)),
-                subtitle: type.isNotEmpty
-                    ? Text(type,
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: palette.uiFloatingText
-                                .withValues(alpha: 0.5)))
-                    : null,
-                onTap: () => Navigator.pop(ctx, entry.key),
-              );
-            },
-          ),
-        ),
-      ),
-    ).then((eid) {
-      if (eid != null && !_selectedEntityIds.contains(eid)) {
-        setState(() => _selectedEntityIds.add(eid));
-      }
-    });
   }
 
   void _save() {

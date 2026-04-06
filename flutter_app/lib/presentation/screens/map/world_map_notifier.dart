@@ -542,6 +542,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
       day: parent?.day ?? 1,
       note: 'New Event',
       color: parent?.color ?? '#42a5f5',
+      entityIds: List<String>.from(parent?.entityIds ?? []),
       parentId: parentId,
     );
     state = state.copyWith(
