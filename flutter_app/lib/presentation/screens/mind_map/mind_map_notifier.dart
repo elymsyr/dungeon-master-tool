@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -612,6 +613,52 @@ class MindMapNotifier extends StateNotifier<MindMapState> {
       clearSelectedNode: true,
       clearSelectedEdge: true,
     );
+  }
+
+  /// Hit-test [point] (in canvas coords) against all edges.
+  /// Returns the edge id if within [threshold] px, or null.
+  String? hitTestEdge(Offset point, {double threshold = 10.0}) {
+    final nodeMap = <String, Offset>{};
+    for (final n in state.nodes) {
+      nodeMap[n.id] = Offset(n.x, n.y);
+    }
+    String? bestId;
+    double bestDist = threshold;
+    for (final edge in state.edges) {
+      final src = nodeMap[edge.sourceId];
+      final tgt = nodeMap[edge.targetId];
+      if (src == null || tgt == null) continue;
+      final d = _distToQuadBezier(point, src, tgt);
+      if (d < bestDist) {
+        bestDist = d;
+        bestId = edge.id;
+      }
+    }
+    return bestId;
+  }
+
+  /// Approximate distance from [p] to a quadratic bezier arc from [a] to [b]
+  /// with the same perpendicular-offset control point used by the painter.
+  static double _distToQuadBezier(Offset p, Offset a, Offset b) {
+    final mid = (a + b) / 2;
+    final diff = b - a;
+    final dist = diff.distance.clamp(1.0, double.infinity);
+    final perpX = -diff.dy / dist;
+    final perpY = diff.dx / dist;
+    final bulge = dist * 0.15;
+    final ctrl = Offset(mid.dx + perpX * bulge, mid.dy + perpY * bulge);
+
+    // Sample 12 points along the curve and return min distance
+    double minDist = double.infinity;
+    for (int i = 0; i <= 12; i++) {
+      final t = i / 12.0;
+      final u = 1 - t;
+      final x = u * u * a.dx + 2 * u * t * ctrl.dx + t * t * b.dx;
+      final y = u * u * a.dy + 2 * u * t * ctrl.dy + t * t * b.dy;
+      final d = math.sqrt((p.dx - x) * (p.dx - x) + (p.dy - y) * (p.dy - y));
+      if (d < minDist) minDist = d;
+    }
+    return minDist;
   }
 
   // -------------------------------------------------------------------------
