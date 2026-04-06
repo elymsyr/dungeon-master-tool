@@ -243,6 +243,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     }
     s = s.copyWith(tokenPositions: positions);
 
+    if (!mounted) return;
     state = s;
 
     // Load assets asynchronously
@@ -573,6 +574,26 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // Tokens
   // -------------------------------------------------------------------------
 
+  /// Assign default positions to combatants that don't have one yet.
+  void ensureTokenPositions(List<Combatant> combatants) {
+    if (!mounted) return;
+    final positions = Map<String, Offset>.from(state.tokenPositions);
+    var changed = false;
+    var idx = 0;
+    for (final c in combatants) {
+      if (!positions.containsKey(c.id)) {
+        final gs = state.gridSize.toDouble();
+        positions[c.id] = Offset((idx % 5 + 1.5) * gs, (idx ~/ 5 + 1.5) * gs);
+        changed = true;
+      }
+      idx++;
+    }
+    if (changed) {
+      state = state.copyWith(tokenPositions: positions);
+      persistTokenPositions();
+    }
+  }
+
   void moveToken(String combatantId, Offset canvasPos) {
     final updated = Map<String, Offset>.from(state.tokenPositions);
     updated[combatantId] = canvasPos;
@@ -598,6 +619,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
 
   /// Persist current token positions to campaign data.
   void persistTokenPositions() {
+    if (!mounted) return;
     final tokenPosMap = <String, dynamic>{};
     for (final entry in state.tokenPositions.entries) {
       tokenPosMap[entry.key] = {'x': entry.value.dx, 'y': entry.value.dy};
@@ -643,6 +665,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   }
 
   void _persistGridSettings() {
+    if (!mounted) return;
     _ref.read(combatProvider.notifier).updateGridSettings(
       encounterId: encounterId,
       gridSize: state.gridSize,
