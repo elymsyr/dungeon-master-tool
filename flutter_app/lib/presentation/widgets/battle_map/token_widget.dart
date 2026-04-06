@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +20,7 @@ class TokenWidget extends StatefulWidget {
   final Offset canvasPosition; // from notifier state
   final ValueListenable<ViewTransform> viewTransform; // for drag scale
   final Color borderColor; // category color
+  final String? imagePath; // entity's first image
   final DmToolColors palette;
   final VoidCallback onDragStart;
   final void Function(String id, Offset finalCanvasPos) onDragEnd;
@@ -31,6 +34,7 @@ class TokenWidget extends StatefulWidget {
     required this.canvasPosition,
     required this.viewTransform,
     required this.borderColor,
+    this.imagePath,
     required this.palette,
     required this.onDragStart,
     required this.onDragEnd,
@@ -113,6 +117,23 @@ class _TokenWidgetState extends State<TokenWidget> {
   }
 
   Widget _buildAvatar(double size) {
+    final path = widget.imagePath;
+    if (path != null && path.isNotEmpty) {
+      final file = File(path);
+      if (file.existsSync()) {
+        return Image.file(
+          file,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => _buildInitials(size),
+        );
+      }
+    }
+    return _buildInitials(size);
+  }
+
+  Widget _buildInitials(double size) {
     final name = widget.combatant.name;
     final initials = name.isNotEmpty
         ? name.split(' ').map((w) => w.isNotEmpty ? w[0] : '').take(2).join().toUpperCase()

@@ -96,6 +96,10 @@ class BattleMapState {
   final int tokenSize;
   final Map<String, int> tokenSizeOverrides;
 
+  // Canvas dimensions (from background image or default)
+  final int canvasWidth;
+  final int canvasHeight;
+
   const BattleMapState({
     this.activeTool = BattleMapTool.navigate,
     this.backgroundImage,
@@ -113,6 +117,8 @@ class BattleMapState {
     this.feetPerCell = 5,
     this.tokenSize = 50,
     this.tokenSizeOverrides = const {},
+    this.canvasWidth = 2048,
+    this.canvasHeight = 2048,
   });
 
   BattleMapState copyWith({
@@ -132,6 +138,8 @@ class BattleMapState {
     int? feetPerCell,
     int? tokenSize,
     Map<String, int>? tokenSizeOverrides,
+    int? canvasWidth,
+    int? canvasHeight,
     // Sentinel for nullable clears
     bool clearFogImage = false,
     bool clearAnnotationImage = false,
@@ -156,6 +164,8 @@ class BattleMapState {
       feetPerCell: feetPerCell ?? this.feetPerCell,
       tokenSize: tokenSize ?? this.tokenSize,
       tokenSizeOverrides: tokenSizeOverrides ?? this.tokenSizeOverrides,
+      canvasWidth: canvasWidth ?? this.canvasWidth,
+      canvasHeight: canvasHeight ?? this.canvasHeight,
     );
   }
 }
@@ -262,6 +272,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       backgroundImage: bg,
       fogImage: fog,
       annotationImage: annot,
+      canvasWidth: bg?.width ?? 2048,
+      canvasHeight: bg?.height ?? 2048,
     );
   }
 
@@ -348,7 +360,12 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     final path = result.files.single.path!;
     final img = await _loadImageFromFile(path);
     if (!mounted) return;
-    state = state.copyWith(backgroundImage: img, mapPath: path);
+    state = state.copyWith(
+      backgroundImage: img,
+      mapPath: path,
+      canvasWidth: img?.width ?? 2048,
+      canvasHeight: img?.height ?? 2048,
+    );
     _ref.read(combatProvider.notifier).saveMapData(
       encounterId: encounterId,
       mapPath: path,
@@ -656,6 +673,12 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
 
   void setGridSize(int size) {
     state = state.copyWith(gridSize: size.clamp(10, 300));
+    _persistGridSettings();
+  }
+
+  void setGridColumns(double columns) {
+    final cellSize = (state.canvasWidth / columns).round().clamp(10, 300);
+    state = state.copyWith(gridSize: cellSize);
     _persistGridSettings();
   }
 

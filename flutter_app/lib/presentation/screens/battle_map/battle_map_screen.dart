@@ -162,6 +162,16 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   // Token layer with Transform wrapper
   // -------------------------------------------------------------------------
 
+  String? _entityImagePath(String? entityId) {
+    if (entityId == null) return null;
+    final entities = ref.read(entityProvider);
+    final entity = entities[entityId];
+    if (entity == null) return null;
+    if (entity.images.isNotEmpty) return entity.images.first;
+    if (entity.imagePath.isNotEmpty) return entity.imagePath;
+    return null;
+  }
+
   Color _categoryColor(String? entityId, DmToolColors palette) {
     if (entityId == null) return palette.tokenBorderNeutral;
     final entities = ref.read(entityProvider);
@@ -236,6 +246,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                 canvasPosition: pos,
                 viewTransform: notifier.viewTransform,
                 borderColor: _categoryColor(c.entityId, palette),
+                imagePath: _entityImagePath(c.entityId),
                 palette: palette,
                 onDragStart: () => setState(() => _tokenDragActive = true),
                 onDragEnd: (id, finalCanvasPos) {

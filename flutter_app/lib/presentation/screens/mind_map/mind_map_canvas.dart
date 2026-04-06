@@ -130,8 +130,38 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
                       notifier.addNode(canvasPos, 'note');
                     }
                   : null,
-              // NOTE: onSecondaryTapUp is NOT here — it's on the
-              // background ColoredBox so node right-clicks work.
+              // Secondary tap on the outer GestureDetector so it shares
+              // the gesture arena with ScaleGestureRecognizer — the
+              // TapGestureRecognizer resolves immediately on pointer-up,
+              // beating the scale recognizer. Node-level secondary tap
+              // handlers still win because they're closer in hit-test order.
+              onSecondaryTapUp: (d) {
+                final canvasPos =
+                    notifier.screenToCanvas(d.localPosition);
+                final scale =
+                    notifier.viewTransform.value.scale;
+                final edgeId = notifier.hitTestEdge(
+                    canvasPos,
+                    threshold: 10.0 / scale);
+                if (edgeId != null) {
+                  notifier.setSelectedEdge(edgeId);
+                  _showEdgeContextMenu(
+                    context,
+                    d.globalPosition,
+                    edgeId,
+                    notifier,
+                    palette,
+                  );
+                } else {
+                  _showCanvasContextMenu(
+                    context,
+                    d.globalPosition,
+                    canvasPos,
+                    notifier,
+                    palette,
+                  );
+                }
+              },
               child: DragTarget<String>(
                 onWillAcceptWithDetails: (_) => true,
                 onAcceptWithDetails: (details) =>
@@ -141,38 +171,8 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        // Background — handles right-click for canvas menu
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onSecondaryTapUp: (d) {
-                            final canvasPos =
-                                notifier.screenToCanvas(d.localPosition);
-                            final scale =
-                                notifier.viewTransform.value.scale;
-                            final edgeId = notifier.hitTestEdge(
-                                canvasPos,
-                                threshold: 10.0 / scale);
-                            if (edgeId != null) {
-                              notifier.setSelectedEdge(edgeId);
-                              _showEdgeContextMenu(
-                                context,
-                                d.globalPosition,
-                                edgeId,
-                                notifier,
-                                palette,
-                              );
-                            } else {
-                              _showCanvasContextMenu(
-                                context,
-                                d.globalPosition,
-                                canvasPos,
-                                notifier,
-                                palette,
-                              );
-                            }
-                          },
-                          child: ColoredBox(color: palette.canvasBg),
-                        ),
+                        // Background — opaque hit target for empty canvas area
+                        ColoredBox(color: palette.canvasBg),
 
                         // Canvas-space content with Transform
                         ValueListenableBuilder<MindMapViewTransform>(
