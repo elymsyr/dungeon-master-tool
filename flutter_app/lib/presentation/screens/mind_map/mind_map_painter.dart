@@ -189,8 +189,8 @@ class MindMapPainter extends CustomPainter {
       final srcCenter = Offset(src.$1, src.$2);
       final tgtCenter = Offset(tgt.$1, tgt.$2);
 
-      // Skip edges fully outside viewport
-      final edgeBounds = Rect.fromPoints(srcCenter, tgtCenter).inflate(20);
+      // Skip edges fully outside viewport (inflate accounts for curve bulge)
+      final edgeBounds = Rect.fromPoints(srcCenter, tgtCenter).inflate(60);
       if (!viewportRect.overlaps(edgeBounds)) continue;
 
       final isSelected = edge.id == mapState.selectedEdgeId;
@@ -209,17 +209,24 @@ class MindMapPainter extends CustomPainter {
   }
 
   Path _bezierPath(Offset src, Offset tgt) {
-    final dx = ((tgt.dx - src.dx).abs() * 0.5).clamp(40.0, 250.0);
+    final mid = (src + tgt) / 2;
+    final diff = tgt - src;
+    final dist = diff.distance.clamp(1.0, double.infinity);
+
+    // Perpendicular unit vector (rotated 90°)
+    final perpX = -diff.dy / dist;
+    final perpY = diff.dx / dist;
+
+    // Curve bulge: scales with distance, always visible
+    final bulge = dist * 0.15;
+
+    // Offset midpoint perpendicular to the line for a visible arc
+    final ctrlX = mid.dx + perpX * bulge;
+    final ctrlY = mid.dy + perpY * bulge;
+
     return Path()
       ..moveTo(src.dx, src.dy)
-      ..cubicTo(
-        src.dx + dx,
-        src.dy,
-        tgt.dx - dx,
-        tgt.dy,
-        tgt.dx,
-        tgt.dy,
-      );
+      ..quadraticBezierTo(ctrlX, ctrlY, tgt.dx, tgt.dy);
   }
 
   void _drawArrow(Canvas canvas, Path path, Offset tip, Color color) {

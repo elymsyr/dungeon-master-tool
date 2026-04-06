@@ -83,26 +83,30 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas> {
                   notifier.onScaleUpdate(d);
                 },
                 onScaleEnd: (_) => notifier.onScaleEnd(),
-                onTap: () {
-                  if (inMoveMode) {
-                    // Place node at viewport center if tapping empty canvas
-                    // (actual placement handled by onTapUp for position)
-                    return;
-                  }
-                  if (mapState.connectingFromId != null) {
-                    notifier.cancelConnecting();
-                  } else {
-                    notifier.clearSelection();
-                    notifier.exitResizeMode();
-                  }
-                },
                 onTapUp: inMoveMode
                     ? (d) {
                         final canvasPos =
                             notifier.screenToCanvas(d.localPosition);
                         notifier.placeNodeAtPosition(canvasPos);
                       }
-                    : null,
+                    : (d) {
+                        if (mapState.connectingFromId != null) {
+                          notifier.cancelConnecting();
+                          return;
+                        }
+                        // Hit-test edges before clearing selection
+                        final canvasPos =
+                            notifier.screenToCanvas(d.localPosition);
+                        final scale = notifier.viewTransform.value.scale;
+                        final edgeId = notifier.hitTestEdge(canvasPos,
+                            threshold: 10.0 / scale);
+                        if (edgeId != null) {
+                          notifier.setSelectedEdge(edgeId);
+                        } else {
+                          notifier.clearSelection();
+                          notifier.exitResizeMode();
+                        }
+                      },
                 onDoubleTapDown: widget.editMode
                     ? (d) {
                         final canvasPos =
@@ -127,13 +131,29 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas> {
                             onSecondaryTapUp: (d) {
                               final canvasPos =
                                   notifier.screenToCanvas(d.localPosition);
-                              _showCanvasContextMenu(
-                                context,
-                                d.globalPosition,
-                                canvasPos,
-                                notifier,
-                                palette,
-                              );
+                              final scale =
+                                  notifier.viewTransform.value.scale;
+                              final edgeId = notifier.hitTestEdge(
+                                  canvasPos,
+                                  threshold: 10.0 / scale);
+                              if (edgeId != null) {
+                                notifier.setSelectedEdge(edgeId);
+                                _showEdgeContextMenu(
+                                  context,
+                                  d.globalPosition,
+                                  edgeId,
+                                  notifier,
+                                  palette,
+                                );
+                              } else {
+                                _showCanvasContextMenu(
+                                  context,
+                                  d.globalPosition,
+                                  canvasPos,
+                                  notifier,
+                                  palette,
+                                );
+                              }
                             },
                             child: ColoredBox(color: palette.canvasBg),
                           ),
@@ -319,6 +339,42 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas> {
           notifier.addNode(canvasPos, 'image');
         case 'workspace':
           notifier.addWorkspace(canvasPos);
+      }
+    });
+  }
+
+  void _showEdgeContextMenu(
+    BuildContext context,
+    Offset globalPos,
+    String edgeId,
+    MindMapNotifier notifier,
+    DmToolColors palette,
+  ) {
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        globalPos.dx,
+        globalPos.dy,
+        globalPos.dx + 1,
+        globalPos.dy + 1,
+      ),
+      color: palette.uiFloatingBg,
+      items: [
+        PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline, size: 16, color: Colors.red[300]),
+              const SizedBox(width: 8),
+              Text('Delete Connection',
+                  style: TextStyle(color: Colors.red[300], fontSize: 13)),
+            ],
+          ),
+        ),
+      ],
+    ).then((value) {
+      if (value == 'delete') {
+        notifier.deleteEdge(edgeId);
       }
     });
   }
