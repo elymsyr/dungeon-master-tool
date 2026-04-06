@@ -145,6 +145,31 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             },
           ),
 
+          // Pin size
+          Tooltip(
+            message: 'Pin size: ${mapState.pinSize.name}',
+            child: InkWell(
+              onTap: notifier.cyclePinSize,
+              borderRadius: BorderRadius.circular(4),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Icon(
+                  switch (mapState.pinSize) {
+                    PinSize.small => Icons.circle,
+                    PinSize.medium => Icons.circle,
+                    PinSize.large => Icons.circle,
+                  },
+                  size: switch (mapState.pinSize) {
+                    PinSize.small => 8,
+                    PinSize.medium => 12,
+                    PinSize.large => 16,
+                  },
+                  color: palette.tabText,
+                ),
+              ),
+            ),
+          ),
+
           _VertDiv(palette: palette),
 
           // Timeline checkbox
@@ -401,6 +426,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                   pin: pin,
                   palette: palette,
                   notifier: notifier,
+                  pinSize: mapState.pinSize,
                   onTap: () => _showPinDetail(context, pin, notifier, palette),
                   onInspect: pin.entityId != null
                       ? () => widget.onOpenEntity?.call(pin.entityId!)
@@ -422,6 +448,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                   pin: pin,
                   palette: palette,
                   notifier: notifier,
+                  pinSize: mapState.pinSize,
                   isLinkMode: mapState.isLinkMode,
                   entityNames: _entityNameMap(pin.entityIds),
                   onTap: () {
@@ -1042,6 +1069,7 @@ class _DraggablePin extends StatefulWidget {
   final VoidCallback? onChangeColor;
   final VoidCallback? onDelete;
   final VoidCallback? onCopyToEpoch;
+  final PinSize pinSize;
 
   const _DraggablePin({
     super.key,
@@ -1054,6 +1082,7 @@ class _DraggablePin extends StatefulWidget {
     this.onChangeColor,
     this.onDelete,
     this.onCopyToEpoch,
+    this.pinSize = PinSize.medium,
   });
 
   @override
@@ -1066,6 +1095,18 @@ class _DraggablePinState extends State<_DraggablePin> {
   // Local drag offset — avoids Riverpod rebuilds during drag for smoothness.
   Offset? _dragOffset;
 
+  double get _iconSize => switch (widget.pinSize) {
+        PinSize.small => 18,
+        PinSize.medium => 24,
+        PinSize.large => 32,
+      };
+
+  double get _fontSize => switch (widget.pinSize) {
+        PinSize.small => 8,
+        PinSize.medium => 9,
+        PinSize.large => 11,
+      };
+
   @override
   Widget build(BuildContext context) {
     final pin = widget.pin;
@@ -1075,10 +1116,12 @@ class _DraggablePinState extends State<_DraggablePin> {
 
     final x = _dragOffset?.dx ?? pin.x;
     final y = _dragOffset?.dy ?? pin.y;
+    final iconSize = _iconSize;
+    final label = pin.label.isNotEmpty ? pin.label : pin.pinType;
 
     return Positioned(
-      left: x - 12,
-      top: y - 24,
+      left: x - iconSize / 2,
+      top: y - iconSize,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
@@ -1102,16 +1145,35 @@ class _DraggablePinState extends State<_DraggablePin> {
           _pinStartPos = null;
           _dragOffset = null;
         },
-        child: Tooltip(
-          message: pin.label.isEmpty ? pin.pinType : pin.label,
-          child: Icon(
-            Icons.location_pin,
-            size: 24,
-            color: displayColor,
-            shadows: const [
-              Shadow(color: Colors.black54, blurRadius: 4)
-            ],
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.location_pin,
+              size: iconSize,
+              color: displayColor,
+              shadows: const [
+                Shadow(color: Colors.black54, blurRadius: 4),
+              ],
+            ),
+            Transform.translate(
+              offset: const Offset(0, -4),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: _fontSize,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  shadows: const [
+                    Shadow(color: Colors.black, blurRadius: 3),
+                    Shadow(color: Colors.black, blurRadius: 6),
+                  ],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1192,6 +1254,7 @@ class _DraggableTimelinePin extends StatefulWidget {
   final void Function(String entityId)? onEntityDrop;
   final Map<String, String> entityNames;
   final VoidCallback? onCopyToEpoch;
+  final PinSize pinSize;
 
   const _DraggableTimelinePin({
     super.key,
@@ -1208,6 +1271,7 @@ class _DraggableTimelinePin extends StatefulWidget {
     this.onEntityDrop,
     this.onCopyToEpoch,
     this.entityNames = const {},
+    this.pinSize = PinSize.medium,
   });
 
   @override
@@ -1219,19 +1283,36 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
   Offset? _pinStartPos;
   Offset? _dragOffset;
   bool _isDragOver = false;
+  bool _isHovered = false;
+
+  // Timeline pins are one step smaller than map pins
+  double get _boxSize => switch (widget.pinSize) {
+        PinSize.small => 18,
+        PinSize.medium => 22,
+        PinSize.large => 28,
+      };
+
+  double get _fontSize => switch (widget.pinSize) {
+        PinSize.small => 7,
+        PinSize.medium => 9,
+        PinSize.large => 11,
+      };
 
   @override
   Widget build(BuildContext context) {
     final pin = widget.pin;
+    final palette = widget.palette;
     final color =
         Color(int.parse(pin.color.replaceAll('#', 'FF'), radix: 16));
 
     final x = _dragOffset?.dx ?? pin.x;
     final y = _dragOffset?.dy ?? pin.y;
+    final size = _boxSize;
+    final half = size / 2;
 
     return Positioned(
-      left: x - 14,
-      top: y - 14,
+      left: x - half,
+      top: y - half,
       child: DragTarget<String>(
         onWillAcceptWithDetails: (_) => widget.onEntityDrop != null,
         onAcceptWithDetails: (details) {
@@ -1245,7 +1326,7 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
           if (_isDragOver) setState(() => _isDragOver = false);
         },
         builder: (context, candidateData, _) {
-          return GestureDetector(
+          final pinWidget = GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: widget.onTap,
             onSecondaryTapUp: (d) =>
@@ -1269,21 +1350,22 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
               _pinStartPos = null;
               _dragOffset = null;
             },
-            child: Tooltip(
-              message: _tooltipText(),
+            child: MouseRegion(
+              onEnter: (_) => setState(() => _isHovered = true),
+              onExit: (_) => setState(() => _isHovered = false),
               child: Container(
-                width: 28,
-                height: 28,
+                width: size,
+                height: size,
                 decoration: BoxDecoration(
                   color: color,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(3),
                   border: Border.all(
                     color: _isDragOver
                         ? Colors.yellowAccent
                         : pin.sessionId != null
                             ? Colors.white
                             : Colors.black54,
-                    width: _isDragOver ? 3 : 2,
+                    width: _isDragOver ? 3 : 1.5,
                   ),
                   boxShadow: const [
                     BoxShadow(color: Colors.black38, blurRadius: 3),
@@ -1292,8 +1374,8 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
                 alignment: Alignment.center,
                 child: Text(
                   '${pin.day}',
-                  style: const TextStyle(
-                    fontSize: 10,
+                  style: TextStyle(
+                    fontSize: _fontSize,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -1301,22 +1383,117 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
               ),
             ),
           );
+
+          // Rich hover card
+          if (!_isHovered) return pinWidget;
+
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              pinWidget,
+              Positioned(
+                left: size + 6,
+                top: -4,
+                child: IgnorePointer(
+                  child: _buildHoverCard(palette, pin),
+                ),
+              ),
+            ],
+          );
         },
       ),
     );
   }
 
-  String _tooltipText() {
-    final parts = <String>[];
-    parts.add('Day ${widget.pin.day}');
-    if (widget.pin.note.isNotEmpty) parts.add(widget.pin.note);
-    if (widget.entityNames.isNotEmpty) {
-      for (final name in widget.entityNames.values) {
-        parts.add('• $name');
-      }
-    }
-    if (widget.pin.sessionId != null) parts.add('(linked)');
-    return parts.join('\n');
+  Widget _buildHoverCard(DmToolColors palette, TimelinePin pin) {
+    final hasNote = pin.note.isNotEmpty;
+    final hasEntities = widget.entityNames.isNotEmpty;
+    final hasSession = pin.sessionId != null;
+
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 200),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: palette.uiFloatingBg,
+        border: Border.all(color: palette.uiFloatingBorder),
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: const [
+          BoxShadow(color: Colors.black45, blurRadius: 6, offset: Offset(1, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Day ${pin.day}',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: palette.uiFloatingText,
+            ),
+          ),
+          if (hasNote) ...[
+            const SizedBox(height: 3),
+            Text(
+              pin.note,
+              style: TextStyle(
+                fontSize: 10,
+                color: palette.uiFloatingText.withValues(alpha: 0.8),
+              ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          if (hasEntities) ...[
+            const SizedBox(height: 4),
+            ...widget.entityNames.values.map(
+              (name) => Padding(
+                padding: const EdgeInsets.only(bottom: 1),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.link, size: 10,
+                        color: palette.uiFloatingText.withValues(alpha: 0.5)),
+                    const SizedBox(width: 3),
+                    Flexible(
+                      child: Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: palette.uiFloatingText.withValues(alpha: 0.7),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          if (hasSession) ...[
+            const SizedBox(height: 3),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.event, size: 10,
+                    color: palette.uiFloatingText.withValues(alpha: 0.5)),
+                const SizedBox(width: 3),
+                Text(
+                  'Session linked',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontStyle: FontStyle.italic,
+                    color: palette.uiFloatingText.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   void _showContextMenu(BuildContext context, Offset globalPos) {

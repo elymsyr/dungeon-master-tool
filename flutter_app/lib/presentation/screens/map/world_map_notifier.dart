@@ -28,11 +28,17 @@ class WorldMapViewTransform {
 /// Strategy for merging epochs when a waypoint is deleted.
 enum EpochMergeStrategy { merge, keepLeft, keepRight }
 
+/// Pin display size preset.
+enum PinSize { small, medium, large }
+
 class WorldMapState {
   final String imagePath;
   final List<MapPin> pins;
   final List<TimelinePin> timelinePins;
   final Set<String> hiddenPinTypes;
+
+  // Pin display size
+  final PinSize pinSize;
 
   // Timeline / visibility
   final bool showTimeline;
@@ -58,6 +64,7 @@ class WorldMapState {
     this.pins = const [],
     this.timelinePins = const [],
     this.hiddenPinTypes = const {},
+    this.pinSize = PinSize.medium,
     this.showTimeline = false,
     this.showMapPins = true,
     this.showNonPlayerTimeline = false,
@@ -76,6 +83,7 @@ class WorldMapState {
     List<MapPin>? pins,
     List<TimelinePin>? timelinePins,
     Set<String>? hiddenPinTypes,
+    PinSize? pinSize,
     bool? showTimeline,
     bool? showMapPins,
     bool? showNonPlayerTimeline,
@@ -95,6 +103,7 @@ class WorldMapState {
       pins: pins ?? this.pins,
       timelinePins: timelinePins ?? this.timelinePins,
       hiddenPinTypes: hiddenPinTypes ?? this.hiddenPinTypes,
+      pinSize: pinSize ?? this.pinSize,
       showTimeline: showTimeline ?? this.showTimeline,
       showMapPins: showMapPins ?? this.showMapPins,
       showNonPlayerTimeline: showNonPlayerTimeline ?? this.showNonPlayerTimeline,
@@ -117,6 +126,7 @@ class WorldMapState {
           pins == other.pins &&
           timelinePins == other.timelinePins &&
           hiddenPinTypes == other.hiddenPinTypes &&
+          pinSize == other.pinSize &&
           showTimeline == other.showTimeline &&
           showMapPins == other.showMapPins &&
           showNonPlayerTimeline == other.showNonPlayerTimeline &&
@@ -130,7 +140,7 @@ class WorldMapState {
 
   @override
   int get hashCode => Object.hash(
-        imagePath, pins, timelinePins, hiddenPinTypes,
+        imagePath, pins, timelinePins, hiddenPinTypes, pinSize,
         showTimeline, showMapPins, showNonPlayerTimeline,
         activeEntityFilters, movingPinId, isLinkMode, pendingParentId,
         epochs, waypoints, activeEpochIndex,
@@ -222,6 +232,10 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
       activeIdx = 0;
     }
 
+    final pinSizeStr = data['pin_size'] as String?;
+    final pinSize = PinSize.values.where((e) => e.name == pinSizeStr).firstOrNull
+        ?? PinSize.medium;
+
     final active = epochs[activeIdx];
     state = WorldMapState(
       imagePath: active.imagePath,
@@ -230,6 +244,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
       epochs: epochs,
       waypoints: waypoints,
       activeEpochIndex: activeIdx,
+      pinSize: pinSize,
     );
   }
 
@@ -306,6 +321,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
           .map((w) => {'id': w.id, 'label': w.label})
           .toList(),
       'active_epoch_index': state.activeEpochIndex,
+      'pin_size': state.pinSize.name,
     };
     await campaign.save();
   }
@@ -920,6 +936,15 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
 
   void toggleMapPinsVisibility() {
     state = state.copyWith(showMapPins: !state.showMapPins);
+  }
+
+  void cyclePinSize() {
+    final next = switch (state.pinSize) {
+      PinSize.small => PinSize.medium,
+      PinSize.medium => PinSize.large,
+      PinSize.large => PinSize.small,
+    };
+    state = state.copyWith(pinSize: next);
   }
 
   void toggleNonPlayerTimeline() {
