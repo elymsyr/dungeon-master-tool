@@ -209,24 +209,25 @@ class MindMapPainter extends CustomPainter {
   }
 
   Path _bezierPath(Offset src, Offset tgt) {
-    final mid = (src + tgt) / 2;
-    final diff = tgt - src;
-    final dist = diff.distance.clamp(1.0, double.infinity);
+    // Smooth S-curve: control points offset along the dominant axis
+    final dx = (tgt.dx - src.dx).abs();
+    final dy = (tgt.dy - src.dy).abs();
+    final spread = (math.max(dx, dy) * 0.4).clamp(30.0, 200.0);
 
-    // Perpendicular unit vector (rotated 90°)
-    final perpX = -diff.dy / dist;
-    final perpY = diff.dx / dist;
-
-    // Curve bulge: scales with distance, always visible
-    final bulge = dist * 0.15;
-
-    // Offset midpoint perpendicular to the line for a visible arc
-    final ctrlX = mid.dx + perpX * bulge;
-    final ctrlY = mid.dy + perpY * bulge;
+    // Horizontal-dominant: offset control points horizontally
+    // Vertical-dominant: offset control points vertically
+    final horizontal = dx >= dy;
 
     return Path()
       ..moveTo(src.dx, src.dy)
-      ..quadraticBezierTo(ctrlX, ctrlY, tgt.dx, tgt.dy);
+      ..cubicTo(
+        horizontal ? src.dx + spread : src.dx,
+        horizontal ? src.dy : src.dy + spread,
+        horizontal ? tgt.dx - spread : tgt.dx,
+        horizontal ? tgt.dy : tgt.dy - spread,
+        tgt.dx,
+        tgt.dy,
+      );
   }
 
   void _drawArrow(Canvas canvas, Path path, Offset tip, Color color) {
