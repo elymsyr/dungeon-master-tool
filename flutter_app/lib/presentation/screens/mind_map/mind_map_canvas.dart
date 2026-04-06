@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -173,11 +174,12 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas> {
     final vt = notifier.viewTransform.value;
     final scale = vt.scale;
     final lodZone = notifier.lodZone;
+    final entities = ref.watch(entityProvider);
 
     // Compute viewport rect in canvas-space for culling
     final viewportRect = _computeViewportRect(notifier);
 
-    return Stack(
+    return _UnboundedStack(
       clipBehavior: Clip.none,
       children: [
         // Grid + edges + workspaces + LOD templates
@@ -211,8 +213,7 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas> {
             final isConnecting = node.id == mapState.connectingFromId;
             final canConnectTo =
                 mapState.connectingFromId != null && !isConnecting;
-            final showResizeHandle = (widget.editMode && isSelected) ||
-                mapState.resizeModeNodeId == node.id;
+            final showResizeHandle = isSelected;
 
             return MindMapNodeWidget(
               key: ValueKey('node_${node.id}'),
@@ -226,6 +227,7 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas> {
               lodZone: lodZone,
               showResizeHandle: showResizeHandle,
               onOpenEntity: widget.onOpenEntity,
+              entities: entities,
             );
           }),
       ],
@@ -371,5 +373,54 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas> {
         notifier.deleteEdge(mapState.selectedEdgeId!);
       }
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Stack whose hit-testing is not bounded by its layout size.
+//
+// In the infinite canvas the Transform inverse-maps screen coordinates to
+// canvas coordinates which can exceed the Stack's viewport-sized bounds.
+// Flutter's default RenderBox.hitTest checks size.contains(position) and
+// rejects those hits.  This widget removes that check so Positioned children
+// at any canvas coordinate receive pointer events.
+// ---------------------------------------------------------------------------
+
+class _UnboundedStack extends Stack {
+  const _UnboundedStack({
+    super.clipBehavior = Clip.none,
+    super.children = const <Widget>[],
+  });
+
+  @override
+  RenderStack createRenderObject(BuildContext context) {
+    return _RenderUnboundedStack(
+      alignment: alignment,
+      textDirection: textDirection ?? Directionality.maybeOf(context),
+      fit: fit,
+      clipBehavior: clipBehavior,
+    );
+  }
+
+}
+
+class _RenderUnboundedStack extends RenderStack {
+  _RenderUnboundedStack({
+    super.alignment,
+    super.textDirection,
+    super.fit,
+    super.clipBehavior,
+  });
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    // Skip the default size.contains(position) check so that children
+    // at any canvas coordinate receive pointer events (right-click, tap, drag).
+    if (hitTestChildren(result, position: position) ||
+        hitTestSelf(position)) {
+      result.add(BoxHitTestEntry(this, position));
+      return true;
+    }
+    return false;
   }
 }
