@@ -27,14 +27,17 @@ class BattleMapScreen extends ConsumerStatefulWidget {
 class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   // Suppress canvas gestures while a token is being dragged
   bool _tokenDragActive = false;
+  late final BattleMapNotifier _notifier;
 
   @override
   void initState() {
     super.initState();
+    _notifier = ref.read(battleMapProvider(widget.encounterId).notifier);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final encounter = ref.read(combatProvider).activeEncounter;
       if (encounter != null && encounter.id == widget.encounterId) {
-        ref.read(battleMapProvider(widget.encounterId).notifier).init(encounter);
+        _notifier.init(encounter);
       }
     });
   }
@@ -42,7 +45,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   @override
   void dispose() {
     // Auto-save on screen dispose (tab switch / session close)
-    unawaited(ref.read(battleMapProvider(widget.encounterId).notifier).save());
+    unawaited(_notifier.save());
     super.dispose();
   }
 
@@ -53,7 +56,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final notifier = ref.read(battleMapProvider(widget.encounterId).notifier);
+    final notifier = _notifier;
 
     // Only watch activeTool for gesture routing — scale/panOffset live in viewTransform
     final activeTool = ref.watch(
@@ -164,43 +167,69 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
 
     final mapState = ref.watch(battleMapProvider(widget.encounterId));
 
+    // Assign default positions to newly added combatants
+    final hasMissing = encounter.combatants.any(
+      (c) => !mapState.tokenPositions.containsKey(c.id),
+    );
+    if (hasMissing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        notifier.ensureTokenPositions(encounter.combatants);
+      });
+    }
+
+    // Canvas extent must be large enough so inverse-transformed screen
+    // coordinates stay within the Stack's layout bounds for hit-testing.
+    const canvasExtent = 10000.0;
+
     return ValueListenableBuilder<ViewTransform>(
       valueListenable: notifier.viewTransform,
       builder: (context, vt, child) {
-        return Transform(
-          transform: Matrix4.identity()
-            ..translateByDouble(vt.panOffset.dx, vt.panOffset.dy, 0, 1)
-            ..scaleByDouble(vt.scale, vt.scale, 1, 1),
-          child: child,
+        return OverflowBox(
+          alignment: Alignment.topLeft,
+          minWidth: 0,
+          maxWidth: double.infinity,
+          minHeight: 0,
+          maxHeight: double.infinity,
+          child: Transform(
+            transform: Matrix4.identity()
+              ..translateByDouble(vt.panOffset.dx, vt.panOffset.dy, 0, 1)
+              ..scaleByDouble(vt.scale, vt.scale, 1, 1),
+            child: child,
+          ),
         );
       },
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          ...encounter.combatants.indexed.map((indexed) {
-            final (index, c) = indexed;
-            final pos = mapState.tokenPositions[c.id];
-            if (pos == null) return const SizedBox.shrink();
-            return TokenWidget(
-              key: ValueKey('token_${c.id}'),
-              combatant: c,
-              tokenSize: mapState.tokenSizeOverrides[c.id] ?? mapState.tokenSize,
-              isActive: index == encounter.turnIndex,
-              canvasPosition: pos,
-              viewTransform: notifier.viewTransform,
-              palette: palette,
-              onDragStart: () => setState(() => _tokenDragActive = true),
-              onDragEnd: (id, finalCanvasPos) {
-                setState(() => _tokenDragActive = false);
-                // Commit final position to notifier
-                notifier.moveToken(id, finalCanvasPos);
-                if (mapState.gridSnap) notifier.snapTokenToGrid(id);
-                notifier.persistTokenPositions();
-              },
-              onResizeRequested: (id) => _showResizeDialog(id, mapState, notifier),
-            );
-          }),
-        ],
+      child: SizedBox(
+        width: canvasExtent,
+        height: canvasExtent,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            ...encounter.combatants.indexed.map((indexed) {
+              final (index, c) = indexed;
+              final pos = mapState.tokenPositions[c.id];
+              if (pos == null) return const SizedBox.shrink();
+              return TokenWidget(
+                key: ValueKey('token_${c.id}'),
+                combatant: c,
+                tokenSize: mapState.tokenSizeOverrides[c.id] ?? mapState.tokenSize,
+                isActive: index == encounter.turnIndex,
+                canvasPosition: pos,
+                viewTransform: notifier.viewTransform,
+                palette: palette,
+                onDragStart: () => setState(() => _tokenDragActive = true),
+                onDragEnd: (id, finalCanvasPos) {
+                  setState(() => _tokenDragActive = false);
+                  // Commit final position to notifier
+                  notifier.moveToken(id, finalCanvasPos);
+                  if (mapState.gridSnap) notifier.snapTokenToGrid(id);
+                  notifier.persistTokenPositions();
+                },
+                onResizeRequested: (id) => _showResizeDialog(id, mapState, notifier),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }
