@@ -17,6 +17,7 @@ class TokenWidget extends StatefulWidget {
   final bool isActive;
   final Offset canvasPosition; // from notifier state
   final ValueListenable<ViewTransform> viewTransform; // for drag scale
+  final Color borderColor; // category color
   final DmToolColors palette;
   final VoidCallback onDragStart;
   final void Function(String id, Offset finalCanvasPos) onDragEnd;
@@ -29,6 +30,7 @@ class TokenWidget extends StatefulWidget {
     required this.isActive,
     required this.canvasPosition,
     required this.viewTransform,
+    required this.borderColor,
     required this.palette,
     required this.onDragStart,
     required this.onDragEnd,
@@ -50,6 +52,8 @@ class _TokenWidgetState extends State<TokenWidget> {
   Widget build(BuildContext context) {
     final size = widget.tokenSize.toDouble();
     final canvasPos = _effectiveCanvasPos;
+
+    final borderWidth = widget.isActive ? 3.0 : 1.5;
 
     // Canvas-space positioning — Transform wrapper handles screen projection
     return Positioned(
@@ -93,13 +97,11 @@ class _TokenWidgetState extends State<TokenWidget> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: widget.isActive
-                    ? widget.palette.tokenBorderActive
-                    : widget.palette.tokenBorderNeutral,
-                width: widget.isActive ? 3.0 : 2.0,
+                color: widget.borderColor,
+                width: borderWidth,
               ),
               boxShadow: widget.isActive
-                  ? [BoxShadow(color: widget.palette.tokenBorderActive.withValues(alpha: 0.4), blurRadius: 8)]
+                  ? [BoxShadow(color: widget.borderColor.withValues(alpha: 0.5), blurRadius: 8)]
                   : null,
             ),
             clipBehavior: Clip.antiAlias,

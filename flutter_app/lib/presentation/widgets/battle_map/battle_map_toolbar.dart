@@ -84,7 +84,7 @@ class BattleMapToolbar extends ConsumerWidget {
             style: TextStyle(fontSize: 11, color: palette.tabText),
           ),
           const SizedBox(width: 4),
-          // Token size slider
+          // Token size slider (in cell units)
           SizedBox(
             width: 120,
             child: SliderTheme(
@@ -98,15 +98,16 @@ class BattleMapToolbar extends ConsumerWidget {
                 inactiveTrackColor: palette.sidebarDivider,
               ),
               child: Slider(
-                value: mapState.tokenSize.toDouble(),
-                min: 20,
-                max: 300,
-                onChanged: (v) => notifier.setGlobalTokenSize(v.round()),
+                value: (mapState.tokenSize / mapState.gridSize).clamp(0.25, 6.0),
+                min: 0.25,
+                max: 6.0,
+                divisions: 23,
+                onChanged: (cells) => notifier.setGlobalTokenSize((cells * mapState.gridSize).round()),
               ),
             ),
           ),
           Text(
-            '${mapState.tokenSize}px',
+            '${(mapState.tokenSize / mapState.gridSize).toStringAsFixed(2)} cells',
             style: TextStyle(fontSize: 11, color: palette.tabText),
           ),
           const Spacer(),
