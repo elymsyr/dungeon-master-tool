@@ -14,6 +14,9 @@ class EpochScrollBar extends StatefulWidget {
   final void Function(int insertIndex) onAddWaypoint;
   final void Function(int wpIndex) onDeleteWaypoint;
   final void Function(int wpIndex) onRenameWaypoint;
+  final String startLabel;
+  final String endLabel;
+  final void Function(String startLabel, String endLabel)? onRenameBoundary;
 
   const EpochScrollBar({
     super.key,
@@ -26,6 +29,9 @@ class EpochScrollBar extends StatefulWidget {
     required this.onAddWaypoint,
     required this.onDeleteWaypoint,
     required this.onRenameWaypoint,
+    this.startLabel = 'Start',
+    this.endLabel = 'End',
+    this.onRenameBoundary,
   });
 
   @override
@@ -81,6 +87,8 @@ class _EpochScrollBarState extends State<EpochScrollBar> {
               trackEnd: _trackEnd,
               trackY: _trackY,
               wpRadius: _wpRadius,
+              startLabel: widget.startLabel,
+              endLabel: widget.endLabel,
             ),
           ),
         ),
@@ -138,7 +146,21 @@ class _EpochScrollBarState extends State<EpochScrollBar> {
     widget.onSwitchEpoch(segIdx);
   }
 
+  /// Returns 'start' or 'end' if x is near an endpoint marker.
+  String? _endpointAtX(double x) {
+    if ((x - _trackStart).abs() <= 10) return 'start';
+    if ((x - _trackEnd).abs() <= 10) return 'end';
+    return null;
+  }
+
   void _handleSecondaryTap(Offset localPos, Offset globalPos) {
+    // Check endpoint hit (Start / End labels)
+    final ep = _endpointAtX(localPos.dx);
+    if (ep != null && widget.onRenameBoundary != null) {
+      _showEndpointRenameMenu(globalPos, ep);
+      return;
+    }
+
     final wpIdx = _waypointAtX(localPos.dx);
     if (wpIdx != null) {
       _showWaypointContextMenu(globalPos, wpIdx);
@@ -150,6 +172,75 @@ class _EpochScrollBarState extends State<EpochScrollBar> {
     if (segIdx != null) {
       widget.onAddWaypoint(segIdx);
     }
+  }
+
+  void _showEndpointRenameMenu(Offset globalPos, String which) {
+    final p = widget.palette;
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+          globalPos.dx, globalPos.dy, globalPos.dx + 1, globalPos.dy + 1),
+      color: p.uiFloatingBg,
+      items: [
+        PopupMenuItem(
+          value: 'rename',
+          child: Row(children: [
+            Icon(Icons.edit, size: 14, color: p.uiFloatingText),
+            const SizedBox(width: 8),
+            Text('Rename',
+                style: TextStyle(fontSize: 12, color: p.uiFloatingText)),
+          ]),
+        ),
+      ],
+    ).then((value) {
+      if (value != 'rename') return;
+      final current =
+          which == 'start' ? widget.startLabel : widget.endLabel;
+      _showRenameBoundaryDialog(current, which);
+    });
+  }
+
+  void _showRenameBoundaryDialog(String current, String which) {
+    final p = widget.palette;
+    final ctrl = TextEditingController(text: current);
+    showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: p.uiFloatingBg,
+        title: Text('Rename ${which == 'start' ? 'Start' : 'End'}',
+            style: TextStyle(fontSize: 14, color: p.uiFloatingText)),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          style: TextStyle(fontSize: 12, color: p.uiFloatingText),
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            isDense: true,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel',
+                style: TextStyle(color: p.uiFloatingText)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final label = ctrl.text.trim();
+              if (label.isNotEmpty) Navigator.pop(ctx, label);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    ).then((newLabel) {
+      if (newLabel == null) return;
+      if (which == 'start') {
+        widget.onRenameBoundary?.call(newLabel, widget.endLabel);
+      } else {
+        widget.onRenameBoundary?.call(widget.startLabel, newLabel);
+      }
+    });
   }
 
   void _showWaypointContextMenu(Offset globalPos, int wpIndex) {
@@ -207,6 +298,8 @@ class _EpochScrollPainter extends CustomPainter {
   final double trackEnd;
   final double trackY;
   final double wpRadius;
+  final String startLabel;
+  final String endLabel;
 
   _EpochScrollPainter({
     required this.epochs,
@@ -220,6 +313,8 @@ class _EpochScrollPainter extends CustomPainter {
     required this.trackEnd,
     required this.trackY,
     required this.wpRadius,
+    required this.startLabel,
+    required this.endLabel,
   });
 
   @override
@@ -279,8 +374,8 @@ class _EpochScrollPainter extends CustomPainter {
     );
 
     // Draw endpoint markers
-    _drawEndpoint(canvas, trackStart, trackY, 'S');
-    _drawEndpoint(canvas, trackEnd, trackY, 'E');
+    _drawEndpoint(canvas, trackStart, trackY, startLabel);
+    _drawEndpoint(canvas, trackEnd, trackY, endLabel);
 
     // Draw waypoint markers
     for (int i = 0; i < wpXs.length; i++) {
@@ -313,17 +408,18 @@ class _EpochScrollPainter extends CustomPainter {
       4,
       Paint()..color = palette.uiFloatingBorder,
     );
+    final display = _shortLabel(label);
     final tp = TextPainter(
       text: TextSpan(
-        text: label,
+        text: display,
         style: TextStyle(
           fontSize: 8,
           fontWeight: FontWeight.bold,
-          color: palette.uiFloatingText.withValues(alpha: 0.4),
+          color: palette.uiFloatingText.withValues(alpha: 0.5),
         ),
       ),
       textDirection: TextDirection.ltr,
-    )..layout();
+    )..layout(maxWidth: 36);
     tp.paint(canvas, Offset(x - tp.width / 2, y - 16));
   }
 
