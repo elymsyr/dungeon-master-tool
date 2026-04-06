@@ -88,7 +88,7 @@ class MindMapPainter extends CustomPainter {
       );
 
       // Viewport culling
-      if (!viewportRect.overlaps(rect.inflate(10))) continue;
+      if (!viewportRect.overlaps(rect.inflate(50))) continue;
 
       final color = _parseHexColor(node.color);
       final isSelected = node.id == mapState.selectedNodeId;
@@ -299,7 +299,7 @@ class MindMapPainter extends CustomPainter {
       );
 
       // Viewport culling
-      if (!viewportRect.overlaps(rect.inflate(10))) continue;
+      if (!viewportRect.overlaps(rect.inflate(50))) continue;
 
       // Background
       final bgColor = switch (node.nodeType) {

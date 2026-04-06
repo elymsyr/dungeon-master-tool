@@ -221,10 +221,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           const Spacer(),
 
           // Status text
-          if (mapState.movingPinId != null)
-            Text('Click to place · Esc to cancel',
-              style: TextStyle(fontSize: 10, color: Colors.amber.withValues(alpha: 0.8)))
-          else if (mapState.isLinkMode)
+          if (mapState.isLinkMode)
             Text('Click pin to link · Click empty to create · Esc to cancel',
               style: TextStyle(fontSize: 10, color: Colors.amber.withValues(alpha: 0.8)))
           else
@@ -250,9 +247,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     WorldMapNotifier notifier,
     WorldMapState mapState,
   ) {
-    final inMoveMode = mapState.movingPinId != null;
     final inLinkMode = mapState.isLinkMode;
-    final cursor = (inMoveMode || inLinkMode)
+    final cursor = inLinkMode
         ? SystemMouseCursors.precise
         : SystemMouseCursors.basic;
 
@@ -262,7 +258,6 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
       onKeyEvent: (event) {
         if (event is KeyDownEvent &&
             event.logicalKey == LogicalKeyboardKey.escape) {
-          if (inMoveMode) notifier.cancelMoveMode();
           if (inLinkMode) notifier.cancelLinkMode();
         }
       },
@@ -283,7 +278,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                 onScaleStart: notifier.onScaleStart,
                 onScaleUpdate: notifier.onScaleUpdate,
                 onScaleEnd: (_) => notifier.onScaleEnd(),
-                onTapUp: (inMoveMode || inLinkMode)
+                onTapUp: inLinkMode
                     ? (d) => _handleCanvasTap(d.localPosition, notifier, mapState)
                     : null,
                 onDoubleTapDown: (details) {
@@ -313,15 +308,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 
   void _handleCanvasTap(
       Offset localPos, WorldMapNotifier notifier, WorldMapState mapState) {
-    final canvasPos = notifier.screenToCanvas(localPos);
-
-    if (mapState.movingPinId != null) {
-      notifier.completePinMove(canvasPos);
-      return;
-    }
-
     if (mapState.isLinkMode) {
-      // Check if tap is on a timeline pin (simplified — just create new)
+      final canvasPos = notifier.screenToCanvas(localPos);
       notifier.handleLinkToNew(canvasPos);
     }
   }
@@ -367,47 +355,43 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 
               // Map pins
               ...notifier.visiblePins.map(
-                (pin) => Positioned(
-                  left: pin.x - 12,
-                  top: pin.y - 24,
-                  child: _PinWidget(
-                    pin: pin,
-                    palette: palette,
-                    onTap: () => _showPinDetail(context, pin, notifier, palette),
-                    onInspect: pin.entityId != null
-                        ? () => widget.onOpenEntity?.call(pin.entityId!)
-                        : null,
-                    onEditNote: () => _showEditPinNoteDialog(pin, notifier, palette),
-                    onChangeColor: () => _showPinColorPicker(pin, notifier, palette),
-                    onMove: () => notifier.startPinMoveMode(pin.id, 'pin'),
-                    onDelete: () => notifier.deletePin(pin.id),
-                  ),
+                (pin) => _DraggablePin(
+                  key: ValueKey('pin_${pin.id}'),
+                  pin: pin,
+                  palette: palette,
+                  notifier: notifier,
+                  onTap: () => _showPinDetail(context, pin, notifier, palette),
+                  onInspect: pin.entityId != null
+                      ? () => widget.onOpenEntity?.call(pin.entityId!)
+                      : null,
+                  onEditNote: () => _showEditPinNoteDialog(pin, notifier, palette),
+                  onChangeColor: () => _showPinColorPicker(pin, notifier, palette),
+                  onDelete: () => notifier.deletePin(pin.id),
                 ),
               ),
 
               // Timeline pins
               ...notifier.visibleTimelinePins.map(
-                (pin) => Positioned(
-                  left: pin.x - 14,
-                  top: pin.y - 14,
-                  child: _TimelinePinWidget(
-                    pin: pin,
-                    palette: palette,
-                    isLinkMode: mapState.isLinkMode,
-                    onTap: () {
-                      if (mapState.isLinkMode) {
-                        notifier.handleLinkToExisting(pin.id);
-                      } else {
-                        _showTimelineEditDialog(pin, notifier, palette);
-                      }
-                    },
-                    onLinkNew: () => notifier.startLinkMode(pin.id),
-                    onEdit: () => _showTimelineEditDialog(pin, notifier, palette),
-                    onChangeColor: () =>
-                        _showTimelineColorPicker(pin, notifier, palette),
-                    onMove: () => notifier.startPinMoveMode(pin.id, 'timeline'),
-                    onDelete: () => notifier.deleteTimelinePin(pin.id),
-                  ),
+                (pin) => _DraggableTimelinePin(
+                  key: ValueKey('tpin_${pin.id}'),
+                  pin: pin,
+                  palette: palette,
+                  notifier: notifier,
+                  isLinkMode: mapState.isLinkMode,
+                  onTap: () {
+                    if (mapState.isLinkMode) {
+                      notifier.handleLinkToExisting(pin.id);
+                    } else {
+                      _showTimelineEditDialog(pin, notifier, palette);
+                    }
+                  },
+                  onAddConnected: () =>
+                      _addConnectedTimeline(pin, notifier, palette),
+                  onLinkNew: () => notifier.startLinkMode(pin.id),
+                  onEdit: () => _showTimelineEditDialog(pin, notifier, palette),
+                  onChangeColor: () =>
+                      _showTimelineColorPicker(pin, notifier, palette),
+                  onDelete: () => notifier.deleteTimelinePin(pin.id),
                 ),
               ),
             ],
@@ -466,10 +450,43 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     final entity = entities[entityId];
     if (entity == null) return;
 
+    // Validate: only entities whose category allows 'worldmap'
+    final schema = ref.read(worldSchemaProvider);
+    final category = schema.categories
+        .where((c) => c.slug == entity.categorySlug)
+        .firstOrNull;
+    if (category == null ||
+        !category.allowedInSections.contains('worldmap')) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                '${entity.name} (${entity.categorySlug}) is not allowed on the world map'),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Auto pinType from category slug
+    final pinType = _pinTypeFromCategorySlug(entity.categorySlug);
+
     final box = context.findRenderObject() as RenderBox;
     final localPos = box.globalToLocal(details.offset);
     final canvasPos = notifier.screenToCanvas(localPos);
-    notifier.addPin(canvasPos, entityId: entityId, label: entity.name);
+    notifier.addPin(canvasPos,
+        entityId: entityId, label: entity.name, pinType: pinType);
+  }
+
+  /// Map category slug → pin type for display/filtering.
+  static String _pinTypeFromCategorySlug(String slug) {
+    return switch (slug) {
+      'npc' => 'npc',
+      'monster' => 'monster',
+      'player' => 'npc',
+      'location' => 'location',
+      _ => 'default',
+    };
   }
 
   // -------------------------------------------------------------------------
@@ -478,88 +495,107 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 
   void _showAddPinDialog(Offset canvasPos, WorldMapNotifier notifier) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    String selectedType = 'default';
     final labelCtrl = TextEditingController();
 
-    showDialog<void>(
+    showDialog<String>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDlgState) => AlertDialog(
-          backgroundColor: palette.uiFloatingBg,
-          title: Text(
-            'Add Pin',
-            style: TextStyle(fontSize: 14, color: palette.uiFloatingText),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: labelCtrl,
-                autofocus: true,
-                style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
-                decoration: InputDecoration(
-                  labelText: 'Label',
-                  labelStyle: TextStyle(
-                    fontSize: 11,
-                    color: palette.uiFloatingText.withValues(alpha: 0.6),
-                  ),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: palette.uiFloatingBorder),
-                  ),
-                  isDense: true,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Pin type',
-                style: TextStyle(
+      builder: (ctx) => AlertDialog(
+        backgroundColor: palette.uiFloatingBg,
+        title: Text(
+          'Add to Map',
+          style: TextStyle(fontSize: 14, color: palette.uiFloatingText),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: labelCtrl,
+              autofocus: true,
+              style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
+              decoration: InputDecoration(
+                labelText: 'Label',
+                labelStyle: TextStyle(
                   fontSize: 11,
                   color: palette.uiFloatingText.withValues(alpha: 0.6),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                children: ['default', 'npc', 'monster', 'location', 'event']
-                    .map(
-                      (t) => ChoiceChip(
-                        label: Text(
-                          t,
-                          style: TextStyle(fontSize: 10, color: palette.tabText),
-                        ),
-                        selected: selectedType == t,
-                        selectedColor: _pinColor(t).withValues(alpha: 0.25),
-                        onSelected: (_) => setDlgState(() => selectedType = t),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: palette.uiFloatingText),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: palette.uiFloatingBorder),
+                ),
+                isDense: true,
               ),
             ),
-            ElevatedButton(
-              onPressed: () {
-                notifier.addPin(
-                  canvasPos,
-                  pinType: selectedType,
-                  label: labelCtrl.text,
-                );
-                Navigator.pop(ctx);
-              },
-              child: const Text('Add'),
+            const SizedBox(height: 16),
+            // Hint about entities
+            Row(
+              children: [
+                Icon(Icons.info_outline, size: 14,
+                    color: palette.uiFloatingText.withValues(alpha: 0.5)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'To add entities, drag them from the sidebar.',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: palette.uiFloatingText.withValues(alpha: 0.5),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel',
+                style: TextStyle(color: palette.uiFloatingText)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              notifier.addPin(canvasPos, label: labelCtrl.text);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Add Pin'),
+          ),
+        ],
       ),
     );
+  }
+
+  /// Add a connected timeline pin: copies entities + session from parent,
+  /// opens the timeline entry dialog pre-filled.
+  void _addConnectedTimeline(
+      TimelinePin parent, WorldMapNotifier notifier, DmToolColors palette) {
+    final prefilled = TimelinePin(
+      id: '',
+      x: parent.x + 40,
+      y: parent.y + 40,
+      day: parent.day,
+      note: '',
+      entityIds: List<String>.from(parent.entityIds),
+      sessionId: parent.sessionId,
+      parentIds: [parent.id],
+      color: parent.color,
+    );
+    showDialog<TimelinePin>(
+      context: context,
+      builder: (ctx) =>
+          TimelineEntryDialog(palette: palette, existing: prefilled),
+    ).then((result) {
+      if (result == null) return;
+      // Use the parent's canvas position with offset
+      notifier.addTimelinePin(
+        Offset(parent.x + 40, parent.y + 40),
+        day: result.day,
+        note: result.note,
+        color: result.color,
+        entityIds: result.entityIds,
+        sessionId: result.sessionId,
+        parentId: parent.id,
+      );
+    });
   }
 
   void _showTimelineEntryDialog(
@@ -739,7 +775,15 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 
   void _showEntityFilterDialog(
       WorldMapNotifier notifier, DmToolColors palette) {
-    final entities = ref.read(entityProvider);
+    // Only show entities whose category allows 'worldmap'
+    final allEntities = ref.read(entityProvider);
+    final schema = ref.read(worldSchemaProvider);
+    final allowedSlugs = schema.categories
+        .where((c) => c.allowedInSections.contains('worldmap'))
+        .map((c) => c.slug)
+        .toSet();
+    final entities = Map.fromEntries(allEntities.entries
+        .where((e) => allowedSlugs.contains(e.value.categorySlug)));
     if (entities.isEmpty) return;
 
     final mapState = ref.read(worldMapProvider);
@@ -810,77 +854,116 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// Pin widget (icon on canvas) with context menu
+// Draggable map pin (hold-and-drag to move)
 // ---------------------------------------------------------------------------
 
-class _PinWidget extends StatelessWidget {
+class _DraggablePin extends StatefulWidget {
   final MapPin pin;
   final DmToolColors palette;
+  final WorldMapNotifier notifier;
   final VoidCallback onTap;
   final VoidCallback? onInspect;
   final VoidCallback? onEditNote;
   final VoidCallback? onChangeColor;
-  final VoidCallback? onMove;
   final VoidCallback? onDelete;
 
-  const _PinWidget({
+  const _DraggablePin({
+    super.key,
     required this.pin,
     required this.palette,
+    required this.notifier,
     required this.onTap,
     this.onInspect,
     this.onEditNote,
     this.onChangeColor,
-    this.onMove,
     this.onDelete,
   });
 
   @override
+  State<_DraggablePin> createState() => _DraggablePinState();
+}
+
+class _DraggablePinState extends State<_DraggablePin> {
+  Offset? _dragStart;
+  Offset? _pinStartPos;
+  // Local drag offset — avoids Riverpod rebuilds during drag for smoothness.
+  Offset? _dragOffset;
+
+  @override
   Widget build(BuildContext context) {
+    final pin = widget.pin;
     final displayColor = pin.color.isNotEmpty
         ? Color(int.parse(pin.color.replaceAll('#', 'FF'), radix: 16))
         : _pinColor(pin.pinType);
 
-    return GestureDetector(
-      onTap: onTap,
-      onSecondaryTapUp: (d) => _showContextMenu(context, d.globalPosition),
-      child: Tooltip(
-        message: pin.label.isEmpty ? pin.pinType : pin.label,
-        child: Icon(
-          Icons.location_pin,
-          size: 24,
-          color: displayColor,
-          shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
+    final x = _dragOffset?.dx ?? pin.x;
+    final y = _dragOffset?.dy ?? pin.y;
+
+    return Positioned(
+      left: x - 12,
+      top: y - 24,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        onSecondaryTapUp: (d) =>
+            _showContextMenu(context, d.globalPosition),
+        onPanStart: (d) {
+          _dragStart = d.globalPosition;
+          _pinStartPos = Offset(pin.x, pin.y);
+        },
+        onPanUpdate: (d) {
+          if (_dragStart == null || _pinStartPos == null) return;
+          final scale = widget.notifier.viewTransform.value.scale;
+          final delta = (d.globalPosition - _dragStart!) / scale;
+          setState(() => _dragOffset = _pinStartPos! + delta);
+        },
+        onPanEnd: (_) {
+          if (_dragOffset != null) {
+            widget.notifier.updatePin(pin.id, pos: _dragOffset!);
+          }
+          _dragStart = null;
+          _pinStartPos = null;
+          _dragOffset = null;
+        },
+        child: Tooltip(
+          message: pin.label.isEmpty ? pin.pinType : pin.label,
+          child: Icon(
+            Icons.location_pin,
+            size: 24,
+            color: displayColor,
+            shadows: const [
+              Shadow(color: Colors.black54, blurRadius: 4)
+            ],
+          ),
         ),
       ),
     );
   }
 
   void _showContextMenu(BuildContext context, Offset globalPos) {
+    final palette = widget.palette;
     final items = <PopupMenuEntry<String>>[];
 
-    if (onInspect != null) {
+    if (widget.onInspect != null) {
       items.add(PopupMenuItem(
         value: 'inspect',
-        child: _menuRow(Icons.open_in_new, 'Inspect Entity'),
+        child: _menuRow(Icons.open_in_new, 'Inspect Entity', palette),
       ));
     }
     items.addAll([
       PopupMenuItem(
         value: 'edit_note',
-        child: _menuRow(Icons.edit_note, 'Edit Note'),
+        child: _menuRow(Icons.edit_note, 'Edit Note', palette),
       ),
       PopupMenuItem(
         value: 'change_color',
-        child: _menuRow(Icons.palette, 'Change Color'),
-      ),
-      PopupMenuItem(
-        value: 'move',
-        child: _menuRow(Icons.open_with, 'Move'),
+        child: _menuRow(Icons.palette, 'Change Color', palette),
       ),
       const PopupMenuDivider(),
       PopupMenuItem(
         value: 'delete',
-        child: _menuRow(Icons.delete_outline, 'Delete', danger: true),
+        child:
+            _menuRow(Icons.delete_outline, 'Delete', palette, danger: true),
       ),
     ]);
 
@@ -893,92 +976,118 @@ class _PinWidget extends StatelessWidget {
     ).then((value) {
       switch (value) {
         case 'inspect':
-          onInspect?.call();
+          widget.onInspect?.call();
         case 'edit_note':
-          onEditNote?.call();
+          widget.onEditNote?.call();
         case 'change_color':
-          onChangeColor?.call();
-        case 'move':
-          onMove?.call();
+          widget.onChangeColor?.call();
         case 'delete':
-          onDelete?.call();
+          widget.onDelete?.call();
       }
     });
-  }
-
-  Widget _menuRow(IconData icon, String label, {bool danger = false}) {
-    return Row(
-      children: [
-        Icon(icon, size: 16,
-            color: danger ? Colors.red[300] : palette.uiFloatingText),
-        const SizedBox(width: 8),
-        Text(label,
-            style: TextStyle(
-                fontSize: 12,
-                color: danger ? Colors.red[300] : palette.uiFloatingText)),
-      ],
-    );
   }
 }
 
 // ---------------------------------------------------------------------------
-// Timeline pin widget
+// Draggable timeline pin (hold-and-drag to move)
 // ---------------------------------------------------------------------------
 
-class _TimelinePinWidget extends StatelessWidget {
+class _DraggableTimelinePin extends StatefulWidget {
   final TimelinePin pin;
   final DmToolColors palette;
+  final WorldMapNotifier notifier;
   final bool isLinkMode;
   final VoidCallback onTap;
+  final VoidCallback? onAddConnected;
   final VoidCallback? onLinkNew;
   final VoidCallback? onEdit;
   final VoidCallback? onChangeColor;
-  final VoidCallback? onMove;
   final VoidCallback? onDelete;
 
-  const _TimelinePinWidget({
+  const _DraggableTimelinePin({
+    super.key,
     required this.pin,
     required this.palette,
+    required this.notifier,
     required this.onTap,
     this.isLinkMode = false,
+    this.onAddConnected,
     this.onLinkNew,
     this.onEdit,
     this.onChangeColor,
-    this.onMove,
     this.onDelete,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final color = Color(
-        int.parse(pin.color.replaceAll('#', 'FF'), radix: 16));
+  State<_DraggableTimelinePin> createState() => _DraggableTimelinePinState();
+}
 
-    return GestureDetector(
-      onTap: onTap,
-      onSecondaryTapUp: (d) => _showContextMenu(context, d.globalPosition),
-      child: Tooltip(
-        message: _tooltipText(),
-        child: Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(
-              color: pin.sessionId != null ? Colors.white : Colors.black54,
-              width: 2,
+class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
+  Offset? _dragStart;
+  Offset? _pinStartPos;
+  Offset? _dragOffset;
+
+  @override
+  Widget build(BuildContext context) {
+    final pin = widget.pin;
+    final color =
+        Color(int.parse(pin.color.replaceAll('#', 'FF'), radix: 16));
+
+    final x = _dragOffset?.dx ?? pin.x;
+    final y = _dragOffset?.dy ?? pin.y;
+
+    return Positioned(
+      left: x - 14,
+      top: y - 14,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        onSecondaryTapUp: (d) =>
+            _showContextMenu(context, d.globalPosition),
+        onPanStart: (d) {
+          _dragStart = d.globalPosition;
+          _pinStartPos = Offset(pin.x, pin.y);
+        },
+        onPanUpdate: (d) {
+          if (_dragStart == null || _pinStartPos == null) return;
+          final scale = widget.notifier.viewTransform.value.scale;
+          final delta = (d.globalPosition - _dragStart!) / scale;
+          setState(() => _dragOffset = _pinStartPos! + delta);
+        },
+        onPanEnd: (_) {
+          if (_dragOffset != null) {
+            widget.notifier.updateTimelinePin(pin.id,
+                pos: _dragOffset!);
+          }
+          _dragStart = null;
+          _pinStartPos = null;
+          _dragOffset = null;
+        },
+        child: Tooltip(
+          message: _tooltipText(),
+          child: Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color:
+                    pin.sessionId != null ? Colors.white : Colors.black54,
+                width: 2,
+              ),
+              boxShadow: const [
+                BoxShadow(color: Colors.black38, blurRadius: 3),
+              ],
             ),
-            boxShadow: const [
-              BoxShadow(color: Colors.black38, blurRadius: 3),
-            ],
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            '${pin.day}',
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+            alignment: Alignment.center,
+            child: Text(
+              '${pin.day}',
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
@@ -988,44 +1097,49 @@ class _TimelinePinWidget extends StatelessWidget {
 
   String _tooltipText() {
     final parts = <String>[];
-    parts.add('Day ${pin.day}');
-    if (pin.note.isNotEmpty) parts.add(pin.note);
-    if (pin.sessionId != null) parts.add('(linked)');
+    parts.add('Day ${widget.pin.day}');
+    if (widget.pin.note.isNotEmpty) parts.add(widget.pin.note);
+    if (widget.pin.sessionId != null) parts.add('(linked)');
     return parts.join('\n');
   }
 
   void _showContextMenu(BuildContext context, Offset globalPos) {
+    final palette = widget.palette;
+    final pin = widget.pin;
     final items = <PopupMenuEntry<String>>[];
 
     if (pin.sessionId != null) {
       items.add(PopupMenuItem(
         value: 'goto_session',
-        child: _menuRow(Icons.event, 'Go to Session'),
+        child: _menuRow(Icons.event, 'Go to Session', palette),
       ));
       items.add(const PopupMenuDivider());
     }
 
     items.addAll([
       PopupMenuItem(
-        value: 'link_new',
-        child: _menuRow(Icons.link, 'Link New'),
+        value: 'add_connected',
+        child: _menuRow(
+            Icons.add_link, 'Add Connected Timeline', palette),
+      ),
+      PopupMenuItem(
+        value: 'link_existing',
+        child: _menuRow(Icons.link, 'Link Existing', palette),
       ),
       PopupMenuItem(
         value: 'edit',
-        child: _menuRow(Icons.edit, 'Edit'),
+        child: _menuRow(Icons.edit, 'Edit', palette),
       ),
       PopupMenuItem(
         value: 'change_color',
-        child: _menuRow(Icons.palette, 'Change Color (chain)'),
-      ),
-      PopupMenuItem(
-        value: 'move',
-        child: _menuRow(Icons.open_with, 'Move'),
+        child:
+            _menuRow(Icons.palette, 'Change Color (chain)', palette),
       ),
       const PopupMenuDivider(),
       PopupMenuItem(
         value: 'delete',
-        child: _menuRow(Icons.delete_outline, 'Delete', danger: true),
+        child:
+            _menuRow(Icons.delete_outline, 'Delete', palette, danger: true),
       ),
     ]);
 
@@ -1037,35 +1151,35 @@ class _TimelinePinWidget extends StatelessWidget {
       items: items,
     ).then((value) {
       switch (value) {
-        case 'goto_session':
-          break; // TODO: navigate to session tab
-        case 'link_new':
-          onLinkNew?.call();
+        case 'add_connected':
+          widget.onAddConnected?.call();
+        case 'link_existing':
+          widget.onLinkNew?.call();
         case 'edit':
-          onEdit?.call();
+          widget.onEdit?.call();
         case 'change_color':
-          onChangeColor?.call();
-        case 'move':
-          onMove?.call();
+          widget.onChangeColor?.call();
         case 'delete':
-          onDelete?.call();
+          widget.onDelete?.call();
       }
     });
   }
+}
 
-  Widget _menuRow(IconData icon, String label, {bool danger = false}) {
-    return Row(
-      children: [
-        Icon(icon, size: 16,
-            color: danger ? Colors.red[300] : palette.uiFloatingText),
-        const SizedBox(width: 8),
-        Text(label,
-            style: TextStyle(
-                fontSize: 12,
-                color: danger ? Colors.red[300] : palette.uiFloatingText)),
-      ],
-    );
-  }
+Widget _menuRow(IconData icon, String label, DmToolColors palette,
+    {bool danger = false}) {
+  return Row(
+    children: [
+      Icon(icon,
+          size: 16,
+          color: danger ? Colors.red[300] : palette.uiFloatingText),
+      const SizedBox(width: 8),
+      Text(label,
+          style: TextStyle(
+              fontSize: 12,
+              color: danger ? Colors.red[300] : palette.uiFloatingText)),
+    ],
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -1160,13 +1274,11 @@ class _PinDetailSheet extends StatefulWidget {
 
 class _PinDetailSheetState extends State<_PinDetailSheet> {
   late TextEditingController _labelCtrl;
-  late String _pinType;
 
   @override
   void initState() {
     super.initState();
     _labelCtrl = TextEditingController(text: widget.pin.label);
-    _pinType = widget.pin.pinType;
   }
 
   @override
@@ -1193,7 +1305,8 @@ class _PinDetailSheetState extends State<_PinDetailSheet> {
           // Header
           Row(
             children: [
-              Icon(Icons.location_pin, size: 20, color: _pinColor(_pinType)),
+              Icon(Icons.location_pin, size: 20,
+                  color: _pinColor(widget.pin.pinType)),
               const SizedBox(width: 8),
               Text(
                 'Pin Details',
@@ -1232,33 +1345,6 @@ class _PinDetailSheetState extends State<_PinDetailSheet> {
               isDense: true,
             ),
           ),
-          const SizedBox(height: 12),
-
-          // Pin type selector
-          Text(
-            'Type',
-            style: TextStyle(
-              fontSize: 11,
-              color: palette.tabText.withValues(alpha: 0.6),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            children: ['default', 'npc', 'monster', 'location', 'event']
-                .map(
-                  (t) => ChoiceChip(
-                    label: Text(
-                      t,
-                      style: TextStyle(fontSize: 10, color: palette.tabText),
-                    ),
-                    selected: _pinType == t,
-                    selectedColor: _pinColor(t).withValues(alpha: 0.25),
-                    onSelected: (_) => setState(() => _pinType = t),
-                  ),
-                )
-                .toList(),
-          ),
           const SizedBox(height: 16),
 
           // Save
@@ -1269,7 +1355,6 @@ class _PinDetailSheetState extends State<_PinDetailSheet> {
                 widget.notifier.updatePin(
                   widget.pin.id,
                   label: _labelCtrl.text,
-                  pinType: _pinType,
                 );
                 Navigator.pop(context);
               },

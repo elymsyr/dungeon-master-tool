@@ -52,10 +52,27 @@ class _TimelineEntryDialogState extends ConsumerState<TimelineEntryDialog> {
     super.dispose();
   }
 
+  /// Returns only entities whose category has 'worldmap' in allowedInSections.
+  Map<String, dynamic> _worldmapEntities() {
+    final entities = ref.read(entityProvider);
+    final schema = ref.read(worldSchemaProvider);
+    final allowedSlugs = schema.categories
+        .where((c) => c.allowedInSections.contains('worldmap'))
+        .map((c) => c.slug)
+        .toSet();
+    final filtered = <String, dynamic>{};
+    for (final entry in entities.entries) {
+      if (allowedSlugs.contains(entry.value.categorySlug)) {
+        filtered[entry.key] = entry.value;
+      }
+    }
+    return filtered;
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = widget.palette;
-    final entities = ref.watch(entityProvider);
+    final entities = _worldmapEntities();
     final isEdit = widget.existing != null;
 
     return AlertDialog(
