@@ -32,9 +32,34 @@ class MindMapCanvas extends ConsumerStatefulWidget {
   ConsumerState<MindMapCanvas> createState() => _MindMapCanvasState();
 }
 
-class _MindMapCanvasState extends ConsumerState<MindMapCanvas> {
+class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
+    with WidgetsBindingObserver {
   // Cursor position in canvas space (for connecting-draft line)
   Offset? _cursorCanvas;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    // Update viewport size on window resize without rebuilding widget tree
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final box = context.findRenderObject() as RenderBox?;
+      if (box != null && box.hasSize) {
+        ref.read(mindMapProvider.notifier).updateViewportSize(box.size);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +76,7 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas> {
       focusNode: FocusNode(),
       autofocus: true,
       onKeyEvent: (event) => _handleKey(event, notifier, mapState),
-      child: _ViewportSizeObserver(
-        onSizeChanged: (size) => notifier.updateViewportSize(size),
-        child: MouseRegion(
+      child: MouseRegion(
           cursor: cursor,
           onHover: (event) {
             if (mapState.connectingFromId != null) {
@@ -174,7 +197,6 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas> {
             ),
           ),
         ),
-      ),
     );
   }
 
@@ -472,30 +494,5 @@ class _RenderUnboundedStack extends RenderStack {
       return true;
     }
     return false;
-  }
-}
-
-/// Lightweight widget that reports its size without triggering child rebuilds.
-class _ViewportSizeObserver extends StatefulWidget {
-  final ValueChanged<Size> onSizeChanged;
-  final Widget child;
-  const _ViewportSizeObserver({required this.onSizeChanged, required this.child});
-  @override
-  State<_ViewportSizeObserver> createState() => _ViewportSizeObserverState();
-}
-
-class _ViewportSizeObserverState extends State<_ViewportSizeObserver> {
-  Size _lastSize = Size.zero;
-
-  @override
-  Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final box = context.findRenderObject() as RenderBox?;
-      if (box != null && box.hasSize && box.size != _lastSize) {
-        _lastSize = box.size;
-        widget.onSizeChanged(box.size);
-      }
-    });
-    return widget.child;
   }
 }
