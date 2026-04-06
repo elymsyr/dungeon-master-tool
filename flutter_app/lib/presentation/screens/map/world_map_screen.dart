@@ -155,22 +155,20 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           ),
 
           // Pin size
-          Tooltip(
-            message: 'Pin size: ${mapState.pinSize.name}',
-            child: InkWell(
-              onTap: notifier.cyclePinSize,
-              borderRadius: BorderRadius.circular(4),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Icon(
-                  Icons.circle,
-                  size: switch (mapState.pinSize) {
-                    PinSize.small => 8,
-                    PinSize.medium => 12,
-                    PinSize.large => 16,
-                  },
-                  color: palette.tabText,
-                ),
+          InkWell(
+            key: const ValueKey('pin_size'),
+            onTap: notifier.cyclePinSize,
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Icon(
+                Icons.circle,
+                size: switch (mapState.pinSize) {
+                  PinSize.small => 8,
+                  PinSize.medium => 12,
+                  PinSize.large => 16,
+                },
+                color: palette.tabText,
               ),
             ),
           ),
@@ -215,53 +213,45 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             onTap: () => _showEntityFilterDialog(notifier, palette),
           ),
           if (mapState.activeEntityFilters.isNotEmpty)
-            Tooltip(
-              message: 'Clear filter',
-              child: InkWell(
-                onTap: notifier.clearEntityFilter,
-                borderRadius: BorderRadius.circular(4),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                  child: Icon(Icons.filter_list_off, size: 14,
-                      color: Colors.red[300]),
-                ),
+            InkWell(
+              key: const ValueKey('clear_filter'),
+              onTap: notifier.clearEntityFilter,
+              borderRadius: BorderRadius.circular(4),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                child: Icon(Icons.filter_list_off, size: 14,
+                    color: Colors.red[300]),
               ),
             ),
 
           _VertDiv(palette: palette),
 
           // Zoom controls
-          Tooltip(
-            message: 'Zoom in',
-            child: InkWell(
-              onTap: () => notifier.zoomAtPoint(const Offset(0, 0), -1),
-              borderRadius: BorderRadius.circular(4),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Icon(Icons.add, size: 14, color: palette.tabText),
-              ),
+          InkWell(
+            key: const ValueKey('zoom_in'),
+            onTap: () => notifier.zoomAtPoint(const Offset(0, 0), -1),
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Icon(Icons.add, size: 14, color: palette.tabText),
             ),
           ),
-          Tooltip(
-            message: 'Zoom out',
-            child: InkWell(
-              onTap: () => notifier.zoomAtPoint(const Offset(0, 0), 1),
-              borderRadius: BorderRadius.circular(4),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Icon(Icons.remove, size: 14, color: palette.tabText),
-              ),
+          InkWell(
+            key: const ValueKey('zoom_out'),
+            onTap: () => notifier.zoomAtPoint(const Offset(0, 0), 1),
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Icon(Icons.remove, size: 14, color: palette.tabText),
             ),
           ),
-          Tooltip(
-            message: 'Reset view',
-            child: InkWell(
-              onTap: notifier.resetView,
-              borderRadius: BorderRadius.circular(4),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Icon(Icons.fit_screen, size: 14, color: palette.tabText),
-              ),
+          InkWell(
+            key: const ValueKey('reset_view'),
+            onTap: notifier.resetView,
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Icon(Icons.fit_screen, size: 14, color: palette.tabText),
             ),
           ),
 
