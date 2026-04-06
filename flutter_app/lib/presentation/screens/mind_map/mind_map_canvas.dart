@@ -51,137 +51,129 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas> {
       focusNode: FocusNode(),
       autofocus: true,
       onKeyEvent: (event) => _handleKey(event, notifier, mapState),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Update viewport size for zoom-to-fit calculations
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            notifier.updateViewportSize(
-              Size(constraints.maxWidth, constraints.maxHeight),
-            );
-          });
-
-          return MouseRegion(
-            cursor: cursor,
-            onHover: (event) {
-              if (mapState.connectingFromId != null) {
-                final canvasPos = notifier.screenToCanvas(event.localPosition);
-                setState(() => _cursorCanvas = canvasPos);
+      child: _ViewportSizeObserver(
+        onSizeChanged: (size) => notifier.updateViewportSize(size),
+        child: MouseRegion(
+          cursor: cursor,
+          onHover: (event) {
+            if (mapState.connectingFromId != null) {
+              final canvasPos = notifier.screenToCanvas(event.localPosition);
+              setState(() => _cursorCanvas = canvasPos);
+            }
+          },
+          child: Listener(
+            onPointerSignal: (signal) {
+              if (signal is PointerScrollEvent) {
+                notifier.zoomAtPoint(
+                  signal.localPosition,
+                  signal.scrollDelta.dy,
+                );
               }
             },
-            child: Listener(
-              onPointerSignal: (signal) {
-                if (signal is PointerScrollEvent) {
-                  notifier.zoomAtPoint(
-                    signal.localPosition,
-                    signal.scrollDelta.dy,
-                  );
-                }
+            child: GestureDetector(
+              onScaleStart: notifier.onScaleStart,
+              onScaleUpdate: (d) {
+                notifier.onScaleUpdate(d);
               },
-              child: GestureDetector(
-                onScaleStart: notifier.onScaleStart,
-                onScaleUpdate: (d) {
-                  notifier.onScaleUpdate(d);
-                },
-                onScaleEnd: (_) => notifier.onScaleEnd(),
-                onTapUp: inMoveMode
-                    ? (d) {
-                        final canvasPos =
-                            notifier.screenToCanvas(d.localPosition);
-                        notifier.placeNodeAtPosition(canvasPos);
+              onScaleEnd: (_) => notifier.onScaleEnd(),
+              onTapUp: inMoveMode
+                  ? (d) {
+                      final canvasPos =
+                          notifier.screenToCanvas(d.localPosition);
+                      notifier.placeNodeAtPosition(canvasPos);
+                    }
+                  : (d) {
+                      if (mapState.connectingFromId != null) {
+                        notifier.cancelConnecting();
+                        return;
                       }
-                    : (d) {
-                        if (mapState.connectingFromId != null) {
-                          notifier.cancelConnecting();
-                          return;
-                        }
-                        // Hit-test edges before clearing selection
-                        final canvasPos =
-                            notifier.screenToCanvas(d.localPosition);
-                        final scale = notifier.viewTransform.value.scale;
-                        final edgeId = notifier.hitTestEdge(canvasPos,
-                            threshold: 10.0 / scale);
-                        if (edgeId != null) {
-                          notifier.setSelectedEdge(edgeId);
-                        } else {
-                          notifier.clearSelection();
-                          notifier.exitResizeMode();
-                        }
-                      },
-                onDoubleTapDown: widget.editMode
-                    ? (d) {
-                        final canvasPos =
-                            notifier.screenToCanvas(d.localPosition);
-                        notifier.addNode(canvasPos, 'note');
+                      // Hit-test edges before clearing selection
+                      final canvasPos =
+                          notifier.screenToCanvas(d.localPosition);
+                      final scale = notifier.viewTransform.value.scale;
+                      final edgeId = notifier.hitTestEdge(canvasPos,
+                          threshold: 10.0 / scale);
+                      if (edgeId != null) {
+                        notifier.setSelectedEdge(edgeId);
+                      } else {
+                        notifier.clearSelection();
+                        notifier.exitResizeMode();
                       }
-                    : null,
-                // NOTE: onSecondaryTapUp is NOT here — it's on the
-                // background ColoredBox so node right-clicks work.
-                child: DragTarget<String>(
-                  onWillAcceptWithDetails: (_) => true,
-                  onAcceptWithDetails: (details) =>
-                      _onEntityDrop(context, details, notifier),
-                  builder: (context, candidateData, rejectedData) {
-                    return ClipRect(
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          // Background — handles right-click for canvas menu
-                          GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onSecondaryTapUp: (d) {
-                              final canvasPos =
-                                  notifier.screenToCanvas(d.localPosition);
-                              final scale =
-                                  notifier.viewTransform.value.scale;
-                              final edgeId = notifier.hitTestEdge(
-                                  canvasPos,
-                                  threshold: 10.0 / scale);
-                              if (edgeId != null) {
-                                notifier.setSelectedEdge(edgeId);
-                                _showEdgeContextMenu(
-                                  context,
-                                  d.globalPosition,
-                                  edgeId,
-                                  notifier,
-                                  palette,
-                                );
-                              } else {
-                                _showCanvasContextMenu(
-                                  context,
-                                  d.globalPosition,
-                                  canvasPos,
-                                  notifier,
-                                  palette,
-                                );
-                              }
-                            },
-                            child: ColoredBox(color: palette.canvasBg),
-                          ),
-
-                          // Canvas-space content with Transform
-                          ValueListenableBuilder<MindMapViewTransform>(
-                            valueListenable: notifier.viewTransform,
-                            builder: (_, vt, child) {
-                              return Transform(
-                                transform: Matrix4.identity()
-                                  ..translateByDouble(
-                                      vt.panOffset.dx, vt.panOffset.dy, 0, 1)
-                                  ..scaleByDouble(vt.scale, vt.scale, 1, 1),
-                                child: child,
+                    },
+              onDoubleTapDown: widget.editMode
+                  ? (d) {
+                      final canvasPos =
+                          notifier.screenToCanvas(d.localPosition);
+                      notifier.addNode(canvasPos, 'note');
+                    }
+                  : null,
+              // NOTE: onSecondaryTapUp is NOT here — it's on the
+              // background ColoredBox so node right-clicks work.
+              child: DragTarget<String>(
+                onWillAcceptWithDetails: (_) => true,
+                onAcceptWithDetails: (details) =>
+                    _onEntityDrop(context, details, notifier),
+                builder: (context, candidateData, rejectedData) {
+                  return ClipRect(
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Background — handles right-click for canvas menu
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onSecondaryTapUp: (d) {
+                            final canvasPos =
+                                notifier.screenToCanvas(d.localPosition);
+                            final scale =
+                                notifier.viewTransform.value.scale;
+                            final edgeId = notifier.hitTestEdge(
+                                canvasPos,
+                                threshold: 10.0 / scale);
+                            if (edgeId != null) {
+                              notifier.setSelectedEdge(edgeId);
+                              _showEdgeContextMenu(
+                                context,
+                                d.globalPosition,
+                                edgeId,
+                                notifier,
+                                palette,
                               );
-                            },
-                            child: _buildCanvasContent(
-                                palette, notifier, mapState),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                            } else {
+                              _showCanvasContextMenu(
+                                context,
+                                d.globalPosition,
+                                canvasPos,
+                                notifier,
+                                palette,
+                              );
+                            }
+                          },
+                          child: ColoredBox(color: palette.canvasBg),
+                        ),
+
+                        // Canvas-space content with Transform
+                        ValueListenableBuilder<MindMapViewTransform>(
+                          valueListenable: notifier.viewTransform,
+                          builder: (_, vt, child) {
+                            return Transform(
+                              transform: Matrix4.identity()
+                                ..translateByDouble(
+                                    vt.panOffset.dx, vt.panOffset.dy, 0, 1)
+                                ..scaleByDouble(vt.scale, vt.scale, 1, 1),
+                              child: child,
+                            );
+                          },
+                          child: _buildCanvasContent(
+                              palette, notifier, mapState),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
@@ -480,5 +472,30 @@ class _RenderUnboundedStack extends RenderStack {
       return true;
     }
     return false;
+  }
+}
+
+/// Lightweight widget that reports its size without triggering child rebuilds.
+class _ViewportSizeObserver extends StatefulWidget {
+  final ValueChanged<Size> onSizeChanged;
+  final Widget child;
+  const _ViewportSizeObserver({required this.onSizeChanged, required this.child});
+  @override
+  State<_ViewportSizeObserver> createState() => _ViewportSizeObserverState();
+}
+
+class _ViewportSizeObserverState extends State<_ViewportSizeObserver> {
+  Size _lastSize = Size.zero;
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final box = context.findRenderObject() as RenderBox?;
+      if (box != null && box.hasSize && box.size != _lastSize) {
+        _lastSize = box.size;
+        widget.onSizeChanged(box.size);
+      }
+    });
+    return widget.child;
   }
 }
