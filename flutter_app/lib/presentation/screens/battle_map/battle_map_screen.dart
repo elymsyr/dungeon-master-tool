@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/combat_provider.dart';
+import '../../../application/providers/entity_provider.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../widgets/battle_map/battle_map_mobile_toolbar.dart';
@@ -161,6 +162,24 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   // Token layer with Transform wrapper
   // -------------------------------------------------------------------------
 
+  Color _categoryColor(String? entityId, DmToolColors palette) {
+    if (entityId == null) return palette.tokenBorderNeutral;
+    final entities = ref.read(entityProvider);
+    final entity = entities[entityId];
+    if (entity == null) return palette.tokenBorderNeutral;
+    final schema = ref.read(worldSchemaProvider);
+    for (final cat in schema.categories) {
+      if (cat.slug == entity.categorySlug) {
+        final hex = cat.color;
+        if (hex.startsWith('#') && hex.length == 7) {
+          return Color(int.parse('FF${hex.substring(1)}', radix: 16));
+        }
+        break;
+      }
+    }
+    return palette.tokenBorderNeutral;
+  }
+
   Widget _buildTokenLayer(DmToolColors palette, BattleMapNotifier notifier) {
     final encounter = ref.watch(combatProvider.select((s) => s.activeEncounter));
     if (encounter == null) return const SizedBox.shrink();
@@ -216,6 +235,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                 isActive: index == encounter.turnIndex,
                 canvasPosition: pos,
                 viewTransform: notifier.viewTransform,
+                borderColor: _categoryColor(c.entityId, palette),
                 palette: palette,
                 onDragStart: () => setState(() => _tokenDragActive = true),
                 onDragEnd: (id, finalCanvasPos) {
@@ -290,8 +310,9 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   // -------------------------------------------------------------------------
 
   void _showResizeDialog(String id, BattleMapState mapState, BattleMapNotifier notifier) {
-    final current = mapState.tokenSizeOverrides[id] ?? mapState.tokenSize;
-    var newSize = current;
+    final currentPx = mapState.tokenSizeOverrides[id] ?? mapState.tokenSize;
+    final gs = mapState.gridSize;
+    var cells = currentPx / gs;
 
     showDialog<void>(
       context: context,
@@ -301,13 +322,13 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
           builder: (ctx, setDialogState) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('$newSize px'),
+              Text('${cells.toStringAsFixed(2)} cells'),
               Slider(
-                value: newSize.toDouble(),
-                min: 20,
-                max: 400,
-                divisions: 38,
-                onChanged: (v) => setDialogState(() => newSize = v.round()),
+                value: cells.clamp(0.25, 8.0),
+                min: 0.25,
+                max: 8.0,
+                divisions: 31,
+                onChanged: (v) => setDialogState(() => cells = v),
               ),
             ],
           ),
@@ -315,7 +336,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              notifier.setTokenSizeOverride(id, newSize);
+              notifier.setTokenSizeOverride(id, (cells * gs).round());
               Navigator.pop(ctx);
             },
             child: const Text('Apply'),
