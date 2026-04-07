@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/mind_map.dart';
+import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../database/entity_card.dart';
 import 'mind_map_notifier.dart';
 
 /// A single mind-map node widget positioned in canvas-space.
@@ -24,6 +26,7 @@ class MindMapNodeWidget extends StatefulWidget {
   final bool showResizeHandle;
   final void Function(String entityId)? onOpenEntity;
   final Map<String, Entity>? entities;
+  final List<EntityCategorySchema> categorySchemas;
 
   const MindMapNodeWidget({
     super.key,
@@ -38,6 +41,7 @@ class MindMapNodeWidget extends StatefulWidget {
     this.showResizeHandle = false,
     this.onOpenEntity,
     this.entities,
+    this.categorySchemas = const [],
   });
 
   @override
@@ -473,210 +477,31 @@ class _MindMapNodeWidgetState extends State<MindMapNodeWidget> {
   }
 
   Widget _buildEntityContent(MindMapNode n, DmToolColors palette) {
-    final entity =
-        (n.entityId != null && widget.entities != null)
-            ? widget.entities![n.entityId!]
-            : null;
-    final fs = _fontSize;
+    if (n.entityId == null) {
+      return Padding(
+        padding: const EdgeInsets.all(8),
+        child: Text(
+          'No entity linked',
+          style: TextStyle(fontSize: 10, color: palette.tabText.withValues(alpha: 0.4)),
+        ),
+      );
+    }
 
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header: icon + name
-          Row(
-            children: [
-              Icon(Icons.person_outline,
-                  size: 14, color: palette.tabIndicator),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  entity?.name ?? n.label,
-                  style: TextStyle(
-                    fontSize: fs,
-                    fontWeight: FontWeight.bold,
-                    color: palette.tabActiveText,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 2),
+    final entity = widget.entities?[n.entityId!];
+    final catSchema = entity != null
+        ? widget.categorySchemas
+            .where((c) => c.slug == entity.categorySlug)
+            .firstOrNull
+        : null;
 
-          // Category subtitle
-          if (entity != null)
-            Text(
-              entity.categorySlug.replaceAll('-', ' ').toUpperCase(),
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-                color: palette.tabIndicator,
-              ),
-            )
-          else if (n.entityId != null)
-            Text('Linked entity',
-                style:
-                    TextStyle(fontSize: 10, color: palette.tabIndicator))
-          else
-            Text('No entity linked',
-                style: TextStyle(
-                    fontSize: 10,
-                    color: palette.tabText.withValues(alpha: 0.4))),
-
-          const SizedBox(height: 4),
-          Divider(
-              height: 1,
-              color: palette.nodeText.withValues(alpha: 0.15)),
-          const SizedBox(height: 4),
-
-          // Scrollable body with all entity data
-          Expanded(
-            child: SingleChildScrollView(
-              child: _buildEntityBody(n, entity, palette),
-            ),
-          ),
-        ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(5),
+      child: EntityCard(
+        key: ValueKey('entity_card_${n.entityId}'),
+        entityId: n.entityId!,
+        categorySchema: catSchema,
+        readOnly: true,
       ),
-    );
-  }
-
-  Widget _buildEntityBody(
-      MindMapNode n, Entity? entity, DmToolColors palette) {
-    if (entity == null) {
-      return Text(
-        n.content.isNotEmpty ? n.content : 'No entity linked',
-        style: TextStyle(
-          fontSize: 10,
-          color: palette.tabText
-              .withValues(alpha: n.content.isNotEmpty ? 0.85 : 0.4),
-          height: 1.4,
-        ),
-      );
-    }
-
-    final children = <Widget>[];
-
-    // Description
-    if (entity.description.isNotEmpty) {
-      children.add(Text(
-        entity.description,
-        style: TextStyle(
-          fontSize: 10,
-          color: palette.nodeText.withValues(alpha: 0.85),
-          height: 1.4,
-        ),
-      ));
-      children.add(const SizedBox(height: 6));
-    }
-
-    // Entity fields (key-value pairs from template)
-    if (entity.fields.isNotEmpty) {
-      for (final entry in entity.fields.entries) {
-        final val = entry.value;
-        if (val == null || (val is String && val.isEmpty)) continue;
-        // Skip complex nested values
-        if (val is Map || val is List) continue;
-        children.add(Padding(
-          padding: const EdgeInsets.only(bottom: 2),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${entry.key}: ',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color: palette.nodeText.withValues(alpha: 0.6),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  '$val',
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: palette.nodeText.withValues(alpha: 0.85),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ));
-      }
-      if (entity.fields.isNotEmpty) {
-        children.add(const SizedBox(height: 4));
-      }
-    }
-
-    // Tags
-    if (entity.tags.isNotEmpty) {
-      children.add(Wrap(
-        spacing: 4,
-        runSpacing: 2,
-        children: entity.tags.map((tag) {
-          return Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(
-              color: palette.tabIndicator.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(3),
-            ),
-            child: Text(tag,
-                style: TextStyle(
-                    fontSize: 8, color: palette.tabIndicator)),
-          );
-        }).toList(),
-      ));
-      children.add(const SizedBox(height: 4));
-    }
-
-    // DM Notes
-    if (entity.dmNotes.isNotEmpty) {
-      children.add(Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: palette.nodeText.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(3),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('DM Notes',
-                style: TextStyle(
-                  fontSize: 8,
-                  fontWeight: FontWeight.w600,
-                  color: palette.nodeText.withValues(alpha: 0.5),
-                )),
-            const SizedBox(height: 2),
-            Text(
-              entity.dmNotes,
-              style: TextStyle(
-                fontSize: 9,
-                color: palette.nodeText.withValues(alpha: 0.75),
-                height: 1.3,
-              ),
-            ),
-          ],
-        ),
-      ));
-    }
-
-    if (children.isEmpty) {
-      return Text(
-        'No details available',
-        style: TextStyle(
-          fontSize: 10,
-          color: palette.tabText.withValues(alpha: 0.4),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: children,
     );
   }
 

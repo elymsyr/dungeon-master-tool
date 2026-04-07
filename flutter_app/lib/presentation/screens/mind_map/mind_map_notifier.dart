@@ -232,6 +232,20 @@ class MindMapNotifier extends StateNotifier<MindMapState> {
     viewTransform.value = MindMapViewTransform(scale: newScale, panOffset: newPan);
   }
 
+  /// Returns true if [canvasPos] is inside an entity or note node
+  /// (nodes that contain scrollable content).
+  bool isPointOverScrollableNode(Offset canvasPos) {
+    return state.nodes.any((node) {
+      if (node.nodeType != 'entity' && node.nodeType != 'note') return false;
+      final nodeRect = Rect.fromCenter(
+        center: Offset(node.x, node.y),
+        width: node.width,
+        height: node.height,
+      );
+      return nodeRect.contains(canvasPos);
+    });
+  }
+
   void updateViewportSize(Size size) {
     _viewportSize = size;
   }

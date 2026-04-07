@@ -15,6 +15,7 @@ import '../../widgets/condition_badge.dart';
 import '../../widgets/hp_bar.dart';
 import '../../widgets/resizable_split.dart';
 import '../battle_map/battle_map_screen.dart';
+import '../database/entity_card.dart';
 
 /// Session tab — Python ui/tabs/session_tab.py birebir karşılığı.
 /// Sol: Combat Tracker + Dice grubu
@@ -54,6 +55,26 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final screen = getScreenType(context);
+
+    // Auto-select entity when turn advances
+    ref.listen<int?>(
+      combatProvider.select((s) => s.activeEncounter?.turnIndex),
+      (previous, next) {
+        if (previous == null || next == null || next < 0) return;
+        final enc = ref.read(combatProvider).activeEncounter;
+        if (enc == null || next >= enc.combatants.length) return;
+        final entityId = enc.combatants[next].entityId;
+        if (entityId != null) {
+          setState(() {
+            _selectedCombatantId = entityId;
+            _bottomTabIndex = 3;
+          });
+          ref.read(uiStateProvider.notifier).update(
+            (s) => s.copyWith(sessionBottomTab: 3),
+          );
+        }
+      },
+    );
 
     // İlk encounter yoksa oluştur
     final isEmpty = ref.watch(combatProvider.select((s) => s.encounters.isEmpty));
@@ -400,100 +421,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         if (_selectedCombatantId == null) {
           return Center(child: Text('Select a combatant\nto view stats', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
         }
+        final schema = ref.watch(worldSchemaProvider);
         final entities = ref.watch(entityProvider);
         final entity = entities[_selectedCombatantId];
         if (entity == null) {
           return Center(child: Text('Entity not found', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
         }
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Text(entity.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
-              Text(entity.categorySlug.toUpperCase(), style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary, letterSpacing: 1)),
-              if (entity.source.isNotEmpty)
-                Text('Source: ${entity.source}', style: TextStyle(fontSize: 11, color: palette.tabText)),
-              if (entity.description.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(entity.description, style: TextStyle(fontSize: 12, color: palette.htmlText)),
-              ],
-              const SizedBox(height: 8),
-              // Fields
-              ...entity.fields.entries.map((e) {
-                final val = e.value;
-                if (val == null) return const SizedBox.shrink();
-                if (val is Map) {
-                  // Stat block or combat stats
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(e.key, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
-                        const SizedBox(height: 2),
-                        Wrap(
-                          spacing: 8,
-                          children: val.entries.map((s) => Chip(
-                            label: Text('${s.key}: ${s.value}', style: const TextStyle(fontSize: 10)),
-                            visualDensity: VisualDensity.compact,
-                          )).toList(),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                if (val is List) {
-                  if (val.isEmpty) return const SizedBox.shrink();
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(e.key, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
-                        ...val.map((item) => Padding(
-                          padding: const EdgeInsets.only(left: 8, top: 2),
-                          child: Text('- ${item is Map ? (item['name'] ?? item.toString()) : item}', style: TextStyle(fontSize: 11, color: palette.htmlText)),
-                        )),
-                      ],
-                    ),
-                  );
-                }
-                final strVal = val.toString();
-                if (strVal.isEmpty) return const SizedBox.shrink();
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(width: 120, child: Text(e.key, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: palette.tabText))),
-                      Expanded(child: Text(strVal, style: TextStyle(fontSize: 11, color: palette.htmlText))),
-                    ],
-                  ),
-                );
-              }),
-              // DM Notes
-              if (entity.dmNotes.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: palette.tokenBorderHostile.withValues(alpha: 0.3)),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('DM Notes', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: palette.tokenBorderHostile)),
-                      const SizedBox(height: 4),
-                      Text(entity.dmNotes, style: TextStyle(fontSize: 12, color: palette.htmlText)),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
+        final catSchema = schema.categories
+            .where((c) => c.slug == entity.categorySlug)
+            .firstOrNull;
+        return EntityCard(
+          entityId: _selectedCombatantId!,
+          categorySchema: catSchema,
+          readOnly: true,
         );
       default:
         return const SizedBox.shrink();

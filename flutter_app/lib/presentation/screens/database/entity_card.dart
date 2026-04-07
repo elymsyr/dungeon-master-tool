@@ -39,6 +39,12 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   late TextEditingController _tagsController;
   late TextEditingController _dmNotesController;
 
+  final FocusNode _nameFocus = FocusNode();
+  final FocusNode _descFocus = FocusNode();
+  final FocusNode _sourceFocus = FocusNode();
+  final FocusNode _tagsFocus = FocusNode();
+  final FocusNode _dmNotesFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -56,7 +62,20 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     _sourceController.dispose();
     _tagsController.dispose();
     _dmNotesController.dispose();
+    _nameFocus.dispose();
+    _descFocus.dispose();
+    _sourceFocus.dispose();
+    _tagsFocus.dispose();
+    _dmNotesFocus.dispose();
     super.dispose();
+  }
+
+  /// Sync controller text only when the field is not focused (to avoid
+  /// overwriting user input mid-keystroke).
+  void _syncIfNotFocused(TextEditingController ctrl, FocusNode focus, String newValue) {
+    if (!focus.hasFocus && ctrl.text != newValue) {
+      ctrl.text = newValue;
+    }
   }
 
   void _updateField(String fieldKey, dynamic value) {
@@ -91,13 +110,13 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       );
     }
 
-    // Controller sync
-    if (_nameController.text != entity.name) _nameController.text = entity.name;
-    if (_descController.text != entity.description) _descController.text = entity.description;
-    if (_dmNotesController.text != entity.dmNotes) _dmNotesController.text = entity.dmNotes;
-    if (_sourceController.text != entity.source) _sourceController.text = entity.source;
+    // Controller sync — only update when the field is not focused
+    _syncIfNotFocused(_nameController, _nameFocus, entity.name);
+    _syncIfNotFocused(_descController, _descFocus, entity.description);
+    _syncIfNotFocused(_dmNotesController, _dmNotesFocus, entity.dmNotes);
+    _syncIfNotFocused(_sourceController, _sourceFocus, entity.source);
     final tagsStr = entity.tags.join(', ');
-    if (_tagsController.text != tagsStr) _tagsController.text = tagsStr;
+    _syncIfNotFocused(_tagsController, _tagsFocus, tagsStr);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -146,6 +165,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                       // İsim
                       TextFormField(
                         controller: _nameController,
+                        focusNode: _nameFocus,
                         readOnly: widget.readOnly,
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette.tabActiveText),
                         decoration: InputDecoration(
@@ -175,6 +195,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                       else
                         TextFormField(
                           controller: _descController,
+                          focusNode: _descFocus,
                           readOnly: widget.readOnly,
                           maxLines: null,
                           minLines: 3,
@@ -192,6 +213,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                           Expanded(
                             child: TextFormField(
                               controller: _sourceController,
+                              focusNode: _sourceFocus,
                               readOnly: widget.readOnly,
                               style: TextStyle(fontSize: 12, color: palette.htmlText),
                               decoration: InputDecoration(
@@ -206,6 +228,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                           Expanded(
                             child: TextFormField(
                               controller: _tagsController,
+                              focusNode: _tagsFocus,
                               readOnly: widget.readOnly,
                               style: TextStyle(fontSize: 12, color: palette.htmlText),
                               decoration: InputDecoration(
@@ -261,6 +284,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _dmNotesController,
+                  focusNode: _dmNotesFocus,
                   readOnly: widget.readOnly,
                   maxLines: 4,
                   style: TextStyle(fontSize: 13, color: palette.htmlText),
