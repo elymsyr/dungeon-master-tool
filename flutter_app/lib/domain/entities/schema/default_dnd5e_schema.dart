@@ -166,9 +166,10 @@ WorldSchema generateDefaultDnd5eSchema() {
         fieldKey: 'condition_stats',
         label: 'Condition Stats',
         fieldType: FieldType.conditionStats,
-        defaultValue: const {'default_duration': ''},
+        defaultValue: const {'default_duration': '', 'effect': ''},
         subFields: const [
           {'key': 'default_duration', 'label': 'Default Duration (turns)', 'type': 'integer'},
+          {'key': 'effect', 'label': 'Effect', 'type': 'textarea'},
         ],
         orderIndex: fieldIdx++,
         isBuiltin: true,

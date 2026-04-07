@@ -166,11 +166,19 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                       : templates.first.schemaId;
                   if (validId != _selectedTemplate?.schemaId) _selectedTemplate = templates.first;
 
+                  // Deduplicate by schemaId to avoid DropdownButton assertion
+                  final seen = <String>{};
+                  final uniqueTemplates = templates.where((t) => seen.add(t.schemaId)).toList();
+                  final finalId = uniqueTemplates.any((t) => t.schemaId == validId)
+                      ? validId
+                      : uniqueTemplates.first.schemaId;
+                  if (finalId != validId) _selectedTemplate = uniqueTemplates.first;
+
                   return DropdownButtonFormField<String>(
-                    key: ValueKey('tmpl_${templates.length}'),
-                    initialValue: validId,
+                    key: ValueKey('tmpl_${uniqueTemplates.length}'),
+                    initialValue: finalId,
                     decoration: const InputDecoration(labelText: 'Template'),
-                    items: templates.map((t) => DropdownMenuItem(
+                    items: uniqueTemplates.map((t) => DropdownMenuItem(
                       value: t.schemaId,
                       child: Text('${t.name}  (${t.categories.length} cat)', style: const TextStyle(fontSize: 12)),
                     )).toList(),

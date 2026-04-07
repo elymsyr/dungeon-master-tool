@@ -211,11 +211,11 @@ class _TemplateEditorState extends State<TemplateEditor> {
               Expanded(
                 child: _showEncounterConfig
                     ? _EncounterConfigEditor(
-                        config: _schema.encounterConfig,
+                        schema: _schema,
                         readOnly: widget.readOnly,
                         palette: palette,
-                        onChanged: (updated) => setState(() {
-                          _schema = _schema.copyWith(encounterConfig: updated);
+                        onSchemaChanged: (updated) => setState(() {
+                          _schema = updated;
                         }),
                       )
                     : selectedCat == null
@@ -362,42 +362,12 @@ class _CategoryEditor extends StatelessWidget {
           const SizedBox(height: 12),
 
           // === FIELD GROUPS ===
-          Text('Field Groups', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
+          Row(
             children: [
-              ...category.fieldGroups.asMap().entries.map((entry) {
-                final gi = entry.key;
-                final group = entry.value;
-                final fieldCount = category.fields.where((f) => f.groupId == group.groupId).length;
-                return InputChip(
-                  label: Text(
-                    '${group.name.isEmpty ? 'Unnamed' : group.name} ($fieldCount) [${group.gridColumns}col]',
-                    style: const TextStyle(fontSize: 10),
-                  ),
-                  deleteIcon: readOnly ? null : const Icon(Icons.close, size: 14),
-                  onDeleted: readOnly ? null : () {
-                    // Gruptaki field'ları ungrouped yap
-                    final updatedFields = category.fields.map((f) =>
-                      f.groupId == group.groupId ? f.copyWith(groupId: null) : f
-                    ).toList();
-                    final updatedGroups = List.of(category.fieldGroups)..removeAt(gi);
-                    onChanged(category.copyWith(fields: updatedFields, fieldGroups: updatedGroups));
-                  },
-                  onPressed: readOnly ? null : () => _editGroup(context, group, (updated) {
-                    final list = List.of(category.fieldGroups);
-                    list[gi] = updated;
-                    onChanged(category.copyWith(fieldGroups: list));
-                  }),
-                );
-              }),
+              Text('Field Groups', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
+              const Spacer(),
               if (!readOnly)
-                ActionChip(
-                  avatar: const Icon(Icons.add, size: 14),
-                  label: const Text('Add Group', style: TextStyle(fontSize: 10)),
-                  visualDensity: VisualDensity.compact,
+                TextButton.icon(
                   onPressed: () {
                     final newGroup = FieldGroup(
                       groupId: _uuid.v4(),
@@ -406,9 +376,98 @@ class _CategoryEditor extends StatelessWidget {
                     );
                     onChanged(category.copyWith(fieldGroups: [...category.fieldGroups, newGroup]));
                   },
+                  icon: const Icon(Icons.add, size: 14),
+                  label: const Text('Add Group', style: TextStyle(fontSize: 11)),
                 ),
             ],
           ),
+          const SizedBox(height: 4),
+          // Group header
+          if (category.fieldGroups.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              color: palette.tabBg,
+              child: Row(
+                children: [
+                  if (!readOnly) const SizedBox(width: 40),
+                  Expanded(flex: 3, child: Text('Name', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText))),
+                  SizedBox(width: 50, child: Text('Cols', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText), textAlign: TextAlign.center)),
+                  SizedBox(width: 50, child: Text('Fields', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText), textAlign: TextAlign.center)),
+                  if (!readOnly) const SizedBox(width: 28),
+                ],
+              ),
+            ),
+          // Sorted group rows
+          ...(category.fieldGroups.toList()..sort((a, b) => a.orderIndex.compareTo(b.orderIndex))).asMap().entries.map((entry) {
+            final gi = entry.key;
+            final group = entry.value;
+            final fieldCount = category.fields.where((f) => f.groupId == group.groupId).length;
+            final sortedGroups = category.fieldGroups.toList()..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: palette.featureCardBorder.withValues(alpha: 0.3)))),
+              child: Row(
+                children: [
+                  if (!readOnly)
+                    SizedBox(
+                      width: 40,
+                      child: Row(
+                        children: [
+                          InkWell(
+                            onTap: gi > 0 ? () {
+                              final list = List.of(sortedGroups);
+                              final item = list.removeAt(gi);
+                              list.insert(gi - 1, item);
+                              // Re-index orderIndex
+                              final reindexed = list.asMap().entries.map((e) => e.value.copyWith(orderIndex: e.key)).toList();
+                              onChanged(category.copyWith(fieldGroups: reindexed));
+                            } : null,
+                            child: Icon(Icons.keyboard_arrow_up, size: 16, color: gi > 0 ? palette.tabText : palette.featureCardBorder),
+                          ),
+                          InkWell(
+                            onTap: gi < sortedGroups.length - 1 ? () {
+                              final list = List.of(sortedGroups);
+                              final item = list.removeAt(gi);
+                              list.insert(gi + 1, item);
+                              final reindexed = list.asMap().entries.map((e) => e.value.copyWith(orderIndex: e.key)).toList();
+                              onChanged(category.copyWith(fieldGroups: reindexed));
+                            } : null,
+                            child: Icon(Icons.keyboard_arrow_down, size: 16, color: gi < sortedGroups.length - 1 ? palette.tabText : palette.featureCardBorder),
+                          ),
+                        ],
+                      ),
+                    ),
+                  Expanded(
+                    flex: 3,
+                    child: InkWell(
+                      onTap: readOnly ? null : () => _editGroup(context, group, (updated) {
+                        final list = category.fieldGroups.map((g) => g.groupId == group.groupId ? updated : g).toList();
+                        onChanged(category.copyWith(fieldGroups: list));
+                      }),
+                      child: Text(group.name.isEmpty ? 'Unnamed' : group.name, style: TextStyle(fontSize: 12, color: palette.tabActiveText)),
+                    ),
+                  ),
+                  SizedBox(width: 50, child: Text('${group.gridColumns}', style: const TextStyle(fontSize: 11), textAlign: TextAlign.center)),
+                  SizedBox(width: 50, child: Text('$fieldCount', style: const TextStyle(fontSize: 11), textAlign: TextAlign.center)),
+                  if (!readOnly)
+                    SizedBox(
+                      width: 28,
+                      child: IconButton(
+                        icon: Icon(Icons.close, size: 14, color: palette.dangerBtnBg),
+                        onPressed: () {
+                          final updatedFields = category.fields.map((f) =>
+                            f.groupId == group.groupId ? f.copyWith(groupId: null) : f
+                          ).toList();
+                          final updatedGroups = category.fieldGroups.where((g) => g.groupId != group.groupId).toList();
+                          onChanged(category.copyWith(fields: updatedFields, fieldGroups: updatedGroups));
+                        },
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }),
 
           const SizedBox(height: 12),
 
@@ -1236,12 +1295,54 @@ class _CategoryEditor extends StatelessWidget {
 /// Renk seçici nokta.
 /// Encounter ayarları editörü — combat stats alanları, kolon yapısı, conditions.
 class _EncounterConfigEditor extends StatelessWidget {
-  final EncounterConfig config;
+  final WorldSchema schema;
   final bool readOnly;
   final DmToolColors palette;
-  final ValueChanged<EncounterConfig> onChanged;
+  final ValueChanged<WorldSchema> onSchemaChanged;
 
-  const _EncounterConfigEditor({required this.config, required this.readOnly, required this.palette, required this.onChanged});
+  const _EncounterConfigEditor({required this.schema, required this.readOnly, required this.palette, required this.onSchemaChanged});
+
+  EncounterConfig get config => schema.encounterConfig;
+
+  void _onConfigChanged(EncounterConfig updated) {
+    onSchemaChanged(schema.copyWith(encounterConfig: updated));
+  }
+
+  /// Find the canonical sub-fields for a given field key and type.
+  List<Map<String, String>> _getSubFields(String fieldKey, FieldType fieldType) {
+    for (final cat in schema.categories) {
+      for (final f in cat.fields) {
+        if (f.fieldKey == fieldKey && f.fieldType == fieldType) {
+          return f.subFields;
+        }
+      }
+    }
+    return [];
+  }
+
+  /// Update sub-fields across ALL categories that have the matching field.
+  WorldSchema _updateSubFieldsAcrossCategories(
+    String fieldKey,
+    FieldType fieldType,
+    List<Map<String, String>> newSubFields,
+  ) {
+    // Build new defaultValue from sub-fields
+    final newDefault = <String, dynamic>{};
+    for (final sf in newSubFields) {
+      newDefault[sf['key'] ?? ''] = '';
+    }
+
+    final updatedCategories = schema.categories.map((cat) {
+      final updatedFields = cat.fields.map((f) {
+        if (f.fieldKey == fieldKey && f.fieldType == fieldType) {
+          return f.copyWith(subFields: newSubFields, defaultValue: newDefault);
+        }
+        return f;
+      }).toList();
+      return cat.copyWith(fields: updatedFields);
+    }).toList();
+    return schema.copyWith(categories: updatedCategories);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1269,7 +1370,7 @@ class _EncounterConfigEditor extends StatelessWidget {
                   readOnly: readOnly,
                   decoration: const InputDecoration(labelText: 'Combat Stats Field Key'),
                   style: const TextStyle(fontSize: 12),
-                  onChanged: (v) => onChanged(config.copyWith(combatStatsFieldKey: v)),
+                  onChanged: (v) => _onConfigChanged(config.copyWith(combatStatsFieldKey: v)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1279,7 +1380,7 @@ class _EncounterConfigEditor extends StatelessWidget {
                   readOnly: readOnly,
                   decoration: const InputDecoration(labelText: 'Stat Block Field Key'),
                   style: const TextStyle(fontSize: 12),
-                  onChanged: (v) => onChanged(config.copyWith(statBlockFieldKey: v)),
+                  onChanged: (v) => _onConfigChanged(config.copyWith(statBlockFieldKey: v)),
                 ),
               ),
             ],
@@ -1293,7 +1394,7 @@ class _EncounterConfigEditor extends StatelessWidget {
                   readOnly: readOnly,
                   decoration: const InputDecoration(labelText: 'Initiative Sub-Field'),
                   style: const TextStyle(fontSize: 12),
-                  onChanged: (v) => onChanged(config.copyWith(initiativeSubField: v)),
+                  onChanged: (v) => _onConfigChanged(config.copyWith(initiativeSubField: v)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1303,7 +1404,7 @@ class _EncounterConfigEditor extends StatelessWidget {
                   readOnly: readOnly,
                   decoration: const InputDecoration(labelText: 'Sort By'),
                   style: const TextStyle(fontSize: 12),
-                  onChanged: (v) => onChanged(config.copyWith(sortBySubField: v)),
+                  onChanged: (v) => _onConfigChanged(config.copyWith(sortBySubField: v)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1317,7 +1418,7 @@ class _EncounterConfigEditor extends StatelessWidget {
                     DropdownMenuItem(value: 'desc', child: Text('Desc', style: TextStyle(fontSize: 11))),
                     DropdownMenuItem(value: 'asc', child: Text('Asc', style: TextStyle(fontSize: 11))),
                   ],
-                  onChanged: readOnly ? null : (v) => onChanged(config.copyWith(sortDirection: v ?? 'desc')),
+                  onChanged: readOnly ? null : (v) => _onConfigChanged(config.copyWith(sortDirection: v ?? 'desc')),
                 ),
               ),
             ],
@@ -1334,7 +1435,7 @@ class _EncounterConfigEditor extends StatelessWidget {
                 TextButton.icon(
                   onPressed: () {
                     final cols = [...config.columns, const EncounterColumnConfig(subFieldKey: '', label: 'New')];
-                    onChanged(config.copyWith(columns: cols));
+                    _onConfigChanged(config.copyWith(columns: cols));
                   },
                   icon: const Icon(Icons.add, size: 14),
                   label: const Text('Add Column', style: TextStyle(fontSize: 11)),
@@ -1373,11 +1474,11 @@ class _EncounterConfigEditor extends StatelessWidget {
                       child: Row(
                         children: [
                           InkWell(
-                            onTap: i > 0 ? () { final l = List<EncounterColumnConfig>.from(config.columns); final item = l.removeAt(i); l.insert(i - 1, item); onChanged(config.copyWith(columns: l)); } : null,
+                            onTap: i > 0 ? () { final l = List<EncounterColumnConfig>.from(config.columns); final item = l.removeAt(i); l.insert(i - 1, item); _onConfigChanged(config.copyWith(columns: l)); } : null,
                             child: Icon(Icons.keyboard_arrow_up, size: 16, color: i > 0 ? palette.tabText : palette.featureCardBorder),
                           ),
                           InkWell(
-                            onTap: i < config.columns.length - 1 ? () { final l = List<EncounterColumnConfig>.from(config.columns); final item = l.removeAt(i); l.insert(i + 1, item); onChanged(config.copyWith(columns: l)); } : null,
+                            onTap: i < config.columns.length - 1 ? () { final l = List<EncounterColumnConfig>.from(config.columns); final item = l.removeAt(i); l.insert(i + 1, item); _onConfigChanged(config.copyWith(columns: l)); } : null,
                             child: Icon(Icons.keyboard_arrow_down, size: 16, color: i < config.columns.length - 1 ? palette.tabText : palette.featureCardBorder),
                           ),
                         ],
@@ -1388,14 +1489,14 @@ class _EncounterConfigEditor extends StatelessWidget {
                     child: readOnly
                         ? Text(col.subFieldKey, style: const TextStyle(fontSize: 12))
                         : TextFormField(initialValue: col.subFieldKey, style: const TextStyle(fontSize: 12), decoration: const InputDecoration(border: InputBorder.none, isDense: true, filled: false),
-                            onChanged: (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(subFieldKey: v); onChanged(config.copyWith(columns: l)); }),
+                            onChanged: (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(subFieldKey: v); _onConfigChanged(config.copyWith(columns: l)); }),
                   ),
                   Expanded(
                     flex: 2,
                     child: readOnly
                         ? Text(col.label, style: const TextStyle(fontSize: 12))
                         : TextFormField(initialValue: col.label, style: const TextStyle(fontSize: 12), decoration: const InputDecoration(border: InputBorder.none, isDense: true, filled: false),
-                            onChanged: (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(label: v); onChanged(config.copyWith(columns: l)); }),
+                            onChanged: (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(label: v); _onConfigChanged(config.copyWith(columns: l)); }),
                   ),
                   SizedBox(
                     width: 50,
@@ -1403,16 +1504,25 @@ class _EncounterConfigEditor extends StatelessWidget {
                         ? Text('${col.width}', style: const TextStyle(fontSize: 11), textAlign: TextAlign.center)
                         : TextFormField(initialValue: '${col.width}', style: const TextStyle(fontSize: 11), textAlign: TextAlign.center, keyboardType: TextInputType.number,
                             decoration: const InputDecoration(border: InputBorder.none, isDense: true, filled: false),
-                            onChanged: (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(width: int.tryParse(v) ?? 0); onChanged(config.copyWith(columns: l)); }),
+                            onChanged: (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(width: int.tryParse(v) ?? 0); _onConfigChanged(config.copyWith(columns: l)); }),
                   ),
-                  SizedBox(width: 40, child: Checkbox(value: col.editable, onChanged: readOnly ? null : (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(editable: v ?? false); onChanged(config.copyWith(columns: l)); }, visualDensity: VisualDensity.compact)),
-                  SizedBox(width: 40, child: Checkbox(value: col.showButtons, onChanged: readOnly ? null : (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(showButtons: v ?? false); onChanged(config.copyWith(columns: l)); }, visualDensity: VisualDensity.compact)),
+                  SizedBox(width: 40, child: Checkbox(value: col.editable, onChanged: readOnly ? null : (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(editable: v ?? false); _onConfigChanged(config.copyWith(columns: l)); }, visualDensity: VisualDensity.compact)),
+                  SizedBox(width: 40, child: Checkbox(value: col.showButtons, onChanged: readOnly ? null : (v) { final l = List<EncounterColumnConfig>.from(config.columns); l[i] = col.copyWith(showButtons: v ?? false); _onConfigChanged(config.copyWith(columns: l)); }, visualDensity: VisualDensity.compact)),
                   if (!readOnly)
-                    SizedBox(width: 28, child: IconButton(icon: Icon(Icons.close, size: 14, color: palette.dangerBtnBg), onPressed: () { final l = List<EncounterColumnConfig>.from(config.columns)..removeAt(i); onChanged(config.copyWith(columns: l)); }, visualDensity: VisualDensity.compact)),
+                    SizedBox(width: 28, child: IconButton(icon: Icon(Icons.close, size: 14, color: palette.dangerBtnBg), onPressed: () { final l = List<EncounterColumnConfig>.from(config.columns)..removeAt(i); _onConfigChanged(config.copyWith(columns: l)); }, visualDensity: VisualDensity.compact)),
                 ],
               ),
             );
           }),
+
+          const SizedBox(height: 20),
+
+          // === COMBAT STATS SUB-FIELDS ===
+          _buildSubFieldEditor(
+            title: 'Combat Stats Sub-Fields',
+            fieldKey: config.combatStatsFieldKey,
+            fieldType: FieldType.combatStats,
+          ),
 
           const SizedBox(height: 20),
 
@@ -1430,11 +1540,143 @@ class _EncounterConfigEditor extends StatelessWidget {
               readOnly: readOnly,
               decoration: const InputDecoration(labelText: 'Condition Stats Field Key'),
               style: const TextStyle(fontSize: 12),
-              onChanged: (v) => onChanged(config.copyWith(conditionStatsFieldKey: v)),
+              onChanged: (v) => _onConfigChanged(config.copyWith(conditionStatsFieldKey: v)),
             ),
+          ),
+          const SizedBox(height: 12),
+
+          // === CONDITION STATS SUB-FIELDS ===
+          _buildSubFieldEditor(
+            title: 'Condition Stats Sub-Fields',
+            fieldKey: config.conditionStatsFieldKey,
+            fieldType: FieldType.conditionStats,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSubFieldEditor({
+    required String title,
+    required String fieldKey,
+    required FieldType fieldType,
+  }) {
+    final subFields = _getSubFields(fieldKey, fieldType);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
+            const Spacer(),
+            if (!readOnly)
+              TextButton.icon(
+                onPressed: () {
+                  final updated = [...subFields, const {'key': '', 'label': 'New Field', 'type': 'text'}];
+                  onSchemaChanged(_updateSubFieldsAcrossCategories(fieldKey, fieldType, updated));
+                },
+                icon: const Icon(Icons.add, size: 14),
+                label: const Text('Add Sub-Field', style: TextStyle(fontSize: 11)),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        // Header
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          color: palette.tabBg,
+          child: Row(
+            children: [
+              Expanded(flex: 2, child: Text('Key', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText))),
+              Expanded(flex: 2, child: Text('Label', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText))),
+              SizedBox(width: 100, child: Text('Type', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText), textAlign: TextAlign.center)),
+              if (!readOnly) const SizedBox(width: 28),
+            ],
+          ),
+        ),
+        // Rows
+        ...subFields.asMap().entries.map((entry) {
+          final i = entry.key;
+          final sf = entry.value;
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: palette.featureCardBorder.withValues(alpha: 0.3)))),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: readOnly
+                      ? Text(sf['key'] ?? '', style: const TextStyle(fontSize: 12))
+                      : TextFormField(
+                          initialValue: sf['key'] ?? '',
+                          style: const TextStyle(fontSize: 12),
+                          decoration: const InputDecoration(border: InputBorder.none, isDense: true, filled: false),
+                          onChanged: (v) {
+                            final updated = subFields.map((s) => Map<String, String>.from(s)).toList();
+                            updated[i] = {...updated[i], 'key': v};
+                            onSchemaChanged(_updateSubFieldsAcrossCategories(fieldKey, fieldType, updated));
+                          },
+                        ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: readOnly
+                      ? Text(sf['label'] ?? '', style: const TextStyle(fontSize: 12))
+                      : TextFormField(
+                          initialValue: sf['label'] ?? '',
+                          style: const TextStyle(fontSize: 12),
+                          decoration: const InputDecoration(border: InputBorder.none, isDense: true, filled: false),
+                          onChanged: (v) {
+                            final updated = subFields.map((s) => Map<String, String>.from(s)).toList();
+                            updated[i] = {...updated[i], 'label': v};
+                            onSchemaChanged(_updateSubFieldsAcrossCategories(fieldKey, fieldType, updated));
+                          },
+                        ),
+                ),
+                SizedBox(
+                  width: 100,
+                  child: readOnly
+                      ? Text(sf['type'] ?? 'text', style: const TextStyle(fontSize: 11), textAlign: TextAlign.center)
+                      : DropdownButtonFormField<String>(
+                          initialValue: sf['type'] ?? 'text',
+                          decoration: const InputDecoration(border: InputBorder.none, isDense: true, filled: false, contentPadding: EdgeInsets.zero),
+                          isExpanded: true,
+                          items: const [
+                            DropdownMenuItem(value: 'text', child: Text('Text', style: TextStyle(fontSize: 11))),
+                            DropdownMenuItem(value: 'integer', child: Text('Integer', style: TextStyle(fontSize: 11))),
+                            DropdownMenuItem(value: 'textarea', child: Text('Textarea', style: TextStyle(fontSize: 11))),
+                            DropdownMenuItem(value: 'dice', child: Text('Dice', style: TextStyle(fontSize: 11))),
+                          ],
+                          onChanged: (v) {
+                            final updated = subFields.map((s) => Map<String, String>.from(s)).toList();
+                            updated[i] = {...updated[i], 'type': v ?? 'text'};
+                            onSchemaChanged(_updateSubFieldsAcrossCategories(fieldKey, fieldType, updated));
+                          },
+                        ),
+                ),
+                if (!readOnly)
+                  SizedBox(
+                    width: 28,
+                    child: IconButton(
+                      icon: Icon(Icons.close, size: 14, color: palette.dangerBtnBg),
+                      onPressed: () {
+                        final updated = subFields.map((s) => Map<String, String>.from(s)).toList()..removeAt(i);
+                        onSchemaChanged(_updateSubFieldsAcrossCategories(fieldKey, fieldType, updated));
+                      },
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }),
+        if (subFields.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text('No sub-fields defined', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary, fontStyle: FontStyle.italic)),
+          ),
+      ],
     );
   }
 

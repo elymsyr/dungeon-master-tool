@@ -658,6 +658,18 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         final combatStats = entity?.fields[cfg.combatStatsFieldKey];
         final statsMap = combatStats is Map ? Map<String, dynamic>.from(combatStats) : <String, dynamic>{};
 
+        // Resolve condition sub-fields once per list build
+        List<Map<String, String>>? condSubFields;
+        for (final cat in schema.categories) {
+          for (final f in cat.fields) {
+            if (f.fieldKey == cfg.conditionStatsFieldKey) {
+              condSubFields = f.subFields;
+              break;
+            }
+          }
+          if (condSubFields != null) break;
+        }
+
         return _MobileCombatCard(
           combatant: c,
           isActive: index == enc.turnIndex,
@@ -672,6 +684,15 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           onDelete: () => ref.read(combatProvider.notifier).deleteCombatant(c.id),
           onAddCondition: (id) => _showAddConditionDialog(id),
           onRemoveCondition: (id, name) => ref.read(combatProvider.notifier).removeCondition(id, name),
+          onUpdateConditionDuration: (id, name, dur) => ref.read(combatProvider.notifier).updateConditionDuration(id, name, dur),
+          conditionStatsSubFields: condSubFields,
+          getConditionStats: (entityId) {
+            if (entityId == null) return {};
+            final allEntities = ref.read(entityProvider);
+            final e = allEntities[entityId];
+            final raw = e?.fields[cfg.conditionStatsFieldKey];
+            return raw is Map ? Map<String, dynamic>.from(raw) : {};
+          },
         );
       },
     );
@@ -1059,6 +1080,9 @@ class _MobileCombatCard extends StatelessWidget {
   final VoidCallback onDelete;
   final void Function(String combatantId) onAddCondition;
   final void Function(String combatantId, String conditionName) onRemoveCondition;
+  final void Function(String combatantId, String condName, int? newDuration) onUpdateConditionDuration;
+  final List<Map<String, String>>? conditionStatsSubFields;
+  final Map<String, dynamic> Function(String? entityId) getConditionStats;
 
   const _MobileCombatCard({
     required this.combatant,
@@ -1071,6 +1095,9 @@ class _MobileCombatCard extends StatelessWidget {
     required this.onDelete,
     required this.onAddCondition,
     required this.onRemoveCondition,
+    required this.onUpdateConditionDuration,
+    required this.getConditionStats,
+    this.conditionStatsSubFields,
   });
 
   @override
@@ -1176,8 +1203,12 @@ class _MobileCombatCard extends StatelessWidget {
                 runSpacing: 2,
                 children: combatant.conditions.map((cond) => ConditionBadge(
                   condition: cond,
+                  combatantId: combatant.id,
                   palette: palette,
+                  conditionStats: getConditionStats(cond.entityId),
+                  conditionStatsSubFields: conditionStatsSubFields,
                   onRemove: () => onRemoveCondition(combatant.id, cond.name),
+                  onUpdateDuration: (dur) => onUpdateConditionDuration(combatant.id, cond.name, dur),
                 )).toList(),
               ),
             ],
@@ -1284,11 +1315,35 @@ class _CombatantRow extends ConsumerWidget {
                 spacing: 2,
                 runSpacing: 2,
                 children: [
-                  ...c.conditions.map((cond) => ConditionBadge(
-                    condition: cond,
-                    palette: palette,
-                    onRemove: () => ref.read(combatProvider.notifier).removeCondition(c.id, cond.name),
-                  )),
+                  ...c.conditions.map((cond) {
+                    // Look up condition entity stats for tooltip
+                    Map<String, dynamic>? condStats;
+                    if (cond.entityId != null) {
+                      final condEntity = ref.watch(entityProvider.select((m) => m[cond.entityId]));
+                      final raw = condEntity?.fields[cfg.conditionStatsFieldKey];
+                      if (raw is Map) condStats = Map<String, dynamic>.from(raw);
+                    }
+                    // Get sub-field definitions for labels
+                    List<Map<String, String>>? condSubFields;
+                    for (final cat in schema.categories) {
+                      for (final f in cat.fields) {
+                        if (f.fieldKey == cfg.conditionStatsFieldKey) {
+                          condSubFields = f.subFields;
+                          break;
+                        }
+                      }
+                      if (condSubFields != null) break;
+                    }
+                    return ConditionBadge(
+                      condition: cond,
+                      combatantId: c.id,
+                      palette: palette,
+                      conditionStats: condStats,
+                      conditionStatsSubFields: condSubFields,
+                      onRemove: () => ref.read(combatProvider.notifier).removeCondition(c.id, cond.name),
+                      onUpdateDuration: (dur) => ref.read(combatProvider.notifier).updateConditionDuration(c.id, cond.name, dur),
+                    );
+                  }),
                   InkWell(
                     onTap: () => onShowAddCondition(c.id, cfg.conditions),
                     child: Container(
