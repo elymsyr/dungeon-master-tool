@@ -264,15 +264,18 @@ class CombatNotifier extends StateNotifier<CombatState>
       newRound++;
     }
 
-    // Condition süreleri düşür
-    final updatedCombatants = enc.combatants.map((c) {
-      if (c.conditions.isEmpty) return c;
-      final updatedConditions = c.conditions.map((cond) {
-        if (cond.duration == null || cond.duration! <= 0) return cond;
-        return cond.copyWith(duration: cond.duration! - 1);
-      }).where((cond) => cond.duration == null || cond.duration! > 0).toList();
-      return c.copyWith(conditions: updatedConditions);
-    }).toList();
+    // Condition süreleri düşür — sadece yeni round başında
+    final isNewRound = newRound > enc.round;
+    final updatedCombatants = isNewRound
+        ? enc.combatants.map((c) {
+            if (c.conditions.isEmpty) return c;
+            final updatedConditions = c.conditions.map((cond) {
+              if (cond.duration == null || cond.duration! <= 0) return cond;
+              return cond.copyWith(duration: cond.duration! - 1);
+            }).where((cond) => cond.duration == null || cond.duration! > 0).toList();
+            return c.copyWith(conditions: updatedConditions);
+          }).toList()
+        : enc.combatants;
 
     _updateEncounter(enc.copyWith(
       combatants: updatedCombatants,
@@ -351,14 +354,22 @@ class CombatNotifier extends StateNotifier<CombatState>
     }
   }
 
-  void addCondition(String combatantId, String condName, int? duration) {
+  void addCondition(String combatantId, String condName, int? duration, {String? entityId}) {
     final enc = state.activeEncounter;
     if (enc == null) return;
     pushUndo(state);
 
     final updated = enc.combatants.map((c) {
       if (c.id != combatantId) return c;
-      return c.copyWith(conditions: [...c.conditions, CombatCondition(name: condName, duration: duration)]);
+      return c.copyWith(conditions: [
+        ...c.conditions,
+        CombatCondition(
+          name: condName,
+          duration: duration,
+          initialDuration: duration,
+          entityId: entityId,
+        ),
+      ]);
     }).toList();
 
     _updateEncounter(enc.copyWith(combatants: updated));

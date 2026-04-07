@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -1001,11 +1002,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                       children: conditionEntities.map((e) {
                         final stats = e.fields[cfg.conditionStatsFieldKey];
                         final defaultDuration = stats is Map ? int.tryParse('${stats['default_duration'] ?? ''}') : null;
+                        final hasImage = e.imagePath.isNotEmpty || e.images.isNotEmpty;
+                        final imgPath = e.imagePath.isNotEmpty ? e.imagePath : (e.images.isNotEmpty ? e.images.first : null);
                         return ActionChip(
+                          avatar: hasImage && imgPath != null
+                              ? CircleAvatar(
+                                  backgroundImage: FileImage(File(imgPath)),
+                                  radius: 10,
+                                )
+                              : null,
                           label: Text(e.name, style: const TextStyle(fontSize: 10)),
                           visualDensity: VisualDensity.compact,
                           onPressed: () {
-                            ref.read(combatProvider.notifier).addCondition(combatantId, e.name, defaultDuration);
+                            ref.read(combatProvider.notifier).addCondition(combatantId, e.name, defaultDuration, entityId: e.id);
                             Navigator.pop(ctx);
                           },
                         );

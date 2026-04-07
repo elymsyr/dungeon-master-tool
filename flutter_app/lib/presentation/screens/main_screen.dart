@@ -383,6 +383,11 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
     if (!ctrl) return;
 
+    if (event.logicalKey == LogicalKeyboardKey.keyE) {
+      setState(() => _editMode = !_editMode);
+      return;
+    }
+
     final dispatcher = ref.read(undoRedoDispatcherProvider);
     if (event.logicalKey == LogicalKeyboardKey.keyZ) {
       if (shift) {

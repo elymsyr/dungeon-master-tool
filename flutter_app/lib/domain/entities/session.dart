@@ -66,6 +66,8 @@ abstract class CombatCondition with _$CombatCondition {
   const factory CombatCondition({
     required String name,
     int? duration,
+    int? initialDuration,
+    String? entityId,
   }) = _CombatCondition;
 
   factory CombatCondition.fromJson(Map<String, dynamic> json) =>
