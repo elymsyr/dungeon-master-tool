@@ -708,9 +708,9 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
   Map<String, dynamic> get _stats =>
       (widget.value is Map) ? Map<String, dynamic>.from(widget.value as Map) : <String, dynamic>{};
 
-  List<(String, String)> get _fields => widget.schema.subFields.isNotEmpty
-      ? widget.schema.subFields.map((sf) => (sf['key'] ?? '', sf['label'] ?? sf['key'] ?? '')).toList()
-      : const [('hp', 'HP'), ('max_hp', 'Max HP'), ('ac', 'AC'), ('speed', 'Speed'), ('initiative', 'Init'), ('cr', 'CR'), ('xp', 'XP')];
+  List<(String, String, String)> get _fields => widget.schema.subFields.isNotEmpty
+      ? widget.schema.subFields.map((sf) => (sf['key'] ?? '', sf['label'] ?? sf['key'] ?? '', sf['type'] ?? 'text')).toList()
+      : const [('hp', 'HP', 'integer'), ('max_hp', 'Max HP', 'integer'), ('ac', 'AC', 'integer'), ('speed', 'Speed', 'text'), ('initiative', 'Init', 'integer'), ('cr', 'CR', 'text'), ('xp', 'XP', 'integer')];
 
   @override
   void initState() {
@@ -750,6 +750,8 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
   Widget build(BuildContext context) {
     final stats = _stats;
     final fields = _fields;
+    final gridFields = fields.where((f) => f.$3 != 'textarea').toList();
+    final textareaFields = fields.where((f) => f.$3 == 'textarea').toList();
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -760,44 +762,65 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
           children: [
             Text(widget.schema.label, style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final cols = (constraints.maxWidth / 88).floor().clamp(1, fields.length);
-                final rows = <Widget>[];
-                for (var i = 0; i < fields.length; i += cols) {
-                  final rowFields = fields.sublist(i, (i + cols).clamp(0, fields.length));
-                  rows.add(Padding(
-                    padding: EdgeInsets.only(bottom: i + cols < fields.length ? 8 : 0),
-                    child: Row(
-                      children: rowFields.map((f) {
-                        return Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(right: f != rowFields.last ? 8 : 0),
-                            child: TextFormField(
-                              key: ValueKey('cs_${f.$1}'),
-                              controller: _controllers[f.$1],
-                              readOnly: widget.readOnly,
-                              textAlign: TextAlign.center,
-                              decoration: InputDecoration(
-                                labelText: f.$2,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            if (gridFields.isNotEmpty)
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final cols = (constraints.maxWidth / 88).floor().clamp(1, gridFields.length);
+                  final rows = <Widget>[];
+                  for (var i = 0; i < gridFields.length; i += cols) {
+                    final rowFields = gridFields.sublist(i, (i + cols).clamp(0, gridFields.length));
+                    rows.add(Padding(
+                      padding: EdgeInsets.only(bottom: i + cols < gridFields.length ? 8 : 0),
+                      child: Row(
+                        children: rowFields.map((f) {
+                          return Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(right: f != rowFields.last ? 8 : 0),
+                              child: TextFormField(
+                                key: ValueKey('cs_${f.$1}'),
+                                controller: _controllers[f.$1],
+                                readOnly: widget.readOnly,
+                                textAlign: TextAlign.center,
+                                decoration: InputDecoration(
+                                  labelText: f.$2,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                ),
+                                onChanged: (v) {
+                                  final updated = Map<String, dynamic>.from(stats);
+                                  updated[f.$1] = v;
+                                  widget.onChanged(updated);
+                                },
                               ),
-                              onChanged: (v) {
-                                final updated = Map<String, dynamic>.from(stats);
-                                updated[f.$1] = v;
-                                widget.onChanged(updated);
-                              },
                             ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ));
-                }
-                return Column(children: rows);
-              },
-            ),
+                          );
+                        }).toList(),
+                      ),
+                    ));
+                  }
+                  return Column(children: rows);
+                },
+              ),
+            // Textarea sub-fields rendered full-width below the grid
+            ...textareaFields.map((f) => Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: TextFormField(
+                key: ValueKey('cs_${f.$1}'),
+                controller: _controllers[f.$1],
+                readOnly: widget.readOnly,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: f.$2,
+                  isDense: true,
+                  alignLabelWithHint: true,
+                ),
+                onChanged: (v) {
+                  final updated = Map<String, dynamic>.from(stats);
+                  updated[f.$1] = v;
+                  widget.onChanged(updated);
+                },
+              ),
+            )),
           ],
         ),
       ),

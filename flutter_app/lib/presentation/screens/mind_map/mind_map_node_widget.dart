@@ -422,6 +422,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
                     border: InputBorder.none,
+                    filled: false,
                   ),
                   onChanged: (v) => widget.notifier.updateNodeLabel(n.id, v),
                 )
@@ -455,6 +456,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
                       isDense: true,
                       contentPadding: EdgeInsets.zero,
                       border: InputBorder.none,
+                      filled: false,
                       hintText: 'Write note...',
                     ),
                     onChanged: (v) => widget.notifier.updateNodeContent(n.id, v),

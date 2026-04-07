@@ -391,6 +391,26 @@ class CombatNotifier extends StateNotifier<CombatState>
     _saveAndNotify();
   }
 
+  void updateConditionDuration(String combatantId, String condName, int? newDuration) {
+    final enc = state.activeEncounter;
+    if (enc == null) return;
+    pushUndo(state);
+
+    final updated = enc.combatants.map((c) {
+      if (c.id != combatantId) return c;
+      return c.copyWith(conditions: c.conditions.map((cond) {
+        if (cond.name != condName) return cond;
+        return cond.copyWith(
+          duration: newDuration,
+          initialDuration: newDuration ?? cond.initialDuration,
+        );
+      }).toList());
+    }).toList();
+
+    _updateEncounter(enc.copyWith(combatants: updated));
+    _saveAndNotify();
+  }
+
   // --- Serialization ---
 
   Map<String, dynamic> getSessionState() {
