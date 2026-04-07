@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../domain/entities/mind_map.dart';
 import '../../theme/dm_tool_colors.dart';
-import '../database/entity_card.dart';
 import 'mind_map_notifier.dart';
 
 /// A single mind-map node widget positioned in canvas-space.
@@ -477,30 +476,176 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     final entity = ref.watch(
       entityProvider.select((map) => map[n.entityId]),
     );
-    final categories = ref.read(worldSchemaProvider).categories;
-    final catSchema = entity != null
-        ? categories
-            .where((c) => c.slug == entity.categorySlug)
-            .firstOrNull
-        : null;
+    if (entity == null) {
+      return Padding(
+        padding: const EdgeInsets.all(8),
+        child: Text(
+          'Entity not found',
+          style: TextStyle(fontSize: 10, color: palette.tabText.withValues(alpha: 0.4)),
+        ),
+      );
+    }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(5),
-      child: EntityCard(
-        key: ValueKey('entity_card_${n.entityId}'),
-        entityId: n.entityId!,
-        categorySchema: catSchema,
-        readOnly: true,
+    final categories = ref.read(worldSchemaProvider).categories;
+    final catSchema = categories
+        .where((c) => c.slug == entity.categorySlug)
+        .firstOrNull;
+    final catColor = catSchema != null
+        ? _parseCatColor(catSchema.color)
+        : palette.tabIndicator;
+
+    // Collect all portrait images
+    final allImages = <String>[
+      if (entity.imagePath.isNotEmpty) entity.imagePath,
+      ...entity.images,
+    ];
+    final hasImage = allImages.isNotEmpty &&
+        _fileExistsCache.putIfAbsent(allImages.first, () => File(allImages.first).existsSync());
+
+    // Mini feature card — mirrors EntityCard default section layout
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Portrait thumbnail (left)
+          if (hasImage)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: Image.file(
+                File(allImages.first),
+                width: n.width * 0.35,
+                height: n.height - 16,
+                fit: BoxFit.cover,
+              ),
+            )
+          else
+            Container(
+              width: n.width * 0.3,
+              height: n.height - 16,
+              decoration: BoxDecoration(
+                color: palette.canvasBg.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Icon(
+                Icons.person_outline,
+                size: 24,
+                color: palette.tabText.withValues(alpha: 0.3),
+              ),
+            ),
+          const SizedBox(width: 8),
+          // Info column (right)
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Category badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: catColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    catSchema?.name ?? entity.categorySlug,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: catColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // Name
+                Text(
+                  entity.name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: palette.nodeText,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                // Description
+                if (entity.description.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Expanded(
+                    child: Text(
+                      entity.description,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: palette.nodeText.withValues(alpha: 0.7),
+                        height: 1.3,
+                      ),
+                      overflow: TextOverflow.fade,
+                    ),
+                  ),
+                ],
+                // Source + Tags row at bottom
+                if (entity.source.isNotEmpty || entity.tags.isNotEmpty) ...[
+                  const Spacer(),
+                  Divider(height: 1, color: palette.nodeText.withValues(alpha: 0.15)),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      if (entity.source.isNotEmpty)
+                        Expanded(
+                          child: Text(
+                            entity.source,
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: palette.nodeText.withValues(alpha: 0.5),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      if (entity.tags.isNotEmpty)
+                        Expanded(
+                          child: Text(
+                            entity.tags.join(', '),
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: palette.nodeText.withValues(alpha: 0.5),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.end,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  static final _catColorCache = <String, Color>{};
+
+  Color _parseCatColor(String hex) {
+    return _catColorCache.putIfAbsent(hex, () {
+      var h = hex.replaceAll('#', '');
+      if (h.length == 6) h = 'FF$h';
+      return Color(int.parse(h, radix: 16));
+    });
+  }
+
+  static final _fileExistsCache = <String, bool>{};
+
   Widget _buildImageContent(MindMapNode n, DmToolColors palette) {
     if (n.imageUrl != null && n.imageUrl!.isNotEmpty) {
-      final file = File(n.imageUrl!);
-      if (file.existsSync()) {
+      final exists = _fileExistsCache.putIfAbsent(
+        n.imageUrl!,
+        () => File(n.imageUrl!).existsSync(),
+      );
+      if (exists) {
         return ClipRRect(
-          child: Image.file(file,
+          child: Image.file(File(n.imageUrl!),
               fit: BoxFit.cover, width: n.width, height: n.height),
         );
       }
@@ -904,9 +1049,6 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     final h0 = _sizeAtResizeStart!.height;
     final cx0 = _posAtResizeStart!.dx;
     final cy0 = _posAtResizeStart!.dy;
-    final lockAspect = widget.node.nodeType == 'entity';
-    final aspect = w0 / h0;
-
     // Original bounds (fixed corner positions)
     final left0 = cx0 - w0 / 2;
     final top0 = cy0 - h0 / 2;
@@ -918,21 +1060,16 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     switch (_resizeCorner!) {
       case 'br': // top-left fixed
         newW = (w0 + delta.dx).clamp(150.0, 2000.0);
-        newH = lockAspect ? newW / aspect : (h0 + delta.dy).clamp(80.0, 2000.0);
+        newH = (h0 + delta.dy).clamp(80.0, 2000.0);
       case 'bl': // top-right fixed
         newW = (w0 - delta.dx).clamp(150.0, 2000.0);
-        newH = lockAspect ? newW / aspect : (h0 + delta.dy).clamp(80.0, 2000.0);
+        newH = (h0 + delta.dy).clamp(80.0, 2000.0);
       case 'tr': // bottom-left fixed
         newW = (w0 + delta.dx).clamp(150.0, 2000.0);
-        newH = lockAspect ? newW / aspect : (h0 - delta.dy).clamp(80.0, 2000.0);
+        newH = (h0 - delta.dy).clamp(80.0, 2000.0);
       case 'tl': // bottom-right fixed
         newW = (w0 - delta.dx).clamp(150.0, 2000.0);
-        newH = lockAspect ? newW / aspect : (h0 - delta.dy).clamp(80.0, 2000.0);
-    }
-
-    if (lockAspect) {
-      newH = newH.clamp(80.0, 2000.0);
-      newW = (newH * aspect).clamp(150.0, 2000.0);
+        newH = (h0 - delta.dy).clamp(80.0, 2000.0);
     }
 
     late double newCx, newCy;

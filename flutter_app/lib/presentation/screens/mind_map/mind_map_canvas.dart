@@ -259,7 +259,7 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
             return ValueListenableBuilder<Map<String, Offset>>(
               key: ValueKey('node_${node.id}'),
               valueListenable: notifier.dragOverrides,
-              builder: (_, dragMap, _) {
+              builder: (_, dragMap, child) {
                 final sizeMap = notifier.sizeOverrides.value;
                 final pos = dragMap[node.id];
                 final size = sizeMap[node.id];
@@ -273,22 +273,23 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
                   top: cy - h / 2,
                   width: w,
                   height: h,
-                  child: RepaintBoundary(
-                    child: MindMapNodeWidget(
-                      node: node,
-                      isSelected: isSelected,
-                      isConnecting: isConnecting,
-                      canConnectTo: canConnectTo,
-                      palette: palette,
-                      notifier: notifier,
-                      editMode: widget.editMode,
-                      lodZone: lodZone,
-                      showResizeHandle: showResizeHandle,
-                      onOpenEntity: widget.onOpenEntity,
-                    ),
-                  ),
+                  child: child!,
                 );
               },
+              child: RepaintBoundary(
+                child: MindMapNodeWidget(
+                  node: node,
+                  isSelected: isSelected,
+                  isConnecting: isConnecting,
+                  canConnectTo: canConnectTo,
+                  palette: palette,
+                  notifier: notifier,
+                  editMode: widget.editMode,
+                  lodZone: lodZone,
+                  showResizeHandle: showResizeHandle,
+                  onOpenEntity: widget.onOpenEntity,
+                ),
+              ),
             );
           }),
       ],
@@ -309,12 +310,12 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
   }
 
   bool _isInViewport(MindMapNode node, Rect viewport) {
-    final nodeRect = Rect.fromCenter(
-      center: Offset(node.x, node.y),
-      width: node.width,
-      height: node.height,
-    );
-    return viewport.overlaps(nodeRect.inflate(50));
+    final hw = node.width / 2 + 50;
+    final hh = node.height / 2 + 50;
+    return node.x + hw > viewport.left &&
+        node.x - hw < viewport.right &&
+        node.y + hh > viewport.top &&
+        node.y - hh < viewport.bottom;
   }
 
   // -------------------------------------------------------------------------
