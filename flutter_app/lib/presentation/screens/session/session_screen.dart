@@ -14,6 +14,7 @@ import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/condition_badge.dart';
 import '../../widgets/hp_bar.dart';
+import '../../widgets/markdown_text_area.dart';
 import '../../widgets/resizable_split.dart';
 import '../battle_map/battle_map_screen.dart';
 import '../database/entity_card.dart';
@@ -335,10 +336,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: TextField(
+                        child: MarkdownTextArea(
                           controller: _logInputController,
-                          decoration: const InputDecoration(hintText: 'Quick log entry...', isDense: true),
-                          style: const TextStyle(fontSize: 12),
+                          decoration: const InputDecoration(hintText: 'Quick log entry... (@ to mention)', isDense: true),
+                          textStyle: const TextStyle(fontSize: 12),
                           maxLines: 1,
                           onSubmitted: (_) => _addLogEntry(),
                         ),
@@ -399,13 +400,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       case 0: // Notes
         return Padding(
           padding: const EdgeInsets.all(12),
-          child: TextField(
+          child: MarkdownTextArea(
             controller: _notesController,
-            maxLines: null,
             expands: true,
             textAlignVertical: TextAlignVertical.top,
-            decoration: InputDecoration(hintText: 'DM notes...', border: InputBorder.none, filled: false, hintStyle: TextStyle(color: palette.sidebarLabelSecondary)),
-            style: TextStyle(fontSize: 13, color: palette.htmlText),
+            decoration: InputDecoration(hintText: 'DM notes... (@ to mention)', border: InputBorder.none, filled: false, hintStyle: TextStyle(color: palette.sidebarLabelSecondary)),
+            textStyle: TextStyle(fontSize: 13, color: palette.htmlText),
           ),
         );
       case 1: // Battle Map
@@ -624,7 +624,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               ),
               1 => Padding(
                 padding: const EdgeInsets.all(8),
-                child: TextField(controller: _notesController, maxLines: null, expands: true, decoration: const InputDecoration(hintText: 'Notes...', border: InputBorder.none, filled: false), style: const TextStyle(fontSize: 12)),
+                child: MarkdownTextArea(controller: _notesController, expands: true, decoration: const InputDecoration(hintText: 'Notes... (@ to mention)', border: InputBorder.none, filled: false), textStyle: const TextStyle(fontSize: 12)),
               ),
               _ => _buildMobileEntityStats(palette),
             },

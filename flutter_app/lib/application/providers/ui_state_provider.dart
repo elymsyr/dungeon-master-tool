@@ -154,3 +154,7 @@ class UiStateNotifier extends StateNotifier<UiState> {
 final uiStateProvider = StateNotifierProvider<UiStateNotifier, UiState>((ref) {
   return UiStateNotifier();
 });
+
+/// Set this to an entity ID to navigate to the Database tab and open that entity.
+/// Consumers should reset to null after handling.
+final entityNavigationProvider = StateProvider<String?>((ref) => null);

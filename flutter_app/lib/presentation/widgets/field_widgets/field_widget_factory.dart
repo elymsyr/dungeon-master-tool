@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../markdown_text_area.dart';
 
 /// Schema-driven field widget factory.
 /// Her FieldType için uygun widget döndürür.
@@ -31,7 +31,7 @@ class FieldWidgetFactory {
 
     return switch (schema.fieldType) {
       FieldType.text => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.textarea => _TextAreaFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.textarea => _TextAreaFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities),
       FieldType.markdown => _MarkdownFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
       FieldType.integer => _IntegerFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.enum_ => _EnumFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
@@ -106,20 +106,21 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
   }
 }
 
-// --- TEXTAREA ---
-class _TextAreaFieldWidget extends StatefulWidget {
+// --- TEXTAREA (with markdown view + @mention) ---
+class _TextAreaFieldWidget extends ConsumerStatefulWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
 
-  const _TextAreaFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _TextAreaFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities});
 
   @override
-  State<_TextAreaFieldWidget> createState() => _TextAreaFieldWidgetState();
+  ConsumerState<_TextAreaFieldWidget> createState() => _TextAreaFieldWidgetState();
 }
 
-class _TextAreaFieldWidgetState extends State<_TextAreaFieldWidget> {
+class _TextAreaFieldWidgetState extends ConsumerState<_TextAreaFieldWidget> {
   late TextEditingController _controller;
 
   @override
@@ -145,25 +146,35 @@ class _TextAreaFieldWidgetState extends State<_TextAreaFieldWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>();
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: TextFormField(
-        key: ValueKey('${widget.schema.fieldKey}_area'),
-        controller: _controller,
-        readOnly: widget.readOnly,
-        maxLines: 4,
-        decoration: InputDecoration(
-          labelText: widget.schema.label,
-          isDense: true,
-        ),
-        onChanged: (v) => widget.onChanged(v),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette?.tabText)),
+          const SizedBox(height: 4),
+          MarkdownTextArea(
+            key: ValueKey('${widget.schema.fieldKey}_area'),
+            controller: _controller,
+            readOnly: widget.readOnly,
+            maxLines: widget.readOnly ? null : 4,
+            textStyle: TextStyle(fontSize: 13, color: palette?.htmlText),
+            decoration: InputDecoration(
+              hintText: 'Markdown supported (@ to mention)',
+              isDense: true,
+            ),
+            onChanged: (v) => widget.onChanged(v),
+          ),
+        ],
       ),
     );
   }
 }
 
-// --- MARKDOWN ---
-class _MarkdownFieldWidget extends StatefulWidget {
+// --- MARKDOWN (with edit/preview toggle + @mention) ---
+class _MarkdownFieldWidget extends ConsumerStatefulWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
@@ -181,16 +192,12 @@ class _MarkdownFieldWidget extends StatefulWidget {
   });
 
   @override
-  State<_MarkdownFieldWidget> createState() => _MarkdownFieldWidgetState();
+  ConsumerState<_MarkdownFieldWidget> createState() => _MarkdownFieldWidgetState();
 }
 
-class _MarkdownFieldWidgetState extends State<_MarkdownFieldWidget> {
+class _MarkdownFieldWidgetState extends ConsumerState<_MarkdownFieldWidget> {
   bool _isPreview = false;
   late TextEditingController _controller;
-  final _focusNode = FocusNode();
-  OverlayEntry? _mentionOverlay;
-  String _mentionQuery = '';
-  int _mentionStart = -1;
 
   @override
   void initState() {
@@ -212,113 +219,7 @@ class _MarkdownFieldWidgetState extends State<_MarkdownFieldWidget> {
   @override
   void dispose() {
     _controller.dispose();
-    _focusNode.dispose();
-    _dismissMentionOverlay();
     super.dispose();
-  }
-
-  void _dismissMentionOverlay() {
-    _mentionOverlay?.remove();
-    _mentionOverlay = null;
-  }
-
-  void _onTextChanged(String text) {
-    widget.onChanged(text);
-
-    // Check for @mention trigger
-    final cursorPos = _controller.selection.baseOffset;
-    if (cursorPos <= 0) {
-      _dismissMentionOverlay();
-      return;
-    }
-
-    // Find the last @ before cursor
-    final beforeCursor = text.substring(0, cursorPos);
-    final atIndex = beforeCursor.lastIndexOf('@');
-
-    if (atIndex >= 0) {
-      final query = beforeCursor.substring(atIndex + 1);
-      // Only show if no space before @ (or @ is at start) and query has no newlines
-      if (!query.contains('\n') && query.length < 30) {
-        _mentionStart = atIndex;
-        _mentionQuery = query.toLowerCase();
-        _showMentionOverlay();
-        return;
-      }
-    }
-    _dismissMentionOverlay();
-  }
-
-  void _showMentionOverlay() {
-    _dismissMentionOverlay();
-    final entities = widget.entities;
-    if (entities == null || entities.isEmpty) return;
-
-    final filtered = entities.values
-        .where((e) => e.name.toLowerCase().contains(_mentionQuery))
-        .take(8)
-        .toList();
-    if (filtered.isEmpty) {
-      return;
-    }
-
-    final overlay = Overlay.of(context);
-    final renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
-    final offset = renderBox.localToGlobal(Offset.zero);
-
-    _mentionOverlay = OverlayEntry(
-      builder: (ctx) => Positioned(
-        left: offset.dx,
-        top: offset.dy + renderBox.size.height,
-        width: renderBox.size.width.clamp(200, 400),
-        child: Material(
-          elevation: 8,
-          borderRadius: BorderRadius.circular(4),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 200),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: filtered.length,
-              itemBuilder: (_, i) {
-                final entity = filtered[i];
-                return ListTile(
-                  dense: true,
-                  title: Text(entity.name, style: const TextStyle(fontSize: 13)),
-                  subtitle: Text(entity.categorySlug, style: const TextStyle(fontSize: 10)),
-                  onTap: () => _insertMention(entity.id, entity.name),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-    overlay.insert(_mentionOverlay!);
-  }
-
-  void _insertMention(String entityId, String entityName) {
-    _dismissMentionOverlay();
-    final text = _controller.text;
-    final cursorPos = _controller.selection.baseOffset;
-    final mention = '@[$entityName](entity:$entityId)';
-    final newText = text.substring(0, _mentionStart) + mention + text.substring(cursorPos);
-    _controller.text = newText;
-    final newCursor = _mentionStart + mention.length;
-    _controller.selection = TextSelection.collapsed(offset: newCursor);
-    widget.onChanged(newText);
-  }
-
-  MarkdownStyleSheet _styleSheet(DmToolColors? palette) {
-    return MarkdownStyleSheet(
-      p: TextStyle(fontSize: 13, color: palette?.htmlText),
-      h1: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
-      h2: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
-      h3: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette?.htmlHeader),
-      code: TextStyle(fontSize: 12, backgroundColor: palette?.htmlCodeBg),
-      a: TextStyle(color: palette?.htmlLink),
-      listBullet: TextStyle(fontSize: 13, color: palette?.htmlText),
-    );
   }
 
   @override
@@ -335,16 +236,10 @@ class _MarkdownFieldWidgetState extends State<_MarkdownFieldWidget> {
           children: [
             Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette?.tabText)),
             const SizedBox(height: 4),
-            MarkdownBody(
-              data: text,
-              selectable: true,
-              styleSheet: _styleSheet(palette),
-              onTapLink: (text, href, title) {
-                // Handle entity: links
-                if (href != null && href.startsWith('entity:')) {
-                  // Entity navigation could be handled here
-                }
-              },
+            MarkdownTextArea(
+              controller: _controller,
+              readOnly: true,
+              textStyle: TextStyle(fontSize: 13, color: palette?.htmlText),
             ),
           ],
         ),
@@ -357,7 +252,6 @@ class _MarkdownFieldWidgetState extends State<_MarkdownFieldWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Edit/Preview toggle
           Row(
             children: [
               Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette?.tabText)),
@@ -388,29 +282,22 @@ class _MarkdownFieldWidgetState extends State<_MarkdownFieldWidget> {
               constraints: const BoxConstraints(minHeight: 100),
               child: _controller.text.isEmpty
                   ? Text('Nothing to preview', style: TextStyle(color: palette?.sidebarLabelSecondary, fontSize: 12, fontStyle: FontStyle.italic))
-                  : MarkdownBody(
-                      data: _controller.text,
-                      selectable: true,
-                      styleSheet: _styleSheet(palette),
-                      onTapLink: (text, href, title) {
-                        if (href != null && href.startsWith('entity:')) {
-                          // Entity navigation
-                        }
-                      },
+                  : MarkdownTextArea(
+                      controller: _controller,
+                      readOnly: true,
+                      textStyle: TextStyle(fontSize: 13, color: palette?.htmlText),
                     ),
             )
           else
-            TextField(
+            MarkdownTextArea(
               controller: _controller,
-              focusNode: _focusNode,
-              maxLines: null,
               minLines: 4,
               decoration: InputDecoration(
                 hintText: 'Markdown supported. Use @ to mention entities.',
                 isDense: true,
                 border: const OutlineInputBorder(),
               ),
-              onChanged: _onTextChanged,
+              onChanged: (v) => widget.onChanged(v),
             ),
         ],
       ),
@@ -801,26 +688,38 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
                   return Column(children: rows);
                 },
               ),
-            // Textarea sub-fields rendered full-width below the grid
-            ...textareaFields.map((f) => Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: TextFormField(
-                key: ValueKey('cs_${f.$1}'),
-                controller: _controllers[f.$1],
-                readOnly: widget.readOnly,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: f.$2,
-                  isDense: true,
-                  alignLabelWithHint: true,
+            // Textarea sub-fields rendered full-width below the grid (markdown + @mention)
+            ...textareaFields.map((f) {
+              final ctrl = _controllers[f.$1];
+              final p = Theme.of(context).extension<DmToolColors>();
+              return Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(f.$2, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p?.tabText)),
+                    const SizedBox(height: 4),
+                    MarkdownTextArea(
+                      key: ValueKey('cs_${f.$1}'),
+                      controller: ctrl!,
+                      readOnly: widget.readOnly,
+                      maxLines: widget.readOnly ? null : 3,
+                      textStyle: TextStyle(fontSize: 13, color: p?.htmlText),
+                      decoration: InputDecoration(
+                        hintText: '@ to mention entities',
+                        isDense: true,
+                        alignLabelWithHint: true,
+                      ),
+                      onChanged: (v) {
+                        final updated = Map<String, dynamic>.from(stats);
+                        updated[f.$1] = v;
+                        widget.onChanged(updated);
+                      },
+                    ),
+                  ],
                 ),
-                onChanged: (v) {
-                  final updated = Map<String, dynamic>.from(stats);
-                  updated[f.$1] = v;
-                  widget.onChanged(updated);
-                },
-              ),
-            )),
+              );
+            }),
           ],
         ),
       ),
