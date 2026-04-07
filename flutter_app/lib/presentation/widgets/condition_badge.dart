@@ -95,9 +95,7 @@ class ConditionBadge extends ConsumerWidget {
                     constraints: const BoxConstraints(minWidth: 14),
                     padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
                     decoration: BoxDecoration(
-                      color: palette.canvasBg,
                       borderRadius: BorderRadius.circular(7),
-                      border: Border.all(color: palette.conditionDefaultBg, width: 1),
                     ),
                     alignment: Alignment.center,
                     child: Text(

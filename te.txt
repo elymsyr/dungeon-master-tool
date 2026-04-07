@@ -2,10 +2,6 @@
 
 Şimdi, önce nasıl bir tech stack kullanacağımızı tartışalım. Olabildiğince maaliyetten kaçınmak istiyorum, özellikle başlarda. Ayrıca, önerdiğin farklı bir sistem varsa, tartışabiliriz. MD plan dosyalarını da oku, yeni bir sisteme geçiş yaparsak bu dosyalarda daha sonra güncellemeye gideceğiz.
 
---- 
-
-field type olarak pdf ekleyelim.
-
 ---
 
 Soundmap sistemini entegre etmeye başlayabiliriz. Soundmap themes, structured musics and intensity slider ekleyeceğiz. Tek basımlık sesler ve arka plan seslerini de entegre edeceğiz. Arayüz üzerinden custom müzik ekleme getireceğiz. Ayrıca, md dosyalarını ve qt sistemindeki soundmap özelliklerini iyi analiz et.
