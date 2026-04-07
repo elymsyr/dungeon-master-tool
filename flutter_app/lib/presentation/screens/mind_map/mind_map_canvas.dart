@@ -36,6 +36,7 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
     with WidgetsBindingObserver {
   // Cursor position in canvas space (for connecting-draft line)
   Offset? _cursorCanvas;
+  final _canvasFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -45,6 +46,7 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
 
   @override
   void dispose() {
+    _canvasFocusNode.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -73,7 +75,7 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
         : SystemMouseCursors.basic;
 
     return KeyboardListener(
-      focusNode: FocusNode(),
+      focusNode: _canvasFocusNode,
       autofocus: true,
       onKeyEvent: (event) => _handleKey(event, notifier, mapState),
       child: MouseRegion(
@@ -457,8 +459,9 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
       }
     } else if (ctrl && event.logicalKey == LogicalKeyboardKey.keyY) {
       notifier.redo();
-    } else if (event.logicalKey == LogicalKeyboardKey.delete ||
-        event.logicalKey == LogicalKeyboardKey.backspace) {
+    } else if (!widget.editMode &&
+        (event.logicalKey == LogicalKeyboardKey.delete ||
+            event.logicalKey == LogicalKeyboardKey.backspace)) {
       if (mapState.selectedNodeId != null) {
         notifier.deleteNode(mapState.selectedNodeId!);
       } else if (mapState.selectedEdgeId != null) {

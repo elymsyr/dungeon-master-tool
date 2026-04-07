@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../domain/entities/mind_map.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/markdown_text_area.dart';
 import 'mind_map_notifier.dart';
 
 /// A single mind-map node widget positioned in canvas-space.
@@ -444,37 +445,29 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
           const SizedBox(height: 4),
           // Content
           Expanded(
-            child: isEditing
-                ? TextField(
-                    controller: _contentCtrl,
-                    maxLines: null,
-                    expands: true,
-                    textAlignVertical: TextAlignVertical.top,
-                    style: TextStyle(
-                      fontSize: fs - 1,
-                      color: palette.nodeText.withValues(alpha: 0.85),
-                      height: 1.4,
-                    ),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      filled: false,
-                      hintText: 'Write note...',
-                    ),
-                    onChanged: (v) => widget.notifier.updateNodeContent(n.id, v),
-                  )
-                : Text(
-                    n.content.isEmpty ? '' : n.content,
-                    style: TextStyle(
-                      fontSize: fs - 1,
-                      color: palette.nodeText.withValues(alpha: 0.85),
-                      height: 1.4,
-                    ),
-                    overflow: TextOverflow.fade,
-                  ),
+            child: ClipRect(
+              child: MarkdownTextArea(
+                controller: _contentCtrl,
+                readOnly: !isEditing,
+                expands: isEditing,
+                textAlignVertical: TextAlignVertical.top,
+                textStyle: TextStyle(
+                  fontSize: fs - 1,
+                  color: palette.nodeText.withValues(alpha: 0.85),
+                  height: 1.4,
+                ),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  hintText: 'Write note... (@ to mention)',
+                ),
+                onChanged: (v) => widget.notifier.updateNodeContent(n.id, v),
+              ),
+            ),
           ),
         ],
       ),

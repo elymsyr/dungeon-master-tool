@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
@@ -14,6 +13,7 @@ import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
+import '../../widgets/markdown_text_area.dart';
 
 /// Schema-driven entity card — Python ui/widgets/npc_sheet.py karşılığı.
 /// Sol kenarlık kategori renginde, tüm alanlar tema-uyumlu.
@@ -212,39 +212,23 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      // Description (markdown)
+                      // Description (markdown + @mention)
                       Text('Description', style: TextStyle(fontSize: 11, color: palette.tabText)),
                       const SizedBox(height: 4),
-                      if (widget.readOnly && entity.description.isNotEmpty)
-                        MarkdownBody(
-                          data: entity.description,
-                          selectable: true,
-                          styleSheet: MarkdownStyleSheet(
-                            p: TextStyle(fontSize: 13, color: palette.htmlText),
-                            h1: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette.htmlHeader),
-                            h2: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.htmlHeader),
-                            h3: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette.htmlHeader),
-                            code: TextStyle(fontSize: 12, backgroundColor: palette.htmlCodeBg),
-                            a: TextStyle(color: palette.htmlLink),
-                            listBullet: TextStyle(fontSize: 13, color: palette.htmlText),
-                          ),
-                        )
-                      else
-                        TextFormField(
-                          controller: _descController,
-                          focusNode: _descFocus,
-                          readOnly: widget.readOnly,
-                          maxLines: null,
-                          minLines: 3,
-                          style: TextStyle(fontSize: 13, color: palette.htmlText),
-                          decoration: InputDecoration(
-                            hintText: 'Markdown supported...',
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          ),
-                          onChanged: (v) => _debouncedProviderUpdate(
-                            () => ref.read(entityProvider)[widget.entityId]!.copyWith(description: v),
-                          ),
+                      MarkdownTextArea(
+                        controller: _descController,
+                        focusNode: _descFocus,
+                        readOnly: widget.readOnly,
+                        minLines: widget.readOnly ? null : 3,
+                        textStyle: TextStyle(fontSize: 13, color: palette.htmlText),
+                        decoration: InputDecoration(
+                          hintText: 'Markdown supported... (@ to mention)',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                         ),
+                        onChanged: (v) => _debouncedProviderUpdate(
+                          () => ref.read(entityProvider)[widget.entityId]!.copyWith(description: v),
+                        ),
+                      ),
                       const SizedBox(height: 10),
                       // Source + Tags yan yana
                       Row(
@@ -325,14 +309,14 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                   ],
                 ),
                 const SizedBox(height: 6),
-                TextFormField(
+                MarkdownTextArea(
                   controller: _dmNotesController,
                   focusNode: _dmNotesFocus,
                   readOnly: widget.readOnly,
-                  maxLines: 4,
-                  style: TextStyle(fontSize: 13, color: palette.htmlText),
+                  maxLines: widget.readOnly ? null : 4,
+                  textStyle: TextStyle(fontSize: 13, color: palette.htmlText),
                   decoration: InputDecoration(
-                    hintText: 'Private DM notes...',
+                    hintText: 'Private DM notes... (@ to mention)',
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.zero,

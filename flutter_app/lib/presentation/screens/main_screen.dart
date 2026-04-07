@@ -46,6 +46,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    HardwareKeyboard.instance.addHandler(_handleGlobalKey);
     // UiState'den restore et
     final uiState = ref.read(uiStateProvider);
     _tabIndex = uiState.mainTabIndex;
@@ -55,6 +56,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleGlobalKey);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -124,6 +126,18 @@ class _MainScreenState extends ConsumerState<MainScreen>
       l10n.tabMap,
     ];
 
+    // Listen for entity navigation requests from anywhere in the app
+    ref.listen<String?>(entityNavigationProvider, (_, entityId) {
+      if (entityId != null) {
+        setState(() {
+          _selectedEntityId = entityId;
+          _tabIndex = 0;
+        });
+        _persistUiState();
+        ref.read(entityNavigationProvider.notifier).state = null;
+      }
+    });
+
     final schema = ref.read(worldSchemaProvider);
 
     final tabStack = IndexedStack(
@@ -157,11 +171,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
       ],
     );
 
-    return KeyboardListener(
-      focusNode: FocusNode(),
-      autofocus: true,
-      onKeyEvent: (event) => _handleGlobalKey(event, ref),
-      child: Scaffold(
+    return Scaffold(
       // --- Toolbar (AppBar) ---
       appBar: AppBar(
         titleSpacing: 8,
@@ -372,22 +382,26 @@ class _MainScreenState extends ConsumerState<MainScreen>
               ),
             )
           : null,
-    ),
     );
   }
 
-  void _handleGlobalKey(KeyEvent event, WidgetRef ref) {
-    if (event is! KeyDownEvent) return;
+  bool _handleGlobalKey(KeyEvent event) {
+    if (event is! KeyDownEvent) return false;
     final ctrl = HardwareKeyboard.instance.isControlPressed;
-    final shift = HardwareKeyboard.instance.isShiftPressed;
+    if (!ctrl) return false;
 
-    if (!ctrl) return;
-
+    // Ctrl+E: always toggle edit mode (even when a text field has focus)
     if (event.logicalKey == LogicalKeyboardKey.keyE) {
       setState(() => _editMode = !_editMode);
-      return;
+      return true;
     }
 
+    // Ctrl+Z / Ctrl+Y: skip if a text field has focus (TextField handles its own undo)
+    final focus = FocusManager.instance.primaryFocus;
+    final isTextEditing = focus?.context?.findAncestorStateOfType<EditableTextState>() != null;
+    if (isTextEditing) return false;
+
+    final shift = HardwareKeyboard.instance.isShiftPressed;
     final dispatcher = ref.read(undoRedoDispatcherProvider);
     if (event.logicalKey == LogicalKeyboardKey.keyZ) {
       if (shift) {
@@ -395,9 +409,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
       } else {
         dispatcher.undo(_tabIndex);
       }
+      return true;
     } else if (event.logicalKey == LogicalKeyboardKey.keyY) {
       dispatcher.redo(_tabIndex);
+      return true;
     }
+    return false;
   }
 }
 
