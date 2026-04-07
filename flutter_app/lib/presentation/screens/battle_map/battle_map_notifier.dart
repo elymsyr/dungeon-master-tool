@@ -94,7 +94,7 @@ class BattleMapState {
   final bool gridSnap;
   final int feetPerCell;
   final int tokenSize;
-  final Map<String, int> tokenSizeOverrides;
+  final Map<String, double> tokenSizeMultipliers;
 
   // Canvas dimensions (from background image or default)
   final int canvasWidth;
@@ -116,7 +116,7 @@ class BattleMapState {
     this.gridSnap = false,
     this.feetPerCell = 5,
     this.tokenSize = 50,
-    this.tokenSizeOverrides = const {},
+    this.tokenSizeMultipliers = const {},
     this.canvasWidth = 2048,
     this.canvasHeight = 2048,
   });
@@ -137,7 +137,7 @@ class BattleMapState {
     bool? gridSnap,
     int? feetPerCell,
     int? tokenSize,
-    Map<String, int>? tokenSizeOverrides,
+    Map<String, double>? tokenSizeMultipliers,
     int? canvasWidth,
     int? canvasHeight,
     // Sentinel for nullable clears
@@ -163,7 +163,7 @@ class BattleMapState {
       gridSnap: gridSnap ?? this.gridSnap,
       feetPerCell: feetPerCell ?? this.feetPerCell,
       tokenSize: tokenSize ?? this.tokenSize,
-      tokenSizeOverrides: tokenSizeOverrides ?? this.tokenSizeOverrides,
+      tokenSizeMultipliers: tokenSizeMultipliers ?? this.tokenSizeMultipliers,
       canvasWidth: canvasWidth ?? this.canvasWidth,
       canvasHeight: canvasHeight ?? this.canvasHeight,
     );
@@ -225,7 +225,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       gridSnap: encounter.gridSnap,
       feetPerCell: encounter.feetPerCell,
       tokenSize: encounter.tokenSize,
-      tokenSizeOverrides: Map<String, int>.from(encounter.tokenSizeOverrides),
+      tokenSizeMultipliers: Map<String, double>.from(encounter.tokenSizeMultipliers),
       mapPath: encounter.mapPath,
     );
 
@@ -628,10 +628,10 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     state = state.copyWith(tokenSize: size.clamp(20, 300));
   }
 
-  void setTokenSizeOverride(String combatantId, int size) {
-    final updated = Map<String, int>.from(state.tokenSizeOverrides);
-    updated[combatantId] = size.clamp(20, 400);
-    state = state.copyWith(tokenSizeOverrides: updated);
+  void setTokenSizeMultiplier(String combatantId, double multiplier) {
+    final updated = Map<String, double>.from(state.tokenSizeMultipliers);
+    updated[combatantId] = multiplier.clamp(0.25, 8.0);
+    state = state.copyWith(tokenSizeMultipliers: updated);
   }
 
   /// Persist current token positions to campaign data.
@@ -644,7 +644,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     _ref.read(combatProvider.notifier).saveMapData(
       encounterId: encounterId,
       tokenPositions: tokenPosMap,
-      tokenSizeOverrides: state.tokenSizeOverrides,
+      tokenSizeMultipliers: state.tokenSizeMultipliers,
       tokenSize: state.tokenSize,
     );
   }
@@ -727,7 +727,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     _ref.read(combatProvider.notifier).saveMapData(
       encounterId: encounterId,
       tokenPositions: tokenPosMap,
-      tokenSizeOverrides: state.tokenSizeOverrides,
+      tokenSizeMultipliers: state.tokenSizeMultipliers,
       tokenSize: state.tokenSize,
     );
   }

@@ -406,14 +406,14 @@ class CombatNotifier extends StateNotifier<CombatState> {
     required String encounterId,
     String? mapPath,
     Map<String, dynamic>? tokenPositions,
-    Map<String, int>? tokenSizeOverrides,
+    Map<String, double>? tokenSizeMultipliers,
     int? tokenSize,
   }) {
     final enc = state.encounters.firstWhere((e) => e.id == encounterId, orElse: () => throw StateError('Encounter not found'));
     _updateEncounter(enc.copyWith(
       mapPath: mapPath ?? enc.mapPath,
       tokenPositions: tokenPositions ?? enc.tokenPositions,
-      tokenSizeOverrides: tokenSizeOverrides ?? enc.tokenSizeOverrides,
+      tokenSizeMultipliers: tokenSizeMultipliers ?? enc.tokenSizeMultipliers,
       tokenSize: tokenSize ?? enc.tokenSize,
     ));
     _saveAndNotify();

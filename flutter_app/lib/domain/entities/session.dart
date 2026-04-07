@@ -26,7 +26,7 @@ abstract class Encounter with _$Encounter {
     @Default([]) List<Combatant> combatants,
     String? mapPath,
     @Default(50) int tokenSize,
-    @Default({}) Map<String, int> tokenSizeOverrides,
+    @Default({}) Map<String, double> tokenSizeMultipliers,
     @Default(-1) int turnIndex,
     @Default(1) int round,
     @Default({}) Map<String, dynamic> tokenPositions,
