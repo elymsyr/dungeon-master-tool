@@ -4,6 +4,12 @@ Bir template'i sildiğimizde trash'e atsın.
 
 ---
 
+## Özellik PDF Viewer
+
+Database sidebar tarzında yeni bir sidebar ekleyeceğiz ancak bu sefer sağ taraftan açılacak. Burada PDF açabileceğiz. İstersek bir entity card'a eklediğimiz bir pdf'i, istersek de local'den açarak görüntüleyebileceğiz. Tablara ayırarak en fazla 10 PDF'i aynı anda açabileceğiz. Database sidebarda olduğu gibi bu sidebar'ı da tamamen kapatabileceğiz.
+
+---
+
 ## Özellik Soundpad
 
 Soundmap sistemini entegre etmeye başlayabiliriz. Soundmap themes, structured musics and intensity slider ekleyeceğiz. Tek basımlık sesler ve arka plan seslerini de entegre edeceğiz. Arayüz üzerinden custom müzik ekleme getireceğiz. Ayrıca, md dosyalarını ve qt sistemindeki soundmap özelliklerini iyi analiz et.
@@ -16,8 +22,7 @@ latest changes md dosyasını güncellemeni istiyorum.
 
 ## Roadmap Devam
 
-
-
+Roadmap'de kaldığımız yerleri analiz etmeni ve şimdi neler yapacağımızı planlamanı istiyorum.
 
 ## Özellik Paket
 
