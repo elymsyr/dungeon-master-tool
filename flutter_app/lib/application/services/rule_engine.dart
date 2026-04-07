@@ -4,6 +4,13 @@ import '../../domain/entities/schema/entity_category_schema.dart';
 
 /// Kural motoru — entity field değerlerini template kurallarına göre hesaplar.
 class RuleEngine {
+  // Simple cache keyed by entity hashCode + category slug
+  static final _cache = <int, Map<String, dynamic>>{};
+  static const _maxCacheSize = 200;
+
+  /// Clear the cache (call when bulk entity updates happen).
+  static void clearCache() => _cache.clear();
+
   /// Kuralları uygulayıp computed değerleri döndürür.
   /// Key: targetFieldKey, Value: hesaplanan değer
   static Map<String, dynamic> applyRules({
@@ -11,6 +18,10 @@ class RuleEngine {
     required EntityCategorySchema category,
     required Map<String, Entity> allEntities,
   }) {
+    final cacheKey = Object.hash(entity, category.slug);
+    final cached = _cache[cacheKey];
+    if (cached != null) return cached;
+
     final computed = <String, dynamic>{};
 
     for (final rule in category.rules) {
@@ -28,6 +39,12 @@ class RuleEngine {
           computed[rule.targetFieldKey] = _conditionalList(entity, rule, allEntities);
       }
     }
+
+    // Evict oldest entries if cache grows too large
+    if (_cache.length >= _maxCacheSize) {
+      _cache.remove(_cache.keys.first);
+    }
+    _cache[cacheKey] = computed;
 
     return computed;
   }

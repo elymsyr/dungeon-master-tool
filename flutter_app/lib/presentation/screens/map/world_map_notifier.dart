@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:collection';
 
 import 'package:file_picker/file_picker.dart';
@@ -7,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/save_state_provider.dart';
+import '../../../application/services/undo_redo_mixin.dart';
 import '../../../domain/entities/map_data.dart';
 
 const _uuid = Uuid();
@@ -161,7 +162,8 @@ class WorldMapState {
 // Notifier
 // ---------------------------------------------------------------------------
 
-class WorldMapNotifier extends StateNotifier<WorldMapState> {
+class WorldMapNotifier extends StateNotifier<WorldMapState>
+    with UndoRedoMixin<WorldMapState> {
   final Ref _ref;
 
   final ValueNotifier<WorldMapViewTransform> viewTransform =
@@ -172,14 +174,12 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
   Offset _focalBase = Offset.zero;
   Offset _panBase = Offset.zero;
 
-  Timer? _saveTimer;
-
   WorldMapNotifier(this._ref) : super(const WorldMapState());
 
   @override
   void dispose() {
-    _saveTimer?.cancel();
     viewTransform.dispose();
+    disposeUndoRedo();
     super.dispose();
   }
 
@@ -260,6 +260,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
       epochStartLabel: epochStartLabel,
       epochEndLabel: epochEndLabel,
     );
+    clearUndoRedo();
   }
 
   List<MapPin> _parseRawPins(List<dynamic> raw) {
@@ -295,7 +296,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
     }).toList();
   }
 
-  Future<void> save() async {
+  void syncToCampaignData() {
     final campaign = _ref.read(activeCampaignProvider.notifier);
     if (campaign.data == null) return;
 
@@ -339,7 +340,6 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
       'epoch_end_label': state.epochEndLabel,
       'pin_size': state.pinSize.name,
     };
-    await campaign.save();
   }
 
   // -------------------------------------------------------------------------
@@ -374,6 +374,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
   void switchEpoch(int index) {
     if (index == state.activeEpochIndex) return;
     if (index < 0 || index >= state.epochs.length) return;
+    pushUndo(state);
     _syncActiveEpoch();
     _loadEpoch(index);
     _debouncedSave();
@@ -410,10 +411,22 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
   }
 
   void _debouncedSave() {
-    _saveTimer?.cancel();
-    _saveTimer = Timer(const Duration(seconds: 2), () {
-      if (mounted) save();
-    });
+    syncToCampaignData();
+    _ref.read(saveStateProvider.notifier).markDirty();
+  }
+
+  void undo() {
+    final restored = popUndo(state);
+    if (restored != null) {
+      state = restored;
+    }
+  }
+
+  void redo() {
+    final restored = popRedo(state);
+    if (restored != null) {
+      state = restored;
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -428,6 +441,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
     bool copyPins = false,
     bool copyTimelinePins = false,
   }) {
+    pushUndo(state);
     _syncActiveEpoch();
 
     final wp = EpochWaypoint(id: _uuid.v4(), label: label);
@@ -492,6 +506,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
   /// Deletes a waypoint and merges its adjacent epochs.
   void deleteWaypoint(int wpIndex, EpochMergeStrategy strategy) {
     if (wpIndex < 0 || wpIndex >= state.waypoints.length) return;
+    pushUndo(state);
     _syncActiveEpoch();
 
     final leftIdx = wpIndex;     // epoch to the left of the waypoint
@@ -551,6 +566,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
   /// Updates a waypoint's label.
   void updateWaypointLabel(int wpIndex, String label) {
     if (wpIndex < 0 || wpIndex >= state.waypoints.length) return;
+    pushUndo(state);
     final updated = List<EpochWaypoint>.from(state.waypoints);
     updated[wpIndex] = updated[wpIndex].copyWith(label: label);
     state = state.copyWith(waypoints: updated);
@@ -559,6 +575,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
 
   /// Updates the Start / End boundary labels.
   void updateEpochBoundaryLabels({String? startLabel, String? endLabel}) {
+    pushUndo(state);
     state = state.copyWith(
       epochStartLabel: startLabel,
       epochEndLabel: endLabel,
@@ -572,6 +589,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
     final pin = state.pins.where((p) => p.id == pinId).firstOrNull;
     if (pin == null) return;
     if (targetEpochIndex < 0 || targetEpochIndex >= state.epochs.length) return;
+    pushUndo(state);
 
     final copy = pin.copyWith(id: _uuid.v4());
     final updatedEpochs = List<MapEpoch>.from(state.epochs);
@@ -590,6 +608,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
         state.timelinePins.where((t) => t.id == tpinId).firstOrNull;
     if (tpin == null) return;
     if (targetEpochIndex < 0 || targetEpochIndex >= state.epochs.length) return;
+    pushUndo(state);
 
     final copy = tpin.copyWith(id: _uuid.v4(), parentIds: []);
     final updatedEpochs = List<MapEpoch>.from(state.epochs);
@@ -631,6 +650,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
     if (result == null || result.files.isEmpty) return;
     final path = result.files.first.path;
     if (path == null) return;
+    pushUndo(state);
     state = state.copyWith(imagePath: path);
     viewTransform.value = const WorldMapViewTransform();
     _debouncedSave();
@@ -655,6 +675,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
   }
 
   void onScaleEnd() {
+    pushUndo(state);
     _debouncedSave();
   }
 
@@ -669,6 +690,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
   }
 
   void resetView() {
+    pushUndo(state);
     viewTransform.value = const WorldMapViewTransform();
     _debouncedSave();
   }
@@ -694,6 +716,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
       entityId: entityId,
       color: color,
     );
+    pushUndo(state);
     state = state.copyWith(pins: [...state.pins, pin]);
     _debouncedSave();
     return id;
@@ -707,6 +730,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
   }) {
     final idx = state.pins.indexWhere((p) => p.id == id);
     if (idx < 0) return;
+    pushUndo(state);
     final updated = List<MapPin>.from(state.pins);
     final p = updated[idx];
     updated[idx] = p.copyWith(
@@ -722,6 +746,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
   void updatePinNote(String id, String note) {
     final idx = state.pins.indexWhere((p) => p.id == id);
     if (idx < 0) return;
+    pushUndo(state);
     final updated = List<MapPin>.from(state.pins);
     updated[idx] = updated[idx].copyWith(note: note);
     state = state.copyWith(pins: updated);
@@ -731,6 +756,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
   void updatePinColor(String id, String color) {
     final idx = state.pins.indexWhere((p) => p.id == id);
     if (idx < 0) return;
+    pushUndo(state);
     final updated = List<MapPin>.from(state.pins);
     updated[idx] = updated[idx].copyWith(color: color);
     state = state.copyWith(pins: updated);
@@ -738,6 +764,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
   }
 
   void deletePin(String id) {
+    pushUndo(state);
     state = state.copyWith(
       pins: state.pins.where((p) => p.id != id).toList(),
     );
@@ -779,6 +806,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
       sessionId: sessionId,
       parentIds: parentId != null ? [parentId] : [],
     );
+    pushUndo(state);
     state = state.copyWith(timelinePins: [...state.timelinePins, pin]);
     _debouncedSave();
     return id;
@@ -795,6 +823,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
   }) {
     final idx = state.timelinePins.indexWhere((t) => t.id == id);
     if (idx < 0) return;
+    pushUndo(state);
     final updated = List<TimelinePin>.from(state.timelinePins);
     final t = updated[idx];
     updated[idx] = t.copyWith(
@@ -811,6 +840,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
   }
 
   void deleteTimelinePin(String id) {
+    pushUndo(state);
     // Remove from children's parentIds
     final updated = state.timelinePins
         .where((t) => t.id != id)
@@ -833,6 +863,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
     if (idx < 0) return;
     final child = state.timelinePins[idx];
     if (child.parentIds.contains(parentId)) return;
+    pushUndo(state);
     final updated = List<TimelinePin>.from(state.timelinePins);
     updated[idx] = child.copyWith(
       parentIds: [...child.parentIds, parentId],
@@ -843,6 +874,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState> {
 
   /// Propagate color through the timeline chain (BFS).
   void updateTimelineChainColor(String startId, String color) {
+    pushUndo(state);
     final pinMap = {for (final t in state.timelinePins) t.id: t};
     final visited = <String>{};
     final queue = Queue<String>()..add(startId);

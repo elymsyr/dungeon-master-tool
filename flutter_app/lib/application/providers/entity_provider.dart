@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -8,7 +6,9 @@ import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/default_dnd5e_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../services/undo_redo_mixin.dart';
 import 'campaign_provider.dart';
+import 'save_state_provider.dart';
 
 const _uuid = Uuid();
 
@@ -38,11 +38,16 @@ final worldSchemaProvider = Provider<WorldSchema>((ref) {
 });
 
 /// Aktif kampanyadaki entity'lerin reactive state'i.
-class EntityNotifier extends StateNotifier<Map<String, Entity>> {
+class EntityNotifier extends StateNotifier<Map<String, Entity>>
+    with UndoRedoMixin<Map<String, Entity>> {
   final ActiveCampaignNotifier _campaign;
   final WorldSchema _schema;
+  final VoidCallback _onDirty;
 
-  EntityNotifier(this._campaign, this._schema) : super({}) {
+  @override
+  int get maxUndoDepth => 30;
+
+  EntityNotifier(this._campaign, this._schema, this._onDirty) : super({}) {
     _loadFromCampaign();
   }
 
@@ -78,8 +83,25 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>> {
     state = entities;
   }
 
+  void undo() {
+    final restored = popUndo(state);
+    if (restored != null) {
+      state = restored;
+      _syncToCampaign();
+    }
+  }
+
+  void redo() {
+    final restored = popRedo(state);
+    if (restored != null) {
+      state = restored;
+      _syncToCampaign();
+    }
+  }
+
   /// Yeni entity oluştur — schema'dan default field değerleri ile.
   String create(String categorySlug, {String name = 'New Record'}) {
+    pushUndo(state);
     final id = _uuid.v4();
 
     // Schema'dan default field değerlerini al
@@ -126,29 +148,29 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>> {
   }
 
   void update(Entity entity) {
+    if (identical(state[entity.id], entity)) return;
+    pushUndo(state);
     state = {...state, entity.id: entity};
     _syncToCampaign();
   }
 
   void delete(String entityId) {
+    pushUndo(state);
     state = Map.from(state)..remove(entityId);
     _syncToCampaign();
   }
-
-  Timer? _saveTimer;
 
   void _syncToCampaign() {
     final data = _campaign.data;
     if (data == null) return;
 
+    // Synchronously update in-memory campaign data
     final raw = <String, dynamic>{};
     for (final entry in state.entries) {
       raw[entry.key] = _entityToMap(entry.value);
     }
     data['entities'] = raw;
-    // Debounced disk write (500ms)
-    _saveTimer?.cancel();
-    _saveTimer = Timer(const Duration(milliseconds: 500), () => _campaign.save());
+    _onDirty();
   }
 
   Map<String, dynamic> _entityToMap(Entity e) {
@@ -215,5 +237,9 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>> {
 final entityProvider =
     StateNotifierProvider<EntityNotifier, Map<String, Entity>>((ref) {
   final schema = ref.watch(worldSchemaProvider);
-  return EntityNotifier(ref.read(activeCampaignProvider.notifier), schema);
+  return EntityNotifier(
+    ref.read(activeCampaignProvider.notifier),
+    schema,
+    () => ref.read(saveStateProvider.notifier).markDirty(),
+  );
 });

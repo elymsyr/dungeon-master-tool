@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show compute;
 import 'package:logger/logger.dart';
 import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:path/path.dart' as p;
@@ -17,7 +19,7 @@ class CampaignLocalDataSource {
     final datFile = File(p.join(campaignPath, 'data.dat'));
     if (await datFile.exists()) {
       final bytes = await datFile.readAsBytes();
-      final decoded = msgpack.deserialize(bytes);
+      final decoded = await compute(_deserializeInIsolate, bytes);
       return _toStringKeyMap(decoded);
     }
 
@@ -34,7 +36,7 @@ class CampaignLocalDataSource {
   /// Kampanya verisini MsgPack olarak kaydet.
   Future<void> save(String campaignPath, Map<String, dynamic> data) async {
     final datFile = File(p.join(campaignPath, 'data.dat'));
-    final bytes = msgpack.serialize(data);
+    final bytes = await compute(_serializeInIsolate, data);
     await datFile.writeAsBytes(bytes);
   }
 
@@ -124,3 +126,7 @@ class CampaignLocalDataSource {
     return value;
   }
 }
+
+// Top-level functions for compute() — must not be closures or instance methods.
+Uint8List _serializeInIsolate(Map<String, dynamic> data) => msgpack.serialize(data);
+dynamic _deserializeInIsolate(Uint8List bytes) => msgpack.deserialize(bytes);

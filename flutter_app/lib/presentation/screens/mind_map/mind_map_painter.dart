@@ -18,6 +18,7 @@ class MindMapPainter extends CustomPainter {
   final String? connectingFromId;
   final Offset? connectingToCanvas;
   final int lodZone;
+  final Map<String, Offset> dragOverrides;
 
   MindMapPainter({
     required this.mapState,
@@ -27,6 +28,7 @@ class MindMapPainter extends CustomPainter {
     this.connectingFromId,
     this.connectingToCanvas,
     this.lodZone = 0,
+    this.dragOverrides = const {},
     super.repaint,
   });
 
@@ -178,7 +180,11 @@ class MindMapPainter extends CustomPainter {
 
     final nodeMap = <String, (double, double, double, double)>{};
     for (final n in mapState.nodes) {
-      nodeMap[n.id] = (n.x, n.y, n.width, n.height);
+      // Use drag override position if available (during active drag)
+      final override = dragOverrides[n.id];
+      final x = override?.dx ?? n.x;
+      final y = override?.dy ?? n.y;
+      nodeMap[n.id] = (x, y, n.width, n.height);
     }
 
     for (final edge in mapState.edges) {
@@ -277,7 +283,8 @@ class MindMapPainter extends CustomPainter {
     final src = mapState.nodes.where((n) => n.id == fromId).firstOrNull;
     if (src == null) return;
 
-    final srcCenter = Offset(src.x, src.y);
+    final override = dragOverrides[fromId];
+    final srcCenter = override ?? Offset(src.x, src.y);
     final paint = Paint()
       ..color = palette.tabIndicator.withValues(alpha: 0.75)
       ..strokeWidth = 1.5
@@ -363,6 +370,7 @@ class MindMapPainter extends CustomPainter {
         old.viewportRect != viewportRect ||
         old.connectingFromId != connectingFromId ||
         old.connectingToCanvas != connectingToCanvas ||
-        old.lodZone != lodZone;
+        old.lodZone != lodZone ||
+        old.dragOverrides != dragOverrides;
   }
 }

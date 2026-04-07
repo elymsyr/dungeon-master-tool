@@ -35,7 +35,7 @@ void main() {
 
     test('addNode with entity type uses correct dimensions', () {
       n.addNode(const Offset(0, 0), 'entity');
-      expect(_state(n).nodes.first.height, 200);
+      expect(_state(n).nodes.first.height, 400);
       expect(_state(n).nodes.first.width, 300);
     });
 
@@ -330,7 +330,7 @@ void main() {
       n.addEntityNode(const Offset(0, 0), 'eid-1', 'NPC');
       final node = _state(n).nodes.first;
       expect(node.width, 300);
-      expect(node.height, 200);
+      expect(node.height, 400);
     });
   });
 

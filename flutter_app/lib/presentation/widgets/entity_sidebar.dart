@@ -36,7 +36,17 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final entities = ref.watch(entityProvider);
+    // Watch only the sidebar-relevant fields — avoids rebuild when entity
+    // fields (description, dmNotes, custom fields etc.) change.
+    final summaries = ref.watch(entityProvider.select((map) =>
+      map.values.map((e) => (
+        id: e.id,
+        name: e.name,
+        categorySlug: e.categorySlug,
+        source: e.source,
+        tags: e.tags,
+      )).toList(),
+    ));
     final categories = widget.schema?.categories
             .where((c) => !c.isArchived)
             .toList() ??
@@ -50,7 +60,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
 
     // Filtrele (isim + tag arama)
     final query = _searchQuery.toLowerCase();
-    final filtered = entities.values.where((e) {
+    final filtered = summaries.where((e) {
       if (_selectedCategory != null && e.categorySlug != _selectedCategory) return false;
       if (query.isNotEmpty) {
         final nameMatch = e.name.toLowerCase().contains(query);
@@ -172,7 +182,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
           child: filtered.isEmpty
               ? Center(
                   child: Text(
-                    entities.isEmpty ? 'No entities yet' : 'No results',
+                    summaries.isEmpty ? 'No entities yet' : 'No results',
                     style: TextStyle(color: palette.sidebarLabelSecondary),
                   ),
                 )
