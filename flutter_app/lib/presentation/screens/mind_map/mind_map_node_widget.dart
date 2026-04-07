@@ -52,14 +52,18 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
   Offset? _resizeStart;
   Size? _sizeAtResizeStart;
 
-  // Inline edit (label)
+  // Inline edit (label — non-edit-mode double-tap rename)
   bool _editingLabel = false;
   late TextEditingController _labelCtrl;
+
+  // Content controller (used in edit mode)
+  late TextEditingController _contentCtrl;
 
   @override
   void initState() {
     super.initState();
     _labelCtrl = TextEditingController(text: widget.node.label);
+    _contentCtrl = TextEditingController(text: widget.node.content);
   }
 
   @override
@@ -68,11 +72,15 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     if (old.node.label != widget.node.label && !_editingLabel) {
       _labelCtrl.text = widget.node.label;
     }
+    if (old.node.content != widget.node.content) {
+      _contentCtrl.text = widget.node.content;
+    }
   }
 
   @override
   void dispose() {
     _labelCtrl.dispose();
+    _contentCtrl.dispose();
     super.dispose();
   }
 
@@ -394,67 +402,72 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
 
   Widget _buildNoteContent(MindMapNode n, DmToolColors palette) {
     final fs = _fontSize;
+    final isEditing = widget.editMode;
+
     return Padding(
       padding: const EdgeInsets.all(8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Label (editable on double-tap in edit mode)
-          GestureDetector(
-            onDoubleTap: widget.editMode
-                ? () => setState(() => _editingLabel = true)
-                : null,
-            child: _editingLabel
+          // Label
+          isEditing
+              ? TextField(
+                  controller: _labelCtrl,
+                  style: TextStyle(
+                    fontSize: fs,
+                    fontWeight: FontWeight.bold,
+                    color: palette.nodeText,
+                  ),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                    border: InputBorder.none,
+                  ),
+                  onChanged: (v) => widget.notifier.updateNodeLabel(n.id, v),
+                )
+              : Text(
+                  n.label,
+                  style: TextStyle(
+                    fontSize: fs,
+                    fontWeight: FontWeight.bold,
+                    color: palette.nodeText,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+          const SizedBox(height: 4),
+          Divider(height: 1, color: palette.nodeText.withValues(alpha: 0.25)),
+          const SizedBox(height: 4),
+          // Content
+          Expanded(
+            child: isEditing
                 ? TextField(
-                    controller: _labelCtrl,
-                    autofocus: true,
+                    controller: _contentCtrl,
+                    maxLines: null,
+                    expands: true,
+                    textAlignVertical: TextAlignVertical.top,
                     style: TextStyle(
-                      fontSize: fs,
-                      fontWeight: FontWeight.bold,
-                      color: palette.nodeText,
+                      fontSize: fs - 1,
+                      color: palette.nodeText.withValues(alpha: 0.85),
+                      height: 1.4,
                     ),
                     decoration: const InputDecoration(
                       isDense: true,
                       contentPadding: EdgeInsets.zero,
                       border: InputBorder.none,
+                      hintText: 'Write note...',
                     ),
-                    onSubmitted: (v) {
-                      widget.notifier.updateNodeLabel(n.id, v);
-                      setState(() => _editingLabel = false);
-                    },
-                    onEditingComplete: () {
-                      widget.notifier.updateNodeLabel(n.id, _labelCtrl.text);
-                      setState(() => _editingLabel = false);
-                    },
+                    onChanged: (v) => widget.notifier.updateNodeContent(n.id, v),
                   )
                 : Text(
-                    n.label,
+                    n.content.isEmpty ? '' : n.content,
                     style: TextStyle(
-                      fontSize: fs,
-                      fontWeight: FontWeight.bold,
-                      color: palette.nodeText,
+                      fontSize: fs - 1,
+                      color: palette.nodeText.withValues(alpha: 0.85),
+                      height: 1.4,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    overflow: TextOverflow.fade,
                   ),
-          ),
-          const SizedBox(height: 4),
-          Divider(height: 1, color: palette.nodeText.withValues(alpha: 0.25)),
-          const SizedBox(height: 4),
-          Expanded(
-            child: Text(
-              n.content.isEmpty
-                  ? 'Double-tap header to rename\nRight-click to edit content'
-                  : n.content,
-              style: TextStyle(
-                fontSize: fs - 1,
-                color: n.content.isEmpty
-                    ? palette.nodeText.withValues(alpha: 0.4)
-                    : palette.nodeText.withValues(alpha: 0.85),
-                height: 1.4,
-              ),
-              overflow: TextOverflow.fade,
-            ),
           ),
         ],
       ),

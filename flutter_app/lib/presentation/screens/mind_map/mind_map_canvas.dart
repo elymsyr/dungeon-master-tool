@@ -126,13 +126,7 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
                         notifier.exitResizeMode();
                       }
                     },
-              onDoubleTapDown: widget.editMode
-                  ? (d) {
-                      final canvasPos =
-                          notifier.screenToCanvas(d.localPosition);
-                      notifier.addNode(canvasPos, 'note');
-                    }
-                  : null,
+              onDoubleTapDown: null,
               // Secondary tap on the outer GestureDetector so it shares
               // the gesture arena with ScaleGestureRecognizer — the
               // TapGestureRecognizer resolves immediately on pointer-up,
