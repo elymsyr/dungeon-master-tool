@@ -87,10 +87,13 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
           child: Listener(
             onPointerSignal: (signal) {
               if (signal is PointerScrollEvent) {
-                notifier.zoomAtPoint(
-                  signal.localPosition,
-                  signal.scrollDelta.dy,
-                );
+                final canvasPos = notifier.screenToCanvas(signal.localPosition);
+                if (!notifier.isPointOverScrollableNode(canvasPos)) {
+                  notifier.zoomAtPoint(
+                    signal.localPosition,
+                    signal.scrollDelta.dy,
+                  );
+                }
               }
             },
             child: GestureDetector(
@@ -209,6 +212,7 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
     final scale = vt.scale;
     final lodZone = notifier.lodZone;
     final entities = ref.watch(entityProvider);
+    final worldSchema = ref.watch(worldSchemaProvider);
 
     // Compute viewport rect in canvas-space for culling.
     // Inflate generously so nodes near edges aren't culled when
@@ -264,6 +268,7 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
               showResizeHandle: showResizeHandle,
               onOpenEntity: widget.onOpenEntity,
               entities: entities,
+              categorySchemas: worldSchema.categories,
             );
           }),
       ],

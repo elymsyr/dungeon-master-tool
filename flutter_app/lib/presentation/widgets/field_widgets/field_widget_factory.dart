@@ -51,7 +51,7 @@ class FieldWidgetFactory {
 }
 
 // --- TEXT ---
-class _TextFieldWidget extends StatelessWidget {
+class _TextFieldWidget extends StatefulWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
@@ -60,26 +60,54 @@ class _TextFieldWidget extends StatelessWidget {
   const _TextFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
 
   @override
+  State<_TextFieldWidget> createState() => _TextFieldWidgetState();
+}
+
+class _TextFieldWidgetState extends State<_TextFieldWidget> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value?.toString() ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _TextFieldWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newText = widget.value?.toString() ?? '';
+    if (_controller.text != newText && oldWidget.value != widget.value) {
+      _controller.text = newText;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: TextFormField(
-        key: ValueKey('${schema.fieldKey}_text_$value'),
-        initialValue: value?.toString() ?? '',
-        readOnly: readOnly,
+        key: ValueKey('${widget.schema.fieldKey}_text'),
+        controller: _controller,
+        readOnly: widget.readOnly,
         decoration: InputDecoration(
-          labelText: schema.label,
-          hintText: schema.placeholder.isNotEmpty ? schema.placeholder : null,
+          labelText: widget.schema.label,
+          hintText: widget.schema.placeholder.isNotEmpty ? widget.schema.placeholder : null,
           isDense: true,
         ),
-        onChanged: (v) => onChanged(v),
+        onChanged: (v) => widget.onChanged(v),
       ),
     );
   }
 }
 
 // --- TEXTAREA ---
-class _TextAreaFieldWidget extends StatelessWidget {
+class _TextAreaFieldWidget extends StatefulWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
@@ -88,19 +116,47 @@ class _TextAreaFieldWidget extends StatelessWidget {
   const _TextAreaFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
 
   @override
+  State<_TextAreaFieldWidget> createState() => _TextAreaFieldWidgetState();
+}
+
+class _TextAreaFieldWidgetState extends State<_TextAreaFieldWidget> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value?.toString() ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _TextAreaFieldWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newText = widget.value?.toString() ?? '';
+    if (_controller.text != newText && oldWidget.value != widget.value) {
+      _controller.text = newText;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: TextFormField(
-        key: ValueKey('${schema.fieldKey}_area_$value'),
-        initialValue: value?.toString() ?? '',
-        readOnly: readOnly,
+        key: ValueKey('${widget.schema.fieldKey}_area'),
+        controller: _controller,
+        readOnly: widget.readOnly,
         maxLines: 4,
         decoration: InputDecoration(
-          labelText: schema.label,
+          labelText: widget.schema.label,
           isDense: true,
         ),
-        onChanged: (v) => onChanged(v),
+        onChanged: (v) => widget.onChanged(v),
       ),
     );
   }
@@ -363,7 +419,7 @@ class _MarkdownFieldWidgetState extends State<_MarkdownFieldWidget> {
 }
 
 // --- INTEGER ---
-class _IntegerFieldWidget extends StatelessWidget {
+class _IntegerFieldWidget extends StatefulWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
@@ -372,19 +428,47 @@ class _IntegerFieldWidget extends StatelessWidget {
   const _IntegerFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
 
   @override
+  State<_IntegerFieldWidget> createState() => _IntegerFieldWidgetState();
+}
+
+class _IntegerFieldWidgetState extends State<_IntegerFieldWidget> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value?.toString() ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _IntegerFieldWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newText = widget.value?.toString() ?? '';
+    if (_controller.text != newText && oldWidget.value != widget.value) {
+      _controller.text = newText;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: TextFormField(
-        key: ValueKey('${schema.fieldKey}_int_$value'),
-        initialValue: value?.toString() ?? '',
-        readOnly: readOnly,
+        key: ValueKey('${widget.schema.fieldKey}_int'),
+        controller: _controller,
+        readOnly: widget.readOnly,
         keyboardType: TextInputType.number,
         decoration: InputDecoration(
-          labelText: schema.label,
+          labelText: widget.schema.label,
           isDense: true,
         ),
-        onChanged: (v) => onChanged(int.tryParse(v) ?? 0),
+        onChanged: (v) => widget.onChanged(int.tryParse(v) ?? 0),
       ),
     );
   }
@@ -496,7 +580,7 @@ class _RelationFieldWidget extends StatelessWidget {
 }
 
 // --- STAT BLOCK (STR/DEX/CON/INT/WIS/CHA) ---
-class _StatBlockFieldWidget extends StatelessWidget {
+class _StatBlockFieldWidget extends StatefulWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
@@ -505,9 +589,51 @@ class _StatBlockFieldWidget extends StatelessWidget {
   const _StatBlockFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
 
   @override
+  State<_StatBlockFieldWidget> createState() => _StatBlockFieldWidgetState();
+}
+
+class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
+  static const _keys = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+  final Map<String, TextEditingController> _controllers = {};
+
+  Map<String, dynamic> get _stats =>
+      (widget.value is Map) ? Map<String, dynamic>.from(widget.value as Map) : <String, dynamic>{};
+
+  @override
+  void initState() {
+    super.initState();
+    final stats = _stats;
+    for (final key in _keys) {
+      _controllers[key] = TextEditingController(text: (stats[key] ?? 10).toString());
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _StatBlockFieldWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      final stats = _stats;
+      for (final key in _keys) {
+        final newText = (stats[key] ?? 10).toString();
+        final ctrl = _controllers[key]!;
+        if (ctrl.text != newText) {
+          ctrl.text = newText;
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final stats = (value is Map) ? Map<String, dynamic>.from(value as Map) : <String, dynamic>{};
-    const keys = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+    final stats = _stats;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -516,10 +642,10 @@ class _StatBlockFieldWidget extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(schema.label, style: Theme.of(context).textTheme.titleSmall),
+            Text(widget.schema.label, style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             Row(
-              children: keys.map((key) {
+              children: _keys.map((key) {
                 final val = stats[key] ?? 10;
                 final mod = ((val is int ? val : 10) - 10) ~/ 2;
                 final modStr = mod >= 0 ? '+$mod' : '$mod';
@@ -532,9 +658,9 @@ class _StatBlockFieldWidget extends StatelessWidget {
                       SizedBox(
                         width: 44,
                         child: TextFormField(
-                          key: ValueKey('sb_${key}_$val'),
-                          initialValue: val.toString(),
-                          readOnly: readOnly,
+                          key: ValueKey('sb_$key'),
+                          controller: _controllers[key],
+                          readOnly: widget.readOnly,
                           textAlign: TextAlign.center,
                           keyboardType: TextInputType.number,
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -543,8 +669,9 @@ class _StatBlockFieldWidget extends StatelessWidget {
                             contentPadding: EdgeInsets.symmetric(vertical: 8),
                           ),
                           onChanged: (v) {
-                            stats[key] = int.tryParse(v) ?? 10;
-                            onChanged(Map<String, dynamic>.from(stats));
+                            final updated = Map<String, dynamic>.from(stats);
+                            updated[key] = int.tryParse(v) ?? 10;
+                            widget.onChanged(updated);
                           },
                         ),
                       ),
@@ -563,7 +690,7 @@ class _StatBlockFieldWidget extends StatelessWidget {
 }
 
 // --- COMBAT STATS (HP, AC, Speed, etc.) ---
-class _CombatStatsFieldWidget extends StatelessWidget {
+class _CombatStatsFieldWidget extends StatefulWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
@@ -572,13 +699,57 @@ class _CombatStatsFieldWidget extends StatelessWidget {
   const _CombatStatsFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
 
   @override
-  Widget build(BuildContext context) {
-    final stats = (value is Map) ? Map<String, dynamic>.from(value as Map) : <String, dynamic>{};
+  State<_CombatStatsFieldWidget> createState() => _CombatStatsFieldWidgetState();
+}
 
-    // subFields varsa ondan al, yoksa default
-    final fields = schema.subFields.isNotEmpty
-        ? schema.subFields.map((sf) => (sf['key'] ?? '', sf['label'] ?? sf['key'] ?? '')).toList()
-        : const [('hp', 'HP'), ('max_hp', 'Max HP'), ('ac', 'AC'), ('speed', 'Speed'), ('initiative', 'Init'), ('cr', 'CR'), ('xp', 'XP')];
+class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
+  final Map<String, TextEditingController> _controllers = {};
+
+  Map<String, dynamic> get _stats =>
+      (widget.value is Map) ? Map<String, dynamic>.from(widget.value as Map) : <String, dynamic>{};
+
+  List<(String, String)> get _fields => widget.schema.subFields.isNotEmpty
+      ? widget.schema.subFields.map((sf) => (sf['key'] ?? '', sf['label'] ?? sf['key'] ?? '')).toList()
+      : const [('hp', 'HP'), ('max_hp', 'Max HP'), ('ac', 'AC'), ('speed', 'Speed'), ('initiative', 'Init'), ('cr', 'CR'), ('xp', 'XP')];
+
+  @override
+  void initState() {
+    super.initState();
+    final stats = _stats;
+    for (final f in _fields) {
+      _controllers[f.$1] = TextEditingController(text: stats[f.$1]?.toString() ?? '');
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _CombatStatsFieldWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      final stats = _stats;
+      for (final f in _fields) {
+        final newText = stats[f.$1]?.toString() ?? '';
+        final ctrl = _controllers[f.$1];
+        if (ctrl != null && ctrl.text != newText) {
+          ctrl.text = newText;
+        } else if (ctrl == null) {
+          _controllers[f.$1] = TextEditingController(text: newText);
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final stats = _stats;
+    final fields = _fields;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -587,11 +758,10 @@ class _CombatStatsFieldWidget extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(schema.label, style: Theme.of(context).textTheme.titleSmall),
+            Text(widget.schema.label, style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             LayoutBuilder(
               builder: (context, constraints) {
-                // Satıra sığan alan sayısını hesapla (min 80px per field + 8px gap)
                 final cols = (constraints.maxWidth / 88).floor().clamp(1, fields.length);
                 final rows = <Widget>[];
                 for (var i = 0; i < fields.length; i += cols) {
@@ -604,9 +774,9 @@ class _CombatStatsFieldWidget extends StatelessWidget {
                           child: Padding(
                             padding: EdgeInsets.only(right: f != rowFields.last ? 8 : 0),
                             child: TextFormField(
-                              key: ValueKey('cs_${f.$1}_${stats[f.$1]}'),
-                              initialValue: stats[f.$1]?.toString() ?? '',
-                              readOnly: readOnly,
+                              key: ValueKey('cs_${f.$1}'),
+                              controller: _controllers[f.$1],
+                              readOnly: widget.readOnly,
                               textAlign: TextAlign.center,
                               decoration: InputDecoration(
                                 labelText: f.$2,
@@ -614,8 +784,9 @@ class _CombatStatsFieldWidget extends StatelessWidget {
                                 contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                               ),
                               onChanged: (v) {
-                                stats[f.$1] = v;
-                                onChanged(Map<String, dynamic>.from(stats));
+                                final updated = Map<String, dynamic>.from(stats);
+                                updated[f.$1] = v;
+                                widget.onChanged(updated);
                               },
                             ),
                           ),
@@ -635,7 +806,7 @@ class _CombatStatsFieldWidget extends StatelessWidget {
 }
 
 // --- GENERIC LIST — herhangi tipin listesi (text list, integer list, image list...) ---
-class _GenericListFieldWidget extends StatelessWidget {
+class _GenericListFieldWidget extends StatefulWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
@@ -644,9 +815,57 @@ class _GenericListFieldWidget extends StatelessWidget {
   const _GenericListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
 
   @override
+  State<_GenericListFieldWidget> createState() => _GenericListFieldWidgetState();
+}
+
+class _GenericListFieldWidgetState extends State<_GenericListFieldWidget> {
+  final List<TextEditingController> _controllers = [];
+
+  List<String> get _items =>
+      (widget.value is List) ? List<String>.from((widget.value as List).map((e) => e.toString())) : <String>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _syncControllers(_items);
+  }
+
+  @override
+  void didUpdateWidget(covariant _GenericListFieldWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      _syncControllers(_items);
+    }
+  }
+
+  void _syncControllers(List<String> items) {
+    // Adjust controller list length
+    while (_controllers.length < items.length) {
+      _controllers.add(TextEditingController());
+    }
+    while (_controllers.length > items.length) {
+      _controllers.removeLast().dispose();
+    }
+    // Update text for controllers whose text differs
+    for (var i = 0; i < items.length; i++) {
+      if (_controllers[i].text != items[i]) {
+        _controllers[i].text = items[i];
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final items = (value is List) ? List<String>.from(value.map((e) => e.toString())) : <String>[];
-    final typeName = schema.fieldType.name;
+    final items = _items;
+    final typeName = widget.schema.fieldType.name;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -657,14 +876,14 @@ class _GenericListFieldWidget extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text('${schema.label} (${items.length})', style: Theme.of(context).textTheme.titleSmall)),
+                Expanded(child: Text('${widget.schema.label} (${items.length})', style: Theme.of(context).textTheme.titleSmall)),
                 Text(typeName, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline)),
-                if (!readOnly)
+                if (!widget.readOnly)
                   IconButton(
                     icon: const Icon(Icons.add, size: 18),
                     onPressed: () {
-                      items.add('');
-                      onChanged(List<String>.from(items));
+                      final updated = List<String>.from(items)..add('');
+                      widget.onChanged(updated);
                     },
                     visualDensity: VisualDensity.compact,
                   ),
@@ -685,23 +904,25 @@ class _GenericListFieldWidget extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextFormField(
-                        initialValue: entry.value,
-                        readOnly: readOnly,
+                        key: ValueKey('${widget.schema.fieldKey}_list_$i'),
+                        controller: _controllers.length > i ? _controllers[i] : null,
+                        readOnly: widget.readOnly,
                         style: const TextStyle(fontSize: 12),
                         decoration: const InputDecoration(isDense: true, filled: false, border: InputBorder.none),
-                        keyboardType: schema.fieldType == FieldType.integer ? TextInputType.number : null,
+                        keyboardType: widget.schema.fieldType == FieldType.integer ? TextInputType.number : null,
                         onChanged: (v) {
-                          items[i] = v;
-                          onChanged(List<String>.from(items));
+                          final updated = List<String>.from(items);
+                          updated[i] = v;
+                          widget.onChanged(updated);
                         },
                       ),
                     ),
-                    if (!readOnly)
+                    if (!widget.readOnly)
                       IconButton(
                         icon: const Icon(Icons.close, size: 14),
                         onPressed: () {
-                          items.removeAt(i);
-                          onChanged(List<String>.from(items));
+                          final updated = List<String>.from(items)..removeAt(i);
+                          widget.onChanged(updated);
                         },
                         visualDensity: VisualDensity.compact,
                       ),
@@ -1263,7 +1484,7 @@ class _DateFieldWidget extends StatelessWidget {
 }
 
 // --- DICE (zar notasyonu: 2d6, 1d20+5, 3d8+2) ---
-class _DiceFieldWidget extends StatelessWidget {
+class _DiceFieldWidget extends StatefulWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
@@ -1272,20 +1493,48 @@ class _DiceFieldWidget extends StatelessWidget {
   const _DiceFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
 
   @override
+  State<_DiceFieldWidget> createState() => _DiceFieldWidgetState();
+}
+
+class _DiceFieldWidgetState extends State<_DiceFieldWidget> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value?.toString() ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _DiceFieldWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newText = widget.value?.toString() ?? '';
+    if (_controller.text != newText && oldWidget.value != widget.value) {
+      _controller.text = newText;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: TextFormField(
-        key: ValueKey('${schema.fieldKey}_dice_$value'),
-        initialValue: value?.toString() ?? '',
-        readOnly: readOnly,
+        key: ValueKey('${widget.schema.fieldKey}_dice'),
+        controller: _controller,
+        readOnly: widget.readOnly,
         decoration: InputDecoration(
-          labelText: schema.label,
+          labelText: widget.schema.label,
           hintText: 'e.g. 2d6+3',
           isDense: true,
           prefixIcon: const Icon(Icons.casino, size: 18),
         ),
-        onChanged: (v) => onChanged(v),
+        onChanged: (v) => widget.onChanged(v),
       ),
     );
   }
