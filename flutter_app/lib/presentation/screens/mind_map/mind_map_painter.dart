@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../domain/entities/mind_map.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'mind_map_notifier.dart';
 
@@ -20,6 +21,16 @@ class MindMapPainter extends CustomPainter {
   final int lodZone;
   final Map<String, Offset> dragOverrides;
 
+  // -----------------------------------------------------------------------
+  // Static caches — survive painter reconstruction across frames
+  // -----------------------------------------------------------------------
+  static final _colorCache = <String, Color>{};
+  static final _wsLabelCache = <String, TextPainter>{};
+  static final _dashedRectCache = <int, Path>{};
+  static final _arrowCache = <int, double>{};
+  static final _nodeLabelCache = <String, TextPainter>{};
+  static List<MindMapNode>? _lastNodes;
+
   MindMapPainter({
     required this.mapState,
     required this.scale,
@@ -32,8 +43,20 @@ class MindMapPainter extends CustomPainter {
     super.repaint,
   });
 
+  /// Clear label and path caches when the node list changes structurally.
+  void _checkCacheValidity() {
+    if (!identical(_lastNodes, mapState.nodes)) {
+      _lastNodes = mapState.nodes;
+      _wsLabelCache.clear();
+      _dashedRectCache.clear();
+      _nodeLabelCache.clear();
+      _arrowCache.clear();
+    }
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
+    _checkCacheValidity();
     _paintGrid(canvas);
     _paintWorkspaces(canvas);
     _paintEdges(canvas);
@@ -106,9 +129,11 @@ class MindMapPainter extends CustomPainter {
       final borderColor = isSelected ? palette.lineSelected : color;
       _drawDashedRect(canvas, rect, borderColor, strokeWidth);
 
-      // Label at top-left
+      // Label at top-left (cached TextPainter)
       final fontSize = (14 / scale).clamp(10.0, 60.0);
-      final tp = TextPainter(
+      final maxW = rect.width - 16 / scale;
+      final cacheKey = '${node.label}_${fontSize.toStringAsFixed(1)}_${maxW.toStringAsFixed(0)}';
+      final tp = _wsLabelCache.putIfAbsent(cacheKey, () => TextPainter(
         text: TextSpan(
           text: node.label,
           style: TextStyle(
@@ -118,7 +143,7 @@ class MindMapPainter extends CustomPainter {
           ),
         ),
         textDirection: TextDirection.ltr,
-      )..layout(maxWidth: rect.width - 16 / scale);
+      )..layout(maxWidth: maxW));
       tp.paint(canvas, rect.topLeft + Offset(8 / scale, 6 / scale));
     }
   }
@@ -130,18 +155,16 @@ class MindMapPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.butt;
 
-    const dashLen = 10.0;
-    const gapLen = 6.0;
-
-    // Draw dashed line along a path
-    final path = Path()
-      ..moveTo(rect.left, rect.top)
-      ..lineTo(rect.right, rect.top)
-      ..lineTo(rect.right, rect.bottom)
-      ..lineTo(rect.left, rect.bottom)
-      ..close();
-
-    final dashedPath = _createDashedPath(path, dashLen, gapLen);
+    final key = Object.hash(rect.left, rect.top, rect.right, rect.bottom);
+    final dashedPath = _dashedRectCache.putIfAbsent(key, () {
+      final path = Path()
+        ..moveTo(rect.left, rect.top)
+        ..lineTo(rect.right, rect.top)
+        ..lineTo(rect.right, rect.bottom)
+        ..lineTo(rect.left, rect.bottom)
+        ..close();
+      return _createDashedPath(path, 10.0, 6.0);
+    });
     canvas.drawPath(dashedPath, paint);
   }
 
@@ -166,9 +189,11 @@ class MindMapPainter extends CustomPainter {
   }
 
   Color _parseHexColor(String hex) {
-    var h = hex.replaceAll('#', '');
-    if (h.length == 6) h = 'FF$h';
-    return Color(int.parse(h, radix: 16));
+    return _colorCache.putIfAbsent(hex, () {
+      var h = hex.replaceAll('#', '');
+      if (h.length == 6) h = 'FF$h';
+      return Color(int.parse(h, radix: 16));
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -210,7 +235,7 @@ class MindMapPainter extends CustomPainter {
 
       final path = _bezierPath(srcCenter, tgtCenter);
       canvas.drawPath(path, paint);
-      _drawArrow(canvas, path, tgtCenter, paint.color);
+      _drawArrow(canvas, path, tgtCenter, paint.color, srcCenter);
     }
   }
 
@@ -236,14 +261,23 @@ class MindMapPainter extends CustomPainter {
       );
   }
 
-  void _drawArrow(Canvas canvas, Path path, Offset tip, Color color) {
-    final metrics = path.computeMetrics().firstOrNull;
-    if (metrics == null || metrics.length < 12) return;
+  void _drawArrow(Canvas canvas, Path path, Offset tip, Color color,
+      Offset srcCenter) {
+    final key = Object.hash(
+      srcCenter.dx.toInt(), srcCenter.dy.toInt(),
+      tip.dx.toInt(), tip.dy.toInt(),
+    );
 
-    final tangent = metrics.getTangentForOffset(metrics.length - 10);
-    if (tangent == null) return;
+    final angle = _arrowCache.putIfAbsent(key, () {
+      final metrics = path.computeMetrics().firstOrNull;
+      if (metrics == null || metrics.length < 12) return double.nan;
+      final tangent = metrics.getTangentForOffset(metrics.length - 10);
+      if (tangent == null) return double.nan;
+      return math.atan2(tangent.vector.dy, tangent.vector.dx);
+    });
 
-    final angle = math.atan2(tangent.vector.dy, tangent.vector.dx);
+    if (angle.isNaN) return;
+
     const arrowLen = 9.0;
     const spread = math.pi / 6;
 
@@ -337,9 +371,11 @@ class MindMapPainter extends CustomPainter {
         );
       }
 
-      // Label — auto-scaled to be readable regardless of zoom
+      // Label — cached TextPainter
       final fontSize = (13 / scale).clamp(8.0, 60.0);
-      final tp = TextPainter(
+      final maxW = rect.width - 8 / scale;
+      final cacheKey = '${node.label}_${fontSize.toStringAsFixed(1)}_${maxW.toStringAsFixed(0)}';
+      final tp = _nodeLabelCache.putIfAbsent(cacheKey, () => TextPainter(
         text: TextSpan(
           text: node.label,
           style: TextStyle(
@@ -351,7 +387,7 @@ class MindMapPainter extends CustomPainter {
         textDirection: TextDirection.ltr,
         maxLines: 1,
         ellipsis: '...',
-      )..layout(maxWidth: rect.width - 8 / scale);
+      )..layout(maxWidth: maxW));
       tp.paint(
         canvas,
         rect.topLeft + Offset(4 / scale, 4 / scale),

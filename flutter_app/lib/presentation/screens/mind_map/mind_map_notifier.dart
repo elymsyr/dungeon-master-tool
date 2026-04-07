@@ -343,17 +343,32 @@ class MindMapNotifier extends StateNotifier<MindMapState>
   }
 
   // -------------------------------------------------------------------------
-  // Sorted nodes (workspaces behind others)
+  // Sorted nodes (workspaces behind others) — cached
   // -------------------------------------------------------------------------
 
+  List<MindMapNode>? _sortedNodesCache;
+  List<MindMapNode>? _lastNodesList;
+
   List<MindMapNode> get sortedNodes {
-    final ws = state.nodes.where((n) => n.nodeType == 'workspace').toList();
-    final other = state.nodes.where((n) => n.nodeType != 'workspace').toList();
-    return [...ws, ...other];
+    if (!identical(_lastNodesList, state.nodes)) {
+      _lastNodesList = state.nodes;
+      final ws = state.nodes.where((n) => n.nodeType == 'workspace').toList();
+      final other = state.nodes.where((n) => n.nodeType != 'workspace').toList();
+      _sortedNodesCache = [...ws, ...other];
+    }
+    return _sortedNodesCache!;
   }
 
-  List<MindMapNode> get workspaces =>
-      state.nodes.where((n) => n.nodeType == 'workspace').toList();
+  List<MindMapNode>? _workspacesCache;
+  List<MindMapNode>? _lastNodesForWs;
+
+  List<MindMapNode> get workspaces {
+    if (!identical(_lastNodesForWs, state.nodes)) {
+      _lastNodesForWs = state.nodes;
+      _workspacesCache = state.nodes.where((n) => n.nodeType == 'workspace').toList();
+    }
+    return _workspacesCache!;
+  }
 
   // -------------------------------------------------------------------------
   // Node CRUD
@@ -412,8 +427,8 @@ class MindMapNotifier extends StateNotifier<MindMapState>
       nodeType: 'entity',
       x: canvasPos.dx,
       y: canvasPos.dy,
-      width: 300,
-      height: 400,
+      width: 360,
+      height: 220,
       entityId: entityId,
     );
     state = state.copyWith(nodes: [...state.nodes, node]);
