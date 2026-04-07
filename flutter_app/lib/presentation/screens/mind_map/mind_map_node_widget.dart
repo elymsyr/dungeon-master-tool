@@ -69,10 +69,11 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
   @override
   void didUpdateWidget(MindMapNodeWidget old) {
     super.didUpdateWidget(old);
-    if (old.node.label != widget.node.label && !_editingLabel) {
+    // Don't reset controllers while user is actively editing (edit mode or inline rename)
+    if (old.node.label != widget.node.label && !_editingLabel && !widget.editMode) {
       _labelCtrl.text = widget.node.label;
     }
-    if (old.node.content != widget.node.content) {
+    if (old.node.content != widget.node.content && !widget.editMode) {
       _contentCtrl.text = widget.node.content;
     }
   }
@@ -422,6 +423,8 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
                     filled: false,
                   ),
                   onChanged: (v) => widget.notifier.updateNodeLabel(n.id, v),
@@ -456,6 +459,8 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
                       isDense: true,
                       contentPadding: EdgeInsets.zero,
                       border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
                       filled: false,
                       hintText: 'Write note...',
                     ),
