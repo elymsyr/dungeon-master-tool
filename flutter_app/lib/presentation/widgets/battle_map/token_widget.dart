@@ -57,7 +57,7 @@ class _TokenWidgetState extends State<TokenWidget> {
     final size = widget.tokenSize.toDouble();
     final canvasPos = _effectiveCanvasPos;
 
-    final borderWidth = widget.isActive ? 3.0 : 1.5;
+    final borderWidth = widget.isActive ? 4.0 : 2.5;
 
     // Canvas-space positioning — Transform wrapper handles screen projection
     return Positioned(

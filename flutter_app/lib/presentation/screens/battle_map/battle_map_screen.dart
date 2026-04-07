@@ -241,7 +241,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
               return TokenWidget(
                 key: ValueKey('token_${c.id}'),
                 combatant: c,
-                tokenSize: mapState.tokenSizeOverrides[c.id] ?? mapState.tokenSize,
+                tokenSize: (mapState.tokenSize * (mapState.tokenSizeMultipliers[c.id] ?? 1.0)).round(),
                 isActive: index == encounter.turnIndex,
                 canvasPosition: pos,
                 viewTransform: notifier.viewTransform,
@@ -321,25 +321,23 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
   // -------------------------------------------------------------------------
 
   void _showResizeDialog(String id, BattleMapState mapState, BattleMapNotifier notifier) {
-    final currentPx = mapState.tokenSizeOverrides[id] ?? mapState.tokenSize;
-    final gs = mapState.gridSize;
-    var cells = currentPx / gs;
+    var multiplier = mapState.tokenSizeMultipliers[id] ?? 1.0;
 
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Token Size'),
+        title: const Text('Token Size Multiplier'),
         content: StatefulBuilder(
           builder: (ctx, setDialogState) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('${cells.toStringAsFixed(2)} cells'),
+              Text('${multiplier.toStringAsFixed(2)}x'),
               Slider(
-                value: cells.clamp(0.25, 8.0),
+                value: multiplier.clamp(0.25, 4.0),
                 min: 0.25,
-                max: 8.0,
-                divisions: 31,
-                onChanged: (v) => setDialogState(() => cells = v),
+                max: 4.0,
+                divisions: 15,
+                onChanged: (v) => setDialogState(() => multiplier = v),
               ),
             ],
           ),
@@ -347,7 +345,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              notifier.setTokenSizeOverride(id, (cells * gs).round());
+              notifier.setTokenSizeMultiplier(id, multiplier);
               Navigator.pop(ctx);
             },
             child: const Text('Apply'),
