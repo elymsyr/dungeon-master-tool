@@ -140,7 +140,13 @@ class BattleMapPainter extends CustomPainter {
     final h = img != null ? img.height.toDouble() : screenSize.height / vt.scale;
     final bounds = Rect.fromLTWH(0, 0, w, h);
 
-    canvas.saveLayer(bounds, Paint());
+    // Only need saveLayer when erase strokes are present (BlendMode.clear
+    // requires compositing within an offscreen layer).
+    final hasErase = mapState.strokes.any((s) => s.isErase) || currentIsErase;
+
+    if (hasErase) {
+      canvas.saveLayer(bounds, Paint());
+    }
 
     // Committed annotation image (flattened on save)
     if (mapState.annotationImage != null) {
@@ -175,7 +181,9 @@ class BattleMapPainter extends CustomPainter {
       );
     }
 
-    canvas.restore();
+    if (hasErase) {
+      canvas.restore();
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -187,19 +195,12 @@ class BattleMapPainter extends CustomPainter {
     if (fogImg == null) return;
 
     final opacity = isDmView ? 0.5 : 1.0;
-    final bounds = Rect.fromLTWH(
-      0, 0,
-      fogImg.width.toDouble(),
-      fogImg.height.toDouble(),
-    );
-
-    canvas.saveLayer(bounds, Paint());
+    // Draw fog directly with opacity paint — no need for saveLayer
     canvas.drawImage(
       fogImg,
       Offset.zero,
       Paint()..color = Colors.white.withValues(alpha: opacity),
     );
-    canvas.restore();
   }
 
   // ---------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,6 +8,8 @@ import '../../application/providers/entity_provider.dart';
 import '../../application/providers/locale_provider.dart';
 import '../../application/providers/theme_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
+import '../../application/providers/save_state_provider.dart';
+import '../../application/providers/undo_redo_provider.dart';
 import '../../core/utils/screen_type.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
@@ -27,7 +30,8 @@ class MainScreen extends ConsumerStatefulWidget {
   ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends ConsumerState<MainScreen> {
+class _MainScreenState extends ConsumerState<MainScreen>
+    with WidgetsBindingObserver {
   int _tabIndex = 0;
   bool _editMode = false;
   String? _selectedEntityId;
@@ -41,11 +45,26 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // UiState'den restore et
     final uiState = ref.read(uiStateProvider);
     _tabIndex = uiState.mainTabIndex;
     _sidebarOpen = uiState.sidebarOpen;
     _sidebarWidth = uiState.sidebarWidth.clamp(_minSidebarWidth, _maxSidebarWidth);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      ref.read(saveStateProvider.notifier).saveNow();
+    }
   }
 
   void _persistUiState() {
@@ -138,7 +157,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       ],
     );
 
-    return Scaffold(
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      autofocus: true,
+      onKeyEvent: (event) => _handleGlobalKey(event, ref),
+      child: Scaffold(
       // --- Toolbar (AppBar) ---
       appBar: AppBar(
         titleSpacing: 8,
@@ -287,6 +310,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                             );
                           }),
                           const Spacer(),
+                          // Undo / Redo buttons + Save indicator
+                          _UndoRedoButtons(tabIndex: _tabIndex),
+                          const SizedBox(width: 8),
+                          const _SaveIndicator(),
+                          const SizedBox(width: 12),
                         ],
                       ),
                     ),
@@ -344,6 +372,104 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               ),
             )
           : null,
+    ),
+    );
+  }
+
+  void _handleGlobalKey(KeyEvent event, WidgetRef ref) {
+    if (event is! KeyDownEvent) return;
+    final ctrl = HardwareKeyboard.instance.isControlPressed;
+    final shift = HardwareKeyboard.instance.isShiftPressed;
+
+    if (!ctrl) return;
+
+    final dispatcher = ref.read(undoRedoDispatcherProvider);
+    if (event.logicalKey == LogicalKeyboardKey.keyZ) {
+      if (shift) {
+        dispatcher.redo(_tabIndex);
+      } else {
+        dispatcher.undo(_tabIndex);
+      }
+    } else if (event.logicalKey == LogicalKeyboardKey.keyY) {
+      dispatcher.redo(_tabIndex);
+    }
+  }
+}
+
+/// Undo / Redo buttons that dispatch to the active tab's notifier.
+class _UndoRedoButtons extends ConsumerWidget {
+  final int tabIndex;
+  const _UndoRedoButtons({required this.tabIndex});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dispatcher = ref.read(undoRedoDispatcherProvider);
+    final (canUndoVN, canRedoVN) = dispatcher.activeNotifiers(tabIndex);
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ValueListenableBuilder<bool>(
+          valueListenable: canUndoVN,
+          builder: (_, canUndo, _) => IconButton(
+            icon: const Icon(Icons.undo, size: 18),
+            tooltip: 'Undo (Ctrl+Z)',
+            onPressed: canUndo ? () => dispatcher.undo(tabIndex) : null,
+            color: palette.tabActiveText,
+            disabledColor: palette.tabText.withValues(alpha: 0.3),
+            iconSize: 18,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            padding: const EdgeInsets.all(4),
+          ),
+        ),
+        ValueListenableBuilder<bool>(
+          valueListenable: canRedoVN,
+          builder: (_, canRedo, _) => IconButton(
+            icon: const Icon(Icons.redo, size: 18),
+            tooltip: 'Redo (Ctrl+Shift+Z)',
+            onPressed: canRedo ? () => dispatcher.redo(tabIndex) : null,
+            color: palette.tabActiveText,
+            disabledColor: palette.tabText.withValues(alpha: 0.3),
+            iconSize: 18,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            padding: const EdgeInsets.all(4),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Save status indicator — shows Saved / Unsaved / Saving...
+class _SaveIndicator extends ConsumerWidget {
+  const _SaveIndicator();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(saveStateProvider);
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+
+    final (IconData? icon, Color color, String label) = switch (status) {
+      SaveStatus.saved => (Icons.check_circle, palette.uiAutosaveTextSaved, 'Saved'),
+      SaveStatus.dirty => (Icons.circle, palette.uiAutosaveTextEditing, 'Unsaved'),
+      SaveStatus.saving => (null, palette.uiAutosaveTextEditing, 'Saving...'),
+    };
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null)
+          Icon(icon, size: 10, color: color)
+        else
+          SizedBox(
+            width: 10,
+            height: 10,
+            child: CircularProgressIndicator(strokeWidth: 1.5, color: color),
+          ),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(fontSize: 11, color: color)),
+      ],
     );
   }
 }

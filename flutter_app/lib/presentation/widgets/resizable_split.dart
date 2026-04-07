@@ -177,7 +177,12 @@ class _SplitDelegate extends MultiChildLayoutDelegate {
   }
 
   @override
-  bool shouldRelayout(covariant _SplitDelegate old) => true;
+  bool shouldRelayout(covariant _SplitDelegate old) =>
+      old.axis != axis ||
+      old.ratio != ratio ||
+      old.dividerSize != dividerSize ||
+      old.minFirstSize != minFirstSize ||
+      old.minSecondSize != minSecondSize;
 }
 
 class _SplitDivider extends StatefulWidget {

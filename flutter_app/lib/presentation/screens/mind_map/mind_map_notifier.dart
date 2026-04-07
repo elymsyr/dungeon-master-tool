@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -6,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/save_state_provider.dart';
+import '../../../application/services/undo_redo_mixin.dart';
 import '../../../domain/entities/mind_map.dart';
 
 const _uuid = Uuid();
@@ -88,7 +89,8 @@ class MindMapState {
 // Notifier
 // ---------------------------------------------------------------------------
 
-class MindMapNotifier extends StateNotifier<MindMapState> {
+class MindMapNotifier extends StateNotifier<MindMapState>
+    with UndoRedoMixin<MindMapState> {
   final Ref _ref;
 
   /// Lightweight view transform — updated at 60fps, not via Riverpod.
@@ -98,11 +100,15 @@ class MindMapNotifier extends StateNotifier<MindMapState> {
   /// Triggers edge repaint without full widget rebuild.
   final ValueNotifier<int> edgeTick = ValueNotifier<int>(0);
 
-  final List<MindMapState> _undoStack = [];
-  final List<MindMapState> _redoStack = [];
-  static const int _maxUndo = 50;
+  /// Temporary drag position overrides — indexed by node ID.
+  /// Node widgets and the edge painter read this directly during drags,
+  /// avoiding Riverpod state updates at 60fps.
+  final ValueNotifier<Map<String, Offset>> dragOverrides =
+      ValueNotifier<Map<String, Offset>>(const {});
 
-  Timer? _saveTimer;
+  /// Temporary size overrides during resize gestures.
+  final ValueNotifier<Map<String, Size>> sizeOverrides =
+      ValueNotifier<Map<String, Size>>(const {});
 
   // Gesture tracking
   double _scaleBase = 1.0;
@@ -114,9 +120,11 @@ class MindMapNotifier extends StateNotifier<MindMapState> {
 
   @override
   void dispose() {
-    _saveTimer?.cancel();
     viewTransform.dispose();
     edgeTick.dispose();
+    dragOverrides.dispose();
+    sizeOverrides.dispose();
+    disposeUndoRedo();
     super.dispose();
   }
 
@@ -141,11 +149,11 @@ class MindMapNotifier extends StateNotifier<MindMapState> {
     );
 
     state = MindMapState(nodes: nodesList, edges: edgesList);
-    _undoStack.clear();
-    _redoStack.clear();
+    clearUndoRedo();
   }
 
-  Future<void> save() async {
+  /// Synchronously update in-memory campaign data with current mind map state.
+  void syncToCampaignData() {
     final campaign = _ref.read(activeCampaignProvider.notifier);
     if (campaign.data == null) return;
 
@@ -162,42 +170,34 @@ class MindMapNotifier extends StateNotifier<MindMapState> {
         Map<String, dynamic>.from(campaign.data!['mind_maps'] as Map? ?? {});
     mindMaps['default'] = mindMapData;
     campaign.data!['mind_maps'] = mindMaps;
-    await campaign.save();
   }
 
   void _debouncedSave() {
-    _saveTimer?.cancel();
-    _saveTimer = Timer(const Duration(seconds: 2), () {
-      if (mounted) save();
-    });
+    syncToCampaignData();
+    _ref.read(saveStateProvider.notifier).markDirty();
   }
 
   // -------------------------------------------------------------------------
-  // Undo / Redo
+  // Undo / Redo (via UndoRedoMixin)
   // -------------------------------------------------------------------------
 
-  void _pushUndo() {
-    _undoStack.add(state);
-    if (_undoStack.length > _maxUndo) _undoStack.removeAt(0);
-    _redoStack.clear();
-  }
+  void _pushUndo() => pushUndo(state);
 
   void undo() {
-    if (_undoStack.isEmpty) return;
-    _redoStack.add(state);
-    state = _undoStack.removeLast();
-    edgeTick.value++;
+    final restored = popUndo(state);
+    if (restored != null) {
+      state = restored;
+      edgeTick.value++;
+    }
   }
 
   void redo() {
-    if (_redoStack.isEmpty) return;
-    _undoStack.add(state);
-    state = _redoStack.removeLast();
-    edgeTick.value++;
+    final restored = popRedo(state);
+    if (restored != null) {
+      state = restored;
+      edgeTick.value++;
+    }
   }
-
-  bool get canUndo => _undoStack.isNotEmpty;
-  bool get canRedo => _redoStack.isNotEmpty;
 
   // -------------------------------------------------------------------------
   // Pan / Zoom (custom gesture handling — BattleMap/WorldMap pattern)
@@ -364,7 +364,7 @@ class MindMapNotifier extends StateNotifier<MindMapState> {
     final id = _uuid.v4();
     final (label, w, h) = switch (nodeType) {
       'note' => ('New Note', 250.0, 200.0),
-      'entity' => ('Entity', 300.0, 200.0),
+      'entity' => ('Entity', 300.0, 400.0),
       'image' => ('Image', 300.0, 300.0),
       'workspace' => ('New Workspace', 800.0, 600.0),
       _ => ('Node', 200.0, 150.0),
@@ -413,7 +413,7 @@ class MindMapNotifier extends StateNotifier<MindMapState> {
       x: canvasPos.dx,
       y: canvasPos.dy,
       width: 300,
-      height: 200,
+      height: 400,
       entityId: entityId,
     );
     state = state.copyWith(nodes: [...state.nodes, node]);
@@ -449,17 +449,19 @@ class MindMapNotifier extends StateNotifier<MindMapState> {
     _debouncedSave();
   }
 
-  void updateNodePosition(String id, Offset pos) {
+  /// [save] — set to false during continuous drag/resize to skip debounced
+  /// disk writes; call with save: true (default) on the final commit.
+  void updateNodePosition(String id, Offset pos, {bool save = true}) {
     final idx = state.nodes.indexWhere((n) => n.id == id);
     if (idx < 0) return;
     final updated = List<MindMapNode>.from(state.nodes);
     updated[idx] = updated[idx].copyWith(x: pos.dx, y: pos.dy);
     state = state.copyWith(nodes: updated);
     edgeTick.value++;
-    _debouncedSave();
+    if (save) _debouncedSave();
   }
 
-  void updateNodeSize(String id, Size size) {
+  void updateNodeSize(String id, Size size, {bool save = true}) {
     final idx = state.nodes.indexWhere((n) => n.id == id);
     if (idx < 0) return;
     final updated = List<MindMapNode>.from(state.nodes);
@@ -469,7 +471,73 @@ class MindMapNotifier extends StateNotifier<MindMapState> {
     );
     state = state.copyWith(nodes: updated);
     edgeTick.value++;
-    _debouncedSave();
+    if (save) _debouncedSave();
+  }
+
+  /// Combined position + size update in a single state change (used by resize).
+  void updateNodeGeometry(String id, Offset pos, Size size, {bool save = true}) {
+    final idx = state.nodes.indexWhere((n) => n.id == id);
+    if (idx < 0) return;
+    final updated = List<MindMapNode>.from(state.nodes);
+    updated[idx] = updated[idx].copyWith(
+      x: pos.dx,
+      y: pos.dy,
+      width: size.width.clamp(150, 2000),
+      height: size.height.clamp(80, 2000),
+    );
+    state = state.copyWith(nodes: updated);
+    edgeTick.value++;
+    if (save) _debouncedSave();
+  }
+
+  // -------------------------------------------------------------------------
+  // Drag / Resize overrides (bypass Riverpod during 60fps gestures)
+  // -------------------------------------------------------------------------
+
+  /// Update drag position override without touching Riverpod state.
+  void updateDragOverride(String id, Offset pos) {
+    dragOverrides.value = {...dragOverrides.value, id: pos};
+    edgeTick.value++;
+  }
+
+  /// Commit drag override to Riverpod state and clear the override.
+  void commitDragOverride(String id) {
+    final pos = dragOverrides.value[id];
+    final updated = Map<String, Offset>.from(dragOverrides.value)..remove(id);
+    dragOverrides.value = updated;
+    if (pos != null) {
+      _pushUndo();
+      updateNodePosition(id, pos);
+    }
+  }
+
+  /// Update both position and size overrides during resize gestures.
+  void updateSizeOverride(String id, Offset pos, Size size) {
+    dragOverrides.value = {...dragOverrides.value, id: pos};
+    sizeOverrides.value = {...sizeOverrides.value, id: size};
+    edgeTick.value++;
+  }
+
+  /// Commit resize overrides to Riverpod state and clear them.
+  void commitSizeOverride(String id) {
+    final pos = dragOverrides.value[id];
+    final size = sizeOverrides.value[id];
+    final updatedDrag = Map<String, Offset>.from(dragOverrides.value)..remove(id);
+    final updatedSize = Map<String, Size>.from(sizeOverrides.value)..remove(id);
+    dragOverrides.value = updatedDrag;
+    sizeOverrides.value = updatedSize;
+    if (pos != null && size != null) {
+      _pushUndo();
+      updateNodeGeometry(id, pos, size);
+    }
+  }
+
+  /// Get effective node center — checks drag override first, then state.
+  Offset getNodeCenter(String id) {
+    final override = dragOverrides.value[id];
+    if (override != null) return override;
+    final node = state.nodes.where((n) => n.id == id).firstOrNull;
+    return node != null ? Offset(node.x, node.y) : Offset.zero;
   }
 
   void updateNodeContent(String id, String content) {

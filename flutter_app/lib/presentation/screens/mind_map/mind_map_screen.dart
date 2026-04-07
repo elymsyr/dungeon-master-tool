@@ -1,9 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/save_state_provider.dart';
 import '../../../domain/entities/mind_map.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'mind_map_canvas.dart';
@@ -49,7 +48,8 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
 
   @override
   void dispose() {
-    unawaited(_notifier.save());
+    _notifier.syncToCampaignData();
+    ref.read(saveStateProvider.notifier).markDirty();
     super.dispose();
   }
 

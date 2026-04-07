@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/entities/entity.dart';
+import '../../../application/providers/entity_provider.dart';
 import '../../../domain/entities/mind_map.dart';
-import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../database/entity_card.dart';
 import 'mind_map_notifier.dart';
@@ -14,7 +14,7 @@ import 'mind_map_notifier.dart';
 ///
 /// Supports note (sharp corners), entity (rounded 6px), image, and workspace
 /// node types with LOD-aware rendering and edit-mode gating.
-class MindMapNodeWidget extends StatefulWidget {
+class MindMapNodeWidget extends ConsumerStatefulWidget {
   final MindMapNode node;
   final bool isSelected;
   final bool isConnecting;
@@ -25,8 +25,6 @@ class MindMapNodeWidget extends StatefulWidget {
   final int lodZone;
   final bool showResizeHandle;
   final void Function(String entityId)? onOpenEntity;
-  final Map<String, Entity>? entities;
-  final List<EntityCategorySchema> categorySchemas;
 
   const MindMapNodeWidget({
     super.key,
@@ -40,15 +38,13 @@ class MindMapNodeWidget extends StatefulWidget {
     this.lodZone = 0,
     this.showResizeHandle = false,
     this.onOpenEntity,
-    this.entities,
-    this.categorySchemas = const [],
   });
 
   @override
-  State<MindMapNodeWidget> createState() => _MindMapNodeWidgetState();
+  ConsumerState<MindMapNodeWidget> createState() => _MindMapNodeWidgetState();
 }
 
-class _MindMapNodeWidgetState extends State<MindMapNodeWidget> {
+class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
   // Drag state
   Offset? _dragStart;
   Offset? _nodeStartPos;
@@ -118,81 +114,76 @@ class _MindMapNodeWidgetState extends State<MindMapNodeWidget> {
     // LOD zone 1: no shadow, simplified
     final showShadow = widget.lodZone == 0;
 
-    return Positioned(
-      left: n.x - n.width / 2,
-      top: n.y - n.height / 2,
-      width: n.width,
-      height: n.height,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Main card — full-body drag + tap + right-click.
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _onTap,
-            onSecondaryTapUp: (d) =>
-                _showContextMenu(context, d.globalPosition),
-            onLongPress: () => _showContextMenu(context, null),
-            onPanStart: (d) {
-              _dragStart = d.globalPosition;
-              _nodeStartPos = Offset(n.x, n.y);
-              widget.notifier.setSelectedNode(n.id);
-            },
-            onPanUpdate: (d) {
-              if (_dragStart == null || _nodeStartPos == null) return;
-              final delta = d.globalPosition - _dragStart!;
-              final scale = widget.notifier.viewTransform.value.scale;
-              widget.notifier.updateNodePosition(
-                n.id,
-                _nodeStartPos! + delta / scale,
-              );
-            },
-            onPanEnd: (_) {
-              _dragStart = null;
-              _nodeStartPos = null;
-            },
-            child: Container(
-              width: n.width,
-              height: n.height,
-              decoration: BoxDecoration(
-                color: _nodeColor(n.nodeType, palette),
-                borderRadius: borderRadius,
-                border:
-                    Border.all(color: borderColor, width: borderWidth),
-                boxShadow: showShadow
-                    ? (widget.isSelected
-                        ? [
-                            BoxShadow(
-                              color: palette.tabIndicator
-                                  .withValues(alpha: 0.25),
-                              blurRadius: 8,
-                              spreadRadius: 1,
-                            )
-                          ]
-                        : [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            )
-                          ])
-                    : null,
-              ),
-              child: widget.lodZone == 0
-                  ? _buildContent(n, palette)
-                  : _buildSimplifiedContent(n, palette),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Main card — full-body drag + tap + right-click.
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _onTap,
+          onSecondaryTapUp: (d) =>
+              _showContextMenu(context, d.globalPosition),
+          onLongPress: () => _showContextMenu(context, null),
+          onPanStart: (d) {
+            _dragStart = d.globalPosition;
+            _nodeStartPos = Offset(n.x, n.y);
+            widget.notifier.setSelectedNode(n.id);
+          },
+          onPanUpdate: (d) {
+            if (_dragStart == null || _nodeStartPos == null) return;
+            final delta = d.globalPosition - _dragStart!;
+            final scale = widget.notifier.viewTransform.value.scale;
+            widget.notifier.updateDragOverride(
+              n.id,
+              _nodeStartPos! + delta / scale,
+            );
+          },
+          onPanEnd: (_) {
+            _dragStart = null;
+            _nodeStartPos = null;
+            widget.notifier.commitDragOverride(n.id);
+          },
+          child: Container(
+            width: n.width,
+            height: n.height,
+            decoration: BoxDecoration(
+              color: _nodeColor(n.nodeType, palette),
+              borderRadius: borderRadius,
+              border:
+                  Border.all(color: borderColor, width: borderWidth),
+              boxShadow: showShadow
+                  ? (widget.isSelected
+                      ? [
+                          BoxShadow(
+                            color: palette.tabIndicator
+                                .withValues(alpha: 0.25),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          )
+                        ]
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ])
+                  : null,
             ),
+            child: widget.lodZone == 0
+                ? _buildContent(n, palette)
+                : _buildSimplifiedContent(n, palette),
           ),
+        ),
 
-          // Corner resize handles
-          if (widget.showResizeHandle) ...[
-            _buildCornerHandle('tl', palette),
-            _buildCornerHandle('tr', palette),
-            _buildCornerHandle('bl', palette),
-            _buildCornerHandle('br', palette),
-          ],
+        // Corner resize handles
+        if (widget.showResizeHandle) ...[
+          _buildCornerHandle('tl', palette),
+          _buildCornerHandle('tr', palette),
+          _buildCornerHandle('bl', palette),
+          _buildCornerHandle('br', palette),
         ],
-      ),
+      ],
     );
   }
 
@@ -215,17 +206,12 @@ class _MindMapNodeWidgetState extends State<MindMapNodeWidget> {
     // Label zone height at the top.
     const labelZone = 32.0;
 
-    return Positioned(
-      left: n.x - n.width / 2,
-      top: n.y - n.height / 2,
-      width: n.width,
-      height: n.height,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Interior zone — intercepts right-click for combined menu.
-          // No onPan/onTap so left-click drag passes through to canvas pan.
-          Positioned.fill(
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Interior zone — intercepts right-click for combined menu.
+        // No onPan/onTap so left-click drag passes through to canvas pan.
+        Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onSecondaryTapUp: (d) {
@@ -271,8 +257,7 @@ class _MindMapNodeWidgetState extends State<MindMapNodeWidget> {
             _buildCornerHandle('br', palette),
           ],
         ],
-      ),
-    );
+      );
   }
 
   /// Workspace border / label hit zone — tap selects, drag moves,
@@ -292,7 +277,7 @@ class _MindMapNodeWidgetState extends State<MindMapNodeWidget> {
         if (_dragStart == null || _nodeStartPos == null) return;
         final delta = d.globalPosition - _dragStart!;
         final scale = widget.notifier.viewTransform.value.scale;
-        widget.notifier.updateNodePosition(
+        widget.notifier.updateDragOverride(
           n.id,
           _nodeStartPos! + delta / scale,
         );
@@ -300,6 +285,7 @@ class _MindMapNodeWidgetState extends State<MindMapNodeWidget> {
       onPanEnd: (_) {
         _dragStart = null;
         _nodeStartPos = null;
+        widget.notifier.commitDragOverride(n.id);
       },
       child: MouseRegion(
         cursor: SystemMouseCursors.move,
@@ -487,9 +473,13 @@ class _MindMapNodeWidgetState extends State<MindMapNodeWidget> {
       );
     }
 
-    final entity = widget.entities?[n.entityId!];
+    // Watch only this specific entity — not the entire map
+    final entity = ref.watch(
+      entityProvider.select((map) => map[n.entityId]),
+    );
+    final categories = ref.read(worldSchemaProvider).categories;
     final catSchema = entity != null
-        ? widget.categorySchemas
+        ? categories
             .where((c) => c.slug == entity.categorySlug)
             .firstOrNull
         : null;
@@ -877,6 +867,7 @@ class _MindMapNodeWidgetState extends State<MindMapNodeWidget> {
           _sizeAtResizeStart = null;
           _posAtResizeStart = null;
           _resizeCorner = null;
+          widget.notifier.commitSizeOverride(widget.node.id);
         },
         child: MouseRegion(
           cursor: cursor,
@@ -913,35 +904,58 @@ class _MindMapNodeWidgetState extends State<MindMapNodeWidget> {
     final h0 = _sizeAtResizeStart!.height;
     final cx0 = _posAtResizeStart!.dx;
     final cy0 = _posAtResizeStart!.dy;
+    final lockAspect = widget.node.nodeType == 'entity';
+    final aspect = w0 / h0;
 
-    late double newW, newH, newCx, newCy;
+    // Original bounds (fixed corner positions)
+    final left0 = cx0 - w0 / 2;
+    final top0 = cy0 - h0 / 2;
+    final right0 = cx0 + w0 / 2;
+    final bottom0 = cy0 + h0 / 2;
+
+    late double newW, newH;
 
     switch (_resizeCorner!) {
       case 'br': // top-left fixed
         newW = (w0 + delta.dx).clamp(150.0, 2000.0);
-        newH = (h0 + delta.dy).clamp(80.0, 2000.0);
-        newCx = (cx0 - w0 / 2) + newW / 2;
-        newCy = (cy0 - h0 / 2) + newH / 2;
+        newH = lockAspect ? newW / aspect : (h0 + delta.dy).clamp(80.0, 2000.0);
       case 'bl': // top-right fixed
         newW = (w0 - delta.dx).clamp(150.0, 2000.0);
-        newH = (h0 + delta.dy).clamp(80.0, 2000.0);
-        newCx = (cx0 + w0 / 2) - newW / 2;
-        newCy = (cy0 - h0 / 2) + newH / 2;
+        newH = lockAspect ? newW / aspect : (h0 + delta.dy).clamp(80.0, 2000.0);
       case 'tr': // bottom-left fixed
         newW = (w0 + delta.dx).clamp(150.0, 2000.0);
-        newH = (h0 - delta.dy).clamp(80.0, 2000.0);
-        newCx = (cx0 - w0 / 2) + newW / 2;
-        newCy = (cy0 + h0 / 2) - newH / 2;
+        newH = lockAspect ? newW / aspect : (h0 - delta.dy).clamp(80.0, 2000.0);
       case 'tl': // bottom-right fixed
         newW = (w0 - delta.dx).clamp(150.0, 2000.0);
-        newH = (h0 - delta.dy).clamp(80.0, 2000.0);
-        newCx = (cx0 + w0 / 2) - newW / 2;
-        newCy = (cy0 + h0 / 2) - newH / 2;
+        newH = lockAspect ? newW / aspect : (h0 - delta.dy).clamp(80.0, 2000.0);
     }
 
-    widget.notifier.updateNodeSize(widget.node.id, Size(newW, newH));
-    widget.notifier.updateNodePosition(
-        widget.node.id, Offset(newCx, newCy));
+    if (lockAspect) {
+      newH = newH.clamp(80.0, 2000.0);
+      newW = (newH * aspect).clamp(150.0, 2000.0);
+    }
+
+    late double newCx, newCy;
+    switch (_resizeCorner!) {
+      case 'br':
+        newCx = left0 + newW / 2;
+        newCy = top0 + newH / 2;
+      case 'bl':
+        newCx = right0 - newW / 2;
+        newCy = top0 + newH / 2;
+      case 'tr':
+        newCx = left0 + newW / 2;
+        newCy = bottom0 - newH / 2;
+      case 'tl':
+        newCx = right0 - newW / 2;
+        newCy = bottom0 - newH / 2;
+    }
+
+    widget.notifier.updateSizeOverride(
+      widget.node.id,
+      Offset(newCx, newCy),
+      Size(newW, newH),
+    );
   }
 
 }

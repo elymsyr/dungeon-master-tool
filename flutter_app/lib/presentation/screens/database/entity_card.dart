@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -55,8 +56,40 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     _dmNotesController = TextEditingController();
   }
 
+  Timer? _updateTimer;
+
+  /// Debounced provider update — avoids rebuilding the entire widget tree
+  /// on every keystroke. The TextEditingController holds the current value
+  /// so the UI stays responsive while the provider update is delayed.
+  void _debouncedProviderUpdate(Entity Function() entityBuilder) {
+    _updateTimer?.cancel();
+    _updateTimer = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      ref.read(entityProvider.notifier).update(entityBuilder());
+    });
+  }
+
+  /// Flush pending debounced update immediately (e.g. on dispose).
+  void _flushPendingUpdate() {
+    if (_updateTimer?.isActive ?? false) {
+      _updateTimer!.cancel();
+      // Re-read current entity and sync from controllers
+      final entity = ref.read(entityProvider)[widget.entityId];
+      if (entity == null) return;
+      ref.read(entityProvider.notifier).update(entity.copyWith(
+        name: _nameController.text,
+        description: _descController.text,
+        source: _sourceController.text,
+        dmNotes: _dmNotesController.text,
+        tags: _tagsController.text.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList(),
+      ));
+    }
+  }
+
   @override
   void dispose() {
+    _flushPendingUpdate();
+    _updateTimer?.cancel();
     _nameController.dispose();
     _descController.dispose();
     _sourceController.dispose();
@@ -79,19 +112,21 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   }
 
   void _updateField(String fieldKey, dynamic value) {
-    final entities = ref.read(entityProvider);
-    final entity = entities[widget.entityId];
-    if (entity == null) return;
-
-    final newFields = Map<String, dynamic>.from(entity.fields);
-    newFields[fieldKey] = value;
-    ref.read(entityProvider.notifier).update(entity.copyWith(fields: newFields));
+    _debouncedProviderUpdate(() {
+      final entity = ref.read(entityProvider)[widget.entityId];
+      if (entity == null) return entity!; // won't happen — guarded by caller
+      final newFields = Map<String, dynamic>.from(entity.fields);
+      newFields[fieldKey] = value;
+      return entity.copyWith(fields: newFields);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final entities = ref.watch(entityProvider);
-    final entity = entities[widget.entityId];
+    // Watch only this specific entity — not the entire map
+    final entity = ref.watch(
+      entityProvider.select((map) => map[widget.entityId]),
+    );
     if (entity == null) {
       return const Center(child: Text('Entity not found'));
     }
@@ -100,13 +135,13 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final cat = widget.categorySchema;
     final catColor = cat != null ? _parseColor(cat.color) : palette.tabIndicator;
 
-    // Rule engine — computed değerleri hesapla
+    // Rule engine — computed değerleri hesapla (use read, not watch, for allEntities)
     Map<String, dynamic> computedValues = {};
     if (cat != null && cat.rules.isNotEmpty) {
       computedValues = RuleEngine.applyRules(
         entity: entity,
         category: cat,
-        allEntities: entities,
+        allEntities: ref.read(entityProvider),
       );
     }
 
@@ -172,7 +207,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                           hintText: 'Entity Name',
                           contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                         ),
-                        onChanged: (v) => ref.read(entityProvider.notifier).update(entity.copyWith(name: v)),
+                        onChanged: (v) => _debouncedProviderUpdate(
+                          () => ref.read(entityProvider)[widget.entityId]!.copyWith(name: v),
+                        ),
                       ),
                       const SizedBox(height: 10),
                       // Description (markdown)
@@ -204,7 +241,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                             hintText: 'Markdown supported...',
                             contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                           ),
-                          onChanged: (v) => ref.read(entityProvider.notifier).update(entity.copyWith(description: v)),
+                          onChanged: (v) => _debouncedProviderUpdate(
+                            () => ref.read(entityProvider)[widget.entityId]!.copyWith(description: v),
+                          ),
                         ),
                       const SizedBox(height: 10),
                       // Source + Tags yan yana
@@ -221,7 +260,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                                 hintText: widget.readOnly ? null : 'e.g. D&D 5e SRD',
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                               ),
-                              onChanged: (v) => ref.read(entityProvider.notifier).update(entity.copyWith(source: v)),
+                              onChanged: (v) => _debouncedProviderUpdate(
+                                () => ref.read(entityProvider)[widget.entityId]!.copyWith(source: v),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -238,7 +279,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                               ),
                               onChanged: (v) {
                                 final tags = v.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
-                                ref.read(entityProvider.notifier).update(entity.copyWith(tags: tags));
+                                _debouncedProviderUpdate(
+                                  () => ref.read(entityProvider)[widget.entityId]!.copyWith(tags: tags),
+                                );
                               },
                             ),
                           ),
@@ -296,7 +339,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                     filled: false,
                     hintStyle: TextStyle(color: palette.sidebarLabelSecondary),
                   ),
-                  onChanged: (v) => ref.read(entityProvider.notifier).update(entity.copyWith(dmNotes: v)),
+                  onChanged: (v) => _debouncedProviderUpdate(
+                    () => ref.read(entityProvider)[widget.entityId]!.copyWith(dmNotes: v),
+                  ),
                 ),
               ],
             ),

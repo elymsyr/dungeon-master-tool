@@ -211,8 +211,6 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
     final vt = notifier.viewTransform.value;
     final scale = vt.scale;
     final lodZone = notifier.lodZone;
-    final entities = ref.watch(entityProvider);
-    final worldSchema = ref.watch(worldSchemaProvider);
 
     // Compute viewport rect in canvas-space for culling.
     // Inflate generously so nodes near edges aren't culled when
@@ -237,6 +235,7 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
                     connectingFromId: mapState.connectingFromId,
                     connectingToCanvas: _cursorCanvas,
                     lodZone: lodZone,
+                    dragOverrides: notifier.dragOverrides.value,
                   ),
                 ),
               );
@@ -245,6 +244,8 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
         ),
 
         // Node widgets (only at LOD 0 and 1)
+        // Wrapped in ValueListenableBuilder so drag/resize overrides
+        // update Positioned coordinates at 60fps without Riverpod rebuild.
         if (lodZone < 2)
           ...notifier.sortedNodes
               .where((n) => _isInViewport(n, viewportRect))
@@ -255,20 +256,39 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
                 mapState.connectingFromId != null && !isConnecting;
             final showResizeHandle = isSelected;
 
-            return MindMapNodeWidget(
+            return ValueListenableBuilder<Map<String, Offset>>(
               key: ValueKey('node_${node.id}'),
-              node: node,
-              isSelected: isSelected,
-              isConnecting: isConnecting,
-              canConnectTo: canConnectTo,
-              palette: palette,
-              notifier: notifier,
-              editMode: widget.editMode,
-              lodZone: lodZone,
-              showResizeHandle: showResizeHandle,
-              onOpenEntity: widget.onOpenEntity,
-              entities: entities,
-              categorySchemas: worldSchema.categories,
+              valueListenable: notifier.dragOverrides,
+              builder: (_, dragMap, _) {
+                final sizeMap = notifier.sizeOverrides.value;
+                final pos = dragMap[node.id];
+                final size = sizeMap[node.id];
+                final cx = pos?.dx ?? node.x;
+                final cy = pos?.dy ?? node.y;
+                final w = size?.width ?? node.width;
+                final h = size?.height ?? node.height;
+
+                return Positioned(
+                  left: cx - w / 2,
+                  top: cy - h / 2,
+                  width: w,
+                  height: h,
+                  child: RepaintBoundary(
+                    child: MindMapNodeWidget(
+                      node: node,
+                      isSelected: isSelected,
+                      isConnecting: isConnecting,
+                      canConnectTo: canConnectTo,
+                      palette: palette,
+                      notifier: notifier,
+                      editMode: widget.editMode,
+                      lodZone: lodZone,
+                      showResizeHandle: showResizeHandle,
+                      onOpenEntity: widget.onOpenEntity,
+                    ),
+                  ),
+                );
+              },
             );
           }),
       ],

@@ -418,8 +418,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           return Center(child: Text('Select a combatant\nto view stats', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
         }
         final schema = ref.watch(worldSchemaProvider);
-        final entities = ref.watch(entityProvider);
-        final entity = entities[_selectedCombatantId];
+        final entity = ref.watch(
+          entityProvider.select((map) => map[_selectedCombatantId]),
+        );
         if (entity == null) {
           return Center(child: Text('Entity not found', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
         }
@@ -639,7 +640,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Widget _buildMobileCombatList(DmToolColors palette, Encounter enc) {
-    final entities = ref.watch(entityProvider);
+    // Only watch entities referenced by current encounter combatants
+    final combatantEntityIds = enc.combatants.map((c) => c.entityId).whereType<String>().toSet();
+    final entities = ref.watch(entityProvider.select((map) =>
+      Map.fromEntries(map.entries.where((e) => combatantEntityIds.contains(e.key))),
+    ));
     final schema = ref.read(worldSchemaProvider);
     final cfg = schema.encounterConfig;
 
@@ -731,8 +736,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     if (_selectedCombatantId == null) {
       return Center(child: Text('Tap a combatant to view stats', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)));
     }
-    final entities = ref.watch(entityProvider);
-    final entity = entities[_selectedCombatantId];
+    final entity = ref.watch(
+      entityProvider.select((map) => map[_selectedCombatantId]),
+    );
     if (entity == null) {
       return Center(child: Text('Entity not found', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)));
     }

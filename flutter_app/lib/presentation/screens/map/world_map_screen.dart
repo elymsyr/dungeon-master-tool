@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -9,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/save_state_provider.dart';
 import '../../../domain/entities/map_data.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'epoch_scroll_bar.dart';
@@ -45,7 +45,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 
   @override
   void dispose() {
-    unawaited(ref.read(worldMapProvider.notifier).save());
+    ref.read(worldMapProvider.notifier).syncToCampaignData();
+    ref.read(saveStateProvider.notifier).markDirty();
     super.dispose();
   }
 

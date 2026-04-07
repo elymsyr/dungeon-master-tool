@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -10,8 +9,10 @@ import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/encounter_config.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/session.dart';
+import '../services/undo_redo_mixin.dart';
 import 'campaign_provider.dart';
 import 'entity_provider.dart';
+import 'save_state_provider.dart';
 
 const _uuid = Uuid();
 final _rng = Random();
@@ -49,7 +50,8 @@ class CombatState {
   }
 }
 
-class CombatNotifier extends StateNotifier<CombatState> {
+class CombatNotifier extends StateNotifier<CombatState>
+    with UndoRedoMixin<CombatState> {
   final Map<String, Entity> Function() _getEntities;
   final WorldSchema Function() _getSchema;
   final VoidCallback _onChanged;
@@ -67,9 +69,24 @@ class CombatNotifier extends StateNotifier<CombatState> {
     if (combatData is Map) {
       loadSessionState(Map<String, dynamic>.from(combatData));
     }
+    clearUndoRedo();
   }
 
-  Timer? _saveTimer;
+  void undo() {
+    final restored = popUndo(state);
+    if (restored != null) {
+      state = restored;
+      _saveAndNotify();
+    }
+  }
+
+  void redo() {
+    final restored = popRedo(state);
+    if (restored != null) {
+      state = restored;
+      _saveAndNotify();
+    }
+  }
 
   void _saveAndNotify() {
     final data = _getCampaignData();
@@ -77,8 +94,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
       // Freezed nesnelerini MsgPack uyumlu primitive Map'e çevir
       data['combat_state'] = jsonDecode(jsonEncode(getSessionState()));
     }
-    _saveTimer?.cancel();
-    _saveTimer = Timer(const Duration(seconds: 2), () => _onChanged());
+    _onChanged();
   }
 
   EncounterConfig get _encounterConfig => _getSchema().encounterConfig;
@@ -86,6 +102,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
   // --- Encounter Management ---
 
   void createEncounter(String name) {
+    pushUndo(state);
     final enc = Encounter(id: _uuid.v4(), name: name);
     state = state.copyWith(
       encounters: [...state.encounters, enc],
@@ -101,6 +118,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
 
   void deleteEncounter(String eid) {
     if (state.encounters.length <= 1) return;
+    pushUndo(state);
     final updated = state.encounters.where((e) => e.id != eid).toList();
     final newActive = state.activeEncounterId == eid ? updated.first.id : state.activeEncounterId;
     state = state.copyWith(encounters: updated, activeEncounterId: newActive);
@@ -136,6 +154,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
     final enc = state.activeEncounter;
     if (enc == null) return;
     if (!canAddToEncounter(entityId)) return;
+    pushUndo(state);
     final entities = _getEntities();
     final entity = entities[entityId];
     if (entity == null) return;
@@ -176,6 +195,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
   void addDirectRow(String name, {Map<String, String> stats = const {}}) {
     final enc = state.activeEncounter;
     if (enc == null) return;
+    pushUndo(state);
     final cfg = _encounterConfig;
 
     final init = int.tryParse(stats[cfg.initiativeSubField] ?? '') ?? 0;
@@ -214,6 +234,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
   void deleteCombatant(String combatantId) {
     final enc = state.activeEncounter;
     if (enc == null) return;
+    pushUndo(state);
     final updated = enc.combatants.where((c) => c.id != combatantId).toList();
     _updateEncounter(enc.copyWith(combatants: updated));
     _saveAndNotify();
@@ -222,6 +243,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
   void clearAll() {
     final enc = state.activeEncounter;
     if (enc == null) return;
+    pushUndo(state);
     _updateEncounter(enc.copyWith(combatants: [], turnIndex: -1, round: 1));
     _log('Combat cleared');
     _saveAndNotify();
@@ -232,6 +254,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
   void nextTurn() {
     final enc = state.activeEncounter;
     if (enc == null || enc.combatants.isEmpty) return;
+    pushUndo(state);
 
     var newIndex = enc.turnIndex + 1;
     var newRound = enc.round;
@@ -269,6 +292,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
   void rollInitiatives() {
     final enc = state.activeEncounter;
     if (enc == null) return;
+    pushUndo(state);
 
     final rolled = enc.combatants.map((c) {
       final roll = _rng.nextInt(20) + 1;
@@ -288,6 +312,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
   void modifyHp(String combatantId, int delta) {
     final enc = state.activeEncounter;
     if (enc == null) return;
+    pushUndo(state);
 
     final updated = enc.combatants.map((c) {
       if (c.id != combatantId) return c;
@@ -329,6 +354,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
   void addCondition(String combatantId, String condName, int? duration) {
     final enc = state.activeEncounter;
     if (enc == null) return;
+    pushUndo(state);
 
     final updated = enc.combatants.map((c) {
       if (c.id != combatantId) return c;
@@ -343,6 +369,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
   void removeCondition(String combatantId, String condName) {
     final enc = state.activeEncounter;
     if (enc == null) return;
+    pushUndo(state);
 
     final updated = enc.combatants.map((c) {
       if (c.id != combatantId) return c;
@@ -467,7 +494,7 @@ final combatProvider = StateNotifierProvider<CombatNotifier, CombatState>((ref) 
   return CombatNotifier(
     () => ref.read(entityProvider),
     () => ref.read(worldSchemaProvider),
-    () => ref.read(activeCampaignProvider.notifier).save(),
+    () => ref.read(saveStateProvider.notifier).markDirty(),
     () => ref.read(activeCampaignProvider.notifier).data,
   );
 });
