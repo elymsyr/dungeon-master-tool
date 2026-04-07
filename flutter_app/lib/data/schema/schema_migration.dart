@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:uuid/uuid.dart';
+
 import '../../domain/entities/schema/default_dnd5e_schema.dart';
 import 'legacy_maps.dart';
 
@@ -14,42 +16,54 @@ class SchemaMigration {
   /// Migrate campaign data in-place.
   /// Returns `true` if any migration was performed.
   static bool migrate(Map<String, dynamic> data) {
-    if (data.containsKey('world_schema')) return false;
+    bool changed = false;
 
-    // 1. Generate and inject default schema
-    final schema = generateDefaultDnd5eSchema();
-    data['world_schema'] = jsonDecode(jsonEncode(schema.toJson()));
+    // Legacy schema migration (Python → Flutter)
+    if (!data.containsKey('world_schema')) {
+      // 1. Generate and inject default schema
+      final schema = generateDefaultDnd5eSchema();
+      data['world_schema'] = jsonDecode(jsonEncode(schema.toJson()));
 
-    // 2. Migrate entities
-    final entities = data['entities'];
-    if (entities is Map) {
-      final migratedEntities = <String, dynamic>{};
-      for (final entry in entities.entries) {
-        final entity = entry.value;
-        if (entity is Map) {
-          final dynamicMap = Map<String, dynamic>.from(entity);
-          _migrateEntity(dynamicMap);
-          migratedEntities[entry.key.toString()] = dynamicMap;
-        } else {
-          migratedEntities[entry.key.toString()] = entity;
+      // 2. Migrate entities
+      final entities = data['entities'];
+      if (entities is Map) {
+        final migratedEntities = <String, dynamic>{};
+        for (final entry in entities.entries) {
+          final entity = entry.value;
+          if (entity is Map) {
+            final dynamicMap = Map<String, dynamic>.from(entity);
+            _migrateEntity(dynamicMap);
+            migratedEntities[entry.key.toString()] = dynamicMap;
+          } else {
+            migratedEntities[entry.key.toString()] = entity;
+          }
         }
-      }
-      data['entities'] = migratedEntities;
-    } else if (entities is List) {
-      final migratedList = <dynamic>[];
-      for (final entity in entities) {
-        if (entity is Map) {
-          final dynamicMap = Map<String, dynamic>.from(entity);
-          _migrateEntity(dynamicMap);
-          migratedList.add(dynamicMap);
-        } else {
-          migratedList.add(entity);
+        data['entities'] = migratedEntities;
+      } else if (entities is List) {
+        final migratedList = <dynamic>[];
+        for (final entity in entities) {
+          if (entity is Map) {
+            final dynamicMap = Map<String, dynamic>.from(entity);
+            _migrateEntity(dynamicMap);
+            migratedList.add(dynamicMap);
+          } else {
+            migratedList.add(entity);
+          }
         }
+        data['entities'] = migratedList;
       }
-      data['entities'] = migratedList;
+
+      changed = true;
     }
 
-    return true;
+    // UUID backfill for existing campaigns
+    if (!data.containsKey('world_id')) {
+      data['world_id'] = const Uuid().v4();
+      data['created_at'] ??= DateTime.now().toIso8601String();
+      changed = true;
+    }
+
+    return changed;
   }
 
   static void _migrateEntity(Map<String, dynamic> entity) {
