@@ -45,6 +45,7 @@ class FieldWidgetFactory {
       FieldType.date => _DateFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.image => _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.file => _FileFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.pdf => _PdfFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       _ => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
     };
   }
@@ -1276,6 +1277,77 @@ class _FileFieldWidget extends StatelessWidget {
                   },
                   icon: const Icon(Icons.attach_file, size: 16),
                   label: const Text('Add File', style: TextStyle(fontSize: 12)),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- PDF ---
+class _PdfFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  const _PdfFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final files = (value is List) ? List<String>.from(value as List) : <String>[];
+    final palette = Theme.of(context).extension<DmToolColors>();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: schema.label,
+          isDense: true,
+          border: const OutlineInputBorder(),
+        ),
+        child: Column(
+          children: [
+            if (files.isNotEmpty)
+              ...files.asMap().entries.map((entry) {
+                final i = entry.key;
+                final path = entry.value;
+                final fileName = path.split('/').last.split('\\').last;
+                return ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.picture_as_pdf, size: 20, color: palette?.tokenBorderHostile ?? Colors.red),
+                  title: Text(fileName, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
+                  onTap: () => Process.run('xdg-open', [path]),
+                  trailing: readOnly
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.close, size: 16),
+                          onPressed: () {
+                            final updated = List<String>.from(files)..removeAt(i);
+                            onChanged(updated);
+                          },
+                        ),
+                );
+              }),
+            if (!readOnly)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () async {
+                    final result = await FilePicker.platform.pickFiles(
+                      type: FileType.custom,
+                      allowedExtensions: ['pdf'],
+                      allowMultiple: true,
+                    );
+                    if (result == null || result.files.isEmpty) return;
+                    final newPaths = result.files.where((f) => f.path != null).map((f) => f.path!).toList();
+                    onChanged([...files, ...newPaths]);
+                  },
+                  icon: const Icon(Icons.picture_as_pdf, size: 16),
+                  label: const Text('Add PDF', style: TextStyle(fontSize: 12)),
                 ),
               ),
           ],

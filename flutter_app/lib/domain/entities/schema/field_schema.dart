@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'field_schema.freezed.dart';
 part 'field_schema.g.dart';
 
-/// Desteklenen alan tipleri — 14 tip.
+/// Desteklenen alan tipleri — 15 tip.
 enum FieldType {
   text,
   textarea,
@@ -18,6 +18,7 @@ enum FieldType {
   date,
   image,
   file,
+  pdf,
   relation,       // Tek referans veya liste referans (allowedTypes ile hedef kategori belirlenir)
   tagList,
   statBlock,

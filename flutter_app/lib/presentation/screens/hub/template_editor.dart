@@ -481,7 +481,7 @@ class _CategoryEditor extends StatelessWidget {
                   icon: Icons.list,
                   label: 'List',
                   color: palette.tabText,
-                  items: [FieldType.text, FieldType.integer, FieldType.float_, FieldType.image, FieldType.file, FieldType.enum_]
+                  items: [FieldType.text, FieldType.integer, FieldType.float_, FieldType.image, FieldType.file, FieldType.pdf, FieldType.enum_]
                       .map((t) => PopupMenuItem(value: t, child: Text('${_fieldTypeName(t)} List', style: const TextStyle(fontSize: 12))))
                       .toList(),
                   onSelected: (t) => _addListField(t),
@@ -1226,6 +1226,7 @@ class _CategoryEditor extends StatelessWidget {
     FieldType.date => 'Date',
     FieldType.image => 'Image',
     FieldType.file => 'File',
+    FieldType.pdf => 'PDF',
     FieldType.relation => 'Relation',
     FieldType.tagList => 'Tags',
     FieldType.statBlock => 'Stat Block',
@@ -1242,6 +1243,7 @@ class _CategoryEditor extends StatelessWidget {
     FieldType.date => Icons.calendar_today,
     FieldType.image => Icons.image,
     FieldType.file => Icons.attach_file,
+    FieldType.pdf => Icons.picture_as_pdf,
     FieldType.relation => Icons.link,
     FieldType.tagList => Icons.label,
     FieldType.statBlock => Icons.casino,
