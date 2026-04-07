@@ -7,6 +7,8 @@ import 'package:logger/logger.dart';
 import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:path/path.dart' as p;
 
+import 'package:uuid/uuid.dart';
+
 import '../../../core/config/app_paths.dart';
 
 final _log = Logger(printer: SimplePrinter());
@@ -84,6 +86,8 @@ class CampaignLocalDataSource {
     await dir.create(recursive: true);
 
     final defaultData = <String, dynamic>{
+      'world_id': const Uuid().v4(),
+      'created_at': DateTime.now().toIso8601String(),
       'world_name': worldName,
       'entities': <String, dynamic>{},
       'map_data': {'image_path': '', 'pins': <dynamic>[], 'timeline': <dynamic>[]},
@@ -105,7 +109,134 @@ class CampaignLocalDataSource {
 
     final trashTarget = p.join(AppPaths.trashDir, '${campaignName}_${DateTime.now().millisecondsSinceEpoch}');
     await dir.rename(trashTarget);
+
+    // Write metadata for reliable restoration
+    final metaFile = File(p.join(trashTarget, '.meta.json'));
+    await metaFile.writeAsString(jsonEncode({
+      'originalName': campaignName,
+      'type': 'World',
+      'deletedAt': DateTime.now().toIso8601String(),
+    }));
+
     _log.i('Campaign moved to trash: $campaignName');
+  }
+
+  /// .trash/ altındaki öğeleri listele.
+  Future<List<TrashItem>> listTrash() async {
+    final dir = Directory(AppPaths.trashDir);
+    if (!await dir.exists()) return [];
+
+    final items = <TrashItem>[];
+    await for (final entry in dir.list()) {
+      if (entry is! Directory) continue;
+      final dirName = p.basename(entry.path);
+
+      // Try .meta.json first
+      final metaFile = File(p.join(entry.path, '.meta.json'));
+      if (await metaFile.exists()) {
+        try {
+          final meta = jsonDecode(await metaFile.readAsString()) as Map<String, dynamic>;
+          items.add(TrashItem(
+            directoryName: dirName,
+            originalName: meta['originalName'] as String? ?? dirName,
+            type: meta['type'] as String? ?? 'World',
+            deletedAt: DateTime.parse(meta['deletedAt'] as String),
+          ));
+          continue;
+        } catch (_) {}
+      }
+
+      // Fallback: parse legacy format {name}_{timestamp}
+      final lastUnderscore = dirName.lastIndexOf('_');
+      if (lastUnderscore > 0) {
+        final namePart = dirName.substring(0, lastUnderscore);
+        final tsPart = dirName.substring(lastUnderscore + 1);
+        final ts = int.tryParse(tsPart);
+        if (ts != null) {
+          items.add(TrashItem(
+            directoryName: dirName,
+            originalName: namePart,
+            type: 'World',
+            deletedAt: DateTime.fromMillisecondsSinceEpoch(ts),
+          ));
+          continue;
+        }
+      }
+
+      // Worst case: use directory name and stat modified time
+      final stat = await entry.stat();
+      items.add(TrashItem(
+        directoryName: dirName,
+        originalName: dirName,
+        type: 'World',
+        deletedAt: stat.modified,
+      ));
+    }
+
+    items.sort((a, b) => b.deletedAt.compareTo(a.deletedAt)); // newest first
+    return items;
+  }
+
+  /// Trash'ten geri yükle.
+  Future<String> restoreFromTrash(String trashDirName, String restoreName) async {
+    final trashPath = p.join(AppPaths.trashDir, trashDirName);
+    final restorePath = p.join(AppPaths.worldsDir, restoreName);
+
+    final trashDir = Directory(trashPath);
+    if (!await trashDir.exists()) {
+      throw FileSystemException('Trash item not found', trashPath);
+    }
+    if (await Directory(restorePath).exists()) {
+      throw FileSystemException('World with this name already exists', restorePath);
+    }
+
+    // Remove .meta.json before restoring
+    final metaFile = File(p.join(trashPath, '.meta.json'));
+    if (await metaFile.exists()) await metaFile.delete();
+
+    // Update world_name in campaign data
+    try {
+      final data = await load(trashPath);
+      data['world_name'] = restoreName;
+      await save(trashPath, data);
+    } catch (_) {
+      // If data can't be loaded, still restore the directory
+    }
+
+    await trashDir.rename(restorePath);
+    _log.i('Campaign restored from trash: $trashDirName → $restoreName');
+    return restoreName;
+  }
+
+  /// Benzersiz geri yükleme ismi bul (çakışma varsa suffix ekle).
+  Future<String> findUniqueRestoreName(String originalName) async {
+    final worldsDir = Directory(AppPaths.worldsDir);
+    final existing = <String>{};
+    if (await worldsDir.exists()) {
+      await for (final entry in worldsDir.list()) {
+        if (entry is Directory) existing.add(p.basename(entry.path));
+      }
+    }
+
+    if (!existing.contains(originalName)) return originalName;
+
+    final restored = '$originalName (restored)';
+    if (!existing.contains(restored)) return restored;
+
+    for (int i = 2; ; i++) {
+      final candidate = '$originalName ($i)';
+      if (!existing.contains(candidate)) return candidate;
+    }
+  }
+
+  /// Trash'ten kalıcı olarak sil.
+  Future<void> permanentlyDeleteFromTrash(String trashDirName) async {
+    final trashPath = p.join(AppPaths.trashDir, trashDirName);
+    final dir = Directory(trashPath);
+    if (await dir.exists()) {
+      await dir.delete(recursive: true);
+    }
+    _log.i('Permanently deleted from trash: $trashDirName');
   }
 
   /// MsgPack'ten gelen dynamic map'i Map<String, dynamic>'e dönüştür.
@@ -125,6 +256,21 @@ class CampaignLocalDataSource {
     }
     return value;
   }
+}
+
+/// Silinen kampanya bilgisi.
+class TrashItem {
+  final String directoryName;
+  final String originalName;
+  final String type;
+  final DateTime deletedAt;
+
+  const TrashItem({
+    required this.directoryName,
+    required this.originalName,
+    required this.type,
+    required this.deletedAt,
+  });
 }
 
 // Top-level functions for compute() — must not be closures or instance methods.

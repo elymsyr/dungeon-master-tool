@@ -522,6 +522,7 @@ int _parseInt(dynamic map, String key, int fallback) {
 }
 
 final combatProvider = StateNotifierProvider<CombatNotifier, CombatState>((ref) {
+  ref.watch(activeCampaignProvider); // rebuild when campaign changes
   return CombatNotifier(
     () => ref.read(entityProvider),
     () => ref.read(worldSchemaProvider),

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../core/config/app_paths.dart';
-import '../../data/datasources/local/campaign_local_ds.dart';
+import '../../data/datasources/local/campaign_local_ds.dart' show CampaignLocalDataSource, TrashItem;
 import '../../data/repositories/campaign_repository_impl.dart';
 import '../../domain/entities/schema/world_schema.dart';
 
@@ -87,4 +87,9 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
 final activeCampaignProvider =
     StateNotifierProvider<ActiveCampaignNotifier, String?>((ref) {
   return ActiveCampaignNotifier(ref.read(campaignRepositoryProvider));
+});
+
+/// Trash'teki silinen kampanyalar.
+final trashListProvider = FutureProvider<List<TrashItem>>((ref) {
+  return ref.read(campaignLocalDsProvider).listTrash();
 });

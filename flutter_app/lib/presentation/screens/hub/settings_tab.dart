@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
+import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/config/app_paths.dart';
+import '../../../data/datasources/local/campaign_local_ds.dart' show TrashItem;
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
 
@@ -88,6 +91,32 @@ class SettingsTab extends ConsumerWidget {
               // --- LANGUAGE ---
               Text('Language', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               const SizedBox(height: 12),
+              ...['en', 'tr', 'de', 'fr'].map((code) {
+                final label = switch (code) {
+                  'en' => 'English',
+                  'tr' => 'Türkçe',
+                  'de' => 'Deutsch',
+                  'fr' => 'Français',
+                  _ => code,
+                };
+                final isSelected = currentLocale.languageCode == code;
+                return ListTile(
+                  leading: Radio<String>(
+                    value: code,
+                    groupValue: currentLocale.languageCode,
+                    onChanged: (v) {
+                      if (v != null) ref.read(localeProvider.notifier).setLocale(v);
+                    },
+                  ),
+                  title: Text(label, style: TextStyle(
+                    fontSize: 14,
+                    color: palette.tabActiveText,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  )),
+                  onTap: () => ref.read(localeProvider.notifier).setLocale(code),
+                  dense: true,
+                );
+              }),
               const SizedBox(height: 32),
 
               // --- VOLUME ---
@@ -125,35 +154,119 @@ class SettingsTab extends ConsumerWidget {
 
               const SizedBox(height: 32),
 
-              ...['en', 'tr', 'de', 'fr'].map((code) {
-                final label = switch (code) {
-                  'en' => 'English',
-                  'tr' => 'Türkçe',
-                  'de' => 'Deutsch',
-                  'fr' => 'Français',
-                  _ => code,
-                };
-                final isSelected = currentLocale.languageCode == code;
-                return ListTile(
-                  leading: Radio<String>(
-                    value: code,
-                    groupValue: currentLocale.languageCode,
-                    onChanged: (v) {
-                      if (v != null) ref.read(localeProvider.notifier).setLocale(v);
-                    },
-                  ),
-                  title: Text(label, style: TextStyle(
-                    fontSize: 14,
-                    color: palette.tabActiveText,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  )),
-                  onTap: () => ref.read(localeProvider.notifier).setLocale(code),
-                  dense: true,
-                );
-              }),
+              // --- TRASH ---
+              Text('Trash', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              const SizedBox(height: 12),
+              ref.watch(trashListProvider).when(
+                data: (items) => items.isEmpty
+                    ? Text('Trash is empty.', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary))
+                    : ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: items.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 4),
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          final daysAgo = DateTime.now().difference(item.deletedAt).inDays;
+                          final daysLeft = 30 - daysAgo;
+                          final dateStr = DateFormat('yyyy-MM-dd HH:mm').format(item.deletedAt);
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: palette.featureCardBg,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: palette.featureCardBorder),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.public, size: 16, color: palette.tabText),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(item.originalName, style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
+                                      Text(
+                                        '${item.type} · $dateStr · ${daysLeft > 0 ? '${daysLeft}d until auto-delete' : 'Pending cleanup'}',
+                                        style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.restore, size: 18, color: palette.successBtnBg),
+                                  tooltip: 'Restore',
+                                  onPressed: () => _restoreTrashItem(context, ref, item, palette),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.delete_forever, size: 18, color: palette.dangerBtnBg),
+                                  tooltip: 'Delete Permanently',
+                                  onPressed: () => _permanentlyDeleteTrashItem(context, ref, item, palette),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text('Error: $e'),
+              ),
+
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _restoreTrashItem(BuildContext context, WidgetRef ref, TrashItem item, DmToolColors palette) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Restore World'),
+        content: Text('Restore "${item.originalName}" from trash?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final ds = ref.read(campaignLocalDsProvider);
+              final restoreName = await ds.findUniqueRestoreName(item.originalName);
+              await ds.restoreFromTrash(item.directoryName, restoreName);
+              ref.invalidate(trashListProvider);
+              ref.invalidate(campaignInfoListProvider);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Restored as "$restoreName"')),
+                );
+              }
+            },
+            style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, foregroundColor: palette.successBtnText),
+            child: const Text('Restore'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _permanentlyDeleteTrashItem(BuildContext context, WidgetRef ref, TrashItem item, DmToolColors palette) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Permanently'),
+        content: Text('Permanently delete "${item.originalName}"?\n\nThis cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await ref.read(campaignLocalDsProvider).permanentlyDeleteFromTrash(item.directoryName);
+              ref.invalidate(trashListProvider);
+            },
+            style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }
