@@ -56,7 +56,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final screen = getScreenType(context);
 
-    // Auto-select entity when turn advances
+    // Auto-select entity when turn advances (without switching tab)
     ref.listen<int?>(
       combatProvider.select((s) => s.activeEncounter?.turnIndex),
       (previous, next) {
@@ -67,11 +67,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         if (entityId != null) {
           setState(() {
             _selectedCombatantId = entityId;
-            _bottomTabIndex = 3;
           });
-          ref.read(uiStateProvider.notifier).update(
-            (s) => s.copyWith(sessionBottomTab: 3),
-          );
         }
       },
     );
