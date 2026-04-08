@@ -1,28 +1,14 @@
-## Template Trash
-
-Bir template'i sildiğimizde trash'e atsın.
-
----
-
-## Özellik PDF Viewer
-
-Database sidebar tarzında yeni bir sidebar ekleyeceğiz ancak bu sefer sağ taraftan açılacak. Burada PDF açabileceğiz. İstersek bir entity card'a eklediğimiz bir pdf'i, istersek de local'den açarak görüntüleyebileceğiz. Tablara ayırarak en fazla 10 PDF'i aynı anda açabileceğiz. Database sidebarda olduğu gibi bu sidebar'ı da tamamen kapatabileceğiz.
-
----
-
 ## Özellik Soundpad
 
 Soundmap sistemini entegre etmeye başlayabiliriz. Soundmap themes, structured musics and intensity slider ekleyeceğiz. Tek basımlık sesler ve arka plan seslerini de entegre edeceğiz. Arayüz üzerinden custom müzik ekleme getireceğiz. Ayrıca, md dosyalarını ve qt sistemindeki soundmap özelliklerini iyi analiz et.
 
 ---
 
-## Latest Changes Update
+## Second Screen
 
-latest changes md dosyasını güncellemeni istiyorum.
+Artık Player Screen bölümüne başlayabiliriz. Bu bölümde amacımız, DM tarafından ikinci bir ekran açılabilmesi ve bu ekranda session'dan resim/pdf/mind map note/battle map paylaşılabilmesidir. Kullanıcı uygulamadki herhangi bir resme/mind map note'a/entity card'a/pdf'e sağ tıklayarak project seçeneği ile projection yapabilecek. Aynı anda birden fazla resim/note/card ve bir pdf ya da battlemap paylaşılabilmeli. Bu paylaşımlar arasında geçiş yapılabilmeli. Önce seçilen bu itemlerin ikinci ekranda nasıl efficient ve optimize bir şekilde gösterebileceğimizi hesapla. Sistem şuan yeterince hızlı çalışmıyor. Tab'lar arası geçişler hala yavaş. Yeni ekran sistemi hızlı çalışmalı.
 
-## Roadmap Devam
-
-Roadmap'de kaldığımız yerleri analiz etmeni ve şimdi neler yapacağımızı planlamanı istiyorum.
+---
 
 ## Özellik Paket
 
