@@ -31,10 +31,9 @@ class UiState {
 
   // Right Sidebar (PDF / Soundmap)
   final RightSidebar rightSidebar;
-  final double pdfSidebarWidth;
+  final double pdfSidebarWidth; // shared width for both PDF and Soundmap
   final List<String> pdfOpenPaths;
   final int pdfActiveIndex;
-  final double soundmapSidebarWidth;
 
   // Theme & Locale
   final String themeName;
@@ -59,7 +58,6 @@ class UiState {
     this.pdfSidebarWidth = 450,
     this.pdfOpenPaths = const [],
     this.pdfActiveIndex = -1,
-    this.soundmapSidebarWidth = 450,
     this.themeName = 'dark',
     this.localeCode = 'en',
     this.volume = 1.0,
@@ -81,7 +79,6 @@ class UiState {
     double? pdfSidebarWidth,
     List<String>? pdfOpenPaths,
     int? pdfActiveIndex,
-    double? soundmapSidebarWidth,
     String? themeName,
     String? localeCode,
     double? volume,
@@ -102,7 +99,6 @@ class UiState {
       pdfSidebarWidth: pdfSidebarWidth ?? this.pdfSidebarWidth,
       pdfOpenPaths: pdfOpenPaths ?? this.pdfOpenPaths,
       pdfActiveIndex: pdfActiveIndex ?? this.pdfActiveIndex,
-      soundmapSidebarWidth: soundmapSidebarWidth ?? this.soundmapSidebarWidth,
       themeName: themeName ?? this.themeName,
       localeCode: localeCode ?? this.localeCode,
       volume: volume ?? this.volume,
@@ -125,7 +121,6 @@ class UiState {
     'pdfSidebarWidth': pdfSidebarWidth,
     'pdfOpenPaths': pdfOpenPaths,
     'pdfActiveIndex': pdfActiveIndex,
-    'soundmapSidebarWidth': soundmapSidebarWidth,
     'themeName': themeName,
     'localeCode': localeCode,
     'volume': volume,
@@ -157,7 +152,6 @@ class UiState {
       pdfSidebarWidth: (json['pdfSidebarWidth'] as num?)?.toDouble() ?? 450,
       pdfOpenPaths: (json['pdfOpenPaths'] as List?)?.cast<String>() ?? const [],
       pdfActiveIndex: json['pdfActiveIndex'] as int? ?? -1,
-      soundmapSidebarWidth: (json['soundmapSidebarWidth'] as num?)?.toDouble() ?? 450,
       themeName: json['themeName'] as String? ?? 'dark',
       localeCode: json['localeCode'] as String? ?? 'en',
       volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
