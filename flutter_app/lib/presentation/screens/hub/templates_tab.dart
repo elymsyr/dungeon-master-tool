@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/schema/default_dnd5e_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
@@ -77,9 +78,10 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                       isCustom: true,
                       onTap: () => setState(() { _mode = 'edit'; _activeSchema = schema; }),
                       onDelete: () async {
-                        await ref.read(templateLocalDsProvider).delete(schema.schemaId);
+                        await ref.read(templateLocalDsProvider).moveToTrash(schema.schemaId, schema.name);
                         ref.invalidate(customTemplatesProvider);
                         ref.invalidate(allTemplatesProvider);
+                        ref.invalidate(trashListProvider);
                       },
                     ),
                   )).toList(),
@@ -230,14 +232,14 @@ class _TemplateCard extends StatelessWidget {
                   showDialog(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      title: const Text('Delete Template'),
-                      content: Text('Delete "${schema.name}"?'),
+                      title: const Text('Move to Trash'),
+                      content: Text('Move "${schema.name}" to trash?'),
                       actions: [
                         TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
                         FilledButton(
                           onPressed: () { Navigator.pop(ctx); onDelete!(); },
                           style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
-                          child: const Text('Delete'),
+                          child: const Text('Move to Trash'),
                         ),
                       ],
                     ),
