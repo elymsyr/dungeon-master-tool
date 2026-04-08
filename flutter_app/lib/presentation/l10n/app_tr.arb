@@ -17,5 +17,7 @@
   "tabDatabase": "Veritabanı",
   "tabSession": "Oturum",
   "tabMindMap": "Zihin Haritası",
-  "tabMap": "Harita"
+  "tabMap": "Harita",
+  "tabPdf": "PDF",
+  "tabSoundmap": "Ses Haritası"
 }

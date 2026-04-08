@@ -6,6 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _key = 'ui_state';
 
+/// Which right sidebar is currently open (mutually exclusive).
+enum RightSidebar { none, pdf, soundmap }
+
 /// Kalıcı UI state — PyQt'deki closeEvent/restoreState karşılığı.
 /// SharedPreferences ile kaydedilir, uygulama açılışında restore edilir.
 class UiState {
@@ -26,6 +29,13 @@ class UiState {
   final double sessionRightSplitterRatio;
   final int sessionBottomTab;
 
+  // Right Sidebar (PDF / Soundmap)
+  final RightSidebar rightSidebar;
+  final double pdfSidebarWidth;
+  final List<String> pdfOpenPaths;
+  final int pdfActiveIndex;
+  final double soundmapSidebarWidth;
+
   // Theme & Locale
   final String themeName;
   final String localeCode;
@@ -45,6 +55,11 @@ class UiState {
     this.sessionMainSplitterRatio = 0.35,
     this.sessionRightSplitterRatio = 0.4,
     this.sessionBottomTab = 0,
+    this.rightSidebar = RightSidebar.none,
+    this.pdfSidebarWidth = 450,
+    this.pdfOpenPaths = const [],
+    this.pdfActiveIndex = -1,
+    this.soundmapSidebarWidth = 450,
     this.themeName = 'dark',
     this.localeCode = 'en',
     this.volume = 1.0,
@@ -62,6 +77,11 @@ class UiState {
     double? sessionMainSplitterRatio,
     double? sessionRightSplitterRatio,
     int? sessionBottomTab,
+    RightSidebar? rightSidebar,
+    double? pdfSidebarWidth,
+    List<String>? pdfOpenPaths,
+    int? pdfActiveIndex,
+    double? soundmapSidebarWidth,
     String? themeName,
     String? localeCode,
     double? volume,
@@ -78,6 +98,11 @@ class UiState {
       sessionMainSplitterRatio: sessionMainSplitterRatio ?? this.sessionMainSplitterRatio,
       sessionRightSplitterRatio: sessionRightSplitterRatio ?? this.sessionRightSplitterRatio,
       sessionBottomTab: sessionBottomTab ?? this.sessionBottomTab,
+      rightSidebar: rightSidebar ?? this.rightSidebar,
+      pdfSidebarWidth: pdfSidebarWidth ?? this.pdfSidebarWidth,
+      pdfOpenPaths: pdfOpenPaths ?? this.pdfOpenPaths,
+      pdfActiveIndex: pdfActiveIndex ?? this.pdfActiveIndex,
+      soundmapSidebarWidth: soundmapSidebarWidth ?? this.soundmapSidebarWidth,
       themeName: themeName ?? this.themeName,
       localeCode: localeCode ?? this.localeCode,
       volume: volume ?? this.volume,
@@ -96,12 +121,26 @@ class UiState {
     'sessionMainSplitterRatio': sessionMainSplitterRatio,
     'sessionRightSplitterRatio': sessionRightSplitterRatio,
     'sessionBottomTab': sessionBottomTab,
+    'rightSidebar': rightSidebar.name,
+    'pdfSidebarWidth': pdfSidebarWidth,
+    'pdfOpenPaths': pdfOpenPaths,
+    'pdfActiveIndex': pdfActiveIndex,
+    'soundmapSidebarWidth': soundmapSidebarWidth,
     'themeName': themeName,
     'localeCode': localeCode,
     'volume': volume,
   };
 
   factory UiState.fromJson(Map<String, dynamic> json) {
+    // Backward compat: migrate old pdfSidebarOpen bool → RightSidebar enum
+    RightSidebar rightSidebar = RightSidebar.none;
+    final rsName = json['rightSidebar'] as String?;
+    if (rsName != null) {
+      rightSidebar = RightSidebar.values.where((e) => e.name == rsName).firstOrNull ?? RightSidebar.none;
+    } else if (json['pdfSidebarOpen'] == true) {
+      rightSidebar = RightSidebar.pdf;
+    }
+
     return UiState(
       mainTabIndex: json['mainTabIndex'] as int? ?? 0,
       sidebarOpen: json['sidebarOpen'] as bool? ?? true,
@@ -114,6 +153,11 @@ class UiState {
       sessionMainSplitterRatio: (json['sessionMainSplitterRatio'] as num?)?.toDouble() ?? 0.35,
       sessionRightSplitterRatio: (json['sessionRightSplitterRatio'] as num?)?.toDouble() ?? 0.4,
       sessionBottomTab: json['sessionBottomTab'] as int? ?? 0,
+      rightSidebar: rightSidebar,
+      pdfSidebarWidth: (json['pdfSidebarWidth'] as num?)?.toDouble() ?? 450,
+      pdfOpenPaths: (json['pdfOpenPaths'] as List?)?.cast<String>() ?? const [],
+      pdfActiveIndex: json['pdfActiveIndex'] as int? ?? -1,
+      soundmapSidebarWidth: (json['soundmapSidebarWidth'] as num?)?.toDouble() ?? 450,
       themeName: json['themeName'] as String? ?? 'dark',
       localeCode: json['localeCode'] as String? ?? 'en',
       volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
@@ -158,3 +202,11 @@ final uiStateProvider = StateNotifierProvider<UiStateNotifier, UiState>((ref) {
 /// Set this to an entity ID to navigate to the Database tab and open that entity.
 /// Consumers should reset to null after handling.
 final entityNavigationProvider = StateProvider<String?>((ref) => null);
+
+/// Set this to a PDF file path to open it in the PDF sidebar.
+/// Consumers should reset to null after handling.
+final pdfNavigationProvider = StateProvider<String?>((ref) => null);
+
+/// Set this to open the soundmap sidebar from anywhere.
+/// Consumers should reset to null after handling.
+final soundmapNavigationProvider = StateProvider<bool?>((ref) => null);

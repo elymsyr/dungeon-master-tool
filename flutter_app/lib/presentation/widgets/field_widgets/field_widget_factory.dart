@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/ui_state_provider.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../dialogs/entity_selector_dialog.dart';
@@ -45,7 +46,7 @@ class FieldWidgetFactory {
       FieldType.date => _DateFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.image => _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.file => _FileFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.pdf => _PdfFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.pdf => _PdfFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, ref: ref),
       _ => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
     };
   }
@@ -1292,8 +1293,9 @@ class _PdfFieldWidget extends StatelessWidget {
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
+  final WidgetRef? ref;
 
-  const _PdfFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _PdfFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.ref});
 
   @override
   Widget build(BuildContext context) {
@@ -1320,7 +1322,14 @@ class _PdfFieldWidget extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(Icons.picture_as_pdf, size: 20, color: palette?.tokenBorderHostile ?? Colors.red),
                   title: Text(fileName, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
-                  onTap: () => Process.run('xdg-open', [path]),
+                  onTap: () {
+                    if (ref != null) {
+                      ref!.read(pdfNavigationProvider.notifier).state = path;
+                    } else {
+                      Process.run('xdg-open', [path]);
+                    }
+                  },
+                  onLongPress: () => Process.run('xdg-open', [path]),
                   trailing: readOnly
                       ? null
                       : IconButton(
