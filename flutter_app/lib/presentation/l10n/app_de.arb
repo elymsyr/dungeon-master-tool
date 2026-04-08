@@ -17,5 +17,7 @@
   "tabDatabase": "Datenbank",
   "tabSession": "Sitzung",
   "tabMindMap": "Mindmap",
-  "tabMap": "Karte"
+  "tabMap": "Karte",
+  "tabPdf": "PDF",
+  "tabSoundmap": "Soundmap"
 }

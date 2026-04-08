@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +17,8 @@ import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
 import '../widgets/entity_sidebar.dart';
+import '../widgets/pdf_sidebar.dart';
+import '../widgets/soundmap_sidebar.dart';
 import 'database/database_screen.dart';
 import 'map/world_map_screen.dart';
 import 'mind_map/mind_map_screen.dart';
@@ -36,11 +40,27 @@ class _MainScreenState extends ConsumerState<MainScreen>
   bool _editMode = false;
   String? _selectedEntityId;
 
-  // Sidebar state
+  // Left sidebar state
   bool _sidebarOpen = true;
   double _sidebarWidth = 280;
   static const double _minSidebarWidth = 200;
   static const double _maxSidebarWidth = 450;
+  // ValueNotifier for drag-time rendering without full rebuild
+  late final ValueNotifier<double> _sidebarWidthNotifier;
+
+  // Right sidebar state (PDF / Soundmap — mutually exclusive)
+  RightSidebar _rightSidebar = RightSidebar.none;
+  double _pdfSidebarWidth = 450;
+  List<String> _pdfOpenPaths = [];
+  int _pdfActiveIndex = -1;
+  static const double _minPdfSidebarWidth = 300;
+  static const double _maxPdfSidebarWidth = 700;
+  static const int _maxPdfTabs = 10;
+  late final ValueNotifier<double> _pdfSidebarWidthNotifier;
+  double _soundmapSidebarWidth = 450;
+  static const double _minSoundmapSidebarWidth = 300;
+  static const double _maxSoundmapSidebarWidth = 700;
+  late final ValueNotifier<double> _soundmapSidebarWidthNotifier;
 
   @override
   void initState() {
@@ -52,10 +72,22 @@ class _MainScreenState extends ConsumerState<MainScreen>
     _tabIndex = uiState.mainTabIndex;
     _sidebarOpen = uiState.sidebarOpen;
     _sidebarWidth = uiState.sidebarWidth.clamp(_minSidebarWidth, _maxSidebarWidth);
+    _sidebarWidthNotifier = ValueNotifier(_sidebarWidth);
+    // Right sidebar restore — silinen dosyaları temizle
+    _rightSidebar = uiState.rightSidebar;
+    _pdfSidebarWidth = uiState.pdfSidebarWidth.clamp(_minPdfSidebarWidth, _maxPdfSidebarWidth);
+    _pdfSidebarWidthNotifier = ValueNotifier(_pdfSidebarWidth);
+    _pdfOpenPaths = uiState.pdfOpenPaths.where((p) => File(p).existsSync()).toList();
+    _pdfActiveIndex = _pdfOpenPaths.isEmpty ? -1 : uiState.pdfActiveIndex.clamp(0, _pdfOpenPaths.length - 1);
+    _soundmapSidebarWidth = uiState.soundmapSidebarWidth.clamp(_minSoundmapSidebarWidth, _maxSoundmapSidebarWidth);
+    _soundmapSidebarWidthNotifier = ValueNotifier(_soundmapSidebarWidth);
   }
 
   @override
   void dispose() {
+    _sidebarWidthNotifier.dispose();
+    _pdfSidebarWidthNotifier.dispose();
+    _soundmapSidebarWidthNotifier.dispose();
     HardwareKeyboard.instance.removeHandler(_handleGlobalKey);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -74,7 +106,53 @@ class _MainScreenState extends ConsumerState<MainScreen>
       mainTabIndex: _tabIndex,
       sidebarOpen: _sidebarOpen,
       sidebarWidth: _sidebarWidth,
+      rightSidebar: _rightSidebar,
+      pdfSidebarWidth: _pdfSidebarWidth,
+      pdfOpenPaths: _pdfOpenPaths,
+      pdfActiveIndex: _pdfActiveIndex,
+      soundmapSidebarWidth: _soundmapSidebarWidth,
     ));
+  }
+
+  void _openPdfTab(String path) {
+    // Zaten açıksa o tab'a geç
+    final existing = _pdfOpenPaths.indexOf(path);
+    if (existing != -1) {
+      setState(() {
+        _pdfActiveIndex = existing;
+        _rightSidebar = RightSidebar.pdf;
+      });
+      _persistUiState();
+      return;
+    }
+    // Maks 10 tab
+    if (_pdfOpenPaths.length >= _maxPdfTabs) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Maximum 10 PDFs can be open at the same time.')),
+      );
+      return;
+    }
+    setState(() {
+      _pdfOpenPaths = [..._pdfOpenPaths, path];
+      _pdfActiveIndex = _pdfOpenPaths.length - 1;
+      _rightSidebar = RightSidebar.pdf;
+    });
+    _persistUiState();
+  }
+
+  void _closePdfTab(int index) {
+    if (index < 0 || index >= _pdfOpenPaths.length) return;
+    setState(() {
+      _pdfOpenPaths = [..._pdfOpenPaths]..removeAt(index);
+      if (_pdfOpenPaths.isEmpty) {
+        _pdfActiveIndex = -1;
+      } else if (_pdfActiveIndex >= _pdfOpenPaths.length) {
+        _pdfActiveIndex = _pdfOpenPaths.length - 1;
+      } else if (_pdfActiveIndex > index) {
+        _pdfActiveIndex--;
+      }
+    });
+    _persistUiState();
   }
 
   void _showMobileSidebar() {
@@ -106,10 +184,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
   }
 
   static const _tabIcons = [
-    Icons.storage,       // Database
-    Icons.event_note,    // Session
-    Icons.account_tree,  // Mind Map
-    Icons.map,           // Map
+    Icons.storage,          // Database
+    Icons.event_note,       // Session
+    Icons.account_tree,     // Mind Map
+    Icons.map,              // Map
+    Icons.picture_as_pdf,   // PDF (mobile/tablet only)
+    Icons.music_note,       // Soundmap (mobile/tablet only)
   ];
 
   @override
@@ -124,6 +204,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
       l10n.tabSession,
       l10n.tabMindMap,
       l10n.tabMap,
+      l10n.tabPdf,
+      l10n.tabSoundmap,
     ];
 
     // Listen for entity navigation requests from anywhere in the app
@@ -137,6 +219,31 @@ class _MainScreenState extends ConsumerState<MainScreen>
         ref.read(entityNavigationProvider.notifier).state = null;
       }
     });
+
+    // Listen for PDF navigation requests from anywhere in the app
+    ref.listen<String?>(pdfNavigationProvider, (_, path) {
+      if (path != null) {
+        _openPdfTab(path);
+        ref.read(pdfNavigationProvider.notifier).state = null;
+      }
+    });
+
+    // Listen for soundmap navigation requests
+    ref.listen<bool?>(soundmapNavigationProvider, (_, value) {
+      if (value != null) {
+        setState(() => _rightSidebar = RightSidebar.soundmap);
+        _persistUiState();
+        ref.read(soundmapNavigationProvider.notifier).state = null;
+      }
+    });
+
+    // Desktop'ta tab index 4/5 geçersiz — guard
+    if (screen == ScreenType.desktop && _tabIndex > 3) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() => _tabIndex = 0);
+        _persistUiState();
+      });
+    }
 
     final schema = ref.read(worldSchemaProvider);
 
@@ -168,6 +275,17 @@ class _MainScreenState extends ConsumerState<MainScreen>
             _persistUiState();
           },
         ),
+        // PDF tab (mobile/tablet only — desktop uses overlay sidebar)
+        PdfSidebar(
+          openPaths: _pdfOpenPaths,
+          activeIndex: _pdfActiveIndex,
+          palette: palette,
+          onTabSelect: (i) { setState(() => _pdfActiveIndex = i); _persistUiState(); },
+          onTabClose: _closePdfTab,
+          onOpenFile: _openPdfTab,
+        ),
+        // Soundmap tab (mobile/tablet only — desktop uses overlay sidebar)
+        SoundmapSidebar(palette: palette),
       ],
     );
 
@@ -186,6 +304,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
           ],
         ),
         actions: [
+          // Undo / Redo
+          _UndoRedoButtons(tabIndex: _tabIndex),
+          const SizedBox(width: 4),
+          // Save indicator
+          const _SaveIndicator(),
+          const SizedBox(width: 4),
           // Edit Mode toggle
           IconButton(
             icon: Icon(
@@ -251,90 +375,200 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
       // --- Body: Responsive Layout ---
       body: switch (screen) {
-        // Desktop: Sidebar (sol) + Tab bar + content (sağ)
-        ScreenType.desktop => Row(
-            children: [
-              // Sol sidebar — collapsible + resizable
-              if (_sidebarOpen)
-                SizedBox(
-                  width: _sidebarWidth,
-                  child: EntitySidebar(
-                    schema: schema,
-                    onEntitySelected: (id) {
-                      setState(() {
-                        _selectedEntityId = id;
-                        _tabIndex = 0;
-                      });
-                      _persistUiState();
-                    },
+        // Desktop: Sidebar (sol) + Tab bar + content + PDF sidebar (overlay)
+        ScreenType.desktop => Stack(
+          children: [
+            // Ana içerik: sol sidebar + tab bar/content
+            Row(
+              children: [
+                // Sol sidebar — collapsible + resizable
+                if (_sidebarOpen)
+                  ValueListenableBuilder<double>(
+                    valueListenable: _sidebarWidthNotifier,
+                    builder: (_, width, child) => SizedBox(width: width, child: child),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: EntitySidebar(
+                            schema: schema,
+                            onEntitySelected: (id) {
+                              setState(() {
+                                _selectedEntityId = id;
+                                _tabIndex = 0;
+                              });
+                              _persistUiState();
+                            },
+                          ),
+                        ),
+                        // Drag handle — sürükleyerek genişletme
+                        _DragHandle(
+                          palette: palette,
+                          onDragUpdate: (dx) {
+                            _sidebarWidth = (_sidebarWidth + dx).clamp(_minSidebarWidth, _maxSidebarWidth);
+                            _sidebarWidthNotifier.value = _sidebarWidth;
+                          },
+                          onDragEnd: () => _persistUiState(),
+                        ),
+                      ],
+                    ),
+                  ),
+                // Orta: tab bar + tab content
+                Expanded(
+                  child: RepaintBoundary(
+                    child: Column(
+                      children: [
+                        // Tab bar — sağ sidebar açıkken padding ile kontrolleri kaydır
+                        ValueListenableBuilder<double>(
+                          valueListenable: _rightSidebar == RightSidebar.pdf
+                              ? _pdfSidebarWidthNotifier
+                              : _soundmapSidebarWidthNotifier,
+                          builder: (_, rightWidth, child) => Container(
+                            color: palette.tabBg,
+                            padding: EdgeInsets.only(
+                              right: _rightSidebar != RightSidebar.none ? rightWidth : 0,
+                            ),
+                            child: child,
+                          ),
+                          child: Row(
+                            children: [
+                              // Database sidebar toggle
+                              IconButton(
+                                icon: Icon(
+                                  _sidebarOpen ? Icons.view_sidebar : Icons.view_sidebar_outlined,
+                                  size: 18,
+                                ),
+                                tooltip: _sidebarOpen ? 'Close Sidebar' : 'Open Sidebar',
+                                onPressed: () { setState(() { _sidebarOpen = !_sidebarOpen; if (_sidebarOpen) _sidebarWidthNotifier.value = _sidebarWidth; }); _persistUiState(); },
+                                color: palette.tabText,
+                                iconSize: 18,
+                                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                              ),
+                              // Tab butonları (desktop: 4 tab)
+                              ...List.generate(4, (i) {
+                                final isActive = i == _tabIndex;
+                                return InkWell(
+                                  onTap: () { setState(() => _tabIndex = i); _persistUiState(); },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                                    decoration: BoxDecoration(
+                                      color: isActive ? palette.tabActiveBg : palette.tabBg,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(_tabIcons[i], size: 18,
+                                          color: isActive ? palette.tabActiveText : palette.tabText),
+                                        const SizedBox(width: 6),
+                                        Text(tabLabels[i],
+                                          style: TextStyle(
+                                            color: isActive ? palette.tabActiveText : palette.tabText,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }),
+                              const Spacer(),
+                              // PDF sidebar toggle
+                              IconButton(
+                                icon: Icon(
+                                  _rightSidebar == RightSidebar.pdf ? Icons.chrome_reader_mode : Icons.chrome_reader_mode_outlined,
+                                  size: 18,
+                                ),
+                                tooltip: _rightSidebar == RightSidebar.pdf ? 'Close PDF Viewer' : 'Open PDF Viewer',
+                                color: _rightSidebar == RightSidebar.pdf ? palette.tabIndicator : palette.tabText,
+                                onPressed: () { setState(() => _rightSidebar = _rightSidebar == RightSidebar.pdf ? RightSidebar.none : RightSidebar.pdf); _persistUiState(); },
+                                iconSize: 18,
+                                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                              ),
+                              // Soundmap sidebar toggle
+                              IconButton(
+                                icon: Icon(
+                                  _rightSidebar == RightSidebar.soundmap ? Icons.music_note : Icons.music_note_outlined,
+                                  size: 18,
+                                ),
+                                tooltip: _rightSidebar == RightSidebar.soundmap ? 'Close Soundmap' : 'Open Soundmap',
+                                color: _rightSidebar == RightSidebar.soundmap ? palette.tabIndicator : palette.tabText,
+                                onPressed: () { setState(() => _rightSidebar = _rightSidebar == RightSidebar.soundmap ? RightSidebar.none : RightSidebar.soundmap); _persistUiState(); },
+                                iconSize: 18,
+                                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Tab content
+                        Expanded(child: RepaintBoundary(child: tabStack)),
+                      ],
+                    ),
                   ),
                 ),
-              // Sidebar divider with toggle + drag resize
-              _SidebarDivider(
-                isOpen: _sidebarOpen,
-                palette: palette,
-                onToggle: () { setState(() => _sidebarOpen = !_sidebarOpen); _persistUiState(); },
-                onDragUpdate: _sidebarOpen
-                    ? (dx) {
-                        setState(() {
-                          _sidebarWidth = (_sidebarWidth + dx).clamp(_minSidebarWidth, _maxSidebarWidth);
-                        });
-                      }
-                    : null,
-                onDragEnd: _sidebarOpen ? () => _persistUiState() : null,
-              ),
-              // Sağ: tab bar + tab content
-              Expanded(
-                child: Column(
+              ],
+            ),
+            // Right sidebar — overlay olarak sağdan açılır (PDF veya Soundmap)
+            if (_rightSidebar != RightSidebar.none)
+              ValueListenableBuilder<double>(
+                valueListenable: _rightSidebar == RightSidebar.pdf
+                    ? _pdfSidebarWidthNotifier
+                    : _soundmapSidebarWidthNotifier,
+                builder: (_, width, child) => Positioned(
+                  top: 0,
+                  bottom: 0,
+                  right: 0,
+                  width: width,
+                  child: child!,
+                ),
+                child: Row(
                   children: [
-                    // Tab bar
-                    Container(
-                      color: palette.tabBg,
-                      child: Row(
-                        children: [
-                          ...List.generate(4, (i) {
-                            final isActive = i == _tabIndex;
-                            return InkWell(
-                              onTap: () { setState(() => _tabIndex = i); _persistUiState(); },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                                decoration: BoxDecoration(
-                                  color: isActive ? palette.tabActiveBg : palette.tabBg,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(_tabIcons[i], size: 18,
-                                      color: isActive ? palette.tabActiveText : palette.tabText),
-                                    const SizedBox(width: 6),
-                                    Text(tabLabels[i],
-                                      style: TextStyle(
-                                        color: isActive ? palette.tabActiveText : palette.tabText,
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }),
-                          const Spacer(),
-                          // Undo / Redo buttons + Save indicator
-                          _UndoRedoButtons(tabIndex: _tabIndex),
-                          const SizedBox(width: 8),
-                          const _SaveIndicator(),
-                          const SizedBox(width: 12),
-                        ],
+                    // Drag handle — sürükleyerek genişletme
+                    _DragHandle(
+                      palette: palette,
+                      onDragUpdate: (dx) {
+                        if (_rightSidebar == RightSidebar.pdf) {
+                          _pdfSidebarWidth = (_pdfSidebarWidth - dx).clamp(_minPdfSidebarWidth, _maxPdfSidebarWidth);
+                          _pdfSidebarWidthNotifier.value = _pdfSidebarWidth;
+                        } else {
+                          _soundmapSidebarWidth = (_soundmapSidebarWidth - dx).clamp(_minSoundmapSidebarWidth, _maxSoundmapSidebarWidth);
+                          _soundmapSidebarWidthNotifier.value = _soundmapSidebarWidth;
+                        }
+                      },
+                      onDragEnd: () => _persistUiState(),
+                    ),
+                    // Sidebar content
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: palette.canvasBg,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(-2, 0),
+                            ),
+                          ],
+                        ),
+                        child: _rightSidebar == RightSidebar.pdf
+                            ? PdfSidebar(
+                                openPaths: _pdfOpenPaths,
+                                activeIndex: _pdfActiveIndex,
+                                palette: palette,
+                                onTabSelect: (i) { setState(() => _pdfActiveIndex = i); _persistUiState(); },
+                                onTabClose: _closePdfTab,
+                                onOpenFile: _openPdfTab,
+                              )
+                            : SoundmapSidebar(palette: palette),
                       ),
                     ),
-                    // Tab content
-                    Expanded(child: tabStack),
                   ],
                 ),
               ),
-            ],
-          ),
+          ],
+        ),
 
         // Tablet: NavigationRail + content
         ScreenType.tablet => Row(
@@ -344,7 +578,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 onDestinationSelected: (i) { setState(() => _tabIndex = i); _persistUiState(); },
                 labelType: NavigationRailLabelType.all,
                 destinations: List.generate(
-                  4,
+                  6,
                   (i) => NavigationRailDestination(
                     icon: Icon(_tabIcons[i]),
                     label: Text(tabLabels[i]),
@@ -374,7 +608,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
               selectedIndex: _tabIndex,
               onDestinationSelected: (i) { setState(() => _tabIndex = i); _persistUiState(); },
               destinations: List.generate(
-                4,
+                6,
                 (i) => NavigationDestination(
                   icon: Icon(_tabIcons[i]),
                   label: tabLabels[i],
@@ -393,6 +627,20 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // Ctrl+E: always toggle edit mode (even when a text field has focus)
     if (event.logicalKey == LogicalKeyboardKey.keyE) {
       setState(() => _editMode = !_editMode);
+      return true;
+    }
+
+    // Ctrl+P: toggle PDF sidebar
+    if (event.logicalKey == LogicalKeyboardKey.keyP) {
+      setState(() => _rightSidebar = _rightSidebar == RightSidebar.pdf ? RightSidebar.none : RightSidebar.pdf);
+      _persistUiState();
+      return true;
+    }
+
+    // Ctrl+M: toggle Soundmap sidebar
+    if (event.logicalKey == LogicalKeyboardKey.keyM) {
+      setState(() => _rightSidebar = _rightSidebar == RightSidebar.soundmap ? RightSidebar.none : RightSidebar.soundmap);
+      _persistUiState();
       return true;
     }
 
@@ -463,7 +711,7 @@ class _UndoRedoButtons extends ConsumerWidget {
   }
 }
 
-/// Save status indicator — shows Saved / Unsaved / Saving...
+/// Save status indicator — icon-only with tooltip.
 class _SaveIndicator extends ConsumerWidget {
   const _SaveIndicator();
 
@@ -472,79 +720,56 @@ class _SaveIndicator extends ConsumerWidget {
     final status = ref.watch(saveStateProvider);
     final palette = Theme.of(context).extension<DmToolColors>()!;
 
-    final (IconData? icon, Color color, String label) = switch (status) {
-      SaveStatus.saved => (Icons.check_circle, palette.uiAutosaveTextSaved, 'Saved'),
-      SaveStatus.dirty => (Icons.circle, palette.uiAutosaveTextEditing, 'Unsaved'),
+    final (IconData? icon, Color color, String tooltip) = switch (status) {
+      SaveStatus.saved => (Icons.cloud_done, palette.uiAutosaveTextSaved, 'All changes saved'),
+      SaveStatus.dirty => (Icons.cloud_upload, palette.uiAutosaveTextEditing, 'Unsaved changes'),
       SaveStatus.saving => (null, palette.uiAutosaveTextEditing, 'Saving...'),
     };
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (icon != null)
-          Icon(icon, size: 10, color: color)
-        else
-          SizedBox(
-            width: 10,
-            height: 10,
-            child: CircularProgressIndicator(strokeWidth: 1.5, color: color),
-          ),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 11, color: color)),
-      ],
+    return Tooltip(
+      message: tooltip,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: icon != null
+            ? Icon(icon, size: 18, color: color)
+            : SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, color: color),
+              ),
+      ),
     );
   }
 }
 
-/// Sidebar divider — toggle butonu + sürükleyerek genişletme.
-class _SidebarDivider extends StatefulWidget {
-  final bool isOpen;
+/// İnce drag handle — sidebar kenarında sürükleyerek genişletme.
+/// ValueNotifier ile çalışır, setState çağırmaz — performanslı.
+class _DragHandle extends StatelessWidget {
   final DmToolColors palette;
-  final VoidCallback onToggle;
-  final void Function(double dx)? onDragUpdate;
-  final VoidCallback? onDragEnd;
+  final void Function(double dx) onDragUpdate;
+  final VoidCallback onDragEnd;
 
-  const _SidebarDivider({
-    required this.isOpen,
+  const _DragHandle({
     required this.palette,
-    required this.onToggle,
-    this.onDragUpdate,
-    this.onDragEnd,
+    required this.onDragUpdate,
+    required this.onDragEnd,
   });
-
-  @override
-  State<_SidebarDivider> createState() => _SidebarDividerState();
-}
-
-class _SidebarDividerState extends State<_SidebarDivider> {
-  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onHorizontalDragUpdate: widget.onDragUpdate != null
-          ? (details) => widget.onDragUpdate!(details.delta.dx)
-          : null,
-      onHorizontalDragEnd: widget.onDragEnd != null
-          ? (_) => widget.onDragEnd!()
-          : null,
+      onHorizontalDragUpdate: (details) => onDragUpdate(details.delta.dx),
+      onHorizontalDragEnd: (_) => onDragEnd(),
       child: MouseRegion(
-        cursor: widget.isOpen ? SystemMouseCursors.resizeColumn : SystemMouseCursors.basic,
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: InkWell(
-          onTap: widget.onToggle,
-          child: Container(
-            width: 10,
-            color: Colors.transparent,
-            child: Center(
-              child: Container(
-                width: 1,
-                height: double.infinity,
-                color: _hovered
-                    ? widget.palette.tabIndicator.withValues(alpha: 0.6)
-                    : widget.palette.sidebarDivider,
-              ),
+        cursor: SystemMouseCursors.resizeColumn,
+        child: Container(
+          width: 6,
+          color: Colors.transparent,
+          child: Center(
+            child: Container(
+              width: 1,
+              height: double.infinity,
+              color: palette.sidebarDivider,
             ),
           ),
         ),
@@ -552,4 +777,3 @@ class _SidebarDividerState extends State<_SidebarDivider> {
     );
   }
 }
-

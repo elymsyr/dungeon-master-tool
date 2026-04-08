@@ -17,5 +17,7 @@
   "tabDatabase": "Database",
   "tabSession": "Session",
   "tabMindMap": "Mind Map",
-  "tabMap": "Map"
+  "tabMap": "Map",
+  "tabPdf": "PDF",
+  "tabSoundmap": "Soundmap"
 }

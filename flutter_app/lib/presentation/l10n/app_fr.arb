@@ -17,5 +17,7 @@
   "tabDatabase": "Base de données",
   "tabSession": "Session",
   "tabMindMap": "Carte mentale",
-  "tabMap": "Carte"
+  "tabMap": "Carte",
+  "tabPdf": "PDF",
+  "tabSoundmap": "Carte sonore"
 }
