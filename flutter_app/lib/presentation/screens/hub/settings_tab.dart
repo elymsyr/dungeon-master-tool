@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/locale_provider.dart';
+import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/config/app_paths.dart';
@@ -179,7 +180,7 @@ class SettingsTab extends ConsumerWidget {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.public, size: 16, color: palette.tabText),
+                                Icon(item.type == 'Template' ? Icons.description : Icons.public, size: 16, color: palette.tabText),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(
@@ -220,24 +221,32 @@ class SettingsTab extends ConsumerWidget {
   }
 
   void _restoreTrashItem(BuildContext context, WidgetRef ref, TrashItem item, DmToolColors palette) {
+    final isTemplate = item.type == 'Template';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Restore World'),
+        title: Text('Restore ${isTemplate ? 'Template' : 'World'}'),
         content: Text('Restore "${item.originalName}" from trash?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              final ds = ref.read(campaignLocalDsProvider);
-              final restoreName = await ds.findUniqueRestoreName(item.originalName);
-              await ds.restoreFromTrash(item.directoryName, restoreName);
-              ref.invalidate(trashListProvider);
-              ref.invalidate(campaignInfoListProvider);
+              if (isTemplate) {
+                await ref.read(templateLocalDsProvider).restoreFromTrash(item.directoryName);
+                ref.invalidate(trashListProvider);
+                ref.invalidate(customTemplatesProvider);
+                ref.invalidate(allTemplatesProvider);
+              } else {
+                final ds = ref.read(campaignLocalDsProvider);
+                final restoreName = await ds.findUniqueRestoreName(item.originalName);
+                await ds.restoreFromTrash(item.directoryName, restoreName);
+                ref.invalidate(trashListProvider);
+                ref.invalidate(campaignInfoListProvider);
+              }
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Restored as "$restoreName"')),
+                  SnackBar(content: Text('Restored "${item.originalName}"')),
                 );
               }
             },
@@ -250,11 +259,12 @@ class SettingsTab extends ConsumerWidget {
   }
 
   void _permanentlyDeleteTrashItem(BuildContext context, WidgetRef ref, TrashItem item, DmToolColors palette) {
+    final typeLabel = item.type == 'Template' ? 'template' : 'world';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Permanently'),
-        content: Text('Permanently delete "${item.originalName}"?\n\nThis cannot be undone.'),
+        content: Text('Permanently delete $typeLabel "${item.originalName}"?\n\nThis cannot be undone.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           FilledButton(

@@ -240,6 +240,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               await ref.read(activeCampaignProvider.notifier).delete(name);
               ref.invalidate(campaignListProvider);
               ref.invalidate(campaignInfoListProvider);
+              ref.invalidate(trashListProvider);
               setState(() => _selectedIndex = -1);
             },
             style: FilledButton.styleFrom(
