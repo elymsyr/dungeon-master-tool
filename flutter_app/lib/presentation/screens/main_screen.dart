@@ -48,19 +48,18 @@ class _MainScreenState extends ConsumerState<MainScreen>
   // ValueNotifier for drag-time rendering without full rebuild
   late final ValueNotifier<double> _sidebarWidthNotifier;
 
-  // Right sidebar state (PDF / Soundmap — mutually exclusive)
+  // Right sidebar state (PDF / Soundmap — mutually exclusive, ortak genislik)
   RightSidebar _rightSidebar = RightSidebar.none;
-  double _pdfSidebarWidth = 450;
+  double _rightSidebarWidth = 450;
+  static const double _minRightSidebarWidth = 300;
+  static const double _maxRightSidebarWidth = 700;
+  late final ValueNotifier<double> _rightSidebarWidthNotifier;
+  // PDF tab state
   List<String> _pdfOpenPaths = [];
   int _pdfActiveIndex = -1;
-  static const double _minPdfSidebarWidth = 300;
-  static const double _maxPdfSidebarWidth = 700;
   static const int _maxPdfTabs = 10;
-  late final ValueNotifier<double> _pdfSidebarWidthNotifier;
-  double _soundmapSidebarWidth = 450;
-  static const double _minSoundmapSidebarWidth = 300;
-  static const double _maxSoundmapSidebarWidth = 700;
-  late final ValueNotifier<double> _soundmapSidebarWidthNotifier;
+  // Tab bar'daki butonlarin sigmasi icin gereken minimum merkez genislik
+  static const double _minCenterWidth = 480;
 
   @override
   void initState() {
@@ -75,19 +74,16 @@ class _MainScreenState extends ConsumerState<MainScreen>
     _sidebarWidthNotifier = ValueNotifier(_sidebarWidth);
     // Right sidebar restore — silinen dosyaları temizle
     _rightSidebar = uiState.rightSidebar;
-    _pdfSidebarWidth = uiState.pdfSidebarWidth.clamp(_minPdfSidebarWidth, _maxPdfSidebarWidth);
-    _pdfSidebarWidthNotifier = ValueNotifier(_pdfSidebarWidth);
+    _rightSidebarWidth = uiState.pdfSidebarWidth.clamp(_minRightSidebarWidth, _maxRightSidebarWidth);
+    _rightSidebarWidthNotifier = ValueNotifier(_rightSidebarWidth);
     _pdfOpenPaths = uiState.pdfOpenPaths.where((p) => File(p).existsSync()).toList();
     _pdfActiveIndex = _pdfOpenPaths.isEmpty ? -1 : uiState.pdfActiveIndex.clamp(0, _pdfOpenPaths.length - 1);
-    _soundmapSidebarWidth = uiState.soundmapSidebarWidth.clamp(_minSoundmapSidebarWidth, _maxSoundmapSidebarWidth);
-    _soundmapSidebarWidthNotifier = ValueNotifier(_soundmapSidebarWidth);
   }
 
   @override
   void dispose() {
     _sidebarWidthNotifier.dispose();
-    _pdfSidebarWidthNotifier.dispose();
-    _soundmapSidebarWidthNotifier.dispose();
+    _rightSidebarWidthNotifier.dispose();
     HardwareKeyboard.instance.removeHandler(_handleGlobalKey);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -107,10 +103,9 @@ class _MainScreenState extends ConsumerState<MainScreen>
       sidebarOpen: _sidebarOpen,
       sidebarWidth: _sidebarWidth,
       rightSidebar: _rightSidebar,
-      pdfSidebarWidth: _pdfSidebarWidth,
+      pdfSidebarWidth: _rightSidebarWidth,
       pdfOpenPaths: _pdfOpenPaths,
       pdfActiveIndex: _pdfActiveIndex,
-      soundmapSidebarWidth: _soundmapSidebarWidth,
     ));
   }
 
@@ -419,9 +414,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                       children: [
                         // Tab bar — sağ sidebar açıkken padding ile kontrolleri kaydır
                         ValueListenableBuilder<double>(
-                          valueListenable: _rightSidebar == RightSidebar.pdf
-                              ? _pdfSidebarWidthNotifier
-                              : _soundmapSidebarWidthNotifier,
+                          valueListenable: _rightSidebarWidthNotifier,
                           builder: (_, rightWidth, child) => Container(
                             color: palette.tabBg,
                             padding: EdgeInsets.only(
@@ -431,48 +424,58 @@ class _MainScreenState extends ConsumerState<MainScreen>
                           ),
                           child: Row(
                             children: [
-                              // Database sidebar toggle
-                              IconButton(
-                                icon: Icon(
-                                  _sidebarOpen ? Icons.view_sidebar : Icons.view_sidebar_outlined,
-                                  size: 18,
-                                ),
-                                tooltip: _sidebarOpen ? 'Close Sidebar' : 'Open Sidebar',
-                                onPressed: () { setState(() { _sidebarOpen = !_sidebarOpen; if (_sidebarOpen) _sidebarWidthNotifier.value = _sidebarWidth; }); _persistUiState(); },
-                                color: palette.tabText,
-                                iconSize: 18,
-                                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                              ),
-                              // Tab butonları (desktop: 4 tab)
-                              ...List.generate(4, (i) {
-                                final isActive = i == _tabIndex;
-                                return InkWell(
-                                  onTap: () { setState(() => _tabIndex = i); _persistUiState(); },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                                    decoration: BoxDecoration(
-                                      color: isActive ? palette.tabActiveBg : palette.tabBg,
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(_tabIcons[i], size: 18,
-                                          color: isActive ? palette.tabActiveText : palette.tabText),
-                                        const SizedBox(width: 6),
-                                        Text(tabLabels[i],
-                                          style: TextStyle(
-                                            color: isActive ? palette.tabActiveText : palette.tabText,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 13,
-                                          ),
+                              // Sol kisim: sidebar toggle + tab butonlari (scrollable)
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // Database sidebar toggle
+                                      IconButton(
+                                        icon: Icon(
+                                          _sidebarOpen ? Icons.view_sidebar : Icons.view_sidebar_outlined,
+                                          size: 18,
                                         ),
-                                      ],
-                                    ),
+                                        tooltip: _sidebarOpen ? 'Close Sidebar' : 'Open Sidebar',
+                                        onPressed: () { setState(() { _sidebarOpen = !_sidebarOpen; if (_sidebarOpen) _sidebarWidthNotifier.value = _sidebarWidth; }); _persistUiState(); },
+                                        color: palette.tabText,
+                                        iconSize: 18,
+                                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                                      ),
+                                      // Tab butonları (desktop: 4 tab)
+                                      ...List.generate(4, (i) {
+                                        final isActive = i == _tabIndex;
+                                        return InkWell(
+                                          onTap: () { setState(() => _tabIndex = i); _persistUiState(); },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                                            decoration: BoxDecoration(
+                                              color: isActive ? palette.tabActiveBg : palette.tabBg,
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(_tabIcons[i], size: 18,
+                                                  color: isActive ? palette.tabActiveText : palette.tabText),
+                                                const SizedBox(width: 6),
+                                                Text(tabLabels[i],
+                                                  style: TextStyle(
+                                                    color: isActive ? palette.tabActiveText : palette.tabText,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      }),
+                                    ],
                                   ),
-                                );
-                              }),
-                              const Spacer(),
+                                ),
+                              ),
                               // PDF sidebar toggle
                               IconButton(
                                 icon: Icon(
@@ -513,9 +516,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
             // Right sidebar — overlay olarak sağdan açılır (PDF veya Soundmap)
             if (_rightSidebar != RightSidebar.none)
               ValueListenableBuilder<double>(
-                valueListenable: _rightSidebar == RightSidebar.pdf
-                    ? _pdfSidebarWidthNotifier
-                    : _soundmapSidebarWidthNotifier,
+                valueListenable: _rightSidebarWidthNotifier,
                 builder: (_, width, child) => Positioned(
                   top: 0,
                   bottom: 0,
@@ -529,13 +530,11 @@ class _MainScreenState extends ConsumerState<MainScreen>
                     _DragHandle(
                       palette: palette,
                       onDragUpdate: (dx) {
-                        if (_rightSidebar == RightSidebar.pdf) {
-                          _pdfSidebarWidth = (_pdfSidebarWidth - dx).clamp(_minPdfSidebarWidth, _maxPdfSidebarWidth);
-                          _pdfSidebarWidthNotifier.value = _pdfSidebarWidth;
-                        } else {
-                          _soundmapSidebarWidth = (_soundmapSidebarWidth - dx).clamp(_minSoundmapSidebarWidth, _maxSoundmapSidebarWidth);
-                          _soundmapSidebarWidthNotifier.value = _soundmapSidebarWidth;
-                        }
+                        final totalW = MediaQuery.sizeOf(context).width;
+                        final leftW = _sidebarOpen ? _sidebarWidthNotifier.value : 0.0;
+                        final dynamicMax = (totalW - leftW - _minCenterWidth).clamp(0.0, _maxRightSidebarWidth);
+                        _rightSidebarWidth = (_rightSidebarWidth - dx).clamp(_minRightSidebarWidth, dynamicMax);
+                        _rightSidebarWidthNotifier.value = _rightSidebarWidth;
                       },
                       onDragEnd: () => _persistUiState(),
                     ),
