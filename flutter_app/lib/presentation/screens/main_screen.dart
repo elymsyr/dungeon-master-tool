@@ -11,6 +11,7 @@ import '../../application/providers/locale_provider.dart';
 import '../../application/providers/theme_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/save_state_provider.dart';
+import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../core/utils/screen_type.dart';
 import '../l10n/app_localizations.dart';
@@ -640,6 +641,18 @@ class _MainScreenState extends ConsumerState<MainScreen>
     if (event.logicalKey == LogicalKeyboardKey.keyM) {
       setState(() => _rightSidebar = _rightSidebar == RightSidebar.soundmap ? RightSidebar.none : RightSidebar.soundmap);
       _persistUiState();
+      return true;
+    }
+
+    // Ctrl+. : stop all sounds
+    if (event.logicalKey == LogicalKeyboardKey.period) {
+      ref.read(soundpadStateProvider.notifier).stopAll();
+      return true;
+    }
+
+    // Ctrl+, : stop ambience
+    if (event.logicalKey == LogicalKeyboardKey.comma) {
+      ref.read(soundpadStateProvider.notifier).stopAmbience();
       return true;
     }
 
