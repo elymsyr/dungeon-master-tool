@@ -9,6 +9,7 @@ class AppPaths {
   static late String worldsDir;
   static late String cacheDir;
   static late String trashDir;
+  static late String soundpadRoot;
 
   static Future<void> initialize() async {
     dataRoot = await _resolveDataRoot();
@@ -16,9 +17,12 @@ class AppPaths {
     cacheDir = p.join(dataRoot, 'cache');
     trashDir = p.join(dataRoot, '.trash');
 
+    soundpadRoot = await _resolveSoundpadRoot();
+
     await Directory(worldsDir).create(recursive: true);
     await Directory(cacheDir).create(recursive: true);
     await Directory(trashDir).create(recursive: true);
+    await Directory(soundpadRoot).create(recursive: true);
 
     // 30 günden eski trash öğelerini temizle
     await _cleanupTrash();
@@ -55,6 +59,38 @@ class AppPaths {
     } catch (_) {
       return false;
     }
+  }
+
+  /// Python config.py'daki SOUNDPAD_ROOT karşılığı.
+  /// SOUNDPAD_ROOT = os.path.join(ASSETS_DIR, "soundpad")
+  static Future<String> _resolveSoundpadRoot() async {
+    // 1) Env override
+    final override = Platform.environment['SOUNDPAD_ROOT']?.trim();
+    if (override != null && override.isNotEmpty && await Directory(override).exists()) {
+      return override;
+    }
+
+    // 2) cwd tabanlı arama (flutter run cwd = flutter_app/, ../assets/soundpad/)
+    final cwd = Directory.current.path;
+    for (final candidate in [
+      p.join(cwd, 'assets', 'soundpad'),
+      p.join(cwd, '..', 'assets', 'soundpad'),
+      p.join(cwd, '..', '..', 'assets', 'soundpad'),
+    ]) {
+      final normalized = p.normalize(candidate);
+      if (await Directory(normalized).exists()) return normalized;
+    }
+
+    // 3) Exe tabanlı arama (portable / release build)
+    final exeDir = p.dirname(Platform.resolvedExecutable);
+    for (var i = 0; i <= 6; i++) {
+      final ups = List.filled(i, '..').join('/');
+      final candidate = p.normalize(p.join(exeDir, ups, 'assets', 'soundpad'));
+      if (await Directory(candidate).exists()) return candidate;
+    }
+
+    // 4) Fallback: dataRoot altında
+    return p.join(dataRoot, 'soundpad');
   }
 
   /// 30 günden eski trash öğelerini sil.
