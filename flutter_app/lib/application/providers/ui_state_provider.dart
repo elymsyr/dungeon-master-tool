@@ -204,3 +204,7 @@ final pdfNavigationProvider = StateProvider<String?>((ref) => null);
 /// Set this to open the soundmap sidebar from anywhere.
 /// Consumers should reset to null after handling.
 final soundmapNavigationProvider = StateProvider<bool?>((ref) => null);
+
+/// Set this to true to switch to the Session tab and focus the projection
+/// (Player Screen) bottom tab. Consumers should reset to null after handling.
+final projectionPanelNavigationProvider = StateProvider<bool?>((ref) => null);

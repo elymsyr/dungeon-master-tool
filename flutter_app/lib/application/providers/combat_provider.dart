@@ -169,17 +169,14 @@ class CombatNotifier extends StateNotifier<CombatState>
     if (entity == null) return;
 
     final cfg = _encounterConfig;
-    final stats = entity.fields[cfg.statBlockFieldKey];
     final combatStats = entity.fields[cfg.combatStatsFieldKey];
 
-    // DEX modifier
-    final dex = (stats is Map ? (stats['DEX'] ?? 10) : 10) as int;
-    final dexMod = (dex - 10) ~/ 2;
-
-    // Initiative from combatStats
-    final initRaw = combatStats is Map ? combatStats[cfg.initiativeSubField] : null;
-    final initBonus = initRaw is int ? initRaw : (int.tryParse(initRaw?.toString() ?? '') ?? 0);
-    final initRoll = _rng.nextInt(20) + 1 + dexMod + initBonus;
+    // Initiative — the configured field is now a dice spec ("-2", "+1d4",
+    // "1d20+3", ...). Roll = 1d20 + parsedSpec.
+    final initSpec = combatStats is Map
+        ? combatStats[cfg.initiativeSubField]?.toString()
+        : null;
+    final initRoll = _rollInitFromSpec(initSpec);
 
     // HP, AC from combatStats
     final hp = _parseInt(combatStats, 'hp', 10);
@@ -318,14 +315,25 @@ class CombatNotifier extends StateNotifier<CombatState>
     ));
   }
 
-  void rollInitiatives() {
+  /// Reroll initiative for every combatant in the active encounter. [dSides]
+  /// selects the base die (the user picks d4/d6/...d20 in the UI). Each
+  /// combatant's roll = 1d[dSides] + eval(entity.combat_stats[initiative]).
+  void rollInitiatives({int dSides = 20}) {
     final enc = state.activeEncounter;
     if (enc == null) return;
     pushUndo(state);
 
+    final entities = _getEntities();
+    final cfg = _encounterConfig;
+
     final rolled = enc.combatants.map((c) {
-      final roll = _rng.nextInt(20) + 1;
-      return c.copyWith(init: roll);
+      String? spec;
+      if (c.entityId != null) {
+        final e = entities[c.entityId];
+        final cs = e?.fields[cfg.combatStatsFieldKey];
+        if (cs is Map) spec = cs[cfg.initiativeSubField]?.toString();
+      }
+      return c.copyWith(init: _rollInitFromSpec(spec, dSides: dSides));
     }).toList();
 
     _updateEncounter(enc.copyWith(combatants: rolled));
@@ -334,6 +342,46 @@ class CombatNotifier extends StateNotifier<CombatState>
     final summary = rolled.map((c) => '${c.name}(${c.init})').join(', ');
     _log('Initiative: $summary');
     _saveAndNotify();
+  }
+
+  /// Roll 1d[dSides] + the parsed dice spec for an initiative roll.
+  /// Spec accepts an arbitrary mix of flat modifiers and dice rolls,
+  /// e.g. `-2`, `+1d4`, `1d20+3`, `+2+1d6-1`. Empty / null → just 1d[dSides].
+  int _rollInitFromSpec(String? spec, {int dSides = 20}) {
+    final base = _rng.nextInt(dSides) + 1;
+    return base + _evalDiceSpec(spec);
+  }
+
+  /// Evaluate a dice expression to an integer (rolls all `NdM` terms).
+  /// Tokens: `[+|-]?(NdM|N)`. Whitespace is ignored. Unrecognized input → 0.
+  static int _evalDiceSpec(String? spec) {
+    if (spec == null) return 0;
+    final s = spec.replaceAll(' ', '');
+    if (s.isEmpty) return 0;
+    final regex = RegExp(r'([+-])?(\d*)d(\d+)|([+-])?(\d+)',
+        caseSensitive: false);
+    var total = 0;
+    for (final m in regex.allMatches(s)) {
+      if (m.group(3) != null) {
+        // NdM term
+        final sign = m.group(1) == '-' ? -1 : 1;
+        final n = (m.group(2) == null || m.group(2)!.isEmpty)
+            ? 1
+            : int.parse(m.group(2)!);
+        final sides = int.parse(m.group(3)!);
+        if (sides <= 0 || n <= 0) continue;
+        var sum = 0;
+        for (var i = 0; i < n; i++) {
+          sum += _rng.nextInt(sides) + 1;
+        }
+        total += sign * sum;
+      } else if (m.group(5) != null) {
+        // Flat integer term
+        final sign = m.group(4) == '-' ? -1 : 1;
+        total += sign * int.parse(m.group(5)!);
+      }
+    }
+    return total;
   }
 
   // --- HP & Conditions ---

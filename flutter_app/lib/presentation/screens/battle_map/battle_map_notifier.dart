@@ -9,6 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/combat_provider.dart';
+import '../../../application/providers/projection_provider.dart';
+import '../../../domain/entities/projection/battle_map_snapshot.dart';
+import '../../../domain/entities/projection/projection_item.dart';
 import '../../../domain/entities/session.dart';
 
 // ---------------------------------------------------------------------------
@@ -27,10 +30,15 @@ class DrawStroke {
   final double width;
   final bool isErase;
 
+  /// Raw point list captured alongside `path` so the stroke can be serialized
+  /// for cross-isolate projection (Path is not JSON-serializable).
+  final List<Offset> rawPoints;
+
   DrawStroke({
     required this.path,
     required this.color,
     required this.width,
+    this.rawPoints = const [],
     this.isErase = false,
   });
 }
@@ -178,6 +186,13 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   final String encounterId;
   final Ref _ref;
 
+  /// Per-encounter cache of the last `ViewTransform` (scale + pan), so that
+  /// switching tabs / closing the battle map and reopening it lands on the
+  /// same view instead of resetting to the top-left identity transform.
+  /// The notifier itself is `autoDispose.family`, so this static map is the
+  /// only thing that survives across recreations.
+  static final Map<String, ViewTransform> _viewMemory = {};
+
   // Lightweight view transform — updated at 60fps without Riverpod overhead.
   // CustomPainter and tokens listen to this directly via repaint / ValueListenableBuilder.
   final ValueNotifier<ViewTransform> viewTransform =
@@ -188,6 +203,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
 
   // In-progress annotation stroke — mutable, NOT in state
   Path? _currentPath;
+  final List<Offset> _currentRawPoints = [];
   Color _currentColor = Colors.red;
   double _currentWidth = 4.0;
   bool _currentIsErase = false;
@@ -203,14 +219,227 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // Debounced auto-save
   Timer? _autoSaveTimer;
 
-  BattleMapNotifier(this.encounterId, this._ref) : super(const BattleMapState());
+  // Projection viewport sync — leading-edge throttle so high-frequency
+  // pan/zoom updates land on the player window at ~30Hz max.
+  Timer? _projectionSyncThrottle;
+
+  // Projection drawings sync — leading-edge throttle for stroke/measurement
+  // /token-size/grid/fog updates. Slower than viewport (80ms) since they're
+  // not driven by 60fps gestures.
+  Timer? _projectionDrawingsThrottle;
+
+  // Cached fog→base64 encoding so we don't re-encode the PNG on every
+  // throttled push when the underlying image hasn't changed.
+  ui.Image? _lastFogImage;
+  String? _lastFogB64;
+  // True when the fog has changed since the last drawings push reached
+  // the player. Until this flips, the patch payload won't include
+  // `fogDataBase64` at all — saving 100s of KB of JSON serialization on
+  // every stroke / measurement edit.
+  bool _fogDirtyForProjection = false;
+
+  BattleMapNotifier(this.encounterId, this._ref)
+      : super(const BattleMapState()) {
+    // Restore the cached view (scale + pan) for this encounter, if any —
+    // so reopening the battle map tab lands on the last position the DM
+    // was looking at instead of resetting to the top-left.
+    final remembered = _viewMemory[encounterId];
+    if (remembered != null) {
+      viewTransform.value = remembered;
+    }
+    viewTransform.addListener(_scheduleProjectionSync);
+    viewTransform.addListener(_persistView);
+  }
+
+  void _persistView() {
+    _viewMemory[encounterId] = viewTransform.value;
+  }
 
   @override
   void dispose() {
+    // Final view snapshot before the notifier goes away — guarantees the
+    // memory is always up to date even if the last update was during a
+    // gesture that hadn't finished firing listeners.
+    _viewMemory[encounterId] = viewTransform.value;
     _autoSaveTimer?.cancel();
+    _projectionSyncThrottle?.cancel();
+    _projectionDrawingsThrottle?.cancel();
+    viewTransform.removeListener(_scheduleProjectionSync);
+    viewTransform.removeListener(_persistView);
     viewTransform.dispose();
     strokeTick.dispose();
     super.dispose();
+  }
+
+  // -------------------------------------------------------------------------
+  // Projection viewport sync
+  // -------------------------------------------------------------------------
+
+  /// Called whenever `viewTransform` changes. Throttles the actual push to
+  /// ~30Hz to avoid spamming IPC during a pinch-zoom gesture.
+  void _scheduleProjectionSync() {
+    if (_projectionSyncThrottle != null) return;
+    _projectionSyncThrottle = Timer(const Duration(milliseconds: 33), () {
+      _projectionSyncThrottle = null;
+      _pushViewportToProjection();
+    });
+  }
+
+  /// Computes the visible canvas rect in **normalized** coordinates and
+  /// pushes it to any unlocked `BattleMapProjection` for this encounter.
+  ///
+  /// Clips the rect to actual canvas bounds before normalizing — DM's
+  /// letterbox padding is NOT content the player should see. When the DM
+  /// is fit-to-screen (or wider) the rect collapses to "full canvas" via
+  /// a null override, so the player paints fit-to-its-own-viewport for an
+  /// edge-to-edge full-screen result.
+  void _pushViewportToProjection() {
+    final vp = _viewportSize;
+    if (vp == Size.zero) return;
+    final canvasW = state.canvasWidth.toDouble();
+    final canvasH = state.canvasHeight.toDouble();
+    if (canvasW <= 0 || canvasH <= 0) return;
+    final vt = viewTransform.value;
+    if (vt.scale <= 0) return;
+
+    // Find the matching projection — bail if none or locked.
+    final pState = _ref.read(projectionControllerProvider);
+    final proj = pState.items
+        .whereType<BattleMapProjection>()
+        .where((p) => p.encounterId == encounterId && !p.viewportLocked)
+        .firstOrNull;
+    if (proj == null) return;
+
+    // visibleRect (canvas-space) = (-pan/scale, vp/scale)
+    final left = -vt.panOffset.dx / vt.scale;
+    final top = -vt.panOffset.dy / vt.scale;
+    final right = left + vp.width / vt.scale;
+    final bottom = top + vp.height / vt.scale;
+
+    // Clip to actual canvas bounds.
+    final clipL = left.clamp(0.0, canvasW);
+    final clipT = top.clamp(0.0, canvasH);
+    final clipR = right.clamp(0.0, canvasW);
+    final clipB = bottom.clamp(0.0, canvasH);
+    final clipW = clipR - clipL;
+    final clipH = clipB - clipT;
+    if (clipW <= 0 || clipH <= 0) return;
+
+    // If the DM is essentially viewing the entire canvas, push null so the
+    // player just fits-to-its-own-viewport (no aspect-ratio letterbox issues).
+    final isFullView = clipL <= 1 &&
+        clipT <= 1 &&
+        clipR >= canvasW - 1 &&
+        clipB >= canvasH - 1;
+
+    final norm = isFullView
+        ? null
+        : NormalizedRect(
+            left: clipL / canvasW,
+            top: clipT / canvasH,
+            width: clipW / canvasW,
+            height: clipH / canvasH,
+          );
+
+    _ref
+        .read(projectionControllerProvider.notifier)
+        .updateBattleMapViewport(proj.id, norm);
+  }
+
+  // -------------------------------------------------------------------------
+  // Projection drawings sync (strokes, measurements, fog, token size, grid)
+  // -------------------------------------------------------------------------
+
+  /// Schedule a leading-edge throttled push of all "static" battle map state
+  /// (everything except viewport + tokens, which have their own paths).
+  void _scheduleDrawingsSync() {
+    if (_projectionDrawingsThrottle != null) return;
+    _projectionDrawingsThrottle = Timer(const Duration(milliseconds: 80), () {
+      _projectionDrawingsThrottle = null;
+      _pushDrawingsToProjection();
+    });
+  }
+
+  Future<void> _pushDrawingsToProjection() async {
+    final pState = _ref.read(projectionControllerProvider);
+    final proj = pState.items
+        .whereType<BattleMapProjection>()
+        .where((p) => p.encounterId == encounterId)
+        .firstOrNull;
+    if (proj == null) return;
+
+    // Re-encode + ship fog only when it's actually dirty since the last
+    // push. The fog PNG is by far the heaviest field in the patch — most
+    // pushes (drawing a stroke, moving a ruler) don't touch it, so we
+    // skip it entirely most of the time.
+    final fog = state.fogImage;
+    String? fogB64;
+    var includeFog = false;
+    if (_fogDirtyForProjection) {
+      _fogDirtyForProjection = false;
+      includeFog = true;
+      if (fog == null) {
+        fogB64 = null;
+        _lastFogImage = null;
+        _lastFogB64 = null;
+      } else if (identical(fog, _lastFogImage)) {
+        fogB64 = _lastFogB64;
+      } else {
+        fogB64 = await _fogToBase64();
+        _lastFogImage = fog;
+        _lastFogB64 = fogB64;
+      }
+    }
+
+    // Map DrawStrokes to JSON-clean snapshots — skip erase strokes (DM-only).
+    final strokeSnaps = <StrokeSnapshot>[];
+    for (final s in state.strokes) {
+      if (s.isErase) continue;
+      if (s.rawPoints.length < 2) continue;
+      final flat = <double>[];
+      for (final p in s.rawPoints) {
+        flat
+          ..add(p.dx)
+          ..add(p.dy);
+      }
+      strokeSnaps.add(StrokeSnapshot(
+        points: flat,
+        colorHex: _colorToHex(s.color),
+        width: s.width,
+      ));
+    }
+
+    final measurementSnaps = state.persistentMeasurements
+        .map((m) => MeasurementSnapshot(
+              type: m.type == BattleMapTool.circle ? 'circle' : 'ruler',
+              x1: m.start.dx,
+              y1: m.start.dy,
+              x2: m.end.dx,
+              y2: m.end.dy,
+            ))
+        .toList();
+
+    _ref.read(projectionControllerProvider.notifier).updateBattleMapDrawings(
+          itemId: proj.id,
+          strokes: strokeSnaps,
+          measurements: measurementSnaps,
+          tokenSize: state.tokenSize,
+          tokenSizeMultipliers: state.tokenSizeMultipliers,
+          gridVisible: state.gridVisible,
+          gridSize: state.gridSize,
+          feetPerCell: state.feetPerCell,
+          fogDataBase64: fogB64,
+          includeFog: includeFog,
+        );
+  }
+
+  static String _colorToHex(Color c) {
+    final r = (c.r * 255).round() & 0xff;
+    final g = (c.g * 255).round() & 0xff;
+    final b = (c.b * 255).round() & 0xff;
+    return '#${r.toRadixString(16).padLeft(2, '0')}'
+        '${g.toRadixString(16).padLeft(2, '0')}'
+        '${b.toRadixString(16).padLeft(2, '0')}';
   }
 
   // -------------------------------------------------------------------------
@@ -275,6 +504,20 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       canvasWidth: bg?.width ?? 2048,
       canvasHeight: bg?.height ?? 2048,
     );
+
+    // First time we open this encounter's battle map — auto-fit the
+    // background to the viewport so the user doesn't see the top-left
+    // letterbox. Subsequent reopens use the remembered view (handled in
+    // the constructor).
+    if (!_viewMemory.containsKey(encounterId) && bg != null) {
+      // The viewport may not be measured yet (LayoutBuilder hasn't run);
+      // schedule for after the first frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_viewportSize == Size.zero) return;
+        resetView();
+      });
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -308,7 +551,10 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   }
 
   void updateViewportSize(Size size) {
+    if (_viewportSize == size) return;
     _viewportSize = size;
+    // First time we know our viewport — push initial projection sync.
+    _scheduleProjectionSync();
   }
 
   /// Zoom in/out centred on [focalPoint] (screen coords). [scrollDelta] > 0 = zoom out.
@@ -405,6 +651,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
 
     if (!mounted) return;
     state = state.copyWith(fogImage: newFog, fogDraftPoints: []);
+    _fogDirtyForProjection = true;
+    _scheduleDrawingsSync();
     _debouncedAutoSave();
   }
 
@@ -415,6 +663,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     if (!mounted) return;
     state.fogImage?.dispose();
     state = state.copyWith(fogImage: fog, fogDraftPoints: []);
+    _fogDirtyForProjection = true;
+    _scheduleDrawingsSync();
     _debouncedAutoSave();
   }
 
@@ -425,6 +675,8 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     if (!mounted) return;
     state.fogImage?.dispose();
     state = state.copyWith(fogImage: fog, fogDraftPoints: []);
+    _fogDirtyForProjection = true;
+    _scheduleDrawingsSync();
     _debouncedAutoSave();
   }
 
@@ -485,14 +737,23 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
 
   void startAnnotationStroke(Offset pt, {bool erase = false}) {
     _currentPath = Path()..moveTo(pt.dx, pt.dy);
+    _currentRawPoints
+      ..clear()
+      ..add(pt);
     _currentIsErase = erase;
     _currentColor = erase ? Colors.transparent : Colors.red;
     _currentWidth = erase ? 20.0 : 4.0;
+    // Force the painter to repaint immediately. Without this the live
+    // stroke wouldn't appear until the first `continueAnnotationStroke`
+    // call ticks the notifier — leaving a tiny but visible "dead zone"
+    // where the user can see no feedback after pressing down.
+    strokeTick.value++;
   }
 
   void continueAnnotationStroke(Offset pt) {
     if (_currentPath == null) return;
     _currentPath!.lineTo(pt.dx, pt.dy);
+    _currentRawPoints.add(pt);
     strokeTick.value++; // lightweight repaint — no Riverpod rebuild
   }
 
@@ -502,16 +763,21 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       path: _currentPath!,
       color: _currentColor,
       width: _currentWidth,
+      rawPoints: List<Offset>.from(_currentRawPoints),
       isErase: _currentIsErase,
     );
     _currentPath = null;
+    _currentRawPoints.clear();
     state = state.copyWith(strokes: [...state.strokes, stroke]);
+    _scheduleDrawingsSync();
     _debouncedAutoSave();
   }
 
   void clearAnnotation() {
     _currentPath = null;
+    _currentRawPoints.clear();
     state = state.copyWith(strokes: [], clearAnnotationImage: true);
+    _scheduleDrawingsSync();
   }
 
   /// Expose in-progress path for painter
@@ -555,6 +821,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       persistentMeasurements: [...state.persistentMeasurements, persistent],
       clearActiveMeasurement: true,
     );
+    _scheduleDrawingsSync();
   }
 
   void clearMeasurements() {
@@ -562,6 +829,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
       persistentMeasurements: [],
       clearActiveMeasurement: true,
     );
+    _scheduleDrawingsSync();
   }
 
   /// Delete measurement closest to the tap in canvas-space (within 30px)
@@ -584,6 +852,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
     if (closest != null && closestDist < threshold) {
       final updated = List<MeasurementMark>.from(marks)..removeAt(closest);
       state = state.copyWith(persistentMeasurements: updated);
+      _scheduleDrawingsSync();
     }
   }
 
@@ -626,12 +895,14 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
 
   void setGlobalTokenSize(int size) {
     state = state.copyWith(tokenSize: size.clamp(20, 300));
+    _scheduleDrawingsSync();
   }
 
   void setTokenSizeMultiplier(String combatantId, double multiplier) {
     final updated = Map<String, double>.from(state.tokenSizeMultipliers);
     updated[combatantId] = multiplier.clamp(0.25, 8.0);
     state = state.copyWith(tokenSizeMultipliers: updated);
+    _scheduleDrawingsSync();
   }
 
   /// Persist current token positions to campaign data.
@@ -664,6 +935,7 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   void setGridVisible(bool v) {
     state = state.copyWith(gridVisible: v);
     _persistGridSettings();
+    _scheduleDrawingsSync();
   }
 
   void setGridSnap(bool v) {
@@ -674,17 +946,20 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   void setGridSize(int size) {
     state = state.copyWith(gridSize: size.clamp(10, 300));
     _persistGridSettings();
+    _scheduleDrawingsSync();
   }
 
   void setGridColumns(double columns) {
     final cellSize = (state.canvasWidth / columns).round().clamp(10, 300);
     state = state.copyWith(gridSize: cellSize);
     _persistGridSettings();
+    _scheduleDrawingsSync();
   }
 
   void setFeetPerCell(int feet) {
     state = state.copyWith(feetPerCell: feet.clamp(1, 100));
     _persistGridSettings();
+    _scheduleDrawingsSync();
   }
 
   void _persistGridSettings() {

@@ -89,13 +89,16 @@ WorldSchema generateDefaultDnd5eSchema() {
         fieldKey: 'combat_stats',
         label: 'Combat Stats',
         fieldType: FieldType.combatStats,
-        defaultValue: const {'hp': '', 'max_hp': '', 'ac': '', 'speed': '', 'cr': '', 'xp': '', 'initiative': ''},
+        defaultValue: const {'hp': '', 'max_hp': '', 'ac': '', 'speed': '', 'cr': '', 'xp': '', 'initiative': '', 'level': ''},
         subFields: const [
           {'key': 'hp', 'label': 'HP', 'type': 'integer'},
           {'key': 'max_hp', 'label': 'Max HP', 'type': 'integer'},
           {'key': 'ac', 'label': 'AC', 'type': 'integer'},
           {'key': 'speed', 'label': 'Speed', 'type': 'text'},
-          {'key': 'initiative', 'label': 'Initiative', 'type': 'integer'},
+          {'key': 'level', 'label': 'Level', 'type': 'integer'},
+          // Dice spec: e.g. `+2`, `-1d4`, `+2+1d4`. Evaluated in combat
+          // at Roll Initiative time — added to the chosen d4/d6/...d20.
+          {'key': 'initiative', 'label': 'Initiative', 'type': 'dice'},
           {'key': 'cr', 'label': 'CR', 'type': 'text'},
           {'key': 'xp', 'label': 'XP', 'type': 'integer'},
         ],
@@ -245,10 +248,10 @@ EncounterConfig _defaultEncounterConfig() {
     sortBySubField: 'initiative',
     sortDirection: 'desc',
     columns: [
-      EncounterColumnConfig(subFieldKey: 'initiative', label: 'Init', editable: true, width: 40),
-      EncounterColumnConfig(subFieldKey: 'ac', label: 'AC', width: 36),
-      EncounterColumnConfig(subFieldKey: 'hp', label: 'HP', editable: true, showButtons: true, width: 130),
-      EncounterColumnConfig(subFieldKey: 'speed', label: 'Speed', width: 50),
+      EncounterColumnConfig(subFieldKey: 'level',      label: 'Lvl',  editable: true, width: 36),
+      EncounterColumnConfig(subFieldKey: 'initiative', label: 'Init', editable: true, width: 48),
+      EncounterColumnConfig(subFieldKey: 'ac',         label: 'AC',   editable: true, width: 36),
+      EncounterColumnConfig(subFieldKey: 'hp',         label: 'HP',   editable: true, showButtons: true, width: 130),
     ],
     conditions: [
       'Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled',

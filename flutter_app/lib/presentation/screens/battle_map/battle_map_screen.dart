@@ -133,10 +133,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
                             strokeTick: notifier.strokeTick,
                             palette: palette,
                             isDmView: true,
-                            currentPath: notifier.currentPath,
-                            currentColor: notifier.currentColor,
-                            currentWidth: notifier.currentWidth,
-                            currentIsErase: notifier.currentIsErase,
+                            notifier: notifier,
                           ),
                         ),
                       );
@@ -195,6 +192,10 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
     if (encounter == null) return const SizedBox.shrink();
 
     final mapState = ref.watch(battleMapProvider(widget.encounterId));
+    // Tokens are only interactive in the navigate tool. With ruler/draw/fog
+    // active, the user is operating on the canvas itself, so any pointer
+    // event over a token should fall through to the gesture detector.
+    final tokensInteractive = mapState.activeTool == BattleMapTool.navigate;
 
     // Assign default positions to newly added combatants
     final hasMissing = encounter.combatants.any(
@@ -228,7 +229,9 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
           ),
         );
       },
-      child: SizedBox(
+      child: IgnorePointer(
+        ignoring: !tokensInteractive,
+        child: SizedBox(
         width: canvasExtent,
         height: canvasExtent,
         child: Stack(
@@ -261,6 +264,7 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
             }),
           ],
         ),
+      ),
       ),
     );
   }

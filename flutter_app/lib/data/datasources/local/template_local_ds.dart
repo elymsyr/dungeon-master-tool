@@ -42,6 +42,20 @@ class TemplateLocalDataSource {
     await file.writeAsString(jsonEncode(schema.toJson()));
   }
 
+  /// Load a single template by schema id. Returns null if there is no
+  /// saved file for that id — used by the built-in template provider to
+  /// prefer an admin-edited version over the code-generated default.
+  Future<WorldSchema?> loadById(String schemaId) async {
+    final file = File(p.join(_dir, '$schemaId.json'));
+    if (!await file.exists()) return null;
+    try {
+      final json = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+      return WorldSchema.fromJson(json);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> delete(String schemaId) async {
     final file = File(p.join(_dir, '$schemaId.json'));
     if (await file.exists()) await file.delete();

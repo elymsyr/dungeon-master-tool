@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/locale_provider.dart';
+import '../../application/providers/projection_provider.dart';
 import '../../application/providers/theme_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/save_state_provider.dart';
@@ -20,6 +21,7 @@ import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
 import '../widgets/entity_sidebar.dart';
 import '../widgets/pdf_sidebar.dart';
+import '../widgets/projection/player_window_status_icon.dart';
 import '../widgets/soundmap_sidebar.dart';
 import 'database/database_screen.dart';
 import 'map/world_map_screen.dart';
@@ -235,6 +237,24 @@ class _MainScreenState extends ConsumerState<MainScreen>
       }
     });
 
+    // Keep battle map and entity card projections in sync with their
+    // source state. Watching these providers installs their inner
+    // listeners, which rebuild snapshots whenever the underlying data
+    // changes. Both are no-ops when no matching projection items exist.
+    ref.watch(projectionBattleMapSyncProvider);
+    ref.watch(projectionEntitySyncProvider);
+
+    // Listen for projection panel navigation requests
+    ref.listen<bool?>(projectionPanelNavigationProvider, (_, value) {
+      if (value == true) {
+        setState(() => _tabIndex = 1);
+        ref.read(uiStateProvider.notifier).update(
+              (s) => s.copyWith(mainTabIndex: 1, sessionBottomTab: 2),
+            );
+        ref.read(projectionPanelNavigationProvider.notifier).state = null;
+      }
+    });
+
     // Desktop'ta tab index 4/5 geçersiz — guard
     if (screen == ScreenType.desktop && _tabIndex > 3) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -317,6 +337,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
             tooltip: 'Edit Mode',
             onPressed: () => setState(() => _editMode = !_editMode),
           ),
+          // Player window status — always visible, jumps to projection panel
+          const PlayerWindowStatusIcon(),
           // Tema
           PopupMenuButton<String>(
             icon: const Icon(Icons.palette, size: 20),
@@ -636,11 +658,31 @@ class _MainScreenState extends ConsumerState<MainScreen>
   bool _handleGlobalKey(KeyEvent event) {
     if (event is! KeyDownEvent) return false;
     final ctrl = HardwareKeyboard.instance.isControlPressed;
+    final shiftPressed = HardwareKeyboard.instance.isShiftPressed;
+
+    // F9: toggle player window blackout — works without Ctrl, from any tab
+    if (event.logicalKey == LogicalKeyboardKey.f9) {
+      ref.read(projectionControllerProvider.notifier).toggleBlackout();
+      return true;
+    }
+
     if (!ctrl) return false;
 
     // Ctrl+E: always toggle edit mode (even when a text field has focus)
     if (event.logicalKey == LogicalKeyboardKey.keyE) {
       setState(() => _editMode = !_editMode);
+      return true;
+    }
+
+    // Ctrl+Shift+P: toggle player sub-window
+    if (shiftPressed && event.logicalKey == LogicalKeyboardKey.keyP) {
+      final controller = ref.read(projectionControllerProvider.notifier);
+      final state = ref.read(projectionControllerProvider);
+      if (state.windowOpen) {
+        controller.closeWindow();
+      } else {
+        controller.openWindow();
+      }
       return true;
     }
 
