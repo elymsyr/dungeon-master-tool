@@ -4,6 +4,10 @@ import '../../core/config/app_paths.dart';
 import '../../data/services/soundpad_engine.dart';
 import '../../data/services/soundpad_loader.dart';
 import '../../domain/entities/audio/audio_models.dart';
+import '../../domain/entities/events/event_envelope.dart';
+import '../../domain/entities/events/event_types.dart';
+import '../services/event_bus.dart';
+import 'event_bus_provider.dart';
 import 'ui_state_provider.dart';
 
 // =============================================================================
@@ -96,10 +100,11 @@ class SoundpadNotifier extends StateNotifier<SoundpadState> {
   final SoundpadEngine _engine;
   final String _soundpadRoot;
   final Ref _ref;
+  final AppEventBus _eventBus;
   SoundpadLibrary _library = const SoundpadLibrary();
   Map<String, SoundpadTheme> _themes = {};
 
-  SoundpadNotifier(this._engine, this._soundpadRoot, this._ref)
+  SoundpadNotifier(this._engine, this._soundpadRoot, this._ref, this._eventBus)
       : super(SoundpadState(
           ambienceSlots: List.generate(
             SoundpadEngine.ambienceSlotCount,
@@ -126,6 +131,7 @@ class SoundpadNotifier extends StateNotifier<SoundpadState> {
     if (themeId == null) {
       _engine.setTheme(null);
       state = state.copyWith(clearTheme: true, clearState: true, musicPlaying: false, intensityLevel: 0);
+      _emitAudioState();
       return;
     }
 
@@ -139,6 +145,7 @@ class SoundpadNotifier extends StateNotifier<SoundpadState> {
       intensityLevel: 0,
       musicPlaying: true,
     );
+    _emitAudioState();
   }
 
   // --- State ---
@@ -153,6 +160,22 @@ class SoundpadNotifier extends StateNotifier<SoundpadState> {
   void setIntensity(int level) {
     _engine.setIntensity(level);
     state = state.copyWith(intensityLevel: level);
+    _emitAudioState();
+  }
+
+  // --- EventBus emission ---
+
+  /// Audio state'ini EventBus'a emit eder. Future NetworkBridge bunu
+  /// player'lara forward eder — onlar kendi bilgisayarlarında çalar.
+  void _emitAudioState() {
+    _eventBus.emit(EventEnvelope.now(
+      EventTypes.audioStateChanged,
+      {
+        'theme': state.activeThemeId ?? '',
+        'intensity': state.intensityLevel.toString(),
+        'master_volume': 1.0,
+      },
+    ));
   }
 
   // --- Ambience ---
@@ -180,6 +203,10 @@ class SoundpadNotifier extends StateNotifier<SoundpadState> {
 
   void playSfx(String sfxId) {
     _engine.playSfx(sfxId, _library, _soundpadRoot);
+    _eventBus.emit(EventEnvelope.now(
+      EventTypes.audioTrackTriggered,
+      {'track_id': sfxId, 'track_name': sfxId},
+    ));
   }
 
   // --- Stop ---
@@ -261,7 +288,7 @@ class SoundpadNotifier extends StateNotifier<SoundpadState> {
 final soundpadStateProvider = StateNotifierProvider<SoundpadNotifier, SoundpadState>((ref) {
   final engine = ref.watch(soundpadEngineProvider);
   final root = ref.watch(soundpadRootProvider);
-  final notifier = SoundpadNotifier(engine, root, ref);
+  final notifier = SoundpadNotifier(engine, root, ref, ref.read(eventBusProvider));
 
   // Library ve themes yüklendiğinde notifier'a aktar
   ref.listen(soundpadLibraryProvider, (_, asyncLib) {

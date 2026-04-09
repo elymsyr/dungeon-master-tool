@@ -4,14 +4,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../core/config/app_paths.dart';
+import '../../data/database/database_provider.dart';
 import '../../data/datasources/local/campaign_local_ds.dart' show CampaignLocalDataSource, TrashItem;
 import '../../data/repositories/campaign_repository_impl.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../../domain/repositories/campaign_repository.dart';
 
 final campaignLocalDsProvider = Provider((_) => CampaignLocalDataSource());
 
-final campaignRepositoryProvider = Provider(
-  (ref) => CampaignRepository(ref.read(campaignLocalDsProvider)),
+final campaignRepositoryProvider = Provider<CampaignRepository>(
+  (ref) => CampaignRepositoryImpl(
+    ref.read(appDatabaseProvider),
+    ref.read(campaignLocalDsProvider),
+  ),
 );
 
 /// Mevcut kampanya listesi.
