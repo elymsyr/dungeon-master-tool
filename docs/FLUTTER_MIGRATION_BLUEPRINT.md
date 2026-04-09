@@ -1,16 +1,29 @@
 # Flutter Migration Blueprint — Dungeon Master Tool v2.0
 
 > **Kaynak Uygulama:** Python 3.10+ / PyQt6 (v0.8.4)
-> **Hedef:** Flutter/Dart — Desktop öncelikli, gelecekte mobile
+> **Hedef:** Flutter/Dart — Desktop öncelikli, mobile/tablet ikincil
 > **Prensip:** UI ve çalışma mantığı birebir korunarak yeniden yazım
+> **Doküman versiyonu:** v2.1 (2026-04-09)
 
 ---
 
 ## Yönetici Özeti
 
-Bu doküman, mevcut Python/PyQt6 Dungeon Master Tool uygulamasının Flutter ile sıfırdan yazılması için kapsamlı bir teknik rehberdir. Mevcut uygulama ~124 Python dosyası, ~12.000+ LOC, 15 ana özellik, 11 tema, 4 dil desteği ve offline-first mimari ile olgun bir masaüstü uygulamasıdır.
+Bu doküman, mevcut Python/PyQt6 Dungeon Master Tool uygulamasının Flutter ile sıfırdan yazılması için kapsamlı bir teknik rehberdir. Mevcut uygulama ~124 Python dosyası, ~12.000+ LOC, 15 ana özellik, 11 tema, 4 dil desteği ve offline-first mimari ile olgun bir masaüstü uygulamasıdır. Flutter portu **2026-04-09** itibarıyla 167 Dart dosya / ~56K LOC / 13 test dosyası / 223 test seviyesinde, Sprint 0–4 tamamen ve Sprint 5'in büyük çoğunluğu bitmiş durumdadır.
 
-Doküman şunları kapsar: sistem mimarisi, proje yapısı, veri modelleri, tüm interaktif sistemlerin (battle map, mind map, combat tracker, soundpad) Flutter karşılıkları, dual screen yönetimi, yerel ve çevrimiçi depolama, database şeması, API entegrasyonu, tema sistemi, lokalizasyon, ve fazlı migrasyon stratejisi.
+Doküman şunları kapsar: sistem mimarisi, proje yapısı, veri modelleri, tüm interaktif sistemlerin (battle map, mind map, combat tracker, soundpad) Flutter karşılıkları, dual screen yönetimi, **Drift (SQLite) yerel depolama**, **Supabase + Cloudflare R2 hibrit online mimari**, API entegrasyonu, tema sistemi, lokalizasyon ve fazlı migrasyon stratejisi.
+
+### v2.1 Mimari Güncellemeler (2026-04)
+
+Bu sürüm üç büyük mimari kararı yansıtır:
+
+| Alan | Eski (v1.0) | Yeni (v2.1) | Sebep |
+|---|---|---|---|
+| **Yerel storage** | MsgPack flat file (`worlds/{name}/data.dat`) | **Drift (SQLite)** — 11 tablo, schema v2 | Tip güvenliği, transactional yazma, Supabase mirror |
+| **Online stack** | FastAPI + Postgres + Redis + MinIO + python-socketio (self-hosted) | **Supabase (Auth + Postgres + Realtime) + Cloudflare R2 + Workers** | Sıfır sunucu maliyeti, hazır JWT, zero egress |
+| **Audio engine** | `just_audio` ^0.9 | **`flutter_soloud` ^3.1** | Cross-platform stabilite, gapless loop, built-in fade, CPU-side mixing |
+
+MsgPack artık **yalnızca** `.dmt` paket import/export için kullanılır. `socket_io_client` planı tamamen iptal edildi; tüm online iletişim `supabase_flutter` SDK üzerinden Realtime Broadcast ile yapılır. Detay: `docs/ONLINE_REPORT.md` (v2.0 — Hibrit Online Teknik Rapor).
 
 ---
 
@@ -25,7 +38,7 @@ Doküman şunları kapsar: sistem mimarisi, proje yapısı, veri modelleri, tüm
 7. [Soundpad ve Audio Engine](#7-soundpad-ve-audio-engine)
 8. [Dual Screen / Player Window](#8-dual-screen--player-window)
 9. [Yerel Depolama](#9-yerel-depolama)
-10. [Online Mimari ve Database Şeması](#10-online-mimari-ve-database-şeması)
+10. [Hibrit Online Mimari (Supabase + Cloudflare)](#10-hibrit-online-mimari-supabase--cloudflare)
 11. [API Entegrasyonu](#11-api-entegrasyonu)
 12. [Tema Sistemi](#12-tema-sistemi)
 13. [Lokalizasyon](#13-lokalizasyon)
@@ -52,17 +65,20 @@ Bu yapı Clean Architecture + Riverpod'a doğal olarak eşlenir.
 | Mevcut Python | Flutter Karşılığı | Açıklama |
 |---|---|---|
 | `core/models.py` | `lib/domain/entities/` | Freezed data class'ları (15 entity tipi) |
-| `core/entity_repository.py` | `lib/domain/repositories/` (abstract) + `lib/data/repositories/` (impl) | Repository interface + concrete |
+| — | **`lib/data/database/tables/`** | **Drift table tanımları** — 11 tablo (campaigns, world_schemas, entities, sessions, encounters, combatants, combat_conditions, map_pins, timeline_pins, mind_map_nodes, mind_map_edges) |
+| — | **`lib/data/database/daos/`** | **DAO sınıfları (5 adet)** — campaign, entity, session, map, mind_map |
+| — | **`lib/data/database/app_database.dart`** | **Drift database root** + `MigrationStrategy` (schemaVersion=2) |
+| `core/entity_repository.py` | `lib/domain/repositories/entity_repository.dart` (abstract — TODO) + Drift DAO entegrasyonu | Repository interface + concrete |
 | `core/session_repository.py` | `lib/domain/repositories/session_repository.dart` + impl | Session CRUD |
-| `core/map_data_manager.py` | `lib/domain/repositories/map_repository.dart` + impl | Pin, timeline CRUD |
-| `core/campaign_manager.py` | `lib/data/repositories/campaign_repository_impl.dart` | Kampanya I/O |
+| `core/map_data_manager.py` | `lib/domain/repositories/map_repository.dart` + impl (TODO) | Pin, timeline CRUD |
+| `core/campaign_manager.py` | `lib/data/repositories/campaign_repository_impl.dart` | Kampanya I/O — Drift primary + MsgPack legacy fallback |
 | `core/library_manager.py` | `lib/data/repositories/library_repository_impl.dart` | API cache yönetimi |
 | `core/settings_manager.py` | `lib/data/repositories/settings_repository_impl.dart` | Ayarlar |
 | `core/data_manager.py` (facade) | `lib/application/providers/` | Riverpod provider'lar |
-| `core/event_bus.py` | Riverpod `ref.watch/listen` + `AppEventBus` service | Reaktif state + cross-cutting events |
-| `core/network/bridge.py` | `lib/data/network/network_bridge.dart` | WebSocket state machine |
-| `core/network/events.py` (24 model) | `lib/domain/entities/events/` | Freezed event envelope'ları |
-| `core/audio/engine.py` | `lib/application/services/audio_engine.dart` | Multi-deck audio |
+| `core/event_bus.py` | Riverpod `ref.watch/listen` + **`AppEventBus`** service (`EventEnvelope` tabanlı) | Reaktif state + cross-cutting events + online forward |
+| `core/network/bridge.py` | **`lib/data/network/network_bridge.dart`** + `no_op_network_bridge.dart` | Abstract bridge + offline default; Supabase impl Sprint 9'da |
+| `core/network/events.py` (24 model) | **`lib/domain/entities/events/event_envelope.dart`** + `event_types.dart` (24 sabit, 17 online-forwarded) | Freezed event envelope + tip sabitleri |
+| `core/audio/engine.py` | `lib/application/services/audio_engine.dart` (`flutter_soloud` tabanlı) | SoLoud handle pool, gapless loop, built-in fade |
 | `core/audio/models.py` | `lib/domain/entities/audio/` | Theme, MusicState, Track, LoopNode |
 | `ui/` (PyQt6 widgets) | `lib/presentation/` | Flutter widget'ları |
 | `ui/presenters/` (MVP) | `lib/presentation/controllers/` | Riverpod AsyncNotifier/StateNotifier |
@@ -74,22 +90,58 @@ Bu yapı Clean Architecture + Riverpod'a doğal olarak eşlenir.
 3. **Multi-window state paylaşımı:** Player window (ikinci ekran) aynı state'i paylaşmalı. Riverpod'un `ProviderContainer`'ı override'larla bu sorunu çözer — her iki pencere aynı container'dan okur.
 4. **EventBus karşılığı:** `ref.listen` ve `ref.watch` çoğu cross-component iletişimi karşılar. Geriye kalan (NetworkBridge'e event forwarding) için hafif bir `StreamController` bus yeterlidir.
 
-### 1.4 EventBus Mimarisi
+### 1.4 EventBus + EventEnvelope Mimarisi
+
+Tüm cross-cutting event'ler tek wire format olan `EventEnvelope` üzerinden akar. Bu zarf hem offline (yalnızca local stream) hem de online (Supabase Realtime broadcast) tarafından kullanılır.
 
 ```dart
-/// Cross-cutting events — NetworkBridge entegrasyon noktası.
-/// Çoğu UI iletişimi Riverpod ref.watch üzerinden akar.
-/// Bu bus sadece online sync ve widget-tree dışı dinleyiciler içindir.
-sealed class AppEvent {
-  final String type;
-  final Map<String, dynamic> payload;
-  const AppEvent(this.type, this.payload);
+@freezed
+class EventEnvelope with _$EventEnvelope {
+  const factory EventEnvelope({
+    required String eventId,        // UUID v4 (idempotency)
+    required String eventType,      // "entity.created", "session.turn_advanced", ...
+    String? sessionId,              // Online session ID (offline iken null)
+    String? campaignId,
+    required DateTime emittedAt,
+    required Map<String, dynamic> payload,
+  }) = _EventEnvelope;
+
+  factory EventEnvelope.now(String type, Map<String, dynamic> payload) =>
+      EventEnvelope(
+        eventId: const Uuid().v4(),
+        eventType: type,
+        emittedAt: DateTime.now().toUtc(),
+        payload: payload,
+      );
+
+  factory EventEnvelope.fromJson(Map<String, dynamic> json) =>
+      _$EventEnvelopeFromJson(json);
 }
 
+typedef EventInterceptor = void Function(EventEnvelope event);
+
 class AppEventBus {
-  final _controller = StreamController<AppEvent>.broadcast();
-  Stream<AppEvent> get stream => _controller.stream;
-  void emit(AppEvent event) => _controller.add(event);
+  final _controller = StreamController<EventEnvelope>.broadcast();
+  EventInterceptor? _networkInterceptor;  // Sprint 9'da SupabaseNetworkBridge kaydolur
+
+  /// Tüm event'leri dinleyen stream — UI provider'ları + bridge bunu okur.
+  Stream<EventEnvelope> get allEvents => _controller.stream;
+
+  /// Lokal kaynaklı (Notifier'lardan gelen) event'i emit eder.
+  /// Bridge interceptor yüklüyse, online forward da tetiklenir.
+  void emit(EventEnvelope event) {
+    _controller.add(event);
+    _networkInterceptor?.call(event);
+  }
+
+  /// Remote'tan gelen event'i lokal'e enjekte eder (UI update için).
+  /// Bridge yalnızca incoming event flow'da bunu çağırır.
+  void injectRemote(EventEnvelope event) => _controller.add(event);
+
+  void registerNetworkInterceptor(EventInterceptor? interceptor) {
+    _networkInterceptor = interceptor;
+  }
+
   void dispose() => _controller.close();
 }
 
@@ -100,6 +152,8 @@ AppEventBus appEventBus(Ref ref) {
   return bus;
 }
 ```
+
+**Tip sabitleri** `lib/domain/entities/events/event_types.dart` içinde `EventTypes` sınıfı altında 24 sabit olarak tutulur (ör. `EventTypes.entityCreated`, `EventTypes.sessionTurnAdvanced`). `EventTypes.onlineEvents` set'i yalnızca network'e forward edilecek event tiplerini içerir (17 adet). Bu liste Python `core/network/events.py` `EVENT_PAYLOAD_MODELS` ile birebir uyumludur.
 
 ### 1.5 Provider Mimarisi
 
@@ -1604,99 +1658,96 @@ class LoopNode with _$LoopNode {
 }
 ```
 
-### 7.3 Flutter Audio Engine — just_audio
+### 7.3 Flutter Audio Engine — flutter_soloud
+
+> **Karar:** v2.1'de `just_audio` yerine **`flutter_soloud` 3.1.0** seçildi. SoLoud bir game audio engine olduğu için CPU-side mixing yapar, gapless loop ve built-in `fadeVolume()` sunar; desktop platformlarda `just_audio`'dan daha stabildir. Ses kaynakları **handle** olarak yönetilir (her `play()` çağrısı bir handle döndürür).
 
 ```dart
+import 'package:flutter_soloud/flutter_soloud.dart';
+
 class AudioEngine {
-  // --- Music Decks ---
-  late MusicDeck _deckA;
-  late MusicDeck _deckB;
-  late MusicDeck _activeDeck;
-  late MusicDeck _inactiveDeck;
+  final SoLoud _soloud = SoLoud.instance;
 
-  // --- Crossfade ---
-  double _masterVolume = 0.5;
-  double _fadeRatio = 1.0;
-  AnimationController? _fadeAnimation;
+  // --- Music: 2 paralel handle (crossfade) ---
+  SoundHandle? _activeMusicHandle;
+  SoundHandle? _fadingMusicHandle;
+  AudioSource? _activeSource;
 
-  // --- Ambience (4 slot) ---
-  final List<AmbienceSlot> _ambienceSlots = List.generate(4, (_) => AmbienceSlot());
+  // --- Intensity layers (base, level1, level2) — paralel handle pool ---
+  final Map<String, SoundHandle> _intensityHandles = {};
+
+  // --- Ambience (4 slot, infinite loop) ---
+  final List<SoundHandle?> _ambienceSlots = List.filled(4, null);
   final List<double> _ambienceSlotVolumes = List.filled(4, 0.7);
 
-  // --- SFX (8 slot) ---
-  final List<SfxSlot> _sfxPool = List.generate(8, (_) => SfxSlot());
+  // --- SFX (8 slot, one-shot, auto-cleanup) ---
+  final List<SoundHandle?> _sfxPool = List.filled(8, null);
 
   // State
   AudioTheme? _currentTheme;
   String? _currentStateId;
   int _intensityLevel = 0;
+  double _masterVolume = 0.5;
 
-  /// Crossfade: 3 saniyelik InOutCubic animasyon
+  Future<void> initialize() async {
+    await _soloud.init();
+    _soloud.setGlobalVolume(_masterVolume);
+  }
+
+  /// Crossfade: SoLoud built-in fadeVolume + 3s
   Future<void> setState(String stateName) async {
     if (_currentTheme == null || stateName == _currentStateId) return;
     final targetState = _currentTheme!.states[stateName];
     if (targetState == null) return;
 
-    // Inactive deck'e yeni state yükle
-    await _inactiveDeck.loadState(targetState);
-    _inactiveDeck.setIntensityMask(_getMaskForLevel(_intensityLevel));
-    _inactiveDeck.setVolume(0.0);
-    _inactiveDeck.play();
-
-    // Deck'leri swap et
-    final temp = _activeDeck;
-    _activeDeck = _inactiveDeck;
-    _inactiveDeck = temp;
-    _currentStateId = stateName;
-
-    // 3 saniyelik crossfade animasyonu
-    await _animateFadeRatio(
-      from: 0.0,
-      to: 1.0,
-      duration: const Duration(seconds: 3),
-      curve: Curves.easeInOutCubic,
+    // 1. Yeni track'i 0 volume ile başlat
+    final newSource = await _soloud.loadFile(
+      targetState.tracks['base']!.sequence.first.filePath,
     );
+    final newHandle = await _soloud.play(newSource, volume: 0.0, looping: true);
+
+    // 2. Eski track'i fade-out, yeni track'i fade-in (paralel, 3s)
+    if (_activeMusicHandle != null) {
+      _soloud.fadeVolume(_activeMusicHandle!, 0.0, const Duration(seconds: 3));
+      _soloud.scheduleStop(_activeMusicHandle!, const Duration(seconds: 3));
+    }
+    _soloud.fadeVolume(newHandle, _masterVolume, const Duration(seconds: 3));
+
+    _activeMusicHandle = newHandle;
+    _activeSource = newSource;
+    _currentStateId = stateName;
   }
 
-  void _updateVolumes() {
-    _activeDeck.setVolume(_masterVolume * _fadeRatio);
-    _inactiveDeck.setVolume(_masterVolume * (1.0 - _fadeRatio));
-  }
+  /// Intensity arttıkça paralel layer'lar açılır.
+  Future<void> setIntensity(int level) async {
+    _intensityLevel = level;
+    final wantedLayers = ['base', for (var i = 1; i <= level; i++) 'level$i'];
 
-  List<String> _getMaskForLevel(int level) {
-    return ['base', ...List.generate(level, (i) => 'level${i + 1}')];
-  }
-}
+    // Eksik layer'ları başlat
+    for (final layerId in wantedLayers) {
+      if (_intensityHandles.containsKey(layerId)) continue;
+      final track = _currentTheme?.states[_currentStateId]?.tracks[layerId];
+      if (track == null) continue;
+      final source = await _soloud.loadFile(track.sequence.first.filePath);
+      final handle = await _soloud.play(source, volume: 0.0, looping: true);
+      _soloud.fadeVolume(handle, _masterVolume, const Duration(milliseconds: 1500));
+      _intensityHandles[layerId] = handle;
+    }
 
-/// Her deck birden fazla eşzamanlı AudioPlayer yönetir (intensity katmanları)
-class MusicDeck {
-  final Map<String, AudioPlayer> _players = {};
-  List<String> _activeLevels = ['base'];
-  double _targetVolume = 0.0;
-
-  Future<void> loadState(MusicState state) async {
-    await disposeAll();
-    for (final entry in state.tracks.entries) {
-      final player = AudioPlayer();
-      if (entry.value.sequence.isNotEmpty) {
-        await player.setFilePath(entry.value.sequence.first.filePath);
-        await player.setLoopMode(LoopMode.all);
-      }
-      _players[entry.key] = player;
+    // Fazladan layer'ları kapat
+    final toRemove = _intensityHandles.keys
+        .where((id) => !wantedLayers.contains(id))
+        .toList();
+    for (final id in toRemove) {
+      final h = _intensityHandles.remove(id)!;
+      _soloud.fadeVolume(h, 0.0, const Duration(milliseconds: 1500));
+      _soloud.scheduleStop(h, const Duration(milliseconds: 1500));
     }
   }
 
-  void setIntensityMask(List<String> levels) {
-    _activeLevels = levels;
-    _updateMix();
-  }
-
-  void _updateMix() {
-    for (final entry in _players.entries) {
-      final target = _activeLevels.contains(entry.key) ? _targetVolume : 0.0;
-      // 1.5 saniyelik fade
-      entry.value.setVolume(target);
-    }
+  void setMasterVolume(double v) {
+    _masterVolume = v;
+    _soloud.setGlobalVolume(v);
   }
 }
 ```
@@ -1704,39 +1755,45 @@ class MusicDeck {
 ### 7.4 Ambience ve SFX
 
 ```dart
-class AmbienceSlot {
-  final AudioPlayer player = AudioPlayer();
-  String? currentAmbienceId;
-
-  Future<void> play(String filePath) async {
-    await player.setFilePath(filePath);
-    await player.setLoopMode(LoopMode.all);
-    player.play();
+extension AudioEngineSlots on AudioEngine {
+  /// Ambience: infinite loop, 4 paralel slot
+  Future<void> playAmbience(int slotIndex, String filePath) async {
+    if (_ambienceSlots[slotIndex] != null) {
+      _soloud.stop(_ambienceSlots[slotIndex]!);
+    }
+    final source = await _soloud.loadFile(filePath);
+    final handle = await _soloud.play(
+      source,
+      volume: _ambienceSlotVolumes[slotIndex],
+      looping: true,
+    );
+    _ambienceSlots[slotIndex] = handle;
   }
 
-  Future<void> stop() async {
-    await player.stop();
-    currentAmbienceId = null;
+  void stopAmbience(int slotIndex) {
+    final h = _ambienceSlots[slotIndex];
+    if (h != null) {
+      _soloud.fadeVolume(h, 0.0, const Duration(milliseconds: 500));
+      _soloud.scheduleStop(h, const Duration(milliseconds: 500));
+      _ambienceSlots[slotIndex] = null;
+    }
   }
-}
 
-class SfxSlot {
-  final AudioPlayer player = AudioPlayer();
-  bool busy = false;
-
-  Future<void> play(String filePath, double volume) async {
-    busy = true;
-    await player.setFilePath(filePath);
-    await player.setVolume(volume);
-    player.play();
-    player.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
-        busy = false;
-      }
-    });
+  /// SFX: one-shot, auto-cleanup (SoLoud handle bittiğinde otomatik free)
+  Future<void> playSfx(String filePath, {double volume = 1.0}) async {
+    final source = await _soloud.loadFile(filePath);
+    await _soloud.play(source, volume: volume, looping: false);
+    // SoLoud handle bittiğinde otomatik dispose, cleanup gerekmez
   }
 }
 ```
+
+**SoLoud avantajları:**
+- ✅ **Gapless loop:** PCM-level seamless loop, just_audio'nun sample-edge gap problemi yok
+- ✅ **Built-in fade:** `fadeVolume(handle, target, duration)` — animasyon controller gerekmez
+- ✅ **CPU mixing:** Tüm handle'lar tek output stream'de mix'lenir, OS audio session sayısı 1
+- ✅ **3D positioning (opsiyonel):** Gelecekte battle map'te konum-tabanlı ses
+- ⚠️ **Düşük seviye API:** `just_audio`'nun stream/playlist soyutlamaları yok; track yönetimi manuel
 
 ---
 
@@ -1899,110 +1956,229 @@ class ProjectionNotifier extends _$ProjectionNotifier {
 
 ## 9. Yerel Depolama
 
-### 9.1 Kampanya Verisi — MsgPack
+### 9.1 Storage Stratejisi — Drift (SQLite) Primary
 
-Mevcut: `worlds/[CampaignName]/data.dat` (MsgPack binary)
+v2.1 ile birlikte yerel depolama tamamen **Drift (SQLite)** üzerine taşındı. MsgPack flat file formatı sadece iki amaç için kalır:
+1. **Legacy migration** — Eski Python `data.dat` dosyalarını ilk açılışta SQLite'a aktarmak
+2. **`.dmt` paket import/export** — Kampanyaları paylaşmak/yedeklemek için
 
-```dart
-class CampaignLocalDataSource {
-  Future<Map<String, dynamic>> load(String campaignPath) async {
-    final datFile = File(path.join(campaignPath, 'data.dat'));
+| Veri | Önceki | Şimdi |
+|---|---|---|
+| Kampanya + entity'ler + schema | `worlds/{name}/data.dat` (MsgPack) | `dmt.sqlite` Drift veritabanı |
+| Combat state, map data, mind map | `data.dat` içinde nested | **`campaigns.state_json`** TEXT blob (henüz normalize edilmedi) |
+| Settings (tema, dil, volume) | JSON file | `SharedPreferences` |
+| API library cache | `cache/library/{source}/{type}/{id}.json` | Aynı (filesystem cache) |
 
-    if (await datFile.exists()) {
-      // MsgPack (birincil format)
-      final bytes = await datFile.readAsBytes();
-      return msgpack_dart.deserialize(bytes) as Map<String, dynamic>;
-    }
-
-    // JSON fallback (legacy)
-    final jsonFile = File(path.join(campaignPath, 'data.json'));
-    if (await jsonFile.exists()) {
-      final content = await jsonFile.readAsString();
-      return jsonDecode(content) as Map<String, dynamic>;
-    }
-
-    throw CampaignNotFoundException(campaignPath);
-  }
-
-  Future<void> save(String campaignPath, Map<String, dynamic> data) async {
-    final datFile = File(path.join(campaignPath, 'data.dat'));
-    final bytes = msgpack_dart.serialize(data);
-    await datFile.writeAsBytes(bytes);
-  }
-}
-```
-
-**Geriye uyumluluk:** `msgpack_dart` paketi Python'un `msgpack` kütüphanesiyle uyumlu format kullanır. Mevcut Python ile oluşturulan `.dat` dosyaları doğrudan okunabilir.
-
-### 9.2 Kampanya Veri Yapısı
+### 9.2 Drift Database — `lib/data/database/app_database.dart`
 
 ```dart
-/// data.dat içeriğinin yapısı
-/*
-{
-  "world_name": String,
-  "entities": {
-    "uuid-1": { ... entity fields ... },
-    "uuid-2": { ... }
-  },
-  "map_data": {
-    "image_path": String,
-    "pins": [
-      {"id": String, "x": double, "y": double, "entity_id": String, "color": String, "note": String}
-    ],
-    "timeline": [
-      {"id": String, "x": double, "y": double, "day": int, "note": String,
-       "parent_id": String?, "entity_ids": [String], "color": String?, "session_id": String?}
-    ]
-  },
-  "sessions": [
-    {
-      "id": String,
-      "name": String,
-      "notes": String,
-      "logs": String,
-      "encounters": [
-        {
-          "id": String,
-          "name": String,
-          "combatants": [...],
-          "round": int,
-          "turn_index": int,
-          "map_path": String?,
-          "token_positions": {"token_id": {"x": double, "y": double}},
-          "token_size": int,
-          "token_size_overrides": {"token_id": int},
-          "grid_size": int,
-          "grid_visible": bool,
-          "grid_snap": bool,
-          "feet_per_cell": int,
-          // fog_data ve annotation_data ayrı binary olarak saklanır
-        }
-      ]
-    }
+@DriftDatabase(
+  tables: [
+    Campaigns,
+    WorldSchemas,
+    Entities,
+    Sessions,
+    Encounters,
+    Combatants,
+    CombatConditions,
+    MapPins,
+    TimelinePins,
+    MindMapNodes,
+    MindMapEdges,
   ],
-  "last_active_session_id": String?,
-  "mind_maps": {
-    "map_id": {
-      "nodes": [...],
-      "edges": [...],
-      "undo_stack": [...]
+  daos: [
+    CampaignDao,
+    EntityDao,
+    SessionDao,
+    MapDao,
+    MindMapDao,
+  ],
+)
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(_openConnection());
+  AppDatabase.forTesting(super.e);
+
+  @override
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            // v2: campaigns.state_json eklendi (un-normalized blob)
+            await m.addColumn(campaigns, campaigns.stateJson);
+          }
+        },
+      );
+}
+
+LazyDatabase _openConnection() {
+  return LazyDatabase(() async {
+    final dir = await getApplicationSupportDirectory();
+    final dbDir = Directory(p.join(dir.path, 'DungeonMasterTool'));
+    if (!dbDir.existsSync()) dbDir.createSync(recursive: true);
+    final file = File(p.join(dbDir.path, 'dmt.sqlite'));
+    return NativeDatabase.createInBackground(file);
+  });
+}
+```
+
+**SQLite dosyası:** `getApplicationSupportDirectory()/DungeonMasterTool/dmt.sqlite`
+
+### 9.3 Tablo Şemaları (Supabase Mirror)
+
+Drift tabloları **Supabase PostgreSQL şemasıyla birebir uyumlu** tasarlandı, böylece online geçişte aynı kolon adları/tipleri kullanılır ve client-server arasında DTO mapping sıfıra iner.
+
+| Tablo | Kolonlar | FK |
+|-------|---------|-----|
+| **campaigns** | `id` (UUID PK), `world_name`, `state_json` (TEXT default `'{}'`), `created_at`, `updated_at` | — |
+| **world_schemas** | `id` PK, `campaign_id` FK, `name`, `version`, `base_system`, `description`, `categories_json`, `encounter_config_json`, `encounter_layouts_json`, `metadata_json`, `created_at`, `updated_at` | → campaigns |
+| **entities** | `id` PK, `campaign_id` FK, `category_slug`, `name`, `source`, `description`, `image_path`, `images_json`, `tags_json`, `dm_notes`, `pdfs_json`, `location_id` (self-FK nullable), `fields_json`, `created_at`, `updated_at` | → campaigns |
+| **sessions** | `id` PK, `campaign_id` FK, `name`, `notes`, `logs`, `is_active`, `created_at`, `updated_at` | → campaigns |
+| **encounters** | `id` PK, `session_id` FK, `campaign_id` FK, `name`, `map_path`, `token_size`, `grid_size`, `grid_visible`, `grid_snap`, `feet_per_cell`, `fog_data`, `annotation_data`, `encounter_layout_id`, `turn_index`, `round`, `token_positions_json`, `token_size_multipliers_json`, `sort_order`, `created_at` | → sessions |
+| **combatants** | `id` PK, `encounter_id` FK, `entity_id` FK (nullable), `name`, `init`, `ac`, `hp`, `max_hp`, `token_id`, `sort_order` | → encounters, → entities |
+| **combat_conditions** | `id` PK, `combatant_id` FK, `name`, `duration`, `initial_duration`, `entity_id` (nullable) | → combatants |
+| **map_pins** | `id` PK, `campaign_id` FK, `x`, `y`, `label`, `pin_type`, `entity_id` FK (nullable), `note`, `color`, `style_json` | → campaigns, → entities |
+| **timeline_pins** | `id` PK, `campaign_id` FK, `x`, `y`, `day`, `note`, `entity_ids_json`, `session_id` FK (nullable), `parent_ids_json`, `color` | → campaigns |
+| **mind_map_nodes** | `id` PK, `campaign_id` FK, `label`, `node_type`, `x`, `y`, `width`, `height`, `entity_id` FK (nullable), `image_url`, `content`, `style_json`, `color` | → campaigns, → entities |
+| **mind_map_edges** | `id` PK, `campaign_id` FK, `source_id` FK, `target_id` FK, `label`, `style_json` | → mind_map_nodes |
+
+> `*_json` kolonları (`fields_json`, `categories_json`, `encounter_config_json`, vb.) Drift'te `TEXT` tutulur, Supabase'de `jsonb` olur. Bu, schema-driven entity sisteminin esnekliğini korur — yeni alan eklendiğinde DDL migration gerekmez.
+
+### 9.4 `state_json` Blob Stratejisi
+
+Henüz normalize edilmeyen üç alan `campaigns.state_json` TEXT kolonunda JSON blob olarak tutulur:
+- `combat_state` — Aktif encounter, turn order, condition'lar
+- `map_data` — Dünya haritası pinleri, fog, timeline
+- `mind_maps` — Workspace'ler, node konumları, undo stack
+
+Bu pragmatik geçici çözüm sayesinde:
+- Yeni feature'lar **schema migration tetiklemeden** eklenebilir
+- Mind/world map UI çalışmaya devam ederken normalize çalışması paralel ilerleyebilir
+- Sprint 5 sonu görevi (`5.19`): bu blob'u `mind_map_nodes`/`mind_map_edges`/`map_pins`/`timeline_pins` tablolarına taşımak
+
+### 9.5 DAO Pattern
+
+```dart
+@DriftAccessor(tables: [Campaigns])
+class CampaignDao extends DatabaseAccessor<AppDatabase> with _$CampaignDaoMixin {
+  CampaignDao(super.db);
+
+  Future<List<Campaign>> getAll() => select(campaigns).get();
+
+  Future<List<String>> getAvailableNames() async {
+    final rows = await select(campaigns).get();
+    return rows.map((c) => c.worldName).toList();
+  }
+
+  Future<Campaign?> getByName(String name) =>
+      (select(campaigns)..where((t) => t.worldName.equals(name)))
+          .getSingleOrNull();
+
+  Future<Campaign?> getById(String id) =>
+      (select(campaigns)..where((t) => t.id.equals(id))).getSingleOrNull();
+
+  Future<int> createCampaign(CampaignsCompanion data) =>
+      into(campaigns).insert(data);
+
+  Future<void> updateCampaign(CampaignsCompanion data) =>
+      update(campaigns).replace(data);
+
+  Future<int> deleteCampaign(String id) =>
+      (delete(campaigns)..where((t) => t.id.equals(id))).go();
+}
+```
+
+DAO'lar `lib/data/database/daos/` altında:
+- `campaign_dao.dart` — campaigns CRUD
+- `entity_dao.dart` — entities CRUD + category/tag filtreleme
+- `session_dao.dart` — sessions + encounters + combatants (TODO: bağlantı)
+- `map_dao.dart` — map_pins + timeline_pins (TODO: bağlantı)
+- `mind_map_dao.dart` — mind_map_nodes + mind_map_edges (TODO: bağlantı)
+
+### 9.6 Repository Layer
+
+`CampaignRepositoryImpl` Drift DAO'larını **legacy MsgPack fallback** ile birleştirir:
+
+```dart
+class CampaignRepositoryImpl implements CampaignRepository {
+  final AppDatabase _db;
+  final CampaignLocalDataSource _localDs;  // MsgPack reader
+
+  @override
+  Future<Map<String, dynamic>> load(String campaignName) async {
+    // 1. Önce SQLite'da ara
+    final existing = await _db.campaignDao.getByName(campaignName);
+    if (existing != null) return _loadFromDb(existing.id);
+
+    // 2. Yoksa legacy .dat dosyasını oku, parse et, SQLite'a migrate et
+    final path = p.join(AppPaths.worldsDir, campaignName);
+    final data = await _localDs.load(path);
+    SchemaMigration.migrate(data);
+    await _migrateToDb(campaignName, data);
+    return data;
+  }
+
+  @override
+  Future<void> save(String campaignName, Map<String, dynamic> data) async {
+    final existing = await _db.campaignDao.getByName(campaignName);
+    if (existing != null) {
+      await _saveToDb(existing.id, data);
+    } else {
+      // Yeni kampanya — direkt SQLite
+      final id = data['world_id'] as String? ?? const Uuid().v4();
+      data['world_id'] = id;
+      await _db.campaignDao.createCampaign(
+        CampaignsCompanion.insert(id: id, worldName: campaignName),
+      );
+      await _saveToDb(id, data);
     }
   }
 }
-*/
 ```
 
-### 9.3 Dosya Yolu Çözümleme
+### 9.7 Legacy MsgPack Migration
 
-Mevcut: `config.py` — `BASE_DIR`, `WORLDS_DIR`, `CACHE_DIR`, `SOUNDPAD_ROOT`
+Mevcut Python kullanıcılarının `.dat` dosyaları otomatik olarak Drift'e aktarılır:
+
+1. App ilk açıldığında: Drift SQLite oluşturulur (boş)
+2. Kullanıcı eski kampanyayı açar: `_loadFromDb` SQLite'ta bulamaz
+3. `CampaignLocalDataSource.load()` ile `worlds/{name}/data.dat` MsgPack okunur
+4. `SchemaMigration.migrate()` — TR→EN field map, default schema backfill
+5. `_migrateToDb()` — Drift transaction içinde tüm tablolara dağıtılır
+6. (Opsiyonel) `data.dat` → `data.dat.bak` olarak yedeklenir, bir daha okunmaz
+
+Bu yaklaşım sayesinde mevcut kullanıcılar kayıpsız geçiş yapar; yeni kampanyalar ise direkt SQLite'da oluşturulur.
+
+### 9.8 `.dmt` Export/Import (Paylaşım Formatı)
+
+`.dmt` paketleri tam kampanya snapshot'larını paylaşmak için kullanılır:
+
+```
+my-campaign.dmt (ZIP)
+├── manifest.json          # Versiyon, yazar, dependency listesi
+├── data.msgpack           # Drift'ten dump edilmiş tam state
+├── assets/
+│   ├── images/
+│   ├── audio/             # SoLoud için pre-cached müzik dosyaları
+│   └── pdfs/
+└── README.md (opsiyonel)
+```
+
+**Export:** Drift tablolarından okunur → JSON dict → MsgPack serialize → ZIP
+**Import:** ZIP unzip → MsgPack deserialize → SchemaMigration → Drift'e yaz
+
+`.dmt-template` ise farklıdır: yalnızca world schema (kategori + alan tanımları), entity'ler değil — Section 3.12'ye bakın.
+
+### 9.9 Dosya Yolu Çözümleme — `AppPaths`
 
 ```dart
 class AppPaths {
-  static late String baseDir;
-  static late String worldsDir;
-  static late String cacheDir;
-  static late String soundpadRoot;
+  static late String baseDir;       // Uygulama veri kökü
+  static late String worldsDir;     // Eski .dat dosyaları (legacy)
+  static late String cacheDir;      // API cache + asset cache
+  static late String soundpadRoot;  // Theme YAML + audio assets
 
   static Future<void> initialize() async {
     // Portable mode: exe yanında worlds/ dizini varsa onu kullan
@@ -2012,17 +2188,15 @@ class AppPaths {
     if (await portableWorlds.exists()) {
       baseDir = exeDir;
     } else {
-      // Platform-specific data dizini
-      final appDocDir = await getApplicationDocumentsDirectory();
-      baseDir = path.join(appDocDir.path, 'DungeonMasterTool');
+      final appSupportDir = await getApplicationSupportDirectory();
+      baseDir = path.join(appSupportDir.path, 'DungeonMasterTool');
     }
 
-    worldsDir = path.join(baseDir, 'worlds');
+    worldsDir = path.join(baseDir, 'worlds');     // Sadece migration için okunur
     cacheDir = path.join(baseDir, 'cache');
     soundpadRoot = path.join(baseDir, 'assets', 'soundpad');
 
-    // Dizinleri oluştur
-    await Directory(worldsDir).create(recursive: true);
+    await Directory(baseDir).create(recursive: true);
     await Directory(cacheDir).create(recursive: true);
   }
 
@@ -2034,7 +2208,9 @@ class AppPaths {
 }
 ```
 
-### 9.4 Ayarlar — SharedPreferences
+> Drift SQLite dosyası `getApplicationSupportDirectory()/DungeonMasterTool/dmt.sqlite` olarak ayrıdır; `AppPaths.baseDir` ile aynı kök ama farklı dosya.
+
+### 9.10 Ayarlar — SharedPreferences
 
 ```dart
 class SettingsLocalDataSource {
@@ -2051,7 +2227,7 @@ class SettingsLocalDataSource {
 }
 ```
 
-### 9.5 API Cache — Dosya Tabanlı
+### 9.11 API Cache — Dosya Tabanlı
 
 ```
 cache/
@@ -2065,312 +2241,396 @@ cache/
 │   │   └── ...
 │   └── open5e/
 │       └── ...
-└── settings.json
+└── assets/
+    └── {sha256}.bin       # R2 download local cache (Sprint 10)
 ```
 
 ---
 
-## 10. Online Mimari ve Database Şeması
+## 10. Hibrit Online Mimari (Supabase + Cloudflare)
 
-### 10.1 Genel Bakış
+> **Detaylı teknik rapor:** `docs/ONLINE_REPORT.md` v2.0 — Hibrit Online Mimarisi
 
-Mevcut tasarım: `docs/ONLINE.md` (851 satır)
+### 10.1 Mimari Felsefesi
 
-**Temel prensipler:**
-1. **DM egemenliği** — Server oyun state'i değiştiremez; sadece DM kararlarını iletir
-2. **Offline-first** — Online özellikler isteğe bağlı; tüm özellikler ağ olmadan çalışır
-3. **Minimal oyuncu sürtünmesi** — 6 karakterlik kod + isim yeterli (hesap opsiyonel)
-4. **Sıfır içerik sızıntısı** — Özel içerik sunucu tarafında filtrelenir
-5. **Artımlı sync** — Delta event'ler, snapshot değil
-6. **DM client kaynak** — Doğruluk kaynağı her zaman DM'in masaüstü uygulaması
+DMT'nin online katmanı **offline-first** prensibine dayalıdır: her özellik internet olmadan çalışmalı, online sadece **opt-in** ekstra bir katman olmalıdır. Bu felsefe altı ana prensibe yansır:
 
-### 10.2 Sunucu Stack
+1. **DM as Source of Truth** — DM'in lokal `dmt.sqlite` veritabanı tek doğruluk kaynağıdır; server hiçbir oyun state'ini değiştiremez, sadece event relay yapar
+2. **Sıfır sunucu maliyeti** — Tüm bileşenler free tier'larda kalmalı; ücretli plan opsiyonel
+3. **Açık kaynak güvenliği** — Kod açık olduğu için güvenlik matematiğe (JWT) dayanır, gizli secret'a değil
+4. **Minimal oyuncu sürtünmesi** — 6-char join code + display name yeterli; full hesap opsiyonel
+5. **İçerik sahipliği** — DM kendi dünyasını her an `.dmt` olarak export edebilir
+6. **Artımlı sync** — Delta event'ler, ancak gerektiğinde snapshot fallback
 
-| Bileşen | Teknoloji | Amaç |
+### 10.2 Stack Değişikliği — v1.0 → v2.1
+
+v1.0 blueprint'inde tarif edilen FastAPI + PostgreSQL + Redis + MinIO + python-socketio self-hosted stack'i **terkedildi**. Yeni stack tamamen managed servisler üzerine kuruludur:
+
+| Eski (v1.0) | Yeni (v2.1) | Sebep |
 |---|---|---|
-| API Server | FastAPI (Python) | REST + WebSocket gateway |
-| WebSocket | python-socketio (async ASGI) | Real-time event relay |
-| Database | PostgreSQL 16 | Kalıcı veri |
-| Cache/PubSub | Redis 7 | Session cache, event broadcast |
-| Asset Storage | MinIO (S3-uyumlu) | Görsel/PDF depolama |
-| Auth | JWT (RS256) | Access (15 dk) + Refresh token |
+| FastAPI + python-socketio | **Supabase Realtime (Broadcast)** | Sıfır sunucu maliyeti, hazır JWT, Dart SDK olgun |
+| PostgreSQL self-hosted | **Supabase Postgres + RLS** | Built-in row-level security, managed backups |
+| Redis self-hosted | **Supabase Realtime channel** | Tek bağımlılık, broadcast pub/sub built-in |
+| MinIO self-hosted | **Cloudflare R2 + Worker** | Sıfır egress maliyeti, edge cache |
+| JWT RS256 (kendi sunucu) | **Supabase JWT** | SDK desteği, refresh token yönetimi hazır |
+| socket_io_client (Dart) | **supabase_flutter** | Realtime + Auth + Storage tek SDK |
 
-### 10.3 PostgreSQL Database Şeması
+### 10.3 Stack Tablosu
+
+| Bileşen | Teknoloji | Free Tier | Amaç |
+|---|---|---|---|
+| **Auth + JWT** | Supabase Auth | 50k MAU | Email/password, refresh token |
+| **Database** | Supabase Postgres | 500MB | Sessions, participants, event log, community market |
+| **Realtime** | Supabase Broadcast | 200 concurrent WS | DM↔Player event relay, fire-and-forget |
+| **Asset Storage** | Cloudflare R2 | 10GB + zero egress | Görsel, PDF, audio (büyük dosyalar) |
+| **Asset Gateway** | Cloudflare Worker | 100k req/day | JWT verify + RLS check + R2 stream |
+| **Rate Limiting** | Cloudflare KV | 1k op/day | 20 download/saat per user |
+| **Mobile P2P** | flutter_webrtc + Cloudflare TURN | (Sprint 11) | Screen share, low latency |
+
+### 10.4 Database Şeması — Supabase Mirror
+
+Section 9.3'teki Drift tabloları **Supabase'de aynen** mevcut olur (kolon adları/tipleri birebir). Ek olarak yalnızca server-side tablolar:
 
 ```sql
--- ===================================================================
--- IDENTITY CONTEXT
--- ===================================================================
+-- Users — Supabase Auth tarafından otomatik yönetilir
+-- (auth.users tablosu, kendimiz yaratmıyoruz)
 
-CREATE TABLE users (
+-- Active game sessions
+CREATE TABLE game_sessions (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email           VARCHAR(255) UNIQUE NOT NULL,
-    password_hash   VARCHAR(255) NOT NULL,  -- bcrypt, cost=12
-    display_name    VARCHAR(100) NOT NULL,
-    created_at      TIMESTAMPTZ DEFAULT now(),
-    updated_at      TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE TABLE refresh_tokens (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token_hash      VARCHAR(255) NOT NULL,  -- SHA-256
-    expires_at      TIMESTAMPTZ NOT NULL,
-    created_at      TIMESTAMPTZ DEFAULT now(),
-    revoked         BOOLEAN DEFAULT FALSE
-);
-
-CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
-
--- ===================================================================
--- SESSION CONTEXT
--- ===================================================================
-
-CREATE TABLE sessions (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    dm_user_id      UUID NOT NULL REFERENCES users(id),
-    campaign_id     VARCHAR(255) NOT NULL,    -- Yerel kampanya klasör adı
+    dm_user_id      UUID NOT NULL REFERENCES auth.users(id),
+    campaign_id     UUID NOT NULL,                -- DM'in lokal campaign UUID
     session_name    VARCHAR(255) NOT NULL,
-    join_code       VARCHAR(6) UNIQUE,        -- Aktifken dolu, bitince NULL
+    join_code       VARCHAR(6) UNIQUE,            -- Aktifken dolu, bitince NULL
     state           VARCHAR(20) NOT NULL DEFAULT 'waiting'
                     CHECK (state IN ('waiting', 'active', 'ended')),
     created_at      TIMESTAMPTZ DEFAULT now(),
-    ended_at        TIMESTAMPTZ,
-    current_snapshot JSONB                    -- Reconnect için son durum snapshot'ı
+    ended_at        TIMESTAMPTZ
 );
 
-CREATE INDEX idx_sessions_join_code ON sessions(join_code) WHERE join_code IS NOT NULL;
-CREATE INDEX idx_sessions_dm ON sessions(dm_user_id, created_at DESC);
+CREATE INDEX idx_sessions_join_code
+    ON game_sessions(join_code) WHERE join_code IS NOT NULL;
 
+-- Session participants (DM, players, observers)
 CREATE TABLE session_participants (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    session_id      UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
-    user_id         UUID,                     -- NULL = anonim oyuncu
+    session_id      UUID NOT NULL REFERENCES game_sessions(id) ON DELETE CASCADE,
+    user_id         UUID REFERENCES auth.users(id),  -- NULL = anonim oyuncu
     display_name    VARCHAR(100) NOT NULL,
     role            VARCHAR(20) NOT NULL DEFAULT 'PLAYER'
                     CHECK (role IN ('DM_OWNER', 'PLAYER', 'OBSERVER')),
     joined_at       TIMESTAMPTZ DEFAULT now(),
-    disconnected_at TIMESTAMPTZ,
     is_connected    BOOLEAN DEFAULT TRUE
 );
 
-CREATE INDEX idx_participants_session ON session_participants(session_id);
-
--- ===================================================================
--- SYNC CONTEXT
--- ===================================================================
-
+-- Event log — revision-based delta sync için
 CREATE TABLE event_log (
     id              BIGSERIAL PRIMARY KEY,
-    event_id        UUID NOT NULL UNIQUE,     -- Client-generated UUID (idempotency)
-    session_id      UUID NOT NULL REFERENCES sessions(id),
+    event_id        UUID NOT NULL UNIQUE,         -- Client UUID (idempotency)
+    session_id      UUID NOT NULL REFERENCES game_sessions(id),
     event_type      VARCHAR(100) NOT NULL,
-    sender_id       UUID,                     -- Gönderen user_id
+    sender_id       UUID,
     sender_role     VARCHAR(20) NOT NULL,
-    revision        BIGINT NOT NULL,          -- Session-bazlı monoton sayaç
+    revision        BIGINT NOT NULL,              -- Session-bazlı monoton sayaç
     payload         JSONB NOT NULL,
     created_at      TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE INDEX idx_event_log_session_rev ON event_log(session_id, revision);
-CREATE INDEX idx_event_log_session_type ON event_log(session_id, event_type);
 
--- ===================================================================
--- ASSETS CONTEXT
--- ===================================================================
-
-CREATE TABLE assets (
+-- Community market: paylaşılan .dmt paketleri
+CREATE TABLE community_worlds (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    session_id      UUID REFERENCES sessions(id),
-    uploaded_by     UUID NOT NULL REFERENCES users(id),
+    author_id       UUID NOT NULL REFERENCES auth.users(id),
+    title           VARCHAR(255) NOT NULL,
+    description     TEXT,
+    r2_object_key   VARCHAR(500) NOT NULL,        -- R2'deki .dmt path
+    download_count  INT DEFAULT 0,
+    created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+-- Asset metadata (R2 object'lere referans)
+CREATE TABLE community_assets (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    world_id        UUID REFERENCES community_worlds(id),
+    session_id      UUID REFERENCES game_sessions(id),
+    uploader_id     UUID NOT NULL REFERENCES auth.users(id),
     filename        VARCHAR(500) NOT NULL,
-    mime_type       VARCHAR(100) NOT NULL,
-    size_bytes      BIGINT NOT NULL,
     sha256_hash     VARCHAR(64) NOT NULL,
-    minio_key       VARCHAR(500) NOT NULL,    -- MinIO object key
-    created_at      TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE INDEX idx_assets_session ON assets(session_id);
-CREATE INDEX idx_assets_hash ON assets(sha256_hash);
-
--- ===================================================================
--- GAMEPLAY CONTEXT
--- ===================================================================
-
-CREATE TABLE dice_rolls (
-    id              BIGSERIAL PRIMARY KEY,
-    session_id      UUID NOT NULL REFERENCES sessions(id),
-    roller_id       UUID,
-    roller_name     VARCHAR(100) NOT NULL,
-    notation        VARCHAR(100) NOT NULL,    -- "2d6+3"
-    individual_rolls INTEGER[] NOT NULL,      -- {4, 5}
-    modifier        INTEGER DEFAULT 0,
-    total           INTEGER NOT NULL,
-    purpose         VARCHAR(255),             -- "Attack roll", "Saving throw"
-    created_at      TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE INDEX idx_dice_rolls_session ON dice_rolls(session_id, created_at);
-
--- ===================================================================
--- AUDIT LOG
--- ===================================================================
-
-CREATE TABLE audit_log (
-    id              BIGSERIAL PRIMARY KEY,
-    user_id         UUID,
-    action          VARCHAR(100) NOT NULL,
-    details         JSONB,
-    ip_address      INET,
+    size_bytes      BIGINT NOT NULL,
+    r2_object_key   VARCHAR(500) NOT NULL,
     created_at      TIMESTAMPTZ DEFAULT now()
 );
 ```
 
-### 10.4 24 Event Tipi (Freezed Classes)
+**RLS Policies (örnekler):**
 
-Mevcut: `core/network/events.py` (225 satır)
+```sql
+-- DM yalnızca kendi session'larını yönetebilir
+CREATE POLICY "DM owns session" ON game_sessions
+    FOR ALL USING (auth.uid() = dm_user_id);
 
-```dart
-// --- Event Envelope ---
-@freezed
-class EventEnvelope with _$EventEnvelope {
-  const factory EventEnvelope({
-    @Default('') String eventId,    // UUID
-    required String eventType,
-    String? sessionId,
-    String? campaignId,
-    required DateTime emittedAt,
-    required Map<String, dynamic> payload,
-  }) = _EventEnvelope;
+-- Player'lar session'ı join_code ile okuyabilir
+CREATE POLICY "Players read session by code" ON game_sessions
+    FOR SELECT USING (join_code IS NOT NULL);
 
-  factory EventEnvelope.fromJson(Map<String, dynamic> json) =>
-      _$EventEnvelopeFromJson(json);
-}
+-- Participant'lar yalnızca kendi katıldıkları session'ları görür
+CREATE POLICY "Participant sees own sessions" ON session_participants
+    FOR SELECT USING (user_id = auth.uid() OR session_id IN (
+        SELECT id FROM game_sessions WHERE dm_user_id = auth.uid()
+    ));
 
-// --- Campaign Payloads ---
-@freezed class CampaignLoadedPayload with _$CampaignLoadedPayload { ... }
-@freezed class CampaignSavedPayload with _$CampaignSavedPayload { ... }
-@freezed class CampaignCreatedPayload with _$CampaignCreatedPayload { ... }
-
-// --- Entity Payloads ---
-@freezed class EntityCreatedPayload with _$EntityCreatedPayload {
-  const factory EntityCreatedPayload({
-    required String entityId,
-    @Default('') String entityType,
-    @Default('') String name,
-  }) = _EntityCreatedPayload;
-}
-@freezed class EntityUpdatedPayload with _$EntityUpdatedPayload {
-  const factory EntityUpdatedPayload({
-    required String entityId,
-    @Default([]) List<String> changedFields,
-  }) = _EntityUpdatedPayload;
-}
-@freezed class EntityDeletedPayload with _$EntityDeletedPayload {
-  const factory EntityDeletedPayload({
-    required String entityId,
-    @Default('') String entityType,
-  }) = _EntityDeletedPayload;
-}
-
-// --- Session Payloads ---
-@freezed class SessionCreatedPayload ...
-@freezed class SessionActivatedPayload ...
-@freezed class CombatantAddedPayload ...
-@freezed class CombatantUpdatedPayload ...
-@freezed class TurnAdvancedPayload ...
-
-// --- Map Payloads ---
-@freezed class MapImageSetPayload ...
-@freezed class MapFogUpdatedPayload { fog_data: String (base64 PNG mask) }
-@freezed class MapPinAddedPayload { pin_id, x, y, label }
-@freezed class MapPinRemovedPayload { pin_id }
-
-// --- MindMap Payloads ---
-@freezed class MindMapNodeCreatedPayload { map_id, node_id, label, x, y }
-@freezed class MindMapNodeUpdatedPayload { map_id, node_id, changes }
-@freezed class MindMapNodeDeletedPayload { map_id, node_id }
-@freezed class MindMapEdgeCreatedPayload { map_id, edge_id, source_id, target_id }
-@freezed class MindMapEdgeDeletedPayload { map_id, edge_id }
-
-// --- Projection Payloads ---
-@freezed class ProjectionContentPayload { content_type: [map|entity|image|pdf|blank], content_ref }
-@freezed class ProjectionModeChangedPayload { mode: [map|content] }
-
-// --- Audio Payloads ---
-@freezed class AudioStatePayload { theme, intensity, master_volume }
-@freezed class AudioTrackTriggeredPayload { track_id, track_name }
+-- Event log: DM her şeyi yazar; player yalnızca kendi session'ından okur
+CREATE POLICY "Read event log in joined session" ON event_log
+    FOR SELECT USING (session_id IN (
+        SELECT session_id FROM session_participants WHERE user_id = auth.uid()
+    ));
 ```
 
-### 10.5 NetworkBridge — Connection State Machine
+### 10.5 EventEnvelope — Tek Wire Format
+
+Section 1.4'te tanımlanan `EventEnvelope` Freezed class'ı tüm online iletişim için kullanılır. 24 event tipi vardır; 17'si `EventTypes.onlineEvents` set'inde tanımlı ve network'e forward edilir:
+
+| Domain | Tipler |
+|---|---|
+| Campaign | `campaign.loaded`, `campaign.saved`, `campaign.created` *(local-only)* |
+| Entity | `entity.created`, `entity.updated`, `entity.deleted` |
+| Session | `session.created`, `session.activated`, `session.combatant_added`, `session.combatant_updated`, `session.turn_advanced` |
+| Map | `map.image_set`, `map.fog_updated`, `map.pin_added`, `map.pin_removed` |
+| Mind Map | `mindmap.node_created`, `mindmap.node_updated`, `mindmap.node_deleted`, `mindmap.edge_created`, `mindmap.edge_deleted` |
+| Projection | `projection.content_set`, `projection.mode_changed` |
+| Audio | `audio.state_changed`, `audio.track_triggered` |
+
+### 10.6 NetworkBridge Mimarisi
 
 ```dart
-enum ConnectionState { disconnected, connecting, connected, error }
+// lib/data/network/network_bridge.dart
+abstract class NetworkBridge {
+  Stream<ConnectionStatus> get statusStream;
+  ConnectionStatus get status;
 
-class NetworkBridge {
-  final AppEventBus _eventBus;
-  ConnectionState _state = ConnectionState.disconnected;
+  Future<void> connect(String sessionId, String accessToken);
+  Future<void> disconnect();
+
+  /// AppEventBus interceptor — outgoing event flow
+  void broadcast(EventEnvelope event);
+
+  /// Incoming event stream — bridge subscribe edip AppEventBus.injectRemote() çağırır
+  Stream<EventEnvelope> get incomingEvents;
+
+  /// Snapshot transferi (player join'de DM yollar)
+  Future<void> sendSnapshot(GameSnapshot snapshot, {required String toUserId});
+}
+
+class NoOpNetworkBridge implements NetworkBridge {
+  @override
+  ConnectionStatus get status => ConnectionStatus.disconnected;
+  // ... tüm metodlar no-op
+}
+
+class SupabaseNetworkBridge implements NetworkBridge {
+  final SupabaseClient _client;
+  RealtimeChannel? _channel;
   final List<EventEnvelope> _pendingQueue = [];
-  io.Socket? _socket;
 
-  /// Online'a yönlendirilecek event tipleri
-  static const onlineEvents = {
-    'entity.created', 'entity.updated', 'entity.deleted',
-    'session.combatant_added', 'session.combatant_updated', 'session.turn_advanced',
-    'map.image_set', 'map.fog_updated', 'map.pin_added', 'map.pin_removed',
-    'mindmap.node_created', 'mindmap.node_updated', 'mindmap.node_deleted',
-    'mindmap.edge_created', 'mindmap.edge_deleted',
-    'projection.content_set', 'audio.state_changed',
-  };
+  @override
+  Future<void> connect(String sessionId, String accessToken) async {
+    _channel = _client.channel('session:$sessionId')
+      ..onBroadcast(
+        event: 'event',
+        callback: (payload, [_]) {
+          final env = EventEnvelope.fromJson(payload['envelope'] as Map<String, dynamic>);
+          _incomingController.add(env);
+        },
+      )
+      ..subscribe();
+  }
 
-  void connect(String serverUrl, String token) { ... }
-  void disconnect() { ... }
+  @override
+  void broadcast(EventEnvelope event) {
+    if (_channel == null) {
+      _pendingQueue.add(event);
+      return;
+    }
+    _channel!.sendBroadcastMessage(event: 'event', payload: {'envelope': event.toJson()});
+  }
+}
+```
 
-  void _onAnyEvent(AppEvent event) {
-    if (!onlineEvents.contains(event.type)) return;
-    final envelope = EventEnvelope(
-      eventId: const Uuid().v4(),
-      eventType: event.type,
-      emittedAt: DateTime.now().toUtc(),
-      payload: event.payload,
+**Connection state machine:**
+
+```
+disconnected → connecting → connected → error
+       ↑                                 │
+       └─────────────────────────────────┘
+```
+
+### 10.7 Snapshot & Recovery — DM as Source of Truth
+
+Player join veya reconnect'te kayıp event'leri kapatmak için iki strateji:
+
+| Senaryo | Strateji |
+|---|---|
+| İlk join | Tam `GameSnapshot` (DM Drift'ten capture eder, broadcast eder, player restore eder) |
+| Reconnect, < 200 event kayıp | **Delta resync** — `event_log` tablosundan revision aralığı çekilir, replay |
+| Reconnect, > 200 event kayıp | **Snapshot fallback** — Tam state yeniden gönderilir |
+
+```dart
+class StateSnapshotService {
+  final AppDatabase _db;
+
+  /// DM tarafı: lokal Drift'ten tam state çıkar
+  Future<GameSnapshot> capture(String campaignId) async {
+    return GameSnapshot(
+      campaignId: campaignId,
+      capturedAt: DateTime.now().toUtc(),
+      entities: await _db.entityDao.getAllForCampaign(campaignId),
+      sessions: await _db.sessionDao.getAllForCampaign(campaignId),
+      mapData: await _db.mapDao.getAllForCampaign(campaignId),
+      mindMaps: await _db.mindMapDao.getAllForCampaign(campaignId),
+      // ...
+    );
+  }
+
+  /// Player tarafı: gelen snapshot'ı lokal Drift'e yaz
+  Future<void> restore(GameSnapshot snapshot) async {
+    await _db.transaction(() async {
+      await _db.entityDao.replaceAll(snapshot.campaignId, snapshot.entities);
+      await _db.sessionDao.replaceAll(snapshot.campaignId, snapshot.sessions);
+      // ...
+    });
+  }
+}
+```
+
+### 10.8 Cloudflare R2 + Worker Asset Pipeline
+
+Büyük dosyalar (görseller, PDF, audio) Supabase Storage yerine **Cloudflare R2**'da tutulur (sıfır egress maliyeti). R2 bucket'ı tamamen private; tüm erişim **Cloudflare Worker** üzerinden geçer.
+
+**Worker Akışı (TypeScript):**
+
+```typescript
+// cloudflare/worker.ts
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const auth = request.headers.get('Authorization');
+    if (!auth?.startsWith('Bearer ')) return new Response('Unauthorized', { status: 401 });
+
+    // 1. Supabase JWT verify
+    const token = auth.slice(7);
+    const payload = await verifyJwt(token, env.SUPABASE_JWT_SECRET);
+    if (!payload) return new Response('Invalid token', { status: 401 });
+
+    const userId = payload.sub;
+
+    // 2. RLS check via Supabase REST API (service role)
+    const objectKey = new URL(request.url).pathname.slice(1);
+    const allowed = await checkAssetAccess(userId, objectKey, env);
+    if (!allowed) return new Response('Forbidden', { status: 403 });
+
+    // 3. Rate limit (KV-backed counter)
+    const rateKey = `rate:${userId}:${new Date().toISOString().slice(0, 13)}`;
+    const count = parseInt((await env.RATE_KV.get(rateKey)) ?? '0');
+    if (count >= 20) return new Response('Too Many Requests', { status: 429 });
+    await env.RATE_KV.put(rateKey, (count + 1).toString(), { expirationTtl: 3600 });
+
+    // 4. R2 stream
+    const obj = await env.R2_BUCKET.get(objectKey);
+    if (!obj) return new Response('Not Found', { status: 404 });
+    return new Response(obj.body, {
+      headers: {
+        'Content-Type': obj.httpMetadata?.contentType ?? 'application/octet-stream',
+        'Cache-Control': 'private, max-age=3600',
+      },
+    });
+  },
+};
+```
+
+**Flutter `AssetService`:**
+
+```dart
+class AssetService {
+  final SupabaseClient _supabase;
+  final Dio _dio;
+
+  /// Player: Worker proxy üzerinden R2'dan indir
+  Future<File> downloadAsset(String objectKey) async {
+    final localCache = File(p.join(AppPaths.cacheDir, 'assets', _hash(objectKey)));
+    if (await localCache.exists()) return localCache;
+
+    final token = _supabase.auth.currentSession!.accessToken;
+    final response = await _dio.get<List<int>>(
+      '${_workerBaseUrl}/$objectKey',
+      options: Options(
+        headers: {'Authorization': 'Bearer $token'},
+        responseType: ResponseType.bytes,
+      ),
     );
 
-    if (_state == ConnectionState.connected) {
-      _send(envelope);
-    } else {
-      _pendingQueue.add(envelope);
-    }
+    await localCache.create(recursive: true);
+    await localCache.writeAsBytes(response.data!);
+    return localCache;
   }
 
-  void _flushQueue() {
-    for (final envelope in _pendingQueue) { _send(envelope); }
-    _pendingQueue.clear();
+  /// DM: Worker presigned URL ile R2'ya yükle
+  Future<String> uploadAsset(File file, String campaignId) async {
+    // ... presigned PUT URL request → upload → return objectKey
   }
 }
 ```
 
-### 10.6 Sync Stratejisi
+### 10.9 Audio Trigger Pattern
 
-- **İlk katılım:** Tam state snapshot (harita, savaş, paylaşılan entity'ler, audio state)
-- **Artımlı:** Sadece delta event'ler
-- **Reconnect:** < 200 kaçırılan event → delta replay; > 200 → yeni snapshot
-- **Rate limiting (client):** Fog 200ms/event, mind map 100ms/event
-- **Rate limiting (server):** DM max 30 event/s, Player max 5 event/s
-- **Delivery:** At-least-once, UUID-based idempotency
+Yüksek kaliteli müzik dosyalarını online stream etmek bant genişliği ve senkronizasyon felaketidir. Çözüm: **dosyalar pre-cached, sadece JSON command broadcast**.
 
-### 10.7 Permission Modeli
+1. `.dmt` paketi tüm ses dosyalarını içerir → DM ve player'lar oyuna girmeden önce indirir (Worker üzerinden)
+2. DM müzik temasını değiştirdiğinde → `EventEnvelope(eventType: 'audio.state_changed', payload: {theme: 'forest', state: 'combat', intensity: 0.8})`
+3. Player'lar bu JSON'u alır → lokal `flutter_soloud` engine kendi cihazında dosyayı oynatır
+4. **Bant tüketimi:** baytlar düzeyinde
+5. **Gecikme:** sıfır
+
+### 10.10 Permission Modeli ve Visibility
 
 | Rol | Görebilecekler | Yapabilecekler |
 |---|---|---|
-| DM_OWNER | Her şey | Her şey |
-| PLAYER | shared_full + shared_restricted | Zar at, condition bildir |
-| OBSERVER | shared_full + shared_restricted | Sadece izle |
+| `DM_OWNER` | Her şey | Her şey |
+| `PLAYER` | shared_full + shared_restricted | Zar at, condition bildir, kendi token'ını hareket ettir |
+| `OBSERVER` | shared_full + shared_restricted | Sadece izle |
 
-**Content visibility:**
-- `private_dm` — Oyunculara asla gönderilmez (DM notes, gizli entity alanları)
-- `shared_full` — Tam erişim (paylaşılan entity'ler, harita)
-- `shared_restricted` — Kısıtlı alanlar (ör. HP yerine "Bloodied/Healthy" gösterilir)
+**Field-level visibility:**
+- `private_dm` — Sadece DM görür; payload server'a bile gitmez (client-side filter + RLS doğrulama)
+- `shared_full` — Tüm katılımcılar tam erişir
+- `shared_restricted` — HP gibi alanlar maskelenmiş gösterilir (`"Bloodied" / "Healthy"`)
+
+### 10.11 Rate Limiting ve Throttling
+
+| Kanal | Limit | Uygulama |
+|---|---|---|
+| Worker R2 download | 20/saat per user | Cloudflare KV counter |
+| Supabase Realtime emit | DM 30/s, Player 5/s | Server-side throttle (Supabase plan) |
+| Auth login | 5/dk per IP | Supabase built-in |
+| Client fog updates | 200ms debounce | Flutter side |
+| Client mind map updates | 100ms debounce | Flutter side |
+
+### 10.12 Bölünmüş Ağ Mimarisi
+
+Supabase Free Tier'ın **200 concurrent WebSocket** limiti darboğazdır. Çözüm: market/community sayfaları **HTTP REST**, sadece aktif oyun masaları **Realtime**.
+
+| Özellik | Protokol | WS limit tüketimi |
+|---|---|---|
+| Community market browse | HTTP REST | Sıfır |
+| .dmt download | HTTP (Worker) | Sıfır |
+| Profile/settings | HTTP REST | Sıfır |
+| Active game session | Realtime Broadcast | DM + 4-5 player ≈ 5-6 WS |
+
+200 limit ile ~33-40 paralel oyun masası mümkün. Kullanıcı session'dan kalktığında kanal **derhal** kapatılır.
+
+> **Tarihsel not:** v1.0 blueprint'i bu noktada ayrıntılı `users / refresh_tokens / sessions / session_participants / event_log / assets / dice_rolls / audit_log` PostgreSQL şemaları + 24 ayrı Freezed payload sınıfı + custom `socket_io_client` NetworkBridge state machine içeriyordu. Bu içerik **tamamen kaldırıldı** çünkü:
+> - PostgreSQL şemaları artık Supabase'de RLS policies ile yönetiliyor (Section 10.4)
+> - 24 payload sınıfı yerine **tek `EventEnvelope` Freezed class'ı** kullanılıyor (Section 1.4); tip bilgisi `EventTypes` sabit string'lerinde
+> - NetworkBridge artık `supabase_flutter` Realtime channel üzerinden çalışıyor (Section 10.6)
+> - Detaylı protokol akışları, JWT lifetime, rate limit numaraları, RLS örnekleri için: **`docs/ONLINE_REPORT.md` v2.0**
 
 ---
 
@@ -2795,19 +3055,21 @@ flutter build apk --release
 
 | Alan | Paket | Versiyon | Amaç |
 |---|---|---|---|
-| State Management | `flutter_riverpod` | ^2.5 | Provider'lar ve reaktif state |
-| Code Generation | `riverpod_annotation` | ^2.3 | @riverpod annotation desteği |
-| Immutable Models | `freezed_annotation` | ^2.4 | Freezed data class annotation'ları |
+| State Management | `flutter_riverpod` | ^2.6 | Provider'lar ve reaktif state |
+| Code Generation | `riverpod_annotation` | ^2.6 | @riverpod annotation desteği |
+| Immutable Models | `freezed_annotation` | ^3.0 | Freezed data class annotation'ları |
 | JSON Serialization | `json_annotation` | ^4.9 | JSON serialization annotation'ları |
-| HTTP Client | `dio` | ^5.4 | REST API çağrıları + interceptor'lar |
-| WebSocket | `socket_io_client` | ^2.0 | Online session event relay |
+| HTTP Client | `dio` | ^5.4 | REST API çağrıları + interceptor'lar (Cloudflare Worker proxy) |
+| **Realtime + Auth + Storage** | **`supabase_flutter`** | **^2.x** | **Supabase Auth + Realtime Broadcast + Postgres + Storage tek SDK** *(Sprint 9'da eklenecek)* |
 
 ### 16.2 Storage Paketleri
 
 | Alan | Paket | Versiyon | Amaç |
 |---|---|---|---|
-| MsgPack | `msgpack_dart` | ^1.0 | Kampanya dosyası I/O (geriye uyumlu) |
-| Settings | `shared_preferences` | ^2.2 | Kullanıcı ayarları |
+| **SQLite ORM** | **`drift`** | **^2.22** | **Birincil yerel storage — 11 tablo, schema v2** |
+| **SQLite native** | **`sqlite3_flutter_libs`** | **^0.5** | **SQLite engine bundling** |
+| MsgPack | `msgpack_dart` | ^1.0 | **Sadece** `.dmt` paket import/export (legacy migration + paylaşım) |
+| Settings | `shared_preferences` | ^2.5 | Kullanıcı ayarları (tema, dil, master volume) |
 | File Paths | `path_provider` | ^2.1 | Platform-specific dizinler |
 | Path Utils | `path` | ^1.9 | Dosya yolu manipülasyonu |
 
@@ -2815,11 +3077,9 @@ flutter build apk --release
 
 | Alan | Paket | Versiyon | Amaç |
 |---|---|---|---|
-| Routing | `go_router` | ^14.0 | Declarative navigation |
+| Routing | `go_router` | ^14.8 | Declarative navigation |
 | Markdown | `flutter_markdown` | ^0.7 | Markdown preview rendering |
-| HTML | `flutter_html` | ^3.0 | Stat block HTML rendering |
-| PDF | `pdfrx` | ^1.0 | PDF doküman görüntüleme |
-| File Picker | `file_picker` | ^8.0 | Görsel/PDF import |
+| File Picker | `file_picker` | ^10.0 | Görsel/PDF import |
 | Splitter | `multi_split_view` | ^3.0 | Yeniden boyutlandırılabilir paneller |
 
 ### 16.4 Desktop Paketleri
@@ -2834,7 +3094,9 @@ flutter build apk --release
 
 | Alan | Paket | Versiyon | Amaç |
 |---|---|---|---|
-| Audio | `just_audio` | ^0.9 | Tüm audio playback (music, ambience, SFX) |
+| **Audio** | **`flutter_soloud`** | **^3.1** | **SoLoud game audio engine — gapless loop, built-in fade, CPU-side mixing, 3D positioning hazır** |
+| **PDF** | **`pdfrx`** | **^2.2** | **PDF doküman görüntüleme** |
+| YAML | `yaml` | ^3.1 | Soundpad theme YAML config parse |
 
 ### 16.6 Utility Paketleri
 
@@ -2860,7 +3122,9 @@ flutter build apk --release
 
 ## 17. Migration Fazları
 
-### Faz 0 — Foundation (Hafta 1-2)
+> **Durum (2026-04-09):** Faz 0–4 %100, Faz 5 ~%85, Faz 6 ~%40, Faz 7 ~%5, Faz 8 ~%25 (sub-faz 8a kısmen). Detaylı sprint progress: `docs/FLUTTER_DEVELOPMENT_ROADMAP.md` Section 0.
+
+### Faz 0 — Foundation (Hafta 1-2) · `✅ Tamamlandı`
 
 **Hedef:** Proje iskeleti, temel altyapı, veri katmanı
 
@@ -2879,7 +3143,7 @@ flutter build apk --release
 
 **Doğrulama:** Mevcut Python kampanya `.dat` dosyası Flutter'da açılabilir.
 
-### Faz 1 — Entity Management + Database Tab (Hafta 3-5)
+### Faz 1 — Entity Management + Database Tab (Hafta 3-5) · `✅ Tamamlandı`
 
 **Hedef:** Tam entity yönetimi, arama, filtreleme
 
@@ -2901,7 +3165,7 @@ flutter build apk --release
 
 **Doğrulama:** Tüm 15 entity tipi oluşturulabilir, düzenlenebilir, silinebilir. @mention çalışır.
 
-### Faz 2 — Session + Combat Tracker (Hafta 6-7)
+### Faz 2 — Session + Combat Tracker (Hafta 6-7) · `✅ Tamamlandı`
 
 **Hedef:** Tam savaş yönetimi, oturum takibi
 
@@ -2921,7 +3185,7 @@ flutter build apk --release
 
 **Doğrulama:** Tam combat encounter oynanabilir, loglar otomatik yazılır.
 
-### Faz 3 — Battle Map (Hafta 8-10)
+### Faz 3 — Battle Map (Hafta 8-10) · `✅ Tamamlandı`
 
 **Hedef:** Tam 6 katmanlı savaş haritası
 
@@ -2948,7 +3212,7 @@ flutter build apk --release
 
 **Doğrulama:** 6 katman doğru sırada render ediliyor. Fog, draw, ruler player window'a sync oluyor.
 
-### Faz 4 — Mind Map (Hafta 11-12)
+### Faz 4 — Mind Map (Hafta 11-12) · `✅ %85 — UI tamam, persistence normalize bekliyor`
 
 **Hedef:** Tam sonsuz canvas, LOD, bağlantılar
 
@@ -2971,7 +3235,7 @@ flutter build apk --release
 
 **Doğrulama:** Node'lar oluşturulabilir, bağlanabilir, taşınabilir. LOD zoom ile sorunsuz geçiş yapar.
 
-### Faz 5 — World Map + Soundpad + PDF (Hafta 13-14)
+### Faz 5 — World Map + Soundpad + PDF (Hafta 13-14) · `~%50 — World Map UI tamam, SoLoud entegre, SoundpadPanel UI bekliyor`
 
 **Hedef:** Dünya haritası, audio sistemi, PDF görüntüleme
 
@@ -3037,25 +3301,44 @@ flutter build apk --release
 
 **Doğrulama:** D&D 5e SRD'den monster/spell aranabilir, indirilir, entity olarak kaydedilir.
 
-### Faz 8 — Online System (Hafta 18-21)
+### Faz 8 — Online System (Supabase + R2) (Hafta 18-21)
 
-**Hedef:** Çevrimiçi oyun altyapısı
+**Hedef:** Çevrimiçi oyun altyapısı (Supabase Auth + Realtime + Cloudflare R2/Worker). v1.0'daki FastAPI/PostgreSQL/Redis/MinIO planı **terkedildi**; detay Section 10.
 
-- [ ] `NetworkBridge` — connection state machine port'u
-- [ ] 24 event payload Freezed class'ları
-- [ ] `AppEventBus` → `NetworkBridge` wire
-- [ ] `socket_io_client` entegrasyonu
-- [ ] Connection status badge (durum çubuğunda gösterge)
-- [ ] Sunucu kurulumu (FastAPI + PostgreSQL + Redis + MinIO)
-- [ ] Database migration'ları (yukarıdaki şema)
-- [ ] Auth akışı (JWT RS256, kayıt, giriş, refresh)
-- [ ] Session create (DM) / join (Player, 6-char code)
-- [ ] Event relay (server-side permission filtering)
-- [ ] Snapshot + delta sync
-- [ ] Reconnect handling
-- [ ] Rate limiting (client + server)
+**Sub-faz 8a — Foundation (Sprint 9)** (✅ kısmen tamam):
+- [x] `EventEnvelope` Freezed class
+- [x] `EventTypes` (24 sabit, 17 online-forwarded — Python `core/network/events.py` ile uyumlu)
+- [x] `AppEventBus` (StreamController + interceptor hook)
+- [x] `NetworkBridge` abstract + `NoOpNetworkBridge`
+- [x] `SessionManager` abstract + `NoOpSessionManager`
+- [x] `GameSnapshot` Freezed class
+- [ ] `supabase_flutter` SDK pubspec entegrasyonu
+- [ ] `SupabaseAuthService` — signUp/signIn/signOut + JWT refresh
+- [ ] `SupabaseNetworkBridge` impl (Realtime channel `session:{join_code}`)
+- [ ] `SupabaseSessionManager` impl + 6-char join code üretimi
+- [ ] Supabase project setup + SQL migrations (game_sessions, session_participants, event_log, community_*)
+- [ ] RLS policies (DM kendi session, player join_code ile, event_log filter)
+- [ ] Auth UI (login/register/forgot dialog)
+- [ ] Session create/join UI
+- [ ] Connection status badge
 
-**Doğrulama:** DM session oluşturur, player kod ile katılır, battle map gerçek zamanlı sync olur.
+**Sub-faz 8b — Sync + Assets (Sprint 10)**:
+- [ ] `event_log` revision counter trigger
+- [ ] `StateSnapshotService` — capture/restore (Drift direct query)
+- [ ] Reconnect state machine (auto-retry + backoff)
+- [ ] Delta resync (revision-based replay; > 200 → snapshot fallback)
+- [ ] **Cloudflare R2 bucket setup** (private, public erişim kapalı)
+- [ ] **Cloudflare Worker** (TypeScript) — Supabase JWT verify + RLS check + KV rate limit + R2 stream
+- [ ] `AssetService` — DM presigned upload + Player Worker proxy download + local sha256 cache
+- [ ] **Audio Trigger pattern** — SoLoud pre-cached, sadece JSON broadcast
+- [ ] Client-side debounce (fog 200ms, mind map 100ms)
+
+**Sub-faz 8c — Mobile + Polish (Sprint 11)**:
+- [ ] `flutter_webrtc` mobile screen share (P2P + Cloudflare TURN)
+- [ ] Permission filtering (DM_OWNER / PLAYER / OBSERVER, `private_dm` field redaction)
+- [ ] Mobile DM/Player mode polish
+
+**Doğrulama:** DM session oluşturur, player 6-char kod ile katılır, snapshot transferi < 3s, basit event broadcast iki taraflı çalışır, Worker JWT doğrulaması 401/403/429 doğru döner.
 
 ### Faz 9 — Polish + Test (Hafta 22-23)
 

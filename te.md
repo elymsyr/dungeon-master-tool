@@ -6,7 +6,9 @@ Soundmap sistemini entegre etmeye başlayabiliriz. Soundmap themes, structured m
 
 ## Second Screen
 
-Artık Player Screen bölümüne başlayabiliriz. Bu bölümde amacımız, DM tarafından ikinci bir ekran açılabilmesi ve bu ekranda session'dan resim/pdf/mind map note/battle map paylaşılabilmesidir. Kullanıcı uygulamadki herhangi bir resme/mind map note'a/entity card'a/pdf'e sağ tıklayarak project seçeneği ile projection yapabilecek. Aynı anda birden fazla resim/note/card ve bir pdf ya da battlemap paylaşılabilmeli. Bu paylaşımlar arasında geçiş yapılabilmeli. Önce seçilen bu itemlerin ikinci ekranda nasıl efficient ve optimize bir şekilde gösterebileceğimizi hesapla. Sistem şuan yeterince hızlı çalışmıyor. Tab'lar arası geçişler hala yavaş. Yeni ekran sistemi hızlı çalışmalı.
+Artık Player Screen bölümüne başlayabiliriz. Bu bölümde amacımız, DM tarafından ikinci bir ekran açılabilmesi ve bu ekranda session'dan resim/entity card/battle map paylaşılabilmesidir. Kullanıcı uygulamadki herhangi bir resme/entity card'a sağ tıklayarak project seçeneği ile projection yapabilecek. Aynı anda birden fazla resim/card ya da battlemap paylaşılabilmeli. Bu paylaşımlar arasında geçiş yapılabilmeli. Önce seçilen bu itemlerin ikinci ekranda nasıl efficient ve optimize bir şekilde gösterebileceğimizi hesapla. Sistem şuan yeterince hızlı çalışmıyor. Tab'lar arası geçişler hala yavaş. Yeni ekran sistemi hızlı çalışmalı.
+
+İkinci ekran sistemi offline oyun öncelikli bir sistem. Online tarafta, her oyuncunun kendi arayüzünde tab'lar ile ekranlara bakılabilecek. Online tarafta bu kısımlar aynı anda paylaşılabileceği için sistemi buna göre düzenleyelim.
 
 ---
 

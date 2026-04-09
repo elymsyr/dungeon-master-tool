@@ -23,7 +23,7 @@
 
 ## 0. Güncel Durum (Nisan 2026)
 
-> Son güncelleme: **2026-04-04** | Branch: `flutter` | 110 Dart dosyası (99 lib + 11 test) | ~26K satır kod | 158 test (11 test dosyası)
+> Son güncelleme: **2026-04-09** | Branch: `flutter` | 167 Dart dosyası (lib/) | ~56K satır kod | 13 test dosyası, 223 test
 
 ### Genel İlerleme
 
@@ -34,22 +34,44 @@
 | Sprint 2 | Advanced Widgets + Template Studio | **%100 ✅** | Tüm field widget'lar + ImportDialog + EntityParser + widget testleri tam |
 | Sprint 3 | Session + Combat Tracker | **%100 ✅** | Mobile layout, combat testleri (51 test), DiceRoller, Entity Stats tam |
 | Sprint 4 | Battle Map | **%100 ✅** | 6 katman, tüm araçlar, performans optimizasyonu, mobile toolbar tam |
-| Sprint 5 | Mind Map + World Map | **~%0** | `mind_map/` ve `map/` klasörleri boş — hiç başlanmadı |
-| Sprint 6 | Soundpad + PDF + Polish | **~%5** | Sadece tema/dil altyapısı var; AudioEngine, SoundpadPanel, PDF viewer yok |
-| Sprint 7 | Dual Screen + Mobile Adaptation | **~%0** | Başlanmadı |
-| Sprint 8 | API Integration + Library | **~%0** | `datasources/remote/` boş; başlanmadı |
-| Sprint 9–12 | Online + Deployment | **~%0** | Başlanmadı |
+| Sprint 5 | Mind Map + World Map | **%85 ✅** | UI + notifier + 65 test tam (mind_map: 46, world_map: 19); persistence şu an `state_json` blob üzerinden — normalize Drift tablolarına taşıma bekliyor |
+| Sprint 6 | Soundpad + PDF + Polish | **~%40** | `flutter_soloud` 3.1.0 + `pdfrx` 2.2.24 entegre; audio entity modelleri var; ses kontrolü hub/settings'e gömülü; ayrı `SoundpadPanel` ekranı + theme YAML loader yok |
+| Sprint 7 | Dual Screen + Mobile Adaptation | **~%5** | Sadece `projection.content_set` / `projection.mode_changed` event tipleri tanımlı; UI/notifier/persistence yok |
+| Sprint 8 | API Integration + Library | **~%0** | `datasources/remote/` dizini hâlâ yok |
+| Sprint 9 | Online: Foundation | **~%25** | EventEnvelope + AppEventBus + NetworkBridge interface + NoOpNetworkBridge + NoOpSessionManager scaffold edildi; Supabase entegrasyonu yok |
+| Sprint 10–12 | Online: Sync + Gameplay + Deployment | **~%0** | Başlanmadı |
+
+### 🆕 Mimari Değişiklikler (2026-04-05 → 2026-04-09)
+
+Önceki dokümantasyon (2026-04-04) yazıldıktan sonra üç büyük mimari karar alındı:
+
+1. **MsgPack flat file → Drift (SQLite) primary storage**
+   - 11 tablo, schema v2, 5 DAO oluşturuldu (`lib/data/database/`)
+   - Tablolar **Supabase PostgreSQL şemasıyla birebir uyumlu** — gelecek online geçişte minimum migration
+   - Henüz normalize edilmeyen alanlar (`combat_state`, `map_data`, `mind_maps`) `campaigns.state_json` TEXT blob'unda
+   - MsgPack artık yalnızca `.dmt` paket import/export için kalır
+2. **Online stack: FastAPI/PostgreSQL/Redis/MinIO → Supabase + Cloudflare R2 + Workers**
+   - Sıfır sunucu maliyeti; Supabase Auth + Postgres + Realtime Broadcast
+   - Asset depolama: Cloudflare R2 (zero egress) + Worker (Supabase JWT verify + RLS check)
+   - `socket_io_client` planı iptal → `supabase_flutter` ile değişti
+   - Detay: `docs/ONLINE_REPORT.md`
+3. **Audio: `just_audio` → `flutter_soloud`**
+   - SoLoud (game audio engine) cross-platform ve daha stabil; CPU-side mixing, gapless loop, built-in fade desteği
+   - Pubspec'e eklendi; UI hooks hub/settings'e bağlandı; ayrı SoundpadPanel hâlâ TODO
 
 ### Tamamlanan Önemli Bileşenler
 
 **Altyapı & Domain:**
 - ✅ Clean Architecture (domain / data / application / presentation katmanları)
-- ✅ Tüm domain entity'leri Freezed ile (`entity`, `campaign`, `session`, `encounter`, `mind_map`, `map_data`, `audio_models`)
+- ✅ Tüm domain entity'leri Freezed ile (`entity`, `campaign`, `session`, `encounter`, `mind_map`, `map_data`, `audio_models`, `event_envelope`, `game_snapshot`)
 - ✅ Schema sistemi: `WorldSchema`, `EntityCategorySchema`, `FieldSchema`, `FieldGroup`, `CategoryRule`, `EncounterLayout`, `EncounterConfig`
 - ✅ `generateDefaultDnd5eSchema()` — 15 kategori, tam alan tanımları
-- ✅ `CampaignLocalDataSource` (MsgPack I/O), `CampaignRepositoryImpl`
+- ✅ **Drift (SQLite) data layer** — `lib/data/database/`: 11 tablo (campaigns, world_schemas, entities, sessions, encounters, combatants, combat_conditions, map_pins, timeline_pins, mind_map_nodes, mind_map_edges), schema v2 + `addColumn` migration, 5 DAO (campaign, entity, session, map, mind_map), `state_json` blob fallback için un-normalized alanlar
+- ✅ `CampaignRepositoryImpl` (Drift primary + MsgPack legacy import fallback)
 - ✅ `AppPaths` (portable + platform-aware), `ScreenType` breakpoint sistemi
-- ✅ `AppEventBus` service, `RuleEngine` (D&D 5e hesaplamalar)
+- ✅ **`AppEventBus` + `EventEnvelope` + `EventTypes`** (24 event sabit, 17 online-forwarded) — Python `core/network/events.py` ile birebir uyum
+- ✅ **`NetworkBridge` + `NoOpNetworkBridge` + `SessionManager` + `NoOpSessionManager`** scaffolding (Supabase impl bekliyor)
+- ✅ `RuleEngine` (D&D 5e hesaplamalar)
 - ✅ `ThemeNotifier` + `LocaleNotifier` (11 tema, 4 dil — EN/TR/DE/FR)
 - ✅ `DmToolColors` ThemeExtension (432 satır, 80+ renk değişkeni)
 
@@ -66,7 +88,11 @@
 - ✅ `HpBar`, `ConditionBadge`, `ResizableSplit`, `MobileCombatCard`
 - ✅ `BattleMapScreen` + `BattleMapNotifier` + `BattleMapPainter` (6 katman, tüm araçlar, scroll zoom, fit-to-screen)
 - ✅ `BattleMapToolbar` (3 satır, grid kontrolleri), `TokenWidget` (drag + resize)
-- ✅ `EntitySelectorDialog`, `EncounterColumnDialog`, `ImportDialog`
+- ✅ **`MindMapScreen` + `MindMapNotifier` + `MindMapCanvas`** (`presentation/screens/mind_map/`, 5 dosya) — sonsuz canvas, LOD, node tipleri, Bézier bağlantılar, workspace menüsü, floating zoom controls
+- ✅ **`WorldMapScreen` + `WorldMapNotifier`** (`presentation/screens/map/`, 5 dosya) — harita yükle, pin sistemi, timeline pin'leri, fog
+- ✅ **PDF viewer** (`pdfrx` 2.2.24)
+- ✅ **SoLoud audio engine** (`flutter_soloud` 3.1.0) — entegre, hub/settings hooks; ayrı SoundpadPanel TODO
+- ✅ `EntitySelectorDialog`, `EncounterColumnDialog`, `ImportDialog`, `BugReportDialog`
 - ✅ `MarkdownFieldWidget` (edit/preview toggle + @mention)
 - ✅ `ImageFieldWidget` + `ImageGallery` (carousel, zoom, file picker)
 - ✅ `AssetImporter`, `EntityParser`
@@ -86,20 +112,22 @@
 - ✅ `campaign_test.dart`, `mind_map_test.dart` (domain entity roundtrip)
 - ✅ `combat_provider_test.dart` (51 test — encounter, combatant, turn, HP, conditions, serialization)
 - ✅ `field_widget_factory_test.dart` (34 test — text, textarea, integer, boolean, enum, statBlock, dice)
-- 📊 Toplam: 158 test, 11 test dosyası
+- ✅ `mind_map_notifier_test.dart` (46 test — node CRUD, edge CRUD, undo/redo, workspace)
+- ✅ `world_map_notifier_test.dart` (19 test — pin CRUD, timeline, fog, image)
+- 📊 Toplam: **223 test**, **13 test dosyası**
 
 ### Eksik / Sıradaki Öncelikler
 
 | Öncelik | Bileşen | Sprint |
 |---------|---------|--------|
-| 🔴 Yüksek | Mind Map canvas + node'lar (sonsuz canvas, LOD, Bézier) | Sprint 5 |
-| 🔴 Yüksek | World Map screen + pin sistemi | Sprint 5 |
-| 🔴 Yüksek | `AudioEngine` + `SoundpadPanel` | Sprint 6 |
-| 🔴 Yüksek | `PdfViewerWidget` (pdfrx) | Sprint 6 |
+| 🔴 Yüksek | **Drift normalize:** mind map / world map / combat verisini `state_json` blob'tan ayrı tablolara taşı | Sprint 5 sonu |
+| 🔴 Yüksek | **Repository abstraksiyonları:** `EntityRepository` / `MapRepository` / `MindMapRepository` interface + impl (şu an `campaign_repository_impl.dart` içinde gömülü) | Sprint 5 sonu |
+| 🔴 Yüksek | `SoundpadPanel` ayrı ekran + theme YAML loader | Sprint 6 |
+| 🔴 Yüksek | **Supabase entegrasyonu** — `SupabaseNetworkBridge`, `SupabaseAuthService`, RLS policies | Sprint 9 |
+| 🟡 Orta | Dual Screen / Player Window (`projection.*` event'leri var, UI yok) | Sprint 7 |
 | 🟡 Düşük | `NpcSheet` alt tab klasörü (`npc_sheet/`) | Sprint 1 refactor |
-| 🟡 Düşük | Dual Screen / Player Window (`screen/` boş) | Sprint 7 |
 | ⚪ Beklemede | API browser + bulk downloader | Sprint 8 |
-| ⚪ Beklemede | Online (NetworkBridge, sunucu, WebRTC) | Sprint 9–11 |
+| ⚪ Beklemede | **Cloudflare R2 + Worker** asset pipeline + WebRTC mobile screen share | Sprint 10–11 |
 
 ---
 
@@ -784,62 +812,66 @@ class ScreenShareService {
 
 ---
 
-### Sprint 5 — Mind Map + World Map (Gün 51-60) · `~0% — BAŞLANMADI`
+### Sprint 5 — Mind Map + World Map (Gün 51-60) · `%85 ✅ — UI tamamlandı, persistence normalize bekleniyor`
 
 **Hedef:** Sonsuz canvas, LOD, node tipleri, dünya haritası.
 
 | # | Task | Tahmin | Kabul Kriterleri |
 |---|---|---|---|
-| 5.1 | `MindMapCanvas` (InteractiveViewer.builder + Stack) | 3s | Sonsuz scroll + zoom |
-| 5.2 | `MindMapGridPainter` (zoom-adaptive grid) | 1s | Grid zoom < 0.15'te gizlenir |
-| 5.3 | LOD sistemi (3 zona: Full/Reduced/Template) | 3s | Zoom threshold'larında geçiş |
-| 5.4 | Note node (MarkdownEditor, sarı bg) | 2s | Oluştur, düzenle, taşı |
-| 5.5 | Entity node (compact NpcSheet, koyu bg) | 3s | Sidebar'dan drag-drop oluşturma |
-| 5.6 | Image node (AspectRatio, transparent) | 2s | Görsel yükle, resize |
-| 5.7 | Template mode (inverse-scale labels) | 2s | Zoom < 0.1'de okunabilir başlık |
-| 5.8 | `ConnectionPainter` (Cubic Bézier) | 2s | Bağlantı çizgileri, seçim highlight |
-| 5.9 | Connection oluşturma (Shift+drag / uzun basma) | 2s | İki node arası bağlantı |
-| 5.10 | Node drag + resize (min 150x100) | 2s | Handle ile boyut değiştir |
-| 5.11 | Undo/Redo (Command pattern, 50 max, Ctrl+Z) | 3s | 50 adım geri/ileri |
-| 5.12 | Autosave (2s debounce) | 1s | Değişiklikten 2s sonra kaydet |
-| 5.13 | Right-click context menu | 1s | Düzenle, sil, çoğalt, bağla |
-| 5.14 | Mind map — mobile read-only view + basit düzenleme | 2s | Görüntüleme + not ekleme |
-| 5.15 | `MapScreen` (dünya haritası + pin sistemi) | 3s | Harita yükle, zoom/pan |
-| 5.16 | Entity pin'leri (renk kodlu) | 2s | NPC=turuncu, Monster=kırmızı, vb. |
-| 5.17 | Timeline pin'leri (gün bazlı, parent-child) | 3s | Timeline oluştur/düzenle/sil |
-| 5.18 | Map filtreler + "Project Map" butonu | 1s | Filtrele, player'a yansıt |
-| **Toplam** | | **38s** | |
+| 5.1 | ~~`MindMapCanvas` (InteractiveViewer.builder + Stack)~~ ✅ | 3s | Sonsuz scroll + zoom çalışır |
+| 5.2 | ~~`MindMapGridPainter` (zoom-adaptive grid)~~ ✅ | 1s | Grid zoom < 0.15'te gizlenir |
+| 5.3 | ~~LOD sistemi (3 zona: Full/Reduced/Template)~~ ✅ | 3s | Zoom threshold'larında geçiş |
+| 5.4 | ~~Note node (MarkdownEditor, sarı bg)~~ ✅ | 2s | Oluştur, düzenle, taşı |
+| 5.5 | ~~Entity node (compact NpcSheet, koyu bg)~~ ✅ | 3s | Sidebar'dan drag-drop oluşturma |
+| 5.6 | ~~Image node (AspectRatio, transparent)~~ ✅ | 2s | Görsel yükle, resize |
+| 5.7 | ~~Template mode (inverse-scale labels)~~ ✅ | 2s | Zoom < 0.1'de okunabilir başlık |
+| 5.8 | ~~`ConnectionPainter` (Cubic Bézier)~~ ✅ | 2s | Bağlantı çizgileri, seçim highlight |
+| 5.9 | ~~Connection oluşturma (Shift+drag / uzun basma)~~ ✅ | 2s | İki node arası bağlantı |
+| 5.10 | ~~Node drag + resize (min 150x100)~~ ✅ | 2s | Handle ile boyut değiştir |
+| 5.11 | ~~Undo/Redo (Command pattern, 50 max, Ctrl+Z)~~ ✅ | 3s | 50 adım geri/ileri |
+| 5.12 | ~~Autosave (2s debounce)~~ ✅ | 1s | `saveStateProvider.markDirty()` ile çalışır |
+| 5.13 | ~~Right-click context menu~~ ✅ | 1s | Düzenle, sil, çoğalt, bağla |
+| 5.14 | ~~Mind map — mobile read-only view + basit düzenleme~~ ✅ | 2s | Görüntüleme + not ekleme |
+| 5.15 | ~~`WorldMapScreen` (dünya haritası + pin sistemi)~~ ✅ | 3s | Harita yükle, zoom/pan |
+| 5.16 | ~~Entity pin'leri (renk kodlu)~~ ✅ | 2s | NPC=turuncu, Monster=kırmızı, vb. |
+| 5.17 | ~~Timeline pin'leri (gün bazlı, parent-child)~~ ✅ | 3s | Timeline oluştur/düzenle/sil |
+| 5.18 | ~~Map filtreler + "Project Map" butonu~~ ✅ | 1s | Filtre çalışır, projection event'i Sprint 7'de wire edilecek |
+| 5.19 | **Mind/Map persistence'ini `state_json` blob'tan normalize Drift tablolarına taşı** | 4s | `mind_map_nodes`, `mind_map_edges`, `map_pins`, `timeline_pins` tablolarına gerçek CRUD; `MapRepository` + `MindMapRepository` interface impl |
+| 5.20 | ~~Mind/world map notifier testleri~~ ✅ | 2s | `mind_map_notifier_test.dart` (46 test), `world_map_notifier_test.dart` (19 test) |
+| **Toplam** | | **42s** | |
 
-**Sprint 5 Doğrulama:** Mind map node'ları oluşturulabilir/bağlanabilir. LOD geçişleri sorunsuz. World map pin'leri çalışır.
+**Sprint 5 Doğrulama:** Mind map node'ları oluşturulabilir/bağlanabilir. LOD geçişleri sorunsuz. World map pin'leri çalışır. *(Persistence şu an `state_json` JSON blob üzerinden — task 5.19 normalize'ı tamamlandığında %100 kapanır.)*
 
 ---
 
-### Sprint 6 — Soundpad + PDF + Polish (Gün 61-70) · `~5% — BAŞLANMADI`
+### Sprint 6 — Soundpad + PDF + Polish (Gün 61-70) · `~%40 — kısmi`
 
 **Hedef:** Audio engine, soundpad UI, PDF viewer, UI polish.
 
+> **Not:** `just_audio` planı **`flutter_soloud`** ile değişti (cross-platform stabilite + game audio engine API). Crossfade artık SoLoud built-in `fadeVolume()` ile yapılır; CPU-side mixing.
+
 | # | Task | Tahmin | Kabul Kriterleri |
 |---|---|---|---|
-| 6.1 | `AudioEngine` — just_audio ile MusicDeck A/B | 4s | Track yükleme, çalma, durdurma |
-| 6.2 | Crossfade sistemi (3s InOutCubic) | 3s | State geçişlerinde smooth crossfade |
-| 6.3 | Intensity mask (base, level1, level2) | 2s | Intensity arttıkça katman eklenir |
+| 6.1 | ~~`flutter_soloud` entegrasyonu — engine init, dispose, handle pool~~ ✅ | 4s | `flutter_soloud` 3.1.0 pubspec'te, hub/settings hooks tam |
+| 6.2 | Crossfade sistemi (SoLoud `fadeVolume`, 3s InOutCubic) | 2s | State geçişlerinde smooth crossfade |
+| 6.3 | Intensity mask (base, level1, level2) — paralel handle'lar | 2s | Intensity arttıkça katman eklenir |
 | 6.4 | Ambience slot'ları (4x, infinite loop, per-slot volume) | 2s | 4 eşzamanlı ambience |
 | 6.5 | SFX slot'ları (8x, one-shot) | 1s | 8 eşzamanlı SFX |
-| 6.6 | Master volume (tüm player'ları etkiler) | 1s | Global volume çalışır |
-| 6.7 | Theme YAML loader | 2s | Mevcut YAML dosyaları parse edilir |
-| 6.8 | `SoundpadPanel` — Desktop (3-tab: music/ambience/sfx) | 3s | Tam kontrol paneli |
+| 6.6 | Master volume (global) | 1s | Tek slider tüm handle'ları etkiler |
+| 6.7 | Theme YAML loader (`yaml` paketi var) | 2s | Mevcut YAML dosyaları parse edilir |
+| 6.8 | `SoundpadPanel` — Desktop (3-tab: music/ambience/sfx) — **ayrı ekran** | 3s | Şu an hub'a gömülü; ayrı panel TODO |
 | 6.9 | `SoundpadPanel` — Tablet (right drawer) | 1s | Drawer açılır/kapanır |
 | 6.10 | `SoundpadPanel` — Mobile (mini player + bottom sheet) | 3s | Persistent mini bar + tam sheet |
-| 6.11 | `PdfViewerWidget` (pdfrx) | 2s | PDF açılır, zoom, scroll |
+| 6.11 | ~~`PdfViewerWidget` (pdfrx)~~ ✅ | 2s | `pdfrx` 2.2.24 entegre |
 | 6.12 | PDF panel — Desktop (sağ panel, collapsible) | 1s | Soundpad ile karşılıklı exclusive |
 | 6.13 | PDF panel — Mobile (full-screen modal) | 1s | Modal route |
-| 6.14 | "Project PDF" akışı (entity → projection) | 1s | PDF player window'a gönderilir |
+| 6.14 | "Project PDF" akışı (entity → projection) | 1s | PDF player window'a gönderilir (Sprint 7 ile birlikte) |
 | 6.15 | `ProjectionManager` widget (drag-drop thumbnails) | 2s | Görsel sürükle-bırak, thumbnail strip |
 | 6.16 | Toolbar — Desktop (tam toolbar) | 2s | Campaign label, projection, controls |
 | 6.17 | Toolbar — Mobile (compact app bar + overflow menu) | 2s | Temel aksiyonlar + menü |
 | 6.18 | Tüm 11 temanın görsel doğrulaması | 2s | Renkler doğru uygulanır |
 | 6.19 | Tüm 4 dilin doğrulaması | 1s | Eksik key yok |
-| **Toplam** | | **36s** | |
+| **Toplam** | | **35s** | |
 
 **Sprint 6 Doğrulama:** Müzik temaları crossfade ile çalışır. Ambience + SFX eşzamanlı. Soundpad desktop/tablet/mobile'da düzgün. PDF görüntüleme çalışır.
 
@@ -896,61 +928,68 @@ class ScreenShareService {
 
 ---
 
-### Sprint 9 — Online: Foundation (Gün 91-100) · `~0% — BAŞLANMADI`
+### Sprint 9 — Online: Foundation (Supabase) (Gün 91-100) · `~%25`
 
-**Hedef:** Event sistemi, NetworkBridge, sunucu iskeleti.
+**Hedef:** EventEnvelope wire format, NetworkBridge interface, Supabase Auth + Realtime entegrasyonu, DM session create/join.
+
+> **Stack değişikliği:** Önceki plan FastAPI + python-socketio + PostgreSQL self-hosted'tı. Yeni karar: **Supabase (Auth + Postgres + Realtime Broadcast)** + **Cloudflare R2/Worker** (Sprint 10). Detay: `docs/ONLINE_REPORT.md`.
 
 | # | Task | Tahmin | Kabul Kriterleri |
 |---|---|---|---|
-| 9.1 | 24 event payload Freezed class'ları | 4s | Tüm tipler + fromJson/toJson |
-| 9.2 | `EventEnvelope` Freezed class | 1s | UUID, timestamp, type, payload |
-| 9.3 | `NetworkBridge` — connection state machine | 3s | DISCONNECTED→CONNECTING→CONNECTED→ERROR |
-| 9.4 | `NetworkBridge` — event queuing + flush | 2s | Offline'da kuyruklar, bağlantıda gönderir |
-| 9.5 | `AppEventBus` → `NetworkBridge` wiring | 2s | Online events otomatik forward |
-| 9.6 | `SocketClient` (socket_io_client wrapper) | 3s | Connect, disconnect, event emit/listen |
-| 9.7 | Connection status badge (status bar) | 1s | Renk: gri/turuncu/yeşil/kırmızı |
-| 9.8 | Server: FastAPI + python-socketio ASGI skeleton | 4s | Health check endpoint çalışır |
-| 9.9 | Server: PostgreSQL schema migration | 3s | Tüm tablolar oluşturulur |
-| 9.10 | Server: JWT auth (register, login, refresh) | 4s | Token alım + yenileme |
-| 9.11 | Server: Session create + join (6-char code) | 3s | DM session açar, player katılır |
-| 9.12 | Server: Basic event relay (no filtering) | 3s | DM event → tüm participant'lara |
-| 9.13 | Flutter: Auth UI (login/register dialog) | 2s | Giriş/kayıt formu |
-| 9.14 | Flutter: Session create/join UI | 2s | Oda oluştur/katıl |
-| **Toplam** | | **37s** | |
+| 9.1 | ~~`EventEnvelope` Freezed class~~ ✅ | 1s | `lib/domain/entities/events/event_envelope.dart` — UUID, timestamp, type, payload, sessionId, campaignId |
+| 9.2 | ~~24 event tip sabit (`EventTypes`)~~ ✅ | 2s | `lib/domain/entities/events/event_types.dart` — Python `core/network/events.py` ile birebir; `onlineEvents` set 17 tip |
+| 9.3 | ~~`AppEventBus` (StreamController + interceptor)~~ ✅ | 2s | `emit()`, `injectRemote()`, `allEvents` stream — bridge interceptor noktası açık |
+| 9.4 | ~~`NetworkBridge` abstract + `NoOpNetworkBridge`~~ ✅ | 2s | `lib/data/network/network_bridge.dart` + `no_op_network_bridge.dart` — offline default |
+| 9.5 | ~~`SessionManager` abstract + `NoOpSessionManager`~~ ✅ | 1s | createSession/joinSession/leaveSession contract |
+| 9.6 | ~~`GameSnapshot` Freezed class~~ ✅ | 1s | `lib/domain/entities/events/game_snapshot.dart` — full state capture/restore wire format |
+| 9.7 | `supabase_flutter` SDK pubspec'e ekleme + initialize | 1s | `Supabase.initialize()` `main.dart`'ta |
+| 9.8 | `SupabaseAuthService` — signUp / signIn / signOut / refresh | 3s | JWT yönetimi; `currentUser` stream |
+| 9.9 | `SupabaseNetworkBridge` impl | 4s | `Realtime.channel('session:$joinCode').broadcast(...)`; outgoing event flow + incoming subscribe |
+| 9.10 | `SupabaseSessionManager` impl | 3s | `game_sessions` tablosu INSERT, 6-char `joinCode` üretimi, leave delete |
+| 9.11 | `GameSession` Freezed model | 1s | sessionId, joinCode, hostId, players[], status |
+| 9.12 | Supabase project setup + SQL migration (game_sessions, session_participants, event_log, community_*) | 3s | Tüm tablolar + RLS policies; `supabase/migrations/` |
+| 9.13 | Auth UI (login/register/forgot dialog) | 3s | Form validation, error states, "remember me" |
+| 9.14 | Session create/join UI (Host / Join with code) | 3s | DM "Host", Player "Join" — oda kodu kopyalama, QR opsiyonu |
+| 9.15 | Connection status badge (4 state) | 1s | Status bar — gri/turuncu/yeşil/kırmızı |
+| 9.16 | `StateSnapshotService` — `capture(Ref)` / `restore(Ref, snap)` | 3s | Drift'ten direkt query ile snapshot; player join'de DM yollar |
+| 9.17 | Online tests — bridge unit, session manager unit, snapshot roundtrip | 2s | Mock Supabase client ile |
+| **Toplam** | | **36s** | |
 
-**Sprint 9 Doğrulama:** DM session oluşturur, player kod ile katılır, basit event relay çalışır.
+**Sprint 9 Doğrulama:** DM session oluşturur, player 6-char kod ile katılır, snapshot transferi tamam, basit event broadcast (entity.updated, session.turn_advanced) iki taraflı çalışır.
 
 ---
 
-### Sprint 10 — Online: Full Sync (Gün 101-110) · `~0% — BAŞLANMADI`
+### Sprint 10 — Online: Full Sync (R2 + Worker) (Gün 101-110) · `~0% — BAŞLANMADI`
 
-**Hedef:** Delta sync, reconnect, asset management, screen share gelişmiş.
+**Hedef:** Delta sync, reconnect, Cloudflare R2 + Worker asset pipeline, audio trigger pattern.
 
 | # | Task | Tahmin | Kabul Kriterleri |
 |---|---|---|---|
-| 10.1 | Server: Event log persistence (revision-based) | 3s | Event'ler sıralı kaydedilir |
-| 10.2 | Server: Permission filtering (DM/Player/Observer) | 3s | private_dm event'ler filtrelenir |
-| 10.3 | Server: Snapshot endpoint (current state) | 3s | Player join'de tam state |
-| 10.4 | Server: Delta resync (revision-based) | 3s | < 200 event → delta, > 200 → snapshot |
-| 10.5 | Flutter: Reconnect state machine | 2s | Bağlantı kopunca auto-reconnect |
-| 10.6 | Flutter: Delta apply + conflict resolution (last-write-wins) | 3s | Event'ler UI'ya uygulanır |
-| 10.7 | Server: Asset upload (MinIO + signed URL) | 3s | Görsel/PDF yükleme |
-| 10.8 | Flutter: Asset upload/download | 2s | DM asset yükler, player indirir |
-| 10.9 | Server: Rate limiting (DM 30/s, Player 5/s) | 1s | Aşırı event throttle edilir |
-| 10.10 | Flutter: Client-side debounce (fog 200ms, mindmap 100ms) | 1s | High-freq event'ler debounce |
-| 10.11 | Mobile: Screen share Mod B (state sync, low bandwidth) | 4s | Projection state JSON olarak sync |
-| 10.12 | Mobile: Screen share asset pre-transfer | 2s | Görseller önceden gönderilir |
-| 10.13 | Audio state broadcast + player mirror | 2s | DM müzik değişince player'da da değişir |
-| 10.14 | Online integration testleri | 3s | Full flow: create → join → sync → disconnect → reconnect |
-| **Toplam** | | **35s** | |
+| 10.1 | Supabase: `event_log` tablosu + revision counter trigger | 2s | Her event session-bazlı monoton revision alır |
+| 10.2 | Supabase: RLS policies — DM/Player/Observer permission filtering | 3s | `private_dm` payload'lar player'lara dönmez |
+| 10.3 | Flutter: Snapshot recovery flow — player join → DM `capture()` → broadcast → player `restore()` | 3s | Player join'de < 3s tam state |
+| 10.4 | Flutter: Delta resync — revision-based replay; < 200 event delta, > 200 snapshot fallback | 3s | Reconnect'te kayıp event'ler uygulanır |
+| 10.5 | Flutter: Reconnect state machine (auto-retry + backoff) | 2s | Bağlantı kopunca exponential backoff retry |
+| 10.6 | Flutter: Delta apply + conflict resolution (last-write-wins) | 3s | Event'ler UI'ya idempotent şekilde uygulanır |
+| 10.7 | **Cloudflare R2 bucket setup** (private, public erişim kapalı) | 1s | wrangler config + bucket created |
+| 10.8 | **Cloudflare Worker** — Supabase JWT verify + RLS check + R2 stream + KV rate limit | 4s | TypeScript Worker; 20 download/saat per user; 401/403/429 doğru döner |
+| 10.9 | Flutter: `AssetService` — DM presigned upload + Player Worker proxy download | 3s | Görsel/PDF/audio asset upload + download çalışır |
+| 10.10 | Flutter: Local asset cache (`assets/cache/{sha256}`) | 2s | Aynı asset tekrar download edilmez |
+| 10.11 | Flutter: Client-side debounce (fog 200ms, mindmap 100ms) | 1s | High-freq event'ler debounce |
+| 10.12 | **Audio Trigger pattern** — DM tema/intensity değişikliği yalnızca JSON broadcast; ses dosyası `.dmt` paketinde pre-cached | 2s | Sıfır ses streaming; player local SoLoud çalar |
+| 10.13 | Reconnect integration test (mid-session disconnect → 5s sonra geri) | 2s | Eksik event'ler delta replay ile kapanır |
+| 10.14 | Online integration testleri (create → join → sync → asset download → disconnect → reconnect) | 3s | E2E mock Supabase ile |
+| **Toplam** | | **34s** | |
 
-**Sprint 10 Doğrulama:** Player disconnect/reconnect mid-session, tam state < 5 saniyede yüklenir. Permission filtering çalışır. Mobile screen share state sync ile çalışır.
+**Sprint 10 Doğrulama:** Player disconnect/reconnect mid-session, tam state < 5 saniyede yüklenir. Worker JWT doğrulama çalışır, izinsiz indirme 403 döner. Audio trigger pattern ile müzik değişimi 0 byte payload.
 
 ---
 
 ### Sprint 11 — Online: Gameplay + Mobile Polish (Gün 111-120) · `~0% — BAŞLANMADI`
 
-**Hedef:** Server-side dice, restricted entity view, mobile finalization.
+**Hedef:** Server-side dice, restricted entity view, mobile finalization, WebRTC mobile screen share.
+
+> **Not:** WebRTC için `flutter_webrtc` paketi pubspec'e bu sprint başında eklenir; STUN/TURN için Cloudflare Calls (TURN) seçilebilir, alternatif coturn self-host.
 
 | # | Task | Tahmin | Kabul Kriterleri |
 |---|---|---|---|
@@ -1087,27 +1126,28 @@ class ScreenShareService {
 - Yedek plan: Aynı pencere içinde split view (SplitView widget)
 - Windows/Linux/macOS'ta ayrı ayrı test
 
-### R2: just_audio Desktop Desteği
+### R2: flutter_soloud Desktop Olgunluğu
+
+**Olasılık:** Düşük | **Etki:** Orta
+
+**Risk:** `flutter_soloud` (SoLoud bindings) Linux/macOS/Windows desktop'ta hâlâ olgunlaşıyor; gapless loop veya crossfade'de edge case'ler olabilir.
+
+**Azaltma:**
+- Sprint 6 başında audio PoC (mevcut entegrasyon `flutter_soloud` 3.1.0 ile başarılı)
+- Yedek: `audioplayers` paketi veya `package:audio_session` ile platform native bridge
+- SoLoud `fadeVolume()` built-in olduğu için crossfade `just_audio`'dan daha güvenilir
+
+### R3: MsgPack Legacy Migration
 
 **Olasılık:** Düşük | **Etki:** Yüksek
 
-**Risk:** `just_audio` desktop platformlarında stabil çalışmayabilir veya crossfade desteği yetersiz olabilir.
+**Risk:** Eski Python `data.dat` dosyaları Drift SQLite'a migrate edilirken Python msgpack ↔ Dart `msgpack_dart` arasında format farklılıkları olabilir.
 
 **Azaltma:**
-- Sprint 6 başında audio PoC
-- Yedek: `audioplayers` paketi veya platform-specific native audio bridge
-- Crossfade yerine hard switch fallback
-
-### R3: MsgPack Backward Compat
-
-**Olasılık:** Düşük | **Etki:** Kritik
-
-**Risk:** Python msgpack ve Dart msgpack_dart arasında format farklılıkları olabilir.
-
-**Azaltma:**
-- Sprint 0'da ilk test (Task 0.9)
+- `CampaignRepositoryImpl._loadFromDb()` SQLite'ta yoksa `.dat` okuyup `_migrateToDb()` ile transfer eder
 - 3+ farklı gerçek kampanya dosyasıyla test
 - Fallback: JSON okuma desteği (mevcut Python app JSON de destekliyor)
+- Migration sonrası `data.dat.bak` olarak yedeklenir, ileri-geri imkân
 
 ### R4: Mobile Battle Map Performansı
 
@@ -1154,6 +1194,43 @@ class ScreenShareService {
 - D&D Beyond entegrasyonu → kullanıcının kendi hesabı
 - Uygulama adında "D&D" veya "Dungeons & Dragons" kullanma
 - "TTRPG Dungeon Master Tool" gibi jenerik isimlendirme
+
+### R8: Supabase Free Tier Limitleri
+
+**Olasılık:** Orta | **Etki:** Yüksek
+
+**Risk:** Supabase Free Tier yalnızca **200 concurrent WebSocket** ve **50k MAU** sunar. Sosyal medya/market özelliklerini gezen her kullanıcı bu limiti tüketirse aktif oyun masaları tıkanır.
+
+**Azaltma:**
+- **Bölünmüş ağ mimarisi:** Market/community sayfaları **HTTP REST** ile çalışır (limit tüketmez), Realtime kanalı sadece bir oyun masasına oturulduğunda açılır, kalkıldığında derhal kapatılır
+- Per-session ortalama 5-6 WebSocket → 200 limit ile ~33-40 paralel masa kapasitesi
+- Pro plan'a geçiş eşiği belirlenir (1k+ DAU)
+- Self-host fallback olarak PocketBase + MinIO araştırılır (Supabase Pro maliyet kontrolden çıkarsa)
+- Detay: `docs/ONLINE_REPORT.md` Sorun 4
+
+### R9: Cloudflare Worker Free Tier Limitleri
+
+**Olasılık:** Düşük | **Etki:** Orta
+
+**Risk:** Worker Free plan **100k request/day** sunar. Yoğun asset indirme veya bot saldırısı bu limiti delip ücretli plan tetikleyebilir.
+
+**Azaltma:**
+- Worker'da KV-tabanlı **rate limit:** 20 download/saat per user
+- Asset SHA256 hash + local cache → aynı dosya tekrar indirilmez
+- Aggressive cache headers (CDN cache) — Worker request sayısını düşürür
+- Pro plan: $5/ay, 10M req/ay (yeterli buffer)
+
+### R10: Drift Schema Migration Riski
+
+**Olasılık:** Orta | **Etki:** Orta
+
+**Risk:** Drift schema'da kolon eklendiğinde/silindiğinde mevcut SQLite veritabanı bozulabilir.
+
+**Azaltma:**
+- Her schema değişikliğinde `schemaVersion++` ve `MigrationStrategy.onUpgrade` içinde adım adım migration (`addColumn`, `addAll`, vb.)
+- Migration testi: her sürüm için `from < N` testi (Drift `MigrationVerifier`)
+- Production rollout: önce app schema dump'ı yedeklenir, sonra migration uygulanır
+- Geri dönüş planı: schema versiyonu unsupport ise eski `.dat` MsgPack legacy fallback aktif kalır
 
 ---
 
