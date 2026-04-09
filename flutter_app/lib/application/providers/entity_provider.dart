@@ -3,11 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/entity.dart';
+import '../../domain/entities/events/event_envelope.dart';
+import '../../domain/entities/events/event_types.dart';
 import '../../domain/entities/schema/default_dnd5e_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../services/event_bus.dart';
 import '../services/undo_redo_mixin.dart';
 import 'campaign_provider.dart';
+import 'event_bus_provider.dart';
 import 'save_state_provider.dart';
 
 const _uuid = Uuid();
@@ -43,13 +47,18 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   final ActiveCampaignNotifier _campaign;
   final WorldSchema _schema;
   final VoidCallback _onDirty;
+  final AppEventBus _eventBus;
 
   @override
   int get maxUndoDepth => 30;
 
-  EntityNotifier(this._campaign, this._schema, this._onDirty) : super({}) {
+  EntityNotifier(
+      this._campaign, this._schema, this._onDirty, this._eventBus)
+      : super({}) {
     _loadFromCampaign();
   }
+
+  String? get _campaignId => _campaign.data?['world_id'] as String?;
 
   void _loadFromCampaign() {
     final data = _campaign.data;
@@ -144,6 +153,11 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     );
     state = {...state, id: entity};
     _syncToCampaign();
+    _eventBus.emit(EventEnvelope.now(
+      EventTypes.entityCreated,
+      {'entity_id': id, 'entity_type': categorySlug, 'name': name},
+      campaignId: _campaignId,
+    ));
     return id;
   }
 
@@ -152,12 +166,26 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     pushUndo(state);
     state = {...state, entity.id: entity};
     _syncToCampaign();
+    _eventBus.emit(EventEnvelope.now(
+      EventTypes.entityUpdated,
+      {'entity_id': entity.id, 'changed_fields': const <String>[]},
+      campaignId: _campaignId,
+    ));
   }
 
   void delete(String entityId) {
+    final removed = state[entityId];
     pushUndo(state);
     state = Map.from(state)..remove(entityId);
     _syncToCampaign();
+    _eventBus.emit(EventEnvelope.now(
+      EventTypes.entityDeleted,
+      {
+        'entity_id': entityId,
+        'entity_type': removed?.categorySlug ?? '',
+      },
+      campaignId: _campaignId,
+    ));
   }
 
   void _syncToCampaign() {
@@ -241,5 +269,6 @@ final entityProvider =
     ref.read(activeCampaignProvider.notifier),
     schema,
     () => ref.read(saveStateProvider.notifier).markDirty(),
+    ref.read(eventBusProvider),
   );
 });

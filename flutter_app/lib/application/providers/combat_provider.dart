@@ -6,12 +6,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/entity.dart';
+import '../../domain/entities/events/event_envelope.dart';
+import '../../domain/entities/events/event_types.dart';
 import '../../domain/entities/schema/encounter_config.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/session.dart';
+import '../services/event_bus.dart';
 import '../services/undo_redo_mixin.dart';
 import 'campaign_provider.dart';
 import 'entity_provider.dart';
+import 'event_bus_provider.dart';
 import 'save_state_provider.dart';
 
 const _uuid = Uuid();
@@ -57,10 +61,15 @@ class CombatNotifier extends StateNotifier<CombatState>
   final VoidCallback _onChanged;
 
   final Map<String, dynamic>? Function() _getCampaignData;
+  final AppEventBus _eventBus;
 
-  CombatNotifier(this._getEntities, this._getSchema, this._onChanged, this._getCampaignData) : super(const CombatState()) {
+  CombatNotifier(this._getEntities, this._getSchema, this._onChanged,
+      this._getCampaignData, this._eventBus)
+      : super(const CombatState()) {
     _loadFromCampaign();
   }
+
+  String? get _campaignId => _getCampaignData()?['world_id'] as String?;
 
   void _loadFromCampaign() {
     final data = _getCampaignData();
@@ -190,6 +199,15 @@ class CombatNotifier extends StateNotifier<CombatState>
     _updateEncounter(enc.copyWith(combatants: [...enc.combatants, combatant]));
     _log('Added ${entity.name} (Init: $initRoll, AC: $ac, HP: $hp/$maxHp)');
     _sortByInitiative();
+    _eventBus.emit(EventEnvelope.now(
+      EventTypes.sessionCombatantAdded,
+      {
+        'session_id': enc.id,
+        'combatant_id': combatant.id,
+        'name': combatant.name,
+      },
+      campaignId: _campaignId,
+    ));
   }
 
   void addDirectRow(String name, {Map<String, String> stats = const {}}) {
@@ -290,6 +308,14 @@ class CombatNotifier extends StateNotifier<CombatState>
       _log('${current.name}\'s turn');
     }
     _saveAndNotify();
+    _eventBus.emit(EventEnvelope.now(
+      EventTypes.sessionTurnAdvanced,
+      {
+        'session_id': enc.id,
+        'new_active_combatant_id': current.id,
+      },
+      campaignId: _campaignId,
+    ));
   }
 
   void rollInitiatives() {
@@ -331,6 +357,15 @@ class CombatNotifier extends StateNotifier<CombatState>
     // Entity card sync — combatStats güncelle
     _syncCombatStatToEntity(combatantId, 'hp', c.hp.toString());
     _saveAndNotify();
+    _eventBus.emit(EventEnvelope.now(
+      EventTypes.sessionCombatantUpdated,
+      {
+        'session_id': enc.id,
+        'combatant_id': combatantId,
+        'changes': {'hp': c.hp},
+      },
+      campaignId: _campaignId,
+    ));
   }
 
   /// Combat stats'taki bir değeri entity'ye de yaz (canlı sync)
@@ -528,5 +563,6 @@ final combatProvider = StateNotifierProvider<CombatNotifier, CombatState>((ref) 
     () => ref.read(worldSchemaProvider),
     () => ref.read(saveStateProvider.notifier).markDirty(),
     () => ref.read(activeCampaignProvider.notifier).data,
+    ref.read(eventBusProvider),
   );
 });
