@@ -36,6 +36,8 @@ dependencies:
   # UI
   cupertino_icons: ^1.0.8
   window_manager: ^0.4.3
+  desktop_multi_window: ^0.2.1
+  screen_retriever: ^0.2.0
 
   # Utilities
   uuid: ^4.5.1

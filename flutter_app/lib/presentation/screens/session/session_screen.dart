@@ -15,6 +15,7 @@ import '../../theme/dm_tool_colors.dart';
 import '../../widgets/condition_badge.dart';
 import '../../widgets/hp_bar.dart';
 import '../../widgets/markdown_text_area.dart';
+import '../../widgets/projection/projection_panel.dart';
 import '../../widgets/resizable_split.dart';
 import '../battle_map/battle_map_screen.dart';
 import '../database/entity_card.dart';
@@ -216,7 +217,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     case 'quick_add': _showQuickAddDialog();
                     case 'add': _showAddDialog();
                     case 'add_players': ref.read(combatProvider.notifier).addAllPlayers();
-                    case 'roll_init': ref.read(combatProvider.notifier).rollInitiatives();
+                    case 'roll_init': _promptRollInitiative();
                     case 'clear_all': ref.read(combatProvider.notifier).clearAll();
                   }
                 },
@@ -412,8 +413,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         final enc = ref.watch(combatProvider.select((s) => s.activeEncounter));
         if (enc == null) return Center(child: Text('No active encounter', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
         return BattleMapScreen(encounterId: enc.id);
-      case 2: // Player Screen (placeholder)
-        return Center(child: Text('Player Screen\n(Coming soon)', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
+      case 2: // Player Screen — projection panel
+        return const ProjectionPanel();
       case 3: // Entity Stats
         if (_selectedCombatantId == null) {
           return Center(child: Text('Select a combatant\nto view stats', textAlign: TextAlign.center, style: TextStyle(color: palette.sidebarLabelSecondary)));
@@ -441,9 +442,25 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // ============================================================
   // COMBAT TABLE
   // ============================================================
+
+  /// Returns the column list for the combat tracker, falling back to a
+  /// hardcoded legacy default (Init / AC / HP) when the loaded schema's
+  /// `encounterConfig.columns` is empty — guarantees the table always shows
+  /// the basic combat stats no matter how the campaign was saved.
+  static const List<EncounterColumnConfig> _fallbackCombatColumns = [
+    EncounterColumnConfig(subFieldKey: 'level',      label: 'Lvl', editable: true, width: 36),
+    EncounterColumnConfig(subFieldKey: 'initiative', label: 'Init', editable: true, width: 48),
+    EncounterColumnConfig(subFieldKey: 'ac',         label: 'AC',  editable: true, width: 36),
+    EncounterColumnConfig(subFieldKey: 'hp',         label: 'HP',  editable: true, showButtons: true, width: 130),
+  ];
+
+  static List<EncounterColumnConfig> _effectiveColumns(EncounterConfig cfg) =>
+      cfg.columns.isNotEmpty ? cfg.columns : _fallbackCombatColumns;
+
   Widget _buildCombatTable(DmToolColors palette, Encounter enc) {
     final schema = ref.read(worldSchemaProvider);
     final cfg = schema.encounterConfig;
+    final cols = _effectiveColumns(cfg);
 
     return Column(
       children: [
@@ -454,7 +471,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           child: Row(
             children: [
               Expanded(flex: 2, child: Text('Name', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText))),
-              ...cfg.columns.map((col) => SizedBox(
+              ...cols.map((col) => SizedBox(
                 width: col.width > 0 ? col.width.toDouble() : 60,
                 child: Text(col.label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText), textAlign: TextAlign.center),
               )),
@@ -480,12 +497,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                       index: index,
                       turnIndex: enc.turnIndex,
                       palette: palette,
-                      onTap: (entityId) => setState(() {
+                      onSelect: (entityId) => setState(() {
                         _selectedCombatantId = entityId;
                         _bottomTabIndex = 3;
                         ref.read(uiStateProvider.notifier).update((s) => s.copyWith(sessionBottomTab: 3));
                       }),
                       onModifyStat: (c, subKey, delta, stats, cfg) => _modifyStat(c, subKey, delta, stats, cfg),
+                      onSetStat: (c, subKey, newVal, cfg) => _setStat(c, subKey, newVal, cfg),
                       onShowAddCondition: (combatantId, _) => _showAddConditionDialog(combatantId),
                     ),
                   ),
@@ -529,6 +547,69 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     // Combatant HP de güncelle (hardcoded hp alanı için)
     if (subKey == 'hp') {
       ref.read(combatProvider.notifier).modifyHp(c.id, delta);
+    }
+  }
+
+  /// Set a combat stat to a raw value (for inline-editable cells). Unlike
+  /// [_modifyStat] this does NOT clamp or assume the value is numeric — it
+  /// writes whatever string the user typed back to the entity. HP/maxHP
+  /// updates are also propagated to the live combatant.
+  void _setStat(Combatant c, String subKey, String newVal, EncounterConfig cfg) {
+    if (c.entityId == null) return;
+    final entities = ref.read(entityProvider);
+    final entity = entities[c.entityId];
+    if (entity == null) return;
+
+    final combatStats = entity.fields[cfg.combatStatsFieldKey];
+    final updated = combatStats is Map
+        ? Map<String, dynamic>.from(combatStats)
+        : <String, dynamic>{};
+    updated[subKey] = newVal;
+    final newFields = Map<String, dynamic>.from(entity.fields);
+    newFields[cfg.combatStatsFieldKey] = updated;
+    ref.read(entityProvider.notifier).update(entity.copyWith(fields: newFields));
+
+    // Live HP/maxHP propagation to the combatant in the active encounter.
+    final asInt = int.tryParse(newVal);
+    if (asInt != null) {
+      if (subKey == 'hp') {
+        final delta = asInt - c.hp;
+        if (delta != 0) ref.read(combatProvider.notifier).modifyHp(c.id, delta);
+      }
+    }
+  }
+
+  /// Show a small dice-picker dialog (d4–d20) and re-roll initiative for
+  /// every combatant with the chosen die. Each combatant's new init is
+  /// 1d[chosen] + the evaluated dice-spec from their entity's
+  /// `combat_stats[<initiativeSubField>]`.
+  Future<void> _promptRollInitiative() async {
+    const dice = [4, 6, 8, 10, 12, 20];
+    final chosen = await showDialog<int>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Roll Initiative'),
+        content: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final d in dice)
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, d),
+                child: Text('d$d'),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+    if (chosen != null) {
+      ref.read(combatProvider.notifier).rollInitiatives(dSides: chosen);
     }
   }
 
@@ -586,7 +667,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                       case 'quick_add': _showQuickAddDialog();
                       case 'add': _showAddDialog();
                       case 'add_players': ref.read(combatProvider.notifier).addAllPlayers();
-                      case 'roll_init': ref.read(combatProvider.notifier).rollInitiatives();
+                      case 'roll_init': _promptRollInitiative();
                     }
                   },
                   itemBuilder: (_) => const [
@@ -1229,8 +1310,13 @@ class _CombatantRow extends ConsumerWidget {
   final int index;
   final int turnIndex;
   final DmToolColors palette;
-  final void Function(String? entityId) onTap;
+  /// Selects this combatant — highlights the row and switches the bottom
+  /// tab to Entity Stats. Fired on any tap on the row that isn't absorbed
+  /// by an InkWell on an editable cell.
+  final void Function(String? entityId) onSelect;
   final void Function(Combatant c, String subKey, int delta, Map<String, dynamic> stats, EncounterConfig cfg) onModifyStat;
+  /// Sets a combat stat to a raw string value (for inline editing).
+  final void Function(Combatant c, String subKey, String newVal, EncounterConfig cfg) onSetStat;
   final void Function(String combatantId, List<String> conditions) onShowAddCondition;
 
   const _CombatantRow({
@@ -1238,8 +1324,9 @@ class _CombatantRow extends ConsumerWidget {
     required this.index,
     required this.turnIndex,
     required this.palette,
-    required this.onTap,
+    required this.onSelect,
     required this.onModifyStat,
+    required this.onSetStat,
     required this.onShowAddCondition,
   });
 
@@ -1249,6 +1336,7 @@ class _CombatantRow extends ConsumerWidget {
     final isActive = index == turnIndex;
     final schema = ref.read(worldSchemaProvider);
     final cfg = schema.encounterConfig;
+    final cols = _SessionScreenState._effectiveColumns(cfg);
 
     // Selective watch — only this combatant's entity
     final entity = c.entityId != null
@@ -1258,7 +1346,7 @@ class _CombatantRow extends ConsumerWidget {
     final statsMap = combatStats is Map ? Map<String, dynamic>.from(combatStats) : <String, dynamic>{};
 
     return GestureDetector(
-      onTap: () => onTap(c.entityId),
+      onTap: () => onSelect(c.entityId),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
@@ -1270,10 +1358,23 @@ class _CombatantRow extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            // Name
-            Expanded(flex: 2, child: Text(c.name, style: TextStyle(fontSize: 13, color: palette.tabActiveText, fontWeight: isActive ? FontWeight.w600 : FontWeight.normal), overflow: TextOverflow.ellipsis)),
-            // Dynamic columns from encounterConfig
-            ...cfg.columns.map((col) {
+            // Name — tapping the row (including the name) selects the
+            // combatant and switches the bottom tab to Entity Stats.
+            Expanded(
+              flex: 2,
+              child: Text(
+                c.name,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: palette.tabActiveText,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            // Dynamic columns from encounterConfig (with legacy fallback
+            // when the loaded schema's columns list is empty).
+            ...cols.map((col) {
               final val = statsMap[col.subFieldKey]?.toString() ?? '';
 
               if (col.showButtons) {
@@ -1290,7 +1391,18 @@ class _CombatantRow extends ConsumerWidget {
                           child: Center(child: Text('-', style: TextStyle(fontSize: 14, color: palette.hpBtnText, fontWeight: FontWeight.bold)))),
                       ),
                       const SizedBox(width: 2),
-                      Expanded(child: HpBar(hp: numVal, maxHp: maxVal > 0 ? maxVal : 1, palette: palette)),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _showInlineEdit(
+                            context,
+                            label: col.label,
+                            initial: val,
+                            onSubmit: (v) =>
+                                onSetStat(c, col.subFieldKey, v, cfg),
+                          ),
+                          child: HpBar(hp: numVal, maxHp: maxVal > 0 ? maxVal : 1, palette: palette),
+                        ),
+                      ),
                       const SizedBox(width: 2),
                       InkWell(
                         onTap: () => onModifyStat(c, col.subFieldKey, 1, statsMap, cfg),
@@ -1302,9 +1414,41 @@ class _CombatantRow extends ConsumerWidget {
                 );
               }
 
+              // Plain cell — tap to inline-edit.
+              //
+              // Special case: the initiative column should display the
+              // **rolled** combatant init (`c.init`), not the entity's
+              // dice spec. The dice spec is what we want to *edit*
+              // though, so on tap we still pop the inline-edit dialog
+              // with the spec as the initial value.
+              final isInitCol = col.subFieldKey == cfg.initiativeSubField;
+              final display = isInitCol ? c.init.toString() : val;
               return SizedBox(
                 width: col.width > 0 ? col.width.toDouble() : 60,
-                child: Text(val, style: TextStyle(fontSize: 12, color: palette.tabActiveText, fontWeight: col.subFieldKey == cfg.initiativeSubField ? FontWeight.bold : FontWeight.normal), textAlign: TextAlign.center),
+                child: InkWell(
+                  onTap: () => _showInlineEdit(
+                    context,
+                    label: col.label,
+                    initial: val,
+                    onSubmit: (v) => onSetStat(c, col.subFieldKey, v, cfg),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    alignment: Alignment.center,
+                    child: Text(
+                      display.isEmpty ? '—' : display,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: display.isEmpty
+                            ? palette.sidebarLabelSecondary
+                            : palette.tabActiveText,
+                        fontWeight:
+                            isInitCol ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
               );
             }),
             const SizedBox(width: 8),
@@ -1363,6 +1507,47 @@ class _CombatantRow extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Pops a tiny inline-edit dialog with a single text field. Used for
+  /// every editable cell in the encounter table — the user types a value
+  /// and the new string is written back to the entity's combat_stats via
+  /// [onSetStat].
+  void _showInlineEdit(
+    BuildContext context, {
+    required String label,
+    required String initial,
+    required void Function(String value) onSubmit,
+  }) {
+    final controller = TextEditingController(text: initial);
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Edit $label'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(labelText: label),
+          onSubmitted: (v) {
+            onSubmit(v);
+            Navigator.pop(ctx);
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              onSubmit(controller.text);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/projection_provider.dart';
 import '../../../application/services/rule_engine.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
@@ -14,6 +15,7 @@ import '../../../domain/entities/schema/field_schema.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
+import '../../widgets/projection/projectable.dart';
 
 /// Schema-driven entity card — Python ui/widgets/npc_sheet.py karşılığı.
 /// Sol kenarlık kategori renginde, tüm alanlar tema-uyumlu.
@@ -170,6 +172,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                     if (entity.imagePath.isNotEmpty) entity.imagePath,
                     ...entity.images,
                   ],
+                  entityName: entity.name,
                   readOnly: widget.readOnly,
                   palette: palette,
                   onImagesChanged: (newImages) {
@@ -184,17 +187,42 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Kategori badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: catColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          cat?.name ?? entity.categorySlug,
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: catColor),
-                        ),
+                      // Kategori badge + Project butonu
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: catColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              cat?.name ?? entity.categorySlug,
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: catColor),
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            tooltip: 'Project entity card to player screen',
+                            icon: const Icon(Icons.cast, size: 16),
+                            visualDensity: VisualDensity.compact,
+                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                            padding: EdgeInsets.zero,
+                            onPressed: () {
+                              ref
+                                  .read(projectionControllerProvider.notifier)
+                                  .addEntityCard(entityId: widget.entityId);
+                              ScaffoldMessenger.of(context)
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(
+                                  const SnackBar(
+                                    duration: Duration(seconds: 2),
+                                    content: Text('Entity card projected to player screen'),
+                                  ),
+                                );
+                            },
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       // İsim
@@ -507,24 +535,26 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 }
 
 /// Portre resim galerisi — 200x260 sabit, hover'da sol/sağ nav, edit modda üstte ekle / altta sil.
-class _PortraitGallery extends StatefulWidget {
+class _PortraitGallery extends ConsumerStatefulWidget {
   final List<String> images;
+  final String entityName;
   final bool readOnly;
   final DmToolColors palette;
   final ValueChanged<List<String>> onImagesChanged;
 
   const _PortraitGallery({
     required this.images,
+    required this.entityName,
     required this.readOnly,
     required this.palette,
     required this.onImagesChanged,
   });
 
   @override
-  State<_PortraitGallery> createState() => _PortraitGalleryState();
+  ConsumerState<_PortraitGallery> createState() => _PortraitGalleryState();
 }
 
-class _PortraitGalleryState extends State<_PortraitGallery> {
+class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
   int _currentIndex = 0;
   bool _hovered = false;
 
@@ -561,7 +591,26 @@ class _PortraitGalleryState extends State<_PortraitGallery> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: Container(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        // Sağ tık → player screen'e project menüsü.
+        // GestureDetector dış Container'da çünkü iç Stack'teki overlay'ler
+        // pointer event'leri tutuyor.
+        onSecondaryTapDown: widget.images.isEmpty
+            ? null
+            : (details) {
+                context.showProjectionMenu(
+                  ref: ref,
+                  globalPosition: details.globalPosition,
+                  itemBuilder: () => ProjectionItemBuilders.image(
+                    label: widget.entityName.isEmpty
+                        ? 'Image'
+                        : widget.entityName,
+                    filePaths: [widget.images[_currentIndex]],
+                  ),
+                );
+              },
+        child: Container(
         width: 200,
         height: 260,
         decoration: BoxDecoration(
@@ -670,6 +719,7 @@ class _PortraitGalleryState extends State<_PortraitGallery> {
               ),
           ],
         ),
+      ),
       ),
     );
   }

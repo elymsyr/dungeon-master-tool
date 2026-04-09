@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/combat_provider.dart';
+import '../../../application/providers/projection_provider.dart';
+import '../../../domain/entities/projection/projection_item.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 
@@ -46,7 +49,7 @@ class BattleMapToolbar extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildRow1(context, palette, tb, notifier),
+          _buildRow1(context, ref, palette, tb, notifier),
           Divider(height: 1, color: palette.sidebarDivider),
           _buildRow2(context, palette, tb, notifier),
           Divider(height: 1, color: palette.sidebarDivider),
@@ -60,7 +63,7 @@ class BattleMapToolbar extends ConsumerWidget {
   // Row 1: View + Token Size + Map Picker
   // -------------------------------------------------------------------------
 
-  Widget _buildRow1(BuildContext context, DmToolColors palette, _ToolbarState mapState, BattleMapNotifier notifier) {
+  Widget _buildRow1(BuildContext context, WidgetRef ref, DmToolColors palette, _ToolbarState mapState, BattleMapNotifier notifier) {
     return SizedBox(
       height: 36,
       child: Row(
@@ -80,6 +83,44 @@ class BattleMapToolbar extends ConsumerWidget {
             tooltip: 'Open Map Image',
             palette: palette,
             onPressed: () async { await notifier.pickMapImage(); },
+          ),
+          const SizedBox(width: 8),
+          // Project to player screen
+          _ToolbarButton(
+            icon: Icons.cast,
+            tooltip: 'Project battle map to player screen',
+            palette: palette,
+            onPressed: () async {
+              final encounter = ref
+                  .read(combatProvider)
+                  .encounters
+                  .where((e) => e.id == encounterId)
+                  .firstOrNull;
+              if (encounter == null) return;
+              await ref
+                  .read(projectionControllerProvider.notifier)
+                  .addBattleMap(
+                    encounterId: encounterId,
+                    label: encounter.name.isEmpty
+                        ? 'Battle Map'
+                        : encounter.name,
+                  );
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  const SnackBar(
+                    duration: Duration(seconds: 2),
+                    content: Text('Battle map projected to player screen'),
+                  ),
+                );
+            },
+          ),
+          // Player viewport lock toggle — only visible when this encounter
+          // is currently being projected. Locked = DM zooms privately.
+          _ProjectionLockButton(
+            encounterId: encounterId,
+            palette: palette,
           ),
           const SizedBox(width: 12),
           // Token size label
@@ -445,6 +486,59 @@ class _SpinBtn extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Icon(icon, size: 12, color: onPressed != null ? palette.tabText : palette.tabText.withValues(alpha: 0.3)),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Player viewport lock toggle — visible only when this encounter is being
+// projected. Highlights when locked.
+// ---------------------------------------------------------------------------
+
+class _ProjectionLockButton extends ConsumerWidget {
+  final String encounterId;
+  final DmToolColors palette;
+
+  const _ProjectionLockButton({
+    required this.encounterId,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final proj = ref
+        .watch(projectionControllerProvider)
+        .items
+        .whereType<BattleMapProjection>()
+        .where((p) => p.encounterId == encounterId)
+        .firstOrNull;
+    if (proj == null) return const SizedBox.shrink();
+    final locked = proj.viewportLocked;
+    return InkWell(
+      onTap: () => ref
+          .read(projectionControllerProvider.notifier)
+          .setBattleMapLocked(proj.id, !locked),
+      borderRadius: BorderRadius.circular(4),
+      child: Tooltip(
+        message: locked
+            ? 'Player view locked — your zoom/pan stays private'
+            : 'Player view follows yours — click to lock',
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+          decoration: BoxDecoration(
+            color: locked ? palette.tabIndicator.withValues(alpha: 0.2) : null,
+            borderRadius: BorderRadius.circular(4),
+            border: locked
+                ? Border.all(color: palette.tabIndicator, width: 1)
+                : null,
+          ),
+          child: Icon(
+            locked ? Icons.lock : Icons.lock_open,
+            size: 18,
+            color: locked ? palette.tabIndicator : palette.tabText,
+          ),
+        ),
       ),
     );
   }

@@ -16,28 +16,28 @@ import 'battle_map_notifier.dart';
 ///
 /// Repaint is driven by [viewTransform] and [strokeTick] Listenables
 /// so that pan/zoom and in-progress strokes bypass widget rebuilds entirely.
+///
+/// **In-progress strokes are read from [notifier] at paint-time** (not
+/// captured at construction). The painter is built once per Consumer
+/// rebuild — if we captured the path at construction, the very first
+/// stroke after the painter was built would be invisible (because the
+/// notifier creates the Path from a mouseDown that doesn't trigger a
+/// state change). Reading dynamically guarantees the live stroke shows
+/// up the moment `strokeTick` ticks.
 class BattleMapPainter extends CustomPainter {
   final BattleMapState mapState;
   final ValueNotifier<ViewTransform> viewTransform;
   final DmToolColors palette;
   final bool isDmView;
-
-  // In-progress annotation stroke (from notifier, not in state to avoid rebuilds per point)
-  final Path? currentPath;
-  final Color currentColor;
-  final double currentWidth;
-  final bool currentIsErase;
+  final BattleMapNotifier notifier;
 
   BattleMapPainter({
     required this.mapState,
     required this.viewTransform,
     required this.palette,
     required this.isDmView,
+    required this.notifier,
     required ValueNotifier<int> strokeTick,
-    this.currentPath,
-    this.currentColor = Colors.red,
-    this.currentWidth = 4.0,
-    this.currentIsErase = false,
   }) : super(repaint: Listenable.merge([viewTransform, strokeTick]));
 
   @override
@@ -140,9 +140,18 @@ class BattleMapPainter extends CustomPainter {
     final h = img != null ? img.height.toDouble() : screenSize.height / vt.scale;
     final bounds = Rect.fromLTWH(0, 0, w, h);
 
+    // Read in-progress stroke state from the notifier at paint-time so a
+    // mouseDown that doesn't trigger a Riverpod rebuild still becomes
+    // visible the moment `strokeTick` ticks.
+    final liveCurrentPath = notifier.currentPath;
+    final liveCurrentColor = notifier.currentColor;
+    final liveCurrentWidth = notifier.currentWidth;
+    final liveCurrentIsErase = notifier.currentIsErase;
+
     // Only need saveLayer when erase strokes are present (BlendMode.clear
     // requires compositing within an offscreen layer).
-    final hasErase = mapState.strokes.any((s) => s.isErase) || currentIsErase;
+    final hasErase =
+        mapState.strokes.any((s) => s.isErase) || liveCurrentIsErase;
 
     if (hasErase) {
       canvas.saveLayer(bounds, Paint());
@@ -168,13 +177,14 @@ class BattleMapPainter extends CustomPainter {
     }
 
     // In-progress stroke
-    if (currentPath != null) {
+    if (liveCurrentPath != null) {
       canvas.drawPath(
-        currentPath!,
+        liveCurrentPath,
         Paint()
-          ..color = currentIsErase ? Colors.transparent : currentColor
-          ..blendMode = currentIsErase ? ui.BlendMode.clear : ui.BlendMode.srcOver
-          ..strokeWidth = currentWidth
+          ..color = liveCurrentIsErase ? Colors.transparent : liveCurrentColor
+          ..blendMode =
+              liveCurrentIsErase ? ui.BlendMode.clear : ui.BlendMode.srcOver
+          ..strokeWidth = liveCurrentWidth
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
@@ -305,8 +315,6 @@ class BattleMapPainter extends CustomPainter {
   bool shouldRepaint(BattleMapPainter old) {
     // View transform and stroke tick are handled by the repaint Listenable,
     // so we only check state changes that require a full repaint.
-    return old.mapState != mapState ||
-        old.isDmView != isDmView ||
-        old.currentColor != currentColor;
+    return old.mapState != mapState || old.isDmView != isDmView;
   }
 }

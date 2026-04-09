@@ -4,7 +4,6 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/template_provider.dart';
-import '../../../domain/entities/schema/default_dnd5e_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'template_editor.dart';
@@ -23,7 +22,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final defaultSchema = generateDefaultDnd5eSchema();
+    final builtinAsync = ref.watch(builtinTemplateProvider);
     final customTemplatesAsync = ref.watch(customTemplatesProvider);
 
     // view mode kaldırıldı — built-in dahil tüm template'ler düzenlenebilir
@@ -35,6 +34,10 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
         onBack: () => setState(() { _mode = null; _activeSchema = null; }),
         onSave: (schema) async {
           await ref.read(templateLocalDsProvider).save(schema);
+          // Invalidate both — the saved file might be the built-in
+          // (admin edit path) or a custom template, we don't need to
+          // distinguish here.
+          ref.invalidate(builtinTemplateProvider);
           ref.invalidate(customTemplatesProvider);
           ref.invalidate(allTemplatesProvider);
           if (mounted) {
@@ -60,11 +63,19 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
               Text('World templates define entity categories and their fields.', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 16),
 
-              // Default template (editable)
-              _TemplateCard(
-                schema: defaultSchema,
-                palette: palette,
-                onTap: () => setState(() { _mode = 'edit'; _activeSchema = defaultSchema; }),
+              // Built-in (default) template — loaded through the provider
+              // so admin edits persist and no ghost copy appears.
+              builtinAsync.when(
+                data: (schema) => _TemplateCard(
+                  schema: schema,
+                  palette: palette,
+                  onTap: () => setState(() { _mode = 'edit'; _activeSchema = schema; }),
+                ),
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => Text('Error: $e'),
               ),
 
               // Custom templates
@@ -107,7 +118,10 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => _showCopyFromDialog(context, palette, defaultSchema),
+                      onPressed: builtinAsync.valueOrNull == null
+                          ? null
+                          : () => _showCopyFromDialog(
+                              context, palette, builtinAsync.valueOrNull!),
                       icon: const Icon(Icons.copy, size: 18),
                       label: const Text('Copy From...'),
                     ),
