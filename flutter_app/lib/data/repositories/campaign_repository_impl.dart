@@ -135,178 +135,72 @@ class CampaignRepositoryImpl implements CampaignRepository {
       };
     }
 
-    // Sessions + Encounters + Combatants
-    final sessionRows = await _db.sessionDao.getAllForCampaign(campaignId);
-    final sessionsList = <Map<String, dynamic>>[];
-    for (final s in sessionRows) {
-      final encounterRows =
-          await _db.sessionDao.getEncountersForSession(s.id);
-      final encountersList = <Map<String, dynamic>>[];
-      for (final enc in encounterRows) {
-        final combatantRows =
-            await _db.sessionDao.getCombatantsForEncounter(enc.id);
-        final combatantsList = <Map<String, dynamic>>[];
-        for (final c in combatantRows) {
-          final conditionRows =
-              await _db.sessionDao.getConditionsForCombatant(c.id);
-          combatantsList.add({
-            'id': c.id,
-            'name': c.name,
-            'init': c.init,
-            'ac': c.ac,
-            'hp': c.hp,
-            'max_hp': c.maxHp,
-            'entity_id': c.entityId,
-            'token_id': c.tokenId,
-            'conditions': conditionRows
-                .map((cond) => {
-                      'name': cond.name,
-                      'duration': cond.duration,
-                      'initial_duration': cond.initialDuration,
-                      'entity_id': cond.entityId,
-                    })
-                .toList(),
-          });
+    // Dynamic state blob (combat_state, map_data, mind_maps, vb.)
+    final stateBlob = <String, dynamic>{};
+    final stateRaw = campaign.stateJson;
+    if (stateRaw.isNotEmpty && stateRaw != '{}') {
+      try {
+        final decoded = jsonDecode(stateRaw);
+        if (decoded is Map) {
+          stateBlob.addAll(Map<String, dynamic>.from(decoded));
         }
-        encountersList.add({
-          'id': enc.id,
-          'name': enc.name,
-          'combatants': combatantsList,
-          'map_path': enc.mapPath,
-          'token_size': enc.tokenSize,
-          'grid_size': enc.gridSize,
-          'grid_visible': enc.gridVisible,
-          'grid_snap': enc.gridSnap,
-          'feet_per_cell': enc.feetPerCell,
-          'fog_data': enc.fogData,
-          'annotation_data': enc.annotationData,
-          'encounter_layout_id': enc.encounterLayoutId,
-          'turn_index': enc.turnIndex,
-          'round': enc.round,
-          'token_positions': jsonDecode(enc.tokenPositionsJson),
-          'token_size_multipliers': jsonDecode(enc.tokenSizeMultipliersJson),
-        });
-      }
-      sessionsList.add({
-        'id': s.id,
-        'name': s.name,
-        'notes': s.notes,
-        'logs': s.logs,
-        'encounters': encountersList,
-        'active_encounter_id': s.isActive ? s.id : null,
-      });
+      } catch (_) {}
     }
 
-    // Map pins
-    final pinRows = await _db.mapDao.getPinsForCampaign(campaignId);
-    final pins = pinRows
-        .map((p) => {
-              'id': p.id,
-              'x': p.x,
-              'y': p.y,
-              'label': p.label,
-              'pin_type': p.pinType,
-              'entity_id': p.entityId,
-              'note': p.note,
-              'color': p.color,
-              'style': jsonDecode(p.styleJson),
-            })
-        .toList();
-
-    // Timeline pins
-    final timelinePinRows =
-        await _db.mapDao.getTimelinePinsForCampaign(campaignId);
-    final timelinePins = timelinePinRows
-        .map((tp) => {
-              'id': tp.id,
-              'x': tp.x,
-              'y': tp.y,
-              'day': tp.day,
-              'note': tp.note,
-              'entity_ids': jsonDecode(tp.entityIdsJson),
-              'session_id': tp.sessionId,
-              'parent_ids': jsonDecode(tp.parentIdsJson),
-              'color': tp.color,
-            })
-        .toList();
-
-    // Mind maps
-    final mindMapIds =
-        await _db.mindMapDao.getMapIdsForCampaign(campaignId);
-    final mindMaps = <String, dynamic>{};
-    for (final mapId in mindMapIds) {
-      final nodes =
-          await _db.mindMapDao.getNodesForMap(campaignId, mapId);
-      final edges =
-          await _db.mindMapDao.getEdgesForMap(campaignId, mapId);
-      mindMaps[mapId] = {
-        'nodes': nodes
-            .map((n) => {
-                  'id': n.id,
-                  'label': n.label,
-                  'node_type': n.nodeType,
-                  'x': n.x,
-                  'y': n.y,
-                  'width': n.width,
-                  'height': n.height,
-                  'entity_id': n.entityId,
-                  'image_url': n.imageUrl,
-                  'content': n.content,
-                  'style': jsonDecode(n.styleJson),
-                  'color': n.color,
-                })
-            .toList(),
-        'edges': edges
-            .map((e) => {
-                  'id': e.id,
-                  'source_id': e.sourceId,
-                  'target_id': e.targetId,
-                  'label': e.label,
-                  'style': jsonDecode(e.styleJson),
-                })
-            .toList(),
-      };
-    }
-
-    // WorldSchema reconstruct
+    // WorldSchema reconstruct — camelCase keys (json_serializable default)
     Map<String, dynamic>? worldSchemaMap;
     if (schemaRow != null) {
       worldSchemaMap = {
-        'schema_id': schemaRow.id,
+        'schemaId': schemaRow.id,
         'name': schemaRow.name,
         'version': schemaRow.version,
-        'base_system': schemaRow.baseSystem,
+        'baseSystem': schemaRow.baseSystem,
         'description': schemaRow.description,
         'categories': jsonDecode(schemaRow.categoriesJson),
-        'encounter_config': jsonDecode(schemaRow.encounterConfigJson),
-        'encounter_layouts': jsonDecode(schemaRow.encounterLayoutsJson),
+        'encounterConfig': jsonDecode(schemaRow.encounterConfigJson),
+        'encounterLayouts': jsonDecode(schemaRow.encounterLayoutsJson),
         'metadata': jsonDecode(schemaRow.metadataJson),
-        'created_at': schemaRow.createdAt.toIso8601String(),
-        'updated_at': schemaRow.updatedAt.toIso8601String(),
+        'createdAt': schemaRow.createdAt.toIso8601String(),
+        'updatedAt': schemaRow.updatedAt.toIso8601String(),
       };
     }
 
     return {
+      ...stateBlob, // combat_state, map_data, mind_maps, vb.
       'world_id': campaign.id,
       'world_name': campaign.worldName,
       'created_at': campaign.createdAt.toIso8601String(),
       'entities': entitiesMap,
-      'sessions': sessionsList,
-      'map_data': {
-        'pins': pins,
-        'timeline': timelinePins,
-      },
-      'mind_maps': mindMaps,
       if (worldSchemaMap != null) 'world_schema': worldSchemaMap,
     };
   }
 
+  /// Anahtarları hangi tablolara map ettiğimizi izole eder. Geri kalan
+  /// dynamic state (combat_state, map_data, mind_maps, vb.) `state_json`
+  /// JSON blob'una yazılır — gelecekte normalize edilebilir.
+  static const _typedTopKeys = <String>{
+    'world_id',
+    'world_name',
+    'created_at',
+    'entities',
+    'world_schema',
+  };
+
   Future<void> _saveToDb(String campaignId, Map<String, dynamic> data) async {
+    // Dynamic state blob — typed kolonlara map'lemediğimiz her şey.
+    final stateBlob = <String, dynamic>{};
+    for (final entry in data.entries) {
+      if (_typedTopKeys.contains(entry.key)) continue;
+      stateBlob[entry.key] = entry.value;
+    }
+    final stateJsonStr = jsonEncode(stateBlob);
+
     await _db.transaction(() async {
-      // Update campaign timestamp
+      // Update campaign + state blob
       await _db.campaignDao.updateCampaign(CampaignsCompanion(
         id: Value(campaignId),
         worldName: Value(data['world_name'] as String? ?? ''),
+        stateJson: Value(stateJsonStr),
         updatedAt: Value(DateTime.now()),
       ));
 
@@ -317,12 +211,13 @@ class CampaignRepositoryImpl implements CampaignRepository {
       final entities = data['entities'] as Map<String, dynamic>? ?? {};
       if (entities.isNotEmpty) {
         final companions = entities.entries.map((e) {
-          final m = e.value as Map<String, dynamic>;
+          final m = Map<String, dynamic>.from(e.value as Map);
           return EntitiesCompanion.insert(
             id: e.key,
             campaignId: campaignId,
-            categorySlug:
-                (m['type'] as String? ?? 'npc').toLowerCase().replaceAll(' ', '-'),
+            categorySlug: (m['type'] as String? ?? 'npc')
+                .toLowerCase()
+                .replaceAll(' ', '-'),
             name: m['name'] as String? ?? 'Unknown',
             source: Value(m['source'] as String? ?? ''),
             description: Value(m['description'] as String? ?? ''),
@@ -344,20 +239,25 @@ class CampaignRepositoryImpl implements CampaignRepository {
         await (_db.delete(_db.worldSchemas)
               ..where((t) => t.campaignId.equals(campaignId)))
             .go();
+        // camelCase (json_serializable) ve snake_case key'leri ikisini de kabul et.
+        String pickStr(String camel, String snake, [String fallback = '']) =>
+            (schemaData[camel] ?? schemaData[snake] ?? fallback) as String;
+        dynamic pickAny(String camel, String snake) =>
+            schemaData[camel] ?? schemaData[snake];
         await (_db.into(_db.worldSchemas)).insert(
           WorldSchemasCompanion.insert(
-            id: schemaData['schema_id'] as String? ?? _uuid.v4(),
+            id: pickStr('schemaId', 'schema_id', _uuid.v4()),
             campaignId: campaignId,
             name: Value(schemaData['name'] as String? ?? ''),
             version: Value(schemaData['version'] as String? ?? '1.0'),
+            description: Value(schemaData['description'] as String? ?? ''),
             categoriesJson:
                 Value(jsonEncode(schemaData['categories'] ?? [])),
-            encounterConfigJson:
-                Value(jsonEncode(schemaData['encounter_config'] ?? {})),
-            encounterLayoutsJson:
-                Value(jsonEncode(schemaData['encounter_layouts'] ?? [])),
-            metadataJson:
-                Value(jsonEncode(schemaData['metadata'] ?? {})),
+            encounterConfigJson: Value(jsonEncode(
+                pickAny('encounterConfig', 'encounter_config') ?? {})),
+            encounterLayoutsJson: Value(jsonEncode(
+                pickAny('encounterLayouts', 'encounter_layouts') ?? [])),
+            metadataJson: Value(jsonEncode(schemaData['metadata'] ?? {})),
           ),
         );
       }

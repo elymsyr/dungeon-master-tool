@@ -44,10 +44,16 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   }
 
   @override
-  void dispose() {
-    ref.read(worldMapProvider.notifier).syncToCampaignData();
-    ref.read(saveStateProvider.notifier).markDirty();
-    super.dispose();
+  void deactivate() {
+    // ref `dispose()` içinde geçersiz olur — sync'i widget tree'den
+    // çıkarken (`deactivate`) yap.
+    try {
+      ref.read(worldMapProvider.notifier).syncToCampaignData();
+      ref.read(saveStateProvider.notifier).markDirty();
+    } catch (_) {
+      // best-effort: widget hayatı boyunca container kapanmış olabilir
+    }
+    super.deactivate();
   }
 
   // -------------------------------------------------------------------------

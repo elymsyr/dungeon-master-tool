@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -9,8 +10,22 @@ import 'package:window_manager/window_manager.dart';
 import 'app.dart';
 import 'application/providers/ui_state_provider.dart';
 import 'core/config/app_paths.dart';
+import 'core/services/log_buffer.dart';
 
 void main() async {
+  // Bug report için debug çıktı yakalama — runApp'ten önce kurulmalı
+  LogBuffer.install();
+
+  // Flutter framework hatalarını yakala
+  FlutterError.onError = (details) {
+    LogBuffer.instance.recordError(
+      details.exception,
+      details.stack,
+      context: 'FlutterError',
+    );
+    FlutterError.presentError(details);
+  };
+
   WidgetsFlutterBinding.ensureInitialized();
   await AppPaths.initialize();
 
@@ -37,12 +52,17 @@ void main() async {
   final uiStateNotifier = UiStateNotifier();
   await uiStateNotifier.load();
 
-  runApp(
-    ProviderScope(
-      overrides: [
-        uiStateProvider.overrideWith((_) => uiStateNotifier),
-      ],
-      child: const DungeonMasterApp(),
+  runZonedGuarded(
+    () => runApp(
+      ProviderScope(
+        overrides: [
+          uiStateProvider.overrideWith((_) => uiStateNotifier),
+        ],
+        child: const DungeonMasterApp(),
+      ),
     ),
+    (error, stack) {
+      LogBuffer.instance.recordError(error, stack, context: 'Zone');
+    },
   );
 }

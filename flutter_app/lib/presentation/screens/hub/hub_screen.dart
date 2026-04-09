@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/screen_type.dart';
+import '../../dialogs/bug_report_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'settings_tab.dart';
 import 'social_tab.dart';
@@ -18,6 +19,7 @@ class HubScreen extends ConsumerStatefulWidget {
 
 class _HubScreenState extends ConsumerState<HubScreen> {
   int _tabIndex = 2; // Worlds tab default
+  final GlobalKey _screenshotKey = GlobalKey();
 
   static const _tabs = [
     (icon: Icons.people, label: 'Social'),
@@ -52,35 +54,49 @@ class _HubScreenState extends ConsumerState<HubScreen> {
             const Text('Dungeon Master Tool', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
-      ),
-      body: switch (screen) {
-        // Desktop: sol rail + sağ content
-        ScreenType.desktop || ScreenType.tablet => Row(
-            children: [
-              NavigationRail(
-                selectedIndex: _tabIndex,
-                onDestinationSelected: (i) => setState(() => _tabIndex = i),
-                labelType: NavigationRailLabelType.all,
-                destinations: _tabs.map((t) => NavigationRailDestination(
-                  icon: Icon(t.icon),
-                  label: Text(t.label),
-                )).toList(),
-              ),
-              VerticalDivider(width: 1, color: palette.sidebarDivider),
-              Expanded(
-                child: IndexedStack(
-                  index: _tabIndex,
-                  children: _tabContent,
-                ),
-              ),
-            ],
+        actions: [
+          IconButton(
+            tooltip: 'Report a Bug',
+            icon: const Icon(Icons.bug_report_outlined),
+            onPressed: () => BugReportDialog.show(
+              context,
+              screenshotKey: _screenshotKey,
+            ),
           ),
-        // Mobile: bottom nav — IndexedStack ile state korunur
-        ScreenType.phone => IndexedStack(
-          index: _tabIndex,
-          children: _tabContent,
-        ),
-      },
+          const SizedBox(width: 4),
+        ],
+      ),
+      body: RepaintBoundary(
+        key: _screenshotKey,
+        child: switch (screen) {
+          // Desktop: sol rail + sağ content
+          ScreenType.desktop || ScreenType.tablet => Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: _tabIndex,
+                  onDestinationSelected: (i) => setState(() => _tabIndex = i),
+                  labelType: NavigationRailLabelType.all,
+                  destinations: _tabs.map((t) => NavigationRailDestination(
+                    icon: Icon(t.icon),
+                    label: Text(t.label),
+                  )).toList(),
+                ),
+                VerticalDivider(width: 1, color: palette.sidebarDivider),
+                Expanded(
+                  child: IndexedStack(
+                    index: _tabIndex,
+                    children: _tabContent,
+                  ),
+                ),
+              ],
+            ),
+          // Mobile: bottom nav — IndexedStack ile state korunur
+          ScreenType.phone => IndexedStack(
+            index: _tabIndex,
+            children: _tabContent,
+          ),
+        },
+      ),
       bottomNavigationBar: screen == ScreenType.phone
           ? NavigationBar(
               selectedIndex: _tabIndex,
