@@ -47,10 +47,15 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
   }
 
   @override
-  void dispose() {
-    _notifier.syncToCampaignData();
-    ref.read(saveStateProvider.notifier).markDirty();
-    super.dispose();
+  void deactivate() {
+    // ref `dispose()` içinde geçersiz — widget tree'den çıkarken sync et.
+    try {
+      _notifier.syncToCampaignData();
+      ref.read(saveStateProvider.notifier).markDirty();
+    } catch (_) {
+      // best-effort
+    }
+    super.deactivate();
   }
 
   @override

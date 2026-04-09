@@ -14,6 +14,7 @@ import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../core/utils/screen_type.dart';
+import '../dialogs/bug_report_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
@@ -40,6 +41,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
   int _tabIndex = 0;
   bool _editMode = false;
   String? _selectedEntityId;
+  final GlobalKey _screenshotKey = GlobalKey();
 
   // Left sidebar state
   bool _sidebarOpen = true;
@@ -365,12 +367,23 @@ class _MainScreenState extends ConsumerState<MainScreen>
               context.go('/hub');
             },
           ),
+          // Bug report
+          IconButton(
+            icon: const Icon(Icons.bug_report_outlined, size: 20),
+            tooltip: 'Report a Bug',
+            onPressed: () => BugReportDialog.show(
+              context,
+              screenshotKey: _screenshotKey,
+            ),
+          ),
           const SizedBox(width: 4),
         ],
       ),
 
       // --- Body: Responsive Layout ---
-      body: switch (screen) {
+      body: RepaintBoundary(
+        key: _screenshotKey,
+        child: switch (screen) {
         // Desktop: Sidebar (sol) + Tab bar + content + PDF sidebar (overlay)
         ScreenType.desktop => Stack(
           children: [
@@ -592,7 +605,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
         // Mobile: BottomNavigationBar
         ScreenType.phone => tabStack,
-      },
+        },
+      ),
 
       // FAB for mobile/tablet entity sidebar
       floatingActionButton: (screen != ScreenType.desktop && _tabIndex == 0)

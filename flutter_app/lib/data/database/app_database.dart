@@ -53,14 +53,16 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) => m.createAll(),
         onUpgrade: (m, from, to) async {
-          // Future schema migrations burada yönetilecek.
-          // Supabase migration'ları ile senkron tutulacak.
+          if (from < 2) {
+            // v2: campaigns.state_json eklendi
+            await m.addColumn(campaigns, campaigns.stateJson);
+          }
         },
       );
 }

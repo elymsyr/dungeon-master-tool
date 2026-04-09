@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,8 @@ class DungeonMasterApp extends ConsumerWidget {
       title: 'Dungeon Master Tool',
       debugShowCheckedModeBanner: false,
       theme: buildThemeData(themeName),
+      // Tema değişimi animasyonunu kapat — anlık geçiş
+      themeAnimationDuration: Duration.zero,
       locale: locale,
       supportedLocales: const [
         Locale('en'),
@@ -34,6 +37,22 @@ class DungeonMasterApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       routerConfig: appRouter,
+      // Scrollbar ve scroll fizigi optimizasyonu
+      scrollBehavior: const _AppScrollBehavior(),
     );
   }
+}
+
+/// Mouse + touch + trackpad scroll desteği — desktop kullanıcıları icin
+/// daha akici scroll deneyimi.
+class _AppScrollBehavior extends MaterialScrollBehavior {
+  const _AppScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.stylus,
+      };
 }
