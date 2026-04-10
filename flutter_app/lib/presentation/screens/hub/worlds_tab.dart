@@ -269,10 +269,129 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   }
 
   Future<void> _loadCampaign(String name) async {
+    // 1. Loading overlay göster
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: Center(
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Loading "$name"...',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // 2. Yükleme
     final success = await ref.read(activeCampaignProvider.notifier).load(name);
-    if (success && mounted) {
-      context.go('/main');
+
+    // 3. Loading overlay kapat
+    if (mounted) Navigator.of(context, rootNavigator: true).pop();
+    if (!success || !mounted) return;
+
+    // 4. Template drift check — uyarı dialogu göster (loading sonrası)
+    final drift = ref.read(pendingTemplateUpdateProvider);
+    if (drift != null) {
+      ref.read(pendingTemplateUpdateProvider.notifier).state = null;
+      final action = await _showPreOpenTemplateDialog(drift);
+      if (!mounted) return;
+      if (action == 'update') {
+        await ref.read(activeCampaignProvider.notifier).applyTemplateUpdate(drift.newTemplate);
+      } else if (action == 'mute') {
+        await ref.read(activeCampaignProvider.notifier).muteTemplateUpdates();
+      } else {
+        await ref.read(activeCampaignProvider.notifier).dismissTemplateUpdate(drift.newHash);
+      }
     }
+
+    // 5. Navigate
+    if (mounted) context.go('/main');
+  }
+
+  Future<String?> _showPreOpenTemplateDialog(TemplateUpdatePrompt prompt) {
+    bool doNotShowAgain = false;
+    final l10n = L10n.of(context)!;
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(l10n.templateDriftTitle),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.templateDriftBody(prompt.templateName)),
+                if (prompt.diffSummary.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(l10n.templateDriftChanges,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  ...prompt.diffSummary.map((line) => Padding(
+                    padding: const EdgeInsets.only(left: 8, bottom: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('\u2022 ',
+                            style: TextStyle(fontSize: 13)),
+                        Expanded(
+                            child: Text(line,
+                                style: const TextStyle(fontSize: 13))),
+                      ],
+                    ),
+                  )),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: Checkbox(
+                        value: doNotShowAgain,
+                        onChanged: (v) =>
+                            setDialogState(() => doNotShowAgain = v ?? false),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(l10n.templateDriftDoNotShowAgain,
+                          style: const TextStyle(fontSize: 13)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(ctx, doNotShowAgain ? 'mute' : 'ignore'),
+              child: Text(l10n.templateDriftIgnore),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, 'update'),
+              child: Text(l10n.templateDriftUpdate),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _showCampaignSettings(String campaignName, DmToolColors palette) async {

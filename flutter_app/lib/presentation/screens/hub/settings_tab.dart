@@ -190,7 +190,15 @@ class SettingsTab extends ConsumerWidget {
                             ),
                             child: Row(
                               children: [
-                                Icon(item.type == 'Template' ? Icons.description : Icons.public, size: 16, color: palette.tabText),
+                                Icon(
+                                item.type == 'Template'
+                                    ? Icons.description
+                                    : item.type == 'Package'
+                                        ? Icons.inventory_2
+                                        : Icons.public,
+                                size: 16,
+                                color: palette.tabText,
+                              ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(
@@ -247,7 +255,12 @@ class SettingsTab extends ConsumerWidget {
                 ref.invalidate(customTemplatesProvider);
                 ref.invalidate(allTemplatesProvider);
               } else if (item.type == 'Package') {
-                await ref.read(packageLocalDsProvider).permanentlyDeleteFromTrash(item.directoryName);
+                final ds = ref.read(packageLocalDsProvider);
+                final restoredData = await ds.restoreFromTrash(item.directoryName);
+                if (restoredData != null) {
+                  final name = restoredData['package_name'] as String? ?? item.originalName;
+                  await ref.read(packageRepositoryProvider).save(name, restoredData);
+                }
                 ref.invalidate(trashListProvider);
                 ref.invalidate(packageListProvider);
               } else {
@@ -283,7 +296,11 @@ class SettingsTab extends ConsumerWidget {
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await ref.read(campaignLocalDsProvider).permanentlyDeleteFromTrash(item.directoryName);
+              if (item.type == 'Package') {
+                await ref.read(packageLocalDsProvider).permanentlyDeleteFromTrash(item.directoryName);
+              } else {
+                await ref.read(campaignLocalDsProvider).permanentlyDeleteFromTrash(item.directoryName);
+              }
               ref.invalidate(trashListProvider);
             },
             style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),

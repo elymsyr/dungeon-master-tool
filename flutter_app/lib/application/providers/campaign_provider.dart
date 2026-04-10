@@ -124,8 +124,9 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     if (newTemplate.originalHash != null) {
       _data!['template_original_hash'] = newTemplate.originalHash;
     }
-    // Clear any previous dismiss so the next drift check doesn't skip.
+    // Clear any previous dismiss/mute so the next drift check doesn't skip.
     _data!.remove('template_dismissed_hash');
+    _data!.remove('template_updates_muted');
     await _repo.save(state!, _data!);
     // Force-notify watchers — round-trip through null because StateNotifier
     // dedupes on equality and the campaign name hasn't changed.
@@ -141,6 +142,14 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   Future<void> dismissTemplateUpdate(String templateHash) async {
     if (state == null || _data == null) return;
     _data!['template_dismissed_hash'] = templateHash;
+    await _repo.save(state!, _data!);
+  }
+
+  /// Permanently suppresses template-update prompts for this campaign.
+  /// Stores `template_updates_muted: true` in the campaign's state_json.
+  Future<void> muteTemplateUpdates() async {
+    if (state == null || _data == null) return;
+    _data!['template_updates_muted'] = true;
     await _repo.save(state!, _data!);
   }
 

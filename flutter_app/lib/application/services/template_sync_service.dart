@@ -72,6 +72,10 @@ class TemplateSyncService {
     final templateId = campaignData['template_id'] as String?;
     final originalHash = campaignData['template_original_hash'] as String?;
     if (templateId == null && originalHash == null) return null;
+
+    // Permanently muted — user chose "Do not show again" for this campaign.
+    final muted = campaignData['template_updates_muted'] as bool? ?? false;
+    if (muted) return null;
     final recordedHash = campaignData['template_hash'] as String?;
 
     final all = await _ref.read(allTemplatesProvider.future);

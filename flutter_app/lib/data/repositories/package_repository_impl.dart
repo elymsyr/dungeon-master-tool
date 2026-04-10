@@ -64,10 +64,15 @@ class PackageRepositoryImpl implements PackageRepository {
   @override
   Future<void> delete(String packageName) async {
     final existing = await _db.packageDao.getByName(packageName);
+    Map<String, dynamic>? data;
     if (existing != null) {
+      // Veriyi DB'den silmeden önce yedekle (trash restore için)
+      try {
+        data = await _loadFromDb(existing.id);
+      } catch (_) {}
       await _db.packageDao.deletePackage(existing.id);
     }
-    await _localDs.moveToTrash(packageName);
+    await _localDs.moveToTrash(packageName, data: data);
   }
 
   @override

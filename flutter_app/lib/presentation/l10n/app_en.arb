@@ -55,6 +55,7 @@
   "templateDriftUpToDate": "Template is up to date",
   "templateDriftChanges": "Changes:",
   "templateDriftUpdated": "Campaign updated with template",
+  "templateDriftDoNotShowAgain": "Do not show again for this world",
   "tabPackages": "Packages",
   "packageCreate": "Create Package",
   "packageName": "Package name",

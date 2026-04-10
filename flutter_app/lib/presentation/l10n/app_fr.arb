@@ -55,6 +55,7 @@
   "templateDriftUpToDate": "Le modèle est à jour",
   "templateDriftChanges": "Modifications :",
   "templateDriftUpdated": "Campagne mise à jour avec le modèle",
+  "templateDriftDoNotShowAgain": "Ne plus afficher pour ce monde",
   "tabPackages": "Paquets",
   "packageCreate": "Créer un paquet",
   "packageName": "Nom du paquet",

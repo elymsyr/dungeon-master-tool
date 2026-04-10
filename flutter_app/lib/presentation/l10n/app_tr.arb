@@ -55,6 +55,7 @@
   "templateDriftUpToDate": "Template güncel",
   "templateDriftChanges": "Değişiklikler:",
   "templateDriftUpdated": "Kampanya template ile güncellendi",
+  "templateDriftDoNotShowAgain": "Bu dünya için bir daha gösterme",
   "tabPackages": "Paketler",
   "packageCreate": "Paket Oluştur",
   "packageName": "Paket adı",
