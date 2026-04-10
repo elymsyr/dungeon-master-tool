@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../core/config/app_paths.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/entities/schema/world_schema_hash.dart';
 
 /// Custom template'leri diske kaydetme/okuma.
 /// Konum: cache/templates/{schemaId}.json
@@ -38,8 +39,18 @@ class TemplateLocalDataSource {
 
   Future<void> save(WorldSchema schema) async {
     await _ensureDir();
-    final file = File(p.join(_dir, '${schema.schemaId}.json'));
-    await file.writeAsString(jsonEncode(schema.toJson()));
+    // Lazy-init the frozen lineage hash on first save. Built-in templates
+    // already carry [builtinDndOriginalHash]; custom templates created
+    // before the originalHash field landed get backfilled here using
+    // their CURRENT content as the "original" — best-effort, but stable
+    // forever once written. Subsequent saves preserve whatever is on the
+    // schema (the editor passes the loaded value through unchanged), so
+    // edits never overwrite the lineage identifier.
+    final toPersist = schema.originalHash == null
+        ? schema.copyWith(originalHash: computeWorldSchemaContentHash(schema))
+        : schema;
+    final file = File(p.join(_dir, '${toPersist.schemaId}.json'));
+    await file.writeAsString(jsonEncode(toPersist.toJson()));
   }
 
   /// Load a single template by schema id. Returns null if there is no

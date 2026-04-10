@@ -5,8 +5,12 @@ import 'package:uuid/uuid.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'template_editor.dart';
+
+/// User's pick from the "save existing template" prompt.
+enum _SaveChoice { update, saveAsNew, cancel }
 
 class TemplatesTab extends ConsumerStatefulWidget {
   const TemplatesTab({super.key});
@@ -33,6 +37,29 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
         readOnly: false,
         onBack: () => setState(() { _mode = null; _activeSchema = null; }),
         onSave: (schema) async {
+          // Existing template? → ask whether to update in place or fork as
+          // a new template. New templates (no _activeSchema) skip the prompt.
+          final isExisting = _activeSchema != null;
+          if (isExisting) {
+            final choice = await _showUpdateOrForkDialog(context);
+            if (choice == null || choice == _SaveChoice.cancel) return;
+            if (choice == _SaveChoice.saveAsNew) {
+              final forked = _cloneAsNew(schema, '${schema.name} (v2)');
+              await ref.read(templateLocalDsProvider).save(forked);
+              ref.invalidate(builtinTemplateProvider);
+              ref.invalidate(customTemplatesProvider);
+              ref.invalidate(allTemplatesProvider);
+              if (mounted) {
+                setState(() { _mode = null; _activeSchema = null; });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Saved as new template: ${forked.name}')),
+                );
+              }
+              return;
+            }
+            // _SaveChoice.update falls through to the in-place save below.
+          }
+
           await ref.read(templateLocalDsProvider).save(schema);
           // Invalidate both — the saved file might be the built-in
           // (admin edit path) or a custom template, we don't need to
@@ -156,23 +183,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                 subtitle: Text('${t.categories.length} categories'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  final now = DateTime.now().toUtc().toIso8601String();
-                  final newId = const Uuid().v4();
-                  final copy = t.copyWith(
-                    schemaId: newId,
-                    name: '${t.name} (Copy)',
-                    createdAt: now,
-                    updatedAt: now,
-                    categories: t.categories.map((c) => c.copyWith(
-                      categoryId: const Uuid().v4(),
-                      schemaId: newId,
-                      isBuiltin: false,
-                      fields: c.fields.map((f) => f.copyWith(
-                        fieldId: const Uuid().v4(),
-                        isBuiltin: false,
-                      )).toList(),
-                    )).toList(),
-                  );
+                  final copy = _cloneAsNew(t, '${t.name} (Copy)');
                   setState(() { _mode = 'edit'; _activeSchema = copy; });
                 },
               );
@@ -183,6 +194,65 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
         ],
       ),
+    );
+  }
+
+  /// Prompts the user when saving an existing template, since the lazy
+  /// template-sync flow will mark dependent campaigns as outdated on their
+  /// next open. Returns the user's pick or null if they dismissed the
+  /// dialog (treated as cancel).
+  Future<_SaveChoice?> _showUpdateOrForkDialog(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    return showDialog<_SaveChoice>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.templateSaveTitle),
+        content: Text(l10n.templateSaveBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, _SaveChoice.cancel),
+            child: Text(l10n.btnCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, _SaveChoice.saveAsNew),
+            child: Text(l10n.templateSaveAsNew),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, _SaveChoice.update),
+            child: Text(l10n.templateSaveUpdate),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Deep-clones a template with fresh UUIDs on every nested entity so the
+  /// new template is fully independent of the source. Used by both the
+  /// "Copy From Template" dialog and the "Save as New" save path.
+  ///
+  /// `originalHash` is explicitly cleared so the fork is treated as a
+  /// brand-new lineage: `template_local_ds.save()` will lazy-init it from
+  /// the fork's content on first save. Without this the fork would
+  /// inherit the source's lineage and the lazy-sync flow would treat
+  /// every dependent campaign as outdated against the wrong template.
+  WorldSchema _cloneAsNew(WorldSchema t, String newName) {
+    final now = DateTime.now().toUtc().toIso8601String();
+    final newId = const Uuid().v4();
+    return t.copyWith(
+      schemaId: newId,
+      name: newName,
+      createdAt: now,
+      updatedAt: now,
+      originalHash: null,
+      categories: t.categories.map((c) => c.copyWith(
+        categoryId: const Uuid().v4(),
+        schemaId: newId,
+        isBuiltin: false,
+        fields: c.fields.map((f) => f.copyWith(
+          fieldId: const Uuid().v4(),
+          isBuiltin: false,
+        )).toList(),
+      )).toList(),
     );
   }
 }

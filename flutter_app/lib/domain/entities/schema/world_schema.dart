@@ -23,6 +23,16 @@ abstract class WorldSchema with _$WorldSchema {
     @Default({}) Map<String, dynamic> metadata,
     required String createdAt,
     required String updatedAt,
+    /// Content hash of THIS template at the moment of its very first
+    /// creation — frozen forever. Two templates with the same originalHash
+    /// share a lineage; edits afterward update [computeWorldSchemaContentHash]
+    /// (the "current" hash) but never this field. Because it is computed
+    /// purely from canonical JSON of gameplay-affecting fields, two
+    /// installs that generate the same template (e.g., the built-in D&D 5e
+    /// default) end up with the same originalHash — i.e., it is global,
+    /// not per-install. Nullable for legacy templates persisted before
+    /// this field landed; lazily backfilled on next save.
+    String? originalHash,
   }) = _WorldSchema;
 
   factory WorldSchema.fromJson(Map<String, dynamic> json) =>

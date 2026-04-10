@@ -15,6 +15,17 @@ const _uuid = Uuid();
 /// Sabit ID — default schema her zaman aynı ID'ye sahip.
 const _defaultSchemaId = 'builtin-dnd5e-default';
 
+/// Globally stable lineage identifier for the built-in D&D 5e template.
+///
+/// Hardcoded so that every install — regardless of the random per-install
+/// UUIDs that `generateDefaultDnd5eSchema()` assigns to categories/fields
+/// — agrees on the SAME `originalHash` for "the built-in template". The
+/// version suffix (`v1`) lets us declare a brand-new lineage if the
+/// hardcoded default ever needs a backwards-incompatible reshape; bumping
+/// it forces every existing campaign to be treated as orphaned (no
+/// matching template), which the sync service handles gracefully.
+const builtinDndOriginalHash = 'builtin-dnd5e-default-v1';
+
 // Grup ID'leri — deterministik (test edilebilir)
 const _grpAttributes = 'grp-attributes';
 const _grpAbilities = 'grp-abilities';
@@ -236,6 +247,11 @@ WorldSchema generateDefaultDnd5eSchema() {
     encounterConfig: _defaultEncounterConfig(),
     createdAt: now,
     updatedAt: now,
+    // Frozen, globally-stable lineage identifier for the built-in
+    // template. Every install lands on the same value here, so a campaign
+    // exported from install A will still find its source template on
+    // install B even though their per-install category/field UUIDs differ.
+    originalHash: builtinDndOriginalHash,
   );
 }
 

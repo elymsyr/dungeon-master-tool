@@ -53,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -62,6 +62,21 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) {
             // v2: campaigns.state_json eklendi
             await m.addColumn(campaigns, campaigns.stateJson);
+          }
+          if (from < 3) {
+            // v3: world_schemas.template_id + template_hash — lazy
+            // template-sync drift detection.
+            await m.addColumn(worldSchemas, worldSchemas.templateId);
+            await m.addColumn(worldSchemas, worldSchemas.templateHash);
+          }
+          if (from < 4) {
+            // v4: world_schemas.template_original_hash — frozen lineage
+            // identifier alongside the existing template_hash (which is
+            // now the "current" hash at last sync). Lets the sync flow
+            // match a campaign back to its template even after the
+            // template's schemaId / current hash change.
+            await m.addColumn(
+                worldSchemas, worldSchemas.templateOriginalHash);
           }
         },
       );

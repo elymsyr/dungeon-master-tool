@@ -15,10 +15,20 @@ final templateLocalDsProvider = Provider((_) => TemplateLocalDataSource());
 /// The built-in D&D 5e template. Loads from disk if admin edits have been
 /// saved; otherwise falls back to the freshly generated code default so
 /// fresh installs still pick up the latest hardcoded schema.
+///
+/// Always force-stamps the canonical [builtinDndOriginalHash] on the
+/// returned schema. Disk files persisted before the originalHash field
+/// landed get patched in-memory; admin-edited built-ins keep their
+/// content but inherit the same global lineage hash so every install
+/// (and every campaign that derives from "the built-in") agrees on what
+/// "the built-in template" is.
 final builtinTemplateProvider = FutureProvider<WorldSchema>((ref) async {
   final ds = ref.read(templateLocalDsProvider);
   final saved = await ds.loadById(builtinTemplateId);
-  return saved ?? generateDefaultDnd5eSchema();
+  final base = saved ?? generateDefaultDnd5eSchema();
+  return base.originalHash == builtinDndOriginalHash
+      ? base
+      : base.copyWith(originalHash: builtinDndOriginalHash);
 });
 
 /// Custom template listesi (disk'ten). Excludes the built-in id so the

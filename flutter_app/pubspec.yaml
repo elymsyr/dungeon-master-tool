@@ -41,6 +41,7 @@ dependencies:
 
   # Utilities
   uuid: ^4.5.1
+  crypto: ^3.0.5
   intl: any
   logger: ^2.5.0
   url_launcher: ^6.3.1

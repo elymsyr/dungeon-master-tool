@@ -15,6 +15,13 @@ abstract class Campaign with _$Campaign {
     String? lastActiveSessionId,
     @Default({}) Map<String, dynamic> mindMaps,
     WorldSchema? worldSchema,
+    /// `schemaId` of the template this campaign was created from. Null in
+    /// legacy campaigns; loaders fall back to `'builtin-dnd5e-default'`.
+    String? templateId,
+    /// Content hash of the template at the time this campaign's worldSchema
+    /// was last synced with it. Used by the lazy template-sync flow on
+    /// campaign open to detect drift and prompt the user.
+    String? templateHash,
   }) = _Campaign;
 
   factory Campaign.fromJson(Map<String, dynamic> json) =>

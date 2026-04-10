@@ -1,11 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/template_provider.dart';
+import '../../../application/services/template_sync_service.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../domain/entities/schema/world_schema_hash.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 
 class WorldsTab extends ConsumerStatefulWidget {
@@ -106,6 +111,14 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                                       ],
                                     ),
                                   ),
+                                  IconButton(
+                                    icon: Icon(Icons.settings, size: 16, color: palette.tabText),
+                                    tooltip: 'World Settings',
+                                    onPressed: () => _showCampaignSettings(info.name, palette),
+                                    visualDensity: VisualDensity.compact,
+                                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                    padding: EdgeInsets.zero,
+                                  ),
                                   if (isSelected)
                                     Icon(Icons.check, size: 16, color: palette.featureCardAccent),
                                 ],
@@ -159,20 +172,21 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               ref.watch(allTemplatesProvider).when(
                 data: (templates) {
                   if (templates.isEmpty) return const Text('No templates');
-                  _selectedTemplate ??= templates.first;
-                  // initialValue items'da yoksa ilk item'ı seç
-                  final validId = templates.any((t) => t.schemaId == _selectedTemplate?.schemaId)
-                      ? _selectedTemplate!.schemaId
-                      : templates.first.schemaId;
-                  if (validId != _selectedTemplate?.schemaId) _selectedTemplate = templates.first;
-
-                  // Deduplicate by schemaId to avoid DropdownButton assertion
+                  // Deduplicate by schemaId to avoid DropdownButton assertion.
                   final seen = <String>{};
                   final uniqueTemplates = templates.where((t) => seen.add(t.schemaId)).toList();
-                  final finalId = uniqueTemplates.any((t) => t.schemaId == validId)
-                      ? validId
-                      : uniqueTemplates.first.schemaId;
-                  if (finalId != validId) _selectedTemplate = uniqueTemplates.first;
+                  // ALWAYS refresh `_selectedTemplate` to the matching object
+                  // from the freshly-fetched list. The schemaId stays stable
+                  // across template edits, so the old "only swap when the id
+                  // disappears" check kept us pointing at a stale in-memory
+                  // copy whenever the user edited a template — and the new
+                  // campaign would then be created from pre-edit columns
+                  // (e.g., the removed `lvl` column would reappear).
+                  final matched = uniqueTemplates
+                      .where((t) => t.schemaId == _selectedTemplate?.schemaId)
+                      .firstOrNull;
+                  _selectedTemplate = matched ?? uniqueTemplates.first;
+                  final finalId = _selectedTemplate!.schemaId;
 
                   return DropdownButtonFormField<String>(
                     key: ValueKey('tmpl_${uniqueTemplates.length}'),
@@ -258,6 +272,153 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final success = await ref.read(activeCampaignProvider.notifier).load(name);
     if (success && mounted) {
       context.go('/main');
+    }
+  }
+
+  Future<void> _showCampaignSettings(String campaignName, DmToolColors palette) async {
+    final l10n = L10n.of(context)!;
+
+    // Load campaign data and check drift against its source template.
+    Map<String, dynamic> data;
+    try {
+      data = await ref.read(campaignRepositoryProvider).load(campaignName);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load campaign: $e')),
+        );
+      }
+      return;
+    }
+
+    TemplateUpdatePrompt? drift;
+    try {
+      drift = await ref.read(templateSyncServiceProvider).checkDrift(
+        campaignName: campaignName,
+        campaignData: data,
+      );
+    } catch (_) {
+      // Best-effort — show the dialog without drift info.
+    }
+
+    if (!mounted) return;
+
+    final schemaMap = data['world_schema'] as Map<String, dynamic>?;
+    final templateName = schemaMap?['name'] as String? ?? 'Unknown';
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('$campaignName — Settings'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.description, size: 16, color: palette.sidebarLabelSecondary),
+                  const SizedBox(width: 6),
+                  Text('Template: $templateName',
+                      style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (drift == null)
+                Row(
+                  children: [
+                    Icon(Icons.check_circle, size: 16, color: palette.successBtnBg),
+                    const SizedBox(width: 6),
+                    Text(l10n.templateDriftUpToDate,
+                        style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
+                  ],
+                )
+              else ...[
+                Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 16, color: palette.featureCardAccent),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(l10n.templateDriftBody(drift.templateName),
+                          style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
+                    ),
+                  ],
+                ),
+                if (drift.diffSummary.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(l10n.templateDriftChanges,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 4),
+                  ...drift.diffSummary.map((line) => Padding(
+                    padding: const EdgeInsets.only(left: 8, bottom: 3),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('\u2022 ', style: TextStyle(fontSize: 12)),
+                        Expanded(child: Text(line, style: const TextStyle(fontSize: 12))),
+                      ],
+                    ),
+                  )),
+                ],
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.btnCancel),
+          ),
+          if (drift != null)
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await _applyTemplateFromSettings(campaignName, data, drift!);
+              },
+              child: Text(l10n.templateDriftUpdate),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Applies a template update from the settings dialog. Handles both the
+  /// active campaign (uses the notifier) and non-active campaigns (direct
+  /// repo save).
+  Future<void> _applyTemplateFromSettings(
+    String campaignName,
+    Map<String, dynamic> data,
+    TemplateUpdatePrompt drift,
+  ) async {
+    try {
+      final activeName = ref.read(activeCampaignProvider);
+      if (activeName == campaignName) {
+        await ref
+            .read(activeCampaignProvider.notifier)
+            .applyTemplateUpdate(drift.newTemplate);
+      } else {
+        // Non-active campaign — mutate data map directly and save.
+        data['world_schema'] = jsonDecode(jsonEncode(drift.newTemplate.toJson()));
+        data['template_id'] = drift.newTemplate.schemaId;
+        data['template_hash'] = computeWorldSchemaContentHash(drift.newTemplate);
+        if (drift.newTemplate.originalHash != null) {
+          data['template_original_hash'] = drift.newTemplate.originalHash;
+        }
+        data.remove('template_dismissed_hash');
+        await ref.read(campaignRepositoryProvider).save(campaignName, data);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.of(context)!.templateDriftUpdated)),
+        );
+      }
+    } catch (e, st) {
+      debugPrint('Template apply from settings failed: $e\n$st');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Update failed: $e')),
+        );
+      }
     }
   }
 

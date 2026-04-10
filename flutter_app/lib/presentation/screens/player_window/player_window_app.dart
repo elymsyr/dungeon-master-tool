@@ -48,7 +48,14 @@ class _PlayerWindowAppState extends ConsumerState<PlayerWindowApp>
   }
 
   /// Native close-button intercepted by `setPreventClose(true)`. Notify the
-  /// DM main window so its cast icon flips immediately, then actually close.
+  /// DM main window so its cast icon flips immediately AND so the DM can
+  /// destroy this window via `WindowController.fromWindowId(...).close()` —
+  /// the desktop_multi_window-native close path. We deliberately do NOT call
+  /// `windowManager.destroy()` from inside the sub-window: on Linux that
+  /// tries to remove the implicit Flutter view and triggers a fatal
+  /// `FlutterEngineRemoveView ... kInvalidArguments` + GL context teardown
+  /// crash. The DM-side close path goes through native window destruction
+  /// instead and is the only path that's stable here.
   @override
   void onWindowClose() async {
     try {
@@ -59,14 +66,12 @@ class _PlayerWindowAppState extends ConsumerState<PlayerWindowApp>
         null,
       );
     } catch (_) {
-      // ignore — DM may have died first
+      // ignore — DM may have died first; in that case the OS will tear
+      // this process down momentarily anyway.
     }
-    try {
-      await windowManager.setPreventClose(false);
-      await windowManager.destroy();
-    } catch (_) {
-      // last resort
-    }
+    // Intentionally no destroy() here — wait for the DM to close us via
+    // WindowController. setPreventClose(true) stays armed so the OS-level
+    // close stays cancelled until the DM yanks the window out from under us.
   }
 
   Future<dynamic> _handleMethod(MethodCall call, int fromWindowId) async {
@@ -88,15 +93,18 @@ class _PlayerWindowAppState extends ConsumerState<PlayerWindowApp>
             .applyBattleMapPatch(itemId, patch);
         return null;
       case ProjectionIpcMethods.close:
-        // Graceful close — windowManager.destroy() detaches just this OS
-        // window without using SystemNavigator.pop(), which on Linux
-        // desktop_multi_window propagates "Lost connection to device" to
-        // the parent process.
+        // Graceful close — just unhook the close-prevent guard and return.
+        // The DM follows up with a `WindowController.fromWindowId(id).close()`
+        // ~200ms later (see `ProjectionController.closeWindow`) which is the
+        // only path that doesn't crash on Linux. We deliberately do NOT call
+        // `windowManager.destroy()` here; doing so triggers the same
+        // `FlutterEngineRemoveView ... kInvalidArguments` + GL context
+        // assertion as the X-button path.
         try {
           await windowManager.setPreventClose(false);
-          await windowManager.destroy();
         } catch (_) {
-          // Fallback if window_manager is unavailable in this isolate.
+          // window_manager unavailable in this isolate — DM's forced close
+          // will handle it.
         }
         return null;
     }

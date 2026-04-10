@@ -38,13 +38,28 @@ void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   LogBuffer.install();
 
-  // Reverse-IPC handler so sub-windows can notify the DM. Currently used by
-  // the player window's `WindowListener.onWindowClose` to flip the cast icon
-  // back to "closed" the moment the user closes the second window via its
-  // native chrome — without waiting for the next outbound push to fail.
+  // Reverse-IPC handler so sub-windows can notify the DM. The player window's
+  // `WindowListener.onWindowClose` fires this when the user clicks the native
+  // X button. We do TWO things:
+  //
+  //   1. Bump `playerWindowClosedSignal` so the DM's `ProjectionController`
+  //      flips the cast icon back to "closed" immediately.
+  //   2. Actually destroy the sub-window via
+  //      `WindowController.fromWindowId(fromWindowId).close()`. This is the
+  //      desktop_multi_window-native close path and the only one that doesn't
+  //      crash on Linux — calling `windowManager.destroy()` from inside the
+  //      sub-window itself trips a fatal `FlutterEngineRemoveView ...
+  //      kInvalidArguments` + EGL/GLX context assertion. The sub-window now
+  //      sends us this signal and waits for us to take it down from outside.
   DesktopMultiWindow.setMethodHandler((call, fromWindowId) async {
     if (call.method == ProjectionIpcMethods.playerClosed) {
       playerWindowClosedSignal.value++;
+      try {
+        await WindowController.fromWindowId(fromWindowId).close();
+      } catch (_) {
+        // Already gone or in a bad state — fine. The DM-side cast icon
+        // already flipped via the signal above, so the UI stays consistent.
+      }
     }
     return null;
   });

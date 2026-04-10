@@ -42,5 +42,17 @@
   "soundpadSoundAdded": "Son ajouté avec succès",
   "soundpadSoundRemoved": "Son supprimé",
   "soundpadSoundName": "Nom du son",
-  "soundpadSelectAudio": "Sélectionner un fichier audio"
+  "soundpadSelectAudio": "Sélectionner un fichier audio",
+  "templateSaveTitle": "Enregistrer le modèle ?",
+  "templateSaveBody": "Les campagnes utilisant ce modèle pourront se mettre à jour vers la nouvelle version au prochain chargement.",
+  "templateSaveAsNew": "Enregistrer comme nouveau",
+  "templateSaveUpdate": "Mettre à jour",
+  "templateDriftTitle": "Mise à jour du modèle disponible",
+  "templateDriftBody": "Le modèle \"{templateName}\" a été mis à jour depuis la dernière synchronisation.",
+  "@templateDriftBody": { "placeholders": { "templateName": { "type": "String" } } },
+  "templateDriftIgnore": "Ignorer",
+  "templateDriftUpdate": "Mettre à jour",
+  "templateDriftUpToDate": "Le modèle est à jour",
+  "templateDriftChanges": "Modifications :",
+  "templateDriftUpdated": "Campagne mise à jour avec le modèle"
 }

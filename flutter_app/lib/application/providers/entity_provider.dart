@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -36,7 +38,7 @@ final worldSchemaProvider = Provider<WorldSchema>((ref) {
   // Fallback: default schema üret ve kampanyaya kaydet
   final schema = generateDefaultDnd5eSchema();
   if (data != null) {
-    data['world_schema'] = schema.toJson();
+    data['world_schema'] = jsonDecode(jsonEncode(schema.toJson()));
   }
   return schema;
 });
