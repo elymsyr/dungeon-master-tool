@@ -232,15 +232,14 @@ class _PackageImportCardState extends State<_PackageImportCard> {
               ),
           };
 
-    final canImport = !_loading &&
-        !widget.importing &&
-        _compat != null &&
-        _compat!.level != CompatibilityLevel.incompatible;
+    final isIncompatible = _compat?.level == CompatibilityLevel.incompatible;
+    final canImport = !_loading && !widget.importing && _compat != null;
 
     final hasDetails = _compat != null &&
         (_compat!.warnings.isNotEmpty ||
             _compat!.addedFields.isNotEmpty ||
-            _compat!.removedFields.isNotEmpty);
+            _compat!.removedFields.isNotEmpty ||
+            _compat!.removedCategories.isNotEmpty);
 
     return Container(
       decoration: BoxDecoration(
@@ -296,14 +295,29 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                   // Import butonu
                   SizedBox(
                     height: 28,
-                    child: FilledButton(
-                      onPressed: canImport ? widget.onImport : null,
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        textStyle: const TextStyle(fontSize: 12),
-                      ),
-                      child: Text(l10n.btnImport),
-                    ),
+                    child: isIncompatible
+                        ? OutlinedButton(
+                            onPressed: canImport
+                                ? () => _confirmForceImport(context)
+                                : null,
+                            style: OutlinedButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              textStyle: const TextStyle(fontSize: 12),
+                              foregroundColor: palette.dangerBtnBg,
+                              side: BorderSide(color: palette.dangerBtnBg),
+                            ),
+                            child: const Text('Force'),
+                          )
+                        : FilledButton(
+                            onPressed: canImport ? widget.onImport : null,
+                            style: FilledButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              textStyle: const TextStyle(fontSize: 12),
+                            ),
+                            child: Text(l10n.btnImport),
+                          ),
                   ),
                   // Expand arrow
                   if (hasDetails)
@@ -380,5 +394,43 @@ class _PackageImportCardState extends State<_PackageImportCard> {
         ],
       ),
     );
+  }
+
+  void _confirmForceImport(BuildContext context) {
+    final palette = widget.palette;
+    showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning, color: palette.dangerBtnBg, size: 22),
+            const SizedBox(width: 8),
+            const Text('Force Import'),
+          ],
+        ),
+        content: const Text(
+          'The package template is incompatible with this world.\n\n'
+          'Entities from unmatched categories will be skipped, and '
+          'mismatched fields will receive default values. '
+          'This may result in significant data loss.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: palette.dangerBtnBg,
+              foregroundColor: palette.dangerBtnText,
+            ),
+            child: const Text('Force Import'),
+          ),
+        ],
+      ),
+    ).then((confirmed) {
+      if (confirmed == true) widget.onImport();
+    });
   }
 }

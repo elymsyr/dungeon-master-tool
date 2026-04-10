@@ -68,6 +68,7 @@ class TemplateSyncService {
   Future<TemplateUpdatePrompt?> checkDrift({
     required String campaignName,
     required Map<String, dynamic> campaignData,
+    bool ignoreDismissed = false,
   }) async {
     final templateId = campaignData['template_id'] as String?;
     final originalHash = campaignData['template_original_hash'] as String?;
@@ -111,8 +112,10 @@ class TemplateSyncService {
 
     // User previously dismissed this exact template version — stay quiet
     // until the template is edited again (producing a new hash).
-    final dismissedHash = campaignData['template_dismissed_hash'] as String?;
-    if (currentHash == dismissedHash) return null;
+    if (!ignoreDismissed) {
+      final dismissedHash = campaignData['template_dismissed_hash'] as String?;
+      if (currentHash == dismissedHash) return null;
+    }
 
     // Compute a human-readable diff between the campaign's current schema
     // and the updated template so the UI can show what will change.
