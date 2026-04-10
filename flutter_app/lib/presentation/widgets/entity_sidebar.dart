@@ -196,6 +196,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                     final color = cat != null ? _parseColor(cat.color) : palette.tabText;
 
                     return Draggable<String>(
+                      key: ValueKey(entity.id),
                       data: entity.id,
                       dragAnchorStrategy: pointerDragAnchorStrategy,
                       feedback: Material(

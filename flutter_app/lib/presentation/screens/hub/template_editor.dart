@@ -150,6 +150,7 @@ class _TemplateEditorState extends State<TemplateEditor> {
                           final color = _parseColor(cat.color);
 
                           return InkWell(
+                            key: ValueKey(cat.slug),
                             borderRadius: BorderRadius.circular(4),
                             onTap: () => setState(() { _selectedCatIndex = i; _showEncounterConfig = false; }),
                             child: Container(

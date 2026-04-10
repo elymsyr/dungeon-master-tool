@@ -75,7 +75,7 @@ class SoundpadLoader {
       if (entity is! Directory) continue;
       final yamlPath = p.join(entity.path, 'theme.yaml');
       if (!await File(yamlPath).exists()) continue;
-      final theme = _parseThemeFile(yamlPath, entity.path);
+      final theme = await _parseThemeFile(yamlPath, entity.path);
       if (theme != null) themes[theme.id] = theme;
     }
     return themes;
@@ -255,9 +255,9 @@ class SoundpadLoader {
   }
 
   /// Tek theme.yaml dosyasını parse eder.
-  static SoundpadTheme? _parseThemeFile(String yamlPath, String baseFolder) {
+  static Future<SoundpadTheme?> _parseThemeFile(String yamlPath, String baseFolder) async {
     try {
-      final raw = File(yamlPath).readAsStringSync();
+      final raw = await File(yamlPath).readAsString();
       final data = loadYaml(raw) as YamlMap?;
       if (data == null) return null;
 

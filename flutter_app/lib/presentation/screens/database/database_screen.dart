@@ -334,6 +334,7 @@ class _TabBar extends StatelessWidget {
           final catColor = tab.categoryColor;
 
           return GestureDetector(
+            key: ValueKey(tab.entityId),
             onTap: () => onSelect(i),
             onTertiaryTapUp: (_) => onClose(i),
             child: Container(

@@ -532,6 +532,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
                 width: n.width * 0.35,
                 height: n.height - 16,
                 fit: BoxFit.cover,
+                cacheWidth: (n.width * 0.7).toInt(),
               ),
             )
           else
@@ -661,7 +662,8 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       if (exists) {
         return ClipRRect(
           child: Image.file(File(n.imageUrl!),
-              fit: BoxFit.cover, width: n.width, height: n.height),
+              fit: BoxFit.cover, width: n.width, height: n.height,
+              cacheWidth: (n.width * 2).toInt()),
         );
       }
     }

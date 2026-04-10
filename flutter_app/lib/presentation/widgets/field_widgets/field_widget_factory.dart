@@ -1167,6 +1167,7 @@ class _ImageFieldWidgetState extends State<_ImageFieldWidget> {
                           File(images[_currentIndex]),
                           fit: BoxFit.contain,
                           width: double.infinity,
+                          cacheWidth: 600,
                           errorBuilder: (_, __, ___) => Container(
                             color: palette?.canvasBg ?? Colors.grey.shade800,
                             child: Center(child: Icon(Icons.broken_image, color: palette?.sidebarLabelSecondary)),

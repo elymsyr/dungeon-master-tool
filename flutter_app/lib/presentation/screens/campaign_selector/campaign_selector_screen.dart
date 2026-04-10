@@ -73,6 +73,7 @@ class _CampaignSelectorScreenState
                             final name = campaigns[index];
                             final isSelected = index == _selectedIndex;
                             return ListTile(
+                              key: ValueKey(name),
                               leading: Icon(
                                 Icons.public,
                                 color: isSelected

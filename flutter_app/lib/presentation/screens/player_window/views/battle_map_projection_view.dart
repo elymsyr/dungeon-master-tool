@@ -574,6 +574,7 @@ class _InitiativeSidePanel extends StatelessWidget {
                     itemCount: tokens.length,
                     itemBuilder: (context, i) {
                       return _InitiativeRow(
+                        key: ValueKey(tokens[i].id),
                         token: tokens[i],
                         isActive: i == activeIdx,
                       );
@@ -631,7 +632,7 @@ class _PanelHeader extends StatelessWidget {
 class _InitiativeRow extends StatelessWidget {
   final TokenSnapshot token;
   final bool isActive;
-  const _InitiativeRow({required this.token, required this.isActive});
+  const _InitiativeRow({super.key, required this.token, required this.isActive});
 
   @override
   Widget build(BuildContext context) {
@@ -787,6 +788,7 @@ class _ConditionBadge extends StatelessWidget {
                 Image.file(
                   File(condition.imagePath!),
                   fit: BoxFit.cover,
+                  cacheWidth: 80,
                   errorBuilder: (_, _, _) => _conditionFallback(),
                 )
               else

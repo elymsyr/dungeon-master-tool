@@ -582,8 +582,9 @@ final projectionControllerProvider =
 /// their snapshots from the latest entity data + world schema.
 final projectionEntitySyncProvider = Provider<void>((ref) {
   ref.listen(entityProvider, (prev, next) {
-    final controller = ref.read(projectionControllerProvider.notifier);
     final state = ref.read(projectionControllerProvider);
+    if (!state.items.any((i) => i is EntityCardProjection)) return;
+    final controller = ref.read(projectionControllerProvider.notifier);
     final schema = ref.read(worldSchemaProvider);
     for (final item in state.items) {
       if (item is! EntityCardProjection) continue;
@@ -606,8 +607,9 @@ final projectionEntitySyncProvider = Provider<void>((ref) {
 /// player window's battle map in sync with the DM's edits.
 final projectionBattleMapSyncProvider = Provider<void>((ref) {
   ref.listen<CombatState>(combatProvider, (prev, next) {
-    final controller = ref.read(projectionControllerProvider.notifier);
     final state = ref.read(projectionControllerProvider);
+    if (!state.items.any((i) => i is BattleMapProjection)) return;
+    final controller = ref.read(projectionControllerProvider.notifier);
     final entities = ref.read(entityProvider);
     final schema = ref.read(worldSchemaProvider);
     for (final item in state.items) {

@@ -1,6 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
+
+import '../../../core/utils/deep_copy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -517,7 +517,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
             .applyTemplateUpdate(drift.newTemplate);
       } else {
         // Non-active campaign — mutate data map directly and save.
-        data['world_schema'] = jsonDecode(jsonEncode(drift.newTemplate.toJson()));
+        data['world_schema'] = deepCopyJson(drift.newTemplate.toJson());
         data['template_id'] = drift.newTemplate.schemaId;
         data['template_hash'] = computeWorldSchemaContentHash(drift.newTemplate);
         if (drift.newTemplate.originalHash != null) {

@@ -64,6 +64,7 @@ class ConditionBadge extends ConsumerWidget {
                     width: size,
                     height: size,
                     fit: BoxFit.cover,
+                    cacheWidth: (size * 2).toInt(),
                   ),
                 )
               else

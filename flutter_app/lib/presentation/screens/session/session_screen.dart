@@ -531,6 +531,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   ListView.builder(
                     itemCount: enc.combatants.length,
                     itemBuilder: (context, index) => _CombatantRow(
+                      key: ValueKey(enc.combatants[index].id),
                       combatant: enc.combatants[index],
                       index: index,
                       turnIndex: enc.turnIndex,
@@ -790,6 +791,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         }
 
         return _MobileCombatCard(
+          key: ValueKey(c.id),
           combatant: c,
           isActive: index == enc.turnIndex,
           palette: palette,
@@ -1204,6 +1206,7 @@ class _MobileCombatCard extends StatelessWidget {
   final Map<String, dynamic> Function(String? entityId) getConditionStats;
 
   const _MobileCombatCard({
+    super.key,
     required this.combatant,
     required this.isActive,
     required this.palette,
@@ -1358,6 +1361,7 @@ class _CombatantRow extends ConsumerWidget {
   final void Function(String combatantId, List<String> conditions) onShowAddCondition;
 
   const _CombatantRow({
+    super.key,
     required this.combatant,
     required this.index,
     required this.turnIndex,

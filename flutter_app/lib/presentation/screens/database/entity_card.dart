@@ -746,6 +746,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
       width: 200,
       height: 260,
       fit: BoxFit.cover,
+      cacheWidth: 400,
       errorBuilder: (_, __, ___) => _buildPlaceholder(),
     );
   }

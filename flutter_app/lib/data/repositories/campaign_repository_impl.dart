@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+
+import '../../core/utils/deep_copy.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
@@ -111,7 +113,7 @@ class CampaignRepositoryImpl implements CampaignRepository {
     // template edits entirely. Always read with the camelCase keys here
     // and let `_saveToDb` handle the legacy fallback via `pickAny`.
     final schemaJson =
-        jsonDecode(jsonEncode(schema.toJson())) as Map<String, dynamic>;
+        deepCopyJson(schema.toJson()) as Map<String, dynamic>;
     // Two hashes per campaign:
     //   - templateOriginalHash → frozen lineage identifier; survives all
     //     template edits and lets the sync service match this campaign
