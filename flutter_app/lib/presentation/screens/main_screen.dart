@@ -323,7 +323,16 @@ class _MainScreenState extends ConsumerState<MainScreen>
       ],
     );
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          ref.invalidate(campaignListProvider);
+          ref.invalidate(campaignInfoListProvider);
+          context.go('/hub');
+        }
+      },
+      child: Scaffold(
       // --- Toolbar (AppBar) ---
       appBar: AppBar(
         titleSpacing: 8,
@@ -685,6 +694,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
               ),
             )
           : null,
+    ),
     );
   }
 
