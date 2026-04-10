@@ -51,6 +51,12 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   Map<String, dynamic>? _data;
   Map<String, dynamic>? get data => _data;
 
+  /// Dışarıdan veri ile önceden yükle (paket ProviderScope override için).
+  void preload(String name, Map<String, dynamic> data) {
+    _data = data;
+    state = name;
+  }
+
   Future<bool> load(String name) async {
     try {
       _data = await _repo.load(name);

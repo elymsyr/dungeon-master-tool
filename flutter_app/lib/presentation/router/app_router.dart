@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../screens/hub/hub_screen.dart';
 import '../screens/landing/landing_screen.dart';
 import '../screens/main_screen.dart';
+import '../screens/package_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -18,6 +19,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/main',
       builder: (context, state) => const MainScreen(),
+    ),
+    GoRoute(
+      path: '/package',
+      builder: (context, state) => const PackageScreen(),
     ),
   ],
 );

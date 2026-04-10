@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
+import 'packages_tab.dart';
 import 'settings_tab.dart';
 import 'social_tab.dart';
 import 'templates_tab.dart';
@@ -26,6 +27,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     (icon: Icons.settings, label: 'Settings'),
     (icon: Icons.public, label: 'Worlds'),
     (icon: Icons.description, label: 'Templates'),
+    (icon: Icons.inventory_2, label: 'Packages'),
   ];
 
   // IndexedStack ile state korunur — tab değişince widget'lar yeniden oluşturulmaz
@@ -34,6 +36,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     SettingsTab(),
     WorldsTab(),
     TemplatesTab(),
+    PackagesTab(),
   ];
 
   @override

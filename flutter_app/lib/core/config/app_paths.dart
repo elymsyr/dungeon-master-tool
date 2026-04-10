@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 class AppPaths {
   static late String dataRoot;
   static late String worldsDir;
+  static late String packagesDir;
   static late String cacheDir;
   static late String trashDir;
   static late String soundpadRoot;
@@ -14,12 +15,14 @@ class AppPaths {
   static Future<void> initialize() async {
     dataRoot = await _resolveDataRoot();
     worldsDir = p.join(dataRoot, 'worlds');
+    packagesDir = p.join(dataRoot, 'packages');
     cacheDir = p.join(dataRoot, 'cache');
     trashDir = p.join(dataRoot, '.trash');
 
     soundpadRoot = await _resolveSoundpadRoot();
 
     await Directory(worldsDir).create(recursive: true);
+    await Directory(packagesDir).create(recursive: true);
     await Directory(cacheDir).create(recursive: true);
     await Directory(trashDir).create(recursive: true);
     await Directory(soundpadRoot).create(recursive: true);

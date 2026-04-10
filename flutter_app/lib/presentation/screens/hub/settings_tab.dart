@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/locale_provider.dart';
+import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/soundpad_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
@@ -230,22 +231,25 @@ class SettingsTab extends ConsumerWidget {
   }
 
   void _restoreTrashItem(BuildContext context, WidgetRef ref, TrashItem item, DmToolColors palette) {
-    final isTemplate = item.type == 'Template';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Restore ${isTemplate ? 'Template' : 'World'}'),
+        title: Text('Restore ${item.type}'),
         content: Text('Restore "${item.originalName}" from trash?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              if (isTemplate) {
+              if (item.type == 'Template') {
                 await ref.read(templateLocalDsProvider).restoreFromTrash(item.directoryName);
                 ref.invalidate(trashListProvider);
                 ref.invalidate(customTemplatesProvider);
                 ref.invalidate(allTemplatesProvider);
+              } else if (item.type == 'Package') {
+                await ref.read(packageLocalDsProvider).permanentlyDeleteFromTrash(item.directoryName);
+                ref.invalidate(trashListProvider);
+                ref.invalidate(packageListProvider);
               } else {
                 final ds = ref.read(campaignLocalDsProvider);
                 final restoreName = await ds.findUniqueRestoreName(item.originalName);
@@ -268,7 +272,7 @@ class SettingsTab extends ConsumerWidget {
   }
 
   void _permanentlyDeleteTrashItem(BuildContext context, WidgetRef ref, TrashItem item, DmToolColors palette) {
-    final typeLabel = item.type == 'Template' ? 'template' : 'world';
+    final typeLabel = item.type.toLowerCase();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(

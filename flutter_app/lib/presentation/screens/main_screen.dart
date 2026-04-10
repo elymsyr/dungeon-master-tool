@@ -17,6 +17,7 @@ import '../../application/providers/undo_redo_provider.dart';
 import '../../application/services/template_sync_service.dart';
 import '../../core/utils/screen_type.dart';
 import '../dialogs/bug_report_dialog.dart';
+import '../dialogs/import_package_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
@@ -352,6 +353,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
           ),
           // Player window status — always visible, jumps to projection panel
           const PlayerWindowStatusIcon(),
+          // Import Package
+          IconButton(
+            icon: const Icon(Icons.inventory_2, size: 20),
+            tooltip: l10n.importPackage,
+            onPressed: () => ImportPackageDialog.show(context),
+          ),
           // Tema
           PopupMenuButton<String>(
             icon: const Icon(Icons.palette, size: 20),

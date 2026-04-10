@@ -175,6 +175,16 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     ));
   }
 
+  /// Birden fazla entity'yi tek seferde ekle (paket import için).
+  /// Çağıran taraf önceden pushUndo() yapmalıdır.
+  void addEntities(Map<String, Entity> entities) {
+    state = {...state, ...entities};
+    _syncToCampaign();
+  }
+
+  /// Mevcut entity map'inin bir kopyasını döndürür (import service için).
+  Map<String, Entity> get currentEntities => Map.unmodifiable(state);
+
   void delete(String entityId) {
     final removed = state[entityId];
     pushUndo(state);

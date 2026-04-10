@@ -9,6 +9,7 @@ import 'daos/campaign_dao.dart';
 import 'daos/entity_dao.dart';
 import 'daos/map_dao.dart';
 import 'daos/mind_map_dao.dart';
+import 'daos/package_dao.dart';
 import 'daos/session_dao.dart';
 import 'tables/campaigns_table.dart';
 import 'tables/combat_conditions_table.dart';
@@ -18,6 +19,9 @@ import 'tables/entities_table.dart';
 import 'tables/map_pins_table.dart';
 import 'tables/mind_map_edges_table.dart';
 import 'tables/mind_map_nodes_table.dart';
+import 'tables/package_entities_table.dart';
+import 'tables/package_schemas_table.dart';
+import 'tables/packages_table.dart';
 import 'tables/sessions_table.dart';
 import 'tables/timeline_pins_table.dart';
 import 'tables/world_schemas_table.dart';
@@ -37,6 +41,9 @@ part 'app_database.g.dart';
     TimelinePins,
     MindMapNodes,
     MindMapEdges,
+    Packages,
+    PackageSchemas,
+    PackageEntities,
   ],
   daos: [
     CampaignDao,
@@ -44,6 +51,7 @@ part 'app_database.g.dart';
     SessionDao,
     MapDao,
     MindMapDao,
+    PackageDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -53,7 +61,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -77,6 +85,12 @@ class AppDatabase extends _$AppDatabase {
             // template's schemaId / current hash change.
             await m.addColumn(
                 worldSchemas, worldSchemas.templateOriginalHash);
+          }
+          if (from < 5) {
+            // v5: Paket sistemi — packages, package_schemas, package_entities.
+            await m.createTable(packages);
+            await m.createTable(packageSchemas);
+            await m.createTable(packageEntities);
           }
         },
       );
