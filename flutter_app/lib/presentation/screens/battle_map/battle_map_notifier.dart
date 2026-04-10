@@ -9,7 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/combat_provider.dart';
+import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/projection_provider.dart';
+import '../../dialogs/media_gallery_dialog.dart';
 import '../../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../../domain/entities/projection/projection_item.dart';
 import '../../../domain/entities/session.dart';
@@ -597,13 +599,25 @@ class BattleMapNotifier extends StateNotifier<BattleMapState> {
   // Map image
   // -------------------------------------------------------------------------
 
-  Future<void> pickMapImage() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp'],
-    );
-    if (result == null || result.files.single.path == null) return;
-    final path = result.files.single.path!;
+  Future<void> pickMapImage(BuildContext context) async {
+    String? path;
+    final mediaDir = _ref.read(mediaDirectoryProvider);
+    if (mediaDir.isNotEmpty) {
+      final selected = await MediaGalleryDialog.show(
+        context,
+        mediaDir: mediaDir,
+        allowMultiple: false,
+      );
+      if (selected == null || selected.isEmpty) return;
+      path = selected.first;
+    } else {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp'],
+      );
+      if (result == null || result.files.single.path == null) return;
+      path = result.files.single.path!;
+    }
     final img = await _loadImageFromFile(path);
     if (!mounted) return;
     state = state.copyWith(

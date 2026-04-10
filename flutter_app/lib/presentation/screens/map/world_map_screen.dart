@@ -132,7 +132,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             icon: Icons.map_outlined,
             label: mapState.imagePath.isEmpty ? 'Load Map' : 'Change',
             palette: palette,
-            onTap: notifier.pickMapImage,
+            onTap: () => notifier.pickMapImage(context),
           ),
 
           _VertDiv(palette: palette),

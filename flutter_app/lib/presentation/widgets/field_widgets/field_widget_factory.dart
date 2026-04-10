@@ -3,10 +3,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../dialogs/entity_selector_dialog.dart';
+import '../../dialogs/media_gallery_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../markdown_text_area.dart';
 
@@ -22,10 +24,16 @@ class FieldWidgetFactory {
     WidgetRef? ref,
     bool computedMode = false,
   }) {
+    // Media directory — image field'ları için galeri desteği.
+    final mediaDir = ref?.read(mediaDirectoryProvider);
+
     // isList → genel liste widget'ı
     if (schema.isList) {
       if (schema.fieldType == FieldType.relation) {
         return _ReferenceListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref, computedMode: computedMode);
+      }
+      if (schema.fieldType == FieldType.image) {
+        return _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, mediaDir: mediaDir);
       }
       return _GenericListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged);
     }
@@ -44,7 +52,7 @@ class FieldWidgetFactory {
       FieldType.boolean_ => _BooleanFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.tagList => _TagListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.date => _DateFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.image => _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.image => _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, mediaDir: mediaDir),
       FieldType.file => _FileFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.pdf => _PdfFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, ref: ref),
       _ => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
@@ -1054,8 +1062,9 @@ class _ImageFieldWidget extends StatefulWidget {
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
+  final String? mediaDir;
 
-  const _ImageFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _ImageFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.mediaDir});
 
   @override
   State<_ImageFieldWidget> createState() => _ImageFieldWidgetState();
@@ -1071,6 +1080,18 @@ class _ImageFieldWidgetState extends State<_ImageFieldWidget> {
   }
 
   Future<void> _pickImages() async {
+    final mediaDir = widget.mediaDir;
+    if (mediaDir != null && mediaDir.isNotEmpty) {
+      final selected = await MediaGalleryDialog.show(
+        context,
+        mediaDir: mediaDir,
+        allowMultiple: true,
+      );
+      if (selected == null || selected.isEmpty) return;
+      widget.onChanged([..._images, ...selected]);
+      return;
+    }
+    // Fallback: doğrudan dosya seçici
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: true,

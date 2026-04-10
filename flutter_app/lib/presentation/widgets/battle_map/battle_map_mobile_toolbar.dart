@@ -391,7 +391,7 @@ class _ViewTab extends StatelessWidget {
                 icon: Icons.image_outlined,
                 label: 'Open Map',
                 palette: palette,
-                onTap: () async { await notifier.pickMapImage(); },
+                onTap: () async { await notifier.pickMapImage(context); },
               ),
             ],
           ),

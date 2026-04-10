@@ -3,14 +3,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:path/path.dart' as p;
+
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/event_bus_provider.dart';
+import '../../application/providers/media_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
+import '../../core/config/app_paths.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/repositories/campaign_repository.dart';
+import '../dialogs/media_gallery_dialog.dart';
 import '../theme/dm_tool_colors.dart';
 import '../widgets/entity_sidebar.dart';
 import 'database/database_screen.dart';
@@ -86,6 +91,9 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
           },
         ),
         worldSchemaProvider.overrideWithValue(schema),
+        mediaDirectoryProvider.overrideWithValue(
+          p.join(AppPaths.packagesDir, packageName, 'media'),
+        ),
         saveStateProvider.overrideWith(
           (ref) => SaveStateNotifier(ref),
         ),
@@ -304,6 +312,17 @@ class _PackageScreenContentState
             ),
           ),
           const SizedBox(width: 4),
+          // Media Gallery
+          IconButton(
+            icon: const Icon(Icons.photo_library_outlined, size: 18),
+            tooltip: 'Media Gallery',
+            onPressed: () {
+              final mediaDir = ref.read(mediaDirectoryProvider);
+              if (mediaDir.isNotEmpty) {
+                MediaGalleryDialog.show(context, mediaDir: mediaDir);
+              }
+            },
+          ),
           // Edit Mode toggle
           IconButton(
             icon: Icon(
