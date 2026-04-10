@@ -135,31 +135,12 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
               // beating the scale recognizer. Node-level secondary tap
               // handlers still win because they're closer in hit-test order.
               onSecondaryTapUp: (d) {
-                final canvasPos =
-                    notifier.screenToCanvas(d.localPosition);
-                final scale =
-                    notifier.viewTransform.value.scale;
-                final edgeId = notifier.hitTestEdge(
-                    canvasPos,
-                    threshold: 10.0 / scale);
-                if (edgeId != null) {
-                  notifier.setSelectedEdge(edgeId);
-                  _showEdgeContextMenu(
-                    context,
-                    d.globalPosition,
-                    edgeId,
-                    notifier,
-                    palette,
-                  );
-                } else {
-                  _showCanvasContextMenu(
-                    context,
-                    d.globalPosition,
-                    canvasPos,
-                    notifier,
-                    palette,
-                  );
-                }
+                _handleContextMenu(
+                    d.localPosition, d.globalPosition, notifier, palette);
+              },
+              onLongPressStart: (d) {
+                _handleContextMenu(
+                    d.localPosition, d.globalPosition, notifier, palette);
               },
               child: DragTarget<String>(
                 onWillAcceptWithDetails: (_) => true,
@@ -337,6 +318,24 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
   // -------------------------------------------------------------------------
   // Canvas context menu
   // -------------------------------------------------------------------------
+
+  void _handleContextMenu(
+    Offset localPosition,
+    Offset globalPosition,
+    MindMapNotifier notifier,
+    DmToolColors palette,
+  ) {
+    final canvasPos = notifier.screenToCanvas(localPosition);
+    final scale = notifier.viewTransform.value.scale;
+    final edgeId = notifier.hitTestEdge(canvasPos, threshold: 10.0 / scale);
+    if (edgeId != null) {
+      notifier.setSelectedEdge(edgeId);
+      _showEdgeContextMenu(context, globalPosition, edgeId, notifier, palette);
+    } else {
+      _showCanvasContextMenu(
+          context, globalPosition, canvasPos, notifier, palette);
+    }
+  }
 
   void _showCanvasContextMenu(
     BuildContext context,

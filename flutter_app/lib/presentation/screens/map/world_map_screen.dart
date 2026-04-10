@@ -323,7 +323,11 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         ? SystemMouseCursors.precise
         : SystemMouseCursors.basic;
 
-    return KeyboardListener(
+    return LayoutBuilder(builder: (context, constraints) {
+      notifier.updateViewportSize(
+          Size(constraints.maxWidth, constraints.maxHeight));
+
+      return KeyboardListener(
       focusNode: FocusNode(),
       autofocus: true,
       onKeyEvent: (event) {
@@ -375,6 +379,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         ),
       ),
     );
+    });
   }
 
   void _handleCanvasTap(
@@ -401,13 +406,18 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // Background image
+              // Background image — OverflowBox removes parent constraints
+              // so Image renders at full natural size (Transform handles zoom).
               if (mapState.imagePath.isNotEmpty &&
                   File(mapState.imagePath).existsSync())
-                Image.file(
-                  File(mapState.imagePath),
-                  fit: BoxFit.none,
+                OverflowBox(
                   alignment: Alignment.topLeft,
+                  maxWidth: double.infinity,
+                  maxHeight: double.infinity,
+                  child: Image.file(
+                    File(mapState.imagePath),
+                    fit: BoxFit.none,
+                  ),
                 )
               else
                 _buildEmptyMapPlaceholder(palette),
@@ -1132,6 +1142,8 @@ class _DraggablePinState extends State<_DraggablePin> {
         onTap: widget.onTap,
         onSecondaryTapUp: (d) =>
             _showContextMenu(context, d.globalPosition),
+        onLongPressStart: (d) =>
+            _showContextMenu(context, d.globalPosition),
         onPanStart: (d) {
           _dragStart = d.globalPosition;
           _pinStartPos = Offset(pin.x, pin.y);
@@ -1377,6 +1389,8 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
                     behavior: HitTestBehavior.opaque,
                     onTap: widget.onTap,
                     onSecondaryTapUp: (d) =>
+                        _showContextMenu(context, d.globalPosition),
+                    onLongPressStart: (d) =>
                         _showContextMenu(context, d.globalPosition),
                     onPanStart: (d) {
                       _dragStart = d.globalPosition;

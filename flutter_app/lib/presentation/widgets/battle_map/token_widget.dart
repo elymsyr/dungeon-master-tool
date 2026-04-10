@@ -95,6 +95,7 @@ class _TokenWidgetState extends State<TokenWidget> {
         },
         child: GestureDetector(
           onSecondaryTap: () => widget.onResizeRequested(widget.combatant.id),
+          onLongPress: () => widget.onResizeRequested(widget.combatant.id),
           child: Container(
             width: size,
             height: size,

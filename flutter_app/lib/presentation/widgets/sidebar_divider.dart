@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 
 import '../theme/dm_tool_colors.dart';
@@ -29,6 +31,7 @@ class SidebarDivider extends StatefulWidget {
 }
 
 class _SidebarDividerState extends State<SidebarDivider> {
+  static final bool _isTouch = Platform.isAndroid || Platform.isIOS;
   bool _hovered = false;
 
   @override
@@ -47,11 +50,11 @@ class _SidebarDividerState extends State<SidebarDivider> {
         child: InkWell(
           onTap: widget.onToggle,
           child: Container(
-            width: 10,
+            width: _isTouch ? 24 : 10,
             color: Colors.transparent,
             child: Center(
               child: Container(
-                width: 1,
+                width: _isTouch ? 3.0 : 1,
                 height: double.infinity,
                 color: _hovered
                     ? widget.palette.tabIndicator.withValues(alpha: 0.6)
