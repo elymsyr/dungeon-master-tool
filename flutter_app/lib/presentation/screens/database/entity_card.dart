@@ -6,12 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../application/services/rule_engine.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../dialogs/media_gallery_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
@@ -559,6 +561,18 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
   bool _hovered = false;
 
   Future<void> _pickImage() async {
+    final mediaDir = ref.read(mediaDirectoryProvider);
+    if (mediaDir.isNotEmpty) {
+      final selected = await MediaGalleryDialog.show(
+        context,
+        mediaDir: mediaDir,
+        allowMultiple: true,
+      );
+      if (selected == null || selected.isEmpty) return;
+      widget.onImagesChanged([...widget.images, ...selected]);
+      return;
+    }
+    // Fallback: doğrudan dosya seçici
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: true,

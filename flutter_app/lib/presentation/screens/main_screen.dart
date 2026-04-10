@@ -16,8 +16,10 @@ import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../application/services/template_sync_service.dart';
 import '../../core/utils/screen_type.dart';
+import '../../application/providers/media_provider.dart';
 import '../dialogs/bug_report_dialog.dart';
 import '../dialogs/import_package_dialog.dart';
+import '../dialogs/media_gallery_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
@@ -353,6 +355,17 @@ class _MainScreenState extends ConsumerState<MainScreen>
           ),
           // Player window status — always visible, jumps to projection panel
           const PlayerWindowStatusIcon(),
+          // Media Gallery
+          IconButton(
+            icon: const Icon(Icons.photo_library_outlined, size: 20),
+            tooltip: 'Media Gallery',
+            onPressed: () {
+              final mediaDir = ref.read(mediaDirectoryProvider);
+              if (mediaDir.isNotEmpty) {
+                MediaGalleryDialog.show(context, mediaDir: mediaDir);
+              }
+            },
+          ),
           // Import Package
           IconButton(
             icon: const Icon(Icons.inventory_2, size: 20),

@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/save_state_provider.dart';
+import '../../dialogs/media_gallery_dialog.dart';
 import '../../../application/services/undo_redo_mixin.dart';
 import '../../../domain/entities/map_data.dart';
 
@@ -642,13 +644,25 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   // Map image
   // -------------------------------------------------------------------------
 
-  Future<void> pickMapImage() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: false,
-    );
-    if (result == null || result.files.isEmpty) return;
-    final path = result.files.first.path;
+  Future<void> pickMapImage(BuildContext context) async {
+    String? path;
+    final mediaDir = _ref.read(mediaDirectoryProvider);
+    if (mediaDir.isNotEmpty) {
+      final selected = await MediaGalleryDialog.show(
+        context,
+        mediaDir: mediaDir,
+        allowMultiple: false,
+      );
+      if (selected == null || selected.isEmpty) return;
+      path = selected.first;
+    } else {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+      if (result == null || result.files.isEmpty) return;
+      path = result.files.first.path;
+    }
     if (path == null) return;
     pushUndo(state);
     state = state.copyWith(imagePath: path);

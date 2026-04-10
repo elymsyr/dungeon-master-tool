@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/media_provider.dart';
+import '../../dialogs/media_gallery_dialog.dart';
 import '../../../domain/entities/mind_map.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/markdown_text_area.dart';
@@ -972,6 +974,18 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
 
   Future<void> _pickImageForNode(BuildContext context) async {
     try {
+      final mediaDir = ref.read(mediaDirectoryProvider);
+      if (mediaDir.isNotEmpty) {
+        final selected = await MediaGalleryDialog.show(
+          context,
+          mediaDir: mediaDir,
+          allowMultiple: false,
+        );
+        if (!mounted || selected == null || selected.isEmpty) return;
+        widget.notifier.updateNodeImageUrl(widget.node.id, selected.first);
+        return;
+      }
+      // Fallback
       final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: false,

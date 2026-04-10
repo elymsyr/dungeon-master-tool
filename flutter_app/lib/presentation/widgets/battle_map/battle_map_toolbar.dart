@@ -82,7 +82,7 @@ class BattleMapToolbar extends ConsumerWidget {
             icon: Icons.image_outlined,
             tooltip: 'Open Map Image',
             palette: palette,
-            onPressed: () async { await notifier.pickMapImage(); },
+            onPressed: () async { await notifier.pickMapImage(context); },
           ),
           const SizedBox(width: 8),
           // Project to player screen
