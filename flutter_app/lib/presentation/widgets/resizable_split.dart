@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 
 import '../theme/dm_tool_colors.dart';
@@ -40,7 +42,8 @@ class ResizableSplit extends StatefulWidget {
 class ResizableSplitState extends State<ResizableSplit> {
   late final _RelayoutNotifier _relayout;
   late final _SplitDelegate _delegate;
-  static const _dividerSize = 8.0;
+  static final double _dividerSize =
+      (Platform.isAndroid || Platform.isIOS) ? 24.0 : 8.0;
 
   @override
   void initState() {
@@ -203,6 +206,8 @@ class _SplitDivider extends StatefulWidget {
 }
 
 class _SplitDividerState extends State<_SplitDivider> {
+  static final double _lineThickness =
+      (Platform.isAndroid || Platform.isIOS) ? 3.0 : 1.0;
   bool _hovered = false;
 
   @override
@@ -221,8 +226,8 @@ class _SplitDividerState extends State<_SplitDivider> {
         onExit: (_) => setState(() => _hovered = false),
         child: Center(
           child: Container(
-            width: isH ? 1 : double.infinity,
-            height: isH ? double.infinity : 1,
+            width: isH ? _lineThickness : double.infinity,
+            height: isH ? double.infinity : _lineThickness,
             color: _hovered
                 ? widget.palette.tabIndicator.withValues(alpha: 0.6)
                 : widget.palette.sidebarDivider,

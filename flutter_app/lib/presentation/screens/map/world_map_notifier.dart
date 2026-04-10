@@ -1,4 +1,6 @@
 import 'dart:collection';
+import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -170,6 +172,9 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
 
   final ValueNotifier<WorldMapViewTransform> viewTransform =
       ValueNotifier<WorldMapViewTransform>(const WorldMapViewTransform());
+
+  // Viewport size for fit-to-image calculations
+  Size _viewportSize = Size.zero;
 
   // Scale gesture tracking
   double _scaleBase = 1.0;
@@ -666,7 +671,7 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     if (path == null) return;
     pushUndo(state);
     state = state.copyWith(imagePath: path);
-    viewTransform.value = const WorldMapViewTransform();
+    await _fitImageInViewport();
     _debouncedSave();
   }
 
@@ -703,10 +708,47 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     viewTransform.value = WorldMapViewTransform(scale: newScale, panOffset: newPan);
   }
 
+  void updateViewportSize(Size size) {
+    _viewportSize = size;
+  }
+
   void resetView() {
     pushUndo(state);
-    viewTransform.value = const WorldMapViewTransform();
+    _fitImageInViewport();
     _debouncedSave();
+  }
+
+  /// Fit the current map image within the viewport (contain).
+  /// Falls back to default transform if image can't be resolved.
+  Future<void> _fitImageInViewport() async {
+    final path = state.imagePath;
+    if (path.isEmpty || _viewportSize == Size.zero) {
+      viewTransform.value = const WorldMapViewTransform();
+      return;
+    }
+    final file = File(path);
+    if (!file.existsSync()) {
+      viewTransform.value = const WorldMapViewTransform();
+      return;
+    }
+    try {
+      final bytes = await file.readAsBytes();
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final imgW = frame.image.width.toDouble();
+      final imgH = frame.image.height.toDouble();
+      frame.image.dispose();
+
+      final scaleX = _viewportSize.width / imgW;
+      final scaleY = _viewportSize.height / imgH;
+      final scale = (scaleX < scaleY ? scaleX : scaleY).clamp(0.05, 10.0);
+      final panX = (_viewportSize.width - imgW * scale) / 2;
+      final panY = (_viewportSize.height - imgH * scale) / 2;
+      viewTransform.value =
+          WorldMapViewTransform(scale: scale, panOffset: Offset(panX, panY));
+    } catch (_) {
+      viewTransform.value = const WorldMapViewTransform();
+    }
   }
 
   // -------------------------------------------------------------------------

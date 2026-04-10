@@ -67,6 +67,7 @@ class _EpochScrollBarState extends State<EpochScrollBar> {
         behavior: HitTestBehavior.opaque,
         onTapUp: (d) => _handleTap(d.localPosition),
         onSecondaryTapUp: (d) => _handleSecondaryTap(d.localPosition, d.globalPosition),
+        onLongPressStart: (d) => _handleSecondaryTap(d.localPosition, d.globalPosition),
         child: MouseRegion(
           onHover: (e) => _updateHover(e.localPosition),
           onExit: (_) => setState(() {
