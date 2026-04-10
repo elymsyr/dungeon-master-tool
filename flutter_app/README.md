@@ -1,6 +1,6 @@
-# Dungeon Master Tool — Flutter
+# Dungeon Master Tool — Flutter App
 
-D&D Dungeon Master Tool'un Flutter ile yeniden yazılmış versiyonu.
+Cross-platform D&D kampanya yönetim aracı. Android, iOS, Windows, Linux ve macOS destekler.
 
 ## Gereksinimler
 
@@ -17,16 +17,18 @@ flutter --version
 ### Linux Desktop Build Bağımlılıkları (Ubuntu/Debian)
 
 ```bash
-sudo apt-get install -y clang ninja-build libgtk-3-dev pkg-config libglib2.0-dev lld libstdc++-12-dev cmake
+sudo apt-get install -y clang ninja-build libgtk-3-dev pkg-config libglib2.0-dev lld libstdc++-12-dev cmake libasound2-dev
 ```
+
+### Android
+
+Android build için [Android Studio](https://developer.android.com/studio) veya Android SDK kurulumu gerekir.
 
 ### Doğrulama
 
 ```bash
 flutter doctor
 ```
-
-`Linux toolchain` satırının yeşil `[✓]` olması yeterli. Android toolchain uyarısı görmezden gelinebilir (desktop-first proje).
 
 ## Kurulum
 
@@ -35,19 +37,41 @@ cd flutter_app
 flutter pub get
 ```
 
+## Code Generation
+
+Freezed, Riverpod ve Drift modelleri için code generation gerekir:
+
+```bash
+# Tek seferlik
+dart run build_runner build --delete-conflicting-outputs
+
+# Watch mode (dosya değişince otomatik üret)
+dart run build_runner watch --delete-conflicting-outputs
+```
+
 ## Çalıştırma
 
-### Linux Desktop (Geliştirme)
-
 ```bash
-export PATH="/home/eren/.flutter-sdk/bin:$PATH" && cd /home/eren/GitHub/dungeon-master-tool/flutter_app && flutter run -d linux
-```
-
-```bash
+# Linux Desktop
 flutter run -d linux
+
+# macOS Desktop
+flutter run -d macos
+
+# Windows Desktop
+flutter run -d windows
+
+# Android
+flutter run -d android
+
+# iOS
+flutter run -d ios
+
+# Chrome (Web)
+flutter run -d chrome
 ```
 
-Uygulama penceresi açılır. Terminal'de aktif komutlar:
+Terminal'de aktif komutlar:
 
 | Tuş | İşlev |
 |-----|-------|
@@ -56,36 +80,24 @@ Uygulama penceresi açılır. Terminal'de aktif komutlar:
 | `q` | Uygulamayı kapat |
 | `d` | Uygulamayı çalışır bırakıp terminal'den ayrıl |
 
-### Chrome (Web)
+## Release Build
 
 ```bash
-flutter run -d chrome
-```
+# Android APK
+flutter build apk --release
 
-### Release Build
+# iOS (unsigned)
+flutter build ios --release --no-codesign
 
-```bash
 # Linux
 flutter build linux --release
 # Çıktı: build/linux/x64/release/bundle/
 
-# Android APK
-flutter build apk --release
-
 # Windows
 flutter build windows --release
-```
 
-## Code Generation
-
-Freezed ve Riverpod modelleri için code generation gerekir:
-
-```bash
-# Tek seferlik
-dart run build_runner build --delete-conflicting-outputs
-
-# Watch mode (dosya değişince otomatik üret)
-dart run build_runner watch --delete-conflicting-outputs
+# macOS
+flutter build macos --release
 ```
 
 ## Localization
