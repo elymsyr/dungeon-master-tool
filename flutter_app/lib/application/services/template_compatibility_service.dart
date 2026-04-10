@@ -33,15 +33,6 @@ class TemplateCompatibilityService {
         worldSchema.categories.map((c) => c.name).toSet();
     final shared = pkgCatNames.intersection(worldCatNames);
 
-    if (shared.isEmpty) {
-      return TemplateCompatibility(
-        level: CompatibilityLevel.incompatible,
-        warnings: diff,
-        addedCategories: worldCatNames.difference(pkgCatNames).toList(),
-        removedCategories: pkgCatNames.difference(worldCatNames).toList(),
-      );
-    }
-
     // Field analizi — yalnızca ortak kategoriler için
     final addedFields = <String>[];
     final removedFields = <String>[];
@@ -64,6 +55,35 @@ class TemplateCompatibilityService {
       for (final f in pkgFields.difference(worldFields)) {
         removedFields.add('$catName: $f');
       }
+    }
+
+    // Same lineage (originalHash matches) — compatible even if content differs.
+    // The field differences are shown as warnings but import is allowed.
+    final sameLineage =
+        packageSchema.originalHash != null &&
+        packageSchema.originalHash == worldSchema.originalHash;
+
+    if (sameLineage) {
+      return TemplateCompatibility(
+        level: CompatibilityLevel.compatible,
+        warnings: diff,
+        addedFields: addedFields,
+        removedFields: removedFields,
+        addedCategories: worldCatNames.difference(pkgCatNames).toList(),
+        removedCategories: pkgCatNames.difference(worldCatNames).toList(),
+      );
+    }
+
+    // Different lineage — check if there are any shared categories.
+    if (shared.isEmpty) {
+      return TemplateCompatibility(
+        level: CompatibilityLevel.incompatible,
+        warnings: diff,
+        addedFields: addedFields,
+        removedFields: removedFields,
+        addedCategories: worldCatNames.difference(pkgCatNames).toList(),
+        removedCategories: pkgCatNames.difference(worldCatNames).toList(),
+      );
     }
 
     return TemplateCompatibility(

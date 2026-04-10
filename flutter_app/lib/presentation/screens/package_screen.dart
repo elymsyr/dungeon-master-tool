@@ -233,6 +233,7 @@ class _PackageScreenContentState
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             ref.read(saveStateProvider.notifier).saveNow();
+            ref.invalidate(packageListProvider);
             context.go('/hub');
           },
         ),

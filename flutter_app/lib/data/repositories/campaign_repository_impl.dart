@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/drift.dart';
 
@@ -73,11 +74,32 @@ class CampaignRepositoryImpl implements CampaignRepository {
   @override
   Future<void> delete(String campaignName) async {
     final existing = await _db.campaignDao.getByName(campaignName);
+
+    // Try filesystem-based trash first (legacy MsgPack/JSON campaigns).
+    await _localDs.deleteCampaign(campaignName);
+
+    // If no filesystem directory existed (DB-only campaign), create a
+    // trash entry with metadata so the item still appears in the trash list.
+    final trashDir = Directory(AppPaths.trashDir);
+    final trashTarget = p.join(
+      trashDir.path,
+      '${campaignName}_${DateTime.now().millisecondsSinceEpoch}',
+    );
+    final trashEntry = Directory(trashTarget);
+    if (!await trashEntry.exists()) {
+      await trashEntry.create(recursive: true);
+      final metaFile = File(p.join(trashTarget, '.meta.json'));
+      await metaFile.writeAsString(jsonEncode({
+        'originalName': campaignName,
+        'type': 'World',
+        'deletedAt': DateTime.now().toIso8601String(),
+      }));
+    }
+
+    // Now remove from database.
     if (existing != null) {
       await _db.campaignDao.deleteCampaign(existing.id);
     }
-    // Legacy dosyayı da sil (varsa)
-    await _localDs.deleteCampaign(campaignName);
   }
 
   @override

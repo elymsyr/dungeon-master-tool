@@ -415,6 +415,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       drift = await ref.read(templateSyncServiceProvider).checkDrift(
         campaignName: campaignName,
         campaignData: data,
+        ignoreDismissed: true,
       );
     } catch (_) {
       // Best-effort — show the dialog without drift info.
