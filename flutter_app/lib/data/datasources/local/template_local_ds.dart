@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
 
 import '../../../core/config/app_paths.dart';
 import '../../../domain/entities/schema/world_schema.dart';
@@ -121,18 +122,20 @@ class TemplateLocalDataSource {
     await _ensureDir();
     final targetFile = File(p.join(_dir, '$schemaId.json'));
 
-    // Aynı ID ile zaten varsa üzerine yazma, yeni ID ile kaydet
+    // Aynı ID ile zaten varsa yeni ID ile kaydet (mevcut template korunsun)
     if (await targetFile.exists()) {
-      // Mevcut template korunur, trash'ten gelen güncellenmiş isimle kaydedilir
       final content = await templateFile.readAsString();
       final json = jsonDecode(content) as Map<String, dynamic>;
       final schema = WorldSchema.fromJson(json);
       final now = DateTime.now().toUtc().toIso8601String();
+      final newId = const Uuid().v4();
       final restored = schema.copyWith(
+        schemaId: newId,
         name: '${schema.name} (restored)',
         updatedAt: now,
       );
-      await targetFile.writeAsString(jsonEncode(restored.toJson()));
+      final newFile = File(p.join(_dir, '$newId.json'));
+      await newFile.writeAsString(jsonEncode(restored.toJson()));
     } else {
       await templateFile.copy(targetFile.path);
     }

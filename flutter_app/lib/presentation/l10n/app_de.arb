@@ -55,6 +55,7 @@
   "templateDriftUpToDate": "Vorlage ist aktuell",
   "templateDriftChanges": "Änderungen:",
   "templateDriftUpdated": "Kampagne mit Vorlage aktualisiert",
+  "templateDriftDoNotShowAgain": "Für diese Welt nicht mehr anzeigen",
   "tabPackages": "Pakete",
   "packageCreate": "Paket erstellen",
   "packageName": "Paketname",
