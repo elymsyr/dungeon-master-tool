@@ -13,7 +13,7 @@ mixin UndoRedoMixin<T> {
   final List<T> _undoStack = [];
   final List<T> _redoStack = [];
 
-  int get maxUndoDepth => 50;
+  int get maxUndoDepth => 20;
 
   final ValueNotifier<bool> canUndoNotifier = ValueNotifier(false);
   final ValueNotifier<bool> canRedoNotifier = ValueNotifier(false);

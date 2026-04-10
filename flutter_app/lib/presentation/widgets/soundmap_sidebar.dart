@@ -331,6 +331,7 @@ class _AmbienceTab extends ConsumerWidget {
               padding: const EdgeInsets.all(12),
               itemCount: SoundpadEngine.ambienceSlotCount,
               itemBuilder: (context, i) => _AmbienceSlotCard(
+                key: ValueKey(i),
                 index: i,
                 slotState: soundpadState.ambienceSlots[i],
                 ambienceList: library.ambience,
@@ -365,6 +366,7 @@ class _AmbienceSlotCard extends StatelessWidget {
   final ValueChanged<double> onVolumeChanged;
 
   const _AmbienceSlotCard({
+    super.key,
     required this.index,
     required this.slotState,
     required this.ambienceList,

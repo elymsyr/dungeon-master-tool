@@ -93,6 +93,7 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
                         final isSelected = _selected.contains(entity.id);
 
                         return ListTile(
+                          key: ValueKey(entity.id),
                           dense: true,
                           selected: isSelected,
                           selectedTileColor: palette.tabIndicator.withValues(alpha: 0.1),

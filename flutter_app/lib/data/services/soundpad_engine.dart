@@ -228,7 +228,9 @@ class SoundpadEngine {
       List.generate(ambienceSlotCount, (_) => _AmbienceSlot());
 
   // SFX cache — aynı ses dosyasını tekrar tekrar yüklememek için
+  static const int _maxSfxCacheSize = 30;
   final Map<String, AudioSource> _sfxCache = {};
+  final List<String> _sfxCacheOrder = [];
 
   // ---------------------------------------------------------------------------
   // Master Volume — SoLoud global volume olarak uygulanır
@@ -386,9 +388,21 @@ class SoundpadEngine {
       AudioSource source;
       if (_sfxCache.containsKey(chosenFile)) {
         source = _sfxCache[chosenFile]!;
+        // Move to end (most recently used)
+        _sfxCacheOrder.remove(chosenFile);
+        _sfxCacheOrder.add(chosenFile);
       } else {
         source = await SoLoud.instance.loadFile(chosenFile);
         _sfxCache[chosenFile] = source;
+        _sfxCacheOrder.add(chosenFile);
+        // Evict oldest if over limit
+        while (_sfxCache.length > _maxSfxCacheSize) {
+          final oldest = _sfxCacheOrder.removeAt(0);
+          final old = _sfxCache.remove(oldest);
+          if (old != null) {
+            try { SoLoud.instance.disposeSource(old); } catch (_) {}
+          }
+        }
       }
 
       // Çal — loop yok, tek seferlik
@@ -430,6 +444,7 @@ class SoundpadEngine {
       } catch (_) {}
     }
     _sfxCache.clear();
+    _sfxCacheOrder.clear();
   }
 
   // ---------------------------------------------------------------------------

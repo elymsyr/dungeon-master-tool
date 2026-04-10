@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+
+import '../../core/utils/deep_copy.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/package_info.dart';
@@ -93,7 +95,7 @@ class PackageRepositoryImpl implements PackageRepository {
 
     if (schema != null) {
       final schemaJson =
-          jsonDecode(jsonEncode(schema.toJson())) as Map<String, dynamic>;
+          deepCopyJson(schema.toJson()) as Map<String, dynamic>;
       final currentHash = computeWorldSchemaContentHash(schema);
       final originalHash = schema.originalHash ?? currentHash;
       await (_db.into(_db.packageSchemas))

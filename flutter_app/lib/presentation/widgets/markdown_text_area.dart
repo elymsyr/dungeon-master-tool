@@ -213,6 +213,7 @@ class _MarkdownTextAreaState extends ConsumerState<MarkdownTextArea> {
                   final entity = items[i];
                   final isSelected = i == selIdx;
                   return Container(
+                    key: ValueKey(entity.id),
                     color: isSelected
                         ? (palette?.featureCardAccent ?? Colors.blue).withValues(alpha: 0.2)
                         : null,

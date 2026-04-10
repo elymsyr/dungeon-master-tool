@@ -1,6 +1,6 @@
-import 'dart:convert';
-
 import 'package:uuid/uuid.dart';
+
+import '../../core/utils/deep_copy.dart';
 
 import '../../domain/entities/schema/default_dnd5e_schema.dart';
 import 'legacy_maps.dart';
@@ -22,7 +22,7 @@ class SchemaMigration {
     if (!data.containsKey('world_schema')) {
       // 1. Generate and inject default schema
       final schema = generateDefaultDnd5eSchema();
-      data['world_schema'] = jsonDecode(jsonEncode(schema.toJson()));
+      data['world_schema'] = deepCopyJson(schema.toJson());
 
       // 2. Migrate entities
       final entities = data['entities'];

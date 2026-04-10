@@ -128,6 +128,7 @@ class _TokenWidgetState extends State<TokenWidget> {
           width: size,
           height: size,
           fit: BoxFit.cover,
+          cacheWidth: (size * 2).toInt(),
           errorBuilder: (_, _, _) => _buildInitials(size),
         );
       }

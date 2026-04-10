@@ -1,6 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
+
+import '../../core/utils/deep_copy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/database/database_provider.dart';
@@ -118,7 +118,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   Future<void> applyTemplateUpdate(WorldSchema newTemplate) async {
     if (state == null || _data == null) return;
     final currentHash = computeWorldSchemaContentHash(newTemplate);
-    _data!['world_schema'] = jsonDecode(jsonEncode(newTemplate.toJson()));
+    _data!['world_schema'] = deepCopyJson(newTemplate.toJson());
     _data!['template_id'] = newTemplate.schemaId;
     _data!['template_hash'] = currentHash;
     if (newTemplate.originalHash != null) {
