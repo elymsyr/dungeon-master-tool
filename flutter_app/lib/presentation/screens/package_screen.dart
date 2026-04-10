@@ -38,15 +38,21 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
     final data = packageNotifier.data;
 
     if (data == null) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/hub'),
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) context.go('/hub');
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.go('/hub'),
+            ),
+            title: const Text('Package'),
           ),
-          title: const Text('Package'),
+          body: const Center(child: Text('No package loaded')),
         ),
-        body: const Center(child: Text('No package loaded')),
       );
     }
 
@@ -61,15 +67,21 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
     }
 
     if (schema == null) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/hub'),
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) context.go('/hub');
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.go('/hub'),
+            ),
+            title: Text(packageName),
           ),
-          title: Text(packageName),
+          body: const Center(child: Text('No template found for this package')),
         ),
-        body: const Center(child: Text('No template found for this package')),
       );
     }
 
@@ -226,7 +238,16 @@ class _PackageScreenContentState
     // Save indicator
     final saveStatus = ref.watch(saveStateProvider);
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          ref.read(saveStateProvider.notifier).saveNow();
+          ref.invalidate(packageListProvider);
+          context.go('/hub');
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         titleSpacing: 8,
         leading: IconButton(
@@ -392,6 +413,7 @@ class _PackageScreenContentState
           ),
         ],
       ),
+    ),
     );
   }
 }
