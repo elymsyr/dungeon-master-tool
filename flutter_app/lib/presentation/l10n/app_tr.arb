@@ -42,5 +42,17 @@
   "soundpadSoundAdded": "Ses başarıyla eklendi",
   "soundpadSoundRemoved": "Ses kaldırıldı",
   "soundpadSoundName": "Ses Adı",
-  "soundpadSelectAudio": "Ses Dosyası Seç"
+  "soundpadSelectAudio": "Ses Dosyası Seç",
+  "templateSaveTitle": "Template kaydedilsin mi?",
+  "templateSaveBody": "Bu template'i kullanan kampanyalar bir sonraki yüklemede yeni sürüme güncellenebilir.",
+  "templateSaveAsNew": "Yeni olarak kaydet",
+  "templateSaveUpdate": "Güncelle",
+  "templateDriftTitle": "Template Güncellemesi Mevcut",
+  "templateDriftBody": "\"{templateName}\" template'i bu kampanya son senkronize edildiğinden beri güncellenmiş.",
+  "@templateDriftBody": { "placeholders": { "templateName": { "type": "String" } } },
+  "templateDriftIgnore": "Yoksay",
+  "templateDriftUpdate": "Güncelle",
+  "templateDriftUpToDate": "Template güncel",
+  "templateDriftChanges": "Değişiklikler:",
+  "templateDriftUpdated": "Kampanya template ile güncellendi"
 }

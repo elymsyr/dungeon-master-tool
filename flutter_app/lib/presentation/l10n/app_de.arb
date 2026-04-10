@@ -42,5 +42,17 @@
   "soundpadSoundAdded": "Sound erfolgreich hinzugefügt",
   "soundpadSoundRemoved": "Sound entfernt",
   "soundpadSoundName": "Soundname",
-  "soundpadSelectAudio": "Audiodatei auswählen"
+  "soundpadSelectAudio": "Audiodatei auswählen",
+  "templateSaveTitle": "Vorlage speichern?",
+  "templateSaveBody": "Kampagnen mit dieser Vorlage können beim nächsten Laden auf die neue Version aktualisiert werden.",
+  "templateSaveAsNew": "Als neu speichern",
+  "templateSaveUpdate": "Aktualisieren",
+  "templateDriftTitle": "Vorlage-Update verfügbar",
+  "templateDriftBody": "Die Vorlage \"{templateName}\" wurde seit der letzten Synchronisation aktualisiert.",
+  "@templateDriftBody": { "placeholders": { "templateName": { "type": "String" } } },
+  "templateDriftIgnore": "Ignorieren",
+  "templateDriftUpdate": "Aktualisieren",
+  "templateDriftUpToDate": "Vorlage ist aktuell",
+  "templateDriftChanges": "Änderungen:",
+  "templateDriftUpdated": "Kampagne mit Vorlage aktualisiert"
 }

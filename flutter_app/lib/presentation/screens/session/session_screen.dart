@@ -9,6 +9,7 @@ import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../domain/entities/schema/encounter_config.dart';
+import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/entities/session.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -443,12 +444,20 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // COMBAT TABLE
   // ============================================================
 
+  /// Sentinel `subFieldKey` for the special "Conditions" column. Lets the
+  /// user position the condition badges anywhere in the table column list
+  /// from the encounter settings editor instead of the legacy "always at
+  /// the end" placement. Detected by both the header and row builders.
+  static const String conditionsColumnKey = '__conditions__';
+
   /// Returns the column list for the combat tracker, falling back to a
   /// hardcoded legacy default (Init / AC / HP) when the loaded schema's
-  /// `encounterConfig.columns` is empty — guarantees the table always shows
-  /// the basic combat stats no matter how the campaign was saved.
+  /// `encounterConfig.columns` is empty — guarantees the table still shows
+  /// the basic combat stats on legacy / un-configured campaigns. The
+  /// fallback intentionally omits `level`: it used to live here and would
+  /// silently re-appear after a user removed it from the template, which
+  /// looked like a bug.
   static const List<EncounterColumnConfig> _fallbackCombatColumns = [
-    EncounterColumnConfig(subFieldKey: 'level',      label: 'Lvl', editable: true, width: 36),
     EncounterColumnConfig(subFieldKey: 'initiative', label: 'Init', editable: true, width: 48),
     EncounterColumnConfig(subFieldKey: 'ac',         label: 'AC',  editable: true, width: 36),
     EncounterColumnConfig(subFieldKey: 'hp',         label: 'HP',  editable: true, showButtons: true, width: 130),
@@ -457,26 +466,55 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   static List<EncounterColumnConfig> _effectiveColumns(EncounterConfig cfg) =>
       cfg.columns.isNotEmpty ? cfg.columns : _fallbackCombatColumns;
 
+  /// True when the user has explicitly placed a Conditions column via the
+  /// encounter settings editor. Used by the renderer to skip the legacy
+  /// "always at the end" Conditions block — the user-positioned one
+  /// already shows them.
+  static bool _hasConditionsColumn(List<EncounterColumnConfig> cols) =>
+      cols.any((c) => c.subFieldKey == conditionsColumnKey);
+
   Widget _buildCombatTable(DmToolColors palette, Encounter enc) {
-    final schema = ref.read(worldSchemaProvider);
+    // `watch` (not `read`) so the table rebuilds when the lazy template
+    // sync flow swaps the world schema in place — otherwise edits to the
+    // template's columns / labels never reach this screen until a full
+    // restart.
+    final schema = ref.watch(worldSchemaProvider);
     final cfg = schema.encounterConfig;
     final cols = _effectiveColumns(cfg);
+    // When the user has placed a conditions column explicitly via the
+    // table-columns editor, that column owns the condition badges and the
+    // legacy "always at the end" block is skipped. Otherwise the legacy
+    // block keeps showing up so existing campaigns don't lose conditions.
+    final hasConditions = _hasConditionsColumn(cols);
 
     return Column(
       children: [
-        // Header — Name + dynamic columns + Conditions
+        // Header — Name + dynamic columns (with optional Conditions column).
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           color: palette.tabBg,
           child: Row(
             children: [
               Expanded(flex: 2, child: Text('Name', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText))),
-              ...cols.map((col) => SizedBox(
-                width: col.width > 0 ? col.width.toDouble() : 60,
-                child: Text(col.label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText), textAlign: TextAlign.center),
-              )),
-              const SizedBox(width: 8),
-              Expanded(flex: 2, child: Text('Conditions', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText))),
+              ...cols.map((col) {
+                if (col.subFieldKey == conditionsColumnKey) {
+                  // Conditions column lives in the user-chosen position;
+                  // give it `Expanded` so the badges have room to wrap.
+                  return Expanded(
+                    flex: 2,
+                    child: Text(col.label.isEmpty ? 'Conditions' : col.label,
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText)),
+                  );
+                }
+                return SizedBox(
+                  width: col.width > 0 ? col.width.toDouble() : 60,
+                  child: Text(col.label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText), textAlign: TextAlign.center),
+                );
+              }),
+              if (!hasConditions) ...[
+                const SizedBox(width: 8),
+                Expanded(flex: 2, child: Text('Conditions', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: palette.tabText))),
+              ],
               const SizedBox(width: 28),
             ],
           ),
@@ -1334,7 +1372,10 @@ class _CombatantRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = combatant;
     final isActive = index == turnIndex;
-    final schema = ref.read(worldSchemaProvider);
+    // `watch` (not `read`) so combatant rows rebuild after a template
+    // sync — otherwise their column layout / labels stay frozen on the
+    // pre-update schema until a hot restart.
+    final schema = ref.watch(worldSchemaProvider);
     final cfg = schema.encounterConfig;
     final cols = _SessionScreenState._effectiveColumns(cfg);
 
@@ -1375,6 +1416,17 @@ class _CombatantRow extends ConsumerWidget {
             // Dynamic columns from encounterConfig (with legacy fallback
             // when the loaded schema's columns list is empty).
             ...cols.map((col) {
+              // Conditions sentinel column — render the same condition
+              // wrap that the legacy "always at the end" block uses, but
+              // at the user-chosen position. `Expanded` so the badges
+              // have room to wrap regardless of `col.width`.
+              if (col.subFieldKey == _SessionScreenState.conditionsColumnKey) {
+                return Expanded(
+                  flex: 2,
+                  child: _buildConditionsCell(context, ref, c, cfg, schema),
+                );
+              }
+
               final val = statsMap[col.subFieldKey]?.toString() ?? '';
 
               if (col.showButtons) {
@@ -1451,54 +1503,17 @@ class _CombatantRow extends ConsumerWidget {
                 ),
               );
             }),
-            const SizedBox(width: 8),
-            // Conditions
-            Expanded(
-              flex: 2,
-              child: Wrap(
-                spacing: 2,
-                runSpacing: 2,
-                children: [
-                  ...c.conditions.map((cond) {
-                    // Look up condition entity stats for tooltip
-                    Map<String, dynamic>? condStats;
-                    if (cond.entityId != null) {
-                      final condEntity = ref.watch(entityProvider.select((m) => m[cond.entityId]));
-                      final raw = condEntity?.fields[cfg.conditionStatsFieldKey];
-                      if (raw is Map) condStats = Map<String, dynamic>.from(raw);
-                    }
-                    // Get sub-field definitions for labels
-                    List<Map<String, String>>? condSubFields;
-                    for (final cat in schema.categories) {
-                      for (final f in cat.fields) {
-                        if (f.fieldKey == cfg.conditionStatsFieldKey) {
-                          condSubFields = f.subFields;
-                          break;
-                        }
-                      }
-                      if (condSubFields != null) break;
-                    }
-                    return ConditionBadge(
-                      condition: cond,
-                      combatantId: c.id,
-                      palette: palette,
-                      conditionStats: condStats,
-                      conditionStatsSubFields: condSubFields,
-                      onRemove: () => ref.read(combatProvider.notifier).removeCondition(c.id, cond.name),
-                      onUpdateDuration: (dur) => ref.read(combatProvider.notifier).updateConditionDuration(c.id, cond.name, dur),
-                    );
-                  }),
-                  InkWell(
-                    onTap: () => onShowAddCondition(c.id, cfg.conditions),
-                    child: Container(
-                      width: 24, height: 24,
-                      decoration: BoxDecoration(border: Border.all(color: palette.sidebarDivider), borderRadius: BorderRadius.circular(12)),
-                      child: Icon(Icons.add, size: 12, color: palette.sidebarLabelSecondary),
-                    ),
-                  ),
-                ],
+            // Legacy "always at the end" Conditions slot — only shown when
+            // the user has NOT placed a conditions column explicitly via
+            // the encounter settings editor. Keeps existing campaigns
+            // working without forcing them to opt-in.
+            if (!_SessionScreenState._hasConditionsColumn(cols)) ...[
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 2,
+                child: _buildConditionsCell(context, ref, c, cfg, schema),
               ),
-            ),
+            ],
             // Delete
             IconButton(
               icon: Icon(Icons.close, size: 14, color: palette.sidebarLabelSecondary),
@@ -1508,6 +1523,62 @@ class _CombatantRow extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// Renders the wrap of condition badges + the "add condition" button
+  /// for [c]. Extracted so the same widget can be used in two places:
+  /// (1) inline at the position of the user-placed conditions column, or
+  /// (2) the legacy "always at the end" slot when no such column exists.
+  Widget _buildConditionsCell(
+    BuildContext context,
+    WidgetRef ref,
+    Combatant c,
+    EncounterConfig cfg,
+    WorldSchema schema,
+  ) {
+    return Wrap(
+      spacing: 2,
+      runSpacing: 2,
+      children: [
+        ...c.conditions.map((cond) {
+          // Look up condition entity stats for tooltip
+          Map<String, dynamic>? condStats;
+          if (cond.entityId != null) {
+            final condEntity = ref.watch(entityProvider.select((m) => m[cond.entityId]));
+            final raw = condEntity?.fields[cfg.conditionStatsFieldKey];
+            if (raw is Map) condStats = Map<String, dynamic>.from(raw);
+          }
+          // Get sub-field definitions for labels
+          List<Map<String, String>>? condSubFields;
+          for (final cat in schema.categories) {
+            for (final f in cat.fields) {
+              if (f.fieldKey == cfg.conditionStatsFieldKey) {
+                condSubFields = f.subFields;
+                break;
+              }
+            }
+            if (condSubFields != null) break;
+          }
+          return ConditionBadge(
+            condition: cond,
+            combatantId: c.id,
+            palette: palette,
+            conditionStats: condStats,
+            conditionStatsSubFields: condSubFields,
+            onRemove: () => ref.read(combatProvider.notifier).removeCondition(c.id, cond.name),
+            onUpdateDuration: (dur) => ref.read(combatProvider.notifier).updateConditionDuration(c.id, cond.name, dur),
+          );
+        }),
+        InkWell(
+          onTap: () => onShowAddCondition(c.id, cfg.conditions),
+          child: Container(
+            width: 24, height: 24,
+            decoration: BoxDecoration(border: Border.all(color: palette.sidebarDivider), borderRadius: BorderRadius.circular(12)),
+            child: Icon(Icons.add, size: 12, color: palette.sidebarLabelSecondary),
+          ),
+        ),
+      ],
     );
   }
 

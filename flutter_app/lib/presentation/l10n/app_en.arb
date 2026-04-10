@@ -42,5 +42,17 @@
   "soundpadSoundAdded": "Sound added successfully",
   "soundpadSoundRemoved": "Sound removed",
   "soundpadSoundName": "Sound Name",
-  "soundpadSelectAudio": "Select Audio File"
+  "soundpadSelectAudio": "Select Audio File",
+  "templateSaveTitle": "Save template?",
+  "templateSaveBody": "Campaigns using this template can update to the new version on next load.",
+  "templateSaveAsNew": "Save as new",
+  "templateSaveUpdate": "Update",
+  "templateDriftTitle": "Template Update Available",
+  "templateDriftBody": "The template \"{templateName}\" has been updated since this campaign was last synced.",
+  "@templateDriftBody": { "placeholders": { "templateName": { "type": "String" } } },
+  "templateDriftIgnore": "Ignore",
+  "templateDriftUpdate": "Update",
+  "templateDriftUpToDate": "Template is up to date",
+  "templateDriftChanges": "Changes:",
+  "templateDriftUpdated": "Campaign updated with template"
 }

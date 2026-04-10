@@ -14,6 +14,7 @@ import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
+import '../../application/services/template_sync_service.dart';
 import '../../core/utils/screen_type.dart';
 import '../dialogs/bug_report_dialog.dart';
 import '../l10n/app_localizations.dart';
@@ -253,6 +254,18 @@ class _MainScreenState extends ConsumerState<MainScreen>
             );
         ref.read(projectionPanelNavigationProvider.notifier).state = null;
       }
+    });
+
+    // Lazy template-sync drift prompt — fired by the campaign loader when
+    // the active campaign was created from a template that has since been
+    // edited. Offers the user a one-click "Update" or "Skip for now".
+    ref.listen<TemplateUpdatePrompt?>(pendingTemplateUpdateProvider,
+        (_, prompt) {
+      if (prompt == null) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _showTemplateUpdatePrompt(prompt);
+      });
     });
 
     // Desktop'ta tab index 4/5 geçersiz — guard
@@ -653,6 +666,89 @@ class _MainScreenState extends ConsumerState<MainScreen>
             )
           : null,
     );
+  }
+
+  /// Surfaces the lazy template-sync drift prompt when a campaign was loaded
+  /// against a stale template hash. The user picks Update (apply the new
+  /// template) or Ignore (dismiss until the template changes again).
+  Future<void> _showTemplateUpdatePrompt(TemplateUpdatePrompt prompt) async {
+    final l10n = L10n.of(context)!;
+    final pendingNotifier = ref.read(pendingTemplateUpdateProvider.notifier);
+    final result = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.templateDriftTitle),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.templateDriftBody(prompt.templateName)),
+              if (prompt.diffSummary.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(l10n.templateDriftChanges,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                ...prompt.diffSummary.map((line) => Padding(
+                  padding: const EdgeInsets.only(left: 8, bottom: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('\u2022 ',
+                          style: TextStyle(fontSize: 13)),
+                      Expanded(
+                          child:
+                              Text(line, style: const TextStyle(fontSize: 13))),
+                    ],
+                  ),
+                )),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'ignore'),
+            child: Text(l10n.templateDriftIgnore),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, 'update'),
+            child: Text(l10n.templateDriftUpdate),
+          ),
+        ],
+      ),
+    );
+
+    pendingNotifier.state = null;
+
+    if (result == 'ignore') {
+      await ref
+          .read(activeCampaignProvider.notifier)
+          .dismissTemplateUpdate(prompt.newHash);
+      return;
+    }
+    if (result != 'update') return;
+
+    try {
+      await ref
+          .read(activeCampaignProvider.notifier)
+          .applyTemplateUpdate(prompt.newTemplate);
+      ref.invalidate(worldSchemaProvider);
+      ref.invalidate(entityProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.templateDriftUpdated)),
+        );
+      }
+    } catch (e, st) {
+      debugPrint('Template apply failed: $e\n$st');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Update failed: $e')),
+        );
+      }
+    }
   }
 
   bool _handleGlobalKey(KeyEvent event) {

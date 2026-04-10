@@ -36,9 +36,31 @@ class CampaignDao extends DatabaseAccessor<AppDatabase>
   Future<List<Campaign>> getAll() => select(campaigns).get();
 
   /// Kampanya adına göre getir.
-  Future<Campaign?> getByName(String worldName) =>
-      (select(campaigns)..where((t) => t.worldName.equals(worldName)))
-          .getSingleOrNull();
+  ///
+  /// Defensive against duplicate rows: the `Campaigns` table has no
+  /// uniqueness constraint on `worldName`, and an earlier bug let
+  /// `_migrateToDb` / `create` insert two rows with the same name. Using
+  /// `getSingleOrNull` here previously crashed with "Bad state: Too many
+  /// elements" the moment a user opened such a campaign. Now we fetch
+  /// every match, return the most recently updated one, and (if more
+  /// than one exists) sweep the older duplicates out so the next load
+  /// doesn't have to deal with them.
+  Future<Campaign?> getByName(String worldName) async {
+    final rows = await (select(campaigns)
+          ..where((t) => t.worldName.equals(worldName))
+          ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+        .get();
+    if (rows.isEmpty) return null;
+    if (rows.length > 1) {
+      // Keep the freshest row, drop the rest. Cascade-delete the related
+      // tables for each removed id so we don't leave orphaned entities /
+      // sessions / encounters lying around.
+      for (final stale in rows.skip(1)) {
+        await deleteCampaign(stale.id);
+      }
+    }
+    return rows.first;
+  }
 
   /// Kampanya ID'ye göre getir.
   Future<Campaign?> getById(String id) =>
@@ -121,4 +143,25 @@ class CampaignDao extends DatabaseAccessor<AppDatabase>
   /// Kampanya adlarının listesi.
   Future<List<String>> getAvailableNames() =>
       select(campaigns).map((c) => c.worldName).get();
+
+  /// Returns (worldName, schemaName) pairs for the hub campaign list.
+  /// Joins campaigns with world_schemas to get the template name without
+  /// loading the full campaign data.
+  Future<List<({String worldName, String templateName})>>
+      getCampaignInfoList() async {
+    final query = select(campaigns).join([
+      leftOuterJoin(
+          worldSchemas, worldSchemas.campaignId.equalsExp(campaigns.id)),
+    ]);
+    query.orderBy([OrderingTerm.asc(campaigns.worldName)]);
+    final rows = await query.get();
+    return rows.map((row) {
+      final c = row.readTable(campaigns);
+      final s = row.readTableOrNull(worldSchemas);
+      return (
+        worldName: c.worldName,
+        templateName: s?.name ?? 'Unknown',
+      );
+    }).toList();
+  }
 }
