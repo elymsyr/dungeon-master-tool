@@ -61,53 +61,6 @@ jobs:
           name: DungeonMasterTool-Android
           path: DungeonMasterTool-Android.apk
 
-  # ── iOS (IPA — unsigned) ───────────────────────────────────────
-  build-ios:
-    name: iOS
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-
-      - name: Install dependencies & generate code
-        working-directory: ${{ env.WORKING_DIR }}
-        run: |
-          flutter pub get
-          dart run build_runner build --delete-conflicting-outputs
-
-      - name: Build iOS (no codesign)
-        working-directory: ${{ env.WORKING_DIR }}
-        run: flutter build ios --release --no-codesign
-
-      - name: Create unsigned IPA
-        run: |
-          cd ${{ env.WORKING_DIR }}/build/ios/iphoneos
-          mkdir -p Payload
-          cp -r Runner.app Payload/
-          zip -r -y ../../../DungeonMasterTool-iOS.zip Payload
-          cd ../../..
-          mv ${{ env.WORKING_DIR }}/DungeonMasterTool-iOS.zip DungeonMasterTool-iOS.zip
-
-      - name: Upload to Release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: DungeonMasterTool-iOS.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload artifact
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
-        with:
-          name: DungeonMasterTool-iOS
-          path: DungeonMasterTool-iOS.zip
-
   # ── Windows ────────────────────────────────────────────────────
   build-windows:
     name: Windows
@@ -187,9 +140,7 @@ jobs:
       - name: Archive
         run: |
           cd ${{ env.WORKING_DIR }}/build/linux/x64/release
-          zip -r ../../../../DungeonMasterTool-Linux.zip bundle
-          cd ../../../..
-          mv ${{ env.WORKING_DIR }}/DungeonMasterTool-Linux.zip DungeonMasterTool-Linux.zip
+          zip -r "$GITHUB_WORKSPACE/DungeonMasterTool-Linux.zip" bundle
 
       - name: Upload to Release
         if: github.event_name == 'release'
@@ -232,9 +183,7 @@ jobs:
       - name: Archive
         run: |
           cd ${{ env.WORKING_DIR }}/build/macos/Build/Products/Release
-          zip -r -y ../../../../../DungeonMasterTool-MacOS.zip "dungeon_master_tool.app"
-          cd ../../../../..
-          mv ${{ env.WORKING_DIR }}/DungeonMasterTool-MacOS.zip DungeonMasterTool-MacOS.zip
+          zip -r -y "$GITHUB_WORKSPACE/DungeonMasterTool-MacOS.zip" "dungeon_master_tool.app"
 
       - name: Upload to Release
         if: github.event_name == 'release'
