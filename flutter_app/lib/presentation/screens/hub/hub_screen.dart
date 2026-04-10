@@ -44,7 +44,12 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final screen = getScreenType(context);
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go('/');
+      },
+      child: Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -110,6 +115,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
               )).toList(),
             )
           : null,
+    ),
     );
   }
 }

@@ -12,7 +12,9 @@ class LandingScreen extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final size = MediaQuery.sizeOf(context);
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
       body: Stack(
         children: [
           // Arka plan gradient
@@ -97,6 +99,7 @@ class LandingScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
