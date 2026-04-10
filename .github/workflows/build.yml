@@ -1,82 +1,252 @@
-name: Cross-Platform Build and Release
+name: Flutter Build and Release
 
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+env:
+  FLUTTER_VERSION: "3.41.6"
+  WORKING_DIR: flutter_app
+
 jobs:
-  release:
-    name: Build for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    env:
-      PYTHONUTF8: 1
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            artifact_name: Windows
-          - os: ubuntu-22.04
-            artifact_name: Linux
-          - os: macos-latest
-            artifact_name: MacOS
-
+  # ── Android (APK) ──────────────────────────────────────────────
+  build-android:
+    name: Android
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-java@v4
         with:
-          python-version: "3.11"
-          cache: 'pip'
+          distribution: zulu
+          java-version: "17"
 
-      - name: Install System Dependencies (Linux Only)
-        if: matrix.os == 'ubuntu-22.04'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies & generate code
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build APK
+        working-directory: ${{ env.WORKING_DIR }}
+        run: flutter build apk --release
+
+      - name: Rename artifact
+        run: |
+          cp ${{ env.WORKING_DIR }}/build/app/outputs/flutter-apk/app-release.apk \
+             DungeonMasterTool-Android.apk
+
+      - name: Upload to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DungeonMasterTool-Android.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DungeonMasterTool-Android
+          path: DungeonMasterTool-Android.apk
+
+  # ── iOS (IPA — unsigned) ───────────────────────────────────────
+  build-ios:
+    name: iOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies & generate code
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build iOS (no codesign)
+        working-directory: ${{ env.WORKING_DIR }}
+        run: flutter build ios --release --no-codesign
+
+      - name: Create unsigned IPA
+        run: |
+          cd ${{ env.WORKING_DIR }}/build/ios/iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -r -y ../../../DungeonMasterTool-iOS.zip Payload
+          cd ../../..
+          mv ${{ env.WORKING_DIR }}/DungeonMasterTool-iOS.zip DungeonMasterTool-iOS.zip
+
+      - name: Upload to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DungeonMasterTool-iOS.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DungeonMasterTool-iOS
+          path: DungeonMasterTool-iOS.zip
+
+  # ── Windows ────────────────────────────────────────────────────
+  build-windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies & generate code
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Windows
+        working-directory: ${{ env.WORKING_DIR }}
+        run: flutter build windows --release
+
+      - name: Archive
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path "${{ env.WORKING_DIR }}\build\windows\x64\runner\Release\*" `
+            -DestinationPath DungeonMasterTool-Windows.zip
+
+      - name: Upload to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DungeonMasterTool-Windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DungeonMasterTool-Windows
+          path: DungeonMasterTool-Windows.zip
+
+  # ── Linux ──────────────────────────────────────────────────────
+  build-linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install Linux dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libegl1-mesa libxcb-xinerama0 libxcb-cursor0 libxcb-icccm4 \
-            libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
-            libxcb-shape0 libxcb-xfixes0 libasound2 zip
+            clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libstdc++-12-dev \
+            libasound2-dev
 
-      - name: Install Python Dependencies
+      - name: Install dependencies & generate code
+        working-directory: ${{ env.WORKING_DIR }}
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
 
-      - name: Run Build Script
-        run: python installer/build.py
+      - name: Build Linux
+        working-directory: ${{ env.WORKING_DIR }}
+        run: flutter build linux --release
 
-      # --- ARŞİVLEME ---
-      
-      - name: Archive Windows Artifact
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
+      - name: Archive
         run: |
-          Compress-Archive -Path dist/DungeonMasterTool -DestinationPath DungeonMasterTool-Windows.zip
+          cd ${{ env.WORKING_DIR }}/build/linux/x64/release
+          zip -r ../../../../DungeonMasterTool-Linux.zip bundle
+          cd ../../../..
+          mv ${{ env.WORKING_DIR }}/DungeonMasterTool-Linux.zip DungeonMasterTool-Linux.zip
 
-      - name: Archive Linux Artifact
-        if: matrix.os == 'ubuntu-22.04'
-        run: |
-          zip -r DungeonMasterTool-Linux.zip dist/DungeonMasterTool
-
-      - name: Archive MacOS Artifact
-        if: matrix.os == 'macos-latest'
-        run: |
-          # MacOS için .app paketini ziple ve sembolik bağları (-y) koru
-          # Bu adım struct is NULL hatasını önlemek için kritiktir.
-          cd dist
-          zip -r -y ../DungeonMasterTool-MacOS.zip DungeonMasterTool.app
-
-      # --- RELEASE'E EKLEME ---
       - name: Upload to Release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: DungeonMasterTool-${{ matrix.artifact_name }}.zip
+          files: DungeonMasterTool-Linux.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DungeonMasterTool-Linux
+          path: DungeonMasterTool-Linux.zip
+
+  # ── macOS ──────────────────────────────────────────────────────
+  build-macos:
+    name: macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies & generate code
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build macOS
+        working-directory: ${{ env.WORKING_DIR }}
+        run: flutter build macos --release
+
+      - name: Archive
+        run: |
+          cd ${{ env.WORKING_DIR }}/build/macos/Build/Products/Release
+          zip -r -y ../../../../../DungeonMasterTool-MacOS.zip "dungeon_master_tool.app"
+          cd ../../../../..
+          mv ${{ env.WORKING_DIR }}/DungeonMasterTool-MacOS.zip DungeonMasterTool-MacOS.zip
+
+      - name: Upload to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DungeonMasterTool-MacOS.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DungeonMasterTool-MacOS
+          path: DungeonMasterTool-MacOS.zip
