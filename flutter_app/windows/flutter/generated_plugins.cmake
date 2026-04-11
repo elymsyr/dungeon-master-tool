@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  app_links
   desktop_multi_window
   screen_retriever_windows
   sqlite3_flutter_libs

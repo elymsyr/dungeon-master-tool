@@ -39,7 +39,10 @@ jobs:
 
       - name: Build APK
         working-directory: ${{ env.WORKING_DIR }}
-        run: flutter build apk --release
+        run: |
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
       - name: Rename artifact
         run: |
@@ -82,7 +85,8 @@ jobs:
 
       - name: Build Windows
         working-directory: ${{ env.WORKING_DIR }}
-        run: flutter build windows --release
+        run: |
+          flutter build windows --release --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
       - name: Archive
         shell: pwsh
@@ -135,7 +139,10 @@ jobs:
 
       - name: Build Linux
         working-directory: ${{ env.WORKING_DIR }}
-        run: flutter build linux --release
+        run: |
+          flutter build linux --release \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
       - name: Archive
         run: |
@@ -178,7 +185,10 @@ jobs:
 
       - name: Build macOS
         working-directory: ${{ env.WORKING_DIR }}
-        run: flutter build macos --release
+        run: |
+          flutter build macos --release \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
       - name: Archive
         run: |
