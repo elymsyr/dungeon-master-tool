@@ -71,22 +71,28 @@ class _BattleMapProjectionViewState extends State<BattleMapProjectionView>
     if (path == _lastMapPath) return;
     _lastMapPath = path;
     if (path == null || path.isEmpty) {
+      debugPrint('SCREENCAST: battlemap mapPath is null/empty');
       setState(() => _bgImage = null);
       return;
     }
     try {
-      final bytes = await File(path).readAsBytes();
+      final file = File(path);
+      final exists = file.existsSync();
+      debugPrint('SCREENCAST: loading map image path=$path exists=$exists');
+      final bytes = await file.readAsBytes();
       final codec = await ui.instantiateImageCodec(bytes);
       final frame = await codec.getNextFrame();
       if (!mounted) {
         frame.image.dispose();
         return;
       }
+      debugPrint('SCREENCAST: map image decoded ${frame.image.width}x${frame.image.height}');
       setState(() {
         _bgImage?.dispose();
         _bgImage = frame.image;
       });
-    } catch (_) {
+    } catch (e) {
+      debugPrint('SCREENCAST: map image load FAILED: $e');
       if (mounted) setState(() => _bgImage = null);
     }
   }

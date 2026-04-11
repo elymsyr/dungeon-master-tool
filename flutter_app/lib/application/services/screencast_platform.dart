@@ -107,7 +107,8 @@ class ScreencastPlatform {
       return result ?? false;
     } on MissingPluginException {
       return false;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('SCREENCAST: pushState failed: $e');
       return false;
     }
   }
@@ -123,7 +124,8 @@ class ScreencastPlatform {
       return result ?? false;
     } on MissingPluginException {
       return false;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('SCREENCAST: pushBattleMapPatch failed: $e');
       return false;
     }
   }
