@@ -1,20 +1,37 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
+name: Feature Request
+about: Suggest a new feature or improvement
+title: '[Feature] '
+labels: enhancement
 assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+**Problem or Motivation**
+Describe the problem this feature would solve, or the use case it addresses. What is difficult or missing in the current app?
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+**Proposed Solution**
+Describe what you would like the app to do. Be as specific as possible.
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**Which area of the app does this affect?**
+<!-- Check all that apply -->
+- [ ] Combat Tracker
+- [ ] Battle Map
+- [ ] Mind Map
+- [ ] World Map
+- [ ] Entity System / Schema
+- [ ] Soundpad / Audio
+- [ ] Player Window / Projection
+- [ ] Session Management
+- [ ] Campaign Management
+- [ ] Templates / Packages
+- [ ] PDF Viewer
+- [ ] Dice Roller
+- [ ] Settings / Themes / Localization
+- [ ] Other: ___
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+**Alternatives Considered**
+Describe any workarounds or alternative approaches you have tried.
+
+**Additional Context**
+Any mockups, screenshots, reference links, or other context.
