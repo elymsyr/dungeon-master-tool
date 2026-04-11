@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../application/providers/auth_provider.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 
 class LandingScreen extends ConsumerStatefulWidget {
@@ -450,7 +451,15 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       _info = null;
     });
 
-    final error = await ref.read(authProvider.notifier).signInWithOAuth(provider);
+    var error = await ref.read(authProvider.notifier).signInWithOAuth(provider);
+
+    // Replace sentinel with localised message.
+    if (error == oauthDeepLinkTimeout && mounted) {
+      final l10n = L10n.of(context);
+      error = l10n?.oauthSignInFailed(
+              'com.elymsyr.dungeonmastertool://auth-callback') ??
+          error;
+    }
 
     if (mounted) {
       setState(() {

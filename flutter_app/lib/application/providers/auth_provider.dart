@@ -2,9 +2,18 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase_flutter;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show
+        AuthChangeEvent,
+        AuthException,
+        OAuthProvider,
+        Supabase,
+        User;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config/supabase_config.dart';
@@ -27,6 +36,11 @@ class AuthState {
   });
 }
 
+/// Sentinel returned by [AuthNotifier.signInWithOAuth] when the mobile
+/// deep-link callback never arrives after the user returns from the browser.
+/// The UI layer should replace this with a localised message.
+const oauthDeepLinkTimeout = '__OAUTH_DEEP_LINK_TIMEOUT__';
+
 /// Manages Supabase auth state. When Supabase is not configured the notifier
 /// stays inert (state is always null) and the app runs fully offline.
 class AuthNotifier extends StateNotifier<AuthState?> {
@@ -48,6 +62,9 @@ class AuthNotifier extends StateNotifier<AuthState?> {
     }
 
     // React to future auth changes (sign-in, sign-out, token refresh).
+    // The onError handler is critical: without it, any error on the stream
+    // (e.g. from a failed deep-link exchange) cancels the subscription and
+    // the app can never detect sign-in / sign-out events again.
     _sub = client.auth.onAuthStateChange
         .map((data) {
           final user = data.session?.user;
@@ -61,7 +78,12 @@ class AuthNotifier extends StateNotifier<AuthState?> {
             createdAt: DateTime.tryParse(user.createdAt),
           );
         })
-        .listen((authState) => state = authState);
+        .listen(
+          (authState) => state = authState,
+          onError: (Object error, StackTrace stackTrace) {
+            debugPrint('Auth stream error: $error');
+          },
+        );
   }
 
   void _setFromUser(User user) {
@@ -118,6 +140,14 @@ class AuthNotifier extends StateNotifier<AuthState?> {
   /// Mobile: open browser with deep-link redirect.
   /// supabase_flutter intercepts the callback and exchanges the code
   /// for a session automatically via its built-in deep link handler.
+  ///
+  /// Unlike the desktop flow (which blocks on a local HTTP server), the mobile
+  /// flow must wait for the deep-link round-trip.  We subscribe to
+  /// [onAuthStateChange] and wait for a [signedIn] event or an error
+  /// (e.g. PKCE exchange failure).  When the app resumes from the browser, a
+  /// short grace period is given for supabase_flutter to process the deep link.
+  /// If the deep link never arrives (e.g. redirect URL not configured in
+  /// the Supabase dashboard), the user gets a clear error message.
   Future<String?> _signInWithOAuthMobile(OAuthProvider provider) async {
     try {
       const redirectUrl = 'com.elymsyr.dungeonmastertool://auth-callback';
@@ -127,12 +157,55 @@ class AuthNotifier extends StateNotifier<AuthState?> {
         redirectTo: redirectUrl,
       );
 
-      await launchUrl(Uri.parse(res.url), mode: LaunchMode.externalApplication);
+      // Listen for the auth result BEFORE launching the browser so we never
+      // miss the event.
+      final completer = Completer<String?>();
 
-      // supabase_flutter handles the deep link callback and session
-      // exchange. The onAuthStateChange listener in _init() will
-      // update the provider state and the UI will navigate to hub.
-      return null;
+      late final StreamSubscription<supabase_flutter.AuthState> authSub;
+      authSub = Supabase.instance.client.auth.onAuthStateChange.listen(
+        (data) {
+          if (data.event == AuthChangeEvent.signedIn &&
+              !completer.isCompleted) {
+            authSub.cancel();
+            completer.complete(null);
+          }
+        },
+        onError: (Object error) {
+          if (!completer.isCompleted) {
+            authSub.cancel();
+            completer.complete(
+              error is AuthException ? error.message : error.toString(),
+            );
+          }
+        },
+      );
+
+      // When the app resumes from the browser, give supabase_flutter a
+      // few seconds to receive and process the deep-link callback.
+      // If nothing arrives, surface an actionable error.
+      AppLifecycleListener? lifecycleListener;
+      lifecycleListener = AppLifecycleListener(
+        onResume: () {
+          lifecycleListener?.dispose();
+          lifecycleListener = null;
+          Future<void>.delayed(const Duration(seconds: 8), () {
+            if (!completer.isCompleted) {
+              authSub.cancel();
+              completer.complete(oauthDeepLinkTimeout);
+            }
+          });
+        },
+      );
+
+      await launchUrl(
+          Uri.parse(res.url), mode: LaunchMode.externalApplication);
+
+      final result = await completer.future;
+
+      // Clean up in case auth succeeded before resume.
+      lifecycleListener?.dispose();
+
+      return result;
     } on AuthException catch (e) {
       return e.message;
     } catch (e) {
