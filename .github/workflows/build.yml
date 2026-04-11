@@ -16,7 +16,7 @@ jobs:
   # ── Android (APK) ──────────────────────────────────────────────
   build-android:
     name: Android
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -64,7 +64,7 @@ jobs:
   # ── Windows ────────────────────────────────────────────────────
   build-windows:
     name: Windows
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
 
@@ -109,7 +109,7 @@ jobs:
   # ── Linux ──────────────────────────────────────────────────────
   build-linux:
     name: Linux
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -160,7 +160,7 @@ jobs:
   # ── macOS ──────────────────────────────────────────────────────
   build-macos:
     name: macOS
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
 
