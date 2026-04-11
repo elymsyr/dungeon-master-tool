@@ -10,6 +10,8 @@ import '../../application/providers/entity_provider.dart';
 import '../../application/providers/locale_provider.dart';
 import '../../application/providers/projection_output_provider.dart';
 import '../../application/providers/projection_provider.dart';
+import '../../domain/entities/projection/projection_output_mode.dart';
+import '../dialogs/screencast_display_picker.dart';
 import '../../application/providers/theme_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/save_state_provider.dart';
@@ -185,6 +187,15 @@ class _MainScreenState extends ConsumerState<MainScreen>
           },
         ),
       ),
+    );
+  }
+
+  Future<void> _openScreencastPicker(ProjectionController controller) async {
+    final display = await ScreencastDisplayPicker.show(context);
+    if (display == null || !mounted) return;
+    controller.activateOutput(
+      ProjectionOutputMode.screencast,
+      displayId: display.id,
     );
   }
 
@@ -927,14 +938,19 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // Ctrl+Shift+P: toggle projection output
     if (shiftPressed && event.logicalKey == LogicalKeyboardKey.keyP) {
       final controller = ref.read(projectionControllerProvider.notifier);
-      final state = ref.read(projectionControllerProvider);
-      if (state.isActive) {
+      final pState = ref.read(projectionControllerProvider);
+      if (pState.isActive) {
         controller.deactivateOutput();
       } else {
         // Activate with platform default (first available mode).
         final available = ref.read(availableProjectionOutputsProvider);
         if (available.isNotEmpty) {
-          controller.activateOutput(available.first);
+          final mode = available.first;
+          if (mode == ProjectionOutputMode.screencast) {
+            _openScreencastPicker(controller);
+          } else {
+            controller.activateOutput(mode);
+          }
         }
       }
       return true;

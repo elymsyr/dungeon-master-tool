@@ -26,16 +26,21 @@ final availableProjectionOutputsProvider =
 });
 
 /// Factory that creates the appropriate [ProjectionOutput] for the given mode.
+///
+/// For [ProjectionOutputMode.screencast], a [displayId] must be provided
+/// (the user picks the target display from the picker dialog).
+///
 /// Returns `null` if the mode is not supported on the current platform.
 final projectionOutputFactoryProvider =
-    Provider<ProjectionOutput? Function(ProjectionOutputMode)>((ref) {
-  return (mode) {
+    Provider<ProjectionOutput? Function(ProjectionOutputMode, {String? displayId})>((ref) {
+  return (mode, {String? displayId}) {
     switch (mode) {
       case ProjectionOutputMode.secondWindow:
         if (!_isDesktop) return null;
         return ProjectionOutputWindow();
       case ProjectionOutputMode.screencast:
-        return ProjectionOutputScreencast();
+        if (displayId == null) return null;
+        return ProjectionOutputScreencast(targetDisplayId: displayId);
       case ProjectionOutputMode.none:
         return null;
     }

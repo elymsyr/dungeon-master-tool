@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/projection_output_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../domain/entities/projection/projection_output_mode.dart';
+import '../../dialogs/screencast_display_picker.dart';
 import '../../theme/dm_tool_colors.dart';
 
 /// AppBar projection toggle button. Adapts to the current platform:
 ///
-/// - **Mobile** (only screencast available): single tap toggles screencast.
+/// - **Mobile** (only screencast available): single tap opens display picker.
 /// - **Desktop** (both modes available): tap opens a popup menu to choose
 ///   between "Second Window" and "Screencast". When active, tap deactivates.
 class ProjectionStatusIcon extends ConsumerWidget {
@@ -35,11 +36,11 @@ class ProjectionStatusIcon extends ConsumerWidget {
     }
 
     if (available.length == 1) {
-      // Only one option (mobile) — direct toggle.
+      // Only one option (mobile) — direct tap opens display picker.
       return IconButton(
         tooltip: _tooltipForMode(available.first, active: false),
         icon: const Icon(Icons.cast, size: 20),
-        onPressed: () => controller.activateOutput(available.first),
+        onPressed: () => _activate(context, controller, available.first),
       );
     }
 
@@ -47,7 +48,7 @@ class ProjectionStatusIcon extends ConsumerWidget {
     return PopupMenuButton<ProjectionOutputMode>(
       tooltip: 'Open projection output',
       icon: const Icon(Icons.cast, size: 20),
-      onSelected: (mode) => controller.activateOutput(mode),
+      onSelected: (mode) => _activate(context, controller, mode),
       itemBuilder: (_) => [
         for (final mode in available)
           PopupMenuItem(
@@ -63,6 +64,36 @@ class ProjectionStatusIcon extends ConsumerWidget {
           ),
       ],
     );
+  }
+
+  Future<void> _activate(BuildContext context,
+      ProjectionController controller, ProjectionOutputMode mode) async {
+    if (mode == ProjectionOutputMode.screencast) {
+      // Show display picker dialog — user selects target display.
+      final display = await ScreencastDisplayPicker.show(context);
+      if (display == null) return; // cancelled
+      if (!context.mounted) return;
+      final ok = await controller.activateOutput(mode, displayId: display.id);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not start screen cast on this display.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } else {
+      // Second window — activate directly.
+      final ok = await controller.activateOutput(mode);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open second window.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   static IconData _iconForMode(ProjectionOutputMode mode) {

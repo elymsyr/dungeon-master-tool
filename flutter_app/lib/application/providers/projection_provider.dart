@@ -52,9 +52,15 @@ class ProjectionController extends StateNotifier<ProjectionState> {
   /// Activates the given output mode. If another output is already active,
   /// deactivates it first (mutually exclusive).
   ///
+  /// For [ProjectionOutputMode.screencast], [displayId] must be provided
+  /// (the target external display chosen by the user from the picker).
+  ///
   /// Returns `true` on success, `false` if the output could not be started
   /// (e.g. no second monitor, no external display).
-  Future<bool> activateOutput(ProjectionOutputMode mode) async {
+  Future<bool> activateOutput(
+    ProjectionOutputMode mode, {
+    String? displayId,
+  }) async {
     if (mode == ProjectionOutputMode.none) {
       await deactivateOutput();
       return true;
@@ -67,7 +73,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     if (_activeOutput != null) await deactivateOutput();
 
     final factory = _ref.read(projectionOutputFactoryProvider);
-    final output = factory(mode);
+    final output = factory(mode, displayId: displayId);
     if (output == null) {
       debugPrint('Projection output mode $mode not available on this platform');
       return false;

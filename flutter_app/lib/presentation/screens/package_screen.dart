@@ -15,6 +15,7 @@ import '../../application/providers/undo_redo_provider.dart';
 import '../../core/config/app_paths.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/repositories/campaign_repository.dart';
+import '../../core/utils/screen_type.dart';
 import '../dialogs/media_gallery_dialog.dart';
 import '../theme/dm_tool_colors.dart';
 import '../widgets/entity_sidebar.dart';
@@ -180,7 +181,6 @@ class _PackageScreenContentState
   String? _selectedEntityId;
 
   // Sidebar state
-  final bool _sidebarOpen = true;
   double _sidebarWidth = 280;
   static const double _minSidebarWidth = 200;
   static const double _maxSidebarWidth = 450;
@@ -357,63 +357,103 @@ class _PackageScreenContentState
           const SizedBox(width: 4),
         ],
       ),
-      body: Row(
-        children: [
-          // Sol sidebar
-          if (_sidebarOpen)
-            ValueListenableBuilder<double>(
-              valueListenable: _sidebarWidthNotifier,
-              builder: (_, width, child) =>
-                  SizedBox(width: width, child: child),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: EntitySidebar(
-                      schema: widget.schema,
-                      onEntitySelected: (id) {
-                        setState(() {
-                          _selectedEntityId = id;
-                        });
-                      },
+      body: Builder(builder: (context) {
+        final screen = getScreenType(context);
+        final showSidebar = screen != ScreenType.phone;
+        return Row(
+          children: [
+            // Sol sidebar — desktop/tablet only
+            if (showSidebar)
+              ValueListenableBuilder<double>(
+                valueListenable: _sidebarWidthNotifier,
+                builder: (_, width, child) =>
+                    SizedBox(width: width, child: child),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: EntitySidebar(
+                        schema: widget.schema,
+                        onEntitySelected: (id) {
+                          setState(() {
+                            _selectedEntityId = id;
+                          });
+                        },
+                      ),
                     ),
-                  ),
-                  // Drag handle
-                  GestureDetector(
-                    onHorizontalDragUpdate: (details) {
-                      _sidebarWidth = (_sidebarWidth + details.delta.dx)
-                          .clamp(_minSidebarWidth, _maxSidebarWidth);
-                      _sidebarWidthNotifier.value = _sidebarWidth;
-                    },
-                    child: MouseRegion(
-                      cursor: SystemMouseCursors.resizeColumn,
-                      child: Container(
-                        width: 6,
-                        color: Colors.transparent,
-                        child: Center(
-                          child: Container(
-                            width: 1,
-                            height: double.infinity,
-                            color: palette.sidebarDivider,
+                    // Drag handle
+                    GestureDetector(
+                      onHorizontalDragUpdate: (details) {
+                        _sidebarWidth = (_sidebarWidth + details.delta.dx)
+                            .clamp(_minSidebarWidth, _maxSidebarWidth);
+                        _sidebarWidthNotifier.value = _sidebarWidth;
+                      },
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.resizeColumn,
+                        child: Container(
+                          width: 6,
+                          color: Colors.transparent,
+                          child: Center(
+                            child: Container(
+                              width: 1,
+                              height: double.infinity,
+                              color: palette.sidebarDivider,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+            // Database screen
+            Expanded(
+              child: DatabaseScreen(
+                editMode: _editMode,
+                selectedEntityId: _selectedEntityId,
+                onEntitySelected: (id) =>
+                    setState(() => _selectedEntityId = id),
               ),
             ),
-          // Database screen
-          Expanded(
-            child: DatabaseScreen(
-              editMode: _editMode,
-              selectedEntityId: _selectedEntityId,
-              onEntitySelected: (id) =>
-                  setState(() => _selectedEntityId = id),
-            ),
-          ),
-        ],
-      ),
+          ],
+        );
+      }),
+      // FAB for mobile entity sidebar
+      floatingActionButton: Builder(builder: (context) {
+        final screen = getScreenType(context);
+        if (screen == ScreenType.phone) {
+          return FloatingActionButton.small(
+            onPressed: _showMobileSidebar,
+            child: const Icon(Icons.list),
+          );
+        }
+        return const SizedBox.shrink();
+      }),
     ),
+    );
+  }
+
+  void _showMobileSidebar() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.3,
+        expand: false,
+        builder: (_, scrollController) => EntitySidebar(
+          schema: widget.schema,
+          onEntitySelected: (id) {
+            Navigator.pop(ctx);
+            setState(() {
+              _selectedEntityId = id;
+            });
+          },
+        ),
+      ),
     );
   }
 }
