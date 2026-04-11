@@ -42,6 +42,7 @@ class ProjectionOutputScreencast extends ProjectionOutput {
     }
 
     _active = true;
+    _platform.startListening();
     _disconnectSub = _platform.onDisplayDisconnected.listen((_) {
       _markDead();
     });

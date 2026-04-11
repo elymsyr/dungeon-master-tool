@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Describes an external display detected by the platform.
@@ -37,13 +38,20 @@ class ScreencastPlatform {
   StreamSubscription<dynamic>? _eventSub;
   final _displayDisconnectedController = StreamController<void>.broadcast();
 
-  ScreencastPlatform() {
+  ScreencastPlatform();
+
+  /// Begin listening for display-disconnect events from the platform.
+  ///
+  /// Must be called only once. Only [ProjectionOutputScreencast] needs this —
+  /// the display picker relies on polling alone.
+  void startListening() {
+    if (_eventSub != null) return;
     _eventSub = _eventChannel.receiveBroadcastStream().listen((event) {
       if (event is Map && event['event'] == 'displayDisconnected') {
         _displayDisconnectedController.add(null);
       }
-    }, onError: (_) {
-      // Platform channel not available — ignore.
+    }, onError: (error) {
+      debugPrint('ScreencastPlatform: event stream error: $error');
     });
   }
 
@@ -73,7 +81,9 @@ class ScreencastPlatform {
       return result ?? false;
     } on MissingPluginException {
       return false;
-    } catch (_) {
+    } on PlatformException catch (e) {
+      debugPrint(
+          'ScreencastPlatform.startPresentation failed: ${e.code} — ${e.message}');
       return false;
     }
   }
