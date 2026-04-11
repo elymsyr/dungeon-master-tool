@@ -33,6 +33,7 @@ class ScreencastPlugin private constructor(
 ) : MethodChannel.MethodCallHandler, DisplayManager.DisplayListener {
 
     companion object {
+        private const val TAG = "ScreencastPlugin"
         private const val CHANNEL = "com.elymsyr.dungeon_master_tool/screencast"
         private const val EVENT_CHANNEL = "com.elymsyr.dungeon_master_tool/screencast/events"
         private const val PRESENTATION_ENGINE_ID = "screencast_presentation_engine"
@@ -135,14 +136,23 @@ class ScreencastPlugin private constructor(
         try {
             // Create a dedicated FlutterEngine for the presentation.
             val pEngine = FlutterEngine(activity)
+            Log.d(TAG, "Created presentation engine")
             pEngine.dartExecutor.executeDartEntrypoint(
                 DartExecutor.DartEntrypoint(
                     FlutterInjector.instance().flutterLoader().findAppBundlePath(),
                     "screencastMain"
                 )
             )
+            Log.d(TAG, "Executed Dart entrypoint 'screencastMain'")
             FlutterEngineCache.getInstance().put(PRESENTATION_ENGINE_ID, pEngine)
             presentationEngine = pEngine
+
+            // A Presentation is not a FlutterActivity, so the engine never
+            // receives lifecycle callbacks automatically.  Without this the
+            // SchedulerBinding stays inactive and scheduleFrame() is a no-op
+            // — widgets build but zero visual frames are ever composed.
+            pEngine.lifecycleChannel.appIsResumed()
+            Log.d(TAG, "Lifecycle -> resumed")
 
             // Set up the render channel once and listen for the Dart-side
             // "engineReady" handshake before forwarding state.
@@ -156,6 +166,7 @@ class ScreencastPlugin private constructor(
                         presentationReady = true
                         val buffered = pendingFullState
                         pendingFullState = null
+                        Log.d(TAG, "Dart engine ready, buffered=${buffered != null}")
                         if (buffered != null) {
                             rc.invokeMethod("applyState", buffered, LoggingResult("applyState"))
                         }
@@ -169,9 +180,11 @@ class ScreencastPlugin private constructor(
             val pres = PlayerPresentation(activity, targetDisplay, pEngine)
             pres.show()
             presentation = pres
+            Log.d(TAG, "Presentation shown on display: ${targetDisplay.name} (${targetDisplay.displayId})")
 
             result.success(true)
         } catch (e: Exception) {
+            Log.e(TAG, "startPresentation failed", e)
             renderChannel?.setMethodCallHandler(null)
             renderChannel = null
             presentationReady = false
@@ -190,6 +203,7 @@ class ScreencastPlugin private constructor(
         renderChannel = null
         presentationReady = false
         pendingFullState = null
+        presentationEngine?.lifecycleChannel?.appIsDetached()
         presentationEngine?.destroy()
         presentationEngine = null
         FlutterEngineCache.getInstance().remove(PRESENTATION_ENGINE_ID)
@@ -198,24 +212,36 @@ class ScreencastPlugin private constructor(
     // -- State push to presentation engine --
 
     private fun pushStateToPresentationEngine(stateJson: Map<*, *>?) {
-        val rc = renderChannel ?: return
+        val rc = renderChannel ?: run {
+            Log.d(TAG, "pushState: no render channel")
+            return
+        }
         if (!presentationReady) {
             // Only buffer full-state pushes; patches are dropped because the
             // buffered full state already contains their effects.
             val isPatch = stateJson?.get("type") == "patch"
             if (!isPatch) {
                 pendingFullState = stateJson
+                Log.d(TAG, "pushState: buffered (engine not ready)")
             }
             return
         }
+        Log.d(TAG, "pushState: forwarding to Dart engine")
         handler.post {
             rc.invokeMethod("applyState", stateJson, LoggingResult("applyState"))
         }
     }
 
     private fun pushBattleMapPatchToPresentationEngine(args: Map<*, *>?) {
-        val rc = renderChannel ?: return
-        if (!presentationReady) return // Covered by the buffered full state.
+        val rc = renderChannel ?: run {
+            Log.d(TAG, "pushBattleMapPatch: no render channel")
+            return
+        }
+        if (!presentationReady) {
+            Log.d(TAG, "pushBattleMapPatch: dropped (engine not ready)")
+            return
+        }
+        Log.d(TAG, "pushBattleMapPatch: forwarding, keys=${args?.keys}")
         handler.post {
             rc.invokeMethod("applyBattleMapPatch", args, LoggingResult("applyBattleMapPatch"))
         }
@@ -277,6 +303,7 @@ class ScreencastPlugin private constructor(
 
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
+            Log.d(TAG, "PlayerPresentation.onCreate display=${display.displayId} size=${display.mode.physicalWidth}x${display.mode.physicalHeight}")
 
             // Show black instead of white before Flutter paints its first frame.
             window?.decorView?.setBackgroundColor(android.graphics.Color.BLACK)
@@ -290,6 +317,7 @@ class ScreencastPlugin private constructor(
                 android.widget.FrameLayout.LayoutParams.MATCH_PARENT
             ))
             flutterView = fv
+            Log.d(TAG, "FlutterView attached to engine")
         }
 
         override fun dismiss() {

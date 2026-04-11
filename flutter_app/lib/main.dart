@@ -14,6 +14,8 @@ import 'application/services/projection_ipc.dart';
 import 'core/config/app_paths.dart';
 import 'core/services/log_buffer.dart';
 import 'presentation/screens/player_window/player_window_main.dart';
+import 'presentation/screens/player_window/screencast_main.dart'
+    as screencast_entry;
 
 /// Bumped by the DM-side reverse-IPC handler whenever the player sub-window
 /// notifies us that it was closed externally. The `ProjectionController`
@@ -135,3 +137,10 @@ void main(List<String> args) async {
     ),
   );
 }
+
+/// Secondary entry point for the screencast presentation engine.
+/// Must live in the root library (main.dart) because Android's
+/// [DartExecutor.DartEntrypoint] with a null library URI only searches
+/// the root library for the function name.
+@pragma('vm:entry-point')
+void screencastMain() => screencast_entry.screencastMain();

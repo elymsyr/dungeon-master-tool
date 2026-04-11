@@ -102,7 +102,15 @@ class _SingleImage extends StatelessWidget {
       fit: BoxFit.contain,
       cacheWidth: cacheWidth,
       gaplessPlayback: true,
-      errorBuilder: (_, _, _) => const ColoredBox(color: Colors.black),
+      errorBuilder: (_, error, _) {
+        debugPrint('SCREENCAST: Image load error for $path: $error');
+        return const ColoredBox(
+          color: Colors.black,
+          child: Center(
+            child: Icon(Icons.broken_image, color: Colors.white24, size: 48),
+          ),
+        );
+      },
     );
   }
 }
