@@ -20,8 +20,13 @@ class ProjectionOutputScreencast extends ProjectionOutput {
   StreamSubscription<void>? _disconnectSub;
   final _externalCloseController = StreamController<void>.broadcast();
 
-  ProjectionOutputScreencast({ScreencastPlatform? platform})
-      : _platform = platform ?? ScreencastPlatform();
+  /// The display ID to present on. Must be set before calling [activate].
+  final String targetDisplayId;
+
+  ProjectionOutputScreencast({
+    required this.targetDisplayId,
+    ScreencastPlatform? platform,
+  }) : _platform = platform ?? ScreencastPlatform();
 
   @override
   bool get isActive => _active;
@@ -30,17 +35,9 @@ class ProjectionOutputScreencast extends ProjectionOutput {
   Future<bool> activate() async {
     if (_active) return true;
 
-    final displays = await _platform.getAvailableDisplays();
-    if (displays.isEmpty) {
-      debugPrint('Screencast: no external displays found');
-      return false;
-    }
-
-    // Use the first available external display.
-    final target = displays.first;
-    final ok = await _platform.startPresentation(target.id);
+    final ok = await _platform.startPresentation(targetDisplayId);
     if (!ok) {
-      debugPrint('Screencast: failed to start presentation on ${target.name}');
+      debugPrint('Screencast: failed to start presentation on $targetDisplayId');
       return false;
     }
 
