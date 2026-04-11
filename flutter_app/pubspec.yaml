@@ -56,6 +56,9 @@ dependencies:
   # YAML parsing (soundpad theme configs)
   yaml: ^3.1.2
 
+  # Auth (Supabase — online features)
+  supabase_flutter: ^2.8.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

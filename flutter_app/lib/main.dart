@@ -6,12 +6,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
 import 'application/providers/ui_state_provider.dart';
 import 'application/services/projection_ipc.dart';
 import 'core/config/app_paths.dart';
+import 'core/config/supabase_config.dart';
 import 'core/services/log_buffer.dart';
 import 'presentation/screens/player_window/player_window_main.dart';
 import 'presentation/screens/player_window/screencast_main.dart'
@@ -99,6 +101,20 @@ void main(List<String> args) async {
   };
 
   await AppPaths.initialize();
+
+  // Supabase — only initialize when configured via --dart-define.
+  // Without the defines the app runs fully offline (P1: Offline-First).
+  if (SupabaseConfig.isConfigured) {
+    try {
+      await Supabase.initialize(
+        url: SupabaseConfig.url,
+        anonKey: SupabaseConfig.anonKey,
+      );
+    } catch (e, st) {
+      LogBuffer.instance.recordError(e, st, context: 'Supabase.init');
+      debugPrint('Supabase init failed – online features disabled: $e');
+    }
+  }
 
   // SoLoud audio engine — tüm platformlarda çalışır.
   // Wrapped in try/catch so the app can still launch when the audio backend
