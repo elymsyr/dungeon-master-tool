@@ -975,6 +975,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // --- Entity Stats Bottom Sheet ---
   void _showMobileEntityStatsSheet(DmToolColors palette) {
     if (_selectedCombatantId == null) return;
+    final schema = ref.read(worldSchemaProvider);
+    final entity = ref.read(entityProvider)[_selectedCombatantId];
+    final catSchema = entity != null
+        ? schema.categories.where((c) => c.slug == entity.categorySlug).firstOrNull
+        : null;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -988,7 +993,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         expand: false,
         builder: (ctx, scrollController) => SingleChildScrollView(
           controller: scrollController,
-          child: _buildMobileEntityStats(palette),
+          child: EntityCard(
+            entityId: _selectedCombatantId!,
+            categorySchema: catSchema,
+            readOnly: true,
+          ),
         ),
       ),
     );
@@ -1105,44 +1114,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildMobileEntityStats(DmToolColors palette) {
-    if (_selectedCombatantId == null) {
-      return Center(child: Text('Tap a combatant to view stats', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)));
-    }
-    final entity = ref.watch(
-      entityProvider.select((map) => map[_selectedCombatantId]),
-    );
-    if (entity == null) {
-      return Center(child: Text('Entity not found', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)));
-    }
-    // Simple stats view
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(entity.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
-          Text(entity.categorySlug, style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
-          if (entity.description.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(entity.description, style: TextStyle(fontSize: 12, color: palette.htmlText), maxLines: 3, overflow: TextOverflow.ellipsis),
-          ],
-          ...entity.fields.entries.where((e) => e.value != null && e.value.toString().isNotEmpty && e.value is! Map && e.value is! List).map(
-            (e) => Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Row(
-                children: [
-                  SizedBox(width: 100, child: Text(e.key, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: palette.tabText))),
-                  Expanded(child: Text(e.value.toString(), style: TextStyle(fontSize: 11, color: palette.htmlText), overflow: TextOverflow.ellipsis)),
-                ],
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
