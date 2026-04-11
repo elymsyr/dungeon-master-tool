@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config/supabase_config.dart';
 
@@ -9,7 +11,15 @@ import '../../core/config/supabase_config.dart';
 class AuthState {
   final String uid;
   final String email;
-  const AuthState({required this.uid, required this.email});
+  final String provider; // 'email', 'google', etc.
+  final DateTime? createdAt;
+
+  const AuthState({
+    required this.uid,
+    required this.email,
+    this.provider = 'email',
+    this.createdAt,
+  });
 }
 
 /// Manages Supabase auth state. When Supabase is not configured the notifier
@@ -36,16 +46,27 @@ class AuthNotifier extends StateNotifier<AuthState?> {
     _sub = client.auth.onAuthStateChange
         .map((data) {
           final user = data.session?.user;
-          if (user != null) {
-            return AuthState(uid: user.id, email: user.email ?? '');
-          }
-          return null;
+          if (user == null) return null;
+          final provider =
+              user.appMetadata['provider'] as String? ?? 'email';
+          return AuthState(
+            uid: user.id,
+            email: user.email ?? '',
+            provider: provider,
+            createdAt: DateTime.tryParse(user.createdAt),
+          );
         })
         .listen((authState) => state = authState);
   }
 
   void _setFromUser(User user) {
-    state = AuthState(uid: user.id, email: user.email ?? '');
+    final provider = user.appMetadata['provider'] as String? ?? 'email';
+    state = AuthState(
+      uid: user.id,
+      email: user.email ?? '',
+      provider: provider,
+      createdAt: DateTime.tryParse(user.createdAt),
+    );
   }
 
   /// Register a new account. Returns `null` on success, an error message on
@@ -76,6 +97,80 @@ class AuthNotifier extends StateNotifier<AuthState?> {
     } on AuthException catch (e) {
       return e.message;
     } catch (e) {
+      return e.toString();
+    }
+  }
+
+  /// Sign in with an OAuth provider (Google, Facebook, GitHub, etc.)
+  /// via PKCE flow. Starts a temporary local HTTP server to catch
+  /// the OAuth callback, then exchanges the auth code for a session.
+  Future<String?> signInWithOAuth(OAuthProvider provider) async {
+    HttpServer? server;
+    try {
+      // 1. Start a temporary local HTTP server on a random port.
+      server = await HttpServer.bind('localhost', 0);
+      final redirectUrl = 'http://localhost:${server.port}/auth/callback';
+
+      // 2. Get the OAuth URL with PKCE code challenge.
+      final res = await Supabase.instance.client.auth.getOAuthSignInUrl(
+        provider: provider,
+        redirectTo: redirectUrl,
+      );
+
+      // 3. Open in the system browser.
+      await launchUrl(Uri.parse(res.url), mode: LaunchMode.externalApplication);
+
+      // 4. Wait for the callback request.
+      final request = await server.first;
+      final code = request.uri.queryParameters['code'];
+
+      // 5. Respond to the browser with a styled success page.
+      request.response
+        ..statusCode = 200
+        ..headers.contentType = ContentType.html
+        ..write(
+          '<!DOCTYPE html>'
+          '<html><head>'
+          '<meta charset="utf-8">'
+          '<meta name="viewport" content="width=device-width,initial-scale=1">'
+          '<title>Authentication Successful</title>'
+          '<style>'
+          '*{margin:0;padding:0;box-sizing:border-box}'
+          'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;'
+          'background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);'
+          'color:#e0e0e0;min-height:100vh;display:flex;align-items:center;justify-content:center}'
+          '.card{background:rgba(255,255,255,0.07);backdrop-filter:blur(12px);'
+          'border:1px solid rgba(255,255,255,0.1);border-radius:16px;'
+          'padding:48px 40px;text-align:center;max-width:420px;width:90%}'
+          '.icon{width:64px;height:64px;background:linear-gradient(135deg,#4ade80,#22c55e);'
+          'border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px}'
+          '.icon svg{width:32px;height:32px;fill:#fff}'
+          'h1{font-size:22px;font-weight:600;margin-bottom:8px;color:#fff}'
+          'p{font-size:14px;color:#a0a0b0;line-height:1.6}'
+          '.brand{font-size:12px;color:#505060;margin-top:24px}'
+          '</style></head><body>'
+          '<div class="card">'
+          '<div class="icon"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>'
+          '<h1>Authentication Successful</h1>'
+          '<p>You can close this tab and return to the app.</p>'
+          '<p class="brand">Dungeon Master Tool</p>'
+          '</div></body></html>',
+        );
+      await request.response.close();
+      await server.close();
+      server = null;
+
+      // 6. Exchange the auth code for a session.
+      if (code != null) {
+        await Supabase.instance.client.auth.exchangeCodeForSession(code);
+      }
+
+      return null;
+    } on AuthException catch (e) {
+      await server?.close();
+      return e.message;
+    } catch (e) {
+      await server?.close();
       return e.toString();
     }
   }

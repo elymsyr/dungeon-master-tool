@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.elymsyr" "\0"
-            VALUE "FileDescription", "dungeon_master_tool" "\0"
+            VALUE "FileDescription", "Dungeon Master Tool" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "dungeon_master_tool" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.elymsyr. All rights reserved." "\0"
             VALUE "OriginalFilename", "dungeon_master_tool.exe" "\0"
-            VALUE "ProductName", "dungeon_master_tool" "\0"
+            VALUE "ProductName", "Dungeon Master Tool" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

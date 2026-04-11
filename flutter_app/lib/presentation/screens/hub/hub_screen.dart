@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/providers/auth_provider.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -95,11 +97,10 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;
 
+    final authState = ref.watch(authProvider);
+
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) context.go('/');
-      },
       child: Scaffold(
       appBar: AppBar(
         leading: isLandscapePhone
@@ -107,10 +108,8 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                 icon: const Icon(Icons.menu, size: 22),
                 onPressed: () => _showLandscapeNavSheet(palette),
               )
-            : IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => context.go('/'),
-              ),
+            : null,
+        automaticallyImplyLeading: false,
         title: Row(
           children: [
             Icon(Icons.castle, size: 20, color: palette.featureCardAccent),
@@ -124,13 +123,6 @@ class _HubScreenState extends ConsumerState<HubScreen> {
           ],
         ),
         actions: [
-          // Back button moved to actions when landscape (leading is burger menu)
-          if (isLandscapePhone)
-            IconButton(
-              icon: const Icon(Icons.arrow_back, size: 20),
-              tooltip: 'Back',
-              onPressed: () => context.go('/'),
-            ),
           IconButton(
             tooltip: 'Report a Bug',
             icon: const Icon(Icons.bug_report_outlined),
@@ -139,6 +131,19 @@ class _HubScreenState extends ConsumerState<HubScreen> {
               screenshotKey: _screenshotKey,
             ),
           ),
+          // Auth button — sign in / sign out
+          if (SupabaseConfig.isConfigured)
+            authState != null
+                ? IconButton(
+                    icon: const Icon(Icons.logout, size: 20),
+                    tooltip: 'Sign Out (${authState.email})',
+                    onPressed: () => ref.read(authProvider.notifier).signOut(),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.login, size: 20),
+                    tooltip: 'Sign In',
+                    onPressed: () => context.go('/'),
+                  ),
           const SizedBox(width: 4),
         ],
       ),

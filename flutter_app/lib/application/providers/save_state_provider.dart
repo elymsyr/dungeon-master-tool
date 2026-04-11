@@ -20,6 +20,9 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
 
   SaveStateNotifier(this._ref) : super(SaveStatus.saved);
 
+  /// Last successful save timestamp — read imperatively for UI display.
+  DateTime? lastSavedAt;
+
   /// Called by any module when in-memory campaign data has changed.
   void markDirty() {
     if (!mounted) return;
@@ -46,6 +49,7 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
     state = SaveStatus.saving;
     try {
       await _ref.read(activeCampaignProvider.notifier).save();
+      lastSavedAt = DateTime.now();
     } catch (e) {
       debugPrint('Save error: $e');
     } finally {
