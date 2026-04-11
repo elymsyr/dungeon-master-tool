@@ -111,6 +111,8 @@ See [flutter_app/README.md](flutter_app/README.md) for full developer documentat
 
 ## Gallery
 
+*Images are from PyQT version, will be updated soon...*
+
 <p align="center">
   <img src="media/main_0.png" width="48%" alt="Main Interface" />
   <img src="media/battlemap.png" width="48%" alt="Battle Map" />
