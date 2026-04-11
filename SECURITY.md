@@ -1,21 +1,42 @@
 # Security Policy
 
+## About This Project
+
+Dungeon Master Tool is an open-source, offline-first desktop and mobile application. It does not operate a web service, API, or server. All user data is stored locally on the device in a SQLite database.
+
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+| Version | Supported |
+| ------- | --------- |
+| 2.0.x   | Yes       |
+| < 2.0   | No        |
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+The project is currently in beta. Security fixes are applied to the latest release only.
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+If you discover a security issue (for example, a path traversal in file import, unsafe deserialization, or a dependency with a known CVE), please report it privately:
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+- **Email:** orhunerenyalcinkaya@gmail.com
+- **Subject line:** [SECURITY] Dungeon Master Tool
+
+Please include:
+
+- A description of the vulnerability.
+- Steps to reproduce, if applicable.
+- The version and platform you tested on.
+
+You can expect an initial response within 7 days. Please do not open a public GitHub issue for security vulnerabilities.
+
+## Scope
+
+**In scope:**
+
+- The Flutter application code in this repository.
+- Third-party dependencies used by the application.
+- Build and release pipeline (GitHub Actions).
+
+**Out of scope:**
+
+- The project website (static GitHub Pages site).
+- Theoretical attacks requiring physical device access.
