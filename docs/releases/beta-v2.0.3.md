@@ -1,4 +1,4 @@
-# v2.0.0 - Flutter Rewrite
+# v2.0.3 - Flutter Rewrite
 
 The entire application has been rewritten from scratch. The original PyQt codebase has been replaced with a Flutter implementation, bringing full cross-platform support and a modern architecture.
 
