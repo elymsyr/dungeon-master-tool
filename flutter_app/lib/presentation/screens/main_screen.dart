@@ -1049,7 +1049,7 @@ class _UndoRedoButtons extends ConsumerWidget {
   }
 }
 
-/// Save status indicator — icon-only with tooltip.
+/// Save status indicators — local save + cloud sync (disabled).
 class _SaveIndicator extends ConsumerWidget {
   const _SaveIndicator();
 
@@ -1059,22 +1059,102 @@ class _SaveIndicator extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
 
     final (IconData? icon, Color color, String tooltip) = switch (status) {
-      SaveStatus.saved => (Icons.cloud_done, palette.uiAutosaveTextSaved, 'All changes saved'),
-      SaveStatus.dirty => (Icons.cloud_upload, palette.uiAutosaveTextEditing, 'Unsaved changes'),
+      SaveStatus.saved => (Icons.check_circle_outline, palette.uiAutosaveTextSaved, 'Local save — up to date'),
+      SaveStatus.dirty => (Icons.save_outlined, palette.uiAutosaveTextEditing, 'Unsaved changes'),
       SaveStatus.saving => (null, palette.uiAutosaveTextEditing, 'Saving...'),
     };
 
-    return Tooltip(
-      message: tooltip,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: icon != null
-            ? Icon(icon, size: 18, color: color)
-            : SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2, color: color),
-              ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // ── Local save ──
+        Tooltip(
+          message: tooltip,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _showLocalSaveInfo(context, ref, palette),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: icon != null
+                  ? Icon(icon, size: 18, color: color)
+                  : SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: color),
+                    ),
+            ),
+          ),
+        ),
+        // ── Cloud sync (disabled) ──
+        Tooltip(
+          message: 'Cloud sync — coming soon',
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _showCloudSyncInfo(context, palette),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Icon(Icons.cloud_off, size: 18,
+                  color: palette.sidebarLabelSecondary.withValues(alpha: 0.4)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showLocalSaveInfo(BuildContext context, WidgetRef ref, DmToolColors palette) {
+    final status = ref.read(saveStateProvider);
+    final lastSaved = ref.read(saveStateProvider.notifier).lastSavedAt;
+
+    String detail;
+    if (status == SaveStatus.saving) {
+      detail = 'Saving in progress...';
+    } else if (status == SaveStatus.dirty) {
+      detail = 'You have unsaved changes.\nThey will be saved automatically.';
+    } else if (lastSaved != null) {
+      final diff = DateTime.now().difference(lastSaved);
+      final timeAgo = diff.inMinutes < 1
+          ? 'just now'
+          : diff.inMinutes < 60
+              ? '${diff.inMinutes}m ago'
+              : '${diff.inHours}h ago';
+      detail = 'All changes saved locally.\nLast saved: $timeAgo';
+    } else {
+      detail = 'All changes saved locally.';
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.save_outlined, size: 20, color: palette.featureCardAccent),
+            const SizedBox(width: 8),
+            const Text('Local Save', style: TextStyle(fontSize: 16)),
+          ],
+        ),
+        content: Text(detail, style: const TextStyle(fontSize: 13)),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+      ),
+    );
+  }
+
+  void _showCloudSyncInfo(BuildContext context, DmToolColors palette) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.cloud_off, size: 20, color: palette.sidebarLabelSecondary),
+            const SizedBox(width: 8),
+            const Text('Cloud Sync', style: TextStyle(fontSize: 16)),
+          ],
+        ),
+        content: const Text(
+          'Cloud sync is not available yet.\nYour data is saved locally on this device.',
+          style: TextStyle(fontSize: 13),
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
       ),
     );
   }

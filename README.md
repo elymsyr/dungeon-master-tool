@@ -170,10 +170,3 @@ flutter run
 | 📸 **Instagram** | [@erenorhun](https://www.instagram.com/erenorhun) |
 | 💼 **LinkedIn** | [Orhun Eren Yalçınkaya](https://www.linkedin.com/in/orhuneren) |
 | 📩 **Email** | *orhunerenyalcinkaya@gmail.com* |
-
----
-
-## ✏️ Credits
-*   [DND 5E SRD API](https://www.dnd5eapi.co/)
-*   [Open5E](https://open5e.com/)
-*   <a href="https://www.flaticon.com/free-icons/sorcery" title="sorcery icons">Sorcery icons created by David Carapinha - Flaticon</a>
