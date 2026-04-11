@@ -39,10 +39,61 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     PackagesTab(),
   ];
 
+  void _showLandscapeNavSheet(DmToolColors palette) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            children: List.generate(_tabs.length, (i) {
+              final t = _tabs[i];
+              final isActive = i == _tabIndex;
+              return InkWell(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() => _tabIndex = i);
+                },
+                child: SizedBox(
+                  width: 80,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(t.icon, size: 24,
+                            color: isActive ? palette.tabIndicator : palette.tabText),
+                        const SizedBox(height: 4),
+                        Text(t.label,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isActive ? palette.tabIndicator : palette.tabText,
+                            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final screen = getScreenType(context);
+    final isLandscapePhone = screen == ScreenType.phone &&
+        MediaQuery.orientationOf(context) == Orientation.landscape;
 
     return PopScope(
       canPop: false,
@@ -51,18 +102,35 @@ class _HubScreenState extends ConsumerState<HubScreen> {
       },
       child: Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
-        ),
+        leading: isLandscapePhone
+            ? IconButton(
+                icon: const Icon(Icons.menu, size: 22),
+                onPressed: () => _showLandscapeNavSheet(palette),
+              )
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go('/'),
+              ),
         title: Row(
           children: [
             Icon(Icons.castle, size: 20, color: palette.featureCardAccent),
             const SizedBox(width: 8),
-            const Text('Dungeon Master Tool', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Flexible(
+              child: Text('Dungeon Master Tool',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         actions: [
+          // Back button moved to actions when landscape (leading is burger menu)
+          if (isLandscapePhone)
+            IconButton(
+              icon: const Icon(Icons.arrow_back, size: 20),
+              tooltip: 'Back',
+              onPressed: () => context.go('/'),
+            ),
           IconButton(
             tooltip: 'Report a Bug',
             icon: const Icon(Icons.bug_report_outlined),
@@ -77,13 +145,13 @@ class _HubScreenState extends ConsumerState<HubScreen> {
       body: RepaintBoundary(
         key: _screenshotKey,
         child: switch (screen) {
-          // Desktop: sol rail + sağ content
+          // Desktop/Tablet: sol rail + sağ content
           ScreenType.desktop || ScreenType.tablet => Row(
               children: [
                 NavigationRail(
                   selectedIndex: _tabIndex,
                   onDestinationSelected: (i) => setState(() => _tabIndex = i),
-                  labelType: NavigationRailLabelType.all,
+                  labelType: NavigationRailLabelType.selected,
                   destinations: _tabs.map((t) => NavigationRailDestination(
                     icon: Icon(t.icon),
                     label: Text(t.label),
@@ -98,14 +166,14 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                 ),
               ],
             ),
-          // Mobile: bottom nav — IndexedStack ile state korunur
+          // Mobile: portrait=BottomNav, landscape=leading burger menu
           ScreenType.phone => IndexedStack(
             index: _tabIndex,
             children: _tabContent,
           ),
         },
       ),
-      bottomNavigationBar: screen == ScreenType.phone
+      bottomNavigationBar: (screen == ScreenType.phone && !isLandscapePhone)
           ? NavigationBar(
               selectedIndex: _tabIndex,
               onDestinationSelected: (i) => setState(() => _tabIndex = i),

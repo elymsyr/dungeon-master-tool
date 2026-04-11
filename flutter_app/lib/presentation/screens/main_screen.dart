@@ -187,6 +187,55 @@ class _MainScreenState extends ConsumerState<MainScreen>
     );
   }
 
+  void _showLandscapeNavSheet(List<String> tabLabels, DmToolColors palette) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            children: List.generate(6, (i) {
+              final isActive = i == _tabIndex;
+              return InkWell(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() => _tabIndex = i);
+                  _persistUiState();
+                },
+                child: SizedBox(
+                  width: 80,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(_tabIcons[i], size: 24,
+                            color: isActive ? palette.tabIndicator : palette.tabText),
+                        const SizedBox(height: 4),
+                        Text(tabLabels[i],
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isActive ? palette.tabIndicator : palette.tabText,
+                            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
   static const _tabIcons = [
     Icons.storage,          // Database
     Icons.event_note,       // Session
@@ -202,6 +251,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final campaignName = ref.read(activeCampaignProvider) ?? '';
     final screen = getScreenType(context);
+    final isLandscapePhone = screen == ScreenType.phone &&
+        MediaQuery.orientationOf(context) == Orientation.landscape;
 
     final tabLabels = [
       l10n.tabDatabase,
@@ -335,14 +386,24 @@ class _MainScreenState extends ConsumerState<MainScreen>
       child: Scaffold(
       // --- Toolbar (AppBar) ---
       appBar: AppBar(
-        titleSpacing: 8,
+        titleSpacing: isLandscapePhone ? 0 : 8,
+        leading: isLandscapePhone
+            ? IconButton(
+                icon: const Icon(Icons.menu, size: 22),
+                onPressed: () => _showLandscapeNavSheet(tabLabels, palette),
+              )
+            : null,
+        automaticallyImplyLeading: false,
         title: Row(
           children: [
             Icon(Icons.castle, size: 20, color: palette.tabIndicator),
             const SizedBox(width: 8),
-            Text(
-              campaignName,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            Flexible(
+              child: Text(
+                campaignName,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
@@ -364,82 +425,137 @@ class _MainScreenState extends ConsumerState<MainScreen>
           ),
           // Player window status — always visible, jumps to projection panel
           const PlayerWindowStatusIcon(),
-          // Media Gallery
-          IconButton(
-            icon: const Icon(Icons.photo_library_outlined, size: 20),
-            tooltip: 'Media Gallery',
-            onPressed: () {
-              final mediaDir = ref.read(mediaDirectoryProvider);
-              if (mediaDir.isNotEmpty) {
-                MediaGalleryDialog.show(context, mediaDir: mediaDir);
-              }
-            },
-          ),
-          // Import Package
-          IconButton(
-            icon: const Icon(Icons.inventory_2, size: 20),
-            tooltip: l10n.importPackage,
-            onPressed: () => ImportPackageDialog.show(context),
-          ),
-          // Tema
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.palette, size: 20),
-            tooltip: l10n.lblTheme,
-            onSelected: (name) =>
-                ref.read(themeProvider.notifier).setTheme(name),
-            itemBuilder: (_) => themeNames
-                .map((name) => PopupMenuItem(
-                      value: name,
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 14,
-                            height: 14,
-                            decoration: BoxDecoration(
-                              color: themePalettes[name]?.canvasBg,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white24),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(name[0].toUpperCase() + name.substring(1)),
-                        ],
-                      ),
-                    ))
-                .toList(),
-          ),
-          // Dil
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.language, size: 20),
-            tooltip: l10n.lblLanguage,
-            onSelected: (code) =>
-                ref.read(localeProvider.notifier).setLocale(code),
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'en', child: Text('English')),
-              PopupMenuItem(value: 'tr', child: Text('Türkçe')),
-              PopupMenuItem(value: 'de', child: Text('Deutsch')),
-              PopupMenuItem(value: 'fr', child: Text('Français')),
-            ],
-          ),
-          // Switch World
-          IconButton(
-            icon: const Icon(Icons.swap_horiz, size: 20),
-            tooltip: 'Switch World',
-            onPressed: () {
-              ref.invalidate(campaignListProvider);
-              ref.invalidate(campaignInfoListProvider);
-              context.go('/hub');
-            },
-          ),
-          // Bug report
-          IconButton(
-            icon: const Icon(Icons.bug_report_outlined, size: 20),
-            tooltip: 'Report a Bug',
-            onPressed: () => BugReportDialog.show(
-              context,
-              screenshotKey: _screenshotKey,
+          // Phone: collapse infrequent actions into overflow menu
+          if (screen == ScreenType.phone) ...[
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, size: 20),
+              onSelected: (action) {
+                switch (action) {
+                  case 'media':
+                    final mediaDir = ref.read(mediaDirectoryProvider);
+                    if (mediaDir.isNotEmpty) {
+                      MediaGalleryDialog.show(context, mediaDir: mediaDir);
+                    }
+                  case 'import':
+                    ImportPackageDialog.show(context);
+                  case 'switch_world':
+                    ref.invalidate(campaignListProvider);
+                    ref.invalidate(campaignInfoListProvider);
+                    context.go('/hub');
+                  case 'bug':
+                    BugReportDialog.show(context, screenshotKey: _screenshotKey);
+                  default:
+                    // Theme selection
+                    if (action.startsWith('theme:')) {
+                      ref.read(themeProvider.notifier).setTheme(action.substring(6));
+                    }
+                    // Language selection
+                    if (action.startsWith('lang:')) {
+                      ref.read(localeProvider.notifier).setLocale(action.substring(5));
+                    }
+                }
+              },
+              itemBuilder: (_) => [
+                const PopupMenuItem(value: 'media', child: Row(children: [Icon(Icons.photo_library_outlined, size: 18), SizedBox(width: 8), Text('Media Gallery')])),
+                PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),
+                const PopupMenuDivider(),
+                ...themeNames.map((name) => PopupMenuItem(
+                  value: 'theme:$name',
+                  child: Row(children: [
+                    Container(width: 14, height: 14, decoration: BoxDecoration(color: themePalettes[name]?.canvasBg, shape: BoxShape.circle, border: Border.all(color: Colors.white24))),
+                    const SizedBox(width: 8),
+                    Text(name[0].toUpperCase() + name.substring(1)),
+                  ]),
+                )),
+                const PopupMenuDivider(),
+                const PopupMenuItem(value: 'lang:en', child: Text('English')),
+                const PopupMenuItem(value: 'lang:tr', child: Text('Türkçe')),
+                const PopupMenuItem(value: 'lang:de', child: Text('Deutsch')),
+                const PopupMenuItem(value: 'lang:fr', child: Text('Français')),
+                const PopupMenuDivider(),
+                const PopupMenuItem(value: 'switch_world', child: Row(children: [Icon(Icons.swap_horiz, size: 18), SizedBox(width: 8), Text('Switch World')])),
+                const PopupMenuItem(value: 'bug', child: Row(children: [Icon(Icons.bug_report_outlined, size: 18), SizedBox(width: 8), Text('Report a Bug')])),
+              ],
             ),
-          ),
+          ] else ...[
+            // Desktop/Tablet: show all buttons
+            // Media Gallery
+            IconButton(
+              icon: const Icon(Icons.photo_library_outlined, size: 20),
+              tooltip: 'Media Gallery',
+              onPressed: () {
+                final mediaDir = ref.read(mediaDirectoryProvider);
+                if (mediaDir.isNotEmpty) {
+                  MediaGalleryDialog.show(context, mediaDir: mediaDir);
+                }
+              },
+            ),
+            // Import Package
+            IconButton(
+              icon: const Icon(Icons.inventory_2, size: 20),
+              tooltip: l10n.importPackage,
+              onPressed: () => ImportPackageDialog.show(context),
+            ),
+            // Tema
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.palette, size: 20),
+              tooltip: l10n.lblTheme,
+              onSelected: (name) =>
+                  ref.read(themeProvider.notifier).setTheme(name),
+              itemBuilder: (_) => themeNames
+                  .map((name) => PopupMenuItem(
+                        value: name,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 14,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: themePalettes[name]?.canvasBg,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white24),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(name[0].toUpperCase() + name.substring(1)),
+                          ],
+                        ),
+                      ))
+                  .toList(),
+            ),
+            // Dil
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.language, size: 20),
+              tooltip: l10n.lblLanguage,
+              onSelected: (code) =>
+                  ref.read(localeProvider.notifier).setLocale(code),
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'en', child: Text('English')),
+                PopupMenuItem(value: 'tr', child: Text('Türkçe')),
+                PopupMenuItem(value: 'de', child: Text('Deutsch')),
+                PopupMenuItem(value: 'fr', child: Text('Français')),
+              ],
+            ),
+            // Switch World
+            IconButton(
+              icon: const Icon(Icons.swap_horiz, size: 20),
+              tooltip: 'Switch World',
+              onPressed: () {
+                ref.invalidate(campaignListProvider);
+                ref.invalidate(campaignInfoListProvider);
+                context.go('/hub');
+              },
+            ),
+            // Bug report
+            IconButton(
+              icon: const Icon(Icons.bug_report_outlined, size: 20),
+              tooltip: 'Report a Bug',
+              onPressed: () => BugReportDialog.show(
+                context,
+                screenshotKey: _screenshotKey,
+              ),
+            ),
+          ],
           const SizedBox(width: 4),
         ],
       ),
@@ -650,15 +766,22 @@ class _MainScreenState extends ConsumerState<MainScreen>
         // Tablet: NavigationRail + content
         ScreenType.tablet => Row(
             children: [
-              NavigationRail(
-                selectedIndex: _tabIndex,
-                onDestinationSelected: (i) { setState(() => _tabIndex = i); _persistUiState(); },
-                labelType: NavigationRailLabelType.all,
-                destinations: List.generate(
-                  6,
-                  (i) => NavigationRailDestination(
-                    icon: Icon(_tabIcons[i]),
-                    label: Text(tabLabels[i]),
+              SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: MediaQuery.sizeOf(context).height - kToolbarHeight - MediaQuery.paddingOf(context).top),
+                  child: IntrinsicHeight(
+                    child: NavigationRail(
+                      selectedIndex: _tabIndex,
+                      onDestinationSelected: (i) { setState(() => _tabIndex = i); _persistUiState(); },
+                      labelType: NavigationRailLabelType.selected,
+                      destinations: List.generate(
+                        6,
+                        (i) => NavigationRailDestination(
+                          icon: Icon(_tabIcons[i]),
+                          label: Text(tabLabels[i]),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -667,7 +790,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
             ],
           ),
 
-        // Mobile: BottomNavigationBar
+        // Mobile: portrait=BottomNav, landscape=leading menu in AppBar
         ScreenType.phone => tabStack,
         },
       ),
@@ -680,8 +803,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
             )
           : null,
 
-      // Mobile bottom nav
-      bottomNavigationBar: screen == ScreenType.phone
+      // Mobile bottom nav (portrait only — landscape uses burger menu overlay)
+      bottomNavigationBar: (screen == ScreenType.phone && !isLandscapePhone)
           ? NavigationBar(
               selectedIndex: _tabIndex,
               onDestinationSelected: (i) { setState(() => _tabIndex = i); _persistUiState(); },
