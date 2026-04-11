@@ -164,6 +164,54 @@ jobs:
           name: DungeonMasterTool-Linux
           path: DungeonMasterTool-Linux.zip
 
+  # ── iOS (IPA – no code signing) ────────────────────────────────
+  build-ios:
+    name: iOS
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies & generate code
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build iOS
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          flutter build ios --release --no-codesign \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+
+      - name: Archive
+        run: |
+          cd ${{ env.WORKING_DIR }}/build/ios/iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -r -y "$GITHUB_WORKSPACE/DungeonMasterTool-iOS.ipa" Payload
+
+      - name: Upload to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DungeonMasterTool-iOS.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DungeonMasterTool-iOS
+          path: DungeonMasterTool-iOS.ipa
+
   # ── macOS ──────────────────────────────────────────────────────
   build-macos:
     name: macOS
@@ -193,7 +241,7 @@ jobs:
       - name: Archive
         run: |
           cd ${{ env.WORKING_DIR }}/build/macos/Build/Products/Release
-          zip -r -y "$GITHUB_WORKSPACE/DungeonMasterTool-MacOS.zip" "dungeon_master_tool.app"
+          zip -r -y "$GITHUB_WORKSPACE/DungeonMasterTool-MacOS.zip" "Dungeon Master Tool.app"
 
       - name: Upload to Release
         if: github.event_name == 'release'

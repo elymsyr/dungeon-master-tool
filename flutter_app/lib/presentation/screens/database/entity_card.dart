@@ -459,15 +459,18 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: rows.map((rowFields) {
+        final children = <Widget>[];
+        for (var i = 0; i < rowFields.length; i++) {
+          if (i > 0) children.add(const SizedBox(width: 8));
+          final span = rowFields[i].gridColumnSpan.clamp(1, gridColumns);
+          children.add(Expanded(
+            flex: span,
+            child: _buildFieldWidget(rowFields[i], entity, computed, palette),
+          ));
+        }
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: rowFields.map((field) {
-            final span = field.gridColumnSpan.clamp(1, gridColumns);
-            return Expanded(
-              flex: span,
-              child: _buildFieldWidget(field, entity, computed, palette),
-            );
-          }).toList(),
+          children: children,
         );
       }).toList(),
     );

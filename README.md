@@ -21,6 +21,9 @@
   <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest">
     <img src="https://img.shields.io/badge/Download-macOS-000000?style=for-the-badge&logo=apple" alt="Download macOS" />
   </a>
+  <a href="https://github.com/elymsyr/dungeon-master-tool/releases/latest">
+    <img src="https://img.shields.io/badge/Download-iOS-999999?style=for-the-badge&logo=apple" alt="Download iOS" />
+  </a>
   <br><br>
   <img src="https://img.shields.io/badge/Status-Beta-blue" />
   <img src="https://img.shields.io/badge/Version-v2.0.3-blueviolet" />
@@ -91,7 +94,7 @@
 ### iOS
 > **Note:** iOS builds are currently unsigned. You will need to sideload via Xcode or a signing service.
 
-1. Download `DungeonMasterTool-iOS.zip` from the [latest release](https://github.com/elymsyr/dungeon-master-tool/releases/latest).
+1. Download `DungeonMasterTool-iOS.ipa` from the [latest release](https://github.com/elymsyr/dungeon-master-tool/releases/latest).
 2. Sideload using Xcode, AltStore, or a similar tool.
 
 ---
