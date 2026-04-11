@@ -560,6 +560,8 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
   int _currentIndex = 0;
   bool _hovered = false;
 
+  bool get _showControls => _hovered || Platform.isAndroid || Platform.isIOS;
+
   Future<void> _pickImage() async {
     final mediaDir = ref.read(mediaDirectoryProvider);
     if (mediaDir.isNotEmpty) {
@@ -624,6 +626,21 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                   ),
                 );
               },
+        // Long-press → projection menüsü (mobile, sağ tık yerine)
+        onLongPressStart: widget.images.isEmpty
+            ? null
+            : (details) {
+                context.showProjectionMenu(
+                  ref: ref,
+                  globalPosition: details.globalPosition,
+                  itemBuilder: () => ProjectionItemBuilders.image(
+                    label: widget.entityName.isEmpty
+                        ? 'Image'
+                        : widget.entityName,
+                    filePaths: [widget.images[_currentIndex]],
+                  ),
+                );
+              },
         child: Container(
         width: 200,
         height: 260,
@@ -640,12 +657,12 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                 ? _buildImage(widget.images[_currentIndex])
                 : _buildPlaceholder(),
 
-            // Hover: hafif overlay
-            if (_hovered && widget.images.isNotEmpty)
+            // Hover: hafif overlay (desktop only)
+            if (_hovered && !(Platform.isAndroid || Platform.isIOS) && widget.images.isNotEmpty)
               Container(color: Colors.black.withValues(alpha: 0.08)),
 
             // Nav: Sol ok
-            if (_hovered && widget.images.length > 1 && _currentIndex > 0)
+            if (_showControls && widget.images.length > 1 && _currentIndex > 0)
               Positioned(
                 left: 4,
                 top: 0,
@@ -664,7 +681,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
               ),
 
             // Nav: Sağ ok
-            if (_hovered && widget.images.length > 1 && _currentIndex < widget.images.length - 1)
+            if (_showControls && widget.images.length > 1 && _currentIndex < widget.images.length - 1)
               Positioned(
                 right: 4,
                 top: 0,
@@ -701,7 +718,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
               ),
 
             // Edit: üstte ekle
-            if (!widget.readOnly && _hovered)
+            if (!widget.readOnly && _showControls)
               Positioned(
                 top: 4,
                 right: 4,
@@ -717,7 +734,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
               ),
 
             // Edit: altta sil
-            if (!widget.readOnly && _hovered && widget.images.isNotEmpty)
+            if (!widget.readOnly && _showControls && widget.images.isNotEmpty)
               Positioned(
                 top: 4,
                 left: 4,

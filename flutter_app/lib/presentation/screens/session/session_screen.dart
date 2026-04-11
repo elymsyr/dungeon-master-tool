@@ -366,6 +366,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               ],
             ),
             second: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Bottom tabs (Notes / BattleMap / Player / EntityStats)
                 Container(
@@ -681,6 +682,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   _buildMobileCombatTab(palette, combat, enc),
                   _buildMobileLogTab(palette, combat),
                   _buildMobileBattleMapTab(palette, enc),
+                  const ProjectionPanel(),
+                  _buildMobileEntityStatsTab(palette),
                 ],
               ),
             ),
@@ -709,6 +712,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           _mobileTab('Combat', Icons.shield, 0, palette),
           _mobileTab('Log', Icons.list_alt, 1, palette),
           _mobileTab('Map', Icons.map, 2, palette),
+          _mobileTab('Player', Icons.tv, 3, palette),
+          _mobileTab('Stats', Icons.assessment, 4, palette),
         ],
       ),
     );
@@ -933,6 +938,38 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       );
     }
     return BattleMapScreen(encounterId: enc.id);
+  }
+
+  // --- Entity Stats Tab (mobile) ---
+  Widget _buildMobileEntityStatsTab(DmToolColors palette) {
+    if (_selectedCombatantId == null) {
+      return Center(
+        child: Text('Select a combatant\nto view stats',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: palette.sidebarLabelSecondary)),
+      );
+    }
+    final schema = ref.watch(worldSchemaProvider);
+    final entity = ref.watch(
+      entityProvider.select((map) => map[_selectedCombatantId]),
+    );
+    if (entity == null) {
+      return Center(
+        child: Text('Entity not found',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: palette.sidebarLabelSecondary)),
+      );
+    }
+    final catSchema = schema.categories
+        .where((c) => c.slug == entity.categorySlug)
+        .firstOrNull;
+    return SingleChildScrollView(
+      child: EntityCard(
+        entityId: _selectedCombatantId!,
+        categorySchema: catSchema,
+        readOnly: true,
+      ),
+    );
   }
 
   // --- Entity Stats Bottom Sheet ---
