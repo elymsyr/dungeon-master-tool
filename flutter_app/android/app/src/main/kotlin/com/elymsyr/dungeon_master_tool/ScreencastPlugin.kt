@@ -229,9 +229,15 @@ class ScreencastPlugin private constructor(
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
 
+            // Show black instead of white before Flutter paints its first frame.
+            window?.decorView?.setBackgroundColor(android.graphics.Color.BLACK)
+
             val fv = FlutterView(context)
             fv.attachToFlutterEngine(flutterEngine)
-            setContentView(fv)
+            setContentView(fv, android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+            ))
             flutterView = fv
         }
 

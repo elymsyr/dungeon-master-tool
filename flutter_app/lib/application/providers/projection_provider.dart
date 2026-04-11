@@ -93,7 +93,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     });
 
     // Push full state once the output has had a chance to set up its handler.
-    Timer(const Duration(milliseconds: 250), () {
+    Timer(const Duration(milliseconds: 100), () {
       if (_activeOutput != null) {
         _activeOutput!.pushFull(state).then((ok) {
           if (!ok) _markOutputClosed();

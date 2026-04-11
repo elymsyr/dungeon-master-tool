@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/combat_provider.dart';
+import '../../../application/providers/projection_provider.dart';
 import '../../screens/battle_map/battle_map_notifier.dart';
 import '../../theme/dm_tool_colors.dart';
 
@@ -67,6 +69,38 @@ class BattleMapMobileToolbar extends ConsumerWidget {
             activeTool: tb.activeTool,
             palette: palette,
             onTap: () => notifier.setTool(BattleMapTool.fogErase),
+          ),
+          const SizedBox(width: 4),
+          // Cast / project to player screen
+          InkWell(
+            onTap: () async {
+              final encounter = ref
+                  .read(combatProvider)
+                  .encounters
+                  .where((e) => e.id == encounterId)
+                  .firstOrNull;
+              if (encounter == null) return;
+              await ref
+                  .read(projectionControllerProvider.notifier)
+                  .addBattleMap(
+                    encounterId: encounterId,
+                    label: encounter.name.isEmpty
+                        ? 'Battle Map'
+                        : encounter.name,
+                  );
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(const SnackBar(
+                  duration: Duration(seconds: 2),
+                  content: Text('Battle map projected'),
+                ));
+            },
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Icon(Icons.cast, size: 18, color: palette.tabText),
+            ),
           ),
           const Spacer(),
           // Expand button — opens full bottom sheet
