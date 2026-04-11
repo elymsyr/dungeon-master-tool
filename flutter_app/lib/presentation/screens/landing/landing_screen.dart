@@ -25,6 +25,19 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   String? _info;
 
   @override
+  void initState() {
+    super.initState();
+    // If already logged in (persisted session), skip landing and go to hub.
+    if (SupabaseConfig.isConfigured) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && ref.read(authProvider) != null) {
+          context.go('/hub');
+        }
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -99,133 +112,46 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
 
   Widget _buildAuthLanding(DmToolColors palette) {
     final size = MediaQuery.sizeOf(context);
+    final isWide = size.width > 700;
+
     return Stack(
       children: [
         _buildBackground(palette),
-        Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+        SafeArea(
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: isWide ? 48 : 24),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   // ── Header ──
-                  Icon(Icons.castle, size: size.width > 600 ? 72 : 56, color: palette.featureCardAccent),
-                  const SizedBox(height: 12),
+                  Icon(Icons.castle, size: isWide ? 48 : 36, color: palette.featureCardAccent),
+                  const SizedBox(height: 8),
                   Text(
                     'Dungeon Master Tool',
                     style: TextStyle(
-                      fontSize: size.width > 600 ? 28 : 22,
+                      fontSize: isWide ? 24 : 20,
                       fontWeight: FontWeight.bold,
                       color: palette.tabActiveText,
                       letterSpacing: 1,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text('v2.0.3', style: TextStyle(fontSize: 13, color: palette.sidebarLabelSecondary)),
-                  const SizedBox(height: 8),
                   Text(
                     'Create an account to unlock online features.',
-                    style: TextStyle(fontSize: 13, color: palette.sidebarLabelSecondary),
+                    style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
+                  ),
+                  SizedBox(height: isWide ? 28 : 16),
+
+                  // ── Auth content — wide: side by side, narrow: stacked ──
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: isWide ? 780 : 400),
+                    child: isWide
+                        ? _buildWideAuthContent(palette)
+                        : _buildNarrowAuthContent(palette),
                   ),
 
-                  const SizedBox(height: 28),
-
-                  // ── OAuth buttons ──
-                  _oauthButton(palette, icon: Icons.g_mobiledata, label: 'Continue with Google', provider: OAuthProvider.google),
-                  const SizedBox(height: 10),
-                  _oauthButton(palette, icon: Icons.code, label: 'Continue with GitHub', provider: OAuthProvider.github),
-
-                  const SizedBox(height: 20),
-
-                  // ── OR divider ──
-                  Row(
-                    children: [
-                      Expanded(child: Divider(color: palette.featureCardBorder)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text('OR', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
-                      ),
-                      Expanded(child: Divider(color: palette.featureCardBorder)),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // ── Email ──
-                  _buildLabel('Email', palette),
-                  const SizedBox(height: 6),
-                  _buildField(_emailController, 'you@example.com', palette, keyboardType: TextInputType.emailAddress),
-                  const SizedBox(height: 14),
-
-                  // ── Password ──
-                  _buildLabel('Password', palette),
-                  const SizedBox(height: 6),
-                  _buildField(_passwordController, 'Min 6 characters', palette, obscure: true),
-
-                  // ── Confirm Password (sign-up only) ──
-                  if (_isSignUp) ...[
-                    const SizedBox(height: 14),
-                    _buildLabel('Confirm Password', palette),
-                    const SizedBox(height: 6),
-                    _buildField(_confirmController, 'Re-enter password', palette, obscure: true),
-                  ],
-
-                  // ── Error ──
-                  if (_error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(_error!, style: TextStyle(fontSize: 12, color: palette.dangerBtnBg)),
-                  ],
-
-                  // ── Info ──
-                  if (_info != null) ...[
-                    const SizedBox(height: 12),
-                    Text(_info!, style: TextStyle(fontSize: 12, color: palette.successBtnBg)),
-                  ],
-
-                  const SizedBox(height: 18),
-
-                  // ── Submit ──
-                  SizedBox(
-                    width: double.infinity,
-                    height: 44,
-                    child: FilledButton(
-                      onPressed: _loading ? null : _submit,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: palette.featureCardAccent,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      ),
-                      child: _loading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : Text(
-                              _isSignUp ? 'Sign Up' : 'Sign In',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // ── Toggle sign-up / sign-in ──
-                  TextButton(
-                    onPressed: _loading
-                        ? null
-                        : () => setState(() {
-                              _isSignUp = !_isSignUp;
-                              _error = null;
-                              _info = null;
-                              _confirmController.clear();
-                            }),
-                    child: Text(
-                      _isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up",
-                      style: TextStyle(fontSize: 12, color: palette.featureCardAccent),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
+                  SizedBox(height: isWide ? 16 : 10),
 
                   // ── Skip Login ──
                   TextButton(
@@ -233,10 +159,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          'Skip Login',
-                          style: TextStyle(fontSize: 13, color: palette.sidebarLabelSecondary),
-                        ),
+                        Text('Skip Login', style: TextStyle(fontSize: 13, color: palette.sidebarLabelSecondary)),
                         const SizedBox(width: 4),
                         Icon(Icons.arrow_forward, size: 16, color: palette.sidebarLabelSecondary),
                       ],
@@ -248,6 +171,137 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
           ),
         ),
         _buildTagline(palette),
+      ],
+    );
+  }
+
+  // ── Wide layout: OAuth left | OR | Email right ────────────────────
+
+  Widget _buildWideAuthContent(DmToolColors palette) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Left: OAuth
+        Expanded(child: _buildOAuthPanel(palette)),
+        // Vertical OR divider
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 1, height: 40, color: palette.featureCardBorder),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text('OR', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+              ),
+              Container(width: 1, height: 40, color: palette.featureCardBorder),
+            ],
+          ),
+        ),
+        // Right: Email form
+        Expanded(child: _buildEmailForm(palette)),
+      ],
+    );
+  }
+
+  // ── Narrow layout: OAuth top, OR, Email bottom ────────────────────
+
+  Widget _buildNarrowAuthContent(DmToolColors palette) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildOAuthPanel(palette),
+        const SizedBox(height: 14),
+        // Horizontal OR divider
+        Row(
+          children: [
+            Expanded(child: Divider(color: palette.featureCardBorder)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text('OR', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+            ),
+            Expanded(child: Divider(color: palette.featureCardBorder)),
+          ],
+        ),
+        const SizedBox(height: 14),
+        _buildEmailForm(palette),
+      ],
+    );
+  }
+
+  // ── OAuth buttons panel ───────────────────────────────────────────
+
+  Widget _buildOAuthPanel(DmToolColors palette) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _oauthButton(palette, icon: Icons.g_mobiledata, label: 'Continue with Google', provider: OAuthProvider.google),
+        const SizedBox(height: 10),
+        _oauthButton(palette, icon: Icons.code, label: 'Continue with GitHub', provider: OAuthProvider.github),
+      ],
+    );
+  }
+
+  // ── Email/password form ───────────────────────────────────────────
+
+  Widget _buildEmailForm(DmToolColors palette) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('Email', palette),
+        const SizedBox(height: 4),
+        _buildField(_emailController, 'you@example.com', palette, keyboardType: TextInputType.emailAddress),
+        const SizedBox(height: 10),
+        _buildLabel('Password', palette),
+        const SizedBox(height: 4),
+        _buildField(_passwordController, 'Min 6 characters', palette, obscure: true),
+        if (_isSignUp) ...[
+          const SizedBox(height: 10),
+          _buildLabel('Confirm Password', palette),
+          const SizedBox(height: 4),
+          _buildField(_confirmController, 'Re-enter password', palette, obscure: true),
+        ],
+        if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(_error!, style: TextStyle(fontSize: 12, color: palette.dangerBtnBg)),
+        ],
+        if (_info != null) ...[
+          const SizedBox(height: 8),
+          Text(_info!, style: TextStyle(fontSize: 12, color: palette.successBtnBg)),
+        ],
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 40,
+          child: FilledButton(
+            onPressed: _loading ? null : _submit,
+            style: FilledButton.styleFrom(
+              backgroundColor: palette.featureCardAccent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+            child: _loading
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : Text(_isSignUp ? 'Sign Up' : 'Sign In', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Center(
+          child: TextButton(
+            onPressed: _loading
+                ? null
+                : () => setState(() {
+                      _isSignUp = !_isSignUp;
+                      _error = null;
+                      _info = null;
+                      _confirmController.clear();
+                    }),
+            child: Text(
+              _isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up",
+              style: TextStyle(fontSize: 11, color: palette.featureCardAccent),
+            ),
+          ),
+        ),
       ],
     );
   }
