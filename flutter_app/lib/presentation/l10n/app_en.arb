@@ -79,5 +79,9 @@
   "importConfirmTitle": "Import \"{name}\"?",
   "@importConfirmTitle": { "placeholders": { "name": { "type": "String" } } },
   "importConfirmBody": "This will add {count} entities to your world.",
-  "@importConfirmBody": { "placeholders": { "count": { "type": "int" } } }
+  "@importConfirmBody": { "placeholders": { "count": { "type": "int" } } },
+  "oauthSignInFailed": "Sign-in could not be completed. Please try again or ensure the redirect URL is configured in your Supabase project.\n(Redirect URL: {redirectUrl})",
+  "@oauthSignInFailed": { "placeholders": { "redirectUrl": { "type": "String" } } },
+  "authStreamError": "Authentication error: {error}",
+  "@authStreamError": { "placeholders": { "error": { "type": "String" } } }
 }

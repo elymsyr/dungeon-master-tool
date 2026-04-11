@@ -79,5 +79,9 @@
   "importConfirmTitle": "\"{name}\" içe aktarılsın mı?",
   "@importConfirmTitle": { "placeholders": { "name": { "type": "String" } } },
   "importConfirmBody": "Dünyanıza {count} varlık eklenecek.",
-  "@importConfirmBody": { "placeholders": { "count": { "type": "int" } } }
+  "@importConfirmBody": { "placeholders": { "count": { "type": "int" } } },
+  "oauthSignInFailed": "Giriş tamamlanamadı. Lütfen tekrar deneyin veya Supabase projesinde redirect URL'in tanımlı olduğundan emin olun.\n(Redirect URL: {redirectUrl})",
+  "@oauthSignInFailed": { "placeholders": { "redirectUrl": { "type": "String" } } },
+  "authStreamError": "Kimlik doğrulama hatası: {error}",
+  "@authStreamError": { "placeholders": { "error": { "type": "String" } } }
 }
