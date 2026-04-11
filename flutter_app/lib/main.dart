@@ -106,7 +106,7 @@ void main(List<String> args) async {
     await windowManager.ensureInitialized();
     await windowManager.waitUntilReadyToShow(
       const WindowOptions(
-        minimumSize: Size(800, 600),
+        minimumSize: Size(300, 400), // TODO: revert to Size(900, 800) after mobile testing
         title: 'Dungeon Master Tool',
         titleBarStyle: TitleBarStyle.normal,
       ),
@@ -123,9 +123,7 @@ void main(List<String> args) async {
 
   runApp(
     ProviderScope(
-      overrides: [
-        uiStateProvider.overrideWith((_) => uiStateNotifier),
-      ],
+      overrides: [uiStateProvider.overrideWith((_) => uiStateNotifier)],
       child: const DungeonMasterApp(),
     ),
   );

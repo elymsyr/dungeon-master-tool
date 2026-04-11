@@ -36,8 +36,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   final _logInputController = TextEditingController();
   final _notesController = TextEditingController();
 
-  // Bottom tabs
+  // Bottom tabs (desktop/tablet)
   int _bottomTabIndex = 0;
+  // Mobile tabs: 0=Combat, 1=Log, 2=BattleMap
+  int _mobileTabIndex = 0;
+  // Log sub-tab: 0=EventLog, 1=Notes
+  int _logSubTabIndex = 0;
   String? _selectedCombatantId;
 
   final _rng = Random();
@@ -46,6 +50,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   void initState() {
     super.initState();
     _bottomTabIndex = ref.read(uiStateProvider).sessionBottomTab;
+    _mobileTabIndex = ref.read(uiStateProvider).sessionMobileTab;
   }
 
   @override
@@ -189,30 +194,32 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         // === Alt kontrol çubuğu: Round+NextTurn (sol) | Actions dropdown (sağ) ===
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              // Round badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: BorderRadius.circular(6)),
-                child: Text('Round ${enc?.round ?? 1}', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
-              ),
-              const SizedBox(width: 8),
-              // Next Turn
-              FilledButton.icon(
-                onPressed: () => ref.read(combatProvider.notifier).nextTurn(),
-                icon: const Icon(Icons.skip_next, size: 20),
-                label: const Text('Next Turn', style: TextStyle(fontSize: 13)),
-                style: FilledButton.styleFrom(
-                  backgroundColor: palette.actionBtnBg,
-                  foregroundColor: palette.actionBtnText,
-                  minimumSize: const Size(0, 40),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                // Round badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: BorderRadius.circular(6)),
+                  child: Text('Round ${enc?.round ?? 1}', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
                 ),
-              ),
-              const Spacer(),
-              // Actions dropdown
-              PopupMenuButton<String>(
+                const SizedBox(width: 8),
+                // Next Turn
+                FilledButton.icon(
+                  onPressed: () => ref.read(combatProvider.notifier).nextTurn(),
+                  icon: const Icon(Icons.skip_next, size: 20),
+                  label: const Text('Next Turn', style: TextStyle(fontSize: 13)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: palette.actionBtnBg,
+                    foregroundColor: palette.actionBtnText,
+                    minimumSize: const Size(0, 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Actions dropdown
+                PopupMenuButton<String>(
                 onSelected: (action) {
                   switch (action) {
                     case 'quick_add': _showQuickAddDialog();
@@ -241,6 +248,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 ),
               ),
             ],
+          ),
           ),
         ),
 
@@ -362,13 +370,16 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 // Bottom tabs (Notes / BattleMap / Player / EntityStats)
                 Container(
                   color: palette.tabBg,
-                  child: Row(
-                    children: [
-                      _bottomTab('Notes', 0, palette),
-                      _bottomTab('Battle Map', 1, palette),
-                      _bottomTab('Player Screen', 2, palette),
-                      _bottomTab('Entity Stats', 3, palette),
-                    ],
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _bottomTab('Notes', 0, palette),
+                        _bottomTab('Battle Map', 1, palette),
+                        _bottomTab('Player Screen', 2, palette),
+                        _bottomTab('Entity Stats', 3, palette),
+                      ],
+                    ),
                   ),
                 ),
                 Expanded(child: _buildBottomTabContent(palette)),
@@ -656,106 +667,292 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // MOBILE LAYOUT
   // ============================================================
   Widget _buildMobileLayout(DmToolColors palette, CombatState combat, Encounter? enc) {
-    return Scaffold(
-      body: Column(
-        children: [
-          // Encounter selector + Round bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            color: palette.tabBg,
-            child: Row(
-              children: [
-                // Encounter dropdown
-                Expanded(
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: combat.activeEncounterId,
-                      isDense: true,
-                      isExpanded: true,
-                      style: TextStyle(fontSize: 12, color: palette.tabActiveText),
-                      dropdownColor: palette.uiPopupBg,
-                      items: combat.encounters.map((e) =>
-                        DropdownMenuItem(value: e.id, child: Text(e.name, style: const TextStyle(fontSize: 12)))
-                      ).toList(),
-                      onChanged: (id) { if (id != null) ref.read(combatProvider.notifier).switchEncounter(id); },
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                // Round badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: BorderRadius.circular(4)),
-                  child: Text('R${enc?.round ?? 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
-                ),
-                const SizedBox(width: 4),
-                // Next Turn
-                FilledButton(
-                  onPressed: () => ref.read(combatProvider.notifier).nextTurn(),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, 32),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                  child: const Text('Next', style: TextStyle(fontSize: 11)),
-                ),
-                // Actions menu
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, size: 20),
-                  onSelected: (action) {
-                    switch (action) {
-                      case 'quick_add': _showQuickAddDialog();
-                      case 'add': _showAddDialog();
-                      case 'add_players': ref.read(combatProvider.notifier).addAllPlayers();
-                      case 'roll_init': _promptRollInitiative();
-                    }
-                  },
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(value: 'quick_add', child: Text('Quick Add', style: TextStyle(fontSize: 12))),
-                    PopupMenuItem(value: 'add', child: Text('Add from Database', style: TextStyle(fontSize: 12))),
-                    PopupMenuItem(value: 'add_players', child: Text('Add All Players', style: TextStyle(fontSize: 12))),
-                    PopupMenuItem(value: 'roll_init', child: Text('Roll Initiative', style: TextStyle(fontSize: 12))),
-                  ],
-                ),
-              ],
+    return Stack(
+      children: [
+        Column(
+          children: [
+            // Top tab bar: Combat | Log | Map
+            _buildMobileTabBar(palette),
+            // Tab content — full remaining height
+            Expanded(
+              child: IndexedStack(
+                index: _mobileTabIndex,
+                children: [
+                  _buildMobileCombatTab(palette, combat, enc),
+                  _buildMobileLogTab(palette, combat),
+                  _buildMobileBattleMapTab(palette, enc),
+                ],
+              ),
+            ),
+          ],
+        ),
+        // Dice FAB only on Combat tab
+        if (_mobileTabIndex == 0)
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: FloatingActionButton(
+              mini: true,
+              onPressed: () => _showDiceBottomSheet(palette),
+              child: const Icon(Icons.casino),
             ),
           ),
-          // Combat card list
-          Expanded(
-            child: enc != null && enc.combatants.isNotEmpty
-                ? _buildMobileCombatList(palette, enc)
-                : Center(child: Text('No combatants', style: TextStyle(color: palette.sidebarLabelSecondary))),
-          ),
-          // Bottom tabs
-          Container(
-            color: palette.tabBg,
-            child: Row(children: [
-              _bottomTab('Log', 0, palette),
-              _bottomTab('Notes', 1, palette),
-              _bottomTab('Stats', 3, palette),
-            ]),
-          ),
-          SizedBox(
-            height: 150,
-            child: switch (_bottomTabIndex) {
-              0 => ListView.builder(
-                padding: const EdgeInsets.all(8),
-                itemCount: combat.eventLog.length,
-                itemBuilder: (_, i) => Text(combat.eventLog[i], style: TextStyle(fontSize: 11, color: palette.htmlText)),
-              ),
-              1 => Padding(
-                padding: const EdgeInsets.all(8),
-                child: MarkdownTextArea(controller: _notesController, expands: true, decoration: const InputDecoration(hintText: 'Notes... (@ to mention)', border: InputBorder.none, filled: false), textStyle: const TextStyle(fontSize: 12)),
-              ),
-              _ => _buildMobileEntityStats(palette),
-            },
-          ),
+      ],
+    );
+  }
+
+  Widget _buildMobileTabBar(DmToolColors palette) {
+    return Container(
+      color: palette.tabBg,
+      child: Row(
+        children: [
+          _mobileTab('Combat', Icons.shield, 0, palette),
+          _mobileTab('Log', Icons.list_alt, 1, palette),
+          _mobileTab('Map', Icons.map, 2, palette),
         ],
       ),
-      // Dice FAB
-      floatingActionButton: FloatingActionButton(
-        mini: true,
-        onPressed: () => _showDiceBottomSheet(palette),
-        child: const Icon(Icons.casino),
+    );
+  }
+
+  Widget _mobileTab(String label, IconData icon, int index, DmToolColors palette) {
+    final isActive = _mobileTabIndex == index;
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          setState(() => _mobileTabIndex = index);
+          ref.read(uiStateProvider.notifier).update(
+            (s) => s.copyWith(sessionMobileTab: index),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isActive ? palette.tabActiveBg : Colors.transparent,
+                width: 2,
+              ),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: isActive ? palette.tabActiveText : palette.tabText),
+              const SizedBox(width: 4),
+              Text(label, style: TextStyle(
+                fontSize: 12,
+                color: isActive ? palette.tabActiveText : palette.tabText,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              )),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- Combat Tab ---
+  Widget _buildMobileCombatTab(DmToolColors palette, CombatState combat, Encounter? enc) {
+    return Column(
+      children: [
+        // Encounter selector + Round bar
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          color: palette.tabBg,
+          child: Row(
+            children: [
+              Expanded(
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: combat.activeEncounterId,
+                    isDense: true,
+                    isExpanded: true,
+                    style: TextStyle(fontSize: 12, color: palette.tabActiveText),
+                    dropdownColor: palette.uiPopupBg,
+                    items: combat.encounters.map((e) =>
+                      DropdownMenuItem(value: e.id, child: Text(e.name, style: const TextStyle(fontSize: 12)))
+                    ).toList(),
+                    onChanged: (id) { if (id != null) ref.read(combatProvider.notifier).switchEncounter(id); },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(color: palette.featureCardBg, borderRadius: BorderRadius.circular(4)),
+                child: Text('R${enc?.round ?? 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              ),
+              const SizedBox(width: 4),
+              FilledButton(
+                onPressed: () => ref.read(combatProvider.notifier).nextTurn(),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+                child: const Text('Next', style: TextStyle(fontSize: 11)),
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 20),
+                onSelected: (action) {
+                  switch (action) {
+                    case 'quick_add': _showQuickAddDialog();
+                    case 'add': _showAddDialog();
+                    case 'add_players': ref.read(combatProvider.notifier).addAllPlayers();
+                    case 'roll_init': _promptRollInitiative();
+                  }
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'quick_add', child: Text('Quick Add', style: TextStyle(fontSize: 12))),
+                  PopupMenuItem(value: 'add', child: Text('Add from Database', style: TextStyle(fontSize: 12))),
+                  PopupMenuItem(value: 'add_players', child: Text('Add All Players', style: TextStyle(fontSize: 12))),
+                  PopupMenuItem(value: 'roll_init', child: Text('Roll Initiative', style: TextStyle(fontSize: 12))),
+                ],
+              ),
+            ],
+          ),
+        ),
+        // Combat cards — full remaining height
+        Expanded(
+          child: enc != null && enc.combatants.isNotEmpty
+              ? _buildMobileCombatList(palette, enc)
+              : Center(child: Text('No combatants', style: TextStyle(color: palette.sidebarLabelSecondary))),
+        ),
+      ],
+    );
+  }
+
+  // --- Log Tab ---
+  Widget _buildMobileLogTab(DmToolColors palette, CombatState combat) {
+    return Column(
+      children: [
+        // Sub-tab toggle: Event Log | Notes
+        Container(
+          color: palette.tabBg,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Row(
+            children: [
+              _logSubTab('Event Log', 0, palette),
+              const SizedBox(width: 8),
+              _logSubTab('Notes', 1, palette),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _logSubTabIndex == 0
+              ? _buildFullScreenEventLog(palette, combat)
+              : _buildFullScreenNotes(palette),
+        ),
+      ],
+    );
+  }
+
+  Widget _logSubTab(String label, int index, DmToolColors palette) {
+    final isActive = _logSubTabIndex == index;
+    return InkWell(
+      onTap: () => setState(() => _logSubTabIndex = index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isActive ? palette.tabActiveBg : Colors.transparent,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(label, style: TextStyle(
+          fontSize: 11,
+          color: isActive ? palette.tabActiveText : palette.tabText,
+          fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+        )),
+      ),
+    );
+  }
+
+  Widget _buildFullScreenEventLog(DmToolColors palette, CombatState combat) {
+    return Column(
+      children: [
+        Expanded(
+          child: combat.eventLog.isEmpty
+              ? Center(child: Text('No events yet', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)))
+              : ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: combat.eventLog.length,
+                  itemBuilder: (_, i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text(combat.eventLog[i], style: TextStyle(fontSize: 13, color: palette.htmlText)),
+                  ),
+                ),
+        ),
+        // Log input pinned at bottom
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: MarkdownTextArea(
+                  controller: _logInputController,
+                  decoration: InputDecoration(hintText: 'Quick log entry... (@ to mention)', isDense: true, hintStyle: TextStyle(color: palette.sidebarLabelSecondary)),
+                  textStyle: const TextStyle(fontSize: 13),
+                  maxLines: 1,
+                  onSubmitted: (_) => _addLogEntry(),
+                ),
+              ),
+              const SizedBox(width: 4),
+              FilledButton(
+                onPressed: _addLogEntry,
+                style: FilledButton.styleFrom(minimumSize: const Size(0, 36)),
+                child: const Text('Add', style: TextStyle(fontSize: 12)),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFullScreenNotes(DmToolColors palette) {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: MarkdownTextArea(
+        controller: _notesController,
+        expands: true,
+        textAlignVertical: TextAlignVertical.top,
+        decoration: InputDecoration(
+          hintText: 'DM notes... (@ to mention)',
+          border: InputBorder.none,
+          filled: false,
+          hintStyle: TextStyle(color: palette.sidebarLabelSecondary),
+        ),
+        textStyle: TextStyle(fontSize: 14, color: palette.htmlText),
+      ),
+    );
+  }
+
+  // --- Battle Map Tab ---
+  Widget _buildMobileBattleMapTab(DmToolColors palette, Encounter? enc) {
+    if (enc == null) {
+      return Center(
+        child: Text('No active encounter', style: TextStyle(color: palette.sidebarLabelSecondary)),
+      );
+    }
+    return BattleMapScreen(encounterId: enc.id);
+  }
+
+  // --- Entity Stats Bottom Sheet ---
+  void _showMobileEntityStatsSheet(DmToolColors palette) {
+    if (_selectedCombatantId == null) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (ctx, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          child: _buildMobileEntityStats(palette),
+        ),
       ),
     );
   }
@@ -797,10 +994,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           palette: palette,
           config: cfg,
           statsMap: statsMap,
-          onTap: () => setState(() {
-            _selectedCombatantId = c.entityId;
-            _bottomTabIndex = 3;
-          }),
+          onTap: () {
+            setState(() => _selectedCombatantId = c.entityId);
+            _showMobileEntityStatsSheet(palette);
+          },
           onModifyStat: (subKey, delta) => _modifyStat(c, subKey, delta, statsMap, cfg),
           onDelete: () => ref.read(combatProvider.notifier).deleteCombatant(c.id),
           onAddCondition: (id) => _showAddConditionDialog(id),

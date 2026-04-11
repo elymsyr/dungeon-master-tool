@@ -28,6 +28,7 @@ class UiState {
   final double sessionMainSplitterRatio;
   final double sessionRightSplitterRatio;
   final int sessionBottomTab;
+  final int sessionMobileTab;
 
   // Right Sidebar (PDF / Soundmap)
   final RightSidebar rightSidebar;
@@ -54,6 +55,7 @@ class UiState {
     this.sessionMainSplitterRatio = 0.35,
     this.sessionRightSplitterRatio = 0.4,
     this.sessionBottomTab = 0,
+    this.sessionMobileTab = 0,
     this.rightSidebar = RightSidebar.none,
     this.pdfSidebarWidth = 450,
     this.pdfOpenPaths = const [],
@@ -75,6 +77,7 @@ class UiState {
     double? sessionMainSplitterRatio,
     double? sessionRightSplitterRatio,
     int? sessionBottomTab,
+    int? sessionMobileTab,
     RightSidebar? rightSidebar,
     double? pdfSidebarWidth,
     List<String>? pdfOpenPaths,
@@ -95,6 +98,7 @@ class UiState {
       sessionMainSplitterRatio: sessionMainSplitterRatio ?? this.sessionMainSplitterRatio,
       sessionRightSplitterRatio: sessionRightSplitterRatio ?? this.sessionRightSplitterRatio,
       sessionBottomTab: sessionBottomTab ?? this.sessionBottomTab,
+      sessionMobileTab: sessionMobileTab ?? this.sessionMobileTab,
       rightSidebar: rightSidebar ?? this.rightSidebar,
       pdfSidebarWidth: pdfSidebarWidth ?? this.pdfSidebarWidth,
       pdfOpenPaths: pdfOpenPaths ?? this.pdfOpenPaths,
@@ -117,6 +121,7 @@ class UiState {
     'sessionMainSplitterRatio': sessionMainSplitterRatio,
     'sessionRightSplitterRatio': sessionRightSplitterRatio,
     'sessionBottomTab': sessionBottomTab,
+    'sessionMobileTab': sessionMobileTab,
     'rightSidebar': rightSidebar.name,
     'pdfSidebarWidth': pdfSidebarWidth,
     'pdfOpenPaths': pdfOpenPaths,
@@ -148,6 +153,7 @@ class UiState {
       sessionMainSplitterRatio: (json['sessionMainSplitterRatio'] as num?)?.toDouble() ?? 0.35,
       sessionRightSplitterRatio: (json['sessionRightSplitterRatio'] as num?)?.toDouble() ?? 0.4,
       sessionBottomTab: json['sessionBottomTab'] as int? ?? 0,
+      sessionMobileTab: json['sessionMobileTab'] as int? ?? 0,
       rightSidebar: rightSidebar,
       pdfSidebarWidth: (json['pdfSidebarWidth'] as num?)?.toDouble() ?? 450,
       pdfOpenPaths: (json['pdfOpenPaths'] as List?)?.cast<String>() ?? const [],

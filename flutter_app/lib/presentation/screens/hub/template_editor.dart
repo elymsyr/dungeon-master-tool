@@ -7,6 +7,7 @@ import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../core/utils/screen_type.dart';
 import '../../theme/dm_tool_colors.dart';
 
 const _uuid = Uuid();
@@ -41,6 +42,8 @@ class _TemplateEditorState extends State<TemplateEditor> {
   late WorldSchema _schema;
   int _selectedCatIndex = 0;
   bool _showEncounterConfig = false;
+  /// Mobile: true = show detail, false = show category list
+  bool _mobileShowingDetail = false;
 
   @override
   void initState() {
@@ -60,9 +63,36 @@ class _TemplateEditorState extends State<TemplateEditor> {
     }
   }
 
+  Widget _buildDetailContent(DmToolColors palette, EntityCategorySchema? selectedCat) {
+    if (_showEncounterConfig) {
+      return _EncounterConfigEditor(
+        schema: _schema,
+        readOnly: widget.readOnly,
+        palette: palette,
+        onSchemaChanged: (updated) => setState(() { _schema = updated; }),
+      );
+    }
+    if (selectedCat == null) {
+      return Center(child: Text('Select or add a category', style: TextStyle(color: palette.sidebarLabelSecondary)));
+    }
+    return _CategoryEditor(
+      key: ValueKey(selectedCat.categoryId),
+      category: selectedCat,
+      allCategories: _schema.categories,
+      readOnly: widget.readOnly,
+      palette: palette,
+      onChanged: (updated) => setState(() {
+        final list = List<EntityCategorySchema>.from(_schema.categories);
+        list[_selectedCatIndex] = updated;
+        _schema = _schema.copyWith(categories: list);
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final phone = isPhone(context);
     final cats = _schema.categories;
     final selectedCat = cats.isNotEmpty && _selectedCatIndex < cats.length
         ? cats[_selectedCatIndex]
@@ -79,12 +109,20 @@ class _TemplateEditorState extends State<TemplateEditor> {
           ),
           child: Row(
             children: [
-              IconButton(icon: const Icon(Icons.arrow_back, size: 20), onPressed: widget.onBack, visualDensity: VisualDensity.compact),
+              // Mobile detail: back to category list. Otherwise: back to templates list.
+              if (phone && _mobileShowingDetail)
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, size: 20),
+                  onPressed: () => setState(() => _mobileShowingDetail = false),
+                  visualDensity: VisualDensity.compact,
+                )
+              else
+                IconButton(icon: const Icon(Icons.arrow_back, size: 20), onPressed: widget.onBack, visualDensity: VisualDensity.compact),
               const SizedBox(width: 8),
               // Template adı
               Expanded(
                 child: widget.readOnly
-                    ? Text(_schema.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText))
+                    ? Text(_schema.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText), overflow: TextOverflow.ellipsis)
                     : TextFormField(
                         initialValue: _schema.name,
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText),
@@ -100,143 +138,160 @@ class _TemplateEditorState extends State<TemplateEditor> {
                 ),
               if (!widget.readOnly) ...[
                 const SizedBox(width: 8),
-                FilledButton.icon(
-                  onPressed: () => widget.onSave?.call(_schema),
-                  icon: const Icon(Icons.save, size: 16),
-                  label: const Text('Save'),
-                ),
+                phone
+                    ? IconButton(
+                        onPressed: () => widget.onSave?.call(_schema),
+                        icon: const Icon(Icons.save, size: 20),
+                        tooltip: 'Save',
+                        visualDensity: VisualDensity.compact,
+                      )
+                    : FilledButton.icon(
+                        onPressed: () => widget.onSave?.call(_schema),
+                        icon: const Icon(Icons.save, size: 16),
+                        label: const Text('Save'),
+                      ),
               ],
             ],
           ),
         ),
 
-        // İçerik: sol kategori listesi + sağ detay
+        // İçerik
         Expanded(
-          child: Row(
-            children: [
-              // Sol: Encounter Settings + Kategori listesi
-              SizedBox(
-                width: 200,
-                child: Column(
-                  children: [
-                    // Encounter Settings butonu
-                    InkWell(
-                      onTap: () => setState(() { _showEncounterConfig = true; }),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        margin: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-                        decoration: BoxDecoration(
-                          color: _showEncounterConfig ? palette.tabIndicator.withValues(alpha: 0.1) : null,
-                          borderRadius: BorderRadius.circular(4),
-                          border: _showEncounterConfig ? Border.all(color: palette.tabIndicator.withValues(alpha: 0.4)) : null,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.shield, size: 16, color: _showEncounterConfig ? palette.tabIndicator : palette.tabText),
-                            const SizedBox(width: 8),
-                            Text('Encounter', style: TextStyle(fontSize: 13, color: palette.tabActiveText, fontWeight: _showEncounterConfig ? FontWeight.w600 : FontWeight.normal)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Divider(height: 1, color: palette.sidebarDivider, indent: 8, endIndent: 8),
-                    Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(8),
-                        itemCount: cats.length,
-                        itemBuilder: (context, i) {
-                          final cat = cats[i];
-                          final isSelected = i == _selectedCatIndex;
-                          final color = _parseColor(cat.color);
+          child: phone
+              ? _buildMobileContent(palette, cats, selectedCat)
+              : _buildDesktopContent(palette, cats, selectedCat),
+        ),
+      ],
+    );
+  }
 
-                          return InkWell(
-                            key: ValueKey(cat.slug),
-                            borderRadius: BorderRadius.circular(4),
-                            onTap: () => setState(() { _selectedCatIndex = i; _showEncounterConfig = false; }),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                              margin: const EdgeInsets.only(bottom: 2),
-                              decoration: BoxDecoration(
-                                color: isSelected ? color.withValues(alpha: 0.1) : null,
-                                borderRadius: BorderRadius.circular(4),
-                                border: isSelected ? Border.all(color: color.withValues(alpha: 0.4)) : null,
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(cat.name, style: TextStyle(fontSize: 13, color: palette.tabActiveText, fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
-                                  ),
-                                  Text('${cat.fields.length}', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    if (!widget.readOnly) ...[
-                      Divider(height: 1, color: palette.sidebarDivider),
-                      Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: FilledButton.icon(
-                                onPressed: _addCategory,
-                                icon: const Icon(Icons.add, size: 16),
-                                label: const Text('Add'),
-                                style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, foregroundColor: palette.successBtnText, minimumSize: const Size(0, 32)),
-                              ),
-                            ),
-                            if (selectedCat != null) ...[
-                              const SizedBox(width: 4),
-                              IconButton(
-                                icon: Icon(Icons.delete, size: 18, color: palette.dangerBtnBg),
-                                onPressed: () => _deleteCategory(_selectedCatIndex),
-                                visualDensity: VisualDensity.compact,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
+  // ---------------------------------------------------------------------------
+  // Desktop/Tablet: side-by-side
+  // ---------------------------------------------------------------------------
+  Widget _buildDesktopContent(DmToolColors palette, List<EntityCategorySchema> cats, EntityCategorySchema? selectedCat) {
+    return Row(
+      children: [
+        // Sol: Encounter Settings + Kategori listesi
+        SizedBox(
+          width: 200,
+          child: _buildCategorySidebar(palette, cats, selectedCat),
+        ),
+        VerticalDivider(width: 1, color: palette.sidebarDivider),
+        // Sağ: detay
+        Expanded(child: _buildDetailContent(palette, selectedCat)),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Mobile: single column — list OR detail
+  // ---------------------------------------------------------------------------
+  Widget _buildMobileContent(DmToolColors palette, List<EntityCategorySchema> cats, EntityCategorySchema? selectedCat) {
+    if (_mobileShowingDetail) {
+      return _buildDetailContent(palette, selectedCat);
+    }
+    return _buildCategorySidebar(palette, cats, selectedCat);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Shared category sidebar (used by both layouts)
+  // ---------------------------------------------------------------------------
+  Widget _buildCategorySidebar(DmToolColors palette, List<EntityCategorySchema> cats, EntityCategorySchema? selectedCat) {
+    return Column(
+      children: [
+        // Encounter Settings butonu
+        InkWell(
+          onTap: () => setState(() {
+            _showEncounterConfig = true;
+            _mobileShowingDetail = true;
+          }),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            margin: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+            decoration: BoxDecoration(
+              color: _showEncounterConfig ? palette.tabIndicator.withValues(alpha: 0.1) : null,
+              borderRadius: BorderRadius.circular(4),
+              border: _showEncounterConfig ? Border.all(color: palette.tabIndicator.withValues(alpha: 0.4)) : null,
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.shield, size: 16, color: _showEncounterConfig ? palette.tabIndicator : palette.tabText),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Encounter', style: TextStyle(fontSize: 13, color: palette.tabActiveText, fontWeight: _showEncounterConfig ? FontWeight.w600 : FontWeight.normal)),
                 ),
-              ),
-
-              VerticalDivider(width: 1, color: palette.sidebarDivider),
-
-              // Sağ: Encounter config VEYA Kategori detayı
-              Expanded(
-                child: _showEncounterConfig
-                    ? _EncounterConfigEditor(
-                        schema: _schema,
-                        readOnly: widget.readOnly,
-                        palette: palette,
-                        onSchemaChanged: (updated) => setState(() {
-                          _schema = updated;
-                        }),
-                      )
-                    : selectedCat == null
-                        ? Center(child: Text('Select or add a category', style: TextStyle(color: palette.sidebarLabelSecondary)))
-                        : _CategoryEditor(
-                            key: ValueKey(selectedCat.categoryId),
-                            category: selectedCat,
-                            allCategories: cats,
-                            readOnly: widget.readOnly,
-                            palette: palette,
-                            onChanged: (updated) => setState(() {
-                              final list = List<EntityCategorySchema>.from(_schema.categories);
-                              list[_selectedCatIndex] = updated;
-                              _schema = _schema.copyWith(categories: list);
-                            }),
-                          ),
-              ),
-            ],
+                Icon(Icons.chevron_right, size: 16, color: palette.sidebarLabelSecondary),
+              ],
+            ),
           ),
         ),
+        Divider(height: 1, color: palette.sidebarDivider, indent: 8, endIndent: 8),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(8),
+            itemCount: cats.length,
+            itemBuilder: (context, i) {
+              final cat = cats[i];
+              final isSelected = i == _selectedCatIndex;
+              final color = _parseColor(cat.color);
+
+              return InkWell(
+                key: ValueKey(cat.slug),
+                borderRadius: BorderRadius.circular(4),
+                onTap: () => setState(() {
+                  _selectedCatIndex = i;
+                  _showEncounterConfig = false;
+                  _mobileShowingDetail = true;
+                }),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  margin: const EdgeInsets.only(bottom: 2),
+                  decoration: BoxDecoration(
+                    color: isSelected ? color.withValues(alpha: 0.1) : null,
+                    borderRadius: BorderRadius.circular(4),
+                    border: isSelected ? Border.all(color: color.withValues(alpha: 0.4)) : null,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(cat.name, style: TextStyle(fontSize: 13, color: palette.tabActiveText, fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
+                      ),
+                      Text('${cat.fields.length}', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        if (!widget.readOnly) ...[
+          Divider(height: 1, color: palette.sidebarDivider),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _addCategory,
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Add'),
+                    style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, foregroundColor: palette.successBtnText, minimumSize: const Size(0, 32)),
+                  ),
+                ),
+                if (selectedCat != null) ...[
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: Icon(Icons.delete, size: 18, color: palette.dangerBtnBg),
+                    onPressed: () => _deleteCategory(_selectedCatIndex),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -293,8 +348,6 @@ class _CategoryEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      final isWide = constraints.maxWidth > 700;
-
       return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -985,9 +1038,8 @@ class _CategoryEditor extends StatelessWidget {
           // Başlık
           title: Row(
             children: [
-              // Label — sabit genişlik
-              SizedBox(
-                width: 140,
+              // Label
+              Expanded(
                 child: readOnly
                     ? Text(field.label, style: TextStyle(fontSize: 13, color: palette.tabActiveText), overflow: TextOverflow.ellipsis)
                     : TextFormField(
@@ -999,11 +1051,9 @@ class _CategoryEditor extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               // Type text
-              Expanded(
-                child: Text(
-                  _fieldTypeName(field.fieldType) + (field.isList ? ' [ ]' : ''),
-                  style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
-                ),
+              Text(
+                _fieldTypeName(field.fieldType) + (field.isList ? ' [ ]' : ''),
+                style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
               ),
               if (isFilter)
                 Padding(
@@ -1037,16 +1087,15 @@ class _CategoryEditor extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               // Checkboxes — List + Filter + Equip
-              Row(
+              Wrap(
+                spacing: 16,
+                runSpacing: 4,
                 children: [
                   _checkboxRow('List', field.isList, (v) => _updateField(index, field.copyWith(isList: v))),
-                  const SizedBox(width: 16),
                   _checkboxRow('Filter', isFilter, canFilter ? (v) => _toggleFilter(field.fieldKey, v) : null),
                   // Equip — sadece isList + relation field'larda
-                  if (field.isList && field.fieldType == FieldType.relation) ...[
-                    const SizedBox(width: 16),
+                  if (field.isList && field.fieldType == FieldType.relation)
                     _checkboxRow('Equip', field.hasEquip, (v) => _updateField(index, field.copyWith(hasEquip: v))),
-                  ],
                 ],
               ),
               const SizedBox(height: 8),
