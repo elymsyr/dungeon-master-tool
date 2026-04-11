@@ -77,6 +77,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+  assets:
+    - assets/app_icon_transparent.png
 
 flutter_launcher_icons:
   android: true
