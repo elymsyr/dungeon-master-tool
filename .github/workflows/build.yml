@@ -160,7 +160,7 @@ jobs:
   # ── macOS ──────────────────────────────────────────────────────
   build-macos:
     name: macOS
-    runs-on: macos-13
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
 
