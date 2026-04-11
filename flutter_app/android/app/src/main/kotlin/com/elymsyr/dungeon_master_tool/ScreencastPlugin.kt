@@ -7,9 +7,11 @@ import android.hardware.display.DisplayManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.Display
 import android.view.WindowManager
 import io.flutter.FlutterInjector
+import io.flutter.embedding.android.FlutterTextureView
 import io.flutter.embedding.android.FlutterView
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
@@ -50,6 +52,9 @@ class ScreencastPlugin private constructor(
 
     private var presentation: PlayerPresentation? = null
     private var presentationEngine: FlutterEngine? = null
+    private var renderChannel: MethodChannel? = null
+    private var presentationReady = false
+    private var pendingFullState: Map<*, *>? = null
     private var eventSink: EventChannel.EventSink? = null
     private var listeningForDisplays = false
 
@@ -139,12 +144,38 @@ class ScreencastPlugin private constructor(
             FlutterEngineCache.getInstance().put(PRESENTATION_ENGINE_ID, pEngine)
             presentationEngine = pEngine
 
+            // Set up the render channel once and listen for the Dart-side
+            // "engineReady" handshake before forwarding state.
+            val rc = MethodChannel(
+                pEngine.dartExecutor.binaryMessenger,
+                "com.elymsyr.dungeon_master_tool/screencast_render"
+            )
+            rc.setMethodCallHandler { call, res ->
+                when (call.method) {
+                    "engineReady" -> {
+                        presentationReady = true
+                        val buffered = pendingFullState
+                        pendingFullState = null
+                        if (buffered != null) {
+                            rc.invokeMethod("applyState", buffered, LoggingResult("applyState"))
+                        }
+                        res.success(null)
+                    }
+                    else -> res.notImplemented()
+                }
+            }
+            renderChannel = rc
+
             val pres = PlayerPresentation(activity, targetDisplay, pEngine)
             pres.show()
             presentation = pres
 
             result.success(true)
         } catch (e: Exception) {
+            renderChannel?.setMethodCallHandler(null)
+            renderChannel = null
+            presentationReady = false
+            pendingFullState = null
             presentationEngine?.destroy()
             presentationEngine = null
             FlutterEngineCache.getInstance().remove(PRESENTATION_ENGINE_ID)
@@ -155,6 +186,10 @@ class ScreencastPlugin private constructor(
     private fun stopPresentation() {
         presentation?.dismiss()
         presentation = null
+        renderChannel?.setMethodCallHandler(null)
+        renderChannel = null
+        presentationReady = false
+        pendingFullState = null
         presentationEngine?.destroy()
         presentationEngine = null
         FlutterEngineCache.getInstance().remove(PRESENTATION_ENGINE_ID)
@@ -163,24 +198,26 @@ class ScreencastPlugin private constructor(
     // -- State push to presentation engine --
 
     private fun pushStateToPresentationEngine(stateJson: Map<*, *>?) {
-        val pEngine = presentationEngine ?: return
-        val channel = MethodChannel(
-            pEngine.dartExecutor.binaryMessenger,
-            "com.elymsyr.dungeon_master_tool/screencast_render"
-        )
+        val rc = renderChannel ?: return
+        if (!presentationReady) {
+            // Only buffer full-state pushes; patches are dropped because the
+            // buffered full state already contains their effects.
+            val isPatch = stateJson?.get("type") == "patch"
+            if (!isPatch) {
+                pendingFullState = stateJson
+            }
+            return
+        }
         handler.post {
-            channel.invokeMethod("applyState", stateJson)
+            rc.invokeMethod("applyState", stateJson, LoggingResult("applyState"))
         }
     }
 
     private fun pushBattleMapPatchToPresentationEngine(args: Map<*, *>?) {
-        val pEngine = presentationEngine ?: return
-        val channel = MethodChannel(
-            pEngine.dartExecutor.binaryMessenger,
-            "com.elymsyr.dungeon_master_tool/screencast_render"
-        )
+        val rc = renderChannel ?: return
+        if (!presentationReady) return // Covered by the buffered full state.
         handler.post {
-            channel.invokeMethod("applyBattleMapPatch", args)
+            rc.invokeMethod("applyBattleMapPatch", args, LoggingResult("applyBattleMapPatch"))
         }
     }
 
@@ -211,6 +248,18 @@ class ScreencastPlugin private constructor(
         }
     }
 
+    // -- Helpers --
+
+    private class LoggingResult(private val methodName: String) : MethodChannel.Result {
+        override fun success(result: Any?) { /* OK */ }
+        override fun error(code: String, msg: String?, details: Any?) {
+            Log.e("ScreencastPlugin", "$methodName error: $code $msg")
+        }
+        override fun notImplemented() {
+            Log.w("ScreencastPlugin", "$methodName not implemented on Dart side")
+        }
+    }
+
     // -- Inner Presentation class --
 
     /**
@@ -232,7 +281,9 @@ class ScreencastPlugin private constructor(
             // Show black instead of white before Flutter paints its first frame.
             window?.decorView?.setBackgroundColor(android.graphics.Color.BLACK)
 
-            val fv = FlutterView(context)
+            // TextureView renders within the standard view hierarchy instead of
+            // a separate surface, which composites correctly on external displays.
+            val fv = FlutterView(context, FlutterTextureView(context))
             fv.attachToFlutterEngine(flutterEngine)
             setContentView(fv, android.widget.FrameLayout.LayoutParams(
                 android.widget.FrameLayout.LayoutParams.MATCH_PARENT,

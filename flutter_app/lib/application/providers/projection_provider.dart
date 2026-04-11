@@ -92,13 +92,10 @@ class ProjectionController extends StateNotifier<ProjectionState> {
       _markOutputClosed();
     });
 
-    // Push full state once the output has had a chance to set up its handler.
-    Timer(const Duration(milliseconds: 100), () {
-      if (_activeOutput != null) {
-        _activeOutput!.pushFull(state).then((ok) {
-          if (!ok) _markOutputClosed();
-        });
-      }
+    // Push full state immediately — the native side buffers until the
+    // presentation engine signals readiness via the engineReady handshake.
+    _activeOutput!.pushFull(state).then((ok) {
+      if (!ok) _markOutputClosed();
     });
 
     return true;

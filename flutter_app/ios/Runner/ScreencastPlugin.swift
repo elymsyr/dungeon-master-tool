@@ -16,6 +16,9 @@ class ScreencastPlugin: NSObject, FlutterStreamHandler {
     private weak var rootViewController: UIViewController?
     private var externalWindow: UIWindow?
     private var presentationEngine: FlutterEngine?
+    private var renderChannel: FlutterMethodChannel?
+    private var presentationReady = false
+    private var pendingFullState: [String: Any]?
     private var eventSink: FlutterEventSink?
 
     static func register(with engine: FlutterEngine, rootViewController: UIViewController?) {
@@ -117,6 +120,28 @@ class ScreencastPlugin: NSObject, FlutterStreamHandler {
         engine.run(withEntrypoint: "screencastMain")
         presentationEngine = engine
 
+        // Set up the render channel once and listen for the Dart-side
+        // "engineReady" handshake before forwarding state.
+        let rc = FlutterMethodChannel(
+            name: ScreencastPlugin.renderChannelName,
+            binaryMessenger: engine.binaryMessenger
+        )
+        rc.setMethodCallHandler { [weak self] call, res in
+            guard let self = self else { return }
+            switch call.method {
+            case "engineReady":
+                self.presentationReady = true
+                if let buffered = self.pendingFullState {
+                    self.pendingFullState = nil
+                    rc.invokeMethod("applyState", arguments: buffered)
+                }
+                res(nil)
+            default:
+                res(FlutterMethodNotImplemented)
+            }
+        }
+        renderChannel = rc
+
         // Create a window on the external screen.
         let window = UIWindow(frame: targetScreen.bounds)
         window.screen = targetScreen
@@ -133,6 +158,10 @@ class ScreencastPlugin: NSObject, FlutterStreamHandler {
         externalWindow?.isHidden = true
         externalWindow?.rootViewController = nil
         externalWindow = nil
+        renderChannel?.setMethodCallHandler(nil)
+        renderChannel = nil
+        presentationReady = false
+        pendingFullState = nil
         presentationEngine?.destroyContext()
         presentationEngine = nil
     }
@@ -140,21 +169,23 @@ class ScreencastPlugin: NSObject, FlutterStreamHandler {
     // MARK: - State push
 
     private func pushStateToPresentationEngine(_ stateJson: [String: Any]?) {
-        guard let engine = presentationEngine else { return }
-        let channel = FlutterMethodChannel(
-            name: ScreencastPlugin.renderChannelName,
-            binaryMessenger: engine.binaryMessenger
-        )
-        channel.invokeMethod("applyState", arguments: stateJson)
+        guard let rc = renderChannel else { return }
+        if !presentationReady {
+            // Only buffer full-state pushes; patches are dropped because the
+            // buffered full state already contains their effects.
+            let isPatch = stateJson?["type"] as? String == "patch"
+            if !isPatch {
+                pendingFullState = stateJson
+            }
+            return
+        }
+        rc.invokeMethod("applyState", arguments: stateJson)
     }
 
     private func pushBattleMapPatchToPresentationEngine(_ args: [String: Any]?) {
-        guard let engine = presentationEngine else { return }
-        let channel = FlutterMethodChannel(
-            name: ScreencastPlugin.renderChannelName,
-            binaryMessenger: engine.binaryMessenger
-        )
-        channel.invokeMethod("applyBattleMapPatch", arguments: args)
+        guard let rc = renderChannel else { return }
+        if !presentationReady { return } // Covered by the buffered full state.
+        rc.invokeMethod("applyBattleMapPatch", arguments: args)
     }
 
     // MARK: - Screen notifications
