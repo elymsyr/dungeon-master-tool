@@ -1,11 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:screen_retriever/screen_retriever.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/events/event_envelope.dart';
@@ -13,139 +9,106 @@ import '../../domain/entities/events/event_types.dart';
 import '../../domain/entities/projection/battle_map_snapshot.dart';
 import '../../domain/entities/projection/entity_snapshot.dart';
 import '../../domain/entities/projection/projection_item.dart';
+import '../../domain/entities/projection/projection_output_mode.dart';
 import '../../domain/entities/projection/projection_state.dart';
-import '../../main.dart' show playerWindowClosedSignal;
 import '../services/battle_map_snapshot_builder.dart';
 import '../services/entity_snapshot_builder.dart';
-import '../services/projection_ipc.dart';
+import '../services/projection_output.dart';
 import 'combat_provider.dart';
 import 'entity_provider.dart';
 import 'event_bus_provider.dart';
+import 'projection_output_provider.dart';
 
 const _projectionUuid = Uuid();
 
 /// Owns the DM-side `ProjectionState` and routes mutations to:
 ///   1. local state (for the projection panel UI),
-///   2. the player sub-window via IPC (full or patch),
+///   2. the active output (second window or screencast) via [ProjectionOutput],
 ///   3. the AppEventBus (for the future online network bridge).
 ///
-/// Phase 1 supports image projection + blackout. Other item types are
-/// modeled but their views are stubbed in the player window.
+/// Content management (add/remove/reorder items) is fully decoupled from the
+/// delivery mechanism. The controller delegates all transport to whichever
+/// [ProjectionOutput] is currently active.
 class ProjectionController extends StateNotifier<ProjectionState> {
-  ProjectionController(this._ref) : super(const ProjectionState()) {
-    // Listen to the reverse-IPC bridge from main.dart so the player window's
-    // native close-button immediately flips our cast icon to "closed".
-    playerWindowClosedSignal.addListener(_onPlayerClosedSignal);
-  }
+  ProjectionController(this._ref) : super(const ProjectionState());
 
   final Ref _ref;
 
-  /// Window id of the open player sub-window. Null when closed.
-  int? _windowId;
-  int? get windowId => _windowId;
-
-  void _onPlayerClosedSignal() {
-    _markWindowClosed();
-  }
+  /// Currently active output. Null when no output is active.
+  ProjectionOutput? _activeOutput;
+  StreamSubscription<void>? _externalCloseSub;
 
   @override
   void dispose() {
-    playerWindowClosedSignal.removeListener(_onPlayerClosedSignal);
+    _externalCloseSub?.cancel();
+    _activeOutput?.dispose();
     super.dispose();
   }
 
   // ---------------------------------------------------------------------
-  // Window lifecycle
+  // Output lifecycle
   // ---------------------------------------------------------------------
 
-  /// Opens the player sub-window if it isn't already open. Returns the
-  /// window id, or null on failure.
+  /// Activates the given output mode. If another output is already active,
+  /// deactivates it first (mutually exclusive).
   ///
-  /// Tries to place the window on a non-primary monitor via screen_retriever.
-  /// Falls back to a centered default frame if no second monitor is found
-  /// or detection fails (Wayland edge cases).
-  Future<int?> openWindow() async {
-    if (_windowId != null) return _windowId;
-    try {
-      final targetFrame = await _resolveTargetFrame();
-      final controller = await DesktopMultiWindow.createWindow(jsonEncode({
-        'type': 'player_window',
-      }));
-      controller
-        ..setFrame(targetFrame)
-        ..setTitle('Player View — Second Screen')
-        ..show();
-      _windowId = controller.windowId;
-      state = state.copyWith(windowOpen: true);
-      // Push full state once the sub-window has had a chance to set up its
-      // method handler. A short delay is good enough for Phase 1; the
-      // sub-window's `projection.ready` ack will replace this in Phase 2.
-      Timer(const Duration(milliseconds: 250), () {
-        final wid = _windowId;
-        if (wid != null) {
-          ProjectionIpc.pushFull(wid, state).then((ok) {
-            if (!ok) _markWindowClosed();
-          });
-        }
-      });
-      return _windowId;
-    } catch (e, st) {
-      debugPrint('Failed to open player window: $e\n$st');
-      return null;
+  /// Returns `true` on success, `false` if the output could not be started
+  /// (e.g. no second monitor, no external display).
+  Future<bool> activateOutput(ProjectionOutputMode mode) async {
+    if (mode == ProjectionOutputMode.none) {
+      await deactivateOutput();
+      return true;
     }
-  }
 
-  /// Picks where to place the new player window. Prefers a non-primary
-  /// monitor (full screen). Falls back to centered default on the primary.
-  Future<Rect> _resolveTargetFrame() async {
-    try {
-      final displays = await screenRetriever.getAllDisplays();
-      final primary = await screenRetriever.getPrimaryDisplay();
-      // Pick first display whose id differs from the primary
-      for (final d in displays) {
-        if (d.id != primary.id) {
-          final pos = d.visiblePosition ?? Offset.zero;
-          final size = d.visibleSize ?? d.size;
-          return Rect.fromLTWH(pos.dx, pos.dy, size.width, size.height);
-        }
-      }
-    } catch (e, st) {
-      debugPrint('screen_retriever failed: $e\n$st');
+    // Already active with the same mode — no-op.
+    if (_activeOutput != null && state.outputMode == mode) return true;
+
+    // Deactivate any previous output.
+    if (_activeOutput != null) await deactivateOutput();
+
+    final factory = _ref.read(projectionOutputFactoryProvider);
+    final output = factory(mode);
+    if (output == null) {
+      debugPrint('Projection output mode $mode not available on this platform');
+      return false;
     }
-    // Fallback: centered 1280x720 on the primary display
-    return const Rect.fromLTWH(120, 120, 1280, 720);
-  }
 
-  /// Closes the player sub-window. Tries the cooperative IPC close first
-  /// (so the player isolate can run cleanup), then forces the OS window
-  /// down via `WindowController.close()` so a wedged sub-isolate can't
-  /// keep a stale window alive. Both calls are fire-and-forget — the DM
-  /// flips its cast icon immediately so the UI stays in sync no matter
-  /// what the player isolate does.
-  Future<void> closeWindow() async {
-    final id = _windowId;
-    if (id == null) return;
-    _windowId = null;
-    state = state.copyWith(windowOpen: false);
+    final ok = await output.activate();
+    if (!ok) {
+      output.dispose();
+      return false;
+    }
 
-    // Cooperative close — lets the player run dispose handlers.
-    ProjectionIpc.requestClose(id);
-    // Forced close — bypasses a wedged player isolate. Runs after a tiny
-    // delay so a healthy player can win the race and shut down cleanly.
-    Timer(const Duration(milliseconds: 200), () async {
-      try {
-        await WindowController.fromWindowId(id).close();
-      } catch (_) {
-        // Already gone — fine.
+    _activeOutput = output;
+    state = state.copyWith(outputMode: mode);
+
+    _externalCloseSub = output.onExternalClose.listen((_) {
+      _markOutputClosed();
+    });
+
+    // Push full state once the output has had a chance to set up its handler.
+    Timer(const Duration(milliseconds: 250), () {
+      if (_activeOutput != null) {
+        _activeOutput!.pushFull(state).then((ok) {
+          if (!ok) _markOutputClosed();
+        });
       }
     });
+
+    return true;
   }
 
-  /// Called by the main isolate's reverse-IPC handler when the player
-  /// window is closed externally (native X button). Equivalent to
-  /// `_markWindowClosed` but exposed publicly so `main.dart` can route the
-  /// `projection.player_closed` message into the controller.
-  void notifyPlayerClosed() => _markWindowClosed();
+  /// Deactivates the current output (if any).
+  Future<void> deactivateOutput() async {
+    final output = _activeOutput;
+    if (output == null) return;
+    _activeOutput = null;
+    _externalCloseSub?.cancel();
+    _externalCloseSub = null;
+    state = state.copyWith(outputMode: ProjectionOutputMode.none);
+    await output.deactivate();
+    output.dispose();
+  }
 
   // ---------------------------------------------------------------------
   // Item mutations
@@ -278,7 +241,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
         encounters.where((e) => e.id == encounterId).firstOrNull;
     if (encounter == null) return;
 
-    // Measure canvas FIRST so the first IPC push already has correct dims.
+    // Measure canvas FIRST so the first push already has correct dims.
     int? w, h;
     if (encounter.mapPath != null && encounter.mapPath!.isNotEmpty) {
       final measured = await BattleMapSnapshotBuilder.measureCanvas(
@@ -358,14 +321,6 @@ class ProjectionController extends StateNotifier<ProjectionState> {
   /// Replaces a battle map projection's snapshot in place. Called by the
   /// sync provider whenever combat state changes for an encounter that
   /// has an active battle map projection.
-  ///
-  /// Combat state only knows about tokens / hp / conditions / turnIndex —
-  /// strokes, measurements, fog, grid, token sizing, and the viewport
-  /// override are owned by `BattleMapNotifier` and pushed via their own
-  /// patch path. To avoid re-encoding the entire `ProjectionState` (which
-  /// can be hundreds of KB once fog is base64-encoded) on every HP tick or
-  /// token drag, we update only the local state with a merged snapshot
-  /// AND ship a token-only patch to the player window.
   void updateBattleMapSnapshot(String itemId, BattleMapSnapshot snapshot) {
     final current = state.items
         .whereType<BattleMapProjection>()
@@ -378,13 +333,12 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     final merged = cur.copyWith(
       tokens: snapshot.tokens,
       turnIndex: snapshot.turnIndex,
-      // Refresh canvas dims if the underlying map was swapped.
       canvasWidth: snapshot.canvasWidth,
       canvasHeight: snapshot.canvasHeight,
       mapPath: snapshot.mapPath,
     );
 
-    // Local state update — no full IPC push.
+    // Local state update — no full push.
     final replacement = current.copyWith(snapshot: merged);
     final newItems = [
       for (final it in state.items)
@@ -392,7 +346,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     ];
     state = state.copyWith(items: newItems);
 
-    // Tokens-only patch to the player window — small payload regardless
+    // Tokens-only patch to the output — small payload regardless
     // of how big the fog bitmap is.
     _pushBattleMapPatch(itemId, {
       'tokens': snapshot.tokens.map((t) => t.toJson()).toList(),
@@ -400,9 +354,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
     });
   }
 
-  /// Toggles the player viewport lock for a battle map projection. When
-  /// locked, viewport sync from the DM's `BattleMapNotifier` becomes a
-  /// no-op so the DM can pan/zoom privately.
+  /// Toggles the player viewport lock for a battle map projection.
   void setBattleMapLocked(String itemId, bool locked) {
     final current = state.items
         .whereType<BattleMapProjection>()
@@ -415,9 +367,6 @@ class ProjectionController extends StateNotifier<ProjectionState> {
 
   /// Updates only the normalized viewport rect of a battle map projection.
   /// Called at ~30Hz from the DM's `BattleMapNotifier` viewTransform listener.
-  /// Skips work when the projection is locked. Pass `null` to clear the
-  /// override (so the player paints fit-to-its-own-viewport for full-screen).
-  /// Uses the optimized patch IPC instead of a full state push.
   void updateBattleMapViewport(String itemId, NormalizedRect? normalizedRect) {
     final current = state.items
         .whereType<BattleMapProjection>()
@@ -435,7 +384,6 @@ class ProjectionController extends StateNotifier<ProjectionState> {
         if (it.id == replacement.id) replacement else it,
     ];
     state = state.copyWith(items: newItems);
-    // Patch instead of full push.
     _pushBattleMapPatch(itemId, {
       if (normalizedRect != null)
         'viewportNormalized': normalizedRect.toJson()
@@ -445,14 +393,7 @@ class ProjectionController extends StateNotifier<ProjectionState> {
   }
 
   /// Updates the "static" battle-map state (strokes, measurements, fog,
-  /// token sizing, grid). Called by [BattleMapNotifier] from a debounced
-  /// throttle so high-frequency edits don't spam IPC. Sends a patch — never
-  /// re-encodes the entire `ProjectionState`.
-  ///
-  /// [includeFog] is `true` only when the fog has actually changed since
-  /// the last push; when `false`, `fogDataBase64` is omitted from the
-  /// patch entirely so we don't pay to JSON-serialize 100s of KB of
-  /// base64 on every stroke.
+  /// token sizing, grid).
   void updateBattleMapDrawings({
     required String itemId,
     required List<StrokeSnapshot> strokes,
@@ -502,10 +443,10 @@ class ProjectionController extends StateNotifier<ProjectionState> {
   }
 
   void _pushBattleMapPatch(String itemId, Map<String, dynamic> patch) {
-    final id = _windowId;
-    if (id != null) {
-      ProjectionIpc.pushBattleMapPatch(id, itemId, patch).then((ok) {
-        if (!ok) _markWindowClosed();
+    final output = _activeOutput;
+    if (output != null) {
+      output.pushBattleMapPatch(itemId, patch).then((ok) {
+        if (!ok) _markOutputClosed();
       });
     }
     _emitEvent();
@@ -522,44 +463,41 @@ class ProjectionController extends StateNotifier<ProjectionState> {
   }
 
   // ---------------------------------------------------------------------
-  // IPC + event bus plumbing
+  // Output transport + event bus plumbing
   // ---------------------------------------------------------------------
 
   void _pushFullAndEmit() {
-    final id = _windowId;
-    if (id != null) {
-      // Fire-and-forget; on failure (window closed externally), clear our
-      // stale id so future syncs become no-ops.
-      ProjectionIpc.pushFull(id, state).then((ok) {
-        if (!ok) _markWindowClosed();
+    final output = _activeOutput;
+    if (output != null) {
+      output.pushFull(state).then((ok) {
+        if (!ok) _markOutputClosed();
       });
     }
     _emitEvent();
   }
 
   void _pushPatch(Map<String, dynamic> patch) {
-    final id = _windowId;
-    if (id != null) {
-      ProjectionIpc.pushPatch(id, patch).then((ok) {
-        if (!ok) _markWindowClosed();
+    final output = _activeOutput;
+    if (output != null) {
+      output.pushPatch(patch).then((ok) {
+        if (!ok) _markOutputClosed();
       });
     }
   }
 
-  /// Called when an IPC push fails — typically because the user closed the
-  /// player window via its native X button. Clears the stale window id and
-  /// flips `windowOpen` so the AppBar cast icon reflects reality.
-  void _markWindowClosed() {
-    if (_windowId == null && !state.windowOpen) return;
-    _windowId = null;
-    if (state.windowOpen) {
-      state = state.copyWith(windowOpen: false);
+  /// Called when an output push fails or the output is closed externally.
+  void _markOutputClosed() {
+    if (_activeOutput == null && !state.isActive) return;
+    _externalCloseSub?.cancel();
+    _externalCloseSub = null;
+    _activeOutput?.dispose();
+    _activeOutput = null;
+    if (state.isActive) {
+      state = state.copyWith(outputMode: ProjectionOutputMode.none);
     }
   }
 
-  /// Emits a `projection.content_set` event on the AppEventBus. Offline this
-  /// has no subscribers besides our own IPC layer; online (future) the
-  /// NetworkBridge interceptor will fan it out to remote players.
+  /// Emits a `projection.content_set` event on the AppEventBus.
   void _emitEvent() {
     try {
       _ref.read(eventBusProvider).emit(EventEnvelope.now(
@@ -600,11 +538,7 @@ final projectionEntitySyncProvider = Provider<void>((ref) {
 
 /// Auto-installed sync — whenever combat state changes, walks all active
 /// `BattleMapProjection` items and rebuilds their snapshots from the latest
-/// encounter + entity data. Throttled to one rebuild per Riverpod update
-/// (no per-token spam).
-///
-/// Watch this provider once at app start (e.g. in main_screen) to keep the
-/// player window's battle map in sync with the DM's edits.
+/// encounter + entity data.
 final projectionBattleMapSyncProvider = Provider<void>((ref) {
   ref.listen<CombatState>(combatProvider, (prev, next) {
     final state = ref.read(projectionControllerProvider);

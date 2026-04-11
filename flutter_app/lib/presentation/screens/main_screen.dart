@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/locale_provider.dart';
+import '../../application/providers/projection_output_provider.dart';
 import '../../application/providers/projection_provider.dart';
 import '../../application/providers/theme_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
@@ -25,7 +26,7 @@ import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
 import '../widgets/entity_sidebar.dart';
 import '../widgets/pdf_sidebar.dart';
-import '../widgets/projection/player_window_status_icon.dart';
+import '../widgets/projection/projection_status_icon.dart';
 import '../widgets/soundmap_sidebar.dart';
 import 'database/database_screen.dart';
 import 'map/world_map_screen.dart';
@@ -424,7 +425,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
             onPressed: () => setState(() => _editMode = !_editMode),
           ),
           // Player window status — always visible, jumps to projection panel
-          const PlayerWindowStatusIcon(),
+          const ProjectionStatusIcon(),
           // Phone: collapse infrequent actions into overflow menu
           if (screen == ScreenType.phone) ...[
             PopupMenuButton<String>(
@@ -923,14 +924,18 @@ class _MainScreenState extends ConsumerState<MainScreen>
       return true;
     }
 
-    // Ctrl+Shift+P: toggle player sub-window
+    // Ctrl+Shift+P: toggle projection output
     if (shiftPressed && event.logicalKey == LogicalKeyboardKey.keyP) {
       final controller = ref.read(projectionControllerProvider.notifier);
       final state = ref.read(projectionControllerProvider);
-      if (state.windowOpen) {
-        controller.closeWindow();
+      if (state.isActive) {
+        controller.deactivateOutput();
       } else {
-        controller.openWindow();
+        // Activate with platform default (first available mode).
+        final available = ref.read(availableProjectionOutputsProvider);
+        if (available.isNotEmpty) {
+          controller.activateOutput(available.first);
+        }
       }
       return true;
     }
