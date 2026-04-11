@@ -145,6 +145,9 @@ class ScreencastPlugin private constructor(
 
             result.success(true)
         } catch (e: Exception) {
+            presentationEngine?.destroy()
+            presentationEngine = null
+            FlutterEngineCache.getInstance().remove(PRESENTATION_ENGINE_ID)
             result.error("PRESENTATION_FAILED", e.message, null)
         }
     }
@@ -225,7 +228,6 @@ class ScreencastPlugin private constructor(
 
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
-            window?.setType(WindowManager.LayoutParams.TYPE_PRIVATE_PRESENTATION)
 
             val fv = FlutterView(context)
             fv.attachToFlutterEngine(flutterEngine)

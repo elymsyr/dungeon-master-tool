@@ -28,19 +28,13 @@ class _ScreencastDisplayPickerState extends State<ScreencastDisplayPicker> {
   final _platform = ScreencastPlatform();
   List<ExternalDisplay>? _displays;
   bool _loading = true;
-  StreamSubscription<void>? _disconnectSub;
   Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
     _loadDisplays();
-    // Listen for display disconnect events.
-    _disconnectSub = _platform.onDisplayDisconnected.listen((_) {
-      _loadDisplays();
-    });
-    // Poll every 2s to detect newly connected displays since there's no
-    // platform "display connected" event — only disconnect is notified.
+    // Poll every 2s to detect newly connected / disconnected displays.
     _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       _loadDisplays();
     });
@@ -49,7 +43,6 @@ class _ScreencastDisplayPickerState extends State<ScreencastDisplayPicker> {
   @override
   void dispose() {
     _pollTimer?.cancel();
-    _disconnectSub?.cancel();
     _platform.dispose();
     super.dispose();
   }

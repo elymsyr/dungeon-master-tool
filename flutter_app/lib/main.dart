@@ -98,8 +98,15 @@ void main(List<String> args) async {
 
   await AppPaths.initialize();
 
-  // SoLoud audio engine — tüm platformlarda çalışır
-  await SoLoud.instance.init();
+  // SoLoud audio engine — tüm platformlarda çalışır.
+  // Wrapped in try/catch so the app can still launch when the audio backend
+  // is unavailable (e.g. missing libFLAC on some Linux distros).
+  try {
+    await SoLoud.instance.init();
+  } catch (e, st) {
+    LogBuffer.instance.recordError(e, st, context: 'SoLoud.init');
+    debugPrint('SoLoud init failed – audio disabled: $e');
+  }
 
   // Desktop window setup
   if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
