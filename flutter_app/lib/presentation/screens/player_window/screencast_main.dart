@@ -36,6 +36,8 @@ class _ScreencastAppState extends ConsumerState<_ScreencastApp> {
   void initState() {
     super.initState();
     _channel.setMethodCallHandler(_handleMethod);
+    // Signal to the native side that the method call handler is ready.
+    _channel.invokeMethod('engineReady', null);
   }
 
   @override
