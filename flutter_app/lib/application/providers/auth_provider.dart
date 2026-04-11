@@ -101,30 +101,58 @@ class AuthNotifier extends StateNotifier<AuthState?> {
     }
   }
 
-  /// Sign in with an OAuth provider (Google, Facebook, GitHub, etc.)
-  /// via PKCE flow. Starts a temporary local HTTP server to catch
-  /// the OAuth callback, then exchanges the auth code for a session.
+  /// Sign in with an OAuth provider (Google, GitHub, etc.) via PKCE flow.
+  /// Uses deep links on mobile and a local HTTP server on desktop.
   Future<String?> signInWithOAuth(OAuthProvider provider) async {
-    HttpServer? server;
-    try {
-      // 1. Start a temporary local HTTP server on a random port.
-      server = await HttpServer.bind('localhost', 0);
-      final redirectUrl = 'http://localhost:${server.port}/auth/callback';
+    if (Platform.isAndroid || Platform.isIOS) {
+      return _signInWithOAuthMobile(provider);
+    }
+    return _signInWithOAuthDesktop(provider);
+  }
 
-      // 2. Get the OAuth URL with PKCE code challenge.
+  /// Mobile: open browser with deep-link redirect.
+  /// supabase_flutter intercepts the callback and exchanges the code
+  /// for a session automatically via its built-in deep link handler.
+  Future<String?> _signInWithOAuthMobile(OAuthProvider provider) async {
+    try {
+      const redirectUrl = 'com.elymsyr.dungeonmastertool://auth-callback';
+
       final res = await Supabase.instance.client.auth.getOAuthSignInUrl(
         provider: provider,
         redirectTo: redirectUrl,
       );
 
-      // 3. Open in the system browser.
       await launchUrl(Uri.parse(res.url), mode: LaunchMode.externalApplication);
 
-      // 4. Wait for the callback request.
+      // supabase_flutter handles the deep link callback and session
+      // exchange. The onAuthStateChange listener in _init() will
+      // update the provider state and the UI will navigate to hub.
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  /// Desktop: start a temporary local HTTP server to catch the callback,
+  /// then exchange the auth code for a session.
+  Future<String?> _signInWithOAuthDesktop(OAuthProvider provider) async {
+    HttpServer? server;
+    try {
+      server = await HttpServer.bind('localhost', 0);
+      final redirectUrl = 'http://localhost:${server.port}/auth/callback';
+
+      final res = await Supabase.instance.client.auth.getOAuthSignInUrl(
+        provider: provider,
+        redirectTo: redirectUrl,
+      );
+
+      await launchUrl(Uri.parse(res.url), mode: LaunchMode.externalApplication);
+
       final request = await server.first;
       final code = request.uri.queryParameters['code'];
 
-      // 5. Respond to the browser with a styled success page.
       request.response
         ..statusCode = 200
         ..headers.contentType = ContentType.html
@@ -160,7 +188,6 @@ class AuthNotifier extends StateNotifier<AuthState?> {
       await server.close();
       server = null;
 
-      // 6. Exchange the auth code for a session.
       if (code != null) {
         await Supabase.instance.client.auth.exchangeCodeForSession(code);
       }
