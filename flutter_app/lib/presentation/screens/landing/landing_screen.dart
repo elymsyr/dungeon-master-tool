@@ -56,7 +56,7 @@ class LandingScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'v2.0.2',
+                  'v2.0.3',
                   style: TextStyle(
                     fontSize: 13,
                     color: palette.sidebarLabelSecondary,
