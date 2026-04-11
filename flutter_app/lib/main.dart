@@ -115,7 +115,10 @@ void main(List<String> args) async {
     await windowManager.ensureInitialized();
     await windowManager.waitUntilReadyToShow(
       const WindowOptions(
-        minimumSize: Size(300, 400), // TODO: revert to Size(900, 800) after mobile testing
+        minimumSize: Size(
+          900,
+          800,
+        ), // TODO: revert to Size(900, 800) after mobile testing
         title: 'Dungeon Master Tool',
         titleBarStyle: TitleBarStyle.normal,
       ),

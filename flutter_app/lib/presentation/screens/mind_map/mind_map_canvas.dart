@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
 import '../../../domain/entities/mind_map.dart';
+import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'mind_map_notifier.dart';
 import 'mind_map_painter.dart';
@@ -366,6 +367,11 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
           value: 'workspace',
           child: _menuItem(Icons.grid_view, 'Add Workspace', palette),
         ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: 'entity',
+          child: _menuItem(Icons.dataset_outlined, 'Add from Database', palette),
+        ),
       ],
     ).then((value) {
       if (value == null) return;
@@ -376,6 +382,8 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
           notifier.addNode(canvasPos, 'image');
         case 'workspace':
           notifier.addWorkspace(canvasPos);
+        case 'entity':
+          _showEntityPicker(canvasPos, notifier);
       }
     });
   }
@@ -414,6 +422,19 @@ class _MindMapCanvasState extends ConsumerState<MindMapCanvas>
         notifier.deleteEdge(edgeId);
       }
     });
+  }
+
+  void _showEntityPicker(Offset canvasPos, MindMapNotifier notifier) async {
+    final result = await showEntitySelectorDialog(
+      context: context,
+      ref: ref,
+    );
+    if (result == null || result.isEmpty) return;
+    final entityId = result.first;
+    final entities = ref.read(entityProvider);
+    final entity = entities[entityId];
+    if (entity == null) return;
+    notifier.addEntityNode(canvasPos, entityId, entity.name);
   }
 
   Widget _menuItem(IconData icon, String text, DmToolColors palette) {

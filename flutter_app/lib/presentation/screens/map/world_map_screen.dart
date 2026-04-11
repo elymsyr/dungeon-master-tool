@@ -10,6 +10,7 @@ import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/save_state_provider.dart';
 import '../../../domain/entities/map_data.dart';
+import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'epoch_scroll_bar.dart';
 import 'epoch_waypoint_dialog.dart';
@@ -37,9 +38,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   void _init() {
     final data = ref.read(activeCampaignProvider.notifier).data;
     if (data == null) return;
-    final mapData = Map<String, dynamic>.from(
-      data['map_data'] as Map? ?? {},
-    );
+    final mapData = Map<String, dynamic>.from(data['map_data'] as Map? ?? {});
     ref.read(worldMapProvider.notifier).init(mapData);
   }
 
@@ -92,9 +91,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                         _showDeleteWaypointDialog(wpIdx, notifier, palette),
                     onRenameWaypoint: (wpIdx) =>
                         _showRenameWaypointDialog(wpIdx, notifier, palette),
-                    onRenameBoundary: (s, e) =>
-                        notifier.updateEpochBoundaryLabels(
-                            startLabel: s, endLabel: e),
+                    onRenameBoundary: (s, e) => notifier
+                        .updateEpochBoundaryLabels(startLabel: s, endLabel: e),
                   ),
                 ),
             ],
@@ -115,7 +113,8 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   ) {
     const pinTypes = ['npc', 'monster', 'location', 'event', 'default'];
     final allHidden = pinTypes.every(
-        (t) => mapState.hiddenPinTypes.contains(t));
+      (t) => mapState.hiddenPinTypes.contains(t),
+    );
 
     return Container(
       width: double.infinity,
@@ -226,8 +225,11 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
               borderRadius: BorderRadius.circular(4),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                child: Icon(Icons.filter_list_off, size: 14,
-                    color: Colors.red[300]),
+                child: Icon(
+                  Icons.filter_list_off,
+                  size: 14,
+                  color: Colors.red[300],
+                ),
               ),
             ),
 
@@ -283,21 +285,29 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             palette: palette,
             highlight: mapState.epochs.length > 1,
             onTap: () => _showAddWaypointDialog(
-                mapState.activeEpochIndex, notifier, palette),
+              mapState.activeEpochIndex,
+              notifier,
+              palette,
+            ),
           ),
 
           // Status text
           if (mapState.isLinkMode)
             Padding(
               padding: const EdgeInsets.only(left: 8),
-              child: Text('Click pin to link · Click empty to create · Esc to cancel',
-                style: TextStyle(fontSize: 10, color: Colors.amber.withValues(alpha: 0.8))),
+              child: Text(
+                'Click pin to link · Click empty to create · Esc to cancel',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.amber.withValues(alpha: 0.8),
+                ),
+              ),
             )
           else
             Padding(
               padding: const EdgeInsets.only(left: 8),
               child: Text(
-                'Double-click to place pin · Drag to pan · Scroll to zoom',
+                'Right-click to place pin · Drag to pan · Scroll to zoom',
                 style: TextStyle(
                   fontSize: 10,
                   color: palette.tabText.withValues(alpha: 0.4),
@@ -323,67 +333,100 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         ? SystemMouseCursors.precise
         : SystemMouseCursors.basic;
 
-    return LayoutBuilder(builder: (context, constraints) {
-      notifier.updateViewportSize(
-          Size(constraints.maxWidth, constraints.maxHeight));
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        notifier.updateViewportSize(
+          Size(constraints.maxWidth, constraints.maxHeight),
+        );
 
-      return KeyboardListener(
-      focusNode: FocusNode(),
-      autofocus: true,
-      onKeyEvent: (event) {
-        if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.escape) {
-          if (inLinkMode) notifier.cancelLinkMode();
-        }
-      },
-      child: MouseRegion(
-        cursor: cursor,
-        child: DragTarget<String>(
-          onWillAcceptWithDetails: (_) => true,
-          onAcceptWithDetails: (details) =>
-              _onEntityDrop(context, details, notifier),
-          builder: (context, _, _) {
-            return Listener(
-              onPointerSignal: (event) {
-                if (event is PointerScrollEvent) {
-                  notifier.zoomAtPoint(event.localPosition, event.scrollDelta.dy);
-                }
-              },
-              child: GestureDetector(
-                onScaleStart: notifier.onScaleStart,
-                onScaleUpdate: notifier.onScaleUpdate,
-                onScaleEnd: (_) => notifier.onScaleEnd(),
-                onTapUp: inLinkMode
-                    ? (d) => _handleCanvasTap(d.localPosition, notifier, mapState)
-                    : null,
-                onDoubleTapDown: (details) {
-                  final canvasPos = notifier.screenToCanvas(details.localPosition);
-                  if (mapState.showTimeline) {
-                    _showTimelineEntryDialog(canvasPos, notifier, palette);
-                  } else {
-                    _showAddPinDialog(canvasPos, notifier);
-                  }
-                },
-                child: ClipRect(
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      ColoredBox(color: palette.canvasBg),
-                      _buildImageAndPins(palette, notifier, mapState),
-                    ],
-                  ),
-                ),
-              ),
-            );
+        return KeyboardListener(
+          focusNode: FocusNode(),
+          autofocus: true,
+          onKeyEvent: (event) {
+            if (event is KeyDownEvent &&
+                event.logicalKey == LogicalKeyboardKey.escape) {
+              if (inLinkMode) notifier.cancelLinkMode();
+            }
           },
-        ),
-      ),
+          child: MouseRegion(
+            cursor: cursor,
+            child: DragTarget<String>(
+              onWillAcceptWithDetails: (_) => true,
+              onAcceptWithDetails: (details) =>
+                  _onEntityDrop(context, details, notifier),
+              builder: (context, _, _) {
+                return Listener(
+                  onPointerSignal: (event) {
+                    if (event is PointerScrollEvent) {
+                      notifier.zoomAtPoint(
+                        event.localPosition,
+                        event.scrollDelta.dy,
+                      );
+                    }
+                  },
+                  child: GestureDetector(
+                    onScaleStart: notifier.onScaleStart,
+                    onScaleUpdate: notifier.onScaleUpdate,
+                    onScaleEnd: (_) => notifier.onScaleEnd(),
+                    onTapUp: inLinkMode
+                        ? (d) => _handleCanvasTap(
+                            d.localPosition,
+                            notifier,
+                            mapState,
+                          )
+                        : null,
+                    onDoubleTapDown: mapState.showTimeline
+                        ? (details) {
+                            final canvasPos = notifier.screenToCanvas(
+                              details.localPosition,
+                            );
+                            _showTimelineEntryDialog(
+                              canvasPos,
+                              notifier,
+                              palette,
+                            );
+                          }
+                        : null,
+                    onSecondaryTapUp: (d) {
+                      _showCanvasContextMenu(
+                        d.localPosition,
+                        d.globalPosition,
+                        notifier,
+                        palette,
+                      );
+                    },
+                    onLongPressStart: (d) {
+                      _showCanvasContextMenu(
+                        d.localPosition,
+                        d.globalPosition,
+                        notifier,
+                        palette,
+                      );
+                    },
+                    child: ClipRect(
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          ColoredBox(color: palette.canvasBg),
+                          _buildImageAndPins(palette, notifier, mapState),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
-    });
   }
 
   void _handleCanvasTap(
-      Offset localPos, WorldMapNotifier notifier, WorldMapState mapState) {
+    Offset localPos,
+    WorldMapNotifier notifier,
+    WorldMapState mapState,
+  ) {
     if (mapState.isLinkMode) {
       final canvasPos = notifier.screenToCanvas(localPos);
       notifier.handleLinkToNew(canvasPos);
@@ -414,10 +457,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                   alignment: Alignment.topLeft,
                   maxWidth: double.infinity,
                   maxHeight: double.infinity,
-                  child: Image.file(
-                    File(mapState.imagePath),
-                    fit: BoxFit.none,
-                  ),
+                  child: Image.file(File(mapState.imagePath), fit: BoxFit.none),
                 )
               else
                 _buildEmptyMapPlaceholder(palette),
@@ -446,12 +486,17 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                   onInspect: pin.entityId != null
                       ? () => widget.onOpenEntity?.call(pin.entityId!)
                       : null,
-                  onEditNote: () => _showEditPinNoteDialog(pin, notifier, palette),
-                  onChangeColor: () => _showPinColorPicker(pin, notifier, palette),
+                  onEditNote: () =>
+                      _showEditPinNoteDialog(pin, notifier, palette),
+                  onChangeColor: () =>
+                      _showPinColorPicker(pin, notifier, palette),
                   onDelete: () => notifier.deletePin(pin.id),
                   onCopyToEpoch: mapState.epochs.length > 1
                       ? () => _showCopyToEpochDialog(
-                          notifier, palette, pinId: pin.id)
+                          notifier,
+                          palette,
+                          pinId: pin.id,
+                        )
                       : null,
                 ),
               ),
@@ -480,11 +525,18 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                   onChangeColor: () =>
                       _showTimelineColorPicker(pin, notifier, palette),
                   onDelete: () => notifier.deleteTimelinePin(pin.id),
-                  onEntityDrop: (entityId) =>
-                      _onEntityDropOnTimelinePin(context, pin, entityId, notifier),
+                  onEntityDrop: (entityId) => _onEntityDropOnTimelinePin(
+                    context,
+                    pin,
+                    entityId,
+                    notifier,
+                  ),
                   onCopyToEpoch: mapState.epochs.length > 1
                       ? () => _showCopyToEpochDialog(
-                          notifier, palette, timelinePinId: pin.id)
+                          notifier,
+                          palette,
+                          timelinePinId: pin.id,
+                        )
                       : null,
                 ),
               ),
@@ -549,13 +601,13 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     final category = schema.categories
         .where((c) => c.slug == entity.categorySlug)
         .firstOrNull;
-    if (category == null ||
-        !category.allowedInSections.contains('worldmap')) {
+    if (category == null || !category.allowedInSections.contains('worldmap')) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                '${entity.name} (${entity.categorySlug}) is not allowed on the world map'),
+              '${entity.name} (${entity.categorySlug}) is not allowed on the world map',
+            ),
           ),
         );
       }
@@ -568,8 +620,12 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     final box = context.findRenderObject() as RenderBox;
     final localPos = box.globalToLocal(details.offset);
     final canvasPos = notifier.screenToCanvas(localPos);
-    notifier.addPin(canvasPos,
-        entityId: entityId, label: entity.name, pinType: pinType);
+    notifier.addPin(
+      canvasPos,
+      entityId: entityId,
+      label: entity.name,
+      pinType: pinType,
+    );
   }
 
   void _onEntityDropOnTimelinePin(
@@ -588,23 +644,20 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
     final category = schema.categories
         .where((c) => c.slug == entity.categorySlug)
         .firstOrNull;
-    if (category == null ||
-        !category.allowedInSections.contains('worldmap')) {
+    if (category == null || !category.allowedInSections.contains('worldmap')) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                '${entity.name} (${entity.categorySlug}) is not allowed on the world map'),
+              '${entity.name} (${entity.categorySlug}) is not allowed on the world map',
+            ),
           ),
         );
       }
       return;
     }
 
-    notifier.updateTimelinePin(
-      pin.id,
-      entityIds: [...pin.entityIds, entityId],
-    );
+    notifier.updateTimelinePin(pin.id, entityIds: [...pin.entityIds, entityId]);
   }
 
   /// Map category slug → pin type for display/filtering.
@@ -621,6 +674,101 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   // -------------------------------------------------------------------------
   // Dialogs / Sheets
   // -------------------------------------------------------------------------
+
+  void _showCanvasContextMenu(
+    Offset localPosition,
+    Offset globalPosition,
+    WorldMapNotifier notifier,
+    DmToolColors palette,
+  ) {
+    final canvasPos = notifier.screenToCanvas(localPosition);
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        globalPosition.dx,
+        globalPosition.dy,
+        globalPosition.dx + 1,
+        globalPosition.dy + 1,
+      ),
+      color: palette.uiFloatingBg,
+      items: [
+        PopupMenuItem(
+          value: 'addPin',
+          child: Row(
+            children: [
+              Icon(
+                Icons.push_pin_outlined,
+                size: 16,
+                color: palette.uiFloatingText,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Add Pin',
+                style: TextStyle(color: palette.uiFloatingText, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'addFromDb',
+          child: Row(
+            children: [
+              Icon(
+                Icons.dataset_outlined,
+                size: 16,
+                color: palette.uiFloatingText,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Add from Database',
+                style: TextStyle(color: palette.uiFloatingText, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ).then((value) {
+      if (value == null) return;
+      switch (value) {
+        case 'addPin':
+          _showAddPinDialog(canvasPos, notifier);
+        case 'addFromDb':
+          _showEntityPickerForMap(canvasPos, notifier);
+      }
+    });
+  }
+
+  void _showEntityPickerForMap(
+    Offset canvasPos,
+    WorldMapNotifier notifier,
+  ) async {
+    // Only show entities whose categories are allowed on the world map.
+    final schema = ref.read(worldSchemaProvider);
+    final allowedSlugs = schema.categories
+        .where((c) => c.allowedInSections.contains('worldmap'))
+        .map((c) => c.slug)
+        .toList();
+
+    final result = await showEntitySelectorDialog(
+      context: context,
+      ref: ref,
+      allowedTypes: allowedSlugs.isEmpty ? null : allowedSlugs,
+    );
+    if (result == null || result.isEmpty) return;
+
+    final entityId = result.first;
+    final entities = ref.read(entityProvider);
+    final entity = entities[entityId];
+    if (entity == null) return;
+
+    final pinType = _pinTypeFromCategorySlug(entity.categorySlug);
+    notifier.addPin(
+      canvasPos,
+      entityId: entityId,
+      label: entity.name,
+      pinType: pinType,
+    );
+  }
 
   void _showAddPinDialog(Offset canvasPos, WorldMapNotifier notifier) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
@@ -658,12 +806,15 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             // Hint about entities
             Row(
               children: [
-                Icon(Icons.info_outline, size: 14,
-                    color: palette.uiFloatingText.withValues(alpha: 0.5)),
+                Icon(
+                  Icons.info_outline,
+                  size: 14,
+                  color: palette.uiFloatingText.withValues(alpha: 0.5),
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'To add entities, drag them from the sidebar.',
+                    'To add entities, right-click the map or drag them from the sidebar.',
                     style: TextStyle(
                       fontSize: 10,
                       color: palette.uiFloatingText.withValues(alpha: 0.5),
@@ -678,8 +829,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
-                style: TextStyle(color: palette.uiFloatingText)),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: palette.uiFloatingText),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -696,16 +849,16 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   /// Build entityId → name map for display in dialogs.
   Map<String, String> _entityNameMap(List<String> entityIds) {
     final entities = ref.read(entityProvider);
-    return {
-      for (final eid in entityIds)
-        eid: entities[eid]?.name ?? eid,
-    };
+    return {for (final eid in entityIds) eid: entities[eid]?.name ?? eid};
   }
 
   /// Add a connected timeline pin: copies entities + session from parent,
   /// opens the timeline entry dialog pre-filled.
   void _addConnectedTimeline(
-      TimelinePin parent, WorldMapNotifier notifier, DmToolColors palette) {
+    TimelinePin parent,
+    WorldMapNotifier notifier,
+    DmToolColors palette,
+  ) {
     final prefilled = TimelinePin(
       id: '',
       x: parent.x + 40,
@@ -739,7 +892,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   }
 
   void _showTimelineEntryDialog(
-      Offset canvasPos, WorldMapNotifier notifier, DmToolColors palette) {
+    Offset canvasPos,
+    WorldMapNotifier notifier,
+    DmToolColors palette,
+  ) {
     showDialog<TimelinePin>(
       context: context,
       builder: (ctx) => TimelineEntryDialog(palette: palette),
@@ -757,7 +913,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   }
 
   void _showTimelineEditDialog(
-      TimelinePin pin, WorldMapNotifier notifier, DmToolColors palette) {
+    TimelinePin pin,
+    WorldMapNotifier notifier,
+    DmToolColors palette,
+  ) {
     showDialog<TimelinePin>(
       context: context,
       builder: (ctx) => TimelineEntryDialog(
@@ -783,7 +942,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   // -------------------------------------------------------------------------
 
   void _showAddWaypointDialog(
-      int insertIndex, WorldMapNotifier notifier, DmToolColors palette) {
+    int insertIndex,
+    WorldMapNotifier notifier,
+    DmToolColors palette,
+  ) {
     showDialog<AddWaypointResult>(
       context: context,
       builder: (ctx) => AddWaypointDialog(palette: palette),
@@ -799,7 +961,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   }
 
   void _showDeleteWaypointDialog(
-      int wpIndex, WorldMapNotifier notifier, DmToolColors palette) {
+    int wpIndex,
+    WorldMapNotifier notifier,
+    DmToolColors palette,
+  ) {
     final mapState = ref.read(worldMapProvider);
     final label = mapState.waypoints[wpIndex].label;
     showDialog<EpochMergeStrategy>(
@@ -813,7 +978,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   }
 
   void _showRenameWaypointDialog(
-      int wpIndex, WorldMapNotifier notifier, DmToolColors palette) {
+    int wpIndex,
+    WorldMapNotifier notifier,
+    DmToolColors palette,
+  ) {
     final mapState = ref.read(worldMapProvider);
     final current = mapState.waypoints[wpIndex].label;
     showDialog<String>(
@@ -863,23 +1031,25 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
-      builder: (ctx) => _PinDetailSheet(
-        pin: pin,
-        palette: palette,
-        notifier: notifier,
-      ),
+      builder: (ctx) =>
+          _PinDetailSheet(pin: pin, palette: palette, notifier: notifier),
     );
   }
 
   void _showEditPinNoteDialog(
-      MapPin pin, WorldMapNotifier notifier, DmToolColors palette) {
+    MapPin pin,
+    WorldMapNotifier notifier,
+    DmToolColors palette,
+  ) {
     final ctrl = TextEditingController(text: pin.note);
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: palette.uiFloatingBg,
-        title: Text('Edit Note',
-            style: TextStyle(fontSize: 14, color: palette.uiFloatingText)),
+        title: Text(
+          'Edit Note',
+          style: TextStyle(fontSize: 14, color: palette.uiFloatingText),
+        ),
         content: TextField(
           controller: ctrl,
           autofocus: true,
@@ -887,14 +1057,17 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
           decoration: InputDecoration(
             border: OutlineInputBorder(
-                borderSide: BorderSide(color: palette.uiFloatingBorder)),
+              borderSide: BorderSide(color: palette.uiFloatingBorder),
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
-                style: TextStyle(color: palette.uiFloatingText)),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: palette.uiFloatingText),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -909,23 +1082,35 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   }
 
   void _showPinColorPicker(
-      MapPin pin, WorldMapNotifier notifier, DmToolColors palette) {
+    MapPin pin,
+    WorldMapNotifier notifier,
+    DmToolColors palette,
+  ) {
     const colors = [
-      '#42a5f5', '#ef5350', '#66bb6a', '#ffa726', '#ab47bc',
-      '#26c6da', '#ec407a', '#8d6e63', '#78909c', '#ffee58',
+      '#42a5f5',
+      '#ef5350',
+      '#66bb6a',
+      '#ffa726',
+      '#ab47bc',
+      '#26c6da',
+      '#ec407a',
+      '#8d6e63',
+      '#78909c',
+      '#ffee58',
     ];
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: palette.uiFloatingBg,
-        title: Text('Pick Color',
-            style: TextStyle(fontSize: 14, color: palette.uiFloatingText)),
+        title: Text(
+          'Pick Color',
+          style: TextStyle(fontSize: 14, color: palette.uiFloatingText),
+        ),
         content: Wrap(
           spacing: 8,
           runSpacing: 8,
           children: colors.map((hex) {
-            final c =
-                Color(int.parse(hex.replaceAll('#', 'FF'), radix: 16));
+            final c = Color(int.parse(hex.replaceAll('#', 'FF'), radix: 16));
             return GestureDetector(
               onTap: () {
                 notifier.updatePinColor(pin.id, hex);
@@ -950,23 +1135,35 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   }
 
   void _showTimelineColorPicker(
-      TimelinePin pin, WorldMapNotifier notifier, DmToolColors palette) {
+    TimelinePin pin,
+    WorldMapNotifier notifier,
+    DmToolColors palette,
+  ) {
     const colors = [
-      '#42a5f5', '#ef5350', '#66bb6a', '#ffa726', '#ab47bc',
-      '#26c6da', '#ec407a', '#8d6e63', '#78909c', '#ffee58',
+      '#42a5f5',
+      '#ef5350',
+      '#66bb6a',
+      '#ffa726',
+      '#ab47bc',
+      '#26c6da',
+      '#ec407a',
+      '#8d6e63',
+      '#78909c',
+      '#ffee58',
     ];
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: palette.uiFloatingBg,
-        title: Text('Pick Color (chain)',
-            style: TextStyle(fontSize: 14, color: palette.uiFloatingText)),
+        title: Text(
+          'Pick Color (chain)',
+          style: TextStyle(fontSize: 14, color: palette.uiFloatingText),
+        ),
         content: Wrap(
           spacing: 8,
           runSpacing: 8,
           children: colors.map((hex) {
-            final c =
-                Color(int.parse(hex.replaceAll('#', 'FF'), radix: 16));
+            final c = Color(int.parse(hex.replaceAll('#', 'FF'), radix: 16));
             return GestureDetector(
               onTap: () {
                 notifier.updateTimelineChainColor(pin.id, hex);
@@ -991,7 +1188,9 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   }
 
   void _showEntityFilterDialog(
-      WorldMapNotifier notifier, DmToolColors palette) {
+    WorldMapNotifier notifier,
+    DmToolColors palette,
+  ) {
     // Only show entities whose category allows 'worldmap'
     final allEntities = ref.read(entityProvider);
     final schema = ref.read(worldSchemaProvider);
@@ -999,8 +1198,11 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         .where((c) => c.allowedInSections.contains('worldmap'))
         .map((c) => c.slug)
         .toSet();
-    final entities = Map.fromEntries(allEntities.entries
-        .where((e) => allowedSlugs.contains(e.value.categorySlug)));
+    final entities = Map.fromEntries(
+      allEntities.entries.where(
+        (e) => allowedSlugs.contains(e.value.categorySlug),
+      ),
+    );
     if (entities.isEmpty) return;
 
     final mapState = ref.read(worldMapProvider);
@@ -1011,9 +1213,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlgState) => AlertDialog(
           backgroundColor: palette.uiFloatingBg,
-          title: Text('Filter by Entity',
-              style: TextStyle(
-                  fontSize: 14, color: palette.uiFloatingText)),
+          title: Text(
+            'Filter by Entity',
+            style: TextStyle(fontSize: 14, color: palette.uiFloatingText),
+          ),
           content: SizedBox(
             width: 300,
             height: 300,
@@ -1022,10 +1225,13 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
                 final isChecked = selected.contains(e.key);
                 return CheckboxListTile(
                   dense: true,
-                  title: Text(e.value.name,
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: palette.uiFloatingText)),
+                  title: Text(
+                    e.value.name,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: palette.uiFloatingText,
+                    ),
+                  ),
                   value: isChecked,
                   onChanged: (v) {
                     setDlgState(() {
@@ -1043,8 +1249,10 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('Cancel',
-                  style: TextStyle(color: palette.uiFloatingText)),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: palette.uiFloatingText),
+              ),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, selected),
@@ -1111,16 +1319,16 @@ class _DraggablePinState extends State<_DraggablePin> {
   Offset? _dragOffset;
 
   double get _iconSize => switch (widget.pinSize) {
-        PinSize.small => 18,
-        PinSize.medium => 24,
-        PinSize.large => 32,
-      };
+    PinSize.small => 18,
+    PinSize.medium => 24,
+    PinSize.large => 32,
+  };
 
   double get _fontSize => switch (widget.pinSize) {
-        PinSize.small => 8,
-        PinSize.medium => 9,
-        PinSize.large => 11,
-      };
+    PinSize.small => 8,
+    PinSize.medium => 9,
+    PinSize.large => 11,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -1140,10 +1348,8 @@ class _DraggablePinState extends State<_DraggablePin> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
-        onSecondaryTapUp: (d) =>
-            _showContextMenu(context, d.globalPosition),
-        onLongPressStart: (d) =>
-            _showContextMenu(context, d.globalPosition),
+        onSecondaryTapUp: (d) => _showContextMenu(context, d.globalPosition),
+        onLongPressStart: (d) => _showContextMenu(context, d.globalPosition),
         onPanStart: (d) {
           _dragStart = d.globalPosition;
           _pinStartPos = Offset(pin.x, pin.y);
@@ -1169,9 +1375,7 @@ class _DraggablePinState extends State<_DraggablePin> {
               Icons.location_pin,
               size: iconSize,
               color: displayColor,
-              shadows: const [
-                Shadow(color: Colors.black54, blurRadius: 4),
-              ],
+              shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
             ),
             Transform.translate(
               offset: const Offset(0, -4),
@@ -1201,10 +1405,12 @@ class _DraggablePinState extends State<_DraggablePin> {
     final items = <PopupMenuEntry<String>>[];
 
     if (widget.onInspect != null) {
-      items.add(PopupMenuItem(
-        value: 'inspect',
-        child: _menuRow(Icons.open_in_new, 'Inspect Entity', palette),
-      ));
+      items.add(
+        PopupMenuItem(
+          value: 'inspect',
+          child: _menuRow(Icons.open_in_new, 'Inspect Entity', palette),
+        ),
+      );
     }
     items.addAll([
       PopupMenuItem(
@@ -1225,15 +1431,18 @@ class _DraggablePinState extends State<_DraggablePin> {
       const PopupMenuDivider(),
       PopupMenuItem(
         value: 'delete',
-        child:
-            _menuRow(Icons.delete_outline, 'Delete', palette, danger: true),
+        child: _menuRow(Icons.delete_outline, 'Delete', palette, danger: true),
       ),
     ]);
 
     showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
-          globalPos.dx, globalPos.dy, globalPos.dx + 1, globalPos.dy + 1),
+        globalPos.dx,
+        globalPos.dy,
+        globalPos.dx + 1,
+        globalPos.dy + 1,
+      ),
       color: palette.uiFloatingBg,
       items: items,
     ).then((value) {
@@ -1304,23 +1513,22 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
 
   // Timeline pins are one step smaller than map pins
   double get _boxSize => switch (widget.pinSize) {
-        PinSize.small => 18,
-        PinSize.medium => 22,
-        PinSize.large => 28,
-      };
+    PinSize.small => 18,
+    PinSize.medium => 22,
+    PinSize.large => 28,
+  };
 
   double get _fontSize => switch (widget.pinSize) {
-        PinSize.small => 7,
-        PinSize.medium => 9,
-        PinSize.large => 11,
-      };
+    PinSize.small => 7,
+    PinSize.medium => 9,
+    PinSize.large => 11,
+  };
 
   @override
   Widget build(BuildContext context) {
     final pin = widget.pin;
     final palette = widget.palette;
-    final color =
-        Color(int.parse(pin.color.replaceAll('#', 'FF'), radix: 16));
+    final color = Color(int.parse(pin.color.replaceAll('#', 'FF'), radix: 16));
 
     final x = _dragOffset?.dx ?? pin.x;
     final y = _dragOffset?.dy ?? pin.y;
@@ -1339,13 +1547,11 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
           color: _isDragOver
               ? Colors.yellowAccent
               : pin.sessionId != null
-                  ? Colors.white
-                  : Colors.black54,
+              ? Colors.white
+              : Colors.black54,
           width: _isDragOver ? 3 : 1.5,
         ),
-        boxShadow: const [
-          BoxShadow(color: Colors.black38, blurRadius: 3),
-        ],
+        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 3)],
       ),
       alignment: Alignment.center,
       child: Text(
@@ -1399,15 +1605,16 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
                     },
                     onPanUpdate: (d) {
                       if (_dragStart == null || _pinStartPos == null) return;
-                      final scale =
-                          widget.notifier.viewTransform.value.scale;
+                      final scale = widget.notifier.viewTransform.value.scale;
                       final delta = (d.globalPosition - _dragStart!) / scale;
                       setState(() => _dragOffset = _pinStartPos! + delta);
                     },
                     onPanEnd: (_) {
                       if (_dragOffset != null) {
-                        widget.notifier.updateTimelinePin(pin.id,
-                            pos: _dragOffset!);
+                        widget.notifier.updateTimelinePin(
+                          pin.id,
+                          pos: _dragOffset!,
+                        );
                       }
                       _dragStart = null;
                       _pinStartPos = null;
@@ -1423,9 +1630,7 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
               Positioned(
                 left: size + 6,
                 top: -4,
-                child: IgnorePointer(
-                  child: _buildHoverCard(palette, pin),
-                ),
+                child: IgnorePointer(child: _buildHoverCard(palette, pin)),
               ),
           ],
         ),
@@ -1481,8 +1686,11 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.link, size: 10,
-                        color: palette.uiFloatingText.withValues(alpha: 0.5)),
+                    Icon(
+                      Icons.link,
+                      size: 10,
+                      color: palette.uiFloatingText.withValues(alpha: 0.5),
+                    ),
                     const SizedBox(width: 3),
                     Flexible(
                       child: Text(
@@ -1505,8 +1713,11 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.event, size: 10,
-                    color: palette.uiFloatingText.withValues(alpha: 0.5)),
+                Icon(
+                  Icons.event,
+                  size: 10,
+                  color: palette.uiFloatingText.withValues(alpha: 0.5),
+                ),
                 const SizedBox(width: 3),
                 Text(
                   'Session linked',
@@ -1530,18 +1741,19 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
     final items = <PopupMenuEntry<String>>[];
 
     if (pin.sessionId != null) {
-      items.add(PopupMenuItem(
-        value: 'goto_session',
-        child: _menuRow(Icons.event, 'Go to Session', palette),
-      ));
+      items.add(
+        PopupMenuItem(
+          value: 'goto_session',
+          child: _menuRow(Icons.event, 'Go to Session', palette),
+        ),
+      );
       items.add(const PopupMenuDivider());
     }
 
     items.addAll([
       PopupMenuItem(
         value: 'add_connected',
-        child: _menuRow(
-            Icons.add_link, 'Add Connected Timeline', palette),
+        child: _menuRow(Icons.add_link, 'Add Connected Timeline', palette),
       ),
       PopupMenuItem(
         value: 'link_existing',
@@ -1553,8 +1765,7 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
       ),
       PopupMenuItem(
         value: 'change_color',
-        child:
-            _menuRow(Icons.palette, 'Change Color (chain)', palette),
+        child: _menuRow(Icons.palette, 'Change Color (chain)', palette),
       ),
       if (widget.onCopyToEpoch != null) ...[
         const PopupMenuDivider(),
@@ -1566,15 +1777,18 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
       const PopupMenuDivider(),
       PopupMenuItem(
         value: 'delete',
-        child:
-            _menuRow(Icons.delete_outline, 'Delete', palette, danger: true),
+        child: _menuRow(Icons.delete_outline, 'Delete', palette, danger: true),
       ),
     ]);
 
     showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
-          globalPos.dx, globalPos.dy, globalPos.dx + 1, globalPos.dy + 1),
+        globalPos.dx,
+        globalPos.dy,
+        globalPos.dx + 1,
+        globalPos.dy + 1,
+      ),
       color: palette.uiFloatingBg,
       items: items,
     ).then((value) {
@@ -1596,18 +1810,27 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
   }
 }
 
-Widget _menuRow(IconData icon, String label, DmToolColors palette,
-    {bool danger = false}) {
+Widget _menuRow(
+  IconData icon,
+  String label,
+  DmToolColors palette, {
+  bool danger = false,
+}) {
   return Row(
     children: [
-      Icon(icon,
-          size: 16,
-          color: danger ? Colors.red[300] : palette.uiFloatingText),
+      Icon(
+        icon,
+        size: 16,
+        color: danger ? Colors.red[300] : palette.uiFloatingText,
+      ),
       const SizedBox(width: 8),
-      Text(label,
-          style: TextStyle(
-              fontSize: 12,
-              color: danger ? Colors.red[300] : palette.uiFloatingText)),
+      Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          color: danger ? Colors.red[300] : palette.uiFloatingText,
+        ),
+      ),
     ],
   );
 }
@@ -1632,7 +1855,8 @@ class _TimelineConnectionPainter extends CustomPainter {
         if (parent == null) continue;
 
         final color = Color(
-            int.parse(pin.color.replaceAll('#', 'FF'), radix: 16));
+          int.parse(pin.color.replaceAll('#', 'FF'), radix: 16),
+        );
         _drawDashedLine(
           canvas,
           Offset(parent.x, parent.y),
@@ -1643,8 +1867,7 @@ class _TimelineConnectionPainter extends CustomPainter {
     }
   }
 
-  void _drawDashedLine(
-      Canvas canvas, Offset start, Offset end, Color color) {
+  void _drawDashedLine(Canvas canvas, Offset start, Offset end, Color color) {
     final paint = Paint()
       ..color = color.withValues(alpha: 0.7)
       ..strokeWidth = 3
@@ -1662,8 +1885,10 @@ class _TimelineConnectionPainter extends CustomPainter {
       var distance = 0.0;
       var draw = true;
       while (distance < metric.length) {
-        final segLen =
-            math.min(draw ? dashLen : gapLen, metric.length - distance);
+        final segLen = math.min(
+          draw ? dashLen : gapLen,
+          metric.length - distance,
+        );
         if (draw) {
           dashedPath.addPath(
             metric.extractPath(distance, distance + segLen),
@@ -1735,8 +1960,11 @@ class _PinDetailSheetState extends State<_PinDetailSheet> {
           // Header
           Row(
             children: [
-              Icon(Icons.location_pin, size: 20,
-                  color: _pinColor(widget.pin.pinType)),
+              Icon(
+                Icons.location_pin,
+                size: 20,
+                color: _pinColor(widget.pin.pinType),
+              ),
               const SizedBox(width: 8),
               Text(
                 'Pin Details',
@@ -1748,7 +1976,11 @@ class _PinDetailSheetState extends State<_PinDetailSheet> {
               ),
               const Spacer(),
               IconButton(
-                icon: Icon(Icons.delete_outline, size: 18, color: Colors.red[300]),
+                icon: Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: Colors.red[300],
+                ),
                 tooltip: 'Delete pin',
                 onPressed: () {
                   widget.notifier.deletePin(widget.pin.id);
@@ -1832,8 +2064,11 @@ class _ToolbarButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14,
-                color: highlight ? Colors.red[300] : palette.tabText),
+            Icon(
+              icon,
+              size: 14,
+              color: highlight ? Colors.red[300] : palette.tabText,
+            ),
             const SizedBox(width: 4),
             Text(
               label,
@@ -1883,12 +2118,16 @@ class _ToolbarCheckbox extends StatelessWidget {
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   visualDensity: VisualDensity.compact,
                   side: BorderSide(
-                      color: palette.tabText.withValues(alpha: 0.5), width: 1),
+                    color: palette.tabText.withValues(alpha: 0.5),
+                    width: 1,
+                  ),
                 ),
               ),
               const SizedBox(width: 4),
-              Text(label,
-                  style: TextStyle(fontSize: 10, color: palette.tabText)),
+              Text(
+                label,
+                style: TextStyle(fontSize: 10, color: palette.tabText),
+              ),
             ],
           ),
         ),
@@ -1912,8 +2151,9 @@ class _PinCategoryDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleCount =
-        _pinTypes.where((t) => !hiddenPinTypes.contains(t)).length;
+    final visibleCount = _pinTypes
+        .where((t) => !hiddenPinTypes.contains(t))
+        .length;
 
     return PopupMenuButton<String>(
       tooltip: 'Pin categories',
@@ -1937,8 +2177,9 @@ class _PinCategoryDropdown extends StatelessWidget {
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   visualDensity: VisualDensity.compact,
                   side: BorderSide(
-                      color: palette.uiFloatingText.withValues(alpha: 0.5),
-                      width: 1),
+                    color: palette.uiFloatingText.withValues(alpha: 0.5),
+                    width: 1,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1951,9 +2192,10 @@ class _PinCategoryDropdown extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Text(type[0].toUpperCase() + type.substring(1),
-                  style: TextStyle(
-                      fontSize: 11, color: palette.uiFloatingText)),
+              Text(
+                type[0].toUpperCase() + type.substring(1),
+                style: TextStyle(fontSize: 11, color: palette.uiFloatingText),
+              ),
             ],
           ),
         );
@@ -1965,8 +2207,10 @@ class _PinCategoryDropdown extends StatelessWidget {
           children: [
             Icon(Icons.category, size: 14, color: palette.tabText),
             const SizedBox(width: 4),
-            Text('Categories ($visibleCount/${_pinTypes.length})',
-                style: TextStyle(fontSize: 10, color: palette.tabText)),
+            Text(
+              'Categories ($visibleCount/${_pinTypes.length})',
+              style: TextStyle(fontSize: 10, color: palette.tabText),
+            ),
             Icon(Icons.arrow_drop_down, size: 14, color: palette.tabText),
           ],
         ),
