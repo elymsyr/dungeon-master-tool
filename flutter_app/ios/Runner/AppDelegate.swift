@@ -12,5 +12,8 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    if let engine = engineBridge.pluginRegistry as? FlutterEngine {
+      ScreencastPlugin.register(with: engine, rootViewController: window?.rootViewController)
+    }
   }
 }
