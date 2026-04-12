@@ -18,18 +18,40 @@ import 'save_state_provider.dart';
 
 const _uuid = Uuid();
 
+/// Module-level memo for [worldSchemaProvider] — keyed on the identity
+/// of the source `world_schema` map inside the active campaign's
+/// `_data`. Reparsing WorldSchema on every downstream rebuild is
+/// expensive (deep Freezed tree), and until the source map is actually
+/// replaced the parse result is stable, so identity equality is safe.
+WorldSchema? _cachedWorldSchema;
+Object? _cachedWorldSchemaSource;
+
 /// WorldSchema provider — aktif kampanyadan schema okur, yoksa default üretir.
+///
+/// Rebuilds when either the active campaign changes or the revision
+/// counter is bumped (in-place data replace / template update). The
+/// parse result is memoized by source-map identity, so a rebuild with
+/// an unchanged underlying map returns the cached WorldSchema instance
+/// — preserving Riverpod equality and preventing cascade rebuilds.
 final worldSchemaProvider = Provider<WorldSchema>((ref) {
-  // State değişikliğini izle (kampanya değişince tetiklenir)
   ref.watch(activeCampaignProvider);
+  ref.watch(campaignRevisionProvider);
   final campaign = ref.read(activeCampaignProvider.notifier);
   final data = campaign.data;
 
-  if (data != null && data.containsKey('world_schema')) {
+  final rawSource = data?['world_schema'];
+  if (rawSource != null && identical(rawSource, _cachedWorldSchemaSource)) {
+    return _cachedWorldSchema!;
+  }
+
+  if (rawSource is Map) {
     try {
-      return WorldSchema.fromJson(
-        Map<String, dynamic>.from(data['world_schema'] as Map),
+      final schema = WorldSchema.fromJson(
+        Map<String, dynamic>.from(rawSource),
       );
+      _cachedWorldSchemaSource = rawSource;
+      _cachedWorldSchema = schema;
+      return schema;
     } catch (e) {
       debugPrint('WorldSchema parse error: $e');
     }
@@ -38,7 +60,13 @@ final worldSchemaProvider = Provider<WorldSchema>((ref) {
   // Fallback: default schema üret ve kampanyaya kaydet
   final schema = generateDefaultDnd5eSchema();
   if (data != null) {
-    data['world_schema'] = deepCopyJson(schema.toJson());
+    final serialized = deepCopyJson(schema.toJson());
+    data['world_schema'] = serialized;
+    _cachedWorldSchemaSource = serialized;
+    _cachedWorldSchema = schema;
+  } else {
+    _cachedWorldSchemaSource = null;
+    _cachedWorldSchema = schema;
   }
   return schema;
 });
@@ -47,7 +75,7 @@ final worldSchemaProvider = Provider<WorldSchema>((ref) {
 class EntityNotifier extends StateNotifier<Map<String, Entity>>
     with UndoRedoMixin<Map<String, Entity>> {
   final ActiveCampaignNotifier _campaign;
-  final WorldSchema _schema;
+  final Ref _ref;
   final VoidCallback _onDirty;
   final AppEventBus _eventBus;
 
@@ -55,9 +83,15 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   int get maxUndoDepth => 30;
 
   EntityNotifier(
-      this._campaign, this._schema, this._onDirty, this._eventBus)
+      this._campaign, this._ref, this._onDirty, this._eventBus)
       : super({}) {
     _loadFromCampaign();
+    // Reload when the active campaign's data is mutated in-place
+    // (cloud restore, template update). Not triggered on initial
+    // mount — the `_loadFromCampaign()` above covers that.
+    _ref.listen<int>(campaignRevisionProvider, (_, _) {
+      _loadFromCampaign();
+    });
   }
 
   String? get _campaignId => _campaign.data?['world_id'] as String?;
@@ -115,8 +149,10 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     pushUndo(state);
     final id = _uuid.v4();
 
-    // Schema'dan default field değerlerini al
-    final cats = _schema.categories.where((c) => c.slug == categorySlug);
+    // Schema'dan default field değerlerini al — lazy read so the
+    // notifier isn't coupled to worldSchemaProvider rebuilds.
+    final schema = _ref.read(worldSchemaProvider);
+    final cats = schema.categories.where((c) => c.slug == categorySlug);
     final cat = cats.isEmpty ? null : cats.first;
 
     final defaultFields = <String, dynamic>{};
@@ -276,10 +312,15 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
 
 final entityProvider =
     StateNotifierProvider<EntityNotifier, Map<String, Entity>>((ref) {
-  final schema = ref.watch(worldSchemaProvider);
+  // Watch only the active campaign name — a new notifier is created
+  // when the user opens a different world/package. Data mutations
+  // (cloud restore, template update) are observed via
+  // campaignRevisionProvider inside the notifier, so the schema
+  // rebuild no longer cascades into a full entity reparse.
+  ref.watch(activeCampaignProvider);
   return EntityNotifier(
     ref.read(activeCampaignProvider.notifier),
-    schema,
+    ref,
     () => ref.read(saveStateProvider.notifier).markDirty(),
     ref.read(eventBusProvider),
   );

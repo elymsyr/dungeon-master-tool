@@ -25,6 +25,16 @@ final campaignListProvider = FutureProvider<List<String>>((ref) {
   return ref.watch(campaignRepositoryProvider).getAvailable();
 });
 
+/// Monotonic revision counter for the active campaign/package data.
+///
+/// Bumped when `_data` is mutated in-place and downstream providers need
+/// to re-read without forcing a full `activeCampaignProvider` rebuild
+/// (which used to be done by null-toggling `state`, triggering a cascade
+/// reparse of WorldSchema and EntityNotifier on every bump). Watchers
+/// that care about data-content changes should watch this provider in
+/// addition to `activeCampaignProvider`.
+final campaignRevisionProvider = StateProvider<int>((_) => 0);
+
 /// Kampanya isim + template bilgisi.
 class CampaignInfo {
   final String name;
@@ -104,10 +114,10 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// Re-reads the active campaign from disk, replaces [_data] in place
   /// (so any cached references — e.g. the wrapped notifier inside
   /// PackageScreen's ProviderScope — observe the new values), and
-  /// force-notifies watchers of [activeCampaignProvider] so downstream
-  /// providers (worldSchemaProvider, entityProvider, …) rebuild from
-  /// the fresh data. Used by the cloud "restore into the currently
-  /// open item" flow.
+  /// bumps [campaignRevisionProvider] so downstream providers
+  /// (worldSchemaProvider, entityProvider, …) re-read from the fresh
+  /// data without a full notifier recreation cascade. Used by the
+  /// cloud "restore into the currently open item" flow.
   Future<void> reload() async {
     if (state == null) return;
     final name = state!;
@@ -119,11 +129,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
         ..clear()
         ..addAll(fresh);
     }
-    // StateNotifier dedupes on equality — toggle via null so every
-    // `ref.watch(activeCampaignProvider)` downstream re-executes.
-    final n = name;
-    state = null;
-    state = n;
+    _bumpRevision();
   }
 
   /// Replaces the in-memory data map with [newData] and persists it.
@@ -141,9 +147,12 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
         ..addAll(newData);
     }
     await _repo.save(name, _data!);
-    final n = name;
-    state = null;
-    state = n;
+    _bumpRevision();
+  }
+
+  void _bumpRevision() {
+    final notifier = _ref.read(campaignRevisionProvider.notifier);
+    notifier.state = notifier.state + 1;
   }
 
   /// Replaces the active campaign's worldSchema with [newTemplate], updates
@@ -179,11 +188,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     _data!.remove('template_dismissed_hash');
     _data!.remove('template_updates_muted');
     await _repo.save(state!, _data!);
-    // Force-notify watchers — round-trip through null because StateNotifier
-    // dedupes on equality and the campaign name hasn't changed.
-    final name = state;
-    state = null;
-    state = name;
+    _bumpRevision();
   }
 
   /// Persists the user's "ignore this template version" choice. The

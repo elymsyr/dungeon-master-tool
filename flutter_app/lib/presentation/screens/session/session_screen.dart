@@ -15,6 +15,7 @@ import '../../dialogs/entity_selector_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/condition_badge.dart';
 import '../../widgets/hp_bar.dart';
+import '../../widgets/lazy_indexed_stack.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/projection/projection_panel.dart';
 import '../../widgets/resizable_split.dart';
@@ -676,7 +677,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             _buildMobileTabBar(palette),
             // Tab content — full remaining height
             Expanded(
-              child: IndexedStack(
+              child: LazyIndexedStack(
                 index: _mobileTabIndex,
                 children: [
                   _buildMobileCombatTab(palette, combat, enc),

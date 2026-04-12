@@ -116,10 +116,9 @@ class _PackageScreenState extends ConsumerState<PackageScreen> {
           (ref) {
             final campaignNotifier =
                 ref.read(activeCampaignProvider.notifier);
-            final ws = ref.watch(worldSchemaProvider);
             return EntityNotifier(
               campaignNotifier,
-              ws,
+              ref,
               () => ref.read(saveStateProvider.notifier).markDirty(),
               ref.read(eventBusProvider),
             );
