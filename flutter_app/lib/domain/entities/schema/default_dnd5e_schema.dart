@@ -13,7 +13,8 @@ const _uuid = Uuid();
 /// üretilen varsayılan D&D 5e WorldSchema.
 /// Yeni kampanya oluşturulduğunda bu schema gömülü olarak kullanılır.
 /// Sabit ID — default schema her zaman aynı ID'ye sahip.
-const _defaultSchemaId = 'builtin-dnd5e-default';
+const builtinDnd5eSchemaId = 'builtin-dnd5e-default';
+const _defaultSchemaId = builtinDnd5eSchemaId;
 
 /// Globally stable lineage identifier for the built-in D&D 5e template.
 ///

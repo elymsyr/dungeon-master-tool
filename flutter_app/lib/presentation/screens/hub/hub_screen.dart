@@ -3,14 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/profile_provider.dart';
 import '../../../application/providers/user_session_provider.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
-import '../../dialogs/confirm_sign_out_dialog.dart';
+import '../../dialogs/profile_edit_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/app_icon_image.dart';
 import '../../widgets/lazy_indexed_stack.dart';
+import '../../widgets/profile_menu_button.dart';
 import '../../widgets/save_sync_indicator.dart';
 import 'packages_tab.dart';
 import 'settings_tab.dart';
@@ -28,6 +30,7 @@ class HubScreen extends ConsumerStatefulWidget {
 class _HubScreenState extends ConsumerState<HubScreen> {
   int _tabIndex = 2; // Worlds tab default
   final GlobalKey _screenshotKey = GlobalKey();
+  bool _profileDialogOpen = false;
 
   static const _tabs = [
     (icon: Icons.people, label: 'Social'),
@@ -102,14 +105,34 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;
 
-    final authState = ref.watch(authProvider);
-
     // Redirect to landing on sign-out when Supabase is configured.
     ref.listen(authProvider, (prev, next) async {
       if (prev != null && next == null && SupabaseConfig.isConfigured) {
         await ref.read(userSessionProvider.notifier).deactivate();
         if (context.mounted) context.go('/');
       }
+    });
+
+    // Yeni sign-in olan kullanıcı profile yoksa username seçim dialog'u zorla aç.
+    // Flag yalnızca sign-out'ta resetlenir; dialog kapanınca resetlenmez —
+    // aksi halde invalidate sonrası yarış (refetch null döner) dialog'u
+    // ikinci kez açabiliyor.
+    ref.listen(currentProfileProvider, (prev, next) {
+      next.whenData((profile) {
+        if (profile != null) return;
+        if (!SupabaseConfig.isConfigured) return;
+        if (ref.read(authProvider) == null) return;
+        if (_profileDialogOpen) return;
+        _profileDialogOpen = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) return;
+          ProfileEditDialog.show(context);
+        });
+      });
+    });
+    // Sign-out sonrası flag'i temizle (yeni kullanıcı için tekrar açılabilsin).
+    ref.listen(authProvider, (prev, next) {
+      if (next == null) _profileDialogOpen = false;
     });
 
     return PopScope(
@@ -145,19 +168,8 @@ class _HubScreenState extends ConsumerState<HubScreen> {
               screenshotKey: _screenshotKey,
             ),
           ),
-          // Auth button — sign in / sign out
-          if (SupabaseConfig.isConfigured)
-            authState != null
-                ? IconButton(
-                    icon: const Icon(Icons.logout, size: 20),
-                    tooltip: 'Sign Out (${authState.email})',
-                    onPressed: () => confirmAndSignOut(context, ref),
-                  )
-                : IconButton(
-                    icon: const Icon(Icons.login, size: 20),
-                    tooltip: 'Sign In',
-                    onPressed: () => context.go('/'),
-                  ),
+          // Profile menu — avatar + username with popup actions
+          const ProfileMenuButton(),
           const SizedBox(width: 4),
         ],
       ),

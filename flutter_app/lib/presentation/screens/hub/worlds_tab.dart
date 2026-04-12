@@ -16,6 +16,7 @@ import '../../../domain/entities/schema/world_schema_hash.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/save_info_section.dart';
+import '../../widgets/visibility_toggle_row.dart';
 
 
 class WorldsTab extends ConsumerStatefulWidget {
@@ -458,6 +459,12 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 itemId: worldId,
                 type: 'world',
                 localUpdatedAt: localUpdatedAt,
+              ),
+              const SizedBox(height: 12),
+              VisibilityToggleRow(
+                itemType: 'world',
+                localId: campaignName,
+                title: campaignName,
               ),
               const SizedBox(height: 12),
               Divider(height: 1, color: palette.featureCardBorder),

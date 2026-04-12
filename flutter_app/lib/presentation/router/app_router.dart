@@ -2,10 +2,12 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../screens/admin/admin_screen.dart';
 import '../screens/hub/hub_screen.dart';
 import '../screens/landing/landing_screen.dart';
 import '../screens/main_screen.dart';
 import '../screens/package_screen.dart';
+import '../screens/profile/profile_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -35,6 +37,17 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/package',
       builder: (context, state) => const PackageScreen(),
+    ),
+    GoRoute(
+      path: '/profile/:userId',
+      builder: (context, state) => ProfileScreen(
+        userId: state.pathParameters['userId'] ?? 'me',
+        openEditOnLoad: state.uri.queryParameters['edit'] == '1',
+      ),
+    ),
+    GoRoute(
+      path: '/admin',
+      builder: (context, state) => const AdminScreen(),
     ),
   ],
 );

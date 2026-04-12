@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/cloud_backup_provider.dart';
@@ -12,6 +13,7 @@ import '../../core/config/supabase_config.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
 import '../../data/repositories/cloud_backup_repository_impl.dart';
+import '../../domain/entities/cloud_backup_meta.dart';
 import '../theme/dm_tool_colors.dart';
 import 'save_info_section.dart';
 
@@ -272,11 +274,20 @@ class _SaveSyncDialog extends ConsumerWidget {
                   ),
                 ],
 
+                // ── Backups (compact mode: show list above storage) ──
+                if (hasCloud && compact) ...[
+                  _SectionLabel('Backups', palette),
+                  const SizedBox(height: 8),
+                  _CompactBackupList(palette: palette),
+                  const SizedBox(height: 16),
+                ],
+
                 // ── Storage ──
                 if (hasCloud) ...[
                   if (!compact) const SizedBox(height: 16),
+                  if (compact) _SectionLabel('Storage', palette),
                   if (!compact) _SectionLabel('Storage', palette),
-                  if (!compact) const SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   _StorageUsageBar(palette: palette),
                 ],
 
@@ -792,6 +803,209 @@ class _ResultRow extends StatelessWidget {
             Text(label, style: TextStyle(fontSize: 10, color: color)),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Compact backup list — top-right cloud icon dialog'unda storage bar'ın
+/// üstünde gösterilir. Restore/delete aksiyonları ile birlikte cloud
+/// backup'ları listeler.
+class _CompactBackupList extends ConsumerWidget {
+  final DmToolColors palette;
+  const _CompactBackupList({required this.palette});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final backupsAsync = ref.watch(cloudBackupListProvider);
+    final opState = ref.watch(cloudBackupOperationProvider);
+
+    // Surface operation completion as snackbar.
+    ref.listen<CloudBackupOperationState>(cloudBackupOperationProvider, (prev, next) {
+      if (prev?.isBusy != true) return;
+      if (next.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Backup error: ${next.errorMessage}')),
+        );
+        ref.read(cloudBackupOperationProvider.notifier).reset();
+      } else if (!next.isBusy && prev?.type == CloudBackupOpType.downloading) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Backup restored')),
+        );
+        ref.read(cloudBackupOperationProvider.notifier).reset();
+      } else if (!next.isBusy && prev?.type == CloudBackupOpType.deleting) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Backup deleted')),
+        );
+        ref.read(cloudBackupOperationProvider.notifier).reset();
+      }
+    });
+
+    return backupsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+      ),
+      error: (e, _) => Text(
+        'Could not load backups',
+        style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
+      ),
+      data: (backups) {
+        if (backups.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: palette.featureCardBg,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: palette.featureCardBorder),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.cloud_off_outlined, size: 16, color: palette.sidebarLabelSecondary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'No cloud backups yet',
+                    style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 220),
+          child: Container(
+            decoration: BoxDecoration(
+              color: palette.featureCardBg,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: palette.featureCardBorder),
+            ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              itemCount: backups.length,
+              separatorBuilder: (ctx, i) => Divider(height: 1, color: palette.featureCardBorder),
+              itemBuilder: (ctx, i) =>
+                  _BackupRow(meta: backups[i], palette: palette, busy: opState.isBusy),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BackupRow extends ConsumerWidget {
+  final CloudBackupMeta meta;
+  final DmToolColors palette;
+  final bool busy;
+  const _BackupRow({required this.meta, required this.palette, required this.busy});
+
+  IconData get _typeIcon => switch (meta.type) {
+        'world' => Icons.public,
+        'template' => Icons.description_outlined,
+        'package' => Icons.inventory_2_outlined,
+        _ => Icons.backup,
+      };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final date = DateFormat.yMMMd().add_Hm().format(meta.createdAt.toLocal());
+    final sizeKb = (meta.sizeBytes / 1024).toStringAsFixed(1);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Row(
+        children: [
+          Icon(_typeIcon, size: 16, color: palette.featureCardAccent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  meta.itemName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: palette.tabActiveText,
+                  ),
+                ),
+                Text(
+                  '$date · $sizeKb KB',
+                  style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.download, size: 16, color: palette.featureCardAccent),
+            tooltip: 'Restore',
+            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            padding: EdgeInsets.zero,
+            onPressed: busy
+                ? null
+                : () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (dctx) => AlertDialog(
+                        title: Text('Restore "${meta.itemName}"?'),
+                        content: const Text('This overwrites the local copy.'),
+                        actions: [
+                          TextButton(
+                              onPressed: () => Navigator.pop(dctx, false),
+                              child: const Text('Cancel')),
+                          FilledButton(
+                              onPressed: () => Navigator.pop(dctx, true),
+                              child: const Text('Restore')),
+                        ],
+                      ),
+                    );
+                    if (confirmed == true) {
+                      ref.read(cloudBackupOperationProvider.notifier).restoreBackup(meta);
+                    }
+                  },
+          ),
+          IconButton(
+            icon: Icon(Icons.delete_outline, size: 16, color: palette.dangerBtnBg),
+            tooltip: 'Delete',
+            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            padding: EdgeInsets.zero,
+            onPressed: busy
+                ? null
+                : () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (dctx) => AlertDialog(
+                        title: const Text('Delete backup?'),
+                        content: Text('Permanently delete "${meta.itemName}" from cloud.'),
+                        actions: [
+                          TextButton(
+                              onPressed: () => Navigator.pop(dctx, false),
+                              child: const Text('Cancel')),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(dctx, true),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: palette.dangerBtnBg,
+                              foregroundColor: palette.dangerBtnText,
+                            ),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed == true) {
+                      ref.read(cloudBackupOperationProvider.notifier).deleteBackup(meta.id);
+                    }
+                  },
+          ),
+        ],
       ),
     );
   }
