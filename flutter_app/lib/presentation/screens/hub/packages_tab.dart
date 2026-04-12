@@ -15,6 +15,7 @@ import '../../../core/utils/deep_copy.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/save_info_section.dart';
+import '../../widgets/visibility_toggle_row.dart';
 
 class PackagesTab extends ConsumerStatefulWidget {
   const PackagesTab({super.key});
@@ -403,6 +404,12 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                 itemId: packageId,
                 type: 'package',
                 localUpdatedAt: localUpdatedAt,
+              ),
+              const SizedBox(height: 12),
+              VisibilityToggleRow(
+                itemType: 'package',
+                localId: packageName,
+                title: packageName,
               ),
               const SizedBox(height: 12),
               Divider(height: 1, color: palette.featureCardBorder),

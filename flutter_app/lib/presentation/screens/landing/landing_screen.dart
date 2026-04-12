@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/user_session_provider.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../core/constants.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/app_icon_image.dart';
@@ -95,7 +96,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 ),
               ),
               const SizedBox(height: 4),
-              Text('v2.0.3', style: TextStyle(fontSize: 13, color: palette.sidebarLabelSecondary)),
+              Text('v$appVersion', style: TextStyle(fontSize: 13, color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 48),
               SizedBox(
                 width: 200,

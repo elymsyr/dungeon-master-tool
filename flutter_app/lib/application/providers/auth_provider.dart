@@ -17,6 +17,7 @@ import 'package:supabase_flutter/supabase_flutter.dart'
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/constants.dart';
 
 /// Base64-encoded app icon, lazily loaded from assets.
 String? _cachedIconBase64;
@@ -379,7 +380,7 @@ class AuthNotifier extends StateNotifier<AuthState?> {
         '<div class="brand">'
         '<span class="brand-text">Dungeon Master Tool</span>'
         '<span class="brand-dot"></span>'
-        '<span class="brand-ver">v2.0.3</span>'
+        '<span class="brand-ver">v$appVersion</span>'
         '</div>'
         '</div>'
         '</body></html>';

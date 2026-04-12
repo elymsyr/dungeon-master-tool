@@ -5,8 +5,18 @@ import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 import '../../../core/config/app_paths.dart';
+import '../../../domain/entities/schema/default_dnd5e_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/entities/schema/world_schema_hash.dart';
+
+/// Built-in template'in admin olmadan üzerine yazılması engellendiğinde
+/// fırlatılır. Çağıran katman snackbar göstermek için yakalar.
+class BuiltinTemplateAdminRequiredException implements Exception {
+  const BuiltinTemplateAdminRequiredException();
+  @override
+  String toString() =>
+      'BuiltinTemplateAdminRequiredException: Only admins can update the built-in template.';
+}
 
 /// Custom template'leri diske kaydetme/okuma.
 /// Konum: cache/templates/{schemaId}.json
@@ -38,7 +48,18 @@ class TemplateLocalDataSource {
     return templates;
   }
 
-  Future<void> save(WorldSchema schema) async {
+  /// Schema'yı diske yaz.
+  ///
+  /// Built-in template (`builtinDnd5eSchemaId`) için bu çağrı varsayılan olarak
+  /// [BuiltinTemplateAdminRequiredException] fırlatır — yalnızca admin user
+  /// olduğu doğrulandıktan sonra çağıran [bypassBuiltinGuard]: true ile bu
+  /// guard'ı atlayabilir. Admin doğrulaması Supabase tarafında `is_admin()`
+  /// RPC ile yapılır; burası yalnızca aksidental yazımı engelleyen son
+  /// savunma hattı.
+  Future<void> save(WorldSchema schema, {bool bypassBuiltinGuard = false}) async {
+    if (schema.schemaId == builtinDnd5eSchemaId && !bypassBuiltinGuard) {
+      throw const BuiltinTemplateAdminRequiredException();
+    }
     await _ensureDir();
     // Lazy-init the frozen lineage hash on first save. Built-in templates
     // already carry [builtinDndOriginalHash]; custom templates created
