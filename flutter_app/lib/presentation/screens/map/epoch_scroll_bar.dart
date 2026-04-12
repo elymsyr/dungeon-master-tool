@@ -241,7 +241,7 @@ class _EpochScrollBarState extends State<EpochScrollBar> {
       } else {
         widget.onRenameBoundary?.call(widget.startLabel, newLabel);
       }
-    });
+    }).whenComplete(ctrl.dispose);
   }
 
   void _showWaypointContextMenu(Offset globalPos, int wpIndex) {

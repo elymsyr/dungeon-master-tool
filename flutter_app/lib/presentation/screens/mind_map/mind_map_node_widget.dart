@@ -891,7 +891,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
           ),
         ],
       ),
-    );
+    ).whenComplete(ctrl.dispose);
   }
 
   void _showRenameDialog(BuildContext context, MindMapNode n) {
@@ -929,7 +929,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
           ),
         ],
       ),
-    );
+    ).whenComplete(ctrl.dispose);
   }
 
   void _showColorPickerDialog(BuildContext context, MindMapNode n) {

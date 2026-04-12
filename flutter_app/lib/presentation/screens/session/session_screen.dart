@@ -1268,7 +1268,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           );
         },
       ),
-    );
+    ).whenComplete(() {
+      nameController.dispose();
+      for (final c in statControllers.values) {
+        c.dispose();
+      }
+    });
   }
 
   void _addLogEntry() {
@@ -1293,7 +1298,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           }, child: const Text('Rename')),
         ],
       ),
-    );
+    ).whenComplete(controller.dispose);
   }
 
   void _showAddDialog() async {
@@ -1391,7 +1396,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           }, child: const Text('Add Custom')),
         ],
       ),
-    );
+    ).whenComplete(() {
+      nameController.dispose();
+      durationController.dispose();
+    });
   }
 }
 

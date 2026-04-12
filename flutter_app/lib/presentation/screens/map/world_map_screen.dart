@@ -29,10 +29,18 @@ class WorldMapScreen extends ConsumerStatefulWidget {
 }
 
 class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
+  final FocusNode _canvasFocusNode = FocusNode(debugLabel: 'WorldMapCanvas');
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _init());
+  }
+
+  @override
+  void dispose() {
+    _canvasFocusNode.dispose();
+    super.dispose();
   }
 
   void _init() {
@@ -340,7 +348,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
         );
 
         return KeyboardListener(
-          focusNode: FocusNode(),
+          focusNode: _canvasFocusNode,
           autofocus: true,
           onKeyEvent: (event) {
             if (event is KeyDownEvent &&
@@ -843,7 +851,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(labelCtrl.dispose);
   }
 
   /// Build entityId → name map for display in dialogs.
@@ -1078,7 +1086,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(ctrl.dispose);
   }
 
   void _showPinColorPicker(

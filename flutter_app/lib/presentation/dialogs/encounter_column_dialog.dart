@@ -52,6 +52,14 @@ class _EncounterColumnDialogState extends State<EncounterColumnDialog> {
         .toList();
   }
 
+  @override
+  void dispose() {
+    for (final e in _entries) {
+      e.dispose();
+    }
+    super.dispose();
+  }
+
   List<String> get _usedKeys => _entries.map((e) => e.subFieldKey).toList();
 
   void _addColumn(String key, String label) {
@@ -68,7 +76,9 @@ class _EncounterColumnDialogState extends State<EncounterColumnDialog> {
   }
 
   void _removeColumn(int index) {
-    setState(() => _entries.removeAt(index));
+    setState(() {
+      _entries.removeAt(index).dispose();
+    });
   }
 
   List<EncounterColumnConfig> _buildResult() {
@@ -129,7 +139,7 @@ class _EncounterColumnDialogState extends State<EncounterColumnDialog> {
                           SizedBox(
                             width: 80,
                             child: TextField(
-                              controller: TextEditingController(text: entry.label),
+                              controller: entry.labelController,
                               decoration: const InputDecoration(
                                 isDense: true,
                                 labelText: 'Label',
@@ -144,7 +154,7 @@ class _EncounterColumnDialogState extends State<EncounterColumnDialog> {
                           SizedBox(
                             width: 50,
                             child: TextField(
-                              controller: TextEditingController(text: entry.width.toString()),
+                              controller: entry.widthController,
                               decoration: const InputDecoration(
                                 isDense: true,
                                 labelText: 'W',
@@ -234,6 +244,9 @@ class _ColumnEntry {
   int width;
   bool enabled;
 
+  final TextEditingController labelController;
+  final TextEditingController widthController;
+
   _ColumnEntry({
     required this.subFieldKey,
     required this.label,
@@ -241,5 +254,11 @@ class _ColumnEntry {
     required this.showButtons,
     required this.width,
     required this.enabled,
-  });
+  })  : labelController = TextEditingController(text: label),
+        widthController = TextEditingController(text: width.toString());
+
+  void dispose() {
+    labelController.dispose();
+    widthController.dispose();
+  }
 }

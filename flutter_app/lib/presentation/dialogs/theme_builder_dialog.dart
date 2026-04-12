@@ -277,7 +277,7 @@ class _ThemeBuilderDialogState extends State<ThemeBuilderDialog> {
           ),
         ],
       ),
-    );
+    ).whenComplete(controller.dispose);
     if (name == null || name.isEmpty) return;
     final slug = _slugify(name);
     if (slug.isEmpty || _states.contains(slug)) return;

@@ -1445,7 +1445,7 @@ class _TagListFieldWidget extends StatelessWidget {
                         TextButton(onPressed: () => Navigator.of(ctx).pop(controller.text), child: const Text('Add')),
                       ],
                     ),
-                  );
+                  ).whenComplete(controller.dispose);
                   if (result != null && result.trim().isNotEmpty) {
                     final newTags = result.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
                     onChanged([...tags, ...newTags]);
