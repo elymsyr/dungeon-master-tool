@@ -567,10 +567,12 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
 
   Future<void> _pickImage() async {
     final mediaDir = ref.read(mediaDirectoryProvider);
+    final campaignId = ref.read(mediaCampaignIdProvider);
     if (mediaDir.isNotEmpty) {
       final selected = await MediaGalleryDialog.show(
         context,
         mediaDir: mediaDir,
+        campaignId: campaignId,
         allowMultiple: true,
       );
       if (selected == null || selected.isEmpty) return;

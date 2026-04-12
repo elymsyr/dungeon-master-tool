@@ -1,5 +1,8 @@
 .env
 supabase
+**/node_modulees/
+.wrangler/
+.claude/
 # User data & runtime
 worlds/
 cache/

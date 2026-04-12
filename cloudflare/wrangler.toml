@@ -1,0 +1,35 @@
+# ============================================================================
+# DMT Assets — Cloudflare Worker configuration
+# ============================================================================
+# Deploy: wrangler deploy
+# Local dev: wrangler dev
+#
+# Kurulum adımları için: cloudflare/README.md
+# ============================================================================
+
+name = "dmt-assets"
+main = "src/worker.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ── R2 bucket binding ────────────────────────────────────────────────────────
+# Önce oluştur: wrangler r2 bucket create dmt-assets
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "dmt-assets"
+
+# ── KV namespace (rate limit counter) ────────────────────────────────────────
+# Önce oluştur: wrangler kv:namespace create RATE_KV
+# Çıkan id'yi aşağıya yapıştır.
+[[kv_namespaces]]
+binding = "RATE_KV"
+id = "c7108c256a5342389b036d5bfa80cc7a"
+
+# ── Public env vars ──────────────────────────────────────────────────────────
+# Not: supabase_url client tarafında da görünür, secret değildir.
+[vars]
+SUPABASE_URL = "https://zapecuofyecpgazfyyhs.supabase.co"
+MAX_UPLOAD_BYTES = "10485760"           # 10 MB per item
+USER_QUOTA_BYTES = "52428800"           # 50 MB combined (cloud_backups + community_assets)
+DOWNLOAD_LIMIT_PER_HOUR = "20"
+UPLOAD_LIMIT_PER_HOUR = "60"

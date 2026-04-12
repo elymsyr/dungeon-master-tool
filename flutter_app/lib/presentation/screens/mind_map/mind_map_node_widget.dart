@@ -977,10 +977,12 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
   Future<void> _pickImageForNode(BuildContext context) async {
     try {
       final mediaDir = ref.read(mediaDirectoryProvider);
+      final campaignId = ref.read(mediaCampaignIdProvider);
       if (mediaDir.isNotEmpty) {
         final selected = await MediaGalleryDialog.show(
           context,
           mediaDir: mediaDir,
+          campaignId: campaignId,
           allowMultiple: false,
         );
         if (!mounted || selected == null || selected.isEmpty) return;

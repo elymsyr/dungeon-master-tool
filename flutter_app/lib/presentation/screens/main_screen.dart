@@ -476,8 +476,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 switch (action) {
                   case 'media':
                     final mediaDir = ref.read(mediaDirectoryProvider);
+                    final campaignId = ref.read(mediaCampaignIdProvider);
                     if (mediaDir.isNotEmpty) {
-                      MediaGalleryDialog.show(context, mediaDir: mediaDir);
+                      MediaGalleryDialog.show(
+                        context,
+                        mediaDir: mediaDir,
+                        campaignId: campaignId,
+                      );
                     }
                   case 'import':
                     ImportPackageDialog.show(context);
@@ -526,8 +531,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
               tooltip: 'Media Gallery',
               onPressed: () {
                 final mediaDir = ref.read(mediaDirectoryProvider);
+                final campaignId = ref.read(mediaCampaignIdProvider);
                 if (mediaDir.isNotEmpty) {
-                  MediaGalleryDialog.show(context, mediaDir: mediaDir);
+                  MediaGalleryDialog.show(
+                    context,
+                    mediaDir: mediaDir,
+                    campaignId: campaignId,
+                  );
                 }
               },
             ),

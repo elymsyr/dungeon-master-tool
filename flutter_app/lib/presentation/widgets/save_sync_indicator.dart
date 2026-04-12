@@ -634,7 +634,7 @@ class _StorageUsageBar extends ConsumerWidget {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    'These limits are temporary and will increase in the future.',
+                    'Combined: cloud backups + media assets. Temporary limit.',
                     style: TextStyle(
                       fontSize: 10,
                       color: palette.sidebarLabelSecondary,

@@ -7,11 +7,14 @@ import '../../domain/exceptions/cloud_backup_exceptions.dart';
 import '../../domain/repositories/cloud_backup_repository.dart';
 import '../datasources/remote/cloud_backup_remote_ds.dart';
 
-/// Per-item JSON boyut limiti (compression oncesi).
-const cloudBackupItemSizeLimit = 5 * 1024 * 1024; // 5 MB
+/// Per-item limit — cloud backup JSON (compression oncesi) ve R2 asset upload
+/// icin ortak sinir. AssetService.maxItemBytes da bu degere bagli.
+const cloudBackupItemSizeLimit = 10 * 1024 * 1024; // 10 MB
 
-/// Per-user toplam cloud storage limiti (compressed).
-const cloudBackupUserQuotaLimit = 20 * 1024 * 1024; // 20 MB
+/// Per-user toplam cloud quota — Supabase cloud_backups + Cloudflare R2
+/// community_assets toplami. get_user_total_storage_used RPC'si bu sinira
+/// karsi kontrol edilir.
+const cloudBackupUserQuotaLimit = 50 * 1024 * 1024; // 50 MB
 
 /// Cloud backup repository implementasyonu.
 ///

@@ -11,3 +11,10 @@ final mediaDirectoryProvider = Provider<String>((ref) {
   if (name == null) return '';
   return p.join(AppPaths.worldsDir, name, 'media');
 });
+
+/// MediaGalleryDialog'un cloud mode için kullandığı kampanya ID'si.
+/// Active campaign yoksa boş string — dialog lokal moda düşer.
+/// PackageScreen kendi context'ine override eder.
+final mediaCampaignIdProvider = Provider<String>((ref) {
+  return ref.watch(activeCampaignProvider) ?? '';
+});

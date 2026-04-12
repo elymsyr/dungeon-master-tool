@@ -144,10 +144,10 @@ class CampaignDao extends DatabaseAccessor<AppDatabase>
   Future<List<String>> getAvailableNames() =>
       select(campaigns).map((c) => c.worldName).get();
 
-  /// Returns (worldName, schemaName) pairs for the hub campaign list.
+  /// Returns (id, worldName, schemaName) tuples for the hub campaign list.
   /// Joins campaigns with world_schemas to get the template name without
   /// loading the full campaign data.
-  Future<List<({String worldName, String templateName})>>
+  Future<List<({String id, String worldName, String templateName})>>
       getCampaignInfoList() async {
     final query = select(campaigns).join([
       leftOuterJoin(
@@ -159,6 +159,7 @@ class CampaignDao extends DatabaseAccessor<AppDatabase>
       final c = row.readTable(campaigns);
       final s = row.readTableOrNull(worldSchemas);
       return (
+        id: c.id,
         worldName: c.worldName,
         templateName: s?.name ?? 'Unknown',
       );
