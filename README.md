@@ -38,11 +38,6 @@
 
 ---
 
-> **Developer Note:**
-> Current priorities, known bugs, and full changelog are in [TODO.md](TODO.md).
-
----
-
 ## Features
 
 - **Combat Tracker** -- Initiative, HP tracking, conditions, turn management, and auto event logging.
