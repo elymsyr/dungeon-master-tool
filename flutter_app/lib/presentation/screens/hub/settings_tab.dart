@@ -11,6 +11,7 @@ import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/config/app_paths.dart';
+import '../../../core/utils/screen_type.dart';
 import '../../../data/datasources/local/campaign_local_ds.dart' show TrashItem;
 import '../../../domain/entities/audio/audio_models.dart';
 import '../../dialogs/theme_builder_dialog.dart';
@@ -27,6 +28,7 @@ class SettingsTab extends ConsumerWidget {
     final currentTheme = ref.watch(themeProvider);
     final currentLocale = ref.watch(localeProvider);
     final l10n = L10n.of(context)!;
+    final phone = isPhone(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -42,9 +44,9 @@ class SettingsTab extends ConsumerWidget {
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  childAspectRatio: 2.2,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: phone ? 2 : 4,
+                  childAspectRatio: phone ? 2.4 : 2.2,
                   crossAxisSpacing: 8,
                   mainAxisSpacing: 8,
                 ),

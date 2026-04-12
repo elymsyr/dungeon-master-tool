@@ -68,7 +68,6 @@ class PostLikeNotifier extends StateNotifier<AsyncValue<void>> {
 
     try {
       await _ref.read(postsRemoteDsProvider).toggleLike(postId);
-      _ref.invalidate(feedProvider);
       state = const AsyncValue.data(null);
     } catch (e, st) {
       _ref.read(postLikeOverrideProvider(postId).notifier).state = prevOverride;

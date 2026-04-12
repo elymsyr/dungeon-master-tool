@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../application/providers/social_providers.dart';
 import '../../../core/utils/profanity_filter.dart';
+import '../../../core/utils/screen_type.dart';
 import '../../../core/utils/world_languages.dart';
 import '../../../data/datasources/remote/posts_remote_ds.dart' show FeedScope;
 import '../../../domain/entities/game_listing.dart';
@@ -52,12 +53,13 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
     final scope = ref.watch(feedScopeProvider);
+    final hPad = isPhone(context) ? 12.0 : 24.0;
 
     if (scope == FeedScope.gameLists) {
       return RefreshIndicator(
         onRefresh: () async => ref.invalidate(openGameListingsProvider),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
           children: [
             _FeedScopeTabs(scope: scope, palette: palette),
             const SizedBox(height: 16),
@@ -75,7 +77,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(feedProvider),
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
         children: [
           _FeedScopeTabs(scope: scope, palette: palette),
           const SizedBox(height: 16),
@@ -91,6 +93,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                   minLines: 1,
                   maxLength: 2000,
                   onTap: () => setState(() => _composerFocused = true),
+                  onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: l10n.feedComposerHint,
                     border: InputBorder.none,
@@ -151,11 +154,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                   )
                 : Column(
                     children: [
-                      for (final p in posts)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
-                          child: _PostCard(post: p),
-                        ),
+                      for (final p in posts) _PostCard(post: p),
                     ],
                   ),
           ),
@@ -230,11 +229,14 @@ class _PostCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final likeBusy = ref.watch(postLikeProvider) is AsyncLoading;
     final override = ref.watch(postLikeOverrideProvider(post.id));
     final liked = override?.likedByMe ?? post.likedByMe;
     final likeCount = override?.likeCount ?? post.likeCount;
-    return SocialCard(
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: palette.featureCardBorder)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -290,11 +292,9 @@ class _PostCard extends ConsumerWidget {
             children: [
               InkWell(
                 borderRadius: BorderRadius.circular(20),
-                onTap: likeBusy
-                    ? null
-                    : () => ref
-                        .read(postLikeProvider.notifier)
-                        .toggle(post.id, currentPost: post),
+                onTap: () => ref
+                    .read(postLikeProvider.notifier)
+                    .toggle(post.id, currentPost: post),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                   child: Row(
