@@ -207,6 +207,6 @@ class ConditionBadge extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ).whenComplete(controller.dispose);
   }
 }

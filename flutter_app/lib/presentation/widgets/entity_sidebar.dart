@@ -331,7 +331,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
           ),
         ],
       ),
-    );
+    ).whenComplete(nameController.dispose);
   }
 
   Widget _dropdownLabel(String text, Color? dotColor, DmToolColors palette) {
