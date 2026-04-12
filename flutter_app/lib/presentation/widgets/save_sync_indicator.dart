@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/cloud_backup_provider.dart';
 import '../../application/providers/cloud_sync_provider.dart';
+import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../core/config/supabase_config.dart';
 import '../../data/database/database_provider.dart';
+import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
 import '../../data/repositories/cloud_backup_repository_impl.dart';
 import '../theme/dm_tool_colors.dart';
 import 'save_info_section.dart';
@@ -216,10 +218,10 @@ class _SaveSyncDialog extends ConsumerWidget {
                   ),
                   if (hasCloud)
                     _SettingsCheckbox(
-                      label: 'Auto cloud backup before exit',
-                      value: uiState.autoCloudBackupBeforeExit,
+                      label: 'Auto cloud save (debounced)',
+                      value: uiState.autoCloudSave,
                       onChanged: (v) => ref.read(uiStateProvider.notifier).update(
-                          (s) => s.copyWith(autoCloudBackupBeforeExit: v)),
+                          (s) => s.copyWith(autoCloudSave: v)),
                       palette: palette,
                     ),
                   const SizedBox(height: 16),
@@ -238,7 +240,14 @@ class _SaveSyncDialog extends ConsumerWidget {
                             : 'Save Locally',
                         onPressed: saveStatus == SaveStatus.saving
                             ? null
-                            : () => ref.read(saveStateProvider.notifier).saveNow(),
+                            : () => withLoading(
+                                  ref.read(globalLoadingProvider.notifier),
+                                  'manual-save-local',
+                                  'Saving locally...',
+                                  () => ref
+                                      .read(saveStateProvider.notifier)
+                                      .saveNow(),
+                                ),
                         palette: palette,
                       ),
                       if (hasCloud)
@@ -249,7 +258,7 @@ class _SaveSyncDialog extends ConsumerWidget {
                               : 'Backup to Cloud',
                           onPressed: syncState?.status == CloudSyncStatus.syncing
                               ? null
-                              : () => ref.read(cloudSyncProvider.notifier).syncNow(),
+                              : () => _backupToCloud(context, ref),
                           palette: palette,
                         ),
                       if (hasCloud)
@@ -296,25 +305,127 @@ class _SaveSyncDialog extends ConsumerWidget {
     );
   }
 
-  Future<void> _syncFromCloud(BuildContext context, WidgetRef ref) async {
-    final backups = await ref.read(cloudBackupListProvider.future);
-    if (backups.isEmpty) {
+  /// Force-uploads the currently active world/package to cloud. Wraps the
+  /// operation in the global loading overlay so the user sees progress.
+  Future<void> _backupToCloud(BuildContext context, WidgetRef ref) async {
+    // Gate up front so we can surface a clear "open something first"
+    // message instead of silently doing nothing.
+    final hasCampaign = ref.read(activeCampaignProvider) != null;
+    final hasPackage = ref.read(activePackageProvider) != null;
+    if (!hasCampaign && !hasPackage) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Open a world or package first to back up to cloud.'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final ok = await withLoading(
+        ref.read(globalLoadingProvider.notifier),
+        'manual-backup-cloud',
+        'Backing up to cloud...',
+        () => ref.read(cloudSyncProvider.notifier).backupActiveItem(),
+      );
+      if (!context.mounted) return;
+      if (!ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nothing to back up.')),
+        );
+        return;
+      }
+      final state = ref.read(cloudSyncProvider);
+      final msg = state.status == CloudSyncStatus.error
+          ? 'Cloud backup failed (${state.failedCount} item(s))'
+          : 'Cloud backup complete';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No cloud backups to sync.')),
+          SnackBar(content: Text('Cloud backup failed: $e')),
+        );
+      }
+    }
+  }
+
+  /// Restores the currently open world/package from its latest cloud
+  /// backup. Targets ONLY the active item so the user-visible flow is:
+  /// "open world → Sync from Cloud → local state is replaced with the
+  /// cloud copy of this exact world". No other items are touched.
+  ///
+  /// Requires an active item; if the user opens the panel from the hub
+  /// (nothing open), we tell them to open something first.
+  Future<void> _syncFromCloud(BuildContext context, WidgetRef ref) async {
+    // 1. Resolve the active item (world or package).
+    final campaignName = ref.read(activeCampaignProvider);
+    final packageName = ref.read(activePackageProvider);
+    String? itemName;
+    String? itemId;
+    String? type;
+    if (campaignName != null) {
+      final data = ref.read(activeCampaignProvider.notifier).data;
+      itemName = campaignName;
+      itemId = (data?['world_id'] as String?) ?? campaignName;
+      type = 'world';
+    } else if (packageName != null) {
+      final data = ref.read(activePackageProvider.notifier).data;
+      itemName = packageName;
+      itemId = (data?['package_id'] as String?) ??
+          (data?['world_id'] as String?) ??
+          packageName;
+      type = 'package';
+    }
+
+    if (itemName == null || itemId == null || type == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Open a world or package first to sync from cloud.'),
+        ),
+      );
+      return;
+    }
+
+    // 2. Fetch the cloud backup for this exact item.
+    final CloudBackupRemoteDataSource remoteDs = CloudBackupRemoteDataSource();
+    final loading = ref.read(globalLoadingProvider.notifier);
+    const fetchTaskId = 'sync-from-cloud-fetch';
+    loading.start(LoadingTask(
+      id: fetchTaskId,
+      message: 'Looking up cloud backup for "$itemName"...',
+    ));
+    final meta = await (() async {
+      try {
+        return await remoteDs.fetchByItem(itemId!, type!);
+      } catch (e) {
+        debugPrint('fetchByItem failed: $e');
+        return null;
+      } finally {
+        loading.end(fetchTaskId);
+      }
+    })();
+
+    if (meta == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No cloud backup found for "$itemName".'),
+          ),
         );
       }
       return;
     }
 
+    // 3. Destructive confirm — this replaces in-memory + on-disk state.
     if (!context.mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sync from Cloud'),
-        content: Text(
-          'This will download ${backups.length} backup(s) from cloud and restore them locally. '
-          'Existing items with the same name will be skipped.',
+        title: Text('Restore "$itemName" from cloud?'),
+        content: const Text(
+          'This will OVERWRITE the current local state with the cloud '
+          'backup. Any unsaved changes since the last cloud backup will '
+          'be lost.',
         ),
         actions: [
           TextButton(
@@ -323,25 +434,48 @@ class _SaveSyncDialog extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sync'),
+            child: const Text('Restore'),
           ),
         ],
       ),
     );
-
     if (confirmed != true) return;
 
-    final opNotifier = ref.read(cloudBackupOperationProvider.notifier);
-    var restored = 0;
-    for (final backup in backups) {
-      final ok = await opNotifier.restoreBackup(backup);
-      if (ok) restored++;
-    }
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Restored $restored/${backups.length} items from cloud.')),
+    // 4. Download + overwrite in place.
+    try {
+      await withLoading(
+        ref.read(globalLoadingProvider.notifier),
+        'sync-from-cloud',
+        'Restoring "$itemName" from cloud...',
+        () async {
+          final repo = ref.read(cloudBackupRepositoryProvider);
+          final data = await repo.downloadBackup(meta.id);
+          if (type == 'world') {
+            await ref
+                .read(activeCampaignProvider.notifier)
+                .replaceWithData(data);
+          } else {
+            await ref
+                .read(activePackageProvider.notifier)
+                .replaceWithData(data);
+            // PackageScreen wraps its own activeCampaignProvider inside
+            // a nested ProviderScope — invalidate the downstream providers
+            // so entity/schema views re-read the restored data.
+            ref.invalidate(cloudBackupListProvider);
+          }
+        },
       );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Restored "$itemName" from cloud.')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Restore failed: $e')),
+        );
+      }
     }
   }
 }

@@ -100,61 +100,7 @@ void main(List<String> args) async {
     return true; // swallow — already logged
   };
 
-  await AppPaths.initialize();
-
-  // Supabase — only initialize when configured via --dart-define.
-  // Without the defines the app runs fully offline (P1: Offline-First).
-  if (SupabaseConfig.isConfigured) {
-    try {
-      await Supabase.initialize(
-        url: SupabaseConfig.url,
-        anonKey: SupabaseConfig.anonKey,
-      );
-    } catch (e, st) {
-      LogBuffer.instance.recordError(e, st, context: 'Supabase.init');
-      debugPrint('Supabase init failed – online features disabled: $e');
-    }
-  }
-
-  // SoLoud audio engine — tüm platformlarda çalışır.
-  // Wrapped in try/catch so the app can still launch when the audio backend
-  // is unavailable (e.g. missing libFLAC on some Linux distros).
-  try {
-    await SoLoud.instance.init();
-  } catch (e, st) {
-    LogBuffer.instance.recordError(e, st, context: 'SoLoud.init');
-    debugPrint('SoLoud init failed – audio disabled: $e');
-  }
-
-  // Desktop window setup
-  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
-    await windowManager.ensureInitialized();
-    await windowManager.waitUntilReadyToShow(
-      const WindowOptions(
-        minimumSize: Size(
-          900,
-          800,
-        ), // TODO: revert to Size(900, 800) after mobile testing
-        title: 'Dungeon Master Tool',
-        titleBarStyle: TitleBarStyle.normal,
-      ),
-      () async {
-        await windowManager.show();
-        await windowManager.focus();
-      },
-    );
-  }
-
-  // UiState'i SharedPreferences'dan yükle
-  final uiStateNotifier = UiStateNotifier();
-  await uiStateNotifier.load();
-
-  runApp(
-    ProviderScope(
-      overrides: [uiStateProvider.overrideWith((_) => uiStateNotifier)],
-      child: const DungeonMasterApp(),
-    ),
-  );
+  runApp(const _BootstrapGate());
 }
 
 /// Secondary entry point for the screencast presentation engine.
@@ -163,3 +109,158 @@ void main(List<String> args) async {
 /// the root library for the function name.
 @pragma('vm:entry-point')
 void screencastMain() => screencast_entry.screencastMain();
+
+/// Splash + bootstrap sequence. Runs the async initialization steps
+/// (AppPaths / Supabase / SoLoud / windowManager / UiState) while showing
+/// a progress card with the current step name, then swaps itself out for
+/// the real app once everything is ready.
+///
+/// Lives OUTSIDE of [ProviderScope] because the loaded [UiStateNotifier]
+/// is passed as an override into the scope we create for [DungeonMasterApp].
+class _BootstrapGate extends StatefulWidget {
+  const _BootstrapGate();
+
+  @override
+  State<_BootstrapGate> createState() => _BootstrapGateState();
+}
+
+class _BootstrapGateState extends State<_BootstrapGate> {
+  String _message = 'Starting Dungeon Master Tool...';
+  UiStateNotifier? _uiStateNotifier;
+  Object? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _bootstrap();
+  }
+
+  void _setMessage(String m) {
+    if (mounted) setState(() => _message = m);
+  }
+
+  Future<void> _bootstrap() async {
+    try {
+      _setMessage('Preparing file system...');
+      await AppPaths.initialize();
+
+      if (SupabaseConfig.isConfigured) {
+        _setMessage('Connecting to cloud...');
+        try {
+          await Supabase.initialize(
+            url: SupabaseConfig.url,
+            anonKey: SupabaseConfig.anonKey,
+          );
+        } catch (e, st) {
+          LogBuffer.instance.recordError(e, st, context: 'Supabase.init');
+          debugPrint('Supabase init failed – online features disabled: $e');
+        }
+      }
+
+      _setMessage('Loading audio engine...');
+      try {
+        await SoLoud.instance.init();
+      } catch (e, st) {
+        LogBuffer.instance.recordError(e, st, context: 'SoLoud.init');
+        debugPrint('SoLoud init failed – audio disabled: $e');
+      }
+
+      if (!kIsWeb &&
+          (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+        _setMessage('Setting up window...');
+        await windowManager.ensureInitialized();
+        await windowManager.waitUntilReadyToShow(
+          const WindowOptions(
+            minimumSize: Size(900, 800),
+            title: 'Dungeon Master Tool',
+            titleBarStyle: TitleBarStyle.normal,
+          ),
+          () async {
+            await windowManager.show();
+            await windowManager.focus();
+          },
+        );
+      }
+
+      _setMessage('Loading settings...');
+      final uiStateNotifier = UiStateNotifier();
+      await uiStateNotifier.load();
+
+      if (!mounted) return;
+      setState(() => _uiStateNotifier = uiStateNotifier);
+    } catch (e, st) {
+      LogBuffer.instance.recordError(e, st, context: 'Bootstrap');
+      if (mounted) setState(() => _error = e);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_error != null) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          backgroundColor: const Color(0xFF1A1814),
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Startup failed:\n$_error',
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_uiStateNotifier == null) {
+      // Splash — dark background, app icon, spinner + bootstrap message.
+      // Colors match the app's dark theme (castle-gold accent on near-black).
+      const bg = Color(0xFF1A1814);
+      const gold = Color(0xFFC8A24B);
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          backgroundColor: bg,
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/app_icon_transparent.png',
+                  width: 160,
+                  height: 160,
+                  filterQuality: FilterQuality.medium,
+                ),
+                const SizedBox(height: 24),
+                const SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(gold),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  _message,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Colors.white70,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return ProviderScope(
+      overrides: [uiStateProvider.overrideWith((_) => _uiStateNotifier!)],
+      child: const DungeonMasterApp(),
+    );
+  }
+}

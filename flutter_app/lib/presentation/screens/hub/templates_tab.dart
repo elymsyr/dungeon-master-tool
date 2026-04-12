@@ -4,10 +4,12 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
+import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/close_guard.dart';
 import '../../widgets/save_info_section.dart';
 import 'template_editor.dart';
 
@@ -37,7 +39,15 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
       return TemplateEditor(
         initial: _activeSchema,
         readOnly: false,
-        onBack: () => setState(() { _mode = null; _activeSchema = null; }),
+        onBack: () async {
+          final ok = await confirmCloseUnconditional(
+            context: context,
+            title: 'Close template editor?',
+          );
+          if (ok && mounted) {
+            setState(() { _mode = null; _activeSchema = null; });
+          }
+        },
         onSave: (schema) async {
           // Existing template? → ask whether to update in place or fork as
           // a new template. New templates (no _activeSchema) skip the prompt.
@@ -47,7 +57,12 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
             if (choice == null || choice == _SaveChoice.cancel) return;
             if (choice == _SaveChoice.saveAsNew) {
               final forked = _cloneAsNew(schema, '${schema.name} (v2)');
-              await ref.read(templateLocalDsProvider).save(forked);
+              await withLoading(
+                ref.read(globalLoadingProvider.notifier),
+                'save-template-new',
+                'Saving template "${forked.name}"...',
+                () => ref.read(templateLocalDsProvider).save(forked),
+              );
               ref.invalidate(builtinTemplateProvider);
               ref.invalidate(customTemplatesProvider);
               ref.invalidate(allTemplatesProvider);
@@ -62,7 +77,12 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
             // _SaveChoice.update falls through to the in-place save below.
           }
 
-          await ref.read(templateLocalDsProvider).save(schema);
+          await withLoading(
+            ref.read(globalLoadingProvider.notifier),
+            'save-template',
+            'Saving template "${schema.name}"...',
+            () => ref.read(templateLocalDsProvider).save(schema),
+          );
           // Invalidate both — the saved file might be the built-in
           // (admin edit path) or a custom template, we don't need to
           // distinguish here.
@@ -283,11 +303,6 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                 itemId: schema.schemaId,
                 type: 'template',
                 localUpdatedAt: localUpdatedAt,
-                onDownloaded: () async {
-                  ref.invalidate(builtinTemplateProvider);
-                  ref.invalidate(customTemplatesProvider);
-                  ref.invalidate(allTemplatesProvider);
-                },
               ),
             ],
           ),

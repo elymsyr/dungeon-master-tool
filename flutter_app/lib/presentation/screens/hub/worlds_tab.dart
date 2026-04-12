@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
+import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/services/template_sync_service.dart';
 import '../../../core/config/app_paths.dart';
@@ -287,38 +288,15 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
   }
 
   Future<void> _loadCampaign(String name) async {
-    // 1. Loading overlay göster
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => PopScope(
-        canPop: false,
-        child: Center(
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Loading "$name"...',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+    // Global loading overlay — unified across all open/close/save/backup
+    // operations. Replaces the old ad-hoc dialog.
+    final success = await withLoading(
+      ref.read(globalLoadingProvider.notifier),
+      'open-world-$name',
+      'Opening world "$name"...',
+      () => ref.read(activeCampaignProvider.notifier).load(name),
     );
 
-    // 2. Yükleme
-    final success = await ref.read(activeCampaignProvider.notifier).load(name);
-
-    // 3. Loading overlay kapat
-    if (mounted) Navigator.of(context, rootNavigator: true).pop();
     if (!success || !mounted) return;
 
     // 4. Template drift check — uyarı dialogu göster (loading sonrası)
@@ -438,11 +416,16 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
 
     TemplateUpdatePrompt? drift;
     try {
-      drift = await ref.read(templateSyncServiceProvider).checkDrift(
+      final result = await ref.read(templateSyncServiceProvider).checkDrift(
         campaignName: campaignName,
         campaignData: data,
         ignoreDismissed: true,
       );
+      drift = result.prompt;
+      if (result.healedHash != null) {
+        data['template_hash'] = result.healedHash!;
+        await ref.read(campaignRepositoryProvider).save(campaignName, data);
+      }
     } catch (_) {
       // Best-effort — show the dialog without drift info.
     }
@@ -475,10 +458,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 itemId: worldId,
                 type: 'world',
                 localUpdatedAt: localUpdatedAt,
-                onDownloaded: () async {
-                  ref.invalidate(campaignListProvider);
-                  ref.invalidate(campaignInfoListProvider);
-                },
               ),
               const SizedBox(height: 12),
               Divider(height: 1, color: palette.featureCardBorder),
@@ -589,7 +568,14 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('World already exists')));
       return;
     }
-    final success = await ref.read(activeCampaignProvider.notifier).create(name, template: _selectedTemplate);
+    final success = await withLoading(
+      ref.read(globalLoadingProvider.notifier),
+      'create-world-$name',
+      'Creating world "$name"...',
+      () => ref
+          .read(activeCampaignProvider.notifier)
+          .create(name, template: _selectedTemplate),
+    );
     if (success && mounted) {
       context.go('/main');
     }

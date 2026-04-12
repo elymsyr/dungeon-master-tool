@@ -9,6 +9,7 @@ import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/confirm_sign_out_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/app_icon_image.dart';
 import '../../widgets/save_sync_indicator.dart';
 import 'packages_tab.dart';
 import 'settings_tab.dart';
@@ -123,7 +124,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
         automaticallyImplyLeading: false,
         title: Row(
           children: [
-            Icon(Icons.castle, size: 20, color: palette.featureCardAccent),
+            const AppIconImage(size: 22),
             const SizedBox(width: 8),
             Flexible(
               child: Text('Dungeon Master Tool',

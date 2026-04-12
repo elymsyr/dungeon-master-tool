@@ -9,6 +9,7 @@ import '../../../core/config/app_paths.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
+import '../../widgets/app_icon_image.dart';
 
 /// Kampanya seçim ekranı — Python ui/campaign_selector.py karşılığı.
 class CampaignSelectorScreen extends ConsumerStatefulWidget {
@@ -45,7 +46,7 @@ class _CampaignSelectorScreenState
             mainAxisSize: MainAxisSize.min,
             children: [
               // Başlık
-              Icon(Icons.castle, size: 48, color: palette.tabIndicator),
+              const AppIconImage(size: 56),
               const SizedBox(height: 12),
               Text(
                 l10n.lblSelectCampaign,

@@ -45,7 +45,7 @@ class UiState {
 
   // Save & Sync
   final bool autoLocalSave;
-  final bool autoCloudBackupBeforeExit;
+  final bool autoCloudSave;
 
   const UiState({
     this.mainTabIndex = 0,
@@ -68,7 +68,7 @@ class UiState {
     this.localeCode = 'en',
     this.volume = 1.0,
     this.autoLocalSave = true,
-    this.autoCloudBackupBeforeExit = false,
+    this.autoCloudSave = false,
   });
 
   UiState copyWith({
@@ -92,7 +92,7 @@ class UiState {
     String? localeCode,
     double? volume,
     bool? autoLocalSave,
-    bool? autoCloudBackupBeforeExit,
+    bool? autoCloudSave,
   }) {
     return UiState(
       mainTabIndex: mainTabIndex ?? this.mainTabIndex,
@@ -115,7 +115,7 @@ class UiState {
       localeCode: localeCode ?? this.localeCode,
       volume: volume ?? this.volume,
       autoLocalSave: autoLocalSave ?? this.autoLocalSave,
-      autoCloudBackupBeforeExit: autoCloudBackupBeforeExit ?? this.autoCloudBackupBeforeExit,
+      autoCloudSave: autoCloudSave ?? this.autoCloudSave,
     );
   }
 
@@ -140,7 +140,7 @@ class UiState {
     'localeCode': localeCode,
     'volume': volume,
     'autoLocalSave': autoLocalSave,
-    'autoCloudBackupBeforeExit': autoCloudBackupBeforeExit,
+    'autoCloudSave': autoCloudSave,
   };
 
   factory UiState.fromJson(Map<String, dynamic> json) {
@@ -174,7 +174,7 @@ class UiState {
       localeCode: json['localeCode'] as String? ?? 'en',
       volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
       autoLocalSave: json['autoLocalSave'] as bool? ?? true,
-      autoCloudBackupBeforeExit: json['autoCloudBackupBeforeExit'] as bool? ?? false,
+      autoCloudSave: json['autoCloudSave'] as bool? ?? false,
     );
   }
 }

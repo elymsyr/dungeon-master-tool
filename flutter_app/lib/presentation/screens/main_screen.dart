@@ -5,10 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../application/providers/auth_provider.dart';
 import '../../application/providers/campaign_provider.dart';
-import '../../application/providers/cloud_sync_provider.dart';
 import '../../application/providers/entity_provider.dart';
+import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/locale_provider.dart';
 import '../../application/providers/projection_output_provider.dart';
 import '../../application/providers/projection_provider.dart';
@@ -20,7 +19,6 @@ import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../application/services/template_sync_service.dart';
-import '../../core/config/supabase_config.dart';
 import '../../core/utils/screen_type.dart';
 import '../../application/providers/media_provider.dart';
 import '../dialogs/bug_report_dialog.dart';
@@ -29,6 +27,8 @@ import '../dialogs/media_gallery_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
+import '../widgets/app_icon_image.dart';
+import '../widgets/close_guard.dart';
 import '../widgets/entity_sidebar.dart';
 import '../widgets/pdf_sidebar.dart';
 import '../widgets/projection/projection_status_icon.dart';
@@ -109,28 +109,33 @@ class _MainScreenState extends ConsumerState<MainScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
+      // Best-effort local save when the OS pauses/detaches us. Cloud
+      // backup is deliberately NOT auto-triggered here — the user asked
+      // for explicit control over cloud backups.
       ref.read(saveStateProvider.notifier).saveNow();
-      // Auto cloud backup before exit (opt-in)
-      if (ref.read(uiStateProvider).autoCloudBackupBeforeExit &&
-          SupabaseConfig.isConfigured &&
-          ref.read(authProvider) != null) {
-        ref.read(cloudSyncProvider.notifier).syncNow();
-      }
     }
   }
 
   /// Hub'a donuse tetiklenen ortak exit akisi:
-  /// 1) Local save (saveNow)
-  /// 2) autoCloudBackupBeforeExit aciksa cloud sync
+  /// 1) Local save (saveNow) — loading overlay ile
+  /// 2) Close guard: local ve/veya cloud state guncel degilse kullaniciya sor
   /// 3) Campaign list provider'larini invalidate et
   /// 4) /hub'a git
   Future<void> _exitToHub() async {
-    await ref.read(saveStateProvider.notifier).saveNow();
-    if (ref.read(uiStateProvider).autoCloudBackupBeforeExit &&
-        SupabaseConfig.isConfigured &&
-        ref.read(authProvider) != null) {
-      await ref.read(cloudSyncProvider.notifier).syncNow();
-    }
+    await withLoading(
+      ref.read(globalLoadingProvider.notifier),
+      'save-world',
+      'Saving world...',
+      () => ref.read(saveStateProvider.notifier).saveNow(),
+    );
+    if (!mounted) return;
+    final campaignName = ref.read(activeCampaignProvider) ?? 'World';
+    final proceed = await confirmCloseWithBackupCheck(
+      context: context,
+      ref: ref,
+      itemName: campaignName,
+    );
+    if (!proceed) return;
     ref.invalidate(campaignListProvider);
     ref.invalidate(campaignInfoListProvider);
     if (mounted) context.go('/hub');
@@ -433,7 +438,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
         automaticallyImplyLeading: false,
         title: Row(
           children: [
-            Icon(Icons.castle, size: 20, color: palette.tabIndicator),
+            const AppIconImage(size: 22),
             const SizedBox(width: 8),
             Flexible(
               child: Text(

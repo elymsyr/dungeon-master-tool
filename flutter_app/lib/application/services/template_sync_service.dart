@@ -33,6 +33,23 @@ class TemplateUpdatePrompt {
 final pendingTemplateUpdateProvider =
     StateProvider<TemplateUpdatePrompt?>((ref) => null);
 
+/// Result of [TemplateSyncService.checkDrift]. Either surfaces a prompt,
+/// silently heals the stored template_hash, or indicates no action needed.
+class DriftCheckResult {
+  /// Non-null when the user should see a drift prompt.
+  final TemplateUpdatePrompt? prompt;
+
+  /// Non-null when the recorded `template_hash` differs from the current
+  /// template hash BUT no semantic changes exist (diff is empty). Callers
+  /// must persist this value into `campaignData['template_hash']` and save,
+  /// so subsequent opens match cleanly and don't recompute the diff.
+  final String? healedHash;
+
+  const DriftCheckResult({this.prompt, this.healedHash});
+
+  static const none = DriftCheckResult();
+}
+
 /// Lazy template-sync logic. Compares a freshly loaded campaign's recorded
 /// template hash against the current on-disk template's content hash and
 /// returns a prompt payload if they differ. Returns null if there is no
@@ -65,18 +82,18 @@ class TemplateSyncService {
   /// and a null `template_hash`. Those are treated as "out of sync" on
   /// first open so the user gets a one-time chance to refresh against the
   /// current built-in template.
-  Future<TemplateUpdatePrompt?> checkDrift({
+  Future<DriftCheckResult> checkDrift({
     required String campaignName,
     required Map<String, dynamic> campaignData,
     bool ignoreDismissed = false,
   }) async {
     final templateId = campaignData['template_id'] as String?;
     final originalHash = campaignData['template_original_hash'] as String?;
-    if (templateId == null && originalHash == null) return null;
+    if (templateId == null && originalHash == null) return DriftCheckResult.none;
 
     // Permanently muted — user chose "Do not show again" for this campaign.
     final muted = campaignData['template_updates_muted'] as bool? ?? false;
-    if (muted) return null;
+    if (muted) return DriftCheckResult.none;
     final recordedHash = campaignData['template_hash'] as String?;
 
     final all = await _ref.read(allTemplatesProvider.future);
@@ -104,17 +121,17 @@ class TemplateSyncService {
     }
     if (template == null) {
       // Source template was deleted — nothing to sync against. Stay quiet.
-      return null;
+      return DriftCheckResult.none;
     }
 
     final currentHash = computeWorldSchemaContentHash(template);
-    if (currentHash == recordedHash) return null;
+    if (currentHash == recordedHash) return DriftCheckResult.none;
 
     // User previously dismissed this exact template version — stay quiet
     // until the template is edited again (producing a new hash).
     if (!ignoreDismissed) {
       final dismissedHash = campaignData['template_dismissed_hash'] as String?;
-      if (currentHash == dismissedHash) return null;
+      if (currentHash == dismissedHash) return DriftCheckResult.none;
     }
 
     // Compute a human-readable diff between the campaign's current schema
@@ -132,14 +149,24 @@ class TemplateSyncService {
       }
     }
 
-    return TemplateUpdatePrompt(
-      campaignName: campaignName,
-      templateId: template.schemaId,
-      templateName: template.name,
-      oldHash: recordedHash,
-      newHash: currentHash,
-      newTemplate: template,
-      diffSummary: diff,
+    // Semantic safeguard: hash mismatch but no actual semantic changes.
+    // Heal the recorded hash silently so the user isn't nagged about a
+    // non-difference. This catches serialization drift, lazy-init of
+    // originalHash, and any future non-determinism in the hash function.
+    if (diff.isEmpty) {
+      return DriftCheckResult(healedHash: currentHash);
+    }
+
+    return DriftCheckResult(
+      prompt: TemplateUpdatePrompt(
+        campaignName: campaignName,
+        templateId: template.schemaId,
+        templateName: template.name,
+        oldHash: recordedHash,
+        newHash: currentHash,
+        newTemplate: template,
+        diffSummary: diff,
+      ),
     );
   }
 }

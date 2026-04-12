@@ -8,6 +8,7 @@ import '../../../application/providers/user_session_provider.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/app_icon_image.dart';
 
 class LandingScreen extends ConsumerStatefulWidget {
   const LandingScreen({super.key});
@@ -82,7 +83,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.castle, size: size.width > 600 ? 96 : 72, color: palette.featureCardAccent),
+              AppIconImage(size: size.width > 600 ? 96 : 72),
               const SizedBox(height: 16),
               Text(
                 'Dungeon Master Tool',
@@ -130,7 +131,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // ── Header ──
-                  Icon(Icons.castle, size: isWide ? 48 : 36, color: palette.featureCardAccent),
+                  AppIconImage(size: isWide ? 48 : 36),
                   const SizedBox(height: 8),
                   Text(
                     'Dungeon Master Tool',
