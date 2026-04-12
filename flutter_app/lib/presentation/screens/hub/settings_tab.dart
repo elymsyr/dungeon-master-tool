@@ -57,12 +57,12 @@ class SettingsTab extends ConsumerWidget {
                   final isSelected = name == currentTheme;
 
                   return InkWell(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: palette.br,
                     onTap: () => ref.read(themeProvider.notifier).setTheme(name),
                     child: Container(
                       decoration: BoxDecoration(
                         color: p.canvasBg,
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: palette.br,
                         border: Border.all(
                           color: isSelected ? p.featureCardAccent : palette.featureCardBorder,
                           width: isSelected ? 2 : 1,
@@ -189,7 +189,7 @@ class SettingsTab extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
                               color: palette.featureCardBg,
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: palette.br,
                               border: Border.all(color: palette.featureCardBorder),
                             ),
                             child: Row(
@@ -623,7 +623,7 @@ class _ThemeCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: palette.featureCardBg,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: palette.br,
         border: Border.all(color: palette.featureCardBorder),
       ),
       child: Row(
@@ -680,7 +680,7 @@ class _SoundRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: palette.featureCardBg,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: palette.br,
         border: Border.all(color: palette.featureCardBorder),
       ),
       child: Row(

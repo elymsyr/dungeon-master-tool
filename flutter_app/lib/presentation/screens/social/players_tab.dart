@@ -50,7 +50,7 @@ class PlayersTab extends ConsumerWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: palette.featureCardAccent,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(borderRadius: palette.br),
                   textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 ),
                 onPressed: () => CreateListingDialog.show(context),
@@ -238,7 +238,7 @@ class _MetaChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: palette.cbr,
         border: Border.all(color: palette.featureCardBorder),
       ),
       child: Row(

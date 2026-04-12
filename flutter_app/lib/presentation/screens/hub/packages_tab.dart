@@ -67,7 +67,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           color: palette.featureCardBg,
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: palette.br,
                           border: Border.all(color: palette.featureCardBorder),
                         ),
                         child: Center(
@@ -89,7 +89,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                           final info = packages[index];
                           final isSelected = index == _selectedIndex;
                           return InkWell(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: palette.br,
                             onTap: () =>
                                 setState(() => _selectedIndex = index),
                             onDoubleTap: () => _loadPackage(info.name),
@@ -101,7 +101,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                                     ? palette.featureCardAccent
                                         .withValues(alpha: 0.1)
                                     : palette.featureCardBg,
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: palette.br,
                                 border: Border.all(
                                   color: isSelected
                                       ? palette.featureCardAccent
@@ -147,7 +147,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                                     ),
                                   ),
                                   InkWell(
-                                    borderRadius: BorderRadius.circular(4),
+                                    borderRadius: palette.br,
                                     onTap: () => _showPackageSettings(info.name, palette),
                                     child: Padding(
                                       padding: const EdgeInsets.all(4),

@@ -171,7 +171,7 @@ class _ProfileBody extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: palette.featureCardBg,
                   border: Border.all(color: palette.featureCardBorder),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: palette.cbr,
                 ),
                 child: Column(
                   children: [
@@ -201,7 +201,7 @@ class _CountTile extends StatelessWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: palette.br,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Column(

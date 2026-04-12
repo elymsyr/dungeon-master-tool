@@ -230,7 +230,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: palette.featureCardBg,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: palette.cbr,
                         border: Border.all(color: palette.featureCardBorder),
                       ),
                       child: TextField(
@@ -247,9 +247,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   const SizedBox(width: 8),
                   Material(
                     color: palette.featureCardAccent,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: palette.cbr,
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: palette.cbr,
                       onTap: _sending ? null : _send,
                       child: Padding(
                         padding: const EdgeInsets.all(12),

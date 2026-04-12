@@ -361,13 +361,13 @@ class _TemplateCard extends StatelessWidget {
     final totalFields = schema.categories.fold<int>(0, (sum, c) => sum + c.fields.length);
 
     return InkWell(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: palette.br,
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: palette.featureCardBg,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: palette.br,
           border: Border.all(color: palette.featureCardBorder),
         ),
         child: Row(
@@ -384,7 +384,7 @@ class _TemplateCard extends StatelessWidget {
                       if (!isCustom)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                          decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: BorderRadius.circular(3)),
+                          decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: palette.br),
                           child: Text('Built-in', style: TextStyle(fontSize: 9, color: palette.tabText)),
                         ),
                     ],

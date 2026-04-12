@@ -175,7 +175,7 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     required this.featureCardBorder,
     required this.featureCardAccent,
     this.borderRadius = 4,
-    this.cardBorderRadius = 4,
+    this.cardBorderRadius = 8,
     this.buttonPaddingH = 10,
     this.buttonPaddingV = 4,
     this.useBorders = true,
@@ -190,6 +190,9 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     this.buttonPressBg = const Color(0xFF2B2B2B),
     required this.mapBg,
   });
+
+  BorderRadius get br => BorderRadius.circular(borderRadius);
+  BorderRadius get cbr => BorderRadius.circular(cardBorderRadius);
 
   @override
   ThemeExtension<DmToolColors> copyWith({

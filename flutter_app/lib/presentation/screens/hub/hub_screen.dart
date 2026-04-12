@@ -292,7 +292,7 @@ class _SideRailButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: palette.br,
     );
     return Material(
       color: selected
@@ -301,7 +301,7 @@ class _SideRailButton extends StatelessWidget {
       shape: shape,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: palette.br,
         child: Tooltip(
           message: tooltip,
           child: SizedBox(

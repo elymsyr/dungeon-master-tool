@@ -91,7 +91,7 @@ class _PillBar extends StatelessWidget {
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: palette.featureCardBg,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: palette.cbr,
                   border: Border.all(color: palette.featureCardBorder),
                 ),
                 child: Row(
@@ -99,7 +99,7 @@ class _PillBar extends StatelessWidget {
                   children: tabs.map((t) {
                     final isActive = t.$1 == currentTab;
                     return InkWell(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: palette.br,
                       onTap: () => onTabChanged(t.$1),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
@@ -109,7 +109,7 @@ class _PillBar extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: isActive ? palette.featureCardAccent : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: palette.br,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -168,7 +168,7 @@ class SocialCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: palette.featureCardBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: palette.cbr,
         border: Border.all(color: palette.featureCardBorder),
       ),
       child: child,
@@ -177,7 +177,7 @@ class SocialCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: palette.cbr,
         onTap: onTap,
         child: card,
       ),

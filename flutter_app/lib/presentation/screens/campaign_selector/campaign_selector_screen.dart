@@ -86,7 +86,7 @@ class _CampaignSelectorScreenState
                               selectedTileColor:
                                   palette.tabIndicator.withValues(alpha: 0.1),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: palette.cbr,
                               ),
                               onTap: () =>
                                   setState(() => _selectedIndex = index),

@@ -119,7 +119,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                       style: FilledButton.styleFrom(
                         backgroundColor: palette.featureCardAccent,
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(borderRadius: palette.br),
                       ),
                       onPressed: composerState is AsyncLoading || _bodyCtrl.text.trim().isEmpty
                           ? null
@@ -280,7 +280,7 @@ class _PostCard extends ConsumerWidget {
           if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
             const SizedBox(height: 12),
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: palette.cbr,
               child: Image.network(post.imageUrl!, fit: BoxFit.cover),
             ),
           ],
@@ -523,7 +523,7 @@ class _FeedListingCard extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: palette.featureCardAccent.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: palette.br,
                   ),
                   child: Text(
                     listing.system!,
@@ -556,7 +556,7 @@ class _FeedListingCard extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: palette.featureCardBg,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: palette.cbr,
                       border: Border.all(color: palette.featureCardBorder),
                     ),
                     child: Row(
@@ -574,7 +574,7 @@ class _FeedListingCard extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: palette.featureCardBg,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: palette.cbr,
                       border: Border.all(color: palette.featureCardBorder),
                     ),
                     child: Text('#$t',
@@ -633,7 +633,7 @@ class _FeedListingCard extends ConsumerWidget {
                           horizontal: 14, vertical: 6),
                       minimumSize: const Size(0, 30),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6)),
+                          borderRadius: palette.br),
                     ),
                     child: Text(l10n.listingApply,
                         style: const TextStyle(
