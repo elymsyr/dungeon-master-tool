@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/supabase_config.dart';
 import '../../data/datasources/remote/shared_items_remote_ds.dart';
+import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/shared_item.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
@@ -30,12 +31,16 @@ class ItemVisibilityNotifier extends StateNotifier<AsyncValue<void>> {
   final Ref _ref;
   ItemVisibilityNotifier(this._ref) : super(const AsyncValue.data(null));
 
-  /// Public'e al: yerel payload'ı yükle.
+  /// Public'e al: yerel payload'ı yükle. Description, language ve tags
+  /// marketplace görüntülenmesi için zorunlu niteliktedir ama zorunlu
+  /// constraint'ler yalnızca UI'da (publish dialog) uygulanır.
   Future<bool> publish({
     required String itemType,
     required String localId,
     required String title,
     String? description,
+    String? language,
+    List<String> tags = const [],
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -45,6 +50,8 @@ class ItemVisibilityNotifier extends StateNotifier<AsyncValue<void>> {
             localId: localId,
             title: title,
             description: description,
+            language: language,
+            tags: tags,
             payload: payload,
           );
       _ref.invalidate(itemVisibilityProvider((itemType: itemType, localId: localId)));
@@ -89,6 +96,54 @@ class ItemVisibilityNotifier extends StateNotifier<AsyncValue<void>> {
         return {'world_schema': tpl.toJson()};
       case 'package':
         return _ref.read(packageRepositoryProvider).load(localId);
+    }
+    throw ArgumentError('Unknown itemType: $itemType');
+  }
+
+  /// Marketplace'ten bir item'ı indir, yerel DB'ye kaydet ve download_count'u
+  /// 1 artır. Çakışan isimler için otomatik " (imported)" eki uygulanır.
+  Future<bool> downloadAndImport({
+    required String itemId,
+    required String itemType,
+    required String payloadPath,
+    required String title,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      final payload = await _ref.read(sharedItemsRemoteDsProvider).download(
+            itemId: itemId,
+            payloadPath: payloadPath,
+          );
+      await _importPayload(itemType, title, payload);
+      state = const AsyncValue.data(null);
+      return true;
+    } catch (e, st) {
+      debugPrint('Download error: $e\n$st');
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+
+  Future<void> _importPayload(
+    String itemType,
+    String title,
+    Map<String, dynamic> payload,
+  ) async {
+    switch (itemType) {
+      case 'world':
+        await _ref.read(campaignRepositoryProvider).save(title, payload);
+        return;
+      case 'package':
+        await _ref.read(packageRepositoryProvider).save(title, payload);
+        return;
+      case 'template':
+        final raw = payload['world_schema'];
+        if (raw is! Map<String, dynamic>) {
+          throw StateError('Invalid template payload: world_schema missing');
+        }
+        final schema = WorldSchema.fromJson(raw);
+        await _ref.read(templateLocalDsProvider).save(schema);
+        return;
     }
     throw ArgumentError('Unknown itemType: $itemType');
   }

@@ -17,6 +17,9 @@ abstract class GameListing with _$GameListing {
     String? schedule,
     @Default(true) bool isOpen,
     required DateTime createdAt,
+    String? gameLanguage,
+    @Default(<String>[]) List<String> tags,
+    @Default(0) int applicationCount,
   }) = _GameListing;
 
   factory GameListing.fromJson(Map<String, dynamic> json) =>

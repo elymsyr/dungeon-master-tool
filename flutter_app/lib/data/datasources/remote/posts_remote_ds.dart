@@ -8,7 +8,7 @@ import '../../../domain/entities/post.dart';
 /// `posts` tablosu + `post-images` Storage bucket. Image upload size_bytes
 /// olarak `posts.size_bytes` ve dolaylı olarak `get_user_total_storage_used`
 /// quota'sına yansır.
-enum FeedScope { all, following }
+enum FeedScope { all, following, gameLists }
 
 class PostsRemoteDataSource {
   static const _table = 'posts';
@@ -32,6 +32,7 @@ class PostsRemoteDataSource {
   }) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) return const [];
+    if (scope == FeedScope.gameLists) return const [];
 
     List<String>? authorIds;
     if (scope == FeedScope.following) {

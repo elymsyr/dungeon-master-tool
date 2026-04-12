@@ -132,6 +132,19 @@ class ProfilesRemoteDataSource {
     return rows.map((r) => _rowToProfile(r as Map<String, dynamic>)).toList();
   }
 
+  /// Auth user'a önerilen kullanıcılar (henüz takip edilmeyen, en çok
+  /// takipçiye sahip olanlar). Marketplace sağ panelinde kullanılır.
+  Future<List<UserProfile>> suggested({int limit = 10}) async {
+    final rows = await _client.rpc('suggested_profiles', params: {'p_limit': limit});
+    if (rows is! List) return const [];
+    return rows
+        .map((r) => _rowToProfile(
+              r as Map<String, dynamic>,
+              followers: (r['followers'] as int?) ?? 0,
+            ))
+        .toList();
+  }
+
   UserProfile _rowToProfile(
     Map<String, dynamic> row, {
     int followers = 0,

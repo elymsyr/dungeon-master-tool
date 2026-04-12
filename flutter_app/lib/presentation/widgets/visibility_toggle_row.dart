@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/auth_provider.dart';
 import '../../application/providers/item_visibility_provider.dart';
 import '../../core/config/supabase_config.dart';
+import '../dialogs/publish_item_dialog.dart';
 import '../theme/dm_tool_colors.dart';
 
 /// World/template/package settings dialog'larında public/private switch.
@@ -77,11 +78,22 @@ class VisibilityToggleRow extends ConsumerWidget {
                     : (v) async {
                         final notifier = ref.read(itemVisibilityNotifierProvider.notifier);
                         if (v) {
+                          final result = await PublishItemDialog.show(
+                            context,
+                            title: title,
+                            itemTypeLabel: _itemTypeLabel(itemType),
+                            initialDescription: shared?.description ?? description,
+                            initialLanguage: shared?.language,
+                            initialTags: shared?.tags,
+                          );
+                          if (result == null) return;
                           await notifier.publish(
                             itemType: itemType,
                             localId: localId,
                             title: title,
-                            description: description,
+                            description: result.description,
+                            language: result.language,
+                            tags: result.tags,
                           );
                         } else {
                           await notifier.unpublish(itemType: itemType, localId: localId);
@@ -93,5 +105,17 @@ class VisibilityToggleRow extends ConsumerWidget {
         );
       },
     );
+  }
+
+  String _itemTypeLabel(String type) {
+    switch (type) {
+      case 'world':
+        return 'World';
+      case 'template':
+        return 'Template';
+      case 'package':
+        return 'Package';
+    }
+    return type;
   }
 }

@@ -26,7 +26,7 @@ class SocialShell extends StatelessWidget {
     final l10n = L10n.of(context)!;
     final tabs = <(String, IconData, String)>[
       ('feed', Icons.dynamic_feed_outlined, l10n.socialTabFeed),
-      ('players', Icons.groups_outlined, l10n.socialTabPlayers),
+      ('players', Icons.groups_outlined, l10n.socialTabGameListings),
       ('messages', Icons.chat_bubble_outline, l10n.socialTabMessages),
       ('marketplace', Icons.storefront_outlined, l10n.socialTabMarketplace),
     ];

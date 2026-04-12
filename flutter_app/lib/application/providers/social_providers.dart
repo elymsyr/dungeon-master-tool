@@ -6,11 +6,15 @@ import '../../core/utils/profanity_filter.dart';
 import '../../data/datasources/remote/game_listings_remote_ds.dart';
 import '../../data/datasources/remote/messages_remote_ds.dart';
 import '../../data/datasources/remote/posts_remote_ds.dart' show PostsRemoteDataSource, FeedScope;
+import '../../data/datasources/remote/profiles_remote_ds.dart';
 import '../../domain/entities/conversation.dart';
 import '../../domain/entities/game_listing.dart';
+import '../../domain/entities/game_listing_application.dart';
 import '../../domain/entities/post.dart';
 import '../../domain/entities/shared_item.dart';
+import '../../domain/entities/user_profile.dart';
 import 'auth_provider.dart';
+import 'follows_provider.dart';
 import 'item_visibility_provider.dart';
 
 // ── Remote DS singletons ────────────────────────────────────────────
@@ -36,18 +40,38 @@ final feedProvider = FutureProvider<List<Post>>((ref) async {
   return ref.read(postsRemoteDsProvider).fetchFeed(scope: scope);
 });
 
-/// Bir post'u beğen / beğeniyi geri al. Optimistic update + feed invalidate.
+/// Bir post'un lokal override'ı (optimistic): beğeni sayısı + likedByMe.
+/// UI, feed'ten gelen post'u bu override ile maskeleyebilir.
+class PostLikeOverride {
+  final bool likedByMe;
+  final int likeCount;
+  const PostLikeOverride({required this.likedByMe, required this.likeCount});
+}
+
+final postLikeOverrideProvider =
+    StateProvider.family<PostLikeOverride?, String>((ref, postId) => null);
+
+/// Bir post'u beğen / beğeniyi geri al. Optimistic: UI anında güncellenir,
+/// DB arka planda çalışır. Hata olursa override geri alınır.
 class PostLikeNotifier extends StateNotifier<AsyncValue<void>> {
   final Ref _ref;
   PostLikeNotifier(this._ref) : super(const AsyncValue.data(null));
 
-  Future<void> toggle(String postId) async {
-    state = const AsyncValue.loading();
+  Future<void> toggle(String postId, {required Post currentPost}) async {
+    final prevOverride = _ref.read(postLikeOverrideProvider(postId));
+    final currentLiked = prevOverride?.likedByMe ?? currentPost.likedByMe;
+    final currentCount = prevOverride?.likeCount ?? currentPost.likeCount;
+    final nextLiked = !currentLiked;
+    final nextCount = currentCount + (nextLiked ? 1 : -1);
+    _ref.read(postLikeOverrideProvider(postId).notifier).state =
+        PostLikeOverride(likedByMe: nextLiked, likeCount: nextCount < 0 ? 0 : nextCount);
+
     try {
       await _ref.read(postsRemoteDsProvider).toggleLike(postId);
       _ref.invalidate(feedProvider);
       state = const AsyncValue.data(null);
     } catch (e, st) {
+      _ref.read(postLikeOverrideProvider(postId).notifier).state = prevOverride;
       state = AsyncValue.error(e, st);
     }
   }
@@ -105,11 +129,68 @@ final postComposerProvider =
 
 // ── Game listings ───────────────────────────────────────────────────
 
+/// Feed "Game Lists" sekmesi ve Game Listings tab'ı için filtre state'i.
+/// null değerler "hepsi" anlamına gelir.
+class GameListingFilters {
+  final String? gameLanguage;
+  final String? system;
+  final String? tag;
+  const GameListingFilters({this.gameLanguage, this.system, this.tag});
+
+  GameListingFilters copyWith({
+    Object? gameLanguage = _sentinel,
+    Object? system = _sentinel,
+    Object? tag = _sentinel,
+  }) =>
+      GameListingFilters(
+        gameLanguage: gameLanguage == _sentinel ? this.gameLanguage : gameLanguage as String?,
+        system: system == _sentinel ? this.system : system as String?,
+        tag: tag == _sentinel ? this.tag : tag as String?,
+      );
+
+  static const _sentinel = Object();
+}
+
+final gameListingFiltersProvider =
+    StateProvider<GameListingFilters>((_) => const GameListingFilters());
+
 final openGameListingsProvider = FutureProvider<List<GameListing>>((ref) async {
   if (!SupabaseConfig.isConfigured) return const [];
   final auth = ref.watch(authProvider);
   if (auth == null) return const [];
-  return ref.read(gameListingsRemoteDsProvider).fetchOpen();
+  final filters = ref.watch(gameListingFiltersProvider);
+  return ref.read(gameListingsRemoteDsProvider).fetchOpen(
+        gameLanguage: filters.gameLanguage,
+        system: filters.system,
+        tag: filters.tag,
+      );
+});
+
+/// Auth user'ın kendi ilanları (başvuru sayılarıyla birlikte).
+final myGameListingsProvider = FutureProvider<List<GameListing>>((ref) async {
+  if (!SupabaseConfig.isConfigured) return const [];
+  final auth = ref.watch(authProvider);
+  if (auth == null) return const [];
+  return ref.read(gameListingsRemoteDsProvider).fetchMine();
+});
+
+/// Belirli bir listing'e gelen başvurular (listing owner'ı için).
+final listingApplicationsProvider =
+    FutureProvider.family<List<GameListingApplication>, String>(
+  (ref, listingId) async {
+    if (!SupabaseConfig.isConfigured) return const [];
+    return ref.read(gameListingsRemoteDsProvider).fetchApplicationsFor(listingId);
+  },
+);
+
+/// Auth user, verilen listing'e başvurdu mu? (feed'de "Başvuru yap" vs
+/// "Başvuruldu" durumunu göstermek için.)
+final hasAppliedProvider =
+    FutureProvider.family<bool, String>((ref, listingId) async {
+  if (!SupabaseConfig.isConfigured) return false;
+  final auth = ref.watch(authProvider);
+  if (auth == null) return false;
+  return ref.read(gameListingsRemoteDsProvider).hasApplied(listingId);
 });
 
 class GameListingComposerNotifier extends StateNotifier<AsyncValue<void>> {
@@ -122,6 +203,8 @@ class GameListingComposerNotifier extends StateNotifier<AsyncValue<void>> {
     String? system,
     int? seatsTotal,
     String? schedule,
+    String? gameLanguage,
+    List<String> tags = const [],
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -131,8 +214,11 @@ class GameListingComposerNotifier extends StateNotifier<AsyncValue<void>> {
             system: system,
             seatsTotal: seatsTotal,
             schedule: schedule,
+            gameLanguage: gameLanguage,
+            tags: tags,
           );
       _ref.invalidate(openGameListingsProvider);
+      _ref.invalidate(myGameListingsProvider);
       state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {
@@ -145,6 +231,46 @@ class GameListingComposerNotifier extends StateNotifier<AsyncValue<void>> {
 final gameListingComposerProvider =
     StateNotifierProvider<GameListingComposerNotifier, AsyncValue<void>>(
   (ref) => GameListingComposerNotifier(ref),
+);
+
+/// Başvuru yap / geri çek için optimistic notifier.
+class ListingApplicationNotifier extends StateNotifier<AsyncValue<void>> {
+  final Ref _ref;
+  ListingApplicationNotifier(this._ref) : super(const AsyncValue.data(null));
+
+  Future<bool> apply({required String listingId, required String message}) async {
+    state = const AsyncValue.loading();
+    try {
+      await _ref.read(gameListingsRemoteDsProvider).apply(
+            listingId: listingId,
+            message: message,
+          );
+      _ref.invalidate(hasAppliedProvider(listingId));
+      _ref.invalidate(listingApplicationsProvider(listingId));
+      _ref.invalidate(myGameListingsProvider);
+      state = const AsyncValue.data(null);
+      return true;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+
+  Future<void> withdraw(String listingId) async {
+    try {
+      await _ref.read(gameListingsRemoteDsProvider).withdrawApplication(listingId);
+      _ref.invalidate(hasAppliedProvider(listingId));
+      _ref.invalidate(listingApplicationsProvider(listingId));
+      _ref.invalidate(myGameListingsProvider);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+}
+
+final listingApplicationProvider =
+    StateNotifierProvider<ListingApplicationNotifier, AsyncValue<void>>(
+  (ref) => ListingApplicationNotifier(ref),
 );
 
 // ── Conversations / messages ────────────────────────────────────────
@@ -171,18 +297,76 @@ class MarketplaceEntry {
   const MarketplaceEntry({required this.item, this.ownerUsername});
 }
 
-/// Marketplace filtresi: 'all' | 'world' | 'template' | 'package'.
-final marketplaceFilterProvider = StateProvider<String>((_) => 'all');
+class MarketplaceFilters {
+  final String type; // 'all' | 'world' | 'template' | 'package'
+  final String? language;
+  final String? tag;
+  const MarketplaceFilters({this.type = 'all', this.language, this.tag});
+
+  MarketplaceFilters copyWith({
+    String? type,
+    Object? language = _sentinel,
+    Object? tag = _sentinel,
+  }) =>
+      MarketplaceFilters(
+        type: type ?? this.type,
+        language: language == _sentinel ? this.language : language as String?,
+        tag: tag == _sentinel ? this.tag : tag as String?,
+      );
+
+  static const _sentinel = Object();
+}
+
+final marketplaceFiltersProvider =
+    StateProvider<MarketplaceFilters>((_) => const MarketplaceFilters());
+
+/// Eski filtre provider'ı bazı yerlerde `type` için hâlâ kullanılıyor
+/// olabilir — tutarlılık için geri uyumlu shortcut.
+final marketplaceFilterProvider = StateProvider<String>((ref) {
+  return ref.watch(marketplaceFiltersProvider).type;
+});
 
 final marketplaceProvider = FutureProvider<List<MarketplaceEntry>>((ref) async {
   if (!SupabaseConfig.isConfigured) return const [];
   final auth = ref.watch(authProvider);
   if (auth == null) return const [];
-  final filter = ref.watch(marketplaceFilterProvider);
+  final filters = ref.watch(marketplaceFiltersProvider);
   final rows = await ref.read(sharedItemsRemoteDsProvider).listAllPublic(
-        itemType: filter == 'all' ? null : filter,
+        itemType: filters.type == 'all' ? null : filters.type,
+        language: filters.language,
+        tag: filters.tag,
       );
   return rows
       .map((r) => MarketplaceEntry(item: r.item, ownerUsername: r.ownerUsername))
       .toList();
+});
+
+// ── Suggested users (marketplace right panel) ────────────────────────
+
+final profilesRemoteDsProvider =
+    Provider<ProfilesRemoteDataSource>((_) => ProfilesRemoteDataSource());
+
+final suggestedUsersProvider = FutureProvider<List<UserProfile>>((ref) async {
+  if (!SupabaseConfig.isConfigured) return const [];
+  final auth = ref.watch(authProvider);
+  if (auth == null) return const [];
+  return ref.read(profilesRemoteDsProvider).suggested();
+});
+
+/// Marketplace sağ panelinde "followed + suggested" birleşik görünümü.
+/// Önce takip edilenler, sonra öneriler (takip edilenler hariç) döner.
+final marketplacePlayersProvider = FutureProvider<List<UserProfile>>((ref) async {
+  if (!SupabaseConfig.isConfigured) return const [];
+  final auth = ref.watch(authProvider);
+  if (auth == null) return const [];
+  final uid = auth.uid;
+  final followedFuture = ref.read(followsRemoteDsProvider).followingOf(uid);
+  final suggestedFuture = ref.read(profilesRemoteDsProvider).suggested(limit: 10);
+  final followed = await followedFuture;
+  final suggested = await suggestedFuture;
+  final seen = <String>{for (final p in followed) p.userId};
+  return [
+    ...followed,
+    ...suggested.where((p) => !seen.contains(p.userId)),
+  ];
 });

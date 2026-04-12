@@ -4,8 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/follows_provider.dart';
 import '../../../application/providers/profile_provider.dart';
+import '../../../application/providers/social_providers.dart';
 import '../../../domain/entities/user_profile.dart';
+import '../../dialogs/follow_list_dialog.dart';
 import '../../dialogs/profile_edit_dialog.dart';
+import '../../l10n/app_localizations.dart';
+import '../social/messages_tab.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/profile_avatar.dart';
 
@@ -128,9 +132,25 @@ class _ProfileBody extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _CountTile(label: 'Followers', value: profile.followers),
+                  _CountTile(
+                    label: L10n.of(context)!.profileFollowersDialog,
+                    value: profile.followers,
+                    onTap: () => FollowListDialog.show(
+                      context,
+                      userId: profile.userId,
+                      mode: FollowListMode.followers,
+                    ),
+                  ),
                   const SizedBox(width: 32),
-                  _CountTile(label: 'Following', value: profile.following),
+                  _CountTile(
+                    label: L10n.of(context)!.profileFollowingDialog,
+                    value: profile.following,
+                    onTap: () => FollowListDialog.show(
+                      context,
+                      userId: profile.userId,
+                      mode: FollowListMode.following,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -173,17 +193,25 @@ class _ProfileBody extends ConsumerWidget {
 class _CountTile extends StatelessWidget {
   final String label;
   final int value;
-  const _CountTile({required this.label, required this.value});
+  final VoidCallback? onTap;
+  const _CountTile({required this.label, required this.value, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    return Column(
-      children: [
-        Text('$value',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
-        Text(label, style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
-      ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Column(
+          children: [
+            Text('$value',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+            Text(label, style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -194,43 +222,59 @@ class _FollowButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = L10n.of(context)!;
     final following = ref.watch(isFollowingProvider(targetUserId));
+    final override = ref.watch(followOverrideProvider(targetUserId));
     final toggleState = ref.watch(followToggleProvider);
     final palette = Theme.of(context).extension<DmToolColors>()!;
 
-    return following.when(
-      loading: () => const SizedBox(width: 120, height: 36, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
-      error: (e, st) => const Text('Error loading follow state'),
-      data: (isFollowing) {
-        final busy = toggleState is AsyncLoading;
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FilledButton.icon(
-              icon: Icon(isFollowing ? Icons.check : Icons.person_add, size: 18),
-              label: Text(isFollowing ? 'Following' : 'Follow'),
-              style: FilledButton.styleFrom(
-                backgroundColor: isFollowing ? palette.featureCardBg : palette.featureCardAccent,
-                foregroundColor: isFollowing ? palette.tabActiveText : Colors.white,
-                side: isFollowing ? BorderSide(color: palette.featureCardBorder) : null,
-              ),
-              onPressed: busy
-                  ? null
-                  : () => ref.read(followToggleProvider.notifier).toggle(targetUserId),
-            ),
-            const SizedBox(width: 12),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.chat_bubble_outline, size: 18),
-              label: const Text('Message'),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('DM coming in next update')),
-                );
-              },
-            ),
-          ],
-        );
-      },
+    // Optimistic: override varsa onu, yoksa async değeri kullan.
+    final isFollowing = override ?? following.value ?? false;
+    final busy = toggleState is AsyncLoading;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FilledButton.icon(
+          icon: Icon(isFollowing ? Icons.check : Icons.person_add, size: 18),
+          label: Text(isFollowing ? l10n.btnUnfollow : l10n.btnFollow),
+          style: FilledButton.styleFrom(
+            backgroundColor:
+                isFollowing ? palette.featureCardBg : palette.featureCardAccent,
+            foregroundColor: isFollowing ? palette.tabActiveText : Colors.white,
+            side: isFollowing ? BorderSide(color: palette.featureCardBorder) : null,
+          ),
+          onPressed: busy
+              ? null
+              : () => ref.read(followToggleProvider.notifier).toggle(targetUserId),
+        ),
+        const SizedBox(width: 12),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.chat_bubble_outline, size: 18),
+          label: Text(l10n.listingMessageApplicant),
+          onPressed: () => _openDm(context, ref, targetUserId),
+        ),
+      ],
     );
+  }
+
+  Future<void> _openDm(BuildContext context, WidgetRef ref, String otherUserId) async {
+    try {
+      final conv = await ref.read(messagesRemoteDsProvider).openDirect(otherUserId);
+      if (!context.mounted) return;
+      final myUid = ref.read(authProvider)?.uid ?? '';
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(conversation: conv, myUserId: myUid),
+        ),
+      );
+      ref.invalidate(myConversationsProvider);
+    } catch (e) {
+      if (!context.mounted) return;
+      final l10n = L10n.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.profileDmError('$e'))),
+      );
+    }
   }
 }
