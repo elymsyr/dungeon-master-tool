@@ -2,9 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/profanity_filter.dart';
 import '../../data/datasources/remote/game_listings_remote_ds.dart';
 import '../../data/datasources/remote/messages_remote_ds.dart';
-import '../../data/datasources/remote/posts_remote_ds.dart';
+import '../../data/datasources/remote/posts_remote_ds.dart' show PostsRemoteDataSource, FeedScope;
 import '../../domain/entities/conversation.dart';
 import '../../domain/entities/game_listing.dart';
 import '../../domain/entities/post.dart';
@@ -22,13 +23,40 @@ final messagesRemoteDsProvider =
 
 // ── Posts / feed ────────────────────────────────────────────────────
 
-/// Auth user için feed (kendi + takip ettikleri).
+/// Feed sekmesi: 'all' (tüm kullanıcılar) | 'following' (takip edilenler).
+final feedScopeProvider = StateProvider<FeedScope>((_) => FeedScope.all);
+
+/// Auth user için feed. Aktif scope'a göre tüm kullanıcılar veya
+/// yalnızca takip edilenler döner.
 final feedProvider = FutureProvider<List<Post>>((ref) async {
   if (!SupabaseConfig.isConfigured) return const [];
   final auth = ref.watch(authProvider);
   if (auth == null) return const [];
-  return ref.read(postsRemoteDsProvider).fetchFeed();
+  final scope = ref.watch(feedScopeProvider);
+  return ref.read(postsRemoteDsProvider).fetchFeed(scope: scope);
 });
+
+/// Bir post'u beğen / beğeniyi geri al. Optimistic update + feed invalidate.
+class PostLikeNotifier extends StateNotifier<AsyncValue<void>> {
+  final Ref _ref;
+  PostLikeNotifier(this._ref) : super(const AsyncValue.data(null));
+
+  Future<void> toggle(String postId) async {
+    state = const AsyncValue.loading();
+    try {
+      await _ref.read(postsRemoteDsProvider).toggleLike(postId);
+      _ref.invalidate(feedProvider);
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+}
+
+final postLikeProvider =
+    StateNotifierProvider<PostLikeNotifier, AsyncValue<void>>(
+  (ref) => PostLikeNotifier(ref),
+);
 
 /// Belirli kullanıcının postları (profile screen).
 final userPostsProvider =
@@ -43,6 +71,16 @@ class PostComposerNotifier extends StateNotifier<AsyncValue<void>> {
 
   Future<bool> submit({String? body, Uint8List? imageBytes, String contentType = 'image/jpeg'}) async {
     if ((body == null || body.trim().isEmpty) && imageBytes == null) return false;
+    if (body != null) {
+      await ProfanityFilter.ensureLoaded();
+      if (ProfanityFilter.contains(body)) {
+        state = AsyncValue.error(
+          const ProfanityRejectedException(),
+          StackTrace.current,
+        );
+        return false;
+      }
+    }
     state = const AsyncValue.loading();
     try {
       await _ref.read(postsRemoteDsProvider).create(

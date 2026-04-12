@@ -79,6 +79,7 @@ flutter:
   generate: true
   assets:
     - assets/app_icon_transparent.png
+    - assets/profanity/
 
 flutter_launcher_icons:
   android: true

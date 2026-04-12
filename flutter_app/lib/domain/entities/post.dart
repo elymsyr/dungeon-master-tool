@@ -14,6 +14,8 @@ abstract class Post with _$Post {
     String? imageUrl,
     @Default(0) int sizeBytes,
     required DateTime createdAt,
+    @Default(0) int likeCount,
+    @Default(false) bool likedByMe,
   }) = _Post;
 
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);

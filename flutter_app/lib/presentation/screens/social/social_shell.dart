@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 
 /// Social alt sekmeleri için ortak shell — max-width constrained, üstte pill
@@ -20,19 +21,19 @@ class SocialShell extends StatelessWidget {
     this.trailing,
   });
 
-  static const _tabs = [
-    ('feed', Icons.dynamic_feed_outlined, 'Feed'),
-    ('players', Icons.groups_outlined, 'Players'),
-    ('messages', Icons.chat_bubble_outline, 'Messages'),
-    ('marketplace', Icons.storefront_outlined, 'Marketplace'),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    final tabs = <(String, IconData, String)>[
+      ('feed', Icons.dynamic_feed_outlined, l10n.socialTabFeed),
+      ('players', Icons.groups_outlined, l10n.socialTabPlayers),
+      ('messages', Icons.chat_bubble_outline, l10n.socialTabMessages),
+      ('marketplace', Icons.storefront_outlined, l10n.socialTabMarketplace),
+    ];
     return Column(
       children: [
         _PillBar(
-          tabs: _tabs,
+          tabs: tabs,
           currentTab: currentTab,
           onTabChanged: onTabChanged,
           trailing: trailing,

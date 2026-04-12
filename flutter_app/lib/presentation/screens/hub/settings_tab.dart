@@ -14,6 +14,7 @@ import '../../../core/config/app_paths.dart';
 import '../../../data/datasources/local/campaign_local_ds.dart' show TrashItem;
 import '../../../domain/entities/audio/audio_models.dart';
 import '../../dialogs/theme_builder_dialog.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
 
@@ -25,6 +26,7 @@ class SettingsTab extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final currentTheme = ref.watch(themeProvider);
     final currentLocale = ref.watch(localeProvider);
+    final l10n = L10n.of(context)!;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -35,7 +37,7 @@ class SettingsTab extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // --- THEME ---
-              Text('Theme', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              Text(l10n.lblTheme, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               const SizedBox(height: 12),
               GridView.builder(
                 shrinkWrap: true,
@@ -95,7 +97,7 @@ class SettingsTab extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // --- LANGUAGE ---
-              Text('Language', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              Text(l10n.lblLanguage, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               const SizedBox(height: 12),
               ...['en', 'tr', 'de', 'fr'].map((code) {
                 final label = switch (code) {
@@ -126,7 +128,7 @@ class SettingsTab extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // --- VOLUME ---
-              Text('Volume', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              Text(l10n.settingsVolume, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -157,20 +159,20 @@ class SettingsTab extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // --- DATA PATH ---
-              Text('Data', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              Text(l10n.settingsData, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               const SizedBox(height: 12),
-              _pathRow('Data Root', AppPaths.dataRoot, palette),
-              _pathRow('Worlds', AppPaths.worldsDir, palette),
-              _pathRow('Cache', AppPaths.cacheDir, palette),
+              _pathRow(l10n.dataPathRoot, AppPaths.dataRoot, palette),
+              _pathRow(l10n.dataPathWorlds, AppPaths.worldsDir, palette),
+              _pathRow(l10n.dataPathCache, AppPaths.cacheDir, palette),
 
               const SizedBox(height: 32),
 
               // --- TRASH ---
-              Text('Trash', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              Text(l10n.settingsTrash, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               const SizedBox(height: 12),
               ref.watch(trashListProvider).when(
                 data: (items) => items.isEmpty
-                    ? Text('Trash is empty.', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary))
+                    ? Text(l10n.trashEmpty, style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary))
                     : ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -206,7 +208,7 @@ class SettingsTab extends ConsumerWidget {
                                     children: [
                                       Text(item.originalName, style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
                                       Text(
-                                        '${item.type} · $dateStr · ${daysLeft > 0 ? '${daysLeft}d until auto-delete' : 'Pending cleanup'}',
+                                        '${item.type} · $dateStr · ${daysLeft > 0 ? l10n.trashAutoDeleteIn(daysLeft) : l10n.trashPendingCleanup}',
                                         style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
                                       ),
                                     ],
@@ -214,12 +216,12 @@ class SettingsTab extends ConsumerWidget {
                                 ),
                                 IconButton(
                                   icon: Icon(Icons.restore, size: 18, color: palette.successBtnBg),
-                                  tooltip: 'Restore',
+                                  tooltip: l10n.btnRestore,
                                   onPressed: () => _restoreTrashItem(context, ref, item, palette),
                                 ),
                                 IconButton(
                                   icon: Icon(Icons.delete_forever, size: 18, color: palette.dangerBtnBg),
-                                  tooltip: 'Delete Permanently',
+                                  tooltip: l10n.trashDeleteTitle,
                                   onPressed: () => _permanentlyDeleteTrashItem(context, ref, item, palette),
                                 ),
                               ],
@@ -239,13 +241,14 @@ class SettingsTab extends ConsumerWidget {
   }
 
   void _restoreTrashItem(BuildContext context, WidgetRef ref, TrashItem item, DmToolColors palette) {
+    final l10n = L10n.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Restore ${item.type}'),
-        content: Text('Restore "${item.originalName}" from trash?'),
+        title: Text(l10n.trashRestoreTitle(item.type)),
+        content: Text(l10n.trashRestoreBody(item.originalName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.btnCancel)),
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -272,12 +275,12 @@ class SettingsTab extends ConsumerWidget {
               }
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Restored "${item.originalName}"')),
+                  SnackBar(content: Text(l10n.trashRestoreSuccess(item.originalName))),
                 );
               }
             },
             style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, foregroundColor: palette.successBtnText),
-            child: const Text('Restore'),
+            child: Text(l10n.btnRestore),
           ),
         ],
       ),
@@ -285,14 +288,15 @@ class SettingsTab extends ConsumerWidget {
   }
 
   void _permanentlyDeleteTrashItem(BuildContext context, WidgetRef ref, TrashItem item, DmToolColors palette) {
+    final l10n = L10n.of(context)!;
     final typeLabel = item.type.toLowerCase();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Permanently'),
-        content: Text('Permanently delete $typeLabel "${item.originalName}"?\n\nThis cannot be undone.'),
+        title: Text(l10n.trashDeleteTitle),
+        content: Text(l10n.trashDeleteBody(typeLabel, item.originalName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.btnCancel)),
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -304,7 +308,7 @@ class SettingsTab extends ConsumerWidget {
               ref.invalidate(trashListProvider);
             },
             style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
-            child: const Text('Delete'),
+            child: Text(l10n.btnDelete),
           ),
         ],
       ),
@@ -343,6 +347,7 @@ class _SoundLibrarySection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = L10n.of(context)!;
     final themesAsync = ref.watch(soundpadThemesProvider);
     final libraryAsync = ref.watch(soundpadLibraryProvider);
     final notifier = ref.read(soundpadStateProvider.notifier);
@@ -350,10 +355,10 @@ class _SoundLibrarySection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Sound Library', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+        Text(l10n.settingsSoundLibrary, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
         const SizedBox(height: 4),
         Text(
-          'Soundpad Root: ${AppPaths.soundpadRoot}',
+          l10n.soundpadRootLabel(AppPaths.soundpadRoot),
           style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
           overflow: TextOverflow.ellipsis,
         ),
@@ -361,13 +366,13 @@ class _SoundLibrarySection extends ConsumerWidget {
         const SizedBox(height: 16),
 
         // --- THEMES ---
-        _sectionHeader('Themes', Icons.music_note, palette),
+        _sectionHeader(l10n.soundpadThemes, Icons.music_note, palette),
         const SizedBox(height: 8),
         themesAsync.when(
           data: (themes) => Column(
             children: [
               if (themes.isEmpty)
-                _emptyHint('No themes found', palette),
+                _emptyHint(l10n.soundpadNoThemes, palette),
               ...themes.entries.map((e) => _ThemeCard(
                     theme: e.value,
                     palette: palette,
@@ -379,7 +384,7 @@ class _SoundLibrarySection extends ConsumerWidget {
                 child: OutlinedButton.icon(
                   onPressed: () => _createTheme(context, ref, notifier),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Create Theme'),
+                  label: Text(l10n.soundpadCreateTheme),
                 ),
               ),
             ],
@@ -391,13 +396,13 @@ class _SoundLibrarySection extends ConsumerWidget {
         const SizedBox(height: 20),
 
         // --- AMBIENCE ---
-        _sectionHeader('Ambience', Icons.water, palette),
+        _sectionHeader(l10n.soundpadTabAmbience, Icons.water, palette),
         const SizedBox(height: 8),
         libraryAsync.when(
           data: (library) => Column(
             children: [
               if (library.ambience.isEmpty)
-                _emptyHint('No ambience sounds', palette),
+                _emptyHint(l10n.soundpadNoAmbience, palette),
               ...library.ambience.map((a) => _SoundRow(
                     name: a.name,
                     id: a.id,
@@ -411,7 +416,7 @@ class _SoundLibrarySection extends ConsumerWidget {
                 child: OutlinedButton.icon(
                   onPressed: () => _addSound(context, ref, notifier, 'ambience'),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Add Ambience'),
+                  label: Text(l10n.soundpadAddAmbience),
                 ),
               ),
             ],
@@ -423,13 +428,13 @@ class _SoundLibrarySection extends ConsumerWidget {
         const SizedBox(height: 20),
 
         // --- SFX ---
-        _sectionHeader('SFX', Icons.volume_up, palette),
+        _sectionHeader(l10n.soundpadTabSfx, Icons.volume_up, palette),
         const SizedBox(height: 8),
         libraryAsync.when(
           data: (library) => Column(
             children: [
               if (library.sfx.isEmpty)
-                _emptyHint('No SFX sounds', palette),
+                _emptyHint(l10n.soundpadNoSfx, palette),
               ...library.sfx.map((s) => _SoundRow(
                     name: s.name,
                     id: s.id,
@@ -443,7 +448,7 @@ class _SoundLibrarySection extends ConsumerWidget {
                 child: OutlinedButton.icon(
                   onPressed: () => _addSound(context, ref, notifier, 'sfx'),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Add SFX'),
+                  label: Text(l10n.soundpadAddSfx),
                 ),
               ),
             ],
@@ -473,29 +478,31 @@ class _SoundLibrarySection extends ConsumerWidget {
   }
 
   Future<void> _createTheme(BuildContext context, WidgetRef ref, SoundpadNotifier notifier) async {
+    final l10n = L10n.of(context)!;
     final result = await ThemeBuilderDialog.show(context, palette);
     if (result == null) return;
 
     final createResult = await notifier.createTheme(result.name, result.id, result.stateMap);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(createResult.$1 ? 'Theme "${result.name}" created' : createResult.$2)),
+        SnackBar(content: Text(createResult.$1 ? l10n.soundpadThemeCreated(result.name) : createResult.$2)),
       );
     }
   }
 
   Future<void> _deleteTheme(BuildContext context, WidgetRef ref, SoundpadNotifier notifier, SoundpadTheme theme) async {
+    final l10n = L10n.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Theme'),
-        content: Text('Delete theme "${theme.name}" and all its audio files?\n\nThis cannot be undone.'),
+        title: Text(l10n.soundpadDeleteThemeTitle),
+        content: Text(l10n.soundpadDeleteThemeBody(theme.name)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.btnCancel)),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
-            child: const Text('Delete'),
+            child: Text(l10n.btnDelete),
           ),
         ],
       ),
@@ -505,12 +512,13 @@ class _SoundLibrarySection extends ConsumerWidget {
     final result = await notifier.deleteTheme(theme.id);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.$1 ? 'Theme deleted' : result.$2)),
+        SnackBar(content: Text(result.$1 ? l10n.soundpadThemeDeleted : result.$2)),
       );
     }
   }
 
   Future<void> _addSound(BuildContext context, WidgetRef ref, SoundpadNotifier notifier, String category) async {
+    final l10n = L10n.of(context)!;
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['wav', 'mp3', 'ogg', 'flac', 'm4a'],
@@ -525,13 +533,13 @@ class _SoundLibrarySection extends ConsumerWidget {
       final name = await showDialog<String>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Sound Name'),
+          title: Text(l10n.soundpadAddSoundDialogTitle),
           content: TextField(controller: controller, autofocus: true),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.btnCancel)),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              child: const Text('Add'),
+              child: Text(l10n.btnAdd),
             ),
           ],
         ),
@@ -540,7 +548,7 @@ class _SoundLibrarySection extends ConsumerWidget {
       final addResult = await notifier.addSound(category, name, result.files.first.path!);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(addResult.$1 ? 'Sound added' : addResult.$2)),
+          SnackBar(content: Text(addResult.$1 ? l10n.soundpadSoundAdded : addResult.$2)),
         );
       }
     } else {
@@ -553,7 +561,7 @@ class _SoundLibrarySection extends ConsumerWidget {
       }
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$added sound(s) added')),
+          SnackBar(content: Text(l10n.soundpadSoundsAdded(added))),
         );
       }
     }
@@ -567,17 +575,18 @@ class _SoundLibrarySection extends ConsumerWidget {
     String soundId,
     String soundName,
   ) async {
+    final l10n = L10n.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove Sound'),
-        content: Text('Remove "$soundName" from the library?'),
+        title: Text(l10n.soundpadRemoveSoundTitle),
+        content: Text(l10n.soundpadRemoveSoundBody(soundName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.btnCancel)),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
-            child: const Text('Remove'),
+            child: Text(l10n.btnRemove),
           ),
         ],
       ),
@@ -587,7 +596,7 @@ class _SoundLibrarySection extends ConsumerWidget {
     final result = await notifier.removeSound(category, soundId);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.$1 ? 'Sound removed' : result.$2)),
+        SnackBar(content: Text(result.$1 ? l10n.soundpadSoundRemoved : result.$2)),
       );
     }
   }
@@ -606,6 +615,7 @@ class _ThemeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -624,7 +634,7 @@ class _ThemeCard extends StatelessWidget {
               children: [
                 Text(theme.name, style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
                 Text(
-                  '${theme.states.length} state(s): ${theme.states.keys.join(", ")}',
+                  l10n.soundpadStatesCount(theme.states.length, theme.states.keys.join(", ")),
                   style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
                 ),
               ],
@@ -632,7 +642,7 @@ class _ThemeCard extends StatelessWidget {
           ),
           IconButton(
             icon: Icon(Icons.delete_outline, size: 18, color: palette.dangerBtnBg),
-            tooltip: 'Delete Theme',
+            tooltip: l10n.soundpadDeleteThemeTitle,
             onPressed: onDelete,
           ),
         ],
@@ -662,6 +672,7 @@ class _SoundRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -676,13 +687,13 @@ class _SoundRow extends StatelessWidget {
             child: Text(name, style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
           ),
           Text(
-            '$fileCount file(s)',
+            l10n.soundpadFilesCount(fileCount),
             style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
           ),
           const SizedBox(width: 8),
           IconButton(
             icon: Icon(Icons.delete_outline, size: 16, color: palette.dangerBtnBg),
-            tooltip: 'Remove',
+            tooltip: l10n.btnRemove,
             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
             padding: EdgeInsets.zero,
             onPressed: onDelete,
