@@ -8,6 +8,7 @@ import '../../domain/exceptions/cloud_backup_exceptions.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
 import 'cloud_backup_provider.dart';
+import 'package_provider.dart';
 
 // ── Sync result types ───────────────────────────────────────────────
 
@@ -95,12 +96,55 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
     _maxDelayTimer ??= Timer(_maxSyncDelay, _performSync);
   }
 
-  /// Manuel tetik.
+  /// Manuel tetik. Pending dirty items varsa hemen upload eder.
   Future<void> syncNow() async {
     _syncTimer?.cancel();
     _maxDelayTimer?.cancel();
     _maxDelayTimer = null;
     await _performSync();
+  }
+
+  /// Force-upload the currently active world or package, regardless of
+  /// dirty state. Resolves the active item via providers, adds it to
+  /// `_dirtyItems`, then runs the sync. Called by the user-facing
+  /// "Backup to Cloud" action — which should work even when nothing has
+  /// been marked dirty (e.g. when auto cloud save is disabled).
+  ///
+  /// Returns `true` when an active item was resolved and the sync ran;
+  /// `false` when there is no active item to back up (caller should
+  /// surface an "open something first" message).
+  Future<bool> backupActiveItem() async {
+    if (!SupabaseConfig.isConfigured || _ref.read(authProvider) == null) {
+      return false;
+    }
+
+    final campaignName = _ref.read(activeCampaignProvider);
+    if (campaignName != null) {
+      final data = _ref.read(activeCampaignProvider.notifier).data;
+      if (data != null) {
+        final worldId = data['world_id'] as String? ?? campaignName;
+        _dirtyItems['world:$worldId'] =
+            (name: campaignName, type: 'world', id: worldId);
+        await syncNow();
+        return true;
+      }
+    }
+
+    final packageName = _ref.read(activePackageProvider);
+    if (packageName != null) {
+      final data = _ref.read(activePackageProvider.notifier).data;
+      if (data != null) {
+        final packageId = (data['package_id'] as String?) ??
+            (data['world_id'] as String?) ??
+            packageName;
+        _dirtyItems['package:$packageId'] =
+            (name: packageName, type: 'package', id: packageId);
+        await syncNow();
+        return true;
+      }
+    }
+
+    return false;
   }
 
   Future<void> _performSync() async {
@@ -130,7 +174,7 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
     for (final entry in items.entries) {
       final item = entry.value;
       try {
-        final data = await _loadItemData(item.id, item.type);
+        final data = await _loadItemData(item.name, item.type);
         if (data == null) continue;
 
         await repo.uploadBackup(item.name, item.id, item.type, data);
@@ -199,20 +243,23 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
     _ref.invalidate(cloudStorageUsedProvider);
   }
 
-  /// Item verisini tip'e göre yükle.
+  /// Item verisini tipe göre yükle. [itemName] kampanya/paket adı (dosya/DB
+  /// lookup key'i); markDirty'den gelen itemId bir UUID olduğu için
+  /// burada kullanılmaz — aksi takdirde `campaignRepository.load()` her
+  /// seferinde file-not-found atardı ve hiçbir world cloud'a yüklenemezdi.
   Future<Map<String, dynamic>?> _loadItemData(
-      String itemId, String type) async {
+      String itemName, String type) async {
     try {
       switch (type) {
         case 'world':
-          // itemId = campaignName (for worlds the name is the lookup key)
-          return await _ref.read(campaignRepositoryProvider).load(itemId);
-        // Template ve package loading ileride eklenecek.
+          return await _ref.read(campaignRepositoryProvider).load(itemName);
+        case 'package':
+          return await _ref.read(packageRepositoryProvider).load(itemName);
         default:
           return null;
       }
     } catch (e) {
-      debugPrint('Cloud sync: failed to load $type:$itemId — $e');
+      debugPrint('Cloud sync: failed to load $type:$itemName — $e');
       return null;
     }
   }

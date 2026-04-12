@@ -60,6 +60,27 @@ class ActivePackageNotifier extends StateNotifier<String?> {
     }
   }
 
+  /// Replaces the in-memory package data with [newData] and persists
+  /// it. Mirrors [ActiveCampaignNotifier.replaceWithData]; used by the
+  /// cloud "restore into the open item" flow to overwrite the running
+  /// package session with fresh downloaded content.
+  Future<void> replaceWithData(Map<String, dynamic> newData) async {
+    if (state == null) return;
+    final name = state!;
+    if (_data == null) {
+      _data = Map<String, dynamic>.from(newData);
+    } else {
+      _data!
+        ..clear()
+        ..addAll(newData);
+    }
+    await _repo.save(name, _data!);
+    // Force-notify watchers — StateNotifier dedupes on equality.
+    final n = name;
+    state = null;
+    state = n;
+  }
+
   Future<void> delete(String packageName) async {
     await _repo.delete(packageName);
     if (state == packageName) {

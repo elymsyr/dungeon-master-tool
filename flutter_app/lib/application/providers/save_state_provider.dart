@@ -59,8 +59,13 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
       if (_disposed) return;
       lastSavedAt = DateTime.now();
 
-      // Cloud sync trigger — local save sonrası dirty olarak işaretle.
-      if (SupabaseConfig.isConfigured && _ref.read(authProvider) != null) {
+      // Cloud sync trigger — SADECE kullanıcı autoCloudSave ayarını
+      // açmışsa dirty olarak işaretle. Default kapalı olduğu için
+      // cloud backup yalnızca kullanıcı elle "Backup to Cloud" butonuna
+      // basınca yapılır.
+      if (SupabaseConfig.isConfigured &&
+          _ref.read(authProvider) != null &&
+          _ref.read(uiStateProvider).autoCloudSave) {
         final campaignName = _ref.read(activeCampaignProvider);
         final data = _ref.read(activeCampaignProvider.notifier).data;
         if (campaignName != null && data != null) {

@@ -65,10 +65,16 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       // show when the source template has been edited since this campaign
       // was last synced. Failures here MUST NOT block the load.
       try {
-        final prompt = await _ref
+        final result = await _ref
             .read(templateSyncServiceProvider)
             .checkDrift(campaignName: name, campaignData: _data!);
-        _ref.read(pendingTemplateUpdateProvider.notifier).state = prompt;
+        if (result.healedHash != null) {
+          // Non-semantic hash drift — store the fresh hash so the next
+          // open matches cleanly, no prompt shown.
+          _data!['template_hash'] = result.healedHash!;
+          await _repo.save(name, _data!);
+        }
+        _ref.read(pendingTemplateUpdateProvider.notifier).state = result.prompt;
       } catch (e, st) {
         debugPrint('Template sync drift check failed: $e\n$st');
       }
@@ -93,6 +99,51 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     if (state != null && _data != null) {
       await _repo.save(state!, _data!);
     }
+  }
+
+  /// Re-reads the active campaign from disk, replaces [_data] in place
+  /// (so any cached references — e.g. the wrapped notifier inside
+  /// PackageScreen's ProviderScope — observe the new values), and
+  /// force-notifies watchers of [activeCampaignProvider] so downstream
+  /// providers (worldSchemaProvider, entityProvider, …) rebuild from
+  /// the fresh data. Used by the cloud "restore into the currently
+  /// open item" flow.
+  Future<void> reload() async {
+    if (state == null) return;
+    final name = state!;
+    final fresh = await _repo.load(name);
+    if (_data == null) {
+      _data = fresh;
+    } else {
+      _data!
+        ..clear()
+        ..addAll(fresh);
+    }
+    // StateNotifier dedupes on equality — toggle via null so every
+    // `ref.watch(activeCampaignProvider)` downstream re-executes.
+    final n = name;
+    state = null;
+    state = n;
+  }
+
+  /// Replaces the in-memory data map with [newData] and persists it.
+  /// Like [reload], but uses a caller-supplied payload instead of
+  /// reading from disk. Used by cloud restore where we already have
+  /// the downloaded backup envelope.
+  Future<void> replaceWithData(Map<String, dynamic> newData) async {
+    if (state == null) return;
+    final name = state!;
+    if (_data == null) {
+      _data = Map<String, dynamic>.from(newData);
+    } else {
+      _data!
+        ..clear()
+        ..addAll(newData);
+    }
+    await _repo.save(name, _data!);
+    final n = name;
+    state = null;
+    state = n;
   }
 
   /// Replaces the active campaign's worldSchema with [newTemplate], updates

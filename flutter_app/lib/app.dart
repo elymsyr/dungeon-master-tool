@@ -8,6 +8,7 @@ import 'application/providers/theme_provider.dart';
 import 'presentation/l10n/app_localizations.dart';
 import 'presentation/router/app_router.dart';
 import 'presentation/theme/palettes.dart';
+import 'presentation/widgets/global_loading_overlay.dart';
 
 class DungeonMasterApp extends ConsumerWidget {
   const DungeonMasterApp({super.key});
@@ -39,6 +40,12 @@ class DungeonMasterApp extends ConsumerWidget {
       routerConfig: appRouter,
       // Scrollbar ve scroll fizigi optimizasyonu
       scrollBehavior: const _AppScrollBehavior(),
+      builder: (context, child) => Stack(
+        children: [
+          child ?? const SizedBox.shrink(),
+          const GlobalLoadingOverlay(),
+        ],
+      ),
     );
   }
 }

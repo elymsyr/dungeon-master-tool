@@ -10,24 +10,15 @@ import '../../domain/entities/cloud_backup_meta.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 
-/// Reusable section showing local save timestamp, cloud backup timestamp,
-/// and a download-from-cloud button.
-///
-/// Used inside item settings dialogs (world/template/package) and inside
-/// the SaveSyncIndicator full-mode dialog.
-///
-/// Caller provides [localUpdatedAt] (already resolved — file mtime, DB
-/// column, or in-memory value). The cloud meta is fetched lazily via
-/// [cloudBackupRepositoryProvider] using ([itemId], [type]).
-///
-/// When [onDownloaded] is provided it is called after a successful restore
-/// so the caller can refresh its lists / reload the item.
+/// Reusable section showing local save timestamp and cloud backup
+/// timestamp. Read-only — no download/restore action. Restoration is
+/// offered globally via the "Sync from Cloud" action in the
+/// SaveSyncIndicator dialog.
 class SaveInfoSection extends ConsumerStatefulWidget {
   final String itemName;
   final String itemId;
   final String type;
   final DateTime? localUpdatedAt;
-  final Future<void> Function()? onDownloaded;
 
   const SaveInfoSection({
     super.key,
@@ -35,7 +26,6 @@ class SaveInfoSection extends ConsumerStatefulWidget {
     required this.itemId,
     required this.type,
     required this.localUpdatedAt,
-    this.onDownloaded,
   });
 
   @override
@@ -57,8 +47,10 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
       return;
     }
     // Use the raw remote DS for a direct query by itemId+type.
-    _cloudFuture =
-        CloudBackupRemoteDataSource().fetchByItem(widget.itemId, widget.type);
+    setState(() {
+      _cloudFuture = CloudBackupRemoteDataSource()
+          .fetchByItem(widget.itemId, widget.type);
+    });
   }
 
   @override
@@ -68,6 +60,15 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
     final hasCloud = SupabaseConfig.isConfigured;
     final isAuthed = ref.watch(authProvider) != null;
 
+    // Re-fetch whenever cloud backup list is invalidated (e.g. after a
+    // successful syncNow). Without this, the section is stuck on the
+    // snapshot from first open and keeps saying "No cloud backup yet"
+    // even after the user just pushed a backup.
+    ref.listen<AsyncValue<List<CloudBackupMeta>>>(
+      cloudBackupListProvider,
+      (_, _) => _refreshCloud(),
+    );
+
     return FutureBuilder<CloudBackupMeta?>(
       future: _cloudFuture,
       builder: (context, snapshot) {
@@ -75,6 +76,7 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
             isAuthed &&
             snapshot.connectionState != ConnectionState.done;
         final cloudMeta = snapshot.data;
+        final hasError = snapshot.hasError;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,28 +95,13 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
                 label: l10n.saveInfoCloudLabel,
                 value: loading
                     ? l10n.saveInfoLoadingCloud
-                    : cloudMeta == null
-                        ? l10n.saveInfoNoCloud
-                        : _formatDate(cloudMeta.createdAt, l10n),
+                    : hasError
+                        ? 'Error: ${snapshot.error}'
+                        : cloudMeta == null
+                            ? l10n.saveInfoNoCloud
+                            : _formatDate(cloudMeta.createdAt, l10n),
                 palette: palette,
               ),
-              if (!loading && cloudMeta != null) ...[
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.cloud_download_outlined, size: 16),
-                    label: Text(l10n.saveInfoDownload),
-                    onPressed: () => _downloadFromCloud(cloudMeta),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      side: BorderSide(color: palette.featureCardBorder),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ],
         );
@@ -162,45 +149,4 @@ class _SaveInfoSectionState extends ConsumerState<SaveInfoSection> {
     return DateFormat.yMMMd().add_Hm().format(dt.toLocal());
   }
 
-  Future<void> _downloadFromCloud(CloudBackupMeta meta) async {
-    final l10n = L10n.of(context)!;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.saveInfoDownloadConfirmTitle),
-        content: Text(l10n.saveInfoDownloadConfirmBody(widget.itemName)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.btnCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.saveInfoDownload),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-    if (!mounted) return;
-
-    final opNotifier = ref.read(cloudBackupOperationProvider.notifier);
-    final ok = await opNotifier.restoreBackup(meta, restoreName: widget.itemName);
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          ok
-              ? l10n.saveInfoDownloadSuccess
-              : l10n.saveInfoDownloadError('restore failed'),
-        ),
-      ),
-    );
-
-    if (ok && widget.onDownloaded != null) {
-      await widget.onDownloaded!();
-    }
-  }
 }

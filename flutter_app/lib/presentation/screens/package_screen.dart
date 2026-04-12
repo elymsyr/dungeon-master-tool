@@ -5,23 +5,21 @@ import 'package:go_router/go_router.dart';
 
 import 'package:path/path.dart' as p;
 
-import '../../application/providers/auth_provider.dart';
 import '../../application/providers/campaign_provider.dart';
-import '../../application/providers/cloud_sync_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/event_bus_provider.dart';
+import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/media_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/save_state_provider.dart';
-import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../core/config/app_paths.dart';
-import '../../core/config/supabase_config.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../../core/utils/screen_type.dart';
 import '../dialogs/media_gallery_dialog.dart';
 import '../theme/dm_tool_colors.dart';
+import '../widgets/close_guard.dart';
 import '../widgets/entity_sidebar.dart';
 import 'database/database_screen.dart';
 
@@ -206,16 +204,23 @@ class _PackageScreenContentState
 
   /// Hub'a donuse tetiklenen ortak exit akisi:
   /// 1) Local save (saveNow)
-  /// 2) autoCloudBackupBeforeExit aciksa cloud sync
+  /// 2) Close guard: cloud backup not synced ise uyar / otomatik backup al
   /// 3) Package list invalidate
   /// 4) /hub'a git
   Future<void> _exitToHub() async {
-    await ref.read(saveStateProvider.notifier).saveNow();
-    if (ref.read(uiStateProvider).autoCloudBackupBeforeExit &&
-        SupabaseConfig.isConfigured &&
-        ref.read(authProvider) != null) {
-      await ref.read(cloudSyncProvider.notifier).syncNow();
-    }
+    await withLoading(
+      ref.read(globalLoadingProvider.notifier),
+      'save-package',
+      'Saving package...',
+      () => ref.read(saveStateProvider.notifier).saveNow(),
+    );
+    if (!mounted) return;
+    final proceed = await confirmCloseWithBackupCheck(
+      context: context,
+      ref: ref,
+      itemName: widget.packageName,
+    );
+    if (!proceed) return;
     ref.invalidate(packageListProvider);
     if (mounted) context.go('/hub');
   }

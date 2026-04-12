@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/cloud_backup_provider.dart';
+import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../application/providers/template_provider.dart';
@@ -362,11 +363,16 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
 
     TemplateUpdatePrompt? drift;
     try {
-      drift = await ref.read(templateSyncServiceProvider).checkDrift(
+      final result = await ref.read(templateSyncServiceProvider).checkDrift(
         campaignName: packageName,
         campaignData: data,
         ignoreDismissed: true,
       );
+      drift = result.prompt;
+      if (result.healedHash != null) {
+        data['template_hash'] = result.healedHash!;
+        await ref.read(packageRepositoryProvider).save(packageName, data);
+      }
     } catch (_) {}
 
     if (!mounted) return;
@@ -397,9 +403,6 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                 itemId: packageId,
                 type: 'package',
                 localUpdatedAt: localUpdatedAt,
-                onDownloaded: () async {
-                  ref.invalidate(packageListProvider);
-                },
               ),
               const SizedBox(height: 12),
               Divider(height: 1, color: palette.featureCardBorder),
@@ -499,19 +502,28 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
   }
 
   Future<void> _loadPackage(String name) async {
-    // 1. Load
-    final success =
-        await ref.read(activePackageProvider.notifier).load(name);
+    // 1. Load (with global loading overlay)
+    final success = await withLoading(
+      ref.read(globalLoadingProvider.notifier),
+      'open-package-$name',
+      'Opening package "$name"...',
+      () => ref.read(activePackageProvider.notifier).load(name),
+    );
     if (!success || !mounted) return;
 
     // 2. Template drift check
     final data = ref.read(activePackageProvider.notifier).data;
     if (data != null) {
       try {
-        final drift = await ref.read(templateSyncServiceProvider).checkDrift(
+        final result = await ref.read(templateSyncServiceProvider).checkDrift(
           campaignName: name,
           campaignData: data,
         );
+        if (result.healedHash != null) {
+          data['template_hash'] = result.healedHash!;
+          await ref.read(packageRepositoryProvider).save(name, data);
+        }
+        final drift = result.prompt;
         if (drift != null && mounted) {
           final action = await _showPreOpenTemplateDialog(drift);
           if (!mounted) return;
@@ -614,9 +626,14 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
       }
       return;
     }
-    final success = await ref
-        .read(activePackageProvider.notifier)
-        .create(name, template: _selectedTemplate);
+    final success = await withLoading(
+      ref.read(globalLoadingProvider.notifier),
+      'create-package-$name',
+      'Creating package "$name"...',
+      () => ref
+          .read(activePackageProvider.notifier)
+          .create(name, template: _selectedTemplate),
+    );
     if (success) {
       ref.invalidate(packageListProvider);
       if (mounted) context.go('/package');
