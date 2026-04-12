@@ -282,7 +282,7 @@ class _MarketplaceCard extends ConsumerWidget {
             height: 48,
             decoration: BoxDecoration(
               color: palette.featureCardAccent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: palette.cbr,
             ),
             child: Icon(_typeIcon, size: 22, color: palette.featureCardAccent),
           ),
@@ -309,7 +309,7 @@ class _MarketplaceCard extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: palette.featureCardAccent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: palette.br,
                       ),
                       child: Text(
                         _typeLabel(l10n),
@@ -399,7 +399,7 @@ class _InlineChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: palette.featureCardBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: palette.cbr,
         border: Border.all(color: palette.featureCardBorder),
       ),
       child: Row(
@@ -484,7 +484,7 @@ class _PlayerTile extends ConsumerWidget {
     final isFollowing = override ?? isFollowingAsync.value ?? false;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: palette.cbr,
       onTap: () => context.push('/profile/${profile.userId}'),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -539,7 +539,7 @@ class _PlayerTile extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   minimumSize: const Size(0, 28),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: palette.br,
                     side: BorderSide(
                       color: isFollowing ? palette.featureCardBorder : Colors.transparent,
                     ),

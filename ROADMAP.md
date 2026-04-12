@@ -2,28 +2,11 @@
 
 Tracked work for upcoming releases — bugs to fix and features to add. Items are grouped by type, not strictly ordered.
 
----
-
-## Bugs
-
-### Marketplace download not visible until restart
-After downloading a world / template / package from the marketplace, the new item does not appear in the corresponding tab until the app is closed and reopened. The relevant provider needs to refresh its list right after a successful import.
-
-### Post composer button stays disabled while typing and for a while
-On the Feed, the **Post** button only enables on focus loss / debounce. It should react immediately as the user types so a non-empty draft is always submittable.
-
-### Like button has noticeable delay
-Liking a post waits for the round-trip before updating the icon. Switch to optimistic update — flip the icon instantly and reconcile in the background, with rollback on failure.
-
-### Mobile settings: theme cards a little short from up in heigth
-Theme preview tiles in the mobile Settings tab are clipped vertically. Increase their height so the swatch + label both fit comfortably.
-
-### Social tab cramped on mobile
-The Social shell (Feed / Marketplace / Messages / Players) was laid out for desktop. Needs a dedicated mobile pass — proper spacing, single-column flows, sticky tab bar.
-
----
-
 ## Features
+
+### Version Control Indicator
+
+Add an indicator to the main menu header. It will get the latest release from https://github.com/elymsyr/dungeon-master-tool and show if a new release is up. The releases are published with <process>-<version> name. Current is beta-v4.0.1
 
 ### Cloud sync overhaul
 Replace the current snapshot/lineage flow with a simpler model:
@@ -59,13 +42,3 @@ Tags entered in one place (e.g., a Game Listing) should be discoverable when oth
 
 ### Latency audit
 Several areas feel sluggish: button taps, tab switches, hitches during casts/animations. Run a profiling pass with Flutter DevTools, identify the worst offenders (rebuild storms, large widget trees, sync work on the main isolate), and apply targeted fixes — `select`-based watches, `const` constructors, lazy lists, deferred work.
-
----
-
-## UI / Theming
-
-### Theme-driven visual identity
-The app currently looks like a generic Material shell regardless of theme. Each theme should ship its own visual character — for some themes this means **harder, sharper edges**, different elevation, accent shapes — applied **across the entire app and every tab**, not just color swaps. Themes can vary among themselves; the goal is that switching theme noticeably changes the feel of the whole interface.
-
-### Light themes too grey / unreadable grey fonts
-Light themes (except **Frost**) currently look washed out — they should be noticeably brighter. Also avoid grey font colors altogether: some light *and* dark themes use grey text that effectively disappears against the background. Example: the **Available in** options in the template edit screen are unreadable. Audit every theme for low-contrast grey text and replace with proper on-surface colors.

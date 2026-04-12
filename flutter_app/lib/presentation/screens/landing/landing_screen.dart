@@ -272,7 +272,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
             onPressed: _loading ? null : _submit,
             style: FilledButton.styleFrom(
               backgroundColor: palette.featureCardAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(borderRadius: palette.br),
             ),
             child: _loading
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
@@ -351,11 +351,11 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
         filled: true,
         fillColor: palette.featureCardBg,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: palette.br,
           borderSide: BorderSide(color: palette.featureCardBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: palette.br,
           borderSide: BorderSide(color: palette.featureCardBorder),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -378,7 +378,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
         label: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: palette.featureCardBorder),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: palette.br),
         ),
       ),
     );

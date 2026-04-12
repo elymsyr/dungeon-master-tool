@@ -91,7 +91,7 @@ class _NotSignedIn extends StatelessWidget {
             label: Text('Sign In', style: TextStyle(color: palette.featureCardAccent)),
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: palette.featureCardAccent),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(borderRadius: palette.br),
             ),
           ),
         ],

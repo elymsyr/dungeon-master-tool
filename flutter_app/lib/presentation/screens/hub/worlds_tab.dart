@@ -62,7 +62,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           color: palette.featureCardBg,
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: palette.br,
                           border: Border.all(color: palette.featureCardBorder),
                         ),
                         child: Center(
@@ -82,14 +82,14 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                           final info = campaigns[index];
                           final isSelected = index == _selectedIndex;
                           return InkWell(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: palette.br,
                             onTap: () => setState(() => _selectedIndex = index),
                             onDoubleTap: () => _loadCampaign(info.name),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               decoration: BoxDecoration(
                                 color: isSelected ? palette.featureCardAccent.withValues(alpha: 0.1) : palette.featureCardBg,
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: palette.br,
                                 border: Border.all(
                                   color: isSelected ? palette.featureCardAccent : palette.featureCardBorder,
                                 ),

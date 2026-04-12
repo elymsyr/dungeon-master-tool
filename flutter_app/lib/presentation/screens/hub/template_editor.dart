@@ -133,7 +133,7 @@ class _TemplateEditorState extends State<TemplateEditor> {
               if (widget.readOnly)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: palette.br),
                   child: Text('Read Only', style: TextStyle(fontSize: 10, color: palette.tabText)),
                 ),
               if (!widget.readOnly) ...[
@@ -210,7 +210,7 @@ class _TemplateEditorState extends State<TemplateEditor> {
             margin: const EdgeInsets.fromLTRB(8, 8, 8, 4),
             decoration: BoxDecoration(
               color: _showEncounterConfig ? palette.tabIndicator.withValues(alpha: 0.1) : null,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: palette.br,
               border: _showEncounterConfig ? Border.all(color: palette.tabIndicator.withValues(alpha: 0.4)) : null,
             ),
             child: Row(
@@ -237,7 +237,7 @@ class _TemplateEditorState extends State<TemplateEditor> {
 
               return InkWell(
                 key: ValueKey(cat.slug),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: palette.br,
                 onTap: () => setState(() {
                   _selectedCatIndex = i;
                   _showEncounterConfig = false;
@@ -248,7 +248,7 @@ class _TemplateEditorState extends State<TemplateEditor> {
                   margin: const EdgeInsets.only(bottom: 2),
                   decoration: BoxDecoration(
                     color: isSelected ? color.withValues(alpha: 0.1) : null,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: palette.br,
                     border: isSelected ? Border.all(color: color.withValues(alpha: 0.4)) : null,
                   ),
                   child: Row(
@@ -358,7 +358,7 @@ class _CategoryEditor extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: palette.featureCardBg,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: palette.br,
               border: Border.all(color: palette.featureCardBorder),
             ),
             child: Row(
@@ -381,7 +381,7 @@ class _CategoryEditor extends StatelessWidget {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: palette.br),
                   child: Text('${category.fields.length} fields', style: TextStyle(fontSize: 10, color: palette.tabText)),
                 ),
               ],
@@ -529,9 +529,10 @@ class _CategoryEditor extends StatelessWidget {
           if (!readOnly)
             Row(
               children: [
-                _addButton(Icons.add, 'Field', palette.tabText, () => _addField(context)),
+                _addButton(context, Icons.add, 'Field', palette.tabText, () => _addField(context)),
                 const SizedBox(width: 6),
                 _addPopup(
+                  context: context,
                   icon: Icons.list,
                   label: 'List',
                   color: palette.tabText,
@@ -669,7 +670,7 @@ class _CategoryEditor extends StatelessWidget {
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: BorderRadius.circular(3)),
+                      decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: palette.br),
                       child: Text(typeLabel, style: TextStyle(fontSize: 9, color: palette.tabText)),
                     ),
                     const SizedBox(width: 8),
@@ -1167,12 +1168,13 @@ class _CategoryEditor extends StatelessWidget {
     );
   }
 
-  Widget _addButton(IconData icon, String label, Color color, VoidCallback onTap) {
+  Widget _addButton(BuildContext context, IconData icon, String label, Color color, VoidCallback onTap) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
     return InkWell(
-      onTap: onTap, borderRadius: BorderRadius.circular(4),
+      onTap: onTap, borderRadius: palette.br,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), border: Border.all(color: color.withValues(alpha: 0.4))),
+        decoration: BoxDecoration(borderRadius: palette.br, border: Border.all(color: color.withValues(alpha: 0.4))),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, size: 14, color: color), const SizedBox(width: 4),
           Text(label, style: TextStyle(fontSize: 11, color: color)),
@@ -1181,11 +1183,12 @@ class _CategoryEditor extends StatelessWidget {
     );
   }
 
-  Widget _addPopup<T>({required IconData icon, required String label, required Color color, required List<PopupMenuEntry<T>> items, required void Function(T) onSelected}) {
+  Widget _addPopup<T>({required BuildContext context, required IconData icon, required String label, required Color color, required List<PopupMenuEntry<T>> items, required void Function(T) onSelected}) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
     return PopupMenuButton<T>(onSelected: onSelected, offset: const Offset(0, 32), itemBuilder: (_) => items,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), border: Border.all(color: color.withValues(alpha: 0.4))),
+        decoration: BoxDecoration(borderRadius: palette.br, border: Border.all(color: color.withValues(alpha: 0.4))),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, size: 14, color: color), const SizedBox(width: 4),
           Text(label, style: TextStyle(fontSize: 11, color: color)),
@@ -1200,7 +1203,7 @@ class _CategoryEditor extends StatelessWidget {
       offset: const Offset(0, 32),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), border: Border.all(color: p.featureCardAccent.withValues(alpha: 0.4))),
+        decoration: BoxDecoration(borderRadius: p.br, border: Border.all(color: p.featureCardAccent.withValues(alpha: 0.4))),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.link, size: 14, color: p.featureCardAccent), const SizedBox(width: 4),
           Text('Relation', style: TextStyle(fontSize: 11, color: p.featureCardAccent)),
