@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../application/providers/follows_provider.dart';
 import '../../../application/providers/social_providers.dart';
 import '../../../core/utils/world_languages.dart';
+import '../../../domain/entities/marketplace_listing.dart';
 import '../../../domain/entities/user_profile.dart';
 import '../../dialogs/marketplace_preview_dialog.dart';
 import '../../l10n/app_localizations.dart';
@@ -89,7 +90,7 @@ class _MarketplaceFeed extends ConsumerWidget {
                   for (final e in items)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: _MarketplaceCard(entry: e),
+                      child: _MarketplaceCard(listing: e),
                     ),
                 ],
               );
@@ -245,17 +246,17 @@ class _SecondaryFilterRowState extends ConsumerState<_SecondaryFilterRow> {
 }
 
 class _MarketplaceCard extends ConsumerWidget {
-  final MarketplaceEntry entry;
-  const _MarketplaceCard({required this.entry});
+  final MarketplaceListing listing;
+  const _MarketplaceCard({required this.listing});
 
-  IconData get _typeIcon => switch (entry.item.itemType) {
+  IconData get _typeIcon => switch (listing.itemType) {
         'world' => Icons.public,
         'template' => Icons.description_outlined,
         'package' => Icons.inventory_2_outlined,
         _ => Icons.folder_outlined,
       };
 
-  String _typeLabel(L10n l10n) => switch (entry.item.itemType) {
+  String _typeLabel(L10n l10n) => switch (listing.itemType) {
         'world' => l10n.itemTypeWorld,
         'template' => l10n.itemTypeTemplate,
         'package' => l10n.itemTypePackage,
@@ -266,12 +267,11 @@ class _MarketplaceCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final ownerName = entry.ownerUsername ?? 'unknown';
-    final item = entry.item;
+    final ownerName = listing.ownerUsername ?? 'unknown';
 
     return SocialCard(
       padding: const EdgeInsets.all(16),
-      onTap: () => MarketplacePreviewDialog.show(context, entry: entry),
+      onTap: () => MarketplacePreviewDialog.show(context, listing: listing),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -293,7 +293,7 @@ class _MarketplaceCard extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        item.title,
+                        listing.title,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -321,27 +321,27 @@ class _MarketplaceCard extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                if (item.description != null && item.description!.isNotEmpty) ...[
+                if (listing.description != null && listing.description!.isNotEmpty) ...[
                   Text(
-                    item.description!,
+                    listing.description!,
                     style: TextStyle(fontSize: 12, color: palette.tabText),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
                 ],
-                if (item.tags.isNotEmpty || item.language != null) ...[
+                if (listing.tags.isNotEmpty || listing.language != null) ...[
                   Wrap(
                     spacing: 4,
                     runSpacing: 4,
                     children: [
-                      if (item.language != null)
+                      if (listing.language != null)
                         _InlineChip(
-                          label: worldLanguageNative(item.language!),
+                          label: worldLanguageNative(listing.language!),
                           icon: Icons.language,
                           palette: palette,
                         ),
-                      for (final tag in item.tags.take(4))
+                      for (final tag in listing.tags.take(4))
                         _InlineChip(
                           label: '#$tag',
                           palette: palette,
@@ -353,7 +353,7 @@ class _MarketplaceCard extends ConsumerWidget {
                 Row(
                   children: [
                     InkWell(
-                      onTap: () => context.push('/profile/${item.ownerId}'),
+                      onTap: () => context.push('/profile/${listing.ownerId}'),
                       child: Text(
                         '@$ownerName',
                         style: TextStyle(
@@ -364,14 +364,14 @@ class _MarketplaceCard extends ConsumerWidget {
                     ),
                     Text(' · ', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
                     Text(
-                      DateFormat.yMMMd().format(item.updatedAt.toLocal()),
+                      DateFormat.yMMMd().format(listing.createdAt.toLocal()),
                       style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary),
                     ),
                     Text(' · ', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
                     Icon(Icons.download_outlined, size: 12, color: palette.sidebarLabelSecondary),
                     const SizedBox(width: 2),
                     Text(
-                      '${item.downloadCount}',
+                      '${listing.downloadCount}',
                       style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary),
                     ),
                   ],

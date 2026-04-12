@@ -11,7 +11,7 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/close_guard.dart';
 import '../../widgets/save_info_section.dart';
-import '../../widgets/visibility_toggle_row.dart';
+import '../../widgets/marketplace_panel.dart';
 import 'template_editor.dart';
 
 /// User's pick from the "save existing template" prompt.
@@ -306,7 +306,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                 localUpdatedAt: localUpdatedAt,
               ),
               const SizedBox(height: 12),
-              VisibilityToggleRow(
+              MarketplacePanel(
                 itemType: 'template',
                 localId: schema.schemaId,
                 title: schema.name,

@@ -16,7 +16,7 @@ import '../../../domain/entities/schema/world_schema_hash.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/save_info_section.dart';
-import '../../widgets/visibility_toggle_row.dart';
+import '../../widgets/marketplace_panel.dart';
 
 
 class WorldsTab extends ConsumerStatefulWidget {
@@ -461,7 +461,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 localUpdatedAt: localUpdatedAt,
               ),
               const SizedBox(height: 12),
-              VisibilityToggleRow(
+              MarketplacePanel(
                 itemType: 'world',
                 localId: campaignName,
                 title: campaignName,
