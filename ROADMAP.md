@@ -9,13 +9,13 @@ Tracked work for upcoming releases — bugs to fix and features to add. Items ar
 ### Marketplace download not visible until restart
 After downloading a world / template / package from the marketplace, the new item does not appear in the corresponding tab until the app is closed and reopened. The relevant provider needs to refresh its list right after a successful import.
 
-### Post composer button stays disabled while typing
+### Post composer button stays disabled while typing and for a while
 On the Feed, the **Post** button only enables on focus loss / debounce. It should react immediately as the user types so a non-empty draft is always submittable.
 
 ### Like button has noticeable delay
 Liking a post waits for the round-trip before updating the icon. Switch to optimistic update — flip the icon instantly and reconcile in the background, with rollback on failure.
 
-### Mobile settings: theme cards too short
+### Mobile settings: theme cards a little short from up in heigth
 Theme preview tiles in the mobile Settings tab are clipped vertically. Increase their height so the swatch + label both fit comfortably.
 
 ### Social tab cramped on mobile

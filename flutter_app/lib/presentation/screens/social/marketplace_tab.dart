@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../application/providers/follows_provider.dart';
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/screen_type.dart';
 import '../../../core/utils/world_languages.dart';
 import '../../../domain/entities/marketplace_listing.dart';
 import '../../../domain/entities/user_profile.dart';
@@ -59,10 +60,11 @@ class _MarketplaceFeed extends ConsumerWidget {
     final entries = ref.watch(marketplaceProvider);
     final filters = ref.watch(marketplaceFiltersProvider);
 
+    final hPad = isPhone(context) ? 12.0 : 24.0;
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(marketplaceProvider),
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
         children: [
           _FilterBar(filters: filters, palette: palette),
           const SizedBox(height: 12),

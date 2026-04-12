@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/screen_type.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 
@@ -24,6 +25,7 @@ class SocialShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
+    final phone = isPhone(context);
     final tabs = <(String, IconData, String)>[
       ('feed', Icons.dynamic_feed_outlined, l10n.socialTabFeed),
       ('players', Icons.groups_outlined, l10n.socialTabGameListings),
@@ -37,14 +39,17 @@ class SocialShell extends StatelessWidget {
           currentTab: currentTab,
           onTabChanged: onTabChanged,
           trailing: trailing,
+          phone: phone,
         ),
         Expanded(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
-              child: child,
-            ),
-          ),
+          child: phone
+              ? child
+              : Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 720),
+                    child: child,
+                  ),
+                ),
         ),
       ],
     );
@@ -56,11 +61,13 @@ class _PillBar extends StatelessWidget {
   final String currentTab;
   final ValueChanged<String> onTabChanged;
   final Widget? trailing;
+  final bool phone;
 
   const _PillBar({
     required this.tabs,
     required this.currentTab,
     required this.onTabChanged,
+    required this.phone,
     this.trailing,
   });
 
@@ -68,7 +75,10 @@ class _PillBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: EdgeInsets.symmetric(
+        horizontal: phone ? 8 : 24,
+        vertical: phone ? 8 : 16,
+      ),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: palette.featureCardBorder)),
       ),
@@ -93,7 +103,10 @@ class _PillBar extends StatelessWidget {
                       onTap: () => onTabChanged(t.$1),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: phone ? 12 : 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: isActive ? palette.featureCardAccent : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
@@ -106,15 +119,17 @@ class _PillBar extends StatelessWidget {
                               size: 16,
                               color: isActive ? Colors.white : palette.sidebarLabelSecondary,
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              t.$3,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                                color: isActive ? Colors.white : palette.tabText,
+                            if (!phone) ...[
+                              const SizedBox(width: 6),
+                              Text(
+                                t.$3,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                                  color: isActive ? Colors.white : palette.tabText,
+                                ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),

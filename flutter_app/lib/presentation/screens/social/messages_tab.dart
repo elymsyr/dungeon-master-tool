@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/screen_type.dart';
 import '../../../domain/entities/conversation.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/profile_avatar.dart';
@@ -15,6 +16,7 @@ class MessagesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final convsAsync = ref.watch(myConversationsProvider);
+    final hPad = isPhone(context) ? 12.0 : 24.0;
 
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(myConversationsProvider),
@@ -32,7 +34,7 @@ class MessagesTab extends ConsumerWidget {
                 ],
               )
             : ListView(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+                padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
                 children: [
                   SocialCard(
                     padding: EdgeInsets.zero,

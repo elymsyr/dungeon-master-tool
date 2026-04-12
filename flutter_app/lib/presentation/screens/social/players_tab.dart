@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/screen_type.dart';
 import '../../../core/utils/world_languages.dart';
 import '../../../domain/entities/game_listing.dart';
 import '../../dialogs/create_listing_dialog.dart';
@@ -25,10 +26,11 @@ class PlayersTab extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final listingsAsync = ref.watch(myGameListingsProvider);
 
+    final hPad = isPhone(context) ? 12.0 : 24.0;
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(myGameListingsProvider),
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
         children: [
           Row(
             children: [

@@ -191,6 +191,15 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
       _ref.invalidate(marketplaceSourceProvider(
         (itemType: listing.itemType, localId: newLocalId),
       ));
+      switch (listing.itemType) {
+        case 'world':
+          _ref.invalidate(campaignInfoListProvider);
+        case 'template':
+          _ref.invalidate(customTemplatesProvider);
+          _ref.invalidate(allTemplatesProvider);
+        case 'package':
+          _ref.invalidate(packageListProvider);
+      }
 
       state = const AsyncValue.data(null);
       return newLocalId;
