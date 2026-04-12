@@ -66,3 +66,6 @@ Several areas feel sluggish: button taps, tab switches, hitches during casts/ani
 
 ### Theme-driven visual identity
 The app currently looks like a generic Material shell regardless of theme. Each theme should ship its own visual character — for some themes this means **harder, sharper edges**, different elevation, accent shapes — applied **across the entire app and every tab**, not just color swaps. Themes can vary among themselves; the goal is that switching theme noticeably changes the feel of the whole interface.
+
+### Light themes too grey / unreadable grey fonts
+Light themes (except **Frost**) currently look washed out — they should be noticeably brighter. Also avoid grey font colors altogether: some light *and* dark themes use grey text that effectively disappears against the background. Example: the **Available in** options in the template edit screen are unreadable. Audit every theme for low-contrast grey text and replace with proper on-surface colors.
