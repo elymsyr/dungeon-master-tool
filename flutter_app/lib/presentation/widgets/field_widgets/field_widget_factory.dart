@@ -1057,7 +1057,7 @@ class _BooleanFieldWidget extends StatelessWidget {
 }
 
 // --- IMAGE GALLERY ---
-class _ImageFieldWidget extends StatefulWidget {
+class _ImageFieldWidget extends ConsumerStatefulWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
@@ -1067,10 +1067,10 @@ class _ImageFieldWidget extends StatefulWidget {
   const _ImageFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.mediaDir});
 
   @override
-  State<_ImageFieldWidget> createState() => _ImageFieldWidgetState();
+  ConsumerState<_ImageFieldWidget> createState() => _ImageFieldWidgetState();
 }
 
-class _ImageFieldWidgetState extends State<_ImageFieldWidget> {
+class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
   int _currentIndex = 0;
 
   List<String> get _images {
@@ -1082,9 +1082,11 @@ class _ImageFieldWidgetState extends State<_ImageFieldWidget> {
   Future<void> _pickImages() async {
     final mediaDir = widget.mediaDir;
     if (mediaDir != null && mediaDir.isNotEmpty) {
+      final campaignId = ref.read(mediaCampaignIdProvider);
       final selected = await MediaGalleryDialog.show(
         context,
         mediaDir: mediaDir,
+        campaignId: campaignId,
         allowMultiple: true,
       );
       if (selected == null || selected.isEmpty) return;

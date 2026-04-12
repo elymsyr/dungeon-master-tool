@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -53,7 +52,9 @@ class CloudBackupRemoteDataSource {
       // Storage'daki eski dosyayi sil (yeni ayni path'e yazilacak)
       try {
         await _client.storage.from(_bucket).remove([storagePath]);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('cloud_backup_remote_ds: old backup storage delete failed for $storagePath: $e');
+      }
       await _client.from(_table).delete().eq('id', oldId);
     }
 
@@ -160,18 +161,17 @@ class CloudBackupRemoteDataSource {
     return _rowToMeta(rows.first);
   }
 
-  /// Kullanicinin toplam storage kullanimini getir (bytes).
+  /// Kullanicinin toplam cloud kullanimini getir (bytes).
+  /// cloud_backups + community_assets (R2) toplami — get_user_total_storage_used
+  /// RPC'si araciligiyla atomic SUM yapar.
   Future<int> getTotalStorageUsed() async {
-    final rows = await _client
-        .from(_table)
-        .select('size_bytes')
-        .eq('user_id', _userId);
-
-    var total = 0;
-    for (final row in rows) {
-      total += row['size_bytes'] as int;
-    }
-    return total;
+    final result = await _client.rpc(
+      'get_user_total_storage_used',
+      params: {'p_user_id': _userId},
+    );
+    if (result == null) return 0;
+    if (result is num) return result.toInt();
+    return int.tryParse(result.toString()) ?? 0;
   }
 
   /// Storage dosyasini ve metadata row'unu sil.

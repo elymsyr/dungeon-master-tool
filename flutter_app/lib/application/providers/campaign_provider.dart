@@ -37,9 +37,14 @@ final campaignRevisionProvider = StateProvider<int>((_) => 0);
 
 /// Kampanya isim + template bilgisi.
 class CampaignInfo {
+  final String id;
   final String name;
   final String templateName;
-  const CampaignInfo({required this.name, required this.templateName});
+  const CampaignInfo({
+    required this.id,
+    required this.name,
+    required this.templateName,
+  });
 }
 
 /// Kampanya listesi + template bilgileri.
@@ -47,7 +52,11 @@ final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((ref) async 
   final db = ref.watch(appDatabaseProvider);
   final rows = await db.campaignDao.getCampaignInfoList();
   return rows
-      .map((r) => CampaignInfo(name: r.worldName, templateName: r.templateName))
+      .map((r) => CampaignInfo(
+            id: r.id,
+            name: r.worldName,
+            templateName: r.templateName,
+          ))
       .toList();
 });
 

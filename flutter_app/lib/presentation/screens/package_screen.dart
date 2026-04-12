@@ -357,7 +357,11 @@ class _PackageScreenContentState
             onPressed: () {
               final mediaDir = ref.read(mediaDirectoryProvider);
               if (mediaDir.isNotEmpty) {
-                MediaGalleryDialog.show(context, mediaDir: mediaDir);
+                MediaGalleryDialog.show(
+                  context,
+                  mediaDir: mediaDir,
+                  campaignId: 'package:${widget.packageName}',
+                );
               }
             },
           ),

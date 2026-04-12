@@ -652,10 +652,12 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   Future<void> pickMapImage(BuildContext context) async {
     String? path;
     final mediaDir = _ref.read(mediaDirectoryProvider);
+    final campaignId = _ref.read(mediaCampaignIdProvider);
     if (mediaDir.isNotEmpty) {
       final selected = await MediaGalleryDialog.show(
         context,
         mediaDir: mediaDir,
+        campaignId: campaignId,
         allowMultiple: false,
       );
       if (selected == null || selected.isEmpty) return;

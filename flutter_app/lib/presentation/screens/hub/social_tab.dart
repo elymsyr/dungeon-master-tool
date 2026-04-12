@@ -201,35 +201,43 @@ class _SocialTabState extends ConsumerState<SocialTab> {
               // ── Coming Soon Features ──
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   color: palette.featureCardBg,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border(
-                    left: BorderSide(color: palette.featureCardAccent, width: 3),
-                    top: BorderSide(color: palette.featureCardBorder),
-                    right: BorderSide(color: palette.featureCardBorder),
-                    bottom: BorderSide(color: palette.featureCardBorder),
-                  ),
+                  border: Border.all(color: palette.featureCardBorder),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.auto_awesome, size: 16, color: palette.featureCardAccent),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Coming Soon',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText),
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(width: 3, color: palette.featureCardAccent),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.auto_awesome, size: 16, color: palette.featureCardAccent),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Coming Soon',
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              _featureItem(Icons.groups, 'Co-op Sessions', 'Invite players to your table', palette),
+                              const SizedBox(height: 8),
+                              _featureItem(Icons.store, 'Community Market', 'Share and discover .dmt packages', palette),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _featureItem(Icons.groups, 'Co-op Sessions', 'Invite players to your table', palette),
-                    const SizedBox(height: 8),
-                    _featureItem(Icons.store, 'Community Market', 'Share and discover .dmt packages', palette),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
