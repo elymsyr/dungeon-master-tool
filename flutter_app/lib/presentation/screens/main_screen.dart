@@ -30,6 +30,7 @@ import '../theme/palettes.dart';
 import '../widgets/app_icon_image.dart';
 import '../widgets/close_guard.dart';
 import '../widgets/entity_sidebar.dart';
+import '../widgets/lazy_indexed_stack.dart';
 import '../widgets/pdf_sidebar.dart';
 import '../widgets/projection/projection_status_icon.dart';
 import '../widgets/save_sync_indicator.dart';
@@ -376,7 +377,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
     final schema = ref.read(worldSchemaProvider);
 
-    final tabStack = IndexedStack(
+    final tabStack = LazyIndexedStack(
       index: _tabIndex,
       children: [
         DatabaseScreen(

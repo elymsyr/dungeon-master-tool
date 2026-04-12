@@ -10,6 +10,7 @@ import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/confirm_sign_out_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/app_icon_image.dart';
+import '../../widgets/lazy_indexed_stack.dart';
 import '../../widgets/save_sync_indicator.dart';
 import 'packages_tab.dart';
 import 'settings_tab.dart';
@@ -177,7 +178,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                 ),
                 VerticalDivider(width: 1, color: palette.sidebarDivider),
                 Expanded(
-                  child: IndexedStack(
+                  child: LazyIndexedStack(
                     index: _tabIndex,
                     children: _tabContent,
                   ),
@@ -185,7 +186,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
               ],
             ),
           // Mobile: portrait=BottomNav, landscape=leading burger menu
-          ScreenType.phone => IndexedStack(
+          ScreenType.phone => LazyIndexedStack(
             index: _tabIndex,
             children: _tabContent,
           ),

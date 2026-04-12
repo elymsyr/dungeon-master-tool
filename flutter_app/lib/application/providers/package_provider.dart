@@ -9,6 +9,7 @@ import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/package_repository.dart';
+import 'campaign_provider.dart' show campaignRevisionProvider;
 
 final packageLocalDsProvider = Provider((_) => PackageLocalDataSource());
 
@@ -27,8 +28,9 @@ final packageListProvider = FutureProvider<List<PackageInfo>>((ref) {
 /// Aktif paket adı. null = henüz seçilmedi.
 class ActivePackageNotifier extends StateNotifier<String?> {
   final PackageRepository _repo;
+  final Ref _ref;
 
-  ActivePackageNotifier(this._repo) : super(null);
+  ActivePackageNotifier(this._repo, this._ref) : super(null);
 
   Map<String, dynamic>? _data;
   Map<String, dynamic>? get data => _data;
@@ -75,10 +77,12 @@ class ActivePackageNotifier extends StateNotifier<String?> {
         ..addAll(newData);
     }
     await _repo.save(name, _data!);
-    // Force-notify watchers — StateNotifier dedupes on equality.
-    final n = name;
-    state = null;
-    state = n;
+    _bumpRevision();
+  }
+
+  void _bumpRevision() {
+    final notifier = _ref.read(campaignRevisionProvider.notifier);
+    notifier.state = notifier.state + 1;
   }
 
   Future<void> delete(String packageName) async {
@@ -102,10 +106,7 @@ class ActivePackageNotifier extends StateNotifier<String?> {
     _data!.remove('template_dismissed_hash');
     _data!.remove('template_updates_muted');
     await _repo.save(state!, _data!);
-    // Force-notify watchers.
-    final name = state;
-    state = null;
-    state = name;
+    _bumpRevision();
   }
 
   /// Dismisses a specific template version for the active package.
@@ -125,5 +126,5 @@ class ActivePackageNotifier extends StateNotifier<String?> {
 
 final activePackageProvider =
     StateNotifierProvider<ActivePackageNotifier, String?>((ref) {
-  return ActivePackageNotifier(ref.watch(packageRepositoryProvider));
+  return ActivePackageNotifier(ref.watch(packageRepositoryProvider), ref);
 });
