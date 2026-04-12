@@ -135,4 +135,4 @@ This project is licensed under [CC BY-NC 4.0](LICENSE). See the LICENSE file for
 | **GitHub Issues** | [Report a Bug](https://github.com/elymsyr/dungeon-master-tool/issues) |
 | **Instagram** | [@erenorhun](https://www.instagram.com/erenorhun) |
 | **LinkedIn** | [Orhun Eren Yalcinkaya](https://www.linkedin.com/in/orhuneren) |
-| **Email** | orhunerenyalcinkaya@gmail.com |
+| **Email** | orhun868@gmail.com |

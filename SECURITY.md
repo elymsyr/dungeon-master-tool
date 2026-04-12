@@ -17,7 +17,7 @@ The project is currently in beta. Security fixes are applied to the latest relea
 
 If you discover a security issue (for example, a path traversal in file import, unsafe deserialization, or a dependency with a known CVE), please report it privately:
 
-- **Email:** orhunerenyalcinkaya@gmail.com
+- **Email:** orhun868@gmail.com
 - **Subject line:** [SECURITY] Dungeon Master Tool
 
 Please include:
