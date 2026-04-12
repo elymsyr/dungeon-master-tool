@@ -4,6 +4,10 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 /// Python config.py'daki resolve_data_root() karşılığı.
+///
+/// Per-user isolation: `setUser(userId)` çağrıldığında tüm path'ler
+/// `{dataRoot}/users/{userId}/` altına taşınır. Offline modda (userId null)
+/// mevcut global path'ler kullanılır.
 class AppPaths {
   static late String dataRoot;
   static late String worldsDir;
@@ -12,12 +16,12 @@ class AppPaths {
   static late String trashDir;
   static late String soundpadRoot;
 
+  /// Aktif kullanıcı ID'si. null = offline / guest mode.
+  static String? currentUserId;
+
   static Future<void> initialize() async {
     dataRoot = await _resolveDataRoot();
-    worldsDir = p.join(dataRoot, 'worlds');
-    packagesDir = p.join(dataRoot, 'packages');
-    cacheDir = p.join(dataRoot, 'cache');
-    trashDir = p.join(dataRoot, '.trash');
+    _setPathsForUser(null);
 
     soundpadRoot = await _resolveSoundpadRoot();
 
@@ -29,6 +33,28 @@ class AppPaths {
 
     // 30 günden eski trash öğelerini temizle
     await _cleanupTrash();
+  }
+
+  /// Kullanıcı değiştiğinde path'leri güncelle.
+  /// [userId] null ise global (offline) path'lere döner.
+  static Future<void> setUser(String? userId) async {
+    currentUserId = userId;
+    _setPathsForUser(userId);
+
+    await Directory(worldsDir).create(recursive: true);
+    await Directory(packagesDir).create(recursive: true);
+    await Directory(cacheDir).create(recursive: true);
+    await Directory(trashDir).create(recursive: true);
+
+    await _cleanupTrash();
+  }
+
+  static void _setPathsForUser(String? userId) {
+    final base = userId != null ? p.join(dataRoot, 'users', userId) : dataRoot;
+    worldsDir = p.join(base, 'worlds');
+    packagesDir = p.join(base, 'packages');
+    cacheDir = p.join(base, 'cache');
+    trashDir = p.join(base, '.trash');
   }
 
   static Future<String> _resolveDataRoot() async {

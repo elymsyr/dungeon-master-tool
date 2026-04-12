@@ -5,14 +5,18 @@ import 'package:go_router/go_router.dart';
 
 import 'package:path/path.dart' as p;
 
+import '../../application/providers/auth_provider.dart';
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/cloud_sync_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/event_bus_provider.dart';
 import '../../application/providers/media_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/save_state_provider.dart';
+import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../core/config/app_paths.dart';
+import '../../core/config/supabase_config.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../../core/utils/screen_type.dart';
@@ -200,6 +204,22 @@ class _PackageScreenContentState
     super.dispose();
   }
 
+  /// Hub'a donuse tetiklenen ortak exit akisi:
+  /// 1) Local save (saveNow)
+  /// 2) autoCloudBackupBeforeExit aciksa cloud sync
+  /// 3) Package list invalidate
+  /// 4) /hub'a git
+  Future<void> _exitToHub() async {
+    await ref.read(saveStateProvider.notifier).saveNow();
+    if (ref.read(uiStateProvider).autoCloudBackupBeforeExit &&
+        SupabaseConfig.isConfigured &&
+        ref.read(authProvider) != null) {
+      await ref.read(cloudSyncProvider.notifier).syncNow();
+    }
+    ref.invalidate(packageListProvider);
+    if (mounted) context.go('/hub');
+  }
+
   bool _handleGlobalKey(KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) return false;
     final ctrl = HardwareKeyboard.instance.isControlPressed ||
@@ -241,22 +261,14 @@ class _PackageScreenContentState
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) {
-          ref.read(saveStateProvider.notifier).saveNow();
-          ref.invalidate(packageListProvider);
-          context.go('/hub');
-        }
+        if (!didPop) _exitToHub();
       },
       child: Scaffold(
       appBar: AppBar(
         titleSpacing: 8,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            ref.read(saveStateProvider.notifier).saveNow();
-            ref.invalidate(packageListProvider);
-            context.go('/hub');
-          },
+          onPressed: _exitToHub,
         ),
         title: Row(
           children: [

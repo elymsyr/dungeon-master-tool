@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/providers/auth_provider.dart';
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/cloud_sync_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/locale_provider.dart';
 import '../../application/providers/projection_output_provider.dart';
@@ -18,6 +20,7 @@ import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
 import '../../application/services/template_sync_service.dart';
+import '../../core/config/supabase_config.dart';
 import '../../core/utils/screen_type.dart';
 import '../../application/providers/media_provider.dart';
 import '../dialogs/bug_report_dialog.dart';
@@ -29,6 +32,7 @@ import '../theme/palettes.dart';
 import '../widgets/entity_sidebar.dart';
 import '../widgets/pdf_sidebar.dart';
 import '../widgets/projection/projection_status_icon.dart';
+import '../widgets/save_sync_indicator.dart';
 import '../widgets/soundmap_sidebar.dart';
 import 'database/database_screen.dart';
 import 'map/world_map_screen.dart';
@@ -106,7 +110,30 @@ class _MainScreenState extends ConsumerState<MainScreen>
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       ref.read(saveStateProvider.notifier).saveNow();
+      // Auto cloud backup before exit (opt-in)
+      if (ref.read(uiStateProvider).autoCloudBackupBeforeExit &&
+          SupabaseConfig.isConfigured &&
+          ref.read(authProvider) != null) {
+        ref.read(cloudSyncProvider.notifier).syncNow();
+      }
     }
+  }
+
+  /// Hub'a donuse tetiklenen ortak exit akisi:
+  /// 1) Local save (saveNow)
+  /// 2) autoCloudBackupBeforeExit aciksa cloud sync
+  /// 3) Campaign list provider'larini invalidate et
+  /// 4) /hub'a git
+  Future<void> _exitToHub() async {
+    await ref.read(saveStateProvider.notifier).saveNow();
+    if (ref.read(uiStateProvider).autoCloudBackupBeforeExit &&
+        SupabaseConfig.isConfigured &&
+        ref.read(authProvider) != null) {
+      await ref.read(cloudSyncProvider.notifier).syncNow();
+    }
+    ref.invalidate(campaignListProvider);
+    ref.invalidate(campaignInfoListProvider);
+    if (mounted) context.go('/hub');
   }
 
   void _persistUiState() {
@@ -390,9 +417,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
-          ref.invalidate(campaignListProvider);
-          ref.invalidate(campaignInfoListProvider);
-          context.go('/hub');
+          _exitToHub();
         }
       },
       child: Scaffold(
@@ -423,8 +448,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
           // Undo / Redo
           _UndoRedoButtons(tabIndex: _tabIndex),
           const SizedBox(width: 4),
-          // Save indicator
-          const _SaveIndicator(),
+          // Save indicator — full save/sync panel
+          const SaveSyncIndicator(),
           const SizedBox(width: 4),
           // Edit Mode toggle
           IconButton(
@@ -451,9 +476,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                   case 'import':
                     ImportPackageDialog.show(context);
                   case 'switch_world':
-                    ref.invalidate(campaignListProvider);
-                    ref.invalidate(campaignInfoListProvider);
-                    context.go('/hub');
+                    _exitToHub();
                   case 'bug':
                     BugReportDialog.show(context, screenshotKey: _screenshotKey);
                   default:
@@ -552,11 +575,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
             IconButton(
               icon: const Icon(Icons.swap_horiz, size: 20),
               tooltip: 'Switch World',
-              onPressed: () {
-                ref.invalidate(campaignListProvider);
-                ref.invalidate(campaignInfoListProvider);
-                context.go('/hub');
-              },
+              onPressed: _exitToHub,
             ),
             // Bug report
             IconButton(
@@ -1045,117 +1064,6 @@ class _UndoRedoButtons extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Save status indicators — local save + cloud sync (disabled).
-class _SaveIndicator extends ConsumerWidget {
-  const _SaveIndicator();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final status = ref.watch(saveStateProvider);
-    final palette = Theme.of(context).extension<DmToolColors>()!;
-
-    final (IconData? icon, Color color, String tooltip) = switch (status) {
-      SaveStatus.saved => (Icons.check_circle_outline, palette.uiAutosaveTextSaved, 'Local save — up to date'),
-      SaveStatus.dirty => (Icons.save_outlined, palette.uiAutosaveTextEditing, 'Unsaved changes'),
-      SaveStatus.saving => (null, palette.uiAutosaveTextEditing, 'Saving...'),
-    };
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // ── Local save ──
-        Tooltip(
-          message: tooltip,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () => _showLocalSaveInfo(context, ref, palette),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              child: icon != null
-                  ? Icon(icon, size: 18, color: color)
-                  : SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: color),
-                    ),
-            ),
-          ),
-        ),
-        // ── Cloud sync (disabled) ──
-        Tooltip(
-          message: 'Cloud sync — coming soon',
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () => _showCloudSyncInfo(context, palette),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              child: Icon(Icons.cloud_off, size: 18,
-                  color: palette.sidebarLabelSecondary.withValues(alpha: 0.4)),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showLocalSaveInfo(BuildContext context, WidgetRef ref, DmToolColors palette) {
-    final status = ref.read(saveStateProvider);
-    final lastSaved = ref.read(saveStateProvider.notifier).lastSavedAt;
-
-    String detail;
-    if (status == SaveStatus.saving) {
-      detail = 'Saving in progress...';
-    } else if (status == SaveStatus.dirty) {
-      detail = 'You have unsaved changes.\nThey will be saved automatically.';
-    } else if (lastSaved != null) {
-      final diff = DateTime.now().difference(lastSaved);
-      final timeAgo = diff.inMinutes < 1
-          ? 'just now'
-          : diff.inMinutes < 60
-              ? '${diff.inMinutes}m ago'
-              : '${diff.inHours}h ago';
-      detail = 'All changes saved locally.\nLast saved: $timeAgo';
-    } else {
-      detail = 'All changes saved locally.';
-    }
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.save_outlined, size: 20, color: palette.featureCardAccent),
-            const SizedBox(width: 8),
-            const Text('Local Save', style: TextStyle(fontSize: 16)),
-          ],
-        ),
-        content: Text(detail, style: const TextStyle(fontSize: 13)),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
-      ),
-    );
-  }
-
-  void _showCloudSyncInfo(BuildContext context, DmToolColors palette) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.cloud_off, size: 20, color: palette.sidebarLabelSecondary),
-            const SizedBox(width: 8),
-            const Text('Cloud Sync', style: TextStyle(fontSize: 16)),
-          ],
-        ),
-        content: const Text(
-          'Cloud sync is not available yet.\nYour data is saved locally on this device.',
-          style: TextStyle(fontSize: 13),
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
-      ),
     );
   }
 }

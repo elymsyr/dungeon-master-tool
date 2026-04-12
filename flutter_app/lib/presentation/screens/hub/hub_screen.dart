@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/user_session_provider.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
+import '../../dialogs/confirm_sign_out_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/save_sync_indicator.dart';
 import 'packages_tab.dart';
 import 'settings_tab.dart';
 import 'social_tab.dart';
@@ -99,6 +102,14 @@ class _HubScreenState extends ConsumerState<HubScreen> {
 
     final authState = ref.watch(authProvider);
 
+    // Redirect to landing on sign-out when Supabase is configured.
+    ref.listen(authProvider, (prev, next) async {
+      if (prev != null && next == null && SupabaseConfig.isConfigured) {
+        await ref.read(userSessionProvider.notifier).deactivate();
+        if (context.mounted) context.go('/');
+      }
+    });
+
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -123,6 +134,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
           ],
         ),
         actions: [
+          const SaveSyncIndicator(compact: true),
           IconButton(
             tooltip: 'Report a Bug',
             icon: const Icon(Icons.bug_report_outlined),
@@ -137,7 +149,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                 ? IconButton(
                     icon: const Icon(Icons.logout, size: 20),
                     tooltip: 'Sign Out (${authState.email})',
-                    onPressed: () => ref.read(authProvider.notifier).signOut(),
+                    onPressed: () => confirmAndSignOut(context, ref),
                   )
                 : IconButton(
                     icon: const Icon(Icons.login, size: 20),

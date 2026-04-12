@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/package_provider.dart';
+import '../../../data/database/database_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/services/template_sync_service.dart';
@@ -11,6 +13,7 @@ import '../../../domain/entities/schema/world_schema_hash.dart';
 import '../../../core/utils/deep_copy.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/save_info_section.dart';
 
 class PackagesTab extends ConsumerStatefulWidget {
   const PackagesTab({super.key});
@@ -302,7 +305,21 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
+              // Cloud cleanup: load package to get package_id before local delete.
+              String? packageId;
+              try {
+                final data = await ref.read(packageRepositoryProvider).load(name);
+                packageId = data['package_id'] as String? ??
+                    data['world_id'] as String? ??
+                    name;
+              } catch (_) {
+                packageId = name;
+              }
               await ref.read(activePackageProvider.notifier).delete(name);
+              // Best-effort cloud cleanup — no-op when offline/signed-out.
+              await ref
+                  .read(cloudBackupOperationProvider.notifier)
+                  .deleteBackupByItem(packageId, 'package');
               ref.invalidate(packageListProvider);
               ref.invalidate(trashListProvider);
               setState(() => _selectedIndex = -1);
@@ -335,6 +352,14 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
       return;
     }
 
+    // Fetch local updatedAt from the DB row for SaveInfoSection.
+    final packageRow =
+        await ref.read(appDatabaseProvider).packageDao.getByName(packageName);
+    final localUpdatedAt = packageRow?.updatedAt;
+    final packageId = data['package_id'] as String? ??
+        data['world_id'] as String? ??
+        packageName;
+
     TemplateUpdatePrompt? drift;
     try {
       drift = await ref.read(templateSyncServiceProvider).checkDrift(
@@ -366,6 +391,18 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                       style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
                 ],
               ),
+              const SizedBox(height: 12),
+              SaveInfoSection(
+                itemName: packageName,
+                itemId: packageId,
+                type: 'package',
+                localUpdatedAt: localUpdatedAt,
+                onDownloaded: () async {
+                  ref.invalidate(packageListProvider);
+                },
+              ),
+              const SizedBox(height: 12),
+              Divider(height: 1, color: palette.featureCardBorder),
               const SizedBox(height: 12),
               if (drift == null)
                 Row(

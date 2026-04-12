@@ -5,13 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/services/template_sync_service.dart';
 import '../../../core/config/app_paths.dart';
+import '../../../data/database/database_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/entities/schema/world_schema_hash.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/save_info_section.dart';
+
 
 class WorldsTab extends ConsumerStatefulWidget {
   const WorldsTab({super.key});
@@ -251,7 +255,21 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
+              // Cloud cleanup: load campaign data to get world_id before local
+              // delete. If either the load or the cloud delete fails, we still
+              // proceed with local delete (it's not fatal).
+              String? worldId;
+              try {
+                final data = await ref.read(campaignRepositoryProvider).load(name);
+                worldId = data['world_id'] as String? ?? name;
+              } catch (_) {
+                worldId = name;
+              }
               await ref.read(activeCampaignProvider.notifier).delete(name);
+              // Best-effort cloud cleanup — no-op when offline/signed-out.
+              await ref
+                  .read(cloudBackupOperationProvider.notifier)
+                  .deleteBackupByItem(worldId, 'world');
               ref.invalidate(campaignListProvider);
               ref.invalidate(campaignInfoListProvider);
               ref.invalidate(trashListProvider);
@@ -410,6 +428,14 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       return;
     }
 
+    // Fetch local updatedAt from the DB row for SaveInfoSection.
+    final campaignRow = await ref
+        .read(appDatabaseProvider)
+        .campaignDao
+        .getByName(campaignName);
+    final localUpdatedAt = campaignRow?.updatedAt;
+    final worldId = data['world_id'] as String? ?? campaignName;
+
     TemplateUpdatePrompt? drift;
     try {
       drift = await ref.read(templateSyncServiceProvider).checkDrift(
@@ -443,6 +469,19 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                       style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
                 ],
               ),
+              const SizedBox(height: 12),
+              SaveInfoSection(
+                itemName: campaignName,
+                itemId: worldId,
+                type: 'world',
+                localUpdatedAt: localUpdatedAt,
+                onDownloaded: () async {
+                  ref.invalidate(campaignListProvider);
+                  ref.invalidate(campaignInfoListProvider);
+                },
+              ),
+              const SizedBox(height: 12),
+              Divider(height: 1, color: palette.featureCardBorder),
               const SizedBox(height: 12),
               if (drift == null)
                 Row(

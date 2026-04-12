@@ -15,14 +15,14 @@ final campaignLocalDsProvider = Provider((_) => CampaignLocalDataSource());
 
 final campaignRepositoryProvider = Provider<CampaignRepository>(
   (ref) => CampaignRepositoryImpl(
-    ref.read(appDatabaseProvider),
+    ref.watch(appDatabaseProvider),
     ref.read(campaignLocalDsProvider),
   ),
 );
 
 /// Mevcut kampanya listesi.
 final campaignListProvider = FutureProvider<List<String>>((ref) {
-  return ref.read(campaignRepositoryProvider).getAvailable();
+  return ref.watch(campaignRepositoryProvider).getAvailable();
 });
 
 /// Kampanya isim + template bilgisi.
@@ -34,7 +34,7 @@ class CampaignInfo {
 
 /// Kampanya listesi + template bilgileri.
 final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((ref) async {
-  final db = ref.read(appDatabaseProvider);
+  final db = ref.watch(appDatabaseProvider);
   final rows = await db.campaignDao.getCampaignInfoList();
   return rows
       .map((r) => CampaignInfo(name: r.worldName, templateName: r.templateName))
@@ -164,7 +164,7 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
 
 final activeCampaignProvider =
     StateNotifierProvider<ActiveCampaignNotifier, String?>((ref) {
-  return ActiveCampaignNotifier(ref.read(campaignRepositoryProvider), ref);
+  return ActiveCampaignNotifier(ref.watch(campaignRepositoryProvider), ref);
 });
 
 /// Trash'teki silinen kampanyalar.

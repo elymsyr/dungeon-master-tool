@@ -14,14 +14,14 @@ final packageLocalDsProvider = Provider((_) => PackageLocalDataSource());
 
 final packageRepositoryProvider = Provider<PackageRepository>(
   (ref) => PackageRepositoryImpl(
-    ref.read(appDatabaseProvider),
+    ref.watch(appDatabaseProvider),
     ref.read(packageLocalDsProvider),
   ),
 );
 
 /// Paket listesi — hub ekranında gösterim için.
 final packageListProvider = FutureProvider<List<PackageInfo>>((ref) {
-  return ref.read(packageRepositoryProvider).getPackageInfoList();
+  return ref.watch(packageRepositoryProvider).getPackageInfoList();
 });
 
 /// Aktif paket adı. null = henüz seçilmedi.
@@ -104,5 +104,5 @@ class ActivePackageNotifier extends StateNotifier<String?> {
 
 final activePackageProvider =
     StateNotifierProvider<ActivePackageNotifier, String?>((ref) {
-  return ActivePackageNotifier(ref.read(packageRepositoryProvider));
+  return ActivePackageNotifier(ref.watch(packageRepositoryProvider));
 });

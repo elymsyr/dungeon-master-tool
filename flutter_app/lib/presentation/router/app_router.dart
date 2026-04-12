@@ -1,5 +1,7 @@
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/config/supabase_config.dart';
 import '../screens/hub/hub_screen.dart';
 import '../screens/landing/landing_screen.dart';
 import '../screens/main_screen.dart';
@@ -7,6 +9,16 @@ import '../screens/package_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
+  redirect: (context, state) {
+    // When Supabase is configured, require authentication for all
+    // routes except the landing page.
+    if (!SupabaseConfig.isConfigured) return null;
+    final isLanding = state.matchedLocation == '/';
+    final isAuthenticated =
+        Supabase.instance.client.auth.currentSession != null;
+    if (!isAuthenticated && !isLanding) return '/';
+    return null;
+  },
   routes: [
     GoRoute(
       path: '/',

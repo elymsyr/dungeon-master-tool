@@ -4,14 +4,23 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../domain/entities/cloud_backup_meta.dart';
+import '../../dialogs/confirm_sign_out_dialog.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 
-class SocialTab extends ConsumerWidget {
+class SocialTab extends ConsumerStatefulWidget {
   const SocialTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SocialTab> createState() => _SocialTabState();
+}
+
+class _SocialTabState extends ConsumerState<SocialTab> {
+  @override
+  Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
 
     if (!SupabaseConfig.isConfigured) {
@@ -90,6 +99,7 @@ class SocialTab extends ConsumerWidget {
   // ── Signed-in profile ───────────────────────────────────────────
 
   Widget _buildProfile(BuildContext context, WidgetRef ref, DmToolColors palette, AuthState authState) {
+    final l10n = L10n.of(context)!;
     final initial = authState.email.isNotEmpty ? authState.email[0].toUpperCase() : '?';
     final providerLabel = switch (authState.provider) {
       'google' => 'Google',
@@ -183,6 +193,11 @@ class SocialTab extends ConsumerWidget {
 
               const SizedBox(height: 16),
 
+              // ── Cloud Backup ──
+              _buildCloudBackupSection(ref, palette),
+
+              const SizedBox(height: 16),
+
               // ── Coming Soon Features ──
               Container(
                 width: double.infinity,
@@ -214,8 +229,6 @@ class SocialTab extends ConsumerWidget {
                     _featureItem(Icons.groups, 'Co-op Sessions', 'Invite players to your table', palette),
                     const SizedBox(height: 8),
                     _featureItem(Icons.store, 'Community Market', 'Share and discover .dmt packages', palette),
-                    const SizedBox(height: 8),
-                    _featureItem(Icons.cloud_upload_outlined, 'Cloud Backup', 'Sync campaigns across devices', palette),
                   ],
                 ),
               ),
@@ -227,9 +240,9 @@ class SocialTab extends ConsumerWidget {
                 width: double.infinity,
                 height: 40,
                 child: OutlinedButton.icon(
-                  onPressed: () => ref.read(authProvider.notifier).signOut(),
+                  onPressed: () => confirmAndSignOut(context, ref),
                   icon: Icon(Icons.logout, size: 18, color: palette.dangerBtnBg),
-                  label: Text('Sign Out', style: TextStyle(color: palette.dangerBtnBg)),
+                  label: Text(l10n.signOut, style: TextStyle(color: palette.dangerBtnBg)),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: palette.dangerBtnBg.withValues(alpha: 0.4)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -241,6 +254,210 @@ class SocialTab extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  // ── Cloud Backup Section ─────────────────────────────────────────
+
+  Widget _buildCloudBackupSection(WidgetRef ref, DmToolColors palette) {
+    final l10n = L10n.of(context)!;
+    final backupsAsync = ref.watch(cloudBackupListProvider);
+    final opState = ref.watch(cloudBackupOperationProvider);
+
+    // Show snackbar on operation completion
+    ref.listen<CloudBackupOperationState>(cloudBackupOperationProvider, (prev, next) {
+      if (prev?.isBusy != true) return;
+      if (next.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.cloudBackupError(next.errorMessage!))),
+        );
+        ref.read(cloudBackupOperationProvider.notifier).reset();
+      } else if (!next.isBusy && next.result != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.cloudBackupSuccess)),
+        );
+        ref.read(cloudBackupOperationProvider.notifier).reset();
+      } else if (!next.isBusy && prev?.type == CloudBackupOpType.downloading) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.cloudBackupRestoreSuccess)),
+        );
+        ref.read(cloudBackupOperationProvider.notifier).reset();
+      } else if (!next.isBusy && prev?.type == CloudBackupOpType.deleting) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.cloudBackupDeleteSuccess)),
+        );
+        ref.read(cloudBackupOperationProvider.notifier).reset();
+      }
+    });
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: palette.featureCardBorder),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            Container(width: 3, color: palette.featureCardAccent),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+          Row(
+            children: [
+              Icon(Icons.cloud_upload_outlined, size: 16, color: palette.featureCardAccent),
+              const SizedBox(width: 8),
+              Text(
+                l10n.cloudBackupTitle,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Operation progress
+          if (opState.isBusy) ...[
+            Row(
+              children: [
+                const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                const SizedBox(width: 10),
+                Text(
+                  switch (opState.type) {
+                    CloudBackupOpType.uploading => l10n.cloudBackupUploading,
+                    CloudBackupOpType.downloading => l10n.cloudBackupDownloading,
+                    CloudBackupOpType.deleting => l10n.cloudBackupDeleting,
+                    _ => '',
+                  },
+                  style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // Backup list
+          backupsAsync.when(
+            data: (backups) => backups.isEmpty
+                ? Text(l10n.cloudBackupEmpty,
+                    style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary))
+                : Column(
+                    children: backups.map((meta) => _buildBackupCard(ref, meta, palette, l10n, opState.isBusy)).toList(),
+                  ),
+            loading: () => const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+            error: (e, _) => Text(
+              l10n.cloudBackupError(e.toString()),
+              style: TextStyle(fontSize: 12, color: palette.dangerBtnBg),
+            ),
+          ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBackupCard(WidgetRef ref, CloudBackupMeta meta, DmToolColors palette, L10n l10n, bool busy) {
+    final date = DateFormat.yMMMd().add_Hm().format(meta.createdAt.toLocal());
+    final sizeKb = (meta.sizeBytes / 1024).toStringAsFixed(1);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: palette.featureCardBg,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: palette.featureCardBorder),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.backup, size: 18, color: palette.sidebarLabelSecondary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(meta.itemName, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: palette.tabActiveText)),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$date  \u2022  ${l10n.cloudBackupEntities(meta.entityCount)}  \u2022  ${l10n.cloudBackupSize(sizeKb)}',
+                    style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
+                  ),
+                  if (meta.notes != null && meta.notes!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(meta.notes!, style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic, color: palette.sidebarLabelSecondary)),
+                    ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.download, size: 16, color: palette.featureCardAccent),
+              tooltip: l10n.cloudBackupRestore,
+              onPressed: busy ? null : () => _confirmRestore(ref, meta, palette, l10n),
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              padding: EdgeInsets.zero,
+            ),
+            IconButton(
+              icon: Icon(Icons.delete_outline, size: 16, color: palette.dangerBtnBg),
+              tooltip: l10n.cloudBackupDelete,
+              onPressed: busy ? null : () => _confirmDelete(ref, meta, palette, l10n),
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              padding: EdgeInsets.zero,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmRestore(WidgetRef ref, CloudBackupMeta meta, DmToolColors palette, L10n l10n) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.cloudBackupRestoreConfirmTitle(meta.itemName)),
+        content: Text(l10n.cloudBackupRestoreConfirmBody),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.btnCancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.cloudBackupRestore)),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      ref.read(cloudBackupOperationProvider.notifier).restoreBackup(meta);
+    }
+  }
+
+  Future<void> _confirmDelete(WidgetRef ref, CloudBackupMeta meta, DmToolColors palette, L10n l10n) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.cloudBackupDeleteConfirmTitle),
+        content: Text(l10n.cloudBackupDeleteConfirmBody(meta.itemName)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.btnCancel)),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: palette.dangerBtnBg,
+              foregroundColor: palette.dangerBtnText,
+            ),
+            child: Text(l10n.btnDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      ref.read(cloudBackupOperationProvider.notifier).deleteBackup(meta.id);
+    }
   }
 
   Widget _infoRow(
