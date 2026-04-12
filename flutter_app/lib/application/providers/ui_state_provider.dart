@@ -43,6 +43,10 @@ class UiState {
   // Volume
   final double volume;
 
+  // Save & Sync
+  final bool autoLocalSave;
+  final bool autoCloudBackupBeforeExit;
+
   const UiState({
     this.mainTabIndex = 0,
     this.sidebarOpen = true,
@@ -63,6 +67,8 @@ class UiState {
     this.themeName = 'dark',
     this.localeCode = 'en',
     this.volume = 1.0,
+    this.autoLocalSave = true,
+    this.autoCloudBackupBeforeExit = false,
   });
 
   UiState copyWith({
@@ -85,6 +91,8 @@ class UiState {
     String? themeName,
     String? localeCode,
     double? volume,
+    bool? autoLocalSave,
+    bool? autoCloudBackupBeforeExit,
   }) {
     return UiState(
       mainTabIndex: mainTabIndex ?? this.mainTabIndex,
@@ -106,6 +114,8 @@ class UiState {
       themeName: themeName ?? this.themeName,
       localeCode: localeCode ?? this.localeCode,
       volume: volume ?? this.volume,
+      autoLocalSave: autoLocalSave ?? this.autoLocalSave,
+      autoCloudBackupBeforeExit: autoCloudBackupBeforeExit ?? this.autoCloudBackupBeforeExit,
     );
   }
 
@@ -129,6 +139,8 @@ class UiState {
     'themeName': themeName,
     'localeCode': localeCode,
     'volume': volume,
+    'autoLocalSave': autoLocalSave,
+    'autoCloudBackupBeforeExit': autoCloudBackupBeforeExit,
   };
 
   factory UiState.fromJson(Map<String, dynamic> json) {
@@ -161,6 +173,8 @@ class UiState {
       themeName: json['themeName'] as String? ?? 'dark',
       localeCode: json['localeCode'] as String? ?? 'en',
       volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
+      autoLocalSave: json['autoLocalSave'] as bool? ?? true,
+      autoCloudBackupBeforeExit: json['autoCloudBackupBeforeExit'] as bool? ?? false,
     );
   }
 }

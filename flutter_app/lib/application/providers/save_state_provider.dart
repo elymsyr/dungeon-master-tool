@@ -3,7 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/supabase_config.dart';
+import 'auth_provider.dart';
 import 'campaign_provider.dart';
+import 'cloud_sync_provider.dart';
+import 'ui_state_provider.dart';
 
 enum SaveStatus { saved, dirty, saving }
 
@@ -17,6 +21,7 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
   Timer? _maxDelayTimer;
   static const _saveDelay = Duration(seconds: 2);
   static const _maxSaveDelay = Duration(seconds: 10);
+  bool _disposed = false;
 
   SaveStateNotifier(this._ref) : super(SaveStatus.saved);
 
@@ -25,12 +30,14 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
 
   /// Called by any module when in-memory campaign data has changed.
   void markDirty() {
-    if (!mounted) return;
+    if (_disposed || !mounted) return;
     state = SaveStatus.dirty;
-    _saveTimer?.cancel();
-    _saveTimer = Timer(_saveDelay, _performSave);
-    // Max delay guard: ilk dirty'den itibaren 10s sonra mutlaka save edilir.
-    _maxDelayTimer ??= Timer(_maxSaveDelay, _performSave);
+    final autoSave = _ref.read(uiStateProvider).autoLocalSave;
+    if (autoSave) {
+      _saveTimer?.cancel();
+      _saveTimer = Timer(_saveDelay, _performSave);
+      _maxDelayTimer ??= Timer(_maxSaveDelay, _performSave);
+    }
   }
 
   /// Force an immediate save (e.g., before app close or tab switch).
@@ -42,18 +49,33 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
   }
 
   Future<void> _performSave() async {
-    if (!mounted) return;
+    if (_disposed || !mounted) return;
     _saveTimer?.cancel();
     _maxDelayTimer?.cancel();
     _maxDelayTimer = null;
     state = SaveStatus.saving;
     try {
       await _ref.read(activeCampaignProvider.notifier).save();
+      if (_disposed) return;
       lastSavedAt = DateTime.now();
+
+      // Cloud sync trigger — local save sonrası dirty olarak işaretle.
+      if (SupabaseConfig.isConfigured && _ref.read(authProvider) != null) {
+        final campaignName = _ref.read(activeCampaignProvider);
+        final data = _ref.read(activeCampaignProvider.notifier).data;
+        if (campaignName != null && data != null) {
+          final worldId = data['world_id'] as String? ?? campaignName;
+          _ref.read(cloudSyncProvider.notifier).markDirty(
+                worldId,
+                campaignName,
+                'world',
+              );
+        }
+      }
     } catch (e) {
       debugPrint('Save error: $e');
     } finally {
-      if (mounted) {
+      if (!_disposed && mounted) {
         state = SaveStatus.saved;
       }
     }
@@ -61,6 +83,7 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
 
   @override
   void dispose() {
+    _disposed = true;
     _saveTimer?.cancel();
     _maxDelayTimer?.cancel();
     super.dispose();

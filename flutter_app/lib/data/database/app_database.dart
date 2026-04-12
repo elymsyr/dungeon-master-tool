@@ -57,6 +57,9 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  /// Per-user database: userId verilirse user-scoped path kullanılır.
+  AppDatabase.forUser(String? userId) : super(_openConnectionForUser(userId));
+
   /// Test ve custom path desteği.
   AppDatabase.forTesting(super.e);
 
@@ -96,10 +99,15 @@ class AppDatabase extends _$AppDatabase {
       );
 }
 
-LazyDatabase _openConnection() {
+LazyDatabase _openConnection() => _openConnectionForUser(null);
+
+LazyDatabase _openConnectionForUser(String? userId) {
   return LazyDatabase(() async {
     final dir = await getApplicationSupportDirectory();
-    final dbDir = Directory(p.join(dir.path, 'DungeonMasterTool'));
+    final basePath = userId != null
+        ? p.join(dir.path, 'DungeonMasterTool', 'users', userId)
+        : p.join(dir.path, 'DungeonMasterTool');
+    final dbDir = Directory(basePath);
     if (!dbDir.existsSync()) {
       dbDir.createSync(recursive: true);
     }

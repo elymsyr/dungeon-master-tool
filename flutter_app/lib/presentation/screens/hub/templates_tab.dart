@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/save_info_section.dart';
 import 'template_editor.dart';
 
 /// User's pick from the "save existing template" prompt.
@@ -97,6 +99,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                   schema: schema,
                   palette: palette,
                   onTap: () => setState(() { _mode = 'edit'; _activeSchema = schema; }),
+                  onSettings: () => _showTemplateSettings(schema, palette),
                 ),
                 loading: () => const Padding(
                   padding: EdgeInsets.all(16),
@@ -115,8 +118,13 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                       palette: palette,
                       isCustom: true,
                       onTap: () => setState(() { _mode = 'edit'; _activeSchema = schema; }),
+                      onSettings: () => _showTemplateSettings(schema, palette),
                       onDelete: () async {
                         await ref.read(templateLocalDsProvider).moveToTrash(schema.schemaId, schema.name);
+                        // Best-effort cloud cleanup — no-op when offline/signed-out.
+                        await ref
+                            .read(cloudBackupOperationProvider.notifier)
+                            .deleteBackupByItem(schema.schemaId, 'template');
                         ref.invalidate(customTemplatesProvider);
                         ref.invalidate(allTemplatesProvider);
                         ref.invalidate(trashListProvider);
@@ -235,6 +243,65 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
   /// the fork's content on first save. Without this the fork would
   /// inherit the source's lineage and the lazy-sync flow would treat
   /// every dependent campaign as outdated against the wrong template.
+  Future<void> _showTemplateSettings(
+      WorldSchema schema, DmToolColors palette) async {
+    final l10n = L10n.of(context)!;
+    // Parse ISO8601 updatedAt from the schema's in-memory copy.
+    DateTime? localUpdatedAt;
+    try {
+      localUpdatedAt = DateTime.parse(schema.updatedAt);
+    } catch (_) {
+      localUpdatedAt = null;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('${schema.name} — Settings'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.description,
+                      size: 16, color: palette.sidebarLabelSecondary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '${schema.categories.length} categories  ·  v${schema.version}',
+                      style: TextStyle(
+                          fontSize: 13, color: palette.tabActiveText),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SaveInfoSection(
+                itemName: schema.name,
+                itemId: schema.schemaId,
+                type: 'template',
+                localUpdatedAt: localUpdatedAt,
+                onDownloaded: () async {
+                  ref.invalidate(builtinTemplateProvider);
+                  ref.invalidate(customTemplatesProvider);
+                  ref.invalidate(allTemplatesProvider);
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.btnCancel),
+          ),
+        ],
+      ),
+    );
+  }
+
   WorldSchema _cloneAsNew(WorldSchema t, String newName) {
     final now = DateTime.now().toUtc().toIso8601String();
     final newId = const Uuid().v4();
@@ -263,8 +330,9 @@ class _TemplateCard extends StatelessWidget {
   final VoidCallback onTap;
   final bool isCustom;
   final VoidCallback? onDelete;
+  final VoidCallback? onSettings;
 
-  const _TemplateCard({required this.schema, required this.palette, required this.onTap, this.isCustom = false, this.onDelete});
+  const _TemplateCard({required this.schema, required this.palette, required this.onTap, this.isCustom = false, this.onDelete, this.onSettings});
 
   @override
   Widget build(BuildContext context) {
@@ -309,6 +377,13 @@ class _TemplateCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (onSettings != null)
+              IconButton(
+                icon: Icon(Icons.settings, size: 18, color: palette.sidebarLabelSecondary),
+                tooltip: 'Settings',
+                onPressed: onSettings,
+                visualDensity: VisualDensity.compact,
+              ),
             if (isCustom && onDelete != null) ...[
               IconButton(
                 icon: Icon(Icons.delete_outline, size: 18, color: palette.sidebarLabelSecondary),

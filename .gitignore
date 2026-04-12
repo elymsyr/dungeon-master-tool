@@ -1,5 +1,5 @@
 .env
-
+supabase
 # User data & runtime
 worlds/
 cache/

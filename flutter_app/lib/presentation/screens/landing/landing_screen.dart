@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/user_session_provider.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -28,11 +29,13 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   @override
   void initState() {
     super.initState();
-    // If already logged in (persisted session), skip landing and go to hub.
+    // If already logged in (persisted session), activate user session and go to hub.
     if (SupabaseConfig.isConfigured) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && ref.read(authProvider) != null) {
-          context.go('/hub');
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final auth = ref.read(authProvider);
+        if (mounted && auth != null) {
+          await ref.read(userSessionProvider.notifier).activate(auth.uid);
+          if (mounted) context.go('/hub');
         }
       });
     }
@@ -53,9 +56,10 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     final showAuth = SupabaseConfig.isConfigured && authState == null;
 
     // Auto-navigate to hub on successful sign-in.
-    ref.listen(authProvider, (prev, next) {
+    ref.listen(authProvider, (prev, next) async {
       if (prev == null && next != null) {
-        context.go('/hub');
+        await ref.read(userSessionProvider.notifier).activate(next.uid);
+        if (mounted) context.go('/hub');
       }
     });
 
@@ -153,19 +157,6 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                   ),
 
                   SizedBox(height: isWide ? 16 : 10),
-
-                  // ── Skip Login ──
-                  TextButton(
-                    onPressed: () => context.go('/hub'),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('Skip Login', style: TextStyle(fontSize: 13, color: palette.sidebarLabelSecondary)),
-                        const SizedBox(width: 4),
-                        Icon(Icons.arrow_forward, size: 16, color: palette.sidebarLabelSecondary),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
