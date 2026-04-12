@@ -10,7 +10,9 @@ final followsRemoteDsProvider = Provider<FollowsRemoteDataSource>(
   (ref) => FollowsRemoteDataSource(),
 );
 
-/// Auth user, [targetUserId]'i takip ediyor mu?
+/// Auth user, [targetUserId]'i takip ediyor mu? Optimistic toggle
+/// notifier üzerinden state = loading veya data(bool) olarak override
+/// edilebilir; UI hemen yeni değeri görür.
 final isFollowingProvider =
     FutureProvider.family<bool, String>((ref, targetUserId) async {
   if (!SupabaseConfig.isConfigured) return false;
@@ -18,6 +20,12 @@ final isFollowingProvider =
   if (auth == null) return false;
   return ref.read(followsRemoteDsProvider).isFollowing(targetUserId);
 });
+
+/// Optimistic local override for follow state. Eğer set edilmişse
+/// UI bu değeri kullanır, aksi halde [isFollowingProvider]'a düşer.
+/// Key: target user id, Value: follow state (true = following).
+final followOverrideProvider =
+    StateProvider.family<bool?, String>((ref, targetUserId) => null);
 
 final followersProvider =
     FutureProvider.family<List<UserProfile>, String>((ref, userId) async {
@@ -35,8 +43,14 @@ class FollowToggleNotifier extends StateNotifier<AsyncValue<void>> {
   final Ref _ref;
   FollowToggleNotifier(this._ref) : super(const AsyncValue.data(null));
 
+  /// Optimistic: önce lokal override'ı ters çevir (UI anında reflect eder),
+  /// sonra DB'ye yaz. Hata olursa override'ı geri al ve hata bildir.
   Future<void> toggle(String targetUserId) async {
-    state = const AsyncValue.loading();
+    final current = _ref.read(followOverrideProvider(targetUserId)) ??
+        (_ref.read(isFollowingProvider(targetUserId)).value ?? false);
+    final next = !current;
+    _ref.read(followOverrideProvider(targetUserId).notifier).state = next;
+
     try {
       await _ref.read(followsRemoteDsProvider).toggle(targetUserId);
       _ref.invalidate(isFollowingProvider(targetUserId));
@@ -45,6 +59,8 @@ class FollowToggleNotifier extends StateNotifier<AsyncValue<void>> {
       _ref.invalidate(currentProfileProvider);
       state = const AsyncValue.data(null);
     } catch (e, st) {
+      // Rollback: override'ı tekrar eski değere çek.
+      _ref.read(followOverrideProvider(targetUserId).notifier).state = current;
       state = AsyncValue.error(e, st);
     }
   }

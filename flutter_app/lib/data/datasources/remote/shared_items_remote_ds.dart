@@ -22,12 +22,16 @@ class SharedItemsRemoteDataSource {
   }
 
   /// Kullanıcının bir item'ını public yapar; payload Storage'a yüklenir.
-  /// `payload` json-encodable bir map; gzip'lenip yüklenir.
+  /// `payload` json-encodable bir map; gzip'lenip yüklenir. [language] ve
+  /// [tags] marketplace filtreleri için opsiyoneldir ama description'ı
+  /// doldurmak şiddetle önerilir.
   Future<SharedItem> publish({
     required String itemType,
     required String localId,
     required String title,
     String? description,
+    String? language,
+    List<String> tags = const [],
     required Map<String, dynamic> payload,
   }) async {
     final uid = _userId;
@@ -47,6 +51,8 @@ class SharedItemsRemoteDataSource {
       'local_id': localId,
       'title': title,
       'description': description,
+      'language': language,
+      'tags': tags,
       'is_public': true,
       'payload_path': path,
       'size_bytes': gz.length,
@@ -58,6 +64,24 @@ class SharedItemsRemoteDataSource {
         .select()
         .single();
     return _rowToShared(inserted);
+  }
+
+  /// Marketplace'ten indirilen item için payload'ı indir, gzip çöz, JSON
+  /// map'i döner. Ayrıca `increment_shared_item_downloads` RPC'si ile
+  /// download_count atomik olarak 1 artırılır.
+  Future<Map<String, dynamic>> download({
+    required String itemId,
+    required String payloadPath,
+  }) async {
+    final bytes = await _client.storage.from(_bucket).download(payloadPath);
+    final jsonStr = utf8.decode(gzip.decode(bytes));
+    final payload = jsonDecode(jsonStr) as Map<String, dynamic>;
+    try {
+      await _client.rpc('increment_shared_item_downloads', params: {'p_item_id': itemId});
+    } catch (e) {
+      debugPrint('download_count increment failed: $e');
+    }
+    return payload;
   }
 
   /// Item'ı private yap: DB row'u sil + Storage objesini sil.
@@ -118,9 +142,13 @@ class SharedItemsRemoteDataSource {
   }
 
   /// Marketplace için tüm public item'lar + owner username'leri.
-  /// [itemType] verilirse sadece o tip döner ('world' | 'template' | 'package').
+  /// [itemType] = 'all' | 'world' | 'template' | 'package'.
+  /// [language] ISO kodu (ör. 'tr') — null ise tüm diller.
+  /// [tag] verilirse item.tags[] içinde geçmesi beklenir.
   Future<List<({SharedItem item, String? ownerUsername})>> listAllPublic({
     String? itemType,
+    String? language,
+    String? tag,
     int limit = 100,
   }) async {
     var query = _client
@@ -128,6 +156,8 @@ class SharedItemsRemoteDataSource {
         .select('*, profiles!shared_items_owner_id_fkey(username)')
         .eq('is_public', true);
     if (itemType != null) query = query.eq('item_type', itemType);
+    if (language != null && language.isNotEmpty) query = query.eq('language', language);
+    if (tag != null && tag.isNotEmpty) query = query.contains('tags', [tag]);
     final rows = await query.order('updated_at', ascending: false).limit(limit);
     return rows.map((r) {
       final profile = r['profiles'] as Map<String, dynamic>?;
@@ -139,6 +169,7 @@ class SharedItemsRemoteDataSource {
   }
 
   SharedItem _rowToShared(Map<String, dynamic> row) {
+    final tagsRaw = row['tags'];
     return SharedItem(
       id: row['id'] as String,
       ownerId: row['owner_id'] as String,
@@ -151,6 +182,9 @@ class SharedItemsRemoteDataSource {
       sizeBytes: (row['size_bytes'] as int?) ?? 0,
       createdAt: DateTime.parse(row['created_at'] as String),
       updatedAt: DateTime.parse((row['updated_at'] ?? row['created_at']) as String),
+      language: row['language'] as String?,
+      tags: tagsRaw is List ? tagsRaw.whereType<String>().toList() : const [],
+      downloadCount: (row['download_count'] as int?) ?? 0,
     );
   }
 }

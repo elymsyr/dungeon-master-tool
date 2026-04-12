@@ -21,6 +21,9 @@ abstract class SharedItem with _$SharedItem {
     @Default(0) int sizeBytes,
     required DateTime createdAt,
     required DateTime updatedAt,
+    String? language,
+    @Default(<String>[]) List<String> tags,
+    @Default(0) int downloadCount,
   }) = _SharedItem;
 
   factory SharedItem.fromJson(Map<String, dynamic> json) =>
