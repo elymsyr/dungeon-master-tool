@@ -232,11 +232,8 @@ class _PostCard extends ConsumerWidget {
     final override = ref.watch(postLikeOverrideProvider(post.id));
     final liked = override?.likedByMe ?? post.likedByMe;
     final likeCount = override?.likeCount ?? post.likeCount;
-    return Container(
+    return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: palette.featureCardBorder)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
