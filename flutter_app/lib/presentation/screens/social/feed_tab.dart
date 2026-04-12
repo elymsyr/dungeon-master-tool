@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/profanity_filter.dart';
+import '../../../data/datasources/remote/posts_remote_ds.dart' show FeedScope;
 import '../../../domain/entities/post.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/profile_avatar.dart';
 import 'social_shell.dart';
@@ -26,23 +29,36 @@ class _FeedTabState extends ConsumerState<FeedTab> {
   }
 
   Future<void> _submit() async {
-    if (_bodyCtrl.text.trim().isEmpty) return;
-    final ok = await ref.read(postComposerProvider.notifier).submit(body: _bodyCtrl.text);
+    final raw = _bodyCtrl.text;
+    if (raw.trim().isEmpty) return;
+    final l10n = L10n.of(context)!;
+    final ok = await ref.read(postComposerProvider.notifier).submit(body: raw);
     if (ok) _bodyCtrl.clear();
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    final state = ref.read(postComposerProvider);
+    if (state is AsyncError && state.error is ProfanityRejectedException) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.feedProfanityRejected)),
+      );
+    }
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
     final feedAsync = ref.watch(feedProvider);
     final composerState = ref.watch(postComposerProvider);
+    final scope = ref.watch(feedScopeProvider);
 
     return RefreshIndicator(
       onRefresh: () async => ref.invalidate(feedProvider),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
         children: [
+          _FeedScopeTabs(scope: scope, palette: palette),
+          const SizedBox(height: 16),
           // Composer
           SocialCard(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -55,8 +71,8 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                   minLines: 1,
                   maxLength: 2000,
                   onTap: () => setState(() => _composerFocused = true),
-                  decoration: const InputDecoration(
-                    hintText: "Share something with your players…",
+                  decoration: InputDecoration(
+                    hintText: l10n.feedComposerHint,
                     border: InputBorder.none,
                     counterText: '',
                     isDense: true,
@@ -69,10 +85,10 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                     IconButton(
                       visualDensity: VisualDensity.compact,
                       icon: Icon(Icons.image_outlined, size: 20, color: palette.sidebarLabelSecondary),
-                      tooltip: 'Add image (uses storage quota)',
+                      tooltip: l10n.feedComposerImageTooltip,
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Image upload coming soon')),
+                          SnackBar(content: Text(l10n.feedImageUploadComingSoon)),
                         );
                       },
                     ),
@@ -91,7 +107,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : const Text('Post', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                          : Text(l10n.feedBtnPost, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                     ),
                   ],
                 ),
@@ -108,10 +124,10 @@ class _FeedTabState extends ConsumerState<FeedTab> {
               child: Text('Error: $e', style: TextStyle(color: palette.dangerBtnBg)),
             ),
             data: (posts) => posts.isEmpty
-                ? const SocialEmptyState(
+                ? SocialEmptyState(
                     icon: Icons.dynamic_feed_outlined,
-                    title: 'Your feed is empty',
-                    subtitle: 'Follow other players or share the first post above.',
+                    title: l10n.feedEmptyTitle,
+                    subtitle: l10n.feedEmptySubtitle,
                   )
                 : Column(
                     children: [
@@ -129,13 +145,50 @@ class _FeedTabState extends ConsumerState<FeedTab> {
   }
 }
 
-class _PostCard extends StatelessWidget {
+class _FeedScopeTabs extends ConsumerWidget {
+  final FeedScope scope;
+  final DmToolColors palette;
+  const _FeedScopeTabs({required this.scope, required this.palette});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = L10n.of(context)!;
+    return SegmentedButton<FeedScope>(
+      style: SegmentedButton.styleFrom(
+        backgroundColor: palette.tabBg,
+        selectedBackgroundColor: palette.featureCardAccent,
+        selectedForegroundColor: Colors.white,
+        foregroundColor: palette.tabText,
+        side: BorderSide(color: palette.featureCardBorder),
+      ),
+      segments: [
+        ButtonSegment(
+          value: FeedScope.all,
+          label: Text(l10n.feedScopeAll),
+          icon: const Icon(Icons.public, size: 16),
+        ),
+        ButtonSegment(
+          value: FeedScope.following,
+          label: Text(l10n.feedScopeFollowing),
+          icon: const Icon(Icons.people_alt_outlined, size: 16),
+        ),
+      ],
+      selected: {scope},
+      onSelectionChanged: (s) {
+        ref.read(feedScopeProvider.notifier).state = s.first;
+      },
+    );
+  }
+}
+
+class _PostCard extends ConsumerWidget {
   final Post post;
   const _PostCard({required this.post});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final likeBusy = ref.watch(postLikeProvider) is AsyncLoading;
     return SocialCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,6 +240,43 @@ class _PostCard extends StatelessWidget {
               child: Image.network(post.imageUrl!, fit: BoxFit.cover),
             ),
           ],
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: likeBusy
+                    ? null
+                    : () => ref.read(postLikeProvider.notifier).toggle(post.id),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        post.likedByMe ? Icons.favorite : Icons.favorite_border,
+                        size: 18,
+                        color: post.likedByMe
+                            ? palette.dangerBtnBg
+                            : palette.sidebarLabelSecondary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${post.likeCount}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: post.likedByMe
+                              ? palette.dangerBtnBg
+                              : palette.sidebarLabelSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

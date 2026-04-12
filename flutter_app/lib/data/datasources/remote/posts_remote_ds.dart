@@ -1,3 +1,5 @@
+import 'dart:math' show pow;
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -6,9 +8,12 @@ import '../../../domain/entities/post.dart';
 /// `posts` tablosu + `post-images` Storage bucket. Image upload size_bytes
 /// olarak `posts.size_bytes` ve dolaylı olarak `get_user_total_storage_used`
 /// quota'sına yansır.
+enum FeedScope { all, following }
+
 class PostsRemoteDataSource {
   static const _table = 'posts';
   static const _bucket = 'post-images';
+  static const _likesTable = 'post_likes';
 
   SupabaseClient get _client => Supabase.instance.client;
 
@@ -18,28 +23,41 @@ class PostsRemoteDataSource {
     return user.id;
   }
 
-  /// Takip edilenlerin postları (kendi postları dahil) — feed.
-  Future<List<Post>> fetchFeed({int limit = 50}) async {
+  /// Feed sorgusu. [scope] = all → tüm kullanıcılar, following → takip
+  /// edilenler + kendisi. Sonuçların yaklaşık üçte biri "hot" sırasıyla
+  /// (post_scores view) en başa konur, geri kalan sade tarih sırasıyla.
+  Future<List<Post>> fetchFeed({
+    FeedScope scope = FeedScope.all,
+    int limit = 50,
+  }) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) return const [];
 
-    // Following uid'leri çek, sonra posts tablosundan author_id IN (...) sorgula.
-    final followsRows = await _client
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', uid);
-    final ids = <String>{
-      uid,
-      for (final r in followsRows) r['following_id'] as String,
-    };
+    List<String>? authorIds;
+    if (scope == FeedScope.following) {
+      final followsRows = await _client
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', uid);
+      final ids = <String>{
+        uid,
+        for (final r in followsRows) r['following_id'] as String,
+      };
+      authorIds = ids.toList();
+      if (authorIds.isEmpty) return const [];
+    }
 
-    final rows = await _client
+    var query = _client
         .from(_table)
-        .select('*, profiles!posts_author_id_fkey(username, avatar_url)')
-        .inFilter('author_id', ids.toList())
+        .select('*, profiles!posts_author_id_fkey(username, avatar_url)');
+    if (authorIds != null) {
+      query = query.inFilter('author_id', authorIds);
+    }
+    final rows = await query
         .order('created_at', ascending: false)
         .limit(limit);
-    return rows.map(_rowToPost).toList();
+    final posts = rows.map(_rowToPost).toList();
+    return _hydrateLikesAndRank(posts, uid);
   }
 
   /// Belirli bir kullanıcının postları — profile screen.
@@ -50,7 +68,77 @@ class PostsRemoteDataSource {
         .eq('author_id', userId)
         .order('created_at', ascending: false)
         .limit(limit);
-    return rows.map(_rowToPost).toList();
+    final posts = rows.map(_rowToPost).toList();
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return posts;
+    return _hydrateLikes(posts, uid);
+  }
+
+  /// Bir post'u beğen / beğeniyi geri al. Yeni durumu döner (true = liked).
+  Future<bool> toggleLike(String postId) async {
+    final uid = _userId;
+    final existing = await _client
+        .from(_likesTable)
+        .select('post_id')
+        .eq('post_id', postId)
+        .eq('user_id', uid)
+        .limit(1);
+    if (existing.isNotEmpty) {
+      await _client
+          .from(_likesTable)
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', uid);
+      return false;
+    } else {
+      await _client.from(_likesTable).insert({
+        'post_id': postId,
+        'user_id': uid,
+      });
+      return true;
+    }
+  }
+
+  Future<List<Post>> _hydrateLikes(List<Post> posts, String uid) async {
+    if (posts.isEmpty) return posts;
+    final ids = posts.map((p) => p.id).toList();
+    final likeRows = await _client
+        .from(_likesTable)
+        .select('post_id, user_id')
+        .inFilter('post_id', ids);
+    final counts = <String, int>{};
+    final liked = <String>{};
+    for (final r in likeRows) {
+      final pid = r['post_id'] as String;
+      counts[pid] = (counts[pid] ?? 0) + 1;
+      if (r['user_id'] == uid) liked.add(pid);
+    }
+    return posts
+        .map((p) => p.copyWith(
+              likeCount: counts[p.id] ?? 0,
+              likedByMe: liked.contains(p.id),
+            ))
+        .toList();
+  }
+
+  /// _hydrateLikes + ara ara çok beğenilen postları yukarı taşır.
+  /// Strateji: postları HN-style hot_score ile sırala, en üst 5'in 3'ünü
+  /// kronolojik listenin önüne enjekte et. Bu sayede feed kronolojik akışı
+  /// büyük ölçüde korunur ama trend olan postlar da öne çıkar.
+  Future<List<Post>> _hydrateLikesAndRank(List<Post> posts, String uid) async {
+    final hydrated = await _hydrateLikes(posts, uid);
+    if (hydrated.length < 4) return hydrated;
+    final now = DateTime.now().toUtc();
+    double score(Post p) {
+      final hours = now.difference(p.createdAt.toUtc()).inMinutes / 60.0;
+      return (p.likeCount + 1) / pow(hours + 2, 1.5);
+    }
+    final ranked = [...hydrated]..sort((a, b) => score(b).compareTo(score(a)));
+    final top = ranked.take(3).where((p) => p.likeCount > 0).toList();
+    if (top.isEmpty) return hydrated;
+    final topIds = top.map((p) => p.id).toSet();
+    final rest = hydrated.where((p) => !topIds.contains(p.id)).toList();
+    return [...top, ...rest];
   }
 
   /// Yeni post oluştur. [imageBytes] verilirse Storage'a yüklenir, kota
