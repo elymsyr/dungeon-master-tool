@@ -2,21 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../application/providers/item_visibility_provider.dart';
+import '../../application/providers/marketplace_listing_provider.dart';
 import '../../application/providers/social_providers.dart';
 import '../../core/utils/world_languages.dart';
+import '../../domain/entities/marketplace_listing.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 
-/// Marketplace'te bir item'a tıklanınca açılan önizleme + indirme dialog'u.
+/// Marketplace'te bir snapshot'a tıklanınca açılan önizleme + indirme dialog'u.
+/// Listing immutable olduğu için "current" snapshot her zaman gösterilir.
 class MarketplacePreviewDialog extends ConsumerWidget {
-  final MarketplaceEntry entry;
-  const MarketplacePreviewDialog({super.key, required this.entry});
+  final MarketplaceListing listing;
+  const MarketplacePreviewDialog({super.key, required this.listing});
 
-  static Future<void> show(BuildContext context, {required MarketplaceEntry entry}) {
+  static Future<void> show(BuildContext context, {required MarketplaceListing listing}) {
     return showDialog<void>(
       context: context,
-      builder: (_) => MarketplacePreviewDialog(entry: entry),
+      builder: (_) => MarketplacePreviewDialog(listing: listing),
     );
   }
 
@@ -24,17 +26,16 @@ class MarketplacePreviewDialog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final item = entry.item;
-    final downloadState = ref.watch(itemVisibilityNotifierProvider);
+    final downloadState = ref.watch(marketplaceListingNotifierProvider);
     final downloading = downloadState is AsyncLoading;
 
-    final typeLabel = switch (item.itemType) {
+    final typeLabel = switch (listing.itemType) {
       'world' => l10n.itemTypeWorld,
       'template' => l10n.itemTypeTemplate,
       'package' => l10n.itemTypePackage,
       _ => l10n.itemTypeGeneric,
     };
-    final icon = switch (item.itemType) {
+    final icon = switch (listing.itemType) {
       'world' => Icons.public,
       'template' => Icons.description_outlined,
       'package' => Icons.inventory_2_outlined,
@@ -53,11 +54,11 @@ class MarketplacePreviewDialog extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.title,
+                  listing.title,
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
                 Text(
-                  '$typeLabel · @${entry.ownerUsername ?? '?'}',
+                  '$typeLabel · @${listing.ownerUsername ?? '?'}',
                   style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary),
                 ),
               ],
@@ -72,10 +73,34 @@ class MarketplacePreviewDialog extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (item.description != null && item.description!.isNotEmpty) ...[
+              if (listing.description != null && listing.description!.isNotEmpty) ...[
                 Text(
-                  item.description!,
+                  listing.description!,
                   style: TextStyle(fontSize: 13, height: 1.4, color: palette.tabText),
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (listing.changelog != null && listing.changelog!.isNotEmpty) ...[
+                Text(
+                  "What's new",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: palette.sidebarLabelSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: palette.featureCardBg,
+                    border: Border.all(color: palette.featureCardBorder),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    listing.changelog!,
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -83,31 +108,31 @@ class MarketplacePreviewDialog extends ConsumerWidget {
                 spacing: 6,
                 runSpacing: 6,
                 children: [
-                  if (item.language != null)
+                  if (listing.language != null)
                     _KvPill(
                       icon: Icons.language,
-                      label: worldLanguageNative(item.language!),
+                      label: worldLanguageNative(listing.language!),
                       palette: palette,
                     ),
-                  for (final tag in item.tags)
+                  for (final tag in listing.tags)
                     _KvPill(label: '#$tag', palette: palette),
                 ],
               ),
               const SizedBox(height: 12),
               _KvRow(
-                label: l10n.marketplaceDownloadCount(item.downloadCount),
+                label: l10n.marketplaceDownloadCount(listing.downloadCount),
                 icon: Icons.download_outlined,
                 palette: palette,
               ),
               const SizedBox(height: 6),
               _KvRow(
-                label: '${(item.sizeBytes / 1024).toStringAsFixed(1)} KB',
+                label: '${(listing.sizeBytes / 1024).toStringAsFixed(1)} KB',
                 icon: Icons.sd_storage_outlined,
                 palette: palette,
               ),
               const SizedBox(height: 6),
               _KvRow(
-                label: DateFormat.yMMMd().add_Hm().format(item.updatedAt.toLocal()),
+                label: DateFormat.yMMMd().add_Hm().format(listing.createdAt.toLocal()),
                 icon: Icons.update,
                 palette: palette,
               ),
@@ -124,26 +149,20 @@ class MarketplacePreviewDialog extends ConsumerWidget {
           onPressed: downloading
               ? null
               : () async {
-                  final ok = await ref
-                      .read(itemVisibilityNotifierProvider.notifier)
-                      .downloadAndImport(
-                        itemId: item.id,
-                        itemType: item.itemType,
-                        payloadPath: item.payloadPath ?? '',
-                        title: item.title,
-                      );
-                  if (!context.mounted) return;
-                  if (ok) {
-                    // Refresh marketplace so download_count reflects the bump.
+                  try {
+                    final newId = await ref
+                        .read(marketplaceListingNotifierProvider.notifier)
+                        .downloadAsNewCopy(listing);
+                    if (!context.mounted) return;
                     ref.invalidate(marketplaceProvider);
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(l10n.marketplaceDownloadSuccess(item.title))),
+                      SnackBar(content: Text(l10n.marketplaceDownloadSuccess(newId))),
                     );
-                  } else {
-                    final err = ref.read(itemVisibilityNotifierProvider).error;
+                  } catch (e) {
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(l10n.marketplaceDownloadError('$err'))),
+                      SnackBar(content: Text(l10n.marketplaceDownloadError('$e'))),
                     );
                   }
                 },

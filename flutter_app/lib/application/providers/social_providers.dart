@@ -10,12 +10,12 @@ import '../../data/datasources/remote/profiles_remote_ds.dart';
 import '../../domain/entities/conversation.dart';
 import '../../domain/entities/game_listing.dart';
 import '../../domain/entities/game_listing_application.dart';
+import '../../domain/entities/marketplace_listing.dart';
 import '../../domain/entities/post.dart';
-import '../../domain/entities/shared_item.dart';
 import '../../domain/entities/user_profile.dart';
 import 'auth_provider.dart';
 import 'follows_provider.dart';
-import 'item_visibility_provider.dart';
+import 'marketplace_listing_provider.dart';
 
 // ── Remote DS singletons ────────────────────────────────────────────
 
@@ -289,13 +289,7 @@ final messagesStreamProvider =
   return ref.read(messagesRemoteDsProvider).streamMessages(conversationId);
 });
 
-// ── Marketplace (public shared_items) ───────────────────────────────
-
-class MarketplaceEntry {
-  final SharedItem item;
-  final String? ownerUsername;
-  const MarketplaceEntry({required this.item, this.ownerUsername});
-}
+// ── Marketplace (public marketplace_listings) ───────────────────────
 
 class MarketplaceFilters {
   final String type; // 'all' | 'world' | 'template' | 'package'
@@ -326,19 +320,16 @@ final marketplaceFilterProvider = StateProvider<String>((ref) {
   return ref.watch(marketplaceFiltersProvider).type;
 });
 
-final marketplaceProvider = FutureProvider<List<MarketplaceEntry>>((ref) async {
+final marketplaceProvider = FutureProvider<List<MarketplaceListing>>((ref) async {
   if (!SupabaseConfig.isConfigured) return const [];
   final auth = ref.watch(authProvider);
   if (auth == null) return const [];
   final filters = ref.watch(marketplaceFiltersProvider);
-  final rows = await ref.read(sharedItemsRemoteDsProvider).listAllPublic(
+  return ref.read(marketplaceListingsRemoteDsProvider).listAllCurrent(
         itemType: filters.type == 'all' ? null : filters.type,
         language: filters.language,
         tag: filters.tag,
       );
-  return rows
-      .map((r) => MarketplaceEntry(item: r.item, ownerUsername: r.ownerUsername))
-      .toList();
 });
 
 // ── Suggested users (marketplace right panel) ────────────────────────

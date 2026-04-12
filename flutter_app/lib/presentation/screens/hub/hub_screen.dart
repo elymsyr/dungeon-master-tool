@@ -9,8 +9,10 @@ import '../../../core/config/supabase_config.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/profile_edit_dialog.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/app_icon_image.dart';
+import '../../widgets/help_icon_button.dart';
 import '../../widgets/lazy_indexed_stack.dart';
 import '../../widgets/profile_menu_button.dart';
 import '../../widgets/save_sync_indicator.dart';
@@ -98,9 +100,27 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     );
   }
 
+  ({String title, String body}) _helpForTab(L10n l10n, int index) {
+    switch (index) {
+      case 0:
+        return (title: l10n.helpSocialTitle, body: l10n.helpSocialBody);
+      case 1:
+        return (title: l10n.helpSettingsTitle, body: l10n.helpSettingsBody);
+      case 2:
+        return (title: l10n.helpWorldsTitle, body: l10n.helpWorldsBody);
+      case 3:
+        return (title: l10n.helpTemplatesTitle, body: l10n.helpTemplatesBody);
+      case 4:
+      default:
+        return (title: l10n.helpPackagesTitle, body: l10n.helpPackagesBody);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
+    final help = _helpForTab(l10n, _tabIndex);
     final screen = getScreenType(context);
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;
@@ -160,6 +180,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
         ),
         actions: [
           const SaveSyncIndicator(compact: true),
+          HelpIconButton(title: help.title, body: help.body),
           IconButton(
             tooltip: 'Report a Bug',
             icon: const Icon(Icons.bug_report_outlined),
@@ -179,14 +200,11 @@ class _HubScreenState extends ConsumerState<HubScreen> {
           // Desktop/Tablet: sol rail + sağ content
           ScreenType.desktop || ScreenType.tablet => Row(
               children: [
-                NavigationRail(
+                _HubSideRail(
+                  tabs: _tabs,
                   selectedIndex: _tabIndex,
-                  onDestinationSelected: (i) => setState(() => _tabIndex = i),
-                  labelType: NavigationRailLabelType.selected,
-                  destinations: _tabs.map((t) => NavigationRailDestination(
-                    icon: Icon(t.icon),
-                    label: Text(t.label),
-                  )).toList(),
+                  onSelected: (i) => setState(() => _tabIndex = i),
+                  palette: palette,
                 ),
                 VerticalDivider(width: 1, color: palette.sidebarDivider),
                 Expanded(
@@ -215,6 +233,90 @@ class _HubScreenState extends ConsumerState<HubScreen> {
             )
           : null,
     ),
+    );
+  }
+}
+
+class _HubSideRail extends StatelessWidget {
+  final List<({IconData icon, String label})> tabs;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+  final DmToolColors palette;
+
+  const _HubSideRail({
+    required this.tabs,
+    required this.selectedIndex,
+    required this.onSelected,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 56,
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          for (var i = 0; i < tabs.length; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: _SideRailButton(
+                icon: tabs[i].icon,
+                tooltip: tabs[i].label,
+                selected: i == selectedIndex,
+                palette: palette,
+                onTap: () => onSelected(i),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SideRailButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final bool selected;
+  final DmToolColors palette;
+  final VoidCallback onTap;
+
+  const _SideRailButton({
+    required this.icon,
+    required this.tooltip,
+    required this.selected,
+    required this.palette,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(6),
+    );
+    return Material(
+      color: selected
+          ? palette.featureCardAccent.withValues(alpha: 0.18)
+          : Colors.transparent,
+      shape: shape,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Tooltip(
+          message: tooltip,
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(
+              icon,
+              size: selected ? 24 : 22,
+              color: selected
+                  ? palette.featureCardAccent
+                  : palette.sidebarLabelSecondary,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

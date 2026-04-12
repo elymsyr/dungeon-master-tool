@@ -173,35 +173,52 @@ class _FeedScopeTabs extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10n.of(context)!;
-    return SegmentedButton<FeedScope>(
-      style: SegmentedButton.styleFrom(
-        backgroundColor: palette.tabBg,
-        selectedBackgroundColor: palette.featureCardAccent,
-        selectedForegroundColor: Colors.white,
-        foregroundColor: palette.tabText,
-        side: BorderSide(color: palette.featureCardBorder),
+    final items = <(FeedScope, String)>[
+      (FeedScope.all, l10n.feedScopeAll),
+      (FeedScope.following, l10n.feedScopeFollowing),
+      (FeedScope.gameLists, l10n.feedScopeGameLists),
+    ];
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: palette.featureCardBorder),
+        ),
       ),
-      segments: [
-        ButtonSegment(
-          value: FeedScope.all,
-          label: Text(l10n.feedScopeAll),
-          icon: const Icon(Icons.public, size: 16),
-        ),
-        ButtonSegment(
-          value: FeedScope.following,
-          label: Text(l10n.feedScopeFollowing),
-          icon: const Icon(Icons.people_alt_outlined, size: 16),
-        ),
-        ButtonSegment(
-          value: FeedScope.gameLists,
-          label: Text(l10n.feedScopeGameLists),
-          icon: const Icon(Icons.groups_outlined, size: 16),
-        ),
-      ],
-      selected: {scope},
-      onSelectionChanged: (s) {
-        ref.read(feedScopeProvider.notifier).state = s.first;
-      },
+      child: Row(
+        children: items.map((t) {
+          final isActive = t.$1 == scope;
+          return Expanded(
+            child: InkWell(
+              onTap: () =>
+                  ref.read(feedScopeProvider.notifier).state = t.$1,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isActive
+                          ? palette.featureCardAccent
+                          : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                child: Text(
+                  t.$2,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                    color: isActive
+                        ? palette.featureCardAccent
+                        : palette.sidebarLabelSecondary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }
@@ -569,49 +586,62 @@ class _FeedListingCard extends ConsumerWidget {
               ],
             ),
           ],
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              if (listing.seatsTotal != null) ...[
-                Icon(Icons.event_seat_outlined, size: 13, color: palette.sidebarLabelSecondary),
-                const SizedBox(width: 4),
-                Text('${listing.seatsFilled}/${listing.seatsTotal}',
-                    style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
-                const SizedBox(width: 14),
-              ],
-              if (listing.schedule != null) ...[
-                Icon(Icons.schedule, size: 13, color: palette.sidebarLabelSecondary),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(listing.schedule!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
-                ),
-              ],
-              const Spacer(),
-              if (hasApplied)
-                TextButton.icon(
-                  onPressed: null,
-                  icon: const Icon(Icons.check, size: 14),
-                  label: Text(l10n.listingApplied,
-                      style: const TextStyle(fontSize: 11)),
-                )
-              else
-                FilledButton(
-                  onPressed: () async {
-                    await ApplyListingDialog.show(context, listing: listing);
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: palette.featureCardAccent,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    minimumSize: const Size(0, 30),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          if (listing.seatsTotal != null || listing.schedule != null) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                if (listing.seatsTotal != null) ...[
+                  Icon(Icons.event_seat_outlined,
+                      size: 13, color: palette.sidebarLabelSecondary),
+                  const SizedBox(width: 4),
+                  Text('${listing.seatsFilled}/${listing.seatsTotal}',
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: palette.sidebarLabelSecondary)),
+                  const SizedBox(width: 14),
+                ],
+                if (listing.schedule != null) ...[
+                  Icon(Icons.schedule,
+                      size: 13, color: palette.sidebarLabelSecondary),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(listing.schedule!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: palette.sidebarLabelSecondary)),
                   ),
-                  child: Text(l10n.listingApply,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-                ),
-            ],
+                ],
+              ],
+            ),
+          ],
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: hasApplied
+                ? TextButton.icon(
+                    onPressed: null,
+                    icon: const Icon(Icons.check, size: 14),
+                    label: Text(l10n.listingApplied,
+                        style: const TextStyle(fontSize: 11)),
+                  )
+                : FilledButton(
+                    onPressed: () async {
+                      await ApplyListingDialog.show(context, listing: listing);
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: palette.featureCardAccent,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 6),
+                      minimumSize: const Size(0, 30),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6)),
+                    ),
+                    child: Text(l10n.listingApply,
+                        style: const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w600)),
+                  ),
           ),
         ],
       ),
