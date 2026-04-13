@@ -60,6 +60,9 @@ class AuthNotifier extends StateNotifier<AuthState?> {
     final session = client.auth.currentSession;
     if (session != null) {
       _setFromUser(session.user);
+      // Startup ban check — eğer kullanıcı oturumu restore edildiyse ve bu
+      // arada banlandıysa oturumu hemen kapat.
+      unawaited(_enforceBanCheck());
     }
 
     // React to future auth changes (sign-in, sign-out, token refresh).
@@ -80,11 +83,61 @@ class AuthNotifier extends StateNotifier<AuthState?> {
           );
         })
         .listen(
-          (authState) => state = authState,
+          (authState) {
+            state = authState;
+            if (authState != null) {
+              // Her sign-in / token refresh sonrası ban kontrolü.
+              unawaited(_enforceBanCheck());
+            }
+          },
           onError: (Object error, StackTrace stackTrace) {
             debugPrint('Auth stream error: $error');
           },
         );
+  }
+
+  /// Oturum banlandığı anda set edilen mesaj. UI (landing_screen) bunu dinler
+  /// ve dialog olarak gösterip `null`'a çeker. `_enforceBanCheck()` tarafından
+  /// doldurulur — hem startup restore, hem mid-session (admin bir kullanıcıyı
+  /// banladığında token refresh üzerinden) hem de login sonrası aynı yoldan
+  /// geçer, böylece tek bir UX noktası var.
+  final ValueNotifier<String?> banMessageNotifier = ValueNotifier<String?>(null);
+
+  /// Mevcut oturumun banlı olup olmadığını RPC ile doğrular. Banlıysa mesajı
+  /// döner; değilse null. Sign-out YAPMAZ — çağıran taraf karar verir.
+  Future<String?> checkBanStatus() async {
+    if (!SupabaseConfig.isConfigured) return null;
+    if (Supabase.instance.client.auth.currentUser == null) return null;
+    try {
+      final res = await Supabase.instance.client.rpc('am_i_banned');
+      final rows = (res as List?) ?? const [];
+      if (rows.isEmpty) return null;
+      final row = rows.first as Map<String, dynamic>;
+      if (row['is_banned'] == true) {
+        final reason = (row['reason'] as String?)?.trim();
+        return reason == null || reason.isEmpty
+            ? 'Your account has been banned.'
+            : 'Your account has been banned: $reason';
+      }
+      return null;
+    } catch (e, st) {
+      debugPrint('am_i_banned RPC error: $e\n$st');
+      return null;
+    }
+  }
+
+  /// Ban varsa oturumu kapatır ve `banMessageNotifier`'ı doldurur.
+  Future<void> _enforceBanCheck() async {
+    final msg = await checkBanStatus();
+    if (msg == null) return;
+    try {
+      await Supabase.instance.client.auth.signOut();
+    } catch (e) {
+      debugPrint('Forced sign-out after ban check failed: $e');
+    }
+    // signOut sonrası set et — landing_screen listener'ı unauth state'e
+    // geçtikten sonra çağrılacak dialog için mesajı bulsun.
+    banMessageNotifier.value = msg;
   }
 
   void _setFromUser(User user) {
