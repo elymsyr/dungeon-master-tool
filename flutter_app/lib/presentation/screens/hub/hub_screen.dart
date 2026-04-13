@@ -16,6 +16,7 @@ import '../../widgets/help_icon_button.dart';
 import '../../widgets/lazy_indexed_stack.dart';
 import '../../widgets/profile_menu_button.dart';
 import '../../widgets/save_sync_indicator.dart';
+import '../../widgets/version_indicator_button.dart';
 import 'packages_tab.dart';
 import 'settings_tab.dart';
 import 'social_tab.dart';
@@ -179,6 +180,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
           ],
         ),
         actions: [
+          const VersionIndicatorButton(),
           const SaveSyncIndicator(compact: true),
           HelpIconButton(title: help.title, body: help.body),
           IconButton(

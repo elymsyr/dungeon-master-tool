@@ -43,10 +43,12 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
-      child: Center(
+      child: Align(
+        alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 500),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(l10n.tabPackages,
