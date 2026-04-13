@@ -192,6 +192,38 @@ class BetaNotifier extends StateNotifier<BetaState> {
     }
   }
 
+  /// `leave_beta` — önce kullanıcının `campaign-backups` bucket objelerini
+  /// Storage API ile siler (Supabase plpgsql'den storage.objects DELETE'e
+  /// izin vermiyor), sonra metadata temizliği için RPC'yi çağırır.
+  Future<bool> leaveBeta() async {
+    if (!_canCallRpc) return false;
+    final userId = _ref.read(authProvider)?.uid;
+    if (userId == null) return false;
+    state = state.copyWith(loading: true, error: null);
+    try {
+      final storage =
+          Supabase.instance.client.storage.from('campaign-backups');
+      try {
+        final objs = await storage.list(path: userId);
+        if (objs.isNotEmpty) {
+          final paths = objs.map((o) => '$userId/${o.name}').toList();
+          await storage.remove(paths);
+        }
+      } catch (e) {
+        debugPrint('leave_beta storage cleanup warning: $e');
+      }
+
+      final res = await Supabase.instance.client.rpc('leave_beta');
+      final ok = res == true || (res is List && res.isNotEmpty && res.first == true);
+      await refresh();
+      return ok;
+    } catch (e, st) {
+      debugPrint('leave_beta error: $e\n$st');
+      state = state.copyWith(loading: false, error: e.toString());
+      return false;
+    }
+  }
+
   /// `beta_heartbeat` — fire-and-forget; beta'da değilse sunucu no-op yapar.
   Future<void> heartbeat() async {
     if (!_canCallRpc) return;

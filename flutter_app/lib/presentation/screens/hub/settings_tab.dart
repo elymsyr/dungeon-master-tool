@@ -973,6 +973,23 @@ class _SubscriptionsSection extends ConsumerWidget {
               height: 1.4,
             ),
           ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: palette.dangerBtnBg,
+                side: BorderSide(color: palette.dangerBtnBg),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: palette.br),
+              ),
+              onPressed: beta.loading ? null : () => _leave(context, ref, l10n),
+              child: Text(
+                l10n.subsBetaLeaveBtn,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
         ],
       );
     }
@@ -1108,5 +1125,36 @@ class _SubscriptionsSection extends ConsumerWidget {
           ),
         );
     }
+  }
+
+  Future<void> _leave(
+      BuildContext context, WidgetRef ref, L10n l10n) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.subsBetaLeaveConfirmTitle),
+        content: Text(l10n.subsBetaLeaveConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.btnCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.subsBetaLeaveBtn),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final ok = await ref.read(betaProvider.notifier).leaveBeta();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok ? l10n.subsBetaLeaveSuccess : l10n.subsBetaLeaveFailed,
+        ),
+      ),
+    );
   }
 }

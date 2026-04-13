@@ -394,6 +394,11 @@
   "subsBetaJoinFailedFull": "Die Beta ist gerade voll geworden. Bitte später erneut versuchen.",
   "subsBetaJoinFailedGeneric": "Beta-Beitritt fehlgeschlagen: {error}",
   "@subsBetaJoinFailedGeneric": { "placeholders": { "error": { "type": "String" } } },
+  "subsBetaLeaveBtn": "Beta verlassen",
+  "subsBetaLeaveConfirmTitle": "Beta verlassen?",
+  "subsBetaLeaveConfirmBody": "Deine Cloud-Speicherungen und Community-Assets werden gelöscht und dein Beta-Slot wird freigegeben. Posts und Marketplace-Angebote bleiben erhalten.",
+  "subsBetaLeaveSuccess": "Du hast die Beta verlassen.",
+  "subsBetaLeaveFailed": "Beta konnte nicht verlassen werden. Bitte später erneut versuchen.",
 
   "feedPostRateLimited": "Du postest zu schnell. Bitte gleich noch einmal versuchen."
 }

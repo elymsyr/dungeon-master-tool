@@ -394,6 +394,11 @@
   "subsBetaJoinFailedFull": "Beta az önce doldu. Daha sonra tekrar dene.",
   "subsBetaJoinFailedGeneric": "Beta'ya katılım başarısız: {error}",
   "@subsBetaJoinFailedGeneric": { "placeholders": { "error": { "type": "String" } } },
+  "subsBetaLeaveBtn": "Beta'dan Ayrıl",
+  "subsBetaLeaveConfirmTitle": "Beta'dan ayrılmak istiyor musun?",
+  "subsBetaLeaveConfirmBody": "Cloud kayıtların ve topluluk varlıkların silinecek, beta slot'un serbest bırakılacak. Post'lar ve marketplace listelemeleri etkilenmez.",
+  "subsBetaLeaveSuccess": "Beta'dan ayrıldın.",
+  "subsBetaLeaveFailed": "Beta'dan ayrılma başarısız. Daha sonra tekrar dene.",
 
   "feedPostRateLimited": "Çok hızlı post atıyorsun. Biraz sonra tekrar dene."
 }
