@@ -244,4 +244,5 @@ class _CampaignSelectorScreenState
       context.go('/main');
     }
   }
+
 }

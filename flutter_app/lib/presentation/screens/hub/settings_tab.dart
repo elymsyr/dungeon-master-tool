@@ -10,6 +10,7 @@ import '../../../application/providers/soundpad_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
+import '../../../application/services/campaign_import_service.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../data/datasources/local/campaign_local_ds.dart' show TrashItem;
@@ -169,6 +170,25 @@ class SettingsTab extends ConsumerWidget {
 
               const SizedBox(height: 32),
 
+              // --- LEGACY IMPORT (v0.8.4 Python) ---
+              Text(l10n.settingsImportLegacy, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              const SizedBox(height: 6),
+              Text(
+                l10n.settingsImportLegacyDesc,
+                style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _importLegacyWorlds(context, ref),
+                  icon: const Icon(Icons.drive_folder_upload),
+                  label: Text(l10n.btnImportLegacyWorlds),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
               // --- TRASH ---
               Text(l10n.settingsTrash, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               const SizedBox(height: 12),
@@ -315,6 +335,71 @@ class SettingsTab extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _importLegacyWorlds(BuildContext context, WidgetRef ref) async {
+    final l10n = L10n.of(context)!;
+    final dir = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: l10n.importLegacyDialogTitle,
+    );
+    if (dir == null) return;
+
+    if (!context.mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    CampaignImportResult result;
+    try {
+      result = await ref
+          .read(campaignImportServiceProvider)
+          .importFromDirectory(dir);
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.importLegacyErrorGeneric(e.toString()))),
+        );
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    ref.invalidate(campaignListProvider);
+    ref.invalidate(campaignInfoListProvider);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_buildImportSummary(l10n, result)),
+        duration: const Duration(seconds: 6),
+        backgroundColor: result.errors.isNotEmpty
+            ? Theme.of(context).colorScheme.error
+            : null,
+      ),
+    );
+  }
+
+  String _buildImportSummary(L10n l10n, CampaignImportResult result) {
+    if (!result.hasAny && result.skipped.isNotEmpty) {
+      return l10n.importLegacyNoWorlds;
+    }
+    final parts = <String>[];
+    if (result.imported.isNotEmpty) {
+      parts.add(l10n.importLegacyImportedCount(result.imported.length));
+    }
+    if (result.renamed.isNotEmpty) {
+      parts.add(l10n.importLegacyRenamed(result.renamed.length));
+    }
+    if (result.skipped.isNotEmpty) {
+      parts.add(l10n.importLegacySkipped(result.skipped.length));
+    }
+    if (result.errors.isNotEmpty) {
+      parts.add(l10n.importLegacyErrors(result.errors.length));
+    }
+    return parts.join(' · ');
   }
 
   Widget _pathRow(String label, String path, DmToolColors palette) {
