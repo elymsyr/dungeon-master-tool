@@ -9,6 +9,7 @@ import '../../data/repositories/campaign_repository_impl.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
+import '../services/campaign_import_service.dart';
 import '../services/template_sync_service.dart';
 
 final campaignLocalDsProvider = Provider((_) => CampaignLocalDataSource());
@@ -18,6 +19,13 @@ final campaignRepositoryProvider = Provider<CampaignRepository>(
     ref.watch(appDatabaseProvider),
     ref.read(campaignLocalDsProvider),
   ),
+);
+
+/// Legacy (Python v0.8.4) world klasörlerini [AppPaths.worldsDir] altına
+/// kopyalayan servis. UI bunu çağırır; mevcut load pipeline sonrasında
+/// otomatik olarak MsgPack → SQLite migration'u devralır.
+final campaignImportServiceProvider = Provider<CampaignImportService>(
+  (ref) => CampaignImportService(ref.watch(campaignRepositoryProvider)),
 );
 
 /// Mevcut kampanya listesi.
