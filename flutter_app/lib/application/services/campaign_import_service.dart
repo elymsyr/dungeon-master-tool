@@ -86,6 +86,15 @@ class CampaignImportService {
 
       try {
         await _copyDirectory(worldDir, Directory(targetPath));
+
+        // Eager migration: CampaignRepositoryImpl.load() yasal MsgPack
+        // dosyasını tespit edip SchemaMigration.migrate() + _migrateToDb()
+        // pipeline'ı ile SQLite'a yazar. Bunu yapmazsak kopyalanan world
+        // sadece legacy-aware `campaignListProvider`'da görünür;
+        // `campaignInfoListProvider` (hub/worlds_tab) sadece SQLite
+        // okuduğu için boş kalır.
+        await _repo.load(targetName);
+
         imported.add(targetName);
         existing.add(targetName); // aynı import içindeki sonraki çakışmalar için
         if (targetName != originalName) {
