@@ -39,16 +39,47 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
           await ref.read(userSessionProvider.notifier).activate(auth.uid);
           if (mounted) context.go('/hub');
         }
+        // Startup sonrası ban dialog'u zaten set olmuşsa hemen göster.
+        _maybeShowBanDialog();
       });
+      // Ban mesajı dinleyicisi — auto sign-out (startup/stream/login) tek
+      // noktadan buradan tetiklenir.
+      ref.read(authProvider.notifier).banMessageNotifier.addListener(_maybeShowBanDialog);
     }
   }
 
   @override
   void dispose() {
+    if (SupabaseConfig.isConfigured) {
+      ref.read(authProvider.notifier).banMessageNotifier.removeListener(_maybeShowBanDialog);
+    }
     _emailController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
     super.dispose();
+  }
+
+  void _maybeShowBanDialog() {
+    final notifier = ref.read(authProvider.notifier).banMessageNotifier;
+    final msg = notifier.value;
+    if (msg == null || !mounted) return;
+    notifier.value = null; // Idempotent — dialog bir kez açılsın.
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(Icons.block, size: 48, color: palette.dangerBtnBg),
+        title: const Text('Account Banned'),
+        content: Text(msg, textAlign: TextAlign.center),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -414,7 +445,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     });
 
     final notifier = ref.read(authProvider.notifier);
-    final String? error;
+    String? error;
 
     if (_isSignUp) {
       error = await notifier.signUp(email, password);
@@ -427,6 +458,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       }
     } else {
       error = await notifier.signIn(email, password);
+      // Ban kontrolü auth stream dinleyicisi tarafından otomatik yapılır;
+      // banlıysa `banMessageNotifier` dolar ve aşağıdaki listener dialog açar.
     }
 
     if (mounted) {

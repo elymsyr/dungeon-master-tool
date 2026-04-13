@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../data/datasources/remote/admin_users_remote_ds.dart';
 import 'auth_provider.dart';
 
 /// Şu anki kullanıcının admin olup olmadığı. Email kaynak kodda DEĞİL —
@@ -24,4 +25,59 @@ final isAdminProvider = FutureProvider<bool>((ref) async {
     debugPrint('isAdmin RPC error: $e\n$st');
     return false;
   }
+});
+
+/// Admin data source — tek instance, provider'lar üzerinden erişilir.
+final adminUsersDataSourceProvider = Provider<AdminUsersRemoteDataSource>((ref) {
+  return AdminUsersRemoteDataSource();
+});
+
+/// Admin panelindeki arama kutusu state'i. Boşken tüm kullanıcılar listelenir.
+final adminUserSearchQueryProvider = StateProvider<String>((ref) => '');
+
+/// Tüm kullanıcılar (arama sorgusuna göre filtreli). Admin değilse boş döner.
+final adminUserListProvider = FutureProvider.autoDispose<List<AdminUserSummary>>((ref) async {
+  final isAdmin = await ref.watch(isAdminProvider.future);
+  if (!isAdmin) return const [];
+  final ds = ref.watch(adminUsersDataSourceProvider);
+  final query = ref.watch(adminUserSearchQueryProvider).trim();
+  if (query.isEmpty) {
+    return ds.fetchAllUsers();
+  }
+  return ds.searchUsers(query);
+});
+
+/// Özet istatistikler — total user + beta user sayıları. Arama sorgusundan
+/// bağımsız, her zaman tüm kullanıcılar üzerinden hesaplanır.
+class AdminUserStats {
+  final int total;
+  final int beta;
+  const AdminUserStats({required this.total, required this.beta});
+}
+
+final adminUserStatsProvider = FutureProvider.autoDispose<AdminUserStats>((ref) async {
+  final isAdmin = await ref.watch(isAdminProvider.future);
+  if (!isAdmin) return const AdminUserStats(total: 0, beta: 0);
+  final ds = ref.watch(adminUsersDataSourceProvider);
+  final all = await ds.fetchAllUsers();
+  return AdminUserStats(
+    total: all.length,
+    beta: all.where((u) => u.isBeta).length,
+  );
+});
+
+/// Banlanmış kullanıcı listesi.
+final adminBannedUsersProvider = FutureProvider.autoDispose<List<BannedUserEntry>>((ref) async {
+  final isAdmin = await ref.watch(isAdminProvider.future);
+  if (!isAdmin) return const [];
+  final ds = ref.watch(adminUsersDataSourceProvider);
+  return ds.fetchBannedUsers();
+});
+
+/// Supabase storage bucket istatistikleri (kullanılan byte).
+final adminStorageStatsProvider = FutureProvider.autoDispose<List<StorageBucketStat>>((ref) async {
+  final isAdmin = await ref.watch(isAdminProvider.future);
+  if (!isAdmin) return const [];
+  final ds = ref.watch(adminUsersDataSourceProvider);
+  return ds.fetchStorageStats();
 });
