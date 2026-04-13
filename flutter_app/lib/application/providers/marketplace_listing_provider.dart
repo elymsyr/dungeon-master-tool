@@ -42,6 +42,18 @@ final lineageHistoryProvider =
       .listLineageHistory(lineageId);
 });
 
+/// Current marketplace listings owned by [userId]. Used by the profile
+/// screen's "Items" tab — anyone can view a user's public listings, the
+/// owner additionally sees delete controls.
+final userMarketplaceListingsProvider =
+    FutureProvider.family<List<MarketplaceListing>, String>(
+        (ref, userId) async {
+  if (!SupabaseConfig.isConfigured) return const [];
+  return ref
+      .read(marketplaceListingsRemoteDsProvider)
+      .listCurrentByOwner(userId);
+});
+
 /// Owner-side: convenience family that resolves a local item's currently
 /// associated lineage id (if any). Returns null when the item has never
 /// been published.
