@@ -2,12 +2,14 @@ import 'dart:io';
 
 import 'package:logger/logger.dart';
 import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
 
 import '../../core/config/app_paths.dart';
 import '../../data/datasources/local/campaign_local_ds.dart';
 import '../../domain/repositories/campaign_repository.dart';
 
 final _log = Logger(printer: SimplePrinter());
+const _uuid = Uuid();
 
 const _imageExtensions = <String>{
   '.png',
@@ -109,6 +111,14 @@ class CampaignImportService {
         if (imageMap.isNotEmpty) {
           await _rewriteCampaignImageRefs(targetPath, imageMap);
         }
+
+        // Entity ID'lerini yeniden üret — `entities` tablosunun PK'sı
+        // global `id` olduğu için aynı world'ü ikinci kez import edince
+        // veya iki ayrı world aynı UUID'yi kullanırsa UNIQUE constraint
+        // failure alıyoruz. Yeniden üretim cross-reference'ları da
+        // (location_id, pin entity_id, combatant eid, mind map nodes,
+        // timeline entity_ids) günceller.
+        await _regenerateEntityIds(targetPath);
 
         // Eager migration: CampaignRepositoryImpl.load() legacy MsgPack
         // dosyasını tespit edip SchemaMigration.migrate() + _migrateToDb()
@@ -290,49 +300,87 @@ class CampaignImportService {
     }
   }
 
-  /// Kampanya verisini oku, `entities[*].images` ve `image_path`
-  /// referanslarını [imageMap] ile yeni absolute path'lere yeniden yaz,
-  /// geri kaydet. `_repo.load()` bu düzeltilmiş veriyi SQLite'a alacak.
+  /// Kampanya verisini oku, tüm görsel referanslarını (entity'ler,
+  /// map_data, encounter battle map'leri, mind map image node'ları)
+  /// [imageMap] ile yeni absolute path'lere yeniden yaz, geri kaydet.
+  ///
+  /// Bu adım `SchemaMigration.migrate()`'den ÖNCE çalışıyor, bu yüzden
+  /// Python key isimlerini (snake_case) kullanıyoruz. Migration sonradan
+  /// bu path'leri camelCase alanlara taşıyacak.
   Future<void> _rewriteCampaignImageRefs(
     String worldPath,
     Map<String, String> imageMap,
   ) async {
     final data = await _localDs.load(worldPath);
-    final entities = data['entities'];
-    if (entities is! Map) return;
-
     var rewrittenCount = 0;
-    for (final entry in entities.entries) {
-      final entity = entry.value;
-      if (entity is! Map) continue;
 
-      // images: List<String>
-      final images = entity['images'];
-      if (images is List) {
-        final newImages = <dynamic>[];
-        for (final img in images) {
-          if (img is String) {
-            final mapped = _lookupImage(imageMap, img);
-            if (mapped != null) {
-              newImages.add(mapped);
-              rewrittenCount++;
-            } else {
-              newImages.add(img);
-            }
-          } else {
-            newImages.add(img);
+    // 1. Entities
+    final entities = data['entities'];
+    if (entities is Map) {
+      for (final entry in entities.entries) {
+        final entity = entry.value;
+        if (entity is! Map) continue;
+        rewrittenCount += _rewriteEntityImages(entity, imageMap);
+      }
+    }
+
+    // 2. map_data.image_path (world map) + epochs
+    final mapData = data['map_data'];
+    if (mapData is Map) {
+      rewrittenCount += _rewriteSingleKey(mapData, 'image_path', imageMap);
+      rewrittenCount += _rewriteSingleKey(mapData, 'imagePath', imageMap);
+      // Epochs (eski kayıtlarda varsa)
+      final epochs = mapData['epochs'];
+      if (epochs is List) {
+        for (final epoch in epochs) {
+          if (epoch is Map) {
+            rewrittenCount += _rewriteSingleKey(epoch, 'image_path', imageMap);
+            rewrittenCount += _rewriteSingleKey(epoch, 'imagePath', imageMap);
           }
         }
-        entity['images'] = newImages;
       }
+    }
 
-      // image_path: legacy single image
-      final imagePath = entity['image_path'];
-      if (imagePath is String && imagePath.isNotEmpty) {
-        final mapped = _lookupImage(imageMap, imagePath);
-        if (mapped != null) {
-          entity['image_path'] = mapped;
-          rewrittenCount++;
+    // 3. sessions[*].encounters[*].map_path (battle map'ler).
+    // Hem List hem Map şekli destekleniyor (iki Python format da var).
+    final sessions = data['sessions'];
+    if (sessions is List) {
+      for (final session in sessions) {
+        if (session is! Map) continue;
+        final encounters = session['encounters'];
+        if (encounters is List) {
+          for (final enc in encounters) {
+            if (enc is Map) {
+              rewrittenCount += _rewriteSingleKey(enc, 'map_path', imageMap);
+              rewrittenCount += _rewriteSingleKey(enc, 'mapPath', imageMap);
+            }
+          }
+        } else if (encounters is Map) {
+          for (final enc in encounters.values) {
+            if (enc is Map) {
+              rewrittenCount += _rewriteSingleKey(enc, 'map_path', imageMap);
+              rewrittenCount += _rewriteSingleKey(enc, 'mapPath', imageMap);
+            }
+          }
+        }
+      }
+    }
+
+    // 4. mind_maps[*].nodes[*].extra.path (image node'lar)
+    final mindMaps = data['mind_maps'];
+    if (mindMaps is Map) {
+      for (final mm in mindMaps.values) {
+        if (mm is! Map) continue;
+        final nodes = mm['nodes'];
+        if (nodes is! List) continue;
+        for (final node in nodes) {
+          if (node is! Map) continue;
+          final extra = node['extra'];
+          if (extra is Map) {
+            rewrittenCount += _rewriteSingleKey(extra, 'path', imageMap);
+          }
+          // Zaten camelCase imageUrl ile gelmişse de dene.
+          rewrittenCount += _rewriteSingleKey(node, 'imageUrl', imageMap);
         }
       }
     }
@@ -340,6 +388,210 @@ class CampaignImportService {
     if (rewrittenCount > 0) {
       await _localDs.save(worldPath, Map<String, dynamic>.from(data));
       _log.i('Rewrote $rewrittenCount image reference(s) in $worldPath');
+    }
+  }
+
+  /// Entity seviyesindeki image alanlarını yeniden yazar.
+  /// Dönen değer: yeniden yazılan referans sayısı.
+  int _rewriteEntityImages(Map entity, Map<String, String> imageMap) {
+    var count = 0;
+
+    // images: List<String>
+    final images = entity['images'];
+    if (images is List) {
+      final newImages = <dynamic>[];
+      for (final img in images) {
+        if (img is String) {
+          final mapped = _lookupImage(imageMap, img);
+          if (mapped != null) {
+            newImages.add(mapped);
+            count++;
+          } else {
+            newImages.add(img);
+          }
+        } else {
+          newImages.add(img);
+        }
+      }
+      entity['images'] = newImages;
+    }
+
+    // image_path: legacy tekil görsel
+    count += _rewriteSingleKey(entity, 'image_path', imageMap);
+
+    // battlemaps: Python location entity'lerinde battle map listesi
+    final battlemaps = entity['battlemaps'];
+    if (battlemaps is List) {
+      final newBms = <dynamic>[];
+      for (final bm in battlemaps) {
+        if (bm is String) {
+          final mapped = _lookupImage(imageMap, bm);
+          if (mapped != null) {
+            newBms.add(mapped);
+            count++;
+          } else {
+            newBms.add(bm);
+          }
+        } else {
+          newBms.add(bm);
+        }
+      }
+      entity['battlemaps'] = newBms;
+    }
+
+    return count;
+  }
+
+  /// [container][key] bir String image referansıysa, [imageMap] üzerinden
+  /// çevir. Çevrilenlerin sayısını döner (0 veya 1).
+  int _rewriteSingleKey(
+    Map container,
+    String key,
+    Map<String, String> imageMap,
+  ) {
+    final value = container[key];
+    if (value is! String || value.isEmpty) return 0;
+    final mapped = _lookupImage(imageMap, value);
+    if (mapped == null) return 0;
+    container[key] = mapped;
+    return 1;
+  }
+
+  /// Entity UUID'lerini baştan üretir ve tüm cross-reference'ları günceller.
+  /// `entities` tablosunun global `id` PK'sı nedeniyle aynı legacy world'ün
+  /// tekrar tekrar import'u veya iki ayrı world'ün aynı UUID'yi kullanması
+  /// UNIQUE constraint ihlaline yol açıyor. Bu metod raw data.dat'ı okur,
+  /// her entity için yeni UUID üretir, bilinen tüm referans alanlarını
+  /// yeniden haritalar ve dosyayı geri yazar.
+  Future<void> _regenerateEntityIds(String worldPath) async {
+    final data = await _localDs.load(worldPath);
+    final entities = data['entities'];
+    if (entities is! Map || entities.isEmpty) return;
+
+    // 1. Eski → yeni mapping.
+    final idMap = <String, String>{};
+    for (final key in entities.keys) {
+      idMap[key.toString()] = _uuid.v4();
+    }
+
+    // 2. Entities map'ini yeni key'lerle yeniden inşa et.
+    final newEntities = <String, dynamic>{};
+    for (final entry in entities.entries) {
+      final oldId = entry.key.toString();
+      final newId = idMap[oldId]!;
+      final entity = entry.value;
+      if (entity is Map) {
+        final m = Map<String, dynamic>.from(entity);
+        // `id` alanını da tut (bazı yerlerde direkt olarak okunuyor olabilir).
+        m['id'] = newId;
+        // location_id: başka bir entity'ye işaret ediyorsa re-map.
+        final locId = m['location_id'];
+        if (locId is String && idMap.containsKey(locId)) {
+          m['location_id'] = idMap[locId];
+        }
+        newEntities[newId] = m;
+      } else {
+        newEntities[newId] = entity;
+      }
+    }
+    data['entities'] = newEntities;
+
+    // 3. map_data.pins[*].entity_id / entityId
+    final mapData = data['map_data'];
+    if (mapData is Map) {
+      final pins = mapData['pins'];
+      if (pins is List) {
+        for (final pin in pins) {
+          if (pin is Map) {
+            _remapId(pin, 'entity_id', idMap);
+            _remapId(pin, 'entityId', idMap);
+          }
+        }
+      }
+      // map_data.timeline[*].entity_ids / entityIds (liste)
+      final timeline = mapData['timeline'];
+      if (timeline is List) {
+        for (final t in timeline) {
+          if (t is Map) {
+            _remapIdList(t, 'entity_ids', idMap);
+            _remapIdList(t, 'entityIds', idMap);
+          }
+        }
+      }
+    }
+
+    // 4. sessions[*].(encounters|combatants) içinde combatant eid/entityId
+    final sessions = data['sessions'];
+    if (sessions is List) {
+      for (final s in sessions) {
+        if (s is! Map) continue;
+        // Session-level (legacy) combatants
+        _remapCombatants(s['combatants'], idMap);
+
+        // encounters List veya Map
+        final enc = s['encounters'];
+        if (enc is List) {
+          for (final e in enc) {
+            if (e is Map) _remapCombatants(e['combatants'], idMap);
+          }
+        } else if (enc is Map) {
+          for (final e in enc.values) {
+            if (e is Map) _remapCombatants(e['combatants'], idMap);
+          }
+        }
+      }
+    }
+
+    // 5. mind_maps[*].nodes[*].extra.eid / entityId
+    final mindMaps = data['mind_maps'];
+    if (mindMaps is Map) {
+      for (final mm in mindMaps.values) {
+        if (mm is! Map) continue;
+        final nodes = mm['nodes'];
+        if (nodes is! List) continue;
+        for (final n in nodes) {
+          if (n is! Map) continue;
+          _remapId(n, 'entityId', idMap);
+          final extra = n['extra'];
+          if (extra is Map) {
+            _remapId(extra, 'eid', idMap);
+            _remapId(extra, 'entityId', idMap);
+          }
+        }
+      }
+    }
+
+    await _localDs.save(worldPath, Map<String, dynamic>.from(data));
+    _log.i('Regenerated ${idMap.length} entity ID(s) in $worldPath');
+  }
+
+  void _remapId(Map m, String key, Map<String, String> idMap) {
+    final v = m[key];
+    if (v is String && idMap.containsKey(v)) {
+      m[key] = idMap[v];
+    }
+  }
+
+  void _remapIdList(Map m, String key, Map<String, String> idMap) {
+    final v = m[key];
+    if (v is! List) return;
+    final newList = <dynamic>[];
+    for (final item in v) {
+      if (item is String && idMap.containsKey(item)) {
+        newList.add(idMap[item]);
+      } else {
+        newList.add(item);
+      }
+    }
+    m[key] = newList;
+  }
+
+  void _remapCombatants(dynamic combatants, Map<String, String> idMap) {
+    if (combatants is! List) return;
+    for (final c in combatants) {
+      if (c is! Map) continue;
+      _remapId(c, 'eid', idMap);
+      _remapId(c, 'entityId', idMap);
     }
   }
 
