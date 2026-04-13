@@ -25,7 +25,10 @@ final campaignRepositoryProvider = Provider<CampaignRepository>(
 /// kopyalayan servis. UI bunu çağırır; mevcut load pipeline sonrasında
 /// otomatik olarak MsgPack → SQLite migration'u devralır.
 final campaignImportServiceProvider = Provider<CampaignImportService>(
-  (ref) => CampaignImportService(ref.watch(campaignRepositoryProvider)),
+  (ref) => CampaignImportService(
+    ref.watch(campaignRepositoryProvider),
+    ref.watch(campaignLocalDsProvider),
+  ),
 );
 
 /// Mevcut kampanya listesi.
