@@ -394,6 +394,11 @@
   "subsBetaJoinFailedFull": "La bêta vient d'être remplie. Réessayez plus tard.",
   "subsBetaJoinFailedGeneric": "Impossible de rejoindre la bêta : {error}",
   "@subsBetaJoinFailedGeneric": { "placeholders": { "error": { "type": "String" } } },
+  "subsBetaLeaveBtn": "Quitter la bêta",
+  "subsBetaLeaveConfirmTitle": "Quitter la bêta ?",
+  "subsBetaLeaveConfirmBody": "Vos sauvegardes cloud et vos ressources communautaires seront supprimées et votre place de bêta sera libérée. Les publications et annonces du marché ne sont pas concernées.",
+  "subsBetaLeaveSuccess": "Vous avez quitté la bêta.",
+  "subsBetaLeaveFailed": "Impossible de quitter la bêta. Réessayez plus tard.",
 
   "feedPostRateLimited": "Vous postez trop vite. Réessayez dans un instant."
 }
