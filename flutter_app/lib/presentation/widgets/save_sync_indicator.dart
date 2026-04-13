@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/cloud_backup_provider.dart';
 import '../../application/providers/cloud_sync_provider.dart';
@@ -331,6 +332,17 @@ class _SaveSyncDialog extends ConsumerWidget {
       );
       return;
     }
+    // Beta gate — cloud save özelliği yalnızca beta katılımcılarına açık.
+    if (!ref.read(betaProvider).isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Cloud save is beta-only. Open Settings → Subscriptions to join the free beta.',
+          ),
+        ),
+      );
+      return;
+    }
 
     try {
       final ok = await withLoading(
@@ -591,13 +603,14 @@ class _StorageUsageBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final storageAsync = ref.watch(cloudStorageUsedProvider);
+    final quotaBytes = ref.watch(betaProvider).quotaBytes;
 
     return storageAsync.when(
       data: (bytes) {
         final usedMb = bytes / (1024 * 1024);
-        final totalMb = cloudBackupUserQuotaLimit / (1024 * 1024);
+        final totalMb = quotaBytes / (1024 * 1024);
         final itemLimitMb = cloudBackupItemSizeLimit / (1024 * 1024);
-        final ratio = (bytes / cloudBackupUserQuotaLimit).clamp(0.0, 1.0);
+        final ratio = (bytes / quotaBytes).clamp(0.0, 1.0);
         final remainingMb = totalMb - usedMb;
 
         return Column(

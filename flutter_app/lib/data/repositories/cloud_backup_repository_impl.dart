@@ -11,10 +11,14 @@ import '../datasources/remote/cloud_backup_remote_ds.dart';
 /// icin ortak sinir. AssetService.maxItemBytes da bu degere bagli.
 const cloudBackupItemSizeLimit = 10 * 1024 * 1024; // 10 MB
 
-/// Per-user toplam cloud quota — Supabase cloud_backups + Cloudflare R2
-/// community_assets toplami. get_user_total_storage_used RPC'si bu sinira
-/// karsi kontrol edilir.
-const cloudBackupUserQuotaLimit = 50 * 1024 * 1024; // 50 MB
+/// Per-user toplam cloud quota fallback. Beta programı aktif olduğunda
+/// `CloudBackupRepositoryImpl` constructor'ına `quota` callback'i üzerinden
+/// sunucuda tanımlı değer (varsayılan 50 MB) geçilir.
+const cloudBackupUserQuotaFallback = 50 * 1024 * 1024; // 50 MB
+
+/// Repository'ye run-time quota (bytes) sağlayan callback. Beta kullanıcısı
+/// için `betaProvider.quotaBytes`'ı döndürür.
+typedef BetaQuotaResolver = int Function();
 
 /// Cloud backup repository implementasyonu.
 ///
@@ -23,8 +27,12 @@ const cloudBackupUserQuotaLimit = 50 * 1024 * 1024; // 50 MB
 /// Worlds, templates ve packages icin ortak kullanilir.
 class CloudBackupRepositoryImpl implements CloudBackupRepository {
   final CloudBackupRemoteDataSource _remoteDs;
+  final BetaQuotaResolver _quota;
 
-  CloudBackupRepositoryImpl(this._remoteDs);
+  CloudBackupRepositoryImpl(
+    this._remoteDs, {
+    BetaQuotaResolver? quota,
+  }) : _quota = (quota ?? (() => cloudBackupUserQuotaFallback));
 
   @override
   Future<List<CloudBackupMeta>> listBackups() => _remoteDs.fetchAll();
@@ -70,13 +78,14 @@ class CloudBackupRepositoryImpl implements CloudBackupRepository {
     final gzipBytes = gzip.encode(jsonBytes);
     final compressedBytes = Uint8List.fromList(gzipBytes);
 
-    // Per-user toplam limit kontrolu
+    // Per-user toplam limit kontrolu — beta quota run-time'da resolve edilir.
+    final quotaLimit = _quota();
     final currentUsage = await _remoteDs.getTotalStorageUsed();
-    if (currentUsage + compressedBytes.length > cloudBackupUserQuotaLimit) {
+    if (currentUsage + compressedBytes.length > quotaLimit) {
       throw CloudBackupQuotaExceededException(
         itemName: itemName,
         currentUsageBytes: currentUsage,
-        quotaBytes: cloudBackupUserQuotaLimit,
+        quotaBytes: quotaLimit,
       );
     }
 

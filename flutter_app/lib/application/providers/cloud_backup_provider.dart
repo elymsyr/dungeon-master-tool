@@ -9,6 +9,7 @@ import '../../domain/exceptions/cloud_backup_exceptions.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/repositories/cloud_backup_repository.dart';
 import 'auth_provider.dart';
+import 'beta_provider.dart';
 import 'campaign_provider.dart';
 import 'package_provider.dart';
 import 'save_state_provider.dart';
@@ -16,9 +17,12 @@ import 'template_provider.dart';
 
 // ── Repository ──────────────────────────────────────────────────────
 
-final cloudBackupRepositoryProvider = Provider<CloudBackupRepository>(
-  (ref) => CloudBackupRepositoryImpl(CloudBackupRemoteDataSource()),
-);
+final cloudBackupRepositoryProvider = Provider<CloudBackupRepository>((ref) {
+  return CloudBackupRepositoryImpl(
+    CloudBackupRemoteDataSource(),
+    quota: () => ref.read(betaProvider).quotaBytes,
+  );
+});
 
 // ── Backup lists ────────────────────────────────────────────────────
 

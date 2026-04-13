@@ -371,5 +371,29 @@
   "mySnapshotsDownloadCount": "{count} indirme",
   "@mySnapshotsDownloadCount": { "placeholders": { "count": { "type": "int" } } },
   "mySnapshotsCurrentBadge": "güncel",
-  "mySnapshotsDeleteTooltip": "Snapshot'ı sil"
+  "mySnapshotsDeleteTooltip": "Snapshot'ı sil",
+
+  "settingsSubscriptions": "Abonelikler",
+  "subsBetaTitle": "Beta Programı",
+  "subsBetaDescription": "Cloud save özelliğini denemek için kapalı beta'ya katıl. 200 slot mevcut.",
+  "subsBetaJoinBtn": "Beta'ya Ücretsiz Katıl",
+  "subsBetaSlotsRemaining": "{n} / 200 slot kaldı",
+  "@subsBetaSlotsRemaining": { "placeholders": { "n": { "type": "int" } } },
+  "subsBetaFull": "Beta dolu. v1 çıktığında haberdar edeceğiz.",
+  "subsBetaActiveBadge": "Beta'dasın — slot #{n}",
+  "@subsBetaActiveBadge": { "placeholders": { "n": { "type": "int" } } },
+  "subsBetaQuotaLabel": "{used} MB / {total} MB kullanıldı",
+  "@subsBetaQuotaLabel": { "placeholders": { "used": { "type": "String" }, "total": { "type": "String" } } },
+  "subsBetaQuotaScopeNote": "Beta depolaması cloud save ve community asset'leri kapsar. Postlar ücretsizdir.",
+  "subsBetaInactivityDisclaimer": "Uygulamayı haftada en az bir kez aç. 7 gün inaktif olursan cloud verin silinir ve beta slot'un serbest bırakılır.",
+  "subsBetaLastSeen": "Son görülme: {when}",
+  "@subsBetaLastSeen": { "placeholders": { "when": { "type": "String" } } },
+  "subsBetaRoadmap": "Beta sonrası daha fazla alan ve online özellikler gelecek.",
+  "subsBetaSignInHint": "Ücretsiz beta'ya katılmak için oturum aç.",
+  "subsBetaRequiredForCloud": "Cloud save yalnızca beta'ya özel. Ayarlar → Abonelikler'den ücretsiz beta'ya katıl.",
+  "subsBetaJoinFailedFull": "Beta az önce doldu. Daha sonra tekrar dene.",
+  "subsBetaJoinFailedGeneric": "Beta'ya katılım başarısız: {error}",
+  "@subsBetaJoinFailedGeneric": { "placeholders": { "error": { "type": "String" } } },
+
+  "feedPostRateLimited": "Çok hızlı post atıyorsun. Biraz sonra tekrar dene."
 }

@@ -371,5 +371,29 @@
   "mySnapshotsDownloadCount": "{count} Downloads",
   "@mySnapshotsDownloadCount": { "placeholders": { "count": { "type": "int" } } },
   "mySnapshotsCurrentBadge": "aktuell",
-  "mySnapshotsDeleteTooltip": "Snapshot löschen"
+  "mySnapshotsDeleteTooltip": "Snapshot löschen",
+
+  "settingsSubscriptions": "Abonnements",
+  "subsBetaTitle": "Beta-Programm",
+  "subsBetaDescription": "Tritt der geschlossenen Beta bei, um Cloud-Speicher zu testen. 200 Plätze verfügbar.",
+  "subsBetaJoinBtn": "Kostenlos Beta beitreten",
+  "subsBetaSlotsRemaining": "{n} / 200 Plätze frei",
+  "@subsBetaSlotsRemaining": { "placeholders": { "n": { "type": "int" } } },
+  "subsBetaFull": "Die Beta ist voll. Wir benachrichtigen dich beim v1-Release.",
+  "subsBetaActiveBadge": "Du bist in der Beta — Platz #{n}",
+  "@subsBetaActiveBadge": { "placeholders": { "n": { "type": "int" } } },
+  "subsBetaQuotaLabel": "{used} MB / {total} MB verwendet",
+  "@subsBetaQuotaLabel": { "placeholders": { "used": { "type": "String" }, "total": { "type": "String" } } },
+  "subsBetaQuotaScopeNote": "Der Beta-Speicher umfasst Cloud-Saves und Community-Assets. Posts sind kostenlos.",
+  "subsBetaInactivityDisclaimer": "Öffne die App mindestens einmal pro Woche. Nach 7 Tagen Inaktivität werden deine Cloud-Daten gelöscht und dein Beta-Platz freigegeben.",
+  "subsBetaLastSeen": "Zuletzt gesehen: {when}",
+  "@subsBetaLastSeen": { "placeholders": { "when": { "type": "String" } } },
+  "subsBetaRoadmap": "Nach der Beta liefern wir mehr Speicher und Online-Funktionen aus.",
+  "subsBetaSignInHint": "Melde dich an, um der kostenlosen Beta beizutreten.",
+  "subsBetaRequiredForCloud": "Cloud-Speicher ist nur in der Beta verfügbar. Öffne Einstellungen → Abonnements, um kostenlos beizutreten.",
+  "subsBetaJoinFailedFull": "Die Beta ist gerade voll geworden. Bitte später erneut versuchen.",
+  "subsBetaJoinFailedGeneric": "Beta-Beitritt fehlgeschlagen: {error}",
+  "@subsBetaJoinFailedGeneric": { "placeholders": { "error": { "type": "String" } } },
+
+  "feedPostRateLimited": "Du postest zu schnell. Bitte gleich noch einmal versuchen."
 }

@@ -371,5 +371,29 @@
   "mySnapshotsDownloadCount": "{count} downloads",
   "@mySnapshotsDownloadCount": { "placeholders": { "count": { "type": "int" } } },
   "mySnapshotsCurrentBadge": "current",
-  "mySnapshotsDeleteTooltip": "Delete snapshot"
+  "mySnapshotsDeleteTooltip": "Delete snapshot",
+
+  "settingsSubscriptions": "Subscriptions",
+  "subsBetaTitle": "Beta Program",
+  "subsBetaDescription": "Join the closed beta to try cloud save. 200 slots available.",
+  "subsBetaJoinBtn": "Join Beta for Free",
+  "subsBetaSlotsRemaining": "{n} / 200 slots remaining",
+  "@subsBetaSlotsRemaining": { "placeholders": { "n": { "type": "int" } } },
+  "subsBetaFull": "The beta is full. We'll let you know when v1 launches.",
+  "subsBetaActiveBadge": "You are in the beta — slot #{n}",
+  "@subsBetaActiveBadge": { "placeholders": { "n": { "type": "int" } } },
+  "subsBetaQuotaLabel": "{used} MB / {total} MB used",
+  "@subsBetaQuotaLabel": { "placeholders": { "used": { "type": "String" }, "total": { "type": "String" } } },
+  "subsBetaQuotaScopeNote": "Beta storage covers cloud saves and community assets. Posts are free.",
+  "subsBetaInactivityDisclaimer": "Open the app at least once a week. After 7 days of inactivity your cloud data is deleted and your beta slot is released.",
+  "subsBetaLastSeen": "Last seen: {when}",
+  "@subsBetaLastSeen": { "placeholders": { "when": { "type": "String" } } },
+  "subsBetaRoadmap": "After the beta we will ship more storage and online features.",
+  "subsBetaSignInHint": "Sign in to join the free beta.",
+  "subsBetaRequiredForCloud": "Cloud save is beta-only. Open Settings → Subscriptions to join the free beta.",
+  "subsBetaJoinFailedFull": "The beta just filled up. Try again later.",
+  "subsBetaJoinFailedGeneric": "Couldn't join the beta: {error}",
+  "@subsBetaJoinFailedGeneric": { "placeholders": { "error": { "type": "String" } } },
+
+  "feedPostRateLimited": "You're posting too fast. Try again in a moment."
 }

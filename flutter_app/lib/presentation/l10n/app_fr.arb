@@ -371,5 +371,29 @@
   "mySnapshotsDownloadCount": "{count} téléchargements",
   "@mySnapshotsDownloadCount": { "placeholders": { "count": { "type": "int" } } },
   "mySnapshotsCurrentBadge": "actuel",
-  "mySnapshotsDeleteTooltip": "Supprimer l'instantané"
+  "mySnapshotsDeleteTooltip": "Supprimer l'instantané",
+
+  "settingsSubscriptions": "Abonnements",
+  "subsBetaTitle": "Programme bêta",
+  "subsBetaDescription": "Rejoignez la bêta fermée pour essayer la sauvegarde cloud. 200 places disponibles.",
+  "subsBetaJoinBtn": "Rejoindre la bêta (gratuit)",
+  "subsBetaSlotsRemaining": "{n} / 200 places restantes",
+  "@subsBetaSlotsRemaining": { "placeholders": { "n": { "type": "int" } } },
+  "subsBetaFull": "La bêta est complète. Nous vous préviendrons lors de la sortie v1.",
+  "subsBetaActiveBadge": "Vous êtes dans la bêta — place #{n}",
+  "@subsBetaActiveBadge": { "placeholders": { "n": { "type": "int" } } },
+  "subsBetaQuotaLabel": "{used} Mo / {total} Mo utilisés",
+  "@subsBetaQuotaLabel": { "placeholders": { "used": { "type": "String" }, "total": { "type": "String" } } },
+  "subsBetaQuotaScopeNote": "Le stockage bêta couvre les sauvegardes cloud et les ressources communautaires. Les posts sont gratuits.",
+  "subsBetaInactivityDisclaimer": "Ouvrez l'application au moins une fois par semaine. Après 7 jours d'inactivité vos données cloud sont supprimées et votre place bêta est libérée.",
+  "subsBetaLastSeen": "Dernière activité : {when}",
+  "@subsBetaLastSeen": { "placeholders": { "when": { "type": "String" } } },
+  "subsBetaRoadmap": "Après la bêta nous livrerons plus d'espace et de fonctionnalités en ligne.",
+  "subsBetaSignInHint": "Connectez-vous pour rejoindre la bêta gratuite.",
+  "subsBetaRequiredForCloud": "La sauvegarde cloud est réservée à la bêta. Ouvrez Paramètres → Abonnements pour rejoindre la bêta gratuite.",
+  "subsBetaJoinFailedFull": "La bêta vient d'être remplie. Réessayez plus tard.",
+  "subsBetaJoinFailedGeneric": "Impossible de rejoindre la bêta : {error}",
+  "@subsBetaJoinFailedGeneric": { "placeholders": { "error": { "type": "String" } } },
+
+  "feedPostRateLimited": "Vous postez trop vite. Réessayez dans un instant."
 }
