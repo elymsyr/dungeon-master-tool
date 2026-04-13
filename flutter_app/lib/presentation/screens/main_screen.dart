@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
@@ -83,6 +84,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     HardwareKeyboard.instance.addHandler(_handleGlobalKey);
+    // Beta heartbeat: ilk launch'ta tek bir best-effort ping. Beta'da değilse
+    // sunucu no-op yapar.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(betaProvider.notifier).heartbeat();
+    });
     // UiState'den restore et
     final uiState = ref.read(uiStateProvider);
     _tabIndex = uiState.mainTabIndex;
@@ -114,6 +121,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
       // backup is deliberately NOT auto-triggered here — the user asked
       // for explicit control over cloud backups.
       ref.read(saveStateProvider.notifier).saveNow();
+    } else if (state == AppLifecycleState.resumed) {
+      // Beta program: her resume'da last_active_at'i tazele ve slot/quota
+      // durumunu yenile. Beta'da değilse sunucu no-op yapar.
+      final betaNotifier = ref.read(betaProvider.notifier);
+      betaNotifier.heartbeat();
+      betaNotifier.refresh();
     }
   }
 

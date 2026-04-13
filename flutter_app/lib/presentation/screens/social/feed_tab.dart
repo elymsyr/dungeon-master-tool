@@ -40,10 +40,16 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     if (ok) _bodyCtrl.clear();
     if (!mounted) return;
     final state = ref.read(postComposerProvider);
-    if (state is AsyncError && state.error is ProfanityRejectedException) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.feedProfanityRejected)),
-      );
+    if (state is AsyncError) {
+      if (state.error is ProfanityRejectedException) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.feedProfanityRejected)),
+        );
+      } else if (state.error is PostRateLimitedException) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.feedPostRateLimited)),
+        );
+      }
     }
     setState(() {});
   }

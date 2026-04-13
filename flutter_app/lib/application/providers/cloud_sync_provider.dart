@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/supabase_config.dart';
 import '../../domain/exceptions/cloud_backup_exceptions.dart';
 import 'auth_provider.dart';
+import 'beta_provider.dart';
 import 'campaign_provider.dart';
 import 'cloud_backup_provider.dart';
 import 'package_provider.dart';
@@ -86,6 +87,8 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
   /// Local save sonrası çağrılır. Item'ı dirty olarak işaretle.
   void markDirty(String itemId, String itemName, String type) {
     if (!SupabaseConfig.isConfigured || _ref.read(authProvider) == null) return;
+    // Beta-only gate: kullanıcı beta programında değilse cloud sync no-op.
+    if (!_ref.read(betaProvider).isActive) return;
 
     final key = '$type:$itemId';
     _dirtyItems[key] = (name: itemName, type: type, id: itemId);
@@ -115,6 +118,11 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
   /// surface an "open something first" message).
   Future<bool> backupActiveItem() async {
     if (!SupabaseConfig.isConfigured || _ref.read(authProvider) == null) {
+      return false;
+    }
+    if (!_ref.read(betaProvider).isActive) {
+      // Caller (save_sync_indicator) false cevabini "beta gereklidir"
+      // mesajiyla yorumlar.
       return false;
     }
 

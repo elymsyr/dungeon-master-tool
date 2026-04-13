@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/package_provider.dart';
@@ -41,6 +43,10 @@ class SettingsTab extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // --- SUBSCRIPTIONS (top of settings) ---
+              _SubscriptionsSection(palette: palette),
+              const SizedBox(height: 32),
+
               // --- THEME ---
               Text(l10n.lblTheme, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               const SizedBox(height: 12),
@@ -790,5 +796,317 @@ class _SoundRow extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// =============================================================================
+// Subscriptions Section — Beta Program (first 200 users, 50 MB cloud save)
+// =============================================================================
+
+class _SubscriptionsSection extends ConsumerWidget {
+  final DmToolColors palette;
+  const _SubscriptionsSection({required this.palette});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = L10n.of(context)!;
+    final auth = ref.watch(authProvider);
+    final beta = ref.watch(betaProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.settingsSubscriptions,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: palette.tabActiveText,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: palette.featureCardBg,
+            border: Border.all(color: palette.featureCardBorder),
+            borderRadius: palette.br,
+          ),
+          child: _buildBody(context, ref, l10n, auth, beta),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    WidgetRef ref,
+    L10n l10n,
+    AuthState? auth,
+    BetaState beta,
+  ) {
+    // Header — every state shows the title + icon.
+    final header = Row(
+      children: [
+        Icon(Icons.science_outlined,
+            size: 18, color: palette.featureCardAccent),
+        const SizedBox(width: 8),
+        Text(
+          l10n.subsBetaTitle,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: palette.tabActiveText,
+          ),
+        ),
+      ],
+    );
+
+    // State: not signed in
+    if (auth == null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          header,
+          const SizedBox(height: 10),
+          Text(
+            l10n.subsBetaSignInHint,
+            style: TextStyle(fontSize: 12, color: palette.tabText, height: 1.4),
+          ),
+        ],
+      );
+    }
+
+    // State: loading
+    if (beta.loading && !beta.isActive && beta.slotNumber == null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          header,
+          const SizedBox(height: 12),
+          const LinearProgressIndicator(minHeight: 2),
+        ],
+      );
+    }
+
+    // State: beta active
+    if (beta.isActive) {
+      final usedMb = (beta.usedBytes / (1024 * 1024)).toStringAsFixed(1);
+      final totalMb = (beta.quotaBytes / (1024 * 1024)).toStringAsFixed(0);
+      final lastSeen = beta.lastActiveAt == null
+          ? '—'
+          : DateFormat.yMMMd().add_Hm().format(beta.lastActiveAt!.toLocal());
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.check_circle,
+                  size: 18, color: palette.successBtnBg),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  beta.slotNumber == null
+                      ? l10n.subsBetaTitle
+                      : l10n.subsBetaActiveBadge(beta.slotNumber!),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: palette.tabActiveText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: beta.usageRatio,
+              minHeight: 8,
+              backgroundColor: palette.featureCardBorder,
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(palette.featureCardAccent),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.subsBetaQuotaLabel(usedMb, totalMb),
+            style: TextStyle(
+              fontSize: 11,
+              color: palette.sidebarLabelSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            l10n.subsBetaQuotaScopeNote,
+            style: TextStyle(
+              fontSize: 11,
+              color: palette.sidebarLabelSecondary,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            l10n.subsBetaLastSeen(lastSeen),
+            style: TextStyle(
+              fontSize: 11,
+              color: palette.sidebarLabelSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            l10n.subsBetaInactivityDisclaimer,
+            style: TextStyle(
+              fontSize: 11,
+              color: palette.sidebarLabelSecondary,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            l10n.subsBetaRoadmap,
+            style: TextStyle(
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+              color: palette.featureCardAccent,
+              height: 1.4,
+            ),
+          ),
+        ],
+      );
+    }
+
+    // State: beta full
+    if (beta.slotsRemaining <= 0) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          header,
+          const SizedBox(height: 10),
+          Text(
+            l10n.subsBetaFull,
+            style: TextStyle(fontSize: 12, color: palette.tabText, height: 1.4),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            l10n.subsBetaRoadmap,
+            style: TextStyle(
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+              color: palette.featureCardAccent,
+              height: 1.4,
+            ),
+          ),
+        ],
+      );
+    }
+
+    // State: can join (slot available)
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        header,
+        const SizedBox(height: 10),
+        Text(
+          l10n.subsBetaDescription,
+          style: TextStyle(fontSize: 12, color: palette.tabText, height: 1.4),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          l10n.subsBetaInactivityDisclaimer,
+          style: TextStyle(
+            fontSize: 11,
+            color: palette.sidebarLabelSecondary,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          l10n.subsBetaSlotsRemaining(beta.slotsRemaining),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: palette.featureCardAccent,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: palette.featureCardAccent,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape:
+                  RoundedRectangleBorder(borderRadius: palette.br),
+            ),
+            onPressed: beta.loading
+                ? null
+                : () => _join(context, ref, l10n),
+            child: beta.loading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
+                  )
+                : Text(
+                    l10n.subsBetaJoinBtn,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          l10n.subsBetaRoadmap,
+          style: TextStyle(
+            fontSize: 11,
+            fontStyle: FontStyle.italic,
+            color: palette.featureCardAccent,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _join(
+      BuildContext context, WidgetRef ref, L10n l10n) async {
+    final result = await ref.read(betaProvider.notifier).joinBeta();
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    switch (result.status) {
+      case BetaJoinStatus.joined:
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              l10n.subsBetaActiveBadge(result.slotNumber ?? 0),
+            ),
+          ),
+        );
+      case BetaJoinStatus.already:
+        // No message — UI state already reflects membership.
+        break;
+      case BetaJoinStatus.full:
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.subsBetaJoinFailedFull)),
+        );
+      case BetaJoinStatus.notSignedIn:
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.subsBetaSignInHint)),
+        );
+      case BetaJoinStatus.error:
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              l10n.subsBetaJoinFailedGeneric(
+                  result.errorMessage ?? 'unknown'),
+            ),
+          ),
+        );
+    }
   }
 }

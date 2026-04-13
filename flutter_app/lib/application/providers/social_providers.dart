@@ -17,6 +17,28 @@ import 'auth_provider.dart';
 import 'follows_provider.dart';
 import 'marketplace_listing_provider.dart';
 
+/// Sunucu `enforce_post_rate_limit` trigger'ı `post_rate_limit_exceeded`
+/// exception'ı fırlattığında client tarafı bu sınıfa maple eder ve UI'a
+/// lokalize "slow down" mesajı gösterir. Pencere label ('1m' | '1h' | '24h')
+/// trigger'ın HINT alanından alınır.
+class PostRateLimitedException implements Exception {
+  final String? window;
+  const PostRateLimitedException({this.window});
+  @override
+  String toString() => 'post_rate_limit_exceeded (${window ?? 'unknown'})';
+}
+
+bool _looksLikeRateLimit(Object error) {
+  final msg = error.toString().toLowerCase();
+  return msg.contains('post_rate_limit_exceeded');
+}
+
+String? _rateLimitWindow(Object error) {
+  final msg = error.toString();
+  final match = RegExp(r'window=(1m|1h|24h)').firstMatch(msg);
+  return match?.group(1);
+}
+
 // ── Remote DS singletons ────────────────────────────────────────────
 
 final postsRemoteDsProvider = Provider<PostsRemoteDataSource>((_) => PostsRemoteDataSource());
@@ -115,7 +137,14 @@ class PostComposerNotifier extends StateNotifier<AsyncValue<void>> {
       state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      if (_looksLikeRateLimit(e)) {
+        state = AsyncValue.error(
+          PostRateLimitedException(window: _rateLimitWindow(e)),
+          st,
+        );
+      } else {
+        state = AsyncValue.error(e, st);
+      }
       return false;
     }
   }
