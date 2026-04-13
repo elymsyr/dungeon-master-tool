@@ -7,6 +7,8 @@ supabase
 worlds/
 cache/
 output.txt
+worlds
+core
 
 # OS
 .DS_Store
