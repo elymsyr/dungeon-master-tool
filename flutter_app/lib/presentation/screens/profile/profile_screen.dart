@@ -13,9 +13,11 @@ import '../../../domain/entities/user_profile.dart';
 import '../../dialogs/follow_list_dialog.dart';
 import '../../dialogs/marketplace_preview_dialog.dart';
 import '../../dialogs/profile_edit_dialog.dart';
+import '../../../core/utils/screen_type.dart';
 import '../../l10n/app_localizations.dart';
 import '../social/messages_tab.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/pill_tab_bar.dart';
 import '../../widgets/profile_avatar.dart';
 
 /// Kullanıcı profili ekranı. `userId` "me" olursa şu anki auth user.
@@ -99,48 +101,52 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
-class _ProfileBody extends ConsumerWidget {
+class _ProfileBody extends ConsumerStatefulWidget {
   final UserProfile profile;
   final bool isMe;
   const _ProfileBody({required this.profile, required this.isMe});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final palette = Theme.of(context).extension<DmToolColors>()!;
+  ConsumerState<_ProfileBody> createState() => _ProfileBodyState();
+}
 
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          _ProfileHeader(profile: profile, isMe: isMe),
-          Container(
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: palette.featureCardBorder),
-              ),
-            ),
-            child: TabBar(
-              labelColor: palette.featureCardAccent,
-              unselectedLabelColor: palette.sidebarLabelSecondary,
-              indicatorColor: palette.featureCardAccent,
-              labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              unselectedLabelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-              tabs: const [
-                Tab(icon: Icon(Icons.article_outlined, size: 18), text: 'Posts'),
-                Tab(icon: Icon(Icons.storefront_outlined, size: 18), text: 'Items'),
-              ],
-            ),
-          ),
-          Expanded(
-            child: TabBarView(
-              children: [
-                _UserPostsTab(userId: profile.userId, isMe: isMe),
-                _UserItemsTab(userId: profile.userId, isMe: isMe),
-              ],
-            ),
-          ),
-        ],
-      ),
+class _ProfileBodyState extends ConsumerState<_ProfileBody> {
+  String _tab = 'posts';
+
+  @override
+  Widget build(BuildContext context) {
+    final phone = isPhone(context);
+    final tabs = <PillTab<String>>[
+      const PillTab(id: 'posts', icon: Icons.article_outlined, label: 'Posts'),
+      const PillTab(id: 'items', icon: Icons.storefront_outlined, label: 'Items'),
+    ];
+    final bar = PillTabBar<String>(
+      tabs: tabs,
+      currentTab: _tab,
+      onTabChanged: (id) => setState(() => _tab = id),
+      phone: phone,
+      showBorderTop: phone,
+      showBorderBottom: !phone,
+    );
+    final content = IndexedStack(
+      index: _tab == 'posts' ? 0 : 1,
+      children: [
+        _UserPostsTab(userId: widget.profile.userId, isMe: widget.isMe),
+        _UserItemsTab(userId: widget.profile.userId, isMe: widget.isMe),
+      ],
+    );
+    return Column(
+      children: phone
+          ? [
+              _ProfileHeader(profile: widget.profile, isMe: widget.isMe),
+              Expanded(child: content),
+              bar,
+            ]
+          : [
+              _ProfileHeader(profile: widget.profile, isMe: widget.isMe),
+              bar,
+              Expanded(child: content),
+            ],
     );
   }
 }

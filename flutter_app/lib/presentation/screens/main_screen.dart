@@ -486,7 +486,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                     }
                   case 'import':
                     ImportPackageDialog.show(context);
-                  case 'switch_world':
+                  case 'quit':
                     _exitToHub();
                   case 'bug':
                     BugReportDialog.show(context, screenshotKey: _screenshotKey);
@@ -519,7 +519,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 const PopupMenuItem(value: 'lang:de', child: Text('Deutsch')),
                 const PopupMenuItem(value: 'lang:fr', child: Text('Français')),
                 const PopupMenuDivider(),
-                const PopupMenuItem(value: 'switch_world', child: Row(children: [Icon(Icons.swap_horiz, size: 18), SizedBox(width: 8), Text('Switch World')])),
+                const PopupMenuItem(value: 'quit', child: Row(children: [Icon(Icons.exit_to_app, size: 18), SizedBox(width: 8), Text('Quit')])),
                 const PopupMenuItem(value: 'bug', child: Row(children: [Icon(Icons.bug_report_outlined, size: 18), SizedBox(width: 8), Text('Report a Bug')])),
               ],
             ),
@@ -587,10 +587,10 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 PopupMenuItem(value: 'fr', child: Text('Français')),
               ],
             ),
-            // Switch World
+            // Quit (return to hub)
             IconButton(
-              icon: const Icon(Icons.swap_horiz, size: 20),
-              tooltip: 'Switch World',
+              icon: const Icon(Icons.exit_to_app, size: 20),
+              tooltip: 'Quit to hub',
               onPressed: _exitToHub,
             ),
             // Bug report

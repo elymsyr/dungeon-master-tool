@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/pill_tab_bar.dart';
 
-/// Social alt sekmeleri için ortak shell — max-width constrained, üstte pill
-/// segmented control, altta scroll'lanabilir içerik. Desktop'ta Material
-/// TabBar yerine daha rafine bir pill bar kullanılır.
+/// Social alt sekmeleri için ortak shell — max-width constrained, pill
+/// segmented control üstte (desktop) veya altta (mobile, ana bottom nav'ın
+/// hemen üzerinde). Mobil'de bar bottom-center'da render edilir ki ana
+/// NavigationBar ile alt hizada otursun.
 class SocialShell extends StatelessWidget {
   final String currentTab;
   final ValueChanged<String> onTabChanged;
@@ -26,125 +28,33 @@ class SocialShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
     final phone = isPhone(context);
-    final tabs = <(String, IconData, String)>[
-      ('feed', Icons.dynamic_feed_outlined, l10n.socialTabFeed),
-      ('players', Icons.groups_outlined, l10n.socialTabGameListings),
-      ('messages', Icons.chat_bubble_outline, l10n.socialTabMessages),
-      ('marketplace', Icons.storefront_outlined, l10n.socialTabMarketplace),
+    final tabs = <PillTab<String>>[
+      PillTab(id: 'feed', icon: Icons.dynamic_feed_outlined, label: l10n.socialTabFeed),
+      PillTab(id: 'players', icon: Icons.groups_outlined, label: l10n.socialTabGameListings),
+      PillTab(id: 'messages', icon: Icons.chat_bubble_outline, label: l10n.socialTabMessages),
+      PillTab(id: 'marketplace', icon: Icons.storefront_outlined, label: l10n.socialTabMarketplace),
     ];
-    return Column(
-      children: [
-        _PillBar(
-          tabs: tabs,
-          currentTab: currentTab,
-          onTabChanged: onTabChanged,
-          trailing: trailing,
-          phone: phone,
-        ),
-        Expanded(
-          child: phone
-              ? child
-              : Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 720),
-                    child: child,
-                  ),
-                ),
-        ),
-      ],
+    final bar = PillTabBar<String>(
+      tabs: tabs,
+      currentTab: currentTab,
+      onTabChanged: onTabChanged,
+      trailing: trailing,
+      phone: phone,
+      showBorderTop: phone,
+      showBorderBottom: !phone,
     );
-  }
-}
-
-class _PillBar extends StatelessWidget {
-  final List<(String, IconData, String)> tabs;
-  final String currentTab;
-  final ValueChanged<String> onTabChanged;
-  final Widget? trailing;
-  final bool phone;
-
-  const _PillBar({
-    required this.tabs,
-    required this.currentTab,
-    required this.onTabChanged,
-    required this.phone,
-    this.trailing,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<DmToolColors>()!;
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: phone ? 8 : 24,
-        vertical: phone ? 8 : 16,
-      ),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: palette.featureCardBorder)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: palette.featureCardBg,
-                  borderRadius: palette.cbr,
-                  border: Border.all(color: palette.featureCardBorder),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: tabs.map((t) {
-                    final isActive = t.$1 == currentTab;
-                    return InkWell(
-                      borderRadius: palette.br,
-                      onTap: () => onTabChanged(t.$1),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: phone ? 12 : 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isActive ? palette.featureCardAccent : Colors.transparent,
-                          borderRadius: palette.br,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              t.$2,
-                              size: 16,
-                              color: isActive ? Colors.white : palette.sidebarLabelSecondary,
-                            ),
-                            if (!phone) ...[
-                              const SizedBox(width: 6),
-                              Text(
-                                t.$3,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                                  color: isActive ? Colors.white : palette.tabText,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
+    final content = phone
+        ? child
+        : Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: child,
             ),
-          ),
-          if (trailing != null) ...[
-            const SizedBox(width: 12),
-            trailing!,
-          ],
-        ],
-      ),
+          );
+    return Column(
+      children: phone
+          ? [Expanded(child: content), bar]
+          : [bar, Expanded(child: content)],
     );
   }
 }

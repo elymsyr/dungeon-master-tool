@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/media_provider.dart';
+import '../../../core/utils/screen_type.dart';
 import '../../dialogs/media_gallery_dialog.dart';
 import '../../../domain/entities/mind_map.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -62,6 +64,15 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
   // Content controller (used in edit mode)
   late TextEditingController _contentCtrl;
 
+  // Mobile explicit-mode gating. On touch devices the node body's
+  // pan/drag handlers are suppressed by default so a finger drag inside
+  // a note scrolls its text instead of moving the node. Users enter
+  // move / resize explicitly via the long-press context menu.
+  bool _mobileMoveMode = false;
+  bool _mobileResizeMode = false;
+  Timer? _mobileModeTimer;
+  ScaffoldFeatureController<SnackBar, SnackBarClosedReason>? _mobileModeSnack;
+
   @override
   void initState() {
     super.initState();
@@ -83,9 +94,73 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
 
   @override
   void dispose() {
+    _mobileModeTimer?.cancel();
+    _mobileModeSnack?.close();
     _labelCtrl.dispose();
     _contentCtrl.dispose();
     super.dispose();
+  }
+
+  // -------------------------------------------------------------------------
+  // Mobile move/resize mode helpers
+  // -------------------------------------------------------------------------
+
+  bool get _isTouchDevice => isPhone(context);
+
+  /// True when the node body's pan handlers should fire. On desktop/tablet
+  /// always true; on phones only when move mode is explicitly active.
+  bool get _panEnabled => !_isTouchDevice || _mobileMoveMode;
+
+  void _enterMobileMode({required bool move}) {
+    _mobileModeTimer?.cancel();
+    _mobileModeSnack?.close();
+    setState(() {
+      _mobileMoveMode = move;
+      _mobileResizeMode = !move;
+    });
+    if (!move) {
+      // Resize mode needs the node selected so the canvas renders the
+      // corner handles (driven by isSelected there).
+      widget.notifier.setSelectedNode(widget.node.id);
+    }
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger != null) {
+      _mobileModeSnack = messenger.showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 30),
+          content: Text(
+            move
+                ? 'Drag the node to move it.'
+                : 'Drag a corner handle to resize.',
+          ),
+          action: SnackBarAction(
+            label: 'Done',
+            onPressed: _exitMobileMode,
+          ),
+        ),
+      );
+      _mobileModeSnack?.closed.then((_) {
+        if (!mounted) return;
+        if (_mobileMoveMode || _mobileResizeMode) _exitMobileMode();
+      });
+    }
+    _mobileModeTimer = Timer(const Duration(seconds: 30), () {
+      if (mounted) _exitMobileMode();
+    });
+  }
+
+  void _exitMobileMode() {
+    _mobileModeTimer?.cancel();
+    _mobileModeTimer = null;
+    _mobileModeSnack?.close();
+    _mobileModeSnack = null;
+    if (!mounted) return;
+    if (_mobileMoveMode || _mobileResizeMode) {
+      setState(() {
+        _mobileMoveMode = false;
+        _mobileResizeMode = false;
+      });
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -125,6 +200,9 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     // LOD zone 1: no shadow, simplified
     final showShadow = widget.lodZone == 0;
 
+    final panEnabled = _panEnabled;
+    final showHandles = widget.showResizeHandle || _mobileResizeMode;
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -135,25 +213,32 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
           onSecondaryTapUp: (d) =>
               _showContextMenu(context, d.globalPosition),
           onLongPress: () => _showContextMenu(context, null),
-          onPanStart: (d) {
-            _dragStart = d.globalPosition;
-            _nodeStartPos = Offset(n.x, n.y);
-            widget.notifier.setSelectedNode(n.id);
-          },
-          onPanUpdate: (d) {
-            if (_dragStart == null || _nodeStartPos == null) return;
-            final delta = d.globalPosition - _dragStart!;
-            final scale = widget.notifier.viewTransform.value.scale;
-            widget.notifier.updateDragOverride(
-              n.id,
-              _nodeStartPos! + delta / scale,
-            );
-          },
-          onPanEnd: (_) {
-            _dragStart = null;
-            _nodeStartPos = null;
-            widget.notifier.commitDragOverride(n.id);
-          },
+          onPanStart: panEnabled
+              ? (d) {
+                  _dragStart = d.globalPosition;
+                  _nodeStartPos = Offset(n.x, n.y);
+                  widget.notifier.setSelectedNode(n.id);
+                }
+              : null,
+          onPanUpdate: panEnabled
+              ? (d) {
+                  if (_dragStart == null || _nodeStartPos == null) return;
+                  final delta = d.globalPosition - _dragStart!;
+                  final scale = widget.notifier.viewTransform.value.scale;
+                  widget.notifier.updateDragOverride(
+                    n.id,
+                    _nodeStartPos! + delta / scale,
+                  );
+                }
+              : null,
+          onPanEnd: panEnabled
+              ? (_) {
+                  _dragStart = null;
+                  _nodeStartPos = null;
+                  widget.notifier.commitDragOverride(n.id);
+                  if (_mobileMoveMode) _exitMobileMode();
+                }
+              : null,
           child: Container(
             width: n.width,
             height: n.height,
@@ -188,7 +273,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
         ),
 
         // Corner resize handles
-        if (widget.showResizeHandle) ...[
+        if (showHandles) ...[
           _buildCornerHandle('tl', palette),
           _buildCornerHandle('tr', palette),
           _buildCornerHandle('bl', palette),
@@ -445,30 +530,50 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
           const SizedBox(height: 4),
           Divider(height: 1, color: palette.nodeText.withValues(alpha: 0.25)),
           const SizedBox(height: 4),
-          // Content
+          // Content — wrap read-only render in a scroll view so finger
+          // drags over the text scroll the content (on mobile the parent
+          // node's pan is gated off by default, so this is what receives
+          // the gesture). In edit mode the TextField handles its own
+          // scrolling, so we skip the wrapper there.
           Expanded(
             child: ClipRect(
-              child: MarkdownTextArea(
-                controller: _contentCtrl,
-                readOnly: !isEditing,
-                expands: isEditing,
-                textAlignVertical: TextAlignVertical.top,
-                textStyle: TextStyle(
-                  fontSize: fs - 1,
-                  color: palette.nodeText.withValues(alpha: 0.85),
-                  height: 1.4,
-                ),
-                decoration: const InputDecoration(
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  filled: false,
-                  hintText: 'Write note... (@ to mention)',
-                ),
-                onChanged: (v) => widget.notifier.updateNodeContent(n.id, v),
-              ),
+              child: isEditing
+                  ? MarkdownTextArea(
+                      controller: _contentCtrl,
+                      readOnly: false,
+                      expands: true,
+                      textAlignVertical: TextAlignVertical.top,
+                      textStyle: TextStyle(
+                        fontSize: fs - 1,
+                        color: palette.nodeText.withValues(alpha: 0.85),
+                        height: 1.4,
+                      ),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        filled: false,
+                        hintText: 'Write note... (@ to mention)',
+                      ),
+                      onChanged: (v) =>
+                          widget.notifier.updateNodeContent(n.id, v),
+                    )
+                  : SingleChildScrollView(
+                      primary: false,
+                      physics: const ClampingScrollPhysics(),
+                      child: MarkdownTextArea(
+                        controller: _contentCtrl,
+                        readOnly: true,
+                        expands: false,
+                        textStyle: TextStyle(
+                          fontSize: fs - 1,
+                          color: palette.nodeText.withValues(alpha: 0.85),
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
             ),
           ),
         ],
@@ -766,6 +871,18 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
           child: _menuItem(Icons.edit_outlined, 'Edit Content', palette)));
     }
 
+    // --- Mobile-only move/resize (workspaces use edge handles instead). ---
+    if (_isTouchDevice && n.nodeType != 'workspace') {
+      if (items.isNotEmpty) items.add(const PopupMenuDivider());
+      items.add(PopupMenuItem(
+          value: 'mobile_move',
+          child: _menuItem(Icons.open_with, 'Move', palette)));
+      items.add(PopupMenuItem(
+          value: 'mobile_resize',
+          child:
+              _menuItem(Icons.aspect_ratio, 'Resize', palette)));
+    }
+
     // --- Divider + common items ---
     if (items.isNotEmpty) items.add(const PopupMenuDivider());
 
@@ -819,6 +936,10 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
           widget.notifier.updateNodeStyle(n.id, {'fontSize': 12});
         case 'font_large':
           widget.notifier.updateNodeStyle(n.id, {'fontSize': 16});
+        case 'mobile_move':
+          _enterMobileMode(move: true);
+        case 'mobile_resize':
+          _enterMobileMode(move: false);
         default:
           break;
       }
@@ -1044,6 +1165,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
           _posAtResizeStart = null;
           _resizeCorner = null;
           widget.notifier.commitSizeOverride(widget.node.id);
+          if (_mobileResizeMode) _exitMobileMode();
         },
         child: MouseRegion(
           cursor: cursor,

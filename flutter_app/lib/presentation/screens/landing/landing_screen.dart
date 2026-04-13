@@ -96,7 +96,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 ),
               ),
               const SizedBox(height: 4),
-              Text('v$appVersion', style: TextStyle(fontSize: 13, color: palette.sidebarLabelSecondary)),
+              Text(appReleaseTag, style: TextStyle(fontSize: 13, color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 48),
               SizedBox(
                 width: 200,
