@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/admin_provider.dart';
+import '../../../core/utils/format_bytes.dart';
+import '../../../core/utils/relative_time.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../data/datasources/remote/admin_users_remote_ds.dart';
+import '../../dialogs/admin_compose_dm_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/pill_tab_bar.dart';
+import 'bug_reports_tab.dart';
 
 /// Admin paneli — PillTabBar ile 4 sekme: Dashboard / Users / Banned / Storage.
 /// Erişim Supabase `is_admin()` RPC'si ile korunur; admin olmayan kullanıcı
@@ -53,6 +57,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
         final tabs = <PillTab<String>>[
           const PillTab(id: 'dashboard', icon: Icons.dashboard_outlined, label: 'Dashboard'),
           const PillTab(id: 'users', icon: Icons.people_outline, label: 'Users'),
+          const PillTab(id: 'reports', icon: Icons.bug_report_outlined, label: 'Reports'),
           const PillTab(id: 'banned', icon: Icons.block_outlined, label: 'Banned'),
           const PillTab(id: 'storage', icon: Icons.storage_outlined, label: 'Storage'),
         ];
@@ -69,6 +74,9 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
         switch (_tab) {
           case 'users':
             content = const _UsersTab();
+            break;
+          case 'reports':
+            content = const BugReportsTab();
             break;
           case 'banned':
             content = const _BannedTab();
@@ -368,7 +376,12 @@ class _UserRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final title = user.username ?? '(no username)';
-    final subtitle = user.email ?? user.userId;
+    final subtitleParts = <String>[
+      user.email ?? user.userId,
+      formatBytes(user.storageBytes),
+      formatRelative(user.lastActiveAt),
+    ];
+    final subtitle = subtitleParts.join(' · ');
 
     return _AdminCard(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -420,7 +433,16 @@ class _UserRow extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline, size: 18),
+            tooltip: 'Message',
+            onPressed: () => AdminComposeDmDialog.show(
+              context,
+              targetUserId: user.userId,
+              targetName: user.username ?? user.email ?? 'user',
+            ),
+          ),
           user.isBanned
               ? TextButton.icon(
                   icon: const Icon(Icons.check, size: 16),
@@ -590,7 +612,16 @@ class _BannedTab extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                        tooltip: 'Message',
+                        onPressed: () => AdminComposeDmDialog.show(
+                          context,
+                          targetUserId: e.userId,
+                          targetName: e.username ?? e.email ?? 'user',
+                        ),
+                      ),
                       TextButton.icon(
                         icon: const Icon(Icons.check, size: 16),
                         label: const Text('Unban'),
@@ -671,7 +702,7 @@ class _StorageTab extends ConsumerWidget {
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 0.4)),
                             const SizedBox(height: 2),
-                            Text(_formatBytes(total),
+                            Text(formatBytes(total),
                                 style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -733,7 +764,7 @@ class _StorageTab extends ConsumerWidget {
                                   ],
                                 ),
                               ),
-                              Text(_formatBytes(s.usedBytes),
+                              Text(formatBytes(s.usedBytes),
                                   style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
@@ -750,15 +781,4 @@ class _StorageTab extends ConsumerWidget {
     );
   }
 
-  String _formatBytes(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    const units = ['KB', 'MB', 'GB', 'TB'];
-    double v = bytes / 1024;
-    int i = 0;
-    while (v >= 1024 && i < units.length - 1) {
-      v /= 1024;
-      i++;
-    }
-    return '${v.toStringAsFixed(2)} ${units[i]}';
-  }
 }

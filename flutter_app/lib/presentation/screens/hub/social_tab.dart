@@ -11,6 +11,10 @@ import '../social/messages_tab.dart';
 import '../social/players_tab.dart';
 import '../social/social_shell.dart';
 
+/// Aktif Social sub-tab'ı — hub_screen help button'u hangi yardım metnini
+/// göstereceğini buradan okur (Marketplace için ayrı metin göstermek için).
+final socialSubTabProvider = StateProvider<String>((ref) => 'feed');
+
 /// Social hub shell — 4 alt sekme: Feed, Players, Messages, Marketplace.
 /// Cloud backup ARTIK burada değil — top-right cloud icon'da.
 class SocialTab extends ConsumerStatefulWidget {
@@ -21,8 +25,6 @@ class SocialTab extends ConsumerStatefulWidget {
 }
 
 class _SocialTabState extends ConsumerState<SocialTab> {
-  String _currentTab = 'feed';
-
   @override
   Widget build(BuildContext context) {
     if (!SupabaseConfig.isConfigured) return const _NotConfigured();
@@ -30,10 +32,12 @@ class _SocialTabState extends ConsumerState<SocialTab> {
     final auth = ref.watch(authProvider);
     if (auth == null) return const _NotSignedIn();
 
+    final currentTab = ref.watch(socialSubTabProvider);
     return SocialShell(
-      currentTab: _currentTab,
-      onTabChanged: (t) => setState(() => _currentTab = t),
-      child: switch (_currentTab) {
+      currentTab: currentTab,
+      onTabChanged: (t) =>
+          ref.read(socialSubTabProvider.notifier).state = t,
+      child: switch (currentTab) {
         'feed' => const FeedTab(),
         'players' => const PlayersTab(),
         'messages' => const MessagesTab(),

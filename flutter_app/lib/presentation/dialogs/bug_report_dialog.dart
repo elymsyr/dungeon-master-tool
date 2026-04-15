@@ -1,323 +1,171 @@
-import 'dart:io';
+import 'dart:io' show Platform;
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/services/log_buffer.dart';
-import '../../core/services/screenshot_service.dart';
+import '../../application/providers/bug_report_provider.dart';
+import '../../core/config/supabase_config.dart';
+import '../../core/constants.dart';
+import '../../data/datasources/remote/bug_reports_remote_ds.dart';
 
-const _githubIssuesUrl =
-    'https://github.com/elymsyr/dungeon-master-tool/issues';
-const _supportEmail = 'orhun868@gmail.com';
+/// In-app bug report dialog — metni Supabase'deki `bug_reports` tablosuna
+/// gönderir. Resim/ek yok; sadece metin. Admin paneli raporları görüntüler
+/// ve kullanıcıya DM ile yanıt verebilir.
+class BugReportDialog extends ConsumerStatefulWidget {
+  const BugReportDialog({super.key});
 
-/// Bug report dialog — title, açıklama, otomatik screenshot + log capture.
-/// Mail ile gönderim ve GitHub issues yönlendirme sağlar.
-class BugReportDialog extends StatefulWidget {
-  /// Screenshot için hedef RepaintBoundary'nin global key'i.
-  final GlobalKey? screenshotKey;
-
-  const BugReportDialog({super.key, this.screenshotKey});
-
-  static Future<void> show(BuildContext context,
-      {GlobalKey? screenshotKey}) {
+  static Future<void> show(BuildContext context) {
+    if (!SupabaseConfig.isConfigured) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bug reporting requires cloud sign-in.'),
+        ),
+      );
+      return Future.value();
+    }
     return showDialog<void>(
       context: context,
-      builder: (_) => BugReportDialog(screenshotKey: screenshotKey),
+      builder: (_) => const BugReportDialog(),
     );
   }
 
   @override
-  State<BugReportDialog> createState() => _BugReportDialogState();
+  ConsumerState<BugReportDialog> createState() => _BugReportDialogState();
 }
 
-class _BugReportDialogState extends State<BugReportDialog> {
-  final _titleCtrl = TextEditingController();
-  final _descCtrl = TextEditingController();
+class _BugReportDialogState extends ConsumerState<BugReportDialog> {
+  final _controller = TextEditingController();
+  bool _submitting = false;
+  String? _errorText;
 
-  Uint8List? _screenshotBytes;
-  String? _screenshotPath;
-  late final String _logsSnapshot;
-  bool _capturing = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _logsSnapshot = LogBuffer.instance.tail(200);
-    _captureScreenshot();
-  }
-
-  Future<void> _captureScreenshot() async {
-    if (widget.screenshotKey == null) {
-      setState(() => _capturing = false);
-      return;
-    }
-    // Bir frame bekle ki dialog bizi engelleyemesin
-    await Future.delayed(const Duration(milliseconds: 50));
-    final path = await ScreenshotService.captureToFile(widget.screenshotKey!);
-    if (path != null) {
-      final bytes = await File(path).readAsBytes();
-      if (mounted) {
-        setState(() {
-          _screenshotPath = path;
-          _screenshotBytes = bytes;
-          _capturing = false;
-        });
-      }
-    } else if (mounted) {
-      setState(() => _capturing = false);
-    }
-  }
+  static const int _minLength = 10;
+  static const int _maxLength = 4000;
 
   @override
   void dispose() {
-    _titleCtrl.dispose();
-    _descCtrl.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  String _buildBody() {
-    final buf = StringBuffer();
-    buf.writeln('## Description');
-    buf.writeln(_descCtrl.text.isEmpty ? '(no description)' : _descCtrl.text);
-    buf.writeln();
-    buf.writeln('## Environment');
-    buf.writeln('- Platform: ${Platform.operatingSystem}');
-    buf.writeln('- OS Version: ${Platform.operatingSystemVersion}');
-    buf.writeln('- Locale: ${Platform.localeName}');
-    buf.writeln();
-    if (_screenshotPath != null) {
-      buf.writeln('## Screenshot');
-      buf.writeln('Attached: $_screenshotPath');
-      buf.writeln();
-    }
-    buf.writeln('## Recent Logs');
-    buf.writeln('```');
-    buf.writeln(_logsSnapshot.isEmpty ? '(no logs captured)' : _logsSnapshot);
-    buf.writeln('```');
-    return buf.toString();
-  }
-
-  Future<void> _sendEmail() async {
-    final subject = _titleCtrl.text.isEmpty
-        ? '[DMT Bug Report]'
-        : '[DMT Bug Report] ${_titleCtrl.text}';
-    final body = _buildBody();
-    final uri = Uri(
-      scheme: 'mailto',
-      path: _supportEmail,
-      query: _encodeQuery({'subject': subject, 'body': body}),
-    );
-    final ok = await launchUrl(uri);
-    if (!ok && mounted) {
-      _showError('Could not open mail client. Report copied to clipboard.');
-      await Clipboard.setData(ClipboardData(text: '$subject\n\n$body'));
+  String _platformLabel() {
+    if (kIsWeb) return 'web';
+    try {
+      return Platform.operatingSystem;
+    } catch (_) {
+      return 'unknown';
     }
   }
 
-  Future<void> _openGithub() async {
-    final ok = await launchUrl(
-      Uri.parse(_githubIssuesUrl),
-      mode: LaunchMode.externalApplication,
-    );
-    if (!ok && mounted) {
-      _showError('Could not open browser.');
+  Future<void> _submit() async {
+    final message = _controller.text.trim();
+    if (message.length < _minLength) {
+      setState(() =>
+          _errorText = 'Please provide at least $_minLength characters.');
+      return;
     }
-  }
-
-  Future<void> _copyToClipboard() async {
-    final subject = _titleCtrl.text.isEmpty
-        ? '[DMT Bug Report]'
-        : '[DMT Bug Report] ${_titleCtrl.text}';
-    await Clipboard.setData(
-        ClipboardData(text: '$subject\n\n${_buildBody()}'));
-    if (mounted) {
+    setState(() {
+      _submitting = true;
+      _errorText = null;
+    });
+    try {
+      await ref.read(bugReportsDataSourceProvider).submit(
+            message: message,
+            appVersion: appReleaseTag,
+            platform: _platformLabel(),
+          );
+      if (!mounted) return;
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Bug report copied to clipboard'),
-            duration: Duration(seconds: 2)),
+        const SnackBar(content: Text('Thank you — your report was sent.')),
       );
+    } on BugReportRateLimitException {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _errorText =
+            'Too many reports recently. Please try again later.';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _errorText = 'Failed to send report: $e';
+      });
     }
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
-  String _encodeQuery(Map<String, String> params) {
-    return params.entries
-        .map((e) =>
-            '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}')
-        .join('&');
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720, maxHeight: 680),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.bug_report, color: theme.colorScheme.error),
-                  const SizedBox(width: 12),
-                  Text('Report a Bug',
-                      style: theme.textTheme.titleLarge),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
+    final length = _controller.text.trim().length;
+    final canSubmit = !_submitting && length >= _minLength;
+
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(Icons.bug_report_outlined, color: theme.colorScheme.error),
+          const SizedBox(width: 12),
+          const Expanded(child: Text('Report a bug')),
+        ],
+      ),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Describe the issue you encountered. Your report goes directly to the developers.',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _controller,
+              maxLines: 6,
+              maxLength: _maxLength,
+              autofocus: true,
+              enabled: !_submitting,
+              decoration: InputDecoration(
+                hintText: 'Steps to reproduce, expected vs actual behavior…',
+                border: const OutlineInputBorder(),
+                alignLabelWithHint: true,
+                errorText: _errorText,
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextField(
-                        controller: _titleCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Title',
-                          hintText: 'Brief summary of the issue',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _descCtrl,
-                        maxLines: 6,
-                        decoration: const InputDecoration(
-                          labelText: 'Description',
-                          hintText:
-                              'Steps to reproduce, expected vs actual behavior…',
-                          border: OutlineInputBorder(),
-                          alignLabelWithHint: true,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _SectionHeader(
-                        icon: Icons.image,
-                        title: 'Screenshot',
-                        trailing: _capturing
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2))
-                            : null,
-                      ),
-                      const SizedBox(height: 8),
-                      if (_screenshotBytes != null)
-                        Container(
-                          constraints:
-                              const BoxConstraints(maxHeight: 180),
-                          decoration: BoxDecoration(
-                            border:
-                                Border.all(color: theme.dividerColor),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Image.memory(_screenshotBytes!,
-                              fit: BoxFit.contain),
-                        )
-                      else if (!_capturing)
-                        Text('(no screenshot available)',
-                            style: theme.textTheme.bodySmall),
-                      const SizedBox(height: 16),
-                      _SectionHeader(
-                        icon: Icons.terminal,
-                        title:
-                            'Recent Logs (${_logsSnapshot.split('\n').length} lines)',
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        constraints:
-                            const BoxConstraints(maxHeight: 140),
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: SingleChildScrollView(
-                          child: SelectableText(
-                            _logsSnapshot.isEmpty
-                                ? '(no logs captured)'
-                                : _logsSnapshot,
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 11,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              onChanged: (_) {
+                if (_errorText != null) {
+                  setState(() => _errorText = null);
+                } else {
+                  setState(() {});
+                }
+              },
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Version: $appReleaseTag · Platform: ${_platformLabel()}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.disabledColor,
               ),
-              const SizedBox(height: 16),
-              Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  TextButton.icon(
-                    icon: const Icon(Icons.copy, size: 18),
-                    label: const Text('Copy'),
-                    onPressed: _copyToClipboard,
-                  ),
-                  TextButton.icon(
-                    icon: const Icon(Icons.open_in_new, size: 18),
-                    label: const Text('GitHub Issues'),
-                    onPressed: _openGithub,
-                  ),
-                  FilledButton.icon(
-                    icon: const Icon(Icons.email, size: 18),
-                    label: const Text('Send Email'),
-                    onPressed: _sendEmail,
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final Widget? trailing;
-
-  const _SectionHeader(
-      {required this.icon, required this.title, this.trailing});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: theme.colorScheme.secondary),
-        const SizedBox(width: 8),
-        Text(title,
-            style: theme.textTheme.labelLarge
-                ?.copyWith(color: theme.colorScheme.secondary)),
-        if (trailing != null) ...[
-          const SizedBox(width: 8),
-          trailing!,
-        ],
+      actions: [
+        TextButton(
+          onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton.icon(
+          icon: _submitting
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.send, size: 16),
+          label: const Text('Send report'),
+          onPressed: canSubmit ? _submit : null,
+        ),
       ],
     );
   }

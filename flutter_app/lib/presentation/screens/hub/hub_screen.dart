@@ -33,7 +33,6 @@ class HubScreen extends ConsumerStatefulWidget {
 
 class _HubScreenState extends ConsumerState<HubScreen> {
   int _tabIndex = 2; // Worlds tab default
-  final GlobalKey _screenshotKey = GlobalKey();
   bool _profileDialogOpen = false;
 
   static const _settingsTabIndex = 1;
@@ -152,9 +151,19 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     );
   }
 
-  ({String title, String body}) _helpForTab(L10n l10n, int index) {
+  ({String title, String body}) _helpForTab(
+    L10n l10n,
+    int index,
+    String socialSubTab,
+  ) {
     switch (index) {
       case 0:
+        if (socialSubTab == 'marketplace') {
+          return (
+            title: l10n.helpMarketplaceTitle,
+            body: l10n.helpMarketplaceBody,
+          );
+        }
         return (title: l10n.helpSocialTitle, body: l10n.helpSocialBody);
       case 1:
         return (title: l10n.helpSettingsTitle, body: l10n.helpSettingsBody);
@@ -172,7 +181,8 @@ class _HubScreenState extends ConsumerState<HubScreen> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
-    final help = _helpForTab(l10n, _tabIndex);
+    final socialSubTab = ref.watch(socialSubTabProvider);
+    final help = _helpForTab(l10n, _tabIndex, socialSubTab);
     final screen = getScreenType(context);
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;
@@ -239,10 +249,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
           IconButton(
             tooltip: 'Report a Bug',
             icon: const Icon(Icons.bug_report_outlined),
-            onPressed: () => BugReportDialog.show(
-              context,
-              screenshotKey: _screenshotKey,
-            ),
+            onPressed: () => BugReportDialog.show(context),
           ),
           // Profile menu — avatar + username with popup actions
           const ProfileMenuButton(),
@@ -250,7 +257,6 @@ class _HubScreenState extends ConsumerState<HubScreen> {
         ],
       ),
       body: RepaintBoundary(
-        key: _screenshotKey,
         child: switch (screen) {
           // Desktop/Tablet: sol rail + sağ content
           ScreenType.desktop || ScreenType.tablet => Row(

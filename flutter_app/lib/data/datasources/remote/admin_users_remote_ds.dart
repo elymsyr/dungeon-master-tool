@@ -8,6 +8,8 @@ class AdminUserSummary {
   final DateTime createdAt;
   final bool isBeta;
   final bool isBanned;
+  final int storageBytes;
+  final DateTime? lastActiveAt;
 
   const AdminUserSummary({
     required this.userId,
@@ -17,6 +19,8 @@ class AdminUserSummary {
     required this.createdAt,
     required this.isBeta,
     required this.isBanned,
+    required this.storageBytes,
+    required this.lastActiveAt,
   });
 
   factory AdminUserSummary.fromRow(Map<String, dynamic> row) => AdminUserSummary(
@@ -27,6 +31,10 @@ class AdminUserSummary {
         createdAt: DateTime.parse(row['created_at'] as String),
         isBeta: row['is_beta'] as bool? ?? false,
         isBanned: row['is_banned'] as bool? ?? false,
+        storageBytes: (row['storage_bytes'] as num?)?.toInt() ?? 0,
+        lastActiveAt: row['last_active_at'] != null
+            ? DateTime.parse(row['last_active_at'] as String)
+            : null,
       );
 }
 
