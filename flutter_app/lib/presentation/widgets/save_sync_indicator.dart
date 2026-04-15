@@ -11,6 +11,7 @@ import '../../application/providers/package_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/error_format.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
 import '../../data/repositories/cloud_backup_repository_impl.dart';
@@ -676,7 +677,9 @@ class _StorageUsageBar extends ConsumerWidget {
         child: LinearProgressIndicator(),
       ),
       error: (e, _) => Text(
-        'Could not load storage info',
+        isOfflineError(e)
+            ? "You're offline — storage info unavailable."
+            : 'Could not load storage info',
         style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
       ),
     );
@@ -837,8 +840,13 @@ class _CompactBackupList extends ConsumerWidget {
     ref.listen<CloudBackupOperationState>(cloudBackupOperationProvider, (prev, next) {
       if (prev?.isBusy != true) return;
       if (next.errorMessage != null) {
+        final msg = next.errorMessage!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Backup error: ${next.errorMessage}')),
+          SnackBar(
+            content: Text(
+              msg.startsWith("You're offline") ? msg : 'Backup error: $msg',
+            ),
+          ),
         );
         ref.read(cloudBackupOperationProvider.notifier).reset();
       } else if (!next.isBusy && prev?.type == CloudBackupOpType.downloading) {
@@ -862,7 +870,9 @@ class _CompactBackupList extends ConsumerWidget {
         ),
       ),
       error: (e, _) => Text(
-        'Could not load backups',
+        isOfflineError(e)
+            ? "You're offline — backups unavailable."
+            : 'Could not load backups',
         style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
       ),
       data: (backups) {

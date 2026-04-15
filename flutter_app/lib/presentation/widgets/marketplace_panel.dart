@@ -5,6 +5,7 @@ import '../../application/providers/auth_provider.dart';
 import '../../application/providers/marketplace_listing_provider.dart';
 import '../../application/services/marketplace_sync_service.dart';
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/error_format.dart';
 import '../../domain/entities/marketplace_source.dart';
 import '../dialogs/marketplace_update_prompt_dialog.dart';
 import '../dialogs/publish_snapshot_dialog.dart';
@@ -117,7 +118,9 @@ class _MarketplacePanelState extends ConsumerState<MarketplacePanel> {
         height: 36,
         child: Center(child: LinearProgressIndicator()),
       ),
-      error: (e, _) => Text(L10n.of(context)!.marketplaceErrorPrefix('$e'),
+      error: (e, _) => Text(isOfflineError(e)
+              ? "You're offline — check your internet connection."
+              : L10n.of(context)!.marketplaceErrorPrefix('$e'),
           style: TextStyle(fontSize: 11, color: palette.dangerBtnBg)),
       data: (lineageId) {
         return sourceAsync.when(
@@ -125,7 +128,9 @@ class _MarketplacePanelState extends ConsumerState<MarketplacePanel> {
             height: 36,
             child: Center(child: LinearProgressIndicator()),
           ),
-          error: (e, _) => Text(L10n.of(context)!.marketplaceErrorPrefix('$e'),
+          error: (e, _) => Text(isOfflineError(e)
+              ? "You're offline — check your internet connection."
+              : L10n.of(context)!.marketplaceErrorPrefix('$e'),
               style: TextStyle(fontSize: 11, color: palette.dangerBtnBg)),
           data: (source) {
             // Kick off drift check on first build (after both providers
