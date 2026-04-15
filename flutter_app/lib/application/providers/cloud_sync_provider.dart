@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../data/network/network_providers.dart';
 import '../../domain/exceptions/cloud_backup_exceptions.dart';
+import '../services/media_bundler.dart';
 import 'auth_provider.dart';
 import 'beta_provider.dart';
 import 'campaign_provider.dart';
@@ -183,8 +185,15 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
     for (final entry in items.entries) {
       final item = entry.value;
       try {
-        final data = await _loadItemData(item.name, item.type);
-        if (data == null) continue;
+        final raw = await _loadItemData(item.name, item.type);
+        if (raw == null) continue;
+
+        // World backups must bundle the media gallery + entity portraits so
+        // another device can restore a self-contained world. No-op for
+        // template/package types.
+        final data = item.type == 'world'
+            ? await _bundleWorldMedia(item.name, item.id, raw)
+            : raw;
 
         await repo.uploadBackup(item.name, item.id, item.type, data);
 
@@ -255,6 +264,34 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
     // multi-device "pull changes" hint that may have been showing.
     if (!hasErrors) {
       _ref.read(cloudRemoteHasNewerProvider.notifier).markCaughtUp();
+    }
+  }
+
+  /// World upload öncesi medya bundling. AssetService yoksa (offline
+  /// / yapılandırılmamış) girdiyi olduğu gibi döndürür.
+  Future<Map<String, dynamic>> _bundleWorldMedia(
+    String worldName,
+    String worldId,
+    Map<String, dynamic> data,
+  ) async {
+    final svc = _ref.read(assetServiceProvider);
+    if (svc == null) return data;
+    try {
+      final result = await MediaBundler(svc).bundleWorldMedia(
+        worldName: worldName,
+        worldId: worldId,
+        data: data,
+      );
+      if (result.failures.isNotEmpty) {
+        debugPrint(
+          'cloud_sync media_bundler partial: ${result.failures.length} file(s) '
+          'failed — ${result.failures.take(3).join(', ')}',
+        );
+      }
+      return result.data;
+    } catch (e, st) {
+      debugPrint('cloud_sync media_bundler error: $e\n$st');
+      return data;
     }
   }
 

@@ -4,11 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
 import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
+import '../../data/network/network_providers.dart';
 import '../../data/repositories/cloud_backup_repository_impl.dart';
 import '../../domain/entities/cloud_backup_meta.dart';
 import '../../domain/exceptions/cloud_backup_exceptions.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/repositories/cloud_backup_repository.dart';
+import '../services/media_bundler.dart';
+import '../services/media_manifest_restorer.dart';
 import 'auth_provider.dart';
 import 'beta_provider.dart';
 import 'campaign_provider.dart';
@@ -109,9 +112,15 @@ class CloudBackupOperationNotifier
     state = const CloudBackupOperationState.busy(CloudBackupOpType.uploading);
     try {
       await _ref.read(saveStateProvider.notifier).saveNow();
-      final data =
+      final raw =
           await _ref.read(campaignRepositoryProvider).load(campaignName);
-      final campaignId = data['world_id'] as String? ?? '';
+      final campaignId = raw['world_id'] as String? ?? '';
+
+      final data = await _bundleWorldMediaIfPossible(
+        worldName: campaignName,
+        worldId: campaignId,
+        data: raw,
+      );
 
       final meta =
           await _ref.read(cloudBackupRepositoryProvider).uploadBackup(
@@ -171,9 +180,15 @@ class CloudBackupOperationNotifier
   Future<bool> uploadCampaign(String campaignName, {String? notes}) async {
     state = const CloudBackupOperationState.busy(CloudBackupOpType.uploading);
     try {
-      final data =
+      final raw =
           await _ref.read(campaignRepositoryProvider).load(campaignName);
-      final campaignId = data['world_id'] as String? ?? '';
+      final campaignId = raw['world_id'] as String? ?? '';
+
+      final data = await _bundleWorldMediaIfPossible(
+        worldName: campaignName,
+        worldId: campaignId,
+        data: raw,
+      );
 
       final meta =
           await _ref.read(cloudBackupRepositoryProvider).uploadBackup(
@@ -214,6 +229,10 @@ class CloudBackupOperationNotifier
               ? _findUniqueName(name, existing)
               : name;
           await _ref.read(campaignRepositoryProvider).save(finalName, data);
+          await _restoreWorldMediaIfPossible(
+            worldName: finalName,
+            data: data,
+          );
           _ref.invalidate(campaignListProvider);
           _ref.invalidate(campaignInfoListProvider);
 
@@ -324,6 +343,65 @@ class CloudBackupOperationNotifier
       debugPrint('Cloud backup delete error: $e\n$st');
       state = CloudBackupOperationState.error(formatError(e));
       return false;
+    }
+  }
+
+  /// Walk [data] for local-path media and upload every file to R2 before
+  /// the world JSON is serialised into the backup envelope. Mutates nothing
+  /// — returns a new `data` map with rewritten entity refs and a
+  /// `media_manifest` block. No-ops (returns [data] untouched) when
+  /// AssetService is offline.
+  Future<Map<String, dynamic>> _bundleWorldMediaIfPossible({
+    required String worldName,
+    required String worldId,
+    required Map<String, dynamic> data,
+  }) async {
+    final svc = _ref.read(assetServiceProvider);
+    if (svc == null) return data;
+    try {
+      final result = await MediaBundler(svc).bundleWorldMedia(
+        worldName: worldName,
+        worldId: worldId,
+        data: data,
+      );
+      if (result.failures.isNotEmpty) {
+        debugPrint(
+          'media_bundler partial: ${result.failures.length} file(s) failed '
+          'to upload — ${result.failures.take(3).join(', ')}',
+        );
+      }
+      return result.data;
+    } catch (e, st) {
+      // Media upload failure must not block the world backup itself.
+      debugPrint('media_bundler error: $e\n$st');
+      return data;
+    }
+  }
+
+  /// After a world backup is written to disk, mirror every manifest entry
+  /// into `{worldsDir}/{worldName}/media/` so local render + gallery work
+  /// without waiting for per-entity downloads.
+  Future<void> _restoreWorldMediaIfPossible({
+    required String worldName,
+    required Map<String, dynamic> data,
+  }) async {
+    final svc = _ref.read(assetServiceProvider);
+    if (svc == null) return;
+    final manifest = data['media_manifest'] as List?;
+    if (manifest == null || manifest.isEmpty) return;
+    try {
+      final result = await MediaManifestRestorer(svc).restore(
+        worldName: worldName,
+        manifest: manifest,
+      );
+      if (result.failures.isNotEmpty) {
+        debugPrint(
+          'media_restore partial: ${result.failures.length} file(s) failed '
+          '— ${result.failures.take(3).join(', ')}',
+        );
+      }
+    } catch (e, st) {
+      debugPrint('media_restore error: $e\n$st');
     }
   }
 

@@ -2,15 +2,6 @@
 
 Tracked work for upcoming releases — bugs to fix and features to add. Items are grouped by type, not strictly ordered.
 
-## Bugs
-
-### Media gallery cloud senkronizasyonu eksik
-- Bir entity'ye eklenen fotoğraflar world cloud'a atılıp başka cihazda indirildiğinde ne entity'de ne de media gallery'de görünüyor.
-- World local'den silindiğinde cloud'dan da siliniyor — silinmemeli.
-- Media gallery yedeklemesi otomatik olmamalı; sadece world yedeklenirken birlikte yedeklenmeli.
-- World yedeklemesi media gallery'yi de kapsamalı.
-- Silinen fotoğraflar cloud'dan geri indirilebilmeli (restore).
-
 ## Features
 
 ### Tutorial metinlerinin detaylandırılması

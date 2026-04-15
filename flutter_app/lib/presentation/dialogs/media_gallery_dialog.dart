@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 import '../../application/providers/campaign_provider.dart';
 import '../../data/network/asset_service.dart';
 import '../../data/network/network_providers.dart';
+import '../../domain/value_objects/asset_ref.dart';
 import '../theme/dm_tool_colors.dart';
 
 /// Uygulama içi medya galerisi dialogu.
@@ -66,10 +67,18 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
 
   // Local state — cloud mode'da bile populate edilir (quota fallback dosyaları)
   List<String> _localImages = [];
+  List<String> _localTrashImages = [];
   final Set<String> _localSelected = {};
 
   TabController? _tabController;
   int _activeTab = 0;
+
+  // Tab indexes — cloud mode'da 3 sekme (This world, All worlds, Trash).
+  static const int _tabThisWorld = 0;
+  static const int _tabAllWorlds = 1;
+  static const int _tabTrash = 2;
+
+  bool get _isTrashTab => _cloudMode && _activeTab == _tabTrash;
 
   bool _loading = true;
   String? _error;
@@ -84,12 +93,14 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
   bool get _cloudMode =>
       _assetService != null && widget.campaignId.isNotEmpty;
 
+  String get _trashDir => p.join(widget.mediaDir, '.trash');
+
   @override
   void initState() {
     super.initState();
     _assetService = ref.read(assetServiceProvider);
     if (_cloudMode) {
-      _tabController = TabController(length: 2, vsync: this);
+      _tabController = TabController(length: 3, vsync: this);
       _tabController!.addListener(_handleTabChange);
     }
     _load();
@@ -160,9 +171,28 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
     }
     entries.sort((a, b) => b.modified.compareTo(a.modified));
 
+    // Ayrıca `.trash/` alt dizinindeki soft-delete edilmiş lokal dosyaları
+    // listele. Trash sadece lokal dosyalar içindir — cloud asset'leri trash'e
+    // taşınmaz, direkt kalıcı silinir.
+    final trashDir = Directory(_trashDir);
+    final trashEntries = <_ImageEntry>[];
+    if (await trashDir.exists()) {
+      await for (final entry in trashDir.list()) {
+        if (entry is File) {
+          final ext = p.extension(entry.path).toLowerCase();
+          if (_imageExtensions.contains(ext)) {
+            final stat = await entry.stat();
+            trashEntries.add(_ImageEntry(entry.path, stat.modified));
+          }
+        }
+      }
+      trashEntries.sort((a, b) => b.modified.compareTo(a.modified));
+    }
+
     if (mounted) {
       setState(() {
         _localImages = entries.map((e) => e.path).toList();
+        _localTrashImages = trashEntries.map((e) => e.path).toList();
       });
     }
   }
@@ -174,85 +204,13 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
     );
     if (result == null || result.files.isEmpty) return;
 
-    if (_cloudMode) {
-      await _importCloud(result);
-    } else {
-      await _importLocal(result);
-    }
+    // Import her zaman lokal — cloud'a otomatik yükleme YOK. Dosyalar
+    // `{worldsDir}/{world}/media/` altına kopyalanır; world cloud backup
+    // yapıldığında MediaBundler bu dizini tarayıp R2'ye bundle'lar.
+    await _importLocal(result);
   }
 
-  Future<void> _importCloud(FilePickerResult result) async {
-    setState(() => _busy = true);
-    final uploaded = <String>[];
-    final localFallback = <String>[];
-    final errors = <String>[];
-
-    for (final file in result.files) {
-      if (file.path == null) continue;
-      final src = File(file.path!);
-      if (!await src.exists()) continue;
-      try {
-        final uri = await _assetService!
-            .uploadAsset(src, campaignId: widget.campaignId);
-        uploaded.add(uri.host + uri.path);
-      } on AssetQuotaExceededException catch (e) {
-        debugPrint('media_gallery quota_exceeded ${file.path}: $e');
-        final localPath = await _copyToLocal(src);
-        if (localPath != null) localFallback.add(localPath);
-      } catch (e, st) {
-        debugPrint('media_gallery upload_failed ${file.path}: $e\n$st');
-        errors.add('${p.basename(file.path!)}: $e');
-      }
-    }
-    if (!mounted) return;
-    setState(() => _busy = false);
-
-    if (uploaded.isNotEmpty) await _loadCloudData();
-    if (localFallback.isNotEmpty) await _scanLocalImages();
-    if (!mounted) return;
-
-    if (localFallback.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${localFallback.length} image${localFallback.length == 1 ? '' : 's'} saved locally only — cloud quota full',
-          ),
-          backgroundColor: Colors.orange.shade800,
-          duration: const Duration(seconds: 6),
-        ),
-      );
-    }
-    if (errors.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Upload failed (${errors.length}): ${errors.first}',
-          ),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 8),
-          action: SnackBarAction(
-            label: 'Copy',
-            textColor: Colors.white,
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: errors.join('\n')));
-            },
-          ),
-        ),
-      );
-    }
-    setState(() {
-      for (final key in uploaded) {
-        final normalized = key.startsWith('/') ? key.substring(1) : key;
-        _cloudSelectedKeys.add(normalized);
-      }
-      for (final path in localFallback) {
-        _localSelected.add(path);
-      }
-    });
-  }
-
-  /// Dosyayı widget.mediaDir'e kopyala (quota fallback için).
-  /// Çakışırsa benzersiz isim üretir.
+  /// Dosyayı widget.mediaDir'e kopyala. Çakışırsa benzersiz isim üretir.
   Future<String?> _copyToLocal(File src) async {
     try {
       final dir = Directory(widget.mediaDir);
@@ -375,7 +333,12 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Image'),
-        content: const Text('Remove this image from the media gallery?'),
+        content: Text(
+          isCloud
+              ? 'Permanently delete this cloud image? This cannot be undone.'
+              : 'Move this image to Trash? You can restore it later from the '
+                  'Trash tab.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -384,7 +347,7 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(isCloud ? 'Delete' : 'Move to Trash'),
           ),
         ],
       ),
@@ -416,11 +379,96 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
         );
       }
     } else {
-      final file = File(identifier);
-      if (await file.exists()) await file.delete();
+      await _moveLocalToTrash(identifier);
       _localSelected.remove(identifier);
       await _scanLocalImages();
     }
+  }
+
+  /// Dosyayı `{mediaDir}/.trash/` altına taşı. Aynı isimde dosya varsa
+  /// sha-tabanlı bir suffix ekler.
+  Future<void> _moveLocalToTrash(String path) async {
+    final file = File(path);
+    if (!await file.exists()) return;
+    final trashDir = Directory(_trashDir);
+    if (!await trashDir.exists()) await trashDir.create(recursive: true);
+    final base = p.basename(path);
+    var target = p.join(_trashDir, base);
+    if (await File(target).exists()) {
+      final stem = p.basenameWithoutExtension(base);
+      final ext = p.extension(base);
+      target = p.join(
+        _trashDir,
+        '${stem}_${DateTime.now().millisecondsSinceEpoch}$ext',
+      );
+    }
+    try {
+      await file.rename(target);
+    } on FileSystemException {
+      // Cross-device rename başarısız olursa copy + delete yap.
+      await file.copy(target);
+      await file.delete();
+    }
+  }
+
+  /// Trash sekmesinden tile tap → Restore / Delete forever seçeneği.
+  Future<void> _showTrashActions(String trashPath) async {
+    final action = await showDialog<_TrashAction>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Trashed Image'),
+        content: const Text('Restore this image or delete it permanently?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, _TrashAction.restore),
+            child: const Text('Restore'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, _TrashAction.purge),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete forever'),
+          ),
+        ],
+      ),
+    );
+    if (action == null) return;
+    if (action == _TrashAction.restore) {
+      await _restoreLocalTrash(trashPath);
+    } else {
+      await _purgeLocalTrash(trashPath);
+    }
+  }
+
+  Future<void> _restoreLocalTrash(String trashPath) async {
+    final file = File(trashPath);
+    if (!await file.exists()) return;
+    final base = p.basename(trashPath);
+    var target = p.join(widget.mediaDir, base);
+    if (await File(target).exists()) {
+      final stem = p.basenameWithoutExtension(base);
+      final ext = p.extension(base);
+      target = p.join(
+        widget.mediaDir,
+        '${stem}_restored_${DateTime.now().millisecondsSinceEpoch}$ext',
+      );
+    }
+    try {
+      await file.rename(target);
+    } on FileSystemException {
+      await file.copy(target);
+      await file.delete();
+    }
+    await _scanLocalImages();
+  }
+
+  Future<void> _purgeLocalTrash(String trashPath) async {
+    final file = File(trashPath);
+    if (await file.exists()) await file.delete();
+    await _scanLocalImages();
   }
 
   void _toggleCloudSelection(String key) {
@@ -454,50 +502,30 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
   Future<void> _confirmSelection() async {
     if (_cloudSelectedKeys.isEmpty && _localSelected.isEmpty) return;
 
-    final paths = <String>[];
-    final failed = <String>[];
-
-    if (_cloudSelectedKeys.isNotEmpty && _assetService != null) {
-      setState(() => _busy = true);
-      for (final key in _cloudSelectedKeys) {
-        try {
-          final file =
-              _cloudCachedFiles[key] ?? await _assetService!.downloadAsset(key);
-          _cloudCachedFiles[key] = file;
-          paths.add(file.path);
-        } catch (e) {
-          debugPrint('media_gallery_dialog: cloud download failed $key: $e');
-          failed.add(key);
-        }
-      }
-      if (!mounted) return;
-      setState(() => _busy = false);
+    // Return stable refs (dmt-asset:// URIs for cloud, absolute paths for
+    // local). Callers store these verbatim in entity.images[]; AssetRefImage
+    // resolves them on demand. Previously cloud picks leaked the ephemeral
+    // download-cache path into entities, so other devices saw a dangling
+    // filesystem reference.
+    final refs = <String>[];
+    for (final key in _cloudSelectedKeys) {
+      refs.add(AssetRef.formatCloudUri(key));
     }
-
-    paths.addAll(_localSelected);
-
-    if (failed.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${failed.length} image${failed.length == 1 ? '' : 's'} failed to download',
-          ),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
-    }
-    Navigator.pop(context, paths);
+    refs.addAll(_localSelected);
+    Navigator.pop(context, refs);
   }
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
 
-    final cloudRows = _cloudMode
-        ? (_activeTab == 0 ? _thisWorldRows : _allRows)
+    // Trash sekmesinde cloud listeleri gizli — trash sadece lokal.
+    final cloudRows = (_cloudMode && !_isTrashTab)
+        ? (_activeTab == _tabThisWorld ? _thisWorldRows : _allRows)
         : const <CommunityAssetRow>[];
     final cloudCount = cloudRows.length;
-    final localCount = _localImages.length;
+    final localCount =
+        _isTrashTab ? _localTrashImages.length : _localImages.length;
     final totalCount = cloudCount + localCount;
     final selectedCount = _cloudSelectedKeys.length + _localSelected.length;
 
@@ -566,6 +594,7 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
                   tabs: const [
                     Tab(text: 'This world', height: 32),
                     Tab(text: 'All worlds', height: 32),
+                    Tab(text: 'Trash', height: 32),
                   ],
                 ),
               ),
@@ -602,15 +631,17 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
               child: Row(
                 children: [
                   Text(
-                    _cloudMode
-                        ? '$cloudCount cloud · $localCount local'
-                        : '$totalCount images',
+                    _isTrashTab
+                        ? '$localCount trashed'
+                        : _cloudMode
+                            ? '$cloudCount cloud · $localCount local'
+                            : '$totalCount images',
                     style: TextStyle(
                       fontSize: 11,
                       color: palette.sidebarLabelSecondary,
                     ),
                   ),
-                  if (selectedCount > 0) ...[
+                  if (!_isTrashTab && selectedCount > 0) ...[
                     const SizedBox(width: 8),
                     TextButton.icon(
                       onPressed: _busy ? null : _deleteSelected,
@@ -635,19 +666,21 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
                   TextButton(
                     onPressed:
                         _busy ? null : () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: const Text('Close'),
                   ),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: (selectedCount == 0 || _busy)
-                        ? null
-                        : _confirmSelection,
-                    child: Text(
-                      selectedCount == 0
-                          ? 'Select'
-                          : 'Select ($selectedCount)',
+                  if (!_isTrashTab) ...[
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: (selectedCount == 0 || _busy)
+                          ? null
+                          : _confirmSelection,
+                      child: Text(
+                        selectedCount == 0
+                            ? 'Select'
+                            : 'Select ($selectedCount)',
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -658,7 +691,34 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
   }
 
   Widget _buildGrid(DmToolColors palette, List<CommunityAssetRow> cloudRows) {
-    final showCampaignBadge = _cloudMode && _activeTab == 1;
+    // Trash sekmesinde cloud tiles yok — sadece `.trash/` dizinindeki lokal
+    // dosyalar gösterilir. Cloud asset silme direkt kalıcıdır (geri alınamaz).
+    if (_isTrashTab) {
+      final items = _localTrashImages;
+      return GridView.builder(
+        padding: const EdgeInsets.all(12),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+        ),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final path = items[index];
+          return _LocalImageTile(
+            path: path,
+            isSelected: false,
+            palette: palette,
+            showLocalOnlyBadge: false,
+            showTrashBadge: true,
+            onTap: () => _showTrashActions(path),
+            onDelete: () => _purgeLocalTrash(path),
+          );
+        },
+      );
+    }
+
+    final showCampaignBadge = _cloudMode && _activeTab == _tabAllWorlds;
     final cloudCount = cloudRows.length;
     final localCount = _localImages.length;
     final total = cloudCount + localCount;
@@ -710,6 +770,8 @@ class _MediaGalleryDialogState extends ConsumerState<MediaGalleryDialog>
 
 // ── Helpers ──
 
+enum _TrashAction { restore, purge }
+
 class _ImageEntry {
   final String path;
   final DateTime modified;
@@ -758,6 +820,7 @@ class _LocalImageTile extends StatefulWidget {
   final bool isSelected;
   final DmToolColors palette;
   final bool showLocalOnlyBadge;
+  final bool showTrashBadge;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
@@ -766,6 +829,7 @@ class _LocalImageTile extends StatefulWidget {
     required this.isSelected,
     required this.palette,
     required this.showLocalOnlyBadge,
+    this.showTrashBadge = false,
     required this.onTap,
     required this.onDelete,
   });
@@ -787,13 +851,19 @@ class _LocalImageTileState extends State<_LocalImageTile> {
       onTap: widget.onTap,
       onDelete: widget.onDelete,
       label: p.basename(widget.path),
-      bottomLeftBadge: widget.showLocalOnlyBadge
+      bottomLeftBadge: widget.showTrashBadge
           ? const _StatusBadge(
-              icon: Icons.cloud_off,
-              text: 'local',
-              color: Colors.orange,
+              icon: Icons.delete_outline,
+              text: 'trash',
+              color: Colors.redAccent,
             )
-          : null,
+          : widget.showLocalOnlyBadge
+              ? const _StatusBadge(
+                  icon: Icons.cloud_off,
+                  text: 'local',
+                  color: Colors.orange,
+                )
+              : null,
       child: Image.file(
         File(widget.path),
         fit: BoxFit.cover,
