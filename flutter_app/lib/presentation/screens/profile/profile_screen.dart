@@ -586,7 +586,7 @@ class _UserItemsTab extends ConsumerWidget {
     );
     if (confirm != true) return;
     try {
-      await ref.read(marketplaceListingNotifierProvider.notifier).deleteListing(listing);
+      await ref.read(marketplaceListingNotifierProvider.notifier).deleteListing(listing: listing);
       ref.invalidate(userMarketplaceListingsProvider(userId));
       ref.invalidate(marketplaceProvider);
     } catch (e) {

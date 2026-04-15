@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/cloud_remote_check_provider.dart';
 import '../../../application/providers/profile_provider.dart';
 import '../../../application/providers/user_session_provider.dart';
 import '../../../core/config/supabase_config.dart';
@@ -35,6 +36,8 @@ class _HubScreenState extends ConsumerState<HubScreen> {
   final GlobalKey _screenshotKey = GlobalKey();
   bool _profileDialogOpen = false;
 
+  static const _settingsTabIndex = 1;
+
   static const _tabs = [
     (icon: Icons.people, label: 'Social'),
     (icon: Icons.settings, label: 'Settings'),
@@ -42,6 +45,48 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     (icon: Icons.description, label: 'Templates'),
     (icon: Icons.inventory_2, label: 'Packages'),
   ];
+
+  /// Renders [icon], optionally layered with a small accent dot in the top-
+  /// right when [showBadge] is true. Shared by every navigation surface
+  /// (side rail, bottom nav, landscape sheet) so the multi-device hint is
+  /// consistent wherever the Settings icon appears.
+  Widget _tabIcon({
+    required IconData icon,
+    required Color color,
+    required bool showBadge,
+    required Color badgeColor,
+    double size = 22,
+  }) {
+    final iconWidget = Icon(icon, size: size, color: color);
+    if (!showBadge) return iconWidget;
+    return SizedBox(
+      width: size + 6,
+      height: size + 6,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: 0,
+            top: 3,
+            child: iconWidget,
+          ),
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: badgeColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   // IndexedStack ile state korunur — tab değişince widget'lar yeniden oluşturulmaz
   final _tabContent = const [
@@ -52,7 +97,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     PackagesTab(),
   ];
 
-  void _showLandscapeNavSheet(DmToolColors palette) {
+  void _showLandscapeNavSheet(DmToolColors palette, bool cloudBadge) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -78,8 +123,14 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(t.icon, size: 24,
-                            color: isActive ? palette.tabIndicator : palette.tabText),
+                        _tabIcon(
+                          icon: t.icon,
+                          size: 24,
+                          color: isActive ? palette.tabIndicator : palette.tabText,
+                          showBadge:
+                              i == _settingsTabIndex && cloudBadge,
+                          badgeColor: palette.featureCardAccent,
+                        ),
                         const SizedBox(height: 4),
                         Text(t.label,
                           style: TextStyle(
@@ -125,6 +176,8 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     final screen = getScreenType(context);
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;
+    // Multi-device hint — another device uploaded changes we haven't pulled.
+    final cloudBadge = ref.watch(cloudRemoteHasNewerProvider);
 
     // Redirect to landing on sign-out when Supabase is configured.
     ref.listen(authProvider, (prev, next) async {
@@ -163,7 +216,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
         leading: isLandscapePhone
             ? IconButton(
                 icon: const Icon(Icons.menu, size: 22),
-                onPressed: () => _showLandscapeNavSheet(palette),
+                onPressed: () => _showLandscapeNavSheet(palette, cloudBadge),
               )
             : null,
         automaticallyImplyLeading: false,
@@ -207,6 +260,8 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                   selectedIndex: _tabIndex,
                   onSelected: (i) => setState(() => _tabIndex = i),
                   palette: palette,
+                  settingsBadge: cloudBadge,
+                  settingsTabIndex: _settingsTabIndex,
                 ),
                 VerticalDivider(width: 1, color: palette.sidebarDivider),
                 Expanded(
@@ -228,10 +283,19 @@ class _HubScreenState extends ConsumerState<HubScreen> {
           ? NavigationBar(
               selectedIndex: _tabIndex,
               onDestinationSelected: (i) => setState(() => _tabIndex = i),
-              destinations: _tabs.map((t) => NavigationDestination(
-                icon: Icon(t.icon),
-                label: t.label,
-              )).toList(),
+              destinations: [
+                for (var i = 0; i < _tabs.length; i++)
+                  NavigationDestination(
+                    icon: _tabIcon(
+                      icon: _tabs[i].icon,
+                      size: 24,
+                      color: palette.tabText,
+                      showBadge: i == _settingsTabIndex && cloudBadge,
+                      badgeColor: palette.featureCardAccent,
+                    ),
+                    label: _tabs[i].label,
+                  ),
+              ],
             )
           : null,
     ),
@@ -244,12 +308,16 @@ class _HubSideRail extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelected;
   final DmToolColors palette;
+  final bool settingsBadge;
+  final int settingsTabIndex;
 
   const _HubSideRail({
     required this.tabs,
     required this.selectedIndex,
     required this.onSelected,
     required this.palette,
+    required this.settingsBadge,
+    required this.settingsTabIndex,
   });
 
   @override
@@ -267,6 +335,7 @@ class _HubSideRail extends StatelessWidget {
                 tooltip: tabs[i].label,
                 selected: i == selectedIndex,
                 palette: palette,
+                showBadge: i == settingsTabIndex && settingsBadge,
                 onTap: () => onSelected(i),
               ),
             ),
@@ -281,6 +350,7 @@ class _SideRailButton extends StatelessWidget {
   final String tooltip;
   final bool selected;
   final DmToolColors palette;
+  final bool showBadge;
   final VoidCallback onTap;
 
   const _SideRailButton({
@@ -288,6 +358,7 @@ class _SideRailButton extends StatelessWidget {
     required this.tooltip,
     required this.selected,
     required this.palette,
+    required this.showBadge,
     required this.onTap,
   });
 
@@ -296,6 +367,10 @@ class _SideRailButton extends StatelessWidget {
     final shape = RoundedRectangleBorder(
       borderRadius: palette.br,
     );
+    final size = selected ? 24.0 : 22.0;
+    final iconColor = selected
+        ? palette.featureCardAccent
+        : palette.sidebarLabelSecondary;
     return Material(
       color: selected
           ? palette.featureCardAccent.withValues(alpha: 0.18)
@@ -309,12 +384,26 @@ class _SideRailButton extends StatelessWidget {
           child: SizedBox(
             width: 40,
             height: 40,
-            child: Icon(
-              icon,
-              size: selected ? 24 : 22,
-              color: selected
-                  ? palette.featureCardAccent
-                  : palette.sidebarLabelSecondary,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                Icon(icon, size: size, color: iconColor),
+                if (showBadge)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: palette.featureCardAccent,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),

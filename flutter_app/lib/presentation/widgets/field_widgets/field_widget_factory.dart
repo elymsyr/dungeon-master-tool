@@ -50,6 +50,7 @@ class FieldWidgetFactory {
       FieldType.conditionStats => _CombatStatsFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.dice => _DiceFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.boolean_ => _BooleanFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.slot => _SlotFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.tagList => _TagListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.date => _DateFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.image => _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, mediaDir: mediaDir),
@@ -1052,6 +1053,164 @@ class _BooleanFieldWidget extends StatelessWidget {
       value: value == true,
       onChanged: readOnly ? null : (v) => onChanged(v),
       dense: true,
+    );
+  }
+}
+
+// --- SLOT ---
+/// Row of checkbox "pips" for spell slots, ammo, charges, hit dice, etc.
+/// Value is stored as `{count, filled}` so it round-trips cleanly through
+/// the entity's `Map<String, dynamic> fields`. Users can resize the row at
+/// any time via the +/- buttons; a refill button in the corner clears every
+/// filled pip in one tap.
+class _SlotFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  const _SlotFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  ({int count, int filled}) get _parsed {
+    if (value is Map) {
+      final m = value as Map;
+      final count = (m['count'] as num?)?.toInt() ?? 0;
+      final filled = (m['filled'] as num?)?.toInt() ?? 0;
+      return (count: count.clamp(0, 99), filled: filled.clamp(0, count));
+    }
+    return (count: 0, filled: 0);
+  }
+
+  void _write({required int count, required int filled}) {
+    onChanged({'count': count, 'filled': filled.clamp(0, count)});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final state = _parsed;
+    final count = state.count;
+    final filled = state.filled;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  schema.label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (!readOnly) ...[
+                IconButton(
+                  tooltip: 'Remove slot',
+                  icon: const Icon(Icons.remove_circle_outline, size: 18),
+                  onPressed: count == 0
+                      ? null
+                      : () => _write(count: count - 1, filled: filled),
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                ),
+                IconButton(
+                  tooltip: 'Add slot',
+                  icon: const Icon(Icons.add_circle_outline, size: 18),
+                  onPressed: count >= 99
+                      ? null
+                      : () => _write(count: count + 1, filled: filled),
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                ),
+                IconButton(
+                  tooltip: 'Refill',
+                  icon: const Icon(Icons.refresh, size: 18),
+                  onPressed: filled == 0
+                      ? null
+                      : () => _write(count: count, filled: 0),
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          if (count == 0)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                'No slots — tap + to add',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: palette.sidebarLabelSecondary,
+                ),
+              ),
+            )
+          else
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (var i = 0; i < count; i++)
+                  _SlotPip(
+                    filled: i < filled,
+                    color: palette.featureCardAccent,
+                    onTap: readOnly
+                        ? null
+                        : () {
+                            // Tap-to-toggle: if this pip is empty, fill one
+                            // more; if it was the last filled one, empty it.
+                            final next = i < filled ? i : i + 1;
+                            _write(count: count, filled: next);
+                          },
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SlotPip extends StatelessWidget {
+  final bool filled;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _SlotPip({
+    required this.filled,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        width: 22,
+        height: 22,
+        decoration: BoxDecoration(
+          color: filled ? color : Colors.transparent,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: color, width: 1.5),
+        ),
+      ),
     );
   }
 }

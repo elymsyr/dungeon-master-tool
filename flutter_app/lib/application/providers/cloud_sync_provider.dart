@@ -9,6 +9,7 @@ import 'auth_provider.dart';
 import 'beta_provider.dart';
 import 'campaign_provider.dart';
 import 'cloud_backup_provider.dart';
+import 'cloud_remote_check_provider.dart';
 import 'package_provider.dart';
 
 // ── Sync result types ───────────────────────────────────────────────
@@ -249,6 +250,12 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
     _ref.invalidate(cloudBackupTemplatesProvider);
     _ref.invalidate(cloudBackupPackagesProvider);
     _ref.invalidate(cloudStorageUsedProvider);
+
+    // We just wrote to remote, so we're definitively caught up — clear any
+    // multi-device "pull changes" hint that may have been showing.
+    if (!hasErrors) {
+      _ref.read(cloudRemoteHasNewerProvider.notifier).markCaughtUp();
+    }
   }
 
   /// Item verisini tipe göre yükle. [itemName] kampanya/paket adı (dosya/DB

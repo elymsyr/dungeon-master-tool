@@ -161,6 +161,23 @@ class CloudBackupRemoteDataSource {
     return _rowToMeta(rows.first);
   }
 
+  /// The `created_at` of the user's newest backup (any type). Used by the
+  /// multi-device badge — when this is newer than the locally remembered
+  /// "last seen" timestamp, it means another device uploaded while we were
+  /// away and we should surface a "pull changes" hint.
+  Future<DateTime?> fetchLatestCreatedAt() async {
+    final rows = await _client
+        .from(_table)
+        .select('created_at')
+        .eq('user_id', _userId)
+        .order('created_at', ascending: false)
+        .limit(1);
+    if (rows.isEmpty) return null;
+    final raw = rows.first['created_at'];
+    if (raw is! String) return null;
+    return DateTime.tryParse(raw);
+  }
+
   /// Kullanicinin toplam cloud kullanimini getir (bytes).
   /// cloud_backups + community_assets (R2) toplami — get_user_total_storage_used
   /// RPC'si araciligiyla atomic SUM yapar.

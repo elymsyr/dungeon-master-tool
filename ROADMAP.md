@@ -69,8 +69,3 @@ This generalizes to: "show items in list field A with style S if field B on each
 
 **Design goal**
 The rule system should be fully dynamic — users compose predicates and effects from primitives (field references, set operations, comparisons, entity relationships) rather than picking from a fixed list of hard-coded rule templates. Treat this as a ground-up redesign of the rule builder, not an incremental patch.
-
-## Bugs
-
-### Offline players should not crash the session
-Players who are offline currently cause errors in the shared session. Instead, surface them as **offline** in the UI and keep the rest of the session functional.

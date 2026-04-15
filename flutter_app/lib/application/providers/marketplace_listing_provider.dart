@@ -21,25 +21,20 @@ final marketplaceLinksLocalDsProvider =
     Provider<MarketplaceLinksLocalDataSource>(
         (_) => MarketplaceLinksLocalDataSource());
 
-/// Thrown when the user re-publishes a snapshot whose content hash matches
-/// the lineage's existing current snapshot. UI surfaces this as a benign
-/// "no changes since last snapshot" notice instead of an error.
-class NoChangesSinceLastSnapshotException implements Exception {
-  const NoChangesSinceLastSnapshotException();
-  @override
-  String toString() => 'NoChangesSinceLastSnapshotException';
-}
-
-/// Owner-side: history of all snapshots in a single lineage. Powers the
-/// "My snapshots" panel inside an item's settings.
-final lineageHistoryProvider =
-    FutureProvider.family<List<MarketplaceListing>, String>(
-        (ref, lineageId) async {
+/// Owner-side: all listings the user has published from this local item,
+/// newest first. Populates the "My Snapshots" panel.
+final ownedSnapshotsProvider = FutureProvider.family<List<MarketplaceListing>,
+    ({String itemType, String localId})>((ref, key) async {
   if (!SupabaseConfig.isConfigured) return const [];
   if (ref.watch(authProvider) == null) return const [];
+  final store = ref.read(marketplaceLinksLocalDsProvider);
+  final ids = await store.getOwnedListingIds(key.itemType, key.localId);
+  if (ids.isEmpty) return const [];
+  // Stored oldest-first; UI wants newest-first.
+  final reversed = ids.reversed.toList();
   return ref
       .read(marketplaceListingsRemoteDsProvider)
-      .listLineageHistory(lineageId);
+      .fetchListingsByIds(reversed);
 });
 
 /// Current marketplace listings owned by [userId]. Used by the profile
@@ -54,20 +49,9 @@ final userMarketplaceListingsProvider =
       .listCurrentByOwner(userId);
 });
 
-/// Owner-side: convenience family that resolves a local item's currently
-/// associated lineage id (if any). Returns null when the item has never
-/// been published.
-final ownerLineageIdProvider =
-    FutureProvider.family<String?, ({String itemType, String localId})>(
-        (ref, key) async {
-  return ref
-      .read(marketplaceLinksLocalDsProvider)
-      .getOwnerLineageId(key.itemType, key.localId);
-});
-
 /// Reader-side: the marketplace_source metadata of a downloaded local copy,
 /// if any. Used by settings panels to render the "imported from marketplace"
-/// badge and the drift banner.
+/// badge.
 final marketplaceSourceProvider =
     FutureProvider.family<MarketplaceSource?, ({String itemType, String localId})>(
         (ref, key) async {
@@ -80,14 +64,9 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
   final Ref _ref;
   MarketplaceListingNotifier(this._ref) : super(const AsyncValue.data(null));
 
-  /// Publish a fresh immutable snapshot of [localId]. If the item has been
-  /// published before, the new snapshot joins the same lineage and
-  /// supersedes the previous current. Pass [freshLineage]: true to start a
-  /// brand new independent listing instead.
-  ///
-  /// Throws [NoChangesSinceLastSnapshotException] when the local content
-  /// hash matches the lineage's current snapshot — UI surfaces this as a
-  /// benign info, not an error.
+  /// Publish a fresh immutable snapshot of [localId]. Each publish is a
+  /// standalone listing; the id is appended to the local "owned listings"
+  /// index so the owner can find it later in the "My Snapshots" panel.
   Future<MarketplaceListing?> publishSnapshot({
     required String itemType,
     required String localId,
@@ -96,32 +75,14 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
     String? language,
     List<String> tags = const [],
     String? changelog,
-    bool freshLineage = false,
   }) async {
     state = const AsyncValue.loading();
     try {
       final payload = await _loadPayload(itemType, localId);
       final hash = computePayloadContentHash(payload);
 
-      final store = _ref.read(marketplaceLinksLocalDsProvider);
-      String? lineageId;
-      if (!freshLineage) {
-        lineageId = await store.getOwnerLineageId(itemType, localId);
-      }
-
       final remote = _ref.read(marketplaceListingsRemoteDsProvider);
-
-      // No-op detection: same content as the lineage's current snapshot.
-      if (lineageId != null) {
-        final current = await remote.currentVersionsForLineages([lineageId]);
-        if (current[lineageId]?.contentHash == hash) {
-          state = const AsyncValue.data(null);
-          throw const NoChangesSinceLastSnapshotException();
-        }
-      }
-
       final listing = await remote.publishSnapshot(
-        lineageId: lineageId,
         itemType: itemType,
         title: title,
         description: description,
@@ -132,20 +93,17 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
         payload: payload,
       );
 
-      // Persist the lineage id locally so subsequent publishes reuse it.
-      await store.setOwnerLineageId(
-        itemType: itemType,
-        localId: localId,
-        lineageId: listing.lineageId,
+      await _ref.read(marketplaceLinksLocalDsProvider).addOwnedListingId(
+            itemType: itemType,
+            localId: localId,
+            listingId: listing.id,
+          );
+      _ref.invalidate(
+        ownedSnapshotsProvider((itemType: itemType, localId: localId)),
       );
-      _ref.invalidate(ownerLineageIdProvider((itemType: itemType, localId: localId)));
-      _ref.invalidate(lineageHistoryProvider(listing.lineageId));
 
       state = const AsyncValue.data(null);
       return listing;
-    } on NoChangesSinceLastSnapshotException {
-      state = const AsyncValue.data(null);
-      rethrow;
     } catch (e, st) {
       debugPrint('publishSnapshot error: $e\n$st');
       state = AsyncValue.error(e, st);
@@ -153,17 +111,32 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  /// Owner deletes a single snapshot. The DB RPC promotes the next-newest
-  /// snapshot in the lineage to current automatically; this method also
-  /// invalidates the relevant providers.
-  Future<void> deleteListing(MarketplaceListing listing) async {
+  /// Owner deletes a single listing. Removes the DB row and the storage
+  /// blob. When [itemType]/[localId] are provided, the local owned-ids
+  /// entry is also cleaned up and the corresponding provider is invalidated;
+  /// callers that delete from a context without that link (profile screen)
+  /// can omit them.
+  Future<void> deleteListing({
+    required MarketplaceListing listing,
+    String? itemType,
+    String? localId,
+  }) async {
     state = const AsyncValue.loading();
     try {
       await _ref.read(marketplaceListingsRemoteDsProvider).deleteListing(
             listingId: listing.id,
             payloadPath: listing.payloadPath,
           );
-      _ref.invalidate(lineageHistoryProvider(listing.lineageId));
+      if (itemType != null && localId != null) {
+        await _ref.read(marketplaceLinksLocalDsProvider).removeOwnedListingId(
+              itemType: itemType,
+              localId: localId,
+              listingId: listing.id,
+            );
+        _ref.invalidate(
+          ownedSnapshotsProvider((itemType: itemType, localId: localId)),
+        );
+      }
       state = const AsyncValue.data(null);
     } catch (e, st) {
       debugPrint('deleteListing error: $e\n$st');
@@ -172,9 +145,8 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  /// Reader: download a listing as a brand new local item. Existing local
-  /// copies (if any) are untouched. Returns the new local id (campaign
-  /// name / template schemaId / package name).
+  /// Reader: download a listing as a brand new local item. Returns the new
+  /// local id (campaign name / template schemaId / package name).
   Future<String> downloadAsNewCopy(MarketplaceListing listing) async {
     state = const AsyncValue.loading();
     try {
@@ -194,7 +166,6 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
             localId: newLocalId,
             source: MarketplaceSource(
               listingId: listing.id,
-              lineageId: listing.lineageId,
               syncedHash: listing.contentHash,
               syncedAt: DateTime.now().toUtc(),
               ownerUsername: listing.ownerUsername,
@@ -220,81 +191,6 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
       state = AsyncValue.error(e, st);
       rethrow;
     }
-  }
-
-  /// Reader: replace an existing local copy with the listing's payload.
-  /// Destructive — caller must have shown a confirmation dialog. Updates
-  /// the marketplace_source metadata so the drift banner clears.
-  Future<void> replaceLocalCopy({
-    required String itemType,
-    required String localId,
-    required MarketplaceListing listing,
-  }) async {
-    state = const AsyncValue.loading();
-    try {
-      final remote = _ref.read(marketplaceListingsRemoteDsProvider);
-      final payload = await remote.downloadPayload(
-        listingId: listing.id,
-        payloadPath: listing.payloadPath,
-      );
-      await _saveBackPayload(itemType, localId, payload);
-
-      await _ref.read(marketplaceLinksLocalDsProvider).setSource(
-            itemType: itemType,
-            localId: localId,
-            source: MarketplaceSource(
-              listingId: listing.id,
-              lineageId: listing.lineageId,
-              syncedHash: listing.contentHash,
-              syncedAt: DateTime.now().toUtc(),
-              ownerUsername: listing.ownerUsername,
-            ),
-          );
-      _ref.invalidate(marketplaceSourceProvider(
-        (itemType: itemType, localId: localId),
-      ));
-
-      state = const AsyncValue.data(null);
-    } catch (e, st) {
-      debugPrint('replaceLocalCopy error: $e\n$st');
-      state = AsyncValue.error(e, st);
-      rethrow;
-    }
-  }
-
-  /// Reader: dismiss a specific listing version (silences the drift banner
-  /// until a *newer* snapshot in the same lineage is published).
-  Future<void> dismissListingVersion({
-    required String itemType,
-    required String localId,
-    required String dismissedListingId,
-  }) async {
-    final store = _ref.read(marketplaceLinksLocalDsProvider);
-    final source = await store.getSource(itemType, localId);
-    if (source == null) return;
-    await store.setSource(
-      itemType: itemType,
-      localId: localId,
-      source: source.copyWith(dismissedListingId: dismissedListingId),
-    );
-    _ref.invalidate(marketplaceSourceProvider((itemType: itemType, localId: localId)));
-  }
-
-  /// Reader: mute (or unmute) all future drift notifications for this item.
-  Future<void> setMuted({
-    required String itemType,
-    required String localId,
-    required bool muted,
-  }) async {
-    final store = _ref.read(marketplaceLinksLocalDsProvider);
-    final source = await store.getSource(itemType, localId);
-    if (source == null) return;
-    await store.setSource(
-      itemType: itemType,
-      localId: localId,
-      source: source.copyWith(muted: muted),
-    );
-    _ref.invalidate(marketplaceSourceProvider((itemType: itemType, localId: localId)));
   }
 
   // ── Payload (de)serialization helpers ─────────────────────────────────
@@ -341,33 +237,6 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
         final schema = WorldSchema.fromJson(raw);
         await _ref.read(templateLocalDsProvider).save(schema);
         return schema.schemaId;
-    }
-    throw ArgumentError('Unknown itemType: $itemType');
-  }
-
-  Future<void> _saveBackPayload(
-    String itemType,
-    String localId,
-    Map<String, dynamic> payload,
-  ) async {
-    switch (itemType) {
-      case 'world':
-        await _ref.read(campaignRepositoryProvider).save(localId, payload);
-        return;
-      case 'package':
-        await _ref.read(packageRepositoryProvider).save(localId, payload);
-        return;
-      case 'template':
-        final raw = payload['world_schema'];
-        if (raw is! Map<String, dynamic>) {
-          throw StateError('Invalid template payload: world_schema missing');
-        }
-        // Force the incoming schema's id to match localId so the existing
-        // file on disk is overwritten rather than producing a duplicate.
-        final overriden = Map<String, dynamic>.from(raw)..['schemaId'] = localId;
-        final schema = WorldSchema.fromJson(overriden);
-        await _ref.read(templateLocalDsProvider).save(schema);
-        return;
     }
     throw ArgumentError('Unknown itemType: $itemType');
   }

@@ -1,17 +1,14 @@
 import 'package:flutter/foundation.dart';
 
 /// Immutable snapshot row from `marketplace_listings`. Once published, only
-/// `isCurrent`, `supersededBy` and `downloadCount` may mutate (enforced by
-/// the DB trigger). New content = new row in the same lineage.
+/// `downloadCount` may mutate (enforced by the DB trigger). Each publish is
+/// an independent row — there is no lineage or supersede relationship.
 @immutable
 class MarketplaceListing {
   const MarketplaceListing({
     required this.id,
     required this.ownerId,
     required this.itemType,
-    required this.lineageId,
-    this.isCurrent = true,
-    this.supersededBy,
     required this.title,
     this.description,
     this.language,
@@ -31,10 +28,6 @@ class MarketplaceListing {
   /// 'world' | 'template' | 'package'
   final String itemType;
 
-  final String lineageId;
-  final bool isCurrent;
-  final String? supersededBy;
-
   final String title;
   final String? description;
   final String? language;
@@ -52,8 +45,6 @@ class MarketplaceListing {
   final String? ownerUsername;
 
   MarketplaceListing copyWith({
-    bool? isCurrent,
-    String? supersededBy,
     int? downloadCount,
     String? ownerUsername,
   }) {
@@ -61,9 +52,6 @@ class MarketplaceListing {
       id: id,
       ownerId: ownerId,
       itemType: itemType,
-      lineageId: lineageId,
-      isCurrent: isCurrent ?? this.isCurrent,
-      supersededBy: supersededBy ?? this.supersededBy,
       title: title,
       description: description,
       language: language,

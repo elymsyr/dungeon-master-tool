@@ -1286,6 +1286,7 @@ class _CategoryEditor extends StatelessWidget {
     FieldType.combatStats => 'Combat Stats',
     FieldType.conditionStats => 'Condition Stats',
     FieldType.dice => 'Dice',
+    FieldType.slot => 'Slots',
   };
 
   IconData _fieldTypeIcon(FieldType t) => switch (t) {
@@ -1303,6 +1304,7 @@ class _CategoryEditor extends StatelessWidget {
     FieldType.combatStats => Icons.shield,
     FieldType.conditionStats => Icons.flash_on,
     FieldType.dice => Icons.casino,
+    FieldType.slot => Icons.check_box_outlined,
   };
 
   void _editGroup(BuildContext context, FieldGroup group, ValueChanged<FieldGroup> onUpdate) {

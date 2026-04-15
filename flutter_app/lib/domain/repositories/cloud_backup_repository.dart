@@ -32,4 +32,9 @@ abstract class CloudBackupRepository {
 
   /// Kullanicinin toplam cloud storage kullanimini getir (bytes).
   Future<int> getTotalStorageUsed();
+
+  /// Kullanicinin en yeni backup'inin `created_at` degeri (herhangi bir
+  /// tipte). Multi-device badge icin; baska bir cihazdan yapilan upload'lari
+  /// tespit etmek icin yerel "last seen" markeriyle karsilastirilir.
+  Future<DateTime?> fetchLatestRemoteCreatedAt();
 }

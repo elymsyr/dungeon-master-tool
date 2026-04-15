@@ -25,6 +25,7 @@ enum FieldType {
   combatStats,
   conditionStats,
   dice,           // Zar notasyonu: "2d6", "1d20+5", "3d8+2"
+  slot,           // Dolu/boş checkbox satırı: spell slot, ammo, charges, hit dice
 }
 
 /// Alan görünürlüğü — online modda kimin görebileceğini belirler.

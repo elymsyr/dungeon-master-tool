@@ -9,20 +9,17 @@ import '../theme/dm_tool_colors.dart';
 import '../widgets/tag_input.dart';
 
 /// Owner-side: collects metadata for a brand-new immutable snapshot. Each
-/// invocation always produces a *new* listing — there is no "edit existing"
-/// path. If the local item already has a lineage, the new snapshot joins
-/// it and supersedes the previous current; the user can override that with
-/// the "Start fresh lineage" toggle to publish an independent listing.
+/// invocation always produces a *new*, independent listing — there is no
+/// "edit existing" path and no lineage relationship between publishes.
 ///
 /// Returns the freshly published [MarketplaceListing] on success, or null
-/// when the user cancels / no-op publish is detected.
+/// when the user cancels.
 Future<MarketplaceListing?> showPublishSnapshotDialog({
   required BuildContext context,
   required String itemType,
   required String localId,
   required String defaultTitle,
   String? defaultDescription,
-  required bool hasExistingLineage,
 }) {
   return showDialog<MarketplaceListing?>(
     context: context,
@@ -31,7 +28,6 @@ Future<MarketplaceListing?> showPublishSnapshotDialog({
       localId: localId,
       defaultTitle: defaultTitle,
       defaultDescription: defaultDescription,
-      hasExistingLineage: hasExistingLineage,
     ),
   );
 }
@@ -41,14 +37,12 @@ class _PublishSnapshotDialog extends ConsumerStatefulWidget {
   final String localId;
   final String defaultTitle;
   final String? defaultDescription;
-  final bool hasExistingLineage;
 
   const _PublishSnapshotDialog({
     required this.itemType,
     required this.localId,
     required this.defaultTitle,
     this.defaultDescription,
-    required this.hasExistingLineage,
   });
 
   @override
@@ -63,7 +57,6 @@ class _PublishSnapshotDialogState
   late final TextEditingController _changelogCtrl;
   String? _language;
   List<String> _tags = const [];
-  bool _freshLineage = false;
   bool _busy = false;
 
   @override
@@ -114,16 +107,9 @@ class _PublishSnapshotDialogState
             changelog: _changelogCtrl.text.trim().isEmpty
                 ? null
                 : _changelogCtrl.text.trim(),
-            freshLineage: _freshLineage,
           );
       if (!mounted) return;
       Navigator.pop(context, listing);
-    } on NoChangesSinceLastSnapshotException {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.publishDialogNoChanges)),
-      );
-      Navigator.pop(context, null);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -147,10 +133,7 @@ class _PublishSnapshotDialogState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _ImmutabilityNotice(
-                hasExistingLineage: widget.hasExistingLineage,
-                palette: palette,
-              ),
+              _ImmutabilityNotice(palette: palette),
               const SizedBox(height: 12),
               TextField(
                 controller: _titleCtrl,
@@ -217,28 +200,6 @@ class _PublishSnapshotDialogState
                 ),
                 style: const TextStyle(fontSize: 13),
               ),
-              if (widget.hasExistingLineage) ...[
-                const SizedBox(height: 6),
-                CheckboxListTile(
-                  value: _freshLineage,
-                  onChanged: (v) => setState(() => _freshLineage = v ?? false),
-                  controlAffinity: ListTileControlAffinity.leading,
-                  contentPadding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                  dense: true,
-                  title: Text(
-                    l10n.publishDialogFreshLineage,
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                  subtitle: Text(
-                    l10n.publishDialogFreshLineageHint,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: palette.sidebarLabelSecondary,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -265,19 +226,12 @@ class _PublishSnapshotDialogState
 }
 
 class _ImmutabilityNotice extends StatelessWidget {
-  final bool hasExistingLineage;
   final DmToolColors palette;
-  const _ImmutabilityNotice({
-    required this.hasExistingLineage,
-    required this.palette,
-  });
+  const _ImmutabilityNotice({required this.palette});
 
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
-    final body = hasExistingLineage
-        ? l10n.publishDialogImmutabilityNoticeExisting
-        : l10n.publishDialogImmutabilityNoticeNew;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
@@ -293,7 +247,7 @@ class _ImmutabilityNotice extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              body,
+              l10n.publishDialogImmutabilityNoticeNew,
               style: TextStyle(fontSize: 11, color: palette.tabActiveText),
             ),
           ),

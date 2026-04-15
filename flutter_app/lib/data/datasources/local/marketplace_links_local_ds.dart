@@ -12,21 +12,16 @@ import '../../../domain/entities/marketplace_source.dart';
 /// 1. Templates are saved as `WorldSchema` objects whose [WorldSchema.metadata]
 ///    is part of the content hash. Persisting marketplace fields *inside*
 ///    that map would invalidate every dependent campaign's template_hash on
-///    next publish, weaponizing the existing template-sync prompt against
-///    its own owner. Keeping marketplace metadata out of band sidesteps that
-///    entirely.
+///    next publish. Keeping marketplace metadata out of band sidesteps that.
 ///
 /// 2. Uniformity. Worlds, templates and packages all use the same key →
-///    record schema, so the sync service can do one batch read for "all
-///    items the user has downloaded from the marketplace" without three
-///    different code paths.
+///    record schema.
 ///
 /// Storage layout (single JSON file under [AppPaths.cacheDir]):
 /// ```json
 /// {
-///   "world:My Campaign":   { "lineage_id": "uuid", "source": null },
-///   "template:abc-123":    { "lineage_id": null,  "source": { ... } },
-///   "package:Lore Vol 1":  { "lineage_id": "uuid", "source": { ... } }
+///   "world:My Campaign":  { "listing_ids": ["uuid1","uuid2"], "source": null },
+///   "template:abc-123":   { "listing_ids": [], "source": { ... } }
 /// }
 /// ```
 class MarketplaceLinksLocalDataSource {
@@ -69,23 +64,46 @@ class MarketplaceLinksLocalDataSource {
     await f.writeAsString(jsonEncode(payload));
   }
 
-  Future<String?> getOwnerLineageId(String itemType, String localId) async {
+  /// Owner-side: listing ids the user has published for this local item.
+  /// Ordered by insertion (newest last).
+  Future<List<String>> getOwnedListingIds(
+    String itemType,
+    String localId,
+  ) async {
     await _load();
-    return _cache![_key(itemType, localId)]?.lineageId;
+    final link = _cache![_key(itemType, localId)];
+    return link?.listingIds ?? const <String>[];
   }
 
-  Future<void> setOwnerLineageId({
+  Future<void> addOwnedListingId({
     required String itemType,
     required String localId,
-    required String lineageId,
+    required String listingId,
   }) async {
     await _load();
     final k = _key(itemType, localId);
     final existing = _cache![k];
-    _cache![k] = _Link(
-      lineageId: lineageId,
-      source: existing?.source,
-    );
+    final ids = List<String>.from(existing?.listingIds ?? const <String>[]);
+    if (!ids.contains(listingId)) ids.add(listingId);
+    _cache![k] = _Link(listingIds: ids, source: existing?.source);
+    await _save();
+  }
+
+  Future<void> removeOwnedListingId({
+    required String itemType,
+    required String localId,
+    required String listingId,
+  }) async {
+    await _load();
+    final k = _key(itemType, localId);
+    final existing = _cache![k];
+    if (existing == null) return;
+    final ids = List<String>.from(existing.listingIds)..remove(listingId);
+    if (ids.isEmpty && existing.source == null) {
+      _cache!.remove(k);
+    } else {
+      _cache![k] = _Link(listingIds: ids, source: existing.source);
+    }
     await _save();
   }
 
@@ -103,14 +121,14 @@ class MarketplaceLinksLocalDataSource {
     final k = _key(itemType, localId);
     final existing = _cache![k];
     _cache![k] = _Link(
-      lineageId: existing?.lineageId,
+      listingIds: existing?.listingIds ?? const <String>[],
       source: source,
     );
     await _save();
   }
 
   /// Drop the entire link record for an item (used when the local item is
-  /// deleted, or when the owner asks to "start fresh lineage").
+  /// deleted).
   Future<void> clear({
     required String itemType,
     required String localId,
@@ -120,77 +138,31 @@ class MarketplaceLinksLocalDataSource {
     await _save();
   }
 
-  /// Drop only the lineage_id (owner side) without touching the source.
-  Future<void> clearOwnerLineageId({
-    required String itemType,
-    required String localId,
-  }) async {
-    await _load();
-    final k = _key(itemType, localId);
-    final existing = _cache![k];
-    if (existing == null) return;
-    if (existing.source == null) {
-      _cache!.remove(k);
-    } else {
-      _cache![k] = _Link(lineageId: null, source: existing.source);
-    }
-    await _save();
-  }
-
-  /// Used by `MarketplaceSyncService` to check every downloaded item in one
-  /// pass. Returns only entries that carry a `MarketplaceSource` (i.e. items
-  /// the user actually downloaded from the marketplace).
-  Future<List<MarketplaceLinkEntry>> allReaderSources() async {
-    await _load();
-    final result = <MarketplaceLinkEntry>[];
-    for (final entry in _cache!.entries) {
-      final source = entry.value.source;
-      if (source == null) continue;
-      final parts = entry.key.split('\u0000');
-      if (parts.length != 2) continue;
-      result.add(MarketplaceLinkEntry(
-        itemType: parts[0],
-        localId: parts[1],
-        source: source,
-      ));
-    }
-    return result;
-  }
-
   /// Forces a re-read on next access (e.g. after the user signs out / in).
   void invalidateCache() {
     _cache = null;
   }
 }
 
-class MarketplaceLinkEntry {
-  final String itemType;
-  final String localId;
-  final MarketplaceSource source;
-  const MarketplaceLinkEntry({
-    required this.itemType,
-    required this.localId,
-    required this.source,
-  });
-}
-
 class _Link {
-  final String? lineageId;
+  final List<String> listingIds;
   final MarketplaceSource? source;
-  const _Link({this.lineageId, this.source});
+  const _Link({this.listingIds = const <String>[], this.source});
 
   Map<String, dynamic> toJson() => {
-        if (lineageId != null) 'lineage_id': lineageId,
+        if (listingIds.isNotEmpty) 'listing_ids': listingIds,
         if (source != null) 'source': source!.toJson(),
       };
 
   static _Link? fromJson(Object? raw) {
     if (raw is! Map) return null;
-    final lineageId = raw['lineage_id'];
-    final sourceRaw = raw['source'];
+    final idsRaw = raw['listing_ids'];
+    final listingIds = idsRaw is List
+        ? idsRaw.whereType<String>().toList()
+        : const <String>[];
     return _Link(
-      lineageId: lineageId is String ? lineageId : null,
-      source: MarketplaceSource.fromJson(sourceRaw),
+      listingIds: listingIds,
+      source: MarketplaceSource.fromJson(raw['source']),
     );
   }
 }
