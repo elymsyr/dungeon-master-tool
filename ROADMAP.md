@@ -2,7 +2,70 @@
 
 Tracked work for upcoming releases — bugs to fix and features to add. Items are grouped by type, not strictly ordered.
 
+## Bugs
+
+### `publish_listing_snapshot` RPC imzası uyumsuz
+`publishSnapshot` çağrısı `p_lineage_id` parametresi olmadan yapılıyor ama DB'deki fonksiyon hâlâ `p_lineage_id` bekliyor. Sonuç: PostgREST `PGRST202` — "Could not find the function ... in the schema cache".
+
+```
+PostgrestException(message: Could not find the function public.publish_listing_snapshot(p_changelog, p_content_hash, p_description, p_item_type, p_language, p_listing_id, p_payload_path, p_size_bytes, p_tags, p_title) in the schema cache, code: PGRST202, hint: Perhaps you meant to call the function public.publish_listing_snapshot(..., p_lineage_id, ...))
+```
+
+Cloud sync overhaul kapsamında lineage tamamen kaldırılacağı için RPC imzasını yeni (lineage'sız) forma hizalamak gerekiyor — migration + client çağrısı birlikte güncellenmeli.
+
+### `LandingScreen.dispose` sonrası `ref` kullanımı
+Android'de `_LandingScreenState.dispose` içinde widget dispose edildikten sonra `ref.read` çağrılıyor ve Riverpod patlıyor:
+
+```
+Bad state: Cannot use "ref" after the widget was disposed.
+#2 _LandingScreenState.dispose (landing_screen.dart:54)
+```
+
+`dispose` içindeki `ref` erişimini kaldır ya da dispose öncesinde snapshot'ını al.
+
+### Mesajlaşma: `conversations` RLS ihlali
+Yeni bir chat açılmaya çalışıldığında:
+
+```
+Could not open chat: PostgrestException(message: new row violates row-level security policy for table "conversations", code: 42501)
+```
+
+`conversations` tablosunun insert policy'si yeni konuşma oluşturan kullanıcıyı kapsamıyor. In-app messaging entegrasyonundan önce RLS policy'leri gözden geçirilmeli.
+
+### Media gallery cloud senkronizasyonu eksik
+- Bir entity'ye eklenen fotoğraflar world cloud'a atılıp başka cihazda indirildiğinde ne entity'de ne de media gallery'de görünüyor.
+- World local'den silindiğinde cloud'dan da siliniyor — silinmemeli.
+- Media gallery yedeklemesi otomatik olmamalı; sadece world yedeklenirken birlikte yedeklenmeli.
+- World yedeklemesi media gallery'yi de kapsamalı.
+- Silinen fotoğraflar cloud'dan geri indirilebilmeli (restore).
+
 ## Features
+
+### Tutorial metinlerinin detaylandırılması
+Uygulamanın her yerindeki tutorial/bilgilendirme metinleri tek tek gözden geçirilip her bölümü açıklayan, gerekirse detaylandıran şekilde genişletilecek. **Tüm uygulama dillerinde** eşdeğer içerik sunulmalı. Beta bilgilendirme yazısı da detaylandırılacak. Eklenecek temel kavram açıklamaları:
+
+- **Worlds** — bir dünyanın tamamı; her şeyin buluştuğu ve tüm içeriği barındırabilecek yer. Sadece temel bir dünya yapısı indirip üstüne karakter/NPC ekleyerek oyun haline getirilebilir, ya da doğrudan bir oyun olarak kurgulanabilir. Worlds konusunda her şey serbest.
+- **Templates** — oyunun en temel yapısını oluşturur. Amaç: farklı setting'leri oyuncuyla buluşturmak ve oyunculara custom setting design yapma ve paylaşma fırsatı sağlamak.
+- **Packages** — bir setting/template üzerine, dünyaya direkt eklemek için oluşturulmuş kartlar. Örneğin hazır bir büyü paketi ya da şifalı bitki paketi oyuna direkt eklenip kullanılabilir.
+- **Marketplace** — oyuncuların oluşturduğu içerikleri paylaşabilmesi için ücretsiz bir platform.
+
+### Versiyon ekranında Markdown desteği
+Sağ üstteki versiyon yazısına tıklandığında açılan içerik Markdown formatında render edilsin (changelog, release notes vb. düzgün görünsün).
+
+### Uygulama içi bug report sistemi (Supabase)
+Kullanıcıların doğrudan uygulama üzerinden bug report gönderebileceği bir akış. Supabase'e bağlanacak. Kurallar:
+
+- Resim gönderme yok; sadece metin.
+- Gönderilen bug raporları admin panelden görüntülenebilsin.
+- Admin panelden gönderen kullanıcıya mesaj atılabilsin.
+- Admin panelde her kullanıcının ne kadar depolama alanı harcadığı görünsün.
+- Her kullanıcının en son ne zaman uygulamaya girdiği relative format ile gösterilsin (`1h`, `6h`, `1w`, `1mo`, `1y`...).
+
+### Feed paylaşımlarına marketplace item eklenebilmesi
+Feed bölümünde yapılan paylaşımlara, resim gibi, marketplace item'ları da eklenebilsin. Böylece bir paylaşım hem marketplace item'ını hem de içerik yazısını birlikte taşıyabilsin.
+
+### Feed'de "Discover People" tab'ı
+Feed'de marketplace kısmının yanına yeni bir tab eklenecek. Bu tab kullanıcı listesi gösterecek — amacı discover people / find new people tarzında bir sayfa ile insanların birbirini bulmasını sağlamak.
 
 ### Cloud sync overhaul
 Replace the current snapshot/lineage flow with a simpler model:
