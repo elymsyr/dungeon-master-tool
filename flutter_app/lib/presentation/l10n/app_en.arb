@@ -314,8 +314,6 @@
   "publishDialogTitleLabel": "Title",
   "publishDialogChangelogLabel": "Changelog (optional)",
   "publishDialogChangelogHint": "What's new in this version?",
-  "publishDialogFreshLineage": "Start fresh lineage",
-  "publishDialogFreshLineageHint": "Publish as an independent listing instead of a new version of the existing one. Existing downloaders will not be notified.",
   "publishDialogImmutabilityNoticeNew": "A new immutable snapshot will be created. Snapshots cannot be edited later — only deleted.",
   "publishDialogImmutabilityNoticeExisting": "A new immutable snapshot will be created. Previous snapshots in this lineage will be marked as outdated. Snapshots cannot be edited later — only deleted.",
   "publishDialogMissingFields": "Please fill in: {fields}",
@@ -400,5 +398,22 @@
   "subsBetaLeaveSuccess": "You have left the beta.",
   "subsBetaLeaveFailed": "Couldn't leave the beta. Try again later.",
 
-  "feedPostRateLimited": "You're posting too fast. Try again in a moment."
+  "feedPostRateLimited": "You're posting too fast. Try again in a moment.",
+
+  "messagesComposeTooltip": "New chat",
+  "messagesComposeNewDirect": "New direct message",
+  "messagesComposeNewGroup": "New group chat",
+  "messagesEmptyTitle": "No conversations yet",
+  "messagesEmptySubtitle": "Tap + to start a new conversation.",
+  "messagesNoMessagesYet": "No messages yet",
+  "messagesInputHint": "Message",
+  "newChatPickerTitleDirect": "New direct message",
+  "newChatPickerTitleGroup": "New group chat",
+  "newChatPickerGroupTitleLabel": "Group title",
+  "newChatPickerGroupTitleHint": "e.g. Tuesday night campaign",
+  "newChatPickerEmpty": "You don't follow anyone yet and no one follows you.",
+  "newChatPickerStart": "Start chat",
+  "newChatPickerCreate": "Create group",
+  "newChatPickerError": "Could not start chat: {error}",
+  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } }
 }

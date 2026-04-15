@@ -314,8 +314,6 @@
   "publishDialogTitleLabel": "Başlık",
   "publishDialogChangelogLabel": "Değişiklik notu (opsiyonel)",
   "publishDialogChangelogHint": "Bu sürümde neler yeni?",
-  "publishDialogFreshLineage": "Yeni bir soy başlat",
-  "publishDialogFreshLineageHint": "Mevcut listingin yeni bir sürümü olarak değil, bağımsız bir listing olarak yayınla. Mevcut indirenlere bildirim gitmez.",
   "publishDialogImmutabilityNoticeNew": "Yeni bir değiştirilemez snapshot oluşturulacak. Snapshot'lar daha sonra düzenlenemez — yalnızca silinebilir.",
   "publishDialogImmutabilityNoticeExisting": "Yeni bir değiştirilemez snapshot oluşturulacak. Bu soydaki önceki snapshot'lar eski olarak işaretlenecek. Snapshot'lar daha sonra düzenlenemez — yalnızca silinebilir.",
   "publishDialogMissingFields": "Lütfen doldur: {fields}",
@@ -400,5 +398,22 @@
   "subsBetaLeaveSuccess": "Beta'dan ayrıldın.",
   "subsBetaLeaveFailed": "Beta'dan ayrılma başarısız. Daha sonra tekrar dene.",
 
-  "feedPostRateLimited": "Çok hızlı post atıyorsun. Biraz sonra tekrar dene."
+  "feedPostRateLimited": "Çok hızlı post atıyorsun. Biraz sonra tekrar dene.",
+
+  "messagesComposeTooltip": "Yeni sohbet",
+  "messagesComposeNewDirect": "Yeni birebir mesaj",
+  "messagesComposeNewGroup": "Yeni grup sohbeti",
+  "messagesEmptyTitle": "Henüz sohbet yok",
+  "messagesEmptySubtitle": "Yeni bir sohbet başlatmak için + butonuna dokun.",
+  "messagesNoMessagesYet": "Henüz mesaj yok",
+  "messagesInputHint": "Mesaj",
+  "newChatPickerTitleDirect": "Yeni birebir mesaj",
+  "newChatPickerTitleGroup": "Yeni grup sohbeti",
+  "newChatPickerGroupTitleLabel": "Grup başlığı",
+  "newChatPickerGroupTitleHint": "ör. Salı akşamı kampanyası",
+  "newChatPickerEmpty": "Henüz kimseyi takip etmiyorsun ve kimse seni takip etmiyor.",
+  "newChatPickerStart": "Sohbeti başlat",
+  "newChatPickerCreate": "Grup oluştur",
+  "newChatPickerError": "Sohbet başlatılamadı: {error}",
+  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } }
 }

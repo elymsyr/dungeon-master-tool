@@ -314,8 +314,6 @@
   "publishDialogTitleLabel": "Titel",
   "publishDialogChangelogLabel": "Änderungsprotokoll (optional)",
   "publishDialogChangelogHint": "Was ist neu in dieser Version?",
-  "publishDialogFreshLineage": "Neue Linie starten",
-  "publishDialogFreshLineageHint": "Veröffentliche als eigenständigen Eintrag statt als neue Version eines bestehenden. Bestehende Downloader werden nicht benachrichtigt.",
   "publishDialogImmutabilityNoticeNew": "Es wird ein neuer unveränderlicher Snapshot erstellt. Snapshots können später nicht bearbeitet, sondern nur gelöscht werden.",
   "publishDialogImmutabilityNoticeExisting": "Es wird ein neuer unveränderlicher Snapshot erstellt. Vorherige Snapshots dieser Linie werden als veraltet markiert. Snapshots können später nicht bearbeitet, sondern nur gelöscht werden.",
   "publishDialogMissingFields": "Bitte ausfüllen: {fields}",
@@ -400,5 +398,22 @@
   "subsBetaLeaveSuccess": "Du hast die Beta verlassen.",
   "subsBetaLeaveFailed": "Beta konnte nicht verlassen werden. Bitte später erneut versuchen.",
 
-  "feedPostRateLimited": "Du postest zu schnell. Bitte gleich noch einmal versuchen."
+  "feedPostRateLimited": "Du postest zu schnell. Bitte gleich noch einmal versuchen.",
+
+  "messagesComposeTooltip": "Neuer Chat",
+  "messagesComposeNewDirect": "Neue Direktnachricht",
+  "messagesComposeNewGroup": "Neuer Gruppenchat",
+  "messagesEmptyTitle": "Noch keine Unterhaltungen",
+  "messagesEmptySubtitle": "Tippe auf +, um eine neue Unterhaltung zu starten.",
+  "messagesNoMessagesYet": "Noch keine Nachrichten",
+  "messagesInputHint": "Nachricht",
+  "newChatPickerTitleDirect": "Neue Direktnachricht",
+  "newChatPickerTitleGroup": "Neuer Gruppenchat",
+  "newChatPickerGroupTitleLabel": "Gruppentitel",
+  "newChatPickerGroupTitleHint": "z. B. Dienstagabend-Kampagne",
+  "newChatPickerEmpty": "Du folgst noch niemandem und niemand folgt dir.",
+  "newChatPickerStart": "Chat starten",
+  "newChatPickerCreate": "Gruppe erstellen",
+  "newChatPickerError": "Chat konnte nicht gestartet werden: {error}",
+  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } }
 }

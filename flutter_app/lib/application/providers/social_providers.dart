@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/profanity_filter.dart';
@@ -315,6 +316,26 @@ final messagesStreamProvider =
     StreamProvider.family<List<ChatMessage>, String>((ref, conversationId) {
   if (!SupabaseConfig.isConfigured) return const Stream.empty();
   return ref.read(messagesRemoteDsProvider).streamMessages(conversationId);
+});
+
+/// `messages` tablosuna realtime subscription kurar; her yeni insert
+/// geldiğinde `myConversationsProvider` invalidate edilir, böylece Messages
+/// tab'ındaki conversation listesi otomatik güncellenir. Supabase RLS
+/// payload'u zaten kullanıcının üyesi olduğu konuşmalarla sınırlar.
+final conversationListRealtimeProvider = Provider<void>((ref) {
+  if (!SupabaseConfig.isConfigured) return;
+  final auth = ref.watch(authProvider);
+  if (auth == null) return;
+  final client = Supabase.instance.client;
+  final channel = client.channel('public:messages:inbox:${auth.uid}')
+    ..onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'messages',
+      callback: (_) => ref.invalidate(myConversationsProvider),
+    )
+    ..subscribe();
+  ref.onDispose(() => client.removeChannel(channel));
 });
 
 // ── Marketplace (public marketplace_listings) ───────────────────────
