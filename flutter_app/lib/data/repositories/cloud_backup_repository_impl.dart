@@ -45,6 +45,10 @@ class CloudBackupRepositoryImpl implements CloudBackupRepository {
   Future<int> getTotalStorageUsed() => _remoteDs.getTotalStorageUsed();
 
   @override
+  Future<DateTime?> fetchLatestRemoteCreatedAt() =>
+      _remoteDs.fetchLatestCreatedAt();
+
+  @override
   Future<CloudBackupMeta> uploadBackup(
     String itemName,
     String itemId,

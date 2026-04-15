@@ -12,6 +12,7 @@ import '../../domain/repositories/cloud_backup_repository.dart';
 import 'auth_provider.dart';
 import 'beta_provider.dart';
 import 'campaign_provider.dart';
+import 'cloud_remote_check_provider.dart';
 import 'package_provider.dart';
 import 'save_state_provider.dart';
 import 'template_provider.dart';
@@ -228,6 +229,9 @@ class CloudBackupOperationNotifier
           await _ref.read(packageRepositoryProvider).save(name, data);
           _ref.invalidate(packageListProvider);
       }
+
+      // Successful restore — we're caught up with what's on remote.
+      _ref.read(cloudRemoteHasNewerProvider.notifier).markCaughtUp();
 
       state = const CloudBackupOperationState.success();
       return true;

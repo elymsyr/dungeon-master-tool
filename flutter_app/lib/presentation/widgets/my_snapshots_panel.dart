@@ -7,18 +7,27 @@ import '../../domain/entities/marketplace_listing.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 
-/// Owner-side: list of every snapshot in a single lineage. The current
-/// (live) snapshot is highlighted; everything else is a historical row
-/// the owner can delete. There is no "edit" — snapshots are immutable.
+/// Owner-side: list of every listing the user has published from this local
+/// item, newest first. Each row is independent and can be deleted on its
+/// own — there is no "current" concept.
 class MySnapshotsPanel extends ConsumerWidget {
-  final String lineageId;
-  const MySnapshotsPanel({super.key, required this.lineageId});
+  final String itemType;
+  final String localId;
+
+  const MySnapshotsPanel({
+    super.key,
+    required this.itemType,
+    required this.localId,
+  });
+
+  ({String itemType, String localId}) get _key =>
+      (itemType: itemType, localId: localId);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final historyAsync = ref.watch(lineageHistoryProvider(lineageId));
+    final historyAsync = ref.watch(ownedSnapshotsProvider(_key));
 
     return historyAsync.when(
       loading: () => const Padding(
@@ -51,10 +60,11 @@ class MySnapshotsPanel extends ConsumerWidget {
                 ),
               ),
             ),
-            for (var i = 0; i < snapshots.length; i++)
+            for (final snapshot in snapshots)
               _SnapshotRow(
-                listing: snapshots[i],
-                versionIndex: snapshots.length - i,
+                listing: snapshot,
+                itemType: itemType,
+                localId: localId,
                 palette: palette,
               ),
           ],
@@ -66,11 +76,13 @@ class MySnapshotsPanel extends ConsumerWidget {
 
 class _SnapshotRow extends ConsumerStatefulWidget {
   final MarketplaceListing listing;
-  final int versionIndex;
+  final String itemType;
+  final String localId;
   final DmToolColors palette;
   const _SnapshotRow({
     required this.listing,
-    required this.versionIndex,
+    required this.itemType,
+    required this.localId,
     required this.palette,
   });
 
@@ -87,11 +99,7 @@ class _SnapshotRowState extends ConsumerState<_SnapshotRow> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l10n.mySnapshotsDeleteTitle),
-        content: Text(
-          widget.listing.isCurrent
-              ? l10n.mySnapshotsDeleteCurrentBody
-              : l10n.mySnapshotsDeleteHistoricalBody,
-        ),
+        content: Text(l10n.mySnapshotsDeleteHistoricalBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -113,7 +121,11 @@ class _SnapshotRowState extends ConsumerState<_SnapshotRow> {
     try {
       await ref
           .read(marketplaceListingNotifierProvider.notifier)
-          .deleteListing(widget.listing);
+          .deleteListing(
+            listing: widget.listing,
+            itemType: widget.itemType,
+            localId: widget.localId,
+          );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.mySnapshotsDeleted)),
@@ -141,36 +153,11 @@ class _SnapshotRowState extends ConsumerState<_SnapshotRow> {
       margin: const EdgeInsets.only(top: 4),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: l.isCurrent
-            ? palette.featureCardAccent.withValues(alpha: 0.08)
-            : null,
-        border: Border.all(
-          color: l.isCurrent
-              ? palette.featureCardAccent
-              : palette.featureCardBorder,
-        ),
+        border: Border.all(color: palette.featureCardBorder),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: l.isCurrent
-                  ? palette.featureCardAccent
-                  : palette.sidebarLabelSecondary,
-              borderRadius: BorderRadius.circular(3),
-            ),
-            child: Text(
-              'v${widget.versionIndex}',
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,18 +181,6 @@ class _SnapshotRowState extends ConsumerState<_SnapshotRow> {
               ],
             ),
           ),
-          if (l.isCurrent)
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: Text(
-                l10n.mySnapshotsCurrentBadge,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: palette.featureCardAccent,
-                ),
-              ),
-            ),
           IconButton(
             onPressed: _busy ? null : _delete,
             tooltip: l10n.mySnapshotsDeleteTooltip,

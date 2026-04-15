@@ -9,11 +9,11 @@ import '../../../domain/entities/marketplace_listing.dart';
 
 /// `marketplace_listings` tablosu + `shared-payloads` Storage bucket.
 ///
-/// Listing rows are immutable once inserted (DB trigger enforces this); a
-/// new "version" is just a new row in the same lineage. The bucket reuses
-/// the existing `shared-payloads` bucket from migration 004 — its RLS
-/// policies key on the leading folder being the owner's `auth.uid()`,
-/// which is satisfied by our path layout `{owner_id}/listings/{listing_id}.json.gz`.
+/// Each publish is an independent immutable row — no lineage / supersede
+/// relationship. The bucket reuses the existing `shared-payloads` bucket
+/// from migration 004 — its RLS policies key on the leading folder being
+/// the owner's `auth.uid()`, which is satisfied by our path layout
+/// `{owner_id}/listings/{listing_id}.json.gz`.
 class MarketplaceListingsRemoteDataSource {
   static const _table = 'marketplace_listings';
   static const _bucket = 'shared-payloads';
@@ -27,16 +27,10 @@ class MarketplaceListingsRemoteDataSource {
     return user.id;
   }
 
-  /// Publish a fresh immutable snapshot. If [lineageId] is provided the new
-  /// listing joins that lineage and supersedes its previous current snapshot.
-  /// If null, a brand-new lineage UUID is generated server-side and returned
-  /// in the resulting [MarketplaceListing.lineageId].
-  ///
-  /// The caller is expected to have computed [contentHash] over [payload]
-  /// using [computePayloadContentHash] and short-circuit when the hash
-  /// matches the lineage's current snapshot (no-op publish).
+  /// Publish a fresh immutable snapshot. Each call produces a standalone
+  /// listing; the caller has no obligation to deduplicate against prior
+  /// publishes.
   Future<MarketplaceListing> publishSnapshot({
-    String? lineageId,
     required String itemType,
     required String title,
     String? description,
@@ -65,7 +59,6 @@ class MarketplaceListingsRemoteDataSource {
     try {
       await _client.rpc('publish_listing_snapshot', params: {
         'p_listing_id': listingId,
-        'p_lineage_id': lineageId,
         'p_item_type': itemType,
         'p_title': title,
         'p_description': description,
@@ -84,8 +77,6 @@ class MarketplaceListingsRemoteDataSource {
       rethrow;
     }
 
-    // RPC returns only ids; fetch the freshly inserted row to get the full
-    // model (created_at, lineage_id, etc).
     final row = await _client.from(_table).select().eq('id', listingId).single();
     return _rowToListing(row);
   }
@@ -107,8 +98,7 @@ class MarketplaceListingsRemoteDataSource {
     return payload;
   }
 
-  /// Owner deletes a snapshot. Removes the DB row (RPC promotes the next
-  /// older snapshot to current if needed) and the Storage blob.
+  /// Owner deletes a single listing. Removes the DB row and the Storage blob.
   Future<void> deleteListing({
     required String listingId,
     required String payloadPath,
@@ -124,47 +114,8 @@ class MarketplaceListingsRemoteDataSource {
     }
   }
 
-  /// Lightweight drift check: returns the *current* snapshot for each given
-  /// lineage id. Lineages with no surviving rows (owner deleted all of
-  /// them) are simply absent from the result map — the caller treats those
-  /// as "removed".
-  ///
-  /// Map key is the lineage id.
-  Future<Map<String, MarketplaceListing>> currentVersionsForLineages(
-    List<String> lineageIds,
-  ) async {
-    if (lineageIds.isEmpty) return const {};
-    final rows = await _client.rpc(
-      'lineage_current_versions',
-      params: {'p_lineage_ids': lineageIds},
-    ) as List<dynamic>;
-    final result = <String, MarketplaceListing>{};
-    for (final r in rows) {
-      final row = r as Map<String, dynamic>;
-      // RPC return shape — flatten field names match the table.
-      final listing = MarketplaceListing(
-        id: row['listing_id'] as String,
-        ownerId: row['owner_id'] as String,
-        itemType: row['item_type'] as String,
-        lineageId: row['lineage_id'] as String,
-        isCurrent: true,
-        title: row['title'] as String,
-        description: row['description'] as String?,
-        language: row['language'] as String?,
-        tags: _readTags(row['tags']),
-        changelog: row['changelog'] as String?,
-        contentHash: row['content_hash'] as String,
-        payloadPath: row['payload_path'] as String,
-        sizeBytes: (row['size_bytes'] as num?)?.toInt() ?? 0,
-        createdAt: DateTime.parse(row['created_at'] as String),
-      );
-      result[listing.lineageId] = listing;
-    }
-    return result;
-  }
-
-  /// Marketplace browse: all `is_current=true` listings, with optional
-  /// filters and a join on `profiles.username` for the author column.
+  /// Marketplace browse: all listings with optional filters and a join on
+  /// `profiles.username` for the author column.
   Future<List<MarketplaceListing>> listAllCurrent({
     String? itemType,
     String? language,
@@ -173,8 +124,7 @@ class MarketplaceListingsRemoteDataSource {
   }) async {
     var query = _client
         .from(_table)
-        .select('*, profiles!marketplace_listings_owner_id_fkey(username)')
-        .eq('is_current', true);
+        .select('*, profiles!marketplace_listings_owner_id_fkey(username)');
     if (itemType != null) query = query.eq('item_type', itemType);
     if (language != null && language.isNotEmpty) query = query.eq('language', language);
     if (tag != null && tag.isNotEmpty) query = query.contains('tags', [tag]);
@@ -182,24 +132,29 @@ class MarketplaceListingsRemoteDataSource {
     return rows.map(_rowToListing).toList();
   }
 
-  /// Owner view: all snapshots in a single lineage, ordered newest first.
-  /// Powers the "My snapshots" panel.
-  Future<List<MarketplaceListing>> listLineageHistory(String lineageId) async {
+  /// Fetch a set of listings by id. Preserves the input order so the
+  /// "My Snapshots" panel can display newest-first from the stored id list.
+  Future<List<MarketplaceListing>> fetchListingsByIds(List<String> ids) async {
+    if (ids.isEmpty) return const [];
     final rows = await _client
         .from(_table)
-        .select()
-        .eq('lineage_id', lineageId)
-        .order('created_at', ascending: false);
-    return rows.map(_rowToListing).toList();
+        .select('*, profiles!marketplace_listings_owner_id_fkey(username)')
+        .inFilter('id', ids);
+    final byId = {
+      for (final r in rows.map(_rowToListing)) r.id: r,
+    };
+    return [
+      for (final id in ids)
+        if (byId[id] != null) byId[id]!,
+    ];
   }
 
-  /// All current listings owned by [ownerId] (profile screen).
+  /// All listings owned by [ownerId] (profile screen).
   Future<List<MarketplaceListing>> listCurrentByOwner(String ownerId) async {
     final rows = await _client
         .from(_table)
         .select()
         .eq('owner_id', ownerId)
-        .eq('is_current', true)
         .order('created_at', ascending: false);
     return rows.map(_rowToListing).toList();
   }
@@ -221,9 +176,6 @@ class MarketplaceListingsRemoteDataSource {
       id: row['id'] as String,
       ownerId: row['owner_id'] as String,
       itemType: row['item_type'] as String,
-      lineageId: row['lineage_id'] as String,
-      isCurrent: (row['is_current'] as bool?) ?? true,
-      supersededBy: row['superseded_by'] as String?,
       title: row['title'] as String,
       description: row['description'] as String?,
       language: row['language'] as String?,
