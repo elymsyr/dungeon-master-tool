@@ -56,7 +56,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
   int _tabIndex = 0;
   bool _editMode = false;
   String? _selectedEntityId;
-  final GlobalKey _screenshotKey = GlobalKey();
 
   // Left sidebar state
   bool _sidebarOpen = true;
@@ -502,7 +501,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                   case 'quit':
                     _exitToHub();
                   case 'bug':
-                    BugReportDialog.show(context, screenshotKey: _screenshotKey);
+                    BugReportDialog.show(context);
                   default:
                     // Theme selection
                     if (action.startsWith('theme:')) {
@@ -610,10 +609,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
             IconButton(
               icon: const Icon(Icons.bug_report_outlined, size: 20),
               tooltip: 'Report a Bug',
-              onPressed: () => BugReportDialog.show(
-                context,
-                screenshotKey: _screenshotKey,
-              ),
+              onPressed: () => BugReportDialog.show(context),
             ),
           ],
           const SizedBox(width: 4),
@@ -622,7 +618,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
       // --- Body: Responsive Layout ---
       body: RepaintBoundary(
-        key: _screenshotKey,
         child: switch (screen) {
         // Desktop: Sidebar (sol) + Tab bar + content + PDF sidebar (overlay)
         ScreenType.desktop => Stack(

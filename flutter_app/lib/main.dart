@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -151,6 +152,16 @@ class _BootstrapGateState extends State<_BootstrapGate> {
             url: SupabaseConfig.url,
             anonKey: SupabaseConfig.anonKey,
           );
+          // Fire-and-forget: updates profiles.last_active_at (and
+          // beta_participants.last_active_at if user is in beta).
+          if (Supabase.instance.client.auth.currentUser != null) {
+            unawaited(
+              Supabase.instance.client
+                  .rpc('user_heartbeat')
+                  .then<void>((_) {})
+                  .catchError((_) {}),
+            );
+          }
         } catch (e, st) {
           LogBuffer.instance.recordError(e, st, context: 'Supabase.init');
           debugPrint('Supabase init failed – online features disabled: $e');

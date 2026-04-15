@@ -6,6 +6,7 @@ import '../../application/providers/admin_provider.dart';
 import '../../application/providers/auth_provider.dart';
 import '../../application/providers/profile_provider.dart';
 import '../../core/config/supabase_config.dart';
+import '../dialogs/bug_report_dialog.dart';
 import '../dialogs/confirm_sign_out_dialog.dart';
 import '../theme/dm_tool_colors.dart';
 import 'profile_avatar.dart';
@@ -61,6 +62,8 @@ class ProfileMenuButton extends ConsumerWidget {
             context.push('/profile/me?edit=1');
           case 'admin':
             context.push('/admin');
+          case 'bug_report':
+            BugReportDialog.show(context);
           case 'signout':
             confirmAndSignOut(context, ref);
         }
@@ -93,6 +96,14 @@ class ProfileMenuButton extends ConsumerWidget {
             ]),
           ),
         const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: 'bug_report',
+          child: Row(children: [
+            Icon(Icons.bug_report_outlined, size: 18, color: palette.sidebarLabelSecondary),
+            const SizedBox(width: 12),
+            Text('Report a bug', style: TextStyle(color: palette.tabActiveText)),
+          ]),
+        ),
         PopupMenuItem<String>(
           value: 'signout',
           child: Row(children: [
