@@ -4,34 +4,6 @@ Tracked work for upcoming releases — bugs to fix and features to add. Items ar
 
 ## Bugs
 
-### `publish_listing_snapshot` RPC imzası uyumsuz
-`publishSnapshot` çağrısı `p_lineage_id` parametresi olmadan yapılıyor ama DB'deki fonksiyon hâlâ `p_lineage_id` bekliyor. Sonuç: PostgREST `PGRST202` — "Could not find the function ... in the schema cache".
-
-```
-PostgrestException(message: Could not find the function public.publish_listing_snapshot(p_changelog, p_content_hash, p_description, p_item_type, p_language, p_listing_id, p_payload_path, p_size_bytes, p_tags, p_title) in the schema cache, code: PGRST202, hint: Perhaps you meant to call the function public.publish_listing_snapshot(..., p_lineage_id, ...))
-```
-
-Cloud sync overhaul kapsamında lineage tamamen kaldırılacağı için RPC imzasını yeni (lineage'sız) forma hizalamak gerekiyor — migration + client çağrısı birlikte güncellenmeli.
-
-### `LandingScreen.dispose` sonrası `ref` kullanımı
-Android'de `_LandingScreenState.dispose` içinde widget dispose edildikten sonra `ref.read` çağrılıyor ve Riverpod patlıyor:
-
-```
-Bad state: Cannot use "ref" after the widget was disposed.
-#2 _LandingScreenState.dispose (landing_screen.dart:54)
-```
-
-`dispose` içindeki `ref` erişimini kaldır ya da dispose öncesinde snapshot'ını al.
-
-### Mesajlaşma: `conversations` RLS ihlali
-Yeni bir chat açılmaya çalışıldığında:
-
-```
-Could not open chat: PostgrestException(message: new row violates row-level security policy for table "conversations", code: 42501)
-```
-
-`conversations` tablosunun insert policy'si yeni konuşma oluşturan kullanıcıyı kapsamıyor. In-app messaging entegrasyonundan önce RLS policy'leri gözden geçirilmeli.
-
 ### Media gallery cloud senkronizasyonu eksik
 - Bir entity'ye eklenen fotoğraflar world cloud'a atılıp başka cihazda indirildiğinde ne entity'de ne de media gallery'de görünüyor.
 - World local'den silindiğinde cloud'dan da siliniyor — silinmemeli.
@@ -80,8 +52,14 @@ Today there is one generic package type. Split it into two distinct kinds:
 - **Entity Card Pack** — current behavior (schema + entities).
 - **Sound Pack** — opens directly into the Soundpad sidebar as the landing view. Users can add tracks from the pack straight into their personal library.
 
-### In-app messaging integration
-Wire the existing `messages_remote_ds` + Realtime channels into the actual Messages tab end-to-end: conversation list, unread state, real-time updates, send/receive, mobile layout.
+### In-app messaging — kalan işler
+Messages tab'ının temel akışı artık canlı: DM + grup compose, realtime conversation listesi, `SECURITY DEFINER` RPC'ler (`open_direct_conversation`, `create_group_conversation`). Kalanlar:
+
+- Unread state (tablo + entity + badge).
+- Typing / presence indikatörleri.
+- Message pagination (şu an `fetchMessages` 200 hard-cap).
+- Grup yönetimi (üye ekle/çıkar, grup silme).
+- Member picker'da username arama (bugün sadece follow+follower union'ı).
 
 ### Profile pictures
 Avatar upload + display across the app: profile screen, post author, message thread header, players list. Storage in the existing avatar bucket.

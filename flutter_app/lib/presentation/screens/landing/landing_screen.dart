@@ -28,6 +28,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   String? _error;
   String? _info;
 
+  ValueNotifier<String?>? _banMessageNotifier;
+
   @override
   void initState() {
     super.initState();
@@ -43,16 +45,17 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
         _maybeShowBanDialog();
       });
       // Ban mesajı dinleyicisi — auto sign-out (startup/stream/login) tek
-      // noktadan buradan tetiklenir.
-      ref.read(authProvider.notifier).banMessageNotifier.addListener(_maybeShowBanDialog);
+      // noktadan buradan tetiklenir. Notifier referansını snapshot alıyoruz
+      // çünkü dispose() sırasında ref.read kullanmak ProviderScope teardown
+      // sonrası "ref after dispose" hatasına yol açıyor.
+      _banMessageNotifier = ref.read(authProvider.notifier).banMessageNotifier
+        ..addListener(_maybeShowBanDialog);
     }
   }
 
   @override
   void dispose() {
-    if (SupabaseConfig.isConfigured) {
-      ref.read(authProvider.notifier).banMessageNotifier.removeListener(_maybeShowBanDialog);
-    }
+    _banMessageNotifier?.removeListener(_maybeShowBanDialog);
     _emailController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();

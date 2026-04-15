@@ -314,8 +314,6 @@
   "publishDialogTitleLabel": "Titre",
   "publishDialogChangelogLabel": "Notes de version (facultatif)",
   "publishDialogChangelogHint": "Quoi de neuf dans cette version ?",
-  "publishDialogFreshLineage": "Démarrer une nouvelle lignée",
-  "publishDialogFreshLineageHint": "Publier en tant qu'annonce indépendante au lieu d'une nouvelle version de l'existante. Les téléchargeurs existants ne seront pas notifiés.",
   "publishDialogImmutabilityNoticeNew": "Un nouvel instantané immuable sera créé. Les instantanés ne peuvent pas être modifiés ultérieurement — seulement supprimés.",
   "publishDialogImmutabilityNoticeExisting": "Un nouvel instantané immuable sera créé. Les instantanés précédents de cette lignée seront marqués comme obsolètes. Les instantanés ne peuvent pas être modifiés ultérieurement — seulement supprimés.",
   "publishDialogMissingFields": "Veuillez remplir : {fields}",
@@ -400,5 +398,22 @@
   "subsBetaLeaveSuccess": "Vous avez quitté la bêta.",
   "subsBetaLeaveFailed": "Impossible de quitter la bêta. Réessayez plus tard.",
 
-  "feedPostRateLimited": "Vous postez trop vite. Réessayez dans un instant."
+  "feedPostRateLimited": "Vous postez trop vite. Réessayez dans un instant.",
+
+  "messagesComposeTooltip": "Nouvelle discussion",
+  "messagesComposeNewDirect": "Nouveau message direct",
+  "messagesComposeNewGroup": "Nouvelle discussion de groupe",
+  "messagesEmptyTitle": "Aucune conversation pour l'instant",
+  "messagesEmptySubtitle": "Appuyez sur + pour démarrer une nouvelle conversation.",
+  "messagesNoMessagesYet": "Aucun message pour l'instant",
+  "messagesInputHint": "Message",
+  "newChatPickerTitleDirect": "Nouveau message direct",
+  "newChatPickerTitleGroup": "Nouvelle discussion de groupe",
+  "newChatPickerGroupTitleLabel": "Titre du groupe",
+  "newChatPickerGroupTitleHint": "ex. Campagne du mardi soir",
+  "newChatPickerEmpty": "Vous ne suivez personne et personne ne vous suit.",
+  "newChatPickerStart": "Démarrer la discussion",
+  "newChatPickerCreate": "Créer le groupe",
+  "newChatPickerError": "Impossible de démarrer la discussion : {error}",
+  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } }
 }

@@ -71,49 +71,25 @@ class MessagesRemoteDataSource {
   }
 
   /// Bir kullanıcı ile DM aç (varsa mevcudunu döner, yoksa oluşturur).
+  /// SECURITY DEFINER RPC kullanır — RLS sıralaması nedeniyle direkt insert
+  /// çalışmıyordu (bkz. migration 010).
   Future<Conversation> openDirect(String otherUserId) async {
     final uid = _userId;
-    // Kendi membership'lerini al, sonra her birinin diğer üyesini kontrol et.
-    final myConvs = await _client
-        .from(_members)
-        .select('conversation_id')
-        .eq('user_id', uid);
-    for (final r in myConvs) {
-      final convId = r['conversation_id'] as String;
-      final conv = await _client
-          .from(_conversations)
-          .select('is_group')
-          .eq('id', convId)
-          .maybeSingle();
-      if (conv == null || conv['is_group'] == true) continue;
-
-      final members = await _client
-          .from(_members)
-          .select('user_id')
-          .eq('conversation_id', convId);
-      final ids = members.map((m) => m['user_id'] as String).toSet();
-      if (ids.length == 2 && ids.contains(otherUserId)) {
-        // Mevcut DM bulundu
-        return (await fetchMyConversations()).firstWhere((c) => c.id == convId);
-      }
-    }
-
-    // Yoksa yeni oluştur.
-    final created = await _client
+    final convId = await _client.rpc(
+      'open_direct_conversation',
+      params: {'p_other_user': otherUserId},
+    ) as String;
+    final row = await _client
         .from(_conversations)
-        .insert({'is_group': false, 'created_by': uid})
-        .select()
+        .select('*')
+        .eq('id', convId)
         .single();
-    final convId = created['id'] as String;
-    await _client.from(_members).insert([
-      {'conversation_id': convId, 'user_id': uid},
-      {'conversation_id': convId, 'user_id': otherUserId},
-    ]);
     return Conversation(
       id: convId,
-      isGroup: false,
+      isGroup: (row['is_group'] as bool?) ?? false,
+      title: row['title'] as String?,
       memberIds: [uid, otherUserId],
-      createdAt: DateTime.parse(created['created_at'] as String),
+      createdAt: DateTime.parse(row['created_at'] as String),
     );
   }
 
@@ -124,21 +100,22 @@ class MessagesRemoteDataSource {
   }) async {
     final uid = _userId;
     final all = {uid, ...memberIds}.toList();
-    final created = await _client
+    final others = memberIds.where((m) => m != uid).toList();
+    final convId = await _client.rpc(
+      'create_group_conversation',
+      params: {'p_title': title, 'p_members': others},
+    ) as String;
+    final row = await _client
         .from(_conversations)
-        .insert({'is_group': true, 'title': title, 'created_by': uid})
-        .select()
+        .select('*')
+        .eq('id', convId)
         .single();
-    final convId = created['id'] as String;
-    await _client.from(_members).insert([
-      for (final m in all) {'conversation_id': convId, 'user_id': m},
-    ]);
     return Conversation(
       id: convId,
       isGroup: true,
       title: title,
       memberIds: all,
-      createdAt: DateTime.parse(created['created_at'] as String),
+      createdAt: DateTime.parse(row['created_at'] as String),
     );
   }
 
