@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/providers/follows_provider.dart';
+import '../../core/utils/error_format.dart';
 import '../../domain/entities/user_profile.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
@@ -51,7 +52,7 @@ class FollowListDialog extends ConsumerWidget {
           width: double.maxFinite,
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text('Error: $e',
+            error: (e, _) => Text(formatError(e),
                 style: TextStyle(fontSize: 12, color: palette.dangerBtnBg)),
             data: (list) {
               if (list.isEmpty) {

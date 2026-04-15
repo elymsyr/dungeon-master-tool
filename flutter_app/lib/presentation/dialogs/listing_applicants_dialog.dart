@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../application/providers/social_providers.dart';
+import '../../core/utils/error_format.dart';
 import '../../domain/entities/game_listing.dart';
 import '../../domain/entities/game_listing_application.dart';
 import '../l10n/app_localizations.dart';
@@ -39,7 +40,7 @@ class ListingApplicantsDialog extends ConsumerWidget {
           width: double.maxFinite,
           child: apps.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text('Error: $e',
+            error: (e, _) => Text(formatError(e),
                 style: TextStyle(fontSize: 12, color: palette.dangerBtnBg)),
             data: (list) {
               if (list.isEmpty) {

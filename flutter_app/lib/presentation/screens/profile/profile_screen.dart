@@ -13,6 +13,7 @@ import '../../../domain/entities/user_profile.dart';
 import '../../dialogs/follow_list_dialog.dart';
 import '../../dialogs/marketplace_preview_dialog.dart';
 import '../../dialogs/profile_edit_dialog.dart';
+import '../../../core/utils/error_format.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../l10n/app_localizations.dart';
 import '../social/messages_tab.dart';
@@ -59,7 +60,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, st) => Center(child: Text('Error: $e')),
+        error: (e, st) => Center(child: Text(formatError(e))),
         data: (profile) {
           if (profile == null) {
             // Henüz profil oluşturulmamış. Kendiyse edit dialog tetikle.
@@ -335,7 +336,7 @@ class _UserPostsTab extends ConsumerWidget {
           children: [
             Padding(
               padding: const EdgeInsets.all(24),
-              child: Text('Error: $e',
+              child: Text(formatError(e),
                   style: TextStyle(color: palette.dangerBtnBg)),
             ),
           ],
@@ -513,7 +514,7 @@ class _UserItemsTab extends ConsumerWidget {
           children: [
             Padding(
               padding: const EdgeInsets.all(24),
-              child: Text('Error: $e',
+              child: Text(formatError(e),
                   style: TextStyle(color: palette.dangerBtnBg)),
             ),
           ],

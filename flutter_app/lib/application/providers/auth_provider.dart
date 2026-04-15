@@ -176,8 +176,10 @@ class AuthNotifier extends StateNotifier<AuthState?> {
       );
       return null;
     } on AuthException catch (e) {
+      debugPrint('Auth signIn failed (AuthException): ${e.message}');
       return e.message;
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('Auth signIn failed (${e.runtimeType}): $e\n$st');
       return e.toString();
     }
   }
