@@ -13,8 +13,10 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../../domain/value_objects/asset_ref.dart';
 import '../../dialogs/media_gallery_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/asset_ref_image.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/projection/projectable.dart';
@@ -761,15 +763,16 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
   }
 
   Widget _buildImage(String path) {
-    final file = File(path);
-    if (!file.existsSync()) return _buildPlaceholder();
-    return Image.file(
-      file,
+    // Entity.images[] may hold either a legacy absolute path or a
+    // `dmt-asset://` cloud URI — both flow through AssetRefImage.
+    return AssetRefImage(
+      ref: AssetRef(path),
       width: 200,
       height: 260,
       fit: BoxFit.cover,
       cacheWidth: 400,
-      errorBuilder: (_, __, ___) => _buildPlaceholder(),
+      placeholder: _buildPlaceholder(),
+      errorWidget: _buildPlaceholder(),
     );
   }
 

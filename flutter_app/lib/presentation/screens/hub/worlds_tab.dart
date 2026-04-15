@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/campaign_provider.dart';
-import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/services/template_sync_service.dart';
@@ -259,24 +258,21 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              // Cloud cleanup: load campaign data to get world_id before local
-              // delete. If either the load or the cloud delete fails, we still
-              // proceed with local delete (it's not fatal).
-              String? worldId;
-              try {
-                final data = await ref.read(campaignRepositoryProvider).load(name);
-                worldId = data['world_id'] as String? ?? name;
-              } catch (_) {
-                worldId = name;
-              }
               await ref.read(activeCampaignProvider.notifier).delete(name);
-              // Best-effort cloud cleanup — no-op when offline/signed-out.
-              await ref
-                  .read(cloudBackupOperationProvider.notifier)
-                  .deleteBackupByItem(worldId, 'world');
               ref.invalidate(campaignListProvider);
               ref.invalidate(campaignInfoListProvider);
               ref.invalidate(trashListProvider);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'World moved to trash. Cloud backup is still available '
+                      'under Cloud → Worlds.',
+                    ),
+                    duration: Duration(seconds: 5),
+                  ),
+                );
+              }
               setState(() => _selectedIndex = -1);
             },
             style: FilledButton.styleFrom(
