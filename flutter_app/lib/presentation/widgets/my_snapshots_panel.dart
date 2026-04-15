@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/marketplace_listing_provider.dart';
+import '../../core/utils/error_format.dart';
 import '../../domain/entities/marketplace_listing.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
@@ -24,7 +25,10 @@ class MySnapshotsPanel extends ConsumerWidget {
         padding: EdgeInsets.symmetric(vertical: 4),
         child: LinearProgressIndicator(),
       ),
-      error: (e, _) => Text(l10n.mySnapshotsLoadError('$e'),
+      error: (e, _) => Text(
+          isOfflineError(e)
+              ? "You're offline — snapshots unavailable."
+              : l10n.mySnapshotsLoadError('$e'),
           style: TextStyle(fontSize: 11, color: palette.dangerBtnBg)),
       data: (snapshots) {
         if (snapshots.isEmpty) {

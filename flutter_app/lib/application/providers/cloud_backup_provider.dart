@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/error_format.dart';
 import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
 import '../../data/repositories/cloud_backup_repository_impl.dart';
 import '../../domain/entities/cloud_backup_meta.dart';
@@ -125,7 +126,7 @@ class CloudBackupOperationNotifier
       return true;
     } catch (e, st) {
       debugPrint('Cloud backup upload error: $e\n$st');
-      state = CloudBackupOperationState.error(e.toString());
+      state = CloudBackupOperationState.error(formatError(e));
       return false;
     }
   }
@@ -153,14 +154,14 @@ class CloudBackupOperationNotifier
       state = CloudBackupOperationState.success(meta: meta);
       return true;
     } on CloudBackupSizeLimitException catch (e) {
-      state = CloudBackupOperationState.error(e.toString());
+      state = CloudBackupOperationState.error(formatError(e));
       return false;
     } on CloudBackupQuotaExceededException catch (e) {
-      state = CloudBackupOperationState.error(e.toString());
+      state = CloudBackupOperationState.error(formatError(e));
       return false;
     } catch (e, st) {
       debugPrint('Cloud backup upload error: $e\n$st');
-      state = CloudBackupOperationState.error(e.toString());
+      state = CloudBackupOperationState.error(formatError(e));
       return false;
     }
   }
@@ -187,7 +188,7 @@ class CloudBackupOperationNotifier
       return true;
     } catch (e, st) {
       debugPrint('Cloud backup upload error: $e\n$st');
-      state = CloudBackupOperationState.error(e.toString());
+      state = CloudBackupOperationState.error(formatError(e));
       return false;
     }
   }
@@ -232,7 +233,7 @@ class CloudBackupOperationNotifier
       return true;
     } catch (e, st) {
       debugPrint('Cloud backup restore error: $e\n$st');
-      state = CloudBackupOperationState.error(e.toString());
+      state = CloudBackupOperationState.error(formatError(e));
       return false;
     }
   }
@@ -256,7 +257,7 @@ class CloudBackupOperationNotifier
       return true;
     } catch (e, st) {
       debugPrint('Cloud backup upload error: $e\n$st');
-      state = CloudBackupOperationState.error(e.toString());
+      state = CloudBackupOperationState.error(formatError(e));
       return false;
     }
   }
@@ -284,7 +285,7 @@ class CloudBackupOperationNotifier
       return true;
     } catch (e, st) {
       debugPrint('Cloud backup upload error: $e\n$st');
-      state = CloudBackupOperationState.error(e.toString());
+      state = CloudBackupOperationState.error(formatError(e));
       return false;
     }
   }
@@ -317,7 +318,7 @@ class CloudBackupOperationNotifier
       return true;
     } catch (e, st) {
       debugPrint('Cloud backup delete error: $e\n$st');
-      state = CloudBackupOperationState.error(e.toString());
+      state = CloudBackupOperationState.error(formatError(e));
       return false;
     }
   }
