@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../application/providers/follows_provider.dart';
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/error_format.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../core/utils/world_languages.dart';
 import '../../../domain/entities/marketplace_listing.dart';
@@ -76,7 +77,7 @@ class _MarketplaceFeed extends ConsumerWidget {
               child: Center(child: CircularProgressIndicator()),
             ),
             error: (e, st) => SocialCard(
-              child: Text('Error: $e',
+              child: Text(formatError(e),
                   style: TextStyle(fontSize: 12, color: palette.dangerBtnBg)),
             ),
             data: (items) {
@@ -447,7 +448,7 @@ class _PlayersPanel extends ConsumerWidget {
           Expanded(
             child: players.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text('Error: $e',
+              error: (e, _) => Text(formatError(e),
                   style: TextStyle(fontSize: 11, color: palette.dangerBtnBg)),
               data: (list) {
                 if (list.isEmpty) {

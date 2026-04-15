@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/error_format.dart';
 import '../../../core/utils/profanity_filter.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../core/utils/world_languages.dart';
@@ -150,7 +151,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
               child: Center(child: CircularProgressIndicator()),
             ),
             error: (e, _) => SocialCard(
-              child: Text('Error: $e', style: TextStyle(color: palette.dangerBtnBg)),
+              child: Text(formatError(e), style: TextStyle(color: palette.dangerBtnBg)),
             ),
             data: (posts) => posts.isEmpty
                 ? SocialEmptyState(
@@ -462,7 +463,7 @@ class _FeedGameListings extends ConsumerWidget {
         child: Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => SocialCard(
-        child: Text('Error: $e', style: TextStyle(color: palette.dangerBtnBg, fontSize: 12)),
+        child: Text(formatError(e), style: TextStyle(color: palette.dangerBtnBg, fontSize: 12)),
       ),
       data: (items) {
         if (items.isEmpty) {

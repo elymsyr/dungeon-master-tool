@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/error_format.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../domain/entities/conversation.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -22,7 +23,7 @@ class MessagesTab extends ConsumerWidget {
       onRefresh: () async => ref.invalidate(myConversationsProvider),
       child: convsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(formatError(e))),
         data: (convs) => convs.isEmpty
             ? ListView(
                 children: const [
@@ -155,7 +156,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           Expanded(
             child: messagesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => Center(child: Text(formatError(e))),
               data: (msgs) => ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: msgs.length,

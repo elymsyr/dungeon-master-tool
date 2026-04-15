@@ -84,7 +84,9 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
   void didUpdateWidget(MindMapNodeWidget old) {
     super.didUpdateWidget(old);
     // Don't reset controllers while user is actively editing (edit mode or inline rename)
-    if (old.node.label != widget.node.label && !_editingLabel && !widget.editMode) {
+    if (old.node.label != widget.node.label &&
+        !_editingLabel &&
+        !widget.editMode) {
       _labelCtrl.text = widget.node.label;
     }
     if (old.node.content != widget.node.content && !widget.editMode) {
@@ -133,10 +135,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
                 ? 'Drag the node to move it.'
                 : 'Drag a corner handle to resize.',
           ),
-          action: SnackBarAction(
-            label: 'Done',
-            onPressed: _exitMobileMode,
-          ),
+          action: SnackBarAction(label: 'Done', onPressed: _exitMobileMode),
         ),
       );
       _mobileModeSnack?.closed.then((_) {
@@ -181,15 +180,15 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     final borderColor = widget.isConnecting
         ? palette.tabIndicator
         : widget.canConnectTo
-            ? palette.tabIndicator.withValues(alpha: 0.7)
-            : widget.isSelected
-                ? palette.lineSelected
-                : palette.sidebarDivider;
+        ? palette.tabIndicator.withValues(alpha: 0.7)
+        : widget.isSelected
+        ? palette.lineSelected
+        : palette.sidebarDivider;
 
     final borderWidth =
         (widget.isSelected || widget.isConnecting || widget.canConnectTo)
-            ? 2.0
-            : 1.0;
+        ? 2.0
+        : 1.0;
 
     final borderRadius = switch (n.nodeType) {
       'note' => BorderRadius.zero,
@@ -210,8 +209,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: _onTap,
-          onSecondaryTapUp: (d) =>
-              _showContextMenu(context, d.globalPosition),
+          onSecondaryTapUp: (d) => _showContextMenu(context, d.globalPosition),
           onLongPress: () => _showContextMenu(context, null),
           onPanStart: panEnabled
               ? (d) {
@@ -245,25 +243,25 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
             decoration: BoxDecoration(
               color: _nodeColor(n.nodeType, palette),
               borderRadius: borderRadius,
-              border:
-                  Border.all(color: borderColor, width: borderWidth),
+              border: Border.all(color: borderColor, width: borderWidth),
               boxShadow: showShadow
                   ? (widget.isSelected
-                      ? [
-                          BoxShadow(
-                            color: palette.tabIndicator
-                                .withValues(alpha: 0.25),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          )
-                        ]
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          )
-                        ])
+                        ? [
+                            BoxShadow(
+                              color: palette.tabIndicator.withValues(
+                                alpha: 0.25,
+                              ),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ])
                   : null,
             ),
             child: widget.lodZone == 0
@@ -308,52 +306,66 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
         // Interior zone — intercepts right-click for combined menu.
         // No onPan/onTap so left-click drag passes through to canvas pan.
         Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onSecondaryTapUp: (d) {
-                final canvasPos = Offset(
-                  n.x - n.width / 2 + d.localPosition.dx,
-                  n.y - n.height / 2 + d.localPosition.dy,
-                );
-                _showWorkspaceInteriorMenu(
-                    context, d.globalPosition, canvasPos, n);
-              },
-              onLongPress: () => _showWorkspaceInteriorMenu(
-                  context, null, Offset(n.x, n.y), n),
-              child: const SizedBox.expand(),
-            ),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onSecondaryTapUp: (d) {
+              final canvasPos = Offset(
+                n.x - n.width / 2 + d.localPosition.dx,
+                n.y - n.height / 2 + d.localPosition.dy,
+              );
+              _showWorkspaceInteriorMenu(
+                context,
+                d.globalPosition,
+                canvasPos,
+                n,
+              );
+            },
+            onLongPress: () =>
+                _showWorkspaceInteriorMenu(context, null, Offset(n.x, n.y), n),
+            child: const SizedBox.expand(),
           ),
-          // Top edge (includes label area)
-          Positioned(
-            left: 0, top: 0, right: 0, height: labelZone,
-            child: _workspaceHitZone(n),
-          ),
-          // Bottom edge
-          Positioned(
-            left: 0, bottom: 0, right: 0, height: borderZone,
-            child: _workspaceHitZone(n),
-          ),
-          // Left edge (between top and bottom zones)
-          Positioned(
-            left: 0, top: labelZone, width: borderZone,
-            bottom: borderZone,
-            child: _workspaceHitZone(n),
-          ),
-          // Right edge (between top and bottom zones)
-          Positioned(
-            right: 0, top: labelZone, width: borderZone,
-            bottom: borderZone,
-            child: _workspaceHitZone(n),
-          ),
-          // Corner resize handles for workspace
-          if (widget.showResizeHandle) ...[
-            _buildCornerHandle('tl', palette),
-            _buildCornerHandle('tr', palette),
-            _buildCornerHandle('bl', palette),
-            _buildCornerHandle('br', palette),
-          ],
+        ),
+        // Top edge (includes label area)
+        Positioned(
+          left: 0,
+          top: 0,
+          right: 0,
+          height: labelZone,
+          child: _workspaceHitZone(n),
+        ),
+        // Bottom edge
+        Positioned(
+          left: 0,
+          bottom: 0,
+          right: 0,
+          height: borderZone,
+          child: _workspaceHitZone(n),
+        ),
+        // Left edge (between top and bottom zones)
+        Positioned(
+          left: 0,
+          top: labelZone,
+          width: borderZone,
+          bottom: borderZone,
+          child: _workspaceHitZone(n),
+        ),
+        // Right edge (between top and bottom zones)
+        Positioned(
+          right: 0,
+          top: labelZone,
+          width: borderZone,
+          bottom: borderZone,
+          child: _workspaceHitZone(n),
+        ),
+        // Corner resize handles for workspace
+        if (widget.showResizeHandle) ...[
+          _buildCornerHandle('tl', palette),
+          _buildCornerHandle('tr', palette),
+          _buildCornerHandle('bl', palette),
+          _buildCornerHandle('br', palette),
         ],
-      );
+      ],
+    );
   }
 
   /// Workspace border / label hit zone — tap selects, drag moves,
@@ -362,8 +374,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => widget.notifier.setSelectedNode(n.id),
-      onSecondaryTapUp: (d) =>
-          _showContextMenu(context, d.globalPosition),
+      onSecondaryTapUp: (d) => _showContextMenu(context, d.globalPosition),
       onPanStart: (d) {
         _dragStart = d.globalPosition;
         _nodeStartPos = Offset(n.x, n.y);
@@ -402,8 +413,7 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
 
     showMenu<String>(
       context: context,
-      position:
-          RelativeRect.fromLTRB(pos.dx, pos.dy, pos.dx + 1, pos.dy + 1),
+      position: RelativeRect.fromLTRB(pos.dx, pos.dy, pos.dx + 1, pos.dy + 1),
       color: palette.uiFloatingBg,
       items: [
         // Canvas items
@@ -433,8 +443,11 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
         PopupMenuItem(
           value: 'delete',
           child: _menuItem(
-              Icons.delete_outline, 'Delete Workspace', palette,
-              danger: true),
+            Icons.delete_outline,
+            'Delete Workspace',
+            palette,
+            danger: true,
+          ),
         ),
       ],
     ).then((value) {
@@ -587,21 +600,25 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
         padding: const EdgeInsets.all(8),
         child: Text(
           'No entity linked',
-          style: TextStyle(fontSize: 10, color: palette.tabText.withValues(alpha: 0.4)),
+          style: TextStyle(
+            fontSize: 10,
+            color: palette.tabText.withValues(alpha: 0.4),
+          ),
         ),
       );
     }
 
     // Watch only this specific entity — not the entire map
-    final entity = ref.watch(
-      entityProvider.select((map) => map[n.entityId]),
-    );
+    final entity = ref.watch(entityProvider.select((map) => map[n.entityId]));
     if (entity == null) {
       return Padding(
         padding: const EdgeInsets.all(8),
         child: Text(
           'Entity not found',
-          style: TextStyle(fontSize: 10, color: palette.tabText.withValues(alpha: 0.4)),
+          style: TextStyle(
+            fontSize: 10,
+            color: palette.tabText.withValues(alpha: 0.4),
+          ),
         ),
       );
     }
@@ -619,8 +636,12 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       if (entity.imagePath.isNotEmpty) entity.imagePath,
       ...entity.images,
     ];
-    final hasImage = allImages.isNotEmpty &&
-        _fileExistsCache.putIfAbsent(allImages.first, () => File(allImages.first).existsSync());
+    final hasImage =
+        allImages.isNotEmpty &&
+        _fileExistsCache.putIfAbsent(
+          allImages.first,
+          () => File(allImages.first).existsSync(),
+        );
 
     // Mini feature card — mirrors EntityCard default section layout
     return Padding(
@@ -662,7 +683,10 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
               children: [
                 // Category badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: catColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
@@ -706,7 +730,10 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
                 // Source + Tags row at bottom
                 if (entity.source.isNotEmpty || entity.tags.isNotEmpty) ...[
                   const Spacer(),
-                  Divider(height: 1, color: palette.nodeText.withValues(alpha: 0.15)),
+                  Divider(
+                    height: 1,
+                    color: palette.nodeText.withValues(alpha: 0.15),
+                  ),
                   const SizedBox(height: 3),
                   Row(
                     children: [
@@ -766,9 +793,13 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       );
       if (exists) {
         return ClipRRect(
-          child: Image.file(File(n.imageUrl!),
-              fit: BoxFit.cover, width: n.width, height: n.height,
-              cacheWidth: (n.width * 2).toInt()),
+          child: Image.file(
+            File(n.imageUrl!),
+            fit: BoxFit.cover,
+            width: n.width,
+            height: n.height,
+            cacheWidth: (n.width * 2).toInt(),
+          ),
         );
       }
     }
@@ -778,13 +809,19 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.image_outlined,
-              size: 28, color: palette.tabText.withValues(alpha: 0.4)),
+          Icon(
+            Icons.image_outlined,
+            size: 28,
+            color: palette.tabText.withValues(alpha: 0.4),
+          ),
           const SizedBox(height: 4),
-          Text('Right-click to set image',
-              style: TextStyle(
-                  fontSize: 10,
-                  color: palette.tabText.withValues(alpha: 0.4))),
+          Text(
+            'Right-click to set image',
+            style: TextStyle(
+              fontSize: 10,
+              color: palette.tabText.withValues(alpha: 0.4),
+            ),
+          ),
         ],
       ),
     );
@@ -816,71 +853,105 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     // --- Type-specific items first (above divider) ---
 
     if (n.nodeType == 'entity' && n.entityId != null) {
-      items.add(PopupMenuItem(
+      items.add(
+        PopupMenuItem(
           value: 'inspect',
-          child: _menuItem(Icons.open_in_new, 'Inspect', palette)));
+          child: _menuItem(Icons.open_in_new, 'Inspect', palette),
+        ),
+      );
     }
 
     if (n.nodeType == 'image') {
-      items.add(PopupMenuItem(
+      items.add(
+        PopupMenuItem(
           value: 'set_image',
-          child: _menuItem(Icons.image_outlined, 'Change Image', palette)));
+          child: _menuItem(Icons.image_outlined, 'Change Image', palette),
+        ),
+      );
     }
 
     if (n.nodeType == 'workspace') {
-      items.add(PopupMenuItem(
+      items.add(
+        PopupMenuItem(
           value: 'rename',
-          child: _menuItem(Icons.text_fields, 'Rename', palette)));
-      items.add(PopupMenuItem(
+          child: _menuItem(Icons.text_fields, 'Rename', palette),
+        ),
+      );
+      items.add(
+        PopupMenuItem(
           value: 'pick_color',
-          child: _menuItem(Icons.palette, 'Pick Color', palette)));
+          child: _menuItem(Icons.palette, 'Pick Color', palette),
+        ),
+      );
     }
 
     if (n.nodeType == 'note') {
-      items.add(PopupMenuItem(
+      items.add(
+        PopupMenuItem(
           value: 'edit',
-          child: _menuItem(Icons.edit_outlined, 'Edit Content', palette)));
+          child: _menuItem(Icons.edit_outlined, 'Edit Content', palette),
+        ),
+      );
 
       // Font size sub-items
       items.add(const PopupMenuDivider());
-      for (final entry in [('font_small', 'Small (10)', 10.0), ('font_normal', 'Normal (12)', 12.0), ('font_large', 'Large (16)', 16.0)]) {
+      for (final entry in [
+        ('font_small', 'Small (10)', 10.0),
+        ('font_normal', 'Normal (12)', 12.0),
+        ('font_large', 'Large (16)', 16.0),
+      ]) {
         final isActive = (currentFontSize - entry.$3).abs() < 0.5;
-        items.add(PopupMenuItem(
-          value: entry.$1,
-          child: Row(
-            children: [
-              SizedBox(
-                width: 16,
-                child: isActive
-                    ? Icon(Icons.check, size: 14, color: palette.uiFloatingText)
-                    : null,
-              ),
-              const SizedBox(width: 4),
-              Text(entry.$2,
-                  style: TextStyle(
-                      fontSize: 12, color: palette.uiFloatingText)),
-            ],
+        items.add(
+          PopupMenuItem(
+            value: entry.$1,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  child: isActive
+                      ? Icon(
+                          Icons.check,
+                          size: 14,
+                          color: palette.uiFloatingText,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  entry.$2,
+                  style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
+                ),
+              ],
+            ),
           ),
-        ));
+        );
       }
     }
 
     if (n.nodeType == 'entity') {
-      items.add(PopupMenuItem(
+      items.add(
+        PopupMenuItem(
           value: 'edit',
-          child: _menuItem(Icons.edit_outlined, 'Edit Content', palette)));
+          child: _menuItem(Icons.edit_outlined, 'Edit Content', palette),
+        ),
+      );
     }
 
     // --- Mobile-only move/resize (workspaces use edge handles instead). ---
     if (_isTouchDevice && n.nodeType != 'workspace') {
       if (items.isNotEmpty) items.add(const PopupMenuDivider());
-      items.add(PopupMenuItem(
+      items.add(
+        PopupMenuItem(
           value: 'mobile_move',
-          child: _menuItem(Icons.open_with, 'Move', palette)));
-      items.add(PopupMenuItem(
+          child: _menuItem(Icons.open_with, 'Move', palette),
+        ),
+      );
+      items.add(
+        PopupMenuItem(
           value: 'mobile_resize',
-          child:
-              _menuItem(Icons.aspect_ratio, 'Resize', palette)));
+          child: _menuItem(Icons.aspect_ratio, 'Resize', palette),
+        ),
+      );
     }
 
     // --- Divider + common items ---
@@ -888,23 +959,24 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
 
     items.addAll([
       PopupMenuItem(
-          value: 'connect',
-          child: _menuItem(Icons.linear_scale, 'Connect to...', palette)),
+        value: 'connect',
+        child: _menuItem(Icons.linear_scale, 'Connect to...', palette),
+      ),
       PopupMenuItem(
-          value: 'duplicate',
-          child: _menuItem(Icons.copy_outlined, 'Duplicate', palette)),
+        value: 'duplicate',
+        child: _menuItem(Icons.copy_outlined, 'Duplicate', palette),
+      ),
       const PopupMenuDivider(),
       PopupMenuItem(
-          value: 'delete',
-          child: _menuItem(Icons.delete_outline, 'Delete', palette,
-              danger: true)),
+        value: 'delete',
+        child: _menuItem(Icons.delete_outline, 'Delete', palette, danger: true),
+      ),
     ]);
 
     final pos = globalPos ?? Offset(n.x, n.y);
     showMenu<String>(
       context: context,
-      position:
-          RelativeRect.fromLTRB(pos.dx, pos.dy, pos.dx + 1, pos.dy + 1),
+      position: RelativeRect.fromLTRB(pos.dx, pos.dy, pos.dx + 1, pos.dy + 1),
       items: items,
       color: palette.uiFloatingBg,
     ).then((value) {
@@ -946,19 +1018,27 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     });
   }
 
-  Widget _menuItem(IconData icon, String label, DmToolColors palette,
-      {bool danger = false}) {
+  Widget _menuItem(
+    IconData icon,
+    String label,
+    DmToolColors palette, {
+    bool danger = false,
+  }) {
     return Row(
       children: [
-        Icon(icon,
-            size: 16,
-            color: danger ? Colors.red[300] : palette.uiFloatingText),
+        Icon(
+          icon,
+          size: 16,
+          color: danger ? Colors.red[300] : palette.uiFloatingText,
+        ),
         const SizedBox(width: 8),
-        Text(label,
-            style: TextStyle(
-                fontSize: 12,
-                color:
-                    danger ? Colors.red[300] : palette.uiFloatingText)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: danger ? Colors.red[300] : palette.uiFloatingText,
+          ),
+        ),
       ],
     );
   }
@@ -974,38 +1054,40 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: palette.uiFloatingBg,
-        title: Text('Edit Content',
-            style: TextStyle(
-                color: palette.uiFloatingText, fontSize: 14)),
+        title: Text(
+          'Edit Content',
+          style: TextStyle(color: palette.uiFloatingText, fontSize: 14),
+        ),
         content: SizedBox(
           width: 400,
           child: TextField(
             controller: ctrl,
             autofocus: true,
             maxLines: 8,
-            style:
-                TextStyle(fontSize: 12, color: palette.uiFloatingText),
+            style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
             decoration: InputDecoration(
               border: OutlineInputBorder(
-                  borderSide:
-                      BorderSide(color: palette.uiFloatingBorder)),
+                borderSide: BorderSide(color: palette.uiFloatingBorder),
+              ),
               hintText: 'Enter markdown content...',
               hintStyle: TextStyle(
-                  color: palette.uiFloatingText.withValues(alpha: 0.4),
-                  fontSize: 12),
+                color: palette.uiFloatingText.withValues(alpha: 0.4),
+                fontSize: 12,
+              ),
             ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
-                style: TextStyle(color: palette.uiFloatingText)),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: palette.uiFloatingText),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
-              widget.notifier
-                  .updateNodeContent(widget.node.id, ctrl.text);
+              widget.notifier.updateNodeContent(widget.node.id, ctrl.text);
               Navigator.pop(ctx);
             },
             child: const Text('Save'),
@@ -1022,24 +1104,27 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: palette.uiFloatingBg,
-        title: Text('Rename',
-            style: TextStyle(
-                color: palette.uiFloatingText, fontSize: 14)),
+        title: Text(
+          'Rename',
+          style: TextStyle(color: palette.uiFloatingText, fontSize: 14),
+        ),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           style: TextStyle(fontSize: 12, color: palette.uiFloatingText),
           decoration: InputDecoration(
             border: OutlineInputBorder(
-                borderSide:
-                    BorderSide(color: palette.uiFloatingBorder)),
+              borderSide: BorderSide(color: palette.uiFloatingBorder),
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
-                style: TextStyle(color: palette.uiFloatingText)),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: palette.uiFloatingText),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1056,22 +1141,30 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
   void _showColorPickerDialog(BuildContext context, MindMapNode n) {
     final palette = widget.palette;
     final colors = [
-      '#42a5f5', '#ef5350', '#66bb6a', '#ffa726', '#ab47bc',
-      '#26c6da', '#ec407a', '#8d6e63', '#78909c', '#ffee58',
+      '#42a5f5',
+      '#ef5350',
+      '#66bb6a',
+      '#ffa726',
+      '#ab47bc',
+      '#26c6da',
+      '#ec407a',
+      '#8d6e63',
+      '#78909c',
+      '#ffee58',
     ];
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: palette.uiFloatingBg,
-        title: Text('Pick Color',
-            style: TextStyle(
-                color: palette.uiFloatingText, fontSize: 14)),
+        title: Text(
+          'Pick Color',
+          style: TextStyle(color: palette.uiFloatingText, fontSize: 14),
+        ),
         content: Wrap(
           spacing: 8,
           runSpacing: 8,
           children: colors.map((hex) {
-            final c = Color(
-                int.parse(hex.replaceAll('#', 'FF'), radix: 16));
+            final c = Color(int.parse(hex.replaceAll('#', 'FF'), radix: 16));
             return GestureDetector(
               onTap: () {
                 widget.notifier.updateWorkspaceColor(n.id, hex);
@@ -1132,13 +1225,21 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
   Offset? _posAtResizeStart;
 
   Widget _buildCornerHandle(String corner, DmToolColors palette) {
-    const hs = 10.0; // handle size
-    final (double? left, double? right, double? top, double? bottom) =
-        switch (corner) {
-      'tl' => (-(hs / 2) as double?, null, -(hs / 2) as double?, null),
-      'tr' => (null, -(hs / 2) as double?, -(hs / 2) as double?, null),
-      'bl' => (-(hs / 2) as double?, null, null, -(hs / 2) as double?),
-      _ /* br */ => (null, -(hs / 2) as double?, null, -(hs / 2) as double?),
+    const hs = 10.0; // visual handle size
+    // Hit area is much larger than the visible handle so fingers — and
+    // imprecise mouse drags — can land on it. Visible square stays 10x10.
+    final double hit = _isTouchDevice ? 44.0 : 24.0;
+    final double offset = hit / 2;
+    final (
+      double? left,
+      double? right,
+      double? top,
+      double? bottom,
+    ) = switch (corner) {
+      'tl' => (-offset as double?, null, -offset as double?, null),
+      'tr' => (null, -offset as double?, -offset as double?, null),
+      'bl' => (-offset as double?, null, null, -offset as double?),
+      _ /* br */ => (null, -offset as double?, null, -offset as double?),
     };
     final cursor = switch (corner) {
       'tl' || 'br' => SystemMouseCursors.resizeUpLeftDownRight,
@@ -1151,10 +1252,10 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       top: top,
       bottom: bottom,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onPanStart: (d) {
           _resizeStart = d.globalPosition;
-          _sizeAtResizeStart =
-              Size(widget.node.width, widget.node.height);
+          _sizeAtResizeStart = Size(widget.node.width, widget.node.height);
           _posAtResizeStart = Offset(widget.node.x, widget.node.y);
           _resizeCorner = corner;
         },
@@ -1169,15 +1270,18 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
         },
         child: MouseRegion(
           cursor: cursor,
-          child: Container(
-            width: hs,
-            height: hs,
-            decoration: BoxDecoration(
-              color: palette.tabIndicator,
-              borderRadius: BorderRadius.circular(2),
-              border: Border.all(
-                color: palette.canvasBg,
-                width: 1,
+          child: SizedBox(
+            width: hit,
+            height: hit,
+            child: Center(
+              child: Container(
+                width: hs,
+                height: hs,
+                decoration: BoxDecoration(
+                  color: palette.tabIndicator,
+                  borderRadius: BorderRadius.circular(2),
+                  border: Border.all(color: palette.canvasBg, width: 1),
+                ),
               ),
             ),
           ),
@@ -1247,6 +1351,4 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
       Size(newW, newH),
     );
   }
-
 }
-

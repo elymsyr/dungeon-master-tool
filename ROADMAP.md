@@ -72,11 +72,5 @@ The rule system should be fully dynamic — users compose predicates and effects
 
 ## Bugs
 
-### Login failures (socket / URL errors)
-Some users cannot log in; **macOS fails outright**. Symptoms point at a socket or URL-level error in the auth request. Needs repro on macOS and instrumentation around the auth client to capture the actual failure.
-
-### Mind map move/resize hitbox on mobile
-Moving and resizing nodes on the mind map is still awkward on touch devices. When the user enters move or resize mode, the grabbable hitbox should be significantly larger than the visual handle so fingers can actually land on it.
-
 ### Offline players should not crash the session
 Players who are offline currently cause errors in the shared session. Instead, surface them as **offline** in the UI and keep the rest of the session functional.

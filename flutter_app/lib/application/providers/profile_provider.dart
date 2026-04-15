@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/error_format.dart';
 import '../../data/datasources/remote/profiles_remote_ds.dart';
 import '../../domain/entities/user_profile.dart';
 import 'auth_provider.dart';
@@ -14,19 +15,33 @@ final profilesRemoteDsProvider = Provider<ProfilesRemoteDataSource>(
 
 /// Mevcut auth user için profil. Auth değişince otomatik refresh.
 /// `null` döner: ya kullanıcı sign-in olmamıştır ya da henüz profil
-/// oluşturmamıştır (ilk sign-in akışı).
+/// oluşturmamıştır (ilk sign-in akışı) ya da cihaz offline.
 final currentProfileProvider = FutureProvider<UserProfile?>((ref) async {
   if (!SupabaseConfig.isConfigured) return null;
   final auth = ref.watch(authProvider);
   if (auth == null) return null;
-  return ref.read(profilesRemoteDsProvider).fetchCurrent();
+  try {
+    return await ref.read(profilesRemoteDsProvider).fetchCurrent();
+  } catch (e, st) {
+    if (isOfflineError(e)) {
+      debugPrint('currentProfileProvider offline, returning null: $e');
+      return null;
+    }
+    debugPrint('currentProfileProvider error: $e\n$st');
+    rethrow;
+  }
 });
 
 /// Başka bir kullanıcının profili (Profile screen, post author'u vs.).
 final profileByIdProvider =
     FutureProvider.family<UserProfile?, String>((ref, userId) async {
   if (!SupabaseConfig.isConfigured) return null;
-  return ref.read(profilesRemoteDsProvider).fetchById(userId);
+  try {
+    return await ref.read(profilesRemoteDsProvider).fetchById(userId);
+  } catch (e) {
+    if (isOfflineError(e)) return null;
+    rethrow;
+  }
 });
 
 /// Username arama (Players tab discover sekmesi).
