@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../domain/entities/schema/category_rule.dart';
 import '../../../domain/entities/schema/encounter_config.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../../domain/entities/schema/rule_v2.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../core/utils/screen_type.dart';
+import '../../dialogs/rule_builder_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 
 const _uuid = Uuid();
@@ -630,19 +631,18 @@ class _CategoryEditor extends StatelessWidget {
           ...category.rules.asMap().entries.map((entry) {
             final i = entry.key;
             final rule = entry.value;
-            final typeLabel = switch (rule.ruleType) {
-              RuleType.pullField => 'Pull',
-              RuleType.mergeFields => 'Merge',
-              RuleType.conditionalList => 'Conditional',
-            };
-            final opLabel = switch (rule.operation) {
-              RuleOperation.replace => '=',
-              RuleOperation.add => '+',
-              RuleOperation.subtract => '−',
-              RuleOperation.multiply => '×',
-              RuleOperation.appendList => '⊕',
-            };
-            final sourcesText = rule.sources.map((s) => '${s.relationFieldKey}.${s.sourceFieldKey}').join(' $opLabel ');
+            final typeLabel = rule.then_.when(
+              setValue: (_, _) => 'Set',
+              gateEquip: (_) => 'Gate',
+              modifyWhileEquipped: (_, _) => 'Equip',
+              styleItems: (_, _) => 'Style',
+            );
+            final subtitleText = rule.then_.when(
+              setValue: (targetFieldKey, _) => '→ $targetFieldKey',
+              gateEquip: (reason) => reason.isNotEmpty ? reason : 'Gate equipping',
+              modifyWhileEquipped: (targetFieldKey, _) => '→ $targetFieldKey (while equipped)',
+              styleItems: (listFieldKey, style) => '→ $listFieldKey${style.faded ? ' [faded]' : ''}${style.strikethrough ? ' [strike]' : ''}',
+            );
 
             return InkWell(
               onTap: readOnly ? null : () => _editRule(context, i, rule),
@@ -659,7 +659,7 @@ class _CategoryEditor extends StatelessWidget {
                       child: Checkbox(
                         value: rule.enabled,
                         onChanged: readOnly ? null : (v) {
-                          final updated = List<CategoryRule>.from(category.rules);
+                          final updated = List<RuleV2>.from(category.rules);
                           updated[i] = rule.copyWith(enabled: v ?? true);
                           onChanged(category.copyWith(rules: updated));
                         },
@@ -680,9 +680,7 @@ class _CategoryEditor extends StatelessWidget {
                         children: [
                           Text(rule.name, style: TextStyle(fontSize: 12, color: palette.tabActiveText)),
                           Text(
-                            '$sourcesText → ${rule.targetFieldKey}'
-                            '${rule.matchOnly ? ' [match]' : ' [add]'}'
-                            '${rule.deactivateIfNotEquipped ? ' [equip]' : ''}',
+                            subtitleText,
                             style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
                           ),
                         ],
@@ -696,7 +694,7 @@ class _CategoryEditor extends StatelessWidget {
                       const SizedBox(width: 4),
                       InkWell(
                         onTap: () {
-                          final updated = List<CategoryRule>.from(category.rules)..removeAt(i);
+                          final updated = List<RuleV2>.from(category.rules)..removeAt(i);
                           onChanged(category.copyWith(rules: updated));
                         },
                         child: Icon(Icons.close, size: 14, color: palette.sidebarLabelSecondary),
@@ -713,219 +711,29 @@ class _CategoryEditor extends StatelessWidget {
     });
   }
 
-  void _editRule(BuildContext context, int index, CategoryRule existing) {
-    _showRuleDialog(context, existing: existing, onSave: (rule) {
-      final updated = List<CategoryRule>.from(category.rules);
-      updated[index] = rule;
-      onChanged(category.copyWith(rules: updated));
-    });
-  }
-
-  void _addRule(BuildContext context) {
-    _showRuleDialog(context, onSave: (rule) {
-      onChanged(category.copyWith(rules: [...category.rules, rule]));
-    });
-  }
-
-  void _showRuleDialog(BuildContext context, {CategoryRule? existing, required ValueChanged<CategoryRule> onSave}) {
-    var ruleType = existing?.ruleType ?? RuleType.pullField;
-    var operation = existing?.operation ?? RuleOperation.replace;
-    var matchOnly = existing?.matchOnly ?? false;
-    var deactivateIfNotEquipped = existing?.deactivateIfNotEquipped ?? false;
-    final nameController = TextEditingController(text: existing?.name ?? '');
-    String? sourceRelation = existing?.sources.isNotEmpty == true ? existing!.sources.first.relationFieldKey : null;
-    String? sourceField = existing?.sources.isNotEmpty == true ? existing!.sources.first.sourceFieldKey : null;
-    String? targetField = existing?.targetFieldKey;
-
-    showDialog(
+  void _editRule(BuildContext context, int index, RuleV2 existing) async {
+    final result = await showRuleBuilderDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) {
-          // Relation field'ları (tek referans)
-          final relationFields = category.fields.where((f) => f.fieldType == FieldType.relation && !f.isList).toList();
-          // Liste relation field'ları
-          final listRelationFields = category.fields.where((f) => f.fieldType == FieldType.relation && f.isList).toList();
-          // Tüm relation field'lar
-          final allRelFields = [...relationFields, ...listRelationFields];
-          // Hedef field'lar
-          final targetFields = category.fields.toList();
-
-          // Source relation'ın hedef kategorisindeki field'lar
-          List<FieldSchema> getSourceFields() {
-            if (sourceRelation == null) return [];
-            final rel = category.fields.where((f) => f.fieldKey == sourceRelation);
-            if (rel.isEmpty) return [];
-            final types = rel.first.validation.allowedTypes;
-            if (types == null || types.isEmpty) return [];
-            final targetCat = allCategories.where((c) => c.slug == types.first);
-            if (targetCat.isEmpty) return [];
-            return targetCat.first.fields;
-          }
-
-          return AlertDialog(
-            title: const Text('Add Rule', style: TextStyle(fontSize: 16)),
-            content: SizedBox(
-              width: 400,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Name
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Rule Name', hintText: 'e.g. Pull speed from Race'),
-                  ),
-                  const SizedBox(height: 12),
-                  // Type
-                  DropdownButtonFormField<RuleType>(
-                    initialValue: ruleType,
-                    decoration: const InputDecoration(labelText: 'Type'),
-                    items: RuleType.values.map((t) => DropdownMenuItem(
-                      value: t,
-                      child: Text(switch (t) {
-                        RuleType.pullField => 'Pull Field (single source → target)',
-                        RuleType.mergeFields => 'Merge Fields (multiple sources → target)',
-                        RuleType.conditionalList => 'Conditional List (list items with active/inactive)',
-                      }, style: const TextStyle(fontSize: 12)),
-                    )).toList(),
-                    onChanged: (v) => setDialogState(() => ruleType = v ?? RuleType.pullField),
-                  ),
-                  const SizedBox(height: 12),
-                  // Source relation
-                  Builder(builder: (_) {
-                    final srcItems = (ruleType == RuleType.conditionalList ? listRelationFields : allRelFields);
-                    final validSrcRel = srcItems.any((f) => f.fieldKey == sourceRelation) ? sourceRelation : null;
-                    if (validSrcRel != sourceRelation) {
-                      // Geçersiz — sıfırla (post-frame)
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (sourceRelation != validSrcRel) setDialogState(() { sourceRelation = validSrcRel; sourceField = null; });
-                      });
-                    }
-                    return DropdownButtonFormField<String>(
-                      key: ValueKey('src_rel_${ruleType}_${srcItems.length}'),
-                      initialValue: validSrcRel,
-                      decoration: const InputDecoration(labelText: 'Source Relation'),
-                      items: srcItems
-                          .map((f) => DropdownMenuItem(value: f.fieldKey, child: Text(f.label, style: const TextStyle(fontSize: 12))))
-                          .toList(),
-                      onChanged: (v) => setDialogState(() { sourceRelation = v; sourceField = null; }),
-                    );
-                  }),
-                  const SizedBox(height: 8),
-                  // Source field (with type info)
-                  Builder(builder: (_) {
-                    final srcFields = getSourceFields();
-                    return DropdownButtonFormField<String>(
-                      key: ValueKey('src_field_$sourceRelation'),
-                      initialValue: srcFields.any((f) => f.fieldKey == sourceField) ? sourceField : null,
-                      decoration: const InputDecoration(labelText: 'Source Field'),
-                      items: srcFields.map((f) {
-                        final typeName = _fieldTypeName(f.fieldType) + (f.isList ? ' []' : '');
-                        return DropdownMenuItem(value: f.fieldKey, child: Text(
-                          '${f.label}  ($typeName)',
-                          style: const TextStyle(fontSize: 12),
-                          overflow: TextOverflow.ellipsis,
-                        ));
-                      }).toList(),
-                      onChanged: (v) => setDialogState(() { sourceField = v; targetField = null; }),
-                    );
-                  }),
-                  const SizedBox(height: 8),
-                  // Target field — type uyumlu olanlar
-                  Builder(builder: (_) {
-                    final srcFields = getSourceFields();
-                    final selectedSrc = srcFields.where((f) => f.fieldKey == sourceField);
-                    // Uyumlu hedefler: aynı fieldType veya aynı relation allowedTypes
-                    final compatibleTargets = selectedSrc.isEmpty
-                        ? targetFields
-                        : targetFields.where((t) {
-                            final s = selectedSrc.first;
-                            // relation → relation (aynı allowedTypes)
-                            if (s.fieldType == FieldType.relation && t.fieldType == FieldType.relation) {
-                              final sTypes = s.validation.allowedTypes ?? [];
-                              final tTypes = t.validation.allowedTypes ?? [];
-                              return sTypes.any((st) => tTypes.contains(st));
-                            }
-                            // Aynı tip
-                            if (s.fieldType == t.fieldType) return true;
-                            // Liste → liste (tek → listeye de atanabilir)
-                            if (!s.isList && t.isList && s.fieldType == t.fieldType) return true;
-                            return false;
-                          }).toList();
-
-                    return DropdownButtonFormField<String>(
-                      key: ValueKey('target_$sourceField'),
-                      initialValue: compatibleTargets.any((f) => f.fieldKey == targetField) ? targetField : null,
-                      decoration: const InputDecoration(labelText: 'Target Field (type-compatible)'),
-                      items: compatibleTargets.map((f) {
-                        final typeName = _fieldTypeName(f.fieldType) + (f.isList ? ' []' : '');
-                        return DropdownMenuItem(value: f.fieldKey, child: Text(
-                          '${f.label}  ($typeName)',
-                          style: const TextStyle(fontSize: 12),
-                          overflow: TextOverflow.ellipsis,
-                        ));
-                      }).toList(),
-                      onChanged: (v) => setDialogState(() => targetField = v),
-                    );
-                  }),
-                  if (ruleType == RuleType.mergeFields) ...[
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<RuleOperation>(
-                      initialValue: operation,
-                      decoration: const InputDecoration(labelText: 'Operation'),
-                      items: RuleOperation.values.map((o) => DropdownMenuItem(
-                        value: o,
-                        child: Text(switch (o) {
-                          RuleOperation.replace => 'Replace (=)',
-                          RuleOperation.add => 'Add (+)',
-                          RuleOperation.subtract => 'Subtract (−)',
-                          RuleOperation.multiply => 'Multiply (×)',
-                          RuleOperation.appendList => 'Append List (⊕)',
-                        }, style: const TextStyle(fontSize: 12)),
-                      )).toList(),
-                      onChanged: (v) => setDialogState(() => operation = v ?? RuleOperation.replace),
-                    ),
-                  ],
-                  // Match or Add
-                  const SizedBox(height: 8),
-                  _dialogCheckbox('Match only (skip if already exists)', matchOnly,
-                    (v) => setDialogState(() => matchOnly = v)),
-                  // Deactivate if not equipped — sadece equip destekli source varsa
-                  if (sourceRelation != null) Builder(builder: (_) {
-                    final srcField = category.fields.where((f) => f.fieldKey == sourceRelation);
-                    final hasEquip = srcField.isNotEmpty && srcField.first.hasEquip;
-                    if (!hasEquip) return const SizedBox.shrink();
-                    return _dialogCheckbox('Deactivate if source not equipped', deactivateIfNotEquipped,
-                      (v) => setDialogState(() => deactivateIfNotEquipped = v));
-                  }),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-              FilledButton(
-                onPressed: sourceRelation != null && sourceField != null && targetField != null
-                    ? () {
-                        final rule = CategoryRule(
-                          ruleId: existing?.ruleId ?? _uuid.v4(),
-                          name: nameController.text.isEmpty ? 'Rule ${category.rules.length + 1}' : nameController.text,
-                          ruleType: ruleType,
-                          sources: [RuleSource(relationFieldKey: sourceRelation!, sourceFieldKey: sourceField!)],
-                          targetFieldKey: targetField!,
-                          operation: ruleType == RuleType.mergeFields ? operation : RuleOperation.replace,
-                          matchOnly: matchOnly,
-                          deactivateIfNotEquipped: deactivateIfNotEquipped,
-                        );
-                        onSave(rule);
-                        Navigator.pop(ctx);
-                      }
-                    : null,
-                child: Text(existing != null ? 'Save' : 'Add'),
-              ),
-            ],
-          );
-        },
-      ),
+      category: category,
+      allCategories: allCategories,
+      existing: existing,
     );
+    if (result != null) {
+      final updated = List<RuleV2>.from(category.rules);
+      updated[index] = result;
+      onChanged(category.copyWith(rules: updated));
+    }
+  }
+
+  void _addRule(BuildContext context) async {
+    final result = await showRuleBuilderDialog(
+      context: context,
+      category: category,
+      allCategories: allCategories,
+    );
+    if (result != null) {
+      onChanged(category.copyWith(rules: [...category.rules, result]));
+    }
   }
 
   /// Normal tip liste alanı ekle (text list, integer list, image list...).
@@ -1220,27 +1028,6 @@ class _CategoryEditor extends StatelessWidget {
           ];
         }).toList();
       },
-    );
-  }
-
-  Widget _dialogCheckbox(String label, bool value, ValueChanged<bool> onChanged) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: InkWell(
-        onTap: () => onChanged(!value),
-        child: Row(
-          children: [
-            SizedBox(width: 20, height: 20, child: Checkbox(
-              value: value,
-              onChanged: (v) => onChanged(v ?? false),
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            )),
-            const SizedBox(width: 8),
-            Flexible(child: Text(label, style: const TextStyle(fontSize: 11))),
-          ],
-        ),
-      ),
     );
   }
 

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../application/providers/admin_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
+import '../../../data/datasources/local/template_local_ds.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/template_provider.dart';
@@ -33,13 +35,17 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final builtinAsync = ref.watch(builtinTemplateProvider);
     final customTemplatesAsync = ref.watch(customTemplatesProvider);
+    final isAdmin = ref.watch(isAdminProvider).valueOrNull ?? false;
 
-    // view mode kaldırıldı — built-in dahil tüm template'ler düzenlenebilir
+    // Built-in template yalnızca admin tarafından düzenlenebilir.
+    final isEditingBuiltin =
+        _activeSchema?.schemaId == builtinTemplateId;
+    final readOnly = isEditingBuiltin && !isAdmin;
 
     if (_mode == 'edit') {
       return TemplateEditor(
         initial: _activeSchema,
-        readOnly: false,
+        readOnly: readOnly,
         onBack: () async {
           final ok = await confirmCloseUnconditional(
             context: context,
@@ -50,6 +56,9 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
           }
         },
         onSave: (schema) async {
+          final savingBuiltin =
+              schema.schemaId == builtinTemplateId;
+
           // Existing template? → ask whether to update in place or fork as
           // a new template. New templates (no _activeSchema) skip the prompt.
           final isExisting = _activeSchema != null;
@@ -58,12 +67,26 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
             if (choice == null || choice == _SaveChoice.cancel) return;
             if (choice == _SaveChoice.saveAsNew) {
               final forked = _cloneAsNew(schema, '${schema.name} (v2)');
-              await withLoading(
-                ref.read(globalLoadingProvider.notifier),
-                'save-template-new',
-                'Saving template "${forked.name}"...',
-                () => ref.read(templateLocalDsProvider).save(forked),
-              );
+              try {
+                await withLoading(
+                  ref.read(globalLoadingProvider.notifier),
+                  'save-template-new',
+                  'Saving template "${forked.name}"...',
+                  () => ref.read(templateLocalDsProvider).save(
+                        forked,
+                        bypassBuiltinGuard: isAdmin,
+                      ),
+                );
+              } on BuiltinTemplateAdminRequiredException {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text(
+                            'Only admins can update the built-in template.')),
+                  );
+                }
+                return;
+              }
               ref.invalidate(builtinTemplateProvider);
               ref.invalidate(customTemplatesProvider);
               ref.invalidate(allTemplatesProvider);
@@ -78,12 +101,26 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
             // _SaveChoice.update falls through to the in-place save below.
           }
 
-          await withLoading(
-            ref.read(globalLoadingProvider.notifier),
-            'save-template',
-            'Saving template "${schema.name}"...',
-            () => ref.read(templateLocalDsProvider).save(schema),
-          );
+          try {
+            await withLoading(
+              ref.read(globalLoadingProvider.notifier),
+              'save-template',
+              'Saving template "${schema.name}"...',
+              () => ref.read(templateLocalDsProvider).save(
+                    schema,
+                    bypassBuiltinGuard: savingBuiltin && isAdmin,
+                  ),
+            );
+          } on BuiltinTemplateAdminRequiredException {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text(
+                        'Only admins can update the built-in template.')),
+              );
+            }
+            return;
+          }
           // Invalidate both — the saved file might be the built-in
           // (admin edit path) or a custom template, we don't need to
           // distinguish here.
@@ -93,7 +130,9 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
           if (mounted) {
             setState(() { _mode = null; _activeSchema = null; });
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Template saved')),
+              SnackBar(content: Text(savingBuiltin
+                  ? 'Built-in template updated'
+                  : 'Template saved')),
             );
           }
         },
@@ -121,6 +160,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                 data: (schema) => _TemplateCard(
                   schema: schema,
                   palette: palette,
+                  isAdmin: isAdmin,
                   onTap: () => setState(() { _mode = 'edit'; _activeSchema = schema; }),
                   onSettings: () => _showTemplateSettings(schema, palette),
                 ),
@@ -353,10 +393,12 @@ class _TemplateCard extends StatelessWidget {
   final DmToolColors palette;
   final VoidCallback onTap;
   final bool isCustom;
+  /// Non-custom (built-in) kartlarda admin durumunu gösterir.
+  final bool isAdmin;
   final VoidCallback? onDelete;
   final VoidCallback? onSettings;
 
-  const _TemplateCard({required this.schema, required this.palette, required this.onTap, this.isCustom = false, this.onDelete, this.onSettings});
+  const _TemplateCard({required this.schema, required this.palette, required this.onTap, this.isCustom = false, this.isAdmin = false, this.onDelete, this.onSettings});
 
   @override
   Widget build(BuildContext context) {
@@ -383,12 +425,17 @@ class _TemplateCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(child: Text(schema.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText))),
-                      if (!isCustom)
+                      if (!isCustom) ...[
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                           decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: palette.br),
                           child: Text('Built-in', style: TextStyle(fontSize: 9, color: palette.tabText)),
                         ),
+                        if (!isAdmin) ...[
+                          const SizedBox(width: 4),
+                          Icon(Icons.lock_outline, size: 12, color: palette.tabText),
+                        ],
+                      ],
                     ],
                   ),
                   const SizedBox(height: 2),
