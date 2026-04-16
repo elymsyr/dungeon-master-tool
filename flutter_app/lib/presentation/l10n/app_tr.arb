@@ -441,5 +441,29 @@
   "groupSettingsDeleteBody": "Bu işlem tüm mesajları herkes için silecektir. Bu işlem geri alınamaz.",
   "groupNameUpdated": "Grup adı güncellendi.",
 
-  "cannotMessageSelf": "Kendinize mesaj gönderemezsiniz."
+  "cannotMessageSelf": "Kendinize mesaj gönderemezsiniz.",
+
+  "chatMenuDelete": "Sil",
+  "chatMenuRenameGroup": "Grubu Yeniden Adlandır",
+  "chatMenuLeaveGroup": "Gruptan Ayrıl",
+  "chatMenuDeleteGroup": "Grubu Sil",
+  "chatMenuKickMember": "Gruptan çıkar",
+  "chatMenuMembers": "Üyeler",
+  "chatRenameTitle": "Grubu Yeniden Adlandır",
+  "chatRenameHint": "Grup adı",
+  "chatMemberKicked": "Üye çıkarıldı.",
+  "chatMenuAddMember": "Üye ekle",
+  "chatMemberAdded": "Üye eklendi.",
+  "chatAddMemberTitle": "Üye ekle",
+
+  "feedComposerAttachListing": "Öğe ekle",
+  "feedAttachedListing": "Ekli öğe",
+  "feedRemoveAttachment": "Kaldır",
+
+  "socialTabDiscover": "Keşfet",
+  "discoverSearchHint": "Kullanıcı adıyla ara…",
+  "discoverSuggestedHeader": "Sizin için öneriler",
+  "discoverSearchResults": "Arama sonuçları",
+  "discoverEmptySearch": "Kullanıcı bulunamadı",
+  "discoverEmptyState": "Öneri bulunmuyor"
 }

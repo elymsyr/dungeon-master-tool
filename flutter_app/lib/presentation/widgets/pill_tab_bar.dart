@@ -4,10 +4,11 @@ import '../theme/dm_tool_colors.dart';
 
 /// Single tab spec for [PillTabBar].
 class PillTab<T> {
-  const PillTab({required this.id, required this.icon, required this.label});
+  const PillTab({required this.id, required this.icon, required this.label, this.badgeCount});
   final T id;
   final IconData icon;
   final String label;
+  final int? badgeCount;
 }
 
 /// Compact pill-shaped segmented control used across Social, Profile and
@@ -92,12 +93,16 @@ class PillTabBar<T> extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              t.icon,
+                            _BadgedIcon(
+                              icon: t.icon,
                               size: 16,
                               color: isActive
                                   ? Colors.white
                                   : palette.sidebarLabelSecondary,
+                              showBadge: t.badgeCount != null && t.badgeCount! > 0,
+                              badgeColor: isActive
+                                  ? Colors.white
+                                  : palette.dangerBtnBg,
                             ),
                             if (withLabels) ...[
                               const SizedBox(width: 6),
@@ -127,6 +132,50 @@ class PillTabBar<T> extends StatelessWidget {
             const SizedBox(width: 12),
             trailing!,
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BadgedIcon extends StatelessWidget {
+  final IconData icon;
+  final double size;
+  final Color color;
+  final bool showBadge;
+  final Color badgeColor;
+
+  const _BadgedIcon({
+    required this.icon,
+    required this.size,
+    required this.color,
+    required this.showBadge,
+    required this.badgeColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final iconWidget = Icon(icon, size: size, color: color);
+    if (!showBadge) return iconWidget;
+    return SizedBox(
+      width: size + 6,
+      height: size + 6,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(left: 0, top: 3, child: iconWidget),
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: badgeColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
         ],
       ),
     );

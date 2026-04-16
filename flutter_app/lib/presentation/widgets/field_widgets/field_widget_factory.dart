@@ -1076,18 +1076,25 @@ class _SlotFieldWidget extends StatelessWidget {
     required this.onChanged,
   });
 
-  ({int count, int filled}) get _parsed {
+  ({int count, List<bool> states}) get _parsed {
     if (value is Map) {
       final m = value as Map;
-      final count = (m['count'] as num?)?.toInt() ?? 0;
-      final filled = (m['filled'] as num?)?.toInt() ?? 0;
-      return (count: count.clamp(0, 99), filled: filled.clamp(0, count));
+      final count = (m['count'] as num?)?.toInt().clamp(0, 99) ?? 0;
+      if (m.containsKey('states') && m['states'] is List) {
+        final raw = (m['states'] as List).map((e) => e == true).toList();
+        // Pad or trim to match count.
+        final states = List.generate(count, (i) => i < raw.length && raw[i]);
+        return (count: count, states: states);
+      }
+      // Legacy format: {count, filled} → migrate to per-pip states.
+      final filled = (m['filled'] as num?)?.toInt().clamp(0, count) ?? 0;
+      return (count: count, states: List.generate(count, (i) => i < filled));
     }
-    return (count: 0, filled: 0);
+    return (count: 0, states: []);
   }
 
-  void _write({required int count, required int filled}) {
-    onChanged({'count': count, 'filled': filled.clamp(0, count)});
+  void _write({required int count, required List<bool> states}) {
+    onChanged({'count': count, 'states': states});
   }
 
   @override
@@ -1095,7 +1102,8 @@ class _SlotFieldWidget extends StatelessWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final state = _parsed;
     final count = state.count;
-    final filled = state.filled;
+    final states = state.states;
+    final anyFilled = states.any((s) => s);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -1119,7 +1127,7 @@ class _SlotFieldWidget extends StatelessWidget {
                   icon: const Icon(Icons.remove_circle_outline, size: 18),
                   onPressed: count == 0
                       ? null
-                      : () => _write(count: count - 1, filled: filled),
+                      : () => _write(count: count - 1, states: states.sublist(0, count - 1)),
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
@@ -1129,7 +1137,7 @@ class _SlotFieldWidget extends StatelessWidget {
                   icon: const Icon(Icons.add_circle_outline, size: 18),
                   onPressed: count >= 99
                       ? null
-                      : () => _write(count: count + 1, filled: filled),
+                      : () => _write(count: count + 1, states: [...states, false]),
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
@@ -1137,9 +1145,9 @@ class _SlotFieldWidget extends StatelessWidget {
                 IconButton(
                   tooltip: 'Refill',
                   icon: const Icon(Icons.refresh, size: 18),
-                  onPressed: filled == 0
+                  onPressed: !anyFilled
                       ? null
-                      : () => _write(count: count, filled: 0),
+                      : () => _write(count: count, states: List.filled(count, false)),
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
@@ -1167,16 +1175,14 @@ class _SlotFieldWidget extends StatelessWidget {
               children: [
                 for (var i = 0; i < count; i++)
                   _SlotPip(
-                    filled: i < filled,
+                    filled: states[i],
                     color: palette.featureCardAccent,
-                    onTap: readOnly
-                        ? null
-                        : () {
-                            // Tap-to-toggle: if this pip is empty, fill one
-                            // more; if it was the last filled one, empty it.
-                            final next = i < filled ? i : i + 1;
-                            _write(count: count, filled: next);
-                          },
+                    borderRadius: palette.br,
+                    onTap: () {
+                      final newStates = [...states];
+                      newStates[i] = !newStates[i];
+                      _write(count: count, states: newStates);
+                    },
                   ),
               ],
             ),
@@ -1189,11 +1195,13 @@ class _SlotFieldWidget extends StatelessWidget {
 class _SlotPip extends StatelessWidget {
   final bool filled;
   final Color color;
+  final BorderRadius borderRadius;
   final VoidCallback? onTap;
 
   const _SlotPip({
     required this.filled,
     required this.color,
+    required this.borderRadius,
     required this.onTap,
   });
 
@@ -1201,13 +1209,13 @@ class _SlotPip extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: borderRadius,
       child: Container(
         width: 22,
         height: 22,
         decoration: BoxDecoration(
           color: filled ? color : Colors.transparent,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: borderRadius,
           border: Border.all(color: color, width: 1.5),
         ),
       ),

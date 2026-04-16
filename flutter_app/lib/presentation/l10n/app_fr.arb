@@ -441,5 +441,29 @@
   "groupSettingsDeleteBody": "Cela supprimera tous les messages pour tout le monde. Cette action est irréversible.",
   "groupNameUpdated": "Nom du groupe mis à jour.",
 
-  "cannotMessageSelf": "Vous ne pouvez pas vous envoyer un message."
+  "cannotMessageSelf": "Vous ne pouvez pas vous envoyer un message.",
+
+  "chatMenuDelete": "Supprimer",
+  "chatMenuRenameGroup": "Renommer le groupe",
+  "chatMenuLeaveGroup": "Quitter le groupe",
+  "chatMenuDeleteGroup": "Supprimer le groupe",
+  "chatMenuKickMember": "Retirer du groupe",
+  "chatMenuMembers": "Membres",
+  "chatRenameTitle": "Renommer le groupe",
+  "chatRenameHint": "Nom du groupe",
+  "chatMemberKicked": "Membre retiré.",
+  "chatMenuAddMember": "Ajouter un membre",
+  "chatMemberAdded": "Membre ajouté.",
+  "chatAddMemberTitle": "Ajouter un membre",
+
+  "feedComposerAttachListing": "Joindre un article",
+  "feedAttachedListing": "Article joint",
+  "feedRemoveAttachment": "Supprimer",
+
+  "socialTabDiscover": "Découvrir",
+  "discoverSearchHint": "Rechercher par nom d'utilisateur…",
+  "discoverSuggestedHeader": "Suggestions pour vous",
+  "discoverSearchResults": "Résultats de recherche",
+  "discoverEmptySearch": "Aucun utilisateur trouvé",
+  "discoverEmptyState": "Aucune suggestion disponible"
 }

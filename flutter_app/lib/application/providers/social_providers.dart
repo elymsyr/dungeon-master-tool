@@ -115,8 +115,8 @@ class PostComposerNotifier extends StateNotifier<AsyncValue<void>> {
   final Ref _ref;
   PostComposerNotifier(this._ref) : super(const AsyncValue.data(null));
 
-  Future<bool> submit({String? body, Uint8List? imageBytes, String contentType = 'image/jpeg'}) async {
-    if ((body == null || body.trim().isEmpty) && imageBytes == null) return false;
+  Future<bool> submit({String? body, Uint8List? imageBytes, String contentType = 'image/jpeg', String? marketplaceItemId}) async {
+    if ((body == null || body.trim().isEmpty) && imageBytes == null && marketplaceItemId == null) return false;
     if (body != null) {
       await ProfanityFilter.ensureLoaded();
       if (ProfanityFilter.contains(body)) {
@@ -133,6 +133,7 @@ class PostComposerNotifier extends StateNotifier<AsyncValue<void>> {
             body: body?.trim(),
             imageBytes: imageBytes,
             contentType: contentType,
+            marketplaceItemId: marketplaceItemId,
           );
       _ref.invalidate(feedProvider);
       state = const AsyncValue.data(null);
@@ -311,6 +312,14 @@ final myConversationsProvider = FutureProvider<List<Conversation>>((ref) async {
   return ref.read(messagesRemoteDsProvider).fetchMyConversations();
 });
 
+/// Total unread message count across all conversations — for badges.
+final totalUnreadCountProvider = FutureProvider<int>((ref) async {
+  if (!SupabaseConfig.isConfigured) return 0;
+  final auth = ref.watch(authProvider);
+  if (auth == null) return 0;
+  return ref.read(messagesRemoteDsProvider).fetchTotalUnreadCount();
+});
+
 /// Realtime mesaj akışı — chat ekranı bunu watch eder.
 final messagesStreamProvider =
     StreamProvider.family<List<ChatMessage>, String>((ref, conversationId) {
@@ -332,7 +341,10 @@ final conversationListRealtimeProvider = Provider<void>((ref) {
       event: PostgresChangeEvent.insert,
       schema: 'public',
       table: 'messages',
-      callback: (_) => ref.invalidate(myConversationsProvider),
+      callback: (_) {
+        ref.invalidate(myConversationsProvider);
+        ref.invalidate(totalUnreadCountProvider);
+      },
     )
     ..onPostgresChanges(
       event: PostgresChangeEvent.delete,
@@ -413,6 +425,21 @@ final suggestedUsersProvider = FutureProvider<List<UserProfile>>((ref) async {
 
 /// Marketplace sağ panelinde "followed + suggested" birleşik görünümü.
 /// Önce takip edilenler, sonra öneriler (takip edilenler hariç) döner.
+// ── Discover people ──────────────────────────────────────────────────
+
+final discoverSearchQueryProvider = StateProvider<String>((ref) => '');
+
+final discoverPeopleProvider = FutureProvider<List<UserProfile>>((ref) async {
+  if (!SupabaseConfig.isConfigured) return const [];
+  final auth = ref.watch(authProvider);
+  if (auth == null) return const [];
+  final query = ref.watch(discoverSearchQueryProvider);
+  if (query.trim().isNotEmpty) {
+    return ref.read(profilesRemoteDsProvider).search(query, limit: 30);
+  }
+  return ref.read(profilesRemoteDsProvider).suggested(limit: 30);
+});
+
 final marketplacePlayersProvider = FutureProvider<List<UserProfile>>((ref) async {
   if (!SupabaseConfig.isConfigured) return const [];
   final auth = ref.watch(authProvider);

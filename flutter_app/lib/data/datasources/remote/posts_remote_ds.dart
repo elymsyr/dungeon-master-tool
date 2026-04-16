@@ -50,7 +50,7 @@ class PostsRemoteDataSource {
 
     var query = _client
         .from(_table)
-        .select('*, profiles!posts_author_id_fkey(username, avatar_url)');
+        .select('*, profiles!posts_author_id_fkey(username, avatar_url), marketplace_listings!posts_marketplace_item_id_fkey(id, title, item_type)');
     if (authorIds != null) {
       query = query.inFilter('author_id', authorIds);
     }
@@ -65,7 +65,7 @@ class PostsRemoteDataSource {
   Future<List<Post>> fetchByAuthor(String userId, {int limit = 50}) async {
     final rows = await _client
         .from(_table)
-        .select('*, profiles!posts_author_id_fkey(username, avatar_url)')
+        .select('*, profiles!posts_author_id_fkey(username, avatar_url), marketplace_listings!posts_marketplace_item_id_fkey(id, title, item_type)')
         .eq('author_id', userId)
         .order('created_at', ascending: false)
         .limit(limit);
@@ -148,6 +148,7 @@ class PostsRemoteDataSource {
     String? body,
     Uint8List? imageBytes,
     String contentType = 'image/jpeg',
+    String? marketplaceItemId,
   }) async {
     final uid = _userId;
     String? imageUrl;
@@ -173,7 +174,8 @@ class PostsRemoteDataSource {
       'image_url': imageUrl,
       'image_path': imagePath,
       'size_bytes': sizeBytes,
-    }).select('*, profiles!posts_author_id_fkey(username, avatar_url)').single();
+      'marketplace_item_id': marketplaceItemId,
+    }).select('*, profiles!posts_author_id_fkey(username, avatar_url), marketplace_listings!posts_marketplace_item_id_fkey(id, title, item_type)').single();
     return _rowToPost(inserted);
   }
 
@@ -196,6 +198,7 @@ class PostsRemoteDataSource {
 
   Post _rowToPost(Map<String, dynamic> row) {
     final profile = row['profiles'] as Map<String, dynamic>?;
+    final marketplace = row['marketplace_listings'] as Map<String, dynamic>?;
     return Post(
       id: row['id'] as String,
       authorId: row['author_id'] as String,
@@ -205,6 +208,9 @@ class PostsRemoteDataSource {
       imageUrl: row['image_url'] as String?,
       sizeBytes: (row['size_bytes'] as int?) ?? 0,
       createdAt: DateTime.parse(row['created_at'] as String),
+      marketplaceItemId: marketplace?['id'] as String?,
+      marketplaceItemTitle: marketplace?['title'] as String?,
+      marketplaceItemType: marketplace?['item_type'] as String?,
     );
   }
 }

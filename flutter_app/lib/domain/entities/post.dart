@@ -16,6 +16,9 @@ abstract class Post with _$Post {
     required DateTime createdAt,
     @Default(0) int likeCount,
     @Default(false) bool likedByMe,
+    String? marketplaceItemId,
+    String? marketplaceItemTitle,
+    String? marketplaceItemType,
   }) = _Post;
 
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);

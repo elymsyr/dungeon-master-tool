@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/social_providers.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../social/discover_tab.dart';
 import '../social/feed_tab.dart';
 import '../social/marketplace_tab.dart';
 import '../social/messages_tab.dart';
@@ -33,8 +35,10 @@ class _SocialTabState extends ConsumerState<SocialTab> {
     if (auth == null) return const _NotSignedIn();
 
     final currentTab = ref.watch(socialSubTabProvider);
+    final unread = ref.watch(totalUnreadCountProvider).value ?? 0;
     return SocialShell(
       currentTab: currentTab,
+      messagesBadgeCount: unread,
       onTabChanged: (t) =>
           ref.read(socialSubTabProvider.notifier).state = t,
       child: switch (currentTab) {
@@ -42,6 +46,7 @@ class _SocialTabState extends ConsumerState<SocialTab> {
         'players' => const PlayersTab(),
         'messages' => const MessagesTab(),
         'marketplace' => const MarketplaceTab(),
+        'discover' => const DiscoverTab(),
         _ => const FeedTab(),
       },
     );

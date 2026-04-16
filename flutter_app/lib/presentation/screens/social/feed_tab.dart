@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/marketplace_listing_provider.dart';
 import '../../../application/providers/social_providers.dart';
 import '../../../core/utils/error_format.dart';
 import '../../../core/utils/profanity_filter.dart';
@@ -10,12 +12,21 @@ import '../../../core/utils/screen_type.dart';
 import '../../../core/utils/world_languages.dart';
 import '../../../data/datasources/remote/posts_remote_ds.dart' show FeedScope;
 import '../../../domain/entities/game_listing.dart';
+import '../../../domain/entities/marketplace_listing.dart';
 import '../../../domain/entities/post.dart';
 import '../../dialogs/apply_listing_dialog.dart';
+import '../../dialogs/marketplace_preview_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/profile_avatar.dart';
 import 'social_shell.dart';
+
+IconData _listingTypeIcon(String itemType) => switch (itemType) {
+      'world' => Icons.public,
+      'template' => Icons.description_outlined,
+      'package' => Icons.inventory_2_outlined,
+      _ => Icons.folder_outlined,
+    };
 
 class FeedTab extends ConsumerStatefulWidget {
   const FeedTab({super.key});
@@ -26,6 +37,7 @@ class FeedTab extends ConsumerStatefulWidget {
 class _FeedTabState extends ConsumerState<FeedTab> {
   final _bodyCtrl = TextEditingController();
   bool _composerFocused = false;
+  MarketplaceListing? _attachedListing;
 
   @override
   void dispose() {
@@ -35,10 +47,16 @@ class _FeedTabState extends ConsumerState<FeedTab> {
 
   Future<void> _submit() async {
     final raw = _bodyCtrl.text;
-    if (raw.trim().isEmpty) return;
+    if (raw.trim().isEmpty && _attachedListing == null) return;
     final l10n = L10n.of(context)!;
-    final ok = await ref.read(postComposerProvider.notifier).submit(body: raw);
-    if (ok) _bodyCtrl.clear();
+    final ok = await ref.read(postComposerProvider.notifier).submit(
+          body: raw,
+          marketplaceItemId: _attachedListing?.id,
+        );
+    if (ok) {
+      _bodyCtrl.clear();
+      setState(() => _attachedListing = null);
+    }
     if (!mounted) return;
     final state = ref.read(postComposerProvider);
     if (state is AsyncError) {
@@ -53,6 +71,50 @@ class _FeedTabState extends ConsumerState<FeedTab> {
       }
     }
     setState(() {});
+  }
+
+  Future<void> _pickMarketplaceItem() async {
+    final uid = ref.read(authProvider)?.uid;
+    if (uid == null) return;
+    final listings = await ref.read(userMarketplaceListingsProvider(uid).future);
+    if (!mounted || listings.isEmpty) return;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
+    final picked = await showModalBottomSheet<MarketplaceListing>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                l10n.feedComposerAttachListing,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: palette.tabActiveText,
+                ),
+              ),
+            ),
+            ...listings.map((listing) => ListTile(
+                  leading: Icon(_listingTypeIcon(listing.itemType),
+                      color: palette.featureCardAccent),
+                  title: Text(listing.title,
+                      style: const TextStyle(fontSize: 13)),
+                  subtitle: Text(listing.itemType,
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: palette.sidebarLabelSecondary)),
+                  onTap: () => Navigator.pop(ctx, listing),
+                )),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (picked != null) setState(() => _attachedListing = picked);
   }
 
   @override
@@ -108,19 +170,60 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                     isDense: true,
                   ),
                 ),
+                if (_attachedListing != null) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: palette.featureCardAccent.withValues(alpha: 0.1),
+                      borderRadius: palette.cbr,
+                      border: Border.all(color: palette.featureCardAccent.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(_listingTypeIcon(_attachedListing!.itemType), size: 16, color: palette.featureCardAccent),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _attachedListing!.title,
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabActiveText),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => setState(() => _attachedListing = null),
+                          child: Icon(Icons.close, size: 16, color: palette.sidebarLabelSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: Icon(Icons.image_outlined, size: 20, color: palette.sidebarLabelSecondary),
-                      tooltip: l10n.feedComposerImageTooltip,
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(l10n.feedImageUploadComingSoon)),
-                        );
-                      },
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          icon: Icon(Icons.image_outlined, size: 20, color: palette.sidebarLabelSecondary),
+                          tooltip: l10n.feedComposerImageTooltip,
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(l10n.feedImageUploadComingSoon)),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          icon: Icon(Icons.storefront_outlined, size: 20,
+                              color: _attachedListing != null ? palette.featureCardAccent : palette.sidebarLabelSecondary),
+                          tooltip: l10n.feedComposerAttachListing,
+                          onPressed: _pickMarketplaceItem,
+                        ),
+                      ],
                     ),
                     FilledButton(
                       style: FilledButton.styleFrom(
@@ -128,7 +231,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         shape: RoundedRectangleBorder(borderRadius: palette.br),
                       ),
-                      onPressed: composerState is AsyncLoading || _bodyCtrl.text.trim().isEmpty
+                      onPressed: composerState is AsyncLoading || (_bodyCtrl.text.trim().isEmpty && _attachedListing == null)
                           ? null
                           : _submit,
                       child: composerState is AsyncLoading
@@ -289,6 +392,56 @@ class _PostCard extends ConsumerWidget {
             ClipRRect(
               borderRadius: palette.cbr,
               child: Image.network(post.imageUrl!, fit: BoxFit.cover),
+            ),
+          ],
+          if (post.marketplaceItemId != null && post.marketplaceItemTitle != null) ...[
+            const SizedBox(height: 12),
+            InkWell(
+              borderRadius: palette.cbr,
+              onTap: () async {
+                final listings = await ref.read(marketplaceListingsRemoteDsProvider).fetchListingsByIds([post.marketplaceItemId!]);
+                if (!context.mounted || listings.isEmpty) return;
+                MarketplacePreviewDialog.show(context, listing: listings.first);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: palette.featureCardBg,
+                  borderRadius: palette.cbr,
+                  border: Border.all(color: palette.featureCardBorder),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: palette.featureCardAccent.withValues(alpha: 0.12),
+                        borderRadius: palette.cbr,
+                      ),
+                      child: Icon(
+                        _listingTypeIcon(post.marketplaceItemType ?? ''),
+                        size: 18,
+                        color: palette.featureCardAccent,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        post.marketplaceItemTitle!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: palette.tabActiveText,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, size: 18, color: palette.sidebarLabelSecondary),
+                  ],
+                ),
+              ),
             ),
           ],
           const SizedBox(height: 8),

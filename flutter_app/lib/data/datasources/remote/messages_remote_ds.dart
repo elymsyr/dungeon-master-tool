@@ -68,7 +68,12 @@ class MessagesRemoteDataSource {
         createdAt: DateTime.parse(c['created_at'] as String),
       ));
     }
-    return result;
+
+    // Hydrate unread counts in a single RPC call.
+    final unreadCounts = await fetchUnreadCounts();
+    return result
+        .map((c) => c.copyWith(unreadCount: unreadCounts[c.id] ?? 0))
+        .toList();
   }
 
   /// Bir kullanıcı ile DM aç (varsa mevcudunu döner, yoksa oluşturur).
@@ -169,12 +174,49 @@ class MessagesRemoteDataSource {
     await _client.rpc('delete_conversation', params: {'p_conv_id': conversationId});
   }
 
+  /// Add a member to a group conversation (admin only).
+  Future<void> addMember(String conversationId, String targetUserId) async {
+    await _client.rpc('add_conversation_member', params: {
+      'p_conv_id': conversationId,
+      'p_target_user': targetUserId,
+    });
+  }
+
+  /// Kick a member from a group conversation (admin only).
+  Future<void> kickMember(String conversationId, String targetUserId) async {
+    await _client.rpc('kick_conversation_member', params: {
+      'p_conv_id': conversationId,
+      'p_target_user': targetUserId,
+    });
+  }
+
   /// Grup ismini değiştir (yalnızca admin).
   Future<void> renameConversation(String conversationId, String title) async {
     await _client.rpc('rename_conversation', params: {
       'p_conv_id': conversationId,
       'p_title': title,
     });
+  }
+
+  /// Mark a conversation as read for the current user.
+  Future<void> markRead(String conversationId) async {
+    await _client.rpc('mark_conversation_read', params: {'p_conv_id': conversationId});
+  }
+
+  /// Per-conversation unread message counts for the current user.
+  Future<Map<String, int>> fetchUnreadCounts() async {
+    final rows = await _client.rpc('get_unread_counts');
+    if (rows is! List) return {};
+    return {
+      for (final r in rows)
+        (r['conversation_id'] as String): ((r['unread_count'] as num?)?.toInt() ?? 0),
+    };
+  }
+
+  /// Total unread message count across all conversations (for badge).
+  Future<int> fetchTotalUnreadCount() async {
+    final result = await _client.rpc('get_total_unread_count');
+    return (result as num?)?.toInt() ?? 0;
   }
 
   ChatMessage _rowToMessage(Map<String, dynamic> row) {

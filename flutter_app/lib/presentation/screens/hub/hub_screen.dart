@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/cloud_remote_check_provider.dart';
+import '../../../application/providers/social_providers.dart';
 import '../../../application/providers/profile_provider.dart';
 import '../../../application/providers/user_session_provider.dart';
 import '../../../core/config/supabase_config.dart';
@@ -96,7 +97,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     PackagesTab(),
   ];
 
-  void _showLandscapeNavSheet(DmToolColors palette, bool cloudBadge) {
+  void _showLandscapeNavSheet(DmToolColors palette, bool cloudBadge, {bool hasUnread = false}) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -127,7 +128,8 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                           size: 24,
                           color: isActive ? palette.tabIndicator : palette.tabText,
                           showBadge:
-                              i == _settingsTabIndex && cloudBadge,
+                              (i == _settingsTabIndex && cloudBadge) ||
+                              (i == 0 && hasUnread),
                           badgeColor: palette.featureCardAccent,
                         ),
                         const SizedBox(height: 4),
@@ -188,6 +190,8 @@ class _HubScreenState extends ConsumerState<HubScreen> {
         MediaQuery.orientationOf(context) == Orientation.landscape;
     // Multi-device hint — another device uploaded changes we haven't pulled.
     final cloudBadge = ref.watch(cloudRemoteHasNewerProvider);
+    // Unread messages — badge on Social tab.
+    final hasUnread = (ref.watch(totalUnreadCountProvider).value ?? 0) > 0;
 
     // Redirect to landing on sign-out when Supabase is configured.
     ref.listen(authProvider, (prev, next) async {
@@ -226,7 +230,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
         leading: isLandscapePhone
             ? IconButton(
                 icon: const Icon(Icons.menu, size: 22),
-                onPressed: () => _showLandscapeNavSheet(palette, cloudBadge),
+                onPressed: () => _showLandscapeNavSheet(palette, cloudBadge, hasUnread: hasUnread),
               )
             : null,
         automaticallyImplyLeading: false,
@@ -268,6 +272,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                   palette: palette,
                   settingsBadge: cloudBadge,
                   settingsTabIndex: _settingsTabIndex,
+                  socialBadge: hasUnread,
                 ),
                 VerticalDivider(width: 1, color: palette.sidebarDivider),
                 Expanded(
@@ -296,7 +301,9 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                       icon: _tabs[i].icon,
                       size: 24,
                       color: palette.tabText,
-                      showBadge: i == _settingsTabIndex && cloudBadge,
+                      showBadge:
+                          (i == _settingsTabIndex && cloudBadge) ||
+                          (i == 0 && hasUnread),
                       badgeColor: palette.featureCardAccent,
                     ),
                     label: _tabs[i].label,
@@ -316,6 +323,7 @@ class _HubSideRail extends StatelessWidget {
   final DmToolColors palette;
   final bool settingsBadge;
   final int settingsTabIndex;
+  final bool socialBadge;
 
   const _HubSideRail({
     required this.tabs,
@@ -324,6 +332,7 @@ class _HubSideRail extends StatelessWidget {
     required this.palette,
     required this.settingsBadge,
     required this.settingsTabIndex,
+    this.socialBadge = false,
   });
 
   @override
@@ -341,7 +350,7 @@ class _HubSideRail extends StatelessWidget {
                 tooltip: tabs[i].label,
                 selected: i == selectedIndex,
                 palette: palette,
-                showBadge: i == settingsTabIndex && settingsBadge,
+                showBadge: (i == settingsTabIndex && settingsBadge) || (i == 0 && socialBadge),
                 onTap: () => onSelected(i),
               ),
             ),

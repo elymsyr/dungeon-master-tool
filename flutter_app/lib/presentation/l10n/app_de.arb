@@ -441,5 +441,29 @@
   "groupSettingsDeleteBody": "Dadurch werden alle Nachrichten für alle gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
   "groupNameUpdated": "Gruppenname aktualisiert.",
 
-  "cannotMessageSelf": "Du kannst dir nicht selbst eine Nachricht senden."
+  "cannotMessageSelf": "Du kannst dir nicht selbst eine Nachricht senden.",
+
+  "chatMenuDelete": "Löschen",
+  "chatMenuRenameGroup": "Gruppe umbenennen",
+  "chatMenuLeaveGroup": "Gruppe verlassen",
+  "chatMenuDeleteGroup": "Gruppe löschen",
+  "chatMenuKickMember": "Aus Gruppe entfernen",
+  "chatMenuMembers": "Mitglieder",
+  "chatRenameTitle": "Gruppe umbenennen",
+  "chatRenameHint": "Gruppenname",
+  "chatMemberKicked": "Mitglied entfernt.",
+  "chatMenuAddMember": "Mitglied hinzufügen",
+  "chatMemberAdded": "Mitglied hinzugefügt.",
+  "chatAddMemberTitle": "Mitglied hinzufügen",
+
+  "feedComposerAttachListing": "Eintrag anhängen",
+  "feedAttachedListing": "Angehängter Eintrag",
+  "feedRemoveAttachment": "Entfernen",
+
+  "socialTabDiscover": "Entdecken",
+  "discoverSearchHint": "Nach Benutzername suchen…",
+  "discoverSuggestedHeader": "Vorschläge für dich",
+  "discoverSearchResults": "Suchergebnisse",
+  "discoverEmptySearch": "Keine Benutzer gefunden",
+  "discoverEmptyState": "Keine Vorschläge verfügbar"
 }
