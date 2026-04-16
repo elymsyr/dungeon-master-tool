@@ -2,16 +2,7 @@
 
 Tracked work for upcoming releases — bugs to fix and features to add. Items are grouped by type, not strictly ordered.
 
-## Bugs
-
-### Bug report message fail
-bug reportlarında admin, report eden kişiye mesaj göndermek istediğinde aşağıdaki hata geliyor: Failed to send: PostgrestException(message: invalid counterpa...
-
 ## Features
-
-### Grup ve Mesaj silme
-
-Grup ve mesajları silebilelim. Kullanıcılar grubu silerse gruptan ayrılmış olsun. Yönetici silerse, yöneticilik başka birine düşsün. Grup ayarlarından gruplara isim verebilelim, yönetici ise grupo ayarlarından direkt grubu silebilsin. Bu durumda grup herkesde  silinir.
 
 ### Template rule propagation into worlds
 Template'ini değiştirdikten sonra bir world'e girmek istediğimizde bu değişiklik algılanır ve önce kullanıcı uyarılır. Kullanıcı isterse world'ü güncelleyebilir. Ancak bu sistem rules dahil template içindeki her değişiklikte çalışmalı.
