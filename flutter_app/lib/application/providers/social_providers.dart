@@ -347,6 +347,12 @@ final conversationListRealtimeProvider = Provider<void>((ref) {
       },
     )
     ..onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'conversation_members',
+      callback: (_) => ref.invalidate(myConversationsProvider),
+    )
+    ..onPostgresChanges(
       event: PostgresChangeEvent.delete,
       schema: 'public',
       table: 'conversation_members',
