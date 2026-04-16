@@ -16,9 +16,6 @@ Avatar upload + display across the app: profile screen, post author, message thr
 ### Global tag system
 Tags entered in one place (e.g., a Game Listing) should be discoverable when other users create their own listings. Provide an autocomplete / suggestion list of existing tags so the same tag is reused instead of slight variants.
 
-### Online data cache layer
-Cache online-side data (marketplace listings, shared content, etc.) locally instead of refetching from scratch every time. Invalidate on meaningful changes rather than on every view.
-
 ### Slot field type
 A new field type: **slot**. Renders as a row of centered, theme-styled checkboxes with no inline text. The player can add as many slot checkboxes as they want to a given slot field. Include a refill button in the top-right of the field to reset all checkboxes at once. Intended for spell slots, ammo, charges, hit dice, etc.
 

@@ -470,5 +470,13 @@
   "discoverSuggestedHeader": "Sizin için öneriler",
   "discoverSearchResults": "Arama sonuçları",
   "discoverEmptySearch": "Kullanıcı bulunamadı",
-  "discoverEmptyState": "Öneri bulunmuyor"
+  "discoverEmptyState": "Öneri bulunmuyor",
+
+  "dmDeleteChat": "Sohbeti Sil",
+  "dmDeleteTitle": "Sohbet silinsin mi?",
+  "dmDeleteBody": "Tüm mesajlar her iki taraf için de silinecek. Bu işlem geri alınamaz.",
+  "dmDeleteConfirm": "Sil",
+
+  "profileHideFromDiscover": "Keşfet'te beni gösterme",
+  "profileHideFromDiscoverHint": "Profiliniz önerilerde ve arama sonuçlarında görünmez"
 }

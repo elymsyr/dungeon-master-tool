@@ -306,41 +306,32 @@ class _FeedScopeTabs extends ConsumerWidget {
       (FeedScope.following, l10n.feedScopeFollowing),
       (FeedScope.gameLists, l10n.feedScopeGameLists),
     ];
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: palette.featureCardBorder),
-        ),
-      ),
-      child: Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
         children: items.map((t) {
           final isActive = t.$1 == scope;
-          return Expanded(
-            child: InkWell(
-              onTap: () =>
-                  ref.read(feedScopeProvider.notifier).state = t.$1,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: isActive
-                          ? palette.featureCardAccent
-                          : Colors.transparent,
-                      width: 2,
-                    ),
-                  ),
+          return InkWell(
+            borderRadius: palette.br,
+            onTap: () =>
+                ref.read(feedScopeProvider.notifier).state = t.$1,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: isActive ? palette.featureCardAccent : Colors.transparent,
+                borderRadius: palette.br,
+                border: Border.all(
+                  color: isActive ? palette.featureCardAccent : palette.featureCardBorder,
                 ),
-                child: Text(
-                  t.$2,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                    color: isActive
-                        ? palette.featureCardAccent
-                        : palette.sidebarLabelSecondary,
-                  ),
+              ),
+              child: Text(
+                t.$2,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: isActive ? Colors.white : palette.tabText,
                 ),
               ),
             ),

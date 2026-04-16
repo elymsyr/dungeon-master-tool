@@ -470,5 +470,13 @@
   "discoverSuggestedHeader": "Vorschläge für dich",
   "discoverSearchResults": "Suchergebnisse",
   "discoverEmptySearch": "Keine Benutzer gefunden",
-  "discoverEmptyState": "Keine Vorschläge verfügbar"
+  "discoverEmptyState": "Keine Vorschläge verfügbar",
+
+  "dmDeleteChat": "Chat löschen",
+  "dmDeleteTitle": "Unterhaltung löschen?",
+  "dmDeleteBody": "Alle Nachrichten werden für beide Seiten gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+  "dmDeleteConfirm": "Löschen",
+
+  "profileHideFromDiscover": "Nicht in Entdecken anzeigen",
+  "profileHideFromDiscoverHint": "Dein Profil erscheint nicht in Vorschlägen oder Suchergebnissen"
 }

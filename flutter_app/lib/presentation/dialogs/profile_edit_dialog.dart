@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/profile_provider.dart';
 import '../../domain/entities/user_profile.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../widgets/profile_avatar.dart';
 
@@ -32,6 +33,7 @@ class _ProfileEditDialogState extends ConsumerState<ProfileEditDialog> {
   late final TextEditingController _bioCtrl;
   String? _avatarUrl;
   String? _localError;
+  late bool _hiddenFromDiscover;
 
   bool get _isCreate => widget.existing == null;
 
@@ -42,6 +44,7 @@ class _ProfileEditDialogState extends ConsumerState<ProfileEditDialog> {
     _displayNameCtrl = TextEditingController(text: widget.existing?.displayName ?? '');
     _bioCtrl = TextEditingController(text: widget.existing?.bio ?? '');
     _avatarUrl = widget.existing?.avatarUrl;
+    _hiddenFromDiscover = widget.existing?.hiddenFromDiscover ?? false;
   }
 
   @override
@@ -84,6 +87,7 @@ class _ProfileEditDialogState extends ConsumerState<ProfileEditDialog> {
             displayName: _displayNameCtrl.text.trim(),
             bio: _bioCtrl.text.trim(),
             avatarUrl: _avatarUrl,
+            hiddenFromDiscover: _hiddenFromDiscover,
           );
     if (ok && mounted) Navigator.pop(context);
   }
@@ -91,6 +95,7 @@ class _ProfileEditDialogState extends ConsumerState<ProfileEditDialog> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
     final editState = ref.watch(profileEditProvider);
     final isBusy = editState.isBusy;
     final remoteError = editState.errorMessage;
@@ -161,6 +166,34 @@ class _ProfileEditDialogState extends ConsumerState<ProfileEditDialog> {
                 border: OutlineInputBorder(),
               ),
             ),
+            if (!_isCreate) ...[
+              const SizedBox(height: 8),
+              InkWell(
+                borderRadius: palette.br,
+                onTap: isBusy ? null : () => setState(() => _hiddenFromDiscover = !_hiddenFromDiscover),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: Checkbox(
+                        value: _hiddenFromDiscover,
+                        onChanged: isBusy ? null : (v) => setState(() => _hiddenFromDiscover = v ?? false),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        side: BorderSide(color: palette.featureCardBorder),
+                        activeColor: palette.featureCardAccent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(palette.borderRadius / 2)),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(l10n.profileHideFromDiscover,
+                          style: TextStyle(fontSize: 12, color: palette.tabText)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (remoteError != null) ...[
               const SizedBox(height: 8),
               Text(remoteError, style: TextStyle(color: palette.dangerBtnBg, fontSize: 12)),

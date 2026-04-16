@@ -125,7 +125,7 @@ class _FilterBar extends ConsumerWidget {
       children: types.map((f) {
         final isActive = f.$1 == filters.type;
         return InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: palette.br,
           onTap: () {
             ref.read(marketplaceFiltersProvider.notifier).state =
                 filters.copyWith(type: f.$1);
@@ -134,7 +134,7 @@ class _FilterBar extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
             decoration: BoxDecoration(
               color: isActive ? palette.featureCardAccent : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: palette.br,
               border: Border.all(
                 color: isActive ? palette.featureCardAccent : palette.featureCardBorder,
               ),
