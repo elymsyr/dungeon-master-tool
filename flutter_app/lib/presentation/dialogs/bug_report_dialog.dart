@@ -220,7 +220,6 @@ class _BugReportDialogState extends ConsumerState<BugReportDialog> {
           label: const Text('GitHub Issues'),
           onPressed: _openGithub,
         ),
-        const Spacer(),
         TextButton(
           onPressed: _submitting ? null : () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
