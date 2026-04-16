@@ -581,15 +581,32 @@ class _ConvTile extends ConsumerWidget {
     final previewIsPlaceholder = conversation.lastMessageBody == null;
     final hasUnread = conversation.unreadCount > 0;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: palette.cbr,
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => ChatScreen(conversation: conversation, myUserId: myId),
+    return GestureDetector(
+      onLongPressStart: conversation.isGroup
+          ? (details) => _showConversationContextMenu(
+                context: context, ref: ref,
+                conversation: conversation,
+                myUserId: myId,
+                globalPosition: details.globalPosition,
+              )
+          : null,
+      onSecondaryTapDown: conversation.isGroup
+          ? (details) => _showConversationContextMenu(
+                context: context, ref: ref,
+                conversation: conversation,
+                myUserId: myId,
+                globalPosition: details.globalPosition,
+              )
+          : null,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: palette.cbr,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ChatScreen(conversation: conversation, myUserId: myId),
+            ),
           ),
-        ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Row(
@@ -666,6 +683,7 @@ class _ConvTile extends ConsumerWidget {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -725,287 +743,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  Future<void> _deleteMessage(String messageId) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete message?'),
-        content: const Text('This message will be permanently deleted.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Delete',
-                style: TextStyle(color: Theme.of(context).colorScheme.error)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    try {
-      await ref.read(messagesRemoteDsProvider).deleteMessage(messageId);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(formatError(e))));
-      }
-    }
-  }
-
-  /// Context menu on the conversation title — group settings, members, leave/delete.
-  void _showTitleContextMenu(Offset globalPosition) {
-    final palette = Theme.of(context).extension<DmToolColors>()!;
-    final l10n = L10n.of(context)!;
-    final conv = widget.conversation;
-    final isAdmin = conv.createdBy == widget.myUserId;
-    final isGroup = conv.isGroup;
-    final errorColor = Theme.of(context).colorScheme.error;
-
-    final items = <PopupMenuEntry<String>>[];
-
-    if (isGroup) {
-      // Members sub-section header
-      items.add(PopupMenuItem(
-        enabled: false,
-        height: 32,
-        child: Text(
-          l10n.chatMenuMembers,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: palette.sidebarLabelSecondary,
-          ),
-        ),
-      ));
-
-      for (var i = 0; i < conv.memberIds.length; i++) {
-        final memberId = conv.memberIds[i];
-        final username = i < conv.memberUsernames.length
-            ? conv.memberUsernames[i]
-            : memberId;
-        final isMemberAdmin = memberId == conv.createdBy;
-        final canKick = isAdmin && !isMemberAdmin && memberId != widget.myUserId;
-
-        items.add(PopupMenuItem(
-          enabled: canKick,
-          value: 'kick:$memberId',
-          child: Row(
-            children: [
-              ProfileAvatar(fallbackText: username, size: 22),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '@$username',
-                  style: const TextStyle(fontSize: 12),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (isMemberAdmin)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: palette.featureCardAccent.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                  child: Text(
-                    'ADMIN',
-                    style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                      color: palette.featureCardAccent,
-                    ),
-                  ),
-                ),
-              if (canKick)
-                Icon(Icons.person_remove_outlined, size: 16, color: errorColor),
-            ],
-          ),
-        ));
-      }
-
-      items.add(const PopupMenuDivider());
-
-      // Rename (admin only)
-      if (isAdmin) {
-        items.add(PopupMenuItem(
-          value: 'rename',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.edit_outlined, size: 18, color: palette.tabText),
-              const SizedBox(width: 8),
-              Text(l10n.chatMenuRenameGroup),
-            ],
-          ),
-        ));
-      }
-
-      // Leave
-      items.add(PopupMenuItem(
-        value: 'leave',
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.exit_to_app, size: 18, color: errorColor),
-            const SizedBox(width: 8),
-            Text(l10n.chatMenuLeaveGroup, style: TextStyle(color: errorColor)),
-          ],
-        ),
-      ));
-
-      // Delete group (admin only)
-      if (isAdmin) {
-        items.add(PopupMenuItem(
-          value: 'delete_group',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.delete_forever, size: 18, color: errorColor),
-              const SizedBox(width: 8),
-              Text(l10n.chatMenuDeleteGroup, style: TextStyle(color: errorColor)),
-            ],
-          ),
-        ));
-      }
-    }
-
-    if (items.isEmpty) return;
-
-    showMenu<String>(
-      context: context,
-      position: RelativeRect.fromLTRB(
-        globalPosition.dx,
-        globalPosition.dy,
-        globalPosition.dx + 1,
-        globalPosition.dy + 1,
-      ),
-      items: items,
-    ).then((value) {
-      if (value == null) return;
-      if (value == 'rename') _renameGroup();
-      if (value == 'leave') _leaveGroup();
-      if (value == 'delete_group') _deleteGroup();
-      if (value.startsWith('kick:')) _kickMember(value.substring(5));
-    });
-  }
-
-  Future<void> _renameGroup() async {
-    final l10n = L10n.of(context)!;
-    final ctrl = TextEditingController(text: widget.conversation.title ?? '');
-    final newTitle = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.chatRenameTitle),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          maxLength: 100,
-          decoration: InputDecoration(
-            hintText: l10n.chatRenameHint,
-            counterText: '',
-            border: const OutlineInputBorder(),
-          ),
-          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    ctrl.dispose();
-    if (newTitle == null || newTitle.isEmpty || newTitle == widget.conversation.title) return;
-    try {
-      await ref.read(messagesRemoteDsProvider).renameConversation(widget.conversation.id, newTitle);
-      ref.invalidate(myConversationsProvider);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
-      }
-    }
-  }
-
-  Future<void> _leaveGroup() async {
-    final l10n = L10n.of(context)!;
-    final isAdmin = widget.conversation.createdBy == widget.myUserId;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.groupSettingsLeaveTitle),
-        content: Text(isAdmin ? l10n.groupSettingsLeaveBodyAdmin : l10n.groupSettingsLeaveBody),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.groupSettingsLeave, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    try {
-      await ref.read(messagesRemoteDsProvider).leaveConversation(widget.conversation.id);
-      ref.invalidate(myConversationsProvider);
-      if (mounted) Navigator.of(context).pop();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
-      }
-    }
-  }
-
-  Future<void> _deleteGroup() async {
-    final l10n = L10n.of(context)!;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.groupSettingsDeleteTitle),
-        content: Text(l10n.groupSettingsDeleteBody),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.groupSettingsDelete, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    try {
-      await ref.read(messagesRemoteDsProvider).deleteConversation(widget.conversation.id);
-      ref.invalidate(myConversationsProvider);
-      if (mounted) Navigator.of(context).pop();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
-      }
-    }
-  }
-
-  Future<void> _kickMember(String targetUserId) async {
-    final l10n = L10n.of(context)!;
-    try {
-      await ref.read(messagesRemoteDsProvider).kickMember(widget.conversation.id, targetUserId);
-      ref.invalidate(myConversationsProvider);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.chatMemberKicked)));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
@@ -1026,11 +763,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ? () {
                   final box = context.findRenderObject() as RenderBox?;
                   final pos = box?.localToGlobal(Offset(box.size.width / 2, box.size.height)) ?? Offset.zero;
-                  _showTitleContextMenu(pos);
+                  _showConversationContextMenu(
+                    context: context, ref: ref,
+                    conversation: widget.conversation,
+                    myUserId: widget.myUserId,
+                    globalPosition: pos,
+                    onLeft: () { if (mounted) Navigator.of(context).pop(); },
+                  );
                 }
               : null,
           onSecondaryTapDown: (widget.conversation.isGroup)
-              ? (details) => _showTitleContextMenu(details.globalPosition)
+              ? (details) => _showConversationContextMenu(
+                    context: context, ref: ref,
+                    conversation: widget.conversation,
+                    myUserId: widget.myUserId,
+                    globalPosition: details.globalPosition,
+                    onLeft: () { if (mounted) Navigator.of(context).pop(); },
+                  )
               : null,
           child: Row(
             children: [
@@ -1138,8 +887,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                   !sameAbove,
                               topTight: sameAbove,
                               bottomTight: sameBelow,
-                              onDelete:
-                                  mine ? () => _deleteMessage(m.id) : null,
                             ),
                           ],
                         );
@@ -1197,15 +944,12 @@ class _MessageBubble extends StatelessWidget {
   final bool showAuthor;
   final bool topTight;
   final bool bottomTight;
-  final VoidCallback? onDelete;
-
   const _MessageBubble({
     required this.message,
     required this.mine,
     required this.showAuthor,
     required this.topTight,
     required this.bottomTight,
-    this.onDelete,
   });
 
   @override
@@ -1264,28 +1008,24 @@ class _MessageBubble extends StatelessWidget {
       ),
       child: Align(
         alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-        child: GestureDetector(
-          onLongPress: onDelete,
-          onSecondaryTap: onDelete,
-          child: Column(
-            crossAxisAlignment:
-                mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-            children: [
-              if (showAuthor && message.authorUsername != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 10, bottom: 3),
-                  child: Text(
-                    '@${message.authorUsername}',
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      color: palette.sidebarLabelSecondary,
-                    ),
+        child: Column(
+          crossAxisAlignment:
+              mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            if (showAuthor && message.authorUsername != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 10, bottom: 3),
+                child: Text(
+                  '@${message.authorUsername}',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    color: palette.sidebarLabelSecondary,
                   ),
                 ),
-              bubble,
-            ],
-          ),
+              ),
+            bubble,
+          ],
         ),
       ),
     );
@@ -1350,9 +1090,9 @@ class _Composer extends StatelessWidget {
                 duration: const Duration(milliseconds: 140),
                 child: Material(
                   color: palette.featureCardAccent,
-                  shape: const CircleBorder(),
+                  borderRadius: palette.cbr,
                   child: InkWell(
-                    customBorder: const CircleBorder(),
+                    borderRadius: palette.cbr,
                     onTap: canSend ? onSend : null,
                     child: Padding(
                       padding: const EdgeInsets.all(11),
