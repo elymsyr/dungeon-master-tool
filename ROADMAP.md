@@ -2,6 +2,8 @@
 
 Tracked work for upcoming releases — bugs to fix and features to add. Items are grouped by type, not strictly ordered.
 
+devam et, ayrıca bir kullanıcı gruba eklendiğinde ya da gruptan çıkarıldığında grup yenilenmeli hemen. bir de message içerisinde message yazdığımız input box'ın border'ı olmamalı.Gönderme butonunun da corner şekli temaya göre değişmeli.
+
 ## Features
 
 ### Template rule propagation into worlds
