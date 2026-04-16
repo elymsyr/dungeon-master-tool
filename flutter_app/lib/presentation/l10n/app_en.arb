@@ -417,5 +417,29 @@
   "newChatPickerStart": "Start chat",
   "newChatPickerCreate": "Create group",
   "newChatPickerError": "Could not start chat: {error}",
-  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } }
+  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } },
+
+  "messageDateToday": "Today",
+  "messageDateYesterday": "Yesterday",
+  "messageDeleteTitle": "Delete message?",
+  "messageDeleteBody": "This message will be permanently deleted.",
+  "messageDeleteAction": "Delete",
+  "cancelAction": "Cancel",
+
+  "groupSettingsTitle": "Group Settings",
+  "groupSettingsName": "Group Name",
+  "groupSettingsNameSave": "Save",
+  "groupSettingsMembers": "Members ({count})",
+  "@groupSettingsMembers": { "placeholders": { "count": { "type": "int" } } },
+  "groupSettingsAdmin": "ADMIN",
+  "groupSettingsLeave": "Leave Group",
+  "groupSettingsLeaveTitle": "Leave group?",
+  "groupSettingsLeaveBodyAdmin": "You are the admin. Admin role will transfer to another member.",
+  "groupSettingsLeaveBody": "You will no longer receive messages from this group.",
+  "groupSettingsDelete": "Delete Group for Everyone",
+  "groupSettingsDeleteTitle": "Delete group?",
+  "groupSettingsDeleteBody": "This will delete all messages for everyone. This action cannot be undone.",
+  "groupNameUpdated": "Group name updated.",
+
+  "cannotMessageSelf": "You cannot message yourself."
 }

@@ -417,5 +417,29 @@
   "newChatPickerStart": "Chat starten",
   "newChatPickerCreate": "Gruppe erstellen",
   "newChatPickerError": "Chat konnte nicht gestartet werden: {error}",
-  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } }
+  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } },
+
+  "messageDateToday": "Heute",
+  "messageDateYesterday": "Gestern",
+  "messageDeleteTitle": "Nachricht löschen?",
+  "messageDeleteBody": "Diese Nachricht wird dauerhaft gelöscht.",
+  "messageDeleteAction": "Löschen",
+  "cancelAction": "Abbrechen",
+
+  "groupSettingsTitle": "Gruppeneinstellungen",
+  "groupSettingsName": "Gruppenname",
+  "groupSettingsNameSave": "Speichern",
+  "groupSettingsMembers": "Mitglieder ({count})",
+  "@groupSettingsMembers": { "placeholders": { "count": { "type": "int" } } },
+  "groupSettingsAdmin": "ADMIN",
+  "groupSettingsLeave": "Gruppe verlassen",
+  "groupSettingsLeaveTitle": "Gruppe verlassen?",
+  "groupSettingsLeaveBodyAdmin": "Du bist der Admin. Die Admin-Rolle wird an ein anderes Mitglied übertragen.",
+  "groupSettingsLeaveBody": "Du wirst keine Nachrichten mehr aus dieser Gruppe erhalten.",
+  "groupSettingsDelete": "Gruppe für alle löschen",
+  "groupSettingsDeleteTitle": "Gruppe löschen?",
+  "groupSettingsDeleteBody": "Dadurch werden alle Nachrichten für alle gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+  "groupNameUpdated": "Gruppenname aktualisiert.",
+
+  "cannotMessageSelf": "Du kannst dir nicht selbst eine Nachricht senden."
 }

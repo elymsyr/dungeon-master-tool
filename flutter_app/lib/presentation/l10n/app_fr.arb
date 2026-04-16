@@ -417,5 +417,29 @@
   "newChatPickerStart": "Démarrer la discussion",
   "newChatPickerCreate": "Créer le groupe",
   "newChatPickerError": "Impossible de démarrer la discussion : {error}",
-  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } }
+  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } },
+
+  "messageDateToday": "Aujourd'hui",
+  "messageDateYesterday": "Hier",
+  "messageDeleteTitle": "Supprimer le message ?",
+  "messageDeleteBody": "Ce message sera définitivement supprimé.",
+  "messageDeleteAction": "Supprimer",
+  "cancelAction": "Annuler",
+
+  "groupSettingsTitle": "Paramètres du groupe",
+  "groupSettingsName": "Nom du groupe",
+  "groupSettingsNameSave": "Enregistrer",
+  "groupSettingsMembers": "Membres ({count})",
+  "@groupSettingsMembers": { "placeholders": { "count": { "type": "int" } } },
+  "groupSettingsAdmin": "ADMIN",
+  "groupSettingsLeave": "Quitter le groupe",
+  "groupSettingsLeaveTitle": "Quitter le groupe ?",
+  "groupSettingsLeaveBodyAdmin": "Vous êtes l'admin. Le rôle d'admin sera transféré à un autre membre.",
+  "groupSettingsLeaveBody": "Vous ne recevrez plus de messages de ce groupe.",
+  "groupSettingsDelete": "Supprimer le groupe pour tous",
+  "groupSettingsDeleteTitle": "Supprimer le groupe ?",
+  "groupSettingsDeleteBody": "Cela supprimera tous les messages pour tout le monde. Cette action est irréversible.",
+  "groupNameUpdated": "Nom du groupe mis à jour.",
+
+  "cannotMessageSelf": "Vous ne pouvez pas vous envoyer un message."
 }

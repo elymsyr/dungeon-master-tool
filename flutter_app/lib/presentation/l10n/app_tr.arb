@@ -417,5 +417,29 @@
   "newChatPickerStart": "Sohbeti başlat",
   "newChatPickerCreate": "Grup oluştur",
   "newChatPickerError": "Sohbet başlatılamadı: {error}",
-  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } }
+  "@newChatPickerError": { "placeholders": { "error": { "type": "String" } } },
+
+  "messageDateToday": "Bugün",
+  "messageDateYesterday": "Dün",
+  "messageDeleteTitle": "Mesaj silinsin mi?",
+  "messageDeleteBody": "Bu mesaj kalıcı olarak silinecektir.",
+  "messageDeleteAction": "Sil",
+  "cancelAction": "İptal",
+
+  "groupSettingsTitle": "Grup Ayarları",
+  "groupSettingsName": "Grup Adı",
+  "groupSettingsNameSave": "Kaydet",
+  "groupSettingsMembers": "Üyeler ({count})",
+  "@groupSettingsMembers": { "placeholders": { "count": { "type": "int" } } },
+  "groupSettingsAdmin": "YÖNETİCİ",
+  "groupSettingsLeave": "Gruptan Ayrıl",
+  "groupSettingsLeaveTitle": "Gruptan ayrılsın mı?",
+  "groupSettingsLeaveBodyAdmin": "Yöneticisiniz. Yöneticilik başka bir üyeye devredilecektir.",
+  "groupSettingsLeaveBody": "Bu gruptaki mesajları artık almayacaksınız.",
+  "groupSettingsDelete": "Grubu Herkes İçin Sil",
+  "groupSettingsDeleteTitle": "Grup silinsin mi?",
+  "groupSettingsDeleteBody": "Bu işlem tüm mesajları herkes için silecektir. Bu işlem geri alınamaz.",
+  "groupNameUpdated": "Grup adı güncellendi.",
+
+  "cannotMessageSelf": "Kendinize mesaj gönderemezsiniz."
 }
