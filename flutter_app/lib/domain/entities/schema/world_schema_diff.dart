@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'category_rule.dart';
 import 'encounter_config.dart';
+import 'rule_v2.dart';
 import 'field_schema.dart';
 import 'world_schema.dart';
 
@@ -111,18 +111,11 @@ bool _fieldChanged(FieldSchema a, FieldSchema b) {
   return aSub != bSub;
 }
 
-bool _ruleChanged(CategoryRule a, CategoryRule b) {
-  if (a.ruleType != b.ruleType) return true;
+bool _ruleChanged(RuleV2 a, RuleV2 b) {
   if (a.enabled != b.enabled) return true;
-  if (a.targetFieldKey != b.targetFieldKey) return true;
-  if (a.operation != b.operation) return true;
-  if (a.matchOnly != b.matchOnly) return true;
-  if (a.deactivateIfNotEquipped != b.deactivateIfNotEquipped) return true;
-  // Compare sources by serialized form for deep equality.
-  if (a.sources.length != b.sources.length) return true;
-  final aSrc = jsonEncode(a.sources.map((s) => s.toJson()).toList());
-  final bSrc = jsonEncode(b.sources.map((s) => s.toJson()).toList());
-  return aSrc != bSrc;
+  if (a.priority != b.priority) return true;
+  // Compare by serialized form for deep equality (Freezed == is structural).
+  return a != b;
 }
 
 // ---------------------------------------------------------------------------

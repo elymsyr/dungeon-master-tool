@@ -7,6 +7,7 @@ import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/field_schema.dart';
+import '../../../domain/entities/schema/rule_v2.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../dialogs/media_gallery_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -23,6 +24,8 @@ class FieldWidgetFactory {
     Map<String, Entity>? entities,
     WidgetRef? ref,
     bool computedMode = false,
+    Map<String, ItemStyle> itemStyles = const {},
+    Map<String, String> equipGates = const {},
   }) {
     // Media directory — image field'ları için galeri desteği.
     final mediaDir = ref?.read(mediaDirectoryProvider);
@@ -30,7 +33,7 @@ class FieldWidgetFactory {
     // isList → genel liste widget'ı
     if (schema.isList) {
       if (schema.fieldType == FieldType.relation) {
-        return _ReferenceListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref, computedMode: computedMode);
+        return _ReferenceListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref, computedMode: computedMode, itemStyles: itemStyles, equipGates: equipGates);
       }
       if (schema.fieldType == FieldType.image) {
         return _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, mediaDir: mediaDir);
@@ -879,8 +882,10 @@ class _ReferenceListFieldWidget extends StatelessWidget {
   final Map<String, Entity>? entities;
   final WidgetRef? ref;
   final bool computedMode; // true = add/remove yok, equip sadece equipped kaynaklar için
+  final Map<String, ItemStyle> itemStyles;
+  final Map<String, String> equipGates;
 
-  const _ReferenceListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities, this.ref, this.computedMode = false});
+  const _ReferenceListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities, this.ref, this.computedMode = false, this.itemStyles = const {}, this.equipGates = const {}});
 
   @override
   Widget build(BuildContext context) {
@@ -935,8 +940,12 @@ class _ReferenceListFieldWidget extends StatelessWidget {
               final i = entry.key;
               final item = entry.value;
               final isEquipped = item['equipped'] == true;
+              final itemId = item['id']?.toString() ?? '';
+              final style = itemStyles[itemId];
+              final gateReason = equipGates[itemId];
+              final isGated = gateReason != null && gateReason.isNotEmpty;
 
-              return Padding(
+              Widget itemRow = Padding(
                 padding: const EdgeInsets.only(bottom: 2),
                 child: Row(
                   children: [
@@ -948,20 +957,27 @@ class _ReferenceListFieldWidget extends StatelessWidget {
                           // Computed mode: kaynak not equipped → disabled
                           final sourceActive = item['_sourceActive'] != false;
                           final sourceDisabled = computedMode && !sourceActive;
+                          // Gate: equip koşulu sağlanmıyorsa toggle devre dışı
+                          final gateDisabled = isGated && !isEquipped;
+                          final disabled = sourceDisabled || gateDisabled;
                           return IconButton(
                             icon: Icon(
                               isEquipped ? Icons.shield : Icons.shield_outlined,
                               size: 16,
-                              color: sourceDisabled
+                              color: disabled
                                   ? Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)
                                   : isEquipped
-                                      ? Theme.of(context).colorScheme.primary
+                                      ? (isGated ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.primary)
                                       : Theme.of(context).colorScheme.outline,
                             ),
-                            tooltip: sourceDisabled
-                                ? 'Source not equipped'
-                                : isEquipped ? 'Equipped' : 'Not equipped',
-                            onPressed: sourceDisabled ? null : () {
+                            tooltip: gateDisabled
+                                ? gateReason
+                                : sourceDisabled
+                                    ? 'Source not equipped'
+                                    : isGated && isEquipped
+                                        ? 'Warning: $gateReason'
+                                        : isEquipped ? 'Equipped' : 'Not equipped',
+                            onPressed: disabled ? null : () {
                               items[i] = {...item, 'equipped': !isEquipped};
                               onChanged(_serializeItems(items, showEquip || computedMode));
                             },
@@ -971,6 +987,12 @@ class _ReferenceListFieldWidget extends StatelessWidget {
                         }),
                       ),
                     ],
+                    // Gate warning icon — item equipped ama koşul sağlanmıyor
+                    if (isGated && isEquipped)
+                      Tooltip(
+                        message: gateReason,
+                        child: Icon(Icons.warning_amber, size: 14, color: Theme.of(context).colorScheme.error),
+                      ),
                     const Icon(Icons.link, size: 14),
                     const SizedBox(width: 6),
                     Expanded(
@@ -979,19 +1001,28 @@ class _ReferenceListFieldWidget extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _resolveEntityName(item['id']?.toString() ?? ''),
+                            _resolveEntityName(itemId),
                             style: TextStyle(
                               fontSize: 12,
-                              decoration: (showEquip || computedMode) && !isEquipped ? TextDecoration.lineThrough : null,
-                              color: (showEquip || computedMode) && !isEquipped
-                                  ? Theme.of(context).colorScheme.outline
+                              decoration: style?.strikethrough == true || ((showEquip || computedMode) && !isEquipped)
+                                  ? TextDecoration.lineThrough
                                   : null,
+                              color: style?.color != null
+                                  ? _parseHexColor(style!.color!)
+                                  : (showEquip || computedMode) && !isEquipped
+                                      ? Theme.of(context).colorScheme.outline
+                                      : null,
                             ),
                           ),
                           if (computedMode && item['from'] != null)
                             Text(
                               'from ${item['from']}',
                               style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.outline),
+                            ),
+                          if (style?.tooltip != null)
+                            Text(
+                              style!.tooltip!,
+                              style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.error, fontStyle: FontStyle.italic),
                             ),
                         ],
                       ),
@@ -1008,6 +1039,13 @@ class _ReferenceListFieldWidget extends StatelessWidget {
                   ],
                 ),
               );
+
+              // Faded style — reduced opacity
+              if (style?.faded == true) {
+                itemRow = Opacity(opacity: 0.4, child: itemRow);
+              }
+
+              return itemRow;
             }),
           ],
         ),
@@ -1034,6 +1072,16 @@ class _ReferenceListFieldWidget extends StatelessWidget {
   dynamic _serializeItems(List<Map<String, dynamic>> items, bool withEquip) {
     if (!withEquip) return items.map((e) => e['id']).toList();
     return items;
+  }
+
+  /// Hex renk kodunu Color'a çevir (ör. '#FF0000' → Color).
+  static Color? _parseHexColor(String hex) {
+    try {
+      final clean = hex.replaceFirst('#', '');
+      return Color(int.parse('FF$clean', radix: 16));
+    } catch (_) {
+      return null;
+    }
   }
 }
 
