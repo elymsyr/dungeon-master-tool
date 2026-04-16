@@ -115,8 +115,8 @@ class PostComposerNotifier extends StateNotifier<AsyncValue<void>> {
   final Ref _ref;
   PostComposerNotifier(this._ref) : super(const AsyncValue.data(null));
 
-  Future<bool> submit({String? body, Uint8List? imageBytes, String contentType = 'image/jpeg', String? marketplaceItemId}) async {
-    if ((body == null || body.trim().isEmpty) && imageBytes == null && marketplaceItemId == null) return false;
+  Future<bool> submit({String? body, Uint8List? imageBytes, String contentType = 'image/jpeg', String? marketplaceItemId, String? gameListingId}) async {
+    if ((body == null || body.trim().isEmpty) && imageBytes == null && marketplaceItemId == null && gameListingId == null) return false;
     if (body != null) {
       await ProfanityFilter.ensureLoaded();
       if (ProfanityFilter.contains(body)) {
@@ -134,6 +134,7 @@ class PostComposerNotifier extends StateNotifier<AsyncValue<void>> {
             imageBytes: imageBytes,
             contentType: contentType,
             marketplaceItemId: marketplaceItemId,
+            gameListingId: gameListingId,
           );
       _ref.invalidate(feedProvider);
       state = const AsyncValue.data(null);
@@ -318,6 +319,18 @@ final totalUnreadCountProvider = FutureProvider<int>((ref) async {
   final auth = ref.watch(authProvider);
   if (auth == null) return 0;
   return ref.read(messagesRemoteDsProvider).fetchTotalUnreadCount();
+});
+
+/// Aggregated notification count across ALL sources. Hub badge watches this.
+/// To add a new notification source:
+///   1. Create a `FutureProvider<int>` that returns its unread count.
+///   2. `ref.watch` it here and add the value to the sum.
+///   3. Invalidate it from the appropriate realtime subscription.
+final totalNotificationCountProvider = FutureProvider<int>((ref) async {
+  final messages = await ref.watch(totalUnreadCountProvider.future);
+  // Future sources plug in here:
+  // final apps = await ref.watch(unreadApplicationsCountProvider.future);
+  return messages;
 });
 
 /// Realtime mesaj akışı — chat ekranı bunu watch eder.

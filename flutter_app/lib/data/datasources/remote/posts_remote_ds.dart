@@ -50,7 +50,7 @@ class PostsRemoteDataSource {
 
     var query = _client
         .from(_table)
-        .select('*, profiles!posts_author_id_fkey(username, avatar_url), marketplace_listings!posts_marketplace_item_id_fkey(id, title, item_type)');
+        .select('*, profiles!posts_author_id_fkey(username, avatar_url), marketplace_listings!posts_marketplace_item_id_fkey(id, title, item_type), game_listings!posts_game_listing_id_fkey(id, title, system)');
     if (authorIds != null) {
       query = query.inFilter('author_id', authorIds);
     }
@@ -65,7 +65,7 @@ class PostsRemoteDataSource {
   Future<List<Post>> fetchByAuthor(String userId, {int limit = 50}) async {
     final rows = await _client
         .from(_table)
-        .select('*, profiles!posts_author_id_fkey(username, avatar_url), marketplace_listings!posts_marketplace_item_id_fkey(id, title, item_type)')
+        .select('*, profiles!posts_author_id_fkey(username, avatar_url), marketplace_listings!posts_marketplace_item_id_fkey(id, title, item_type), game_listings!posts_game_listing_id_fkey(id, title, system)')
         .eq('author_id', userId)
         .order('created_at', ascending: false)
         .limit(limit);
@@ -149,6 +149,7 @@ class PostsRemoteDataSource {
     Uint8List? imageBytes,
     String contentType = 'image/jpeg',
     String? marketplaceItemId,
+    String? gameListingId,
   }) async {
     final uid = _userId;
     String? imageUrl;
@@ -175,7 +176,8 @@ class PostsRemoteDataSource {
       'image_path': imagePath,
       'size_bytes': sizeBytes,
       'marketplace_item_id': marketplaceItemId,
-    }).select('*, profiles!posts_author_id_fkey(username, avatar_url), marketplace_listings!posts_marketplace_item_id_fkey(id, title, item_type)').single();
+      'game_listing_id': gameListingId,
+    }).select('*, profiles!posts_author_id_fkey(username, avatar_url), marketplace_listings!posts_marketplace_item_id_fkey(id, title, item_type), game_listings!posts_game_listing_id_fkey(id, title, system)').single();
     return _rowToPost(inserted);
   }
 
@@ -199,6 +201,7 @@ class PostsRemoteDataSource {
   Post _rowToPost(Map<String, dynamic> row) {
     final profile = row['profiles'] as Map<String, dynamic>?;
     final marketplace = row['marketplace_listings'] as Map<String, dynamic>?;
+    final gameListing = row['game_listings'] as Map<String, dynamic>?;
     return Post(
       id: row['id'] as String,
       authorId: row['author_id'] as String,
@@ -211,6 +214,9 @@ class PostsRemoteDataSource {
       marketplaceItemId: marketplace?['id'] as String?,
       marketplaceItemTitle: marketplace?['title'] as String?,
       marketplaceItemType: marketplace?['item_type'] as String?,
+      gameListingId: gameListing?['id'] as String?,
+      gameListingTitle: gameListing?['title'] as String?,
+      gameListingSystem: gameListing?['system'] as String?,
     );
   }
 }

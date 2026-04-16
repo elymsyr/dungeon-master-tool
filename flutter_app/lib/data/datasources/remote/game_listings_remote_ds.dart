@@ -80,6 +80,17 @@ class GameListingsRemoteDataSource {
         .toList();
   }
 
+  /// Fetch a single game listing by ID (for post card tap preview).
+  Future<GameListing?> fetchById(String id) async {
+    final row = await _client
+        .from(_table)
+        .select('*, profiles!game_listings_owner_id_fkey(username)')
+        .eq('id', id)
+        .maybeSingle();
+    if (row == null) return null;
+    return _rowToListing(row);
+  }
+
   Future<GameListing> create({
     required String title,
     String? description,
