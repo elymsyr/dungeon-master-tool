@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/cached_provider.dart';
 import '../../data/datasources/remote/follows_remote_ds.dart';
 import '../../domain/entities/user_profile.dart';
 import 'auth_provider.dart';
@@ -18,7 +19,12 @@ final isFollowingProvider =
   if (!SupabaseConfig.isConfigured) return false;
   final auth = ref.watch(authProvider);
   if (auth == null) return false;
-  return ref.read(followsRemoteDsProvider).isFollowing(targetUserId);
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'isFollowing:$targetUserId',
+    ttl: const Duration(minutes: 5),
+    fetch: () => ref.read(followsRemoteDsProvider).isFollowing(targetUserId),
+  );
 });
 
 /// Optimistic local override for follow state. Eğer set edilmişse
@@ -30,13 +36,23 @@ final followOverrideProvider =
 final followersProvider =
     FutureProvider.family<List<UserProfile>, String>((ref, userId) async {
   if (!SupabaseConfig.isConfigured) return const [];
-  return ref.read(followsRemoteDsProvider).followersOf(userId);
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'followers:$userId',
+    ttl: const Duration(minutes: 5),
+    fetch: () => ref.read(followsRemoteDsProvider).followersOf(userId),
+  );
 });
 
 final followingProvider =
     FutureProvider.family<List<UserProfile>, String>((ref, userId) async {
   if (!SupabaseConfig.isConfigured) return const [];
-  return ref.read(followsRemoteDsProvider).followingOf(userId);
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'following:$userId',
+    ttl: const Duration(minutes: 5),
+    fetch: () => ref.read(followsRemoteDsProvider).followingOf(userId),
+  );
 });
 
 class FollowToggleNotifier extends StateNotifier<AsyncValue<void>> {
@@ -53,6 +69,10 @@ class FollowToggleNotifier extends StateNotifier<AsyncValue<void>> {
 
     try {
       await _ref.read(followsRemoteDsProvider).toggle(targetUserId);
+      invalidateCache('isFollowing:$targetUserId');
+      invalidateCache('followers:$targetUserId');
+      invalidateCache('profile:$targetUserId');
+      invalidateCache('currentProfile');
       _ref.invalidate(isFollowingProvider(targetUserId));
       _ref.invalidate(followersProvider(targetUserId));
       _ref.invalidate(profileByIdProvider(targetUserId));

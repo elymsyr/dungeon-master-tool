@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/cached_provider.dart';
 import '../../core/utils/profanity_filter.dart';
 import '../../data/datasources/remote/game_listings_remote_ds.dart';
 import '../../data/datasources/remote/messages_remote_ds.dart';
@@ -60,7 +61,12 @@ final feedProvider = FutureProvider<List<Post>>((ref) async {
   final auth = ref.watch(authProvider);
   if (auth == null) return const [];
   final scope = ref.watch(feedScopeProvider);
-  return ref.read(postsRemoteDsProvider).fetchFeed(scope: scope);
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'feed:${scope.name}',
+    ttl: const Duration(minutes: 2),
+    fetch: () => ref.read(postsRemoteDsProvider).fetchFeed(scope: scope),
+  );
 });
 
 /// Bir post'un lokal override'ı (optimistic): beğeni sayısı + likedByMe.
@@ -108,7 +114,12 @@ final postLikeProvider =
 final userPostsProvider =
     FutureProvider.family<List<Post>, String>((ref, userId) async {
   if (!SupabaseConfig.isConfigured) return const [];
-  return ref.read(postsRemoteDsProvider).fetchByAuthor(userId);
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'userPosts:$userId',
+    ttl: const Duration(minutes: 2),
+    fetch: () => ref.read(postsRemoteDsProvider).fetchByAuthor(userId),
+  );
 });
 
 class PostComposerNotifier extends StateNotifier<AsyncValue<void>> {
@@ -136,6 +147,7 @@ class PostComposerNotifier extends StateNotifier<AsyncValue<void>> {
             marketplaceItemId: marketplaceItemId,
             gameListingId: gameListingId,
           );
+      invalidateCachePrefix('feed:');
       _ref.invalidate(feedProvider);
       state = const AsyncValue.data(null);
       return true;
@@ -190,11 +202,16 @@ final openGameListingsProvider = FutureProvider<List<GameListing>>((ref) async {
   final auth = ref.watch(authProvider);
   if (auth == null) return const [];
   final filters = ref.watch(gameListingFiltersProvider);
-  return ref.read(gameListingsRemoteDsProvider).fetchOpen(
-        gameLanguage: filters.gameLanguage,
-        system: filters.system,
-        tag: filters.tag,
-      );
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'gameListings:${filters.gameLanguage}:${filters.system}:${filters.tag}',
+    ttl: const Duration(minutes: 5),
+    fetch: () => ref.read(gameListingsRemoteDsProvider).fetchOpen(
+          gameLanguage: filters.gameLanguage,
+          system: filters.system,
+          tag: filters.tag,
+        ),
+  );
 });
 
 /// Auth user'ın kendi ilanları (başvuru sayılarıyla birlikte).
@@ -202,7 +219,12 @@ final myGameListingsProvider = FutureProvider<List<GameListing>>((ref) async {
   if (!SupabaseConfig.isConfigured) return const [];
   final auth = ref.watch(authProvider);
   if (auth == null) return const [];
-  return ref.read(gameListingsRemoteDsProvider).fetchMine();
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'myGameListings',
+    ttl: const Duration(minutes: 5),
+    fetch: () => ref.read(gameListingsRemoteDsProvider).fetchMine(),
+  );
 });
 
 /// Belirli bir listing'e gelen başvurular (listing owner'ı için).
@@ -248,6 +270,8 @@ class GameListingComposerNotifier extends StateNotifier<AsyncValue<void>> {
             gameLanguage: gameLanguage,
             tags: tags,
           );
+      invalidateCachePrefix('gameListings:');
+      invalidateCache('myGameListings');
       _ref.invalidate(openGameListingsProvider);
       _ref.invalidate(myGameListingsProvider);
       state = const AsyncValue.data(null);
@@ -276,6 +300,7 @@ class ListingApplicationNotifier extends StateNotifier<AsyncValue<void>> {
             listingId: listingId,
             message: message,
           );
+      invalidateCache('myGameListings');
       _ref.invalidate(hasAppliedProvider(listingId));
       _ref.invalidate(listingApplicationsProvider(listingId));
       _ref.invalidate(myGameListingsProvider);
@@ -290,6 +315,7 @@ class ListingApplicationNotifier extends StateNotifier<AsyncValue<void>> {
   Future<void> withdraw(String listingId) async {
     try {
       await _ref.read(gameListingsRemoteDsProvider).withdrawApplication(listingId);
+      invalidateCache('myGameListings');
       _ref.invalidate(hasAppliedProvider(listingId));
       _ref.invalidate(listingApplicationsProvider(listingId));
       _ref.invalidate(myGameListingsProvider);
@@ -310,7 +336,12 @@ final myConversationsProvider = FutureProvider<List<Conversation>>((ref) async {
   if (!SupabaseConfig.isConfigured) return const [];
   final auth = ref.watch(authProvider);
   if (auth == null) return const [];
-  return ref.read(messagesRemoteDsProvider).fetchMyConversations();
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'conversations',
+    ttl: const Duration(minutes: 1),
+    fetch: () => ref.read(messagesRemoteDsProvider).fetchMyConversations(),
+  );
 });
 
 /// Total unread message count across all conversations — for badges.
@@ -318,7 +349,12 @@ final totalUnreadCountProvider = FutureProvider<int>((ref) async {
   if (!SupabaseConfig.isConfigured) return 0;
   final auth = ref.watch(authProvider);
   if (auth == null) return 0;
-  return ref.read(messagesRemoteDsProvider).fetchTotalUnreadCount();
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'totalUnread',
+    ttl: const Duration(seconds: 30),
+    fetch: () => ref.read(messagesRemoteDsProvider).fetchTotalUnreadCount(),
+  );
 });
 
 /// Aggregated notification count across ALL sources. Hub badge watches this.
@@ -349,39 +385,49 @@ final conversationListRealtimeProvider = Provider<void>((ref) {
   final auth = ref.watch(authProvider);
   if (auth == null) return;
   final client = Supabase.instance.client;
+
+  /// Debounced invalidation: skip if the last fetch was < 10 seconds ago.
+  void invalidateConversations({bool includeUnread = false}) {
+    final age = cacheAge('conversations');
+    if (age != null && age < const Duration(seconds: 10)) return;
+    invalidateCache('conversations');
+    ref.invalidate(myConversationsProvider);
+    if (includeUnread) {
+      invalidateCache('totalUnread');
+      ref.invalidate(totalUnreadCountProvider);
+    }
+  }
+
   final channel = client.channel('public:messages:inbox:${auth.uid}')
     ..onPostgresChanges(
       event: PostgresChangeEvent.insert,
       schema: 'public',
       table: 'messages',
-      callback: (_) {
-        ref.invalidate(myConversationsProvider);
-        ref.invalidate(totalUnreadCountProvider);
-      },
+      callback: (_) => invalidateConversations(includeUnread: true),
     )
     ..onPostgresChanges(
       event: PostgresChangeEvent.insert,
       schema: 'public',
       table: 'conversation_members',
-      callback: (_) => ref.invalidate(myConversationsProvider),
+      callback: (_) => invalidateConversations(),
     )
     ..onPostgresChanges(
       event: PostgresChangeEvent.delete,
       schema: 'public',
       table: 'conversation_members',
-      callback: (_) => ref.invalidate(myConversationsProvider),
+      callback: (_) => invalidateConversations(),
     )
     ..onPostgresChanges(
       event: PostgresChangeEvent.delete,
       schema: 'public',
       table: 'conversations',
-      callback: (_) => ref.invalidate(myConversationsProvider),
+      callback: (_) => invalidateConversations(),
     )
     ..onPostgresChanges(
       event: PostgresChangeEvent.update,
       schema: 'public',
       table: 'conversations',
-      callback: (_) => ref.invalidate(myConversationsProvider),
+      callback: (_) => invalidateConversations(),
     )
     ..subscribe();
   ref.onDispose(() => client.removeChannel(channel));
@@ -423,11 +469,16 @@ final marketplaceProvider = FutureProvider<List<MarketplaceListing>>((ref) async
   final auth = ref.watch(authProvider);
   if (auth == null) return const [];
   final filters = ref.watch(marketplaceFiltersProvider);
-  return ref.read(marketplaceListingsRemoteDsProvider).listAllCurrent(
-        itemType: filters.type == 'all' ? null : filters.type,
-        language: filters.language,
-        tag: filters.tag,
-      );
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'marketplace:${filters.type}:${filters.language}:${filters.tag}',
+    ttl: const Duration(minutes: 5),
+    fetch: () => ref.read(marketplaceListingsRemoteDsProvider).listAllCurrent(
+          itemType: filters.type == 'all' ? null : filters.type,
+          language: filters.language,
+          tag: filters.tag,
+        ),
+  );
 });
 
 // ── Suggested users (marketplace right panel) ────────────────────────
@@ -439,7 +490,12 @@ final suggestedUsersProvider = FutureProvider<List<UserProfile>>((ref) async {
   if (!SupabaseConfig.isConfigured) return const [];
   final auth = ref.watch(authProvider);
   if (auth == null) return const [];
-  return ref.read(profilesRemoteDsProvider).suggested();
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'suggestedUsers',
+    ttl: const Duration(minutes: 10),
+    fetch: () => ref.read(profilesRemoteDsProvider).suggested(),
+  );
 });
 
 /// Marketplace sağ panelinde "followed + suggested" birleşik görünümü.
@@ -453,10 +509,17 @@ final discoverPeopleProvider = FutureProvider<List<UserProfile>>((ref) async {
   final auth = ref.watch(authProvider);
   if (auth == null) return const [];
   final query = ref.watch(discoverSearchQueryProvider);
-  if (query.trim().isNotEmpty) {
-    return ref.read(profilesRemoteDsProvider).search(query, limit: 30);
-  }
-  return ref.read(profilesRemoteDsProvider).suggested(limit: 30);
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'discover:${query.trim()}',
+    ttl: const Duration(minutes: 5),
+    fetch: () {
+      if (query.trim().isNotEmpty) {
+        return ref.read(profilesRemoteDsProvider).search(query, limit: 30);
+      }
+      return ref.read(profilesRemoteDsProvider).suggested(limit: 30);
+    },
+  );
 });
 
 final marketplacePlayersProvider = FutureProvider<List<UserProfile>>((ref) async {
@@ -464,13 +527,20 @@ final marketplacePlayersProvider = FutureProvider<List<UserProfile>>((ref) async
   final auth = ref.watch(authProvider);
   if (auth == null) return const [];
   final uid = auth.uid;
-  final followedFuture = ref.read(followsRemoteDsProvider).followingOf(uid);
-  final suggestedFuture = ref.read(profilesRemoteDsProvider).suggested(limit: 10);
-  final followed = await followedFuture;
-  final suggested = await suggestedFuture;
-  final seen = <String>{for (final p in followed) p.userId};
-  return [
-    ...followed,
-    ...suggested.where((p) => !seen.contains(p.userId)),
-  ];
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'marketplacePlayers',
+    ttl: const Duration(minutes: 5),
+    fetch: () async {
+      final followedFuture = ref.read(followsRemoteDsProvider).followingOf(uid);
+      final suggestedFuture = ref.read(profilesRemoteDsProvider).suggested(limit: 10);
+      final followed = await followedFuture;
+      final suggested = await suggestedFuture;
+      final seen = <String>{for (final p in followed) p.userId};
+      return [
+        ...followed,
+        ...suggested.where((p) => !seen.contains(p.userId)),
+      ];
+    },
+  );
 });

@@ -13,6 +13,7 @@ import '../../../domain/entities/user_profile.dart';
 import '../../dialogs/follow_list_dialog.dart';
 import '../../dialogs/marketplace_preview_dialog.dart';
 import '../../dialogs/profile_edit_dialog.dart';
+import '../../../core/utils/cached_provider.dart';
 import '../../../core/utils/error_format.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../l10n/app_localizations.dart';
@@ -305,6 +306,7 @@ class _FollowButton extends ConsumerWidget {
           builder: (_) => ChatScreen(conversation: conv, myUserId: myUid),
         ),
       );
+      invalidateCache('conversations');
       ref.invalidate(myConversationsProvider);
     } catch (e) {
       if (!context.mounted) return;
@@ -329,7 +331,10 @@ class _UserPostsTab extends ConsumerWidget {
     final postsAsync = ref.watch(userPostsProvider(userId));
 
     return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(userPostsProvider(userId)),
+      onRefresh: () async {
+        invalidateCache('userPosts:$userId');
+        ref.invalidate(userPostsProvider(userId));
+      },
       child: postsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => ListView(
@@ -408,6 +413,8 @@ class _UserPostsTab extends ConsumerWidget {
     if (confirm != true) return;
     try {
       await ref.read(postsRemoteDsProvider).delete(post.id);
+      invalidateCache('userPosts:$userId');
+      invalidateCachePrefix('feed:');
       ref.invalidate(userPostsProvider(userId));
       ref.invalidate(feedProvider);
     } catch (e) {
@@ -507,7 +514,10 @@ class _UserItemsTab extends ConsumerWidget {
     final itemsAsync = ref.watch(userMarketplaceListingsProvider(userId));
 
     return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(userMarketplaceListingsProvider(userId)),
+      onRefresh: () async {
+        invalidateCache('userListings:$userId');
+        ref.invalidate(userMarketplaceListingsProvider(userId));
+      },
       child: itemsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => ListView(
@@ -587,6 +597,8 @@ class _UserItemsTab extends ConsumerWidget {
     if (confirm != true) return;
     try {
       await ref.read(marketplaceListingNotifierProvider.notifier).deleteListing(listing: listing);
+      invalidateCache('userListings:$userId');
+      invalidateCachePrefix('marketplace:');
       ref.invalidate(userMarketplaceListingsProvider(userId));
       ref.invalidate(marketplaceProvider);
     } catch (e) {

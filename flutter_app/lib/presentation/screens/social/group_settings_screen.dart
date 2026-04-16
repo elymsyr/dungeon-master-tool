@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/cached_provider.dart';
 import '../../../core/utils/error_format.dart';
 import '../../../domain/entities/conversation.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -51,6 +52,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
       await ref
           .read(messagesRemoteDsProvider)
           .renameConversation(widget.conversation.id, newTitle);
+      invalidateCache('conversations');
       ref.invalidate(myConversationsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -96,6 +98,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
       await ref
           .read(messagesRemoteDsProvider)
           .leaveConversation(widget.conversation.id);
+      invalidateCache('conversations');
       ref.invalidate(myConversationsProvider);
       if (mounted) {
         // Pop back to conversation list
@@ -140,6 +143,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
       await ref
           .read(messagesRemoteDsProvider)
           .deleteConversation(widget.conversation.id);
+      invalidateCache('conversations');
       ref.invalidate(myConversationsProvider);
       if (mounted) {
         Navigator.of(context)

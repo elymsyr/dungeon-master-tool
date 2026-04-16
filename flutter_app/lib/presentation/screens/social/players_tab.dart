@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/cached_provider.dart';
 import '../../../core/utils/error_format.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../core/utils/world_languages.dart';
@@ -29,7 +30,10 @@ class PlayersTab extends ConsumerWidget {
 
     final hPad = isPhone(context) ? 12.0 : 24.0;
     return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(myGameListingsProvider),
+      onRefresh: () async {
+        invalidateCache('myGameListings');
+        ref.invalidate(myGameListingsProvider);
+      },
       child: ListView(
         padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
         children: [
@@ -60,6 +64,7 @@ class PlayersTab extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           listingsAsync.when(
+            skipLoadingOnRefresh: true,
             loading: () => const Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Center(child: CircularProgressIndicator()),
@@ -205,6 +210,8 @@ class _OwnerMenu extends ConsumerWidget {
             await ds.delete(listing.id);
             break;
         }
+        invalidateCache('myGameListings');
+        invalidateCachePrefix('gameListings:');
         ref.invalidate(myGameListingsProvider);
         ref.invalidate(openGameListingsProvider);
       },
@@ -270,6 +277,7 @@ Future<void> openDmWithApplicant(
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => ChatScreen(conversation: conv, myUserId: myUid),
     ));
+    invalidateCache('conversations');
     ref.invalidate(myConversationsProvider);
   } catch (e) {
     if (!context.mounted) return;

@@ -18,6 +18,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config/supabase_config.dart';
 import '../../core/constants.dart';
+import '../../core/utils/cached_provider.dart';
 
 /// Base64-encoded app icon, lazily loaded from assets.
 String? _cachedIconBase64;
@@ -35,6 +36,14 @@ class AuthState {
     this.provider = 'email',
     this.createdAt,
   });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AuthState && uid == other.uid && email == other.email;
+
+  @override
+  int get hashCode => Object.hash(uid, email);
 }
 
 /// Sentinel returned by [AuthNotifier.signInWithOAuth] when the mobile
@@ -135,6 +144,7 @@ class AuthNotifier extends StateNotifier<AuthState?> {
     } catch (e) {
       debugPrint('Forced sign-out after ban check failed: $e');
     }
+    clearCache();
     // signOut sonrası set et — landing_screen listener'ı unauth state'e
     // geçtikten sonra çağrılacak dialog için mesajı bulsun.
     banMessageNotifier.value = msg;
@@ -446,6 +456,7 @@ class AuthNotifier extends StateNotifier<AuthState?> {
     try {
       await Supabase.instance.client.auth.signOut();
     } catch (_) {}
+    clearCache();
     state = null;
   }
 

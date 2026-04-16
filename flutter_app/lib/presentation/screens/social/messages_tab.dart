@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/follows_provider.dart';
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/cached_provider.dart';
 import '../../../core/utils/error_format.dart';
 import '../../../domain/entities/conversation.dart';
 import '../../../domain/entities/user_profile.dart';
@@ -255,6 +256,7 @@ Future<void> _deleteDmFlow({
   if (confirmed != true) return;
   try {
     await ref.read(messagesRemoteDsProvider).deleteConversation(conversation.id);
+    invalidateCache('conversations');
     ref.invalidate(myConversationsProvider);
     onLeft?.call();
   } catch (e) {
@@ -305,6 +307,7 @@ Future<void> _addMemberFlow({
 
   try {
     await ref.read(messagesRemoteDsProvider).addMember(conversation.id, picked.userId);
+    invalidateCache('conversations');
     ref.invalidate(myConversationsProvider);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.chatMemberAdded)));
@@ -348,6 +351,7 @@ Future<void> _renameGroupFlow({
   if (newTitle == null || newTitle.isEmpty || newTitle == conversation.title) return;
   try {
     await ref.read(messagesRemoteDsProvider).renameConversation(conversation.id, newTitle);
+    invalidateCache('conversations');
     ref.invalidate(myConversationsProvider);
   } catch (e) {
     if (context.mounted) {
@@ -382,6 +386,7 @@ Future<void> _leaveGroupFlow({
   if (confirmed != true) return;
   try {
     await ref.read(messagesRemoteDsProvider).leaveConversation(conversation.id);
+    invalidateCache('conversations');
     ref.invalidate(myConversationsProvider);
     onLeft?.call();
   } catch (e) {
@@ -415,6 +420,7 @@ Future<void> _deleteGroupFlow({
   if (confirmed != true) return;
   try {
     await ref.read(messagesRemoteDsProvider).deleteConversation(conversation.id);
+    invalidateCache('conversations');
     ref.invalidate(myConversationsProvider);
     onLeft?.call();
   } catch (e) {
@@ -433,6 +439,7 @@ Future<void> _kickMemberFlow({
   final l10n = L10n.of(context)!;
   try {
     await ref.read(messagesRemoteDsProvider).kickMember(conversation.id, targetUserId);
+    invalidateCache('conversations');
     ref.invalidate(myConversationsProvider);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.chatMemberKicked)));
@@ -546,8 +553,12 @@ class MessagesTab extends ConsumerWidget {
     return Stack(
       children: [
         RefreshIndicator(
-          onRefresh: () async => ref.invalidate(myConversationsProvider),
+          onRefresh: () async {
+            invalidateCache('conversations');
+            ref.invalidate(myConversationsProvider);
+          },
           child: convsAsync.when(
+            skipLoadingOnRefresh: true,
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text(formatError(e))),
             data: (convs) => Center(
@@ -884,6 +895,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Future<void> _markRead() async {
     try {
       await ref.read(messagesRemoteDsProvider).markRead(widget.conversation.id);
+      invalidateCache('totalUnread');
+      invalidateCache('conversations');
       ref.invalidate(totalUnreadCountProvider);
       ref.invalidate(myConversationsProvider);
     } catch (_) {
