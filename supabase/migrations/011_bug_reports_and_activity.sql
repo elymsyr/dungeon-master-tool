@@ -113,6 +113,7 @@ CREATE TRIGGER trg_bug_report_rate_limit
 -- ── 4. Admin RPC: get_bug_reports(p_status) ─────────────────────────────────
 -- p_status NULL veya 'all' → tüm raporlar. Aksi halde filtre.
 
+DROP FUNCTION IF EXISTS public.get_bug_reports(TEXT);
 CREATE OR REPLACE FUNCTION public.get_bug_reports(p_status TEXT DEFAULT NULL)
 RETURNS TABLE (
   id           UUID,
