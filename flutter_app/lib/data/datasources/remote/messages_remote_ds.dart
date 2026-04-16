@@ -4,7 +4,6 @@ import '../../../domain/entities/conversation.dart';
 
 class MessagesRemoteDataSource {
   static const _conversations = 'conversations';
-  static const _members = 'conversation_members';
   static const _messages = 'messages';
 
   SupabaseClient get _client => Supabase.instance.client;
@@ -16,64 +15,35 @@ class MessagesRemoteDataSource {
   }
 
   /// Auth kullanıcının üyesi olduğu tüm konuşmalar (en son aktiviteye göre).
+  /// Single RPC call — replaces the old N+1 pattern.
   Future<List<Conversation>> fetchMyConversations() async {
-    final uid = _userId;
-    final memberRows = await _client
-        .from(_members)
-        .select('conversation_id')
-        .eq('user_id', uid);
-    final ids = memberRows.map((r) => r['conversation_id'] as String).toList();
-    if (ids.isEmpty) return const [];
-
-    final convRows = await _client
-        .from(_conversations)
-        .select('*')
-        .inFilter('id', ids)
-        .order('created_at', ascending: false);
-
-    // Her konuşmanın üyelerini topla (basit fetch — N+1 ama küçük listeler için yeterli).
-    final result = <Conversation>[];
-    for (final c in convRows) {
-      final convId = c['id'] as String;
-      final memberRows = await _client
-          .from(_members)
-          .select('user_id, profiles!conversation_members_user_id_fkey(username)')
-          .eq('conversation_id', convId);
-      final memberIds = <String>[];
-      final memberUsernames = <String>[];
-      for (final m in memberRows) {
-        memberIds.add(m['user_id'] as String);
-        final p = m['profiles'] as Map<String, dynamic>?;
-        if (p != null) memberUsernames.add(p['username'] as String);
-      }
-
-      final lastMsg = await _client
-          .from(_messages)
-          .select('body, created_at')
-          .eq('conversation_id', convId)
-          .order('created_at', ascending: false)
-          .limit(1);
-
-      result.add(Conversation(
-        id: convId,
+    final result = await _client.rpc('get_my_conversations');
+    if (result == null) return const [];
+    final rows = (result as List).cast<Map<String, dynamic>>();
+    return rows.map((c) {
+      final members = (c['members'] as List?) ?? [];
+      final memberIds = members
+          .map((m) => (m as Map<String, dynamic>)['user_id'] as String)
+          .toList();
+      final memberUsernames = members
+          .map((m) => (m as Map<String, dynamic>)['username'] as String)
+          .toList();
+      final lastMsg = c['last_message'] as Map<String, dynamic>?;
+      return Conversation(
+        id: c['id'] as String,
         isGroup: (c['is_group'] as bool?) ?? false,
         title: c['title'] as String?,
         createdBy: c['created_by'] as String?,
         memberIds: memberIds,
         memberUsernames: memberUsernames,
-        lastMessageBody: lastMsg.isNotEmpty ? lastMsg.first['body'] as String? : null,
-        lastMessageAt: lastMsg.isNotEmpty
-            ? DateTime.parse(lastMsg.first['created_at'] as String)
+        lastMessageBody: lastMsg?['body'] as String?,
+        lastMessageAt: lastMsg != null
+            ? DateTime.parse(lastMsg['created_at'] as String)
             : null,
         createdAt: DateTime.parse(c['created_at'] as String),
-      ));
-    }
-
-    // Hydrate unread counts in a single RPC call.
-    final unreadCounts = await fetchUnreadCounts();
-    return result
-        .map((c) => c.copyWith(unreadCount: unreadCounts[c.id] ?? 0))
-        .toList();
+        unreadCount: (c['unread_count'] as num?)?.toInt() ?? 0,
+      );
+    }).toList();
   }
 
   /// Bir kullanıcı ile DM aç (varsa mevcudunu döner, yoksa oluşturur).
@@ -201,16 +171,6 @@ class MessagesRemoteDataSource {
   /// Mark a conversation as read for the current user.
   Future<void> markRead(String conversationId) async {
     await _client.rpc('mark_conversation_read', params: {'p_conv_id': conversationId});
-  }
-
-  /// Per-conversation unread message counts for the current user.
-  Future<Map<String, int>> fetchUnreadCounts() async {
-    final rows = await _client.rpc('get_unread_counts');
-    if (rows is! List) return {};
-    return {
-      for (final r in rows)
-        (r['conversation_id'] as String): ((r['unread_count'] as num?)?.toInt() ?? 0),
-    };
   }
 
   /// Total unread message count across all conversations (for badge).

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/cached_provider.dart';
 import '../../core/utils/error_format.dart';
 import '../../data/datasources/remote/profiles_remote_ds.dart';
 import '../../domain/entities/user_profile.dart';
@@ -21,7 +22,12 @@ final currentProfileProvider = FutureProvider<UserProfile?>((ref) async {
   final auth = ref.watch(authProvider);
   if (auth == null) return null;
   try {
-    return await ref.read(profilesRemoteDsProvider).fetchCurrent();
+    return await cachedFetch<UserProfile?>(
+      ref: ref,
+      cacheKey: 'currentProfile',
+      ttl: const Duration(minutes: 5),
+      fetch: () => ref.read(profilesRemoteDsProvider).fetchCurrent(),
+    );
   } catch (e, st) {
     if (isOfflineError(e)) {
       debugPrint('currentProfileProvider offline, returning null: $e');
@@ -37,7 +43,12 @@ final profileByIdProvider =
     FutureProvider.family<UserProfile?, String>((ref, userId) async {
   if (!SupabaseConfig.isConfigured) return null;
   try {
-    return await ref.read(profilesRemoteDsProvider).fetchById(userId);
+    return await cachedFetch<UserProfile?>(
+      ref: ref,
+      cacheKey: 'profile:$userId',
+      ttl: const Duration(minutes: 5),
+      fetch: () => ref.read(profilesRemoteDsProvider).fetchById(userId),
+    );
   } catch (e) {
     if (isOfflineError(e)) return null;
     rethrow;
@@ -48,7 +59,12 @@ final profileByIdProvider =
 final profileSearchProvider =
     FutureProvider.family<List<UserProfile>, String>((ref, query) async {
   if (!SupabaseConfig.isConfigured || query.trim().length < 2) return const [];
-  return ref.read(profilesRemoteDsProvider).search(query);
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'profileSearch:${query.trim().toLowerCase()}',
+    ttl: const Duration(minutes: 5),
+    fetch: () => ref.read(profilesRemoteDsProvider).search(query),
+  );
 });
 
 /// Profil düzenleme + oluşturma için state-machine notifier.
@@ -70,6 +86,7 @@ class ProfileEditNotifier extends StateNotifier<ProfileEditState> {
             bio: bio,
             avatarUrl: avatarUrl,
           );
+      invalidateCache('currentProfile');
       _ref.invalidate(currentProfileProvider);
       state = const ProfileEditState.success();
       return true;
@@ -104,6 +121,7 @@ class ProfileEditNotifier extends StateNotifier<ProfileEditState> {
             avatarUrl: avatarUrl,
             hiddenFromDiscover: hiddenFromDiscover,
           );
+      invalidateCache('currentProfile');
       _ref.invalidate(currentProfileProvider);
       state = const ProfileEditState.success();
       return true;

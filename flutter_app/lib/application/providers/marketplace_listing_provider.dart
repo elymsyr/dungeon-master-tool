@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../core/utils/cached_provider.dart';
 import '../../data/datasources/local/marketplace_links_local_ds.dart';
 import '../../data/datasources/remote/marketplace_listings_remote_ds.dart';
 import '../../domain/entities/marketplace_listing.dart';
@@ -44,9 +45,14 @@ final userMarketplaceListingsProvider =
     FutureProvider.family<List<MarketplaceListing>, String>(
         (ref, userId) async {
   if (!SupabaseConfig.isConfigured) return const [];
-  return ref
-      .read(marketplaceListingsRemoteDsProvider)
-      .listCurrentByOwner(userId);
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'userListings:$userId',
+    ttl: const Duration(minutes: 5),
+    fetch: () => ref
+        .read(marketplaceListingsRemoteDsProvider)
+        .listCurrentByOwner(userId),
+  );
 });
 
 /// Reader-side: the marketplace_source metadata of a downloaded local copy,

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../application/providers/follows_provider.dart';
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/cached_provider.dart';
 import '../../../core/utils/error_format.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../core/utils/world_languages.dart';
@@ -63,7 +64,10 @@ class _MarketplaceFeed extends ConsumerWidget {
 
     final hPad = isPhone(context) ? 12.0 : 24.0;
     return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(marketplaceProvider),
+      onRefresh: () async {
+        invalidateCachePrefix('marketplace:');
+        ref.invalidate(marketplaceProvider);
+      },
       child: ListView(
         padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
         children: [
@@ -72,6 +76,7 @@ class _MarketplaceFeed extends ConsumerWidget {
           _SecondaryFilterRow(filters: filters, palette: palette),
           const SizedBox(height: 20),
           entries.when(
+            skipLoadingOnRefresh: true,
             loading: () => const Padding(
               padding: EdgeInsets.symmetric(vertical: 48),
               child: Center(child: CircularProgressIndicator()),
@@ -447,6 +452,7 @@ class _PlayersPanel extends ConsumerWidget {
           const SizedBox(height: 12),
           Expanded(
             child: players.when(
+              skipLoadingOnRefresh: true,
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Text(formatError(e),
                   style: TextStyle(fontSize: 11, color: palette.dangerBtnBg)),

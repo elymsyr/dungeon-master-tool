@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/follows_provider.dart';
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/cached_provider.dart';
 import '../../../core/utils/error_format.dart';
 import '../../../domain/entities/conversation.dart';
 import '../../../domain/entities/user_profile.dart';
@@ -62,6 +63,7 @@ class _NewChatPickerScreenState extends ConsumerState<NewChatPickerScreen> {
       } else {
         conv = await ds.openDirect(_selectedIds.first);
       }
+      invalidateCache('conversations');
       ref.invalidate(myConversationsProvider);
       if (!mounted) return;
       navigator.pop();

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/follows_provider.dart';
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/cached_provider.dart';
 import '../../../core/utils/error_format.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../domain/entities/user_profile.dart';
@@ -40,7 +41,10 @@ class _DiscoverTabState extends ConsumerState<DiscoverTab> {
     final peopleAsync = ref.watch(discoverPeopleProvider);
 
     return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(discoverPeopleProvider),
+      onRefresh: () async {
+        invalidateCachePrefix('discover:');
+        ref.invalidate(discoverPeopleProvider);
+      },
       child: ListView(
         padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
         children: [
@@ -72,6 +76,7 @@ class _DiscoverTabState extends ConsumerState<DiscoverTab> {
           const SizedBox(height: 12),
           // Results
           peopleAsync.when(
+            skipLoadingOnRefresh: true,
             loading: () => const Padding(
               padding: EdgeInsets.symmetric(vertical: 48),
               child: Center(child: CircularProgressIndicator()),

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/marketplace_listing_provider.dart';
 import '../../../application/providers/social_providers.dart';
+import '../../../core/utils/cached_provider.dart';
 import '../../../core/utils/error_format.dart';
 import '../../../core/utils/profanity_filter.dart';
 import '../../../core/utils/screen_type.dart';
@@ -139,7 +140,10 @@ class _FeedTabState extends ConsumerState<FeedTab> {
 
     if (scope == FeedScope.gameLists) {
       return RefreshIndicator(
-        onRefresh: () async => ref.invalidate(openGameListingsProvider),
+        onRefresh: () async {
+          invalidateCachePrefix('gameListings:');
+          ref.invalidate(openGameListingsProvider);
+        },
         child: ListView(
           padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
           children: [
@@ -157,7 +161,10 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     final composerState = ref.watch(postComposerProvider);
 
     return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(feedProvider),
+      onRefresh: () async {
+        invalidateCachePrefix('feed:');
+        ref.invalidate(feedProvider);
+      },
       child: ListView(
         padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
         children: [
@@ -268,6 +275,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
           ),
           const SizedBox(height: 20),
           feedAsync.when(
+            skipLoadingOnRefresh: true,
             loading: () => const Padding(
               padding: EdgeInsets.symmetric(vertical: 48),
               child: Center(child: CircularProgressIndicator()),
@@ -838,6 +846,7 @@ class _FeedGameListings extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final listingsAsync = ref.watch(openGameListingsProvider);
     return listingsAsync.when(
+      skipLoadingOnRefresh: true,
       loading: () => const Padding(
         padding: EdgeInsets.symmetric(vertical: 48),
         child: Center(child: CircularProgressIndicator()),
