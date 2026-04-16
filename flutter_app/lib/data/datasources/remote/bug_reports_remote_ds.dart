@@ -6,6 +6,7 @@ class BugReport {
   final String? email;
   final String? username;
   final String message;
+  final String? logs;
   final String? appVersion;
   final String? platform;
   final String status; // open / read / resolved
@@ -19,6 +20,7 @@ class BugReport {
     required this.email,
     required this.username,
     required this.message,
+    required this.logs,
     required this.appVersion,
     required this.platform,
     required this.status,
@@ -33,6 +35,7 @@ class BugReport {
         email: row['email'] as String?,
         username: row['username'] as String?,
         message: row['message'] as String,
+        logs: row['logs'] as String?,
         appVersion: row['app_version'] as String?,
         platform: row['platform'] as String?,
         status: (row['status'] as String?) ?? 'open',
@@ -64,6 +67,7 @@ class BugReportsRemoteDataSource {
   /// `BugReportRateLimitException` fırlatılır.
   Future<void> submit({
     required String message,
+    String? logs,
     String? appVersion,
     String? platform,
   }) async {
@@ -71,6 +75,7 @@ class BugReportsRemoteDataSource {
       await _client.from('bug_reports').insert({
         'user_id': _userId,
         'message': message,
+        if (logs != null && logs.isNotEmpty) 'logs': logs,
         'app_version': appVersion,
         'platform': platform,
       });

@@ -1,5 +1,6 @@
 .env
-supabase
+supabase/.temp
+supabase/.branches
 **/node_modulees/
 .wrangler/
 .claude/
@@ -7,8 +8,6 @@ supabase
 worlds/
 cache/
 output.txt
-worlds
-core
 
 # OS
 .DS_Store

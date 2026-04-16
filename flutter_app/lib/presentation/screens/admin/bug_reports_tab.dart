@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/bug_report_provider.dart';
@@ -103,6 +104,7 @@ class _BugReportCard extends ConsumerStatefulWidget {
 
 class _BugReportCardState extends ConsumerState<_BugReportCard> {
   bool _expanded = false;
+  bool _logsExpanded = false;
 
   Color _statusColor(String status, DmToolColors palette) {
     switch (status) {
@@ -130,11 +132,40 @@ class _BugReportCardState extends ConsumerState<_BugReportCard> {
     }
   }
 
+  void _copyAll() {
+    final r = widget.report;
+    final buf = StringBuffer();
+    buf.writeln('Bug Report — ${r.username ?? r.email ?? r.userId}');
+    buf.writeln('Status: ${r.status} | Version: ${r.appVersion ?? '?'} | '
+        'Platform: ${r.platform ?? '?'} | Date: ${r.createdAt}');
+    buf.writeln();
+    buf.writeln('== Description ==');
+    buf.writeln(r.message);
+    if (r.logs != null && r.logs!.isNotEmpty) {
+      buf.writeln();
+      buf.writeln('== Terminal Logs ==');
+      buf.writeln(r.logs);
+    }
+    if (r.adminNote != null && r.adminNote!.isNotEmpty) {
+      buf.writeln();
+      buf.writeln('== Admin Note ==');
+      buf.writeln(r.adminNote);
+    }
+    Clipboard.setData(ClipboardData(text: buf.toString()));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Report copied to clipboard'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final r = widget.report;
     final title = r.username ?? r.email ?? r.userId;
+    final hasLogs = r.logs != null && r.logs!.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -197,6 +228,8 @@ class _BugReportCardState extends ConsumerState<_BugReportCard> {
                 label: formatRelative(r.createdAt),
                 color: palette.featureCardBorder,
               ),
+              if (hasLogs)
+                _Chip(label: 'HAS LOGS', color: palette.featureCardAccent),
             ],
           ),
           const SizedBox(height: 10),
@@ -211,6 +244,57 @@ class _BugReportCardState extends ConsumerState<_BugReportCard> {
                   fontSize: 13, height: 1.4, color: palette.tabActiveText),
             ),
           ),
+          // Logs section
+          if (hasLogs) ...[
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () => setState(() => _logsExpanded = !_logsExpanded),
+              child: Row(
+                children: [
+                  Icon(Icons.terminal, size: 14,
+                      color: palette.sidebarLabelSecondary),
+                  const SizedBox(width: 6),
+                  Text(
+                    _logsExpanded ? 'Hide logs' : 'Show logs',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: palette.featureCardAccent,
+                    ),
+                  ),
+                  Icon(
+                    _logsExpanded
+                        ? Icons.expand_less
+                        : Icons.expand_more,
+                    size: 16,
+                    color: palette.featureCardAccent,
+                  ),
+                ],
+              ),
+            ),
+            if (_logsExpanded) ...[
+              const SizedBox(height: 6),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 200),
+                width: double.infinity,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: palette.featureCardBorder.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: SingleChildScrollView(
+                  child: SelectableText(
+                    r.logs!,
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10,
+                      color: palette.tabActiveText,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
           if (r.adminNote != null && r.adminNote!.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
@@ -227,6 +311,11 @@ class _BugReportCardState extends ConsumerState<_BugReportCard> {
             alignment: WrapAlignment.end,
             spacing: 4,
             children: [
+              IconButton(
+                icon: const Icon(Icons.copy, size: 16),
+                tooltip: 'Copy all',
+                onPressed: _copyAll,
+              ),
               if (r.status == 'open')
                 TextButton.icon(
                   icon: const Icon(Icons.mark_email_read_outlined, size: 16),
