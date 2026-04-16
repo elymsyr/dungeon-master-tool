@@ -182,14 +182,12 @@ Future<void> _addMemberFlow({
   required Conversation conversation,
 }) async {
   final l10n = L10n.of(context)!;
-  final palette = Theme.of(context).extension<DmToolColors>()!;
   final uid = ref.read(authProvider)?.uid;
   if (uid == null) return;
 
   final existingIds = conversation.memberIds.toSet();
   final following = await ref.read(followingProvider(uid).future);
   final followers = await ref.read(followersProvider(uid).future);
-  // Merge and exclude existing members
   final seen = <String>{};
   final candidates = <UserProfile>[];
   for (final p in [...following, ...followers]) {
@@ -207,37 +205,11 @@ Future<void> _addMemberFlow({
     return;
   }
 
-  final picked = await showModalBottomSheet<UserProfile>(
+  final picked = await showDialog<UserProfile>(
     context: context,
-    builder: (ctx) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              l10n.chatAddMemberTitle,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: palette.tabActiveText,
-              ),
-            ),
-          ),
-          ...candidates.map((p) => ListTile(
-                leading: ProfileAvatar(
-                  avatarUrl: p.avatarUrl,
-                  fallbackText: p.username,
-                  size: 32,
-                ),
-                title: Text(p.displayName ?? p.username, style: const TextStyle(fontSize: 13)),
-                subtitle: Text('@${p.username}', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
-                onTap: () => Navigator.pop(ctx, p),
-              )),
-          const SizedBox(height: 8),
-        ],
-      ),
+    builder: (ctx) => _SearchableUserPickerDialog(
+      title: l10n.chatAddMemberTitle,
+      candidates: candidates,
     ),
   );
 
@@ -406,6 +378,20 @@ String _dateSeparatorLabel(DateTime date) {
   return DateFormat.yMMMd().format(date);
 }
 
+/// For a DM conversation, returns the other person's username (excluding [myId]).
+String _dmOtherName(Conversation conv, String? myId) {
+  final idx = conv.memberIds.indexOf(myId ?? '');
+  if (idx >= 0 && idx < conv.memberUsernames.length) {
+    // Remove current user, return the other
+    final others = <String>[];
+    for (var i = 0; i < conv.memberUsernames.length; i++) {
+      if (i != idx) others.add(conv.memberUsernames[i]);
+    }
+    if (others.isNotEmpty) return others.join(', ');
+  }
+  return conv.memberUsernames.join(', ');
+}
+
 bool _isDifferentDay(DateTime a, DateTime b) {
   final la = a.toLocal();
   final lb = b.toLocal();
@@ -415,62 +401,50 @@ bool _isDifferentDay(DateTime a, DateTime b) {
 class MessagesTab extends ConsumerWidget {
   const MessagesTab({super.key});
 
-  void _openCompose(BuildContext context) {
+  void _openCompose(BuildContext context, Offset fabPosition) {
     final l10n = L10n.of(context)!;
-    final palette = Theme.of(context).extension<DmToolColors>()!;
-    showModalBottomSheet<void>(
+    showMenu<String>(
       context: context,
-      backgroundColor: palette.featureCardBg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      position: RelativeRect.fromLTRB(
+        fabPosition.dx - 180,
+        fabPosition.dy - 100,
+        fabPosition.dx,
+        fabPosition.dy,
       ),
-      builder: (ctx) => SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
-          child: Column(
+      items: [
+        PopupMenuItem(
+          value: 'direct',
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 8),
-                decoration: BoxDecoration(
-                  color: palette.featureCardBorder,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              _ComposeAction(
-                icon: Icons.person_outline,
-                label: l10n.messagesComposeNewDirect,
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          const NewChatPickerScreen(mode: NewChatMode.direct),
-                    ),
-                  );
-                },
-              ),
-              _ComposeAction(
-                icon: Icons.group_outlined,
-                label: l10n.messagesComposeNewGroup,
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          const NewChatPickerScreen(mode: NewChatMode.group),
-                    ),
-                  );
-                },
-              ),
+              const Icon(Icons.person_outline, size: 18),
+              const SizedBox(width: 10),
+              Text(l10n.messagesComposeNewDirect),
             ],
           ),
         ),
-      ),
-    );
+        PopupMenuItem(
+          value: 'group',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.group_outlined, size: 18),
+              const SizedBox(width: 10),
+              Text(l10n.messagesComposeNewGroup),
+            ],
+          ),
+        ),
+      ],
+    ).then((value) {
+      if (value == null) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => NewChatPickerScreen(
+            mode: value == 'direct' ? NewChatMode.direct : NewChatMode.group,
+          ),
+        ),
+      );
+    });
   }
 
   @override
@@ -514,13 +488,19 @@ class MessagesTab extends ConsumerWidget {
         Positioned(
           right: 16,
           bottom: 16,
-          child: FloatingActionButton(
-            tooltip: l10n.messagesComposeTooltip,
-            backgroundColor: palette.featureCardAccent,
-            foregroundColor: Colors.white,
-            elevation: 4,
-            onPressed: () => _openCompose(context),
-            child: const Icon(Icons.edit_outlined),
+          child: Builder(
+            builder: (fabCtx) => FloatingActionButton(
+              tooltip: l10n.messagesComposeTooltip,
+              backgroundColor: palette.featureCardAccent,
+              foregroundColor: Colors.white,
+              elevation: 4,
+              onPressed: () {
+                final box = fabCtx.findRenderObject() as RenderBox;
+                final pos = box.localToGlobal(Offset.zero);
+                _openCompose(context, pos);
+              },
+              child: const Icon(Icons.edit_outlined),
+            ),
           ),
         ),
       ],
@@ -528,32 +508,135 @@ class MessagesTab extends ConsumerWidget {
   }
 }
 
-class _ComposeAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const _ComposeAction({required this.icon, required this.label, required this.onTap});
+/// Reusable in-app dialog with search for picking a user from a list.
+class _SearchableUserPickerDialog extends StatefulWidget {
+  final String title;
+  final List<UserProfile> candidates;
+  const _SearchableUserPickerDialog({required this.title, required this.candidates});
+
+  @override
+  State<_SearchableUserPickerDialog> createState() => _SearchableUserPickerDialogState();
+}
+
+class _SearchableUserPickerDialogState extends State<_SearchableUserPickerDialog> {
+  final _searchCtrl = TextEditingController();
+  List<UserProfile> _filtered = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filtered = widget.candidates;
+    _searchCtrl.addListener(_onSearch);
+  }
+
+  void _onSearch() {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    setState(() {
+      if (q.isEmpty) {
+        _filtered = widget.candidates;
+      } else {
+        _filtered = widget.candidates
+            .where((p) =>
+                p.username.toLowerCase().contains(q) ||
+                (p.displayName?.toLowerCase().contains(q) ?? false))
+            .toList();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
+    final l10n = L10n.of(context)!;
+    return Dialog(
+      backgroundColor: palette.canvasBg,
+      shape: RoundedRectangleBorder(borderRadius: palette.cbr),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 380, maxHeight: 480),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 20, color: palette.featureCardAccent),
-            const SizedBox(width: 14),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: palette.tabActiveText,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                widget.title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: palette.tabActiveText,
+                ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _searchCtrl,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: l10n.discoverSearchHint,
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  isDense: true,
+                  filled: true,
+                  fillColor: palette.featureCardBg,
+                  border: OutlineInputBorder(
+                    borderRadius: palette.br,
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Flexible(
+              child: _filtered.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          l10n.discoverEmptySearch,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: palette.sidebarLabelSecondary,
+                          ),
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: _filtered.length,
+                      itemBuilder: (_, i) {
+                        final p = _filtered[i];
+                        return ListTile(
+                          dense: true,
+                          leading: ProfileAvatar(
+                            avatarUrl: p.avatarUrl,
+                            fallbackText: p.username,
+                            size: 32,
+                          ),
+                          title: Text(
+                            p.displayName ?? p.username,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                          subtitle: Text(
+                            '@${p.username}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: palette.sidebarLabelSecondary,
+                            ),
+                          ),
+                          onTap: () => Navigator.pop(context, p),
+                        );
+                      },
+                    ),
+            ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -574,7 +657,7 @@ class _ConvTile extends ConsumerWidget {
 
     final title = conversation.isGroup
         ? (conversation.title ?? 'Group')
-        : conversation.memberUsernames.join(', ');
+        : _dmOtherName(conversation, myId);
     final displayTitle = title.isEmpty ? '(empty)' : title;
     final fallback = title.isEmpty ? '?' : title;
     final preview = conversation.lastMessageBody ?? l10n.messagesNoMessagesYet;
@@ -751,7 +834,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ref.watch(messagesStreamProvider(widget.conversation.id));
     final title = widget.conversation.isGroup
         ? (widget.conversation.title ?? 'Group')
-        : widget.conversation.memberUsernames.join(', ');
+        : _dmOtherName(widget.conversation, widget.myUserId);
     final fallback = title.isEmpty ? '?' : title;
 
     return Scaffold(

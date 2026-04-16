@@ -459,6 +459,11 @@
   "feedComposerAttachListing": "Attach listing",
   "feedAttachedListing": "Attached listing",
   "feedRemoveAttachment": "Remove",
+  "feedAttachNoListings": "You don't have any listings to attach.",
+  "feedPickerSearchHint": "Search your listings…",
+  "feedPickerMarketplaceSection": "Marketplace Items",
+  "feedPickerGameListingSection": "Game Listings",
+  "feedPickerEmpty": "No listings match your search.",
 
   "socialTabDiscover": "Discover",
   "discoverSearchHint": "Search by username…",

@@ -459,6 +459,11 @@
   "feedComposerAttachListing": "Öğe ekle",
   "feedAttachedListing": "Ekli öğe",
   "feedRemoveAttachment": "Kaldır",
+  "feedAttachNoListings": "Eklenecek bir öğeniz yok.",
+  "feedPickerSearchHint": "Öğelerinizde arayın…",
+  "feedPickerMarketplaceSection": "Pazar Yeri Öğeleri",
+  "feedPickerGameListingSection": "Oyun İlanları",
+  "feedPickerEmpty": "Aramanıza uygun öğe bulunamadı.",
 
   "socialTabDiscover": "Keşfet",
   "discoverSearchHint": "Kullanıcı adıyla ara…",

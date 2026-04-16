@@ -35,10 +35,10 @@ class _SocialTabState extends ConsumerState<SocialTab> {
     if (auth == null) return const _NotSignedIn();
 
     final currentTab = ref.watch(socialSubTabProvider);
-    final unread = ref.watch(totalUnreadCountProvider).value ?? 0;
+    final messageUnread = ref.watch(totalUnreadCountProvider).value ?? 0;
     return SocialShell(
       currentTab: currentTab,
-      messagesBadgeCount: unread,
+      messagesBadgeCount: messageUnread,
       onTabChanged: (t) =>
           ref.read(socialSubTabProvider.notifier).state = t,
       child: switch (currentTab) {

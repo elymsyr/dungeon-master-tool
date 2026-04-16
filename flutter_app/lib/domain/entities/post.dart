@@ -19,6 +19,9 @@ abstract class Post with _$Post {
     String? marketplaceItemId,
     String? marketplaceItemTitle,
     String? marketplaceItemType,
+    String? gameListingId,
+    String? gameListingTitle,
+    String? gameListingSystem,
   }) = _Post;
 
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);

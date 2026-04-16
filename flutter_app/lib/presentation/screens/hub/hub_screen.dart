@@ -191,7 +191,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     // Multi-device hint — another device uploaded changes we haven't pulled.
     final cloudBadge = ref.watch(cloudRemoteHasNewerProvider);
     // Unread messages — badge on Social tab.
-    final hasUnread = (ref.watch(totalUnreadCountProvider).value ?? 0) > 0;
+    final hasUnread = (ref.watch(totalNotificationCountProvider).value ?? 0) > 0;
 
     // Redirect to landing on sign-out when Supabase is configured.
     ref.listen(authProvider, (prev, next) async {

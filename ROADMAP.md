@@ -2,24 +2,7 @@
 
 Tracked work for upcoming releases — bugs to fix and features to add. Items are grouped by type, not strictly ordered.
 
-devam et, ayrıca bir kullanıcı gruba eklendiğinde ya da gruptan çıkarıldığında grup yenilenmeli hemen. bir de message içerisinde message yazdığımız input box'ın border'ı olmamalı.Gönderme butonunun da corner şekli temaya göre değişmeli. Bir de mesaj yönetme context menüsünü, mesaja girdikten sonra yalnızca sol üstteki mesaj isminden açabilsin. Her hangi bir mesaja tıklayarak açılmasın.
-
 ## Features
-
-### Template rule propagation into worlds
-Template'ini değiştirdikten sonra bir world'e girmek istediğimizde bu değişiklik algılanır ve önce kullanıcı uyarılır. Kullanıcı isterse world'ü güncelleyebilir. Ancak bu sistem rules dahil template içindeki her değişiklikte çalışmalı.
-
-### Slot field type doğru çalışmıyor. 
-Slot field içerisindeki her bir checkbox birbirinmden bağımsız açılıp kapanabilmeli. ayrıca checkbox rounded corners de yine temaya göre değişsin. örneğin grim temasında tam kare olabilir. Ayrıca checkbox'ları değiştirmek için edit modda olmamıza gerek olmamalı.
-
-### Feed paylaşımlarına marketplace item eklenebilmesi
-Feed bölümünde yapılan paylaşımlara, resim gibi, marketplace item'ları da eklenebilsin. Böylece bir paylaşım hem marketplace item'ını hem de içerik yazısını birlikte taşıyabilsin.
-
-### Feed'de "Discover People" tab'ı
-Feed'de marketplace kısmının yanına yeni bir tab eklenecek. Bu tab kullanıcı listesi gösterecek — amacı discover people / find new people tarzında bir sayfa ile insanların birbirini bulmasını sağlamak.
-
-### App notification system
-A unified app notification surface (badge + drawer/list). **First integration: messages** — unread DM count + per-message notifications. Designed so future sources (marketplace updates, follows, replies) can plug in.
 
 ### Package types
 Today there is one generic package type. Split it into two distinct kinds:

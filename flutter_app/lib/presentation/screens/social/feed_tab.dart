@@ -28,6 +28,26 @@ IconData _listingTypeIcon(String itemType) => switch (itemType) {
       _ => Icons.folder_outlined,
     };
 
+// ── Sealed type for attached listings ───────────────────────────────
+
+sealed class AttachedListing {
+  String get title;
+}
+
+class AttachedMarketplace extends AttachedListing {
+  final MarketplaceListing listing;
+  AttachedMarketplace(this.listing);
+  @override
+  String get title => listing.title;
+}
+
+class AttachedGameListing extends AttachedListing {
+  final GameListing listing;
+  AttachedGameListing(this.listing);
+  @override
+  String get title => listing.title;
+}
+
 class FeedTab extends ConsumerStatefulWidget {
   const FeedTab({super.key});
   @override
@@ -37,7 +57,7 @@ class FeedTab extends ConsumerStatefulWidget {
 class _FeedTabState extends ConsumerState<FeedTab> {
   final _bodyCtrl = TextEditingController();
   bool _composerFocused = false;
-  MarketplaceListing? _attachedListing;
+  AttachedListing? _attached;
 
   @override
   void dispose() {
@@ -47,15 +67,22 @@ class _FeedTabState extends ConsumerState<FeedTab> {
 
   Future<void> _submit() async {
     final raw = _bodyCtrl.text;
-    if (raw.trim().isEmpty && _attachedListing == null) return;
+    if (raw.trim().isEmpty && _attached == null) return;
     final l10n = L10n.of(context)!;
     final ok = await ref.read(postComposerProvider.notifier).submit(
           body: raw,
-          marketplaceItemId: _attachedListing?.id,
+          marketplaceItemId: switch (_attached) {
+            AttachedMarketplace(listing: final l) => l.id,
+            _ => null,
+          },
+          gameListingId: switch (_attached) {
+            AttachedGameListing(listing: final l) => l.id,
+            _ => null,
+          },
         );
     if (ok) {
       _bodyCtrl.clear();
-      setState(() => _attachedListing = null);
+      setState(() => _attached = null);
     }
     if (!mounted) return;
     final state = ref.read(postComposerProvider);
@@ -73,48 +100,34 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     setState(() {});
   }
 
-  Future<void> _pickMarketplaceItem() async {
+  Future<void> _pickListing() async {
     final uid = ref.read(authProvider)?.uid;
     if (uid == null) return;
-    final listings = await ref.read(userMarketplaceListingsProvider(uid).future);
-    if (!mounted || listings.isEmpty) return;
-    final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
-    final picked = await showModalBottomSheet<MarketplaceListing>(
+
+    final results = await Future.wait([
+      ref.read(userMarketplaceListingsProvider(uid).future),
+      ref.read(myGameListingsProvider.future),
+    ]);
+    final marketplaceItems = results[0] as List<MarketplaceListing>;
+    final gameItems = results[1] as List<GameListing>;
+
+    if (!mounted) return;
+    if (marketplaceItems.isEmpty && gameItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.feedAttachNoListings)),
+      );
+      return;
+    }
+
+    final picked = await showDialog<AttachedListing>(
       context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(
-                l10n.feedComposerAttachListing,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: palette.tabActiveText,
-                ),
-              ),
-            ),
-            ...listings.map((listing) => ListTile(
-                  leading: Icon(_listingTypeIcon(listing.itemType),
-                      color: palette.featureCardAccent),
-                  title: Text(listing.title,
-                      style: const TextStyle(fontSize: 13)),
-                  subtitle: Text(listing.itemType,
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: palette.sidebarLabelSecondary)),
-                  onTap: () => Navigator.pop(ctx, listing),
-                )),
-            const SizedBox(height: 8),
-          ],
-        ),
+      builder: (ctx) => _ListingPickerDialog(
+        marketplaceItems: marketplaceItems,
+        gameItems: gameItems,
       ),
     );
-    if (picked != null) setState(() => _attachedListing = picked);
+    if (picked != null) setState(() => _attached = picked);
   }
 
   @override
@@ -170,7 +183,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                     isDense: true,
                   ),
                 ),
-                if (_attachedListing != null) ...[
+                if (_attached != null) ...[
                   const SizedBox(height: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -181,18 +194,24 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                     ),
                     child: Row(
                       children: [
-                        Icon(_listingTypeIcon(_attachedListing!.itemType), size: 16, color: palette.featureCardAccent),
+                        Icon(
+                          switch (_attached!) {
+                            AttachedMarketplace(listing: final l) => _listingTypeIcon(l.itemType),
+                            AttachedGameListing() => Icons.groups_outlined,
+                          },
+                          size: 16, color: palette.featureCardAccent,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            _attachedListing!.title,
+                            _attached!.title,
                             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabActiveText),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         InkWell(
-                          onTap: () => setState(() => _attachedListing = null),
+                          onTap: () => setState(() => _attached = null),
                           child: Icon(Icons.close, size: 16, color: palette.sidebarLabelSecondary),
                         ),
                       ],
@@ -219,9 +238,9 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                         IconButton(
                           visualDensity: VisualDensity.compact,
                           icon: Icon(Icons.storefront_outlined, size: 20,
-                              color: _attachedListing != null ? palette.featureCardAccent : palette.sidebarLabelSecondary),
+                              color: _attached != null ? palette.featureCardAccent : palette.sidebarLabelSecondary),
                           tooltip: l10n.feedComposerAttachListing,
-                          onPressed: _pickMarketplaceItem,
+                          onPressed: _pickListing,
                         ),
                       ],
                     ),
@@ -231,7 +250,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         shape: RoundedRectangleBorder(borderRadius: palette.br),
                       ),
-                      onPressed: composerState is AsyncLoading || (_bodyCtrl.text.trim().isEmpty && _attachedListing == null)
+                      onPressed: composerState is AsyncLoading || (_bodyCtrl.text.trim().isEmpty && _attached == null)
                           ? null
                           : _submit,
                       child: composerState is AsyncLoading
@@ -327,6 +346,160 @@ class _FeedScopeTabs extends ConsumerWidget {
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+}
+
+// ── Listing picker dialog ───────────────────────────────────────────
+
+class _ListingPickerDialog extends StatefulWidget {
+  final List<MarketplaceListing> marketplaceItems;
+  final List<GameListing> gameItems;
+  const _ListingPickerDialog({required this.marketplaceItems, required this.gameItems});
+
+  @override
+  State<_ListingPickerDialog> createState() => _ListingPickerDialogState();
+}
+
+class _ListingPickerDialogState extends State<_ListingPickerDialog> {
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtrl.addListener(() {
+      setState(() => _query = _searchCtrl.text.trim().toLowerCase());
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  List<MarketplaceListing> get _filteredMarketplace => _query.isEmpty
+      ? widget.marketplaceItems
+      : widget.marketplaceItems.where((l) => l.title.toLowerCase().contains(_query)).toList();
+
+  List<GameListing> get _filteredGame => _query.isEmpty
+      ? widget.gameItems
+      : widget.gameItems.where((l) => l.title.toLowerCase().contains(_query)).toList();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
+    final mItems = _filteredMarketplace;
+    final gItems = _filteredGame;
+    final empty = mItems.isEmpty && gItems.isEmpty;
+
+    return Dialog(
+      backgroundColor: palette.canvasBg,
+      shape: RoundedRectangleBorder(borderRadius: palette.cbr),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                l10n.feedComposerAttachListing,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: palette.tabActiveText,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _searchCtrl,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: l10n.feedPickerSearchHint,
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  isDense: true,
+                  filled: true,
+                  fillColor: palette.featureCardBg,
+                  border: OutlineInputBorder(
+                    borderRadius: palette.br,
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Flexible(
+              child: empty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          l10n.feedPickerEmpty,
+                          style: TextStyle(fontSize: 13, color: palette.sidebarLabelSecondary),
+                        ),
+                      ),
+                    )
+                  : ListView(
+                      shrinkWrap: true,
+                      children: [
+                        if (mItems.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                            child: Text(
+                              l10n.feedPickerMarketplaceSection,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: palette.sidebarLabelSecondary,
+                              ),
+                            ),
+                          ),
+                          for (final item in mItems)
+                            ListTile(
+                              dense: true,
+                              leading: Icon(_listingTypeIcon(item.itemType), size: 20, color: palette.featureCardAccent),
+                              title: Text(item.title, style: const TextStyle(fontSize: 13)),
+                              subtitle: Text(item.itemType, style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+                              onTap: () => Navigator.pop(context, AttachedMarketplace(item)),
+                            ),
+                        ],
+                        if (gItems.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                            child: Text(
+                              l10n.feedPickerGameListingSection,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: palette.sidebarLabelSecondary,
+                              ),
+                            ),
+                          ),
+                          for (final item in gItems)
+                            ListTile(
+                              dense: true,
+                              leading: Icon(Icons.groups_outlined, size: 20, color: palette.featureCardAccent),
+                              title: Text(item.title, style: const TextStyle(fontSize: 13)),
+                              subtitle: item.system != null
+                                  ? Text(item.system!, style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary))
+                                  : null,
+                              onTap: () => Navigator.pop(context, AttachedGameListing(item)),
+                            ),
+                        ],
+                      ],
+                    ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
@@ -436,6 +609,69 @@ class _PostCard extends ConsumerWidget {
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, size: 18, color: palette.sidebarLabelSecondary),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          if (post.gameListingId != null && post.gameListingTitle != null) ...[
+            const SizedBox(height: 12),
+            InkWell(
+              borderRadius: palette.cbr,
+              onTap: () async {
+                final listing = await ref.read(gameListingsRemoteDsProvider).fetchById(post.gameListingId!);
+                if (!context.mounted || listing == null) return;
+                ApplyListingDialog.show(context, listing: listing);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: palette.featureCardBg,
+                  borderRadius: palette.cbr,
+                  border: Border.all(color: palette.featureCardBorder),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: palette.featureCardAccent.withValues(alpha: 0.12),
+                        borderRadius: palette.cbr,
+                      ),
+                      child: const Icon(
+                        Icons.groups_outlined,
+                        size: 18,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            post.gameListingTitle!,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: palette.tabActiveText,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (post.gameListingSystem != null)
+                            Text(
+                              post.gameListingSystem!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: palette.sidebarLabelSecondary,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     Icon(Icons.chevron_right, size: 18, color: palette.sidebarLabelSecondary),

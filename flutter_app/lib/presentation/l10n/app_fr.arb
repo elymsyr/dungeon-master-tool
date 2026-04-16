@@ -459,6 +459,11 @@
   "feedComposerAttachListing": "Joindre un article",
   "feedAttachedListing": "Article joint",
   "feedRemoveAttachment": "Supprimer",
+  "feedAttachNoListings": "Vous n'avez aucun article à joindre.",
+  "feedPickerSearchHint": "Rechercher vos articles…",
+  "feedPickerMarketplaceSection": "Articles du marché",
+  "feedPickerGameListingSection": "Annonces de jeux",
+  "feedPickerEmpty": "Aucun article ne correspond à votre recherche.",
 
   "socialTabDiscover": "Découvrir",
   "discoverSearchHint": "Rechercher par nom d'utilisateur…",

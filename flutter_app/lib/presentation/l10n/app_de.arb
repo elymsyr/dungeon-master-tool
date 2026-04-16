@@ -459,6 +459,11 @@
   "feedComposerAttachListing": "Eintrag anhängen",
   "feedAttachedListing": "Angehängter Eintrag",
   "feedRemoveAttachment": "Entfernen",
+  "feedAttachNoListings": "Du hast keine Einträge zum Anhängen.",
+  "feedPickerSearchHint": "Deine Einträge durchsuchen…",
+  "feedPickerMarketplaceSection": "Marktplatz-Einträge",
+  "feedPickerGameListingSection": "Spielanzeigen",
+  "feedPickerEmpty": "Keine Einträge passen zu deiner Suche.",
 
   "socialTabDiscover": "Entdecken",
   "discoverSearchHint": "Nach Benutzername suchen…",

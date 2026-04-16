@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'category_rule.dart';
 import 'encounter_config.dart';
+import 'field_schema.dart';
 import 'world_schema.dart';
 
 /// Compares two [WorldSchema] instances and returns a list of human-readable
@@ -62,6 +63,16 @@ void _diffCategories(WorldSchema old, WorldSchema now, List<String> out) {
       }
     }
 
+    // Modified fields (same label, different properties)
+    final oldFieldsByLabel = {for (final f in oldCat.fields) f.label: f};
+    for (final f in newCat.fields) {
+      final oldField = oldFieldsByLabel[f.label];
+      if (oldField == null) continue;
+      if (_fieldChanged(oldField, f)) {
+        out.add('$name: modified field ${f.label}');
+      }
+    }
+
     // Rules
     final oldRules = {for (final r in oldCat.rules) r.name: r};
     final newRules = {for (final r in newCat.rules) r.name: r};
@@ -85,6 +96,19 @@ void _diffCategories(WorldSchema old, WorldSchema now, List<String> out) {
       }
     }
   }
+}
+
+bool _fieldChanged(FieldSchema a, FieldSchema b) {
+  if (a.fieldType != b.fieldType) return true;
+  if (a.isList != b.isList) return true;
+  if (a.isRequired != b.isRequired) return true;
+  if (a.hasEquip != b.hasEquip) return true;
+  if (a.visibility != b.visibility) return true;
+  if (a.validation != b.validation) return true;
+  if (a.subFields.length != b.subFields.length) return true;
+  final aSub = jsonEncode(a.subFields);
+  final bSub = jsonEncode(b.subFields);
+  return aSub != bSub;
 }
 
 bool _ruleChanged(CategoryRule a, CategoryRule b) {
