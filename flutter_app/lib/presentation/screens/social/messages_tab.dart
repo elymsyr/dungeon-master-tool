@@ -18,8 +18,10 @@ const double _kListMaxWidth = 640;
 
 // ── Shared conversation context menu ─────────────────────────────────
 
-/// Shows the group management context menu (members, add/kick, rename, leave,
-/// delete). Used from both [_ConvTile] (messages list) and [ChatScreen] title.
+/// Shows the conversation context menu.
+/// For groups: members, add/kick, rename, leave, delete.
+/// For DMs: delete only.
+/// Used from both [_ConvTile] (messages list) and [ChatScreen] title.
 void _showConversationContextMenu({
   required BuildContext context,
   required WidgetRef ref,
@@ -29,7 +31,16 @@ void _showConversationContextMenu({
   /// Called after a destructive action (leave/delete) so the caller can pop.
   VoidCallback? onLeft,
 }) {
-  if (!conversation.isGroup) return;
+  if (!conversation.isGroup) {
+    _showDmContextMenu(
+      context: context,
+      ref: ref,
+      conversation: conversation,
+      globalPosition: globalPosition,
+      onLeft: onLeft,
+    );
+    return;
+  }
 
   final palette = Theme.of(context).extension<DmToolColors>()!;
   final l10n = L10n.of(context)!;
@@ -174,6 +185,83 @@ void _showConversationContextMenu({
     if (value == 'delete_group') _deleteGroupFlow(context: context, ref: ref, conversation: conversation, onLeft: onLeft);
     if (value.startsWith('kick:')) _kickMemberFlow(context: context, ref: ref, conversation: conversation, targetUserId: value.substring(5));
   });
+}
+
+/// Context menu for non-group (DM) conversations — delete only.
+void _showDmContextMenu({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Conversation conversation,
+  required Offset globalPosition,
+  VoidCallback? onLeft,
+}) {
+  final l10n = L10n.of(context)!;
+  final errorColor = Theme.of(context).colorScheme.error;
+
+  showMenu<String>(
+    context: context,
+    position: RelativeRect.fromLTRB(
+      globalPosition.dx,
+      globalPosition.dy,
+      globalPosition.dx + 1,
+      globalPosition.dy + 1,
+    ),
+    items: [
+      PopupMenuItem(
+        value: 'delete_dm',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.delete_outline, size: 18, color: errorColor),
+            const SizedBox(width: 8),
+            Text(l10n.dmDeleteChat, style: TextStyle(color: errorColor)),
+          ],
+        ),
+      ),
+    ],
+  ).then((value) {
+    if (value == 'delete_dm') {
+      _deleteDmFlow(
+        context: context,
+        ref: ref,
+        conversation: conversation,
+        onLeft: onLeft,
+      );
+    }
+  });
+}
+
+Future<void> _deleteDmFlow({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Conversation conversation,
+  VoidCallback? onLeft,
+}) async {
+  final l10n = L10n.of(context)!;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.dmDeleteTitle),
+      content: Text(l10n.dmDeleteBody),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(l10n.dmDeleteConfirm, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) return;
+  try {
+    await ref.read(messagesRemoteDsProvider).deleteConversation(conversation.id);
+    ref.invalidate(myConversationsProvider);
+    onLeft?.call();
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+    }
+  }
 }
 
 Future<void> _addMemberFlow({
@@ -665,22 +753,18 @@ class _ConvTile extends ConsumerWidget {
     final hasUnread = conversation.unreadCount > 0;
 
     return GestureDetector(
-      onLongPressStart: conversation.isGroup
-          ? (details) => _showConversationContextMenu(
-                context: context, ref: ref,
-                conversation: conversation,
-                myUserId: myId,
-                globalPosition: details.globalPosition,
-              )
-          : null,
-      onSecondaryTapDown: conversation.isGroup
-          ? (details) => _showConversationContextMenu(
-                context: context, ref: ref,
-                conversation: conversation,
-                myUserId: myId,
-                globalPosition: details.globalPosition,
-              )
-          : null,
+      onLongPressStart: (details) => _showConversationContextMenu(
+            context: context, ref: ref,
+            conversation: conversation,
+            myUserId: myId,
+            globalPosition: details.globalPosition,
+          ),
+      onSecondaryTapDown: (details) => _showConversationContextMenu(
+            context: context, ref: ref,
+            conversation: conversation,
+            myUserId: myId,
+            globalPosition: details.globalPosition,
+          ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(

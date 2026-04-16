@@ -16,6 +16,7 @@ abstract class UserProfile with _$UserProfile {
     String? avatarUrl,
     @Default(0) int followers,
     @Default(0) int following,
+    @Default(false) bool hiddenFromDiscover,
     required DateTime createdAt,
   }) = _UserProfile;
 

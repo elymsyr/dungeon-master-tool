@@ -470,5 +470,13 @@
   "discoverSuggestedHeader": "Suggested for you",
   "discoverSearchResults": "Search results",
   "discoverEmptySearch": "No users found",
-  "discoverEmptyState": "No suggestions available"
+  "discoverEmptyState": "No suggestions available",
+
+  "dmDeleteChat": "Delete Chat",
+  "dmDeleteTitle": "Delete conversation?",
+  "dmDeleteBody": "This will delete all messages for both sides. This action cannot be undone.",
+  "dmDeleteConfirm": "Delete",
+
+  "profileHideFromDiscover": "Do not show me on Discover",
+  "profileHideFromDiscoverHint": "Your profile won't appear in suggestions or search results"
 }

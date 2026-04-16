@@ -85,6 +85,7 @@ class ProfilesRemoteDataSource {
     String? displayName,
     String? bio,
     String? avatarUrl,
+    bool? hiddenFromDiscover,
   }) async {
     final uid = _currentUserId;
     if (uid == null) throw StateError('Not authenticated');
@@ -96,6 +97,7 @@ class ProfilesRemoteDataSource {
     if (displayName != null) patch['display_name'] = displayName;
     if (bio != null) patch['bio'] = bio;
     if (avatarUrl != null) patch['avatar_url'] = avatarUrl;
+    if (hiddenFromDiscover != null) patch['hidden_from_discover'] = hiddenFromDiscover;
 
     final updated = await _client
         .from(_table)
@@ -158,6 +160,7 @@ class ProfilesRemoteDataSource {
       avatarUrl: row['avatar_url'] as String?,
       followers: followers,
       following: following,
+      hiddenFromDiscover: row['hidden_from_discover'] as bool? ?? false,
       createdAt: row['created_at'] != null
           ? DateTime.parse(row['created_at'] as String)
           : DateTime.now().toUtc(),

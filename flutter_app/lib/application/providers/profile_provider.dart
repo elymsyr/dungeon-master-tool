@@ -93,6 +93,7 @@ class ProfileEditNotifier extends StateNotifier<ProfileEditState> {
     String? displayName,
     String? bio,
     String? avatarUrl,
+    bool? hiddenFromDiscover,
   }) async {
     state = const ProfileEditState.busy();
     try {
@@ -101,6 +102,7 @@ class ProfileEditNotifier extends StateNotifier<ProfileEditState> {
             displayName: displayName,
             bio: bio,
             avatarUrl: avatarUrl,
+            hiddenFromDiscover: hiddenFromDiscover,
           );
       _ref.invalidate(currentProfileProvider);
       state = const ProfileEditState.success();
