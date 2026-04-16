@@ -15,6 +15,374 @@ import 'new_chat_picker_screen.dart';
 import 'social_shell.dart';
 
 const double _kListMaxWidth = 640;
+
+// ── Shared conversation context menu ─────────────────────────────────
+
+/// Shows the group management context menu (members, add/kick, rename, leave,
+/// delete). Used from both [_ConvTile] (messages list) and [ChatScreen] title.
+void _showConversationContextMenu({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Conversation conversation,
+  required String? myUserId,
+  required Offset globalPosition,
+  /// Called after a destructive action (leave/delete) so the caller can pop.
+  VoidCallback? onLeft,
+}) {
+  if (!conversation.isGroup) return;
+
+  final palette = Theme.of(context).extension<DmToolColors>()!;
+  final l10n = L10n.of(context)!;
+  final isAdmin = conversation.createdBy == myUserId;
+  final errorColor = Theme.of(context).colorScheme.error;
+
+  final items = <PopupMenuEntry<String>>[];
+
+  // Members header
+  items.add(PopupMenuItem(
+    enabled: false,
+    height: 32,
+    child: Text(
+      l10n.chatMenuMembers,
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: palette.sidebarLabelSecondary,
+      ),
+    ),
+  ));
+
+  for (var i = 0; i < conversation.memberIds.length; i++) {
+    final memberId = conversation.memberIds[i];
+    final username = i < conversation.memberUsernames.length
+        ? conversation.memberUsernames[i]
+        : memberId;
+    final isMemberAdmin = memberId == conversation.createdBy;
+    final canKick = isAdmin && !isMemberAdmin && memberId != myUserId;
+
+    items.add(PopupMenuItem(
+      enabled: canKick,
+      value: 'kick:$memberId',
+      child: Row(
+        children: [
+          ProfileAvatar(fallbackText: username, size: 22),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '@$username',
+              style: const TextStyle(fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (isMemberAdmin)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                color: palette.featureCardAccent.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: Text(
+                'ADMIN',
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w700,
+                  color: palette.featureCardAccent,
+                ),
+              ),
+            ),
+          if (canKick)
+            Icon(Icons.person_remove_outlined, size: 16, color: errorColor),
+        ],
+      ),
+    ));
+  }
+
+  items.add(const PopupMenuDivider());
+
+  // Add member (admin only)
+  if (isAdmin) {
+    items.add(PopupMenuItem(
+      value: 'add_member',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.person_add_outlined, size: 18, color: palette.featureCardAccent),
+          const SizedBox(width: 8),
+          Text(l10n.chatMenuAddMember, style: TextStyle(color: palette.featureCardAccent)),
+        ],
+      ),
+    ));
+  }
+
+  // Rename (admin only)
+  if (isAdmin) {
+    items.add(PopupMenuItem(
+      value: 'rename',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.edit_outlined, size: 18, color: palette.tabText),
+          const SizedBox(width: 8),
+          Text(l10n.chatMenuRenameGroup),
+        ],
+      ),
+    ));
+  }
+
+  // Leave
+  items.add(PopupMenuItem(
+    value: 'leave',
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.exit_to_app, size: 18, color: errorColor),
+        const SizedBox(width: 8),
+        Text(l10n.chatMenuLeaveGroup, style: TextStyle(color: errorColor)),
+      ],
+    ),
+  ));
+
+  // Delete group (admin only)
+  if (isAdmin) {
+    items.add(PopupMenuItem(
+      value: 'delete_group',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.delete_forever, size: 18, color: errorColor),
+          const SizedBox(width: 8),
+          Text(l10n.chatMenuDeleteGroup, style: TextStyle(color: errorColor)),
+        ],
+      ),
+    ));
+  }
+
+  showMenu<String>(
+    context: context,
+    position: RelativeRect.fromLTRB(
+      globalPosition.dx,
+      globalPosition.dy,
+      globalPosition.dx + 1,
+      globalPosition.dy + 1,
+    ),
+    items: items,
+  ).then((value) {
+    if (value == null) return;
+    if (value == 'add_member') _addMemberFlow(context: context, ref: ref, conversation: conversation);
+    if (value == 'rename') _renameGroupFlow(context: context, ref: ref, conversation: conversation);
+    if (value == 'leave') _leaveGroupFlow(context: context, ref: ref, conversation: conversation, myUserId: myUserId, onLeft: onLeft);
+    if (value == 'delete_group') _deleteGroupFlow(context: context, ref: ref, conversation: conversation, onLeft: onLeft);
+    if (value.startsWith('kick:')) _kickMemberFlow(context: context, ref: ref, conversation: conversation, targetUserId: value.substring(5));
+  });
+}
+
+Future<void> _addMemberFlow({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Conversation conversation,
+}) async {
+  final l10n = L10n.of(context)!;
+  final palette = Theme.of(context).extension<DmToolColors>()!;
+  final uid = ref.read(authProvider)?.uid;
+  if (uid == null) return;
+
+  final existingIds = conversation.memberIds.toSet();
+  final following = await ref.read(followingProvider(uid).future);
+  final followers = await ref.read(followersProvider(uid).future);
+  // Merge and exclude existing members
+  final seen = <String>{};
+  final candidates = <UserProfile>[];
+  for (final p in [...following, ...followers]) {
+    if (!existingIds.contains(p.userId) && seen.add(p.userId)) {
+      candidates.add(p);
+    }
+  }
+
+  if (!context.mounted) return;
+
+  if (candidates.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.discoverEmptyState)),
+    );
+    return;
+  }
+
+  final picked = await showModalBottomSheet<UserProfile>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
+              l10n.chatAddMemberTitle,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: palette.tabActiveText,
+              ),
+            ),
+          ),
+          ...candidates.map((p) => ListTile(
+                leading: ProfileAvatar(
+                  avatarUrl: p.avatarUrl,
+                  fallbackText: p.username,
+                  size: 32,
+                ),
+                title: Text(p.displayName ?? p.username, style: const TextStyle(fontSize: 13)),
+                subtitle: Text('@${p.username}', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+                onTap: () => Navigator.pop(ctx, p),
+              )),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
+
+  if (picked == null || !context.mounted) return;
+
+  try {
+    await ref.read(messagesRemoteDsProvider).addMember(conversation.id, picked.userId);
+    ref.invalidate(myConversationsProvider);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.chatMemberAdded)));
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+    }
+  }
+}
+
+Future<void> _renameGroupFlow({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Conversation conversation,
+}) async {
+  final l10n = L10n.of(context)!;
+  final ctrl = TextEditingController(text: conversation.title ?? '');
+  final newTitle = await showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.chatRenameTitle),
+      content: TextField(
+        controller: ctrl,
+        autofocus: true,
+        maxLength: 100,
+        decoration: InputDecoration(
+          hintText: l10n.chatRenameHint,
+          counterText: '',
+          border: const OutlineInputBorder(),
+        ),
+        onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: const Text('Save')),
+      ],
+    ),
+  );
+  ctrl.dispose();
+  if (newTitle == null || newTitle.isEmpty || newTitle == conversation.title) return;
+  try {
+    await ref.read(messagesRemoteDsProvider).renameConversation(conversation.id, newTitle);
+    ref.invalidate(myConversationsProvider);
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+    }
+  }
+}
+
+Future<void> _leaveGroupFlow({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Conversation conversation,
+  required String? myUserId,
+  VoidCallback? onLeft,
+}) async {
+  final l10n = L10n.of(context)!;
+  final isAdmin = conversation.createdBy == myUserId;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.groupSettingsLeaveTitle),
+      content: Text(isAdmin ? l10n.groupSettingsLeaveBodyAdmin : l10n.groupSettingsLeaveBody),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(l10n.groupSettingsLeave, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) return;
+  try {
+    await ref.read(messagesRemoteDsProvider).leaveConversation(conversation.id);
+    ref.invalidate(myConversationsProvider);
+    onLeft?.call();
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+    }
+  }
+}
+
+Future<void> _deleteGroupFlow({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Conversation conversation,
+  VoidCallback? onLeft,
+}) async {
+  final l10n = L10n.of(context)!;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.groupSettingsDeleteTitle),
+      content: Text(l10n.groupSettingsDeleteBody),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(l10n.groupSettingsDelete, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) return;
+  try {
+    await ref.read(messagesRemoteDsProvider).deleteConversation(conversation.id);
+    ref.invalidate(myConversationsProvider);
+    onLeft?.call();
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+    }
+  }
+}
+
+Future<void> _kickMemberFlow({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Conversation conversation,
+  required String targetUserId,
+}) async {
+  final l10n = L10n.of(context)!;
+  try {
+    await ref.read(messagesRemoteDsProvider).kickMember(conversation.id, targetUserId);
+    ref.invalidate(myConversationsProvider);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.chatMemberKicked)));
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+    }
+  }
+}
 const double _kChatMaxWidth = 760;
 
 String _relativeTime(DateTime dt) {
