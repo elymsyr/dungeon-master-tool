@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'category_rule.dart';
 import 'encounter_config.dart';
 import 'world_schema.dart';
 
@@ -58,7 +61,44 @@ void _diffCategories(WorldSchema old, WorldSchema now, List<String> out) {
         out.add('$name: removed field $f');
       }
     }
+
+    // Rules
+    final oldRules = {for (final r in oldCat.rules) r.name: r};
+    final newRules = {for (final r in newCat.rules) r.name: r};
+
+    for (final rName in newRules.keys) {
+      if (!oldRules.containsKey(rName)) {
+        out.add('$name: added rule $rName');
+      }
+    }
+    for (final rName in oldRules.keys) {
+      if (!newRules.containsKey(rName)) {
+        out.add('$name: removed rule $rName');
+      }
+    }
+    for (final rName in newRules.keys) {
+      final oldRule = oldRules[rName];
+      if (oldRule == null) continue;
+      final newRule = newRules[rName]!;
+      if (_ruleChanged(oldRule, newRule)) {
+        out.add('$name: modified rule $rName');
+      }
+    }
   }
+}
+
+bool _ruleChanged(CategoryRule a, CategoryRule b) {
+  if (a.ruleType != b.ruleType) return true;
+  if (a.enabled != b.enabled) return true;
+  if (a.targetFieldKey != b.targetFieldKey) return true;
+  if (a.operation != b.operation) return true;
+  if (a.matchOnly != b.matchOnly) return true;
+  if (a.deactivateIfNotEquipped != b.deactivateIfNotEquipped) return true;
+  // Compare sources by serialized form for deep equality.
+  if (a.sources.length != b.sources.length) return true;
+  final aSrc = jsonEncode(a.sources.map((s) => s.toJson()).toList());
+  final bSrc = jsonEncode(b.sources.map((s) => s.toJson()).toList());
+  return aSrc != bSrc;
 }
 
 // ---------------------------------------------------------------------------

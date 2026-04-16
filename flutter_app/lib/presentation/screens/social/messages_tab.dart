@@ -3,13 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../application/providers/auth_provider.dart';
+import '../../../application/providers/follows_provider.dart';
 import '../../../application/providers/social_providers.dart';
 import '../../../core/utils/error_format.dart';
 import '../../../domain/entities/conversation.dart';
+import '../../../domain/entities/user_profile.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/profile_avatar.dart';
-import 'group_settings_screen.dart';
 import 'new_chat_picker_screen.dart';
 import 'social_shell.dart';
 
@@ -133,17 +134,9 @@ class MessagesTab extends ConsumerWidget {
                           ),
                         ],
                       )
-                    : ListView.separated(
+                    : ListView.builder(
                         padding: const EdgeInsets.fromLTRB(8, 8, 8, 96),
                         itemCount: convs.length,
-                        separatorBuilder: (_, _) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 66),
-                          child: Divider(
-                            height: 1,
-                            thickness: 1,
-                            color: palette.featureCardBorder.withValues(alpha: 0.5),
-                          ),
-                        ),
                         itemBuilder: (_, i) => _ConvTile(conversation: convs[i]),
                       ),
               ),
@@ -218,11 +211,12 @@ class _ConvTile extends ConsumerWidget {
     final fallback = title.isEmpty ? '?' : title;
     final preview = conversation.lastMessageBody ?? l10n.messagesNoMessagesYet;
     final previewIsPlaceholder = conversation.lastMessageBody == null;
+    final hasUnread = conversation.unreadCount > 0;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: palette.cbr,
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => ChatScreen(conversation: conversation, myUserId: myId),
@@ -248,7 +242,7 @@ class _ConvTile extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 14.5,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w600,
                               color: palette.tabActiveText,
                             ),
                           ),
@@ -259,24 +253,43 @@ class _ConvTile extends ConsumerWidget {
                             _relativeTime(conversation.lastMessageAt!),
                             style: TextStyle(
                               fontSize: 11,
-                              color: palette.sidebarLabelSecondary,
+                              color: hasUnread ? palette.featureCardAccent : palette.sidebarLabelSecondary,
+                              fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
                             ),
                           ),
                         ],
                       ],
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      preview,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: palette.sidebarLabelSecondary,
-                        fontStyle: previewIsPlaceholder
-                            ? FontStyle.italic
-                            : FontStyle.normal,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            preview,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: hasUnread ? palette.tabActiveText : palette.sidebarLabelSecondary,
+                              fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
+                              fontStyle: previewIsPlaceholder
+                                  ? FontStyle.italic
+                                  : FontStyle.normal,
+                            ),
+                          ),
+                        ),
+                        if (hasUnread) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: palette.featureCardAccent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
@@ -311,6 +324,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       final has = _ctrl.text.trim().isNotEmpty;
       if (has != _hasText) setState(() => _hasText = has);
     });
+    // Mark conversation as read on open.
+    _markRead();
+  }
+
+  Future<void> _markRead() async {
+    try {
+      await ref.read(messagesRemoteDsProvider).markRead(widget.conversation.id);
+      ref.invalidate(totalUnreadCountProvider);
+      ref.invalidate(myConversationsProvider);
+    } catch (_) {
+      // Non-critical — don't block chat.
+    }
   }
 
   @override
@@ -362,6 +387,257 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  /// Context menu on the conversation title — group settings, members, leave/delete.
+  void _showTitleContextMenu(Offset globalPosition) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
+    final conv = widget.conversation;
+    final isAdmin = conv.createdBy == widget.myUserId;
+    final isGroup = conv.isGroup;
+    final errorColor = Theme.of(context).colorScheme.error;
+
+    final items = <PopupMenuEntry<String>>[];
+
+    if (isGroup) {
+      // Members sub-section header
+      items.add(PopupMenuItem(
+        enabled: false,
+        height: 32,
+        child: Text(
+          l10n.chatMenuMembers,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: palette.sidebarLabelSecondary,
+          ),
+        ),
+      ));
+
+      for (var i = 0; i < conv.memberIds.length; i++) {
+        final memberId = conv.memberIds[i];
+        final username = i < conv.memberUsernames.length
+            ? conv.memberUsernames[i]
+            : memberId;
+        final isMemberAdmin = memberId == conv.createdBy;
+        final canKick = isAdmin && !isMemberAdmin && memberId != widget.myUserId;
+
+        items.add(PopupMenuItem(
+          enabled: canKick,
+          value: 'kick:$memberId',
+          child: Row(
+            children: [
+              ProfileAvatar(fallbackText: username, size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '@$username',
+                  style: const TextStyle(fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (isMemberAdmin)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: palette.featureCardAccent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: Text(
+                    'ADMIN',
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: palette.featureCardAccent,
+                    ),
+                  ),
+                ),
+              if (canKick)
+                Icon(Icons.person_remove_outlined, size: 16, color: errorColor),
+            ],
+          ),
+        ));
+      }
+
+      items.add(const PopupMenuDivider());
+
+      // Rename (admin only)
+      if (isAdmin) {
+        items.add(PopupMenuItem(
+          value: 'rename',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.edit_outlined, size: 18, color: palette.tabText),
+              const SizedBox(width: 8),
+              Text(l10n.chatMenuRenameGroup),
+            ],
+          ),
+        ));
+      }
+
+      // Leave
+      items.add(PopupMenuItem(
+        value: 'leave',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.exit_to_app, size: 18, color: errorColor),
+            const SizedBox(width: 8),
+            Text(l10n.chatMenuLeaveGroup, style: TextStyle(color: errorColor)),
+          ],
+        ),
+      ));
+
+      // Delete group (admin only)
+      if (isAdmin) {
+        items.add(PopupMenuItem(
+          value: 'delete_group',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.delete_forever, size: 18, color: errorColor),
+              const SizedBox(width: 8),
+              Text(l10n.chatMenuDeleteGroup, style: TextStyle(color: errorColor)),
+            ],
+          ),
+        ));
+      }
+    }
+
+    if (items.isEmpty) return;
+
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        globalPosition.dx,
+        globalPosition.dy,
+        globalPosition.dx + 1,
+        globalPosition.dy + 1,
+      ),
+      items: items,
+    ).then((value) {
+      if (value == null) return;
+      if (value == 'rename') _renameGroup();
+      if (value == 'leave') _leaveGroup();
+      if (value == 'delete_group') _deleteGroup();
+      if (value.startsWith('kick:')) _kickMember(value.substring(5));
+    });
+  }
+
+  Future<void> _renameGroup() async {
+    final l10n = L10n.of(context)!;
+    final ctrl = TextEditingController(text: widget.conversation.title ?? '');
+    final newTitle = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.chatRenameTitle),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLength: 100,
+          decoration: InputDecoration(
+            hintText: l10n.chatRenameHint,
+            counterText: '',
+            border: const OutlineInputBorder(),
+          ),
+          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (newTitle == null || newTitle.isEmpty || newTitle == widget.conversation.title) return;
+    try {
+      await ref.read(messagesRemoteDsProvider).renameConversation(widget.conversation.id, newTitle);
+      ref.invalidate(myConversationsProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+      }
+    }
+  }
+
+  Future<void> _leaveGroup() async {
+    final l10n = L10n.of(context)!;
+    final isAdmin = widget.conversation.createdBy == widget.myUserId;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.groupSettingsLeaveTitle),
+        content: Text(isAdmin ? l10n.groupSettingsLeaveBodyAdmin : l10n.groupSettingsLeaveBody),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.groupSettingsLeave, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref.read(messagesRemoteDsProvider).leaveConversation(widget.conversation.id);
+      ref.invalidate(myConversationsProvider);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+      }
+    }
+  }
+
+  Future<void> _deleteGroup() async {
+    final l10n = L10n.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.groupSettingsDeleteTitle),
+        content: Text(l10n.groupSettingsDeleteBody),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.groupSettingsDelete, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref.read(messagesRemoteDsProvider).deleteConversation(widget.conversation.id);
+      ref.invalidate(myConversationsProvider);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+      }
+    }
+  }
+
+  Future<void> _kickMember(String targetUserId) async {
+    final l10n = L10n.of(context)!;
+    try {
+      await ref.read(messagesRemoteDsProvider).kickMember(widget.conversation.id, targetUserId);
+      ref.invalidate(myConversationsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.chatMemberKicked)));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
@@ -377,55 +653,51 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       backgroundColor: palette.canvasBg,
       appBar: AppBar(
         titleSpacing: 0,
-        title: Row(
-          children: [
-            ProfileAvatar(fallbackText: fallback, size: 32),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title.isEmpty ? '(empty)' : title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w600),
-                  ),
-                  if (widget.conversation.isGroup &&
-                      widget.conversation.memberUsernames.isNotEmpty)
+        title: GestureDetector(
+          onTap: (widget.conversation.isGroup)
+              ? () {
+                  final box = context.findRenderObject() as RenderBox?;
+                  final pos = box?.localToGlobal(Offset(box.size.width / 2, box.size.height)) ?? Offset.zero;
+                  _showTitleContextMenu(pos);
+                }
+              : null,
+          onSecondaryTapDown: (widget.conversation.isGroup)
+              ? (details) => _showTitleContextMenu(details.globalPosition)
+              : null,
+          child: Row(
+            children: [
+              ProfileAvatar(fallbackText: fallback, size: 32),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      widget.conversation.memberUsernames.join(', '),
+                      title.isEmpty ? '(empty)' : title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: palette.sidebarLabelSecondary,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w600),
+                    ),
+                    if (widget.conversation.isGroup &&
+                        widget.conversation.memberUsernames.isNotEmpty)
+                      Text(
+                        widget.conversation.memberUsernames.join(', '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: palette.sidebarLabelSecondary,
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        actions: [
-          if (widget.conversation.isGroup)
-            IconButton(
-              icon: const Icon(Icons.settings_outlined),
-              tooltip: 'Group settings',
-              onPressed: () async {
-                await Navigator.of(context).push<void>(
-                  MaterialPageRoute(
-                    builder: (_) => GroupSettingsScreen(
-                      conversation: widget.conversation,
-                      myUserId: widget.myUserId,
-                    ),
-                  ),
-                );
-              },
-            ),
-        ],
+        actions: const [],
       ),
       body: Center(
         child: ConstrainedBox(
@@ -536,8 +808,7 @@ class _DateSeparator extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
           color: palette.featureCardBg,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: palette.featureCardBorder),
+          borderRadius: palette.cbr,
         ),
         child: Text(
           label,
@@ -572,30 +843,7 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    const bigR = Radius.circular(16);
-    const smallR = Radius.circular(4);
-    const tailR = Radius.zero;
-
-    // WhatsApp-style border radius:
-    // First in group (!topTight) gets tail → tail-side top corner is zero
-    // Middle messages get small radius on the author's side
-    // Last in group (!bottomTight) gets big radius everywhere except author's side top
-    final BorderRadius borderRadius;
-    if (mine) {
-      borderRadius = BorderRadius.only(
-        topLeft: bigR,
-        topRight: !topTight ? tailR : smallR,
-        bottomLeft: bigR,
-        bottomRight: !bottomTight ? bigR : smallR,
-      );
-    } else {
-      borderRadius = BorderRadius.only(
-        topLeft: !topTight ? tailR : smallR,
-        topRight: bigR,
-        bottomLeft: !bottomTight ? bigR : smallR,
-        bottomRight: bigR,
-      );
-    }
+    final bubbleRadius = palette.cbr;
 
     final bubbleColor =
         mine ? palette.featureCardAccent : palette.featureCardBg;
@@ -607,10 +855,7 @@ class _MessageBubble extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(10, 7, 8, 7),
         decoration: BoxDecoration(
           color: bubbleColor,
-          border: mine
-              ? null
-              : Border.all(color: palette.featureCardBorder),
-          borderRadius: borderRadius,
+          borderRadius: bubbleRadius,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -644,40 +889,6 @@ class _MessageBubble extends StatelessWidget {
       ),
     );
 
-    // Bubble with optional tail
-    final bool showTail = !topTight;
-    final Widget bubbleRow;
-    if (showTail) {
-      if (mine) {
-        bubbleRow = Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            bubble,
-            _BubbleTail(color: bubbleColor, mine: true),
-          ],
-        );
-      } else {
-        bubbleRow = Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _BubbleTail(color: bubbleColor, mine: false),
-            bubble,
-          ],
-        );
-      }
-    } else {
-      // Indent to align with tailed messages
-      bubbleRow = Padding(
-        padding: EdgeInsets.only(
-          left: mine ? 0 : 8,
-          right: mine ? 8 : 0,
-        ),
-        child: bubble,
-      );
-    }
-
     return Padding(
       padding: EdgeInsets.only(
         top: topTight ? 1 : 6,
@@ -686,37 +897,8 @@ class _MessageBubble extends StatelessWidget {
       child: Align(
         alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
         child: GestureDetector(
-          onLongPressStart: onDelete != null
-              ? (details) {
-                  showMenu<String>(
-                    context: context,
-                    position: RelativeRect.fromLTRB(
-                      details.globalPosition.dx,
-                      details.globalPosition.dy,
-                      details.globalPosition.dx + 1,
-                      details.globalPosition.dy + 1,
-                    ),
-                    items: [
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.delete_outline,
-                                size: 18, color: Colors.red.shade300),
-                            const SizedBox(width: 8),
-                            Text('Delete',
-                                style:
-                                    TextStyle(color: Colors.red.shade300)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ).then((value) {
-                    if (value == 'delete') onDelete!();
-                  });
-                }
-              : null,
+          onLongPress: onDelete,
+          onSecondaryTap: onDelete,
           child: Column(
             crossAxisAlignment:
                 mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -733,57 +915,13 @@ class _MessageBubble extends StatelessWidget {
                     ),
                   ),
                 ),
-              bubbleRow,
+              bubble,
             ],
           ),
         ),
       ),
     );
   }
-}
-
-/// WhatsApp-style bubble tail triangle
-class _BubbleTail extends StatelessWidget {
-  final Color color;
-  final bool mine;
-  const _BubbleTail({required this.color, required this.mine});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: const Size(8, 12),
-      painter: _TailPainter(color: color, mine: mine),
-    );
-  }
-}
-
-class _TailPainter extends CustomPainter {
-  final Color color;
-  final bool mine;
-  _TailPainter({required this.color, required this.mine});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    final path = Path();
-    if (mine) {
-      path.moveTo(0, 0);
-      path.lineTo(size.width, 0);
-      path.lineTo(0, size.height);
-    } else {
-      path.moveTo(size.width, 0);
-      path.lineTo(0, 0);
-      path.lineTo(size.width, size.height);
-    }
-    path.close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _TailPainter old) =>
-      color != old.color || mine != old.mine;
 }
 
 class _Composer extends StatelessWidget {
@@ -817,8 +955,7 @@ class _Composer extends StatelessWidget {
                 constraints: const BoxConstraints(minHeight: 40, maxHeight: 140),
                 decoration: BoxDecoration(
                   color: palette.featureCardBg,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: palette.featureCardBorder),
+                  borderRadius: palette.cbr,
                 ),
                 child: TextField(
                   controller: controller,

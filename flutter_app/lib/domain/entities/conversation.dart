@@ -15,6 +15,7 @@ abstract class Conversation with _$Conversation {
     @Default(<String>[]) List<String> memberIds,
     @Default(<String>[]) List<String> memberUsernames,
     required DateTime createdAt,
+    @Default(0) int unreadCount,
   }) = _Conversation;
 
   factory Conversation.fromJson(Map<String, dynamic> json) =>

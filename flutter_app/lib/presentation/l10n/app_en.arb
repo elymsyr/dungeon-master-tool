@@ -441,5 +441,29 @@
   "groupSettingsDeleteBody": "This will delete all messages for everyone. This action cannot be undone.",
   "groupNameUpdated": "Group name updated.",
 
-  "cannotMessageSelf": "You cannot message yourself."
+  "cannotMessageSelf": "You cannot message yourself.",
+
+  "chatMenuDelete": "Delete",
+  "chatMenuRenameGroup": "Rename Group",
+  "chatMenuLeaveGroup": "Leave Group",
+  "chatMenuDeleteGroup": "Delete Group",
+  "chatMenuKickMember": "Remove from group",
+  "chatMenuMembers": "Members",
+  "chatRenameTitle": "Rename Group",
+  "chatRenameHint": "Group name",
+  "chatMemberKicked": "Member removed.",
+  "chatMenuAddMember": "Add member",
+  "chatMemberAdded": "Member added.",
+  "chatAddMemberTitle": "Add member",
+
+  "feedComposerAttachListing": "Attach listing",
+  "feedAttachedListing": "Attached listing",
+  "feedRemoveAttachment": "Remove",
+
+  "socialTabDiscover": "Discover",
+  "discoverSearchHint": "Search by username…",
+  "discoverSuggestedHeader": "Suggested for you",
+  "discoverSearchResults": "Search results",
+  "discoverEmptySearch": "No users found",
+  "discoverEmptyState": "No suggestions available"
 }

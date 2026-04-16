@@ -15,6 +15,8 @@ class SocialShell extends StatelessWidget {
   final Widget child;
   /// Sağ üste opsiyonel action (örn. "New post", "New listing").
   final Widget? trailing;
+  /// Unread message count — shown as badge on Messages tab.
+  final int messagesBadgeCount;
 
   const SocialShell({
     super.key,
@@ -22,6 +24,7 @@ class SocialShell extends StatelessWidget {
     required this.onTabChanged,
     required this.child,
     this.trailing,
+    this.messagesBadgeCount = 0,
   });
 
   @override
@@ -31,8 +34,9 @@ class SocialShell extends StatelessWidget {
     final tabs = <PillTab<String>>[
       PillTab(id: 'feed', icon: Icons.dynamic_feed_outlined, label: l10n.socialTabFeed),
       PillTab(id: 'players', icon: Icons.groups_outlined, label: l10n.socialTabGameListings),
-      PillTab(id: 'messages', icon: Icons.chat_bubble_outline, label: l10n.socialTabMessages),
+      PillTab(id: 'messages', icon: Icons.chat_bubble_outline, label: l10n.socialTabMessages, badgeCount: messagesBadgeCount),
       PillTab(id: 'marketplace', icon: Icons.storefront_outlined, label: l10n.socialTabMarketplace),
+      PillTab(id: 'discover', icon: Icons.person_search_outlined, label: l10n.socialTabDiscover),
     ];
     final bar = PillTabBar<String>(
       tabs: tabs,
