@@ -9,6 +9,7 @@ abstract class Conversation with _$Conversation {
     required String id,
     @Default(false) bool isGroup,
     String? title,
+    String? createdBy,
     String? lastMessageBody,
     DateTime? lastMessageAt,
     @Default(<String>[]) List<String> memberIds,

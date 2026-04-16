@@ -58,6 +58,7 @@ class MessagesRemoteDataSource {
         id: convId,
         isGroup: (c['is_group'] as bool?) ?? false,
         title: c['title'] as String?,
+        createdBy: c['created_by'] as String?,
         memberIds: memberIds,
         memberUsernames: memberUsernames,
         lastMessageBody: lastMsg.isNotEmpty ? lastMsg.first['body'] as String? : null,
@@ -88,6 +89,7 @@ class MessagesRemoteDataSource {
       id: convId,
       isGroup: (row['is_group'] as bool?) ?? false,
       title: row['title'] as String?,
+      createdBy: row['created_by'] as String?,
       memberIds: [uid, otherUserId],
       createdAt: DateTime.parse(row['created_at'] as String),
     );
@@ -114,6 +116,7 @@ class MessagesRemoteDataSource {
       id: convId,
       isGroup: true,
       title: title,
+      createdBy: uid,
       memberIds: all,
       createdAt: DateTime.parse(row['created_at'] as String),
     );
@@ -147,6 +150,31 @@ class MessagesRemoteDataSource {
         .eq('conversation_id', conversationId)
         .order('created_at')
         .map((rows) => rows.map(_rowToMessage).toList());
+  }
+
+  /// Mesaj sil (yalnızca kendi mesajları — RLS policy kontrol eder).
+  Future<void> deleteMessage(String messageId) async {
+    await _client.from(_messages).delete().eq('id', messageId);
+  }
+
+  /// Konuşmadan ayrıl. Admin ise yöneticilik transfer edilir; son üyeyse
+  /// konuşma silinir.
+  Future<void> leaveConversation(String conversationId) async {
+    await _client.rpc('leave_conversation', params: {'p_conv_id': conversationId});
+  }
+
+  /// Konuşmayı tamamen sil (yalnızca admin). CASCADE ile tüm üyeler ve
+  /// mesajlar silinir.
+  Future<void> deleteConversation(String conversationId) async {
+    await _client.rpc('delete_conversation', params: {'p_conv_id': conversationId});
+  }
+
+  /// Grup ismini değiştir (yalnızca admin).
+  Future<void> renameConversation(String conversationId, String title) async {
+    await _client.rpc('rename_conversation', params: {
+      'p_conv_id': conversationId,
+      'p_title': title,
+    });
   }
 
   ChatMessage _rowToMessage(Map<String, dynamic> row) {

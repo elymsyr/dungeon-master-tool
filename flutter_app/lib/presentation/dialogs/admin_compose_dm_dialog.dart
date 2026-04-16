@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/datasources/remote/messages_remote_ds.dart';
 
@@ -50,6 +51,11 @@ class _AdminComposeDmDialogState extends State<AdminComposeDmDialog> {
       setState(() => _errorText = 'Message cannot be empty.');
       return;
     }
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    if (currentUserId != null && widget.targetUserId == currentUserId) {
+      setState(() => _errorText = 'You cannot message yourself.');
+      return;
+    }
     setState(() {
       _sending = true;
       _errorText = null;
@@ -65,9 +71,16 @@ class _AdminComposeDmDialogState extends State<AdminComposeDmDialog> {
       );
     } catch (e) {
       if (!mounted) return;
+      final msg = e.toString();
+      String errorMsg;
+      if (msg.contains('invalid counterparty')) {
+        errorMsg = 'Cannot open conversation with this user.';
+      } else {
+        errorMsg = 'Failed to send message. Please try again.';
+      }
       setState(() {
         _sending = false;
-        _errorText = 'Failed to send: $e';
+        _errorText = errorMsg;
       });
     }
   }

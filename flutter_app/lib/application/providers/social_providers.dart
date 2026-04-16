@@ -334,6 +334,24 @@ final conversationListRealtimeProvider = Provider<void>((ref) {
       table: 'messages',
       callback: (_) => ref.invalidate(myConversationsProvider),
     )
+    ..onPostgresChanges(
+      event: PostgresChangeEvent.delete,
+      schema: 'public',
+      table: 'conversation_members',
+      callback: (_) => ref.invalidate(myConversationsProvider),
+    )
+    ..onPostgresChanges(
+      event: PostgresChangeEvent.delete,
+      schema: 'public',
+      table: 'conversations',
+      callback: (_) => ref.invalidate(myConversationsProvider),
+    )
+    ..onPostgresChanges(
+      event: PostgresChangeEvent.update,
+      schema: 'public',
+      table: 'conversations',
+      callback: (_) => ref.invalidate(myConversationsProvider),
+    )
     ..subscribe();
   ref.onDispose(() => client.removeChannel(channel));
 });

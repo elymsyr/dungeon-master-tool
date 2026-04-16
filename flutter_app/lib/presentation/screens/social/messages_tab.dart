@@ -9,6 +9,7 @@ import '../../../domain/entities/conversation.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/profile_avatar.dart';
+import 'group_settings_screen.dart';
 import 'new_chat_picker_screen.dart';
 import 'social_shell.dart';
 
@@ -23,6 +24,23 @@ String _relativeTime(DateTime dt) {
   if (diff.inHours < 24) return '${diff.inHours}h';
   if (diff.inDays < 7) return '${diff.inDays}d';
   return DateFormat.MMMd().format(dt.toLocal());
+}
+
+String _dateSeparatorLabel(DateTime date) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final msgDate = DateTime(date.year, date.month, date.day);
+  final diff = today.difference(msgDate).inDays;
+  if (diff == 0) return 'Today';
+  if (diff == 1) return 'Yesterday';
+  if (diff < 7) return DateFormat.EEEE().format(date);
+  return DateFormat.yMMMd().format(date);
+}
+
+bool _isDifferentDay(DateTime a, DateTime b) {
+  final la = a.toLocal();
+  final lb = b.toLocal();
+  return la.year != lb.year || la.month != lb.month || la.day != lb.day;
 }
 
 class MessagesTab extends ConsumerWidget {
@@ -285,7 +303,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _scroll = ScrollController();
   bool _sending = false;
   bool _hasText = false;
-  int _lastMessageCount = 0;
 
   @override
   void initState() {
@@ -303,17 +320,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.dispose();
   }
 
-  void _scrollToBottomSoon() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scroll.hasClients) return;
-      _scroll.animateTo(
-        _scroll.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 240),
-        curve: Curves.easeOutCubic,
-      );
-    });
-  }
-
   Future<void> _send() async {
     final text = _ctrl.text.trim();
     if (text.isEmpty) return;
@@ -321,9 +327,38 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     try {
       await ref.read(messagesRemoteDsProvider).send(widget.conversation.id, text);
       _ctrl.clear();
-      _scrollToBottomSoon();
     } finally {
       if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  Future<void> _deleteMessage(String messageId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete message?'),
+        content: const Text('This message will be permanently deleted.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Delete',
+                style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref.read(messagesRemoteDsProvider).deleteMessage(messageId);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(formatError(e))));
+      }
     }
   }
 
@@ -331,13 +366,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
-    final messagesAsync = ref.watch(messagesStreamProvider(widget.conversation.id));
+    final messagesAsync =
+        ref.watch(messagesStreamProvider(widget.conversation.id));
     final title = widget.conversation.isGroup
         ? (widget.conversation.title ?? 'Group')
         : widget.conversation.memberUsernames.join(', ');
     final fallback = title.isEmpty ? '?' : title;
 
     return Scaffold(
+      backgroundColor: palette.canvasBg,
       appBar: AppBar(
         titleSpacing: 0,
         title: Row(
@@ -353,7 +390,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     title.isEmpty ? '(empty)' : title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                   if (widget.conversation.isGroup &&
                       widget.conversation.memberUsernames.isNotEmpty)
@@ -371,6 +409,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
           ],
         ),
+        actions: [
+          if (widget.conversation.isGroup)
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              tooltip: 'Group settings',
+              onPressed: () async {
+                await Navigator.of(context).push<void>(
+                  MaterialPageRoute(
+                    builder: (_) => GroupSettingsScreen(
+                      conversation: widget.conversation,
+                      myUserId: widget.myUserId,
+                    ),
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       body: Center(
         child: ConstrainedBox(
@@ -379,13 +434,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             children: [
               Expanded(
                 child: messagesAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(child: Text(formatError(e))),
                   data: (msgs) {
-                    if (msgs.length != _lastMessageCount) {
-                      _lastMessageCount = msgs.length;
-                      _scrollToBottomSoon();
-                    }
                     if (msgs.isEmpty) {
                       return Center(
                         child: Text(
@@ -398,30 +450,58 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         ),
                       );
                     }
+                    // Reverse for bottom-anchored display
+                    final reversed = msgs.reversed.toList();
                     return ListView.builder(
                       controller: _scroll,
+                      reverse: true,
                       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                      itemCount: msgs.length,
+                      itemCount: reversed.length,
                       itemBuilder: (ctx, i) {
-                        final m = msgs[i];
+                        final m = reversed[i];
                         final mine = m.authorId == widget.myUserId;
-                        final prev = i > 0 ? msgs[i - 1] : null;
-                        final next = i < msgs.length - 1 ? msgs[i + 1] : null;
-                        final samePrev = prev != null &&
-                            prev.authorId == m.authorId &&
-                            m.createdAt.difference(prev.createdAt).inMinutes < 3;
-                        final sameNext = next != null &&
-                            next.authorId == m.authorId &&
-                            next.createdAt.difference(m.createdAt).inMinutes < 3;
-                        return _MessageBubble(
-                          message: m,
-                          mine: mine,
-                          showAuthor: !mine &&
-                              widget.conversation.isGroup &&
-                              !samePrev,
-                          showTimestamp: !sameNext,
-                          topTight: samePrev,
-                          bottomTight: sameNext,
+                        // In reversed list: visually above = i+1, below = i-1
+                        final above =
+                            i < reversed.length - 1 ? reversed[i + 1] : null;
+                        final below = i > 0 ? reversed[i - 1] : null;
+                        final sameAbove = above != null &&
+                            above.authorId == m.authorId &&
+                            m.createdAt
+                                    .difference(above.createdAt)
+                                    .inMinutes <
+                                3;
+                        final sameBelow = below != null &&
+                            below.authorId == m.authorId &&
+                            below.createdAt
+                                    .difference(m.createdAt)
+                                    .inMinutes <
+                                3;
+
+                        // Date separator: show below this message if it's a
+                        // different day than the message visually above it
+                        final showDateSeparator = above == null ||
+                            _isDifferentDay(m.createdAt, above.createdAt);
+
+                        return Column(
+                          children: [
+                            if (showDateSeparator)
+                              _DateSeparator(
+                                label: _dateSeparatorLabel(
+                                    m.createdAt.toLocal()),
+                                palette: palette,
+                              ),
+                            _MessageBubble(
+                              message: m,
+                              mine: mine,
+                              showAuthor: !mine &&
+                                  widget.conversation.isGroup &&
+                                  !sameAbove,
+                              topTight: sameAbove,
+                              bottomTight: sameBelow,
+                              onDelete:
+                                  mine ? () => _deleteMessage(m.id) : null,
+                            ),
+                          ],
                         );
                       },
                     );
@@ -443,28 +523,161 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 }
 
+class _DateSeparator extends StatelessWidget {
+  final String label;
+  final DmToolColors palette;
+  const _DateSeparator({required this.label, required this.palette});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: palette.featureCardBg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: palette.featureCardBorder),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: palette.sidebarLabelSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final bool mine;
   final bool showAuthor;
-  final bool showTimestamp;
   final bool topTight;
   final bool bottomTight;
+  final VoidCallback? onDelete;
 
   const _MessageBubble({
     required this.message,
     required this.mine,
     required this.showAuthor,
-    required this.showTimestamp,
     required this.topTight,
     required this.bottomTight,
+    this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    const bigRadius = Radius.circular(16);
-    const smallRadius = Radius.circular(4);
+    const bigR = Radius.circular(16);
+    const smallR = Radius.circular(4);
+    const tailR = Radius.zero;
+
+    // WhatsApp-style border radius:
+    // First in group (!topTight) gets tail → tail-side top corner is zero
+    // Middle messages get small radius on the author's side
+    // Last in group (!bottomTight) gets big radius everywhere except author's side top
+    final BorderRadius borderRadius;
+    if (mine) {
+      borderRadius = BorderRadius.only(
+        topLeft: bigR,
+        topRight: !topTight ? tailR : smallR,
+        bottomLeft: bigR,
+        bottomRight: !bottomTight ? bigR : smallR,
+      );
+    } else {
+      borderRadius = BorderRadius.only(
+        topLeft: !topTight ? tailR : smallR,
+        topRight: bigR,
+        bottomLeft: !bottomTight ? bigR : smallR,
+        bottomRight: bigR,
+      );
+    }
+
+    final bubbleColor =
+        mine ? palette.featureCardAccent : palette.featureCardBg;
+    final timeStr = DateFormat.Hm().format(message.createdAt.toLocal());
+
+    final bubble = ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 460),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 7, 8, 7),
+        decoration: BoxDecoration(
+          color: bubbleColor,
+          border: mine
+              ? null
+              : Border.all(color: palette.featureCardBorder),
+          borderRadius: borderRadius,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Flexible(
+              child: Text(
+                message.body,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  height: 1.3,
+                  color: mine ? Colors.white : palette.tabActiveText,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                timeStr,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: mine
+                      ? Colors.white.withValues(alpha: 0.7)
+                      : palette.sidebarLabelSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // Bubble with optional tail
+    final bool showTail = !topTight;
+    final Widget bubbleRow;
+    if (showTail) {
+      if (mine) {
+        bubbleRow = Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            bubble,
+            _BubbleTail(color: bubbleColor, mine: true),
+          ],
+        );
+      } else {
+        bubbleRow = Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _BubbleTail(color: bubbleColor, mine: false),
+            bubble,
+          ],
+        );
+      }
+    } else {
+      // Indent to align with tailed messages
+      bubbleRow = Padding(
+        padding: EdgeInsets.only(
+          left: mine ? 0 : 8,
+          right: mine ? 8 : 0,
+        ),
+        child: bubble,
+      );
+    }
+
     return Padding(
       padding: EdgeInsets.only(
         top: topTight ? 1 : 6,
@@ -472,69 +685,105 @@ class _MessageBubble extends StatelessWidget {
       ),
       child: Align(
         alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-        child: Column(
-          crossAxisAlignment:
-              mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            if (showAuthor && message.authorUsername != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 10, bottom: 3),
-                child: Text(
-                  '@${message.authorUsername}',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    color: palette.sidebarLabelSecondary,
+        child: GestureDetector(
+          onLongPressStart: onDelete != null
+              ? (details) {
+                  showMenu<String>(
+                    context: context,
+                    position: RelativeRect.fromLTRB(
+                      details.globalPosition.dx,
+                      details.globalPosition.dy,
+                      details.globalPosition.dx + 1,
+                      details.globalPosition.dy + 1,
+                    ),
+                    items: [
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.delete_outline,
+                                size: 18, color: Colors.red.shade300),
+                            const SizedBox(width: 8),
+                            Text('Delete',
+                                style:
+                                    TextStyle(color: Colors.red.shade300)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ).then((value) {
+                    if (value == 'delete') onDelete!();
+                  });
+                }
+              : null,
+          child: Column(
+            crossAxisAlignment:
+                mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            children: [
+              if (showAuthor && message.authorUsername != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 10, bottom: 3),
+                  child: Text(
+                    '@${message.authorUsername}',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: palette.sidebarLabelSecondary,
+                    ),
                   ),
                 ),
-              ),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-                decoration: BoxDecoration(
-                  color: mine ? palette.featureCardAccent : palette.featureCardBg,
-                  border: Border.all(
-                    color:
-                        mine ? palette.featureCardAccent : palette.featureCardBorder,
-                  ),
-                  borderRadius: BorderRadius.only(
-                    topLeft: (mine || !topTight) ? bigRadius : smallRadius,
-                    topRight: (!mine || !topTight) ? bigRadius : smallRadius,
-                    bottomLeft: mine
-                        ? bigRadius
-                        : (bottomTight ? smallRadius : smallRadius),
-                    bottomRight: mine
-                        ? (bottomTight ? smallRadius : smallRadius)
-                        : bigRadius,
-                  ),
-                ),
-                child: Text(
-                  message.body,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    height: 1.3,
-                    color: mine ? Colors.white : palette.tabActiveText,
-                  ),
-                ),
-              ),
-            ),
-            if (showTimestamp)
-              Padding(
-                padding: const EdgeInsets.only(left: 10, right: 10, top: 3),
-                child: Text(
-                  DateFormat.Hm().format(message.createdAt.toLocal()),
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: palette.sidebarLabelSecondary,
-                  ),
-                ),
-              ),
-          ],
+              bubbleRow,
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// WhatsApp-style bubble tail triangle
+class _BubbleTail extends StatelessWidget {
+  final Color color;
+  final bool mine;
+  const _BubbleTail({required this.color, required this.mine});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(8, 12),
+      painter: _TailPainter(color: color, mine: mine),
+    );
+  }
+}
+
+class _TailPainter extends CustomPainter {
+  final Color color;
+  final bool mine;
+  _TailPainter({required this.color, required this.mine});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final path = Path();
+    if (mine) {
+      path.moveTo(0, 0);
+      path.lineTo(size.width, 0);
+      path.lineTo(0, size.height);
+    } else {
+      path.moveTo(size.width, 0);
+      path.lineTo(0, 0);
+      path.lineTo(size.width, size.height);
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _TailPainter old) =>
+      color != old.color || mine != old.mine;
 }
 
 class _Composer extends StatelessWidget {
