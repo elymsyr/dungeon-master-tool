@@ -493,5 +493,11 @@
   "dmDeleteConfirm": "Löschen",
 
   "profileHideFromDiscover": "Nicht in Entdecken anzeigen",
-  "profileHideFromDiscoverHint": "Dein Profil erscheint nicht in Vorschlägen oder Suchergebnissen"
+  "profileHideFromDiscoverHint": "Dein Profil erscheint nicht in Vorschlägen oder Suchergebnissen",
+
+  "welcomeTitle": "Willkommen, Dungeon Master!",
+  "welcomeBetaNotice": "Die App befindet sich noch in der Beta — Funktionen, integrierte Vorlagen und Pakete können sich zwischen Releases ändern. Sichere wichtige Daten gelegentlich.",
+  "welcomeRoadmap": "Offizielle Inhaltspakete für D&D 5e (2014) und D&D 5e (2024) sind auf der Roadmap und werden bald als fertige Pakete verfügbar sein.",
+  "welcomeClosing": "Danke, dass du es ausprobierst — mögen deine Würfel glücklich und deine Sessions unvergesslich sein!",
+  "welcomeContinue": "Los geht's"
 }

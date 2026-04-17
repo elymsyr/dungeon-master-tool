@@ -493,5 +493,11 @@
   "dmDeleteConfirm": "Delete",
 
   "profileHideFromDiscover": "Do not show me on Discover",
-  "profileHideFromDiscoverHint": "Your profile won't appear in suggestions or search results"
+  "profileHideFromDiscoverHint": "Your profile won't appear in suggestions or search results",
+
+  "welcomeTitle": "Welcome, Dungeon Master!",
+  "welcomeBetaNotice": "This app is still in beta — features, built-in templates and packages may change between releases. Please back up important data from time to time.",
+  "welcomeRoadmap": "Official D&D 5e (2014) and D&D 5e (2024) content packages are on the roadmap and will arrive soon as ready-to-import packs.",
+  "welcomeClosing": "Thanks for trying it out — may your rolls be lucky and your sessions unforgettable!",
+  "welcomeContinue": "Let's roll"
 }

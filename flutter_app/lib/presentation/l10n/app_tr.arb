@@ -493,5 +493,11 @@
   "dmDeleteConfirm": "Sil",
 
   "profileHideFromDiscover": "Keşfet'te beni gösterme",
-  "profileHideFromDiscoverHint": "Profiliniz önerilerde ve arama sonuçlarında görünmez"
+  "profileHideFromDiscoverHint": "Profiliniz önerilerde ve arama sonuçlarında görünmez",
+
+  "welcomeTitle": "Hoş geldin, Zindan Ustası!",
+  "welcomeBetaNotice": "Uygulama hâlâ beta aşamasında — özellikler, built-in template ve paketler sürümler arasında değişebilir. Önemli verilerinizi zaman zaman yedeklemeyi unutmayın.",
+  "welcomeRoadmap": "D&D 5e (2014) ve D&D 5e (2024) resmi içerik paketleri yol haritasında; yakın zamanda hazır paketler olarak eklenecek.",
+  "welcomeClosing": "Denediğin için teşekkürler — zarların yaver gitsin, seansların unutulmaz olsun!",
+  "welcomeContinue": "Hadi başlayalım"
 }

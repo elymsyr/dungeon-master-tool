@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/soundpad_provider.dart';
@@ -246,7 +247,9 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                                     ? Icons.description
                                     : item.type == 'Package'
                                         ? Icons.inventory_2
-                                        : Icons.public,
+                                        : item.type == 'Character'
+                                            ? Icons.person
+                                            : Icons.public,
                                 size: 16,
                                 color: palette.tabText,
                               ),
@@ -315,6 +318,11 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                 }
                 ref.invalidate(trashListProvider);
                 ref.invalidate(packageListProvider);
+              } else if (item.type == 'Character') {
+                await ref
+                    .read(characterListProvider.notifier)
+                    .restoreFromTrash(item.directoryName);
+                ref.invalidate(trashListProvider);
               } else {
                 final ds = ref.read(campaignLocalDsProvider);
                 final restoreName = await ds.findUniqueRestoreName(item.originalName);
