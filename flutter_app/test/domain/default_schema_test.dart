@@ -72,10 +72,11 @@ void main() {
       expect(player.fields.any((f) => f.fieldType == FieldType.statBlock), true);
     });
 
-    test('Condition has source + effects text fields', () {
+    test('Condition has source, effects, and condition_stats fields', () {
       final cond = schema.categories.firstWhere((c) => c.slug == 'condition');
-      expect(cond.fields.length, 2);
-      expect(cond.fields.map((f) => f.fieldKey).toList(), containsAll(['source', 'effects']));
+      expect(cond.fields.length, 3);
+      expect(cond.fields.map((f) => f.fieldKey).toList(),
+          containsAll(['source', 'effects', 'condition_stats']));
     });
 
     test('default encounter layout exists', () {

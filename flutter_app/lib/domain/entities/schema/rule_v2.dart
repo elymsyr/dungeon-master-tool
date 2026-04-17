@@ -1,3 +1,8 @@
+// `@JsonKey(...)` on freezed factory parameters generates the expected
+// `@JsonKey.new` on constructor params; the analyzer flags it but the
+// annotation is consumed correctly by json_serializable. Ignore repo-wide.
+// ignore_for_file: invalid_annotation_target
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'rule_v2.freezed.dart';

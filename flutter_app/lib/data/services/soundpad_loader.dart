@@ -62,7 +62,7 @@ class SoundpadLoader {
     }
   }
 
-  /// Tüm theme dizinlerini tarar → Map<themeId, SoundpadTheme>.
+  /// Tüm theme dizinlerini tarar → `Map<themeId, SoundpadTheme>`.
   static Future<Map<String, SoundpadTheme>> loadAllThemes(String soundpadRoot) async {
     final themes = <String, SoundpadTheme>{};
     final dir = Directory(soundpadRoot);
@@ -380,7 +380,7 @@ class SoundpadLoader {
     await file.writeAsString(buf.toString());
   }
 
-  /// YamlMap → mutable Map<String, dynamic> dönüşümü.
+  /// YamlMap → mutable `Map<String, dynamic>` dönüşümü.
   static Map<String, dynamic> _yamlToMap(YamlMap yamlMap) {
     final result = <String, dynamic>{};
     for (final entry in yamlMap.entries) {

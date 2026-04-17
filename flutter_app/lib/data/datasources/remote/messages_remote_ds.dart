@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/parse_utils.dart';
 import '../../../domain/entities/conversation.dart';
 
 class MessagesRemoteDataSource {
@@ -37,10 +38,8 @@ class MessagesRemoteDataSource {
         memberIds: memberIds,
         memberUsernames: memberUsernames,
         lastMessageBody: lastMsg?['body'] as String?,
-        lastMessageAt: lastMsg != null
-            ? DateTime.parse(lastMsg['created_at'] as String)
-            : null,
-        createdAt: DateTime.parse(c['created_at'] as String),
+        lastMessageAt: parseIsoOrNull(lastMsg?['created_at']),
+        createdAt: parseIsoOrNow(c['created_at']),
         unreadCount: (c['unread_count'] as num?)?.toInt() ?? 0,
       );
     }).toList();
@@ -66,7 +65,7 @@ class MessagesRemoteDataSource {
       title: row['title'] as String?,
       createdBy: row['created_by'] as String?,
       memberIds: [uid, otherUserId],
-      createdAt: DateTime.parse(row['created_at'] as String),
+      createdAt: parseIsoOrNow(row['created_at']),
     );
   }
 
@@ -93,7 +92,7 @@ class MessagesRemoteDataSource {
       title: title,
       createdBy: uid,
       memberIds: all,
-      createdAt: DateTime.parse(row['created_at'] as String),
+      createdAt: parseIsoOrNow(row['created_at']),
     );
   }
 
@@ -123,7 +122,7 @@ class MessagesRemoteDataSource {
         .from(_messages)
         .stream(primaryKey: ['id'])
         .eq('conversation_id', conversationId)
-        .order('created_at')
+        .order('created_at', ascending: true)
         .map((rows) => rows.map(_rowToMessage).toList());
   }
 
@@ -187,7 +186,7 @@ class MessagesRemoteDataSource {
       authorId: row['author_id'] as String?,
       authorUsername: profile?['username'] as String?,
       body: row['body'] as String,
-      createdAt: DateTime.parse(row['created_at'] as String),
+      createdAt: parseIsoOrNow(row['created_at']),
     );
   }
 }

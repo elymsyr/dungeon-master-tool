@@ -39,8 +39,12 @@ void main() {
   });
 
   group('SchemaMigration', () {
-    test('does nothing when world_schema exists', () {
-      final data = <String, dynamic>{'world_schema': {'some': 'data'}};
+    test('does nothing when world_schema and world_id exist', () {
+      // migrate() also backfills world_id; supply both so no mutation occurs.
+      final data = <String, dynamic>{
+        'world_schema': {'some': 'data'},
+        'world_id': 'existing-id',
+      };
       final result = SchemaMigration.migrate(data);
       expect(result, false);
     });

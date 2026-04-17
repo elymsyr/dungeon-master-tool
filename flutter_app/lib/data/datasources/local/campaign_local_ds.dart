@@ -239,7 +239,7 @@ class CampaignLocalDataSource {
     _log.i('Permanently deleted from trash: $trashDirName');
   }
 
-  /// MsgPack'ten gelen dynamic map'i Map<String, dynamic>'e dönüştür.
+  /// MsgPack'ten gelen dynamic map'i `Map<String, dynamic>`'e dönüştür.
   Map<String, dynamic> _toStringKeyMap(dynamic value) {
     if (value is Map) {
       return value.map((k, v) => MapEntry(k.toString(), _convertValue(v)));

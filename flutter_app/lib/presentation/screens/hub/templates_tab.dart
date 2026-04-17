@@ -90,7 +90,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                       ),
                 );
               } on BuiltinTemplateAdminRequiredException {
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                         content: Text(
@@ -102,7 +102,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
               ref.invalidate(builtinTemplateProvider);
               ref.invalidate(customTemplatesProvider);
               ref.invalidate(allTemplatesProvider);
-              if (mounted) {
+              if (context.mounted) {
                 setState(() { _mode = null; _activeSchema = null; });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Saved as new template: ${forked.name}')),
@@ -124,7 +124,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                   ),
             );
           } on BuiltinTemplateAdminRequiredException {
-            if (mounted) {
+            if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                     content: Text(
@@ -139,7 +139,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
           ref.invalidate(builtinTemplateProvider);
           ref.invalidate(customTemplatesProvider);
           ref.invalidate(allTemplatesProvider);
-          if (mounted) {
+          if (context.mounted) {
             setState(() { _mode = null; _activeSchema = null; });
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(savingBuiltin

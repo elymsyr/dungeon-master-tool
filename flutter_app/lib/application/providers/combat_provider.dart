@@ -352,14 +352,15 @@ class CombatNotifier extends StateNotifier<CombatState>
 
   /// Evaluate a dice expression to an integer (rolls all `NdM` terms).
   /// Tokens: `[+|-]?(NdM|N)`. Whitespace is ignored. Unrecognized input → 0.
+  static final RegExp _diceSpecRegex =
+      RegExp(r'([+-])?(\d*)d(\d+)|([+-])?(\d+)', caseSensitive: false);
+
   static int _evalDiceSpec(String? spec) {
     if (spec == null) return 0;
     final s = spec.replaceAll(' ', '');
     if (s.isEmpty) return 0;
-    final regex = RegExp(r'([+-])?(\d*)d(\d+)|([+-])?(\d+)',
-        caseSensitive: false);
     var total = 0;
-    for (final m in regex.allMatches(s)) {
+    for (final m in _diceSpecRegex.allMatches(s)) {
       if (m.group(3) != null) {
         // NdM term
         final sign = m.group(1) == '-' ? -1 : 1;

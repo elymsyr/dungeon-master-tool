@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/utils/parse_utils.dart';
 import '../../../domain/entities/cloud_backup_meta.dart';
 
 const _uuid = Uuid();
@@ -209,7 +210,7 @@ class CloudBackupRemoteDataSource {
       entityCount: row['entity_count'] as int? ?? 0,
       schemaVersion: row['schema_version'] as int? ?? 5,
       appVersion: row['app_version'] as String?,
-      createdAt: DateTime.parse(row['created_at'] as String),
+      createdAt: parseIsoOrNow(row['created_at']),
       notes: row['notes'] as String?,
     );
   }

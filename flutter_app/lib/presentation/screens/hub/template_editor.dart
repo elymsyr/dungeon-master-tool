@@ -1112,7 +1112,7 @@ class _CategoryEditor extends StatelessWidget {
                 TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Group Name')),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int>(
-                  value: cols,
+                  initialValue: cols,
                   decoration: const InputDecoration(labelText: 'Grid Columns'),
                   items: [1, 2, 3, 4].map((c) => DropdownMenuItem(value: c, child: Text('$c column${c > 1 ? 's' : ''}'))).toList(),
                   onChanged: (v) { if (v != null) setDialogState(() => cols = v); },

@@ -7,7 +7,7 @@ import '../../core/utils/error_format.dart';
 import '../../domain/entities/game_listing.dart';
 import '../../domain/entities/game_listing_application.dart';
 import '../l10n/app_localizations.dart';
-import '../screens/social/players_tab.dart' show openDmWithApplicant;
+import '../utils/open_dm.dart';
 import '../theme/dm_tool_colors.dart';
 import '../widgets/profile_avatar.dart';
 

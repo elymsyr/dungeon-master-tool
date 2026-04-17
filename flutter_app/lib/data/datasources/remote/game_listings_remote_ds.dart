@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/parse_utils.dart';
 import '../../../domain/entities/game_listing.dart';
 import '../../../domain/entities/game_listing_application.dart';
 
@@ -113,6 +114,37 @@ class GameListingsRemoteDataSource {
     return _rowToListing(inserted);
   }
 
+  /// Owner-side metadata update for an existing listing. `is_open` ve
+  /// `seats_filled` bu endpoint'te değişmez — onlar `close` / kontenjan
+  /// akışıyla yönetilir.
+  Future<GameListing> update({
+    required String listingId,
+    required String title,
+    String? description,
+    String? system,
+    int? seatsTotal,
+    String? schedule,
+    String? gameLanguage,
+    List<String> tags = const [],
+  }) async {
+    final updated = await _client
+        .from(_table)
+        .update({
+          'title': title,
+          'description': description,
+          'system': system,
+          'seats_total': seatsTotal,
+          'schedule': schedule,
+          'game_language': gameLanguage,
+          'tags': tags,
+        })
+        .eq('id', listingId)
+        .eq('owner_id', _userId)
+        .select('*, profiles!game_listings_owner_id_fkey(username)')
+        .single();
+    return _rowToListing(updated);
+  }
+
   Future<void> close(String listingId) async {
     await _client
         .from(_table)
@@ -193,7 +225,7 @@ class GameListingsRemoteDataSource {
       seatsFilled: (row['seats_filled'] as int?) ?? 0,
       schedule: row['schedule'] as String?,
       isOpen: (row['is_open'] as bool?) ?? true,
-      createdAt: DateTime.parse(row['created_at'] as String),
+      createdAt: parseIsoOrNow(row['created_at']),
       gameLanguage: row['game_language'] as String?,
       tags: tagsRaw is List ? tagsRaw.whereType<String>().toList() : const [],
     );
@@ -209,7 +241,7 @@ class GameListingsRemoteDataSource {
       applicantDisplayName: profile?['display_name'] as String?,
       applicantAvatarUrl: profile?['avatar_url'] as String?,
       message: row['message'] as String,
-      createdAt: DateTime.parse(row['created_at'] as String),
+      createdAt: parseIsoOrNow(row['created_at']),
     );
   }
 }

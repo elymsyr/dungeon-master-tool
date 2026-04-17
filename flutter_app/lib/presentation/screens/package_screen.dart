@@ -19,7 +19,6 @@ import '../../domain/repositories/campaign_repository.dart';
 import '../../core/utils/screen_type.dart';
 import '../dialogs/media_gallery_dialog.dart';
 import '../theme/dm_tool_colors.dart';
-import '../widgets/close_guard.dart';
 import '../widgets/entity_sidebar.dart';
 import 'database/database_screen.dart';
 
@@ -201,11 +200,10 @@ class _PackageScreenContentState
     super.dispose();
   }
 
-  /// Hub'a donuse tetiklenen ortak exit akisi:
+  /// Hub'a donuse tetiklenen ortak exit akisi (sessiz):
   /// 1) Local save (saveNow)
-  /// 2) Close guard: cloud backup not synced ise uyar / otomatik backup al
-  /// 3) Package list invalidate
-  /// 4) /hub'a git
+  /// 2) Package list invalidate
+  /// 3) /hub'a git
   Future<void> _exitToHub() async {
     await withLoading(
       ref.read(globalLoadingProvider.notifier),
@@ -214,12 +212,6 @@ class _PackageScreenContentState
       () => ref.read(saveStateProvider.notifier).saveNow(),
     );
     if (!mounted) return;
-    final proceed = await confirmCloseWithBackupCheck(
-      context: context,
-      ref: ref,
-      itemName: widget.packageName,
-    );
-    if (!proceed) return;
     ref.invalidate(packageListProvider);
     if (mounted) context.go('/hub');
   }

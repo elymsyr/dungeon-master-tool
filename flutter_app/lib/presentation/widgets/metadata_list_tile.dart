@@ -78,16 +78,7 @@ class MetadataListTile extends StatelessWidget {
             padding: const EdgeInsets.only(top: 6, right: 6),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                _settingsButton(),
-                if (isSelected)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2, right: 4),
-                    child: Icon(Icons.check,
-                        size: 16, color: palette.featureCardAccent),
-                  ),
-              ],
+              children: [_settingsButton()],
             ),
           ),
         ],
@@ -107,12 +98,6 @@ class MetadataListTile extends StatelessWidget {
             children: [
               Expanded(child: _textBlock()),
               _settingsButton(),
-              if (isSelected)
-                Padding(
-                  padding: const EdgeInsets.only(left: 2, top: 6),
-                  child: Icon(Icons.check,
-                      size: 16, color: palette.featureCardAccent),
-                ),
             ],
           ),
         ),

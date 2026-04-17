@@ -33,12 +33,14 @@ class MarketplacePreviewDialog extends ConsumerWidget {
       'world' => l10n.itemTypeWorld,
       'template' => l10n.itemTypeTemplate,
       'package' => l10n.itemTypePackage,
+      'character' => l10n.itemTypeCharacter,
       _ => l10n.itemTypeGeneric,
     };
     final icon = switch (listing.itemType) {
       'world' => Icons.public,
       'template' => Icons.description_outlined,
       'package' => Icons.inventory_2_outlined,
+      'character' => Icons.person,
       _ => Icons.folder_outlined,
     };
 

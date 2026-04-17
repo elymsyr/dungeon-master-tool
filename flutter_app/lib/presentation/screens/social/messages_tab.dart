@@ -180,6 +180,7 @@ void _showConversationContextMenu({
     items: items,
   ).then((value) {
     if (value == null) return;
+    if (!context.mounted) return;
     if (value == 'add_member') _addMemberFlow(context: context, ref: ref, conversation: conversation);
     if (value == 'rename') _renameGroupFlow(context: context, ref: ref, conversation: conversation);
     if (value == 'leave') _leaveGroupFlow(context: context, ref: ref, conversation: conversation, myUserId: myUserId, onLeft: onLeft);
@@ -221,7 +222,7 @@ void _showDmContextMenu({
       ),
     ],
   ).then((value) {
-    if (value == 'delete_dm') {
+    if (value == 'delete_dm' && context.mounted) {
       _deleteDmFlow(
         context: context,
         ref: ref,
@@ -326,28 +327,32 @@ Future<void> _renameGroupFlow({
 }) async {
   final l10n = L10n.of(context)!;
   final ctrl = TextEditingController(text: conversation.title ?? '');
-  final newTitle = await showDialog<String>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(l10n.chatRenameTitle),
-      content: TextField(
-        controller: ctrl,
-        autofocus: true,
-        maxLength: 100,
-        decoration: InputDecoration(
-          hintText: l10n.chatRenameHint,
-          counterText: '',
-          border: const OutlineInputBorder(),
+  final String? newTitle;
+  try {
+    newTitle = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.chatRenameTitle),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLength: 100,
+          decoration: InputDecoration(
+            hintText: l10n.chatRenameHint,
+            counterText: '',
+            border: const OutlineInputBorder(),
+          ),
+          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
         ),
-        onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: const Text('Save')),
+        ],
       ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-        TextButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: const Text('Save')),
-      ],
-    ),
-  );
-  ctrl.dispose();
+    );
+  } finally {
+    ctrl.dispose();
+  }
   if (newTitle == null || newTitle.isEmpty || newTitle == conversation.title) return;
   try {
     await ref.read(messagesRemoteDsProvider).renameConversation(conversation.id, newTitle);
@@ -531,7 +536,7 @@ class MessagesTab extends ConsumerWidget {
         ),
       ],
     ).then((value) {
-      if (value == null) return;
+      if (value == null || !context.mounted) return;
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => NewChatPickerScreen(
@@ -645,7 +650,9 @@ class _SearchableUserPickerDialogState extends State<_SearchableUserPickerDialog
 
   @override
   void dispose() {
-    _searchCtrl.dispose();
+    _searchCtrl
+      ..removeListener(_onSearch)
+      ..dispose();
     super.dispose();
   }
 

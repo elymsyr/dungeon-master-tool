@@ -130,32 +130,37 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
               // --- LANGUAGE ---
               Text(l10n.lblLanguage, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
               const SizedBox(height: 12),
-              ...['en', 'tr', 'de', 'fr'].map((code) {
-                final label = switch (code) {
-                  'en' => 'English',
-                  'tr' => 'Türkçe',
-                  'de' => 'Deutsch',
-                  'fr' => 'Français',
-                  _ => code,
-                };
-                final isSelected = currentLocale.languageCode == code;
-                return ListTile(
-                  leading: Radio<String>(
-                    value: code,
-                    groupValue: currentLocale.languageCode,
-                    onChanged: (v) {
-                      if (v != null) ref.read(localeProvider.notifier).setLocale(v);
-                    },
-                  ),
-                  title: Text(label, style: TextStyle(
-                    fontSize: 14,
-                    color: palette.tabActiveText,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  )),
-                  onTap: () => ref.read(localeProvider.notifier).setLocale(code),
-                  dense: true,
-                );
-              }),
+              RadioGroup<String>(
+                groupValue: currentLocale.languageCode,
+                onChanged: (v) {
+                  if (v != null) {
+                    ref.read(localeProvider.notifier).setLocale(v);
+                  }
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: ['en', 'tr', 'de', 'fr'].map((code) {
+                    final label = switch (code) {
+                      'en' => 'English',
+                      'tr' => 'Türkçe',
+                      'de' => 'Deutsch',
+                      'fr' => 'Français',
+                      _ => code,
+                    };
+                    final isSelected = currentLocale.languageCode == code;
+                    return ListTile(
+                      leading: Radio<String>(value: code),
+                      title: Text(label, style: TextStyle(
+                        fontSize: 14,
+                        color: palette.tabActiveText,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      )),
+                      onTap: () => ref.read(localeProvider.notifier).setLocale(code),
+                      dense: true,
+                    );
+                  }).toList(),
+                ),
+              ),
               const SizedBox(height: 32),
 
               // --- VOLUME ---

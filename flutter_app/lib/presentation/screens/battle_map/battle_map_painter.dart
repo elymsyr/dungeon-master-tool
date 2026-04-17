@@ -162,33 +162,30 @@ class BattleMapPainter extends CustomPainter {
       canvas.drawImage(mapState.annotationImage!, Offset.zero, Paint());
     }
 
+    // Reuse a single mutable Paint across all strokes to avoid per-stroke
+    // allocation (can be 100+ strokes on a busy map).
+    final strokePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
     // Committed strokes (since last save)
     for (final stroke in mapState.strokes) {
-      canvas.drawPath(
-        stroke.path,
-        Paint()
-          ..color = stroke.isErase ? Colors.transparent : stroke.color
-          ..blendMode = stroke.isErase ? ui.BlendMode.clear : ui.BlendMode.srcOver
-          ..strokeWidth = stroke.width
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round,
-      );
+      strokePaint
+        ..color = stroke.isErase ? Colors.transparent : stroke.color
+        ..blendMode = stroke.isErase ? ui.BlendMode.clear : ui.BlendMode.srcOver
+        ..strokeWidth = stroke.width;
+      canvas.drawPath(stroke.path, strokePaint);
     }
 
     // In-progress stroke
     if (liveCurrentPath != null) {
-      canvas.drawPath(
-        liveCurrentPath,
-        Paint()
-          ..color = liveCurrentIsErase ? Colors.transparent : liveCurrentColor
-          ..blendMode =
-              liveCurrentIsErase ? ui.BlendMode.clear : ui.BlendMode.srcOver
-          ..strokeWidth = liveCurrentWidth
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round,
-      );
+      strokePaint
+        ..color = liveCurrentIsErase ? Colors.transparent : liveCurrentColor
+        ..blendMode =
+            liveCurrentIsErase ? ui.BlendMode.clear : ui.BlendMode.srcOver
+        ..strokeWidth = liveCurrentWidth;
+      canvas.drawPath(liveCurrentPath, strokePaint);
     }
 
     if (hasErase) {

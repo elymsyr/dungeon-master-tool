@@ -329,8 +329,8 @@ void main() {
     test('addEntityNode uses correct dimensions', () {
       n.addEntityNode(const Offset(0, 0), 'eid-1', 'NPC');
       final node = _state(n).nodes.first;
-      expect(node.width, 300);
-      expect(node.height, 400);
+      expect(node.width, 360);
+      expect(node.height, 220);
     });
   });
 

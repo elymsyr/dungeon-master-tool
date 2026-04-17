@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../application/providers/follows_provider.dart';
 import '../../../application/providers/social_providers.dart';
@@ -9,11 +8,11 @@ import '../../../core/utils/cached_provider.dart';
 import '../../../core/utils/error_format.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../core/utils/world_languages.dart';
-import '../../../domain/entities/marketplace_listing.dart';
 import '../../../domain/entities/user_profile.dart';
 import '../../dialogs/marketplace_preview_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/listing_banner_card.dart';
 import '../../widgets/profile_avatar.dart';
 import 'social_shell.dart';
 
@@ -98,7 +97,13 @@ class _MarketplaceFeed extends ConsumerWidget {
                   for (final e in items)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: _MarketplaceCard(listing: e),
+                      child: ListingBannerCard.marketplace(
+                        listing: e,
+                        onTap: () => MarketplacePreviewDialog.show(
+                          context,
+                          listing: e,
+                        ),
+                      ),
                     ),
                 ],
               );
@@ -123,6 +128,7 @@ class _FilterBar extends ConsumerWidget {
       ('world', l10n.filterWorlds),
       ('template', l10n.filterTemplates),
       ('package', l10n.filterPackages),
+      ('character', l10n.filterCharacters),
     ];
     return Wrap(
       spacing: 8,
@@ -249,178 +255,6 @@ class _SecondaryFilterRowState extends ConsumerState<_SecondaryFilterRow> {
           },
         ),
       ],
-    );
-  }
-}
-
-class _MarketplaceCard extends ConsumerWidget {
-  final MarketplaceListing listing;
-  const _MarketplaceCard({required this.listing});
-
-  IconData get _typeIcon => switch (listing.itemType) {
-        'world' => Icons.public,
-        'template' => Icons.description_outlined,
-        'package' => Icons.inventory_2_outlined,
-        _ => Icons.folder_outlined,
-      };
-
-  String _typeLabel(L10n l10n) => switch (listing.itemType) {
-        'world' => l10n.itemTypeWorld,
-        'template' => l10n.itemTypeTemplate,
-        'package' => l10n.itemTypePackage,
-        _ => l10n.itemTypeGeneric,
-      };
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = L10n.of(context)!;
-    final palette = Theme.of(context).extension<DmToolColors>()!;
-    final ownerName = listing.ownerUsername ?? 'unknown';
-
-    return SocialCard(
-      padding: const EdgeInsets.all(16),
-      onTap: () => MarketplacePreviewDialog.show(context, listing: listing),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: palette.featureCardAccent.withValues(alpha: 0.12),
-              borderRadius: palette.cbr,
-            ),
-            child: Icon(_typeIcon, size: 22, color: palette.featureCardAccent),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        listing.title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: palette.tabActiveText,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: palette.featureCardAccent.withValues(alpha: 0.15),
-                        borderRadius: palette.br,
-                      ),
-                      child: Text(
-                        _typeLabel(l10n),
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: palette.featureCardAccent,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                if (listing.description != null && listing.description!.isNotEmpty) ...[
-                  Text(
-                    listing.description!,
-                    style: TextStyle(fontSize: 12, color: palette.tabText),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
-                ],
-                if (listing.tags.isNotEmpty || listing.language != null) ...[
-                  Wrap(
-                    spacing: 4,
-                    runSpacing: 4,
-                    children: [
-                      if (listing.language != null)
-                        _InlineChip(
-                          label: worldLanguageNative(listing.language!),
-                          icon: Icons.language,
-                          palette: palette,
-                        ),
-                      for (final tag in listing.tags.take(4))
-                        _InlineChip(
-                          label: '#$tag',
-                          palette: palette,
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                ],
-                Row(
-                  children: [
-                    InkWell(
-                      onTap: () => context.push('/profile/${listing.ownerId}'),
-                      child: Text(
-                        '@$ownerName',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: palette.featureCardAccent,
-                        ),
-                      ),
-                    ),
-                    Text(' · ', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
-                    Text(
-                      DateFormat.yMMMd().format(listing.createdAt.toLocal()),
-                      style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary),
-                    ),
-                    Text(' · ', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
-                    Icon(Icons.download_outlined, size: 12, color: palette.sidebarLabelSecondary),
-                    const SizedBox(width: 2),
-                    Text(
-                      '${listing.downloadCount}',
-                      style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InlineChip extends StatelessWidget {
-  final String label;
-  final IconData? icon;
-  final DmToolColors palette;
-  const _InlineChip({required this.label, this.icon, required this.palette});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: palette.featureCardBg,
-        borderRadius: palette.cbr,
-        border: Border.all(color: palette.featureCardBorder),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 11, color: palette.sidebarLabelSecondary),
-            const SizedBox(width: 3),
-          ],
-          Text(
-            label,
-            style: TextStyle(fontSize: 10, color: palette.tabText),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -564,4 +398,3 @@ class _PlayerTile extends ConsumerWidget {
     );
   }
 }
-

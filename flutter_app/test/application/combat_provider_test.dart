@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dungeon_master_tool/application/providers/combat_provider.dart';
+import 'package:dungeon_master_tool/application/services/event_bus.dart';
 import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:dungeon_master_tool/domain/entities/session.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/default_dnd5e_schema.dart';
@@ -9,12 +10,14 @@ import 'package:dungeon_master_tool/domain/entities/schema/default_dnd5e_schema.
 CombatNotifier _createNotifier({
   Map<String, Entity> Function()? getEntities,
   Map<String, dynamic>? Function()? getCampaignData,
+  AppEventBus? eventBus,
 }) {
   return CombatNotifier(
     getEntities ?? () => <String, Entity>{},
     () => generateDefaultDnd5eSchema(),
     () {},
     getCampaignData ?? () => null,
+    eventBus ?? AppEventBus(),
   );
 }
 
@@ -98,6 +101,26 @@ void main() {
       expect(s.encounters, hasLength(2));
       // The second encounter should be active.
       expect(s.activeEncounter!.name, 'Enc B');
+    });
+
+    test('renameEncounter updates the encounter name', () {
+      final n = _createNotifier();
+      n.createEncounter('Old Name');
+      final id = _state(n).activeEncounter!.id;
+
+      n.renameEncounter(id, 'Shiny New Name');
+
+      expect(_state(n).activeEncounter!.name, 'Shiny New Name');
+    });
+
+    test('renameEncounter throws for unknown id', () {
+      final n = _createNotifier();
+      n.createEncounter('Existing');
+
+      expect(
+        () => n.renameEncounter('non-existent-id', 'Ghost'),
+        throwsStateError,
+      );
     });
 
     test('switchEncounter changes activeEncounterId', () {
@@ -301,7 +324,7 @@ void main() {
       expect(_state(n).activeEncounter!.turnIndex, -1);
     });
 
-    test('nextTurn decrements condition durations', () {
+    test('nextTurn decrements condition durations at round start', () {
       final n = _createNotifier();
       n.createEncounter('Fight');
       n.addDirectRow('Warrior', stats: {'initiative': '10'});
@@ -309,7 +332,10 @@ void main() {
       final cId = _state(n).activeEncounter!.combatants.first.id;
       n.addCondition(cId, 'Poisoned', 3);
 
-      n.nextTurn(); // duration goes from 3 to 2
+      // Conditions decrement at round boundary, not per-turn: with 1
+      // combatant two nextTurn calls are needed to cross into round 2.
+      n.nextTurn(); // -1 -> 0, still round 1, no decrement
+      n.nextTurn(); // wraps to round 2, decrement 3 -> 2
 
       final conditions = _state(n).activeEncounter!.combatants.first.conditions;
       expect(conditions, hasLength(1));
@@ -324,8 +350,9 @@ void main() {
       final cId = _state(n).activeEncounter!.combatants.first.id;
       n.addCondition(cId, 'Stunned', 1);
 
-      // Duration is 1 -> nextTurn decrements to 0 -> removed (where > 0)
+      // Two nextTurn calls needed to cross round boundary with 1 combatant.
       n.nextTurn();
+      n.nextTurn(); // 1 -> 0 -> removed
 
       final conditions = _state(n).activeEncounter!.combatants.first.conditions;
       expect(conditions, isEmpty);
@@ -515,6 +542,10 @@ void main() {
       final cId = _state(n1).activeEncounter!.combatants.first.id;
       n1.addCondition(cId, 'Poisoned', 3);
       n1.modifyHp(cId, -20);
+      // With 2 combatants, three nextTurn calls are needed to advance from
+      // round 1 into round 2 (where conditions decrement).
+      n1.nextTurn();
+      n1.nextTurn();
       n1.nextTurn();
 
       final snapshot = _toJsonPrimitives(n1.getSessionState());

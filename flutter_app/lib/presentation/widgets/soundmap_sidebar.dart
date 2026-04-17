@@ -218,7 +218,7 @@ class _ThemeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String?>(
-      value: activeThemeId,
+      initialValue: activeThemeId,
       isExpanded: true,
       decoration: InputDecoration(
         labelText: l10n.soundpadSelectTheme,
@@ -392,7 +392,7 @@ class _AmbienceSlotCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             DropdownButtonFormField<String?>(
-              value: slotState.ambienceId,
+              initialValue: slotState.ambienceId,
               isExpanded: true,
               decoration: InputDecoration(
                 isDense: true,

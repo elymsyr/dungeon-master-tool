@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/parse_utils.dart';
+
 class BugReport {
   final String id;
   final String userId;
@@ -40,8 +42,8 @@ class BugReport {
         platform: row['platform'] as String?,
         status: (row['status'] as String?) ?? 'open',
         adminNote: row['admin_note'] as String?,
-        createdAt: DateTime.parse(row['created_at'] as String),
-        updatedAt: DateTime.parse(row['updated_at'] as String),
+        createdAt: parseIsoOrNow(row['created_at']),
+        updatedAt: parseIsoOrNow(row['updated_at']),
       );
 }
 
