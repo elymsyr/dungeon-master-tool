@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/providers/admin_provider.dart';
 import '../../application/providers/auth_provider.dart';
+import '../../application/providers/hub_tab_provider.dart';
 import '../../application/providers/profile_provider.dart';
 import '../../core/config/supabase_config.dart';
 import '../dialogs/bug_report_dialog.dart';
@@ -20,7 +21,16 @@ class ProfileMenuButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!SupabaseConfig.isConfigured) return const SizedBox.shrink();
+    if (!SupabaseConfig.isConfigured) {
+      // Even without auth the user still needs a way to reach Settings on
+      // mobile (where the Settings tab is hidden). Show a compact gear.
+      return IconButton(
+        tooltip: 'Settings',
+        icon: const Icon(Icons.settings_outlined, size: 20),
+        onPressed: () =>
+            ref.read(hubTabIndexProvider.notifier).state = settingsTabIndex,
+      );
+    }
 
     final auth = ref.watch(authProvider);
     final palette = Theme.of(context).extension<DmToolColors>()!;
@@ -60,6 +70,8 @@ class ProfileMenuButton extends ConsumerWidget {
             context.push('/profile/me');
           case 'edit':
             context.push('/profile/me?edit=1');
+          case 'settings':
+            ref.read(hubTabIndexProvider.notifier).state = settingsTabIndex;
           case 'admin':
             context.push('/admin');
           case 'bug_report':
@@ -83,6 +95,14 @@ class ProfileMenuButton extends ConsumerWidget {
             const Icon(Icons.edit_outlined, size: 18),
             const SizedBox(width: 12),
             Text('Edit Profile', style: TextStyle(color: palette.tabActiveText)),
+          ]),
+        ),
+        PopupMenuItem<String>(
+          value: 'settings',
+          child: Row(children: [
+            const Icon(Icons.settings_outlined, size: 18),
+            const SizedBox(width: 12),
+            Text('Settings', style: TextStyle(color: palette.tabActiveText)),
           ]),
         ),
         if (isAdmin)
