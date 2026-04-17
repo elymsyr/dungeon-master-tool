@@ -5,10 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
-import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../dialogs/builtin_warning_dialog.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
@@ -24,9 +25,8 @@ class CharactersTab extends ConsumerStatefulWidget {
 class _CharactersTabState extends ConsumerState<CharactersTab> {
   final _nameController = TextEditingController();
   int _selectedIndex = -1;
-  WorldSchema? _selectedTemplate;
-  final Set<String> _selectedPackages = {};
-  final Set<String> _selectedWorlds = {};
+  String? _selectedWorldName;
+  bool _creating = false;
 
   @override
   void dispose() {
@@ -37,6 +37,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
     final charactersAsync = ref.watch(characterListProvider);
 
     return SingleChildScrollView(
@@ -60,7 +61,6 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       fontSize: 12, color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 16),
 
-              // Karakter listesi
               charactersAsync.when(
                 data: (characters) => characters.isEmpty
                     ? Container(
@@ -111,7 +111,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                               child: MetadataListTile(
                                 icon: Icons.person,
                                 name: c.entity.name,
-                                subtitle: _subInfo(c),
+                                subtitle: _subInfo(c, l10n),
                                 description: c.entity.description,
                                 tags: c.entity.tags,
                                 coverImagePath: c.entity.imagePath,
@@ -132,7 +132,6 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
 
               const SizedBox(height: 12),
 
-              // Load + Delete butonları
               Row(
                 children: [
                   Expanded(
@@ -169,18 +168,15 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
               Divider(color: palette.sidebarDivider),
               const SizedBox(height: 16),
 
-              // Yeni karakter oluşturma
               Text('Create New Character',
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: palette.tabActiveText)),
               const SizedBox(height: 8),
-              _templatePicker(palette),
+              _worldPicker(palette, l10n),
               const SizedBox(height: 8),
-              _linkedPackagesChips(palette),
-              const SizedBox(height: 8),
-              _linkedWorldsChips(palette),
+              _inheritedTemplateRow(palette),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -194,8 +190,14 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
-                    onPressed: _createCharacter,
-                    icon: const Icon(Icons.add, size: 18),
+                    onPressed: _canCreate() ? _createCharacter : null,
+                    icon: _creating
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.add, size: 18),
                     label: const Text('Create'),
                     style: FilledButton.styleFrom(
                         backgroundColor: palette.successBtnBg,
@@ -210,62 +212,52 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     );
   }
 
-  String _subInfo(Character c) {
+  String _subInfo(Character c, L10n l10n) {
     final parts = <String>[c.templateName];
-    if (c.linkedPackages.isNotEmpty) {
-      parts.add('${c.linkedPackages.length} pkg');
-    }
-    if (c.linkedWorlds.isNotEmpty) {
-      parts.add('${c.linkedWorlds.length} world');
+    if (c.worldName.isNotEmpty) {
+      parts.add(c.worldName);
+    } else {
+      parts.add(l10n.charWorldOrphan);
     }
     return parts.join(' · ');
   }
 
-  Widget _templatePicker(DmToolColors palette) {
-    final templatesAsync = ref.watch(allTemplatesProvider);
-    return templatesAsync.when(
-      data: (templates) {
-        final eligible = templates
-            .where((t) =>
-                t.categories.any((c) => c.slug == playerCategorySlug))
-            .toList();
-        if (eligible.isEmpty) {
+  Widget _worldPicker(DmToolColors palette, L10n l10n) {
+    final worldsAsync = ref.watch(campaignInfoListProvider);
+    return worldsAsync.when(
+      data: (worlds) {
+        if (worlds.isEmpty) {
           return Text(
-            'No templates with a Player category. Create a template first.',
+            l10n.charCreateWorldRequired,
             style: TextStyle(
                 fontSize: 12,
                 color: palette.sidebarLabelSecondary,
                 fontStyle: FontStyle.italic),
           );
         }
-        // Deduplicate by schemaId to avoid DropdownButton assertion.
-        final seen = <String>{};
-        final uniqueTemplates =
-            eligible.where((t) => seen.add(t.schemaId)).toList();
-        final matched = uniqueTemplates
-            .where((t) => t.schemaId == _selectedTemplate?.schemaId)
-            .firstOrNull;
-        _selectedTemplate = matched ?? uniqueTemplates.first;
+        final names = worlds.map((w) => w.name).toList();
+        if (_selectedWorldName != null &&
+            !names.contains(_selectedWorldName)) {
+          _selectedWorldName = null;
+        }
+        // Key selection'a bağlı — setState tetiklenince widget fully remount
+        // olur ve yeni initialValue'yu direkt gösterir. FormField'in internal
+        // state ile initialValue arasındaki yarışı temizler.
         return DropdownButtonFormField<String>(
-          key: ValueKey('char_tmpl_${uniqueTemplates.length}'),
-          initialValue: _selectedTemplate!.schemaId,
-          decoration: const InputDecoration(labelText: 'Template'),
-          items: uniqueTemplates
-              .map((t) => DropdownMenuItem(
-                    value: t.schemaId,
-                    child: Text(t.name,
+          key: ValueKey(
+              'char_world_${worlds.length}_${_selectedWorldName ?? "none"}'),
+          initialValue: _selectedWorldName,
+          decoration: InputDecoration(
+            labelText: '${l10n.charCreateWorldLabel} *',
+          ),
+          items: worlds
+              .map((w) => DropdownMenuItem(
+                    value: w.name,
+                    child: Text('${w.name}  (${w.templateName})',
                         style: const TextStyle(fontSize: 12)),
                   ))
               .toList(),
-          onChanged: (id) {
-            if (id == null) return;
-            for (final t in uniqueTemplates) {
-              if (t.schemaId == id) {
-                setState(() => _selectedTemplate = t);
-                break;
-              }
-            }
-          },
+          onChanged: (v) => setState(() => _selectedWorldName = v),
         );
       },
       loading: () => const LinearProgressIndicator(),
@@ -273,36 +265,40 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     );
   }
 
-  Widget _linkedPackagesChips(DmToolColors palette) {
-    final packagesAsync = ref.watch(packageListProvider);
-    return packagesAsync.when(
-      data: (packages) => _MultiSelectDropdown(
-        label: 'Link Packages',
-        options: packages.map((p) => p.name).toList(),
-        selected: _selectedPackages,
-        onToggle: (name, on) => setState(() {
-          on ? _selectedPackages.add(name) : _selectedPackages.remove(name);
-        }),
+  Widget _inheritedTemplateRow(DmToolColors palette) {
+    final worlds = ref.watch(campaignInfoListProvider).valueOrNull ?? const [];
+    final match = worlds.where((w) => w.name == _selectedWorldName).firstOrNull;
+    final templateText = match == null
+        ? '—'
+        : '${match.templateName}  (inherited from world)';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(Icons.description,
+              size: 14, color: palette.sidebarLabelSecondary),
+          const SizedBox(width: 6),
+          Text('Template: ',
+              style: TextStyle(
+                  fontSize: 12, color: palette.sidebarLabelSecondary)),
+          Expanded(
+            child: Text(
+              templateText,
+              style:
+                  TextStyle(fontSize: 12, color: palette.tabActiveText),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
-      loading: () => const LinearProgressIndicator(),
-      error: (_, _) => const SizedBox.shrink(),
     );
   }
 
-  Widget _linkedWorldsChips(DmToolColors palette) {
-    final worldsAsync = ref.watch(campaignInfoListProvider);
-    return worldsAsync.when(
-      data: (worlds) => _MultiSelectDropdown(
-        label: 'Link Worlds',
-        options: worlds.map((c) => c.name).toList(),
-        selected: _selectedWorlds,
-        onToggle: (name, on) => setState(() {
-          on ? _selectedWorlds.add(name) : _selectedWorlds.remove(name);
-        }),
-      ),
-      loading: () => const LinearProgressIndicator(),
-      error: (_, _) => const SizedBox.shrink(),
-    );
+  bool _canCreate() {
+    if (_creating) return false;
+    if (_nameController.text.trim().isEmpty) return false;
+    if (_selectedWorldName == null) return false;
+    return true;
   }
 
   void _loadCharacter(String id) => context.push('/character/$id');
@@ -328,7 +324,6 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
               await ref
                   .read(characterListProvider.notifier)
                   .delete(c.id);
-              // Best-effort cloud cleanup — no-op when offline/signed-out.
               await ref
                   .read(cloudBackupOperationProvider.notifier)
                   .deleteBackupByItem(c.id, 'character');
@@ -346,25 +341,58 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
   }
 
   Future<void> _createCharacter() async {
+    if (!_canCreate()) return;
     final name = _nameController.text.trim();
-    if (name.isEmpty) return;
-    final template = _selectedTemplate;
-    if (template == null) return;
+    final worldName = _selectedWorldName!;
+    setState(() => _creating = true);
+    try {
+      final data =
+          await ref.read(campaignRepositoryProvider).load(worldName);
+      final schemaMap = data['world_schema'] as Map<String, dynamic>?;
+      if (schemaMap == null) {
+        _snack('World is missing a template schema.');
+        return;
+      }
+      // Campaign repo, world_schema.schemaId'yi kendi row-id'siyle
+      // (rotasyona uğramış) döndürüyor; kaynak template'i eşleştirmek için
+      // `template_id` alanını kullanıp schemaId'yi override ediyoruz.
+      final realTemplateId = (data['template_id'] as String?) ??
+          (schemaMap['schemaId'] as String? ?? '');
+      final template = WorldSchema.fromJson(Map<String, dynamic>.from(schemaMap))
+          .copyWith(schemaId: realTemplateId);
+      if (!template.categories.any((c) => c.slug == playerCategorySlug)) {
+        _snack('This world\'s template has no Player category.');
+        return;
+      }
 
-    final c = await ref.read(characterListProvider.notifier).create(
-          name: name,
-          template: template,
-          linkedPackages: _selectedPackages.toList(),
-          linkedWorlds: _selectedWorlds.toList(),
-        );
-    _nameController.clear();
-    if (mounted) {
-      setState(() {
-        _selectedPackages.clear();
-        _selectedWorlds.clear();
-      });
-      context.push('/character/${c.id}');
+      if (template.schemaId == builtinTemplateId) {
+        if (!mounted) return;
+        final choice =
+            await BuiltinWarningDialog.show(context, offerCopyFirst: false);
+        if (choice != BuiltinWarningChoice.continueBuiltin) return;
+      }
+
+      final c = await ref.read(characterListProvider.notifier).create(
+            name: name,
+            template: template,
+            worldName: worldName,
+          );
+      _nameController.clear();
+      if (mounted) {
+        setState(() {});
+        context.push('/character/${c.id}');
+      }
+    } catch (e) {
+      _snack('Failed to create character: $e');
+    } finally {
+      if (mounted) setState(() => _creating = false);
     }
+  }
+
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
   }
 
   Future<void> _showCharacterSettings(
@@ -378,7 +406,6 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       updatedAt = DateTime.parse(c.updatedAt);
     } catch (_) {}
 
-    // Mutable working copy — edits committed on Save.
     var workingName = c.entity.name;
     var workingDescription = c.entity.description;
     var workingTags = [...c.entity.tags];
@@ -388,235 +415,108 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-        title: Text('${c.entity.name} — Settings'),
-        content: SizedBox(
-          width: 420,
-          child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              MetadataEditorSection(
-                name: workingName,
-                description: workingDescription,
-                tags: workingTags,
-                coverImagePath: workingCover,
-                onNameChanged: (v) => workingName = v,
-                onDescriptionChanged: (v) => workingDescription = v,
-                onTagsChanged: (v) => setDialogState(() => workingTags = v),
-                onCoverChanged: (v) =>
-                    setDialogState(() => workingCover = v),
-              ),
-              const SizedBox(height: 16),
-              Divider(height: 1, color: palette.featureCardBorder),
-              const SizedBox(height: 12),
-              Row(
+          title: Text('${c.entity.name} — Settings'),
+          content: SizedBox(
+            width: 440,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.description,
-                      size: 16, color: palette.sidebarLabelSecondary),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text('Template: ${c.templateName}',
-                        style: TextStyle(
-                            fontSize: 13, color: palette.tabActiveText)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (updatedAt != null)
-                Row(
-                  children: [
-                    Icon(Icons.access_time,
-                        size: 16, color: palette.sidebarLabelSecondary),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Last edited: ${updatedAt.toLocal().toString().split('.').first}',
-                      style: TextStyle(
-                          fontSize: 12, color: palette.tabActiveText),
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 12),
-              SaveInfoSection(
-                itemName: c.entity.name,
-                itemId: c.id,
-                type: 'character',
-                localUpdatedAt: updatedAt,
-              ),
-              const SizedBox(height: 12),
-              Text('Linked Packages',
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: palette.tabActiveText)),
-              const SizedBox(height: 4),
-              if (c.linkedPackages.isEmpty)
-                Text('None',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontStyle: FontStyle.italic,
-                        color: palette.sidebarLabelSecondary))
-              else
-                Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: c.linkedPackages
-                      .map((p) => Chip(
-                            avatar: const Icon(Icons.inventory_2, size: 12),
-                            label: Text(p,
-                                style: const TextStyle(fontSize: 11)),
-                            visualDensity: VisualDensity.compact,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                          ))
-                      .toList(),
-                ),
-              const SizedBox(height: 12),
-              Text('Linked Worlds',
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: palette.tabActiveText)),
-              const SizedBox(height: 4),
-              if (c.linkedWorlds.isEmpty)
-                Text('None',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontStyle: FontStyle.italic,
-                        color: palette.sidebarLabelSecondary))
-              else
-                Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: c.linkedWorlds
-                      .map((w) => Chip(
-                            avatar: const Icon(Icons.public, size: 12),
-                            label: Text(w,
-                                style: const TextStyle(fontSize: 11)),
-                            visualDensity: VisualDensity.compact,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                          ))
-                      .toList(),
-                ),
-            ],
-          ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              await ref.read(characterListProvider.notifier).updateMetadata(
-                    id: c.id,
+                  MetadataEditorSection(
                     name: workingName,
                     description: workingDescription,
                     tags: workingTags,
                     coverImagePath: workingCover,
-                  );
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-      ),
-    );
-  }
-}
-
-/// Dropdown-style multi-select — DropdownButtonFormField görünümü, ama
-/// tap sonrası açılan menüde birden fazla kutu işaretlenebilir.
-/// Seçili öğeler InputDecorator içinde chip olarak gösterilir.
-class _MultiSelectDropdown extends StatelessWidget {
-  final String label;
-  final List<String> options;
-  final Set<String> selected;
-  final void Function(String, bool) onToggle;
-
-  const _MultiSelectDropdown({
-    required this.label,
-    required this.options,
-    required this.selected,
-    required this.onToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final outline = theme.colorScheme.outline;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: InkWell(
-        onTap: options.isEmpty ? null : () => _openMenu(context),
-        borderRadius: BorderRadius.circular(4),
-        child: InputDecorator(
-          decoration: InputDecoration(
-            labelText: label,
-            isDense: false,
-            suffixIcon: Icon(Icons.arrow_drop_down, color: outline),
-          ),
-          child: selected.isEmpty
-              ? Text(
-                  options.isEmpty ? 'None available' : 'None selected',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: outline,
-                    fontStyle: FontStyle.italic,
+                    onNameChanged: (v) => workingName = v,
+                    onDescriptionChanged: (v) => workingDescription = v,
+                    onTagsChanged: (v) =>
+                        setDialogState(() => workingTags = v),
+                    onCoverChanged: (v) =>
+                        setDialogState(() => workingCover = v),
                   ),
-                )
-              : Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: selected
-                      .map((name) => Chip(
-                            label: Text(name,
-                                style: const TextStyle(fontSize: 11)),
-                            onDeleted: () => onToggle(name, false),
-                            deleteIconColor: outline,
-                            visualDensity: VisualDensity.compact,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                          ))
-                      .toList(),
-                ),
+                  const SizedBox(height: 16),
+                  Divider(height: 1, color: palette.featureCardBorder),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(Icons.description,
+                          size: 16, color: palette.sidebarLabelSecondary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text('Template: ${c.templateName}',
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: palette.tabActiveText)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.public,
+                          size: 16, color: palette.sidebarLabelSecondary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          c.worldName.isEmpty
+                              ? L10n.of(context)!.charWorldOrphan
+                              : 'World: ${c.worldName}',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: palette.tabActiveText),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (updatedAt != null)
+                    Row(
+                      children: [
+                        Icon(Icons.access_time,
+                            size: 16,
+                            color: palette.sidebarLabelSecondary),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Last edited: ${updatedAt.toLocal().toString().split('.').first}',
+                          style: TextStyle(
+                              fontSize: 12, color: palette.tabActiveText),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 12),
+                  SaveInfoSection(
+                    itemName: c.entity.name,
+                    itemId: c.id,
+                    type: 'character',
+                    localUpdatedAt: updatedAt,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                await ref.read(characterListProvider.notifier).updateMetadata(
+                      id: c.id,
+                      name: workingName,
+                      description: workingDescription,
+                      tags: workingTags,
+                      coverImagePath: workingCover,
+                    );
+                if (ctx.mounted) Navigator.pop(ctx);
+              },
+              child: const Text('Save'),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Future<void> _openMenu(BuildContext context) async {
-    final box = context.findRenderObject() as RenderBox?;
-    if (box == null) return;
-    final overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox?;
-    if (overlay == null) return;
-    final position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        box.localToGlobal(box.size.bottomLeft(Offset.zero),
-            ancestor: overlay),
-        box.localToGlobal(box.size.bottomRight(Offset.zero),
-            ancestor: overlay),
-      ),
-      Offset.zero & overlay.size,
-    );
-
-    await showMenu<void>(
-      context: context,
-      position: position,
-      constraints: BoxConstraints(minWidth: box.size.width),
-      items: options.map((name) {
-        final on = selected.contains(name);
-        return CheckedPopupMenuItem<void>(
-          checked: on,
-          onTap: () => onToggle(name, !on),
-          child: Text(name, style: const TextStyle(fontSize: 13)),
-        );
-      }).toList(),
-    );
-  }
 }

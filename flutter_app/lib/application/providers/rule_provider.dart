@@ -8,8 +8,8 @@ import 'entity_provider.dart';
 /// Bu entity'nin kendisini, ilişkili entity'lerini ve worldSchema'yı izler.
 /// Herhangi biri değiştiğinde otomatik yeniden hesaplar.
 /// Statik cache yok — Riverpod'un kendi memoization'ı yeterli.
-final computedFieldsProvider =
-    Provider.family<RuleEvaluationResult, String>((ref, entityId) {
+final computedFieldsProvider = Provider.family<RuleEvaluationResult, String>(
+    dependencies: [entityProvider, worldSchemaProvider], (ref, entityId) {
   // 1. Entity'yi izle
   final entity = ref.watch(entityProvider.select((m) => m[entityId]));
   if (entity == null) return RuleEvaluationResult.empty;

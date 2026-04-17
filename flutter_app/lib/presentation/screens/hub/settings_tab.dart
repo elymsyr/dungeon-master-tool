@@ -22,11 +22,30 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
 
-class SettingsTab extends ConsumerWidget {
+class SettingsTab extends ConsumerStatefulWidget {
   const SettingsTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsTab> createState() => _SettingsTabState();
+}
+
+class _SettingsTabState extends ConsumerState<SettingsTab> {
+  @override
+  void initState() {
+    super.initState();
+    // Tab her açıldığında storage-ilgili provider'ları yenile:
+    // trash sayısı, beta cloud quota, sound library + toplam boyut.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.invalidate(trashListProvider);
+      ref.read(betaProvider.notifier).refresh();
+      ref.invalidate(soundpadLibraryProvider);
+      ref.invalidate(soundpadTotalSizeProvider);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final currentTheme = ref.watch(themeProvider);
     final currentLocale = ref.watch(localeProvider);
@@ -445,6 +464,7 @@ class _SoundLibrarySection extends ConsumerWidget {
     final l10n = L10n.of(context)!;
     final themesAsync = ref.watch(soundpadThemesProvider);
     final libraryAsync = ref.watch(soundpadLibraryProvider);
+    final totalSizeAsync = ref.watch(soundpadTotalSizeProvider);
     final notifier = ref.read(soundpadStateProvider.notifier);
 
     return Column(
@@ -456,6 +476,16 @@ class _SoundLibrarySection extends ConsumerWidget {
           l10n.soundpadRootLabel(AppPaths.soundpadRoot),
           style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
           overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          totalSizeAsync.when(
+            data: (bytes) => l10n.soundpadTotalSize(
+                (bytes / (1024 * 1024)).toStringAsFixed(1)),
+            loading: () => l10n.soundpadTotalSize('—'),
+            error: (_, _) => l10n.soundpadTotalSize('?'),
+          ),
+          style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
         ),
 
         const SizedBox(height: 16),

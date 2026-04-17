@@ -35,8 +35,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   Future<Character> create({
     required String name,
     required WorldSchema template,
-    List<String> linkedPackages = const [],
-    List<String> linkedWorlds = const [],
+    required String worldName,
   }) async {
     final playerCategory =
         template.categories.firstWhere((c) => c.slug == playerCategorySlug);
@@ -52,14 +51,50 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       templateId: template.schemaId,
       templateName: template.name,
       entity: entity,
-      linkedPackages: linkedPackages,
-      linkedWorlds: linkedWorlds,
+      worldName: worldName,
       createdAt: now,
       updatedAt: now,
     );
     await _repo.save(character);
     state = AsyncValue.data([character, ...state.valueOrNull ?? const []]);
     return character;
+  }
+
+  /// Bir world'de template güncellenince o world'e bağlı karakterlerin
+  /// `entity.fields`'i yeni Player kategorisine göre haritalanır: yeni
+  /// alanlara default, kaldırılan alanlar düşürülür.
+  Future<void> applyTemplateUpdate({
+    required String worldName,
+    required WorldSchema newTemplate,
+  }) async {
+    final playerCat = newTemplate.categories
+        .where((c) => c.slug == playerCategorySlug)
+        .firstOrNull;
+    if (playerCat == null) return;
+    final list = [...(state.valueOrNull ?? const <Character>[])];
+    final defaults = _defaultFieldsFor(playerCat);
+    final allowedKeys = playerCat.fields.map((f) => f.fieldKey).toSet();
+    var changed = false;
+    for (var i = 0; i < list.length; i++) {
+      final c = list[i];
+      if (c.worldName != worldName) continue;
+      final merged = <String, dynamic>{};
+      for (final key in allowedKeys) {
+        merged[key] = c.entity.fields.containsKey(key)
+            ? c.entity.fields[key]
+            : defaults[key];
+      }
+      final bumped = c.copyWith(
+        entity: c.entity.copyWith(fields: merged),
+        templateId: newTemplate.schemaId,
+        templateName: newTemplate.name,
+        updatedAt: DateTime.now().toUtc().toIso8601String(),
+      );
+      await _repo.save(bumped);
+      list[i] = bumped;
+      changed = true;
+    }
+    if (changed) state = AsyncValue.data(list);
   }
 
   Future<void> update(Character character) async {
