@@ -20,12 +20,13 @@ class MarketplaceListing {
     this.downloadCount = 0,
     required this.createdAt,
     this.ownerUsername,
+    this.coverImageB64,
   });
 
   final String id;
   final String ownerId;
 
-  /// 'world' | 'template' | 'package'
+  /// 'world' | 'template' | 'package' | 'character'
   final String itemType;
 
   final String title;
@@ -43,6 +44,11 @@ class MarketplaceListing {
   /// Joined from `profiles.username` for marketplace browse / preview UI.
   /// Null when fetched without the join.
   final String? ownerUsername;
+
+  /// Base64-encoded banner/cover image bytes captured at publish time.
+  /// Rendered directly by the marketplace cards so browse lists get a
+  /// preview without extra fetches. Null when the local item had no cover.
+  final String? coverImageB64;
 
   MarketplaceListing copyWith({
     int? downloadCount,
@@ -63,6 +69,7 @@ class MarketplaceListing {
       downloadCount: downloadCount ?? this.downloadCount,
       createdAt: createdAt,
       ownerUsername: ownerUsername ?? this.ownerUsername,
+      coverImageB64: coverImageB64,
     );
   }
 }

@@ -3,12 +3,13 @@ import 'dart:math' show pow;
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/parse_utils.dart';
 import '../../../domain/entities/post.dart';
 
 /// `posts` tablosu + `post-images` Storage bucket. Image upload size_bytes
 /// olarak `posts.size_bytes` ve dolaylı olarak `get_user_total_storage_used`
 /// quota'sına yansır.
-enum FeedScope { all, following, gameLists }
+enum FeedScope { all, following, discover }
 
 class PostsRemoteDataSource {
   static const _table = 'posts';
@@ -32,7 +33,9 @@ class PostsRemoteDataSource {
   }) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) return const [];
-    if (scope == FeedScope.gameLists) return const [];
+    if (scope == FeedScope.discover) {
+      return const [];
+    }
 
     List<String>? authorIds;
     if (scope == FeedScope.following) {
@@ -210,7 +213,7 @@ class PostsRemoteDataSource {
       body: row['body'] as String?,
       imageUrl: row['image_url'] as String?,
       sizeBytes: (row['size_bytes'] as int?) ?? 0,
-      createdAt: DateTime.parse(row['created_at'] as String),
+      createdAt: parseIsoOrNow(row['created_at']),
       marketplaceItemId: marketplace?['id'] as String?,
       marketplaceItemTitle: marketplace?['title'] as String?,
       marketplaceItemType: marketplace?['item_type'] as String?,

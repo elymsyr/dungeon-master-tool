@@ -33,10 +33,9 @@ class SocialShell extends StatelessWidget {
     final phone = isPhone(context);
     final tabs = <PillTab<String>>[
       PillTab(id: 'feed', icon: Icons.dynamic_feed_outlined, label: l10n.socialTabFeed),
-      PillTab(id: 'players', icon: Icons.groups_outlined, label: l10n.socialTabGameListings),
       PillTab(id: 'messages', icon: Icons.chat_bubble_outline, label: l10n.socialTabMessages, badgeCount: messagesBadgeCount),
+      PillTab(id: 'gameListings', icon: Icons.groups_outlined, label: l10n.socialTabGameListings),
       PillTab(id: 'marketplace', icon: Icons.storefront_outlined, label: l10n.socialTabMarketplace),
-      PillTab(id: 'discover', icon: Icons.person_search_outlined, label: l10n.socialTabDiscover),
     ];
     final bar = PillTabBar<String>(
       tabs: tabs,

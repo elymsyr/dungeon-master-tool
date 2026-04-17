@@ -214,6 +214,20 @@ final openGameListingsProvider = FutureProvider<List<GameListing>>((ref) async {
   );
 });
 
+/// Herhangi bir kullanıcının (başkasının profili için) public listings'i.
+/// Sadece public / open olanlar değil — hepsini getirir; Profile Listings
+/// sekmesinde başka kullanıcıların geçmiş ilanları da görünebilir.
+final userGameListingsProvider =
+    FutureProvider.family<List<GameListing>, String>((ref, userId) async {
+  if (!SupabaseConfig.isConfigured) return const [];
+  return cachedFetch(
+    ref: ref,
+    cacheKey: 'userGameListings:$userId',
+    ttl: const Duration(minutes: 5),
+    fetch: () => ref.read(gameListingsRemoteDsProvider).fetchByOwner(userId),
+  );
+});
+
 /// Auth user'ın kendi ilanları (başvuru sayılarıyla birlikte).
 final myGameListingsProvider = FutureProvider<List<GameListing>>((ref) async {
   if (!SupabaseConfig.isConfigured) return const [];
@@ -272,6 +286,41 @@ class GameListingComposerNotifier extends StateNotifier<AsyncValue<void>> {
           );
       invalidateCachePrefix('gameListings:');
       invalidateCache('myGameListings');
+      _ref.invalidate(openGameListingsProvider);
+      _ref.invalidate(myGameListingsProvider);
+      state = const AsyncValue.data(null);
+      return true;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return false;
+    }
+  }
+
+  Future<bool> update({
+    required String listingId,
+    required String title,
+    String? description,
+    String? system,
+    int? seatsTotal,
+    String? schedule,
+    String? gameLanguage,
+    List<String> tags = const [],
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      await _ref.read(gameListingsRemoteDsProvider).update(
+            listingId: listingId,
+            title: title,
+            description: description,
+            system: system,
+            seatsTotal: seatsTotal,
+            schedule: schedule,
+            gameLanguage: gameLanguage,
+            tags: tags,
+          );
+      invalidateCachePrefix('gameListings:');
+      invalidateCache('myGameListings');
+      invalidateCachePrefix('userGameListings:');
       _ref.invalidate(openGameListingsProvider);
       _ref.invalidate(myGameListingsProvider);
       state = const AsyncValue.data(null);
@@ -436,7 +485,7 @@ final conversationListRealtimeProvider = Provider<void>((ref) {
 // ── Marketplace (public marketplace_listings) ───────────────────────
 
 class MarketplaceFilters {
-  final String type; // 'all' | 'world' | 'template' | 'package'
+  final String type; // 'all' | 'world' | 'template' | 'package' | 'character'
   final String? language;
   final String? tag;
   const MarketplaceFilters({this.type = 'all', this.language, this.tag});

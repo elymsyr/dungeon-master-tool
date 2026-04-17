@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 /// Mixin that provides undo/redo stack management for StateNotifier subclasses.
 ///
 /// Usage:
-///   class MyNotifier extends StateNotifier<MyState> with UndoRedoMixin<MyState> {
+///   class MyNotifier extends StateNotifier&lt;MyState&gt; with UndoRedoMixin&lt;MyState&gt; {
 ///     void someAction() {
 ///       pushUndo(state);
 ///       state = state.copyWith(...);

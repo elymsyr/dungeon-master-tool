@@ -39,7 +39,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
         final auth = ref.read(authProvider);
         if (mounted && auth != null) {
           await ref.read(userSessionProvider.notifier).activate(auth.uid);
-          if (mounted) context.go('/hub');
+          if (!mounted) return;
+          context.go('/hub');
         }
         // Startup sonrası ban dialog'u zaten set olmuşsa hemen göster.
         _maybeShowBanDialog();
@@ -95,7 +96,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     ref.listen(authProvider, (prev, next) async {
       if (prev == null && next != null) {
         await ref.read(userSessionProvider.notifier).activate(next.uid);
-        if (mounted) context.go('/hub');
+        if (!context.mounted) return;
+        context.go('/hub');
       }
     });
 

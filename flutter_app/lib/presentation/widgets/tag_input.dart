@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../theme/dm_tool_colors.dart';
+import '../../application/providers/global_tags_provider.dart';
+import '../../application/services/tag_moderation.dart';
 
-/// Virgül veya enter ile tag eklemeye izin veren küçük text input.
-/// Girilen tag'ler küçük harfe çevrilir ve trim edilir; boş/mükerrer
-/// tag'ler sessizce atlanır. Chip'e tıklanınca kaldırılır.
-class TagInput extends StatefulWidget {
+/// Plain comma-separated tag input with inline global-tag autocomplete.
+/// Kullanıcı virgül yazdıkça veya submit ettikçe tag listesi güncellenir;
+/// aynı anda altta açılan bir Material overlay global tag önerileri gösterir.
+/// Davranış `metadata_editor_section._tagsField` ile bire bir aynıdır.
+class TagInput extends ConsumerStatefulWidget {
   final List<String> tags;
   final ValueChanged<List<String>> onChanged;
   final String? label;
@@ -22,12 +25,30 @@ class TagInput extends StatefulWidget {
   });
 
   @override
-  State<TagInput> createState() => _TagInputState();
+  ConsumerState<TagInput> createState() => _TagInputState();
 }
 
-class _TagInputState extends State<TagInput> {
-  final _ctrl = TextEditingController();
-  final _focus = FocusNode();
+class _TagInputState extends ConsumerState<TagInput> {
+  late final TextEditingController _ctrl;
+  final FocusNode _focus = FocusNode();
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.tags.join(', '));
+  }
+
+  @override
+  void didUpdateWidget(covariant TagInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final joined = widget.tags.join(', ');
+    // Parent'tan gelen değişiklikleri yakala — yalnızca inline düzenleme
+    // sırasında controller metnini ezme.
+    if (!_focus.hasFocus && _ctrl.text != joined) {
+      _ctrl.text = joined;
+    }
+  }
 
   @override
   void dispose() {
@@ -38,69 +59,107 @@ class _TagInputState extends State<TagInput> {
 
   void _commit(String raw) {
     final parts = raw
-        .split(RegExp(r'[,\n]'))
-        .map((s) => s.trim().toLowerCase())
-        .where((s) => s.isNotEmpty);
-    final next = <String>[...widget.tags];
+        .split(',')
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty)
+        .toList();
+    String? err;
+    final accepted = <String>[];
     for (final p in parts) {
-      if (next.length >= widget.maxTags) break;
-      if (!next.contains(p)) next.add(p);
+      if (accepted.length >= widget.maxTags) break;
+      final reason = TagModeration.validate(p);
+      if (reason != null) {
+        err = '"$p": $reason';
+        continue;
+      }
+      if (!accepted.contains(p)) accepted.add(p);
     }
-    widget.onChanged(next);
-    _ctrl.clear();
-  }
-
-  void _remove(String tag) {
-    final next = [...widget.tags]..remove(tag);
-    widget.onChanged(next);
+    setState(() => _error = err);
+    widget.onChanged(accepted);
   }
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<DmToolColors>()!;
-    return InputDecorator(
-      decoration: InputDecoration(
-        labelText: widget.label,
-        border: const OutlineInputBorder(),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (widget.tags.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4, bottom: 6),
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: widget.tags
-                    .map((t) => InputChip(
-                          label: Text(t, style: const TextStyle(fontSize: 12)),
-                          onDeleted: () => _remove(t),
-                          backgroundColor: palette.featureCardBg,
-                          visualDensity: VisualDensity.compact,
-                        ))
-                    .toList(),
+    final globalTags = ref.watch(globalTagsProvider);
+    return RawAutocomplete<String>(
+      focusNode: _focus,
+      textEditingController: _ctrl,
+      optionsBuilder: (TextEditingValue value) {
+        final text = value.text;
+        final lastComma = text.lastIndexOf(',');
+        final current =
+            (lastComma >= 0 ? text.substring(lastComma + 1) : text)
+                .trim()
+                .toLowerCase();
+        if (current.isEmpty) return const Iterable<String>.empty();
+        final already =
+            text.split(',').map((s) => s.trim().toLowerCase()).toSet();
+        return globalTags
+            .where((t) =>
+                t.toLowerCase().contains(current) &&
+                !already.contains(t.toLowerCase()))
+            .take(8);
+      },
+      fieldViewBuilder: (context, controller, focus, onSubmit) {
+        return TextField(
+          controller: controller,
+          focusNode: focus,
+          decoration: InputDecoration(
+            labelText: widget.label,
+            hintText: widget.hint ?? 'comma, separated, tags',
+            errorText: _error,
+            border: const OutlineInputBorder(),
+            isDense: true,
+          ),
+          style: const TextStyle(fontSize: 13),
+          onChanged: _commit,
+          onSubmitted: (_) {
+            onSubmit();
+            _commit(controller.text);
+          },
+        );
+      },
+      onSelected: (option) {
+        final text = _ctrl.text;
+        final lastComma = text.lastIndexOf(',');
+        final head =
+            lastComma >= 0 ? '${text.substring(0, lastComma + 1)} ' : '';
+        final replaced = '$head$option, ';
+        _ctrl.value = TextEditingValue(
+          text: replaced,
+          selection: TextSelection.collapsed(offset: replaced.length),
+        );
+        _commit(replaced);
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 3,
+            borderRadius: BorderRadius.circular(4),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360, maxHeight: 200),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (_, i) {
+                  final opt = options.elementAt(i);
+                  return InkWell(
+                    onTap: () => onSelected(opt),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      child:
+                          Text(opt, style: const TextStyle(fontSize: 13)),
+                    ),
+                  );
+                },
               ),
             ),
-          TextField(
-            controller: _ctrl,
-            focusNode: _focus,
-            decoration: InputDecoration(
-              isDense: true,
-              border: InputBorder.none,
-              hintText: widget.hint,
-            ),
-            onSubmitted: (v) {
-              _commit(v);
-              _focus.requestFocus();
-            },
-            onChanged: (v) {
-              if (v.endsWith(',')) _commit(v);
-            },
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

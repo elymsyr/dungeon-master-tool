@@ -108,12 +108,15 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         ref.read(uiStateProvider.notifier).update((s) => s.copyWith(sessionMainSplitterRatio: r));
       },
       first: Consumer(builder: (context, ref, _) {
-        final combat = ref.watch(combatProvider);
-        return _buildLeftPanel(palette, combat, combat.activeEncounter);
+        final (encounters, enc) = ref.watch(combatProvider.select(
+          (s) => (s.encounters, s.activeEncounter),
+        ));
+        return _buildLeftPanel(palette, encounters, enc);
       }),
       second: Consumer(builder: (context, ref, _) {
-        final combat = ref.watch(combatProvider);
-        return _buildRightPanel(palette, combat);
+        final eventLog =
+            ref.watch(combatProvider.select((s) => s.eventLog));
+        return _buildRightPanel(palette, eventLog);
       }),
     );
   }
@@ -121,7 +124,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // ============================================================
   // SOL PANEL — Combat Tracker
   // ============================================================
-  Widget _buildLeftPanel(DmToolColors palette, CombatState combat, Encounter? enc) {
+  Widget _buildLeftPanel(
+      DmToolColors palette, List<Encounter> encounters, Encounter? enc) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -133,12 +137,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               Expanded(
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value: combat.activeEncounterId,
+                    value: enc?.id,
                     isDense: true,
                     isExpanded: true,
                     style: TextStyle(fontSize: 13, color: palette.tabActiveText, fontWeight: FontWeight.w600),
                     dropdownColor: palette.uiPopupBg,
-                    items: combat.encounters.map((e) =>
+                    items: encounters.map((e) =>
                       DropdownMenuItem(value: e.id, child: Text(e.name, style: const TextStyle(fontSize: 13)))
                     ).toList(),
                     onChanged: (id) { if (id != null) ref.read(combatProvider.notifier).switchEncounter(id); },
@@ -147,7 +151,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               ),
               IconButton(
                 icon: const Icon(Icons.add, size: 20),
-                onPressed: () => ref.read(combatProvider.notifier).createEncounter('Encounter ${combat.encounters.length + 1}'),
+                onPressed: () => ref.read(combatProvider.notifier).createEncounter('Encounter ${encounters.length + 1}'),
                 tooltip: 'New Encounter',
               ),
               IconButton(
@@ -157,7 +161,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               ),
               IconButton(
                 icon: Icon(Icons.delete, size: 18, color: palette.dangerBtnBg),
-                onPressed: combat.encounters.length > 1 && enc != null ? () => ref.read(combatProvider.notifier).deleteEncounter(enc.id) : null,
+                onPressed: encounters.length > 1 && enc != null ? () => ref.read(combatProvider.notifier).deleteEncounter(enc.id) : null,
                 tooltip: 'Delete',
               ),
             ],
@@ -288,7 +292,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   // ============================================================
   // SAĞ PANEL — Session Controls + Log + Bottom Tabs
   // ============================================================
-  Widget _buildRightPanel(DmToolColors palette, CombatState combat) {
+  Widget _buildRightPanel(DmToolColors palette, List<String> eventLog) {
     return Column(
       children: [
         // Session control bar
@@ -298,7 +302,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           child: Row(
             children: [
               Expanded(flex: 2, child: Text('Session', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText))),
-              // TODO: Session selector dropdown (şimdilik tek session)
+              // Multi-session selector intentionally deferred — app currently
+              // owns a single implicit session per campaign.
               FilledButton.icon(
                 onPressed: () {},
                 icon: const Icon(Icons.save, size: 14),
@@ -328,15 +333,15 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   child: Text('Event Log', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
                 ),
                 Expanded(
-                  child: combat.eventLog.isEmpty
+                  child: eventLog.isEmpty
                       ? Center(child: Text('No events yet', style: TextStyle(color: palette.sidebarLabelSecondary, fontSize: 12)))
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
-                          itemCount: combat.eventLog.length,
+                          itemCount: eventLog.length,
                           itemBuilder: (context, index) {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 2),
-                              child: Text(combat.eventLog[index], style: TextStyle(fontSize: 12, color: palette.htmlText)),
+                              child: Text(eventLog[index], style: TextStyle(fontSize: 12, color: palette.htmlText)),
                             );
                           },
                         ),
@@ -1293,7 +1298,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           FilledButton(onPressed: () {
-            // TODO: rename encounter in provider
+            final name = controller.text.trim();
+            if (name.isNotEmpty && name != enc.name) {
+              ref.read(combatProvider.notifier).renameEncounter(enc.id, name);
+            }
             Navigator.pop(ctx);
           }, child: const Text('Rename')),
         ],

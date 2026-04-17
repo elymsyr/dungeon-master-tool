@@ -5,24 +5,28 @@
 # IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
 # invoked from the command line by running `flutter analyze`.
 
-# The following line activates a set of recommended lints for Flutter apps,
-# packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
-linter:
-  # The lint rules applied to this project can be customized in the
-  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
-  # included above or to enable additional rules. A list of all available lints
-  # and their documentation is published at https://dart.dev/lints.
-  #
-  # Instead of disabling a lint rule for the entire project in the
-  # section below, it can also be suppressed for a single line of code
-  # or a specific dart file by using the `// ignore: name_of_lint` and
-  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
-  # producing the lint.
-  rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+analyzer:
+  exclude:
+    # Generated files — freezed/drift/riverpod/json_serializable output.
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "lib/gen/**"
+    - "lib/l10n/gen/**"
+  errors:
+    # Promote a few opinionated lints from info → warning so CI catches them.
+    use_build_context_synchronously: warning
+    cancel_subscriptions: warning
+    close_sinks: warning
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+linter:
+  rules:
+    # Safety-focused lints layered on top of flutter_lints defaults.
+    # (prefer_const_* and unawaited_futures intentionally omitted — both
+    # produce high-noise, low-signal diffs in the current codebase;
+    # revisit once we adopt them incrementally.)
+    - avoid_empty_else
+    - cancel_subscriptions
+    - close_sinks
+    - use_build_context_synchronously

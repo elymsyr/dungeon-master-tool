@@ -116,7 +116,7 @@ class _CampaignSelectorScreenState
                         }
                       : null,
                   icon: const Icon(Icons.folder_open),
-                  label: Text(l10n.btnSave), // TODO: BTN_LOAD key
+                  label: Text(l10n.btnLoad),
                 ),
               ),
 

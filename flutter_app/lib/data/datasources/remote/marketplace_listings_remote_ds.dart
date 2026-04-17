@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/utils/parse_utils.dart';
 import '../../../domain/entities/marketplace_listing.dart';
 
 /// `marketplace_listings` tablosu + `shared-payloads` Storage bucket.
@@ -39,6 +40,7 @@ class MarketplaceListingsRemoteDataSource {
     String? changelog,
     required String contentHash,
     required Map<String, dynamic> payload,
+    String? coverImageB64,
   }) async {
     final uid = _userId;
     final listingId = _uuid.v4();
@@ -68,6 +70,7 @@ class MarketplaceListingsRemoteDataSource {
         'p_content_hash': contentHash,
         'p_payload_path': path,
         'p_size_bytes': gz.length,
+        'p_cover_image_b64': coverImageB64,
       });
     } catch (e) {
       // Roll back the orphaned blob if the DB insert failed.
@@ -185,8 +188,9 @@ class MarketplaceListingsRemoteDataSource {
       payloadPath: row['payload_path'] as String,
       sizeBytes: (row['size_bytes'] as num?)?.toInt() ?? 0,
       downloadCount: (row['download_count'] as num?)?.toInt() ?? 0,
-      createdAt: DateTime.parse(row['created_at'] as String),
+      createdAt: parseIsoOrNow(row['created_at']),
       ownerUsername: profile?['username'] as String?,
+      coverImageB64: row['cover_image_b64'] as String?,
     );
   }
 

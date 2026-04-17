@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dungeon_master_tool/presentation/widgets/field_widgets/field_widget_factory.dart';
+import 'package:dungeon_master_tool/presentation/widgets/markdown_text_area.dart';
 import 'package:dungeon_master_tool/domain/entities/schema/field_schema.dart';
 
 FieldSchema _makeSchema(
@@ -107,7 +108,7 @@ void main() {
         ),
       ));
       expect(find.text('Description'), findsOneWidget);
-      expect(find.byType(TextFormField), findsOneWidget);
+      expect(find.byType(MarkdownTextArea), findsOneWidget);
     });
 
     testWidgets('has maxLines set to 4', (tester) async {
@@ -120,8 +121,9 @@ void main() {
           onChanged: (_) {},
         ),
       ));
-      final field = tester.widget<TextField>(find.byType(TextField));
-      expect(field.maxLines, 4);
+      final area =
+          tester.widget<MarkdownTextArea>(find.byType(MarkdownTextArea));
+      expect(area.maxLines, 4);
     });
 
     testWidgets('shows initial value', (tester) async {
@@ -147,8 +149,10 @@ void main() {
           onChanged: (_) {},
         ),
       ));
-      final field = tester.widget<TextField>(find.byType(TextField));
-      expect(field.readOnly, isTrue);
+      final area =
+          tester.widget<MarkdownTextArea>(find.byType(MarkdownTextArea));
+      expect(area.readOnly, isTrue);
+      expect(find.byType(TextField), findsNothing);
     });
   });
 

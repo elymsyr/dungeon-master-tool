@@ -11,6 +11,7 @@ import '../../../domain/entities/schema/world_schema.dart';
 import '../../dialogs/builtin_warning_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/marketplace_panel.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
@@ -490,6 +491,12 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                     itemId: c.id,
                     type: 'character',
                     localUpdatedAt: updatedAt,
+                  ),
+                  const SizedBox(height: 12),
+                  MarketplacePanel(
+                    itemType: 'character',
+                    localId: c.id,
+                    title: c.entity.name,
                   ),
                 ],
               ),

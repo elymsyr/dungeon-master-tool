@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/parse_utils.dart';
+
 class AdminUserSummary {
   final String userId;
   final String? email;
@@ -28,13 +30,11 @@ class AdminUserSummary {
         email: row['email'] as String?,
         username: row['username'] as String?,
         provider: (row['provider'] as String?) ?? 'email',
-        createdAt: DateTime.parse(row['created_at'] as String),
+        createdAt: parseIsoOrNow(row['created_at']),
         isBeta: row['is_beta'] as bool? ?? false,
         isBanned: row['is_banned'] as bool? ?? false,
         storageBytes: (row['storage_bytes'] as num?)?.toInt() ?? 0,
-        lastActiveAt: row['last_active_at'] != null
-            ? DateTime.parse(row['last_active_at'] as String)
-            : null,
+        lastActiveAt: parseIsoOrNull(row['last_active_at']),
       );
 }
 
@@ -58,7 +58,7 @@ class BannedUserEntry {
         email: row['email'] as String?,
         username: row['username'] as String?,
         reason: row['reason'] as String?,
-        bannedAt: DateTime.parse(row['banned_at'] as String),
+        bannedAt: parseIsoOrNow(row['banned_at']),
       );
 }
 

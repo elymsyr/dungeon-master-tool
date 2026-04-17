@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/beta_provider.dart';
+import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
@@ -295,12 +296,6 @@ class _CharacterEditorScreenState
                 PopupMenuItem(value: 'fr', child: Text('Français')),
               ],
             ),
-            // Quit
-            IconButton(
-              icon: const Icon(Icons.exit_to_app, size: 20),
-              tooltip: 'Quit to hub',
-              onPressed: () => _saveAndClose(context),
-            ),
             // Bug report
             IconButton(
               icon: const Icon(Icons.bug_report_outlined, size: 20),
@@ -321,7 +316,6 @@ class _CharacterEditorScreenState
                 children: [
                   _entityHeader(palette, character),
                   const SizedBox(height: 16),
-                  _linkedBadges(palette, character),
                   _renderFields(palette, playerCat),
                 ],
               ),
@@ -332,63 +326,29 @@ class _CharacterEditorScreenState
     );
   }
 
-  /// Entity header — portrait + name + description + tags.
+  /// Entity header — portrait + name + description + tags + world link.
   Widget _entityHeader(DmToolColors palette, Character c) {
     final entity = c.entity;
     final hasImage =
         entity.imagePath.isNotEmpty && File(entity.imagePath).existsSync();
     final globalTags = ref.watch(globalTagsProvider);
 
+    const portraitWidth = 140.0;
     return Container(
-      padding: const EdgeInsets.all(12),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: palette.featureCardBg,
         borderRadius: palette.br,
         border: Border.all(color: palette.featureCardBorder),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          InkWell(
-            onTap: _pickPortrait,
-            customBorder: const CircleBorder(),
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: palette.featureCardBg,
-                border: Border.all(
-                    color: palette.featureCardBorder, width: 2),
-                image: hasImage
-                    ? DecorationImage(
-                        image: FileImage(File(entity.imagePath)),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              alignment: Alignment.center,
-              child: hasImage
-                  ? null
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.person,
-                            size: 40,
-                            color: palette.sidebarLabelSecondary),
-                        const SizedBox(height: 2),
-                        Text('Add photo',
-                            style: TextStyle(
-                                fontSize: 10,
-                                color: palette.sidebarLabelSecondary)),
-                      ],
-                    ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                portraitWidth + 16, 14, 14, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
                   key: ValueKey('hdr_name_${c.id}'),
@@ -421,8 +381,8 @@ class _CharacterEditorScreenState
                     contentPadding: EdgeInsets.zero,
                   ),
                   onChanged: (v) {
-                    _mutate(
-                        c.copyWith(entity: c.entity.copyWith(description: v)));
+                    _mutate(c.copyWith(
+                        entity: c.entity.copyWith(description: v)));
                   },
                 ),
                 const SizedBox(height: 8),
@@ -434,12 +394,64 @@ class _CharacterEditorScreenState
                         c.copyWith(entity: c.entity.copyWith(tags: tags)));
                   },
                 ),
+                const SizedBox(height: 10),
+                _WorldLink(
+                  worldName: c.worldName,
+                  palette: palette,
+                  onOpen: c.worldName.isEmpty
+                      ? null
+                      : () => _openWorld(c.worldName),
+                ),
               ],
+            ),
+          ),
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: portraitWidth,
+            child: InkWell(
+              onTap: _pickPortrait,
+              child: hasImage
+                  ? Image.file(
+                      File(entity.imagePath),
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      alignment: Alignment.center,
+                      color: palette.featureCardBg,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.person,
+                              size: 40,
+                              color: palette.sidebarLabelSecondary),
+                          const SizedBox(height: 2),
+                          Text('Add photo',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: palette.sidebarLabelSecondary)),
+                        ],
+                      ),
+                    ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _openWorld(String worldName) async {
+    await _save(silent: true);
+    if (!mounted) return;
+    final success = await withLoading(
+      ref.read(globalLoadingProvider.notifier),
+      'open-world-$worldName',
+      'Opening world "$worldName"...',
+      () => ref.read(activeCampaignProvider.notifier).load(worldName),
+    );
+    if (!success || !mounted) return;
+    context.go('/main');
   }
 
   Future<void> _pickPortrait() async {
@@ -454,32 +466,6 @@ class _CharacterEditorScreenState
     _mutate(c.copyWith(entity: c.entity.copyWith(imagePath: path)));
   }
 
-  Widget _linkedBadges(DmToolColors palette, Character c) {
-    if (c.worldName.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Chip(
-          avatar: Icon(Icons.warning_amber,
-              size: 14, color: palette.dangerBtnBg),
-          label: Text(
-            L10n.of(context)!.charWorldOrphan,
-            style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
-          ),
-          visualDensity: VisualDensity.compact,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Chip(
-        avatar: const Icon(Icons.public, size: 14),
-        label: Text(c.worldName, style: const TextStyle(fontSize: 11)),
-        visualDensity: VisualDensity.compact,
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-    );
-  }
 
   Widget _renderFields(DmToolColors palette, EntityCategorySchema cat) {
     final character = _working!;
@@ -567,6 +553,62 @@ class _CharacterEditorScreenState
     _autoSaveTimer?.cancel();
     await _save(silent: true);
     if (context.mounted) context.pop();
+  }
+}
+
+/// Inline world link inside the character header. Plain text with a small
+/// globe icon — no border/chip. Tapping opens the linked world (if any)
+/// after saving the current character.
+class _WorldLink extends StatelessWidget {
+  final String worldName;
+  final DmToolColors palette;
+  final VoidCallback? onOpen;
+
+  const _WorldLink({
+    required this.worldName,
+    required this.palette,
+    required this.onOpen,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context)!;
+    if (worldName.isEmpty) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.warning_amber, size: 13, color: palette.dangerBtnBg),
+          const SizedBox(width: 4),
+          Text(
+            l10n.charWorldOrphan,
+            style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
+          ),
+        ],
+      );
+    }
+    return InkWell(
+      onTap: onOpen,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.public, size: 13, color: palette.featureCardAccent),
+            const SizedBox(width: 4),
+            Text(
+              worldName,
+              style: TextStyle(
+                fontSize: 12,
+                color: palette.featureCardAccent,
+                decoration: TextDecoration.underline,
+                decorationColor:
+                    palette.featureCardAccent.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

@@ -29,7 +29,6 @@ import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
 import '../widgets/app_icon_image.dart';
-import '../widgets/close_guard.dart';
 import '../widgets/entity_sidebar.dart';
 import '../widgets/lazy_indexed_stack.dart';
 import '../widgets/pdf_sidebar.dart';
@@ -129,11 +128,10 @@ class _MainScreenState extends ConsumerState<MainScreen>
     }
   }
 
-  /// Hub'a donuse tetiklenen ortak exit akisi:
+  /// Hub'a donuse tetiklenen ortak exit akisi (sessiz):
   /// 1) Local save (saveNow) — loading overlay ile
-  /// 2) Close guard: local ve/veya cloud state guncel degilse kullaniciya sor
-  /// 3) Campaign list provider'larini invalidate et
-  /// 4) /hub'a git
+  /// 2) Campaign list provider'larini invalidate et
+  /// 3) /hub'a git
   Future<void> _exitToHub() async {
     await withLoading(
       ref.read(globalLoadingProvider.notifier),
@@ -142,13 +140,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
       () => ref.read(saveStateProvider.notifier).saveNow(),
     );
     if (!mounted) return;
-    final campaignName = ref.read(activeCampaignProvider) ?? 'World';
-    final proceed = await confirmCloseWithBackupCheck(
-      context: context,
-      ref: ref,
-      itemName: campaignName,
-    );
-    if (!proceed) return;
     ref.invalidate(campaignListProvider);
     ref.invalidate(campaignInfoListProvider);
     if (mounted) context.go('/hub');
@@ -442,12 +433,16 @@ class _MainScreenState extends ConsumerState<MainScreen>
       // --- Toolbar (AppBar) ---
       appBar: AppBar(
         titleSpacing: isLandscapePhone ? 0 : 8,
-        leading: isLandscapePhone
-            ? IconButton(
-                icon: const Icon(Icons.menu, size: 22),
-                onPressed: () => _showLandscapeNavSheet(tabLabels, palette),
-              )
-            : null,
+        leading: IconButton(
+          icon: Icon(
+            isLandscapePhone ? Icons.menu : Icons.arrow_back,
+            size: 22,
+          ),
+          tooltip: isLandscapePhone ? 'Menu' : 'Back to hub',
+          onPressed: isLandscapePhone
+              ? () => _showLandscapeNavSheet(tabLabels, palette)
+              : _exitToHub,
+        ),
         automaticallyImplyLeading: false,
         title: Row(
           children: [
@@ -498,8 +493,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
                     }
                   case 'import':
                     ImportPackageDialog.show(context);
-                  case 'quit':
-                    _exitToHub();
                   case 'bug':
                     BugReportDialog.show(context);
                   default:
@@ -531,7 +524,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 const PopupMenuItem(value: 'lang:de', child: Text('Deutsch')),
                 const PopupMenuItem(value: 'lang:fr', child: Text('Français')),
                 const PopupMenuDivider(),
-                const PopupMenuItem(value: 'quit', child: Row(children: [Icon(Icons.exit_to_app, size: 18), SizedBox(width: 8), Text('Quit')])),
                 const PopupMenuItem(value: 'bug', child: Row(children: [Icon(Icons.bug_report_outlined, size: 18), SizedBox(width: 8), Text('Report a Bug')])),
               ],
             ),
@@ -598,12 +590,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 PopupMenuItem(value: 'de', child: Text('Deutsch')),
                 PopupMenuItem(value: 'fr', child: Text('Français')),
               ],
-            ),
-            // Quit (return to hub)
-            IconButton(
-              icon: const Icon(Icons.exit_to_app, size: 20),
-              tooltip: 'Quit to hub',
-              onPressed: _exitToHub,
             ),
             // Bug report
             IconButton(

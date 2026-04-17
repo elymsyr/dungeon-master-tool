@@ -124,12 +124,15 @@ class _TokenWidgetState extends State<TokenWidget> {
     if (path != null && path.isNotEmpty) {
       final file = File(path);
       if (file.existsSync()) {
+        final cacheDim = (size * 2).toInt();
         return Image.file(
           file,
           width: size,
           height: size,
           fit: BoxFit.cover,
-          cacheWidth: (size * 2).toInt(),
+          cacheWidth: cacheDim,
+          cacheHeight: cacheDim,
+          filterQuality: FilterQuality.low,
           errorBuilder: (_, _, _) => _buildInitials(size),
         );
       }

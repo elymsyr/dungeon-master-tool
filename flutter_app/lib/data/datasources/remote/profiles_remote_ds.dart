@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/parse_utils.dart';
 import '../../../domain/entities/user_profile.dart';
 
 /// Supabase `profiles` tablosu + `profile_counts` view + `search_profiles` RPC
@@ -161,9 +162,7 @@ class ProfilesRemoteDataSource {
       followers: followers,
       following: following,
       hiddenFromDiscover: row['hidden_from_discover'] as bool? ?? false,
-      createdAt: row['created_at'] != null
-          ? DateTime.parse(row['created_at'] as String)
-          : DateTime.now().toUtc(),
+      createdAt: parseIsoOrNull(row['created_at']) ?? DateTime.now().toUtc(),
     );
   }
 }

@@ -6,11 +6,10 @@ import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/social_providers.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../theme/dm_tool_colors.dart';
-import '../social/discover_tab.dart';
 import '../social/feed_tab.dart';
+import '../social/game_listings_tab.dart';
 import '../social/marketplace_tab.dart';
 import '../social/messages_tab.dart';
-import '../social/players_tab.dart';
 import '../social/social_shell.dart';
 
 /// Aktif Social sub-tab'ı — hub_screen help button'u hangi yardım metnini
@@ -43,10 +42,9 @@ class _SocialTabState extends ConsumerState<SocialTab> {
           ref.read(socialSubTabProvider.notifier).state = t,
       child: switch (currentTab) {
         'feed' => const FeedTab(),
-        'players' => const PlayersTab(),
         'messages' => const MessagesTab(),
+        'gameListings' => const GameListingsTab(),
         'marketplace' => const MarketplaceTab(),
-        'discover' => const DiscoverTab(),
         _ => const FeedTab(),
       },
     );

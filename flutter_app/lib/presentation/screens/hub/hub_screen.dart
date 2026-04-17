@@ -235,11 +235,11 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     final screen = getScreenType(context);
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;
-    // Mobile hides Settings from the tab bar — it lives in the profile menu.
-    final isPhone = screen == ScreenType.phone;
+    // Settings is accessible only via the profile menu — hidden on desktop
+    // side rail, mobile bottom nav, and landscape sheet.
     final visibleTabs = <int>[
       for (var i = 0; i < _tabs.length; i++)
-        if (!(isPhone && i == _settingsTabIndex)) i,
+        if (i != _settingsTabIndex) i,
     ];
     // Multi-device hint — another device uploaded changes we haven't pulled.
     final cloudBadge = ref.watch(cloudRemoteHasNewerProvider);
@@ -326,6 +326,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
               children: [
                 _HubSideRail(
                   tabs: _tabs,
+                  visibleTabs: visibleTabs,
                   selectedIndex: tabIndex,
                   onSelected: (i) =>
                       ref.read(hubTabIndexProvider.notifier).state = i,
@@ -370,6 +371,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
 
 class _HubSideRail extends StatelessWidget {
   final List<({IconData icon, String label})> tabs;
+  final List<int> visibleTabs;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
   final DmToolColors palette;
@@ -379,6 +381,7 @@ class _HubSideRail extends StatelessWidget {
 
   const _HubSideRail({
     required this.tabs,
+    required this.visibleTabs,
     required this.selectedIndex,
     required this.onSelected,
     required this.palette,
@@ -394,7 +397,7 @@ class _HubSideRail extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          for (var i = 0; i < tabs.length; i++)
+          for (final i in visibleTabs)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: _SideRailButton(

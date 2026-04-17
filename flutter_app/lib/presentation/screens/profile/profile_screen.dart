@@ -7,10 +7,13 @@ import '../../../application/providers/follows_provider.dart';
 import '../../../application/providers/marketplace_listing_provider.dart';
 import '../../../application/providers/profile_provider.dart';
 import '../../../application/providers/social_providers.dart';
+import '../../../domain/entities/game_listing.dart';
 import '../../../domain/entities/marketplace_listing.dart';
 import '../../../domain/entities/post.dart';
 import '../../../domain/entities/user_profile.dart';
+import '../../dialogs/create_listing_dialog.dart';
 import '../../dialogs/follow_list_dialog.dart';
+import '../../dialogs/listing_applicants_dialog.dart';
 import '../../dialogs/marketplace_preview_dialog.dart';
 import '../../dialogs/profile_edit_dialog.dart';
 import '../../../core/utils/cached_provider.dart';
@@ -19,6 +22,7 @@ import '../../../core/utils/screen_type.dart';
 import '../../l10n/app_localizations.dart';
 import '../social/messages_tab.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/listing_banner_card.dart';
 import '../../widgets/pill_tab_bar.dart';
 import '../../widgets/profile_avatar.dart';
 
@@ -118,9 +122,15 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
   @override
   Widget build(BuildContext context) {
     final phone = isPhone(context);
+    final l10n = L10n.of(context)!;
     final tabs = <PillTab<String>>[
       const PillTab(id: 'posts', icon: Icons.article_outlined, label: 'Posts'),
       const PillTab(id: 'items', icon: Icons.storefront_outlined, label: 'Items'),
+      PillTab(
+        id: 'listings',
+        icon: Icons.groups_outlined,
+        label: l10n.profileTabListings,
+      ),
     ];
     final bar = PillTabBar<String>(
       tabs: tabs,
@@ -131,10 +141,11 @@ class _ProfileBodyState extends ConsumerState<_ProfileBody> {
       showBorderBottom: !phone,
     );
     final content = IndexedStack(
-      index: _tab == 'posts' ? 0 : 1,
+      index: switch (_tab) { 'items' => 1, 'listings' => 2, _ => 0 },
       children: [
         _UserPostsTab(userId: widget.profile.userId, isMe: widget.isMe),
         _UserItemsTab(userId: widget.profile.userId, isMe: widget.isMe),
+        _UserListingsTab(userId: widget.profile.userId, isMe: widget.isMe),
       ],
     );
     return Column(
@@ -501,7 +512,7 @@ class _UserPostCard extends StatelessWidget {
   }
 }
 
-// ── Items tab ──────────────────────────────────────────────────────────
+// ── Items tab — marketplace listings ───────────────────────────────────
 
 class _UserItemsTab extends ConsumerWidget {
   final String userId;
@@ -557,10 +568,18 @@ class _UserItemsTab extends ConsumerWidget {
             itemBuilder: (_, i) => Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 540),
-                child: _UserListingCard(
-                  listing: items[i],
-                  canDelete: isMe,
-                  onDelete: () => _confirmAndDeleteListing(context, ref, items[i]),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: ListingBannerCard.marketplace(
+                    listing: items[i],
+                    onTap: () => MarketplacePreviewDialog.show(
+                      context,
+                      listing: items[i],
+                    ),
+                    onDelete: isMe
+                        ? () => _confirmAndDeleteListing(context, ref, items[i])
+                        : null,
+                  ),
                 ),
               ),
             ),
@@ -596,11 +615,12 @@ class _UserItemsTab extends ConsumerWidget {
     );
     if (confirm != true) return;
     try {
-      await ref.read(marketplaceListingNotifierProvider.notifier).deleteListing(listing: listing);
+      await ref
+          .read(marketplaceListingNotifierProvider.notifier)
+          .deleteListing(listing: listing);
       invalidateCache('userListings:$userId');
       invalidateCachePrefix('marketplace:');
       ref.invalidate(userMarketplaceListingsProvider(userId));
-      ref.invalidate(marketplaceProvider);
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -610,147 +630,176 @@ class _UserItemsTab extends ConsumerWidget {
   }
 }
 
-class _UserListingCard extends StatelessWidget {
-  final MarketplaceListing listing;
-  final bool canDelete;
-  final VoidCallback onDelete;
-  const _UserListingCard({
-    required this.listing,
-    required this.canDelete,
-    required this.onDelete,
-  });
+// ── Listings tab — game listings ──────────────────────────────────────
 
-  IconData get _typeIcon => switch (listing.itemType) {
-        'world' => Icons.public,
-        'template' => Icons.description_outlined,
-        'package' => Icons.inventory_2_outlined,
-        _ => Icons.folder_outlined,
-      };
-
-  String _typeLabel(L10n l10n) => switch (listing.itemType) {
-        'world' => l10n.itemTypeWorld,
-        'template' => l10n.itemTypeTemplate,
-        'package' => l10n.itemTypePackage,
-        _ => l10n.itemTypeGeneric,
-      };
+class _UserListingsTab extends ConsumerWidget {
+  final String userId;
+  final bool isMe;
+  const _UserListingsTab({required this.userId, required this.isMe});
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = L10n.of(context)!;
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final l10n = L10n.of(context)!;
+    final listingsAsync = isMe
+        ? ref.watch(myGameListingsProvider)
+        : ref.watch(userGameListingsProvider(userId));
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: palette.featureCardBg,
-        border: Border.all(color: palette.featureCardBorder),
-        borderRadius: palette.cbr,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: palette.cbr,
-          onTap: () => MarketplacePreviewDialog.show(context, listing: listing),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: palette.featureCardAccent.withValues(alpha: 0.12),
-                    borderRadius: palette.cbr,
-                  ),
-                  child: Icon(_typeIcon, size: 20, color: palette.featureCardAccent),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              listing.title,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: palette.tabActiveText,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+    return RefreshIndicator(
+      onRefresh: () async {
+        if (isMe) {
+          invalidateCache('myGameListings');
+          ref.invalidate(myGameListingsProvider);
+        } else {
+          invalidateCache('userGameListings:$userId');
+          ref.invalidate(userGameListingsProvider(userId));
+        }
+      },
+      child: listingsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => ListView(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(formatError(e),
+                  style: TextStyle(color: palette.dangerBtnBg)),
+            ),
+          ],
+        ),
+        data: (items) {
+          return ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            children: [
+              if (isMe) ...[
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 540),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        FilledButton.icon(
+                          icon: const Icon(Icons.add, size: 16),
+                          label: Text(l10n.btnNewListing),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: palette.featureCardAccent,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: palette.br),
+                            textStyle: const TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.w600),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: palette.featureCardAccent.withValues(alpha: 0.15),
-                              borderRadius: palette.br,
-                            ),
-                            child: Text(
-                              _typeLabel(l10n),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: palette.featureCardAccent,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (listing.description != null && listing.description!.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          listing.description!,
-                          style: TextStyle(fontSize: 12, color: palette.tabText),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                          onPressed: () => CreateListingDialog.show(context),
                         ),
                       ],
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Text(
-                            DateFormat.yMMMd().format(listing.createdAt.toLocal()),
-                            style: TextStyle(
-                                fontSize: 11, color: palette.sidebarLabelSecondary),
-                          ),
-                          Text(' · ',
-                              style: TextStyle(
-                                  fontSize: 11, color: palette.sidebarLabelSecondary)),
-                          Icon(Icons.download_outlined,
-                              size: 12, color: palette.sidebarLabelSecondary),
-                          const SizedBox(width: 2),
-                          Text(
-                            '${listing.downloadCount}',
-                            style: TextStyle(
-                                fontSize: 11, color: palette.sidebarLabelSecondary),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                if (canDelete) ...[
-                  const SizedBox(width: 8),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: onDelete,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Icon(Icons.delete_outline,
-                          size: 18, color: palette.dangerBtnBg),
                     ),
                   ),
-                ],
+                ),
+                const SizedBox(height: 12),
               ],
-            ),
-          ),
-        ),
+              if (items.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 48),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.groups_outlined,
+                            size: 36,
+                            color: palette.sidebarLabelSecondary),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.profileListingsEmpty,
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: palette.sidebarLabelSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                for (final listing in items)
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 540),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: ListingBannerCard.game(
+                          listing: listing,
+                          onTap: () => ListingApplicantsDialog.show(
+                            context,
+                            listing: listing,
+                          ),
+                          onEdit: isMe
+                              ? () => CreateListingDialog.show(
+                                    context,
+                                    existing: listing,
+                                  )
+                              : null,
+                          onClose: isMe
+                              ? () => _close(context, ref, listing)
+                              : null,
+                          onDelete: isMe
+                              ? () => _confirmAndDelete(context, ref, listing)
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ),
+            ],
+          );
+        },
       ),
     );
+  }
+
+  Future<void> _close(
+    BuildContext context,
+    WidgetRef ref,
+    GameListing listing,
+  ) async {
+    await ref.read(gameListingsRemoteDsProvider).close(listing.id);
+    invalidateCache('myGameListings');
+    invalidateCachePrefix('gameListings:');
+    ref.invalidate(myGameListingsProvider);
+    ref.invalidate(openGameListingsProvider);
+  }
+
+  Future<void> _confirmAndDelete(
+    BuildContext context,
+    WidgetRef ref,
+    GameListing listing,
+  ) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete "${listing.title}"?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    try {
+      await ref.read(gameListingsRemoteDsProvider).delete(listing.id);
+      invalidateCache('myGameListings');
+      invalidateCachePrefix('gameListings:');
+      ref.invalidate(myGameListingsProvider);
+      ref.invalidate(openGameListingsProvider);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Delete failed: $e')),
+      );
+    }
   }
 }

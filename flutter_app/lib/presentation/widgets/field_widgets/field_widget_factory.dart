@@ -1390,7 +1390,7 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
                           fit: BoxFit.contain,
                           width: double.infinity,
                           cacheWidth: 600,
-                          errorBuilder: (_, __, ___) => Container(
+                          errorBuilder: (_, _, _) => Container(
                             color: palette?.canvasBg ?? Colors.grey.shade800,
                             child: Center(child: Icon(Icons.broken_image, color: palette?.sidebarLabelSecondary)),
                           ),

@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/parse_utils.dart';
 import '../../../domain/entities/user_profile.dart';
 
 /// `follows` tablosu üzerinde takip toggle ve listeleme.
@@ -80,9 +81,8 @@ class FollowsRemoteDataSource {
             displayName: profile['display_name'] as String?,
             bio: profile['bio'] as String?,
             avatarUrl: profile['avatar_url'] as String?,
-            createdAt: profile['created_at'] != null
-                ? DateTime.parse(profile['created_at'] as String)
-                : DateTime.now().toUtc(),
+            createdAt: parseIsoOrNull(profile['created_at']) ??
+                DateTime.now().toUtc(),
           );
         })
         .whereType<UserProfile>()
