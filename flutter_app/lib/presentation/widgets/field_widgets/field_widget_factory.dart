@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../domain/entities/entity.dart';
+import '../../../domain/entities/schema/dnd5e_constants.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/rule_v2.dart';
 import '../../dialogs/entity_selector_dialog.dart';
@@ -26,6 +27,9 @@ class FieldWidgetFactory {
     bool computedMode = false,
     Map<String, ItemStyle> itemStyles = const {},
     Map<String, String> equipGates = const {},
+    /// Aynı entity'deki diğer field değerleri — proficiencyTable gibi
+    /// cross-field lookup (stat_block, proficiency_bonus) gereksinimleri için.
+    Map<String, dynamic>? entityFields,
   }) {
     // Media directory — image field'ları için galeri desteği.
     final mediaDir = ref?.read(mediaDirectoryProvider);
@@ -54,6 +58,7 @@ class FieldWidgetFactory {
       FieldType.dice => _DiceFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.boolean_ => _BooleanFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.slot => _SlotFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.proficiencyTable => _ProficiencyTableFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entityFields: entityFields),
       FieldType.tagList => _TagListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.date => _DateFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.image => _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, mediaDir: mediaDir),
@@ -1719,6 +1724,227 @@ class _DateFieldWidget extends StatelessWidget {
                     }
                   },
                 ),
+        ),
+      ),
+    );
+  }
+}
+
+// --- PROFICIENCY TABLE (skills / saving throws) ---
+/// Her satır `{name, ability, proficient, expertise, misc}`.
+/// Toplam bonus `entityFields` varsa runtime'da hesaplanır:
+///   `ability_mod + PB * (proficient ? 1 : 0) + PB * (expertise ? 1 : 0) + misc`
+/// `stat_block` ve `proficiency_bonus` diğer field'lardan okunur.
+class _ProficiencyTableFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, dynamic>? entityFields;
+
+  const _ProficiencyTableFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entityFields,
+  });
+
+  List<Map<String, dynamic>> get _rows {
+    if (value is Map && (value as Map)['rows'] is List) {
+      return ((value as Map)['rows'] as List)
+          .map<Map<String, dynamic>>((r) => Map<String, dynamic>.from(r as Map))
+          .toList();
+    }
+    return const [];
+  }
+
+  int? _abilityScore(String ability) {
+    final sb = entityFields?['stat_block'];
+    if (sb is! Map) return null;
+    final v = sb[ability];
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return int.tryParse(v?.toString() ?? '');
+  }
+
+  int _proficiencyBonus() {
+    final pb = entityFields?['proficiency_bonus'];
+    if (pb is int) return pb;
+    if (pb is num) return pb.toInt();
+    final parsed = int.tryParse(pb?.toString() ?? '');
+    if (parsed != null) return parsed;
+    // Fallback: level'dan türet.
+    final cs = entityFields?['combat_stats'];
+    int level = 1;
+    if (cs is Map) {
+      final lv = cs['level'];
+      level = (lv is int) ? lv : int.tryParse(lv?.toString() ?? '') ?? 1;
+    }
+    return proficiencyBonusForLevel(level);
+  }
+
+  void _updateRow(int index, Map<String, dynamic> patch) {
+    final rows = _rows;
+    rows[index] = {...rows[index], ...patch};
+    onChanged({'rows': rows});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _rows;
+    final pb = _proficiencyBonus();
+    final outline = Theme.of(context).colorScheme.outline;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: Text(schema.label, style: Theme.of(context).textTheme.titleSmall)),
+                if (entityFields != null)
+                  Text('PB +$pb', style: TextStyle(fontSize: 11, color: outline)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            // Header
+            Row(
+              children: [
+                const SizedBox(width: 24), // prof
+                const SizedBox(width: 24), // exp
+                Expanded(flex: 4, child: Text('Skill', style: TextStyle(fontSize: 10, color: outline))),
+                SizedBox(width: 34, child: Text('Abil', style: TextStyle(fontSize: 10, color: outline))),
+                SizedBox(width: 44, child: Text('Misc', style: TextStyle(fontSize: 10, color: outline), textAlign: TextAlign.center)),
+                SizedBox(width: 40, child: Text('Total', style: TextStyle(fontSize: 10, color: outline), textAlign: TextAlign.right)),
+              ],
+            ),
+            const Divider(height: 8),
+            if (rows.isEmpty)
+              Text('No rows', style: TextStyle(color: outline, fontSize: 12))
+            else
+              ...rows.asMap().entries.map((e) {
+                final i = e.key;
+                final row = e.value;
+                final name = row['name']?.toString() ?? '';
+                final ability = row['ability']?.toString() ?? '';
+                final proficient = row['proficient'] == true;
+                final expertise = row['expertise'] == true;
+                final misc = (row['misc'] is int)
+                    ? row['misc'] as int
+                    : int.tryParse(row['misc']?.toString() ?? '') ?? 0;
+
+                final score = _abilityScore(ability);
+                final mod = score != null ? abilityModifier(score) : null;
+                final total = (mod ?? 0) +
+                    (proficient ? pb : 0) +
+                    (expertise ? pb : 0) +
+                    misc;
+                final totalStr = entityFields != null && mod != null
+                    ? (total >= 0 ? '+$total' : '$total')
+                    : '—';
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    children: [
+                      _ProfDot(
+                        active: proficient,
+                        tooltip: 'Proficient',
+                        onTap: readOnly ? null : () => _updateRow(i, {'proficient': !proficient}),
+                      ),
+                      _ProfDot(
+                        active: expertise,
+                        doubled: true,
+                        tooltip: 'Expertise',
+                        onTap: readOnly ? null : () => _updateRow(i, {'expertise': !expertise}),
+                      ),
+                      Expanded(flex: 4, child: Text(name, style: const TextStyle(fontSize: 12))),
+                      SizedBox(width: 34, child: Text(ability, style: TextStyle(fontSize: 10, color: outline))),
+                      SizedBox(
+                        width: 44,
+                        child: TextFormField(
+                          key: ValueKey('pt_${schema.fieldKey}_${i}_misc'),
+                          initialValue: misc == 0 ? '' : misc.toString(),
+                          readOnly: readOnly,
+                          textAlign: TextAlign.center,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(fontSize: 12),
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                            border: InputBorder.none,
+                            hintText: '0',
+                          ),
+                          onChanged: (v) => _updateRow(i, {'misc': int.tryParse(v) ?? 0}),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 40,
+                        child: Text(
+                          totalStr,
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: proficient || expertise
+                                ? Theme.of(context).colorScheme.primary
+                                : null,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfDot extends StatelessWidget {
+  final bool active;
+  final bool doubled;
+  final String tooltip;
+  final VoidCallback? onTap;
+
+  const _ProfDot({
+    required this.active,
+    required this.tooltip,
+    this.doubled = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: Center(
+            child: Container(
+              width: doubled ? 14 : 12,
+              height: doubled ? 14 : 12,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: active ? color : Colors.transparent,
+                border: Border.all(
+                  color: active ? color : Theme.of(context).colorScheme.outline,
+                  width: doubled ? 2 : 1,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

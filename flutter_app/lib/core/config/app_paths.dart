@@ -12,6 +12,7 @@ class AppPaths {
   static late String dataRoot;
   static late String worldsDir;
   static late String packagesDir;
+  static late String charactersDir;
   static late String cacheDir;
   static late String trashDir;
   static late String soundpadRoot;
@@ -27,6 +28,7 @@ class AppPaths {
 
     await Directory(worldsDir).create(recursive: true);
     await Directory(packagesDir).create(recursive: true);
+    await Directory(charactersDir).create(recursive: true);
     await Directory(cacheDir).create(recursive: true);
     await Directory(trashDir).create(recursive: true);
     await Directory(soundpadRoot).create(recursive: true);
@@ -43,6 +45,7 @@ class AppPaths {
 
     await Directory(worldsDir).create(recursive: true);
     await Directory(packagesDir).create(recursive: true);
+    await Directory(charactersDir).create(recursive: true);
     await Directory(cacheDir).create(recursive: true);
     await Directory(trashDir).create(recursive: true);
 
@@ -53,6 +56,7 @@ class AppPaths {
     final base = userId != null ? p.join(dataRoot, 'users', userId) : dataRoot;
     worldsDir = p.join(base, 'worlds');
     packagesDir = p.join(base, 'packages');
+    charactersDir = p.join(base, 'characters');
     cacheDir = p.join(base, 'cache');
     trashDir = p.join(base, '.trash');
   }

@@ -19,6 +19,7 @@ import '../../widgets/lazy_indexed_stack.dart';
 import '../../widgets/profile_menu_button.dart';
 import '../../widgets/save_sync_indicator.dart';
 import '../../widgets/version_indicator_button.dart';
+import 'characters_tab.dart';
 import 'packages_tab.dart';
 import 'settings_tab.dart';
 import 'social_tab.dart';
@@ -42,6 +43,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     (icon: Icons.people, label: 'Social'),
     (icon: Icons.settings, label: 'Settings'),
     (icon: Icons.public, label: 'Worlds'),
+    (icon: Icons.person, label: 'Characters'),
     (icon: Icons.description, label: 'Templates'),
     (icon: Icons.inventory_2, label: 'Packages'),
   ];
@@ -93,6 +95,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     SocialTab(),
     SettingsTab(),
     WorldsTab(),
+    CharactersTab(),
     TemplatesTab(),
     PackagesTab(),
   ];
@@ -172,8 +175,10 @@ class _HubScreenState extends ConsumerState<HubScreen> {
       case 2:
         return (title: l10n.helpWorldsTitle, body: l10n.helpWorldsBody);
       case 3:
-        return (title: l10n.helpTemplatesTitle, body: l10n.helpTemplatesBody);
+        return (title: 'Characters', body: 'Your characters, across all templates. Create new characters from any template that has a Player category.');
       case 4:
+        return (title: l10n.helpTemplatesTitle, body: l10n.helpTemplatesBody);
+      case 5:
       default:
         return (title: l10n.helpPackagesTitle, body: l10n.helpPackagesBody);
     }

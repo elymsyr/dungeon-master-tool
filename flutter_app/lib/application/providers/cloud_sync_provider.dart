@@ -258,6 +258,7 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
     _ref.invalidate(cloudBackupWorldsProvider);
     _ref.invalidate(cloudBackupTemplatesProvider);
     _ref.invalidate(cloudBackupPackagesProvider);
+    _ref.invalidate(cloudBackupCharactersProvider);
     _ref.invalidate(cloudStorageUsedProvider);
 
     // We just wrote to remote, so we're definitively caught up — clear any
