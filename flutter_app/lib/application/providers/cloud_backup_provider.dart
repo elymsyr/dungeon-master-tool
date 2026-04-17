@@ -1,11 +1,17 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
+import '../../core/config/app_paths.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
 import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
 import '../../data/network/network_providers.dart';
 import '../../data/repositories/cloud_backup_repository_impl.dart';
+import '../../domain/entities/character.dart';
 import '../../domain/entities/cloud_backup_meta.dart';
 import '../../domain/exceptions/cloud_backup_exceptions.dart';
 import '../../domain/entities/schema/world_schema.dart';
@@ -15,6 +21,7 @@ import '../services/media_manifest_restorer.dart';
 import 'auth_provider.dart';
 import 'beta_provider.dart';
 import 'campaign_provider.dart';
+import 'character_provider.dart';
 import 'cloud_remote_check_provider.dart';
 import 'package_provider.dart';
 import 'save_state_provider.dart';
@@ -59,6 +66,15 @@ final cloudBackupPackagesProvider =
   final auth = ref.watch(authProvider);
   if (!SupabaseConfig.isConfigured || auth == null) return [];
   return ref.read(cloudBackupRepositoryProvider).listBackupsByType('package');
+});
+
+final cloudBackupCharactersProvider =
+    FutureProvider<List<CloudBackupMeta>>((ref) async {
+  final auth = ref.watch(authProvider);
+  if (!SupabaseConfig.isConfigured || auth == null) return [];
+  return ref
+      .read(cloudBackupRepositoryProvider)
+      .listBackupsByType('character');
 });
 
 /// Kullanicinin toplam cloud storage kullanimi (bytes).
@@ -247,6 +263,30 @@ class CloudBackupOperationNotifier
         case 'package':
           await _ref.read(packageRepositoryProvider).save(name, data);
           _ref.invalidate(packageListProvider);
+
+        case 'character':
+          final charJson = Map<String, dynamic>.from(
+            data['character'] as Map<String, dynamic>? ?? data,
+          );
+          var character = Character.fromJson(charJson);
+          // Restore bundled cover image if present.
+          final coverB64 = data['cover_image_data'] as String?;
+          final coverExt = (data['cover_image_ext'] as String?) ?? '.png';
+          if (coverB64 != null && coverB64.isNotEmpty) {
+            try {
+              final dir = Directory(AppPaths.charactersDir);
+              await dir.create(recursive: true);
+              final file = File(p.join(dir.path, '${character.id}_cover$coverExt'));
+              await file.writeAsBytes(base64Decode(coverB64));
+              character = character.copyWith(coverImagePath: file.path);
+            } catch (e) {
+              debugPrint('Character cover restore skip: $e');
+            }
+          }
+          await _ref
+              .read(characterRepositoryProvider)
+              .save(character);
+          await _ref.read(characterListProvider.notifier).refresh();
       }
 
       // Successful restore — we're caught up with what's on remote.
@@ -278,6 +318,49 @@ class CloudBackupOperationNotifier
       _invalidateLists();
       state = CloudBackupOperationState.success(meta: meta);
       return true;
+    } catch (e, st) {
+      debugPrint('Cloud backup upload error: $e\n$st');
+      state = CloudBackupOperationState.error(formatError(e));
+      return false;
+    }
+  }
+
+  /// Karakteri cloud'a yedekle.
+  Future<bool> uploadCharacter(Character character, {String? notes}) async {
+    state = const CloudBackupOperationState.busy(CloudBackupOpType.uploading);
+    try {
+      final envelope = <String, dynamic>{
+        'character': character.toJson(),
+      };
+      // Bundle cover image as base64 so it survives the round trip.
+      if (character.coverImagePath.isNotEmpty) {
+        try {
+          final file = File(character.coverImagePath);
+          if (await file.exists()) {
+            envelope['cover_image_data'] = base64Encode(await file.readAsBytes());
+            envelope['cover_image_ext'] = p.extension(character.coverImagePath);
+          }
+        } catch (e) {
+          debugPrint('Character cover bundle skip: $e');
+        }
+      }
+      final meta =
+          await _ref.read(cloudBackupRepositoryProvider).uploadBackup(
+                character.entity.name,
+                character.id,
+                'character',
+                envelope,
+                notes: notes,
+              );
+      _invalidateLists();
+      state = CloudBackupOperationState.success(meta: meta);
+      return true;
+    } on CloudBackupSizeLimitException catch (e) {
+      state = CloudBackupOperationState.error(formatError(e));
+      return false;
+    } on CloudBackupQuotaExceededException catch (e) {
+      state = CloudBackupOperationState.error(formatError(e));
+      return false;
     } catch (e, st) {
       debugPrint('Cloud backup upload error: $e\n$st');
       state = CloudBackupOperationState.error(formatError(e));
@@ -412,6 +495,7 @@ class CloudBackupOperationNotifier
     _ref.invalidate(cloudBackupWorldsProvider);
     _ref.invalidate(cloudBackupTemplatesProvider);
     _ref.invalidate(cloudBackupPackagesProvider);
+    _ref.invalidate(cloudBackupCharactersProvider);
     _ref.invalidate(cloudStorageUsedProvider);
   }
 

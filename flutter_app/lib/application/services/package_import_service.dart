@@ -204,6 +204,7 @@ class PackageImportService {
           'initiative': '',
         },
       FieldType.dice => '',
+      FieldType.proficiencyTable => const {'rows': <dynamic>[]},
       _ => null,
     };
   }

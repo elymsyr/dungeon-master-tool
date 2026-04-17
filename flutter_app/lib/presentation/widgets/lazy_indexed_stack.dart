@@ -18,7 +18,11 @@ class LazyIndexedStack extends StatefulWidget {
     required this.children,
     this.alignment = AlignmentDirectional.topStart,
     this.textDirection,
-    this.sizing = StackFit.loose,
+    // Expand so the active child fills the parent. With StackFit.loose,
+    // the SCROLLVIEW inside a tab gets loose vertical constraints and
+    // shrinks to content size — which makes `Align(topCenter)` above it
+    // ineffective on first mount. Expand pins height → topCenter works.
+    this.sizing = StackFit.expand,
   });
 
   @override

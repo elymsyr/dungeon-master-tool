@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
 import '../screens/admin/admin_screen.dart';
+import '../screens/characters/character_editor_screen.dart';
 import '../screens/hub/hub_screen.dart';
 import '../screens/landing/landing_screen.dart';
 import '../screens/main_screen.dart';
@@ -48,6 +49,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/admin',
       builder: (context, state) => const AdminScreen(),
+    ),
+    GoRoute(
+      path: '/character/:id',
+      builder: (context, state) =>
+          CharacterEditorScreen(characterId: state.pathParameters['id']!),
     ),
   ],
 );

@@ -415,6 +415,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
           computedMode: hasComputed,
           itemStyles: itemStyles,
           equipGates: equipGates,
+          entityFields: entity.fields,
         ),
         if (hasComputed)
           Padding(

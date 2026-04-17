@@ -26,6 +26,7 @@ enum FieldType {
   conditionStats,
   dice,           // Zar notasyonu: "2d6", "1d20+5", "3d8+2"
   slot,           // Dolu/boş checkbox satırı: spell slot, ammo, charges, hit dice
+  proficiencyTable, // D&D 5e skills/saving throws — her satır: name, ability, proficient, expertise, misc
 }
 
 /// Alan görünürlüğü — online modda kimin görebileceğini belirler.

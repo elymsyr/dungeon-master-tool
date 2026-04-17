@@ -29,6 +29,16 @@ class TemplatesTab extends ConsumerStatefulWidget {
 class _TemplatesTabState extends ConsumerState<TemplatesTab> {
   String? _mode;
   WorldSchema? _activeSchema;
+  final _nameController = TextEditingController();
+  int _selectedIndex = -1;
+  /// null = "(Empty — start from scratch)"; otherwise schemaId to clone from.
+  String? _copyFromId;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,90 +149,245 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
       );
     }
 
+    // Build a combined, stable-ordered list: built-in first, then custom.
+    final builtinSchema = builtinAsync.valueOrNull;
+    final customList = customTemplatesAsync.valueOrNull ?? const <WorldSchema>[];
+    final combined = <WorldSchema>[
+      ?builtinSchema,
+      ...customList,
+    ];
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
+          constraints: const BoxConstraints(maxWidth: 500),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Templates', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              Text('Templates',
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: palette.tabActiveText)),
               const SizedBox(height: 4),
-              Text('World templates define entity categories and their fields.', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
+              Text('World templates define entity categories and their fields.',
+                  style: TextStyle(
+                      fontSize: 12, color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 16),
 
-              // Built-in (default) template — loaded through the provider
-              // so admin edits persist and no ghost copy appears.
-              builtinAsync.when(
-                data: (schema) => _TemplateCard(
-                  schema: schema,
-                  palette: palette,
-                  isAdmin: isAdmin,
-                  onTap: () => setState(() { _mode = 'edit'; _activeSchema = schema; }),
-                  onSettings: () => _showTemplateSettings(schema, palette),
-                ),
-                loading: () => const Padding(
+              if (builtinAsync.isLoading || customTemplatesAsync.isLoading)
+                const Padding(
                   padding: EdgeInsets.all(16),
                   child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (e, _) => Text('Error: $e'),
-              ),
-
-              // Custom templates
-              customTemplatesAsync.when(
-                data: (templates) => Column(
-                  children: templates.map((schema) => Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: _TemplateCard(
-                      schema: schema,
-                      palette: palette,
-                      isCustom: true,
-                      onTap: () => setState(() { _mode = 'edit'; _activeSchema = schema; }),
-                      onSettings: () => _showTemplateSettings(schema, palette),
-                      onDelete: () async {
-                        await ref.read(templateLocalDsProvider).moveToTrash(schema.schemaId, schema.name);
-                        // Best-effort cloud cleanup — no-op when offline/signed-out.
-                        await ref
-                            .read(cloudBackupOperationProvider.notifier)
-                            .deleteBackupByItem(schema.schemaId, 'template');
-                        ref.invalidate(customTemplatesProvider);
-                        ref.invalidate(allTemplatesProvider);
-                        ref.invalidate(trashListProvider);
-                      },
+                )
+              else if (combined.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: palette.featureCardBg,
+                    borderRadius: palette.br,
+                    border: Border.all(color: palette.featureCardBorder),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'No templates found.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: palette.sidebarLabelSecondary, fontSize: 12),
                     ),
-                  )).toList(),
-                ),
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (e, _) => Text('Error: $e'),
-              ),
+                  ),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: combined.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 4),
+                  itemBuilder: (context, index) {
+                    final schema = combined[index];
+                    final isBuiltin = schema.schemaId == builtinTemplateId;
+                    final isSelected = index == _selectedIndex;
+                    final totalFields = schema.categories
+                        .fold<int>(0, (sum, c) => sum + c.fields.length);
 
-              const SizedBox(height: 16),
+                    return InkWell(
+                      borderRadius: palette.br,
+                      onTap: () => setState(() => _selectedIndex = index),
+                      onDoubleTap: () => _loadTemplate(schema, isAdmin),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? palette.featureCardAccent
+                                  .withValues(alpha: 0.1)
+                              : palette.featureCardBg,
+                          borderRadius: palette.br,
+                          border: Border.all(
+                            color: isSelected
+                                ? palette.featureCardAccent
+                                : palette.featureCardBorder,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.description,
+                                size: 20,
+                                color: isSelected
+                                    ? palette.featureCardAccent
+                                    : palette.tabText),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(schema.name,
+                                            style: TextStyle(
+                                                fontSize: 14,
+                                                color:
+                                                    palette.tabActiveText)),
+                                      ),
+                                      if (isBuiltin) ...[
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 1),
+                                          decoration: BoxDecoration(
+                                              color: palette.sidebarFilterBg,
+                                              borderRadius: palette.br),
+                                          child: Text('Built-in',
+                                              style: TextStyle(
+                                                  fontSize: 9,
+                                                  color: palette.tabText)),
+                                        ),
+                                        if (!isAdmin) ...[
+                                          const SizedBox(width: 4),
+                                          Icon(Icons.lock_outline,
+                                              size: 12,
+                                              color: palette.tabText),
+                                        ],
+                                      ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${schema.categories.length} cat · $totalFields fields · v${schema.version}',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: palette.sidebarLabelSecondary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.settings,
+                                  size: 16, color: palette.tabText),
+                              tooltip: 'Template Settings',
+                              onPressed: () =>
+                                  _showTemplateSettings(schema, palette),
+                              visualDensity: VisualDensity.compact,
+                              constraints: const BoxConstraints(
+                                  minWidth: 32, minHeight: 32),
+                              padding: EdgeInsets.zero,
+                            ),
+                            if (isSelected)
+                              Icon(Icons.check,
+                                  size: 16,
+                                  color: palette.featureCardAccent),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
 
+              const SizedBox(height: 12),
+
+              // Load + Delete
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => setState(() { _mode = 'edit'; _activeSchema = null; }),
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('New Empty'),
+                    child: FilledButton.icon(
+                      onPressed: _selectedIndex >= 0 &&
+                              _selectedIndex < combined.length
+                          ? () => _loadTemplate(
+                              combined[_selectedIndex], isAdmin)
+                          : null,
+                      icon: const Icon(Icons.folder_open, size: 18),
+                      label: const Text('Load Template'),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: builtinAsync.valueOrNull == null
-                          ? null
-                          : () => _showCopyFromDialog(
-                              context, palette, builtinAsync.valueOrNull!),
-                      icon: const Icon(Icons.copy, size: 18),
-                      label: const Text('Copy From...'),
+                  FilledButton.icon(
+                    onPressed: _canDelete(combined)
+                        ? () => _deleteSelected(combined)
+                        : null,
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    label: const Text('Delete'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: palette.dangerBtnBg,
+                      foregroundColor: palette.dangerBtnText,
                     ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+              Divider(color: palette.sidebarDivider),
+              const SizedBox(height: 16),
+
+              // Create New Template
+              Text('Create New Template',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: palette.tabActiveText)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String?>(
+                key: ValueKey('tpl_copy_${combined.length}'),
+                initialValue: _copyFromId,
+                decoration: const InputDecoration(
+                  labelText: 'Copy from (optional)',
+                ),
+                items: [
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('(Empty — start from scratch)',
+                        style: TextStyle(fontSize: 12)),
+                  ),
+                  ...combined.map((t) => DropdownMenuItem<String?>(
+                        value: t.schemaId,
+                        child: Text(
+                            '${t.name}  (${t.categories.length} cat)',
+                            style: const TextStyle(fontSize: 12)),
+                      )),
+                ],
+                onChanged: (id) => setState(() => _copyFromId = id),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _nameController,
+                      decoration:
+                          const InputDecoration(hintText: 'Template name'),
+                      onSubmitted: (_) => _createTemplate(combined),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: () => _createTemplate(combined),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Create'),
+                    style: FilledButton.styleFrom(
+                        backgroundColor: palette.successBtnBg,
+                        foregroundColor: palette.successBtnText),
                   ),
                 ],
               ),
@@ -233,39 +398,86 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
     );
   }
 
-  void _showCopyFromDialog(BuildContext context, DmToolColors palette, WorldSchema defaultSchema) {
-    final customTemplates = ref.read(customTemplatesProvider).valueOrNull ?? [];
-    final allTemplates = [defaultSchema, ...customTemplates];
+  bool _canDelete(List<WorldSchema> combined) {
+    if (_selectedIndex < 0 || _selectedIndex >= combined.length) return false;
+    return combined[_selectedIndex].schemaId != builtinTemplateId;
+  }
 
-    showDialog(
+  void _loadTemplate(WorldSchema schema, bool isAdmin) {
+    setState(() {
+      _mode = 'edit';
+      _activeSchema = schema;
+    });
+  }
+
+  Future<void> _deleteSelected(List<WorldSchema> combined) async {
+    if (!_canDelete(combined)) return;
+    final schema = combined[_selectedIndex];
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+
+    await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Copy From Template'),
-        content: SizedBox(
-          width: 300,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: allTemplates.length,
-            itemBuilder: (_, i) {
-              final t = allTemplates[i];
-              return ListTile(
-                leading: Icon(Icons.description, color: palette.featureCardAccent),
-                title: Text(t.name),
-                subtitle: Text('${t.categories.length} categories'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  final copy = _cloneAsNew(t, '${t.name} (Copy)');
-                  setState(() { _mode = 'edit'; _activeSchema = copy; });
-                },
-              );
-            },
-          ),
-        ),
+        title: const Text('Move to Trash'),
+        content: Text('Move "${schema.name}" to trash?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await ref
+                  .read(templateLocalDsProvider)
+                  .moveToTrash(schema.schemaId, schema.name);
+              await ref
+                  .read(cloudBackupOperationProvider.notifier)
+                  .deleteBackupByItem(schema.schemaId, 'template');
+              ref.invalidate(customTemplatesProvider);
+              ref.invalidate(allTemplatesProvider);
+              ref.invalidate(trashListProvider);
+              if (mounted) setState(() => _selectedIndex = -1);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: palette.dangerBtnBg,
+              foregroundColor: palette.dangerBtnText,
+            ),
+            child: const Text('Move to Trash'),
+          ),
         ],
       ),
     );
+  }
+
+  void _createTemplate(List<WorldSchema> combined) {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a template name')),
+      );
+      return;
+    }
+    final now = DateTime.now().toUtc().toIso8601String();
+    WorldSchema schema;
+    if (_copyFromId == null) {
+      schema = WorldSchema(
+        schemaId: const Uuid().v4(),
+        name: name,
+        createdAt: now,
+        updatedAt: now,
+      );
+    } else {
+      final source =
+          combined.where((t) => t.schemaId == _copyFromId).firstOrNull;
+      if (source == null) return;
+      schema = _cloneAsNew(source, name);
+    }
+    setState(() {
+      _mode = 'edit';
+      _activeSchema = schema;
+      _nameController.clear();
+      _copyFromId = null;
+    });
   }
 
   /// Prompts the user when saving an existing template, since the lazy
@@ -388,100 +600,3 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
   }
 }
 
-class _TemplateCard extends StatelessWidget {
-  final WorldSchema schema;
-  final DmToolColors palette;
-  final VoidCallback onTap;
-  final bool isCustom;
-  /// Non-custom (built-in) kartlarda admin durumunu gösterir.
-  final bool isAdmin;
-  final VoidCallback? onDelete;
-  final VoidCallback? onSettings;
-
-  const _TemplateCard({required this.schema, required this.palette, required this.onTap, this.isCustom = false, this.isAdmin = false, this.onDelete, this.onSettings});
-
-  @override
-  Widget build(BuildContext context) {
-    final totalFields = schema.categories.fold<int>(0, (sum, c) => sum + c.fields.length);
-
-    return InkWell(
-      borderRadius: palette.br,
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: palette.featureCardBg,
-          borderRadius: palette.br,
-          border: Border.all(color: palette.featureCardBorder),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.description, size: 36, color: isCustom ? palette.tabIndicator : palette.featureCardAccent),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(child: Text(schema.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText))),
-                      if (!isCustom) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                          decoration: BoxDecoration(color: palette.sidebarFilterBg, borderRadius: palette.br),
-                          child: Text('Built-in', style: TextStyle(fontSize: 9, color: palette.tabText)),
-                        ),
-                        if (!isAdmin) ...[
-                          const SizedBox(width: 4),
-                          Icon(Icons.lock_outline, size: 12, color: palette.tabText),
-                        ],
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(schema.description, style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${schema.categories.length} categories  ·  $totalFields fields  ·  v${schema.version}',
-                    style: TextStyle(fontSize: 11, color: palette.tabText),
-                  ),
-                ],
-              ),
-            ),
-            if (onSettings != null)
-              IconButton(
-                icon: Icon(Icons.settings, size: 18, color: palette.sidebarLabelSecondary),
-                tooltip: 'Settings',
-                onPressed: onSettings,
-                visualDensity: VisualDensity.compact,
-              ),
-            if (isCustom && onDelete != null) ...[
-              IconButton(
-                icon: Icon(Icons.delete_outline, size: 18, color: palette.sidebarLabelSecondary),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('Move to Trash'),
-                      content: Text('Move "${schema.name}" to trash?'),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-                        FilledButton(
-                          onPressed: () { Navigator.pop(ctx); onDelete!(); },
-                          style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
-                          child: const Text('Move to Trash'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                visualDensity: VisualDensity.compact,
-              ),
-            ],
-            Icon(Icons.chevron_right, color: palette.tabText),
-          ],
-        ),
-      ),
-    );
-  }
-}

@@ -1036,6 +1036,7 @@ class _RuleBuilderDialogState extends State<_RuleBuilderDialog> {
     FieldType.conditionStats => 'conditions',
     FieldType.dice => 'dice',
     FieldType.slot => 'slot',
+    FieldType.proficiencyTable => 'proficiency',
   };
 }
 

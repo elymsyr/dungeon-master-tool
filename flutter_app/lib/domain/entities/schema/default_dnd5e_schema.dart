@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 
+import 'dnd5e_constants.dart';
 import 'encounter_config.dart';
 import 'encounter_layout.dart';
 import 'entity_category_schema.dart';
@@ -121,9 +122,47 @@ WorldSchema generateDefaultDnd5eSchema() {
         createdAt: now,
         updatedAt: now,
       ));
-      fields.add(FieldSchema(fieldId: _uuid.v4(), categoryId: catId, fieldKey: 'saving_throws', label: 'Saving Throws', fieldType: FieldType.text, orderIndex: fieldIdx++, isBuiltin: true, groupId: _grpCombat, createdAt: now, updatedAt: now));
-      fields.add(FieldSchema(fieldId: _uuid.v4(), categoryId: catId, fieldKey: 'skills', label: 'Skills', fieldType: FieldType.text, orderIndex: fieldIdx++, isBuiltin: true, groupId: _grpCombat, createdAt: now, updatedAt: now));
-      fields.add(FieldSchema(fieldId: _uuid.v4(), categoryId: catId, fieldKey: 'proficiency_bonus', label: 'Proficiency Bonus', fieldType: FieldType.text, orderIndex: fieldIdx++, isBuiltin: true, groupId: _grpCombat, createdAt: now, updatedAt: now));
+      fields.add(FieldSchema(
+        fieldId: _uuid.v4(),
+        categoryId: catId,
+        fieldKey: 'saving_throws',
+        label: 'Saving Throws',
+        fieldType: FieldType.proficiencyTable,
+        defaultValue: proficiencyTableDefault(kDnd5eSavingThrows),
+        orderIndex: fieldIdx++,
+        isBuiltin: true,
+        groupId: _grpCombat,
+        gridColumnSpan: 2,
+        createdAt: now,
+        updatedAt: now,
+      ));
+      fields.add(FieldSchema(
+        fieldId: _uuid.v4(),
+        categoryId: catId,
+        fieldKey: 'skills',
+        label: 'Skills',
+        fieldType: FieldType.proficiencyTable,
+        defaultValue: proficiencyTableDefault(kDnd5eSkills),
+        orderIndex: fieldIdx++,
+        isBuiltin: true,
+        groupId: _grpCombat,
+        gridColumnSpan: 2,
+        createdAt: now,
+        updatedAt: now,
+      ));
+      fields.add(FieldSchema(
+        fieldId: _uuid.v4(),
+        categoryId: catId,
+        fieldKey: 'proficiency_bonus',
+        label: 'Proficiency Bonus',
+        fieldType: FieldType.integer,
+        defaultValue: 2,
+        orderIndex: fieldIdx++,
+        isBuiltin: true,
+        groupId: _grpCombat,
+        createdAt: now,
+        updatedAt: now,
+      ));
       fields.add(FieldSchema(fieldId: _uuid.v4(), categoryId: catId, fieldKey: 'passive_perception', label: 'Passive Perception', fieldType: FieldType.text, orderIndex: fieldIdx++, isBuiltin: true, groupId: _grpCombat, createdAt: now, updatedAt: now));
       // Resistances
       fields.add(FieldSchema(fieldId: _uuid.v4(), categoryId: catId, fieldKey: 'damage_vulnerabilities', label: 'Damage Vulnerabilities', fieldType: FieldType.text, orderIndex: fieldIdx++, isBuiltin: true, groupId: _grpResistances, createdAt: now, updatedAt: now));
