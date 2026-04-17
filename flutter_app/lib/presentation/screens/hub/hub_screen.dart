@@ -6,11 +6,13 @@ import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/cloud_remote_check_provider.dart';
 import '../../../application/providers/social_providers.dart';
 import '../../../application/providers/profile_provider.dart';
+import '../../../application/providers/ui_state_provider.dart';
 import '../../../application/providers/user_session_provider.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/profile_edit_dialog.dart';
+import '../../dialogs/welcome_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/app_icon_image.dart';
@@ -38,6 +40,20 @@ class _HubScreenState extends ConsumerState<HubScreen> {
   bool _profileDialogOpen = false;
 
   static const _settingsTabIndex = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    // Uygulama ilk kez açıldığında karşılama + beta bildirim dialog'u.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final ui = ref.read(uiStateProvider);
+      if (ui.welcomeSeen) return;
+      await WelcomeDialog.show(context);
+      if (!mounted) return;
+      ref.read(uiStateProvider.notifier).update((s) => s.copyWith(welcomeSeen: true));
+    });
+  }
 
   static const _tabs = [
     (icon: Icons.people, label: 'Social'),

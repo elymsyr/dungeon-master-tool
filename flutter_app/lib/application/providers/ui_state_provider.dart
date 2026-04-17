@@ -47,6 +47,9 @@ class UiState {
   final bool autoLocalSave;
   final bool autoCloudSave;
 
+  // First-launch onboarding: welcome/beta dialog shown once.
+  final bool welcomeSeen;
+
   const UiState({
     this.mainTabIndex = 0,
     this.sidebarOpen = true,
@@ -69,6 +72,7 @@ class UiState {
     this.volume = 1.0,
     this.autoLocalSave = true,
     this.autoCloudSave = false,
+    this.welcomeSeen = false,
   });
 
   UiState copyWith({
@@ -93,6 +97,7 @@ class UiState {
     double? volume,
     bool? autoLocalSave,
     bool? autoCloudSave,
+    bool? welcomeSeen,
   }) {
     return UiState(
       mainTabIndex: mainTabIndex ?? this.mainTabIndex,
@@ -116,6 +121,7 @@ class UiState {
       volume: volume ?? this.volume,
       autoLocalSave: autoLocalSave ?? this.autoLocalSave,
       autoCloudSave: autoCloudSave ?? this.autoCloudSave,
+      welcomeSeen: welcomeSeen ?? this.welcomeSeen,
     );
   }
 
@@ -141,6 +147,7 @@ class UiState {
     'volume': volume,
     'autoLocalSave': autoLocalSave,
     'autoCloudSave': autoCloudSave,
+    'welcomeSeen': welcomeSeen,
   };
 
   factory UiState.fromJson(Map<String, dynamic> json) {
@@ -175,6 +182,7 @@ class UiState {
       volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
       autoLocalSave: json['autoLocalSave'] as bool? ?? true,
       autoCloudSave: json['autoCloudSave'] as bool? ?? false,
+      welcomeSeen: json['welcomeSeen'] as bool? ?? false,
     );
   }
 }

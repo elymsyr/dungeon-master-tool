@@ -493,5 +493,11 @@
   "dmDeleteConfirm": "Supprimer",
 
   "profileHideFromDiscover": "Ne pas me montrer dans Découvrir",
-  "profileHideFromDiscoverHint": "Votre profil n'apparaîtra pas dans les suggestions ni les résultats de recherche"
+  "profileHideFromDiscoverHint": "Votre profil n'apparaîtra pas dans les suggestions ni les résultats de recherche",
+
+  "welcomeTitle": "Bienvenue, Maître du Donjon !",
+  "welcomeBetaNotice": "L'application est encore en bêta — les fonctionnalités, les modèles et packages intégrés peuvent évoluer entre les versions. Pensez à sauvegarder vos données importantes de temps en temps.",
+  "welcomeRoadmap": "Les packs de contenu officiels D&D 5e (2014) et D&D 5e (2024) sont prévus dans la feuille de route et arriveront bientôt comme packs prêts à l'emploi.",
+  "welcomeClosing": "Merci de l'essayer — que vos dés soient cléments et vos sessions inoubliables !",
+  "welcomeContinue": "C'est parti"
 }

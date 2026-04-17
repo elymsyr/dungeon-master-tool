@@ -35,9 +35,66 @@ class CharacterRepository {
     await file.writeAsString(jsonEncode(character.toJson()));
   }
 
-  Future<void> delete(String id) async {
+  /// Karakteri `.trash/` klasörüne taşı (soft delete, 30 gün sonra temizlenir).
+  /// Restore için tüm karakter JSON'u ile birlikte `.meta.json` yazılır.
+  Future<void> delete(String id, {String? displayName}) async {
     final file = File(p.join(AppPaths.charactersDir, '$id.json'));
-    if (await file.exists()) await file.delete();
+    if (!await file.exists()) return;
+
+    final originalName = (displayName ?? '').trim().isEmpty ? id : displayName!;
+    final safeName = originalName.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+    final trashTarget = p.join(
+      AppPaths.trashDir,
+      '${safeName}_${DateTime.now().millisecondsSinceEpoch}',
+    );
+    await Directory(trashTarget).create(recursive: true);
+
+    await file.copy(p.join(trashTarget, '$id.json'));
+
+    final metaFile = File(p.join(trashTarget, '.meta.json'));
+    await metaFile.writeAsString(jsonEncode({
+      'originalName': originalName,
+      'type': 'Character',
+      'characterId': id,
+      'deletedAt': DateTime.now().toIso8601String(),
+    }));
+
+    await file.delete();
+  }
+
+  /// Trash'ten karakter dosyasını geri yükle. Meta'daki characterId orijinal
+  /// konumdaki dosya adını verir; çakışma olursa UUID yenilenir.
+  Future<Character?> restoreFromTrash(String trashDirName) async {
+    final trashPath = p.join(AppPaths.trashDir, trashDirName);
+    final trashDir = Directory(trashPath);
+    if (!await trashDir.exists()) return null;
+
+    final metaFile = File(p.join(trashPath, '.meta.json'));
+    if (!await metaFile.exists()) return null;
+    final meta = jsonDecode(await metaFile.readAsString()) as Map<String, dynamic>;
+    final id = meta['characterId'] as String?;
+    if (id == null) return null;
+
+    final jsonFile = File(p.join(trashPath, '$id.json'));
+    if (!await jsonFile.exists()) return null;
+
+    await Directory(AppPaths.charactersDir).create(recursive: true);
+    final targetFile = File(p.join(AppPaths.charactersDir, '$id.json'));
+    if (await targetFile.exists()) {
+      // Aynı id çakışması — eski veri korunsun, restore edilen düşsün.
+      await trashDir.delete(recursive: true);
+      return null;
+    }
+    await jsonFile.copy(targetFile.path);
+    await trashDir.delete(recursive: true);
+
+    try {
+      final map = jsonDecode(await targetFile.readAsString()) as Map<String, dynamic>;
+      _migrateLegacyWorldLinks(map);
+      return Character.fromJson(map);
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Eski karakter JSON'larında `linked_worlds: [...]` + `linked_packages: [...]`

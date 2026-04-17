@@ -137,10 +137,25 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   }
 
   Future<void> delete(String id) async {
-    await _repo.delete(id);
-    final list = (state.valueOrNull ?? const <Character>[])
-        .where((c) => c.id != id)
-        .toList();
+    final list = state.valueOrNull ?? const <Character>[];
+    final existing = list.where((c) => c.id == id).firstOrNull;
+    final displayName = existing?.entity.name;
+    await _repo.delete(id, displayName: displayName);
+    state = AsyncValue.data(list.where((c) => c.id != id).toList());
+  }
+
+  /// Trash'ten karakteri geri yükle. UI tarafı settings_tab'tan çağırır.
+  Future<void> restoreFromTrash(String trashDirName) async {
+    final restored = await _repo.restoreFromTrash(trashDirName);
+    if (restored == null) return;
+    final list = [...(state.valueOrNull ?? const <Character>[])];
+    final idx = list.indexWhere((c) => c.id == restored.id);
+    if (idx >= 0) {
+      list[idx] = restored;
+    } else {
+      list.insert(0, restored);
+    }
+    list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     state = AsyncValue.data(list);
   }
 }
