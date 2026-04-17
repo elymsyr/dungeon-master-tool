@@ -71,6 +71,35 @@ final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((ref) async 
       .toList();
 });
 
+/// Per-campaign metadata lookup — cover / description / tags için.
+/// Campaign blob'undan `metadata` alanını okur. List UI bu provider'ı
+/// watch ederek cover/desc/tags gösterimi için kullanır.
+final campaignMetadataProvider =
+    FutureProvider.family<Map<String, dynamic>, String>((ref, campaignName) async {
+  try {
+    final data = await ref.read(campaignRepositoryProvider).load(campaignName);
+    final meta = data['metadata'];
+    return meta is Map ? Map<String, dynamic>.from(meta) : <String, dynamic>{};
+  } catch (_) {
+    return <String, dynamic>{};
+  }
+});
+
+/// Campaign metadata writer — sadece metadata'yı değiştirir, diğer verilere
+/// dokunmaz. Ayarlar dialog'undan çağrılır.
+Future<void> updateCampaignMetadata(
+  WidgetRef ref,
+  String campaignName,
+  Map<String, dynamic> newMetadata,
+) async {
+  final repo = ref.read(campaignRepositoryProvider);
+  final data = await repo.load(campaignName);
+  data['metadata'] = newMetadata;
+  await repo.save(campaignName, data);
+  ref.invalidate(campaignMetadataProvider(campaignName));
+  ref.invalidate(campaignInfoListProvider);
+}
+
 /// Aktif kampanya adı. null = henüz seçilmedi.
 class ActiveCampaignNotifier extends StateNotifier<String?> {
   final CampaignRepository _repo;

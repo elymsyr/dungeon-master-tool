@@ -12,8 +12,10 @@ import '../../../domain/entities/schema/world_schema.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/close_guard.dart';
-import '../../widgets/save_info_section.dart';
 import '../../widgets/marketplace_panel.dart';
+import '../../widgets/metadata_editor_section.dart';
+import '../../widgets/metadata_list_tile.dart';
+import '../../widgets/save_info_section.dart';
 import 'template_editor.dart';
 
 /// User's pick from the "save existing template" prompt.
@@ -212,14 +214,13 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                     final isSelected = index == _selectedIndex;
                     final totalFields = schema.categories
                         .fold<int>(0, (sum, c) => sum + c.fields.length);
-
+                    final meta = schema.metadata;
                     return InkWell(
                       borderRadius: palette.br,
                       onTap: () => setState(() => _selectedIndex = index),
                       onDoubleTap: () => _loadTemplate(schema, isAdmin),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                        clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
                           color: isSelected
                               ? palette.featureCardAccent
@@ -232,73 +233,43 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                                 : palette.featureCardBorder,
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.description,
-                                size: 20,
-                                color: isSelected
-                                    ? palette.featureCardAccent
-                                    : palette.tabText),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(schema.name,
-                                            style: TextStyle(
-                                                fontSize: 14,
-                                                color:
-                                                    palette.tabActiveText)),
-                                      ),
-                                      if (isBuiltin) ...[
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 6, vertical: 1),
-                                          decoration: BoxDecoration(
-                                              color: palette.sidebarFilterBg,
-                                              borderRadius: palette.br),
-                                          child: Text('Built-in',
-                                              style: TextStyle(
-                                                  fontSize: 9,
-                                                  color: palette.tabText)),
-                                        ),
-                                        if (!isAdmin) ...[
-                                          const SizedBox(width: 4),
-                                          Icon(Icons.lock_outline,
-                                              size: 12,
-                                              color: palette.tabText),
-                                        ],
-                                      ],
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${schema.categories.length} cat · $totalFields fields · v${schema.version}',
+                        child: MetadataListTile(
+                          icon: Icons.description,
+                          name: schema.name,
+                          subtitle:
+                              '${schema.categories.length} cat · $totalFields fields · v${schema.version}',
+                          description: schema.description.isNotEmpty
+                              ? schema.description
+                              : ((meta['description'] as String?) ?? ''),
+                          tags: ((meta['tags'] as List?) ?? const [])
+                              .whereType<String>()
+                              .toList(),
+                          coverImagePath:
+                              (meta['cover_image_path'] as String?) ?? '',
+                          isSelected: isSelected,
+                          palette: palette,
+                          layout: MetadataTileLayout.topBanner,
+                          onSettings: () =>
+                              _showTemplateSettings(schema, palette),
+                          trailingBadges: [
+                            if (isBuiltin) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                    color: palette.sidebarFilterBg,
+                                    borderRadius: palette.br),
+                                child: Text('Built-in',
                                     style: TextStyle(
-                                        fontSize: 11,
-                                        color: palette.sidebarLabelSecondary),
-                                  ),
-                                ],
+                                        fontSize: 9,
+                                        color: palette.tabText)),
                               ),
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.settings,
-                                  size: 16, color: palette.tabText),
-                              tooltip: 'Template Settings',
-                              onPressed: () =>
-                                  _showTemplateSettings(schema, palette),
-                              visualDensity: VisualDensity.compact,
-                              constraints: const BoxConstraints(
-                                  minWidth: 32, minHeight: 32),
-                              padding: EdgeInsets.zero,
-                            ),
-                            if (isSelected)
-                              Icon(Icons.check,
-                                  size: 16,
-                                  color: palette.featureCardAccent),
+                              if (!isAdmin) ...[
+                                const SizedBox(width: 4),
+                                Icon(Icons.lock_outline,
+                                    size: 12, color: palette.tabText),
+                              ],
+                            ],
                           ],
                         ),
                       ),
@@ -521,7 +492,10 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
   Future<void> _showTemplateSettings(
       WorldSchema schema, DmToolColors palette) async {
     final l10n = L10n.of(context)!;
-    // Parse ISO8601 updatedAt from the schema's in-memory copy.
+    final isBuiltin = schema.schemaId == builtinTemplateId;
+    final isAdmin = ref.read(isAdminProvider).valueOrNull ?? false;
+    final canEdit = !isBuiltin || isAdmin;
+
     DateTime? localUpdatedAt;
     try {
       localUpdatedAt = DateTime.parse(schema.updatedAt);
@@ -529,51 +503,123 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
       localUpdatedAt = null;
     }
 
+    // Mutable working copy.
+    var workingName = schema.name;
+    var workingDescription = schema.description;
+    final meta = Map<String, dynamic>.from(schema.metadata);
+    var workingTags = ((meta['tags'] as List?) ?? const [])
+        .whereType<String>()
+        .toList();
+    var workingCover = (meta['cover_image_path'] as String?) ?? '';
+
     await showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('${schema.name} — Settings'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text('${schema.name} — Settings'),
+          content: SizedBox(
+            width: 440,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.description,
-                      size: 16, color: palette.sidebarLabelSecondary),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      '${schema.categories.length} categories  ·  v${schema.version}',
+                  if (canEdit)
+                    MetadataEditorSection(
+                      name: workingName,
+                      description: workingDescription,
+                      tags: workingTags,
+                      coverImagePath: workingCover,
+                      onNameChanged: (v) => workingName = v,
+                      onDescriptionChanged: (v) => workingDescription = v,
+                      onTagsChanged: (v) =>
+                          setDialogState(() => workingTags = v),
+                      onCoverChanged: (v) =>
+                          setDialogState(() => workingCover = v),
+                    )
+                  else
+                    Text(
+                      'Built-in template — metadata is read-only for non-admin users.',
                       style: TextStyle(
-                          fontSize: 13, color: palette.tabActiveText),
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                          color: palette.sidebarLabelSecondary),
                     ),
+                  const SizedBox(height: 12),
+                  Divider(height: 1, color: palette.featureCardBorder),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(Icons.description,
+                          size: 16,
+                          color: palette.sidebarLabelSecondary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '${schema.categories.length} categories  ·  v${schema.version}',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: palette.tabActiveText),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SaveInfoSection(
+                    itemName: schema.name,
+                    itemId: schema.schemaId,
+                    type: 'template',
+                    localUpdatedAt: localUpdatedAt,
+                  ),
+                  const SizedBox(height: 12),
+                  MarketplacePanel(
+                    itemType: 'template',
+                    localId: schema.schemaId,
+                    title: schema.name,
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              SaveInfoSection(
-                itemName: schema.name,
-                itemId: schema.schemaId,
-                type: 'template',
-                localUpdatedAt: localUpdatedAt,
-              ),
-              const SizedBox(height: 12),
-              MarketplacePanel(
-                itemType: 'template',
-                localId: schema.schemaId,
-                title: schema.name,
-              ),
-            ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.btnCancel),
+            ),
+            if (canEdit)
+              FilledButton(
+                onPressed: () async {
+                  final newMeta = Map<String, dynamic>.from(schema.metadata)
+                    ..['cover_image_path'] = workingCover
+                    ..['tags'] = workingTags;
+                  final updated = schema.copyWith(
+                    name: workingName,
+                    description: workingDescription,
+                    metadata: newMeta,
+                    updatedAt:
+                        DateTime.now().toUtc().toIso8601String(),
+                  );
+                  try {
+                    await ref.read(templateLocalDsProvider).save(
+                          updated,
+                          bypassBuiltinGuard: isBuiltin && isAdmin,
+                        );
+                    ref.invalidate(customTemplatesProvider);
+                    ref.invalidate(allTemplatesProvider);
+                    ref.invalidate(builtinTemplateProvider);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  } catch (e) {
+                    if (ctx.mounted) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        SnackBar(content: Text('Save failed: $e')),
+                      );
+                    }
+                  }
+                },
+                child: const Text('Save'),
+              ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.btnCancel),
-          ),
-        ],
       ),
     );
   }

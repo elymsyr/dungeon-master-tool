@@ -1,15 +1,36 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/character_provider.dart';
+import '../../../application/providers/cloud_backup_provider.dart';
+import '../../../application/providers/global_loading_provider.dart';
+import '../../../application/providers/global_tags_provider.dart';
+import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/template_provider.dart';
+import '../../../application/providers/theme_provider.dart';
+import '../../../application/services/tag_moderation.dart';
+import '../../../core/config/supabase_config.dart';
+import '../../../data/datasources/remote/cloud_backup_remote_ds.dart';
+import '../../../data/repositories/cloud_backup_repository_impl.dart';
 import '../../../domain/entities/character.dart';
+import '../../../domain/entities/cloud_backup_meta.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../dialogs/bug_report_dialog.dart';
+import '../../dialogs/import_package_dialog.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../theme/palettes.dart';
+import '../../widgets/app_icon_image.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
+import '../../widgets/save_info_section.dart';
 
 /// Standalone character editor. Hub-level Characters tab'dan push edilir.
 /// Bir Character'ı template'inin Player kategorisine göre render eder.
@@ -26,18 +47,82 @@ class CharacterEditorScreen extends ConsumerStatefulWidget {
 class _CharacterEditorScreenState
     extends ConsumerState<CharacterEditorScreen> {
   Character? _working;
-  late final TextEditingController _nameCtrl;
+  Timer? _autoSaveTimer;
+  bool _saving = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _nameCtrl = TextEditingController();
-  }
+  // Undo/redo — character scoped. Idle timer coalesces rapid mutations into
+  // a single undo step so typing doesn't produce per-keystroke history.
+  final List<Character> _undoStack = [];
+  final List<Character> _redoStack = [];
+  Character? _undoBaseline;
+  Timer? _undoIdleTimer;
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
+    _autoSaveTimer?.cancel();
+    _undoIdleTimer?.cancel();
     super.dispose();
+  }
+
+  /// Central mutation entry point — records undo baseline, updates state,
+  /// schedules autosave. All edits (name, desc, tags, portrait, fields)
+  /// should go through this.
+  void _mutate(Character next) {
+    final prev = _working;
+    setState(() => _working = next);
+    _undoBaseline ??= prev;
+    _undoIdleTimer?.cancel();
+    _undoIdleTimer = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      final baseline = _undoBaseline;
+      if (baseline != null && baseline != _working) {
+        _undoStack.add(baseline);
+        if (_undoStack.length > 100) _undoStack.removeAt(0);
+        _redoStack.clear();
+      }
+      _undoBaseline = null;
+      setState(() {});
+    });
+    _scheduleAutoSave();
+  }
+
+  bool get _canUndo => _undoStack.isNotEmpty || _undoBaseline != null;
+  bool get _canRedo => _redoStack.isNotEmpty;
+
+  void _undo() {
+    // Commit any pending baseline first so the user's in-progress edit
+    // counts as one undo step.
+    _undoIdleTimer?.cancel();
+    final baseline = _undoBaseline;
+    if (baseline != null && baseline != _working) {
+      _undoStack.add(baseline);
+    }
+    _undoBaseline = null;
+    if (_undoStack.isEmpty) return;
+    final prev = _undoStack.removeLast();
+    final cur = _working;
+    if (cur != null) _redoStack.add(cur);
+    setState(() => _working = prev);
+    _scheduleAutoSave();
+  }
+
+  void _redo() {
+    if (_redoStack.isEmpty) return;
+    final next = _redoStack.removeLast();
+    final cur = _working;
+    if (cur != null) _undoStack.add(cur);
+    setState(() => _working = next);
+    _scheduleAutoSave();
+  }
+
+  /// Mark `_working` as dirty and debounce-persist via characterListProvider.
+  /// Mirrors the world editor's autosave vibe.
+  void _scheduleAutoSave() {
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = Timer(const Duration(milliseconds: 1200), () {
+      if (!mounted) return;
+      _save(silent: true);
+    });
   }
 
   @override
@@ -53,10 +138,7 @@ class _CharacterEditorScreenState
       );
     }
 
-    if (_working == null) {
-      _working = character;
-      _nameCtrl.text = character.entity.name;
-    }
+    _working ??= character;
 
     final templatesAsync = ref.watch(allTemplatesProvider);
     return templatesAsync.when(
@@ -104,63 +186,272 @@ class _CharacterEditorScreenState
     WorldSchema template,
   ) {
     final character = _working!;
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _nameCtrl,
-          decoration: const InputDecoration(
-            border: InputBorder.none,
-            hintText: 'Character Name',
-          ),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          onChanged: (v) => setState(() {
-            _working = character.copyWith(
-              entity: character.entity.copyWith(name: v),
-            );
-          }),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => _saveAndClose(context),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Save',
-            icon: const Icon(Icons.save_outlined),
-            onPressed: _save,
-          ),
-          const SizedBox(width: 4),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Center(
-              child: Text(
+    final l10n = L10n.of(context)!;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _saveAndClose(context);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          titleSpacing: 8,
+          automaticallyImplyLeading: false,
+          title: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, size: 20),
+                tooltip: 'Back',
+                onPressed: () => _saveAndClose(context),
+                visualDensity: VisualDensity.compact,
+              ),
+              const SizedBox(width: 4),
+              const AppIconImage(size: 22),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  character.entity.name.isEmpty
+                      ? 'Character'
+                      : character.entity.name,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 15),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
                 template.name,
                 style: TextStyle(
                   fontSize: 11,
                   color: palette.sidebarLabelSecondary,
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _linkedBadges(palette, character),
-                _renderFields(palette, playerCat),
+          actions: [
+            // Undo / Redo
+            IconButton(
+              icon: const Icon(Icons.undo, size: 18),
+              tooltip: 'Undo',
+              onPressed: _canUndo ? _undo : null,
+              iconSize: 18,
+              visualDensity: VisualDensity.compact,
+            ),
+            IconButton(
+              icon: const Icon(Icons.redo, size: 18),
+              tooltip: 'Redo',
+              onPressed: _canRedo ? _redo : null,
+              iconSize: 18,
+              visualDensity: VisualDensity.compact,
+            ),
+            // Cloud save & sync — same UI/behaviour as worlds' Save & Sync.
+            _CharacterSaveSyncButton(
+              character: character,
+              saving: _saving,
+              flushLocal: () => _save(silent: true),
+            ),
+            // Import package / world — shared dialog.
+            IconButton(
+              icon: const Icon(Icons.inventory_2, size: 20),
+              tooltip: l10n.importPackage,
+              onPressed: () => ImportPackageDialog.show(context),
+            ),
+            // Theme
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.palette, size: 20),
+              tooltip: l10n.lblTheme,
+              onSelected: (name) =>
+                  ref.read(themeProvider.notifier).setTheme(name),
+              itemBuilder: (_) => themeNames
+                  .map((name) => PopupMenuItem(
+                        value: name,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 14,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: themePalettes[name]?.canvasBg,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white24),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(name[0].toUpperCase() + name.substring(1)),
+                          ],
+                        ),
+                      ))
+                  .toList(),
+            ),
+            // Language
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.language, size: 20),
+              tooltip: l10n.lblLanguage,
+              onSelected: (code) =>
+                  ref.read(localeProvider.notifier).setLocale(code),
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'en', child: Text('English')),
+                PopupMenuItem(value: 'tr', child: Text('Türkçe')),
+                PopupMenuItem(value: 'de', child: Text('Deutsch')),
+                PopupMenuItem(value: 'fr', child: Text('Français')),
               ],
+            ),
+            // Quit
+            IconButton(
+              icon: const Icon(Icons.exit_to_app, size: 20),
+              tooltip: 'Quit to hub',
+              onPressed: () => _saveAndClose(context),
+            ),
+            // Bug report
+            IconButton(
+              icon: const Icon(Icons.bug_report_outlined, size: 20),
+              tooltip: 'Report a Bug',
+              onPressed: () => BugReportDialog.show(context),
+            ),
+            const SizedBox(width: 4),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _entityHeader(palette, character),
+                  const SizedBox(height: 16),
+                  _linkedBadges(palette, character),
+                  _renderFields(palette, playerCat),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  /// Entity header — portrait + name + description + tags.
+  Widget _entityHeader(DmToolColors palette, Character c) {
+    final entity = c.entity;
+    final hasImage =
+        entity.imagePath.isNotEmpty && File(entity.imagePath).existsSync();
+    final globalTags = ref.watch(globalTagsProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        borderRadius: palette.br,
+        border: Border.all(color: palette.featureCardBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: _pickPortrait,
+            customBorder: const CircleBorder(),
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: palette.featureCardBg,
+                border: Border.all(
+                    color: palette.featureCardBorder, width: 2),
+                image: hasImage
+                    ? DecorationImage(
+                        image: FileImage(File(entity.imagePath)),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              alignment: Alignment.center,
+              child: hasImage
+                  ? null
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.person,
+                            size: 40,
+                            color: palette.sidebarLabelSecondary),
+                        const SizedBox(height: 2),
+                        Text('Add photo',
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: palette.sidebarLabelSecondary)),
+                      ],
+                    ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  key: ValueKey('hdr_name_${c.id}'),
+                  initialValue: entity.name,
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: palette.tabActiveText),
+                  decoration: const InputDecoration(
+                    hintText: 'Character Name',
+                    isDense: true,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 4),
+                  ),
+                  onChanged: (v) {
+                    _mutate(c.copyWith(entity: c.entity.copyWith(name: v)));
+                  },
+                ),
+                const SizedBox(height: 4),
+                TextFormField(
+                  key: ValueKey('hdr_desc_${c.id}'),
+                  initialValue: entity.description,
+                  minLines: 1,
+                  maxLines: 3,
+                  style: TextStyle(fontSize: 12, color: palette.tabText),
+                  decoration: const InputDecoration(
+                    hintText: 'Short description...',
+                    isDense: true,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onChanged: (v) {
+                    _mutate(
+                        c.copyWith(entity: c.entity.copyWith(description: v)));
+                  },
+                ),
+                const SizedBox(height: 8),
+                _HeaderTagsField(
+                  initial: entity.tags.join(', '),
+                  globalTags: globalTags,
+                  onCommit: (tags) {
+                    _mutate(
+                        c.copyWith(entity: c.entity.copyWith(tags: tags)));
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickPortrait() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    );
+    final path = result?.files.firstOrNull?.path;
+    if (path == null) return;
+    final c = _working;
+    if (c == null) return;
+    _mutate(c.copyWith(entity: c.entity.copyWith(imagePath: path)));
   }
 
   Widget _linkedBadges(DmToolColors palette, Character c) {
@@ -203,7 +494,6 @@ class _CharacterEditorScreenState
 
     final children = <Widget>[];
 
-    // Grupsuz field'lar üstte.
     final orphans = fieldsByGroup[null] ?? const <FieldSchema>[];
     for (final f in orphans) {
       children.add(_fieldTile(f, character));
@@ -245,30 +535,592 @@ class _CharacterEditorScreenState
           ...character.entity.fields,
           f.fieldKey: v,
         };
-        setState(() {
-          _working = character.copyWith(
-            entity: character.entity.copyWith(fields: updatedFields),
-          );
-        });
+        _mutate(character.copyWith(
+          entity: character.entity.copyWith(fields: updatedFields),
+        ));
       },
       entityFields: character.entity.fields,
       ref: ref,
     );
   }
 
-  Future<void> _save() async {
+  Future<void> _save({bool silent = false}) async {
     final w = _working;
     if (w == null) return;
-    await ref.read(characterListProvider.notifier).update(w);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Character saved.')),
-      );
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      await ref.read(characterListProvider.notifier).update(w);
+      if (!mounted) return;
+      if (!silent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Character saved.'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
   Future<void> _saveAndClose(BuildContext context) async {
-    await _save();
+    _autoSaveTimer?.cancel();
+    await _save(silent: true);
     if (context.mounted) context.pop();
   }
 }
+
+// ── Character-scoped Save & Sync button ────────────────────────────
+//
+// Mirrors the worlds' SaveSyncIndicator: state-aware cloud icon in the app
+// bar, tap opens a dialog with Save Locally / Backup to Cloud / Sync from
+// Cloud actions plus this character's save info and cloud storage usage.
+
+class _CharacterSaveSyncButton extends ConsumerWidget {
+  final Character character;
+  final bool saving;
+  final Future<void> Function() flushLocal;
+
+  const _CharacterSaveSyncButton({
+    required this.character,
+    required this.saving,
+    required this.flushLocal,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final hasCloud = SupabaseConfig.isConfigured;
+    final opState = ref.watch(cloudBackupOperationProvider);
+    final busy = saving ||
+        opState.type == CloudBackupOpType.uploading ||
+        opState.type == CloudBackupOpType.downloading;
+
+    final (icon, color) = _resolveIcon(palette, hasCloud, opState);
+
+    return IconButton(
+      icon: busy
+          ? SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: color),
+            )
+          : Icon(icon, size: 20, color: color),
+      tooltip: _tooltip(opState, saving),
+      onPressed: () => showDialog<void>(
+        context: context,
+        builder: (ctx) => _CharacterSaveSyncDialog(
+          character: character,
+          flushLocal: flushLocal,
+        ),
+      ),
+    );
+  }
+
+  (IconData, Color) _resolveIcon(
+    DmToolColors palette,
+    bool hasCloud,
+    CloudBackupOperationState op,
+  ) {
+    if (!hasCloud) {
+      return (Icons.save, palette.sidebarLabelSecondary);
+    }
+    if (op.errorMessage != null) {
+      return (Icons.cloud_off, palette.dangerBtnBg);
+    }
+    return switch (op.type) {
+      CloudBackupOpType.uploading ||
+      CloudBackupOpType.downloading =>
+        (Icons.cloud_sync, palette.featureCardAccent),
+      _ => op.result != null
+          ? (Icons.cloud_done, palette.successBtnBg)
+          : (Icons.cloud_queue, palette.sidebarLabelSecondary),
+    };
+  }
+
+  String _tooltip(CloudBackupOperationState op, bool saving) {
+    if (saving) return 'Saving...';
+    if (op.errorMessage != null) return 'Cloud error';
+    return switch (op.type) {
+      CloudBackupOpType.uploading => 'Backing up...',
+      CloudBackupOpType.downloading => 'Restoring...',
+      CloudBackupOpType.deleting => 'Deleting...',
+      _ => 'Save & Sync',
+    };
+  }
+}
+
+class _CharacterSaveSyncDialog extends ConsumerWidget {
+  final Character character;
+  final Future<void> Function() flushLocal;
+
+  const _CharacterSaveSyncDialog({
+    required this.character,
+    required this.flushLocal,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final hasCloud = SupabaseConfig.isConfigured;
+    final opState = ref.watch(cloudBackupOperationProvider);
+    final isUploading = opState.type == CloudBackupOpType.uploading;
+    final isDownloading = opState.type == CloudBackupOpType.downloading;
+
+    DateTime? updatedAt;
+    try {
+      updatedAt = DateTime.parse(character.updatedAt);
+    } catch (_) {}
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420, maxHeight: 560),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      hasCloud ? Icons.cloud_sync : Icons.save,
+                      size: 20,
+                      color: palette.tabActiveText,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Save & Sync',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: palette.tabActiveText,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 18),
+                      onPressed: () => Navigator.pop(context),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 28, minHeight: 28),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Active character info
+                _sectionLabel(palette, character.entity.name.isEmpty
+                    ? 'Character'
+                    : character.entity.name),
+                const SizedBox(height: 6),
+                SaveInfoSection(
+                  itemName: character.entity.name,
+                  itemId: character.id,
+                  type: 'character',
+                  localUpdatedAt: updatedAt,
+                ),
+                const SizedBox(height: 16),
+
+                // Actions
+                _sectionLabel(palette, 'Actions'),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _actionButton(
+                      palette,
+                      icon: Icons.save,
+                      label: 'Save Locally',
+                      onPressed: () async {
+                        await flushLocal();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Saved locally.'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    if (hasCloud)
+                      _actionButton(
+                        palette,
+                        icon: Icons.cloud_upload_outlined,
+                        label: isUploading ? 'Syncing...' : 'Backup to Cloud',
+                        onPressed: isUploading
+                            ? null
+                            : () => _backupToCloud(context, ref),
+                      ),
+                    if (hasCloud)
+                      _actionButton(
+                        palette,
+                        icon: Icons.cloud_download_outlined,
+                        label: isDownloading ? 'Restoring...' : 'Sync from Cloud',
+                        onPressed: isDownloading
+                            ? null
+                            : () => _syncFromCloud(context, ref),
+                      ),
+                  ],
+                ),
+
+                // Storage
+                if (hasCloud) ...[
+                  const SizedBox(height: 16),
+                  _sectionLabel(palette, 'Storage'),
+                  const SizedBox(height: 8),
+                  _CharacterStorageBar(palette: palette),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(DmToolColors palette, String text) => Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: palette.sidebarLabelSecondary,
+          letterSpacing: 0.5,
+        ),
+      );
+
+  Widget _actionButton(
+    DmToolColors palette, {
+    required IconData icon,
+    required String label,
+    required VoidCallback? onPressed,
+  }) =>
+      OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 16),
+        label: Text(label, style: const TextStyle(fontSize: 12)),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          side: BorderSide(color: palette.featureCardBorder),
+          visualDensity: VisualDensity.compact,
+        ),
+      );
+
+  Future<void> _backupToCloud(BuildContext context, WidgetRef ref) async {
+    if (!ref.read(betaProvider).isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Cloud save is beta-only. Open Settings → Subscriptions to join the free beta.',
+          ),
+        ),
+      );
+      return;
+    }
+    // Flush local edits first so the cloud copy matches disk.
+    await flushLocal();
+    final ok = await withLoading(
+      ref.read(globalLoadingProvider.notifier),
+      'character-backup-cloud',
+      'Backing up "${character.entity.name}" to cloud...',
+      () => ref
+          .read(cloudBackupOperationProvider.notifier)
+          .uploadCharacter(character),
+    );
+    if (!context.mounted) return;
+    final fresh = ref.read(cloudBackupOperationProvider);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok
+            ? 'Cloud backup complete'
+            : 'Cloud backup failed: ${fresh.errorMessage ?? ''}'),
+      ),
+    );
+  }
+
+  Future<void> _syncFromCloud(BuildContext context, WidgetRef ref) async {
+    final remoteDs = CloudBackupRemoteDataSource();
+    final loading = ref.read(globalLoadingProvider.notifier);
+    const fetchTaskId = 'character-sync-fetch';
+    loading.start(LoadingTask(
+      id: fetchTaskId,
+      message: 'Looking up cloud backup for "${character.entity.name}"...',
+    ));
+    CloudBackupMeta? meta;
+    try {
+      meta = await remoteDs.fetchByItem(character.id, 'character');
+    } catch (e) {
+      debugPrint('character fetchByItem failed: $e');
+    } finally {
+      loading.end(fetchTaskId);
+    }
+    if (!context.mounted) return;
+    if (meta == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'No cloud backup found for "${character.entity.name}".'),
+        ),
+      );
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Restore "${character.entity.name}" from cloud?'),
+        content: const Text(
+          'This will OVERWRITE the local character with the cloud backup. '
+          'Any unsaved changes since the last cloud backup will be lost.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Restore'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final ok = await withLoading(
+      ref.read(globalLoadingProvider.notifier),
+      'character-sync-restore',
+      'Restoring "${character.entity.name}"...',
+      () => ref
+          .read(cloudBackupOperationProvider.notifier)
+          .restoreBackup(meta!),
+    );
+    if (!context.mounted) return;
+    final fresh = ref.read(cloudBackupOperationProvider);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok
+            ? 'Restored "${character.entity.name}" from cloud.'
+            : 'Restore failed: ${fresh.errorMessage ?? ''}'),
+      ),
+    );
+  }
+}
+
+class _CharacterStorageBar extends ConsumerWidget {
+  final DmToolColors palette;
+  const _CharacterStorageBar({required this.palette});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final storageAsync = ref.watch(cloudStorageUsedProvider);
+    final quotaBytes = ref.watch(betaProvider).quotaBytes;
+
+    return storageAsync.when(
+      data: (bytes) {
+        final usedMb = bytes / (1024 * 1024);
+        final totalMb = quotaBytes / (1024 * 1024);
+        final itemLimitMb = cloudBackupItemSizeLimit / (1024 * 1024);
+        final ratio = (bytes / quotaBytes).clamp(0.0, 1.0);
+        final remainingMb = totalMb - usedMb;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: ratio,
+                      minHeight: 8,
+                      backgroundColor: palette.featureCardBorder,
+                      color: ratio > 0.9
+                          ? palette.dangerBtnBg
+                          : palette.featureCardAccent,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  '${usedMb.toStringAsFixed(1)} / ${totalMb.toStringAsFixed(0)} MB',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: palette.tabActiveText,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${remainingMb.toStringAsFixed(1)} MB remaining  |  Max ${itemLimitMb.toStringAsFixed(0)} MB per item',
+              style: TextStyle(
+                fontSize: 11,
+                color: palette.sidebarLabelSecondary,
+              ),
+            ),
+          ],
+        );
+      },
+      loading: () => const SizedBox(
+        height: 8,
+        child: LinearProgressIndicator(),
+      ),
+      error: (_, _) => Text(
+        'Could not load storage info',
+        style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
+      ),
+    );
+  }
+}
+
+/// Compact comma-separated tags field with global autocomplete + moderation.
+class _HeaderTagsField extends StatefulWidget {
+  final String initial;
+  final Set<String> globalTags;
+  final ValueChanged<List<String>> onCommit;
+
+  const _HeaderTagsField({
+    required this.initial,
+    required this.globalTags,
+    required this.onCommit,
+  });
+
+  @override
+  State<_HeaderTagsField> createState() => _HeaderTagsFieldState();
+}
+
+class _HeaderTagsFieldState extends State<_HeaderTagsField> {
+  late final TextEditingController _ctrl;
+  final FocusNode _focus = FocusNode();
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.initial);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  void _commit(String raw) {
+    final parts = raw
+        .split(',')
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty)
+        .toList();
+    String? err;
+    final accepted = <String>[];
+    for (final p in parts) {
+      final reason = TagModeration.validate(p);
+      if (reason != null) {
+        err = '"$p": $reason';
+        continue;
+      }
+      if (!accepted.contains(p)) accepted.add(p);
+    }
+    setState(() => _error = err);
+    widget.onCommit(accepted);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RawAutocomplete<String>(
+      focusNode: _focus,
+      textEditingController: _ctrl,
+      optionsBuilder: (value) {
+        final text = value.text;
+        final lastComma = text.lastIndexOf(',');
+        final current =
+            (lastComma >= 0 ? text.substring(lastComma + 1) : text)
+                .trim()
+                .toLowerCase();
+        if (current.isEmpty) return const Iterable<String>.empty();
+        final already =
+            text.split(',').map((s) => s.trim().toLowerCase()).toSet();
+        return widget.globalTags
+            .where((t) =>
+                t.toLowerCase().contains(current) &&
+                !already.contains(t.toLowerCase()))
+            .take(8);
+      },
+      fieldViewBuilder: (context, controller, focus, onSubmit) {
+        return TextField(
+          controller: controller,
+          focusNode: focus,
+          decoration: InputDecoration(
+            hintText: 'tags, comma, separated',
+            errorText: _error,
+            isDense: true,
+            prefixIcon: const Icon(Icons.tag, size: 14),
+            prefixIconConstraints:
+                const BoxConstraints(minWidth: 24, minHeight: 24),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          ),
+          style: const TextStyle(fontSize: 11),
+          onChanged: _commit,
+          onSubmitted: (_) {
+            onSubmit();
+            _commit(controller.text);
+          },
+        );
+      },
+      onSelected: (option) {
+        final text = _ctrl.text;
+        final lastComma = text.lastIndexOf(',');
+        final head =
+            lastComma >= 0 ? '${text.substring(0, lastComma + 1)} ' : '';
+        final replaced = '$head$option, ';
+        _ctrl.value = TextEditingValue(
+          text: replaced,
+          selection: TextSelection.collapsed(offset: replaced.length),
+        );
+        _commit(replaced);
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 3,
+            borderRadius: BorderRadius.circular(4),
+            child: ConstrainedBox(
+              constraints:
+                  const BoxConstraints(maxWidth: 360, maxHeight: 200),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (_, i) {
+                  final opt = options.elementAt(i);
+                  return InkWell(
+                    onTap: () => onSelected(opt),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      child:
+                          Text(opt, style: const TextStyle(fontSize: 13)),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+

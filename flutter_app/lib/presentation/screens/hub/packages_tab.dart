@@ -14,8 +14,10 @@ import '../../../domain/entities/schema/world_schema_hash.dart';
 import '../../../core/utils/deep_copy.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
-import '../../widgets/save_info_section.dart';
 import '../../widgets/marketplace_panel.dart';
+import '../../widgets/metadata_editor_section.dart';
+import '../../widgets/metadata_list_tile.dart';
+import '../../widgets/save_info_section.dart';
 
 class PackagesTab extends ConsumerStatefulWidget {
   const PackagesTab({super.key});
@@ -90,14 +92,17 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                         itemBuilder: (context, index) {
                           final info = packages[index];
                           final isSelected = index == _selectedIndex;
+                          final metaAsync =
+                              ref.watch(packageMetadataProvider(info.name));
+                          final meta =
+                              metaAsync.valueOrNull ?? const <String, dynamic>{};
                           return InkWell(
                             borderRadius: palette.br,
                             onTap: () =>
                                 setState(() => _selectedIndex = index),
                             onDoubleTap: () => _loadPackage(info.name),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 10),
+                              clipBehavior: Clip.antiAlias,
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? palette.featureCardAccent
@@ -110,61 +115,23 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                                       : palette.featureCardBorder,
                                 ),
                               ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.inventory_2,
-                                      size: 20,
-                                      color: isSelected
-                                          ? palette.featureCardAccent
-                                          : palette.tabText),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(info.name,
-                                            style: TextStyle(
-                                                fontSize: 14,
-                                                color:
-                                                    palette.tabActiveText)),
-                                        const SizedBox(height: 2),
-                                        Row(
-                                          children: [
-                                            Icon(Icons.description,
-                                                size: 12,
-                                                color: palette
-                                                    .sidebarLabelSecondary),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              '${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}',
-                                              style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: palette
-                                                      .sidebarLabelSecondary),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  InkWell(
-                                    borderRadius: palette.br,
-                                    onTap: () => _showPackageSettings(info.name, palette),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(4),
-                                      child: Icon(Icons.settings,
-                                          size: 16,
-                                          color: palette.sidebarLabelSecondary),
-                                    ),
-                                  ),
-                                  if (isSelected) ...[
-                                    const SizedBox(width: 4),
-                                    Icon(Icons.check,
-                                        size: 16,
-                                        color: palette.featureCardAccent),
-                                  ],
-                                ],
+                              child: MetadataListTile(
+                                icon: Icons.inventory_2,
+                                name: info.name,
+                                subtitle:
+                                    '${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}',
+                                description:
+                                    (meta['description'] as String?) ?? '',
+                                tags: ((meta['tags'] as List?) ?? const [])
+                                    .whereType<String>()
+                                    .toList(),
+                                coverImagePath:
+                                    (meta['cover_image_path'] as String?) ?? '',
+                                isSelected: isSelected,
+                                palette: palette,
+                                layout: MetadataTileLayout.topBanner,
+                                onSettings: () =>
+                                    _showPackageSettings(info.name, palette),
                               ),
                             ),
                           );
@@ -383,15 +350,46 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     final schemaMap = data['world_schema'] as Map<String, dynamic>?;
     final templateName = schemaMap?['name'] as String? ?? 'Unknown';
 
+    final existingMeta = data['metadata'];
+    final workingMeta = existingMeta is Map
+        ? Map<String, dynamic>.from(existingMeta)
+        : <String, dynamic>{};
+    workingMeta['description'] ??= '';
+    workingMeta['tags'] ??= <String>[];
+    workingMeta['cover_image_path'] ??= '';
+
     await showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
         title: Text('$packageName — Settings'),
-        content: SingleChildScrollView(
+        content: SizedBox(
+          width: 440,
+          child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              MetadataEditorSection(
+                showNameField: false,
+                name: packageName,
+                description: workingMeta['description'] as String? ?? '',
+                tags: ((workingMeta['tags'] as List?) ?? const [])
+                    .whereType<String>()
+                    .toList(),
+                coverImagePath:
+                    workingMeta['cover_image_path'] as String? ?? '',
+                onNameChanged: (_) {},
+                onDescriptionChanged: (v) =>
+                    workingMeta['description'] = v,
+                onTagsChanged: (v) =>
+                    setDialogState(() => workingMeta['tags'] = v),
+                onCoverChanged: (v) => setDialogState(
+                    () => workingMeta['cover_image_path'] = v),
+              ),
+              const SizedBox(height: 12),
+              Divider(height: 1, color: palette.featureCardBorder),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Icon(Icons.description, size: 16, color: palette.sidebarLabelSecondary),
@@ -455,6 +453,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
               ],
             ],
           ),
+          ),
         ),
         actions: [
           TextButton(
@@ -469,7 +468,15 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
               },
               child: Text(l10n.templateDriftUpdate),
             ),
+          FilledButton(
+            onPressed: () async {
+              await updatePackageMetadata(ref, packageName, workingMeta);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Save'),
+          ),
         ],
+      ),
       ),
     );
   }

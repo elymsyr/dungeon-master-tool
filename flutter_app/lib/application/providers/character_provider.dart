@@ -79,7 +79,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   }
 
   /// Partial metadata update — name/description/tags/cover/rename combined.
-  /// Settings dialog'un tek bir Save butonu ile kullanılır.
+  /// Tüm metadata entity alanlarına yazılır (entity_card ile ortak kaynak).
   Future<void> updateMetadata({
     required String id,
     String? name,
@@ -91,10 +91,12 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     final c = list.where((x) => x.id == id).firstOrNull;
     if (c == null) return;
     final patched = c.copyWith(
-      entity: name != null ? c.entity.copyWith(name: name) : c.entity,
-      description: description ?? c.description,
-      tags: tags ?? c.tags,
-      coverImagePath: coverImagePath ?? c.coverImagePath,
+      entity: c.entity.copyWith(
+        name: name ?? c.entity.name,
+        description: description ?? c.entity.description,
+        tags: tags ?? c.entity.tags,
+        imagePath: coverImagePath ?? c.entity.imagePath,
+      ),
     );
     await update(patched);
   }
