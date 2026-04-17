@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/cloud_remote_check_provider.dart';
+import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/social_providers.dart';
 import '../../../application/providers/profile_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
@@ -36,10 +37,9 @@ class HubScreen extends ConsumerStatefulWidget {
 }
 
 class _HubScreenState extends ConsumerState<HubScreen> {
-  int _tabIndex = 2; // Worlds tab default
   bool _profileDialogOpen = false;
 
-  static const _settingsTabIndex = 1;
+  static const _settingsTabIndex = settingsTabIndex;
 
   @override
   void initState() {
@@ -116,7 +116,13 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     PackagesTab(),
   ];
 
-  void _showLandscapeNavSheet(DmToolColors palette, bool cloudBadge, {bool hasUnread = false}) {
+  void _showLandscapeNavSheet(
+    DmToolColors palette,
+    bool cloudBadge, {
+    bool hasUnread = false,
+    required int currentTabIndex,
+    required List<int> visibleTabs,
+  }) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -127,45 +133,64 @@ class _HubScreenState extends ConsumerState<HubScreen> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Wrap(
             alignment: WrapAlignment.center,
-            children: List.generate(_tabs.length, (i) {
-              final t = _tabs[i];
-              final isActive = i == _tabIndex;
-              return InkWell(
-                onTap: () {
-                  Navigator.pop(ctx);
-                  setState(() => _tabIndex = i);
-                },
-                child: SizedBox(
-                  width: 80,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _tabIcon(
-                          icon: t.icon,
-                          size: 24,
-                          color: isActive ? palette.tabIndicator : palette.tabText,
-                          showBadge:
-                              (i == _settingsTabIndex && cloudBadge) ||
-                              (i == 0 && hasUnread),
-                          badgeColor: palette.featureCardAccent,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(t.label,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isActive ? palette.tabIndicator : palette.tabText,
-                            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
+            children: [
+              for (final i in visibleTabs)
+                _buildLandscapeSheetTile(
+                  ctx: ctx,
+                  index: i,
+                  palette: palette,
+                  cloudBadge: cloudBadge,
+                  hasUnread: hasUnread,
+                  currentTabIndex: currentTabIndex,
                 ),
-              );
-            }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLandscapeSheetTile({
+    required BuildContext ctx,
+    required int index,
+    required DmToolColors palette,
+    required bool cloudBadge,
+    required bool hasUnread,
+    required int currentTabIndex,
+  }) {
+    final t = _tabs[index];
+    final isActive = index == currentTabIndex;
+    return InkWell(
+      onTap: () {
+        Navigator.pop(ctx);
+        ref.read(hubTabIndexProvider.notifier).state = index;
+      },
+      child: SizedBox(
+        width: 80,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _tabIcon(
+                icon: t.icon,
+                size: 24,
+                color: isActive ? palette.tabIndicator : palette.tabText,
+                showBadge:
+                    (index == _settingsTabIndex && cloudBadge) ||
+                    (index == 0 && hasUnread),
+                badgeColor: palette.featureCardAccent,
+              ),
+              const SizedBox(height: 4),
+              Text(t.label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isActive ? palette.tabIndicator : palette.tabText,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         ),
       ),
@@ -205,10 +230,17 @@ class _HubScreenState extends ConsumerState<HubScreen> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
     final socialSubTab = ref.watch(socialSubTabProvider);
-    final help = _helpForTab(l10n, _tabIndex, socialSubTab);
+    final tabIndex = ref.watch(hubTabIndexProvider);
+    final help = _helpForTab(l10n, tabIndex, socialSubTab);
     final screen = getScreenType(context);
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;
+    // Mobile hides Settings from the tab bar — it lives in the profile menu.
+    final isPhone = screen == ScreenType.phone;
+    final visibleTabs = <int>[
+      for (var i = 0; i < _tabs.length; i++)
+        if (!(isPhone && i == _settingsTabIndex)) i,
+    ];
     // Multi-device hint — another device uploaded changes we haven't pulled.
     final cloudBadge = ref.watch(cloudRemoteHasNewerProvider);
     // Unread messages — badge on Social tab.
@@ -251,7 +283,13 @@ class _HubScreenState extends ConsumerState<HubScreen> {
         leading: isLandscapePhone
             ? IconButton(
                 icon: const Icon(Icons.menu, size: 22),
-                onPressed: () => _showLandscapeNavSheet(palette, cloudBadge, hasUnread: hasUnread),
+                onPressed: () => _showLandscapeNavSheet(
+                  palette,
+                  cloudBadge,
+                  hasUnread: hasUnread,
+                  currentTabIndex: tabIndex,
+                  visibleTabs: visibleTabs,
+                ),
               )
             : null,
         automaticallyImplyLeading: false,
@@ -288,8 +326,9 @@ class _HubScreenState extends ConsumerState<HubScreen> {
               children: [
                 _HubSideRail(
                   tabs: _tabs,
-                  selectedIndex: _tabIndex,
-                  onSelected: (i) => setState(() => _tabIndex = i),
+                  selectedIndex: tabIndex,
+                  onSelected: (i) =>
+                      ref.read(hubTabIndexProvider.notifier).state = i,
                   palette: palette,
                   settingsBadge: cloudBadge,
                   settingsTabIndex: _settingsTabIndex,
@@ -298,7 +337,7 @@ class _HubScreenState extends ConsumerState<HubScreen> {
                 VerticalDivider(width: 1, color: palette.sidebarDivider),
                 Expanded(
                   child: LazyIndexedStack(
-                    index: _tabIndex,
+                    index: tabIndex,
                     children: _tabContent,
                   ),
                 ),
@@ -306,30 +345,22 @@ class _HubScreenState extends ConsumerState<HubScreen> {
             ),
           // Mobile: portrait=BottomNav, landscape=leading burger menu
           ScreenType.phone => LazyIndexedStack(
-            index: _tabIndex,
+            index: tabIndex,
             children: _tabContent,
           ),
         },
       ),
       bottomNavigationBar: (screen == ScreenType.phone && !isLandscapePhone)
-          ? NavigationBar(
-              selectedIndex: _tabIndex,
-              onDestinationSelected: (i) => setState(() => _tabIndex = i),
-              destinations: [
-                for (var i = 0; i < _tabs.length; i++)
-                  NavigationDestination(
-                    icon: _tabIcon(
-                      icon: _tabs[i].icon,
-                      size: 24,
-                      color: palette.tabText,
-                      showBadge:
-                          (i == _settingsTabIndex && cloudBadge) ||
-                          (i == 0 && hasUnread),
-                      badgeColor: palette.featureCardAccent,
-                    ),
-                    label: _tabs[i].label,
-                  ),
-              ],
+          ? _MobileHubNavBar(
+              tabs: _tabs,
+              visibleTabs: visibleTabs,
+              selectedTabIndex: tabIndex,
+              onSelected: (i) =>
+                  ref.read(hubTabIndexProvider.notifier).state = i,
+              palette: palette,
+              settingsTabIndex: _settingsTabIndex,
+              cloudBadge: cloudBadge,
+              socialBadge: hasUnread,
             )
           : null,
     ),
@@ -439,6 +470,146 @@ class _SideRailButton extends StatelessWidget {
                       ),
                     ),
                   ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Themed mobile bottom navigation. Replaces Material's default NavigationBar
+/// so hover/active states respect DmToolColors (accent fill, themed radius,
+/// tab text colors).
+class _MobileHubNavBar extends StatelessWidget {
+  final List<({IconData icon, String label})> tabs;
+  final List<int> visibleTabs;
+  final int selectedTabIndex;
+  final ValueChanged<int> onSelected;
+  final DmToolColors palette;
+  final int settingsTabIndex;
+  final bool cloudBadge;
+  final bool socialBadge;
+
+  const _MobileHubNavBar({
+    required this.tabs,
+    required this.visibleTabs,
+    required this.selectedTabIndex,
+    required this.onSelected,
+    required this.palette,
+    required this.settingsTabIndex,
+    required this.cloudBadge,
+    required this.socialBadge,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: palette.tabBg,
+      child: SafeArea(
+        top: false,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: palette.sidebarDivider, width: 1),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+          child: Row(
+            children: [
+              for (final i in visibleTabs)
+                Expanded(
+                  child: _MobileNavTile(
+                    icon: tabs[i].icon,
+                    label: tabs[i].label,
+                    selected: i == selectedTabIndex,
+                    palette: palette,
+                    showBadge: (i == settingsTabIndex && cloudBadge) ||
+                        (i == 0 && socialBadge),
+                    onTap: () => onSelected(i),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileNavTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final DmToolColors palette;
+  final bool showBadge;
+  final VoidCallback onTap;
+
+  const _MobileNavTile({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.palette,
+    required this.showBadge,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final activeColor = palette.featureCardAccent;
+    final bg = selected ? activeColor.withValues(alpha: 0.18) : Colors.transparent;
+    final fg = selected ? activeColor : palette.tabText;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Material(
+        color: bg,
+        borderRadius: palette.br,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: palette.br,
+          hoverColor: activeColor.withValues(alpha: 0.10),
+          splashColor: activeColor.withValues(alpha: 0.22),
+          highlightColor: activeColor.withValues(alpha: 0.14),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(icon, size: selected ? 24 : 22, color: fg),
+                    if (showBadge)
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: activeColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: palette.tabBg,
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: fg,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           ),
