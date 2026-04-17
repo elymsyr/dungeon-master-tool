@@ -123,6 +123,7 @@ class MarketplaceListingsRemoteDataSource {
     String? itemType,
     String? language,
     String? tag,
+    bool? builtinOnly,
     int limit = 100,
   }) async {
     var query = _client
@@ -131,8 +132,24 @@ class MarketplaceListingsRemoteDataSource {
     if (itemType != null) query = query.eq('item_type', itemType);
     if (language != null && language.isNotEmpty) query = query.eq('language', language);
     if (tag != null && tag.isNotEmpty) query = query.contains('tags', [tag]);
+    if (builtinOnly != null) query = query.eq('is_builtin', builtinOnly);
     final rows = await query.order('created_at', ascending: false).limit(limit);
     return rows.map(_rowToListing).toList();
+  }
+
+  /// Admin tarafından built-in olarak işaretlenmiş listing'leri döner.
+  /// Shorthand for `listAllCurrent(builtinOnly: true)`.
+  Future<List<MarketplaceListing>> listBuiltIns({
+    String? itemType,
+    String? language,
+    int limit = 100,
+  }) {
+    return listAllCurrent(
+      itemType: itemType,
+      language: language,
+      builtinOnly: true,
+      limit: limit,
+    );
   }
 
   /// Fetch a set of listings by id. Preserves the input order so the
@@ -191,6 +208,8 @@ class MarketplaceListingsRemoteDataSource {
       createdAt: parseIsoOrNow(row['created_at']),
       ownerUsername: profile?['username'] as String?,
       coverImageB64: row['cover_image_b64'] as String?,
+      isBuiltin: row['is_builtin'] as bool? ?? false,
+      builtinMarkedAt: parseIsoOrNull(row['builtin_marked_at']),
     );
   }
 

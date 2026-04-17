@@ -17,6 +17,11 @@ abstract class UserProfile with _$UserProfile {
     @Default(0) int followers,
     @Default(0) int following,
     @Default(false) bool hiddenFromDiscover,
+    @Default(false) bool onlineRestricted,
+    String? onlineRestrictedReason,
+    DateTime? onlineRestrictedAt,
+    String? appVersion,
+    String? platform,
     required DateTime createdAt,
   }) = _UserProfile;
 

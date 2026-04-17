@@ -81,3 +81,66 @@ final adminStorageStatsProvider = FutureProvider.autoDispose<List<StorageBucketS
   final ds = ref.watch(adminUsersDataSourceProvider);
   return ds.fetchStorageStats();
 });
+
+/// Restricted (online yasaklı) kullanıcı listesi — admin paneli için.
+final adminRestrictedUsersProvider =
+    FutureProvider.autoDispose<List<RestrictedUserEntry>>((ref) async {
+  final isAdmin = await ref.watch(isAdminProvider.future);
+  if (!isAdmin) return const [];
+  final ds = ref.watch(adminUsersDataSourceProvider);
+  return ds.fetchRestrictedUsers();
+});
+
+/// Tüm post'lar (admin moderation tab).
+final adminAllPostsProvider =
+    FutureProvider.autoDispose<List<AdminPostRow>>((ref) async {
+  final isAdmin = await ref.watch(isAdminProvider.future);
+  if (!isAdmin) return const [];
+  final ds = ref.watch(adminUsersDataSourceProvider);
+  return ds.fetchAllPosts();
+});
+
+/// Tüm game listing'leri (admin moderation tab).
+final adminAllGameListingsProvider =
+    FutureProvider.autoDispose<List<AdminGameListingRow>>((ref) async {
+  final isAdmin = await ref.watch(isAdminProvider.future);
+  if (!isAdmin) return const [];
+  final ds = ref.watch(adminUsersDataSourceProvider);
+  return ds.fetchAllGameListings();
+});
+
+/// Marketplace listing filter: null = hepsi, true = yalnızca built-in.
+final adminMarketplaceFilterProvider = StateProvider<bool?>((ref) => null);
+
+/// Tüm marketplace listing'leri (admin moderation + built-in tabs).
+final adminAllMarketplaceListingsProvider =
+    FutureProvider.autoDispose<List<AdminMarketplaceListingRow>>((ref) async {
+  final isAdmin = await ref.watch(isAdminProvider.future);
+  if (!isAdmin) return const [];
+  final ds = ref.watch(adminUsersDataSourceProvider);
+  final filter = ref.watch(adminMarketplaceFilterProvider);
+  return ds.fetchAllMarketplaceListings(builtinOnly: filter);
+});
+
+/// Admin audit log — en yeni başta.
+final adminAuditLogProvider =
+    FutureProvider.autoDispose<List<AdminAuditLogEntry>>((ref) async {
+  final isAdmin = await ref.watch(isAdminProvider.future);
+  if (!isAdmin) return const [];
+  final ds = ref.watch(adminUsersDataSourceProvider);
+  return ds.fetchAuditLog();
+});
+
+/// Kullanıcı tarafı: mevcut oturumun online restriction durumu. Auth state
+/// değişince otomatik refresh olur (banned user flow'una benzer).
+///
+/// UI tarafında `onlineRestrictionProvider` ile izlenir; restricted ise
+/// sosyal etkileşim butonları disable edilir ve banner gösterilir.
+final onlineRestrictionProvider =
+    FutureProvider<OnlineRestriction>((ref) async {
+  if (!SupabaseConfig.isConfigured) return OnlineRestriction.none;
+  final auth = ref.watch(authProvider);
+  if (auth == null) return OnlineRestriction.none;
+  final ds = ref.watch(adminUsersDataSourceProvider);
+  return ds.amIOnlineRestricted();
+});
