@@ -455,30 +455,28 @@ class _CharacterEditorScreenState
   }
 
   Widget _linkedBadges(DmToolColors palette, Character c) {
-    final packs = c.linkedPackages;
-    final worlds = c.linkedWorlds;
-    if (packs.isEmpty && worlds.isEmpty) return const SizedBox.shrink();
+    if (c.worldName.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Chip(
+          avatar: Icon(Icons.warning_amber,
+              size: 14, color: palette.dangerBtnBg),
+          label: Text(
+            L10n.of(context)!.charWorldOrphan,
+            style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
+          ),
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 4,
-        children: [
-          for (final p in packs)
-            Chip(
-              avatar: const Icon(Icons.inventory_2, size: 14),
-              label: Text(p, style: const TextStyle(fontSize: 11)),
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-          for (final w in worlds)
-            Chip(
-              avatar: const Icon(Icons.public, size: 14),
-              label: Text(w, style: const TextStyle(fontSize: 11)),
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-        ],
+      child: Chip(
+        avatar: const Icon(Icons.public, size: 14),
+        label: Text(c.worldName, style: const TextStyle(fontSize: 11)),
+        visualDensity: VisualDensity.compact,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }

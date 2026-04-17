@@ -5,9 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/template_provider.dart';
+import '../../../application/services/template_clone_util.dart';
 import '../../../application/services/template_sync_service.dart';
+import '../../dialogs/builtin_warning_dialog.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
@@ -294,6 +297,10 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       if (!mounted) return;
       if (action == 'update') {
         await ref.read(activeCampaignProvider.notifier).applyTemplateUpdate(drift.newTemplate);
+        await ref.read(characterListProvider.notifier).applyTemplateUpdate(
+              worldName: drift.campaignName,
+              newTemplate: drift.newTemplate,
+            );
       } else if (action == 'mute') {
         await ref.read(activeCampaignProvider.notifier).muteTemplateUpdates();
       } else {
@@ -568,6 +575,10 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
         await ref
             .read(activeCampaignProvider.notifier)
             .applyTemplateUpdate(drift.newTemplate);
+        await ref.read(characterListProvider.notifier).applyTemplateUpdate(
+              worldName: campaignName,
+              newTemplate: drift.newTemplate,
+            );
       } else {
         // Non-active campaign — mutate data map directly and save.
         data['world_schema'] = deepCopyJson(drift.newTemplate.toJson());
@@ -578,6 +589,10 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
         }
         data.remove('template_dismissed_hash');
         await ref.read(campaignRepositoryProvider).save(campaignName, data);
+        await ref.read(characterListProvider.notifier).applyTemplateUpdate(
+              worldName: campaignName,
+              newTemplate: drift.newTemplate,
+            );
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -602,13 +617,41 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('World already exists')));
       return;
     }
+
+    WorldSchema? template = _selectedTemplate;
+    // Built-in ise kullanıcıya uyarı göster.
+    if (template != null && template.schemaId == builtinTemplateId) {
+      final choice = await BuiltinWarningDialog.show(context);
+      switch (choice) {
+        case BuiltinWarningChoice.cancel:
+          return;
+        case BuiltinWarningChoice.continueBuiltin:
+          break;
+        case BuiltinWarningChoice.copyFirst:
+          final cloned = cloneTemplateAsNew(template, '${template.name} (copy)');
+          try {
+            await ref.read(templateLocalDsProvider).save(cloned);
+            ref.invalidate(customTemplatesProvider);
+            ref.invalidate(allTemplatesProvider);
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text('Clone failed: $e')));
+            }
+            return;
+          }
+          template = cloned;
+      }
+    }
+
+    final templateFinal = template;
     final success = await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'create-world-$name',
       'Creating world "$name"...',
       () => ref
           .read(activeCampaignProvider.notifier)
-          .create(name, template: _selectedTemplate),
+          .create(name, template: templateFinal),
     );
     if (success && mounted) {
       context.go('/main');

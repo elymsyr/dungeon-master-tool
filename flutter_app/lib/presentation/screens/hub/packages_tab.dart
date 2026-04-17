@@ -8,7 +8,9 @@ import '../../../application/providers/package_provider.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/services/template_clone_util.dart';
 import '../../../application/services/template_sync_service.dart';
+import '../../dialogs/builtin_warning_dialog.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../../domain/entities/schema/world_schema_hash.dart';
 import '../../../core/utils/deep_copy.dart';
@@ -642,13 +644,40 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
       }
       return;
     }
+
+    WorldSchema? template = _selectedTemplate;
+    if (template != null && template.schemaId == builtinTemplateId) {
+      final choice = await BuiltinWarningDialog.show(context);
+      switch (choice) {
+        case BuiltinWarningChoice.cancel:
+          return;
+        case BuiltinWarningChoice.continueBuiltin:
+          break;
+        case BuiltinWarningChoice.copyFirst:
+          final cloned = cloneTemplateAsNew(template, '${template.name} (copy)');
+          try {
+            await ref.read(templateLocalDsProvider).save(cloned);
+            ref.invalidate(customTemplatesProvider);
+            ref.invalidate(allTemplatesProvider);
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text('Clone failed: $e')));
+            }
+            return;
+          }
+          template = cloned;
+      }
+    }
+
+    final templateFinal = template;
     final success = await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'create-package-$name',
       'Creating package "$name"...',
       () => ref
           .read(activePackageProvider.notifier)
-          .create(name, template: _selectedTemplate),
+          .create(name, template: templateFinal),
     );
     if (success) {
       ref.invalidate(packageListProvider);

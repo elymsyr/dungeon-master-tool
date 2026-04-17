@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/character_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/package_provider.dart';
@@ -47,39 +48,31 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     final compatService = TemplateCompatibilityService();
 
     return AlertDialog(
-      title: Row(
-        children: [
-          Expanded(child: Text(l10n.importPackageTitle)),
-          SegmentedButton<_ImportSource>(
-            segments: const [
-              ButtonSegment(
-                value: _ImportSource.packages,
-                icon: Icon(Icons.inventory_2, size: 16),
-                label: Text('Packages', style: TextStyle(fontSize: 12)),
-              ),
-              ButtonSegment(
-                value: _ImportSource.characters,
-                icon: Icon(Icons.person, size: 16),
-                label: Text('Characters', style: TextStyle(fontSize: 12)),
-              ),
-            ],
-            selected: {_source},
-            onSelectionChanged: _importing
-                ? null
-                : (s) => setState(() => _source = s.first),
-            showSelectedIcon: false,
-          ),
-        ],
-      ),
+      title: Text(l10n.importPackageTitle),
       content: SizedBox(
         width: 500,
-        height: 440,
-        child: switch (_source) {
-          _ImportSource.packages =>
-            _packagesBody(l10n, palette, worldSchema, compatService),
-          _ImportSource.characters =>
-            _charactersBody(l10n, palette, worldSchema, compatService),
-        },
+        height: 480,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ImportSourcePillTabs(
+              source: _source,
+              palette: palette,
+              disabled: _importing,
+              onChanged: (s) => setState(() => _source = s),
+              l10n: l10n,
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: switch (_source) {
+                _ImportSource.packages =>
+                  _packagesBody(l10n, palette, worldSchema, compatService),
+                _ImportSource.characters =>
+                  _charactersBody(l10n, palette, worldSchema, compatService),
+              },
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -152,9 +145,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
               palette: palette,
               l10n: l10n,
               importing: _importing,
-              onImport: templ == null
-                  ? null
-                  : () => _importCharacter(c, templ, worldSchema),
+              onImport: templ == null ? null : () => _importCharacter(c),
             );
           },
         );
@@ -216,44 +207,53 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     }
   }
 
-  Future<void> _importCharacter(
-      Character c, WorldSchema template, WorldSchema worldSchema) async {
+  /// Karakter import'u **kopya değil, link** kurar. Aktif world'ün
+  /// `linked_character_ids` listesine karakter id'si eklenir. Karakter
+  /// hub'da tek kaynak olarak yaşar — hub'da yapılan her edit, linked
+  /// world'de de görünür (EntityNotifier `characterListProvider`'ı
+  /// dinliyor ve otomatik reload yapıyor).
+  Future<void> _importCharacter(Character c) async {
     setState(() => _importing = true);
     try {
-      // Package import service konvansiyonu: `type` = kategori slug,
-      // `attributes` = fields map. Character tek entity olarak import edilir.
-      final entityMap = <String, dynamic>{
-        'name': c.entity.name,
-        'type': c.entity.categorySlug,
-        'source': c.entity.source,
-        'description': c.entity.description,
-        'images': c.entity.images,
-        'image_path': c.entity.imagePath,
-        'tags': c.entity.tags,
-        'dm_notes': c.entity.dmNotes,
-        'pdfs': c.entity.pdfs,
-        'location_id': c.entity.locationId,
-        'attributes': c.entity.fields,
-      };
-      final packageEntities = <String, dynamic>{c.entity.id: entityMap};
-
-      final count = PackageImportService().importPackage(
-        packageEntities: packageEntities,
-        packageSchema: template,
-        worldSchema: worldSchema,
-        entityNotifier: ref.read(entityProvider.notifier),
-      );
+      final activeNotifier = ref.read(activeCampaignProvider.notifier);
+      final data = activeNotifier.data;
+      if (data == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No active world')),
+          );
+        }
+        return;
+      }
+      final existing =
+          (data['linked_character_ids'] as List?)?.whereType<String>().toList() ??
+              <String>[];
+      if (existing.contains(c.id)) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('"${c.entity.name}" already linked')),
+          );
+        }
+        return;
+      }
+      data['linked_character_ids'] = [...existing, c.id];
+      await activeNotifier.save();
+      // Bump revision → EntityNotifier `_loadFromCampaign()` çalışır,
+      // linked karakter world görünümüne enjekte olur.
+      ref.read(campaignRevisionProvider.notifier).state++;
 
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(L10n.of(context)!.importSuccess(count))),
+          SnackBar(
+              content: Text('Linked "${c.entity.name}" to this world')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Import failed: $e')),
+          SnackBar(content: Text('Link failed: $e')),
         );
       }
     } finally {
@@ -677,6 +677,67 @@ class _CharacterImportCard extends StatelessWidget {
       child: hasImage
           ? null
           : Icon(Icons.person, size: 22, color: palette.tabText),
+    );
+  }
+}
+
+/// Feed-scope tarzı pill tab: Packages / Characters seçici.
+class _ImportSourcePillTabs extends StatelessWidget {
+  final _ImportSource source;
+  final DmToolColors palette;
+  final bool disabled;
+  final ValueChanged<_ImportSource> onChanged;
+  final L10n l10n;
+
+  const _ImportSourcePillTabs({
+    required this.source,
+    required this.palette,
+    required this.disabled,
+    required this.onChanged,
+    required this.l10n,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <(_ImportSource, String)>[
+      (_ImportSource.packages, l10n.importSourcePackages),
+      (_ImportSource.characters, l10n.importSourceCharacters),
+    ];
+    return Opacity(
+      opacity: disabled ? 0.6 : 1,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: items.map((t) {
+          final isActive = t.$1 == source;
+          return InkWell(
+            borderRadius: palette.br,
+            onTap: disabled ? null : () => onChanged(t.$1),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color:
+                    isActive ? palette.featureCardAccent : Colors.transparent,
+                borderRadius: palette.br,
+                border: Border.all(
+                  color: isActive
+                      ? palette.featureCardAccent
+                      : palette.featureCardBorder,
+                ),
+              ),
+              child: Text(
+                t.$2,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: isActive ? Colors.white : palette.tabText,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_paths.dart';
@@ -21,6 +23,25 @@ final soundpadRootProvider = Provider<String>((ref) => AppPaths.soundpadRoot);
 final soundpadLibraryProvider = FutureProvider<SoundpadLibrary>((ref) {
   final root = ref.watch(soundpadRootProvider);
   return SoundpadLoader.loadGlobalLibrary(root);
+});
+
+/// Soundpad kök dizinindeki tüm dosyaların toplam boyutu (byte).
+/// Settings tab'da "kullanılan storage" göstergesini beslemek için.
+final soundpadTotalSizeProvider = FutureProvider<int>((ref) async {
+  final root = ref.watch(soundpadRootProvider);
+  final dir = Directory(root);
+  if (!await dir.exists()) return 0;
+  var total = 0;
+  await for (final entry in dir.list(recursive: true, followLinks: false)) {
+    if (entry is File) {
+      try {
+        total += await entry.length();
+      } catch (_) {
+        // İzin hataları vs. — yoksay.
+      }
+    }
+  }
+  return total;
 });
 
 /// Tüm müzik temaları.

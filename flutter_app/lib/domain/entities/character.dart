@@ -7,6 +7,10 @@ part 'character.g.dart';
 
 /// Hub-level karakter — bir template'in Player kategorisinden üretilir.
 /// Kampanyadan bağımsız olarak saklanır: `{charactersDir}/{id}.json`.
+///
+/// Her karakter bir world'e (campaign) bağlanır; class/spell/equipment/traits
+/// gibi entity'leri o world'ün entities'inden çözer. Boş `worldName` =
+/// migration sırasında world bilgisi kaybedilen orphan karakter.
 @freezed
 abstract class Character with _$Character {
   const factory Character({
@@ -17,11 +21,9 @@ abstract class Character with _$Character {
     /// character metadata bu alanlarda saklanır, böylece entity_card ile
     /// aynı field'ları paylaşırız.
     required Entity entity,
-    /// Karakterin referans alabileceği paket isimleri (sınıflar, spell listeleri
-    /// vs.). Entity resolution runtime'da bu paketlerden yapılır.
-    @Default(<String>[]) List<String> linkedPackages,
-    /// Karakterin referans alabileceği world/campaign isimleri.
-    @Default(<String>[]) List<String> linkedWorlds,
+    /// Karakterin bağlı olduğu world (campaign) adı. Boş ise orphan:
+    /// kullanıcı editorde world seçene kadar bazı özellikler kapalı kalır.
+    @Default('') String worldName,
     required String createdAt,
     required String updatedAt,
   }) = _Character;

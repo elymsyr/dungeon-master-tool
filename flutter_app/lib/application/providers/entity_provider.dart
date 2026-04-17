@@ -13,6 +13,7 @@ import '../../domain/entities/schema/world_schema.dart';
 import '../services/event_bus.dart';
 import '../services/undo_redo_mixin.dart';
 import 'campaign_provider.dart';
+import 'character_provider.dart';
 import 'event_bus_provider.dart';
 import 'save_state_provider.dart';
 
@@ -82,6 +83,12 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   @override
   int get maxUndoDepth => 30;
 
+  /// Aktif kampanyaya link edilmiş (kopya değil) karakterlerin id'leri.
+  /// `_loadFromCampaign` içinde doldurulur; `_syncToCampaign` bunları
+  /// disk'e `entities`'e yazmaz — karakterler hub'da kalır, world sadece
+  /// referansı (`linked_character_ids`) tutar.
+  final Set<String> _linkedCharacterIds = {};
+
   EntityNotifier(
       this._campaign, this._ref, this._onDirty, this._eventBus)
       : super({}) {
@@ -91,6 +98,12 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     // mount — the `_loadFromCampaign()` above covers that.
     _ref.listen<int>(campaignRevisionProvider, (_, _) {
       _loadFromCampaign();
+    });
+    // Linked karakter edit'leri hub'dan geldiğinde world görünümünü
+    // otomatik tazele — kopya olmadığı için güncellemeler anında
+    // yansımalı.
+    _ref.listen(characterListProvider, (_, _) {
+      if (_linkedCharacterIds.isNotEmpty) _loadFromCampaign();
     });
   }
 
@@ -122,6 +135,25 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
         );
       } catch (e) {
         debugPrint('Entity parse error for ${entry.key}: $e');
+      }
+    }
+
+    // Linked karakterleri enjekte et: hub'daki karakterin entity'sini aynı
+    // id ile map'e koyarız. Böylece world görünümü hub'taki canlı veriyi
+    // gösterir; edit'lerde `characterListProvider` listen'i ile anında
+    // reload yapılır.
+    _linkedCharacterIds
+      ..clear()
+      ..addAll(
+        (data['linked_character_ids'] as List?)?.whereType<String>() ??
+            const [],
+      );
+    if (_linkedCharacterIds.isNotEmpty) {
+      final chars = _ref.read(characterListProvider).valueOrNull ?? const [];
+      for (final c in chars) {
+        if (_linkedCharacterIds.contains(c.id)) {
+          entities[c.entity.id] = c.entity;
+        }
       }
     }
 
@@ -241,10 +273,14 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     final data = _campaign.data;
     if (data == null) return;
 
-    // Synchronously update in-memory campaign data
+    // Synchronously update in-memory campaign data.
+    // Linked karakterler disk'e `entities` altına yazılmaz — world sadece
+    // `linked_character_ids`'i tutar, veri hub'da kalır.
     final raw = <String, dynamic>{};
     for (final entry in state.entries) {
-      raw[entry.key] = _entityToMap(entry.value);
+      final entity = entry.value;
+      if (_linkedCharacterIds.contains(entity.id)) continue;
+      raw[entry.key] = _entityToMap(entity);
     }
     data['entities'] = raw;
     _onDirty();

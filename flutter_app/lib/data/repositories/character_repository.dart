@@ -18,6 +18,7 @@ class CharacterRepository {
       try {
         final text = await entry.readAsString();
         final map = jsonDecode(text) as Map<String, dynamic>;
+        _migrateLegacyWorldLinks(map);
         out.add(Character.fromJson(map));
       } catch (_) {
         // Skip corrupt files.
@@ -37,5 +38,24 @@ class CharacterRepository {
   Future<void> delete(String id) async {
     final file = File(p.join(AppPaths.charactersDir, '$id.json'));
     if (await file.exists()) await file.delete();
+  }
+
+  /// Eski karakter JSON'larında `linked_worlds: [...]` + `linked_packages: [...]`
+  /// vardı. Yeni model tek bir `world_name` bekliyor — ilk linkedWorld alınıp
+  /// worldName'e taşınır, paketler tamamen bırakılır.
+  void _migrateLegacyWorldLinks(Map<String, dynamic> map) {
+    if (map.containsKey('world_name') && (map['world_name'] as String?) != null) {
+      return;
+    }
+    final linkedWorlds = map['linked_worlds'];
+    if (linkedWorlds is List && linkedWorlds.isNotEmpty) {
+      final first = linkedWorlds.first;
+      if (first is String && first.isNotEmpty) {
+        map['world_name'] = first;
+      }
+    }
+    map['world_name'] ??= '';
+    map.remove('linked_worlds');
+    map.remove('linked_packages');
   }
 }
