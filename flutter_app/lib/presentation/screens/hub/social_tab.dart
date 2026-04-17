@@ -6,6 +6,7 @@ import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/social_providers.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/online_restriction_banner.dart';
 import '../social/feed_tab.dart';
 import '../social/game_listings_tab.dart';
 import '../social/marketplace_tab.dart';
@@ -35,18 +36,24 @@ class _SocialTabState extends ConsumerState<SocialTab> {
 
     final currentTab = ref.watch(socialSubTabProvider);
     final messageUnread = ref.watch(totalUnreadCountProvider).value ?? 0;
+    final tabChild = switch (currentTab) {
+      'feed' => const FeedTab(),
+      'messages' => const MessagesTab(),
+      'gameListings' => const GameListingsTab(),
+      'marketplace' => const MarketplaceTab(),
+      _ => const FeedTab(),
+    };
     return SocialShell(
       currentTab: currentTab,
       messagesBadgeCount: messageUnread,
       onTabChanged: (t) =>
           ref.read(socialSubTabProvider.notifier).state = t,
-      child: switch (currentTab) {
-        'feed' => const FeedTab(),
-        'messages' => const MessagesTab(),
-        'gameListings' => const GameListingsTab(),
-        'marketplace' => const MarketplaceTab(),
-        _ => const FeedTab(),
-      },
+      child: Column(
+        children: [
+          const OnlineRestrictionBanner(),
+          Expanded(child: tabChild),
+        ],
+      ),
     );
   }
 }

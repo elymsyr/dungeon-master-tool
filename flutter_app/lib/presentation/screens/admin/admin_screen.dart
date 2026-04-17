@@ -9,7 +9,11 @@ import '../../../data/datasources/remote/admin_users_remote_ds.dart';
 import '../../dialogs/admin_compose_dm_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/pill_tab_bar.dart';
+import 'audit_log_tab.dart';
 import 'bug_reports_tab.dart';
+import 'builtins_tab.dart';
+import 'content_moderation_tab.dart';
+import 'restricted_users_tab.dart';
 
 /// Admin paneli — PillTabBar ile 4 sekme: Dashboard / Users / Banned / Storage.
 /// Erişim Supabase `is_admin()` RPC'si ile korunur; admin olmayan kullanıcı
@@ -57,8 +61,12 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
         final tabs = <PillTab<String>>[
           const PillTab(id: 'dashboard', icon: Icons.dashboard_outlined, label: 'Dashboard'),
           const PillTab(id: 'users', icon: Icons.people_outline, label: 'Users'),
+          const PillTab(id: 'content', icon: Icons.forum_outlined, label: 'Content'),
+          const PillTab(id: 'builtins', icon: Icons.star_border, label: 'Built-ins'),
           const PillTab(id: 'reports', icon: Icons.bug_report_outlined, label: 'Reports'),
           const PillTab(id: 'banned', icon: Icons.block_outlined, label: 'Banned'),
+          const PillTab(id: 'restricted', icon: Icons.lock_outline, label: 'Restricted'),
+          const PillTab(id: 'audit', icon: Icons.fact_check_outlined, label: 'Audit'),
           const PillTab(id: 'storage', icon: Icons.storage_outlined, label: 'Storage'),
         ];
         final bar = PillTabBar<String>(
@@ -75,11 +83,23 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
           case 'users':
             content = const _UsersTab();
             break;
+          case 'content':
+            content = const ContentModerationTab();
+            break;
+          case 'builtins':
+            content = const BuiltinsTab();
+            break;
           case 'reports':
             content = const BugReportsTab();
             break;
           case 'banned':
             content = const _BannedTab();
+            break;
+          case 'restricted':
+            content = const RestrictedUsersTab();
+            break;
+          case 'audit':
+            content = const AuditLogTab();
             break;
           case 'storage':
             content = const _StorageTab();
@@ -376,10 +396,14 @@ class _UserRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final title = user.username ?? '(no username)';
+    final versionPart = user.appVersion == null
+        ? null
+        : 'v${user.appVersion}${user.platform != null ? " · ${user.platform}" : ""}';
     final subtitleParts = <String>[
       user.email ?? user.userId,
       formatBytes(user.storageBytes),
       formatRelative(user.lastActiveAt),
+      ?versionPart,
     ];
     final subtitle = subtitleParts.join(' · ');
 
@@ -391,10 +415,18 @@ class _UserRow extends ConsumerWidget {
             radius: 18,
             backgroundColor: user.isBanned
                 ? palette.dangerBtnBg.withValues(alpha: 0.15)
-                : palette.featureCardAccent.withValues(alpha: 0.15),
+                : user.onlineRestricted
+                    ? palette.dangerBtnBg.withValues(alpha: 0.10)
+                    : palette.featureCardAccent.withValues(alpha: 0.15),
             child: Icon(
-              user.isBanned ? Icons.block : Icons.person_outline,
-              color: user.isBanned ? palette.dangerBtnBg : palette.featureCardAccent,
+              user.isBanned
+                  ? Icons.block
+                  : user.onlineRestricted
+                      ? Icons.lock_outline
+                      : Icons.person_outline,
+              color: user.isBanned || user.onlineRestricted
+                  ? palette.dangerBtnBg
+                  : palette.featureCardAccent,
               size: 18,
             ),
           ),
@@ -403,31 +435,29 @@ class _UserRow extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Flexible(
-                      child: Text(title,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: palette.tabActiveText)),
-                    ),
-                    const SizedBox(width: 6),
+                    Text(title,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: palette.tabActiveText)),
                     _Chip(label: user.provider.toUpperCase(), color: palette.featureCardBorder),
-                    if (user.isBeta) ...[
-                      const SizedBox(width: 4),
+                    if (user.isBeta)
                       _Chip(label: 'BETA', color: palette.featureCardAccent),
-                    ],
-                    if (user.isBanned) ...[
-                      const SizedBox(width: 4),
+                    if (user.isBanned)
                       _Chip(label: 'BANNED', color: palette.dangerBtnBg),
-                    ],
+                    if (user.onlineRestricted && !user.isBanned)
+                      _Chip(label: 'RESTRICTED', color: palette.dangerBtnBg),
                   ],
                 ),
                 const SizedBox(height: 2),
                 Text(subtitle,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
               ],
@@ -443,6 +473,19 @@ class _UserRow extends ConsumerWidget {
               targetName: user.username ?? user.email ?? 'user',
             ),
           ),
+          if (!user.isBanned)
+            IconButton(
+              icon: Icon(
+                user.onlineRestricted ? Icons.lock_open : Icons.lock_outline,
+                size: 18,
+                color: user.onlineRestricted
+                    ? palette.featureCardAccent
+                    : palette.dangerBtnBg,
+              ),
+              tooltip:
+                  user.onlineRestricted ? 'Remove online restriction' : 'Restrict online',
+              onPressed: () => _toggleRestriction(context, ref),
+            ),
           user.isBanned
               ? TextButton.icon(
                   icon: const Icon(Icons.check, size: 16),
@@ -458,6 +501,85 @@ class _UserRow extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _toggleRestriction(BuildContext context, WidgetRef ref) async {
+    if (user.onlineRestricted) {
+      try {
+        await ref.read(adminUsersDataSourceProvider).setOnlineRestriction(
+              userId: user.userId,
+              restricted: false,
+            );
+        ref.invalidate(adminUserListProvider);
+        ref.invalidate(adminRestrictedUsersProvider);
+        ref.invalidate(adminAuditLogProvider);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Online restriction removed.')));
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Unrestrict failed: $e')));
+        }
+      }
+      return;
+    }
+    final controller = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Restrict ${user.username ?? user.email ?? "user"}?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'User can sign in and browse, but cannot post, like, message, publish to marketplace, or apply to games. Marketplace downloads still work.',
+              style: TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                labelText: 'Reason (optional)',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Restrict'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref.read(adminUsersDataSourceProvider).setOnlineRestriction(
+            userId: user.userId,
+            restricted: true,
+            reason: controller.text.trim().isEmpty ? null : controller.text.trim(),
+          );
+      ref.invalidate(adminUserListProvider);
+      ref.invalidate(adminRestrictedUsersProvider);
+      ref.invalidate(adminAuditLogProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User restricted online.')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Restrict failed: $e')));
+      }
+    }
   }
 
   Future<void> _banDialog(BuildContext context, WidgetRef ref) async {

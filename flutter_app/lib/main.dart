@@ -15,6 +15,7 @@ import 'application/providers/ui_state_provider.dart';
 import 'application/services/projection_ipc.dart';
 import 'core/config/app_paths.dart';
 import 'core/config/supabase_config.dart';
+import 'core/constants.dart' show appVersion;
 import 'core/services/log_buffer.dart';
 import 'presentation/screens/player_window/player_window_main.dart';
 import 'presentation/screens/player_window/screencast_main.dart'
@@ -152,12 +153,16 @@ class _BootstrapGateState extends State<_BootstrapGate> {
             url: SupabaseConfig.url,
             anonKey: SupabaseConfig.anonKey,
           );
-          // Fire-and-forget: updates profiles.last_active_at (and
-          // beta_participants.last_active_at if user is in beta).
+          // Fire-and-forget: updates profiles.last_active_at + app_version +
+          // platform (migration 023). beta_participants.last_active_at also
+          // bumped if user is in beta.
           if (Supabase.instance.client.auth.currentUser != null) {
             unawaited(
               Supabase.instance.client
-                  .rpc('user_heartbeat')
+                  .rpc('user_heartbeat', params: {
+                    'p_app_version': appVersion,
+                    'p_platform': kIsWeb ? 'web' : Platform.operatingSystem,
+                  })
                   .then<void>((_) {})
                   .catchError((_) {}),
             );
