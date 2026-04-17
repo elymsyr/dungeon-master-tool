@@ -13,16 +13,15 @@ abstract class Character with _$Character {
     required String id,
     required String templateId,
     required String templateName,
+    /// Entity base modelinde name/description/tags/imagePath zaten var —
+    /// character metadata bu alanlarda saklanır, böylece entity_card ile
+    /// aynı field'ları paylaşırız.
     required Entity entity,
     /// Karakterin referans alabileceği paket isimleri (sınıflar, spell listeleri
     /// vs.). Entity resolution runtime'da bu paketlerden yapılır.
     @Default(<String>[]) List<String> linkedPackages,
     /// Karakterin referans alabileceği world/campaign isimleri.
     @Default(<String>[]) List<String> linkedWorlds,
-    /// Metadata — UI'da kartta ve settings'te gösterilir.
-    @Default('') String coverImagePath,
-    @Default('') String description,
-    @Default(<String>[]) List<String> tags,
     required String createdAt,
     required String updatedAt,
   }) = _Character;

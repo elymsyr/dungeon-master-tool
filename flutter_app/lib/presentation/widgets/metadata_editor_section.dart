@@ -2,16 +2,17 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/global_tags_provider.dart';
+import '../../application/services/tag_moderation.dart';
 import '../theme/dm_tool_colors.dart';
 
 /// Kart metadata'sı için shared editor: cover image + name + description + tags.
 /// Worlds / Packages / Templates / Characters settings dialog'larında aynı
-/// görünümü sağlar.
-///
-/// Değer değişikliklerini parent'a [onChanged] ile bildirir — parent
-/// mutable state'i kendisi tutar (freezed copyWith veya data map mutasyonu).
-class MetadataEditorSection extends StatefulWidget {
+/// görünümü sağlar. Tag alanı düz yazı (virgülle ayrılır), global tag
+/// havuzundan autocomplete önerir ve moderation ile zararlı içerik engellenir.
+class MetadataEditorSection extends ConsumerStatefulWidget {
   final String name;
   final String description;
   final List<String> tags;
@@ -22,8 +23,7 @@ class MetadataEditorSection extends StatefulWidget {
   final ValueChanged<List<String>> onTagsChanged;
   final ValueChanged<String> onCoverChanged;
 
-  /// Show the name field (hidden when name editing is handled elsewhere,
-  /// e.g. Worlds where campaign rename is a heavier operation).
+  /// Name alanını gizle — entity_card gibi başka bir yerde isim düzenleniyorsa.
   final bool showNameField;
 
   const MetadataEditorSection({
@@ -40,31 +40,39 @@ class MetadataEditorSection extends StatefulWidget {
   });
 
   @override
-  State<MetadataEditorSection> createState() => _MetadataEditorSectionState();
+  ConsumerState<MetadataEditorSection> createState() =>
+      _MetadataEditorSectionState();
 }
 
-class _MetadataEditorSectionState extends State<MetadataEditorSection> {
+class _MetadataEditorSectionState
+    extends ConsumerState<MetadataEditorSection> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _descCtrl;
-  late final TextEditingController _tagCtrl;
+  late final TextEditingController _tagsCtrl;
+  final FocusNode _tagsFocus = FocusNode();
+  String? _tagsError;
 
   @override
   void initState() {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.name);
     _descCtrl = TextEditingController(text: widget.description);
-    _tagCtrl = TextEditingController();
+    _tagsCtrl = TextEditingController(text: widget.tags.join(', '));
   }
 
   @override
   void didUpdateWidget(covariant MetadataEditorSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.name != widget.name && _nameCtrl.text != widget.name) {
+    if (oldWidget.name != widget.name && !_nameCtrl.selection.isValid) {
       _nameCtrl.text = widget.name;
     }
     if (oldWidget.description != widget.description &&
-        _descCtrl.text != widget.description) {
+        !_descCtrl.selection.isValid) {
       _descCtrl.text = widget.description;
+    }
+    if (oldWidget.tags.join(',') != widget.tags.join(',') &&
+        !_tagsFocus.hasFocus) {
+      _tagsCtrl.text = widget.tags.join(', ');
     }
   }
 
@@ -72,13 +80,56 @@ class _MetadataEditorSectionState extends State<MetadataEditorSection> {
   void dispose() {
     _nameCtrl.dispose();
     _descCtrl.dispose();
-    _tagCtrl.dispose();
+    _tagsCtrl.dispose();
+    _tagsFocus.dispose();
     super.dispose();
   }
+
+  /// Parse + validate + commit tag string.
+  void _commitTags(String raw) {
+    final parts = raw
+        .split(',')
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty)
+        .toList();
+    String? error;
+    final accepted = <String>[];
+    for (final p in parts) {
+      final reason = TagModeration.validate(p);
+      if (reason != null) {
+        error = '"$p": $reason';
+        continue;
+      }
+      if (!accepted.contains(p)) accepted.add(p);
+    }
+    setState(() => _tagsError = error);
+    widget.onTagsChanged(accepted);
+  }
+
+  /// Unified content padding — all input rows share the same internal
+  /// padding so their visible heights match. Top padding is slightly
+  /// taller than bottom so the caret sits comfortably below the label.
+  static const EdgeInsets _inputPadding =
+      EdgeInsets.fromLTRB(12, 14, 12, 12);
+
+  InputDecoration _deco({
+    required String labelText,
+    String? hintText,
+    String? errorText,
+  }) =>
+      InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        errorText: errorText,
+        contentPadding: _inputPadding,
+        isDense: false,
+        alignLabelWithHint: true,
+      );
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final globalTags = ref.watch(globalTagsProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -89,10 +140,7 @@ class _MetadataEditorSectionState extends State<MetadataEditorSection> {
         if (widget.showNameField) ...[
           TextField(
             controller: _nameCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              isDense: true,
-            ),
+            decoration: _deco(labelText: 'Name'),
             onChanged: widget.onNameChanged,
           ),
           const SizedBox(height: 8),
@@ -101,60 +149,114 @@ class _MetadataEditorSectionState extends State<MetadataEditorSection> {
           controller: _descCtrl,
           minLines: 2,
           maxLines: 4,
-          decoration: const InputDecoration(
-            labelText: 'Description',
-            isDense: true,
-            alignLabelWithHint: true,
-          ),
+          decoration: _deco(labelText: 'Description'),
           onChanged: widget.onDescriptionChanged,
         ),
         const SizedBox(height: 8),
-        InputDecorator(
-          decoration: const InputDecoration(
-            labelText: 'Tags',
-            isDense: true,
-          ),
-          child: Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              ...widget.tags.map((t) => Chip(
-                    label: Text(t, style: const TextStyle(fontSize: 11)),
-                    deleteIconColor: palette.sidebarLabelSecondary,
-                    onDeleted: () {
-                      final updated = [...widget.tags]..remove(t);
-                      widget.onTagsChanged(updated);
+        _tagsField(palette, globalTags),
+      ],
+    );
+  }
+
+  Widget _tagsField(DmToolColors palette, Set<String> globalTags) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        RawAutocomplete<String>(
+          focusNode: _tagsFocus,
+          textEditingController: _tagsCtrl,
+          optionsBuilder: (TextEditingValue value) {
+            // Kullanıcının yazdığı son parçayı al (virgülden sonra).
+            final text = value.text;
+            final lastComma = text.lastIndexOf(',');
+            final current = (lastComma >= 0
+                    ? text.substring(lastComma + 1)
+                    : text)
+                .trim()
+                .toLowerCase();
+            if (current.isEmpty) return const Iterable<String>.empty();
+            final already = text
+                .split(',')
+                .map((s) => s.trim().toLowerCase())
+                .toSet();
+            return globalTags
+                .where((t) =>
+                    t.toLowerCase().contains(current) &&
+                    !already.contains(t.toLowerCase()))
+                .take(8);
+          },
+          fieldViewBuilder: (context, controller, focus, onSubmit) {
+            return TextField(
+              controller: controller,
+              focusNode: focus,
+              decoration: _deco(
+                labelText: 'Tags',
+                hintText: 'comma, separated, tags',
+                errorText: _tagsError,
+              ),
+              onChanged: _commitTags,
+              onSubmitted: (_) {
+                onSubmit();
+                _commitTags(controller.text);
+              },
+            );
+          },
+          onSelected: (option) {
+            final text = _tagsCtrl.text;
+            final lastComma = text.lastIndexOf(',');
+            final head = lastComma >= 0
+                ? '${text.substring(0, lastComma + 1)} '
+                : '';
+            final replaced = '$head$option, ';
+            _tagsCtrl.value = TextEditingValue(
+              text: replaced,
+              selection: TextSelection.collapsed(offset: replaced.length),
+            );
+            _commitTags(replaced);
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 3,
+                borderRadius: BorderRadius.circular(4),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                      maxWidth: 360, maxHeight: 200),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (_, i) {
+                      final opt = options.elementAt(i);
+                      return InkWell(
+                        onTap: () => onSelected(opt),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          child: Text(opt,
+                              style: const TextStyle(fontSize: 13)),
+                        ),
+                      );
                     },
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize:
-                        MaterialTapTargetSize.shrinkWrap,
-                  )),
-              SizedBox(
-                width: 120,
-                child: TextField(
-                  controller: _tagCtrl,
-                  style: const TextStyle(fontSize: 12),
-                  decoration: const InputDecoration(
-                    hintText: '+ add tag',
-                    isDense: true,
-                    border: InputBorder.none,
                   ),
-                  onSubmitted: (v) {
-                    final tag = v.trim();
-                    if (tag.isEmpty) return;
-                    if (widget.tags.contains(tag)) {
-                      _tagCtrl.clear();
-                      return;
-                    }
-                    widget.onTagsChanged([...widget.tags, tag]);
-                    _tagCtrl.clear();
-                  },
                 ),
               ),
-            ],
-          ),
+            );
+          },
         ),
+        if (globalTags.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Type tags separated by commas. Suggestions appear as you type.',
+              style: TextStyle(
+                fontSize: 10,
+                color: palette.sidebarLabelSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -167,7 +269,7 @@ class _MetadataEditorSectionState extends State<MetadataEditorSection> {
       onTap: _pickCover,
       borderRadius: BorderRadius.circular(6),
       child: Container(
-        height: 140,
+        height: 160,
         decoration: BoxDecoration(
           color: palette.featureCardBg,
           borderRadius: BorderRadius.circular(6),
@@ -204,7 +306,7 @@ class _MetadataEditorSectionState extends State<MetadataEditorSection> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.add_photo_alternate_outlined,
-                      size: 32, color: palette.sidebarLabelSecondary),
+                      size: 36, color: palette.sidebarLabelSecondary),
                   const SizedBox(height: 4),
                   Text('Add cover image',
                       style: TextStyle(

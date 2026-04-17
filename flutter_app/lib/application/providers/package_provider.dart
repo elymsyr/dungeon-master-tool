@@ -25,6 +25,32 @@ final packageListProvider = FutureProvider<List<PackageInfo>>((ref) {
   return ref.watch(packageRepositoryProvider).getPackageInfoList();
 });
 
+/// Per-package metadata lookup — cover / description / tags için.
+final packageMetadataProvider =
+    FutureProvider.family<Map<String, dynamic>, String>((ref, packageName) async {
+  try {
+    final data = await ref.read(packageRepositoryProvider).load(packageName);
+    final meta = data['metadata'];
+    return meta is Map ? Map<String, dynamic>.from(meta) : <String, dynamic>{};
+  } catch (_) {
+    return <String, dynamic>{};
+  }
+});
+
+/// Package metadata writer — sadece metadata'yı değiştirir.
+Future<void> updatePackageMetadata(
+  WidgetRef ref,
+  String packageName,
+  Map<String, dynamic> newMetadata,
+) async {
+  final repo = ref.read(packageRepositoryProvider);
+  final data = await repo.load(packageName);
+  data['metadata'] = newMetadata;
+  await repo.save(packageName, data);
+  ref.invalidate(packageMetadataProvider(packageName));
+  ref.invalidate(packageListProvider);
+}
+
 /// Aktif paket adı. null = henüz seçilmedi.
 class ActivePackageNotifier extends StateNotifier<String?> {
   final PackageRepository _repo;

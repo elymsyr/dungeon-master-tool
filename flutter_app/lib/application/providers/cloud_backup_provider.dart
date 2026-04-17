@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../../core/config/app_paths.dart';
 import '../../core/config/supabase_config.dart';
+import '../services/cover_image_bundler.dart';
 import '../../core/utils/error_format.dart';
 import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
 import '../../data/network/network_providers.dart';
@@ -137,6 +138,7 @@ class CloudBackupOperationNotifier
         worldId: campaignId,
         data: raw,
       );
+      await _bundleMetadataCover(data);
 
       final meta =
           await _ref.read(cloudBackupRepositoryProvider).uploadBackup(
@@ -205,6 +207,7 @@ class CloudBackupOperationNotifier
         worldId: campaignId,
         data: raw,
       );
+      await _bundleMetadataCover(data);
 
       final meta =
           await _ref.read(cloudBackupRepositoryProvider).uploadBackup(
@@ -244,6 +247,9 @@ class CloudBackupOperationNotifier
           final finalName = existing.contains(name) && restoreName == null
               ? _findUniqueName(name, existing)
               : name;
+          // Restore metadata cover image to local path.
+          await _restoreMetadataCover(
+              data, AppPaths.worldsDir, meta.itemId);
           await _ref.read(campaignRepositoryProvider).save(finalName, data);
           await _restoreWorldMediaIfPossible(
             worldName: finalName,
@@ -253,14 +259,28 @@ class CloudBackupOperationNotifier
           _ref.invalidate(campaignInfoListProvider);
 
         case 'template':
-          final schema = WorldSchema.fromJson(
+          final schemaJson = Map<String, dynamic>.from(
               data['world_schema'] as Map<String, dynamic>? ?? data);
+          // Unpack cover from schema metadata if bundled.
+          final sMeta = schemaJson['metadata'];
+          if (sMeta is Map) {
+            final mutable = Map<String, dynamic>.from(sMeta);
+            await CoverImageBundler.restore(
+              metadata: mutable,
+              destDir: AppPaths.cacheDir,
+              itemId: meta.itemId,
+            );
+            schemaJson['metadata'] = mutable;
+          }
+          final schema = WorldSchema.fromJson(schemaJson);
           await _ref.read(templateLocalDsProvider).save(schema);
           _ref.invalidate(allTemplatesProvider);
           _ref.invalidate(customTemplatesProvider);
           _ref.invalidate(builtinTemplateProvider);
 
         case 'package':
+          await _restoreMetadataCover(
+              data, AppPaths.packagesDir, meta.itemId);
           await _ref.read(packageRepositoryProvider).save(name, data);
           _ref.invalidate(packageListProvider);
 
@@ -278,7 +298,9 @@ class CloudBackupOperationNotifier
               await dir.create(recursive: true);
               final file = File(p.join(dir.path, '${character.id}_cover$coverExt'));
               await file.writeAsBytes(base64Decode(coverB64));
-              character = character.copyWith(coverImagePath: file.path);
+              character = character.copyWith(
+                entity: character.entity.copyWith(imagePath: file.path),
+              );
             } catch (e) {
               debugPrint('Character cover restore skip: $e');
             }
@@ -306,6 +328,14 @@ class CloudBackupOperationNotifier
     state = const CloudBackupOperationState.busy(CloudBackupOpType.uploading);
     try {
       final data = schema.toJson();
+      // Bundle template's cover image (metadata['cover_image_path']) into
+      // the schema's metadata map so the cloud envelope is self-contained.
+      final schemaMeta = data['metadata'];
+      if (schemaMeta is Map) {
+        final mutable = Map<String, dynamic>.from(schemaMeta);
+        await CoverImageBundler.bundle(mutable);
+        data['metadata'] = mutable;
+      }
       final meta =
           await _ref.read(cloudBackupRepositoryProvider).uploadBackup(
                 schema.name,
@@ -332,13 +362,14 @@ class CloudBackupOperationNotifier
       final envelope = <String, dynamic>{
         'character': character.toJson(),
       };
-      // Bundle cover image as base64 so it survives the round trip.
-      if (character.coverImagePath.isNotEmpty) {
+      // Bundle portrait (entity.imagePath) as base64.
+      final portraitPath = character.entity.imagePath;
+      if (portraitPath.isNotEmpty) {
         try {
-          final file = File(character.coverImagePath);
+          final file = File(portraitPath);
           if (await file.exists()) {
             envelope['cover_image_data'] = base64Encode(await file.readAsBytes());
-            envelope['cover_image_ext'] = p.extension(character.coverImagePath);
+            envelope['cover_image_ext'] = p.extension(portraitPath);
           }
         } catch (e) {
           debugPrint('Character cover bundle skip: $e');
@@ -376,6 +407,7 @@ class CloudBackupOperationNotifier
           await _ref.read(packageRepositoryProvider).load(packageName);
       final packageId = data['package_id'] as String? ??
           data['world_id'] as String? ?? packageName;
+      await _bundleMetadataCover(data);
 
       final meta =
           await _ref.read(cloudBackupRepositoryProvider).uploadBackup(
@@ -427,6 +459,31 @@ class CloudBackupOperationNotifier
       state = CloudBackupOperationState.error(formatError(e));
       return false;
     }
+  }
+
+  /// `data['metadata']['cover_image_path']` içindeki yerel dosyayı base64
+  /// olarak aynı metadata map'ine gömer. Worlds / Packages için.
+  /// WorldSchema template için uploadTemplate ayrı handle ediyor.
+  Future<void> _bundleMetadataCover(Map<String, dynamic> data) async {
+    final meta = data['metadata'];
+    if (meta is! Map) return;
+    final mutable = Map<String, dynamic>.from(meta);
+    await CoverImageBundler.bundle(mutable);
+    data['metadata'] = mutable;
+  }
+
+  /// Restore counterpart — base64'i decode edip [destDir]'e yazar.
+  Future<void> _restoreMetadataCover(
+      Map<String, dynamic> data, String destDir, String itemId) async {
+    final meta = data['metadata'];
+    if (meta is! Map) return;
+    final mutable = Map<String, dynamic>.from(meta);
+    await CoverImageBundler.restore(
+      metadata: mutable,
+      destDir: destDir,
+      itemId: itemId,
+    );
+    data['metadata'] = mutable;
   }
 
   /// Walk [data] for local-path media and upload every file to R2 before
@@ -497,6 +554,11 @@ class CloudBackupOperationNotifier
     _ref.invalidate(cloudBackupPackagesProvider);
     _ref.invalidate(cloudBackupCharactersProvider);
     _ref.invalidate(cloudStorageUsedProvider);
+    // Own upload/delete — by definition we're caught up with remote, so
+    // clear the multi-device "someone else pushed" hint immediately. Without
+    // this, the Settings tab shows a dot right after the user's own push
+    // because next refresh() sees remote_latest > last_seen.
+    _ref.read(cloudRemoteHasNewerProvider.notifier).markCaughtUp();
   }
 
   String _findUniqueName(String base, List<String> existing) {

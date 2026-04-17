@@ -1,17 +1,23 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/character_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/package_provider.dart';
+import '../../application/providers/template_provider.dart';
 import '../../application/services/package_import_service.dart';
 import '../../application/services/template_compatibility_service.dart';
+import '../../domain/entities/character.dart';
 import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/template_compatibility.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 
-/// Paket import dialogu — dünyaya paket import etmek için.
+/// Paket / karakter import dialogu — aktif dünyaya paket veya karakter
+/// import etmek için. Üstteki segmented control ile kaynak seçilir.
 class ImportPackageDialog extends ConsumerStatefulWidget {
   const ImportPackageDialog({super.key});
 
@@ -27,51 +33,53 @@ class ImportPackageDialog extends ConsumerStatefulWidget {
       _ImportPackageDialogState();
 }
 
+enum _ImportSource { packages, characters }
+
 class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
   bool _importing = false;
+  _ImportSource _source = _ImportSource.packages;
 
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final packageList = ref.watch(packageListProvider);
     final worldSchema = ref.read(worldSchemaProvider);
     final compatService = TemplateCompatibilityService();
 
     return AlertDialog(
-      title: Text(l10n.importPackageTitle),
+      title: Row(
+        children: [
+          Expanded(child: Text(l10n.importPackageTitle)),
+          SegmentedButton<_ImportSource>(
+            segments: const [
+              ButtonSegment(
+                value: _ImportSource.packages,
+                icon: Icon(Icons.inventory_2, size: 16),
+                label: Text('Packages', style: TextStyle(fontSize: 12)),
+              ),
+              ButtonSegment(
+                value: _ImportSource.characters,
+                icon: Icon(Icons.person, size: 16),
+                label: Text('Characters', style: TextStyle(fontSize: 12)),
+              ),
+            ],
+            selected: {_source},
+            onSelectionChanged: _importing
+                ? null
+                : (s) => setState(() => _source = s.first),
+            showSelectedIcon: false,
+          ),
+        ],
+      ),
       content: SizedBox(
-        width: 450,
-        height: 400,
-        child: packageList.when(
-          data: (packages) {
-            if (packages.isEmpty) {
-              return Center(
-                child: Text(l10n.noPackages,
-                    style: TextStyle(color: palette.sidebarLabelSecondary)),
-              );
-            }
-
-            return ListView.separated(
-              itemCount: packages.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 6),
-              itemBuilder: (context, index) {
-                final info = packages[index];
-                return _PackageImportCard(
-                  info: info,
-                  worldSchema: worldSchema,
-                  compatService: compatService,
-                  palette: palette,
-                  l10n: l10n,
-                  importing: _importing,
-                  onImport: () => _importPackage(info, worldSchema),
-                );
-              },
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Error: $e')),
-        ),
+        width: 500,
+        height: 440,
+        child: switch (_source) {
+          _ImportSource.packages =>
+            _packagesBody(l10n, palette, worldSchema, compatService),
+          _ImportSource.characters =>
+            _charactersBody(l10n, palette, worldSchema, compatService),
+        },
       ),
       actions: [
         TextButton(
@@ -82,16 +90,88 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     );
   }
 
+  Widget _packagesBody(L10n l10n, DmToolColors palette,
+      WorldSchema worldSchema, TemplateCompatibilityService compatService) {
+    final packageList = ref.watch(packageListProvider);
+    return packageList.when(
+      data: (packages) {
+        if (packages.isEmpty) {
+          return Center(
+            child: Text(l10n.noPackages,
+                style: TextStyle(color: palette.sidebarLabelSecondary)),
+          );
+        }
+        return ListView.separated(
+          itemCount: packages.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 6),
+          itemBuilder: (context, index) {
+            final info = packages[index];
+            return _PackageImportCard(
+              info: info,
+              worldSchema: worldSchema,
+              compatService: compatService,
+              palette: palette,
+              l10n: l10n,
+              importing: _importing,
+              onImport: () => _importPackage(info, worldSchema),
+            );
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+    );
+  }
+
+  Widget _charactersBody(L10n l10n, DmToolColors palette,
+      WorldSchema worldSchema, TemplateCompatibilityService compatService) {
+    final charList = ref.watch(characterListProvider);
+    final templatesAsync = ref.watch(allTemplatesProvider);
+    return charList.when(
+      data: (chars) {
+        if (chars.isEmpty) {
+          return Center(
+            child: Text('No characters found.',
+                style: TextStyle(color: palette.sidebarLabelSecondary)),
+          );
+        }
+        final templates = templatesAsync.valueOrNull ?? const <WorldSchema>[];
+        return ListView.separated(
+          itemCount: chars.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 6),
+          itemBuilder: (context, index) {
+            final c = chars[index];
+            final templ = templates
+                .where((t) => t.schemaId == c.templateId)
+                .firstOrNull;
+            return _CharacterImportCard(
+              character: c,
+              template: templ,
+              worldSchema: worldSchema,
+              compatService: compatService,
+              palette: palette,
+              l10n: l10n,
+              importing: _importing,
+              onImport: templ == null
+                  ? null
+                  : () => _importCharacter(c, templ, worldSchema),
+            );
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+    );
+  }
+
   Future<void> _importPackage(
       PackageInfo info, WorldSchema worldSchema) async {
     setState(() => _importing = true);
 
     try {
-      // Paket verisini yükle
       final packageData =
           await ref.read(packageRepositoryProvider).load(info.name);
 
-      // Paket schema'sını al
       final schemaMap = packageData['world_schema'] as Map<String, dynamic>?;
       if (schemaMap == null) {
         if (mounted) {
@@ -122,8 +202,52 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text(L10n.of(context)!.importSuccess(count))),
+              content: Text(L10n.of(context)!.importSuccess(count))),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Import failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _importing = false);
+    }
+  }
+
+  Future<void> _importCharacter(
+      Character c, WorldSchema template, WorldSchema worldSchema) async {
+    setState(() => _importing = true);
+    try {
+      // Package import service konvansiyonu: `type` = kategori slug,
+      // `attributes` = fields map. Character tek entity olarak import edilir.
+      final entityMap = <String, dynamic>{
+        'name': c.entity.name,
+        'type': c.entity.categorySlug,
+        'source': c.entity.source,
+        'description': c.entity.description,
+        'images': c.entity.images,
+        'image_path': c.entity.imagePath,
+        'tags': c.entity.tags,
+        'dm_notes': c.entity.dmNotes,
+        'pdfs': c.entity.pdfs,
+        'location_id': c.entity.locationId,
+        'attributes': c.entity.fields,
+      };
+      final packageEntities = <String, dynamic>{c.entity.id: entityMap};
+
+      final count = PackageImportService().importPackage(
+        packageEntities: packageEntities,
+        packageSchema: template,
+        worldSchema: worldSchema,
+        entityNotifier: ref.read(entityProvider.notifier),
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.of(context)!.importSuccess(count))),
         );
       }
     } catch (e) {
@@ -174,7 +298,6 @@ class _PackageImportCardState extends State<_PackageImportCard> {
   }
 
   Future<void> _checkCompatibility() async {
-    // Paket schema'sını yüklememiz gerekiyor — bu kart için lazy load
     try {
       final container = ProviderScope.containerOf(context, listen: false);
       final repo = container.read(packageRepositoryProvider);
@@ -206,7 +329,6 @@ class _PackageImportCardState extends State<_PackageImportCard> {
     final palette = widget.palette;
     final l10n = widget.l10n;
 
-    // Uyumluluk durumu
     final (IconData icon, Color color, String label) = _loading
         ? (Icons.hourglass_empty, palette.sidebarLabelSecondary, '...')
         : switch (_compat?.level) {
@@ -250,7 +372,6 @@ class _PackageImportCardState extends State<_PackageImportCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           InkWell(
             borderRadius: BorderRadius.circular(4),
             onTap: hasDetails
@@ -281,7 +402,6 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                       ],
                     ),
                   ),
-                  // Uyumluluk badge
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -292,7 +412,6 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                     ],
                   ),
                   const SizedBox(width: 8),
-                  // Import butonu
                   SizedBox(
                     height: 28,
                     child: isIncompatible
@@ -319,7 +438,6 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                             child: Text(l10n.btnImport),
                           ),
                   ),
-                  // Expand arrow
                   if (hasDetails)
                     Icon(
                       _expanded
@@ -332,7 +450,6 @@ class _PackageImportCardState extends State<_PackageImportCard> {
               ),
             ),
           ),
-          // Expanded details
           if (_expanded && _compat != null) ...[
             Divider(height: 1, color: palette.featureCardBorder),
             Padding(
@@ -432,5 +549,134 @@ class _PackageImportCardState extends State<_PackageImportCard> {
     ).then((confirmed) {
       if (confirmed == true) widget.onImport();
     });
+  }
+}
+
+/// Tek bir karakter kartı — profil fotoğrafı + isim + template uyumluluk.
+class _CharacterImportCard extends StatelessWidget {
+  final Character character;
+  final WorldSchema? template;
+  final WorldSchema worldSchema;
+  final TemplateCompatibilityService compatService;
+  final DmToolColors palette;
+  final L10n l10n;
+  final bool importing;
+  final VoidCallback? onImport;
+
+  const _CharacterImportCard({
+    required this.character,
+    required this.template,
+    required this.worldSchema,
+    required this.compatService,
+    required this.palette,
+    required this.l10n,
+    required this.importing,
+    required this.onImport,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final compat = template == null
+        ? null
+        : compatService.check(template!, worldSchema);
+
+    final (IconData icon, Color color, String label) = compat == null
+        ? (
+            Icons.help_outline,
+            palette.sidebarLabelSecondary,
+            'Template missing'
+          )
+        : switch (compat.level) {
+            CompatibilityLevel.perfect => (
+                Icons.check_circle,
+                palette.successBtnBg,
+                l10n.importCompatPerfect,
+              ),
+            CompatibilityLevel.compatible => (
+                Icons.warning_amber,
+                palette.uiAutosaveTextEditing,
+                l10n.importCompatWarning,
+              ),
+            CompatibilityLevel.incompatible => (
+                Icons.cancel,
+                palette.dangerBtnBg,
+                l10n.importCompatIncompatible,
+              ),
+          };
+
+    final canImport = !importing && onImport != null;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: palette.featureCardBorder),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          _avatar(),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(character.entity.name,
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: palette.tabActiveText)),
+                Text(
+                  character.templateName,
+                  style: TextStyle(
+                      fontSize: 11, color: palette.sidebarLabelSecondary),
+                ),
+              ],
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 4),
+              Text(label, style: TextStyle(fontSize: 11, color: color)),
+            ],
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            height: 28,
+            child: FilledButton(
+              onPressed: canImport ? onImport : null,
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                textStyle: const TextStyle(fontSize: 12),
+              ),
+              child: Text(l10n.btnImport),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _avatar() {
+    final path = character.entity.imagePath;
+    final hasImage = path.isNotEmpty && File(path).existsSync();
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        shape: BoxShape.circle,
+        border: Border.all(color: palette.featureCardBorder),
+        image: hasImage
+            ? DecorationImage(image: FileImage(File(path)), fit: BoxFit.cover)
+            : null,
+      ),
+      alignment: Alignment.center,
+      child: hasImage
+          ? null
+          : Icon(Icons.person, size: 22, color: palette.tabText),
+    );
   }
 }

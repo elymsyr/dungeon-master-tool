@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +11,7 @@ import '../../../domain/entities/character.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/metadata_editor_section.dart';
+import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
 
 class CharactersTab extends ConsumerStatefulWidget {
@@ -96,7 +95,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                                 setState(() => _selectedIndex = index),
                             onDoubleTap: () => _loadCharacter(c.id),
                             child: Container(
-                              padding: const EdgeInsets.all(10),
+                              clipBehavior: Clip.antiAlias,
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? palette.featureCardAccent
@@ -109,15 +108,16 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                                       : palette.featureCardBorder,
                                 ),
                               ),
-                              child: _MetadataListTile(
+                              child: MetadataListTile(
                                 icon: Icons.person,
                                 name: c.entity.name,
                                 subtitle: _subInfo(c),
-                                description: c.description,
-                                tags: c.tags,
-                                coverImagePath: c.coverImagePath,
+                                description: c.entity.description,
+                                tags: c.entity.tags,
+                                coverImagePath: c.entity.imagePath,
                                 isSelected: isSelected,
                                 palette: palette,
+                                layout: MetadataTileLayout.leftAvatar,
                                 onSettings: () =>
                                     _showCharacterSettings(c.id, palette),
                               ),
@@ -380,9 +380,9 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
 
     // Mutable working copy — edits committed on Save.
     var workingName = c.entity.name;
-    var workingDescription = c.description;
-    var workingTags = [...c.tags];
-    var workingCover = c.coverImagePath;
+    var workingDescription = c.entity.description;
+    var workingTags = [...c.entity.tags];
+    var workingCover = c.entity.imagePath;
 
     await showDialog<void>(
       context: context,
@@ -442,28 +442,6 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                 itemId: c.id,
                 type: 'character',
                 localUpdatedAt: updatedAt,
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FilledButton.icon(
-                  onPressed: () async {
-                    final ok = await ref
-                        .read(cloudBackupOperationProvider.notifier)
-                        .uploadCharacter(c);
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(ok
-                            ? 'Character backed up to cloud'
-                            : 'Cloud backup failed'),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.cloud_upload, size: 16),
-                  label: const Text('Backup to Cloud',
-                      style: TextStyle(fontSize: 12)),
-                ),
               ),
               const SizedBox(height: 12),
               Text('Linked Packages',
@@ -546,135 +524,6 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
         ],
       ),
       ),
-    );
-  }
-}
-
-/// List tile with cover thumbnail + name + description/subtitle + tags.
-/// Reused by all hub tabs (Worlds/Packages/Templates/Characters) once the
-/// metadata fields exist on their respective models.
-class _MetadataListTile extends StatelessWidget {
-  final IconData icon;
-  final String name;
-  final String subtitle;
-  final String description;
-  final List<String> tags;
-  final String coverImagePath;
-  final bool isSelected;
-  final DmToolColors palette;
-  final VoidCallback onSettings;
-
-  const _MetadataListTile({
-    required this.icon,
-    required this.name,
-    required this.subtitle,
-    required this.description,
-    required this.tags,
-    required this.coverImagePath,
-    required this.isSelected,
-    required this.palette,
-    required this.onSettings,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hasImage =
-        coverImagePath.isNotEmpty && File(coverImagePath).existsSync();
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Cover thumbnail or icon fallback.
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: Container(
-            width: 48,
-            height: 48,
-            color: palette.featureCardBg,
-            alignment: Alignment.center,
-            child: hasImage
-                ? Image.file(
-                    File(coverImagePath),
-                    width: 48,
-                    height: 48,
-                    fit: BoxFit.cover,
-                    cacheWidth: 96,
-                  )
-                : Icon(icon,
-                    size: 22,
-                    color: isSelected
-                        ? palette.featureCardAccent
-                        : palette.tabText),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                name,
-                style:
-                    TextStyle(fontSize: 14, color: palette.tabActiveText),
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (subtitle.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: palette.sidebarLabelSecondary),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-              if (description.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      fontSize: 11, color: palette.tabText),
-                ),
-              ],
-              if (tags.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Wrap(
-                  spacing: 4,
-                  runSpacing: 2,
-                  children: tags
-                      .take(4)
-                      .map((t) => Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: palette.sidebarFilterBg,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(t,
-                                style: TextStyle(
-                                    fontSize: 9,
-                                    color: palette.tabText)),
-                          ))
-                      .toList(),
-                ),
-              ],
-            ],
-          ),
-        ),
-        IconButton(
-          icon: Icon(Icons.settings, size: 16, color: palette.tabText),
-          tooltip: 'Settings',
-          onPressed: onSettings,
-          visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          padding: EdgeInsets.zero,
-        ),
-        if (isSelected)
-          Icon(Icons.check, size: 16, color: palette.featureCardAccent),
-      ],
     );
   }
 }
