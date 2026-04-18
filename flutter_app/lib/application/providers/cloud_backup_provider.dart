@@ -275,8 +275,6 @@ class CloudBackupOperationNotifier
           final schema = WorldSchema.fromJson(schemaJson);
           await _ref.read(templateLocalDsProvider).save(schema);
           _ref.invalidate(allTemplatesProvider);
-          _ref.invalidate(customTemplatesProvider);
-          _ref.invalidate(builtinTemplateProvider);
 
         case 'package':
           await _restoreMetadataCover(

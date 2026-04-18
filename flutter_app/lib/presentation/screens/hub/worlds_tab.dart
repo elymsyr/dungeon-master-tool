@@ -8,9 +8,7 @@ import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/template_provider.dart';
-import '../../../application/services/template_clone_util.dart';
 import '../../../application/services/template_sync_service.dart';
-import '../../dialogs/builtin_warning_dialog.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
@@ -618,33 +616,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       return;
     }
 
-    WorldSchema? template = _selectedTemplate;
-    // Built-in ise kullanıcıya uyarı göster.
-    if (template != null && template.schemaId == builtinTemplateId) {
-      final choice = await BuiltinWarningDialog.show(context);
-      switch (choice) {
-        case BuiltinWarningChoice.cancel:
-          return;
-        case BuiltinWarningChoice.continueBuiltin:
-          break;
-        case BuiltinWarningChoice.copyFirst:
-          final cloned = cloneTemplateAsNew(template, '${template.name} (copy)');
-          try {
-            await ref.read(templateLocalDsProvider).save(cloned);
-            ref.invalidate(customTemplatesProvider);
-            ref.invalidate(allTemplatesProvider);
-          } catch (e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(SnackBar(content: Text('Clone failed: $e')));
-            }
-            return;
-          }
-          template = cloned;
-      }
-    }
-
-    final templateFinal = template;
+    final templateFinal = _selectedTemplate;
     final success = await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'create-world-$name',

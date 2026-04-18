@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../application/providers/admin_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
-import '../../../data/datasources/local/template_local_ds.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/template_provider.dart';
@@ -45,19 +43,12 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final builtinAsync = ref.watch(builtinTemplateProvider);
-    final customTemplatesAsync = ref.watch(customTemplatesProvider);
-    final isAdmin = ref.watch(isAdminProvider).valueOrNull ?? false;
-
-    // Built-in template yalnızca admin tarafından düzenlenebilir.
-    final isEditingBuiltin =
-        _activeSchema?.schemaId == builtinTemplateId;
-    final readOnly = isEditingBuiltin && !isAdmin;
+    final templatesAsync = ref.watch(allTemplatesProvider);
 
     if (_mode == 'edit') {
       return TemplateEditor(
         initial: _activeSchema,
-        readOnly: readOnly,
+        readOnly: false,
         onBack: () async {
           final ok = await confirmCloseUnconditional(
             context: context,
@@ -68,9 +59,6 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
           }
         },
         onSave: (schema) async {
-          final savingBuiltin =
-              schema.schemaId == builtinTemplateId;
-
           // Existing template? → ask whether to update in place or fork as
           // a new template. New templates (no _activeSchema) skip the prompt.
           final isExisting = _activeSchema != null;
@@ -79,28 +67,12 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
             if (choice == null || choice == _SaveChoice.cancel) return;
             if (choice == _SaveChoice.saveAsNew) {
               final forked = _cloneAsNew(schema, '${schema.name} (v2)');
-              try {
-                await withLoading(
-                  ref.read(globalLoadingProvider.notifier),
-                  'save-template-new',
-                  'Saving template "${forked.name}"...',
-                  () => ref.read(templateLocalDsProvider).save(
-                        forked,
-                        bypassBuiltinGuard: isAdmin,
-                      ),
-                );
-              } on BuiltinTemplateAdminRequiredException {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text(
-                            'Only admins can update the built-in template.')),
-                  );
-                }
-                return;
-              }
-              ref.invalidate(builtinTemplateProvider);
-              ref.invalidate(customTemplatesProvider);
+              await withLoading(
+                ref.read(globalLoadingProvider.notifier),
+                'save-template-new',
+                'Saving template "${forked.name}"...',
+                () => ref.read(templateLocalDsProvider).save(forked),
+              );
               ref.invalidate(allTemplatesProvider);
               if (context.mounted) {
                 setState(() { _mode = null; _activeSchema = null; });
@@ -113,51 +85,24 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
             // _SaveChoice.update falls through to the in-place save below.
           }
 
-          try {
-            await withLoading(
-              ref.read(globalLoadingProvider.notifier),
-              'save-template',
-              'Saving template "${schema.name}"...',
-              () => ref.read(templateLocalDsProvider).save(
-                    schema,
-                    bypassBuiltinGuard: savingBuiltin && isAdmin,
-                  ),
-            );
-          } on BuiltinTemplateAdminRequiredException {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text(
-                        'Only admins can update the built-in template.')),
-              );
-            }
-            return;
-          }
-          // Invalidate both — the saved file might be the built-in
-          // (admin edit path) or a custom template, we don't need to
-          // distinguish here.
-          ref.invalidate(builtinTemplateProvider);
-          ref.invalidate(customTemplatesProvider);
+          await withLoading(
+            ref.read(globalLoadingProvider.notifier),
+            'save-template',
+            'Saving template "${schema.name}"...',
+            () => ref.read(templateLocalDsProvider).save(schema),
+          );
           ref.invalidate(allTemplatesProvider);
           if (context.mounted) {
             setState(() { _mode = null; _activeSchema = null; });
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(savingBuiltin
-                  ? 'Built-in template updated'
-                  : 'Template saved')),
+              const SnackBar(content: Text('Template saved')),
             );
           }
         },
       );
     }
 
-    // Build a combined, stable-ordered list: built-in first, then custom.
-    final builtinSchema = builtinAsync.valueOrNull;
-    final customList = customTemplatesAsync.valueOrNull ?? const <WorldSchema>[];
-    final combined = <WorldSchema>[
-      ?builtinSchema,
-      ...customList,
-    ];
+    final combined = templatesAsync.valueOrNull ?? const <WorldSchema>[];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -180,7 +125,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                       fontSize: 12, color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 16),
 
-              if (builtinAsync.isLoading || customTemplatesAsync.isLoading)
+              if (templatesAsync.isLoading)
                 const Padding(
                   padding: EdgeInsets.all(16),
                   child: Center(child: CircularProgressIndicator()),
@@ -210,7 +155,6 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                   separatorBuilder: (_, _) => const SizedBox(height: 4),
                   itemBuilder: (context, index) {
                     final schema = combined[index];
-                    final isBuiltin = schema.schemaId == builtinTemplateId;
                     final isSelected = index == _selectedIndex;
                     final totalFields = schema.categories
                         .fold<int>(0, (sum, c) => sum + c.fields.length);
@@ -218,7 +162,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                     return InkWell(
                       borderRadius: palette.br,
                       onTap: () => setState(() => _selectedIndex = index),
-                      onDoubleTap: () => _loadTemplate(schema, isAdmin),
+                      onDoubleTap: () => _loadTemplate(schema),
                       child: Container(
                         clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
@@ -251,26 +195,6 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                           layout: MetadataTileLayout.topBanner,
                           onSettings: () =>
                               _showTemplateSettings(schema, palette),
-                          trailingBadges: [
-                            if (isBuiltin) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 1),
-                                decoration: BoxDecoration(
-                                    color: palette.sidebarFilterBg,
-                                    borderRadius: palette.br),
-                                child: Text('Built-in',
-                                    style: TextStyle(
-                                        fontSize: 9,
-                                        color: palette.tabText)),
-                              ),
-                              if (!isAdmin) ...[
-                                const SizedBox(width: 4),
-                                Icon(Icons.lock_outline,
-                                    size: 12, color: palette.tabText),
-                              ],
-                            ],
-                          ],
                         ),
                       ),
                     );
@@ -286,8 +210,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                     child: FilledButton.icon(
                       onPressed: _selectedIndex >= 0 &&
                               _selectedIndex < combined.length
-                          ? () => _loadTemplate(
-                              combined[_selectedIndex], isAdmin)
+                          ? () => _loadTemplate(combined[_selectedIndex])
                           : null,
                       icon: const Icon(Icons.folder_open, size: 18),
                       label: const Text('Load Template'),
@@ -370,11 +293,10 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
   }
 
   bool _canDelete(List<WorldSchema> combined) {
-    if (_selectedIndex < 0 || _selectedIndex >= combined.length) return false;
-    return combined[_selectedIndex].schemaId != builtinTemplateId;
+    return _selectedIndex >= 0 && _selectedIndex < combined.length;
   }
 
-  void _loadTemplate(WorldSchema schema, bool isAdmin) {
+  void _loadTemplate(WorldSchema schema) {
     setState(() {
       _mode = 'edit';
       _activeSchema = schema;
@@ -404,7 +326,6 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
               await ref
                   .read(cloudBackupOperationProvider.notifier)
                   .deleteBackupByItem(schema.schemaId, 'template');
-              ref.invalidate(customTemplatesProvider);
               ref.invalidate(allTemplatesProvider);
               ref.invalidate(trashListProvider);
               if (mounted) setState(() => _selectedIndex = -1);
@@ -492,9 +413,6 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
   Future<void> _showTemplateSettings(
       WorldSchema schema, DmToolColors palette) async {
     final l10n = L10n.of(context)!;
-    final isBuiltin = schema.schemaId == builtinTemplateId;
-    final isAdmin = ref.read(isAdminProvider).valueOrNull ?? false;
-    final canEdit = !isBuiltin || isAdmin;
 
     DateTime? localUpdatedAt;
     try {
@@ -524,27 +442,18 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (canEdit)
-                    MetadataEditorSection(
-                      name: workingName,
-                      description: workingDescription,
-                      tags: workingTags,
-                      coverImagePath: workingCover,
-                      onNameChanged: (v) => workingName = v,
-                      onDescriptionChanged: (v) => workingDescription = v,
-                      onTagsChanged: (v) =>
-                          setDialogState(() => workingTags = v),
-                      onCoverChanged: (v) =>
-                          setDialogState(() => workingCover = v),
-                    )
-                  else
-                    Text(
-                      'Built-in template — metadata is read-only for non-admin users.',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontStyle: FontStyle.italic,
-                          color: palette.sidebarLabelSecondary),
-                    ),
+                  MetadataEditorSection(
+                    name: workingName,
+                    description: workingDescription,
+                    tags: workingTags,
+                    coverImagePath: workingCover,
+                    onNameChanged: (v) => workingName = v,
+                    onDescriptionChanged: (v) => workingDescription = v,
+                    onTagsChanged: (v) =>
+                        setDialogState(() => workingTags = v),
+                    onCoverChanged: (v) =>
+                        setDialogState(() => workingCover = v),
+                  ),
                   const SizedBox(height: 12),
                   Divider(height: 1, color: palette.featureCardBorder),
                   const SizedBox(height: 12),
@@ -586,38 +495,32 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
               onPressed: () => Navigator.pop(ctx),
               child: Text(l10n.btnCancel),
             ),
-            if (canEdit)
-              FilledButton(
-                onPressed: () async {
-                  final newMeta = Map<String, dynamic>.from(schema.metadata)
-                    ..['cover_image_path'] = workingCover
-                    ..['tags'] = workingTags;
-                  final updated = schema.copyWith(
-                    name: workingName,
-                    description: workingDescription,
-                    metadata: newMeta,
-                    updatedAt:
-                        DateTime.now().toUtc().toIso8601String(),
-                  );
-                  try {
-                    await ref.read(templateLocalDsProvider).save(
-                          updated,
-                          bypassBuiltinGuard: isBuiltin && isAdmin,
-                        );
-                    ref.invalidate(customTemplatesProvider);
-                    ref.invalidate(allTemplatesProvider);
-                    ref.invalidate(builtinTemplateProvider);
-                    if (ctx.mounted) Navigator.pop(ctx);
-                  } catch (e) {
-                    if (ctx.mounted) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        SnackBar(content: Text('Save failed: $e')),
-                      );
-                    }
+            FilledButton(
+              onPressed: () async {
+                final newMeta = Map<String, dynamic>.from(schema.metadata)
+                  ..['cover_image_path'] = workingCover
+                  ..['tags'] = workingTags;
+                final updated = schema.copyWith(
+                  name: workingName,
+                  description: workingDescription,
+                  metadata: newMeta,
+                  updatedAt:
+                      DateTime.now().toUtc().toIso8601String(),
+                );
+                try {
+                  await ref.read(templateLocalDsProvider).save(updated);
+                  ref.invalidate(allTemplatesProvider);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                } catch (e) {
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      SnackBar(content: Text('Save failed: $e')),
+                    );
                   }
-                },
-                child: const Text('Save'),
-              ),
+                }
+              },
+              child: const Text('Save'),
+            ),
           ],
         ),
       ),

@@ -351,6 +351,12 @@
   "publishDialogFailed": "Publish failed: {error}",
   "@publishDialogFailed": { "placeholders": { "error": { "type": "String" } } },
 
+  "publishAsBuiltinButton": "Publish as Built-in",
+  "publishAsBuiltinHeading": "Publish as Built-in",
+  "publishAsBuiltinNotice": "This snapshot will be added to the official built-in catalogue on top of the normal publish. Admins can unmark it later from Admin → Content.",
+  "publishAsBuiltinSuccess": "Published as built-in.",
+  "publishAsBuiltinFlagFailed": "Published, but marking as built-in failed. Use Admin → Content to retry.",
+
   "marketplaceErrorPrefix": "Marketplace error: {error}",
   "@marketplaceErrorPrefix": { "placeholders": { "error": { "type": "String" } } },
   "marketplaceOwnerNotShared": "Not yet shared. Publish an immutable snapshot to the marketplace.",

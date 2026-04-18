@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -200,6 +204,8 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
               _pathRow(l10n.dataPathRoot, AppPaths.dataRoot, palette),
               _pathRow(l10n.dataPathWorlds, AppPaths.worldsDir, palette),
               _pathRow(l10n.dataPathCache, AppPaths.cacheDir, palette),
+              const SizedBox(height: 8),
+              _DataPathActions(path: AppPaths.dataRoot, palette: palette),
 
               const SizedBox(height: 32),
 
@@ -460,6 +466,76 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
       height: 10,
       margin: const EdgeInsets.symmetric(horizontal: 2),
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+}
+
+/// Copy path + open-in-file-manager helper. Open button is desktop-only.
+class _DataPathActions extends StatelessWidget {
+  final String path;
+  final DmToolColors palette;
+  const _DataPathActions({required this.path, required this.palette});
+
+  bool get _canOpen =>
+      !kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+
+  Future<void> _open(BuildContext context) async {
+    try {
+      final String exe;
+      final List<String> args;
+      if (Platform.isWindows) {
+        exe = 'explorer';
+        args = [path];
+      } else if (Platform.isMacOS) {
+        exe = 'open';
+        args = [path];
+      } else {
+        exe = 'xdg-open';
+        args = [path];
+      }
+      await Process.start(exe, args, mode: ProcessStartMode.detached);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Could not open folder: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        OutlinedButton.icon(
+          onPressed: () async {
+            await Clipboard.setData(ClipboardData(text: path));
+            if (context.mounted) {
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(content: Text('Path copied')));
+            }
+          },
+          icon: const Icon(Icons.copy, size: 14),
+          label: const Text('Copy path',
+              style: TextStyle(fontSize: 12)),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            minimumSize: const Size(0, 28),
+          ),
+        ),
+        if (_canOpen) ...[
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: () => _open(context),
+            icon: const Icon(Icons.folder_open, size: 14),
+            label: const Text('Open data folder',
+                style: TextStyle(fontSize: 12)),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              minimumSize: const Size(0, 28),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

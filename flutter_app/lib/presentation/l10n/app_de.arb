@@ -351,6 +351,12 @@
   "publishDialogFailed": "Veröffentlichung fehlgeschlagen: {error}",
   "@publishDialogFailed": { "placeholders": { "error": { "type": "String" } } },
 
+  "publishAsBuiltinButton": "Als Built-in veröffentlichen",
+  "publishAsBuiltinHeading": "Als Built-in veröffentlichen",
+  "publishAsBuiltinNotice": "Dieser Snapshot wird zusätzlich zur normalen Veröffentlichung in den offiziellen Built-in-Katalog aufgenommen. Admins können die Markierung später unter Admin → Content entfernen.",
+  "publishAsBuiltinSuccess": "Als Built-in veröffentlicht.",
+  "publishAsBuiltinFlagFailed": "Veröffentlicht, aber die Built-in-Markierung ist fehlgeschlagen. Erneut versuchen unter Admin → Content.",
+
   "marketplaceErrorPrefix": "Marketplace-Fehler: {error}",
   "@marketplaceErrorPrefix": { "placeholders": { "error": { "type": "String" } } },
   "marketplaceOwnerNotShared": "Noch nicht geteilt. Veröffentliche einen unveränderlichen Snapshot im Marketplace.",

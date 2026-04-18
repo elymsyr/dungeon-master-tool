@@ -44,10 +44,7 @@ class UserSessionNotifier extends StateNotifier<bool> {
     _ref.invalidate(campaignListProvider);
     _ref.invalidate(campaignInfoListProvider);
     _ref.invalidate(cloudBackupListProvider);
-    // Template ve package provider'ları da invalidate et.
     _ref.invalidate(allTemplatesProvider);
-    _ref.invalidate(customTemplatesProvider);
-    _ref.invalidate(builtinTemplateProvider);
   }
 
   /// Global path'te veri varsa ve user path'te yoksa, kopyala (one-time).

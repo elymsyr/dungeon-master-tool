@@ -5,10 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
-import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/schema/world_schema.dart';
-import '../../dialogs/builtin_warning_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/marketplace_panel.dart';
@@ -364,13 +362,6 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       if (!template.categories.any((c) => c.slug == playerCategorySlug)) {
         _snack('This world\'s template has no Player category.');
         return;
-      }
-
-      if (template.schemaId == builtinTemplateId) {
-        if (!mounted) return;
-        final choice =
-            await BuiltinWarningDialog.show(context, offerCopyFirst: false);
-        if (choice != BuiltinWarningChoice.continueBuiltin) return;
       }
 
       final c = await ref.read(characterListProvider.notifier).create(

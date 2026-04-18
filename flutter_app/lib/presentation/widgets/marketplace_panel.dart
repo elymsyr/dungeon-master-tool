@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/admin_provider.dart';
 import '../../application/providers/auth_provider.dart';
 import '../../application/providers/marketplace_listing_provider.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
+import '../../domain/entities/marketplace_listing.dart';
 import '../dialogs/publish_snapshot_dialog.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
@@ -36,16 +38,43 @@ class _MarketplacePanelState extends ConsumerState<MarketplacePanel> {
   ({String itemType, String localId}) get _key =>
       (itemType: widget.itemType, localId: widget.localId);
 
-  Future<void> _publishSnapshot() async {
-    final listing = await showPublishSnapshotDialog(
+  Future<MarketplaceListing?> _openPublishDialog({required bool asBuiltin}) {
+    return showPublishSnapshotDialog(
       context: context,
       itemType: widget.itemType,
       localId: widget.localId,
       defaultTitle: widget.title,
+      publishAsBuiltin: asBuiltin,
     );
+  }
+
+  Future<void> _publishSnapshot() async {
+    final listing = await _openPublishDialog(asBuiltin: false);
     if (listing != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(L10n.of(context)!.marketplaceSnapshotPublished)),
+      );
+    }
+  }
+
+  Future<void> _publishAsBuiltin() async {
+    final l10n = L10n.of(context)!;
+    final listing = await _openPublishDialog(asBuiltin: true);
+    if (listing == null || !mounted) return;
+    try {
+      await ref
+          .read(adminUsersDataSourceProvider)
+          .setListingBuiltin(listing.id, true);
+      ref.invalidate(adminAllMarketplaceListingsProvider);
+      ref.invalidate(ownedSnapshotsProvider(_key));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.publishAsBuiltinSuccess)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.publishAsBuiltinFlagFailed)),
       );
     }
   }
@@ -58,6 +87,7 @@ class _MarketplacePanelState extends ConsumerState<MarketplacePanel> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final ownedAsync = ref.watch(ownedSnapshotsProvider(_key));
     final sourceAsync = ref.watch(marketplaceSourceProvider(_key));
+    final isAdmin = ref.watch(isAdminProvider).valueOrNull ?? false;
 
     return ownedAsync.when(
       loading: () => const SizedBox(
@@ -92,6 +122,8 @@ class _MarketplacePanelState extends ConsumerState<MarketplacePanel> {
                   _OwnerSection(
                     hasPublished: owned.isNotEmpty,
                     onPublish: _publishSnapshot,
+                    onPublishAsBuiltin:
+                        isAdmin ? _publishAsBuiltin : null,
                     palette: palette,
                   ),
                   if (owned.isNotEmpty) ...[
@@ -123,11 +155,13 @@ class _MarketplacePanelState extends ConsumerState<MarketplacePanel> {
 class _OwnerSection extends StatelessWidget {
   final bool hasPublished;
   final VoidCallback onPublish;
+  final VoidCallback? onPublishAsBuiltin;
   final DmToolColors palette;
 
   const _OwnerSection({
     required this.hasPublished,
     required this.onPublish,
+    required this.onPublishAsBuiltin,
     required this.palette,
   });
 
@@ -164,22 +198,50 @@ class _OwnerSection extends StatelessWidget {
         const SizedBox(height: 10),
         Align(
           alignment: Alignment.centerRight,
-          child: FilledButton.icon(
-            onPressed: onPublish,
-            icon: const Icon(Icons.add, size: 14),
-            label: Text(
-              hasPublished
-                  ? l10n.marketplacePublishSnapshotButton
-                  : l10n.marketplaceShareButton,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: palette.featureCardAccent,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              minimumSize: const Size(0, 30),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6)),
-            ),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            alignment: WrapAlignment.end,
+            children: [
+              if (onPublishAsBuiltin != null)
+                FilledButton.icon(
+                  onPressed: onPublishAsBuiltin,
+                  icon: const Icon(Icons.star, size: 14),
+                  label: Text(
+                    l10n.publishAsBuiltinButton,
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFC8A24B),
+                    foregroundColor: Colors.black87,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                    minimumSize: const Size(0, 30),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6)),
+                  ),
+                ),
+              FilledButton.icon(
+                onPressed: onPublish,
+                icon: const Icon(Icons.add, size: 14),
+                label: Text(
+                  hasPublished
+                      ? l10n.marketplacePublishSnapshotButton
+                      : l10n.marketplaceShareButton,
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: palette.featureCardAccent,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
+                  minimumSize: const Size(0, 30),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6)),
+                ),
+              ),
+            ],
           ),
         ),
       ],
