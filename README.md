@@ -40,6 +40,8 @@
 
 ## Features
 
+### Table & Campaign Tools
+
 - **Combat Tracker** -- Initiative, HP tracking, conditions, turn management, and auto event logging.
 - **Battle Map** -- 6-layer canvas (grid, token, annotation, fog, terrain, decal) with fog of war, persistent rulers, circles, and a draw tool. All synced to the player screen.
 - **Mind Map** -- Infinite canvas with Bezier connections, level-of-detail rendering, workspaces, undo/redo.
@@ -52,6 +54,27 @@
 - **PDF Viewer** -- Integrated viewer with page navigation and zoom.
 - **Dice Roller** -- d4, d6, d8, d10, d12, d20, d100.
 - **Customization** -- 11 themes (dark and light variants) and 4-language localization.
+
+### Social & Community
+
+- **Public Profiles** -- Username, display name, bio, avatar, and follower/following counts. Opt-out of discovery supported.
+- **Follow System** -- Follow and unfollow other players with optimistic updates; browse followers and following lists per profile.
+- **Activity Feed** -- Share text and image posts, like entries, and toggle the feed between *all users* and *following only*. Rate-limited server-side to keep the feed healthy.
+- **Direct Messaging** -- Realtime 1-to-1 and group conversations with unread counters, group renaming, member leave, and admin-managed deletion.
+- **User Discovery** -- Suggested profiles based on community activity and username search with prefix matching.
+
+### Player Search & Looking-for-Group
+
+- **Game Listings** -- DMs can post open games with title, description, system (D&D 5e, Pathfinder, etc.), seat count, schedule, language, and tags.
+- **Filtering** -- Browse listings filtered by language, system, and tags; status tracking for open/closed seats.
+- **Applications** -- Players apply to a listing with a personal message. Listing owners review, accept, or reject applicants; applicants can withdraw at any time.
+
+### Marketplace
+
+- **Publish & Share** -- Publish worlds, templates, packages, and characters as immutable snapshots with title, description, tags, changelog, and cover image.
+- **Versioning & Lineage** -- Every publish creates a new version; all releases of the same item are linked via lineage tracking so subscribers can see history.
+- **Browse & Download** -- Filter by item type (world, template, package, character), language, and tags. Atomic download counters and separate built-in vs. community sections.
+- **Integrity Guarantees** -- Database-enforced immutability for core metadata (title, description, content hash, ownership) prevents silent edits after publish.
 
 ---
 
