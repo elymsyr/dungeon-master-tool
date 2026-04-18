@@ -609,4 +609,249 @@ void main() {
       expect(result.computedValues.containsKey('speed'), false);
     });
   });
+
+  group('Table lookup', () {
+    test('resolves value by key from related entity table', () {
+      final cat = _cat('char', rules: [
+        const RuleV2(
+          ruleId: 'slot_rule',
+          name: 'spell slots',
+          when_: Predicate.always(),
+          then_: RuleEffect.setValue(
+            targetFieldKey: 'spellSlotsLv1',
+            value: ValueExpression.tableLookup(
+              table: FieldRef(
+                scope: RefScope.related,
+                fieldKey: 'spellSlotLv1Table',
+                relationFieldKey: 'class_ref',
+              ),
+              key: ValueExpression.fieldValue(FieldRef(
+                scope: RefScope.self,
+                fieldKey: 'level',
+              )),
+            ),
+          ),
+        ),
+      ]);
+      final wizard = _entity('wizard', 'class', fields: {
+        'spellSlotLv1Table': {'1': 2, '2': 3, '3': 4},
+      });
+      final char = _entity('c1', 'char', fields: {
+        'class_ref': 'wizard',
+        'level': 3,
+      });
+      final result = RuleEngineV2.evaluate(
+        entity: char,
+        category: cat,
+        allEntities: {'c1': char, 'wizard': wizard},
+      );
+      expect(result.computedValues['spellSlotsLv1'], 4);
+    });
+
+    test('falls back when key not in table', () {
+      final cat = _cat('char', rules: [
+        const RuleV2(
+          ruleId: 'r',
+          name: 'r',
+          when_: Predicate.always(),
+          then_: RuleEffect.setValue(
+            targetFieldKey: 'slots',
+            value: ValueExpression.tableLookup(
+              table: FieldRef(scope: RefScope.self, fieldKey: 'table'),
+              key: ValueExpression.fieldValue(FieldRef(scope: RefScope.self, fieldKey: 'level')),
+              fallback: ValueExpression.literal(0),
+            ),
+          ),
+        ),
+      ]);
+      final char = _entity('c1', 'char', fields: {
+        'table': {'1': 2, '2': 3},
+        'level': 99,
+      });
+      final result = RuleEngineV2.evaluate(entity: char, category: cat, allEntities: {'c1': char});
+      expect(result.computedValues['slots'], 0);
+    });
+
+    test('returns null when table missing and no fallback', () {
+      final cat = _cat('char', rules: [
+        const RuleV2(
+          ruleId: 'r',
+          name: 'r',
+          when_: Predicate.always(),
+          then_: RuleEffect.setValue(
+            targetFieldKey: 'slots',
+            value: ValueExpression.tableLookup(
+              table: FieldRef(scope: RefScope.self, fieldKey: 'missing'),
+              key: ValueExpression.fieldValue(FieldRef(scope: RefScope.self, fieldKey: 'level')),
+            ),
+          ),
+        ),
+      ]);
+      final char = _entity('c1', 'char', fields: {'level': 3});
+      final result = RuleEngineV2.evaluate(entity: char, category: cat, allEntities: {'c1': char});
+      expect(result.computedValues.containsKey('slots'), false);
+    });
+  });
+
+  group('Ability modifier', () {
+    test('D&D 5e score → modifier conversion', () {
+      RuleV2 rule(int score, String key) => const RuleV2(
+            ruleId: 'r',
+            name: 'r',
+            when_: Predicate.always(),
+            then_: RuleEffect.setValue(
+              targetFieldKey: 'mod',
+              value: ValueExpression.modifier(FieldRef(scope: RefScope.self, fieldKey: 'score')),
+            ),
+          );
+      final cases = <int, int>{
+        1: -5, 3: -4, 8: -1, 9: -1, 10: 0, 11: 0, 12: 1, 14: 2, 15: 2, 20: 5, 30: 10,
+      };
+      for (final entry in cases.entries) {
+        final cat = _cat('char', rules: [rule(entry.key, 'mod')]);
+        final char = _entity('c1', 'char', fields: {'score': entry.key});
+        final result = RuleEngineV2.evaluate(entity: char, category: cat, allEntities: {'c1': char});
+        expect(result.computedValues['mod'], entry.value,
+            reason: 'score ${entry.key} should produce mod ${entry.value}');
+      }
+    });
+
+    test('AC = 12 + DEX mod (arithmetic + modifier)', () {
+      final cat = _cat('char', rules: [
+        const RuleV2(
+          ruleId: 'ac',
+          name: 'AC',
+          when_: Predicate.always(),
+          then_: RuleEffect.setValue(
+            targetFieldKey: 'ac',
+            value: ValueExpression.arithmetic(
+              left: ValueExpression.literal(12),
+              op: ArithOp.add,
+              right: ValueExpression.modifier(FieldRef(
+                scope: RefScope.self,
+                fieldKey: 'stats',
+                nestedFieldKey: 'DEX',
+              )),
+            ),
+          ),
+        ),
+      ]);
+      final char = _entity('c1', 'char', fields: {
+        'stats': {'DEX': 14},
+      });
+      final result = RuleEngineV2.evaluate(entity: char, category: cat, allEntities: {'c1': char});
+      expect(result.computedValues['ac'], 14);
+    });
+  });
+
+  group('Stringify', () {
+    test('formats arithmetic + modifier readably', () {
+      const expr = ValueExpression.arithmetic(
+        left: ValueExpression.literal(12),
+        op: ArithOp.add,
+        right: ValueExpression.modifier(FieldRef(
+          scope: RefScope.self,
+          fieldKey: 'stats',
+          nestedFieldKey: 'DEX',
+        )),
+      );
+      expect(RuleEngineV2.stringify(expr), '(12 + stats.DEX mod)');
+    });
+
+    test('formats related table lookup', () {
+      const expr = ValueExpression.tableLookup(
+        table: FieldRef(scope: RefScope.related, fieldKey: 'slotTable', relationFieldKey: 'class'),
+        key: ValueExpression.fieldValue(FieldRef(scope: RefScope.self, fieldKey: 'level')),
+      );
+      expect(RuleEngineV2.stringify(expr), 'class.slotTable[level]');
+    });
+  });
+
+  group('List source tagging', () {
+    test('rule-produced list items are tagged with rule id', () {
+      final cat = _cat('char', rules: [
+        const RuleV2(
+          ruleId: 'class_spells',
+          name: 'class spells',
+          when_: Predicate.always(),
+          then_: RuleEffect.setValue(
+            targetFieldKey: 'spells',
+            value: ValueExpression.literal([
+              {'id': 'fireball', 'equipped': false},
+              {'id': 'shield', 'equipped': true},
+            ]),
+          ),
+        ),
+      ]);
+      final char = _entity('c1', 'char');
+      final result = RuleEngineV2.evaluate(entity: char, category: cat, allEntities: {'c1': char});
+      final spells = result.computedValues['spells'] as List;
+      expect(spells.length, 2);
+      expect(spells[0]['source'], 'rule:class_spells');
+      expect(spells[1]['source'], 'rule:class_spells');
+    });
+
+    test('manual items preserved when rule appends to a list', () {
+      final cat = _cat('char', rules: [
+        const RuleV2(
+          ruleId: 'r',
+          name: 'r',
+          when_: Predicate.always(),
+          then_: RuleEffect.setValue(
+            targetFieldKey: 'inv',
+            value: ValueExpression.literal([
+              {'id': 'wand', 'equipped': false},
+            ]),
+          ),
+        ),
+      ]);
+      final char = _entity('c1', 'char', fields: {
+        'inv': [
+          {'id': 'dagger', 'equipped': true, 'source': 'manual'},
+          {'id': 'potion', 'equipped': false},
+          {'id': 'stale_rule_item', 'equipped': false, 'source': 'rule:old_rule'},
+        ],
+      });
+      final result = RuleEngineV2.evaluate(entity: char, category: cat, allEntities: {'c1': char});
+      final inv = result.computedValues['inv'] as List;
+      final ids = inv.map((e) => e['id']).toList();
+      expect(ids, containsAll(['dagger', 'potion', 'wand']));
+      expect(ids.contains('stale_rule_item'), false);
+      final wand = inv.firstWhere((e) => e['id'] == 'wand');
+      expect(wand['source'], 'rule:r');
+    });
+
+    test('multiple rules accumulate on same list field', () {
+      final cat = _cat('char', rules: [
+        const RuleV2(
+          ruleId: 'r1',
+          name: 'r1',
+          when_: Predicate.always(),
+          then_: RuleEffect.setValue(
+            targetFieldKey: 'inv',
+            value: ValueExpression.literal([
+              {'id': 'a'},
+            ]),
+          ),
+        ),
+        const RuleV2(
+          ruleId: 'r2',
+          name: 'r2',
+          when_: Predicate.always(),
+          then_: RuleEffect.setValue(
+            targetFieldKey: 'inv',
+            value: ValueExpression.literal([
+              {'id': 'b'},
+            ]),
+          ),
+        ),
+      ]);
+      final char = _entity('c1', 'char');
+      final result = RuleEngineV2.evaluate(entity: char, category: cat, allEntities: {'c1': char});
+      final inv = result.computedValues['inv'] as List;
+      expect(inv.length, 2);
+      expect(inv[0]['source'], 'rule:r1');
+      expect(inv[1]['source'], 'rule:r2');
+    });
+  });
 }

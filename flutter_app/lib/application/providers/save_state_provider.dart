@@ -7,6 +7,7 @@ import '../../core/config/supabase_config.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
 import 'cloud_sync_provider.dart';
+import 'template_provider.dart';
 import 'ui_state_provider.dart';
 
 enum SaveStatus { saved, dirty, saving }
@@ -55,7 +56,12 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
     _maxDelayTimer = null;
     state = SaveStatus.saving;
     try {
-      await _ref.read(activeCampaignProvider.notifier).save();
+      // Aktif item: campaign öncelikli; yoksa template.
+      if (_ref.read(activeCampaignProvider) != null) {
+        await _ref.read(activeCampaignProvider.notifier).save();
+      } else if (_ref.read(activeTemplateProvider) != null) {
+        await _ref.read(activeTemplateProvider.notifier).save();
+      }
       if (_disposed) return;
       lastSavedAt = DateTime.now();
 
@@ -75,6 +81,17 @@ class SaveStateNotifier extends StateNotifier<SaveStatus> {
                 campaignName,
                 'world',
               );
+        }
+        final templateId = _ref.read(activeTemplateProvider);
+        if (templateId != null) {
+          final schema = _ref.read(activeTemplateProvider.notifier).schema;
+          if (schema != null) {
+            _ref.read(cloudSyncProvider.notifier).markDirty(
+                  schema.schemaId,
+                  schema.name,
+                  'template',
+                );
+          }
         }
       }
     } catch (e) {

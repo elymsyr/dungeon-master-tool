@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
-import '../../../application/providers/global_loading_provider.dart';
+import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
-import '../../widgets/close_guard.dart';
 import '../../widgets/marketplace_panel.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
-import 'template_editor.dart';
-
-/// User's pick from the "save existing template" prompt.
-enum _SaveChoice { update, saveAsNew, cancel }
+import 'social_tab.dart';
 
 class TemplatesTab extends ConsumerStatefulWidget {
   const TemplatesTab({super.key});
@@ -27,10 +24,9 @@ class TemplatesTab extends ConsumerStatefulWidget {
 }
 
 class _TemplatesTabState extends ConsumerState<TemplatesTab> {
-  String? _mode;
-  WorldSchema? _activeSchema;
   final _nameController = TextEditingController();
   int _selectedIndex = -1;
+
   /// null = "(Empty — start from scratch)"; otherwise schemaId to clone from.
   String? _copyFromId;
 
@@ -45,63 +41,6 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final templatesAsync = ref.watch(allTemplatesProvider);
 
-    if (_mode == 'edit') {
-      return TemplateEditor(
-        initial: _activeSchema,
-        readOnly: false,
-        onBack: () async {
-          final ok = await confirmCloseUnconditional(
-            context: context,
-            title: 'Close template editor?',
-          );
-          if (ok && mounted) {
-            setState(() { _mode = null; _activeSchema = null; });
-          }
-        },
-        onSave: (schema) async {
-          // Existing template? → ask whether to update in place or fork as
-          // a new template. New templates (no _activeSchema) skip the prompt.
-          final isExisting = _activeSchema != null;
-          if (isExisting) {
-            final choice = await _showUpdateOrForkDialog(context);
-            if (choice == null || choice == _SaveChoice.cancel) return;
-            if (choice == _SaveChoice.saveAsNew) {
-              final forked = _cloneAsNew(schema, '${schema.name} (v2)');
-              await withLoading(
-                ref.read(globalLoadingProvider.notifier),
-                'save-template-new',
-                'Saving template "${forked.name}"...',
-                () => ref.read(templateLocalDsProvider).save(forked),
-              );
-              ref.invalidate(allTemplatesProvider);
-              if (context.mounted) {
-                setState(() { _mode = null; _activeSchema = null; });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Saved as new template: ${forked.name}')),
-                );
-              }
-              return;
-            }
-            // _SaveChoice.update falls through to the in-place save below.
-          }
-
-          await withLoading(
-            ref.read(globalLoadingProvider.notifier),
-            'save-template',
-            'Saving template "${schema.name}"...',
-            () => ref.read(templateLocalDsProvider).save(schema),
-          );
-          ref.invalidate(allTemplatesProvider);
-          if (context.mounted) {
-            setState(() { _mode = null; _activeSchema = null; });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Template saved')),
-            );
-          }
-        },
-      );
-    }
-
     final combined = templatesAsync.valueOrNull ?? const <WorldSchema>[];
 
     return SingleChildScrollView(
@@ -114,15 +53,45 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Templates',
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: palette.tabActiveText)),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Templates',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: palette.tabActiveText,
+                      ),
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      ref.read(socialSubTabProvider.notifier).state =
+                          'marketplace';
+                      ref.read(hubTabIndexProvider.notifier).state = 0;
+                    },
+                    icon: const Icon(Icons.storefront, size: 16),
+                    label: const Text('Marketplace'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      minimumSize: const Size(0, 32),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 4),
-              Text('World templates define entity categories and their fields.',
-                  style: TextStyle(
-                      fontSize: 12, color: palette.sidebarLabelSecondary)),
+              Text(
+                'World templates define entity categories and their fields.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: palette.sidebarLabelSecondary,
+                ),
+              ),
               const SizedBox(height: 16),
 
               if (templatesAsync.isLoading)
@@ -143,7 +112,9 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                       'No templates found.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          color: palette.sidebarLabelSecondary, fontSize: 12),
+                        color: palette.sidebarLabelSecondary,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 )
@@ -156,8 +127,10 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                   itemBuilder: (context, index) {
                     final schema = combined[index];
                     final isSelected = index == _selectedIndex;
-                    final totalFields = schema.categories
-                        .fold<int>(0, (sum, c) => sum + c.fields.length);
+                    final totalFields = schema.categories.fold<int>(
+                      0,
+                      (sum, c) => sum + c.fields.length,
+                    );
                     final meta = schema.metadata;
                     return InkWell(
                       borderRadius: palette.br,
@@ -167,8 +140,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                         clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? palette.featureCardAccent
-                                  .withValues(alpha: 0.1)
+                              ? palette.featureCardAccent.withValues(alpha: 0.1)
                               : palette.featureCardBg,
                           borderRadius: palette.br,
                           border: Border.all(
@@ -208,7 +180,8 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                 children: [
                   Expanded(
                     child: FilledButton.icon(
-                      onPressed: _selectedIndex >= 0 &&
+                      onPressed:
+                          _selectedIndex >= 0 &&
                               _selectedIndex < combined.length
                           ? () => _loadTemplate(combined[_selectedIndex])
                           : null,
@@ -236,11 +209,14 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
               const SizedBox(height: 16),
 
               // Create New Template
-              Text('Create New Template',
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: palette.tabActiveText)),
+              Text(
+                'Create New Template',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: palette.tabActiveText,
+                ),
+              ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String?>(
                 key: ValueKey('tpl_copy_${combined.length}'),
@@ -251,15 +227,17 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                 items: [
                   const DropdownMenuItem<String?>(
                     value: null,
-                    child: Text('(Empty — start from scratch)',
-                        style: TextStyle(fontSize: 12)),
+                    child: Text('Empty', style: TextStyle(fontSize: 12)),
                   ),
-                  ...combined.map((t) => DropdownMenuItem<String?>(
-                        value: t.schemaId,
-                        child: Text(
-                            '${t.name}  (${t.categories.length} cat)',
-                            style: const TextStyle(fontSize: 12)),
-                      )),
+                  ...combined.map(
+                    (t) => DropdownMenuItem<String?>(
+                      value: t.schemaId,
+                      child: Text(
+                        '${t.name}  (${t.categories.length} cat)',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
                 ],
                 onChanged: (id) => setState(() => _copyFromId = id),
               ),
@@ -269,8 +247,9 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                   Expanded(
                     child: TextField(
                       controller: _nameController,
-                      decoration:
-                          const InputDecoration(hintText: 'Template name'),
+                      decoration: const InputDecoration(
+                        hintText: 'Template name',
+                      ),
                       onSubmitted: (_) => _createTemplate(combined),
                     ),
                   ),
@@ -280,8 +259,9 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                     icon: const Icon(Icons.add, size: 18),
                     label: const Text('Create'),
                     style: FilledButton.styleFrom(
-                        backgroundColor: palette.successBtnBg,
-                        foregroundColor: palette.successBtnText),
+                      backgroundColor: palette.successBtnBg,
+                      foregroundColor: palette.successBtnText,
+                    ),
                   ),
                 ],
               ),
@@ -296,11 +276,10 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
     return _selectedIndex >= 0 && _selectedIndex < combined.length;
   }
 
-  void _loadTemplate(WorldSchema schema) {
-    setState(() {
-      _mode = 'edit';
-      _activeSchema = schema;
-    });
+  Future<void> _loadTemplate(WorldSchema schema) async {
+    await context.push('/template/edit', extra: (schema: schema, isNew: false));
+    if (!mounted) return;
+    ref.invalidate(allTemplatesProvider);
   }
 
   Future<void> _deleteSelected(List<WorldSchema> combined) async {
@@ -315,8 +294,9 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
         content: Text('Move "${schema.name}" to trash?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -341,12 +321,12 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
     );
   }
 
-  void _createTemplate(List<WorldSchema> combined) {
+  Future<void> _createTemplate(List<WorldSchema> combined) async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a template name')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter a template name')));
       return;
     }
     final now = DateTime.now().toUtc().toIso8601String();
@@ -359,46 +339,19 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
         updatedAt: now,
       );
     } else {
-      final source =
-          combined.where((t) => t.schemaId == _copyFromId).firstOrNull;
+      final source = combined
+          .where((t) => t.schemaId == _copyFromId)
+          .firstOrNull;
       if (source == null) return;
       schema = _cloneAsNew(source, name);
     }
     setState(() {
-      _mode = 'edit';
-      _activeSchema = schema;
       _nameController.clear();
       _copyFromId = null;
     });
-  }
-
-  /// Prompts the user when saving an existing template, since the lazy
-  /// template-sync flow will mark dependent campaigns as outdated on their
-  /// next open. Returns the user's pick or null if they dismissed the
-  /// dialog (treated as cancel).
-  Future<_SaveChoice?> _showUpdateOrForkDialog(BuildContext context) {
-    final l10n = L10n.of(context)!;
-    return showDialog<_SaveChoice>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.templateSaveTitle),
-        content: Text(l10n.templateSaveBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, _SaveChoice.cancel),
-            child: Text(l10n.btnCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, _SaveChoice.saveAsNew),
-            child: Text(l10n.templateSaveAsNew),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, _SaveChoice.update),
-            child: Text(l10n.templateSaveUpdate),
-          ),
-        ],
-      ),
-    );
+    await context.push('/template/edit', extra: (schema: schema, isNew: true));
+    if (!mounted) return;
+    ref.invalidate(allTemplatesProvider);
   }
 
   /// Deep-clones a template with fresh UUIDs on every nested entity so the
@@ -411,7 +364,9 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
   /// inherit the source's lineage and the lazy-sync flow would treat
   /// every dependent campaign as outdated against the wrong template.
   Future<void> _showTemplateSettings(
-      WorldSchema schema, DmToolColors palette) async {
+    WorldSchema schema,
+    DmToolColors palette,
+  ) async {
     final l10n = L10n.of(context)!;
 
     DateTime? localUpdatedAt;
@@ -449,8 +404,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                     coverImagePath: workingCover,
                     onNameChanged: (v) => workingName = v,
                     onDescriptionChanged: (v) => workingDescription = v,
-                    onTagsChanged: (v) =>
-                        setDialogState(() => workingTags = v),
+                    onTagsChanged: (v) => setDialogState(() => workingTags = v),
                     onCoverChanged: (v) =>
                         setDialogState(() => workingCover = v),
                   ),
@@ -459,16 +413,19 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Icon(Icons.description,
-                          size: 16,
-                          color: palette.sidebarLabelSecondary),
+                      Icon(
+                        Icons.description,
+                        size: 16,
+                        color: palette.sidebarLabelSecondary,
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           '${schema.categories.length} categories  ·  v${schema.version}',
                           style: TextStyle(
-                              fontSize: 13,
-                              color: palette.tabActiveText),
+                            fontSize: 13,
+                            color: palette.tabActiveText,
+                          ),
                         ),
                       ),
                     ],
@@ -504,8 +461,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                   name: workingName,
                   description: workingDescription,
                   metadata: newMeta,
-                  updatedAt:
-                      DateTime.now().toUtc().toIso8601String(),
+                  updatedAt: DateTime.now().toUtc().toIso8601String(),
                 );
                 try {
                   await ref.read(templateLocalDsProvider).save(updated);
@@ -513,9 +469,9 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                   if (ctx.mounted) Navigator.pop(ctx);
                 } catch (e) {
                   if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(content: Text('Save failed: $e')),
-                    );
+                    ScaffoldMessenger.of(
+                      ctx,
+                    ).showSnackBar(SnackBar(content: Text('Save failed: $e')));
                   }
                 }
               },
@@ -536,16 +492,23 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
       createdAt: now,
       updatedAt: now,
       originalHash: null,
-      categories: t.categories.map((c) => c.copyWith(
-        categoryId: const Uuid().v4(),
-        schemaId: newId,
-        isBuiltin: false,
-        fields: c.fields.map((f) => f.copyWith(
-          fieldId: const Uuid().v4(),
-          isBuiltin: false,
-        )).toList(),
-      )).toList(),
+      categories: t.categories
+          .map(
+            (c) => c.copyWith(
+              categoryId: const Uuid().v4(),
+              schemaId: newId,
+              isBuiltin: false,
+              fields: c.fields
+                  .map(
+                    (f) => f.copyWith(
+                      fieldId: const Uuid().v4(),
+                      isBuiltin: false,
+                    ),
+                  )
+                  .toList(),
+            ),
+          )
+          .toList(),
     );
   }
 }
-

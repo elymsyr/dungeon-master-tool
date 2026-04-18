@@ -123,6 +123,19 @@ abstract class ValueExpression with _$ValueExpression {
     required ValueExpression right,
   }) = ArithmeticExpr;
 
+  /// Tablo araması — `Map<int,int>` (storage: `Map<String, num>`) field'ında
+  /// [key] anahtarıyla değeri döner. Key tabloda yoksa [fallback] döner.
+  /// Tipik kullanım: class.spellSlotTable[self.level].
+  const factory ValueExpression.tableLookup({
+    required FieldRef table,
+    required ValueExpression key,
+    ValueExpression? fallback,
+  }) = TableLookupExpr;
+
+  /// D&D 5e ability modifier — (score - 10) / 2, floor.
+  /// [source] bir ability score field'ını göstermeli (örn. statBlock.DEX).
+  const factory ValueExpression.modifier(FieldRef source) = ModifierExpr;
+
   factory ValueExpression.fromJson(Map<String, dynamic> json) =>
       _$ValueExpressionFromJson(json);
 }

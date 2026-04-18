@@ -9,6 +9,7 @@ import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../application/providers/rule_provider.dart';
+import '../../../application/services/rule_engine_v2.dart';
 import '../../../domain/entities/schema/rule_v2.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
@@ -401,6 +402,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   Widget _buildFieldWidget(FieldSchema field, Entity entity, Map<String, dynamic> computed, DmToolColors palette, {Map<String, ItemStyle> itemStyles = const {}, Map<String, String> equipGates = const {}}) {
     final hasComputed = computed.containsKey(field.fieldKey);
     final fieldValue = hasComputed ? computed[field.fieldKey] : entity.fields[field.fieldKey];
+    final formula = hasComputed && !widget.readOnly ? _formulaFor(field.fieldKey) : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,12 +426,34 @@ class _EntityCardState extends ConsumerState<EntityCard> {
               children: [
                 Icon(Icons.auto_fix_high, size: 12, color: palette.sidebarLabelSecondary),
                 const SizedBox(width: 4),
-                Text('Auto-filled by rule', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary, fontStyle: FontStyle.italic)),
+                Expanded(
+                  child: Text(
+                    formula != null ? '= $formula' : 'Auto-filled by rule',
+                    style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary, fontStyle: FontStyle.italic),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
           ),
       ],
     );
+  }
+
+  /// Bu entity'nin kategorisinde, [fieldKey] hedefli bir setValue kuralı
+  /// varsa, ValueExpression'ı stringify ederek formül string'i döner.
+  String? _formulaFor(String fieldKey) {
+    final cat = widget.categorySchema;
+    if (cat == null) return null;
+    for (final rule in cat.rules) {
+      if (!rule.enabled) continue;
+      final match = rule.then_.maybeWhen(
+        setValue: (target, value) => target == fieldKey ? value : null,
+        orElse: () => null,
+      );
+      if (match != null) return RuleEngineV2.stringify(match);
+    }
+    return null;
   }
 
   Widget _buildGroupGrid(List<FieldSchema> fields, int gridColumns, Entity entity, Map<String, dynamic> computed, DmToolColors palette, {Map<String, ItemStyle> itemStyles = const {}, Map<String, String> equipGates = const {}}) {
