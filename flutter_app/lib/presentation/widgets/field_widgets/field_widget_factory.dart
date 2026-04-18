@@ -57,7 +57,8 @@ class FieldWidgetFactory {
       FieldType.conditionStats => _CombatStatsFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.dice => _DiceFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.boolean_ => _BooleanFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.slot => _SlotFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.slot => _SlotFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entityFields: entityFields, ruleDriven: computedMode),
+      FieldType.levelTable => _LevelTableFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.proficiencyTable => _ProficiencyTableFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entityFields: entityFields),
       FieldType.tagList => _TagListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.date => _DateFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
@@ -879,7 +880,7 @@ class _GenericListFieldWidgetState extends State<_GenericListFieldWidget> {
 }
 
 // --- REFERENCE LIST — equip destekli kategori referans listesi ---
-class _ReferenceListFieldWidget extends StatelessWidget {
+class _ReferenceListFieldWidget extends StatefulWidget {
   final FieldSchema schema;
   final dynamic value;
   final bool readOnly;
@@ -893,13 +894,38 @@ class _ReferenceListFieldWidget extends StatelessWidget {
   const _ReferenceListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities, this.ref, this.computedMode = false, this.itemStyles = const {}, this.equipGates = const {}});
 
   @override
+  State<_ReferenceListFieldWidget> createState() => _ReferenceListFieldWidgetState();
+}
+
+class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
+  bool _showAllSources = false;
+
+  FieldSchema get schema => widget.schema;
+  dynamic get value => widget.value;
+  bool get readOnly => widget.readOnly;
+  ValueChanged<dynamic> get onChanged => widget.onChanged;
+  Map<String, Entity>? get entities => widget.entities;
+  WidgetRef? get ref => widget.ref;
+  bool get computedMode => widget.computedMode;
+  Map<String, ItemStyle> get itemStyles => widget.itemStyles;
+  Map<String, String> get equipGates => widget.equipGates;
+
+  @override
   Widget build(BuildContext context) {
     // Değer iki formatta olabilir:
     // 1) List<String> — basit ID listesi (equip yok)
-    // 2) List<Map> — [{id: 'xxx', equipped: true}, ...] (equip var)
+    // 2) List<Map> — [{id: 'xxx', equipped: true, source: 'manual'|'rule:<id>'}, ...]
     final items = _parseItems(value);
     final targetTypes = schema.validation.allowedTypes?.join(', ') ?? 'any';
     final showEquip = schema.hasEquip;
+    final hasRuleSourced = items.any((i) {
+      final src = i['source']?.toString() ?? 'manual';
+      return src != 'manual';
+    });
+    final filterActive = schema.showSourceFilter && hasRuleSourced;
+    final visibleItems = filterActive && !_showAllSources
+        ? items.where((i) => i['equipped'] == true).toList()
+        : items;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -910,8 +936,21 @@ class _ReferenceListFieldWidget extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text('${schema.label} (${items.length})', style: Theme.of(context).textTheme.titleSmall)),
+                Expanded(child: Text('${schema.label} (${visibleItems.length}${filterActive ? '/${items.length}' : ''})', style: Theme.of(context).textTheme.titleSmall)),
                 Text('→ $targetTypes', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline)),
+                if (filterActive)
+                  IconButton(
+                    tooltip: _showAllSources ? 'Showing all sources' : 'Showing only equipped',
+                    icon: Icon(
+                      _showAllSources ? Icons.visibility : Icons.visibility_off,
+                      size: 16,
+                      color: _showAllSources
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.outline,
+                    ),
+                    onPressed: () => setState(() => _showAllSources = !_showAllSources),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 if (!readOnly && !computedMode)
                   IconButton(
                     icon: const Icon(Icons.add, size: 18),
@@ -927,7 +966,7 @@ class _ReferenceListFieldWidget extends StatelessWidget {
                       );
                       if (result != null) {
                         for (final id in result) {
-                          items.add({'id': id, 'equipped': false});
+                          items.add({'id': id, 'equipped': false, 'source': 'manual'});
                         }
                         onChanged(_serializeItems(items, showEquip));
                       }
@@ -936,16 +975,22 @@ class _ReferenceListFieldWidget extends StatelessWidget {
                   ),
               ],
             ),
-            if (items.isEmpty)
+            if (visibleItems.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text('No items linked', style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12)),
+                child: Text(
+                  filterActive && !_showAllSources
+                      ? 'No equipped items — toggle to see all sources'
+                      : 'No items linked',
+                  style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12),
+                ),
               ),
-            ...items.asMap().entries.map((entry) {
-              final i = entry.key;
-              final item = entry.value;
+            ...visibleItems.map((item) {
+              final i = items.indexOf(item);
               final isEquipped = item['equipped'] == true;
               final itemId = item['id']?.toString() ?? '';
+              final source = item['source']?.toString() ?? 'manual';
+              final isRuleSourced = source != 'manual';
               final style = itemStyles[itemId];
               final gateReason = equipGates[itemId];
               final isGated = gateReason != null && gateReason.isNotEmpty;
@@ -1024,6 +1069,11 @@ class _ReferenceListFieldWidget extends StatelessWidget {
                               'from ${item['from']}',
                               style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.outline),
                             ),
+                          if (isRuleSourced && (computedMode || _showAllSources))
+                            Text(
+                              'from rule',
+                              style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.primary, fontStyle: FontStyle.italic),
+                            ),
                           if (style?.tooltip != null)
                             Text(
                               style!.tooltip!,
@@ -1032,7 +1082,7 @@ class _ReferenceListFieldWidget extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (!readOnly && !computedMode)
+                    if (!readOnly && !computedMode && !isRuleSourced)
                       IconButton(
                         icon: const Icon(Icons.close, size: 14),
                         onPressed: () {
@@ -1121,25 +1171,47 @@ class _SlotFieldWidget extends StatelessWidget {
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
+  /// Kural slot count'u sağlıyorsa, entity'nin kendi alanındaki states
+  /// bilgisi buradan okunur. States kullanıcı taplamalarıyla düzenlenir,
+  /// count rule-driven olduğu için değiştirilemez.
+  final Map<String, dynamic>? entityFields;
+  final bool ruleDriven;
 
   const _SlotFieldWidget({
     required this.schema,
     required this.value,
     required this.readOnly,
     required this.onChanged,
+    this.entityFields,
+    this.ruleDriven = false,
   });
 
   ({int count, List<bool> states}) get _parsed {
+    // Rule-driven: value bir sayı (count), states entity'nin orijinal
+    // alanından okunur. Length count'a pad/trunc edilir.
+    if (ruleDriven && value is num) {
+      final count = (value as num).toInt().clamp(0, 99);
+      List<bool> raw = const [];
+      final own = entityFields?[schema.fieldKey];
+      if (own is Map) {
+        if (own['states'] is List) {
+          raw = (own['states'] as List).map((e) => e == true).toList();
+        } else if (own['filled'] is num) {
+          final filled = (own['filled'] as num).toInt().clamp(0, count);
+          raw = List.generate(count, (i) => i < filled);
+        }
+      }
+      final states = List.generate(count, (i) => i < raw.length && raw[i]);
+      return (count: count, states: states);
+    }
     if (value is Map) {
       final m = value as Map;
       final count = (m['count'] as num?)?.toInt().clamp(0, 99) ?? 0;
       if (m.containsKey('states') && m['states'] is List) {
         final raw = (m['states'] as List).map((e) => e == true).toList();
-        // Pad or trim to match count.
         final states = List.generate(count, (i) => i < raw.length && raw[i]);
         return (count: count, states: states);
       }
-      // Legacy format: {count, filled} → migrate to per-pip states.
       final filled = (m['filled'] as num?)?.toInt().clamp(0, count) ?? 0;
       return (count: count, states: List.generate(count, (i) => i < filled));
     }
@@ -1174,7 +1246,15 @@ class _SlotFieldWidget extends StatelessWidget {
                   ),
                 ),
               ),
-              if (!readOnly) ...[
+              if (ruleDriven)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Tooltip(
+                    message: 'Count is set by a rule',
+                    child: Icon(Icons.auto_fix_high, size: 14, color: palette.sidebarLabelSecondary),
+                  ),
+                ),
+              if (!readOnly && !ruleDriven) ...[
                 IconButton(
                   tooltip: 'Remove slot',
                   icon: const Icon(Icons.remove_circle_outline, size: 18),
@@ -1195,6 +1275,8 @@ class _SlotFieldWidget extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 ),
+              ],
+              if (!readOnly || ruleDriven)
                 IconButton(
                   tooltip: 'Refill',
                   icon: const Icon(Icons.refresh, size: 18),
@@ -1205,7 +1287,6 @@ class _SlotFieldWidget extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 ),
-              ],
             ],
           ),
           const SizedBox(height: 4),
@@ -1270,6 +1351,154 @@ class _SlotPip extends StatelessWidget {
           color: filled ? color : Colors.transparent,
           borderRadius: borderRadius,
           border: Border.all(color: color, width: 1.5),
+        ),
+      ),
+    );
+  }
+}
+
+// --- LEVEL TABLE — level → value progression tablosu ---
+/// Satır satır (level, value) editörü. Storage: `Map<String, num>`
+/// (int key'ler JSON uyumu için string olarak saklanır).
+class _LevelTableFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  const _LevelTableFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  List<MapEntry<int, num>> get _rows {
+    if (value is! Map) return [];
+    final m = value as Map;
+    final entries = <MapEntry<int, num>>[];
+    for (final e in m.entries) {
+      final k = int.tryParse(e.key.toString());
+      if (k == null) continue;
+      final v = e.value is num ? e.value as num : num.tryParse(e.value.toString());
+      if (v == null) continue;
+      entries.add(MapEntry(k, v));
+    }
+    entries.sort((a, b) => a.key.compareTo(b.key));
+    return entries;
+  }
+
+  void _write(List<MapEntry<int, num>> rows) {
+    final out = <String, num>{};
+    for (final r in rows) {
+      out[r.key.toString()] = r.value;
+    }
+    onChanged(out);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _rows;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: Text(schema.label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+                if (!readOnly)
+                  IconButton(
+                    tooltip: 'Add row',
+                    icon: const Icon(Icons.add, size: 16),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      final nextLevel = rows.isEmpty ? 1 : rows.last.key + 1;
+                      _write([...rows, MapEntry(nextLevel, 0)]);
+                    },
+                  ),
+              ],
+            ),
+            if (rows.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text('No levels — tap + to add', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+              )
+            else ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4, top: 2),
+                child: Row(
+                  children: [
+                    SizedBox(width: 60, child: Text('Level', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary))),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text('Value', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary))),
+                  ],
+                ),
+              ),
+              ...rows.asMap().entries.map((entry) {
+                final i = entry.key;
+                final row = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 60,
+                        child: TextFormField(
+                          key: ValueKey('${schema.fieldKey}_lvl_${row.key}_$i'),
+                          initialValue: row.key.toString(),
+                          readOnly: readOnly,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(fontSize: 12),
+                          decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 4)),
+                          onChanged: (v) {
+                            final newLevel = int.tryParse(v);
+                            if (newLevel == null) return;
+                            final updated = [...rows];
+                            updated[i] = MapEntry(newLevel, row.value);
+                            _write(updated);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          key: ValueKey('${schema.fieldKey}_val_${row.key}_$i'),
+                          initialValue: row.value.toString(),
+                          readOnly: readOnly,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          style: const TextStyle(fontSize: 12),
+                          decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 4)),
+                          onChanged: (v) {
+                            final newVal = num.tryParse(v);
+                            if (newVal == null) return;
+                            final updated = [...rows];
+                            updated[i] = MapEntry(row.key, newVal);
+                            _write(updated);
+                          },
+                        ),
+                      ),
+                      if (!readOnly)
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 14),
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          onPressed: () {
+                            final updated = [...rows]..removeAt(i);
+                            _write(updated);
+                          },
+                        ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ],
         ),
       ),
     );

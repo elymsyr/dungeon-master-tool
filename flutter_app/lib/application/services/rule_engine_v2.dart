@@ -53,6 +53,20 @@ class RuleEngineV2 {
     final equipGates = <String, String>{};
     final equippedModifiers = <String, dynamic>{};
 
+    // Manual-only base cache per list field — rule-sourced itemlar temizlenir.
+    final listBases = <String, List<dynamic>>{};
+    List<dynamic> manualBase(String key) {
+      return listBases.putIfAbsent(key, () {
+        final existing = entity.fields[key];
+        if (existing is! List) return <dynamic>[];
+        return existing.where((item) {
+          if (item is! Map) return true;
+          final src = item['source']?.toString() ?? 'manual';
+          return src == 'manual';
+        }).toList();
+      });
+    }
+
     // Öncelik sırasına göre sırala
     final rules = category.rules.toList()
       ..sort((a, b) => a.priority.compareTo(b.priority));
@@ -64,7 +78,30 @@ class RuleEngineV2 {
         setValue: (targetFieldKey, value) {
           if (_evalPredicate(rule.when_, ctx)) {
             final computed = _evalValue(value, ctx);
-            if (computed != null) computedValues[targetFieldKey] = computed;
+            if (computed == null) return;
+            if (computed is List) {
+              // List setValue: manual itemları koru, rule-sourced olanları
+              // bu kuralın ID'siyle tagla ve birleştir.
+              final tagged = computed.map((item) {
+                if (item is Map) {
+                  return {
+                    ...Map<String, dynamic>.from(item),
+                    'source': 'rule:${rule.ruleId}',
+                  };
+                }
+                return {
+                  'id': item.toString(),
+                  'equipped': false,
+                  'source': 'rule:${rule.ruleId}',
+                };
+              }).toList();
+              final base = computedValues.containsKey(targetFieldKey)
+                  ? (computedValues[targetFieldKey] as List)
+                  : manualBase(targetFieldKey);
+              computedValues[targetFieldKey] = [...base, ...tagged];
+            } else {
+              computedValues[targetFieldKey] = computed;
+            }
           }
         },
         gateEquip: (blockReason) {
@@ -86,6 +123,38 @@ class RuleEngineV2 {
       equippedModifiers: equippedModifiers,
     );
   }
+
+  /// ValueExpression → insan-okunur formül string. Edit mode'da
+  /// kullanıcıya formülü göstermek için.
+  static String stringify(ValueExpression expr) {
+    return expr.when(
+      fieldValue: (src) => _refStr(src),
+      aggregate: (rel, srcField, op, onlyEq) =>
+          '${op.name}($rel.$srcField${onlyEq ? ':equipped' : ''})',
+      literal: (v) => v?.toString() ?? 'null',
+      arithmetic: (l, op, r) =>
+          '(${stringify(l)} ${_arithSym(op)} ${stringify(r)})',
+      tableLookup: (table, key, fb) =>
+          '${_refStr(table)}[${stringify(key)}]${fb != null ? ' ?? ${stringify(fb)}' : ''}',
+      modifier: (src) => '${_refStr(src)} mod',
+    );
+  }
+
+  static String _refStr(FieldRef r) {
+    final base = switch (r.scope) {
+      RefScope.self => r.fieldKey,
+      RefScope.related => '${r.relationFieldKey ?? '?'}.${r.fieldKey}',
+      RefScope.relatedItems => '${r.relationFieldKey ?? '?'}[].${r.fieldKey}',
+    };
+    return r.nestedFieldKey != null ? '$base.${r.nestedFieldKey}' : base;
+  }
+
+  static String _arithSym(ArithOp op) => switch (op) {
+    ArithOp.add => '+',
+    ArithOp.subtract => '-',
+    ArithOp.multiply => '*',
+    ArithOp.divide => '/',
+  };
 
   /// Entity'nin rule'larından bağımlı entity ID'lerini topla.
   /// Provider'ın hangi entity'leri izlemesi gerektiğini belirler.
@@ -142,6 +211,30 @@ class RuleEngineV2 {
           ArithOp.divide => r != 0 ? l / r : 0.0,
         };
         return result == result.roundToDouble() ? result.toInt() : result;
+      },
+      tableLookup: (table, key, fallback) {
+        final tableValue = _resolveRef(table, ctx, depth: depth + 1);
+        final keyValue = _evalValue(key, ctx, depth: depth + 1);
+        if (tableValue is! Map) {
+          return fallback != null ? _evalValue(fallback, ctx, depth: depth + 1) : null;
+        }
+        final keyStr = keyValue?.toString();
+        if (keyStr == null) {
+          return fallback != null ? _evalValue(fallback, ctx, depth: depth + 1) : null;
+        }
+        // Storage: Map<String, num>; tolerate int keys as well.
+        final hit = tableValue[keyStr] ?? tableValue[keyValue];
+        if (hit != null) return hit is num && hit == hit.toInt() ? hit.toInt() : hit;
+        return fallback != null ? _evalValue(fallback, ctx, depth: depth + 1) : null;
+      },
+      modifier: (source) {
+        final raw = _resolveRef(source, ctx, depth: depth + 1);
+        final score = _toDouble(raw);
+        // D&D 5e: floor((score - 10) / 2). Dart ~/ floors toward zero, so for
+        // negative odd values subtract 1 to emulate math floor.
+        final diff = score.toInt() - 10;
+        if (diff >= 0) return diff ~/ 2;
+        return -((-diff + 1) ~/ 2);
       },
     );
   }
@@ -505,6 +598,12 @@ class RuleEngineV2 {
         _collectIdsFromValue(left, entity, ids);
         _collectIdsFromValue(right, entity, ids);
       },
+      tableLookup: (table, key, fallback) {
+        _collectIdsFromRef(table, entity, ids);
+        _collectIdsFromValue(key, entity, ids);
+        if (fallback != null) _collectIdsFromValue(fallback, entity, ids);
+      },
+      modifier: (source) => _collectIdsFromRef(source, entity, ids),
     );
   }
 

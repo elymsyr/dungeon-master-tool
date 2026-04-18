@@ -60,20 +60,19 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                             fontWeight: FontWeight.bold,
                             color: palette.tabActiveText)),
                   ),
-                  if (charactersAsync.valueOrNull?.isEmpty ?? false)
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        ref.read(socialSubTabProvider.notifier).state = 'marketplace';
-                        ref.read(hubTabIndexProvider.notifier).state = 0;
-                      },
-                      icon: const Icon(Icons.storefront, size: 16),
-                      label: const Text('Marketplace'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        minimumSize: const Size(0, 32),
-                        visualDensity: VisualDensity.compact,
-                      ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      ref.read(socialSubTabProvider.notifier).state = 'marketplace';
+                      ref.read(hubTabIndexProvider.notifier).state = 0;
+                    },
+                    icon: const Icon(Icons.storefront, size: 16),
+                    label: const Text('Marketplace'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      minimumSize: const Size(0, 32),
+                      visualDensity: VisualDensity.compact,
                     ),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -195,36 +194,78 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       fontWeight: FontWeight.w600,
                       color: palette.tabActiveText)),
               const SizedBox(height: 8),
-              _worldPicker(palette, l10n),
-              const SizedBox(height: 8),
-              _inheritedTemplateRow(palette),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _nameController,
-                      decoration:
-                          const InputDecoration(hintText: 'Character name'),
-                      onSubmitted: (_) => _createCharacter(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: _canCreate() ? _createCharacter : null,
-                    icon: _creating
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.add, size: 18),
-                    label: const Text('Create'),
-                    style: FilledButton.styleFrom(
-                        backgroundColor: palette.successBtnBg,
-                        foregroundColor: palette.successBtnText),
-                  ),
-                ],
+              ref.watch(campaignInfoListProvider).when(
+                data: (worlds) {
+                  if (worlds.isEmpty) {
+                    // Karakter bir dünyaya bağlıdır. Dünya yoksa Worlds
+                    // sekmesine yönlendir.
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: palette.featureCardBg,
+                        borderRadius: palette.br,
+                        border: Border.all(color: palette.featureCardBorder),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('No worlds created',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
+                          const SizedBox(height: 6),
+                          Text('You need at least one world to create a character. Open the Worlds tab to create one.',
+                              style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
+                          const SizedBox(height: 12),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              ref.read(hubTabIndexProvider.notifier).state = 2;
+                            },
+                            icon: const Icon(Icons.public, size: 16),
+                            label: const Text('Go to Worlds'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _worldPicker(palette, l10n),
+                      const SizedBox(height: 8),
+                      _inheritedTemplateRow(palette),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _nameController,
+                              decoration:
+                                  const InputDecoration(hintText: 'Character name'),
+                              onSubmitted: (_) => _createCharacter(),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton.icon(
+                            onPressed: _canCreate() ? _createCharacter : null,
+                            icon: _creating
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.add, size: 18),
+                            label: const Text('Create'),
+                            style: FilledButton.styleFrom(
+                                backgroundColor: palette.successBtnBg,
+                                foregroundColor: palette.successBtnText),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text('Error: $e'),
               ),
             ],
           ),

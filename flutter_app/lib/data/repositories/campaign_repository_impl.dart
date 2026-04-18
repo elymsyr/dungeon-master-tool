@@ -8,7 +8,6 @@ import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 import '../../core/config/app_paths.dart';
-import '../../domain/entities/schema/default_dnd5e_schema.dart';
 import '../../domain/entities/schema/world_schema.dart' as domain;
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
@@ -115,7 +114,14 @@ class CampaignRepositoryImpl implements CampaignRepository {
     }
 
     final campaignId = _uuid.v4();
-    final schema = template ?? generateDefaultDnd5eSchema();
+    // A world must be created from an explicitly-chosen template. The previous
+    // `template ?? generateDefaultDnd5eSchema()` fallback silently created
+    // worlds from the bundled D&D 5e schema even when the user had no
+    // templates installed, which short-circuited the Marketplace flow.
+    if (template == null) {
+      throw StateError('Cannot create world without a template');
+    }
+    final schema = template;
 
     await _db.campaignDao.createCampaign(CampaignsCompanion.insert(
       id: campaignId,

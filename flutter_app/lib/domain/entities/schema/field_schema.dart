@@ -27,6 +27,7 @@ enum FieldType {
   dice,           // Zar notasyonu: "2d6", "1d20+5", "3d8+2"
   slot,           // Dolu/boş checkbox satırı: spell slot, ammo, charges, hit dice
   proficiencyTable, // D&D 5e skills/saving throws — her satır: name, ability, proficient, expertise, misc
+  levelTable,     // Map<int,int> — level → value progression tablosu (spell slot count, hit dice, vs.)
 }
 
 /// Alan görünürlüğü — online modda kimin görebileceğini belirler.
@@ -75,6 +76,10 @@ abstract class FieldSchema with _$FieldSchema {
     @Default(false) bool isBuiltin,
     @Default(false) bool isList,
     @Default(false) bool hasEquip,
+    /// Relation list için "show all sources" filter UI'ını aktive eder.
+    /// Varsayılan: sadece equipped itemlar görünür. Açıkken: rule-sourced
+    /// itemlar da (class trait vs.) source badge ile görünür.
+    @Default(false) bool showSourceFilter,
     @Default([]) List<String> allowedInSections,
     /// combatStats tipi için alt-alan tanımları. Encounter tablosu buradan beslenir.
     /// Her eleman: {key: 'hp', label: 'HP', type: 'text'|'integer'|'dice'}

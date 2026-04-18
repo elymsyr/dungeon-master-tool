@@ -61,20 +61,19 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                   Expanded(
                     child: Text('Worlds', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
                   ),
-                  if (campaignInfoList.valueOrNull?.isEmpty ?? false)
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        ref.read(socialSubTabProvider.notifier).state = 'marketplace';
-                        ref.read(hubTabIndexProvider.notifier).state = 0;
-                      },
-                      icon: const Icon(Icons.storefront, size: 16),
-                      label: const Text('Marketplace'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        minimumSize: const Size(0, 32),
-                        visualDensity: VisualDensity.compact,
-                      ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      ref.read(socialSubTabProvider.notifier).state = 'marketplace';
+                      ref.read(hubTabIndexProvider.notifier).state = 0;
+                    },
+                    icon: const Icon(Icons.storefront, size: 16),
+                    label: const Text('Marketplace'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      minimumSize: const Size(0, 32),
+                      visualDensity: VisualDensity.compact,
                     ),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -186,10 +185,41 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               // Yeni kampanya
               Text('Create New World', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
               const SizedBox(height: 8),
-              // Template seçici
               ref.watch(allTemplatesProvider).when(
                 data: (templates) {
-                  if (templates.isEmpty) return const Text('No templates');
+                  if (templates.isEmpty) {
+                    // No template → a world cannot be created without one.
+                    // Redirect the user to the marketplace instead of silently
+                    // falling back to a built-in default template.
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: palette.featureCardBg,
+                        borderRadius: palette.br,
+                        border: Border.all(color: palette.featureCardBorder),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('No templates installed',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
+                          const SizedBox(height: 6),
+                          Text('You need at least one template to create a world. Visit the Marketplace to install one.',
+                              style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
+                          const SizedBox(height: 12),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              ref.read(socialSubTabProvider.notifier).state = 'marketplace';
+                              ref.read(hubTabIndexProvider.notifier).state = 0;
+                            },
+                            icon: const Icon(Icons.storefront, size: 16),
+                            label: const Text('Go to Marketplace'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                   // Deduplicate by schemaId to avoid DropdownButton assertion.
                   final seen = <String>{};
                   final uniqueTemplates = templates.where((t) => seen.add(t.schemaId)).toList();
@@ -206,43 +236,48 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                   _selectedTemplate = matched ?? uniqueTemplates.first;
                   final finalId = _selectedTemplate!.schemaId;
 
-                  return DropdownButtonFormField<String>(
-                    key: ValueKey('tmpl_${uniqueTemplates.length}'),
-                    initialValue: finalId,
-                    decoration: const InputDecoration(labelText: 'Template'),
-                    items: uniqueTemplates.map((t) => DropdownMenuItem(
-                      value: t.schemaId,
-                      child: Text('${t.name}  (${t.categories.length} cat)', style: const TextStyle(fontSize: 12)),
-                    )).toList(),
-                    onChanged: (id) {
-                      if (id == null) return;
-                      for (final t in templates) {
-                        if (t.schemaId == id) { _selectedTemplate = t; break; }
-                      }
-                    },
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        key: ValueKey('tmpl_${uniqueTemplates.length}'),
+                        initialValue: finalId,
+                        decoration: const InputDecoration(labelText: 'Template'),
+                        items: uniqueTemplates.map((t) => DropdownMenuItem(
+                          value: t.schemaId,
+                          child: Text('${t.name}  (${t.categories.length} cat)', style: const TextStyle(fontSize: 12)),
+                        )).toList(),
+                        onChanged: (id) {
+                          if (id == null) return;
+                          for (final t in templates) {
+                            if (t.schemaId == id) { _selectedTemplate = t; break; }
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _nameController,
+                              decoration: const InputDecoration(hintText: 'World name'),
+                              onSubmitted: (_) => _createCampaign(),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton.icon(
+                            onPressed: _createCampaign,
+                            icon: const Icon(Icons.add, size: 18),
+                            label: const Text('Create'),
+                            style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, foregroundColor: palette.successBtnText),
+                          ),
+                        ],
+                      ),
+                    ],
                   );
                 },
                 loading: () => const LinearProgressIndicator(),
                 error: (e, _) => Text('Error: $e'),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(hintText: 'World name'),
-                      onSubmitted: (_) => _createCampaign(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: _createCampaign,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Create'),
-                    style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, foregroundColor: palette.successBtnText),
-                  ),
-                ],
               ),
             ],
           ),
@@ -639,6 +674,14 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     }
 
     final templateFinal = _selectedTemplate;
+    if (templateFinal == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Install a template from the Marketplace before creating a world')),
+        );
+      }
+      return;
+    }
     final success = await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'create-world-$name',

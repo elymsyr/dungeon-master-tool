@@ -64,20 +64,19 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                             fontWeight: FontWeight.bold,
                             color: palette.tabActiveText)),
                   ),
-                  if (packageList.valueOrNull?.isEmpty ?? false)
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        ref.read(socialSubTabProvider.notifier).state = 'marketplace';
-                        ref.read(hubTabIndexProvider.notifier).state = 0;
-                      },
-                      icon: const Icon(Icons.storefront, size: 16),
-                      label: const Text('Marketplace'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        minimumSize: const Size(0, 32),
-                        visualDensity: VisualDensity.compact,
-                      ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      ref.read(socialSubTabProvider.notifier).state = 'marketplace';
+                      ref.read(hubTabIndexProvider.notifier).state = 0;
+                    },
+                    icon: const Icon(Icons.storefront, size: 16),
+                    label: const Text('Marketplace'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      minimumSize: const Size(0, 32),
+                      visualDensity: VisualDensity.compact,
                     ),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -210,21 +209,54 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                       fontWeight: FontWeight.w600,
                       color: palette.tabActiveText)),
               const SizedBox(height: 8),
-              // Template seçici
               ref.watch(allTemplatesProvider).when(
-                    data: (templates) {
-                      if (templates.isEmpty) return const Text('No templates');
-                      final seen = <String>{};
-                      final uniqueTemplates =
-                          templates.where((t) => seen.add(t.schemaId)).toList();
-                      final matched = uniqueTemplates
-                          .where(
-                              (t) => t.schemaId == _selectedTemplate?.schemaId)
-                          .firstOrNull;
-                      _selectedTemplate = matched ?? uniqueTemplates.first;
-                      final finalId = _selectedTemplate!.schemaId;
+                data: (templates) {
+                  if (templates.isEmpty) {
+                    // No template → paket oluşturulamaz. Kullanıcıyı
+                    // Marketplace'e yönlendir.
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: palette.featureCardBg,
+                        borderRadius: palette.br,
+                        border: Border.all(color: palette.featureCardBorder),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('No templates installed',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
+                          const SizedBox(height: 6),
+                          Text('You need at least one template to create a package. Visit the Marketplace to install one.',
+                              style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
+                          const SizedBox(height: 12),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              ref.read(socialSubTabProvider.notifier).state = 'marketplace';
+                              ref.read(hubTabIndexProvider.notifier).state = 0;
+                            },
+                            icon: const Icon(Icons.storefront, size: 16),
+                            label: const Text('Go to Marketplace'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  final seen = <String>{};
+                  final uniqueTemplates =
+                      templates.where((t) => seen.add(t.schemaId)).toList();
+                  final matched = uniqueTemplates
+                      .where(
+                          (t) => t.schemaId == _selectedTemplate?.schemaId)
+                      .firstOrNull;
+                  _selectedTemplate = matched ?? uniqueTemplates.first;
+                  final finalId = _selectedTemplate!.schemaId;
 
-                      return DropdownButtonFormField<String>(
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      DropdownButtonFormField<String>(
                         key: ValueKey('pkg_tmpl_${uniqueTemplates.length}'),
                         initialValue: finalId,
                         decoration:
@@ -246,32 +278,34 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                             }
                           }
                         },
-                      );
-                    },
-                    loading: () => const LinearProgressIndicator(),
-                    error: (e, _) => Text('Error: $e'),
-                  ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _nameController,
-                      decoration:
-                          InputDecoration(hintText: l10n.packageName),
-                      onSubmitted: (_) => _createPackage(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: _createPackage,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: Text(l10n.btnCreate),
-                    style: FilledButton.styleFrom(
-                        backgroundColor: palette.successBtnBg,
-                        foregroundColor: palette.successBtnText),
-                  ),
-                ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _nameController,
+                              decoration:
+                                  InputDecoration(hintText: l10n.packageName),
+                              onSubmitted: (_) => _createPackage(),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton.icon(
+                            onPressed: _createPackage,
+                            icon: const Icon(Icons.add, size: 18),
+                            label: Text(l10n.btnCreate),
+                            style: FilledButton.styleFrom(
+                                backgroundColor: palette.successBtnBg,
+                                foregroundColor: palette.successBtnText),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text('Error: $e'),
               ),
             ],
           ),

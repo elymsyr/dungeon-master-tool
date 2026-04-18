@@ -87,6 +87,19 @@ class _RuleBuilderDialogState extends State<_RuleBuilderDialog> {
   String? _aggSourceField;
   AggregateOp _aggOp = AggregateOp.sum;
   bool _aggOnlyEquipped = false;
+  // Effect: tableLookup
+  RefScope _tableScope = RefScope.related;
+  String? _tableRelation;
+  String? _tableField;
+  RefScope _tableKeyScope = RefScope.self;
+  String? _tableKeyField;
+  String? _tableKeyRelation;
+  String? _tableFallback;
+  // Effect: modifier
+  RefScope _modScope = RefScope.self;
+  String? _modRelation;
+  String? _modField;
+  String? _modNested;
   // Effect: styleItems
   String? _styleListField;
   bool _styleFaded = true;
@@ -185,6 +198,41 @@ class _RuleBuilderDialogState extends State<_RuleBuilderDialog> {
       },
       arithmetic: (_, _, _) {
         _valueChoice = _ValueExprChoice.fieldValue;
+      },
+      tableLookup: (table, key, fallback) {
+        _valueChoice = _ValueExprChoice.tableLookup;
+        _tableScope = table.scope;
+        _tableRelation = table.relationFieldKey;
+        _tableField = table.fieldKey;
+        key.when(
+          fieldValue: (src) {
+            _tableKeyScope = src.scope;
+            _tableKeyField = src.fieldKey;
+            _tableKeyRelation = src.relationFieldKey;
+          },
+          aggregate: (_, _, _, _) {},
+          literal: (_) {},
+          arithmetic: (_, _, _) {},
+          tableLookup: (_, _, _) {},
+          modifier: (_) {},
+        );
+        if (fallback != null) {
+          fallback.when(
+            fieldValue: (_) {},
+            aggregate: (_, _, _, _) {},
+            literal: (v) => _tableFallback = v?.toString(),
+            arithmetic: (_, _, _) {},
+            tableLookup: (_, _, _) {},
+            modifier: (_) {},
+          );
+        }
+      },
+      modifier: (source) {
+        _valueChoice = _ValueExprChoice.modifier;
+        _modScope = source.scope;
+        _modRelation = source.relationFieldKey;
+        _modField = source.fieldKey;
+        _modNested = source.nestedFieldKey;
       },
     );
   }
@@ -484,6 +532,8 @@ class _RuleBuilderDialogState extends State<_RuleBuilderDialog> {
       (_ValueExprChoice.fieldValue, Icons.link, 'From Field'),
       (_ValueExprChoice.aggregate, Icons.functions, 'Aggregate'),
       (_ValueExprChoice.literal, Icons.edit_note, 'Constant'),
+      (_ValueExprChoice.tableLookup, Icons.table_chart_outlined, 'Lookup'),
+      (_ValueExprChoice.modifier, Icons.calculate_outlined, 'Mod'),
     ];
     return Container(
       padding: const EdgeInsets.all(3),
@@ -513,7 +563,14 @@ class _RuleBuilderDialogState extends State<_RuleBuilderDialog> {
                   children: [
                     Icon(icon, size: 14, color: isActive ? Colors.white : palette.sidebarLabelSecondary),
                     const SizedBox(width: 4),
-                    Text(label, style: TextStyle(fontSize: 11, fontWeight: isActive ? FontWeight.w600 : FontWeight.w500, color: isActive ? Colors.white : palette.tabText)),
+                    Flexible(
+                      child: Text(
+                        label,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                        style: TextStyle(fontSize: 11, fontWeight: isActive ? FontWeight.w600 : FontWeight.w500, color: isActive ? Colors.white : palette.tabText),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -575,7 +632,74 @@ class _RuleBuilderDialogState extends State<_RuleBuilderDialog> {
           controller: _literalController,
           decoration: const InputDecoration(labelText: 'Constant value', isDense: true, helperText: 'Number, text, true/false'),
         );
+      case _ValueExprChoice.tableLookup:
+        return _buildTableLookupConfig(palette);
+      case _ValueExprChoice.modifier:
+        return _buildModifierConfig(palette);
     }
+  }
+
+  Widget _buildModifierConfig(DmToolColors palette) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Ability score → modifier', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
+        const SizedBox(height: 4),
+        Text('D&D 5e: floor((score − 10) / 2). E.g. DEX 14 → +2.',
+            style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
+        const SizedBox(height: 8),
+        _buildFieldRefPicker(
+          label: 'Score', scope: _modScope, relationKey: _modRelation, fieldKey: _modField, nestedKey: _modNested,
+          onScopeChanged: (v) => setState(() { _modScope = v; _modRelation = null; _modField = null; _modNested = null; }),
+          onRelationChanged: (v) => setState(() { _modRelation = v; _modField = null; _modNested = null; }),
+          onFieldChanged: (v) => setState(() { _modField = v; _modNested = null; }),
+          onNestedChanged: (v) => setState(() => _modNested = v),
+          palette: palette,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTableLookupConfig(DmToolColors palette) {
+    final fallbackCtrl = TextEditingController(text: _tableFallback ?? '');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Level table', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
+        const SizedBox(height: 4),
+        Text('Pick a levelTable field on a related entity (e.g. class.spellSlotTable).',
+            style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
+        const SizedBox(height: 6),
+        _buildFieldRefPicker(
+          label: 'Table', scope: _tableScope, relationKey: _tableRelation, fieldKey: _tableField, nestedKey: null,
+          onScopeChanged: (v) => setState(() { _tableScope = v; _tableRelation = null; _tableField = null; }),
+          onRelationChanged: (v) => setState(() { _tableRelation = v; _tableField = null; }),
+          onFieldChanged: (v) => setState(() => _tableField = v),
+          onNestedChanged: (_) {},
+          palette: palette,
+        ),
+        const SizedBox(height: 10),
+        Text('Lookup key', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
+        const SizedBox(height: 4),
+        Text('Field whose value indexes the table (e.g. self.level).',
+            style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary)),
+        const SizedBox(height: 6),
+        _buildFieldRefPicker(
+          label: 'Key', scope: _tableKeyScope, relationKey: _tableKeyRelation, fieldKey: _tableKeyField, nestedKey: null,
+          onScopeChanged: (v) => setState(() { _tableKeyScope = v; _tableKeyRelation = null; _tableKeyField = null; }),
+          onRelationChanged: (v) => setState(() { _tableKeyRelation = v; _tableKeyField = null; }),
+          onFieldChanged: (v) => setState(() => _tableKeyField = v),
+          onNestedChanged: (_) {},
+          palette: palette,
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: fallbackCtrl,
+          decoration: const InputDecoration(labelText: 'Fallback (optional)', isDense: true, helperText: 'Used when key is not found in the table'),
+          onChanged: (v) => _tableFallback = v.isEmpty ? null : v,
+        ),
+      ],
+    );
   }
 
   Widget _buildGateEquipConfig(DmToolColors palette) {
@@ -949,6 +1073,29 @@ class _RuleBuilderDialogState extends State<_RuleBuilderDialog> {
         return ValueExpression.aggregate(relationFieldKey: _aggRelation ?? '', sourceFieldKey: _aggSourceField ?? '', op: _aggOp, onlyEquipped: _aggOnlyEquipped);
       case _ValueExprChoice.literal:
         return ValueExpression.literal(_parseLiteral(_literalController.text));
+      case _ValueExprChoice.tableLookup:
+        return ValueExpression.tableLookup(
+          table: FieldRef(
+            scope: _tableScope,
+            fieldKey: _tableField ?? '',
+            relationFieldKey: _tableScope != RefScope.self ? _tableRelation : null,
+          ),
+          key: ValueExpression.fieldValue(FieldRef(
+            scope: _tableKeyScope,
+            fieldKey: _tableKeyField ?? '',
+            relationFieldKey: _tableKeyScope != RefScope.self ? _tableKeyRelation : null,
+          )),
+          fallback: _tableFallback != null && _tableFallback!.isNotEmpty
+              ? ValueExpression.literal(_parseLiteral(_tableFallback!))
+              : null,
+        );
+      case _ValueExprChoice.modifier:
+        return ValueExpression.modifier(FieldRef(
+          scope: _modScope,
+          fieldKey: _modField ?? '',
+          relationFieldKey: _modScope != RefScope.self ? _modRelation : null,
+          nestedFieldKey: _modNested,
+        ));
     }
   }
 
@@ -1037,7 +1184,8 @@ class _RuleBuilderDialogState extends State<_RuleBuilderDialog> {
     FieldType.dice => 'dice',
     FieldType.slot => 'slot',
     FieldType.proficiencyTable => 'proficiency',
+    FieldType.levelTable => 'level table',
   };
 }
 
-enum _ValueExprChoice { fieldValue, aggregate, literal }
+enum _ValueExprChoice { fieldValue, aggregate, literal, tableLookup, modifier }

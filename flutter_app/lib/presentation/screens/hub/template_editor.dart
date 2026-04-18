@@ -26,21 +26,35 @@ class TemplateEditor extends StatefulWidget {
   final bool readOnly;
   final ValueChanged<WorldSchema>? onSave;
   final VoidCallback onBack;
+  /// True: üst toolbar render edilmez (TemplateEditorScreen kendi AppBar'ı
+  /// sağlıyorsa). Mobile kategori-detay back butonu yine çizilir.
+  final bool hideHeader;
+  /// Şemanın dış taraftan takip edilmesi için (dirty-flag, otomatik sync
+  /// gibi). Her internal mutation sonrası çağrılır.
+  final ValueChanged<WorldSchema>? onSchemaChanged;
 
   const TemplateEditor({
     this.initial,
     this.readOnly = false,
     this.onSave,
     required this.onBack,
+    this.hideHeader = false,
+    this.onSchemaChanged,
     super.key,
   });
 
   @override
-  State<TemplateEditor> createState() => _TemplateEditorState();
+  State<TemplateEditor> createState() => TemplateEditorState();
 }
 
-class _TemplateEditorState extends State<TemplateEditor> {
+class TemplateEditorState extends State<TemplateEditor> {
   late WorldSchema _schema;
+  WorldSchema get schema => _schema;
+  void setSchema(WorldSchema s) {
+    setState(() => _schema = s);
+    widget.onSchemaChanged?.call(s);
+  }
+  void _notify() => widget.onSchemaChanged?.call(_schema);
   int _selectedCatIndex = 0;
   bool _showEncounterConfig = false;
   /// Mobile: true = show detail, false = show category list
@@ -70,7 +84,7 @@ class _TemplateEditorState extends State<TemplateEditor> {
         schema: _schema,
         readOnly: widget.readOnly,
         palette: palette,
-        onSchemaChanged: (updated) => setState(() { _schema = updated; }),
+        onSchemaChanged: (updated) { setState(() { _schema = updated; }); _notify(); },
       );
     }
     if (selectedCat == null) {
@@ -82,11 +96,14 @@ class _TemplateEditorState extends State<TemplateEditor> {
       allCategories: _schema.categories,
       readOnly: widget.readOnly,
       palette: palette,
-      onChanged: (updated) => setState(() {
-        final list = List<EntityCategorySchema>.from(_schema.categories);
-        list[_selectedCatIndex] = updated;
-        _schema = _schema.copyWith(categories: list);
-      }),
+      onChanged: (updated) {
+        setState(() {
+          final list = List<EntityCategorySchema>.from(_schema.categories);
+          list[_selectedCatIndex] = updated;
+          _schema = _schema.copyWith(categories: list);
+        });
+        _notify();
+      },
     );
   }
 
@@ -101,8 +118,8 @@ class _TemplateEditorState extends State<TemplateEditor> {
 
     return Column(
       children: [
-        // Üst bar
-        Container(
+        // Üst bar — TemplateEditorScreen kendi AppBar'ını sağlıyorsa gizli.
+        if (!widget.hideHeader) Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: palette.featureCardBg,
@@ -128,7 +145,7 @@ class _TemplateEditorState extends State<TemplateEditor> {
                         initialValue: _schema.name,
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText),
                         decoration: const InputDecoration(border: InputBorder.none, hintText: 'Template name', isDense: true, filled: false),
-                        onChanged: (v) => _schema = _schema.copyWith(name: v),
+                        onChanged: (v) { _schema = _schema.copyWith(name: v); _notify(); },
                       ),
               ),
               if (widget.readOnly)
@@ -156,6 +173,31 @@ class _TemplateEditorState extends State<TemplateEditor> {
           ),
         ),
 
+        // Mobile detay back — hideHeader modunda header kaybolunca tek
+        // kalan navigasyon (kategori listesine dönüş).
+        if (widget.hideHeader && phone && _mobileShowingDetail)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: palette.featureCardBg,
+              border: Border(bottom: BorderSide(color: palette.featureCardBorder)),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, size: 20),
+                  tooltip: 'Back to categories',
+                  onPressed: () => setState(() => _mobileShowingDetail = false),
+                  visualDensity: VisualDensity.compact,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  selectedCat?.name ?? 'Category',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText),
+                ),
+              ],
+            ),
+          ),
         // İçerik
         Expanded(
           child: phone
@@ -313,6 +355,7 @@ class _TemplateEditorState extends State<TemplateEditor> {
       _schema = _schema.copyWith(categories: [..._schema.categories, newCat]);
       _selectedCatIndex = _schema.categories.length - 1;
     });
+    _notify();
   }
 
   void _deleteCategory(int index) {
@@ -321,6 +364,7 @@ class _TemplateEditorState extends State<TemplateEditor> {
       _schema = _schema.copyWith(categories: list);
       if (_selectedCatIndex >= list.length) _selectedCatIndex = list.length - 1;
     });
+    _notify();
   }
 
   Color _parseColor(String hex) {
@@ -905,6 +949,9 @@ class _CategoryEditor extends StatelessWidget {
                   // Equip — sadece isList + relation field'larda
                   if (field.isList && field.fieldType == FieldType.relation)
                     _checkboxRow('Equip', field.hasEquip, (v) => _updateField(index, field.copyWith(hasEquip: v))),
+                  // Show all sources — rule-sourced itemları göster/gizle toggle'ı
+                  if (field.isList && field.fieldType == FieldType.relation && field.hasEquip)
+                    _checkboxRow('Source filter', field.showSourceFilter, (v) => _updateField(index, field.copyWith(showSourceFilter: v))),
                 ],
               ),
               const SizedBox(height: 8),
@@ -1075,6 +1122,7 @@ class _CategoryEditor extends StatelessWidget {
     FieldType.dice => 'Dice',
     FieldType.slot => 'Slots',
     FieldType.proficiencyTable => 'Proficiency Table',
+    FieldType.levelTable => 'Level Table',
   };
 
   IconData _fieldTypeIcon(FieldType t) => switch (t) {
@@ -1094,6 +1142,7 @@ class _CategoryEditor extends StatelessWidget {
     FieldType.dice => Icons.casino,
     FieldType.slot => Icons.check_box_outlined,
     FieldType.proficiencyTable => Icons.fact_check,
+    FieldType.levelTable => Icons.table_chart_outlined,
   };
 
   void _editGroup(BuildContext context, FieldGroup group, ValueChanged<FieldGroup> onUpdate) {

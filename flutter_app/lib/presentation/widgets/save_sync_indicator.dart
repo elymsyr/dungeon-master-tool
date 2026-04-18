@@ -9,6 +9,7 @@ import '../../application/providers/cloud_sync_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/save_state_provider.dart';
+import '../../application/providers/template_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
@@ -325,10 +326,11 @@ class _SaveSyncDialog extends ConsumerWidget {
     // message instead of silently doing nothing.
     final hasCampaign = ref.read(activeCampaignProvider) != null;
     final hasPackage = ref.read(activePackageProvider) != null;
-    if (!hasCampaign && !hasPackage) {
+    final hasTemplate = ref.read(activeTemplateProvider) != null;
+    if (!hasCampaign && !hasPackage && !hasTemplate) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Open a world or package first to back up to cloud.'),
+          content: Text('Open a world, package or template first to back up to cloud.'),
         ),
       );
       return;
@@ -381,9 +383,10 @@ class _SaveSyncDialog extends ConsumerWidget {
   /// Requires an active item; if the user opens the panel from the hub
   /// (nothing open), we tell them to open something first.
   Future<void> _syncFromCloud(BuildContext context, WidgetRef ref) async {
-    // 1. Resolve the active item (world or package).
+    // 1. Resolve the active item (world, package or template).
     final campaignName = ref.read(activeCampaignProvider);
     final packageName = ref.read(activePackageProvider);
+    final templateId = ref.read(activeTemplateProvider);
     String? itemName;
     String? itemId;
     String? type;
@@ -399,12 +402,19 @@ class _SaveSyncDialog extends ConsumerWidget {
           (data?['world_id'] as String?) ??
           packageName;
       type = 'package';
+    } else if (templateId != null) {
+      final schema = ref.read(activeTemplateProvider.notifier).schema;
+      if (schema != null) {
+        itemName = schema.name;
+        itemId = schema.schemaId;
+        type = 'template';
+      }
     }
 
     if (itemName == null || itemId == null || type == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Open a world or package first to sync from cloud.'),
+          content: Text('Open a world, package or template first to sync from cloud.'),
         ),
       );
       return;
@@ -478,6 +488,11 @@ class _SaveSyncDialog extends ConsumerWidget {
             await ref
                 .read(activeCampaignProvider.notifier)
                 .replaceWithData(data);
+          } else if (type == 'template') {
+            await ref
+                .read(activeTemplateProvider.notifier)
+                .replaceWithData(data);
+            ref.invalidate(allTemplatesProvider);
           } else {
             await ref
                 .read(activePackageProvider.notifier)
@@ -742,6 +757,20 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
         type: 'package',
         updatedAt: row?.updatedAt,
       );
+    }
+    final templateId = ref.read(activeTemplateProvider);
+    if (templateId != null) {
+      final schema = ref.read(activeTemplateProvider.notifier).schema;
+      if (schema != null) {
+        DateTime? localUpdatedAt;
+        try { localUpdatedAt = DateTime.parse(schema.updatedAt); } catch (_) {}
+        return (
+          name: schema.name,
+          id: schema.schemaId,
+          type: 'template',
+          updatedAt: localUpdatedAt,
+        );
+      }
     }
     return null;
   }
