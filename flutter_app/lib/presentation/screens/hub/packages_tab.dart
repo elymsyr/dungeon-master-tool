@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
+import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../application/providers/template_provider.dart';
@@ -15,6 +16,7 @@ import '../../../core/utils/deep_copy.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/marketplace_panel.dart';
+import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
@@ -53,11 +55,31 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n.tabPackages,
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: palette.tabActiveText)),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(l10n.tabPackages,
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: palette.tabActiveText)),
+                  ),
+                  if (packageList.valueOrNull?.isEmpty ?? false)
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        ref.read(socialSubTabProvider.notifier).state = 'marketplace';
+                        ref.read(hubTabIndexProvider.notifier).state = 0;
+                      },
+                      icon: const Icon(Icons.storefront, size: 16),
+                      label: const Text('Marketplace'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        minimumSize: const Size(0, 32),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(height: 4),
               Text('Select or create an entity package.',
                   style: TextStyle(
