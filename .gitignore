@@ -1,3 +1,9 @@
+# Android signing material — never commit these.
+*.jks
+*.keystore
+*.jks.b64
+key.properties
+
 .env
 supabase/.temp
 supabase/.branches

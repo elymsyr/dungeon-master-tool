@@ -5,6 +5,7 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../../core/config/app_paths.dart';
 import 'daos/campaign_dao.dart';
 import 'daos/entity_dao.dart';
 import 'daos/map_dao.dart';
@@ -101,17 +102,41 @@ class AppDatabase extends _$AppDatabase {
 
 LazyDatabase _openConnection() => _openConnectionForUser(null);
 
+/// Opens the SQLite DB under `AppPaths.dataRoot/db/dmt.sqlite` (per-user:
+/// `AppPaths.dataRoot/users/{userId}/db/dmt.sqlite`), unifying the DB with
+/// all other user data so update/backup semantics cover everything.
+///
+/// On first launch after the Apr 2026 migration, the legacy file at
+/// `{getApplicationSupportDirectory}/DungeonMasterTool[/users/{userId}]/dmt.sqlite`
+/// is copied to the new location if no new-location DB exists yet. The
+/// legacy file is NOT deleted — leaves a recovery path if something goes
+/// wrong — but a `.moved_to_dataroot` marker is written next to it so we
+/// know it's superseded.
 LazyDatabase _openConnectionForUser(String? userId) {
   return LazyDatabase(() async {
-    final dir = await getApplicationSupportDirectory();
-    final basePath = userId != null
-        ? p.join(dir.path, 'DungeonMasterTool', 'users', userId)
-        : p.join(dir.path, 'DungeonMasterTool');
-    final dbDir = Directory(basePath);
-    if (!dbDir.existsSync()) {
-      dbDir.createSync(recursive: true);
+    final base = userId != null
+        ? p.join(AppPaths.dataRoot, 'users', userId)
+        : AppPaths.dataRoot;
+    final dbDir = Directory(p.join(base, 'db'));
+    if (!dbDir.existsSync()) dbDir.createSync(recursive: true);
+    final newFile = File(p.join(dbDir.path, 'dmt.sqlite'));
+
+    if (!newFile.existsSync()) {
+      try {
+        final support = await getApplicationSupportDirectory();
+        final legacyBase = userId != null
+            ? p.join(support.path, 'DungeonMasterTool', 'users', userId)
+            : p.join(support.path, 'DungeonMasterTool');
+        final legacyFile = File(p.join(legacyBase, 'dmt.sqlite'));
+        if (legacyFile.existsSync()) {
+          await legacyFile.copy(newFile.path);
+          await File(p.join(legacyBase, '.moved_to_dataroot'))
+              .writeAsString(newFile.path);
+        }
+      } catch (_) {
+        // path_provider unavailable (e.g. tests) — create fresh DB.
+      }
     }
-    final file = File(p.join(dbDir.path, 'dmt.sqlite'));
-    return NativeDatabase.createInBackground(file);
+    return NativeDatabase.createInBackground(newFile);
   });
 }
