@@ -17,9 +17,13 @@ What IS shared: cross-cutting infra (DB, projection, networking, UI shell, sound
 // flutter_app/lib/domain/game_system/game_system.dart
 abstract interface class GameSystem {
   String get id;                        // 'dnd5e', 'pathfinder2e', 'coc7'
-  String get displayName;               // 'D&D 5e (SRD 5.2.1)'
-  String get version;                   // '1.0.0'
-  String get sourceLicense;             // 'CC BY 4.0'
+  String get displayName;               // 'D&D 5e' — mechanics identity, not a content claim
+  String get version;                   // rules-engine version, '1.0.0'
+
+  /// Packages the system wants auto-installed on fresh-world creation.
+  /// For dnd5e this is the SRD Core Rules bundle — see [15-srd-core-package.md].
+  /// Returning an empty list means the system ships no default content.
+  List<BuiltInPackage> get autoInstallPackages;
 
   /// Routes to the system's character creation entry screen.
   Widget buildCharacterCreationFlow({required VoidCallback onComplete});
@@ -39,7 +43,19 @@ abstract interface class GameSystem {
   /// Returns route definitions to be registered with GoRouter.
   List<RouteBase> get routes;
 }
+
+/// A package bundled with the app binary (loaded from assets) that the system
+/// offers to auto-install on fresh worlds. Licensing travels with the package,
+/// not the GameSystem.
+class BuiltInPackage {
+  final String assetPath;               // 'assets/packages/srd_core.dnd5e-pkg.json'
+  final bool recommendedDefault;        // controls wizard-checkbox default state
+  final String displayName;             // 'D&D 5e SRD Core Rules'
+  final String description;
+}
 ```
+
+**Note.** `sourceLicense` no longer lives on `GameSystem`. Licensing is per-package metadata ([14-package-system-redesign.md](./14-package-system-redesign.md)) — the rules engine itself carries no content to license.
 
 ## Registry
 
@@ -65,9 +81,19 @@ final gameSystemRegistryProvider = Provider<GameSystemRegistry>((_) {
 // flutter_app/lib/domain/dnd5e/dnd5e_game_system.dart
 class Dnd5eGameSystem implements GameSystem {
   @override final id = 'dnd5e';
-  @override final displayName = 'D&D 5e (SRD 5.2.1)';
+  @override final displayName = 'D&D 5e';
   @override final version = '1.0.0';
-  @override final sourceLicense = 'CC BY 4.0';
+
+  @override
+  List<BuiltInPackage> get autoInstallPackages => const [
+    BuiltInPackage(
+      assetPath: 'assets/packages/srd_core.dnd5e-pkg.json',
+      recommendedDefault: true,
+      displayName: 'D&D 5e SRD Core Rules',
+      description: 'D&D 5e 5.2.1 under CC BY 4.0. Conditions, spells, monsters, '
+                   'classes, and the standard damage types.',
+    ),
+  ];
 
   @override
   Widget buildCharacterCreationFlow({required VoidCallback onComplete}) =>
@@ -121,7 +147,8 @@ class PathfinderGameSystem implements GameSystem {
   @override final id = 'pathfinder2e';
   @override final displayName = 'Pathfinder 2e (stub)';
   @override final version = '0.0.0';
-  @override final sourceLicense = 'OGL';
+
+  @override List<BuiltInPackage> get autoInstallPackages => const [];
 
   @override
   Widget buildCharacterCreationFlow({required VoidCallback onComplete}) =>
@@ -140,6 +167,7 @@ class PathfinderGameSystem implements GameSystem {
 - `GameSystemRegistry.all()` returns 1 entry (`Dnd5eGameSystem`).
 - Adding `PathfinderGameSystem` requires zero changes outside `domain/pathfinder/` and `application/pathfinder/` (and one registry line).
 - DnD 5e UI never directly references `Dnd5eGameSystem` from outside `domain/dnd5e/` — always goes through `registry.byId(campaign.gameSystemId)`.
+- **Registering `Dnd5eGameSystem` imports zero content.** A fresh world with no packages installed has empty catalogs (no conditions, no spells, no monsters, no damage types). SRD content becomes available only after the SRD Core package from `autoInstallPackages` is installed — which the campaign-creation wizard offers by default.
 
 ## Open Questions
 

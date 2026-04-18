@@ -3,6 +3,7 @@
 > **For Claude.** Pure functions for attack roll → crit → damage roll → resistance/vuln/immunity → save-half → temp HP → HP delta.
 > **Source rules:** [00 §1, §10, §11](./00-dnd5e-mechanics-reference.md#11-damage-pp-16-17)
 > **Target:** `flutter_app/lib/application/dnd5e/combat/`
+> **Content references.** All `DamageType` references are namespaced `ContentReference<DamageType>` strings (e.g. `srd:fire`). All `Condition` membership checks read compiled `ConditionInteraction` tags, not specific ids. See [01-domain-model-spec.md](./01-domain-model-spec.md) §Effects.
 
 ## Pipeline Overview
 
@@ -50,8 +51,8 @@ class AttackResult {
 class DamageRollSpec {
   final List<DiceExpression> dice;
   final int flatBonus;
-  final DamageType primaryType;
-  final List<({DiceExpression dice, DamageType type})> additionalTypes;
+  final ContentReference<DamageType> primaryTypeId;
+  final List<({DiceExpression dice, ContentReference<DamageType> typeId})> additionalTypes;
   final bool isCritical;
   final bool fromSavingThrowEffect;
   final bool savingThrowSucceeded;
@@ -60,7 +61,7 @@ class DamageRollSpec {
 
 class DamageRollResult {
   final int totalRolled;
-  final Map<DamageType, int> byType;
+  final Map<ContentReference<DamageType>, int> byType;
   final List<int> individualDice;   // for display
 }
 
@@ -158,24 +159,24 @@ class DamageRollBuilder {
   DamageRollSpec build(AttackContext ctx, AttackResult attack) {
     final base = _baseDamage(ctx);   // weapon die + ability mod, or spell-specified
 
-    final extras = <({DiceExpression dice, DamageType type})>[];
+    final extras = <({DiceExpression dice, ContentReference<DamageType> typeId})>[];
     int flatBonus = 0;
 
     for (final fx in ctx.attackerEffects) {
       final m = fx.modifyDamageRoll(_buildDamageContext(ctx, attack));
       flatBonus += m.flatBonus;
       for (final d in m.extraDice) {
-        extras.add((dice: d, type: ctx.weapon?.damageType ?? base.primaryType));
+        extras.add((dice: d, typeId: ctx.weapon?.damageTypeId ?? base.primaryTypeId));
       }
-      for (final t in m.additionalTypes) {
-        extras.add((dice: m.extraDice.first, type: t));   // simplified
+      for (final tId in m.additionalTypeIds) {
+        extras.add((dice: m.extraDice.first, typeId: tId));   // simplified
       }
     }
 
     return DamageRollSpec(
       dice: base.dice,
       flatBonus: base.flatBonus + flatBonus,
-      primaryType: base.primaryType,
+      primaryTypeId: base.primaryTypeId,
       additionalTypes: extras,
       isCritical: attack.isCritical,
       fromSavingThrowEffect: false,
@@ -190,7 +191,7 @@ class DamageRollBuilder {
 ```dart
 class DamageRollExecutor {
   DamageRollResult execute(DamageRollSpec spec) {
-    final byType = <DamageType, int>{};
+    final byType = <ContentReference<DamageType>, int>{};
     final allDice = <int>[];
 
     // Primary dice.
@@ -201,12 +202,12 @@ class DamageRollExecutor {
       allDice.addAll(d.lastIndividualRolls);
     }
     primary += spec.flatBonus;
-    byType[spec.primaryType] = (byType[spec.primaryType] ?? 0) + primary;
+    byType[spec.primaryTypeId] = (byType[spec.primaryTypeId] ?? 0) + primary;
 
     // Additional types.
     for (final extra in spec.additionalTypes) {
       final rolled = spec.isCritical ? extra.dice.rollDoubled() : extra.dice.roll();
-      byType[extra.type] = (byType[extra.type] ?? 0) + rolled;
+      byType[extra.typeId] = (byType[extra.typeId] ?? 0) + rolled;
       allDice.addAll(extra.dice.lastIndividualRolls);
     }
 
@@ -234,26 +235,27 @@ class DamageReducer {
     final notes = <String>[];
 
     for (final entry in rolled.byType.entries) {
+      final typeId = entry.key;   // e.g. 'srd:fire'
       var amt = entry.value;
 
       // [3] Adjustments. (MVP: skip; auras come later.)
 
       // [4] Resistance.
-      if (target.resistances.contains(entry.key)) {
+      if (target.resistances.contains(typeId)) {
         amt = (amt / 2).floor();
-        notes.add('Resistance to ${entry.key.name}: halved');
+        notes.add('Resistance to $typeId: halved');
       }
 
       // [5] Vulnerability.
-      if (target.vulnerabilities.contains(entry.key)) {
+      if (target.vulnerabilities.contains(typeId)) {
         amt = amt * 2;
-        notes.add('Vulnerability to ${entry.key.name}: doubled');
+        notes.add('Vulnerability to $typeId: doubled');
       }
 
       // [6] Immunity.
-      if (target.damageImmunities.contains(entry.key)) {
+      if (target.damageImmunities.contains(typeId)) {
         amt = 0;
-        notes.add('Immune to ${entry.key.name}');
+        notes.add('Immune to $typeId');
       }
 
       totalAfter += amt;
@@ -306,10 +308,21 @@ class DamageReducer {
 
   bool _concentrationCheck(Combatant target, int damage) {
     if (target.concentration == null) return false;
-    if (target.conditions.contains(Condition.incapacitated)) return true;
+    // "Incapacitated" is not a hardcoded condition id; it's a compiled tag on
+    // any condition whose ConditionInteraction.incapacitated == true.
+    if (_hasIncapacitatedTag(target)) return true;
     final dc = math.min(30, math.max(10, (damage / 2).floor()));
     final save = Dice.d20() + target.savingThrowMod(Ability.constitution);
     return save < dc;
+  }
+
+  bool _hasIncapacitatedTag(Combatant target) {
+    for (final id in target.conditionIds) {
+      final cond = registry.conditions[id];
+      if (cond == null) continue;
+      if (compiler.conditionInteraction(cond).incapacitated) return true;
+    }
+    return false;
   }
 }
 ```
@@ -325,7 +338,8 @@ class SaveResolver {
     required List<FeatureEffect> targetEffects,
     bool autoFailSometimes = false,    // for paralyzed STR/DEX, etc.
   }) {
-    // Auto-fail for certain conditions (Paralyzed → STR/DEX auto-fail).
+    // Auto-fail: aggregated from each active condition's ConditionInteraction.autoFailSavesOf.
+    // No hardcoded "if Paralyzed" — the condition's compiled descriptor declares STR/DEX auto-fail.
     if (_autoFailsByCondition(target, ability)) {
       return SaveResult(succeeded: false, autoResult: 'auto-fail', d20Roll: 0, total: 0, dc: dc);
     }
@@ -393,7 +407,7 @@ Required test scenarios (parameterized):
 | Concentration check | dmg=15, CON +1 | DC = max(10, 7) = 10; pass if 1d20+1 ≥ 10 |
 | Massive damage at 0 HP | hp=0, dmg=maxHp | instantDeath=true |
 | Crit at 0 HP | hp=0, dmg=any | deathSaveFailures=2 |
-| Auto-fail STR save while Paralyzed | condition=paralyzed | succeeded=false |
+| Auto-fail STR save while Paralyzed | target has `srd:paralyzed` (ConditionInteraction.autoFailSavesOf = {STR, DEX}) | succeeded=false |
 | Adv + Disadv cancel | both flagged | advState=normal |
 
 ## Acceptance

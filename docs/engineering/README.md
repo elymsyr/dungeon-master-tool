@@ -11,10 +11,13 @@ The current Template-based JSON schema system is being **removed** and replaced 
 
 | Decision | Choice |
 |---|---|
-| RuleEngineV2 | **Remove entirely.** Effects implemented as Dart pure functions. |
+| RuleEngineV2 | **Remove entirely.** Effects implemented via serializable `EffectDescriptor` DSL compiled to `CompiledEffect`. |
 | User data migration | **Fresh start.** No automated migration from old template-derived data. |
 | Auto-resolve combat | **Out of MVP scope.** Manual combat tracker + visual player AoE markers only. |
 | Internationalization | **TR + EN.** `intl` + `.arb` files. SRD content stays English (CC BY 4.0). |
+| Mechanics vs content | **Built-in dnd5e module ships mechanics only.** All concrete content (conditions, spells, monsters, classes) arrives via packages; SRD ships as `srd_core.dnd5e-pkg.json` (see Doc 15). |
+| `CustomEffect` escape hatch | **Allowed, whitelisted.** SRD ships ~9 Dart-backed impls (Wish, Wild Shape, Polymorph, …). Registry gated at package import. |
+| Catalog id namespacing | **`<packageSlug>:<localId>`** (e.g. `srd:stunned`). Cross-package collisions impossible by construction. |
 
 ### Game Mode Priorities (per user)
 
@@ -44,15 +47,23 @@ The current Template-based JSON schema system is being **removed** and replaced 
 | 04 | [`04-template-removal-checklist.md`](./04-template-removal-checklist.md) | ~40-file deletion order; dependency graph; per-step regression test plan. | 01, 03 | 🟡 |
 | 05 | [`05-rule-engine-removal-spec.md`](./05-rule-engine-removal-spec.md) | Removal of RuleV2/RuleEngineV2; replacement pattern (effects as pure functions). | 01 | 🟡 |
 
+## Phase 1.5: Mechanics / Content Decoupling — blocks Phase 2 implementation
+
+The built-in dnd5e module ships **mechanics only** (rules engine, typed shapes, effect DSL). All concrete content (conditions, spells, monsters, classes, damage types, …) arrives via packages — including the SRD bundle. Docs 01/02/05/14 were revised; Doc 15 is new.
+
+| # | Filename | Purpose | Deps | Status |
+|---|---|---|---|---|
+| 15 | [`15-srd-core-package.md`](./15-srd-core-package.md) | SRD 5.2.1 shipped as a package (assets build step + auto-install flow). Defines the whitelisted `CustomEffect` registry. | 01, 14 | 🟡 |
+
 ## Phase 2: Game Feature Specs (Sprint 2-4)
 
 | # | Filename | Purpose | Deps | Status |
 |---|---|---|---|---|
-| 10 | [`10-character-creation-flow.md`](./10-character-creation-flow.md) | 5-step wizard. State machine, per-step validation, level-1 vs higher-level paths. | 00, 01 | 🟡 |
+| 10 | [`10-character-creation-flow.md`](./10-character-creation-flow.md) | 5-step wizard. State machine, per-step validation, level-1 vs higher-level paths. | 00, 01, 15 | 🟡 |
 | 11 | [`11-combat-engine-spec.md`](./11-combat-engine-spec.md) | Manual combat tracker (MVP): initiative, turn state, action economy, condition expiration. Auto-resolve = future. | 00, 01 | 🟡 |
 | 12 | [`12-spell-system-spec.md`](./12-spell-system-spec.md) | Slot tables, multiclass calculator, Pact Magic, concentration, AoE geometry. | 00, 01 | 🟡 |
 | 13 | [`13-damage-resolver-spec.md`](./13-damage-resolver-spec.md) | Attack pipeline: crit, resistance/vuln/immunity, save-half, temp HP, concentration check. | 00, 01, 11 | 🟡 |
-| 14 | [`14-package-system-redesign.md`](./14-package-system-redesign.md) | DnD5e-native typed package format. Import/merge, UUID remap, conflict resolution. | 01 | 🟡 |
+| 14 | [`14-package-system-redesign.md`](./14-package-system-redesign.md) | DnD5e-native typed package format (v2). Catalog content types, id namespacing, `requiredRuntimeExtensions`. | 01 | 🟡 |
 
 ## Phase 3: Online Multiplayer Specs (Sprint 5-7)
 
@@ -92,10 +103,10 @@ The current Template-based JSON schema system is being **removed** and replaced 
      │        ├── 03 ── 04
      │        │        ├── 42
      │        ├── 05
-     │        ├── 10
+     │        ├── 14 ── 15 ── 10
      │        ├── 11 ── 13
      │        ├── 12 ──┐
-     │        ├── 14   │
+     │        │        │
      │        └── 20 ──┴── 21 ──┬── 22
      │                          ├── 23 ── 33
      │                          ├── 24
@@ -105,7 +116,8 @@ The current Template-based JSON schema system is being **removed** and replaced 
               ├── 33
               └── 43
 
-40, 41 cross-cut all docs.
+40, 41 cross-cut all docs. 15 blocks all Phase 2 implementation because
+character creation, spells, combat, and items all reference SRD content.
 ```
 
 ## Authoring Conventions

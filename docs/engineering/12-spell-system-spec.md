@@ -3,90 +3,59 @@
 > **For Claude.** Spell slots, multiclass calculator, concentration, AoE geometry.
 > **Source rules:** [00 §17, §24](./00-dnd5e-mechanics-reference.md#17-multiclassing-pp-24-25)
 > **Target:** `flutter_app/lib/application/dnd5e/spell/`, `flutter_app/lib/domain/dnd5e/spell/`
+> **Content policy.** Spell slot *progression tables* are D&D 5e mechanics and live in Dart (see below). Concrete spells and classes are Tier 1 content and arrive via packages. A class's `casterFraction` field (data) drives the multiclass calculator (structural logic). `Spell.effects: List<EffectDescriptor>` — see [01-domain-model-spec.md](./01-domain-model-spec.md) §Effects for the unified descriptor family.
 
 ## Spell Slot Tables
 
-### Single-Class Slot Tables
-
-Per class table — stored as static const data:
+The slot progression table is structural (a D&D 5e mechanic); class identities (`srd:wizard`, `srd:paladin`, …) and their caster fractions are content. Tier 1 `CharacterClass` declares:
 
 ```dart
-// flutter_app/lib/application/dnd5e/spell/single_class_slot_table.dart
+enum CasterKind { none, full, half, third, pact }
 
-class SingleClassSlotTable {
-  /// Map: classId → list of 20 entries (one per level).
-  /// Each entry: List<int> length 9 = slots per spell level (1..9).
-  static const Map<String, List<List<int>>> _table = {
-    'wizard': [
-      [2,0,0,0,0,0,0,0,0],   // L1
-      [3,0,0,0,0,0,0,0,0],   // L2
-      [4,2,0,0,0,0,0,0,0],   // L3
-      [4,3,0,0,0,0,0,0,0],
-      [4,3,2,0,0,0,0,0,0],
-      [4,3,3,0,0,0,0,0,0],
-      [4,3,3,1,0,0,0,0,0],
-      [4,3,3,2,0,0,0,0,0],
-      [4,3,3,3,1,0,0,0,0],
-      [4,3,3,3,2,0,0,0,0],
-      [4,3,3,3,2,1,0,0,0],
-      [4,3,3,3,2,1,0,0,0],
-      [4,3,3,3,2,1,1,0,0],
-      [4,3,3,3,2,1,1,0,0],
-      [4,3,3,3,2,1,1,1,0],
-      [4,3,3,3,2,1,1,1,0],
-      [4,3,3,3,2,1,1,1,1],
-      [4,3,3,3,3,1,1,1,1],
-      [4,3,3,3,3,2,1,1,1],
-      [4,3,3,3,3,2,2,1,1],   // L20
-    ],
-    'sorcerer': [...],   // identical to wizard slot progression
-    'bard': [...],
-    'cleric': [...],
-    'druid': [...],
-    'paladin': [...],    // half-caster: starts L2
-    'ranger': [...],
-    // Warlock = Pact Magic, separate (see below)
-  };
-
-  static List<int> slotsFor(String classId, int level) {
-    final t = _table[classId];
-    if (t == null) return List.filled(9, 0);
-    return t[level - 1];
-  }
+class CharacterClass {
+  final String id;                     // 'srd:wizard'
+  final String name;
+  final CasterKind casterKind;         // data input to multiclass calculator
+  final double casterFraction;         // 1.0 / 0.5 / (1/3). 0 for non-casters. Pact uses own table.
+  ...
 }
 ```
 
-### Multiclass Slot Calculator
+No per-class slot tables live in Dart. All full-casters share one progression; half-casters use it at `floor(level * 0.5)`; third-casters at `floor(level * 1/3)`. Warlock (Pact) uses the separate table below, gated on `casterKind == pact`.
+
+### Multiclass / Single-Class Slot Calculator
+
+Single-class callers invoke the multiclass calculator with a one-entry list — the math collapses correctly.
 
 ```dart
 // flutter_app/lib/application/dnd5e/spell/multiclass_slot_calculator.dart
 
 class MulticlassSlotCalculator {
-  static const Map<String, double> _casterFraction = {
-    'bard': 1.0, 'cleric': 1.0, 'druid': 1.0, 'sorcerer': 1.0, 'wizard': 1.0,
-    'paladin': 0.5, 'ranger': 0.5,
-    // 'warlock': handled separately via Pact Magic
-  };
+  final ContentRegistry registry;
+  MulticlassSlotCalculator(this.registry);
 
-  /// Returns combined caster level for the multiclass slot table.
-  static int combinedCasterLevel(List<CharacterClassLevel> levels) {
+  /// Returns combined caster level by summing level * class.casterFraction.
+  int combinedCasterLevel(List<CharacterClassLevel> levels) {
     double sum = 0;
     for (final lvl in levels) {
-      final f = _casterFraction[lvl.classId];
-      if (f == null) continue;
-      sum += lvl.level * f;
+      final cls = registry.classes[lvl.classId];
+      if (cls == null) continue;
+      if (cls.casterKind == CasterKind.none || cls.casterKind == CasterKind.pact) continue;
+      sum += lvl.level * cls.casterFraction;
     }
     return sum.floor();
   }
 
-  /// Returns slot array (9 entries, one per spell level) for a multiclass spellcaster.
-  static List<int> slotsFor(List<CharacterClassLevel> levels) {
+  /// Returns slot array (9 entries, one per spell level) for a spellcaster.
+  List<int> slotsFor(List<CharacterClassLevel> levels) {
     final cl = combinedCasterLevel(levels);
     if (cl == 0) return List.filled(9, 0);
-    return _multiclassTable[cl - 1];
+    return _slotProgression[cl - 1];
   }
 
-  static const List<List<int>> _multiclassTable = [
+  /// Structural D&D 5e slot progression — identical for all full casters.
+  /// Half/third casters index via combinedCasterLevel which has already applied their fraction.
+  static const List<List<int>> _slotProgression = [
     [2,0,0,0,0,0,0,0,0],   // 1
     [3,0,0,0,0,0,0,0,0],
     [4,2,0,0,0,0,0,0,0],
@@ -111,9 +80,9 @@ class MulticlassSlotCalculator {
 }
 ```
 
-If only one caster class → use `SingleClassSlotTable` directly. If 2+ → `MulticlassSlotCalculator`.
-
 ### Pact Magic (Warlock)
+
+Pact Magic is a D&D 5e mechanic wired to a class whose `casterKind == pact`. The content package decides *which* class has pact casting — the SRD package assigns it to `srd:warlock`. The progression table below is structural.
 
 Stored separately from Spellcasting slots. Different progression:
 
@@ -169,9 +138,17 @@ class ConcentrationManager {
   bool checkConcentration({
     required Combatant target,
     required int damage,
+    required ContentRegistry registry,
+    required EffectCompiler compiler,
   }) {
     if (target.concentration == null) return false;
-    if (target.conditions.contains(Condition.incapacitated)) return true;
+    // Read "incapacitated" tag from compiled ConditionInteraction descriptors,
+    // not from a hardcoded Condition enum match.
+    final incapacitated = target.conditionIds.any((id) {
+      final cond = registry.conditions[id];
+      return cond != null && compiler.conditionInteraction(cond).incapacitated;
+    });
+    if (incapacitated) return true;
     if (target.isDead) return true;
     final dc = saveDcForDamage(damage);
     final save = Dice.d20() + target.savingThrowMod(Ability.constitution);
@@ -368,13 +345,15 @@ Player flow:
 
 ```dart
 class SpellSlotRefreshService {
-  Character afterShortRest(Character c) {
+  Character afterShortRest(Character c, ContentRegistry registry) {
     // Wizard Arcane Recovery handled separately (interactive: choose slots).
-    // Warlock: refresh all pact slots.
-    final warlockLvl = c.classLevels.firstWhereOrNull((cl) => cl.classId == 'warlock')?.level ?? 0;
-    if (warlockLvl > 0) {
-      final pact = PactMagicTable.forLevel(warlockLvl);
-      return c.copyWith(pactSlots: PactMagicSlots(current: pact.slots, max: pact.slots, slotLevel: pact.slotLevel));
+    // Any class with casterKind == pact refreshes pact slots on short rest.
+    for (final lvl in c.classLevels) {
+      final cls = registry.classes[lvl.classId];
+      if (cls != null && cls.casterKind == CasterKind.pact) {
+        final pact = PactMagicTable.forLevel(lvl.level);
+        return c.copyWith(pactSlots: PactMagicSlots(current: pact.slots, max: pact.slots, slotLevel: pact.slotLevel));
+      }
     }
     return c;
   }
@@ -388,9 +367,10 @@ class SpellSlotRefreshService {
 
 ## Acceptance
 
-- Single-class spellcaster L1-L20: slots match SRD class table.
-- Multiclass (e.g., Wizard 5 + Cleric 3): slots match Multiclass Spellcaster table at combined caster level 8.
-- Warlock 5: 2 slots at slot level 3, refresh on Short Rest.
+- Single-class spellcaster L1-L20: slots from the structural progression table, driven by the SRD package's class `casterKind` + `casterFraction`.
+- Multiclass (e.g., `srd:wizard` 5 + `srd:cleric` 3): slots match the progression at combined caster level 8.
+- `srd:warlock` 5: 2 slots at slot level 3, refresh on Short Rest (driven by `casterKind == pact`).
+- A homebrew class package with `casterKind: full, casterFraction: 1.0` produces identical slot math to SRD full-casters.
 - Concentration broken on damage: CON save with DC = max(10, dmg/2) ≤ 30.
 - Casting ritual spell: no slot expended, +10 min duration noted.
 - AoE shapes render correctly on grid for Cone (15/30/60 ft), Cube (5/10/15 ft), Sphere (10/20/30 ft), Line (30 ft).

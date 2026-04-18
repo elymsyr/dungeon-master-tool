@@ -2,6 +2,7 @@
 
 > **For Claude.** Drift schema after template removal. Fresh start (no migration from v4 — see [42](./42-fresh-start-db-reset.md)).
 > **Target:** `flutter_app/lib/data/database/`
+> **Content policy.** No Tier 1 enums (Condition, DamageType, Skill, Size, SpellSchool, Alignment, Rarity, Language, WeaponProperty, WeaponMastery, ArmorCategory, CreatureType). All catalog columns are `text()` holding namespaced ids like `srd:stunned`. See [01-domain-model-spec.md](./01-domain-model-spec.md) §Tier Split, §ID Namespacing.
 
 ## Migration Strategy
 
@@ -62,10 +63,10 @@ class Characters extends Table {
   TextColumn get id => text()();
   TextColumn get campaignId => text().references(Campaigns, #id)();
   TextColumn get name => text()();
-  TextColumn get speciesId => text()();
+  TextColumn get speciesId => text()();                    // 'srd:human'
   TextColumn get lineageId => text().nullable()();
-  TextColumn get backgroundId => text()();
-  TextColumn get alignment => textEnum<Alignment>()();
+  TextColumn get backgroundId => text()();                  // 'srd:soldier'
+  TextColumn get alignmentId => text()();                   // 'srd:lawful_good'
   IntColumn get experiencePoints => integer().withDefault(const Constant(0))();
   // Ability scores (final, post-background-bonus)
   IntColumn get strScore => integer()();
@@ -86,7 +87,7 @@ class Characters extends Table {
   IntColumn get exhaustionLevel => integer().withDefault(const Constant(0))();
   // Misc
   BoolColumn get hasInspiration => boolean().withDefault(const Constant(false))();
-  TextColumn get languagesJson => text()();    // List<String> JSON-encoded (acceptable for arrays)
+  TextColumn get languageIdsJson => text()();   // List<String> of namespaced language ids
   TextColumn get notes => text().nullable()();
   IntColumn get createdAt => integer()();
   IntColumn get updatedAt => integer()();
@@ -103,7 +104,7 @@ Multi-row per character (one per class).
 class CharacterClassLevels extends Table {
   TextColumn get id => text()();
   TextColumn get characterId => text().references(Characters, #id, onDelete: KeyAction.cascade)();
-  TextColumn get classId => text()();             // 'barbarian'
+  TextColumn get classId => text()();             // 'srd:barbarian'
   TextColumn get subclassId => text().nullable()();
   IntColumn get level => integer()();
   IntColumn get hitDiceRemaining => integer()();  // for short rest
@@ -162,9 +163,9 @@ class CharacterInventory extends Table {
 class CharacterProficiencies extends Table {
   TextColumn get characterId => text().references(Characters, #id, onDelete: KeyAction.cascade)();
   TextColumn get profType => text()();        // 'skill'|'tool'|'weapon'|'armor'|'save'|'language'
-  TextColumn get profKey => text()();         // 'athletics'|'thieves_tools'|...
-  TextColumn get level => textEnum<Proficiency>()();   // 'half'|'full'|'expertise'
-  TextColumn get sourceJson => text().nullable()();    // {'class':'rogue','feature':'expertise'}
+  TextColumn get profKey => text()();         // Ability short for 'save' (e.g. 'STR'); namespaced id otherwise ('srd:athletics')
+  TextColumn get level => textEnum<Proficiency>()();   // Tier 0 enum: 'half'|'full'|'expertise'
+  TextColumn get sourceJson => text().nullable()();
   @override Set<Column> get primaryKey => {characterId, profType, profKey};
 }
 ```
@@ -202,12 +203,12 @@ class Monsters extends Table {
 
 ```dart
 class Spells extends Table {
-  TextColumn get id => text()();
+  TextColumn get id => text()();              // 'srd:fireball'
   TextColumn get name => text()();
   IntColumn get level => integer()();         // 0..9
-  TextColumn get school => textEnum<SpellSchool>()();
+  TextColumn get schoolId => text()();        // 'srd:evocation'
   TextColumn get sourcePackageId => text().nullable()();
-  TextColumn get bodyJson => text()();        // full Spell as JSON
+  TextColumn get bodyJson => text()();        // full Spell as JSON (effects are EffectDescriptor list)
   @override Set<Column> get primaryKey => {id};
 }
 ```
@@ -216,10 +217,10 @@ class Spells extends Table {
 
 ```dart
 class Items extends Table {
-  TextColumn get id => text()();
+  TextColumn get id => text()();              // 'srd:longsword'
   TextColumn get name => text()();
   TextColumn get itemType => text()();        // 'weapon'|'armor'|'shield'|'gear'|'magic'|'tool'|'ammo'
-  TextColumn get rarity => textEnum<Rarity>().nullable()();
+  TextColumn get rarityId => text().nullable()();            // 'srd:rare'
   TextColumn get sourcePackageId => text().nullable()();
   TextColumn get bodyJson => text()();        // full Item subtype as JSON
   @override Set<Column> get primaryKey => {id};
@@ -229,6 +230,37 @@ class Items extends Table {
 ### `feats`, `backgrounds`, `species`, `subclasses`, `class_progressions`
 
 All same shape: `id, name, body_json, source_package_id`. JSON blob OK (catalog data).
+
+### Catalog tables (Tier 1 mechanic primitives)
+
+All catalog tables share the same shape: namespaced `id TEXT PRIMARY KEY`, `name`, `body_json`, `source_package_id`, `created_at`, `updated_at`. The body JSON carries type-specific fields (including `List<EffectDescriptor>` where applicable). These rows are populated by the package importer ([14-package-system-redesign.md](./14-package-system-redesign.md)); the built-in dnd5e module itself seeds zero rows.
+
+```dart
+abstract class _CatalogTable extends Table {
+  TextColumn get id => text()();                    // '<packageSlug>:<localId>'
+  TextColumn get name => text()();
+  TextColumn get bodyJson => text()();
+  TextColumn get sourcePackageId => text()();
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
+  @override Set<Column> get primaryKey => {id};
+}
+
+class Conditions        extends _CatalogTable {}
+class DamageTypes       extends _CatalogTable {}
+class Skills            extends _CatalogTable {}
+class Sizes             extends _CatalogTable {}
+class CreatureTypes     extends _CatalogTable {}
+class Alignments        extends _CatalogTable {}
+class Languages         extends _CatalogTable {}
+class SpellSchools      extends _CatalogTable {}
+class WeaponProperties  extends _CatalogTable {}
+class WeaponMasteries   extends _CatalogTable {}
+class ArmorCategories   extends _CatalogTable {}
+class Rarities          extends _CatalogTable {}
+```
+
+Querying catalog rows by name or filter fields happens in-memory after bulk load (catalogs are small; typical SRD bundle is 17 conditions, 14 damage types, etc.). The `source_package_id` column supports "uninstall package X removes all its catalog rows."
 
 ### `encounters`
 
@@ -271,6 +303,9 @@ class Combatants extends Table {
   RealColumn get tokenY => real().nullable()();
   TextColumn get notes => text().nullable()();
   IntColumn get displayOrder => integer()();
+  TextColumn get resistancesJson => text().withDefault(const Constant('[]'))();     // List<String> of DamageType ids
+  TextColumn get vulnerabilitiesJson => text().withDefault(const Constant('[]'))();
+  TextColumn get immunitiesJson => text().withDefault(const Constant('[]'))();
   @override Set<Column> get primaryKey => {id};
 }
 ```
@@ -280,10 +315,10 @@ class Combatants extends Table {
 ```dart
 class CombatantConditions extends Table {
   TextColumn get combatantId => text().references(Combatants, #id, onDelete: KeyAction.cascade)();
-  TextColumn get condition => textEnum<Condition>()();
+  TextColumn get conditionId => text()();                            // 'srd:stunned' — namespaced ContentReference<Condition>
   IntColumn get durationRoundsRemaining => integer().nullable()();   // null = indefinite
   IntColumn get exhaustionLevel => integer().nullable()();           // for Exhaustion only
-  @override Set<Column> get primaryKey => {combatantId, condition};
+  @override Set<Column> get primaryKey => {combatantId, conditionId};
 }
 ```
 
@@ -322,7 +357,9 @@ For **per-instance / mutable** state (characters, combatants, conditions), use t
 
 - `flutter_app/lib/data/database/app_database.dart` reports `schemaVersion = 5`.
 - `flutter analyze` passes.
-- Fresh app launch creates v5 schema.
+- Fresh app launch creates v5 schema with all 12 catalog tables empty.
+- After SRD Core package auto-install: `conditions` has 17 rows, `damage_types` has 14, `skills` has 18, etc. Every row's `id` matches `srd:.*`.
+- Uninstalling a package deletes all its catalog rows via `source_package_id` match.
 - Upgrade from v4 drops & recreates (with user warning shown by app code, see [42](./42-fresh-start-db-reset.md)).
 - Loading 1000 monsters from `monsters` table completes < 200 ms on debug build.
 

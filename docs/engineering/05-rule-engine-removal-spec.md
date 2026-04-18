@@ -1,6 +1,7 @@
 # 05 — Rule Engine Removal & Replacement Pattern
 
-> **For Claude.** RuleV2/RuleEngineV2 deletion + replacement pattern (effects as pure Dart functions).
+> **For Claude.** RuleV2/RuleEngineV2 deletion + replacement pattern (compiled effects driven by a serializable descriptor DSL).
+> **Content policy.** No concrete D&D content lives in the app binary. Descriptors come from installed packages; see [14-package-system-redesign.md](./14-package-system-redesign.md) and [15-srd-core-package.md](./15-srd-core-package.md). `EffectDescriptor` family is defined in [01-domain-model-spec.md](./01-domain-model-spec.md) §Effects.
 
 ## What's Removed
 
@@ -20,9 +21,9 @@ flutter_app/test/...rule_engine_v2_test.dart
 - Every D&D feature already mechanically distinct; expressing as `Predicate + ValueExpression` was lossy and required string field keys (no compile-time safety).
 - Direct Dart functions: type-safe, debuggable, testable, IDE-navigable.
 
-## Replacement Pattern: Feature Effects as Pure Functions
+## Replacement Pattern: Compiled Feature Effects
 
-A "feature" (class feature, feat, spell, magic item) exposes typed effect hooks. No global engine.
+A "feature" (class feature, feat, spell, magic item, condition) is described by a list of `EffectDescriptor` cases ([01-domain-model-spec.md](./01-domain-model-spec.md) §Effects). Content authors write those descriptors in package JSON; they never write Dart. An **`EffectCompiler`** turns each descriptor list into a `CompiledEffect` — the internal representation the combat resolvers consume. `FeatureEffect` (below) is the shape of that compiled form; it is an *internal interface*, not a user-facing extension point.
 
 ### Signature Types
 
@@ -46,7 +47,7 @@ class AttackRollMods {
 class DamageRollMods {
   final List<DiceExpression> extraDice;
   final int flatBonus;
-  final Set<DamageType> additionalTypes;
+  final Set<ContentReference<DamageType>> additionalTypeIds;   // namespaced ids
 }
 class SaveMods {
   final int flatBonus;
@@ -66,27 +67,33 @@ class AttackRollContext {
 }
 ```
 
-### Feature Definition Shape
+### Compiled Feature Shape (internal)
 
 ```dart
+// flutter_app/lib/application/dnd5e/effect/compiled_effect.dart
+
 abstract class FeatureEffect {
-  String get id;
+  String get id;                                       // source descriptor id or aggregate key
   String get name;
 
-  // Override only the hooks you care about. Default = no-op.
+  // Hooks the resolvers call. Default = no-op.
   AttackRollMods modifyAttackRoll(AttackRollContext ctx) => const AttackRollMods();
   DamageRollMods modifyDamageRoll(DamageRollContext ctx) => const DamageRollMods();
   SaveMods modifySave(SaveContext ctx) => const SaveMods();
   int modifyAc(Character c) => 0;
   int modifyInitiative(Character c) => 0;
-  bool grantsCondition(Combatant c, Condition cond) => false;
+  bool grantsCondition(Combatant c, ContentReference<Condition> conditionId) => false;
 }
 ```
 
-### Example: Barbarian Rage
+`FeatureEffect` subclasses are **not hand-written for SRD content**. They are emitted by the `EffectCompiler` from `EffectDescriptor` lists carried by content. The three examples below illustrate what the compiler *produces*; they are not files shipped in the app binary.
+
+### Example (compiler output): Barbarian Rage
 
 ```dart
-// flutter_app/lib/domain/dnd5e/content/classes/barbarian/rage_effect.dart
+// Compiler-output illustration — not a file that ships. Shown here so reviewers
+// can see the shape of what EffectCompiler produces from a Rage class-feature
+// descriptor list in the SRD package.
 
 class RageEffect extends FeatureEffect {
   final int rageDamageBonus;       // from class level (Rage Damage column)
@@ -110,7 +117,7 @@ class RageEffect extends FeatureEffect {
 }
 ```
 
-### Example: Sneak Attack
+### Example (compiler output): Sneak Attack
 
 ```dart
 class SneakAttackEffect extends FeatureEffect {
@@ -129,7 +136,9 @@ class SneakAttackEffect extends FeatureEffect {
   bool _qualifies(DamageRollContext ctx) {
     final w = ctx.weapon;
     if (w == null) return false;
-    if (!w.properties.contains(WeaponProperty.finesse) && !w.type.isRanged) return false;
+    // WeaponProperty is a Tier 1 catalog entity; the compiler resolves 'srd:finesse'
+    // at compile time into this flag check.
+    if (!w.hasPropertyFlag(PropertyFlag.finesse) && !w.type.isRanged) return false;
     if (ctx.hasAdvantage) return true;
     if (ctx.hasAllyAdjacentToTarget && !ctx.hasDisadvantage) return true;
     return false;
@@ -137,7 +146,7 @@ class SneakAttackEffect extends FeatureEffect {
 }
 ```
 
-### Example: Bless Spell
+### Example (compiler output): Bless Spell
 
 ```dart
 class BlessEffect extends FeatureEffect {
@@ -250,16 +259,41 @@ final featureRegistryProvider = Provider<FeatureEffectRegistry>((ref) {
 ## Where Effects Live in the Codebase
 
 ```
-domain/dnd5e/feature/feature_effect.dart        # base class + context types
-domain/dnd5e/content/classes/{class}/*.dart     # built-in class feature effects
-domain/dnd5e/content/feats/*.dart               # feat effects
-domain/dnd5e/content/spells/*.dart              # spell effects
-domain/dnd5e/content/items/*.dart               # magic item effects
-application/dnd5e/feature/feature_registry.dart # registry
-application/dnd5e/combat/{attack|save|damage}_resolver.dart  # apply chain
+domain/dnd5e/effect/effect_descriptor.dart      # Tier 2 sealed descriptor family (see Doc 01)
+domain/dnd5e/effect/predicate.dart              # Predicate sealed family
+domain/dnd5e/effect/duration.dart               # Duration sealed family
+application/dnd5e/effect/compiled_effect.dart   # FeatureEffect base (internal compiled form)
+application/dnd5e/effect/effect_compiler.dart   # descriptors → FeatureEffect
+application/dnd5e/effect/custom_effect_registry.dart  # whitelisted Dart escape hatches
+application/dnd5e/feature/feature_registry.dart # per-Combatant active-effect index
+application/dnd5e/combat/{attack|save|damage}_resolver.dart  # apply chain (unchanged)
 ```
 
-Package-imported features (custom homebrew) register via the package importer at install time.
+**No `domain/dnd5e/content/` directory.** All concrete content (Rage, Sneak Attack, Bless, Stunned, Fireball, …) arrives as `EffectDescriptor` lists in installed packages and is compiled at load time.
+
+## CustomEffect Extensibility
+
+A minority of SRD features resist pure-descriptor encoding (Wish's open-ended branch, Wild Shape's form substitution, Polymorph, Animate Dead, Summon families, Simulacrum, Shapechange, Glyph of Warding). These use the `CustomEffect` descriptor case, which names an `implementationId`:
+
+```dart
+// application/dnd5e/effect/custom_effect_registry.dart
+
+abstract interface class CustomEffectImpl {
+  String get id;                                        // 'srd:wish'
+  CompiledEffect compile(Map<String, Object?> parameters);
+}
+
+class CustomEffectRegistry {
+  final Map<String, CustomEffectImpl> _byId = {};
+  void register(CustomEffectImpl impl) => _byId[impl.id] = impl;
+  CustomEffectImpl? byId(String id) => _byId[id];
+  bool has(String id) => _byId.containsKey(id);
+}
+```
+
+Registered at app boot. The set of registered ids is closed, small, and documented. Packages declare the ones they depend on in `requiredRuntimeExtensions`; the package importer rejects packages whose required ids aren't registered ([14-package-system-redesign.md](./14-package-system-redesign.md) §Package Importer step 0). The SRD Core package's required set is enumerated in [15-srd-core-package.md](./15-srd-core-package.md) §Whitelisted `CustomEffect` Implementations.
+
+Homebrew packages can name an `implementationId` the app does not ship, but the package will only import on runtimes that have registered it (which in practice means runtimes that have been extended via a code plugin — out of scope for MVP).
 
 ## Migration of Existing Rules
 
@@ -284,7 +318,11 @@ class Character {
 
 ## Testing
 
-Each `FeatureEffect` impl has a unit test in `test/domain/dnd5e/content/...`:
+Testing focuses on **the compiler** and **the resolver pipeline**, not hand-authored `FeatureEffect` subclasses.
+
+- `EffectCompiler` tests: for each `EffectDescriptor` case, assert that compilation produces the expected `CompiledEffect` behavior over representative contexts.
+- Integration tests: load the SRD Core package into a test registry, then exercise scenarios end-to-end (e.g. "Raging STR-weapon attack adds rage damage bonus"; "Stunned target auto-fails DEX save and is attacked with advantage").
+- `CustomEffect` tests: assert each whitelisted impl produces expected behavior.
 
 ```dart
 test('Rage adds rage damage bonus to STR weapon attack', () {
@@ -300,9 +338,12 @@ test('Rage adds rage damage bonus to STR weapon attack', () {
 
 ## Acceptance
 
-- All 5 deleted files removed; 0 grep hits for `RuleV2|RuleEngineV2|Predicate|ValueExpression`.
-- `FeatureEffect` interface defined.
-- At least 3 sample effects implemented and tested (Rage, Sneak Attack, Bless).
+- All 5 deleted files removed; 0 grep hits for `RuleV2|RuleEngineV2|ValueExpression` (note: `Predicate` is now reused by the descriptor DSL and will still appear).
+- `FeatureEffect` interface defined in `application/dnd5e/effect/compiled_effect.dart`.
+- No `domain/dnd5e/content/` directory exists.
+- `EffectCompiler` compiles every `EffectDescriptor` case to a `CompiledEffect` covered by unit tests.
+- Rage, Sneak Attack, Bless, Stunned integration tests pass against the SRD Core package — with **zero hand-written `FeatureEffect` subclasses** for any of them.
+- `CustomEffect` registry rejects packages whose `requiredRuntimeExtensions` include unregistered ids.
 - `AttackResolver`, `DamageResolver`, `SaveResolver` apply effects in pipeline.
 - Old aggregation use cases (encumbrance, AC) re-implemented as getters.
 - `flutter analyze` + `flutter test` clean.
