@@ -79,3 +79,13 @@ SELECT public.is_admin();
   Default kullanıcı kotası **50 MB** (`profiles.storage_quota_bytes`).
 - **`profile_counts` view** takipçi/takip sayıları için lazy hesaplanır;
   büyük ölçekte materialize edilebilir.
+
+## Dashboard-only ayarlar (migration'a girmeyen)
+
+Yeni bir Supabase projesi ayağa kaldırıldığında aşağıdaki adımlar Dashboard'dan
+**elle** yapılmalı — SQL migration'a sığmazlar:
+
+- **Leaked password protection**: Authentication → Providers → Email → "Leaked
+  password protection" açık olmalı. HaveIBeenPwned DB'sine karşı şifre kontrolü
+  yapar; `024_linter_fixes.sql` SQL tarafını kapatsa da bu bayrak Dashboard'da
+  kalır.
