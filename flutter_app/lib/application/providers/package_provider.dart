@@ -1,13 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/utils/deep_copy.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/datasources/local/package_local_ds.dart';
 import '../../data/repositories/package_repository_impl.dart';
 import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/world_schema.dart';
-import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/package_repository.dart';
 import 'campaign_provider.dart' show campaignRevisionProvider;
 
@@ -119,35 +117,6 @@ class ActivePackageNotifier extends StateNotifier<String?> {
     }
   }
 
-  /// Applies a template update to the active package (mirrors campaign logic).
-  Future<void> applyTemplateUpdate(WorldSchema newTemplate) async {
-    if (state == null || _data == null) return;
-    final currentHash = computeWorldSchemaContentHash(newTemplate);
-    _data!['world_schema'] = deepCopyJson(newTemplate.toJson());
-    _data!['template_id'] = newTemplate.schemaId;
-    _data!['template_hash'] = currentHash;
-    if (newTemplate.originalHash != null) {
-      _data!['template_original_hash'] = newTemplate.originalHash;
-    }
-    _data!.remove('template_dismissed_hash');
-    _data!.remove('template_updates_muted');
-    await _repo.save(state!, _data!);
-    _bumpRevision();
-  }
-
-  /// Dismisses a specific template version for the active package.
-  Future<void> dismissTemplateUpdate(String templateHash) async {
-    if (state == null || _data == null) return;
-    _data!['template_dismissed_hash'] = templateHash;
-    await _repo.save(state!, _data!);
-  }
-
-  /// Permanently mutes template update prompts for the active package.
-  Future<void> muteTemplateUpdates() async {
-    if (state == null || _data == null) return;
-    _data!['template_updates_muted'] = true;
-    await _repo.save(state!, _data!);
-  }
 }
 
 final activePackageProvider =

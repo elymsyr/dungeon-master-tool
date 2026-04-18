@@ -15,7 +15,6 @@ import '../../data/repositories/cloud_backup_repository_impl.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/cloud_backup_meta.dart';
 import '../../domain/exceptions/cloud_backup_exceptions.dart';
-import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/repositories/cloud_backup_repository.dart';
 import '../services/media_bundler.dart';
 import '../services/media_manifest_restorer.dart';
@@ -26,7 +25,6 @@ import 'character_provider.dart';
 import 'cloud_remote_check_provider.dart';
 import 'package_provider.dart';
 import 'save_state_provider.dart';
-import 'template_provider.dart';
 
 // ── Repository ──────────────────────────────────────────────────────
 
@@ -53,13 +51,6 @@ final cloudBackupWorldsProvider =
   final auth = ref.watch(authProvider);
   if (!SupabaseConfig.isConfigured || auth == null) return [];
   return ref.read(cloudBackupRepositoryProvider).listBackupsByType('world');
-});
-
-final cloudBackupTemplatesProvider =
-    FutureProvider<List<CloudBackupMeta>>((ref) async {
-  final auth = ref.watch(authProvider);
-  if (!SupabaseConfig.isConfigured || auth == null) return [];
-  return ref.read(cloudBackupRepositoryProvider).listBackupsByType('template');
 });
 
 final cloudBackupPackagesProvider =
@@ -258,24 +249,6 @@ class CloudBackupOperationNotifier
           _ref.invalidate(campaignListProvider);
           _ref.invalidate(campaignInfoListProvider);
 
-        case 'template':
-          final schemaJson = Map<String, dynamic>.from(
-              data['world_schema'] as Map<String, dynamic>? ?? data);
-          // Unpack cover from schema metadata if bundled.
-          final sMeta = schemaJson['metadata'];
-          if (sMeta is Map) {
-            final mutable = Map<String, dynamic>.from(sMeta);
-            await CoverImageBundler.restore(
-              metadata: mutable,
-              destDir: AppPaths.cacheDir,
-              itemId: meta.itemId,
-            );
-            schemaJson['metadata'] = mutable;
-          }
-          final schema = WorldSchema.fromJson(schemaJson);
-          await _ref.read(templateLocalDsProvider).save(schema);
-          _ref.invalidate(allTemplatesProvider);
-
         case 'package':
           await _restoreMetadataCover(
               data, AppPaths.packagesDir, meta.itemId);
@@ -316,38 +289,6 @@ class CloudBackupOperationNotifier
       return true;
     } catch (e, st) {
       debugPrint('Cloud backup restore error: $e\n$st');
-      state = CloudBackupOperationState.error(formatError(e));
-      return false;
-    }
-  }
-
-  /// Template'i cloud'a yedekle.
-  Future<bool> uploadTemplate(WorldSchema schema, {String? notes}) async {
-    state = const CloudBackupOperationState.busy(CloudBackupOpType.uploading);
-    try {
-      final data = schema.toJson();
-      // Bundle template's cover image (metadata['cover_image_path']) into
-      // the schema's metadata map so the cloud envelope is self-contained.
-      final schemaMeta = data['metadata'];
-      if (schemaMeta is Map) {
-        final mutable = Map<String, dynamic>.from(schemaMeta);
-        await CoverImageBundler.bundle(mutable);
-        data['metadata'] = mutable;
-      }
-      final meta =
-          await _ref.read(cloudBackupRepositoryProvider).uploadBackup(
-                schema.name,
-                schema.schemaId,
-                'template',
-                {'world_schema': data},
-                notes: notes,
-              );
-
-      _invalidateLists();
-      state = CloudBackupOperationState.success(meta: meta);
-      return true;
-    } catch (e, st) {
-      debugPrint('Cloud backup upload error: $e\n$st');
       state = CloudBackupOperationState.error(formatError(e));
       return false;
     }
@@ -548,7 +489,6 @@ class CloudBackupOperationNotifier
   void _invalidateLists() {
     _ref.invalidate(cloudBackupListProvider);
     _ref.invalidate(cloudBackupWorldsProvider);
-    _ref.invalidate(cloudBackupTemplatesProvider);
     _ref.invalidate(cloudBackupPackagesProvider);
     _ref.invalidate(cloudBackupCharactersProvider);
     _ref.invalidate(cloudStorageUsedProvider);

@@ -13,7 +13,6 @@ import 'campaign_provider.dart';
 import 'cloud_backup_provider.dart';
 import 'cloud_remote_check_provider.dart';
 import 'package_provider.dart';
-import 'template_provider.dart';
 
 // ── Sync result types ───────────────────────────────────────────────
 
@@ -156,17 +155,6 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
       }
     }
 
-    final templateId = _ref.read(activeTemplateProvider);
-    if (templateId != null) {
-      final schema = _ref.read(activeTemplateProvider.notifier).schema;
-      if (schema != null) {
-        _dirtyItems['template:${schema.schemaId}'] =
-            (name: schema.name, type: 'template', id: schema.schemaId);
-        await syncNow();
-        return true;
-      }
-    }
-
     return false;
   }
 
@@ -268,7 +256,6 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
     // Invalidate backup list providers.
     _ref.invalidate(cloudBackupListProvider);
     _ref.invalidate(cloudBackupWorldsProvider);
-    _ref.invalidate(cloudBackupTemplatesProvider);
     _ref.invalidate(cloudBackupPackagesProvider);
     _ref.invalidate(cloudBackupCharactersProvider);
     _ref.invalidate(cloudStorageUsedProvider);
@@ -320,8 +307,6 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
           return await _ref.read(campaignRepositoryProvider).load(itemName);
         case 'package':
           return await _ref.read(packageRepositoryProvider).load(itemName);
-        case 'template':
-          return _ref.read(activeTemplateProvider.notifier).data;
         default:
           return null;
       }
