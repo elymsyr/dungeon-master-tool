@@ -197,6 +197,11 @@ class CampaignRepositoryImpl implements CampaignRepository {
         'pdfs': jsonDecode(e.pdfsJson),
         'location_id': e.locationId,
         'attributes': jsonDecode(e.fieldsJson),
+        // V3 rule engine state
+        'resources': _safeDecode(e.resourcesJson, fallback: const {}),
+        'choices': _safeDecode(e.choicesJson, fallback: const {}),
+        'turn_state': _safeDecode(e.turnStateJson, fallback: const {}),
+        'active_effects': _safeDecode(e.activeEffectsJson, fallback: const []),
       };
     }
 
@@ -264,6 +269,16 @@ class CampaignRepositoryImpl implements CampaignRepository {
     };
   }
 
+  /// V3 JSON blob kolonlarını güvenli parse et — bozuk/empty değerler fallback.
+  dynamic _safeDecode(String raw, {required dynamic fallback}) {
+    if (raw.isEmpty) return fallback;
+    try {
+      return jsonDecode(raw);
+    } catch (_) {
+      return fallback;
+    }
+  }
+
   /// Anahtarları hangi tablolara map ettiğimizi izole eder. Geri kalan
   /// dynamic state (combat_state, map_data, mind_maps, vb.) `state_json`
   /// JSON blob'una yazılır — gelecekte normalize edilebilir.
@@ -320,6 +335,10 @@ class CampaignRepositoryImpl implements CampaignRepository {
             pdfsJson: Value(jsonEncode(m['pdfs'] ?? [])),
             locationId: Value(m['location_id'] as String?),
             fieldsJson: Value(jsonEncode(m['attributes'] ?? {})),
+            resourcesJson: Value(jsonEncode(m['resources'] ?? {})),
+            choicesJson: Value(jsonEncode(m['choices'] ?? {})),
+            turnStateJson: Value(jsonEncode(m['turn_state'] ?? {})),
+            activeEffectsJson: Value(jsonEncode(m['active_effects'] ?? [])),
           );
         }).toList();
         await _db.entityDao.insertAll(companions);

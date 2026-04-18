@@ -65,7 +65,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -95,6 +95,15 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(packages);
             await m.createTable(packageSchemas);
             await m.createTable(packageEntities);
+          }
+          if (from < 6) {
+            // v6: Rule V3 entity state — resources/choices/turnState/
+            // activeEffects JSON blob kolonları. Eski entity'ler default
+            // boş map/list ile yüklenir.
+            await m.addColumn(entities, entities.resourcesJson);
+            await m.addColumn(entities, entities.choicesJson);
+            await m.addColumn(entities, entities.turnStateJson);
+            await m.addColumn(entities, entities.activeEffectsJson);
           }
         },
       );

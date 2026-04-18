@@ -1,0 +1,9 @@
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          # Force nested freezed objects to be serialized via .toJson().
+          # Gerekli: Map<String, ResourceState> / List<AppliedEffect> /
+          # RuleV3 sealed unions düzgün JSON round-trip yapabilsin.
+          explicit_to_json: true

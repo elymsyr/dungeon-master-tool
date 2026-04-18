@@ -4,10 +4,14 @@ import '../../core/utils/deep_copy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../domain/entities/applied_effect.dart';
+import '../../domain/entities/choice_state.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/events/event_envelope.dart';
 import '../../domain/entities/events/event_types.dart';
+import '../../domain/entities/resource_state.dart';
 import '../../domain/entities/schema/default_dnd5e_schema.dart';
+import '../../domain/entities/turn_state.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../services/event_bus.dart';
@@ -132,6 +136,10 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
           pdfs: _toStringList(map['pdfs']),
           locationId: map['location_id'] as String?,
           fields: _extractFields(map),
+          resources: _parseResources(map['resources']),
+          choices: _parseChoices(map['choices']),
+          turnState: _parseTurnState(map['turn_state']),
+          activeEffects: _parseActiveEffects(map['active_effects']),
         );
       } catch (e) {
         debugPrint('Entity parse error for ${entry.key}: $e');
@@ -299,7 +307,64 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       'pdfs': e.pdfs,
       'location_id': e.locationId,
       'attributes': e.fields,
+      // V3 rule engine state
+      'resources': e.resources.map((k, v) => MapEntry(k, v.toJson())),
+      'choices': e.choices.map((k, v) => MapEntry(k, v.toJson())),
+      'turn_state': e.turnState?.toJson(),
+      'active_effects': e.activeEffects.map((eff) => eff.toJson()).toList(),
     };
+  }
+
+  Map<String, ResourceState> _parseResources(dynamic raw) {
+    if (raw is! Map) return const {};
+    final result = <String, ResourceState>{};
+    for (final entry in raw.entries) {
+      final v = entry.value;
+      if (v is Map) {
+        try {
+          result[entry.key.toString()] =
+              ResourceState.fromJson(Map<String, dynamic>.from(v));
+        } catch (_) {}
+      }
+    }
+    return result;
+  }
+
+  Map<String, ChoiceState> _parseChoices(dynamic raw) {
+    if (raw is! Map) return const {};
+    final result = <String, ChoiceState>{};
+    for (final entry in raw.entries) {
+      final v = entry.value;
+      if (v is Map) {
+        try {
+          result[entry.key.toString()] =
+              ChoiceState.fromJson(Map<String, dynamic>.from(v));
+        } catch (_) {}
+      }
+    }
+    return result;
+  }
+
+  TurnState? _parseTurnState(dynamic raw) {
+    if (raw is! Map || raw.isEmpty) return null;
+    try {
+      return TurnState.fromJson(Map<String, dynamic>.from(raw));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<AppliedEffect> _parseActiveEffects(dynamic raw) {
+    if (raw is! List) return const [];
+    final result = <AppliedEffect>[];
+    for (final item in raw) {
+      if (item is Map) {
+        try {
+          result.add(AppliedEffect.fromJson(Map<String, dynamic>.from(item)));
+        } catch (_) {}
+      }
+    }
+    return result;
   }
 
   String _resolveCategory(Map<String, dynamic> map) {
