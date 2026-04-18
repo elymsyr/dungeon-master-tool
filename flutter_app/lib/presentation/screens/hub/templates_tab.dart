@@ -153,7 +153,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                           icon: Icons.description,
                           name: schema.name,
                           subtitle:
-                              '${schema.categories.length} cat · $totalFields fields · v${schema.version}',
+                              '${schema.categories.length} cat · $totalFields fields',
                           description: schema.description.isNotEmpty
                               ? schema.description
                               : ((meta['description'] as String?) ?? ''),
@@ -421,7 +421,7 @@ class _TemplatesTabState extends ConsumerState<TemplatesTab> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          '${schema.categories.length} categories  ·  v${schema.version}',
+                          '${schema.categories.length} categories',
                           style: TextStyle(
                             fontSize: 13,
                             color: palette.tabActiveText,
