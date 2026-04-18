@@ -9,8 +9,6 @@ import '../screens/landing/landing_screen.dart';
 import '../screens/main_screen.dart';
 import '../screens/package_screen.dart';
 import '../screens/profile/profile_screen.dart';
-import '../screens/templates/template_editor_screen.dart';
-import '../../domain/entities/schema/world_schema.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -57,34 +55,5 @@ final appRouter = GoRouter(
       builder: (context, state) =>
           CharacterEditorScreen(characterId: state.pathParameters['id']!),
     ),
-    GoRoute(
-      path: '/template/edit',
-      builder: (context, state) {
-        final args = state.extra as ({WorldSchema schema, bool isNew})?;
-        if (args == null) {
-          // Fallback: yeni template'e dön.
-          return TemplateEditorScreen(
-            initial: _blankTemplate(),
-            isNew: true,
-          );
-        }
-        return TemplateEditorScreen(
-          initial: args.schema,
-          isNew: args.isNew,
-        );
-      },
-    ),
   ],
 );
-
-WorldSchema _blankTemplate() {
-  final now = DateTime.now().toUtc().toIso8601String();
-  return WorldSchema(
-    schemaId: 'tpl_${DateTime.now().millisecondsSinceEpoch}',
-    name: 'New Template',
-    version: '1.0.0',
-    description: '',
-    createdAt: now,
-    updatedAt: now,
-  );
-}
