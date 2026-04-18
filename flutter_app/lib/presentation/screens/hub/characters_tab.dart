@@ -5,11 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
+import '../../../application/providers/hub_tab_provider.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/marketplace_panel.dart';
+import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
@@ -49,11 +51,31 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Characters',
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: palette.tabActiveText)),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text('Characters',
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: palette.tabActiveText)),
+                  ),
+                  if (charactersAsync.valueOrNull?.isEmpty ?? false)
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        ref.read(socialSubTabProvider.notifier).state = 'marketplace';
+                        ref.read(hubTabIndexProvider.notifier).state = 0;
+                      },
+                      icon: const Icon(Icons.storefront, size: 16),
+                      label: const Text('Marketplace'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        minimumSize: const Size(0, 32),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(height: 4),
               Text('Select or create a character.',
                   style: TextStyle(

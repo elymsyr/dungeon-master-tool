@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
+import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/services/template_sync_service.dart';
 import '../../../core/config/app_paths.dart';
@@ -16,6 +17,7 @@ import '../../../domain/entities/schema/world_schema_hash.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/marketplace_panel.dart';
+import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
@@ -54,7 +56,27 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Worlds', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text('Worlds', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+                  ),
+                  if (campaignInfoList.valueOrNull?.isEmpty ?? false)
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        ref.read(socialSubTabProvider.notifier).state = 'marketplace';
+                        ref.read(hubTabIndexProvider.notifier).state = 0;
+                      },
+                      icon: const Icon(Icons.storefront, size: 16),
+                      label: const Text('Marketplace'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        minimumSize: const Size(0, 32),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(height: 4),
               Text('Select or create a campaign world.', style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 16),
