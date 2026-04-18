@@ -38,50 +38,50 @@ The current Template-based JSON schema system is being **removed** and replaced 
 | # | Filename | Purpose | Deps | Status |
 |---|---|---|---|---|
 | 00 | [`00-dnd5e-mechanics-reference.md`](./00-dnd5e-mechanics-reference.md) | Normative SRD 5.2.1 mechanics reference. Source of truth for all engine behavior. | — | 🟢 |
-| 01 | `01-domain-model-spec.md` | Typed Dart classes for Character, Monster, Spell, Item (sealed), Feat, Background, Species, CharacterClass, Subclass, Encounter, Combatant, Effect, etc. with invariants and serialization plan. | 00 | ⚪ |
-| 02 | `02-game-system-abstraction.md` | `GameSystem` interface for future Pathfinder/CoC modularity. Defines what is "DnD5e-specific" vs "system-agnostic." Stub Pathfinder example. | 01 | ⚪ |
-| 03 | `03-database-schema-spec.md` | Drift v5: drop `world_schemas` and template_* columns; add typed tables (`characters`, `monsters`, `spells`, `items`, `feats`, `backgrounds`, `species`, `subclasses`, `class_progressions`, `encounters`, `combatants`, etc.). Fresh-start reset note (see doc 42). | 01 | ⚪ |
-| 04 | `04-template-removal-checklist.md` | ~40-file deletion order; dependency graph; per-step regression test plan. Lists every file in `domain/entities/schema/`, `application/services/template_*`, `application/providers/template_provider.dart`, `presentation/screens/templates/`, etc. | 01, 03 | ⚪ |
-| 05 | `05-rule-engine-removal-spec.md` | Removal of RuleV2 / RuleEngineV2; replacement pattern (effects as pure functions on `Combatant` / `Character`). Migration guidance for currently-rule-driven features. | 01 | ⚪ |
+| 01 | [`01-domain-model-spec.md`](./01-domain-model-spec.md) | Typed Dart classes for Character, Monster, Spell, Item (sealed), Feat, Background, Species, CharacterClass, Subclass, Encounter, Combatant, Effect, etc. with invariants. | 00 | 🟡 |
+| 02 | [`02-game-system-abstraction.md`](./02-game-system-abstraction.md) | `GameSystem` interface for future Pathfinder/CoC modularity. Stub Pathfinder example. | 01 | 🟡 |
+| 03 | [`03-database-schema-spec.md`](./03-database-schema-spec.md) | Drift v5: drop `world_schemas` + template_* columns; add typed tables. Fresh-start reset (doc 42). | 01 | 🟡 |
+| 04 | [`04-template-removal-checklist.md`](./04-template-removal-checklist.md) | ~40-file deletion order; dependency graph; per-step regression test plan. | 01, 03 | 🟡 |
+| 05 | [`05-rule-engine-removal-spec.md`](./05-rule-engine-removal-spec.md) | Removal of RuleV2/RuleEngineV2; replacement pattern (effects as pure functions). | 01 | 🟡 |
 
 ## Phase 2: Game Feature Specs (Sprint 2-4)
 
 | # | Filename | Purpose | Deps | Status |
 |---|---|---|---|---|
-| 10 | `10-character-creation-flow.md` | 5-step wizard (Class → Origin → Scores → Alignment → Details). State machine, per-step validation, level-1 vs higher-level paths. UX for ability score generation methods. | 00, 01 | ⚪ |
-| 11 | `11-combat-engine-spec.md` | Manual combat tracker (MVP): initiative roll, turn state, action/bonus/reaction tracking, condition expiration. Auto-resolve in "Future Work" section. | 00, 01 | ⚪ |
-| 12 | `12-spell-system-spec.md` | Spell slot table, multiclass slot calculator, concentration manager, upcasting rules, AoE geometry math (Cone/Cube/Cylinder/Emanation/Line/Sphere) for both rendering and target selection. | 00, 01 | ⚪ |
-| 13 | `13-damage-resolver-spec.md` | Attack roll → crit detection → damage roll → resistance/vuln/immunity pipeline → save-half rule → AoE single-roll rule. Pure function signatures with test fixtures. | 00, 01, 11 | ⚪ |
-| 14 | `14-package-system-redesign.md` | DnD5e-native typed package format (`SpellPack`, `MonsterPack`, `ItemPack`, `SubclassPack`, `BackgroundPack`, `SpeciesPack`). Import/merge rules, UUID remap, conflict resolution. Replaces JSON schema-based packages. | 01 | ⚪ |
+| 10 | [`10-character-creation-flow.md`](./10-character-creation-flow.md) | 5-step wizard. State machine, per-step validation, level-1 vs higher-level paths. | 00, 01 | 🟡 |
+| 11 | [`11-combat-engine-spec.md`](./11-combat-engine-spec.md) | Manual combat tracker (MVP): initiative, turn state, action economy, condition expiration. Auto-resolve = future. | 00, 01 | 🟡 |
+| 12 | [`12-spell-system-spec.md`](./12-spell-system-spec.md) | Slot tables, multiclass calculator, Pact Magic, concentration, AoE geometry. | 00, 01 | 🟡 |
+| 13 | [`13-damage-resolver-spec.md`](./13-damage-resolver-spec.md) | Attack pipeline: crit, resistance/vuln/immunity, save-half, temp HP, concentration check. | 00, 01, 11 | 🟡 |
+| 14 | [`14-package-system-redesign.md`](./14-package-system-redesign.md) | DnD5e-native typed package format. Import/merge, UUID remap, conflict resolution. | 01 | 🟡 |
 
 ## Phase 3: Online Multiplayer Specs (Sprint 5-7)
 
 | # | Filename | Purpose | Deps | Status |
 |---|---|---|---|---|
-| 20 | `20-supabase-schema.md` | Tables: `game_sessions`, `session_participants`, `shared_battle_maps`, `player_actions`, `player_drawings`, `combat_state` (broadcast snapshot only — authoritative state local). RLS policies. Indexes. | 01 | ⚪ |
-| 21 | `21-realtime-protocol.md` | Broadcast channel naming (`session:{code}:battlemap`, `:combat`, `:projection`, `:presence`). Event envelope schema. Delta vs snapshot heuristic. Reconnection / sequence number / conflict strategy. | 20 | ⚪ |
-| 22 | `22-online-game-flow.md` | Game code generation (entropy, collision avoidance), DM/player join, role assignment, disconnect/reconnect handling, persistent vs ephemeral state distinction. | 20, 21 | ⚪ |
-| 23 | `23-battlemap-sync-protocol.md` | DM↔player fog/draw/token sync. DM is source of truth; players can draw (their own strokes) and DM can erase any stroke. Bandwidth budget per event class. | 21 | ⚪ |
-| 24 | `24-player-action-protocol.md` | Player visual AoE marker flow: select spell/action → preview valid range + AoE shape → confirm → broadcast marker → DM resolves manually. MVP: no auto-spell-slot decrement, no auto-damage. | 12, 21 | ⚪ |
-| 25 | `25-second-screen-integration.md` | `ProjectionOutput` extension to online mode. Single DM → fan-out pipeline (local window + screencast + remote players). Reuse `BattleMapSnapshot` and `EntitySnapshot`. | 21 | ⚪ |
+| 20 | [`20-supabase-schema.md`](./20-supabase-schema.md) | Tables, RLS policies, indexes for game sessions. | 01 | 🟡 |
+| 21 | [`21-realtime-protocol.md`](./21-realtime-protocol.md) | Channel naming, event envelope, sequence numbers, snapshot vs delta. | 20 | 🟡 |
+| 22 | [`22-online-game-flow.md`](./22-online-game-flow.md) | Game code generation, DM/player join, lobby, role assignment, disconnect handling. | 20, 21 | 🟡 |
+| 23 | [`23-battlemap-sync-protocol.md`](./23-battlemap-sync-protocol.md) | DM↔player fog/draw/token sync. DM authority model, bandwidth budget. | 21 | 🟡 |
+| 24 | [`24-player-action-protocol.md`](./24-player-action-protocol.md) | Player visual AoE marker. MVP: no auto-resolve. | 12, 21 | 🟡 |
+| 25 | [`25-second-screen-integration.md`](./25-second-screen-integration.md) | ProjectionOutput → fan-out (local + Supabase). | 21 | 🟡 |
 
 ## Phase 4: UI/UX Design Specs (Sprint 6-8, parallel with Phase 3)
 
 | # | Filename | Purpose | Deps | Status |
 |---|---|---|---|---|
-| 30 | `30-responsive-design-system.md` | Breakpoints (mobile <600w, tablet 600-1200w, desktop >1200w). Adaptive widget pattern: `LayoutBuilder` + `MediaQuery`. Touch vs mouse vs stylus interaction matrix. Platform conventions (BottomNav / NavigationRail / Sidebar). | — | ⚪ |
-| 31 | `31-ui-component-library.md` | DnD5e-specific reusable widgets: `AbilityScoreInput`, `DiceRoller`, `SpellSlotTracker`, `HPTracker`, `ConditionBadge`, `StatBlockCard`, `AoEMarkerOverlay`, `WeaponMasteryChip`, `RestPanel`. | 01, 30 | ⚪ |
-| 32 | `32-character-sheet-views.md` | DM vs player view, private/public field split (e.g., DM sees monster HP exact; players see Bloodied only). Mobile/tablet/desktop layouts. Print-friendly export mode. | 01, 30, 31 | ⚪ |
-| 33 | `33-battlemap-interaction-spec.md` | Pan/zoom (touch + mouse + trackpad), token drag with speed-limit visualization, drawing tools (line/freehand/shape), measurement tools (ruler/circle), AoE placement with snap-to-grid, fog brushes. Touch vs mouse gesture matrix. | 23, 30 | ⚪ |
+| 30 | [`30-responsive-design-system.md`](./30-responsive-design-system.md) | Breakpoints, adaptive widget pattern, touch vs mouse vs stylus. | — | 🟡 |
+| 31 | [`31-ui-component-library.md`](./31-ui-component-library.md) | 24 DnD5e-specific reusable widgets. | 01, 30 | 🟡 |
+| 32 | [`32-character-sheet-views.md`](./32-character-sheet-views.md) | DM vs player views, field visibility matrix, mobile/tablet/desktop layouts. | 01, 30, 31 | 🟡 |
+| 33 | [`33-battlemap-interaction-spec.md`](./33-battlemap-interaction-spec.md) | Pan/zoom, token drag, drawing tools, measurement, AoE placement, fog brushes. | 23, 30 | 🟡 |
 
 ## Phase 5: Quality & Operations (Sprint 8+)
 
 | # | Filename | Purpose | Deps | Status |
 |---|---|---|---|---|
-| 40 | `40-testing-strategy.md` | Unit (rules — 100+ scenarios per attack/save/damage), widget (UI components), integration (combat scenarios end-to-end), golden (stat block / character sheet rendering), network (Supabase mock). Coverage targets per layer. | 00-33 | ⚪ |
-| 41 | `41-security-and-privacy.md` | Game code entropy (8+ char alphanumeric), Supabase RLS audit, player PII handling, anti-cheat policy (trust-based — no server-side dice; rely on accountability). | 20-22 | ⚪ |
-| 42 | `42-fresh-start-db-reset.md` | Drift v5 = drop+recreate. No migration script provided. User-facing release notice. Backup recommendation prior to upgrade. | 03 | ⚪ |
-| 43 | `43-i18n-localization-spec.md` | `intl` package setup, `.arb` files (en, tr), key naming conventions, language switcher UX, SRD content English-only justification (CC BY 4.0 attribution must remain unmodified for licensed text). | 30 | ⚪ |
+| 40 | [`40-testing-strategy.md`](./40-testing-strategy.md) | Unit/widget/golden/integration/network test layers. Coverage targets. | 00-33 | 🟡 |
+| 41 | [`41-security-and-privacy.md`](./41-security-and-privacy.md) | Threat model, RLS audit, anti-cheat policy (trust-based), PII. | 20-22 | 🟡 |
+| 42 | [`42-fresh-start-db-reset.md`](./42-fresh-start-db-reset.md) | Drift v5 = drop+recreate. User-facing notice. Optional backup. | 03 | 🟡 |
+| 43 | [`43-i18n-localization-spec.md`](./43-i18n-localization-spec.md) | `intl` setup, `.arb` files (en/tr). SRD content English-only. | 30 | 🟡 |
 
 ---
 
