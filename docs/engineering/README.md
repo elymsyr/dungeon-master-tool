@@ -575,6 +575,44 @@ Serialize/deserialize `Dnd5ePackage` ↔ JSON. Unblocks Doc 14's file-format par
 
 11 new tests: codec round-trip on realistic fixture (1), encode idempotency (1), minimal-payload defaults (1), missing-required-field FormatException (1), wrong-type list FormatException with field name (1), null description preserved (1). Reader JSON-string parse (1), malformed JSON rejected (1), non-object root rejected (1). Writer compact-mode single-line (1), pretty-mode round-trips through reader (1).
 
+### 2026-04-19 — Doc 15 Tier 1 catalog per-entity codecs (🟣 partial)
+
+Second Doc 15 landing. Bridges opaque `CatalogEntry.bodyJson` strings ↔ typed Tier 1 domain objects for all 12 catalog classes. Unblocks SRD content authoring (JSON → domain) and lets `CharacterDraftValidator` eventually consume the live catalog registry.
+
+**New code:**
+
+| File | Purpose |
+|---|---|
+| [`domain/dnd5e/catalog/catalog_json_codecs.dart`](../../flutter_app/lib/domain/dnd5e/catalog/catalog_json_codecs.dart) | Top-level `xxxFromEntry(CatalogEntry) → X` + `xxxToEntry(X) → CatalogEntry` pairs for Condition, DamageType, Skill, Size, CreatureType, Alignment, Language, SpellSchool, WeaponProperty, WeaponMastery, ArmorCategory, Rarity. Preconditions: entry ids are **already namespaced** (`srd:stunned`, not `stunned`) — caller handles via `CatalogEntry.namespaced(slug)`. |
+
+**Wire shape per class** (`body` JSON object):
+- Condition: `{"description": string}` — effects deferred
+- DamageType: `{"physical": bool}`
+- Skill: `{"ability": Ability.name}`  (`"strength"` … `"charisma"`)
+- Size: `{"spaceFt": num, "tokenScale": num}`
+- CreatureType: `{}`
+- Alignment: `{"lawChaos": LawChaosAxis.name, "goodEvil": GoodEvilAxis.name}`
+- Language: `{"script": string|null}`
+- SpellSchool: `{"color": "#RRGGBB"|null}`
+- WeaponProperty: `{"flags": [PropertyFlag.name, ...], "description": string|null}` — flags serialize sorted for stable output
+- WeaponMastery: `{"description": string}`
+- ArmorCategory: `{"stealthDisadvantage": bool, "maxDexCap": int|null}`
+- Rarity: `{"sortOrder": int, "attunementTierReq": int|null}`
+
+**Behaviour locked:**
+- **FormatException prefix is the entry id.** Every decode error ships as `<entry.id>: <reason>`, e.g. `srd:stealth: field "ability" has unknown enum value "bogus".` Lets importer logs point at the offending entry without extra context.
+- **Missing optionals take domain defaults** (Condition.description = '', DamageType.physical = false, …). Explicit `null` on a nullable field stays null.
+- **Unknown keys ignored** for forward compatibility.
+- **Enum values use `.name`** (not toString, not index) — stable wire vocabulary independent of declaration order.
+- **WeaponProperty.flags sorted** on encode so the emitted body is deterministic regardless of Set iteration order.
+
+**Deferred (still remainder of Doc 15):**
+- **`Spell.fromJson` / `Monster.fromJson` / `Item.fromJson` / `Subclass.fromJson`** — Tier 2 content codecs. More involved (`CastingTime`, `SpellRange`, `AreaOfEffect`, full `StatBlock`, …). Separate turn.
+- **`EffectDescriptor` codec** — Condition.effects and every other effect-carrying class (spells, weapons, feats) need this. Wide surface.
+- Everything already listed in the Doc 15 file-format codec entry above (SRD content, build_srd_pkg, SrdBootstrapService, 9 CustomEffect impls, CC BY 4.0 UI, upgrade flow).
+
+27 new tests: Condition (3), DamageType (2), Skill (3), Size (2), CreatureType (1), Alignment (2), Language (2), SpellSchool (2), WeaponProperty (4), WeaponMastery (1), ArmorCategory (2), Rarity (2), shared FormatException-prefix-is-entry-id (1).
+
 ### Current test totals
 
-`flutter analyze`: 0 issues. `flutter test`: **736 / 736 passing, 1 skipped** (was 725 at end of Doc 10; +11 Doc 15 file-format codec tests added).
+`flutter analyze`: 0 issues. `flutter test`: **763 / 763 passing, 1 skipped** (was 736 at end of Doc 15 file-format codec; +27 Tier 1 catalog codec tests added).
