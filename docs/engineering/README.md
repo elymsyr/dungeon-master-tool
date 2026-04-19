@@ -192,6 +192,29 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 13 EffectAccumulator (🟣) — Phase C reducer over EffectDescriptor
+
+Second slice of the EffectDescriptor dispatch layer. Consumes the just-shipped `PredicateEvaluator` to fold a `List<EffectDescriptor>` into three structured contribution buckets that downstream resolvers (`AttackResolver` / `DamageResolver` / `SaveResolver`) consume.
+
+Files added:
+- `lib/application/dnd5e/effect/effect_accumulator.dart` — three reducer methods on `EffectAccumulator` plus three contribution structs:
+  - `accumulateAttack(descriptors, ctx, {appliesTo})` → `AttackContribution { flatBonus, advantage, extraDice }`. Filters `ModifyAttackRoll` only; respects `appliesTo` (attacker vs targeted side); combines `AdvantageState` via `combine` (SRD cancellation rule).
+  - `accumulateDamage(descriptors, ctx)` → `DamageContribution { flatBonus, extraDice, extraTypedDice, damageTypeOverride }`. Filters `ModifyDamageRoll`; concatenates `extraDice`/`extraTypedDice`; `damageTypeOverride` is the last non-null override in iteration order.
+  - `accumulateSave(descriptors, ctx, {required ability})` → `SaveContribution { flatBonus, advantage, autoSucceed, autoFail }`. Filters `ModifySave` matching the requested ability. Both auto-flags surfaced — precedence is the resolver's job (`SaveResolver` already prefers autoFail).
+  - All three skip descriptors where `evaluator.evaluate(when, ctx)` is false.
+- `test/application/dnd5e/effect/effect_accumulator_test.dart` — 15 tests in 4 groups: attack (empty, sum, advantage cancel, when-gating, appliesTo filter, extraDice order), damage (empty, sum + extras, override last-wins, when-gating), save (empty, ability filter, both auto flags, advantage cancel, when-gating), non-modify descriptors ignored across all three accumulators.
+
+Decisions:
+- **Three reducer methods, not one polymorphic one** — each contribution shape is genuinely different (advantage vs not, ability filter vs not). Splitting keeps callers from passing junk parameters.
+- **`damageTypeOverride` last-wins, not first-wins or throw** — matches "later descriptor wins" intuition for layered effects (e.g. Elemental Adept on top of weapon damage type). Documented in the dartdoc; content authors who care about determinism order their lists.
+- **Both `autoSucceed` and `autoFail` surfaced when present from different descriptors** — accumulator is dumb folder, resolver decides. Avoids duplicating the precedence rule in two places.
+- **Non-modify descriptors silently ignored** (`Heal`, `GrantCondition`, `GrantProficiency`, …) — they have different lifecycle hooks (heal at end of turn / spell cast, grant on apply, …). Throwing here would force callers to pre-filter; ignoring lets them pass the unfiltered descriptor list straight from the entity.
+- **`PredicateEvaluator` injected via constructor with `const` default** — accumulator and evaluator both stateless, but the seam is there for tests that want to mock predicate evaluation without building real `EffectContext`s.
+
+Verification: `flutter analyze` 0 issues, `flutter test` 1288/1288 pass (1 skipped). +18 tests this turn.
+
+Next candidates: wire `EffectAccumulator` into `AttackResolver`/`DamageResolver`/`SaveResolver` call sites at the `EncounterService` boundary (needs `Combatant.copyWith` sweep first, since the service is the one collecting active descriptors per combatant), `Combatant.copyWith` sweep itself, or the Phase A structural unblock (Doc 04 Step 5/7 + Doc 42 wiring — still gated on `_backupV4DbBeforeReset`).
+
 ### 2026-04-19 — Doc 13 PredicateEvaluator (🟣) — Phase C effect-dispatch foundation
 
 First slice of the EffectDescriptor dispatch layer. Pure recursive evaluator over the sealed `Predicate` family — the `when:` field on every `ModifyAttackRoll` / `ModifyDamageRoll` / `ModifySave` / `ModifyAc` will run through this. No live combatant references; caller flattens state into `EffectContext`.
