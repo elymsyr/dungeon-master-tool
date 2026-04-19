@@ -143,7 +143,7 @@ The built-in dnd5e module ships **mechanics only** (rules engine, typed shapes, 
 |---|---|---|---|---|
 | 40 | [`40-testing-strategy.md`](./40-testing-strategy.md) | Unit/widget/golden/integration/network test layers. Coverage targets. | 00-33 | ⚪ |
 | 41 | [`41-security-and-privacy.md`](./41-security-and-privacy.md) | Threat model, RLS audit, anti-cheat policy (trust-based), PII. | 20-22 | ⚪ |
-| 42 | [`42-fresh-start-db-reset.md`](./42-fresh-start-db-reset.md) | Drift v5 = drop+recreate. User-facing notice. Optional backup. | 03 | ⚪ |
+| 42 | [`42-fresh-start-db-reset.md`](./42-fresh-start-db-reset.md) | Drift v5 = drop+recreate. User-facing notice. Optional backup. | 03 | 🟣 |
 | 43 | [`43-i18n-localization-spec.md`](./43-i18n-localization-spec.md) | `intl` setup, `.arb` files (en/tr). SRD content English-only. | 30 | ⚪ |
 
 ---
@@ -490,6 +490,31 @@ Pure-function pipeline pieces for the attack → damage → save flow. Builds on
 
 37 new tests: D20Roller advantage/disadvantage/normal + nat-20/nat-1 detection (4), AttackResolver hit/miss/crit/fumble/cover/advantage/flatBonus (8), TypedDamage guards (6), MultiTypeDamageResolver per-type mitigation + save-half + temp HP + drop-to-zero + Massive Damage + death-save accrual + concentration DC (13), SaveResolver pass/fail/auto-succeed/auto-fail precedence/advantage/flatBonus (7).
 
+### 2026-04-19 — Doc 42 fresh-start reset primitives (🟣 partial)
+
+Pure purger + bootstrap glue for the v4→v5 reset flow. All three primitives are shippable now; wiring into `main.dart::_BootstrapGate` is deferred until Doc 04 Step 7 (drift v5 drop+recreate) lands — otherwise the "your data has been removed" dialog would fire before the DB has actually been dropped.
+
+**New code:**
+
+| File | Purpose |
+|---|---|
+| [`data/storage/legacy_data_purger.dart`](../../flutter_app/lib/data/storage/legacy_data_purger.dart) | `LegacyDataPurger` — deletes `templates/` / `package_cache_v4/` / `rule_eval_cache/` under an injected `cacheRoot` and removes `template_*` / `rule_*` keys from an injected `SharedPreferences`. Returns a `PurgeReport` so callers can distinguish fresh-install from v4-upgrade. Best-effort: locked-file errors on Windows are swallowed rather than aborting startup. |
+| [`data/storage/v5_reset_bootstrap.dart`](../../flutter_app/lib/data/storage/v5_reset_bootstrap.dart) | `V5ResetBootstrap.runIfNeeded` — idempotent wrapper. Checks `v5_reset_complete` flag; if already true → `alreadyComplete`. Otherwise runs the purger, sets the flag, and classifies the result as `freshInstall` (nothing removed) or `upgradedFromV4` (something removed → upgrade dialog should show). |
+| [`presentation/dialogs/v5_upgrade_notice_dialog.dart`](../../flutter_app/lib/presentation/dialogs/v5_upgrade_notice_dialog.dart) | `V5UpgradeNoticeDialog.show(context, backupPath)` — one-time Material `AlertDialog` explaining the Template→native-D&D-5e switch. Optional `backupPath` slot surfaces the v4 DB copy when the optional backup step lands. |
+
+**Behaviour locked:**
+- **Fresh install vs upgrade disambiguated by purge report, not by Drift migration hook.** Before Doc 04 Step 7 lands, the Drift `from < 5` migration doesn't fire (schema already starts at v7 on fresh installs). The purger's removal count is the only reliable "this device had v4 data" signal available to the reset-flag path.
+- **Prefs key `v5_reset_complete` is sticky.** Once set, subsequent launches skip the purger entirely — no repeated dialogs, no scanning of an empty cache dir.
+- **Purger is injection-friendly.** Takes `cacheRoot` + `SharedPreferences` as constructor args so tests run on `Directory.systemTemp.createTemp` with `SharedPreferences.setMockInitialValues` — no `path_provider` plugin needed at test time.
+- **Non-legacy prefs survive.** Only prefixes `template_` and `rule_` are touched; `welcome_seen`, theme, locale, and every other stored key is preserved.
+
+**Deferred (remainder of Doc 42):**
+- **Bootstrap wiring** — `_BootstrapGate._bootstrap()` should call `V5ResetBootstrap(cacheRoot: AppPaths.cacheDir).runIfNeeded()` after `AppPaths.initialize()`, stash the `V5ResetOutcome` in a provider, and have `DungeonMasterApp` consume it to show `V5UpgradeNoticeDialog` via `addPostFrameCallback`. Blocked on Doc 04 Step 7 so the dialog's "your data has been removed" copy is actually true.
+- **Optional v4 DB backup** — `_backupV4DbBeforeReset` copies `dmt.sqlite` to `{appDocs}/backups/{timestamp}_v4_db.sqlite` before the Drift migration runs. Lives alongside the drift migration, so it also lands with Doc 04 Step 7.
+- **Release notes copy** — content is authored in [`42-fresh-start-db-reset.md`](./42-fresh-start-db-reset.md); goes into the v5.0.0 `CHANGELOG.md` section once the release is cut.
+
+9 new tests: `LegacyDataPurger` no-op on clean cache, removes legacy dirs but not siblings, removes legacy prefs keys but not siblings, `hasAnyRemovals` truthiness, idempotency (5). `V5ResetBootstrap` alreadyComplete short-circuit, freshInstall classification, upgradedFromV4 classification, sticky-flag on subsequent runs (4).
+
 ### Current test totals
 
-`flutter analyze`: 0 issues. `flutter test`: **664 / 664 passing, 1 skipped** (was 627 at end of Doc 12; +37 Doc 13 attack/damage/save pipeline tests added).
+`flutter analyze`: 0 issues. `flutter test`: **673 / 673 passing, 1 skipped** (was 664 at end of Doc 13; +9 Doc 42 reset-primitive tests added).
