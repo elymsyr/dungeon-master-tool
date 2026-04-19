@@ -192,6 +192,25 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 13 PredicateEvaluator (🟣) — Phase C effect-dispatch foundation
+
+First slice of the EffectDescriptor dispatch layer. Pure recursive evaluator over the sealed `Predicate` family — the `when:` field on every `ModifyAttackRoll` / `ModifyDamageRoll` / `ModifySave` / `ModifyAc` will run through this. No live combatant references; caller flattens state into `EffectContext`.
+
+Files added:
+- `lib/application/dnd5e/effect/effect_context.dart` — value type with `attackerConditions`/`targetConditions` (Sets of `ContentReference<Condition>`), `attackReach` (`enum AttackReach { none, melee, ranged }`), `attackAbility`, `weaponProperties`, `damageTypeId`, `isCritical`, `hasAdvantage`, `activeEffectIds`. All sets `Set.unmodifiable` at construction. Defaults are conservative (`none` reach, false flags, empty sets) so non-attack contexts can omit attack fields.
+- `lib/application/dnd5e/effect/predicate_evaluator.dart` — `const PredicateEvaluator()` with single `bool evaluate(Predicate, EffectContext)` method. Sealed `switch` covers all 12 predicate cases. `Always` true, `Not` flips, `All` vacuously true on empty list, `Any` false on empty list.
+- `test/application/dnd5e/effect/predicate_evaluator_test.dart` — 17 tests in 5 groups: atoms (`Always`/`IsCritical`/`HasAdvantage`), combinators (`Not`/`All`/`Any` plus empty-list edge cases plus nested combinator), attacker/target conditions (id match, attacker conditions don't satisfy target predicate), attack-shape (`AttackIsMelee`/`AttackIsRanged` reach gating, `AttackUsesAbility` ability match), weapon/damage/effect (`WeaponHasProperty`/`DamageTypeIs`/`EffectActive` id match).
+
+Decisions:
+- **Three-state attack reach (`none`/`melee`/`ranged`)** — neither `AttackIsMelee` nor `AttackIsRanged` should fire when the predicate is evaluated outside an attack (e.g. a passive feature checking carrier conditions). A nullable bool would have collapsed to `false` and silently behaved the same, but the enum makes the third state explicit at the call site.
+- **`damageTypeId` nullable** — only set during a damage roll. `DamageTypeIs` returns false on null context, matching the "don't fire outside a damage roll" intent.
+- **Empty `All` is true, empty `Any` is false** — the standard fold identities. Avoids a special-case for "no constraints" lists since codecs may emit empty `All`/`Any` from empty JSON arrays.
+- **No registry lookups in the evaluator** — `EffectActive(effectId)` checks against pre-flattened `activeEffectIds`. The caller (combat service) is the one that knows the active effect set; the evaluator stays a pure function of its two arguments.
+
+Verification: `flutter analyze` 0 issues, `flutter test` 1270/1270 pass (1 skipped). +18 tests this turn.
+
+Next candidates: `EffectAccumulator` (consumes `PredicateEvaluator` to reduce a `List<EffectDescriptor>` into `AttackContribution`/`DamageContribution`/`SaveContribution` for `AttackResolver`/`DamageResolver`/`SaveResolver`), `Combatant.copyWith` sweep (still the biggest single unblock for `EncounterService`), or the Phase A structural unblock (Doc 04 Step 5/7 + Doc 42 wiring).
+
 ### 2026-04-19 — Doc 12 SpellCastValidator + Service: Pact Magic (🟣) — Phase C Warlock support
 
 Extends the already-shipped `SpellCastValidator` + `SpellCastService` + `CastOutcome` trio with Warlock pact-magic casting. Pact slots live in their own table (`PactMagicSlots`: single level, refresh on short rest), so the validator/service must branch on which pool to spend.
