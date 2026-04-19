@@ -81,6 +81,7 @@ flutter:
   assets:
     - assets/app_icon_transparent.png
     - assets/profanity/
+    - assets/packages/srd_core.dnd5e-pkg.json
 
 flutter_launcher_icons:
   android: true
