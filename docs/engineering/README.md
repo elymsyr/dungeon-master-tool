@@ -192,6 +192,16 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 Lineage codec (🟣) — Tier 2 entity codec #8
+
+Shipped `flutter_app/lib/domain/dnd5e/character/lineage_json_codec.dart` — `lineageFromEntry(CatalogEntry)` + `lineageToEntry(Lineage)`. Body shape `{"parentSpeciesId": String, "effects"?: [<effect>...], "description"?: String}`. Engine merges parent Species effects with Lineage effects at character build time per `lineage.dart` doc comment — codec just passes `parentSpeciesId` as an opaque `ContentReference<Species>` string. Pattern mirrors `species_json_codec.dart` minus the sizeId/baseSpeedFt fields (those live on the parent Species).
+
+- New files: `domain/dnd5e/character/lineage_json_codec.dart`.
+- Tests: 7 new (`test/domain/dnd5e/character/lineage_json_codec_test.dart`) — minimal round-trip (High Elf → srd:elf), full round-trip with `GrantProficiency` effect, empty-field omission, valid-JSON structure check, decode errors for missing parentSpeciesId / non-array effects / malformed JSON.
+- Result: `flutter analyze` clean, 1017/1017 tests pass (1010 → 1017, +7).
+- Tier 2 content codec status: Spell ✓, Monster ✓, Item ✓, Subclass ✓, Species ✓, Background ✓, Feat ✓, **Lineage ✓** (new). Remaining: **CharacterClass** (last one — spellcasting table, features-by-level, subclass-gate).
+- Next: CharacterClass codec closes the Tier 2 codec surface entirely; after that, Phase B transitions fully to SRD asset authoring.
+
 ### 2026-04-19 — Doc 15 Feat codec (🟣) — Tier 2 entity codec #7
 
 Shipped `flutter_app/lib/domain/dnd5e/character/feat_json_codec.dart` — `featFromEntry(CatalogEntry)` + `featToEntry(Feat)`. Body shape `{"category": String, "repeatable"?: bool, "prerequisite"?: String, "effects"?: [<effect>...], "description"?: String}`. `category` encodes `FeatCategory.name` (origin / general / fightingStyle / epicBoon) per project convention of `.name` for enum wire format. `repeatable` omitted when false; `prerequisite` is free-form string for UI (machine-checked prereqs live inside effects as `Predicate`s per `feat.dart` doc comment).
