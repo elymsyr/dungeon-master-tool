@@ -1,0 +1,16 @@
+[
+  {"id": "aberration", "name": "Aberration", "body": {}},
+  {"id": "beast", "name": "Beast", "body": {}},
+  {"id": "celestial", "name": "Celestial", "body": {}},
+  {"id": "construct", "name": "Construct", "body": {}},
+  {"id": "dragon", "name": "Dragon", "body": {}},
+  {"id": "elemental", "name": "Elemental", "body": {}},
+  {"id": "fey", "name": "Fey", "body": {}},
+  {"id": "fiend", "name": "Fiend", "body": {}},
+  {"id": "giant", "name": "Giant", "body": {}},
+  {"id": "humanoid", "name": "Humanoid", "body": {}},
+  {"id": "monstrosity", "name": "Monstrosity", "body": {}},
+  {"id": "ooze", "name": "Ooze", "body": {}},
+  {"id": "plant", "name": "Plant", "body": {}},
+  {"id": "undead", "name": "Undead", "body": {}}
+]

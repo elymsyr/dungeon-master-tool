@@ -1,0 +1,6 @@
+[
+  {"id": "light", "name": "Light", "body": {"stealthDisadvantage": false, "maxDexCap": null}},
+  {"id": "medium", "name": "Medium", "body": {"stealthDisadvantage": false, "maxDexCap": 2}},
+  {"id": "heavy", "name": "Heavy", "body": {"stealthDisadvantage": true, "maxDexCap": 0}},
+  {"id": "shield", "name": "Shield", "body": {"stealthDisadvantage": false, "maxDexCap": null}}
+]

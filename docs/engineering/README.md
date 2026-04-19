@@ -192,6 +192,33 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 SRD armor categories asset (🟣)
+
+Shipped `flutter_app/assets/packages/srd_core/armor_categories.json` with 4 SRD armor categories — Light, Medium, Heavy, Shield. Body is `{"stealthDisadvantage": bool, "maxDexCap": int?}`. Canonical values: Light `null`/`false` (Dex uncapped, no stealth penalty), Medium `2`/`false` (+2 Dex cap, per-armor override for stealth), Heavy `0`/`true` (Dex contributes nothing, stealth disadvantage), Shield `null`/`false` (shields don't cap Dex — they add flat AC, modeled separately at item level). Count follows `armor_category.dart` dartdoc (4) rather than the plan table (3); Shield is a first-class category because it composes orthogonally with body armor.
+
+- New assets: `assets/packages/srd_core/armor_categories.json`.
+- Tests: 7 new (`test/assets/packages/srd_core/armor_categories_asset_test.dart`) — parse all 4, namespace + uniqueness, canonical 4-set, per-category dex-cap + stealth flag checks.
+- Result: `flutter analyze` clean, 954/954 tests pass (947 → 954, +7).
+- Next: rarities (6), weapon masteries (5), spell schools (8), or larger: languages (~16), weapon properties (~14).
+
+### 2026-04-19 — Doc 15 SRD alignments asset (🟣)
+
+Shipped `flutter_app/assets/packages/srd_core/alignments.json` with the 10 SRD alignments — the 3×3 L/N/C × G/N/E grid plus Unaligned. Body is `{"lawChaos": <LawChaosAxis.name>, "goodEvil": <GoodEvilAxis.name>}`. True Neutral keeps the SRD display name "Neutral" with id `srd:true_neutral` to avoid a namespace clash on the neutral axis values. Unaligned maps both axes to `unaligned` (Tier 0 enum fourth variant) — monsters like oozes and non-sentient beasts use this.
+
+- New assets: `assets/packages/srd_core/alignments.json`.
+- Tests: 8 new (`test/assets/packages/srd_core/alignments_asset_test.dart`) — parse all 10, namespace + uniqueness, canonical 10-set, 3×3 grid coverage check, per-corner value check (LG, CE), True Neutral name + axes, Unaligned uses `unaligned` enum value on both axes.
+- Result: `flutter analyze` clean, 947/947 tests pass (939 → 947, +8).
+- Next: armor categories (3), rarities (6), or weapon masteries (5).
+
+### 2026-04-19 — Doc 15 SRD creature types asset (🟣)
+
+Shipped `flutter_app/assets/packages/srd_core/creature_types.json` with the 14 SRD creature types (Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead). Body is the empty object `{}` — creature types carry no domain fields beyond id/name; monsters reference them by id for tagging/filtering + tags-to-effects interaction (e.g. Radiant bonus vs Undead/Fiends).
+
+- New assets: `assets/packages/srd_core/creature_types.json`.
+- Tests: 4 new (`test/assets/packages/srd_core/creature_types_asset_test.dart`) — parse all 14, namespace + uniqueness, canonical 14-set match, names Title Case.
+- Result: `flutter analyze` clean, 939/939 tests pass (935 → 939, +4).
+- Next: alignments (10, two enum axes) or armor categories (3).
+
 ### 2026-04-19 — Doc 15 SRD sizes asset (🟣)
 
 Shipped `flutter_app/assets/packages/srd_core/sizes.json` with the 6 SRD creature sizes (Tiny, Small, Medium, Large, Huge, Gargantuan). Body carries the two `Size` domain fields — `spaceFt` (square side the creature occupies) and `tokenScale` (multiplier relative to a 1×1 Medium token). Canonical values: Tiny 2.5ft/×0.5, Small 5ft/×1, Medium 5ft/×1, Large 10ft/×2, Huge 15ft/×3, Gargantuan 20ft/×4 (per SRD 5.2.1 + doc 00 §Glossary).

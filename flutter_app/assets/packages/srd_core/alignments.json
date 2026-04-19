@@ -1,0 +1,12 @@
+[
+  {"id": "lawful_good", "name": "Lawful Good", "body": {"lawChaos": "lawful", "goodEvil": "good"}},
+  {"id": "neutral_good", "name": "Neutral Good", "body": {"lawChaos": "neutral", "goodEvil": "good"}},
+  {"id": "chaotic_good", "name": "Chaotic Good", "body": {"lawChaos": "chaotic", "goodEvil": "good"}},
+  {"id": "lawful_neutral", "name": "Lawful Neutral", "body": {"lawChaos": "lawful", "goodEvil": "neutral"}},
+  {"id": "true_neutral", "name": "Neutral", "body": {"lawChaos": "neutral", "goodEvil": "neutral"}},
+  {"id": "chaotic_neutral", "name": "Chaotic Neutral", "body": {"lawChaos": "chaotic", "goodEvil": "neutral"}},
+  {"id": "lawful_evil", "name": "Lawful Evil", "body": {"lawChaos": "lawful", "goodEvil": "evil"}},
+  {"id": "neutral_evil", "name": "Neutral Evil", "body": {"lawChaos": "neutral", "goodEvil": "evil"}},
+  {"id": "chaotic_evil", "name": "Chaotic Evil", "body": {"lawChaos": "chaotic", "goodEvil": "evil"}},
+  {"id": "unaligned", "name": "Unaligned", "body": {"lawChaos": "unaligned", "goodEvil": "unaligned"}}
+]
