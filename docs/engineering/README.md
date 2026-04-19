@@ -192,6 +192,16 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 CharacterClass codec (🟣) — Tier 2 entity codec #9 (codec surface COMPLETE)
+
+Shipped `flutter_app/lib/domain/dnd5e/character/character_class_json_codec.dart` — `characterClassFromEntry(CatalogEntry)` + `characterClassToEntry(CharacterClass)`. Body shape `{"hitDie": String, "casterKind": String, "spellcastingAbility"?: String, "savingThrows"?: [String...], "featureTable"?: [<row>...], "casterFraction"?: num, "description"?: String}`. Each row: `{"level": int, "featureIds"?: [String...], "effects"?: [<effect>...]}`. All enums (`Die`, `CasterKind`, `Ability`) encoded via `.name`. `casterFraction` omitted when it equals the default for `casterKind` (0/1.0/0.5/1/3/0 for none/full/half/third/pact) — homebrew fractional casters still round-trip exactly. Feature rows sorted by level on encode for deterministic output, matching subclass codec pattern.
+
+- New files: `domain/dnd5e/character/character_class_json_codec.dart`.
+- Tests: 14 new (`test/domain/dnd5e/character/character_class_json_codec_test.dart`) — minimal non-caster round-trip (Fighter d10), full caster round-trip (Wizard d6 + INT saves + spellcasting ability + 2-row featureTable with GrantProficiency effect), per-CasterKind enum loop, per-Die enum loop, feature-table sort on encode, default-field omission, enum `.name` encoding (hitDie/casterKind/spellcastingAbility/savingThrows), non-default casterFraction emission, decode errors for missing hitDie / unknown Die / unknown CasterKind / unknown Ability in savingThrows / row missing level / malformed JSON.
+- Result: `flutter analyze` clean, 1031/1031 tests pass (1017 → 1031, +14).
+- Tier 2 content codec status: Spell ✓, Monster ✓, Item ✓, Subclass ✓, Species ✓, Background ✓, Feat ✓, Lineage ✓, **CharacterClass ✓** (new). **Phase A codec surface is now 100% complete** — every Tier 1/Tier 2 content type has a round-tripping JSON codec.
+- Next: Phase B pivots fully to SRD asset authoring (Tier 2 entities: 9 species, 16 backgrounds, ~40 feats, 12 classes + subclasses, lineages, ~361 spells, ~320 monsters, ~300 items — batches of ~50 for the large sets). The `tool:build_srd_pkg` CLI + `SrdBootstrapService` is the non-blocking side track that makes per-asset tests unnecessary once the monolith builder exists.
+
 ### 2026-04-19 — Doc 15 Lineage codec (🟣) — Tier 2 entity codec #8
 
 Shipped `flutter_app/lib/domain/dnd5e/character/lineage_json_codec.dart` — `lineageFromEntry(CatalogEntry)` + `lineageToEntry(Lineage)`. Body shape `{"parentSpeciesId": String, "effects"?: [<effect>...], "description"?: String}`. Engine merges parent Species effects with Lineage effects at character build time per `lineage.dart` doc comment — codec just passes `parentSpeciesId` as an opaque `ContentReference<Species>` string. Pattern mirrors `species_json_codec.dart` minus the sizeId/baseSpeedFt fields (those live on the parent Species).
