@@ -192,6 +192,15 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 Condition.effects wired to EffectDescriptor codec (🟣)
+
+`conditionToEntry` / `conditionFromEntry` now serialize `Condition.effects` through the Tier 2 `encodeEffect`/`decodeEffect` bridge. `effects` key omitted when list empty; non-array and unknown-tag payloads rejected with `<entry.id>:`-prefixed `FormatException`.
+
+- Edited: `domain/dnd5e/catalog/catalog_json_codecs.dart` — added `_decodeEffectList` helper; Condition bodyJson now carries `{"description": ..., "effects": [...]}`.
+- Tests: 4 new (`catalog_json_codecs_test.dart` Condition group) — `ConditionInteraction` round-trip, empty-list elision, non-array rejection, unknown-tag rejection.
+- Result: `flutter analyze` clean, 812/812 tests pass (808 → 812, +4).
+- Unblocks: SRD authoring of the 17 conditions with their rule-engine riders (prone advantage/disadvantage on attacks, restrained speed-zero, stunned auto-fail STR/DEX, blinded invisibleToSight, etc.).
+
 ### 2026-04-19 — Doc 15 EffectDescriptor codec (🟣)
 
 Tagged-union JSON codec for the Tier 2 sealed families: `EffectDescriptor` (11 variants), `Predicate` (14 variants), `EffectDuration` (6 variants), `AcFormula` (4 variants). Keyed on `"t"`; unknown tags fail fast with context-prefixed `FormatException`. Dice stored as canonical string (`DiceExpression.toString()`/`parse`), enums via `.name`, ContentReferences as-is. Defaults elided on encode; decoders fill them back in. Sorted id arrays for deterministic output (`ModifyResistances.add/remove`, `ConditionInteraction.autoFailSavesOf`).

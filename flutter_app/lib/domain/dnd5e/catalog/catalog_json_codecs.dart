@@ -28,20 +28,20 @@ import 'weapon_property_flag.dart';
 /// (see each codec's dartdoc). Missing optional keys take the domain default.
 /// Unknown keys are ignored for forward compatibility.
 ///
-/// `Condition.effects` is intentionally deferred — a future
-/// `EffectDescriptor` codec turn will encode them; decoders here emit `[]`.
+/// `Condition.effects` is serialized via the Tier 2 `effect_descriptor_codec`.
 
 // ----------------------------------------------------------------------------
 // Condition
 // ----------------------------------------------------------------------------
 
-/// `body`: `{"description": String}`. Effects deferred.
+/// `body`: `{"description": String, "effects": [<effect>...]}`.
 Condition conditionFromEntry(CatalogEntry e) {
   final body = _decodeBody(e, 'Condition');
   return Condition(
     id: e.id,
     name: e.name,
     description: _optString(body, 'description', e.id) ?? '',
+    effects: _decodeEffectList(body, 'effects', e.id),
   );
 }
 
@@ -50,8 +50,20 @@ CatalogEntry conditionToEntry(Condition c) => CatalogEntry(
       name: c.name,
       bodyJson: jsonEncode(<String, Object?>{
         'description': c.description,
+        if (c.effects.isNotEmpty)
+          'effects': c.effects.map(encodeEffect).toList(),
       }),
     );
+
+List<EffectDescriptor> _decodeEffectList(
+    Map<String, Object?> body, String key, String ctx) {
+  final raw = body[key];
+  if (raw == null) return const [];
+  if (raw is! List) {
+    throw FormatException('$ctx: "$key" must be an array when present.');
+  }
+  return raw.map((e) => decodeEffect(e, ctx)).toList();
+}
 
 // ----------------------------------------------------------------------------
 // DamageType

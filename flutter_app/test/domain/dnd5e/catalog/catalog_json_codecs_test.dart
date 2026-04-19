@@ -13,6 +13,7 @@ import 'package:dungeon_master_tool/domain/dnd5e/catalog/weapon_mastery.dart';
 import 'package:dungeon_master_tool/domain/dnd5e/catalog/weapon_property.dart';
 import 'package:dungeon_master_tool/domain/dnd5e/catalog/weapon_property_flag.dart';
 import 'package:dungeon_master_tool/domain/dnd5e/core/ability.dart';
+import 'package:dungeon_master_tool/domain/dnd5e/effect/effect_descriptor.dart';
 import 'package:dungeon_master_tool/domain/dnd5e/package/catalog_entry.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -37,6 +38,44 @@ void main() {
 
     test('rejects non-object body', () {
       final e = CatalogEntry(id: 'srd:x', name: 'X', bodyJson: '[]');
+      expect(() => conditionFromEntry(e), throwsFormatException);
+    });
+
+    test('effects round-trip via effect codec', () {
+      final c = Condition(
+        id: 'srd:prone',
+        name: 'Prone',
+        effects: [
+          ConditionInteraction(
+            imposedAdvantageOnAttacksAgainst: true,
+            attacksHaveDisadvantage: true,
+          ),
+        ],
+      );
+      final back = conditionFromEntry(conditionToEntry(c));
+      expect(back.effects, hasLength(1));
+      final first = back.effects.single as ConditionInteraction;
+      expect(first.imposedAdvantageOnAttacksAgainst, true);
+      expect(first.attacksHaveDisadvantage, true);
+    });
+
+    test('empty effects omitted from encoded body', () {
+      final c = Condition(id: 'srd:x', name: 'X');
+      final body = conditionToEntry(c).bodyJson;
+      expect(body.contains('effects'), false);
+    });
+
+    test('rejects non-array effects field', () {
+      final e = CatalogEntry(
+          id: 'srd:x', name: 'X', bodyJson: '{"effects":"bogus"}');
+      expect(() => conditionFromEntry(e), throwsFormatException);
+    });
+
+    test('rejects unknown effect tag in effects list', () {
+      final e = CatalogEntry(
+          id: 'srd:x',
+          name: 'X',
+          bodyJson: '{"effects":[{"t":"bogusEffect"}]}');
       expect(() => conditionFromEntry(e), throwsFormatException);
     });
   });
