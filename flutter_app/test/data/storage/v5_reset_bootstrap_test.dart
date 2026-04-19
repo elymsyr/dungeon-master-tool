@@ -74,5 +74,70 @@ void main() {
       final second = await bootstrap.runIfNeeded();
       expect(second.status, V5ResetStatus.alreadyComplete);
     });
+
+    test('legacyDbPath triggers backup before purge and surfaces path',
+        () async {
+      await Directory(p.join(tempRoot.path, 'templates')).create();
+      final dbFile = File(p.join(tempRoot.path, 'dmt.sqlite'));
+      await dbFile.writeAsBytes(<int>[7, 7, 7]);
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+
+      var backupCalled = false;
+      String? receivedPath;
+      final bootstrap = V5ResetBootstrap(
+        cacheRoot: tempRoot.path,
+        legacyDbPath: dbFile.path,
+        backupV4Db: (path) async {
+          backupCalled = true;
+          receivedPath = path;
+          return '$path.v4.backup.sqlite';
+        },
+      );
+
+      final out = await bootstrap.runIfNeeded();
+      expect(backupCalled, true);
+      expect(receivedPath, dbFile.path);
+      expect(out.backupPath, '${dbFile.path}.v4.backup.sqlite');
+      expect(out.status, V5ResetStatus.upgradedFromV4);
+    });
+
+    test('no legacyDbPath = no backup attempt + null backupPath', () async {
+      await Directory(p.join(tempRoot.path, 'templates')).create();
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+
+      var backupCalled = false;
+      final bootstrap = V5ResetBootstrap(
+        cacheRoot: tempRoot.path,
+        backupV4Db: (_) async {
+          backupCalled = true;
+          return 'should-not-be-called';
+        },
+      );
+
+      final out = await bootstrap.runIfNeeded();
+      expect(backupCalled, false);
+      expect(out.backupPath, isNull);
+    });
+
+    test('alreadyComplete short-circuit skips backup', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        LegacyDataPurger.resetCompleteFlag: true,
+      });
+
+      var backupCalled = false;
+      final bootstrap = V5ResetBootstrap(
+        cacheRoot: tempRoot.path,
+        legacyDbPath: '/some/path/dmt.sqlite',
+        backupV4Db: (_) async {
+          backupCalled = true;
+          return null;
+        },
+      );
+
+      final out = await bootstrap.runIfNeeded();
+      expect(backupCalled, false);
+      expect(out.status, V5ResetStatus.alreadyComplete);
+      expect(out.backupPath, isNull);
+    });
   });
 }

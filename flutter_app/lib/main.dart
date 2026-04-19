@@ -10,13 +10,17 @@ import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'package:path/path.dart' as path;
+
 import 'app.dart';
 import 'application/providers/ui_state_provider.dart';
+import 'application/providers/v5_reset_provider.dart';
 import 'application/services/projection_ipc.dart';
 import 'core/config/app_paths.dart';
 import 'core/config/supabase_config.dart';
 import 'core/constants.dart' show appVersion;
 import 'core/services/log_buffer.dart';
+import 'data/storage/v5_reset_bootstrap.dart';
 import 'presentation/screens/player_window/player_window_main.dart';
 import 'presentation/screens/player_window/screencast_main.dart'
     as screencast_entry;
@@ -129,6 +133,7 @@ class _BootstrapGate extends StatefulWidget {
 class _BootstrapGateState extends State<_BootstrapGate> {
   String _message = 'Starting Dungeon Master Tool...';
   UiStateNotifier? _uiStateNotifier;
+  V5ResetOutcome? _v5ResetOutcome;
   Object? _error;
 
   @override
@@ -145,6 +150,20 @@ class _BootstrapGateState extends State<_BootstrapGate> {
     try {
       _setMessage('Preparing file system...');
       await AppPaths.initialize();
+
+      _setMessage('Checking for legacy v4 data...');
+      try {
+        final v5 = V5ResetBootstrap(
+          cacheRoot: AppPaths.dataRoot,
+          legacyDbPath: path.join(AppPaths.dataRoot, 'db', 'dmt.sqlite'),
+        );
+        _v5ResetOutcome = await v5.runIfNeeded();
+      } catch (e, st) {
+        // Backup-or-purge failure must not block startup. The flag stays
+        // unset so the next launch retries; the app continues without
+        // showing the upgrade dialog this session.
+        LogBuffer.instance.recordError(e, st, context: 'V5ResetBootstrap');
+      }
 
       if (SupabaseConfig.isConfigured) {
         _setMessage('Connecting to cloud...');
@@ -275,7 +294,11 @@ class _BootstrapGateState extends State<_BootstrapGate> {
     }
 
     return ProviderScope(
-      overrides: [uiStateProvider.overrideWith((_) => _uiStateNotifier!)],
+      overrides: [
+        uiStateProvider.overrideWith((_) => _uiStateNotifier!),
+        if (_v5ResetOutcome != null)
+          v5ResetOutcomeProvider.overrideWith((_) => _v5ResetOutcome),
+      ],
       child: const DungeonMasterApp(),
     );
   }

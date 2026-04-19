@@ -7,6 +7,8 @@ import 'application/dnd5e/bootstrap/srd_bootstrap_service.dart';
 import 'application/providers/locale_provider.dart';
 import 'application/providers/srd_bootstrap_provider.dart';
 import 'application/providers/theme_provider.dart';
+import 'application/providers/v5_reset_provider.dart';
+import 'presentation/dialogs/v5_upgrade_notice_dialog.dart';
 import 'presentation/l10n/app_localizations.dart';
 import 'presentation/router/app_router.dart';
 import 'presentation/theme/palettes.dart';
@@ -17,11 +19,41 @@ import 'presentation/widgets/global_loading_overlay.dart';
 /// router subtree.
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-class DungeonMasterApp extends ConsumerWidget {
+class DungeonMasterApp extends ConsumerStatefulWidget {
   const DungeonMasterApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DungeonMasterApp> createState() => _DungeonMasterAppState();
+}
+
+class _DungeonMasterAppState extends ConsumerState<DungeonMasterApp> {
+  bool _v5DialogShown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Doc 42 — show the one-time v4→v5 upgrade notice on the first frame
+    // after the bootstrap purger has run. Reads via a post-frame callback
+    // so the MaterialApp + ScaffoldMessenger are fully attached before
+    // we try to push a dialog.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final outcome = ref.read(v5ResetOutcomeProvider);
+      if (outcome == null ||
+          !outcome.shouldShowUpgradeNotice ||
+          _v5DialogShown) {
+        return;
+      }
+      _v5DialogShown = true;
+      final ctx = scaffoldMessengerKey.currentContext;
+      if (ctx != null) {
+        V5UpgradeNoticeDialog.show(ctx, backupPath: outcome.backupPath);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeName = ref.watch(themeProvider);
     final locale = ref.watch(localeProvider);
 
