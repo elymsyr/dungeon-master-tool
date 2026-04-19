@@ -192,6 +192,26 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 Feat codec (🟣) — Tier 2 entity codec #7
+
+Shipped `flutter_app/lib/domain/dnd5e/character/feat_json_codec.dart` — `featFromEntry(CatalogEntry)` + `featToEntry(Feat)`. Body shape `{"category": String, "repeatable"?: bool, "prerequisite"?: String, "effects"?: [<effect>...], "description"?: String}`. `category` encodes `FeatCategory.name` (origin / general / fightingStyle / epicBoon) per project convention of `.name` for enum wire format. `repeatable` omitted when false; `prerequisite` is free-form string for UI (machine-checked prereqs live inside effects as `Predicate`s per `feat.dart` doc comment).
+
+- New files: `domain/dnd5e/character/feat_json_codec.dart`.
+- Tests: 10 new (`test/domain/dnd5e/character/feat_json_codec_test.dart`) — minimal round-trip, full round-trip with all fields + `GrantProficiency` effect, per-category enum round-trip (all 4 values), default-field omission, category `.name` encoding, `repeatable=true` emission, decode errors for missing/unknown category, non-bool repeatable, malformed JSON.
+- Result: `flutter analyze` clean, 1010/1010 tests pass (1000 → 1010, +10).
+- Tier 2 content codec status: Spell ✓, Monster ✓, Item ✓, Subclass ✓, Species ✓, Background ✓, **Feat ✓** (new). Remaining: Lineage, CharacterClass.
+- Next: CharacterClass codec (larger — spellcasting table, features by level), or Lineage codec (smaller), or begin SRD species / background / feat asset authoring.
+
+### 2026-04-19 — Doc 15 Background codec (🟣) — Tier 2 entity codec #6
+
+Shipped `flutter_app/lib/domain/dnd5e/character/background_json_codec.dart` — `backgroundFromEntry(CatalogEntry)` + `backgroundToEntry(Background)`. Body shape `{"effects"?: [<effect>...], "description"?: String}` — smallest Tier 2 body yet; `Background` carries only id/name/effects/description per 2024 SRD (proficiencies + origin feat encoded as effects, not top-level fields). Effects route through `effect_descriptor_codec`; empty effect list + empty description are omitted. Pattern mirrors `species_json_codec.dart`.
+
+- New files: `domain/dnd5e/character/background_json_codec.dart`.
+- Tests: 8 new (`test/domain/dnd5e/character/background_json_codec_test.dart`) — minimal round-trip, full round-trip with two `GrantProficiency` effects (skill + tool), empty-field omission, decode errors for non-object body / malformed JSON / non-string description / non-array effects (all carry `<entry.id>:` prefix + `Background` type name where applicable).
+- Result: `flutter analyze` clean, 1000/1000 tests pass (992 → 1000, +8).
+- Tier 2 content codec status: Spell ✓, Monster ✓, Item ✓, Subclass ✓, Species ✓, **Background ✓** (new). Remaining: Lineage, CharacterClass, Feat.
+- Next: Feat or CharacterClass codec, or begin authoring SRD species / background assets now that both codecs exist.
+
 ### 2026-04-19 — Doc 15 Species codec (🟣) — Tier 2 entity codec #5
 
 Shipped `flutter_app/lib/domain/dnd5e/character/species_json_codec.dart` — `speciesFromEntry(CatalogEntry)` + `speciesToEntry(Species)`. Body shape `{"sizeId": String, "baseSpeedFt": int, "effects"?: [<effect>...], "description"?: String}`. Effects route through `effect_descriptor_codec`; empty effect list + empty description are omitted for compact output. Pattern mirrors `subclass_json_codec.dart`. This opens the way for authoring 9 SRD species (Dragonborn, Dwarf, Elf, Gnome, Halfling, Human, Orc, Tiefling + one more) with real darkvision/resistance/ancestry effects in subsequent turns.
