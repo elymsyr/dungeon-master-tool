@@ -8,8 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/projection_provider.dart';
-import '../../../application/providers/rule_provider.dart';
-import '../../../application/services/rule_engine_v2.dart';
 import '../../../domain/entities/schema/rule_v2.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
@@ -143,9 +141,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final cat = widget.categorySchema;
     final catColor = cat != null ? _parseColor(cat.color) : palette.tabIndicator;
 
-    // Rule engine v2 — reaktif computed değerleri (ilişkili entity + schema değişikliklerini izler)
-    final ruleResult = ref.watch(computedFieldsProvider(widget.entityId));
-    final computedValues = ruleResult.computedValues;
+    // RuleEngineV2 removed (doc 05). computed values always empty until
+    // TODO(05) class-feature pure functions land.
+    final computedValues = <String, dynamic>{};
 
     // Controller sync — only update when the field is not focused
     _syncIfNotFocused(_nameController, _nameFocus, entity.name);
@@ -309,7 +307,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
           const SizedBox(height: 8),
 
           // === SCHEMA-DRIVEN FIELDS ===
-          if (cat != null) ..._buildSchemaFields(entity, cat, palette, computedValues, ruleResult.itemStyles, ruleResult.equipGates),
+          if (cat != null) ..._buildSchemaFields(entity, cat, palette, computedValues, const {}, const {}),
 
           const SizedBox(height: 8),
 
@@ -442,19 +440,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 
   /// Bu entity'nin kategorisinde, [fieldKey] hedefli bir setValue kuralı
   /// varsa, ValueExpression'ı stringify ederek formül string'i döner.
-  String? _formulaFor(String fieldKey) {
-    final cat = widget.categorySchema;
-    if (cat == null) return null;
-    for (final rule in cat.rules) {
-      if (!rule.enabled) continue;
-      final match = rule.then_.maybeWhen(
-        setValue: (target, value) => target == fieldKey ? value : null,
-        orElse: () => null,
-      );
-      if (match != null) return RuleEngineV2.stringify(match);
-    }
-    return null;
-  }
+  String? _formulaFor(String fieldKey) => null;
 
   Widget _buildGroupGrid(List<FieldSchema> fields, int gridColumns, Entity entity, Map<String, dynamic> computed, DmToolColors palette, {Map<String, ItemStyle> itemStyles = const {}, Map<String, String> equipGates = const {}}) {
     if (gridColumns <= 1) {

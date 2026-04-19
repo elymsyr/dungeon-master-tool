@@ -128,7 +128,6 @@ class _FilterBar extends ConsumerWidget {
     final types = [
       ('all', l10n.filterAll),
       ('world', l10n.filterWorlds),
-      ('template', l10n.filterTemplates),
       ('package', l10n.filterPackages),
       ('character', l10n.filterCharacters),
     ];

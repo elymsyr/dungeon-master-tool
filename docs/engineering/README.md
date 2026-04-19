@@ -82,6 +82,8 @@ The app must remain fully usable on **mobile/tablet (Android, iOS)** and **deskt
 - 🟢 **Complete** — merged, authoritative
 - 🟡 **In Review** — drafted, awaiting feedback
 - 🟠 **Drafting** — actively being written
+- 🔵 **Implementation In Progress** — code work started
+- 🟣 **Implementation Partial / Blocked** — partially implemented, remainder blocked on dependency
 - ⚪ **Not Started** — planned
 
 ---
@@ -91,11 +93,11 @@ The app must remain fully usable on **mobile/tablet (Android, iOS)** and **deskt
 | # | Filename | Purpose | Deps | Status |
 |---|---|---|---|---|
 | 00 | [`00-dnd5e-mechanics-reference.md`](./00-dnd5e-mechanics-reference.md) | Normative SRD 5.2.1 mechanics reference. Source of truth for all engine behavior. | — | ⚪ |
-| 01 | [`01-domain-model-spec.md`](./01-domain-model-spec.md) | Typed Dart classes for Character, Monster, Spell, Item (sealed), Feat, Background, Species, CharacterClass, Subclass, Encounter, Combatant, Effect, etc. with invariants. | 00 | ⚪ |
+| 01 | [`01-domain-model-spec.md`](./01-domain-model-spec.md) | Typed Dart classes for Character, Monster, Spell, Item (sealed), Feat, Background, Species, CharacterClass, Subclass, Encounter, Combatant, Effect, etc. with invariants. | 00 | 🔵 |
 | 02 | [`02-game-system-abstraction.md`](./02-game-system-abstraction.md) | `GameSystem` interface for future Pathfinder/CoC modularity. Stub Pathfinder example. | 01 | ⚪ |
 | 03 | [`03-database-schema-spec.md`](./03-database-schema-spec.md) | Drift v5: drop `world_schemas` + template_* columns; add typed tables. Fresh-start reset (doc 42). | 01 | ⚪ |
-| 04 | [`04-template-removal-checklist.md`](./04-template-removal-checklist.md) | ~40-file deletion order; dependency graph; per-step regression test plan. | 01, 03 | ⚪ |
-| 05 | [`05-rule-engine-removal-spec.md`](./05-rule-engine-removal-spec.md) | Removal of RuleV2/RuleEngineV2; replacement pattern (effects as pure functions). | 01 | ⚪ |
+| 04 | [`04-template-removal-checklist.md`](./04-template-removal-checklist.md) | ~40-file deletion order; dependency graph; per-step regression test plan. | 01, 03 | 🟣 |
+| 05 | [`05-rule-engine-removal-spec.md`](./05-rule-engine-removal-spec.md) | Removal of RuleV2/RuleEngineV2; replacement pattern (effects as pure functions). | 01 | 🔵 |
 
 ## Phase 1.5: Mechanics / Content Decoupling — blocks Phase 2 implementation
 
@@ -187,3 +189,61 @@ character creation, spells, combat, and items all reference SRD content.
 4. PR review: domain expert + at least one engineer.
 5. Merge → mark ⚪ In Review for 1 week → 🟢 Complete.
 6. Doc enters maintenance: minor updates as code evolves; major rewrite triggers version bump.
+
+## Implementation Log
+
+### 2026-04-19 — Doc 04 template removal partial (🟣)
+
+Steps 1-4, 6, 8-10 landed. Steps 5 (schema dir deletion) + 7 (drift v5 drop+recreate) blocked on Doc 01 typed domain model — WorldSchema/EntityCategorySchema/FieldSchema still load-bearing for rendering and persistence.
+
+- Removed: template UI (editor screen, templates_tab, hub route), TemplateSyncService, TemplateCompatibilityService, activeTemplateProvider, ActiveTemplateNotifier, templateLocalDsProvider, customTemplatesProvider, TemplateLocalDataSource, legacy_builtin_seed migration, RuleEngineV2, rule_provider, applyTemplateUpdate/dismissTemplateUpdate/muteTemplateUpdates on Campaign/Package/CharacterList notifiers, marketplace 'template' filter.
+- Shimmed: `allTemplatesProvider` now returns `[generateDefaultDnd5eSchema()]` — no disk, no ActiveTemplateNotifier. Sufficient to keep entity_card / character_editor rendering until Doc 01 types land.
+- Result: `flutter analyze` clean, 251/251 tests pass (33 RuleEngineV2 tests removed).
+
+### 2026-04-19 — Doc 05 rule engine removal (🔵)
+
+RuleEngineV2 + rule_provider + tests deleted. `_formulaFor` in entity_card now returns null until Doc 01 class-feature pure functions replace it. `computedFieldsProvider` gone; entity_card uses `const <String, dynamic>{}` for computed values.
+
+### 2026-04-19 — Doc 01 domain model (🔵)
+
+Target layout per spec §Directory Layout — `flutter_app/lib/domain/dnd5e/`.
+
+**Tier 0 (structural primitives) — COMPLETE.** 13 classes + 79 tests in `domain/dnd5e/core/`:
+
+| File | Purpose | Tests |
+|---|---|---|
+| `ability.dart` | 6-member enum + `short` / `label` / `fromShort` | 4 |
+| `ability_score.dart` | Value class [1,30] + SRD modifier formula | 4 |
+| `ability_scores.dart` | 6-tuple + `byAbility` + `withBonus` (clamped) | 4 |
+| `proficiency.dart` | enum {none, half, full, expertise} + `applyTo(PB)` | 4 |
+| `proficiency_bonus.dart` | `forLevel(1..20)` + `forChallengeRating(0..30)` | 3 |
+| `die.dart` | enum d4/d6/d8/d10/d12/d20/d100 + `averageFloor` + `fromSides` | 4 |
+| `advantage_state.dart` | enum + `combine` + `fromFlags` (SRD cancellation) | 7 |
+| `dice_expression.dart` | Parser for `NdS±K` + roll/max/min/averageFloor | 14 |
+| `spell_level.dart` | [0,9] value class, cantrip detection | 4 |
+| `challenge_rating.dart` | Canonical fraction string + XP table (0..30) | 8 |
+| `hit_points.dart` | current/max/temp + takeDamage/heal/grantTemp/withMax | 11 |
+| `death_saves.dart` | 0..3 tally + crit-failure doubles + isStable/isDead | 5 |
+| `exhaustion.dart` | 0..6 track, -2×level D20 penalty (2024 SRD), gain/reduce | 5 |
+
+Design choices locked in this tier:
+- **No Freezed.** Manual `==`/`hashCode`/`copyWith` per spec §Conventions.
+- **Factory guards** throw `ArgumentError` with specific message on invariant violations.
+- **CR as canonical string** (`'1/4'`, `'5'`) not double — avoids float equality per spec §Open Questions Q2.
+- **Temp HP** does not stack (max-wins), consumed before current HP on damage.
+- **Exhaustion** uses 2024 SRD scaling (-2 × level) not 2014 six-step.
+
+**Next — Tier 1 (catalog classes):** `catalog/condition.dart`, `damage_type.dart`, `skill.dart`, `size.dart`, `creature_type.dart`, `alignment.dart`, `language.dart`, `spell_school.dart`, `weapon_property.dart` + `PropertyFlag`, `weapon_mastery.dart`, `armor_category.dart`, `rarity.dart`. All carry namespaced `<packageId>:<localId>` ids. Empty catalogs on fresh install (SRD package populates them — Doc 15).
+
+**Then Tier 2 (EffectDescriptor DSL):** `effect/effect_descriptor.dart` sealed family + `predicate.dart` + `duration.dart`.
+
+**Then larger entities:** `character/`, `spell/`, `item/`, `monster/`, `combat/`, `world/`.
+
+**Blockers that auto-unblock when Doc 01 lands:**
+- Doc 04 Step 5 (schema dir deletion) — replace `WorldSchema` / `EntityCategorySchema` / `FieldSchema` consumers with typed entities file-by-file.
+- Doc 04 Step 7 (drift v5 drop+recreate) — needs Doc 03 typed tables which need Doc 01 types.
+- Docs 02 (GameSystem interface), 11 (combat engine), 12 (spell system), 13 (damage resolver), 14 (typed package format), 15 (SRD core package) all key off Doc 01 domain.
+
+### Current test totals
+
+`flutter analyze`: 0 issues. `flutter test`: **330 / 330 passing** (was 251 at end of Doc 04 partial; +79 Tier 0 tests added).
