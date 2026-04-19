@@ -1,0 +1,20 @@
+[
+  {"id": "athletics", "name": "Athletics", "body": {"ability": "strength"}},
+  {"id": "acrobatics", "name": "Acrobatics", "body": {"ability": "dexterity"}},
+  {"id": "sleight_of_hand", "name": "Sleight of Hand", "body": {"ability": "dexterity"}},
+  {"id": "stealth", "name": "Stealth", "body": {"ability": "dexterity"}},
+  {"id": "arcana", "name": "Arcana", "body": {"ability": "intelligence"}},
+  {"id": "history", "name": "History", "body": {"ability": "intelligence"}},
+  {"id": "investigation", "name": "Investigation", "body": {"ability": "intelligence"}},
+  {"id": "nature", "name": "Nature", "body": {"ability": "intelligence"}},
+  {"id": "religion", "name": "Religion", "body": {"ability": "intelligence"}},
+  {"id": "animal_handling", "name": "Animal Handling", "body": {"ability": "wisdom"}},
+  {"id": "insight", "name": "Insight", "body": {"ability": "wisdom"}},
+  {"id": "medicine", "name": "Medicine", "body": {"ability": "wisdom"}},
+  {"id": "perception", "name": "Perception", "body": {"ability": "wisdom"}},
+  {"id": "survival", "name": "Survival", "body": {"ability": "wisdom"}},
+  {"id": "deception", "name": "Deception", "body": {"ability": "charisma"}},
+  {"id": "intimidation", "name": "Intimidation", "body": {"ability": "charisma"}},
+  {"id": "performance", "name": "Performance", "body": {"ability": "charisma"}},
+  {"id": "persuasion", "name": "Persuasion", "body": {"ability": "charisma"}}
+]

@@ -192,6 +192,15 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 SRD skills asset (🟣)
+
+Shipped `flutter_app/assets/packages/srd_core/skills.json` with all 18 SRD 5.2.1 skills, each tagged with governing ability: 1 STR (Athletics), 3 DEX (Acrobatics, Sleight of Hand, Stealth), 5 INT (Arcana, History, Investigation, Nature, Religion), 5 WIS (Animal Handling, Insight, Medicine, Perception, Survival), 4 CHA (Deception, Intimidation, Performance, Persuasion). Multi-word ids use snake_case (`srd:sleight_of_hand`, `srd:animal_handling`).
+
+- New assets: `assets/packages/srd_core/skills.json`.
+- Tests: 8 new (`test/assets/packages/srd_core/skills_asset_test.dart`) — parse all 18, namespace + uniqueness, ability distribution (1/3/5/5/4), STR single-skill = Athletics, exact DEX/WIS/CHA subsets, canonical 18-skill set match.
+- Result: `flutter analyze` clean, 928/928 tests pass (920 → 928, +8).
+- Next: sizes (6 entries) or creature types (14).
+
 ### 2026-04-19 — Doc 15 SRD damage types asset (🟣)
 
 Shipped `flutter_app/assets/packages/srd_core/damage_types.json` with the canonical 13 SRD 5.2.1 damage types (acid, bludgeoning, cold, fire, force, lightning, necrotic, piercing, poison, psychic, radiant, slashing, thunder). `physical=true` on the three weapon types (bludgeoning / piercing / slashing); rest default false. Doc 15 table said 14 — SRD 5.2.1 has 13 (see doc 00 §11.2 + §Glossary row `Damage Types | 13 named types`); table correction pending.
