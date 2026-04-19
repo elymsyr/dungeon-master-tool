@@ -1,0 +1,45 @@
+[
+  {
+    "id": "drow",
+    "name": "Drow",
+    "body": {
+      "parentSpeciesId": "srd:elf",
+      "effects": [
+        {"t": "grantSenseOrSpeed", "kind": "darkvision", "value": 120}
+      ],
+      "description": "Drow are elves shaped by the Underdark. You have Superior Darkvision to 120 feet (overriding the Elf baseline of 60 feet). You know the Dancing Lights cantrip, cast using Charisma. Starting at 3rd level you can cast Faerie Fire once per Long Rest without a spell slot; at 5th level you can also cast Darkness once per Long Rest. You can cast either of these using available spell slots as well. Charisma is the spellcasting ability for these spells."
+    }
+  },
+  {
+    "id": "high_elf",
+    "name": "High Elf",
+    "body": {
+      "parentSpeciesId": "srd:elf",
+      "description": "High Elves are attuned to arcane magic. You know one cantrip of your choice from the Wizard spell list; Intelligence is the spellcasting ability for it. Whenever you finish a Long Rest you can replace that cantrip with a different Wizard cantrip. Starting at 3rd level you can cast Detect Magic once per Long Rest without a spell slot; at 5th level you can also cast Misty Step once per Long Rest. You can cast either of these using available spell slots as well."
+    }
+  },
+  {
+    "id": "wood_elf",
+    "name": "Wood Elf",
+    "body": {
+      "parentSpeciesId": "srd:elf",
+      "description": "Wood Elves are swift and at home in the wilds. Your Speed increases to 35 feet (Fleet of Foot). You know the Druidcraft cantrip, cast using Wisdom. Starting at 3rd level you can cast Longstrider once per Long Rest without a spell slot; at 5th level you can also cast Pass Without Trace once per Long Rest. You can cast either of these using available spell slots as well."
+    }
+  },
+  {
+    "id": "forest_gnome",
+    "name": "Forest Gnome",
+    "body": {
+      "parentSpeciesId": "srd:gnome",
+      "description": "Forest Gnomes live in deep woodlands and keep close ties to small animals. You know the Minor Illusion cantrip, cast using Intelligence. You can always speak with Small or smaller Beasts as if under the Speak with Animals spell, limited to simple ideas."
+    }
+  },
+  {
+    "id": "rock_gnome",
+    "name": "Rock Gnome",
+    "body": {
+      "parentSpeciesId": "srd:gnome",
+      "description": "Rock Gnomes are inventors and artisans. You know the Mending and Prestidigitation cantrips, cast using Intelligence. You can use an hour and 10 gp of materials to build a Tiny clockwork device (AC 5, 1 HP) — a Clockwork Toy, Fire Starter, or Music Box — that operates for up to 24 hours before needing rewinding."
+    }
+  }
+]
