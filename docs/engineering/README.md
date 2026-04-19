@@ -192,6 +192,15 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 SRD sizes asset (🟣)
+
+Shipped `flutter_app/assets/packages/srd_core/sizes.json` with the 6 SRD creature sizes (Tiny, Small, Medium, Large, Huge, Gargantuan). Body carries the two `Size` domain fields — `spaceFt` (square side the creature occupies) and `tokenScale` (multiplier relative to a 1×1 Medium token). Canonical values: Tiny 2.5ft/×0.5, Small 5ft/×1, Medium 5ft/×1, Large 10ft/×2, Huge 15ft/×3, Gargantuan 20ft/×4 (per SRD 5.2.1 + doc 00 §Glossary).
+
+- New assets: `assets/packages/srd_core/sizes.json`.
+- Tests: 7 new (`test/assets/packages/srd_core/sizes_asset_test.dart`) — parse all 6, namespace + uniqueness, canonical 6-size set, Tiny fractional values, Small/Medium share 5ft/×1, per-size value check for Large/Huge/Gargantuan, `spaceFt` monotonic across the canonical ordering.
+- Result: `flutter analyze` clean, 935/935 tests pass (928 → 935, +7).
+- Next: creature types (14 entries) or alignments (10). Both small, pick either.
+
 ### 2026-04-19 — Doc 15 SRD skills asset (🟣)
 
 Shipped `flutter_app/assets/packages/srd_core/skills.json` with all 18 SRD 5.2.1 skills, each tagged with governing ability: 1 STR (Athletics), 3 DEX (Acrobatics, Sleight of Hand, Stealth), 5 INT (Arcana, History, Investigation, Nature, Religion), 5 WIS (Animal Handling, Insight, Medicine, Perception, Survival), 4 CHA (Deception, Intimidation, Performance, Persuasion). Multi-word ids use snake_case (`srd:sleight_of_hand`, `srd:animal_handling`).

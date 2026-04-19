@@ -1,0 +1,8 @@
+[
+  {"id": "tiny", "name": "Tiny", "body": {"spaceFt": 2.5, "tokenScale": 0.5}},
+  {"id": "small", "name": "Small", "body": {"spaceFt": 5, "tokenScale": 1}},
+  {"id": "medium", "name": "Medium", "body": {"spaceFt": 5, "tokenScale": 1}},
+  {"id": "large", "name": "Large", "body": {"spaceFt": 10, "tokenScale": 2}},
+  {"id": "huge", "name": "Huge", "body": {"spaceFt": 15, "tokenScale": 3}},
+  {"id": "gargantuan", "name": "Gargantuan", "body": {"spaceFt": 20, "tokenScale": 4}}
+]
