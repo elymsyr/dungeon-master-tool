@@ -192,6 +192,27 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 12 SpellCastValidator + Service: Pact Magic (🟣) — Phase C Warlock support
+
+Extends the already-shipped `SpellCastValidator` + `SpellCastService` + `CastOutcome` trio with Warlock pact-magic casting. Pact slots live in their own table (`PactMagicSlots`: single level, refresh on short rest), so the validator/service must branch on which pool to spend.
+
+Files changed:
+- `lib/application/dnd5e/spell/spell_cast_validator.dart` — adds `PactMagicSlots? pactSlots, bool usePactSlot = false` parameters. New branch fires after cantrip + ritual paths: requires `pactSlots != null`, `current ≥ 1`, `slotLevel ≥ spell.level`, and (if `slotLevelChosen` non-null) `slotLevelChosen == pactSlots.slotLevel`. Prepared check still applies.
+- `lib/application/dnd5e/spell/spell_cast_service.dart` — same params; on success spends pact slot instead of regular slot, sets `pactCastLevel = pactSlots.slotLevel`, threads it into the `Concentration.castAtLevel` so concentration upcasting tracks the actual pact level.
+- `lib/application/dnd5e/spell/cast_outcome.dart` — adds `PactMagicSlots? pactSlots` field (mirrors `slots`: input on failure/no-spend, decremented when pact slot spent) and `bool pactSlotConsumed` (mutually exclusive with `slotConsumed`). `CastOutcome.error` and `CastOutcome.success` factories both accept the new field.
+- `test/application/dnd5e/spell/spell_cast_validator_test.dart` — +7 tests in a `pact magic` group: happy path, no pactSlots, no slots remaining, spell level above pact level, mismatched chosen slot, equal chosen slot, not prepared, cantrip ignores `usePactSlot`.
+- `test/application/dnd5e/spell/spell_cast_service_test.dart` — +4 tests: pact spend decrements pactSlots not regular, failed cast echoes pactSlots unchanged, pact concentration cast records pact level as `castAtLevel`, cantrip with `usePactSlot` does not spend pact slot.
+
+Decisions:
+- **Explicit `usePactSlot` rather than auto-detect** — Warlock multi-classed with another caster could choose either pool (per SRD). Letting the caller (UI/notifier) state intent keeps the validator/service honest and avoids hidden policy.
+- **`slotLevelChosen` optional on pact path** — pact slots only have one valid level, so passing `null` is the natural call. If the UI sends a non-null value, it must match the pact level (else error) — protects against the UI showing a level picker by accident.
+- **`CastOutcome.pactSlots` mirrors `slots`** — same input/output contract: present and unchanged on failure or non-pact cast, decremented on pact spend. Keeps the consumer code symmetric (write back both fields, no special-casing).
+- **`pactCastLevel` overrides `slotLevelChosen` for concentration** — when pact slot was spent, `Concentration.castAtLevel` reflects the pact level, not whatever was passed in `slotLevelChosen`. Matches "the spell was actually cast at level X" semantics needed by upcast scaling.
+
+Verification: `flutter analyze` 0 issues, `flutter test` 1252/1252 pass (1 skipped). +11 tests this turn.
+
+Next candidates: `Combatant.copyWith` sweep (still the biggest single unblock for `EncounterService` repo writes — non-trivial because PlayerCombatant.HP delegates through Character.hp), `SpellEffectDispatcher` (Doc 13 — wires `CastOutcome.success` to compiled `EffectDescriptor` registry), or the Phase A structural unblock (Doc 04 Step 5/7 + Doc 42 wiring — still gated on `_backupV4DbBeforeReset`).
+
 ### 2026-04-19 — Doc 13 AoEDamageOrchestrator (🟣) — Phase C area-of-effect
 
 Single-roll multi-apply per SRD §11.6: damage rolled once, broadcast to every target inside the AoE coverage. Composes existing `AreaOfEffect.coverage` (geometry) + `SaveResolver` (per-target spell save) + `ApplyDamagePipeline` (damage + concentration). Pure — no Combatant mutation.

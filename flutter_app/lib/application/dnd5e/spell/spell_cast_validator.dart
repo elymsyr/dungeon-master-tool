@@ -1,3 +1,4 @@
+import '../../../domain/dnd5e/character/pact_magic_slots.dart';
 import '../../../domain/dnd5e/character/prepared_spells.dart';
 import '../../../domain/dnd5e/character/spell_slots.dart';
 import '../../../domain/dnd5e/spell/spell.dart';
@@ -19,6 +20,8 @@ class SpellCastValidator {
     Set<String> ritualBookSpellIds = const {},
     required CasterContext context,
     CastingMethod method = CastingMethod.normal,
+    PactMagicSlots? pactSlots,
+    bool usePactSlot = false,
   }) {
     if (spell.isCantrip) {
       return _validateComponents(spell, context);
@@ -29,6 +32,18 @@ class SpellCastValidator {
       final accessible = prepared.contains(spell.id) ||
           ritualBookSpellIds.contains(spell.id);
       if (!accessible) return 'Spell not available for ritual';
+      return _validateComponents(spell, context);
+    }
+
+    if (usePactSlot) {
+      if (pactSlots == null) return 'Caster has no pact magic';
+      if (pactSlots.current < 1) return 'No pact slots remaining';
+      if (pactSlots.slotLevel < spell.level.value) return 'Pact slot too low';
+      if (slotLevelChosen != null && slotLevelChosen != pactSlots.slotLevel) {
+        return 'Pact slot is L${pactSlots.slotLevel}, '
+            'cannot cast at L$slotLevelChosen';
+      }
+      if (!prepared.contains(spell.id)) return 'Spell not prepared';
       return _validateComponents(spell, context);
     }
 

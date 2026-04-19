@@ -1,6 +1,7 @@
 import 'package:dungeon_master_tool/application/dnd5e/spell/caster_context.dart';
 import 'package:dungeon_master_tool/application/dnd5e/spell/casting_method.dart';
 import 'package:dungeon_master_tool/application/dnd5e/spell/spell_cast_service.dart';
+import 'package:dungeon_master_tool/domain/dnd5e/character/pact_magic_slots.dart';
 import 'package:dungeon_master_tool/domain/dnd5e/character/prepared_spells.dart';
 import 'package:dungeon_master_tool/domain/dnd5e/character/spell_slots.dart';
 import 'package:dungeon_master_tool/domain/dnd5e/combat/concentration.dart';
@@ -234,6 +235,82 @@ void main() {
       expect(out.success, isTrue);
       expect(out.concentration?.spellId, 'srd:detect_magic');
       expect(out.concentration?.castAtLevel, SpellLevel(1));
+    });
+  });
+
+  group('pact magic', () {
+    PactMagicSlots pact({int level = 3, int current = 2, int max = 2}) =>
+        PactMagicSlots(slotLevel: level, current: current, max: max);
+
+    test('pact slot spent decrements pactSlots, not regular slots', () {
+      final slots = _slots();
+      final out = service.cast(
+        spell: _spell(level: 2),
+        slotLevelChosen: null,
+        slots: slots,
+        prepared: _prepared(['srd:fireball']),
+        context: const CasterContext(),
+        pactSlots: pact(),
+        usePactSlot: true,
+      );
+      expect(out.success, isTrue);
+      expect(out.pactSlotConsumed, isTrue);
+      expect(out.slotConsumed, isFalse);
+      expect(out.pactSlots!.current, 1);
+      expect(out.slots, slots);
+    });
+
+    test('failed pact cast echoes pactSlots unchanged', () {
+      final pactIn = pact(current: 0);
+      final out = service.cast(
+        spell: _spell(level: 2),
+        slotLevelChosen: null,
+        slots: _slots(),
+        prepared: _prepared(['srd:fireball']),
+        context: const CasterContext(),
+        pactSlots: pactIn,
+        usePactSlot: true,
+      );
+      expect(out.success, isFalse);
+      expect(out.error, 'No pact slots remaining');
+      expect(out.pactSlots, pactIn);
+      expect(out.pactSlotConsumed, isFalse);
+    });
+
+    test('pact concentration cast records pact slot level as castAtLevel', () {
+      final hold = _spell(
+        id: 'srd:hold_person',
+        level: 2,
+        duration: SpellMinutes(minutes: 1, concentration: true),
+      );
+      final out = service.cast(
+        spell: hold,
+        slotLevelChosen: null,
+        slots: SpellSlots.empty(),
+        prepared: _prepared(['srd:hold_person']),
+        context: const CasterContext(),
+        pactSlots: pact(level: 5),
+        usePactSlot: true,
+      );
+      expect(out.success, isTrue);
+      expect(out.concentration?.spellId, 'srd:hold_person');
+      expect(out.concentration?.castAtLevel, SpellLevel(5));
+    });
+
+    test('cantrip with usePactSlot does not spend pact slot', () {
+      final pactIn = pact();
+      final out = service.cast(
+        spell: _spell(id: 'srd:eldritch_blast', level: 0),
+        slotLevelChosen: null,
+        slots: SpellSlots.empty(),
+        prepared: PreparedSpells.empty(),
+        context: const CasterContext(),
+        pactSlots: pactIn,
+        usePactSlot: true,
+      );
+      expect(out.success, isTrue);
+      expect(out.pactSlotConsumed, isFalse);
+      expect(out.pactSlots, pactIn);
     });
   });
 }

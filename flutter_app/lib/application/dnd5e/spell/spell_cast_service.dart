@@ -1,3 +1,4 @@
+import '../../../domain/dnd5e/character/pact_magic_slots.dart';
 import '../../../domain/dnd5e/character/prepared_spells.dart';
 import '../../../domain/dnd5e/character/spell_slots.dart';
 import '../../../domain/dnd5e/combat/concentration.dart';
@@ -27,6 +28,8 @@ class SpellCastService {
     required CasterContext context,
     Concentration? currentConcentration,
     CastingMethod method = CastingMethod.normal,
+    PactMagicSlots? pactSlots,
+    bool usePactSlot = false,
   }) {
     final err = validator.validate(
       spell: spell,
@@ -36,17 +39,28 @@ class SpellCastService {
       ritualBookSpellIds: ritualBookSpellIds,
       context: context,
       method: method,
+      pactSlots: pactSlots,
+      usePactSlot: usePactSlot,
     );
     if (err != null) {
       return CastOutcome.error(err, slots,
-          currentConcentration: currentConcentration);
+          pactSlots: pactSlots, currentConcentration: currentConcentration);
     }
 
     var newSlots = slots;
+    var newPactSlots = pactSlots;
     var slotConsumed = false;
+    var pactSlotConsumed = false;
+    int? pactCastLevel;
     if (!spell.isCantrip && method == CastingMethod.normal) {
-      newSlots = slots.spend(slotLevelChosen!);
-      slotConsumed = true;
+      if (usePactSlot) {
+        newPactSlots = pactSlots!.spend();
+        pactSlotConsumed = true;
+        pactCastLevel = pactSlots.slotLevel;
+      } else {
+        newSlots = slots.spend(slotLevelChosen!);
+        slotConsumed = true;
+      }
     }
 
     final concentrates = _isConcentrationSpell(spell);
@@ -55,7 +69,7 @@ class SpellCastService {
     if (concentrates) {
       dropped = currentConcentration;
       final castLevel = method == CastingMethod.normal && !spell.isCantrip
-          ? slotLevelChosen!
+          ? (pactCastLevel ?? slotLevelChosen!)
           : spell.level.value;
       newConc = Concentration(
         spellId: spell.id,
@@ -65,9 +79,11 @@ class SpellCastService {
 
     return CastOutcome.success(
       slots: newSlots,
+      pactSlots: newPactSlots,
       concentration: newConc,
       droppedConcentration: dropped,
       slotConsumed: slotConsumed,
+      pactSlotConsumed: pactSlotConsumed,
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:dungeon_master_tool/application/dnd5e/spell/caster_context.dart';
 import 'package:dungeon_master_tool/application/dnd5e/spell/casting_method.dart';
 import 'package:dungeon_master_tool/application/dnd5e/spell/spell_cast_validator.dart';
+import 'package:dungeon_master_tool/domain/dnd5e/character/pact_magic_slots.dart';
 import 'package:dungeon_master_tool/domain/dnd5e/character/prepared_spells.dart';
 import 'package:dungeon_master_tool/domain/dnd5e/character/spell_slots.dart';
 import 'package:dungeon_master_tool/domain/dnd5e/core/spell_level.dart';
@@ -313,6 +314,113 @@ void main() {
         context: const CasterContext(
           heldMaterialDescriptions: {'a diamond worth 300+ gp'},
         ),
+      );
+      expect(err, isNull);
+    });
+  });
+
+  group('pact magic', () {
+    PactMagicSlots pact({int level = 3, int current = 2, int max = 2}) =>
+        PactMagicSlots(slotLevel: level, current: current, max: max);
+
+    test('happy path: pact slot at correct level', () {
+      final err = validator.validate(
+        spell: _spell(level: 2),
+        slotLevelChosen: null,
+        slots: SpellSlots.empty(),
+        prepared: _prepared(['srd:fireball']),
+        context: const CasterContext(),
+        pactSlots: pact(),
+        usePactSlot: true,
+      );
+      expect(err, isNull);
+    });
+
+    test('usePactSlot without pactSlots rejected', () {
+      final err = validator.validate(
+        spell: _spell(),
+        slotLevelChosen: null,
+        slots: SpellSlots.empty(),
+        prepared: _prepared(['srd:fireball']),
+        context: const CasterContext(),
+        usePactSlot: true,
+      );
+      expect(err, 'Caster has no pact magic');
+    });
+
+    test('no pact slots remaining rejected', () {
+      final err = validator.validate(
+        spell: _spell(),
+        slotLevelChosen: null,
+        slots: SpellSlots.empty(),
+        prepared: _prepared(['srd:fireball']),
+        context: const CasterContext(),
+        pactSlots: pact(current: 0),
+        usePactSlot: true,
+      );
+      expect(err, 'No pact slots remaining');
+    });
+
+    test('spell level above pact level rejected', () {
+      final err = validator.validate(
+        spell: _spell(level: 4),
+        slotLevelChosen: null,
+        slots: SpellSlots.empty(),
+        prepared: _prepared(['srd:fireball']),
+        context: const CasterContext(),
+        pactSlots: pact(level: 3),
+        usePactSlot: true,
+      );
+      expect(err, 'Pact slot too low');
+    });
+
+    test('chosen slot level mismatching pact rejected', () {
+      final err = validator.validate(
+        spell: _spell(level: 2),
+        slotLevelChosen: 2,
+        slots: SpellSlots.empty(),
+        prepared: _prepared(['srd:fireball']),
+        context: const CasterContext(),
+        pactSlots: pact(level: 3),
+        usePactSlot: true,
+      );
+      expect(err, 'Pact slot is L3, cannot cast at L2');
+    });
+
+    test('chosen slot equal to pact level accepted', () {
+      final err = validator.validate(
+        spell: _spell(level: 2),
+        slotLevelChosen: 3,
+        slots: SpellSlots.empty(),
+        prepared: _prepared(['srd:fireball']),
+        context: const CasterContext(),
+        pactSlots: pact(level: 3),
+        usePactSlot: true,
+      );
+      expect(err, isNull);
+    });
+
+    test('not prepared on pact path rejected', () {
+      final err = validator.validate(
+        spell: _spell(level: 2),
+        slotLevelChosen: null,
+        slots: SpellSlots.empty(),
+        prepared: PreparedSpells.empty(),
+        context: const CasterContext(),
+        pactSlots: pact(),
+        usePactSlot: true,
+      );
+      expect(err, 'Spell not prepared');
+    });
+
+    test('cantrip ignores usePactSlot', () {
+      final err = validator.validate(
+        spell: _spell(id: 'srd:eldritch_blast', level: 0),
+        slotLevelChosen: null,
+        slots: SpellSlots.empty(),
+        prepared: PreparedSpells.empty(),
+        context: const CasterContext(),
+        usePactSlot: true,
       );
       expect(err, isNull);
     });
