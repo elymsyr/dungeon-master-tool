@@ -192,6 +192,24 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 12 ConcentrationCheckResolver (🟣) — Phase C damage→save→break/keep
+
+Pure damage-driven concentration check, decoupled from `Combatant`. Composes existing `ConcentrationDc.forDamage` (DC formula, capped at 30) with the existing `SaveResolver` (advantage / autoFail / autoSucceed mechanics), so the formula and the save mechanics stay in one place each.
+
+Files added:
+- `lib/application/dnd5e/spell/concentration_check_outcome.dart` — `{damage, dc, save: SaveResult, concentrationAfter: Concentration?}`. `concentrationAfter` is the same `Concentration` on success / null on break, so callers can write the value back to the snapshot unconditionally. `broken` / `maintained` getters for ergonomics.
+- `lib/application/dnd5e/spell/concentration_check_resolver.dart` — `check({current, damage, conMod, saveProfBonus, advantage, autoSucceed, autoFail})`. CON ability hard-coded (per SRD); `saveProfBonus` is a flat number so the caller decides whether the concentrator is proficient.
+- `test/application/dnd5e/spell/concentration_check_resolver_test.dart` — 11 tests across two groups: DC formula (floor at 10, mid-range floor(d/2), cap at 30, negative damage rejected) and save outcomes (pass keeps, fail breaks, prof bonus added, advantage picks higher d20, autoFail breaks regardless of mod, autoSucceed keeps regardless of damage).
+
+Decisions:
+- **One save per damage instance** — Doc 12 spec calls out the SRD rule that multi-instance damage triggers separate saves. Encoded as a doc-comment expectation on `check`, not as a batch API: keeps the resolver pure and lets the caller decide instance boundaries.
+- **No `Combatant.copyWith` yet** — Doc 12 §"Concentration Manager" wants `combatant.copyWith(concentration: null)` after a break, but the sealed `Combatant` family has no copyWith and adding one is a separate sweep. The resolver returns the post-state value; whoever owns the combatant snapshot writes it back.
+- **CON modifier is the caller's input**, not derived from a passed-in `Combatant` — keeps the resolver usable from pre-combat preview UI ("if a 25-damage hit lands, what's the chance you keep concentration?").
+
+Verification: `flutter analyze` 0 issues, `flutter test` 1224/1224 pass (1 skipped). +11 tests this turn.
+
+Next candidates: `EncounterService` (Doc 11 — turn rotation + condition ticking + integrates DamageResolver + ConcentrationCheckResolver into one apply-damage pipeline), `SpellEffectDispatcher` (Doc 13 — wires `CastOutcome.success` to compiled `EffectDescriptor` registry), or the Phase A structural unblock (Doc 04 Step 5/7 + Doc 42 wiring).
+
 ### 2026-04-19 — Doc 12 SpellCastService (🟣) — Phase C composition layer
 
 Wraps the just-shipped `SpellCastValidator` with the deterministic state transitions a successful cast triggers: slot consumption + concentration start/replace. Pure — returns a `CastOutcome` value the caller persists; no dice, no effect dispatch, no Combatant mutation.
