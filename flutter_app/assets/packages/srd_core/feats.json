@@ -1,0 +1,102 @@
+[
+  {
+    "id": "alert",
+    "name": "Alert",
+    "body": {
+      "category": "origin",
+      "description": "You are always on the lookout for danger. You gain the following benefits. Initiative Proficiency: When you roll Initiative, you can add your Proficiency Bonus to the roll. Initiative Swap: Immediately after you roll Initiative, you can swap your Initiative with the Initiative of one willing ally in the same combat. You can't make this swap if you or the ally has the Incapacitated condition."
+    }
+  },
+  {
+    "id": "crafter",
+    "name": "Crafter",
+    "body": {
+      "category": "origin",
+      "description": "You are adept at crafting things and bartering with merchants. You gain the following benefits. Tool Proficiency: You gain proficiency with three different Artisan's Tools of your choice from the Fast Crafting table. Discount: Whenever you buy a nonmagical item, you get a 20 percent discount on it. Fast Crafting: When you finish a Long Rest, you can craft one piece of gear from the Fast Crafting table, provided you have the Artisan's Tools associated with that item and have proficiency with those tools."
+    }
+  },
+  {
+    "id": "healer",
+    "name": "Healer",
+    "body": {
+      "category": "origin",
+      "description": "You are an able physician, allowing you to mend wounds quickly and get your allies back in the fight. You gain the following benefits. Battle Medic: If you have a Healer's Kit, you can use it to restore Hit Points to a creature as a Utilize action. The creature regains a number of Hit Points equal to 1d6 plus your Proficiency Bonus, provided that the creature has at least 1 Hit Point and isn't at its Hit Point maximum. Healing Rerolls: Whenever you roll a die to determine the number of Hit Points you restore with a spell or with this feat's Battle Medic benefit, you can reroll the die if it rolls a 1, and you must use the new roll."
+    }
+  },
+  {
+    "id": "lucky",
+    "name": "Lucky",
+    "body": {
+      "category": "origin",
+      "description": "You have inexplicable luck that can kick in at just the right moment. You have a number of Luck Points equal to your Proficiency Bonus and can spend the points on the following benefits. You regain your expended Luck Points when you finish a Long Rest. Advantage: When you roll a d20 for a D20 Test, you can spend 1 Luck Point to give yourself Advantage on the roll. Disadvantage: When a creature rolls a d20 for an attack roll against you, you can spend 1 Luck Point to impose Disadvantage on that roll."
+    }
+  },
+  {
+    "id": "magic_initiate_cleric",
+    "name": "Magic Initiate (Cleric)",
+    "body": {
+      "category": "origin",
+      "repeatable": true,
+      "description": "You have learned the rudiments of the Cleric spell list. You gain the following benefits. Two Cantrips: You learn two cantrips of your choice from the Cleric spell list. Wisdom is your spellcasting ability for this feat's spells. Level 1 Spell: Choose a level 1 spell from the Cleric spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have. Spell Change: Whenever you gain a new level, you can replace one of the spells you chose for this feat with another spell of the same level from the Cleric spell list. Repeatable: You can take this feat more than once, but you must choose a different spell list each time."
+    }
+  },
+  {
+    "id": "magic_initiate_druid",
+    "name": "Magic Initiate (Druid)",
+    "body": {
+      "category": "origin",
+      "repeatable": true,
+      "description": "You have learned the rudiments of the Druid spell list. You gain the following benefits. Two Cantrips: You learn two cantrips of your choice from the Druid spell list. Wisdom is your spellcasting ability for this feat's spells. Level 1 Spell: Choose a level 1 spell from the Druid spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have. Spell Change: Whenever you gain a new level, you can replace one of the spells you chose for this feat with another spell of the same level from the Druid spell list. Repeatable: You can take this feat more than once, but you must choose a different spell list each time."
+    }
+  },
+  {
+    "id": "magic_initiate_wizard",
+    "name": "Magic Initiate (Wizard)",
+    "body": {
+      "category": "origin",
+      "repeatable": true,
+      "description": "You have learned the rudiments of the Wizard spell list. You gain the following benefits. Two Cantrips: You learn two cantrips of your choice from the Wizard spell list. Intelligence is your spellcasting ability for this feat's spells. Level 1 Spell: Choose a level 1 spell from the Wizard spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a Long Rest. You can also cast the spell using any spell slots you have. Spell Change: Whenever you gain a new level, you can replace one of the spells you chose for this feat with another spell of the same level from the Wizard spell list. Repeatable: You can take this feat more than once, but you must choose a different spell list each time."
+    }
+  },
+  {
+    "id": "musician",
+    "name": "Musician",
+    "body": {
+      "category": "origin",
+      "description": "You are adept at playing music. You gain the following benefits. Instrument Training: You gain proficiency with three Musical Instruments of your choice. Encouraging Song: As you finish a Short Rest or Long Rest, you can play a song on a Musical Instrument with which you have proficiency and give Heroic Inspiration to allies who hear the song. The number of allies you can affect in this way equals your Proficiency Bonus."
+    }
+  },
+  {
+    "id": "savage_attacker",
+    "name": "Savage Attacker",
+    "body": {
+      "category": "origin",
+      "description": "You've trained to deal particularly damaging strikes. Once per turn when you hit a target with a weapon, you can roll the weapon's damage dice twice and use either roll against the target."
+    }
+  },
+  {
+    "id": "skilled",
+    "name": "Skilled",
+    "body": {
+      "category": "origin",
+      "repeatable": true,
+      "description": "You have exceptionally broad learning. You gain proficiency in any combination of three skills or tools of your choice. Repeatable: You can take this feat more than once."
+    }
+  },
+  {
+    "id": "tavern_brawler",
+    "name": "Tavern Brawler",
+    "body": {
+      "category": "origin",
+      "description": "Accustomed to brawling, you gain the following benefits. Enhanced Unarmed Strike: When you hit with your Unarmed Strike and deal damage, you can deal Bludgeoning damage equal to 1d4 plus your Strength modifier instead of the normal damage of an Unarmed Strike. Damage Rerolls: Whenever you roll a damage die for your Unarmed Strike, you can reroll the die if it rolls a 1, and you must use the new roll. Improvised Weaponry: You have proficiency with improvised weapons. Push: When you hit a creature with an Unarmed Strike as part of the Attack action on your turn, you can deal damage to the target and also push it 5 feet away from you. You can use this benefit only once per turn."
+    }
+  },
+  {
+    "id": "tough",
+    "name": "Tough",
+    "body": {
+      "category": "origin",
+      "description": "Your Hit Point maximum increases by an amount equal to twice your character level when you gain this feat. Whenever you gain a character level thereafter, your Hit Point maximum increases by an additional 2 Hit Points."
+    }
+  }
+]
