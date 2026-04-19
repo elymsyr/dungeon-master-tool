@@ -1,0 +1,67 @@
+[
+  {
+    "id": "acid",
+    "name": "Acid",
+    "body": {}
+  },
+  {
+    "id": "bludgeoning",
+    "name": "Bludgeoning",
+    "body": {"physical": true}
+  },
+  {
+    "id": "cold",
+    "name": "Cold",
+    "body": {}
+  },
+  {
+    "id": "fire",
+    "name": "Fire",
+    "body": {}
+  },
+  {
+    "id": "force",
+    "name": "Force",
+    "body": {}
+  },
+  {
+    "id": "lightning",
+    "name": "Lightning",
+    "body": {}
+  },
+  {
+    "id": "necrotic",
+    "name": "Necrotic",
+    "body": {}
+  },
+  {
+    "id": "piercing",
+    "name": "Piercing",
+    "body": {"physical": true}
+  },
+  {
+    "id": "poison",
+    "name": "Poison",
+    "body": {}
+  },
+  {
+    "id": "psychic",
+    "name": "Psychic",
+    "body": {}
+  },
+  {
+    "id": "radiant",
+    "name": "Radiant",
+    "body": {}
+  },
+  {
+    "id": "slashing",
+    "name": "Slashing",
+    "body": {"physical": true}
+  },
+  {
+    "id": "thunder",
+    "name": "Thunder",
+    "body": {}
+  }
+]

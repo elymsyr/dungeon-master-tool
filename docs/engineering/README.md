@@ -192,6 +192,15 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 SRD damage types asset (🟣)
+
+Shipped `flutter_app/assets/packages/srd_core/damage_types.json` with the canonical 13 SRD 5.2.1 damage types (acid, bludgeoning, cold, fire, force, lightning, necrotic, piercing, poison, psychic, radiant, slashing, thunder). `physical=true` on the three weapon types (bludgeoning / piercing / slashing); rest default false. Doc 15 table said 14 — SRD 5.2.1 has 13 (see doc 00 §11.2 + §Glossary row `Damage Types | 13 named types`); table correction pending.
+
+- New assets: `assets/packages/srd_core/damage_types.json`.
+- Tests: 5 new (`test/assets/packages/srd_core/damage_types_asset_test.dart`) — parses all 13, ids namespaced + unique, physical flag set on b/p/s, other 10 default false, exact set match.
+- Result: `flutter analyze` clean, 920/920 tests pass (915 → 920, +5).
+- Next: skills catalog (18 entries).
+
 ### 2026-04-19 — Doc 15 SRD conditions asset (Phase B start) (🟣)
 
 First SRD content asset shipped: `flutter_app/assets/packages/srd_core/conditions.json` with all 15 SRD 5.2.1 conditions (Blinded, Charmed, Deafened, Exhaustion, Frightened, Grappled, Incapacitated, Invisible, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious). Authoring format is human-readable (`body` inline as object); the build step (future) stringifies to wire shape. Each entry encodes SRD description + representable mechanical flags via `ConditionInteraction` (incapacitated, speedZero, autoFailSavesOf, imposedAdvantageOnAttacksAgainst, attacksHaveDisadvantage, cannotTakeActions, cannotTakeReactions, grappled, invisibleToSight). Restrained adds a rider `ModifySave` for DEX disadvantage. Petrified's "resistance to all damage" + auto-crit-within-5ft on Paralyzed/Unconscious remain text-only (no DSL surface).
