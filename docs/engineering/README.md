@@ -94,7 +94,7 @@ The app must remain fully usable on **mobile/tablet (Android, iOS)** and **deskt
 |---|---|---|---|---|
 | 00 | [`00-dnd5e-mechanics-reference.md`](./00-dnd5e-mechanics-reference.md) | Normative SRD 5.2.1 mechanics reference. Source of truth for all engine behavior. | — | ⚪ |
 | 01 | [`01-domain-model-spec.md`](./01-domain-model-spec.md) | Typed Dart classes for Character, Monster, Spell, Item (sealed), Feat, Background, Species, CharacterClass, Subclass, Encounter, Combatant, Effect, etc. with invariants. | 00 | 🟢 |
-| 02 | [`02-game-system-abstraction.md`](./02-game-system-abstraction.md) | `GameSystem` interface for future Pathfinder/CoC modularity. Stub Pathfinder example. | 01 | ⚪ |
+| 02 | [`02-game-system-abstraction.md`](./02-game-system-abstraction.md) | `GameSystem` interface for future Pathfinder/CoC modularity. Stub Pathfinder example. | 01 | 🟣 |
 | 03 | [`03-database-schema-spec.md`](./03-database-schema-spec.md) | Drift v5: drop `world_schemas` + template_* columns; add typed tables. Fresh-start reset (doc 42). | 01 | ⚪ |
 | 04 | [`04-template-removal-checklist.md`](./04-template-removal-checklist.md) | ~40-file deletion order; dependency graph; per-step regression test plan. | 01, 03 | 🟣 |
 | 05 | [`05-rule-engine-removal-spec.md`](./05-rule-engine-removal-spec.md) | Removal of RuleV2/RuleEngineV2; replacement pattern (effects as pure functions). | 01 | 🔵 |
@@ -303,6 +303,29 @@ Design choices locked in this tier:
 - Doc 04 Step 7 (drift v5 drop+recreate) — needs Doc 03 typed tables.
 - Docs 02 (GameSystem interface), 11 (combat engine), 12 (spell system), 13 (damage resolver), 14 (typed package format), 15 (SRD core package) can now begin — all reference the domain types that now exist.
 
+### 2026-04-19 — Doc 02 GameSystem abstraction (🟣 partial)
+
+Scope-narrowed first pass. Implementation landed:
+
+| File | Purpose |
+|---|---|
+| [`domain/game_system/game_system.dart`](../../flutter_app/lib/domain/game_system/game_system.dart) | `abstract interface class GameSystem` — `id` / `displayName` / `version` / `autoInstallPackages` |
+| [`domain/game_system/built_in_package.dart`](../../flutter_app/lib/domain/game_system/built_in_package.dart) | `BuiltInPackage` value type for bundled auto-install content |
+| [`domain/game_system/game_system_registry.dart`](../../flutter_app/lib/domain/game_system/game_system_registry.dart) | in-process registry with `register` / `byId` / `contains` / `all` / `clear` + duplicate-id guard |
+| [`domain/dnd5e/dnd5e_game_system.dart`](../../flutter_app/lib/domain/dnd5e/dnd5e_game_system.dart) | `Dnd5eGameSystem` metadata + SRD Core auto-install entry |
+| [`domain/pathfinder/pathfinder_game_system.dart`](../../flutter_app/lib/domain/pathfinder/pathfinder_game_system.dart) | compile-test-only Pathfinder stub (NOT registered in prod) |
+| [`application/providers/game_system_provider.dart`](../../flutter_app/lib/application/providers/game_system_provider.dart) | `gameSystemRegistryProvider` wiring only D&D 5e |
+
+**Deliberately deferred to later docs** so the interface stays minimal until its consumers exist:
+- `driftTables` getter — lands with Doc 03 typed Drift schema.
+- `buildCharacterCreationFlow` / `buildCharacterSheet` / `buildCombatTracker` — land with Docs 10/11/32 as their UI arrives.
+- `packageImporter` getter — lands with Doc 14 typed package format.
+- `routes` getter — lands with the go_router migration.
+
+The interface grows additively in those docs; Pathfinder stub tracks the same shape.
+
+9 tests cover registry invariants, dnd5e SRD manifest, and Pathfinder stub conformance.
+
 ### Current test totals
 
-`flutter analyze`: 0 issues. `flutter test`: **497 / 497 passing, 1 skipped** (was 415 at end of Tier 2; +82 larger-entity tests added).
+`flutter analyze`: 0 issues. `flutter test`: **506 / 506 passing, 1 skipped** (was 497 at end of Doc 01; +9 Doc 02 tests added).
