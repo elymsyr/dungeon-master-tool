@@ -92,7 +92,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -153,6 +153,16 @@ class AppDatabase extends _$AppDatabase {
             // v7: Doc 14 typed-package installed registry (coexists with v5
             // template-coupled `packages` until Doc 04 Step 5 lands).
             await m.createTable(installedPackages);
+          }
+          if (from < 8) {
+            // v8: Doc 15 attribution surface — author + license + description
+            // columns on installed_packages so the CC BY 4.0 attribution
+            // screen can render every installed package without re-loading
+            // its source asset.
+            await m.addColumn(installedPackages, installedPackages.authorName);
+            await m.addColumn(
+                installedPackages, installedPackages.sourceLicense);
+            await m.addColumn(installedPackages, installedPackages.description);
           }
         },
       );

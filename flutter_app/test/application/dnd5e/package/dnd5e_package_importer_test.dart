@@ -137,6 +137,30 @@ void main() {
     expect(installs.single.packageIdSlug, 'srd');
   });
 
+  test('attribution fields persist on installed_packages row', () async {
+    final pkg = Dnd5ePackage(
+      id: 'pkg-attrib',
+      packageIdSlug: 'srd',
+      name: 'SRD Core',
+      version: '1.0.0',
+      authorId: 'wotc',
+      authorName: 'Wizards of the Coast',
+      sourceLicense: 'CC BY 4.0',
+      description: 'D&D 5e SRD content released under Creative Commons.',
+      conditions: const [
+        CatalogEntry(id: 'stunned', name: 'Stunned', bodyJson: '{}'),
+      ],
+    );
+    final res = await importer.import(pkg);
+    expect(res, isA<PackageImportSuccess>());
+
+    final row = await db.select(db.installedPackages).getSingle();
+    expect(row.authorName, 'Wizards of the Coast');
+    expect(row.sourceLicense, 'CC BY 4.0');
+    expect(row.description,
+        'D&D 5e SRD content released under Creative Commons.');
+  });
+
   test('fails when required runtime extension missing', () async {
     final res =
         await importer.import(_sample(extensions: const ['srd:wish']));

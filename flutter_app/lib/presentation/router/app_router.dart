@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../screens/about/about_screen.dart';
 import '../screens/admin/admin_screen.dart';
 import '../screens/characters/character_editor_screen.dart';
 import '../screens/hub/hub_screen.dart';
@@ -54,6 +55,10 @@ final appRouter = GoRouter(
       path: '/character/:id',
       builder: (context, state) =>
           CharacterEditorScreen(characterId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/about',
+      builder: (context, state) => const AboutScreen(),
     ),
   ],
 );

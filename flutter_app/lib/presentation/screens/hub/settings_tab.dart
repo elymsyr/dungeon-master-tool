@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../application/providers/auth_provider.dart';
@@ -222,6 +223,25 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                   onPressed: () => _importLegacyWorlds(context, ref),
                   icon: const Icon(Icons.drive_folder_upload),
                   label: Text(l10n.btnImportLegacyWorlds),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // --- ABOUT & ATTRIBUTIONS ---
+              Text('About', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              const SizedBox(height: 6),
+              Text(
+                'License attribution for the bundled SRD Core package and any other installed packages.',
+                style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => context.push('/about'),
+                  icon: const Icon(Icons.info_outline),
+                  label: const Text('About & Attributions'),
                 ),
               ),
 

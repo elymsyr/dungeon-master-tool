@@ -15,6 +15,9 @@ class InstalledPackages extends Table {
   TextColumn get name => text()();
   TextColumn get version => text()();
   TextColumn get gameSystemId => text()();
+  TextColumn get authorName => text().withDefault(const Constant(''))();
+  TextColumn get sourceLicense => text().withDefault(const Constant(''))();
+  TextColumn get description => text().nullable()();
   TextColumn get reportJson => text().withDefault(const Constant('{}'))();
   DateTimeColumn get installedAt => dateTime().withDefault(currentDateAndTime)();
 
