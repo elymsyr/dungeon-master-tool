@@ -1,0 +1,63 @@
+[
+  {
+    "id": "finger_of_death",
+    "name": "Finger of Death",
+    "body": {
+      "level": 7,
+      "schoolId": "srd:necromancy",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "Send negative energy at a creature within range. The target makes a Constitution save, taking 7d8+30 necrotic damage on a fail or half on a success."
+    }
+  },
+  {
+    "id": "plane_shift",
+    "name": "Plane Shift",
+    "body": {
+      "level": 7,
+      "schoolId": "srd:conjuration",
+      "castingTime": {"t": "action"},
+      "range": {"t": "touch"},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a forked metal rod worth 250+ GP, attuned to a plane", "costCp": 25000}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["multipleCreatures"],
+      "classListIds": ["srd:cleric", "srd:druid", "srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "You and up to 8 willing creatures who join hands transport to a different plane of existence."
+    }
+  },
+  {
+    "id": "reverse_gravity",
+    "name": "Reverse Gravity",
+    "body": {
+      "level": 7,
+      "schoolId": "srd:transmutation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 100},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a lodestone and iron filings"}],
+      "duration": {"t": "minutes", "minutes": 1, "concentration": true},
+      "targets": ["aoeOriginPoint"],
+      "area": {"t": "cylinder", "radiusFt": 50, "heightFt": 100},
+      "classListIds": ["srd:druid", "srd:sorcerer", "srd:wizard"],
+      "description": "Reverse gravity in a 50-foot-radius, 100-foot-high cylinder. Loose objects and unattached creatures fall upward."
+    }
+  },
+  {
+    "id": "teleport",
+    "name": "Teleport",
+    "body": {
+      "level": 7,
+      "schoolId": "srd:conjuration",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 10},
+      "components": [{"t": "v"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["multipleCreatures"],
+      "classListIds": ["srd:bard", "srd:sorcerer", "srd:wizard"],
+      "description": "Instantly transport yourself and up to 8 willing creatures (or one object) to a destination you select."
+    }
+  }
+]

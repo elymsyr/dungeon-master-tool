@@ -1,0 +1,103 @@
+[
+  {
+    "id": "longsword",
+    "name": "Longsword",
+    "body": {
+      "t": "weapon",
+      "weightLb": 3,
+      "costCp": 1500,
+      "rarityId": "srd:common",
+      "category": "martial",
+      "type": "melee",
+      "damage": "1d8",
+      "damageTypeId": "srd:slashing",
+      "propertyIds": ["srd:versatile"],
+      "masteryId": "srd:sap",
+      "versatileDamage": "1d10"
+    }
+  },
+  {
+    "id": "longbow",
+    "name": "Longbow",
+    "body": {
+      "t": "weapon",
+      "weightLb": 2,
+      "costCp": 5000,
+      "rarityId": "srd:common",
+      "category": "martial",
+      "type": "ranged",
+      "damage": "1d8",
+      "damageTypeId": "srd:piercing",
+      "propertyIds": ["srd:ammunition", "srd:heavy", "srd:two_handed"],
+      "masteryId": "srd:slow",
+      "range": {"normal": 150, "long": 600}
+    }
+  },
+  {
+    "id": "chain_mail",
+    "name": "Chain Mail",
+    "body": {
+      "t": "armor",
+      "weightLb": 55,
+      "costCp": 7500,
+      "rarityId": "srd:common",
+      "categoryId": "srd:heavy",
+      "baseAc": 16,
+      "strengthRequirement": 13
+    }
+  },
+  {
+    "id": "shield",
+    "name": "Shield",
+    "body": {
+      "t": "shield",
+      "weightLb": 6,
+      "costCp": 1000,
+      "rarityId": "srd:common"
+    }
+  },
+  {
+    "id": "backpack",
+    "name": "Backpack",
+    "body": {
+      "t": "gear",
+      "weightLb": 5,
+      "costCp": 200,
+      "rarityId": "srd:common",
+      "description": "A leather pack that can hold 30 pounds in its interior compartment."
+    }
+  },
+  {
+    "id": "thieves_tools",
+    "name": "Thieves' Tools",
+    "body": {
+      "t": "tool",
+      "weightLb": 1,
+      "costCp": 2500,
+      "rarityId": "srd:common",
+      "proficiencyId": "srd:thieves_tools_prof"
+    }
+  },
+  {
+    "id": "arrow",
+    "name": "Arrow",
+    "body": {
+      "t": "ammunition",
+      "weightLb": 0.05,
+      "costCp": 5,
+      "rarityId": "srd:common",
+      "quantityPerStack": 20
+    }
+  },
+  {
+    "id": "longsword_plus_1",
+    "name": "Longsword +1",
+    "body": {
+      "t": "magicItem",
+      "weightLb": 3,
+      "rarityId": "srd:uncommon",
+      "baseItemId": "srd:longsword",
+      "requiresAttunement": false
+    }
+  }
+]

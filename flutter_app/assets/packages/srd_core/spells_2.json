@@ -1,0 +1,63 @@
+[
+  {
+    "id": "aid",
+    "name": "Aid",
+    "body": {
+      "level": 2,
+      "schoolId": "srd:abjuration",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 30},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a strip of white cloth"}],
+      "duration": {"t": "hours", "hours": 8},
+      "targets": ["multipleCreatures"],
+      "classListIds": ["srd:cleric", "srd:paladin"],
+      "description": "Choose up to three creatures within range. Each target's HP maximum and current HP increase by 5 for the duration."
+    }
+  },
+  {
+    "id": "hold_person",
+    "name": "Hold Person",
+    "body": {
+      "level": 2,
+      "schoolId": "srd:enchantment",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a small, straight piece of iron"}],
+      "duration": {"t": "minutes", "minutes": 1, "concentration": true},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:bard", "srd:cleric", "srd:druid", "srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "Target a Humanoid you can see within range. The target must succeed on a Wisdom save or have the Paralyzed condition for the duration."
+    }
+  },
+  {
+    "id": "misty_step",
+    "name": "Misty Step",
+    "body": {
+      "level": 2,
+      "schoolId": "srd:conjuration",
+      "castingTime": {"t": "bonusAction"},
+      "range": {"t": "self"},
+      "components": [{"t": "v"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["self"],
+      "classListIds": ["srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "Briefly surrounded by silvery mist, you teleport up to 30 feet to an unoccupied space you can see."
+    }
+  },
+  {
+    "id": "web",
+    "name": "Web",
+    "body": {
+      "level": 2,
+      "schoolId": "srd:conjuration",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a bit of spiderweb"}],
+      "duration": {"t": "hours", "hours": 1, "concentration": true},
+      "targets": ["aoeOriginPoint"],
+      "area": {"t": "cube", "sideFt": 20},
+      "classListIds": ["srd:sorcerer", "srd:wizard"],
+      "description": "Conjure thick, sticky webs that fill a 20-foot Cube. The webs are difficult terrain and lightly obscure the area."
+    }
+  }
+]

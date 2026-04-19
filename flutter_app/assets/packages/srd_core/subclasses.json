@@ -1,0 +1,69 @@
+[
+  {
+    "id": "path_of_the_berserker",
+    "name": "Path of the Berserker",
+    "body": {
+      "parentClassId": "srd:barbarian",
+      "featureTable": [
+        {"level": 3, "featureIds": ["srd:frenzy"]},
+        {"level": 6, "featureIds": ["srd:mindless_rage"]},
+        {"level": 10, "featureIds": ["srd:retaliation"]},
+        {"level": 14, "featureIds": ["srd:intimidating_presence"]}
+      ],
+      "description": "For some Barbarians, rage is a means to an end — that end being violence."
+    }
+  },
+  {
+    "id": "life_domain",
+    "name": "Life Domain",
+    "body": {
+      "parentClassId": "srd:cleric",
+      "featureTable": [
+        {"level": 3, "featureIds": ["srd:disciple_of_life", "srd:life_domain_spells"]},
+        {"level": 6, "featureIds": ["srd:blessed_healer"]},
+        {"level": 17, "featureIds": ["srd:supreme_healing"]}
+      ],
+      "description": "The Life Domain focuses on the vibrant positive energy that sustains all life."
+    }
+  },
+  {
+    "id": "champion",
+    "name": "Champion",
+    "body": {
+      "parentClassId": "srd:fighter",
+      "featureTable": [
+        {"level": 3, "featureIds": ["srd:improved_critical"]},
+        {"level": 7, "featureIds": ["srd:remarkable_athlete"]},
+        {"level": 15, "featureIds": ["srd:superior_critical"]},
+        {"level": 18, "featureIds": ["srd:survivor"]}
+      ],
+      "description": "The archetypal Champion focuses on raw physical power honed to deadly perfection."
+    }
+  },
+  {
+    "id": "thief",
+    "name": "Thief",
+    "body": {
+      "parentClassId": "srd:rogue",
+      "featureTable": [
+        {"level": 3, "featureIds": ["srd:fast_hands", "srd:second_story_work"]},
+        {"level": 9, "featureIds": ["srd:supreme_sneak"]},
+        {"level": 13, "featureIds": ["srd:use_magic_device"]}
+      ],
+      "description": "Thieves rely on speed and stealth to climb where others cannot and grab what others cannot reach."
+    }
+  },
+  {
+    "id": "evoker",
+    "name": "Evoker",
+    "body": {
+      "parentClassId": "srd:wizard",
+      "featureTable": [
+        {"level": 3, "featureIds": ["srd:evocation_savant", "srd:potent_cantrip", "srd:sculpt_spells"]},
+        {"level": 10, "featureIds": ["srd:empowered_evocation"]},
+        {"level": 14, "featureIds": ["srd:overchannel"]}
+      ],
+      "description": "An Evoker focuses their study on magic that creates powerful elemental effects."
+    }
+  }
+]

@@ -1,0 +1,64 @@
+[
+  {
+    "id": "antimagic_field",
+    "name": "Antimagic Field",
+    "body": {
+      "level": 8,
+      "schoolId": "srd:abjuration",
+      "castingTime": {"t": "action"},
+      "range": {"t": "self"},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "iron filings"}],
+      "duration": {"t": "hours", "hours": 1, "concentration": true},
+      "targets": ["self"],
+      "area": {"t": "emanation", "distanceFt": 10},
+      "classListIds": ["srd:cleric", "srd:wizard"],
+      "description": "An invisible 10-foot-radius emanation surrounds you and suppresses magic within it for the duration."
+    }
+  },
+  {
+    "id": "dominate_monster",
+    "name": "Dominate Monster",
+    "body": {
+      "level": 8,
+      "schoolId": "srd:enchantment",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "hours", "hours": 1, "concentration": true},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:bard", "srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "Attempt to beguile a creature you can see within range. The target must succeed on a Wisdom save or have the Charmed condition; you control its actions."
+    }
+  },
+  {
+    "id": "power_word_stun",
+    "name": "Power Word Stun",
+    "body": {
+      "level": 8,
+      "schoolId": "srd:enchantment",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:bard", "srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "Speak a word of power to a creature you can see within range. If the target has 150 HP or fewer, it has the Stunned condition until it makes a Constitution save."
+    }
+  },
+  {
+    "id": "sunburst",
+    "name": "Sunburst",
+    "body": {
+      "level": 8,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 150},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "fire and a piece of sunstone"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["aoeOriginPoint"],
+      "area": {"t": "sphere", "radiusFt": 60},
+      "classListIds": ["srd:druid", "srd:sorcerer", "srd:wizard"],
+      "description": "Brilliant sunlight flashes in a 60-foot-radius Sphere. Each creature makes a Constitution save, taking 12d6 radiant damage on a fail or half on a success."
+    }
+  }
+]

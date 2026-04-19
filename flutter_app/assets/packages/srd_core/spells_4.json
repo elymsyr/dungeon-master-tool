@@ -1,0 +1,63 @@
+[
+  {
+    "id": "banishment",
+    "name": "Banishment",
+    "body": {
+      "level": 4,
+      "schoolId": "srd:abjuration",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a hairpin made of cold iron"}],
+      "duration": {"t": "minutes", "minutes": 1, "concentration": true},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:cleric", "srd:paladin", "srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "Attempt to send one creature you can see within range to another plane of existence. The target must succeed on a Charisma save or be banished."
+    }
+  },
+  {
+    "id": "greater_invisibility",
+    "name": "Greater Invisibility",
+    "body": {
+      "level": 4,
+      "schoolId": "srd:illusion",
+      "castingTime": {"t": "action"},
+      "range": {"t": "touch"},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "minutes", "minutes": 1, "concentration": true},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:bard", "srd:sorcerer", "srd:wizard"],
+      "description": "A creature you touch has the Invisible condition for the duration."
+    }
+  },
+  {
+    "id": "polymorph",
+    "name": "Polymorph",
+    "body": {
+      "level": 4,
+      "schoolId": "srd:transmutation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a caterpillar cocoon"}],
+      "duration": {"t": "hours", "hours": 1, "concentration": true},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:bard", "srd:druid", "srd:sorcerer", "srd:wizard"],
+      "description": "Transform a creature you can see within range into a Beast. An unwilling creature must succeed on a Wisdom save."
+    }
+  },
+  {
+    "id": "wall_of_fire",
+    "name": "Wall of Fire",
+    "body": {
+      "level": 4,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 120},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a piece of phosphorus"}],
+      "duration": {"t": "minutes", "minutes": 1, "concentration": true},
+      "targets": ["aoeOriginPoint"],
+      "area": {"t": "line", "lengthFt": 60, "widthFt": 5},
+      "classListIds": ["srd:druid", "srd:sorcerer", "srd:wizard"],
+      "description": "Create a wall of fire on a solid surface. Each creature in the wall's space makes a Dexterity save, taking 5d8 fire damage on a fail or half on a success."
+    }
+  }
+]

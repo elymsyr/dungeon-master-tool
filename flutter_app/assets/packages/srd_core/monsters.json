@@ -1,0 +1,137 @@
+[
+  {
+    "id": "goblin",
+    "name": "Goblin",
+    "body": {
+      "stats": {
+        "sizeId": "srd:small",
+        "typeId": "srd:humanoid",
+        "alignmentId": "srd:chaotic_evil",
+        "armorClass": 15,
+        "hitPoints": 7,
+        "hitPointsFormula": "2d6",
+        "speeds": {"walk": 30},
+        "abilities": {"str": 8, "dex": 14, "con": 10, "int": 10, "wis": 8, "cha": 8},
+        "skills": {"srd:stealth": "full"},
+        "senses": {"darkvision": 60},
+        "languageIds": ["srd:common", "srd:goblin"],
+        "cr": "1/4"
+      },
+      "actions": [
+        {"t": "attack", "name": "Scimitar", "attackBonus": 4, "damage": "1d6+2", "damageTypeId": "srd:slashing"}
+      ],
+      "bonusActions": [
+        {"t": "special", "name": "Nimble Escape", "description": "Take Disengage or Hide as a bonus action."}
+      ],
+      "description": "A small humanoid raider known for cowardice in the open and viciousness in ambush."
+    }
+  },
+  {
+    "id": "wolf",
+    "name": "Wolf",
+    "body": {
+      "stats": {
+        "sizeId": "srd:medium",
+        "typeId": "srd:beast",
+        "armorClass": 12,
+        "hitPoints": 11,
+        "hitPointsFormula": "2d8+2",
+        "speeds": {"walk": 40},
+        "abilities": {"str": 12, "dex": 15, "con": 12, "int": 3, "wis": 12, "cha": 6},
+        "skills": {"srd:perception": "full", "srd:stealth": "full"},
+        "cr": "1/4"
+      },
+      "actions": [
+        {"t": "attack", "name": "Bite", "attackBonus": 4, "damage": "2d4+2", "damageTypeId": "srd:piercing"}
+      ],
+      "description": "A pack-hunting predator with keen senses."
+    }
+  },
+  {
+    "id": "orc",
+    "name": "Orc",
+    "body": {
+      "stats": {
+        "sizeId": "srd:medium",
+        "typeId": "srd:humanoid",
+        "alignmentId": "srd:chaotic_evil",
+        "armorClass": 13,
+        "hitPoints": 15,
+        "hitPointsFormula": "2d8+6",
+        "speeds": {"walk": 30},
+        "abilities": {"str": 16, "dex": 12, "con": 16, "int": 7, "wis": 11, "cha": 10},
+        "senses": {"darkvision": 60},
+        "languageIds": ["srd:common", "srd:orc"],
+        "cr": "1/2"
+      },
+      "actions": [
+        {"t": "attack", "name": "Greataxe", "attackBonus": 5, "damage": "1d12+3", "damageTypeId": "srd:slashing"}
+      ],
+      "bonusActions": [
+        {"t": "special", "name": "Aggressive", "description": "Move up to walking speed toward a hostile creature you can see."}
+      ],
+      "description": "A savage warrior driven to dominate the weak."
+    }
+  },
+  {
+    "id": "skeleton",
+    "name": "Skeleton",
+    "body": {
+      "stats": {
+        "sizeId": "srd:medium",
+        "typeId": "srd:undead",
+        "alignmentId": "srd:lawful_evil",
+        "armorClass": 13,
+        "hitPoints": 13,
+        "hitPointsFormula": "2d8+4",
+        "speeds": {"walk": 30},
+        "abilities": {"str": 10, "dex": 14, "con": 15, "int": 6, "wis": 8, "cha": 5},
+        "damageVulnerabilityIds": ["srd:bludgeoning"],
+        "damageImmunityIds": ["srd:poison"],
+        "conditionImmunityIds": ["srd:exhaustion", "srd:poisoned"],
+        "senses": {"darkvision": 60},
+        "cr": "1/4"
+      },
+      "actions": [
+        {"t": "attack", "name": "Shortsword", "attackBonus": 4, "damage": "1d6+2", "damageTypeId": "srd:piercing"},
+        {"t": "attack", "name": "Shortbow", "attackBonus": 4, "rangeNormalFt": 80, "rangeLongFt": 320, "damage": "1d6+2", "damageTypeId": "srd:piercing"}
+      ],
+      "description": "An animated bone construct bound by necromancy."
+    }
+  },
+  {
+    "id": "adult_red_dragon",
+    "name": "Adult Red Dragon",
+    "body": {
+      "stats": {
+        "sizeId": "srd:huge",
+        "typeId": "srd:dragon",
+        "alignmentId": "srd:chaotic_evil",
+        "armorClass": 19,
+        "hitPoints": 256,
+        "hitPointsFormula": "19d12+133",
+        "speeds": {"walk": 40, "fly": 80, "climb": 40},
+        "abilities": {"str": 27, "dex": 10, "con": 25, "int": 16, "wis": 13, "cha": 21},
+        "savingThrows": {"dexterity": "full", "constitution": "full", "wisdom": "full", "charisma": "full"},
+        "skills": {"srd:perception": "expertise", "srd:stealth": "full"},
+        "damageImmunityIds": ["srd:fire"],
+        "senses": {"blindsight": 60, "darkvision": 120},
+        "languageIds": ["srd:common", "srd:draconic"],
+        "cr": "17"
+      },
+      "actions": [
+        {"t": "multiattack", "actionNames": ["Bite", "Claw", "Claw"]},
+        {"t": "attack", "name": "Bite", "attackBonus": 14, "reachFt": 10, "damage": "2d10+8", "damageTypeId": "srd:piercing"},
+        {"t": "attack", "name": "Claw", "attackBonus": 14, "damage": "2d6+8", "damageTypeId": "srd:slashing"},
+        {"t": "save", "name": "Fire Breath", "ability": "dexterity", "dc": 21, "damage": "18d6", "damageTypeId": "srd:fire"}
+      ],
+      "legendaryActions": [
+        {"name": "Detect", "inner": {"t": "special", "name": "Detect", "description": "Make a Wisdom (Perception) check."}},
+        {"name": "Tail Attack", "inner": {"t": "attack", "name": "Tail", "attackBonus": 14, "reachFt": 15, "damage": "2d8+8", "damageTypeId": "srd:bludgeoning"}},
+        {"name": "Wing Attack", "cost": 2, "inner": {"t": "save", "name": "Wing Attack", "ability": "dexterity", "dc": 22, "damage": "2d6+8", "damageTypeId": "srd:bludgeoning", "halfOnSave": false}}
+      ],
+      "legendaryActionSlots": 3,
+      "description": "An ancient evil that hoards gold and fire alike."
+    }
+  }
+]

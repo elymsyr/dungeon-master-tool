@@ -1,0 +1,63 @@
+[
+  {
+    "id": "animate_objects",
+    "name": "Animate Objects",
+    "body": {
+      "level": 5,
+      "schoolId": "srd:transmutation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 120},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "minutes", "minutes": 1, "concentration": true},
+      "targets": ["multipleCreatures"],
+      "classListIds": ["srd:bard", "srd:sorcerer", "srd:wizard"],
+      "description": "Up to 10 nonmagical objects within range animate at your command, becoming creatures under your control."
+    }
+  },
+  {
+    "id": "cone_of_cold",
+    "name": "Cone of Cold",
+    "body": {
+      "level": 5,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "self"},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a small crystal or glass cone"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["aoeOriginPoint"],
+      "area": {"t": "cone", "lengthFt": 60},
+      "classListIds": ["srd:sorcerer", "srd:wizard"],
+      "description": "A blast of cold air erupts from your hands. Each creature in a 60-foot Cone makes a Constitution save, taking 8d8 cold damage on a fail or half on a success."
+    }
+  },
+  {
+    "id": "hold_monster",
+    "name": "Hold Monster",
+    "body": {
+      "level": 5,
+      "schoolId": "srd:enchantment",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 90},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a small, straight piece of iron"}],
+      "duration": {"t": "minutes", "minutes": 1, "concentration": true},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:bard", "srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "Choose a creature you can see within range. The target must succeed on a Wisdom save or have the Paralyzed condition."
+    }
+  },
+  {
+    "id": "raise_dead",
+    "name": "Raise Dead",
+    "body": {
+      "level": 5,
+      "schoolId": "srd:necromancy",
+      "castingTime": {"t": "hours", "hours": 1},
+      "range": {"t": "touch"},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a diamond worth 500+ GP, which the spell consumes", "costCp": 50000, "consumed": true}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:bard", "srd:cleric", "srd:paladin"],
+      "description": "Return a dead creature you touch to life, provided it has been dead no longer than 10 days."
+    }
+  }
+]

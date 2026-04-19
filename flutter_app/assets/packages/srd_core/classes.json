@@ -1,0 +1,72 @@
+[
+  {
+    "id": "barbarian",
+    "name": "Barbarian",
+    "body": {
+      "hitDie": "d12",
+      "casterKind": "none",
+      "savingThrows": ["strength", "constitution"],
+      "featureTable": [
+        {"level": 1, "featureIds": ["srd:rage", "srd:unarmored_defense_barbarian"]},
+        {"level": 2, "featureIds": ["srd:reckless_attack", "srd:danger_sense"]}
+      ],
+      "description": "A fierce warrior of primitive background who can enter a battle rage."
+    }
+  },
+  {
+    "id": "cleric",
+    "name": "Cleric",
+    "body": {
+      "hitDie": "d8",
+      "casterKind": "full",
+      "spellcastingAbility": "wisdom",
+      "savingThrows": ["wisdom", "charisma"],
+      "featureTable": [
+        {"level": 1, "featureIds": ["srd:spellcasting_cleric", "srd:divine_order"]}
+      ],
+      "description": "A priestly champion who wields divine magic in service of a higher power."
+    }
+  },
+  {
+    "id": "fighter",
+    "name": "Fighter",
+    "body": {
+      "hitDie": "d10",
+      "casterKind": "none",
+      "savingThrows": ["strength", "constitution"],
+      "featureTable": [
+        {"level": 1, "featureIds": ["srd:fighting_style", "srd:second_wind", "srd:weapon_mastery"]},
+        {"level": 2, "featureIds": ["srd:action_surge"]}
+      ],
+      "description": "A master of martial combat, skilled with a variety of weapons and armor."
+    }
+  },
+  {
+    "id": "rogue",
+    "name": "Rogue",
+    "body": {
+      "hitDie": "d8",
+      "casterKind": "none",
+      "savingThrows": ["dexterity", "intelligence"],
+      "featureTable": [
+        {"level": 1, "featureIds": ["srd:expertise", "srd:sneak_attack", "srd:thieves_cant"]},
+        {"level": 2, "featureIds": ["srd:cunning_action"]}
+      ],
+      "description": "A scoundrel who uses stealth and trickery to overcome obstacles and enemies."
+    }
+  },
+  {
+    "id": "wizard",
+    "name": "Wizard",
+    "body": {
+      "hitDie": "d6",
+      "casterKind": "full",
+      "spellcastingAbility": "intelligence",
+      "savingThrows": ["intelligence", "wisdom"],
+      "featureTable": [
+        {"level": 1, "featureIds": ["srd:spellcasting_wizard", "srd:ritual_adept", "srd:arcane_recovery"]}
+      ],
+      "description": "A scholarly magic-user capable of manipulating the structures of reality."
+    }
+  }
+]

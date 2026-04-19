@@ -1,0 +1,63 @@
+[
+  {
+    "id": "counterspell",
+    "name": "Counterspell",
+    "body": {
+      "level": 3,
+      "schoolId": "srd:abjuration",
+      "castingTime": {"t": "reaction", "trigger": "another creature within 60 feet of yourself casts a spell with Verbal or Somatic components"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "Attempt to interrupt a creature in the process of casting a spell. The target must succeed on a Constitution save (DC 10 + spell's level) or the spell fails."
+    }
+  },
+  {
+    "id": "fireball",
+    "name": "Fireball",
+    "body": {
+      "level": 3,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 150},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a ball of bat guano and sulfur"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["aoeOriginPoint"],
+      "area": {"t": "sphere", "radiusFt": 20},
+      "classListIds": ["srd:sorcerer", "srd:wizard"],
+      "description": "A bright streak flashes from you to a point you choose within range and blossoms into an explosion of flame. Each creature in a 20-foot radius Sphere makes a Dexterity save, taking 8d6 fire damage on a fail or half on a success."
+    }
+  },
+  {
+    "id": "fly",
+    "name": "Fly",
+    "body": {
+      "level": 3,
+      "schoolId": "srd:transmutation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "touch"},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a wing feather from any bird"}],
+      "duration": {"t": "minutes", "minutes": 10, "concentration": true},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "A willing creature you touch gains a Fly Speed of 60 feet for the duration."
+    }
+  },
+  {
+    "id": "revivify",
+    "name": "Revivify",
+    "body": {
+      "level": 3,
+      "schoolId": "srd:necromancy",
+      "castingTime": {"t": "action"},
+      "range": {"t": "touch"},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "diamonds worth 300+ GP, which the spell consumes", "costCp": 30000, "consumed": true}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:cleric", "srd:paladin"],
+      "description": "Touch a creature that has died within the last minute. That creature returns to life with 1 HP. This spell can't return to life a creature that has died of old age, nor can it restore any missing body parts."
+    }
+  }
+]

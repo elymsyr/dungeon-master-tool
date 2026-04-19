@@ -1,0 +1,63 @@
+[
+  {
+    "id": "meteor_swarm",
+    "name": "Meteor Swarm",
+    "body": {
+      "level": 9,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "miles", "miles": 1},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["aoeOriginPoint"],
+      "area": {"t": "sphere", "radiusFt": 40},
+      "classListIds": ["srd:sorcerer", "srd:wizard"],
+      "description": "Blazing orbs of fire plummet to the ground at four points within range. Each creature in a 40-foot-radius Sphere takes 20d6 fire damage and 20d6 bludgeoning damage on a failed Dexterity save."
+    }
+  },
+  {
+    "id": "power_word_kill",
+    "name": "Power Word Kill",
+    "body": {
+      "level": 9,
+      "schoolId": "srd:enchantment",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:bard", "srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "Utter a word of power that can compel one creature you can see within range to die instantly. If the target has 100 HP or fewer, it dies."
+    }
+  },
+  {
+    "id": "time_stop",
+    "name": "Time Stop",
+    "body": {
+      "level": 9,
+      "schoolId": "srd:transmutation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "self"},
+      "components": [{"t": "v"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["self"],
+      "classListIds": ["srd:sorcerer", "srd:wizard"],
+      "description": "Briefly stop the flow of time for everyone but yourself. Take 1d4+1 turns in a row, during which other creatures are frozen."
+    }
+  },
+  {
+    "id": "wish",
+    "name": "Wish",
+    "body": {
+      "level": 9,
+      "schoolId": "srd:conjuration",
+      "castingTime": {"t": "action"},
+      "range": {"t": "self"},
+      "components": [{"t": "v"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["self"],
+      "classListIds": ["srd:sorcerer", "srd:wizard"],
+      "description": "By simply speaking aloud, you can alter the very foundations of reality in accord with your desires."
+    }
+  }
+]

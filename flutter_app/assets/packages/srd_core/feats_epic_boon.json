@@ -1,0 +1,29 @@
+[
+  {
+    "id": "boon_of_combat_prowess",
+    "name": "Boon of Combat Prowess",
+    "body": {
+      "category": "epicBoon",
+      "prerequisite": "Level 19+",
+      "description": "Increase one ability score by 1 (max 30). Once on each of your turns when you miss with an attack roll, you can hit instead."
+    }
+  },
+  {
+    "id": "boon_of_dimensional_travel",
+    "name": "Boon of Dimensional Travel",
+    "body": {
+      "category": "epicBoon",
+      "prerequisite": "Level 19+",
+      "description": "Increase one ability score by 1 (max 30). As a bonus action, teleport up to 30 feet to an unoccupied space you can see."
+    }
+  },
+  {
+    "id": "boon_of_skill",
+    "name": "Boon of Skill",
+    "body": {
+      "category": "epicBoon",
+      "prerequisite": "Level 19+",
+      "description": "Increase one ability score by 1 (max 30). Gain proficiency in all skills."
+    }
+  }
+]

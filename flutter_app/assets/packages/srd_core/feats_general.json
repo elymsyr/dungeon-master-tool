@@ -1,0 +1,30 @@
+[
+  {
+    "id": "mobile",
+    "name": "Mobile",
+    "body": {
+      "category": "general",
+      "prerequisite": "Level 4+",
+      "description": "Speed increases by 10 feet. Dash through difficult terrain doesn't cost extra movement. After making a melee attack against a creature this turn, you don't provoke opportunity attacks from that creature."
+    }
+  },
+  {
+    "id": "sentinel",
+    "name": "Sentinel",
+    "body": {
+      "category": "general",
+      "prerequisite": "Level 4+",
+      "description": "Opportunity attack reduces the creature's speed to 0. Creatures provoke opportunity attacks even with Disengage. When a creature within 5 feet attacks a target other than you, you can use a reaction to make a melee attack."
+    }
+  },
+  {
+    "id": "skill_expert",
+    "name": "Skill Expert",
+    "body": {
+      "category": "general",
+      "repeatable": true,
+      "prerequisite": "Level 4+",
+      "description": "Increase one ability score by 1 (max 20). Gain proficiency in one skill. Choose one skill you're proficient in to gain Expertise."
+    }
+  }
+]

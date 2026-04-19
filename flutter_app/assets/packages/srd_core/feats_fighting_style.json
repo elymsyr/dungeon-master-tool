@@ -1,0 +1,38 @@
+[
+  {
+    "id": "fs_defense",
+    "name": "Defense",
+    "body": {
+      "category": "fightingStyle",
+      "prerequisite": "Fighting Style feature",
+      "description": "While you wear armor, you gain a +1 bonus to AC."
+    }
+  },
+  {
+    "id": "fs_dueling",
+    "name": "Dueling",
+    "body": {
+      "category": "fightingStyle",
+      "prerequisite": "Fighting Style feature",
+      "description": "When you are wielding a melee weapon in one hand and no other weapons, you gain a +2 bonus to damage rolls with that weapon."
+    }
+  },
+  {
+    "id": "fs_great_weapon_fighting",
+    "name": "Great Weapon Fighting",
+    "body": {
+      "category": "fightingStyle",
+      "prerequisite": "Fighting Style feature",
+      "description": "When you roll a 1 or 2 on a damage die for a melee weapon you wield with two hands, you can reroll the die and must use the new roll. The weapon must have the Two-Handed or Versatile property."
+    }
+  },
+  {
+    "id": "fs_two_weapon_fighting",
+    "name": "Two-Weapon Fighting",
+    "body": {
+      "category": "fightingStyle",
+      "prerequisite": "Fighting Style feature",
+      "description": "When you make an extra attack as part of the Light weapon mastery, you can add your ability modifier to that attack's damage."
+    }
+  }
+]

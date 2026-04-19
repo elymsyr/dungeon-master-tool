@@ -1,0 +1,62 @@
+[
+  {
+    "id": "chain_lightning",
+    "name": "Chain Lightning",
+    "body": {
+      "level": 6,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 150},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a bit of fur, a piece of amber, and a silver pin"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["multipleCreatures"],
+      "classListIds": ["srd:sorcerer", "srd:wizard"],
+      "description": "A bolt of lightning strikes a target you choose, then arcs to up to 3 additional targets within 30 feet. Each target makes a Dexterity save, taking 10d8 lightning damage on a fail or half on a success."
+    }
+  },
+  {
+    "id": "disintegrate",
+    "name": "Disintegrate",
+    "body": {
+      "level": 6,
+      "schoolId": "srd:transmutation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "a lodestone and dust"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreatureOrObject"],
+      "classListIds": ["srd:sorcerer", "srd:wizard"],
+      "description": "A thin green ray springs from your finger. The target must succeed on a Dexterity save or take 10d6+40 force damage; if reduced to 0 HP, it is disintegrated."
+    }
+  },
+  {
+    "id": "heal",
+    "name": "Heal",
+    "body": {
+      "level": 6,
+      "schoolId": "srd:abjuration",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:cleric", "srd:druid"],
+      "description": "Choose a creature you can see within range. Surges of positive energy wash through it, restoring 70 HP and ending Blinded, Deafened, and any disease on it."
+    }
+  },
+  {
+    "id": "true_seeing",
+    "name": "True Seeing",
+    "body": {
+      "level": 6,
+      "schoolId": "srd:divination",
+      "castingTime": {"t": "action"},
+      "range": {"t": "touch"},
+      "components": [{"t": "v"}, {"t": "s"}, {"t": "m", "description": "ointment for the eyes worth 25+ GP", "costCp": 2500, "consumed": true}],
+      "duration": {"t": "hours", "hours": 1},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:bard", "srd:cleric", "srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "The willing creature you touch has Truesight with a range of 120 feet for the duration."
+    }
+  }
+]
