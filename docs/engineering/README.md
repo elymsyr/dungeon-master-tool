@@ -192,6 +192,26 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 13 AoEDamageOrchestrator (🟣) — Phase C area-of-effect
+
+Single-roll multi-apply per SRD §11.6: damage rolled once, broadcast to every target inside the AoE coverage. Composes existing `AreaOfEffect.coverage` (geometry) + `SaveResolver` (per-target spell save) + `ApplyDamagePipeline` (damage + concentration). Pure — no Combatant mutation.
+
+Files added:
+- `lib/application/dnd5e/combat/aoe_target.dart` — per-target input bundle: `{id, position, defenses, spellSaveAbilityMod/ProfBonus/Advantage/auto…, concentration?, conMod, concentrationSaveProfBonus/Advantage/auto…}`. Flat record; orchestrator never reads `Combatant`.
+- `lib/application/dnd5e/combat/aoe_target_outcome.dart` — per-target result: `{spellSave: SaveResult?, damage: ApplyDamageOutcome}`. `spellSave` null when the spell offers no save.
+- `lib/application/dnd5e/combat/aoe_damage_orchestrator.dart` — `apply({area, origin, direction, targets, damageAmount, damageTypeId, saveAbility?, saveDc?, isCritical, sourceSpellId})` returning `Map<id, AoETargetOutcome>`. Filters by `area.coverage(origin, direction)` first; for each survivor rolls the spell save (if `saveDc` non-null), builds `DamageInstance(fromSavedThrow: saveDc != null, savedSucceeded: …)`, runs the pipeline.
+- `test/application/dnd5e/combat/aoe_damage_orchestrator_test.dart` — 9 tests across coverage filter (out-of-area skipped, only in-area resolved), save-for-half (success halves, fail full, null saveDc skips spell save, save+ability paired-or-neither, resistance after save halving), concentration in AoE (damaged concentrator rolls conc save post-spell-save, non-concentrator skips), input validation (negative damage rejected).
+
+Decisions:
+- **Save inside, damage outside** — orchestrator owns the per-target spell save (it's an AoE-specific concern: same DC + ability across targets, but each target rolls its own d20). Damage roll comes in pre-rolled by the caller per the SRD "rolled once" rule, so the orchestrator stays free of dice for the damage value itself.
+- **`saveDc + saveAbility` paired** — both null = no save spell (Magic Missile-style); both set = save-for-half. Mixed = ArgumentError. Avoids the silent bug where a caller sets DC but forgets the ability.
+- **Concentration check delegated to `ApplyDamagePipeline`** — keeps the orchestrator focused on AoE-specific concerns; concentration math is universal and already lives in the pipeline. Per-target conc params flow through the `AoETarget` bundle.
+- **Pre-rolled damage value, not a `DamageRollResult`** — the existing pipeline takes a flat `int amount`. Following that convention rather than introducing a new value type for "the AoE rolled this once."
+
+Verification: `flutter analyze` 0 issues, `flutter test` 1241/1241 pass (1 skipped). +9 tests this turn.
+
+Next candidates: `Combatant.copyWith` sweep (unblocks `EncounterService` repo writes — non-trivial because PlayerCombatant.HP delegates through Character.hp), `SpellEffectDispatcher` (Doc 13 — wires `CastOutcome.success` to compiled `EffectDescriptor` registry), or the Phase A structural unblock (Doc 04 Step 5/7 + Doc 42 wiring — still gated on `_backupV4DbBeforeReset`).
+
 ### 2026-04-19 — Doc 11 ApplyDamagePipeline (🟣) — Phase C combat composition
 
 Composes the just-shipped `ConcentrationCheckResolver` with the existing `DamageResolver` so the EncounterService apply-damage flow becomes a single pure call. No `Combatant.copyWith` dependency yet — the pipeline returns a value and the caller writes back.
