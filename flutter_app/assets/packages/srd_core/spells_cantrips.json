@@ -1,0 +1,448 @@
+[
+  {
+    "id": "acid_splash",
+    "name": "Acid Splash",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:conjuration",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:sorcerer", "srd:wizard"],
+      "description": "You create an acidic bubble at a point within range, where it explodes in a 5-foot-radius Sphere. Each creature in the Sphere must succeed on a Dexterity saving throw or take 1d6 Acid damage. Cantrip Upgrade: The damage increases by 1d6 when you reach levels 5 (2d6), 11 (3d6), and 17 (4d6)."
+    }
+  },
+  {
+    "id": "dancing_lights",
+    "name": "Dancing Lights",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:illusion",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 120},
+      "components": [
+        {"t": "v"},
+        {"t": "s"},
+        {"t": "m", "description": "a bit of phosphorus or wychwood, or a glowworm"}
+      ],
+      "duration": {"t": "minutes", "minutes": 1, "concentration": true},
+      "targets": ["point"],
+      "classListIds": ["srd:bard", "srd:sorcerer", "srd:wizard"],
+      "description": "You create up to four torch-sized lights within range, making each light appear as a torch, a lantern, or a glowing orb that hovers in the air for the duration. You can also combine the four lights into one glowing vaguely humanoid form of Medium size. Whichever form you choose, each light sheds Dim Light in a 10-foot radius. As a Bonus Action, you can move the lights up to 60 feet to a new spot within range."
+    }
+  },
+  {
+    "id": "druidcraft",
+    "name": "Druidcraft",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:transmutation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 30},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["point"],
+      "classListIds": ["srd:druid"],
+      "description": "You create one of the following effects within range: a tiny, harmless sensory effect that predicts the next 24 hours of weather; a flower to instantly bloom, a seed pod to open, or a leaf bud to bloom; an instantaneous, harmless sensory effect (e.g., falling leaves, puff of wind, sound of an animal); or you light or snuff out a candle, torch, or small campfire."
+    }
+  },
+  {
+    "id": "eldritch_blast",
+    "name": "Eldritch Blast",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 120},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:warlock"],
+      "description": "A beam of crackling energy streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 Force damage. Cantrip Upgrade: You create two beams at level 5, three beams at level 11, and four beams at level 17. You can direct the beams at the same target or at different ones. Make a separate attack roll for each beam."
+    }
+  },
+  {
+    "id": "fire_bolt",
+    "name": "Fire Bolt",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 120},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreatureOrObject"],
+      "classListIds": ["srd:sorcerer", "srd:wizard"],
+      "description": "You hurl a mote of fire at a creature or an object within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 Fire damage. A flammable object hit by this spell starts burning if it isn't being worn or carried. Cantrip Upgrade: The damage increases by 1d10 when you reach levels 5 (2d10), 11 (3d10), and 17 (4d10)."
+    }
+  },
+  {
+    "id": "guidance",
+    "name": "Guidance",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:divination",
+      "castingTime": {"t": "action"},
+      "range": {"t": "touch"},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "minutes", "minutes": 1, "concentration": true},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:cleric", "srd:druid"],
+      "description": "You touch a willing creature and choose a skill. Until the spell ends, the creature adds 1d4 to any ability check using the chosen skill. The spell then ends."
+    }
+  },
+  {
+    "id": "light",
+    "name": "Light",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "touch"},
+      "components": [
+        {"t": "v"},
+        {"t": "m", "description": "a firefly or phosphorescent moss"}
+      ],
+      "duration": {"t": "hours", "hours": 1},
+      "targets": ["oneObject"],
+      "classListIds": ["srd:bard", "srd:cleric", "srd:sorcerer", "srd:wizard"],
+      "description": "You touch one object that is no larger than 10 feet in any dimension. Until the spell ends, the object sheds Bright Light in a 20-foot radius and Dim Light for an additional 20 feet. The light can be colored as you like. Completely covering the object with something opaque blocks the light. The spell ends if you cast it again or dismiss it (no action required). If you target an object held or worn by a hostile creature, that creature must succeed on a Dexterity saving throw to avoid the spell."
+    }
+  },
+  {
+    "id": "mage_hand",
+    "name": "Mage Hand",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:conjuration",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 30},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "minutes", "minutes": 1},
+      "targets": ["point"],
+      "classListIds": ["srd:bard", "srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "A spectral, floating hand appears at a point you choose within range. The hand lasts for the duration or until you dismiss it (no action required). The hand vanishes if it is more than 30 feet from you or if you cast this spell again. As a Magic action, you can control the hand to manipulate an object, open an unlocked door or container, stow or retrieve an item from an open container, or pour the contents out of a vial. You can move the hand up to 30 feet each time you use it. The hand can't attack, activate magic items, or carry more than 10 pounds."
+    }
+  },
+  {
+    "id": "mending",
+    "name": "Mending",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:transmutation",
+      "castingTime": {"t": "minutes", "minutes": 1},
+      "range": {"t": "touch"},
+      "components": [
+        {"t": "v"},
+        {"t": "s"},
+        {"t": "m", "description": "two lodestones"}
+      ],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneObject"],
+      "classListIds": ["srd:bard", "srd:cleric", "srd:druid", "srd:sorcerer", "srd:wizard"],
+      "description": "This spell repairs a single break or tear in an object you touch, such as a broken chain link, two halves of a broken key, a torn cloak, or a leaking wineskin. As long as the break or tear is no larger than 1 foot in any dimension, you mend it, leaving no trace of the former damage. This spell can physically repair a magic item or construct, but it can't restore magic to such an object."
+    }
+  },
+  {
+    "id": "message",
+    "name": "Message",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:transmutation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 120},
+      "components": [
+        {"t": "v"},
+        {"t": "s"},
+        {"t": "m", "description": "a short piece of copper wire"}
+      ],
+      "duration": {"t": "rounds", "rounds": 1},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:bard", "srd:sorcerer", "srd:wizard"],
+      "description": "You point toward a creature within range and whisper a message. The target (and only the target) hears the message and can reply in a whisper that only you can hear. You can cast this spell through solid objects if you are familiar with the target and know it is beyond the barrier. Magical silence, 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood blocks the spell. The spell doesn't have to follow a straight line and can travel freely around corners or through openings."
+    }
+  },
+  {
+    "id": "minor_illusion",
+    "name": "Minor Illusion",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:illusion",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 30},
+      "components": [
+        {"t": "s"},
+        {"t": "m", "description": "a bit of fleece"}
+      ],
+      "duration": {"t": "minutes", "minutes": 1},
+      "targets": ["point"],
+      "classListIds": ["srd:bard", "srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "You create a sound or an image of an object within range that lasts for the duration. See the Illusion description for the kinds of illusions you can create. The illusion ends if you cast this spell again or dismiss it (no action required). If you create a sound, its volume can range from a whisper to a scream. An image can be no larger than a 5-foot Cube. The image can't create sensory effects that a Light spell could. Physical interaction reveals it to be an illusion, and a creature using its action to examine the sound or image can identify it as illusory with a successful Investigation check against your spell save DC."
+    }
+  },
+  {
+    "id": "poison_spray",
+    "name": "Poison Spray",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:necromancy",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 10},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:druid", "srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "You extend your hand toward a creature you can see within range and project a puff of noxious gas from your palm. The target must succeed on a Constitution saving throw or take 1d12 Poison damage. Cantrip Upgrade: The damage increases by 1d12 when you reach levels 5 (2d12), 11 (3d12), and 17 (4d12)."
+    }
+  },
+  {
+    "id": "prestidigitation",
+    "name": "Prestidigitation",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:transmutation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 10},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "hours", "hours": 1},
+      "targets": ["point"],
+      "classListIds": ["srd:bard", "srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "This spell is a minor magical trick that novice spellcasters use for practice. You create one of the following magical effects within range: an instantaneous, harmless sensory effect (shower of sparks, puff of wind, faint odor, soft note); an instantaneous fire-starter effect (light or snuff a candle, torch, or small campfire); clean or soil a 1-foot cube; chill, warm, or flavor 1 cubic foot of nonliving material for 1 hour; make a color, a small mark, or a symbol appear on an object or surface for 1 hour; or create a nonmagical trinket or illusory image that fits in your hand and lasts until the end of your next turn."
+    }
+  },
+  {
+    "id": "produce_flame",
+    "name": "Produce Flame",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:conjuration",
+      "castingTime": {"t": "action"},
+      "range": {"t": "self"},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "minutes", "minutes": 10},
+      "targets": ["self"],
+      "classListIds": ["srd:druid"],
+      "description": "A flickering flame appears in your hand. The flame remains there for the duration and harms neither you nor your equipment. The flame sheds Bright Light in a 10-foot radius and Dim Light for an additional 10 feet. The spell ends if you dismiss it (no action required) or if you cast it again. You can also attack with the flame: as a Magic action, hurl the flame at a creature or object within 60 feet. Make a ranged spell attack. On a hit, the target takes 1d8 Fire damage. This attack ends the spell. Cantrip Upgrade: damage increases by 1d8 at levels 5/11/17."
+    }
+  },
+  {
+    "id": "ray_of_frost",
+    "name": "Ray of Frost",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:sorcerer", "srd:wizard"],
+      "description": "A frigid beam of blue-white light streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 1d8 Cold damage, and its Speed is reduced by 10 feet until the start of your next turn. Cantrip Upgrade: The damage increases by 1d8 when you reach levels 5 (2d8), 11 (3d8), and 17 (4d8)."
+    }
+  },
+  {
+    "id": "resistance",
+    "name": "Resistance",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:abjuration",
+      "castingTime": {"t": "action"},
+      "range": {"t": "touch"},
+      "components": [
+        {"t": "v"},
+        {"t": "s"},
+        {"t": "m", "description": "a miniature cloak"}
+      ],
+      "duration": {"t": "minutes", "minutes": 1, "concentration": true},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:cleric", "srd:druid"],
+      "description": "You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice. It can roll the die before or after making the saving throw. The spell then ends."
+    }
+  },
+  {
+    "id": "sacred_flame",
+    "name": "Sacred Flame",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:cleric"],
+      "description": "Flame-like radiance descends on a creature you can see within range. The target must succeed on a Dexterity saving throw or take 1d8 Radiant damage. The target gains no benefit from Half Cover or Three-Quarters Cover for this save. Cantrip Upgrade: The damage increases by 1d8 when you reach levels 5 (2d8), 11 (3d8), and 17 (4d8)."
+    }
+  },
+  {
+    "id": "shillelagh",
+    "name": "Shillelagh",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:transmutation",
+      "castingTime": {"t": "bonusAction"},
+      "range": {"t": "touch"},
+      "components": [
+        {"t": "v"},
+        {"t": "s"},
+        {"t": "m", "description": "mistletoe, a shamrock leaf, and a Club or Quarterstaff"}
+      ],
+      "duration": {"t": "minutes", "minutes": 1},
+      "targets": ["oneObject"],
+      "classListIds": ["srd:druid"],
+      "description": "A Club or Quarterstaff you are holding is imbued with nature's power. For the duration, you can use your spellcasting ability instead of Strength for the attack and damage rolls of melee attacks using that weapon, and the weapon's damage die becomes a d8. The weapon also becomes magical if it isn't already. The spell ends if you cast it again or if you let go of the weapon."
+    }
+  },
+  {
+    "id": "shocking_grasp",
+    "name": "Shocking Grasp",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "touch"},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:sorcerer", "srd:wizard"],
+      "description": "Lightning springs from your hand to deliver a shock to a creature you try to touch. Make a melee spell attack against the target. You have Advantage on the roll if the target is wearing armor made of metal. On a hit, the target takes 1d8 Lightning damage, and it can't take Reactions until the start of its next turn. Cantrip Upgrade: The damage increases by 1d8 when you reach levels 5 (2d8), 11 (3d8), and 17 (4d8)."
+    }
+  },
+  {
+    "id": "spare_the_dying",
+    "name": "Spare the Dying",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:necromancy",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 15},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:cleric", "srd:druid"],
+      "description": "Choose a creature within range that has 0 Hit Points but isn't dead. The creature becomes Stable."
+    }
+  },
+  {
+    "id": "starry_wisp",
+    "name": "Starry Wisp",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [
+        {"t": "v"},
+        {"t": "s"},
+        {"t": "m", "description": "a bit of phosphorescent material"}
+      ],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:bard", "srd:druid"],
+      "description": "You launch a mote of light at a creature or object within range. Make a ranged spell attack against the target. On a hit, the target takes 1d8 Radiant damage and emits Dim Light in a 10-foot radius for 1 minute or until a creature takes a Magic action to extinguish the light. The target also has Disadvantage on its next attack roll before the end of its next turn. Cantrip Upgrade: The damage increases by 1d8 when you reach levels 5 (2d8), 11 (3d8), and 17 (4d8)."
+    }
+  },
+  {
+    "id": "thaumaturgy",
+    "name": "Thaumaturgy",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:transmutation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 30},
+      "components": [{"t": "v"}],
+      "duration": {"t": "minutes", "minutes": 1},
+      "targets": ["point"],
+      "classListIds": ["srd:cleric"],
+      "description": "You manifest a minor wonder, a sign of supernatural power, within range. You create one of the following magical effects within range: your voice booms up to three times as loud as normal for 1 minute; cause flames to flicker, brighten, dim, or change color for 1 minute; cause harmless tremors in the ground for 1 minute; create an instantaneous sound that originates from a point of your choice within range; instantaneously cause an unlocked door or window to fly open or slam shut; or alter the appearance of your eyes for 1 minute. If you cast this spell multiple times, you can have up to three of its 1-minute effects active at a time, and you can dismiss such an effect as an action."
+    }
+  },
+  {
+    "id": "thorn_whip",
+    "name": "Thorn Whip",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:transmutation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 30},
+      "components": [
+        {"t": "v"},
+        {"t": "s"},
+        {"t": "m", "description": "the stem of a plant with thorns"}
+      ],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:druid"],
+      "description": "You create a long, vine-like whip covered in thorns that lashes out at a creature within range. Make a melee spell attack against the target. On a hit, the target takes 1d6 Piercing damage, and if the target is Large or smaller, you pull the target up to 10 feet closer to you. Cantrip Upgrade: The damage increases by 1d6 when you reach levels 5 (2d6), 11 (3d6), and 17 (4d6)."
+    }
+  },
+  {
+    "id": "toll_the_dead",
+    "name": "Toll the Dead",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:necromancy",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}, {"t": "s"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:cleric", "srd:warlock", "srd:wizard"],
+      "description": "You point at one creature you can see within range, and the sound of a dolorous bell fills the air around it for a moment. The target must succeed on a Wisdom saving throw or take 1d8 Necrotic damage. If the target is missing any of its Hit Points, it instead takes 1d12 Necrotic damage. Cantrip Upgrade: The damage die changes when you reach levels 5 (2d8 or 2d12), 11 (3d8 or 3d12), and 17 (4d8 or 4d12)."
+    }
+  },
+  {
+    "id": "true_strike",
+    "name": "True Strike",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:divination",
+      "castingTime": {"t": "action"},
+      "range": {"t": "self"},
+      "components": [
+        {"t": "s"},
+        {"t": "m", "description": "a weapon with which the caster has proficiency and that is worth at least 1 SP"}
+      ],
+      "duration": {"t": "instantaneous"},
+      "targets": ["self"],
+      "classListIds": ["srd:bard", "srd:sorcerer", "srd:warlock", "srd:wizard"],
+      "description": "Guided by a flash of magical insight, you make one attack with the weapon used in the spell's casting. The attack uses your spellcasting ability for the attack and damage rolls instead of using Strength or Dexterity. If the attack deals damage, it can be Radiant damage or the weapon's normal damage type (your choice). Cantrip Upgrade: The attack deals an extra 1d6 Radiant damage at levels 5 (+1d6), 11 (+2d6), and 17 (+3d6)."
+    }
+  },
+  {
+    "id": "vicious_mockery",
+    "name": "Vicious Mockery",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:enchantment",
+      "castingTime": {"t": "action"},
+      "range": {"t": "feet", "feet": 60},
+      "components": [{"t": "v"}],
+      "duration": {"t": "instantaneous"},
+      "targets": ["oneCreature"],
+      "classListIds": ["srd:bard"],
+      "description": "You unleash a string of insults laced with subtle enchantments at a creature you can see within range. If the target can hear you, it must succeed on a Wisdom saving throw or take 1d6 Psychic damage and have Disadvantage on the next attack roll it makes before the end of its next turn. Cantrip Upgrade: The damage increases by 1d6 when you reach levels 5 (2d6), 11 (3d6), and 17 (4d6)."
+    }
+  },
+  {
+    "id": "word_of_radiance",
+    "name": "Word of Radiance",
+    "body": {
+      "level": 0,
+      "schoolId": "srd:evocation",
+      "castingTime": {"t": "action"},
+      "range": {"t": "self"},
+      "components": [
+        {"t": "v"},
+        {"t": "m", "description": "a holy symbol"}
+      ],
+      "duration": {"t": "instantaneous"},
+      "targets": ["aoeOriginPoint"],
+      "area": {"t": "emanation", "distanceFt": 5},
+      "classListIds": ["srd:cleric"],
+      "description": "You utter a divine word, and burning radiance erupts from you. Each creature of your choice that you can see within range must succeed on a Constitution saving throw or take 1d6 Radiant damage. Cantrip Upgrade: The damage increases by 1d6 when you reach levels 5 (2d6), 11 (3d6), and 17 (4d6)."
+    }
+  }
+]
