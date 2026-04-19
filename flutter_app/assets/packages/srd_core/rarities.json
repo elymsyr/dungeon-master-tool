@@ -1,0 +1,8 @@
+[
+  {"id": "common", "name": "Common", "body": {"sortOrder": 0, "attunementTierReq": 1}},
+  {"id": "uncommon", "name": "Uncommon", "body": {"sortOrder": 1, "attunementTierReq": 1}},
+  {"id": "rare", "name": "Rare", "body": {"sortOrder": 2, "attunementTierReq": 5}},
+  {"id": "very_rare", "name": "Very Rare", "body": {"sortOrder": 3, "attunementTierReq": 11}},
+  {"id": "legendary", "name": "Legendary", "body": {"sortOrder": 4, "attunementTierReq": 17}},
+  {"id": "artifact", "name": "Artifact", "body": {"sortOrder": 5, "attunementTierReq": null}}
+]

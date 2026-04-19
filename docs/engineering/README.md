@@ -192,6 +192,15 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 SRD rarities asset (🟣)
+
+Shipped `flutter_app/assets/packages/srd_core/rarities.json` with 6 SRD magic-item rarities — Common, Uncommon, Rare, Very Rare, Legendary, Artifact. Body is `{"sortOrder": int, "attunementTierReq": int?}`. `sortOrder` runs 0..5 to give a stable rank across installed packages. `attunementTierReq` follows the DMG level guideline (Common/Uncommon 1+, Rare 5+, Very Rare 11+, Legendary 17+); Artifact is `null` — one-of-a-kind items handed out at DM discretion, no level floor.
+
+- New assets: `assets/packages/srd_core/rarities.json`.
+- Tests: 6 new (`test/assets/packages/srd_core/rarities_asset_test.dart`) — parse all 6, namespace + uniqueness, canonical 6-set, `sortOrder` monotonic 0..5, per-rarity attunement tiers, Artifact has null tier.
+- Result: `flutter analyze` clean, 960/960 tests pass (954 → 960, +6).
+- Next: weapon masteries (5), spell schools (8), languages (~16), or weapon properties (~14).
+
 ### 2026-04-19 — Doc 15 SRD armor categories asset (🟣)
 
 Shipped `flutter_app/assets/packages/srd_core/armor_categories.json` with 4 SRD armor categories — Light, Medium, Heavy, Shield. Body is `{"stealthDisadvantage": bool, "maxDexCap": int?}`. Canonical values: Light `null`/`false` (Dex uncapped, no stealth penalty), Medium `2`/`false` (+2 Dex cap, per-armor override for stealth), Heavy `0`/`true` (Dex contributes nothing, stealth disadvantage), Shield `null`/`false` (shields don't cap Dex — they add flat AC, modeled separately at item level). Count follows `armor_category.dart` dartdoc (4) rather than the plan table (3); Shield is a first-class category because it composes orthogonally with body armor.
