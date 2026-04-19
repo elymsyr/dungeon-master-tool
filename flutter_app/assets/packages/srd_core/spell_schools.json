@@ -1,0 +1,10 @@
+[
+  {"id": "abjuration", "name": "Abjuration", "body": {"color": "#2B6CB0"}},
+  {"id": "conjuration", "name": "Conjuration", "body": {"color": "#D69E2E"}},
+  {"id": "divination", "name": "Divination", "body": {"color": "#718096"}},
+  {"id": "enchantment", "name": "Enchantment", "body": {"color": "#D53F8C"}},
+  {"id": "evocation", "name": "Evocation", "body": {"color": "#DD6B20"}},
+  {"id": "illusion", "name": "Illusion", "body": {"color": "#805AD5"}},
+  {"id": "necromancy", "name": "Necromancy", "body": {"color": "#1A202C"}},
+  {"id": "transmutation", "name": "Transmutation", "body": {"color": "#38A169"}}
+]

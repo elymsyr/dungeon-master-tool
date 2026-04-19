@@ -192,6 +192,24 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 SRD languages asset (🟣)
+
+Shipped `flutter_app/assets/packages/srd_core/languages.json` with 19 SRD 5.2.1 languages — 9 Standard (Common, Common Sign Language, Dwarvish, Elvish, Giant, Gnomish, Goblin, Halfling, Orc), 9 Rare (Abyssal, Celestial, Deep Speech, Draconic, Druidic, Infernal, Primordial, Sylvan, Undercommon), plus Thieves' Cant. Body is `{"script": String?}`. Scripts follow classic D&D lore (e.g. Dwarvish → Dwarvish runes; Elvish → Elvish; Goblin uses Common; Orc uses Dwarvish). Three entries have `null` script for unwritten/gestural/secret forms: Common Sign Language, Deep Speech, Thieves' Cant.
+
+- New assets: `assets/packages/srd_core/languages.json`.
+- Tests: 7 new (`test/assets/packages/srd_core/languages_asset_test.dart`) — parse all 19, namespace + uniqueness, canonical 19-set, non-empty scripts when present, unwritten langs have null, Common/Draconic specific script assertions.
+- Result: `flutter analyze` clean, 978/978 tests pass (971 → 978, +7).
+- Next: weapon properties (~14) — last remaining Tier 1 catalog.
+
+### 2026-04-19 — Doc 15 SRD spell schools asset (🟣)
+
+Shipped `flutter_app/assets/packages/srd_core/spell_schools.json` with the 8 canonical SRD schools — Abjuration, Conjuration, Divination, Enchantment, Evocation, Illusion, Necromancy, Transmutation. Body is `{"color": String?}`. Picked a distinct `#RRGGBB` hex per school for UI tinting (the domain `_isHex` regex enforces the format). Colors are advisory — engine only reads `id`/`name`.
+
+- New assets: `assets/packages/srd_core/spell_schools.json`.
+- Tests: 5 new (`test/assets/packages/srd_core/spell_schools_asset_test.dart`) — parse all 8, namespace + uniqueness, canonical 8-set, `#RRGGBB` format per school, colors distinct.
+- Result: `flutter analyze` clean, 971/971 tests pass (966 → 971, +5).
+- Next: languages (~16) or weapon properties (~14).
+
 ### 2026-04-19 — Doc 15 SRD weapon masteries asset (🟣)
 
 Shipped `flutter_app/assets/packages/srd_core/weapon_masteries.json` with the 8 canonical 2024 PHB weapon masteries — Cleave, Graze, Nick, Push, Sap, Slow, Topple, Vex. Body is `{"description": String}`. Count follows the PHB (8) rather than the Phase B plan's earlier "5 masteries" estimate; descriptions paraphrase the 2024 PHB mastery table. Behavior attaches at the Weapon level via `EffectDescriptor`s (per `weapon_mastery.dart`) — catalog entries here only carry the reference data.

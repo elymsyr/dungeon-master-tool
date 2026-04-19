@@ -1,0 +1,21 @@
+[
+  {"id": "common", "name": "Common", "body": {"script": "Common"}},
+  {"id": "common_sign_language", "name": "Common Sign Language", "body": {"script": null}},
+  {"id": "dwarvish", "name": "Dwarvish", "body": {"script": "Dwarvish"}},
+  {"id": "elvish", "name": "Elvish", "body": {"script": "Elvish"}},
+  {"id": "giant", "name": "Giant", "body": {"script": "Dwarvish"}},
+  {"id": "gnomish", "name": "Gnomish", "body": {"script": "Dwarvish"}},
+  {"id": "goblin", "name": "Goblin", "body": {"script": "Common"}},
+  {"id": "halfling", "name": "Halfling", "body": {"script": "Common"}},
+  {"id": "orc", "name": "Orc", "body": {"script": "Dwarvish"}},
+  {"id": "abyssal", "name": "Abyssal", "body": {"script": "Infernal"}},
+  {"id": "celestial", "name": "Celestial", "body": {"script": "Celestial"}},
+  {"id": "deep_speech", "name": "Deep Speech", "body": {"script": null}},
+  {"id": "draconic", "name": "Draconic", "body": {"script": "Draconic"}},
+  {"id": "druidic", "name": "Druidic", "body": {"script": "Druidic"}},
+  {"id": "infernal", "name": "Infernal", "body": {"script": "Infernal"}},
+  {"id": "primordial", "name": "Primordial", "body": {"script": "Dwarvish"}},
+  {"id": "sylvan", "name": "Sylvan", "body": {"script": "Elvish"}},
+  {"id": "undercommon", "name": "Undercommon", "body": {"script": "Elvish"}},
+  {"id": "thieves_cant", "name": "Thieves' Cant", "body": {"script": null}}
+]
