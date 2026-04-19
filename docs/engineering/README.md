@@ -616,3 +616,79 @@ Second Doc 15 landing. Bridges opaque `CatalogEntry.bodyJson` strings ↔ typed 
 ### Current test totals
 
 `flutter analyze`: 0 issues. `flutter test`: **763 / 763 passing, 1 skipped** (was 736 at end of Doc 15 file-format codec; +27 Tier 1 catalog codec tests added).
+
+---
+
+## Pre-Destructive-Migration Audit (2026-04-19)
+
+SRD 5.2.1 PDF + current codebase + Doc 04/42 plan audited before landing the v5 drop+recreate migration. Goal: be sure the engine actually works end-to-end before any irreversible schema change.
+
+### Verdict
+
+**Safe to proceed with Phase A. NOT safe to run Doc 04 Step 7 today.** App is pre-1.0 alpha (pubspec `5.1.0`, no prod tags past `alpha-v0.6.3`, no `CHANGELOG.md`) so there are no App Store users to regress. But local/beta tester DBs are still at risk, and the domain model has silent-failure gaps that would propagate into authored SRD content if we ship now.
+
+### Release & Migration Reality
+
+| Fact | Source | Implication |
+|---|---|---|
+| Version `5.1.0` pre-release | [`pubspec.yaml:4`](../../flutter_app/pubspec.yaml#L4) | Pre-MVP; breaking DB change acceptable |
+| Latest tag `alpha-v0.6.3` only | `git tag` | No prod users to regress |
+| Current drift `schemaVersion = 7` | [`app_database.dart:95`](../../flutter_app/lib/data/database/app_database.dart#L95) | Doc 42 v5 drop not yet wired — migration still additive |
+| `from < 5` / `< 6` / `< 7` branches are all additive (create new tables, drop nothing) | [`app_database.dart:100-157`](../../flutter_app/lib/data/database/app_database.dart#L100-L157) | Beta tester v4 data still intact today; Step 7 destroys it |
+| No v4 DB backup implementation (Doc 42 spec §124 proposed, not coded) | [`legacy_data_purger.dart`](../../flutter_app/lib/data/storage/legacy_data_purger.dart) touches caches only | Botched migration = unrecoverable beta data loss |
+| Legacy SQLite file copy on AppPaths move leaves `.moved_to_dataroot` marker + preserves source | [`app_database.dart:182-193`](../../flutter_app/lib/data/database/app_database.dart#L182-L193) | Partial manual recovery possible for technical testers |
+| Supabase not built (only abstract `SessionManager` skeleton exists) | [`data/network/session_manager.dart`](../../flutter_app/lib/data/network/session_manager.dart) | No cloud restore path; local backup is the only safety net |
+
+### Domain Model Coverage vs SRD 5.2.1 (~65%)
+
+**High-risk gaps** — silent content-authoring failures waiting to happen:
+
+| Gap | SRD ref | Consequence |
+|---|---|---|
+| **Split movement** — `ActionEconomy` has binary move flag, not feet-remaining budget | p.14 ("move → action → move") | Fighter Dash-Attack-Dash and rogue kite patterns desync from engine |
+| **Multiclass prerequisites** — no STR/DEX/INT/etc. ≥ 13 check | p.25 | Invalid multiclass accepted silently |
+| **Attunement cap** — `Inventory` factory enforcement needs verification vs 3-item rule | p.102 | Possible overflow |
+| **Cover +AC bonus** — no cover modifier path in [`attack_roll.dart`](../../flutter_app/lib/application/dnd5e/combat/attack_roll.dart) | p.15 (Half +2 / Three-Quarters +5 / Total unhittable) | Attack math wrong whenever cover applies |
+| **Weapon-property auto-wiring** — Light doesn't auto-permit off-hand attack; Heavy doesn't auto-disadvantage STR/DEX<13; Finesse is domain-enum-only | p.89-90 | Content authors must wire each rule manually; fragile |
+| **ASI auto-schedule** — no enforcement at levels 4/8/12/16/19 | p.24 | Each class definition must remember to add ASI rows |
+| **Instant-death overflow arithmetic** — flag exists in `DamageOutcome` but arithmetic needs test against SRD wording | p.17 (damage ≥ max HP at 0 = instant death) | Possible off-by-one; requires dedicated test |
+| **Surprise** — no `surprised` condition nor initiative-disadvantage hook | p.13 | Encounter setup silently wrong when ambush happens |
+
+**Content catalog gaps** — must be fixed before SRD JSON authoring begins:
+
+- **No `Tool` catalog class.** SRD ships ~17 tools (9 Artisan + 8 Other) with `ability` + utilize DC + craft list. Current 12-catalog set covers no tool concept. **Decision needed**: add `Tool` as a Tier 1 catalog class, or tuck tools into `Item` via a `ToolItem` subclass carrying `abilityForCheck` + `utilizeDc` + `craftsItemIds`.
+- **Adventuring gear mechanics as effects.** Caltrops (DC 15 DEX or speed 0), Ball Bearings (DC 10 DEX or prone), Manacles (grapple), Net (restrained), Oil (fire-reactive), Holy Water (radiant vs Fiend/Undead), Healer's Kit (stabilize). These are **Utilize-action effects** — a new surface the current `EffectDescriptor` cases do not cover (no `UtilizeAction` target).
+- **Spell scroll constants** — creator-independent scrolls use attack bonus `+5` + save DC `13`. Needs either a constant or inline.
+- **Mounts + vehicles** — `Mount` + `Vehicle` stat blocks absent (MVP-acceptable deferral per Phase 3 non-goals).
+- **Lifestyle / hirelings / spellcasting services** — Gameplay Toolbox (p.101-103), MVP-deferrable.
+
+### The Critical Unknown
+
+**No integration test yet proves the effect DSL + resolvers actually model a real spell end-to-end.** All 763 tests are unit-level. The first time a `Fireball`-as-JSON → decoded `Spell` → cast validator → AoE coverage → per-target save → multi-type damage → concentration DC round trips through the full stack will be when SRD content lands. Design risk: `EffectDescriptor` cases may not cover every SRD effect shape (e.g. Hold Person's auto-crit-on-melee-within-5-ft, Sleep's HP-pool targeting, Wall of Force's shape-over-time). A **three-spell smoke test** (Fireball, Hold Person, Bless) must pass before committing to the content-authoring sprint.
+
+### Revised Phase A Sequence (blocker-safe)
+
+Supersedes the original Phase A in `nested-percolating-cookie.md`:
+
+1. **A0** — Verify `DamageResolver` instant-death arithmetic against SRD p.17. Read [`damage_resolver.dart`](../../flutter_app/lib/application/dnd5e/combat/damage_resolver.dart) + add targeted test.
+2. **A1** — `EffectDescriptor` codec + **three-spell integration smoke test**. Pick Fireball (AoE + save-half + fire), Hold Person (save-or-auto-fail-condition), Bless (advantage bonus). JSON → decode → execute through resolvers end-to-end. Proves the shape works before authoring 361 spells.
+3. **A2** — Fix high-risk domain gaps surfaced above: multiclass prereq, attunement cap verification, split-movement `MovementBudget`, cover-to-AC, weapon-property auto-wiring, surprise condition. Small commits, tests each.
+4. **A3** — Add `Tool` catalog class (or `ToolItem` subclass, decided during the turn). Required before any equipment JSON.
+5. **A4** — Doc 04 Step 5: delete [`lib/data/schema/`](../../flutter_app/lib/data/schema/) after verifying `allTemplatesProvider` unused + refactoring `character_editor_screen.dart` + `worlds_tab.dart` off it.
+6. **A5** — Implement `_backupV4DbBeforeReset` (Doc 42 §124). Default-ON. Write to `{appDocs}/backups/{ts}_v4_db.sqlite` + log SHA256.
+7. **A6** — Doc 04 Step 7 + Doc 42 wiring bundled. **Only after A0-A5 pass analyze + full test suite + manual smoke on a beta device with a pre-populated v4 DB.**
+
+### Pre-flight Checklist — Must Be Green Before Step 7 Commit
+
+- [ ] `rg 'WorldSchema|EntityCategorySchema|FieldSchema|generateDefaultDnd5eSchema|allTemplatesProvider' flutter_app/lib --type dart --glob '!**/migration/**' --glob '!**/test/**'` → 0 hits
+- [ ] `_backupV4DbBeforeReset` writes backup + verifies SHA256 before purger runs
+- [ ] `V5ResetBootstrap` wired in `_BootstrapGate._bootstrap()`; outcome in a provider; `V5UpgradeNoticeDialog` shown via `addPostFrameCallback`
+- [ ] Fireball + Hold Person + Bless integration smoke tests round-trip and resolve correctly
+- [ ] `flutter analyze` → 0 + `flutter test` → all green
+- [ ] Beta test run on Linux desktop + Android emulator with pre-populated v4 DB → backup file exists, upgrade dialog shows, typed tables populated
+- [ ] `CHANGELOG.md` seeded with v5.0.0 "Fresh start DB reset" entry + migration notes
+- [ ] Alpha testers pinged (Discord/whatever) with screenshot of reset dialog before the tag cut
+
+### Recommended Immediate Next Turn
+
+**A0 + A1 bundle** — verify instant-death arithmetic + start `EffectDescriptor` codec paired with a Fireball integration smoke test. Proves the system works end-to-end before any destructive migration. Two turns max.
