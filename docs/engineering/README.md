@@ -192,6 +192,16 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 Species codec (🟣) — Tier 2 entity codec #5
+
+Shipped `flutter_app/lib/domain/dnd5e/character/species_json_codec.dart` — `speciesFromEntry(CatalogEntry)` + `speciesToEntry(Species)`. Body shape `{"sizeId": String, "baseSpeedFt": int, "effects"?: [<effect>...], "description"?: String}`. Effects route through `effect_descriptor_codec`; empty effect list + empty description are omitted for compact output. Pattern mirrors `subclass_json_codec.dart`. This opens the way for authoring 9 SRD species (Dragonborn, Dwarf, Elf, Gnome, Halfling, Human, Orc, Tiefling + one more) with real darkvision/resistance/ancestry effects in subsequent turns.
+
+- New files: `domain/dnd5e/character/species_json_codec.dart`.
+- Tests: 7 new (`test/domain/dnd5e/character/species_json_codec_test.dart`) — minimal round-trip, full round-trip with `GrantSenseOrSpeed` + `GrantProficiency` effects, empty-field omission on encode, decode errors for missing sizeId / non-int baseSpeedFt / malformed JSON (all carry `<entry.id>:` prefix + `Species` type name).
+- Result: `flutter analyze` clean, 992/992 tests pass (985 → 992, +7).
+- Tier 2 content codec status: Spell ✓, Monster ✓, Item ✓, Subclass ✓, **Species ✓** (new). Remaining: Lineage, CharacterClass, Background, Feat.
+- Next: smallest-first path — author SRD species assets (9 entries), or ship Background / Feat codec (smaller bodies).
+
 ### 2026-04-19 — Doc 15 SRD weapon properties asset (🟣) — Tier 1 catalogs COMPLETE
 
 Shipped `flutter_app/assets/packages/srd_core/weapon_properties.json` with the 10 canonical 2024 PHB weapon properties — Ammunition, Finesse, Heavy, Light, Loading, Range, Reach, Thrown, Two-Handed, Versatile. Body is `{"flags": [<PropertyFlag.name>...], "description": String?}`. Each property carries exactly the matching `PropertyFlag` from `weapon_property_flag.dart` so engine dispatch works on the flag rather than the id (homebrew "arcane:graceful" with `finesse` flag behaves identically to `srd:finesse`). Count is 10 (not plan's "~14" estimate); material/imbue flags (`silvered`, `magical`, `appliesToSneakAttack`) are not PHB weapon properties — they attach at item level.
