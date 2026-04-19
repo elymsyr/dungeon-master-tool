@@ -1,0 +1,189 @@
+[
+  {
+    "id": "acolyte",
+    "name": "Acolyte",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:insight"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:religion"},
+        {"t": "grantProficiency", "kind": "tool", "targetId": "srd:calligraphers_supplies"}
+      ],
+      "description": "You devoted yourself to service in a temple. Ability Scores: Intelligence, Wisdom, Charisma. Origin Feat: Magic Initiate (Cleric). Skill Proficiencies: Insight, Religion. Tool Proficiency: Calligrapher's Supplies. Starting Equipment: Calligrapher's Supplies, a Holy Symbol, a Prayer Book, 5 sheets of Parchment, a set of Common Clothes, and a Pouch containing 8 GP."
+    }
+  },
+  {
+    "id": "artisan",
+    "name": "Artisan",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:investigation"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:persuasion"}
+      ],
+      "description": "You apprenticed to a master crafter. Ability Scores: Strength, Dexterity, Intelligence. Origin Feat: Crafter. Skill Proficiencies: Investigation, Persuasion. Tool Proficiency: one set of Artisan's Tools of your choice (chosen at character creation; grants a tool proficiency effect dynamically). Starting Equipment: 2 Pouches, Traveler's Clothes, one set of Artisan's Tools, and 32 GP."
+    }
+  },
+  {
+    "id": "charlatan",
+    "name": "Charlatan",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:deception"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:sleight_of_hand"},
+        {"t": "grantProficiency", "kind": "tool", "targetId": "srd:forgery_kit"}
+      ],
+      "description": "You made your way by grift and misdirection. Ability Scores: Dexterity, Constitution, Charisma. Origin Feat: Skilled. Skill Proficiencies: Deception, Sleight of Hand. Tool Proficiency: Forgery Kit. Starting Equipment: Fine Clothes, a Forgery Kit, Costume, and 15 GP."
+    }
+  },
+  {
+    "id": "criminal",
+    "name": "Criminal",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:sleight_of_hand"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:stealth"},
+        {"t": "grantProficiency", "kind": "tool", "targetId": "srd:thieves_tools"}
+      ],
+      "description": "You lived by breaking the law. Ability Scores: Dexterity, Constitution, Intelligence. Origin Feat: Alert. Skill Proficiencies: Sleight of Hand, Stealth. Tool Proficiency: Thieves' Tools. Starting Equipment: 2 Daggers, Thieves' Tools, a Crowbar, 2 Pouches, Traveler's Clothes, and 16 GP."
+    }
+  },
+  {
+    "id": "entertainer",
+    "name": "Entertainer",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:acrobatics"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:performance"}
+      ],
+      "description": "You thrived on the applause of a crowd. Ability Scores: Strength, Dexterity, Charisma. Origin Feat: Musician. Skill Proficiencies: Acrobatics, Performance. Tool Proficiency: one Musical Instrument of your choice. Starting Equipment: Traveler's Clothes, one Musical Instrument, a Costume, and 11 GP."
+    }
+  },
+  {
+    "id": "farmer",
+    "name": "Farmer",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:animal_handling"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:nature"},
+        {"t": "grantProficiency", "kind": "tool", "targetId": "srd:carpenters_tools"}
+      ],
+      "description": "You worked the land and learned patience. Ability Scores: Strength, Constitution, Wisdom. Origin Feat: Tough. Skill Proficiencies: Animal Handling, Nature. Tool Proficiency: Carpenter's Tools. Starting Equipment: Carpenter's Tools, a Shovel, an Iron Pot, Traveler's Clothes, and 30 GP."
+    }
+  },
+  {
+    "id": "guard",
+    "name": "Guard",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:athletics"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:perception"}
+      ],
+      "description": "You stood watch over a settlement. Ability Scores: Strength, Intelligence, Wisdom. Origin Feat: Alert. Skill Proficiencies: Athletics, Perception. Tool Proficiency: one Gaming Set of your choice. Starting Equipment: a Spear, a Light Crossbow with 20 Bolts, a Gaming Set, a Hooded Lantern, Traveler's Clothes, and 12 GP."
+    }
+  },
+  {
+    "id": "guide",
+    "name": "Guide",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:stealth"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:survival"},
+        {"t": "grantProficiency", "kind": "tool", "targetId": "srd:cartographers_tools"}
+      ],
+      "description": "You grew up in the wilds far from civilization. Ability Scores: Dexterity, Constitution, Wisdom. Origin Feat: Magic Initiate (Druid). Skill Proficiencies: Stealth, Survival. Tool Proficiency: Cartographer's Tools. Starting Equipment: a Shortbow with 20 Arrows, Cartographer's Tools, Traveler's Clothes, a Tent, and 3 GP."
+    }
+  },
+  {
+    "id": "hermit",
+    "name": "Hermit",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:medicine"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:religion"},
+        {"t": "grantProficiency", "kind": "tool", "targetId": "srd:herbalism_kit"}
+      ],
+      "description": "You lived in seclusion, seeking insight. Ability Scores: Constitution, Wisdom, Charisma. Origin Feat: Healer. Skill Proficiencies: Medicine, Religion. Tool Proficiency: Herbalism Kit. Starting Equipment: a Quarterstaff, a Herbalism Kit, Traveler's Clothes, 2 Pouches, and 16 GP."
+    }
+  },
+  {
+    "id": "merchant",
+    "name": "Merchant",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:animal_handling"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:persuasion"},
+        {"t": "grantProficiency", "kind": "tool", "targetId": "srd:navigators_tools"}
+      ],
+      "description": "You hauled goods between markets. Ability Scores: Constitution, Intelligence, Charisma. Origin Feat: Lucky. Skill Proficiencies: Animal Handling, Persuasion. Tool Proficiency: Navigator's Tools. Starting Equipment: Navigator's Tools, 2 Pouches, Traveler's Clothes, and 22 GP."
+    }
+  },
+  {
+    "id": "noble",
+    "name": "Noble",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:history"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:persuasion"}
+      ],
+      "description": "You were born to privilege and rank. Ability Scores: Strength, Intelligence, Charisma. Origin Feat: Skilled. Skill Proficiencies: History, Persuasion. Tool Proficiency: one Gaming Set of your choice. Starting Equipment: a Gaming Set, Fine Clothes, a Perfume, and 29 GP."
+    }
+  },
+  {
+    "id": "sage",
+    "name": "Sage",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:arcana"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:history"},
+        {"t": "grantProficiency", "kind": "tool", "targetId": "srd:calligraphers_supplies"}
+      ],
+      "description": "You devoted yourself to study and research. Ability Scores: Constitution, Intelligence, Wisdom. Origin Feat: Magic Initiate (Wizard). Skill Proficiencies: Arcana, History. Tool Proficiency: Calligrapher's Supplies. Starting Equipment: a Quarterstaff, Calligrapher's Supplies, a Book of Lore, Robes, a Parchment, a Bottle of Ink, and 8 GP."
+    }
+  },
+  {
+    "id": "sailor",
+    "name": "Sailor",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:acrobatics"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:perception"},
+        {"t": "grantProficiency", "kind": "tool", "targetId": "srd:navigators_tools"}
+      ],
+      "description": "You shipped out to learn the sea. Ability Scores: Strength, Dexterity, Wisdom. Origin Feat: Tavern Brawler. Skill Proficiencies: Acrobatics, Perception. Tool Proficiency: Navigator's Tools. Starting Equipment: a Dagger, Navigator's Tools, a Rope, Traveler's Clothes, and 20 GP."
+    }
+  },
+  {
+    "id": "scribe",
+    "name": "Scribe",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:investigation"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:perception"},
+        {"t": "grantProficiency", "kind": "tool", "targetId": "srd:calligraphers_supplies"}
+      ],
+      "description": "You trained to transcribe and illuminate texts. Ability Scores: Dexterity, Intelligence, Wisdom. Origin Feat: Skilled. Skill Proficiencies: Investigation, Perception. Tool Proficiency: Calligrapher's Supplies. Starting Equipment: Calligrapher's Supplies, a Fine Clothes, a Lamp, 2 Flasks of Oil, 5 sheets of Parchment, and 23 GP."
+    }
+  },
+  {
+    "id": "soldier",
+    "name": "Soldier",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:athletics"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:intimidation"}
+      ],
+      "description": "You trained in a martial company. Ability Scores: Strength, Dexterity, Constitution. Origin Feat: Savage Attacker. Skill Proficiencies: Athletics, Intimidation. Tool Proficiency: one Gaming Set of your choice. Starting Equipment: a Spear, a Shortbow with 20 Arrows, a Gaming Set, a Healer's Kit, Traveler's Clothes, and 14 GP."
+    }
+  },
+  {
+    "id": "wayfarer",
+    "name": "Wayfarer",
+    "body": {
+      "effects": [
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:insight"},
+        {"t": "grantProficiency", "kind": "skill", "targetId": "srd:stealth"},
+        {"t": "grantProficiency", "kind": "tool", "targetId": "srd:thieves_tools"}
+      ],
+      "description": "You grew up on the streets, always moving. Ability Scores: Dexterity, Wisdom, Charisma. Origin Feat: Lucky. Skill Proficiencies: Insight, Stealth. Tool Proficiency: Thieves' Tools. Starting Equipment: 2 Daggers, Thieves' Tools, a Gaming Set, 2 Pouches, Traveler's Clothes, and 16 GP."
+    }
+  }
+]
