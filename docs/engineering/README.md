@@ -192,6 +192,16 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 EffectDescriptor codec (🟣)
+
+Tagged-union JSON codec for the Tier 2 sealed families: `EffectDescriptor` (11 variants), `Predicate` (14 variants), `EffectDuration` (6 variants), `AcFormula` (4 variants). Keyed on `"t"`; unknown tags fail fast with context-prefixed `FormatException`. Dice stored as canonical string (`DiceExpression.toString()`/`parse`), enums via `.name`, ContentReferences as-is. Defaults elided on encode; decoders fill them back in. Sorted id arrays for deterministic output (`ModifyResistances.add/remove`, `ConditionInteraction.autoFailSavesOf`).
+
+- New: `domain/dnd5e/effect/effect_descriptor_codec.dart` with `encodeEffect`/`decodeEffect`/`encodePredicate`/`decodePredicate`/`encodeDuration`/`decodeDuration`/`encodeAcFormula`/`decodeAcFormula`.
+- Tests: 45 new (`test/domain/dnd5e/effect/effect_descriptor_codec_test.dart`) covering each variant round-trip, default elision, sorted-output determinism, unknown-tag rejection, malformed field rejection, and predicate nesting inside effects.
+- A0 verification: audited `DamageResolver` instant-death arithmetic vs SRD p.17 — `overkill = remainder - currentHp; instantDeath = hpAfter==0 && overkill >= maxHp` matches "remaining damage equals or exceeds HP max" across full-HP oneshot / at-0 max-HP-hit / partial-damage cases. Correct.
+- Result: `flutter analyze` clean, 808/808 tests pass (763 → 808, +45).
+- Unblocks: `Condition.effects` round-trip, every Tier 1/2 entity carrying effect bodies (Spell, Feat, MagicItem, Subclass, class features). Consumer wiring of the codec into catalog/content entry bodies is the next Doc 15 turn.
+
 ### 2026-04-19 — Doc 04 template removal partial (🟣)
 
 Steps 1-4, 6, 8-10 landed. Steps 5 (schema dir deletion) + 7 (drift v5 drop+recreate) blocked on Doc 01 typed domain model — WorldSchema/EntityCategorySchema/FieldSchema still load-bearing for rendering and persistence.

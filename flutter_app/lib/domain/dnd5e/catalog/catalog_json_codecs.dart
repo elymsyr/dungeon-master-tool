@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import '../core/ability.dart';
+import '../effect/effect_descriptor.dart';
+import '../effect/effect_descriptor_codec.dart';
 import '../package/catalog_entry.dart';
 import 'alignment.dart';
 import 'armor_category.dart';
