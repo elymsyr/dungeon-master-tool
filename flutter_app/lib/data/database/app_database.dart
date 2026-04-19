@@ -13,8 +13,10 @@ import 'daos/mind_map_dao.dart';
 import 'daos/package_dao.dart';
 import 'daos/session_dao.dart';
 import 'tables/campaigns_table.dart';
+import 'tables/catalog_tables.dart';
 import 'tables/combat_conditions_table.dart';
 import 'tables/combatants_table.dart';
+import 'tables/dnd5e_content_tables.dart';
 import 'tables/encounters_table.dart';
 import 'tables/entities_table.dart';
 import 'tables/map_pins_table.dart';
@@ -45,6 +47,28 @@ part 'app_database.g.dart';
     Packages,
     PackageSchemas,
     PackageEntities,
+    // Doc 03 — Tier 1 catalog tables (read-mostly, package-populated).
+    Conditions,
+    DamageTypes,
+    Skills,
+    Sizes,
+    CreatureTypes,
+    Alignments,
+    Languages,
+    SpellSchools,
+    WeaponProperties,
+    WeaponMasteries,
+    ArmorCategories,
+    Rarities,
+    // Doc 03 — Tier 1 D&D 5e content tables (JSON-blob catalog).
+    Monsters,
+    Spells,
+    Items,
+    Feats,
+    Backgrounds,
+    SpeciesCatalog,
+    Subclasses,
+    ClassProgressions,
   ],
   daos: [
     CampaignDao,
@@ -65,7 +89,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -95,6 +119,32 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(packages);
             await m.createTable(packageSchemas);
             await m.createTable(packageEntities);
+          }
+          if (from < 6) {
+            // v6: Doc 03 typed D&D 5e schema. Additive (does not drop v5
+            // tables so still-live consumers keep working until Doc 04
+            // Step 5 lands). Catalogs start empty; SRD Core package
+            // populates them at install time.
+            await m.createTable(conditions);
+            await m.createTable(damageTypes);
+            await m.createTable(skills);
+            await m.createTable(sizes);
+            await m.createTable(creatureTypes);
+            await m.createTable(alignments);
+            await m.createTable(languages);
+            await m.createTable(spellSchools);
+            await m.createTable(weaponProperties);
+            await m.createTable(weaponMasteries);
+            await m.createTable(armorCategories);
+            await m.createTable(rarities);
+            await m.createTable(monsters);
+            await m.createTable(spells);
+            await m.createTable(items);
+            await m.createTable(feats);
+            await m.createTable(backgrounds);
+            await m.createTable(speciesCatalog);
+            await m.createTable(subclasses);
+            await m.createTable(classProgressions);
           }
         },
       );

@@ -95,7 +95,7 @@ The app must remain fully usable on **mobile/tablet (Android, iOS)** and **deskt
 | 00 | [`00-dnd5e-mechanics-reference.md`](./00-dnd5e-mechanics-reference.md) | Normative SRD 5.2.1 mechanics reference. Source of truth for all engine behavior. | — | ⚪ |
 | 01 | [`01-domain-model-spec.md`](./01-domain-model-spec.md) | Typed Dart classes for Character, Monster, Spell, Item (sealed), Feat, Background, Species, CharacterClass, Subclass, Encounter, Combatant, Effect, etc. with invariants. | 00 | 🟢 |
 | 02 | [`02-game-system-abstraction.md`](./02-game-system-abstraction.md) | `GameSystem` interface for future Pathfinder/CoC modularity. Stub Pathfinder example. | 01 | 🟣 |
-| 03 | [`03-database-schema-spec.md`](./03-database-schema-spec.md) | Drift v5: drop `world_schemas` + template_* columns; add typed tables. Fresh-start reset (doc 42). | 01 | ⚪ |
+| 03 | [`03-database-schema-spec.md`](./03-database-schema-spec.md) | Drift v5: drop `world_schemas` + template_* columns; add typed tables. Fresh-start reset (doc 42). | 01 | 🟣 |
 | 04 | [`04-template-removal-checklist.md`](./04-template-removal-checklist.md) | ~40-file deletion order; dependency graph; per-step regression test plan. | 01, 03 | 🟣 |
 | 05 | [`05-rule-engine-removal-spec.md`](./05-rule-engine-removal-spec.md) | Removal of RuleV2/RuleEngineV2; replacement pattern (effects as pure functions). | 01 | 🔵 |
 
@@ -326,6 +326,30 @@ The interface grows additively in those docs; Pathfinder stub tracks the same sh
 
 9 tests cover registry invariants, dnd5e SRD manifest, and Pathfinder stub conformance.
 
+### 2026-04-19 — Doc 03 typed Drift schema (🟣 partial)
+
+Additive first pass — new Doc 03 typed tables ship **alongside** the v5 entity/world_schema tables so existing consumers keep working until Doc 04 Step 5 lands. Schema version bumps **5 → 6**; on upgrade the new tables are `createTable`'d, nothing is dropped.
+
+**New tables (20 total) — all empty on fresh install; populated by packages (Doc 14/15).**
+
+- **12 Tier 1 catalog tables** — [`catalog_tables.dart`](../../flutter_app/lib/data/database/tables/catalog_tables.dart): `Conditions`, `DamageTypes`, `Skills`, `Sizes`, `CreatureTypes`, `Alignments`, `Languages`, `SpellSchools`, `WeaponProperties`, `WeaponMasteries`, `ArmorCategories`, `Rarities`. Shared shape via private `_CatalogTable` base: `id` (namespaced PK) + `name` + `bodyJson` + `sourcePackageId` + timestamps. Query by id/name in-memory after bulk load — catalogs are small (~17 conditions, ~14 damage types).
+- **8 D&D 5e content tables** — [`dnd5e_content_tables.dart`](../../flutter_app/lib/data/database/tables/dnd5e_content_tables.dart): `Monsters` (with `statBlockJson` instead of bodyJson per spec), `Spells` (with typed `level` + `schoolId` columns for filter queries), `Items` (with `itemType` + optional `rarityId`), plus `Feats`, `Backgrounds`, `SpeciesCatalog` (Dart class name clashes with `Species` in generated mapper output — stored as SQL table `species` via `tableName` override), `Subclasses` (with `parentClassId` for parent-class FK), `ClassProgressions`.
+
+Design choices locked in this pass:
+- **JSON-blob over per-field columns** for read-mostly catalog data. Per Doc 03 §JSON-Blob Justification: whole entity loaded for display, no per-field SQL queries beyond id/name/level/school/itemType, schema evolves without DB migration.
+- **`sourcePackageId` column** on every catalog/content table powers "uninstall package X deletes all its rows" via a single `DELETE WHERE sourcePackageId = ?`. Verified by test.
+- **Additive migration** — the v4→v5 drop-everything-on-upgrade policy from the spec is deferred to the Doc 04 Step 7 pass when `entities` + `world_schemas` actually become removable. Doing both at once would mid-flight users' worlds.
+- **`SpeciesCatalog` vs generated `Species`** — the Drift class name is `SpeciesCatalog` to avoid colliding with future Dart mappers named `Species`; the SQL table name stays `species` for spec compliance.
+
+**Deliberately deferred to later passes:**
+- `characters` + 7 character_* tables (needs consumer migration off `entities`).
+- Reworked `encounters` / `combatants` / `combatant_conditions` / `combatant_concentration` (existing tables stay until combat engine rework — Doc 11).
+- Drop `entities` + `world_schemas` + template_* columns on `campaigns` — Doc 04 Step 5/7.
+- `game_system_id` column on `campaigns` — lands with Doc 02 campaign-creation wiring.
+- Indexes listed in Doc 03 §Indexes — land with the repository layer that queries them.
+
+10 tests cover: schema version, empty-on-create for all 20 tables, insert/select round-trips on distinctive shapes (Spells/Items/Monsters/SpeciesCatalog/Subclasses/Conditions), and uninstall-by-package cascade delete.
+
 ### Current test totals
 
-`flutter analyze`: 0 issues. `flutter test`: **506 / 506 passing, 1 skipped** (was 497 at end of Doc 01; +9 Doc 02 tests added).
+`flutter analyze`: 0 issues. `flutter test`: **516 / 516 passing, 1 skipped** (was 506 at end of Doc 02; +10 Doc 03 schema tests added).
