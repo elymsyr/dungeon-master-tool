@@ -259,9 +259,24 @@ Design choices locked in this tier:
 - **Immutable collections.** `effects` / `flags` wrapped via `List.unmodifiable` / `Set.unmodifiable`.
 - **Structural flags stay Tier 0.** `PropertyFlag`, `LawChaosAxis`, `GoodEvilAxis` are enums so the engine keys off flags not strings.
 
-**Next — Tier 2 (EffectDescriptor DSL):** populate `effect/effect_descriptor.dart` sealed family (`ModifyAttackRoll`, `ModifyDamageRoll`, `ModifySave`, `ModifyAc`, `ModifyResistances`, `GrantCondition`, `GrantProficiency`, `GrantSenseOrSpeed`, `Heal`, `ConditionInteraction`, `CustomEffect`) + `predicate.dart` sealed `Predicate` family (`AttackerHasCondition`, `TargetHasCondition`, `WeaponHasProperty`, `DamageTypeIs`, …) + `duration.dart` sealed `Duration` family.
+**Tier 2 (EffectDescriptor DSL) — COMPLETE.** 4 files + 39 tests in `domain/dnd5e/effect/`:
 
-**Then larger entities:** `character/`, `spell/`, `item/`, `monster/`, `combat/`, `world/`.
+| File | Purpose | Tests |
+|---|---|---|
+| `duration.dart` | sealed `EffectDuration` (+ `Instantaneous`, `RoundsDuration`, `MinutesDuration`, `UntilRest`, `ConcentrationDuration`, `UntilRemoved`) + `RestKind` enum. Renamed from spec's `Duration` to avoid `dart:core` shadowing. | 6 |
+| `predicate.dart` | sealed `Predicate` (+ `Always`, `All`, `Any`, `Not`, `AttackerHasCondition`, `TargetHasCondition`, `AttackIsMelee/Ranged`, `AttackUsesAbility`, `WeaponHasProperty`, `DamageTypeIs`, `IsCritical`, `HasAdvantage`, `EffectActive`). Structural equality on all 14 cases. | 8 |
+| `effect_descriptor.dart` | sealed `EffectDescriptor` + 11 concrete cases (`ModifyAttackRoll`, `ModifyDamageRoll`, `ModifySave`, `ModifyAc`, `ModifyResistances`, `GrantCondition`, `GrantProficiency`, `GrantSenseOrSpeed`, `Heal`, `ConditionInteraction`, `CustomEffect`) + helpers `TypedDice`, `SaveSpec`, sealed `AcFormula` (`AcFlat`, `AcNaturalPlusDex`, `AcUnarmored`, `AcMageArmor`), enums `EffectTarget`, `ResistanceKind`, `ProficiencyKind`, `SenseOrSpeedKind`. | 21 |
+| `custom_effect_registry.dart` | `abstract interface class CustomEffectImpl` + process-wide `CustomEffectRegistry` (register/byId/contains/clear). `compile` step deferred to Doc 05 (rule engine). | 4 |
+
+Design choices locked in this tier:
+- **Closed sealed families** — no runtime-evaluated strings, no reflection. Engine dispatches on case in `application/dnd5e/services/`.
+- **Factory invariant guards** on every case that touches `ContentReference`s (id shape validated via `validateContentId`), on mutually exclusive flags (`ModifySave.autoSucceed` vs `autoFail`), and on numeric ranges.
+- **Immutable collections** — `extraTypedDice`, `add/remove` damage-type sets, `autoFailSavesOf`, `parameters` all wrapped via `List`/`Set`/`Map.unmodifiable`.
+- **Save proficiency exception** — `GrantProficiency.targetId` accepts raw Ability short codes (`'DEX'`) when `kind == ProficiencyKind.save`, namespaced ids otherwise. Codified in factory.
+- **`Duration` renamed to `EffectDuration`** — Doc 01 uses the bare `Duration` name; the rename is mechanical and noted in the file header.
+- **Structural equality on `Predicate`** — engine may use predicate sets as cache keys or deduplicate; leaf cases implement `==`/`hashCode`/`toString`. `EffectDescriptor` cases skip it (not yet needed; add when consumers demand).
+
+**Now — larger entities:** `character/`, `spell/`, `item/`, `monster/`, `combat/`, `world/`. Begin with `character/` root + leaf value types (`SpellSlots`, `HitDicePool`, `ProficiencySet`, `Inventory`). Multiclass invariants enforced in `Character` factory per spec §Invariants.
 
 **Blockers that auto-unblock when Doc 01 lands:**
 - Doc 04 Step 5 (schema dir deletion) — replace `WorldSchema` / `EntityCategorySchema` / `FieldSchema` consumers with typed entities file-by-file.
@@ -270,4 +285,4 @@ Design choices locked in this tier:
 
 ### Current test totals
 
-`flutter analyze`: 0 issues. `flutter test`: **376 / 376 passing, 1 skipped** (was 330 at end of Tier 0; +46 Tier 1 catalog tests added).
+`flutter analyze`: 0 issues. `flutter test`: **415 / 415 passing, 1 skipped** (was 376 at end of Tier 1; +39 Tier 2 effect tests added).
