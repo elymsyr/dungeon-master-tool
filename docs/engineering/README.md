@@ -233,9 +233,33 @@ Design choices locked in this tier:
 - **Temp HP** does not stack (max-wins), consumed before current HP on damage.
 - **Exhaustion** uses 2024 SRD scaling (-2 × level) not 2014 six-step.
 
-**Next — Tier 1 (catalog classes):** `catalog/condition.dart`, `damage_type.dart`, `skill.dart`, `size.dart`, `creature_type.dart`, `alignment.dart`, `language.dart`, `spell_school.dart`, `weapon_property.dart` + `PropertyFlag`, `weapon_mastery.dart`, `armor_category.dart`, `rarity.dart`. All carry namespaced `<packageId>:<localId>` ids. Empty catalogs on fresh install (SRD package populates them — Doc 15).
+**Tier 1 (catalog classes) — COMPLETE.** 12 classes + shared helpers + 46 tests (1 skipped) in `domain/dnd5e/catalog/`:
 
-**Then Tier 2 (EffectDescriptor DSL):** `effect/effect_descriptor.dart` sealed family + `predicate.dart` + `duration.dart`.
+| File | Purpose | Tests |
+|---|---|---|
+| `content_reference.dart` | `typedef ContentReference<T> = String` + `validateContentId` shape guard | 4 |
+| `condition.dart` | `{id, name, description, effects: List<EffectDescriptor>}` | 6 (1 skip) |
+| `damage_type.dart` | `{id, name, physical}` (physical true for BPS) | 4 |
+| `skill.dart` | `{id, name, ability: Ability}` — Tier 0 ability enum | 4 |
+| `size.dart` | `{id, name, spaceFt, tokenScale}` for map rendering | 3 |
+| `creature_type.dart` | `{id, name}` — pure catalog | 3 |
+| `alignment.dart` | `{id, name, lawChaos, goodEvil}` with Tier 0 axis enums (incl. unaligned) | 3 |
+| `language.dart` | `{id, name, script?}` — script null for spoken-only langs | 3 |
+| `spell_school.dart` | `{id, name, color?}` — color validated as `#RRGGBB` hex | 3 |
+| `weapon_property_flag.dart` | Tier 0 `enum PropertyFlag` (finesse, heavy, light, …, silvered, magical) | — |
+| `weapon_property.dart` | `{id, name, flags: Set<PropertyFlag>, description?}` + `hasFlag` | 4 |
+| `weapon_mastery.dart` | `{id, name, description}` — 2024 PHB masteries (Cleave, Graze, …) | 3 |
+| `armor_category.dart` | `{id, name, stealthDisadvantage, maxDexCap}` (null = no cap, 0 = Dex ignored) | 4 |
+| `rarity.dart` | `{id, name, sortOrder, attunementTierReq: 1..20?}` | 3 |
+
+Design choices locked in this tier:
+- **Tier 2 stub shipped.** `effect/effect_descriptor.dart` is an empty `sealed class EffectDescriptor` so `Condition.effects` compiles before the full Tier 2 DSL lands.
+- **Shared id validator.** `validateContentId(String)` in `catalog/content_reference.dart` enforces `<pkg>:<local>` shape for every catalog factory.
+- **Equality by id.** All catalog classes use id-only `==`/`hashCode` — two entries with the same id from the same package are identical by construction.
+- **Immutable collections.** `effects` / `flags` wrapped via `List.unmodifiable` / `Set.unmodifiable`.
+- **Structural flags stay Tier 0.** `PropertyFlag`, `LawChaosAxis`, `GoodEvilAxis` are enums so the engine keys off flags not strings.
+
+**Next — Tier 2 (EffectDescriptor DSL):** populate `effect/effect_descriptor.dart` sealed family (`ModifyAttackRoll`, `ModifyDamageRoll`, `ModifySave`, `ModifyAc`, `ModifyResistances`, `GrantCondition`, `GrantProficiency`, `GrantSenseOrSpeed`, `Heal`, `ConditionInteraction`, `CustomEffect`) + `predicate.dart` sealed `Predicate` family (`AttackerHasCondition`, `TargetHasCondition`, `WeaponHasProperty`, `DamageTypeIs`, …) + `duration.dart` sealed `Duration` family.
 
 **Then larger entities:** `character/`, `spell/`, `item/`, `monster/`, `combat/`, `world/`.
 
@@ -246,4 +270,4 @@ Design choices locked in this tier:
 
 ### Current test totals
 
-`flutter analyze`: 0 issues. `flutter test`: **330 / 330 passing** (was 251 at end of Doc 04 partial; +79 Tier 0 tests added).
+`flutter analyze`: 0 issues. `flutter test`: **376 / 376 passing, 1 skipped** (was 330 at end of Tier 0; +46 Tier 1 catalog tests added).
