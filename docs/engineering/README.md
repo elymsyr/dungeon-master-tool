@@ -111,7 +111,7 @@ The built-in dnd5e module ships **mechanics only** (rules engine, typed shapes, 
 
 | # | Filename | Purpose | Deps | Status |
 |---|---|---|---|---|
-| 10 | [`10-character-creation-flow.md`](./10-character-creation-flow.md) | 5-step wizard. State machine, per-step validation, level-1 vs higher-level paths. | 00, 01, 15 | ⚪ |
+| 10 | [`10-character-creation-flow.md`](./10-character-creation-flow.md) | 5-step wizard. State machine, per-step validation, level-1 vs higher-level paths. | 00, 01, 15 | 🟣 |
 | 11 | [`11-combat-engine-spec.md`](./11-combat-engine-spec.md) | Manual combat tracker (MVP): initiative, turn state, action economy, condition expiration. Auto-resolve = future. | 00, 01 | 🟣 |
 | 12 | [`12-spell-system-spec.md`](./12-spell-system-spec.md) | Slot tables, multiclass calculator, Pact Magic, concentration, AoE geometry. | 00, 01 | 🟣 |
 | 13 | [`13-damage-resolver-spec.md`](./13-damage-resolver-spec.md) | Attack pipeline: crit, resistance/vuln/immunity, save-half, temp HP, concentration check. | 00, 01, 11 | 🟣 |
@@ -515,6 +515,37 @@ Pure purger + bootstrap glue for the v4→v5 reset flow. All three primitives ar
 
 9 new tests: `LegacyDataPurger` no-op on clean cache, removes legacy dirs but not siblings, removes legacy prefs keys but not siblings, `hasAnyRemovals` truthiness, idempotency (5). `V5ResetBootstrap` alreadyComplete short-circuit, freshInstall classification, upgradedFromV4 classification, sticky-flag on subsequent runs (4).
 
+### 2026-04-19 — Doc 10 character creation state machine (🟣 partial)
+
+Pure wizard foundations — state types + per-step validators that Doc 15's content tables can plug into without rewriting any of the core logic. UI widgets (Stepper / per-step panels / live preview) and the save-to-repository path are deferred until Doc 31 (UI component library) + Doc 15 (SRD Core catalog) land.
+
+**New code:**
+
+| File | Purpose |
+|---|---|
+| [`application/dnd5e/character_creation/ability_score_method.dart`](../../flutter_app/lib/application/dnd5e/character_creation/ability_score_method.dart) | `AbilityScoreGenerationMethod` enum + canonical `kStandardArray` multiset + `kPointBuyCosts` table (SRD §16.6) + `AbilityScoreValidator` (pure `validateStandardArray` / `validateRandom` / `validatePointBuy` / `validateBackgroundBonuses`). Background-bonus validator enforces the **2024 SRD Origin Feat +3 budget** (`+2/+1` on 2 listed OR `+1/+1/+1` on 3) — corrects Doc 10's stale "total +4" spec text. Cap-20 post-bonus enforced. |
+| [`application/dnd5e/character_creation/hp_method.dart`](../../flutter_app/lib/application/dnd5e/character_creation/hp_method.dart) | `HpMethod` enum `{fixed, rolled}`. |
+| [`application/dnd5e/character_creation/character_draft.dart`](../../flutter_app/lib/application/dnd5e/character_creation/character_draft.dart) | `CharacterDraft` value type + `DraftClassLevel`. Sentinel-based `copyWith` so callers can set a nullable field to `null` without losing the "field not touched" signal. Derived `totalLevel` getter. |
+| [`application/dnd5e/character_creation/character_creation_step.dart`](../../flutter_app/lib/application/dnd5e/character_creation/character_creation_step.dart) | 7-step wizard enum + `next` / `previous` / `isFirst` / `isLast`. |
+| [`application/dnd5e/character_creation/character_creation_state.dart`](../../flutter_app/lib/application/dnd5e/character_creation/character_creation_state.dart) | `CharacterCreationState` snapshot + `canAdvance` / `canGoBack` derived from the per-step validation map. Immutable `copyWith`. |
+| [`application/dnd5e/character_creation/step_validator.dart`](../../flutter_app/lib/application/dnd5e/character_creation/step_validator.dart) | `CharacterDraftValidator` + `StepValidationContext`. Single `validate(step, draft, ctx)` entry point. Context fields are all nullable so partial content (pre-Doc-15) skips the relevant check instead of blocking — every catalog-derived constraint (subclass-choice level, required skill count, required language count, listed abilities, equipment option count) comes through the context and is opt-in. |
+
+**Behaviour locked:**
+- **Validator is pure.** No RNG, no DB, no content lookup. The Notifier (future work) pulls content hints out of the catalogs and hands them in via `StepValidationContext`. This keeps the rule set testable in isolation and lets the Notifier load classes/backgrounds/species lazily.
+- **Partial-content degrades to fewer checks, not to crashes.** Missing a hint (e.g. `subclassChoiceLevel` null) → that sub-check is skipped. "Some validation is better than none" for the pre-Doc-15 interim.
+- **Class-level total = starting level** enforced in Step 1 — caught before the user reaches Step 5 where HP depends on the sum.
+- **Origin Feat SRD fix baked in.** Doc 10 spec text says "+4 total" but 2024 SRD says +3. The code matches SRD; the spec doc will be corrected in a follow-up.
+- **Review step is always valid** — earlier steps enforce the invariants.
+
+**Deferred (remainder of Doc 10):**
+- **`CharacterCreationNotifier`** — Riverpod `StateNotifier` with per-field setters (`selectClass`, `selectBackground`, `setBaseScore`, …). Needs a content repository provider to look up subclass-choice level, skill count, background listed abilities, equipment options — blocked on **Doc 15**.
+- **`_buildCharacter(draft)` save path** — assembles a concrete `Character` from the draft (applies class L1 features, species traits, background bonuses, computes HP/AC/passives/spell slots). Blocked on Doc 15 content + Doc 11/12/13 services (AC computation, spell slot initial state).
+- **UI screens** — `CharacterCreationScreen` + mobile/tablet/desktop layouts + per-step widgets (`_StartModeStep` through `_ReviewStep`) + live preview panel. Blocked on **Doc 31**.
+- **Higher-level start sub-flow** — ASI/feat picks per level, subclass at appropriate level, bonus equipment by tier. Blocked on Doc 15 + class-progression tables (already in Doc 03 schema, populated by Doc 15).
+- **Character drafts persistence** — save/resume incomplete drafts (SRD §16 Open Question #2). Deferred per spec.
+
+23 new tests: `AbilityScoreValidator` — Standard Array accept/reject-dupes/reject-missing (3), Point Buy accept-27/reject-overspend/reject-below-8/reject-above-15/cost-table (5), Random accept-[3,18]/reject-below-3/reject-above-18 (3), Background Bonus +2/+1 + +1/+1/+1 + non-listed reject + total-≠-3 + shape reject + cap-20 (6). `CharacterCreationStep` — ordering / isFirst-isLast / next-previous chain (3). `CharacterDraft` — empty defaults / copyWith sentinel / copyWith null clears / totalLevel / DraftClassLevel equality / DraftClassLevel subclass clear (6). `CharacterCreationState` — initial / canAdvance false / canGoBack / null-message-is-clean (4). `CharacterDraftValidator` — per-step positive + negative paths across all 7 steps (~30 scenarios, merged into the five method files above).
+
 ### Current test totals
 
-`flutter analyze`: 0 issues. `flutter test`: **673 / 673 passing, 1 skipped** (was 664 at end of Doc 13; +9 Doc 42 reset-primitive tests added).
+`flutter analyze`: 0 issues. `flutter test`: **725 / 725 passing, 1 skipped** (was 673 at end of Doc 42; +52 Doc 10 wizard-foundation tests added).
