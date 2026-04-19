@@ -192,6 +192,46 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 12 SpellCastService (🟣) — Phase C composition layer
+
+Wraps the just-shipped `SpellCastValidator` with the deterministic state transitions a successful cast triggers: slot consumption + concentration start/replace. Pure — returns a `CastOutcome` value the caller persists; no dice, no effect dispatch, no Combatant mutation.
+
+Files added:
+- `lib/application/dnd5e/spell/cast_outcome.dart` — result value with `slots`, `concentration`, `droppedConcentration`, `slotConsumed`, `error`. Failures preserve prior concentration so callers can pass the outcome through unconditionally.
+- `lib/application/dnd5e/spell/spell_cast_service.dart` — `cast(...)` composes `validator.validate(...)` with `SpellSlots.spend(level)` and a switch over `SpellDuration` to detect concentration spells.
+- `test/application/dnd5e/spell/spell_cast_service_test.dart` — 11 tests across three groups: failure passthrough (validator error short-circuits without touching slots; prior concentration preserved on failure), slot accounting (normal cast spends one at chosen level, upcast spends at slot level not spell level, cantrip + ritual never spend), concentration transitions (non-conc spell preserves prior conc, conc spell starts at slot level, new conc drops old, ritual conc spell tracks at base spell level).
+
+Decisions:
+- **Concentration detection lives on the service**, not on `Spell`, because `SpellDuration` already encodes the flag on three of its variants (`SpellRounds`/`SpellMinutes`/`SpellHours`). A `Spell.requiresConcentration` getter would just duplicate that switch and risk drift.
+- **`castAtLevel` for ritual = base spell level**, since rituals don't expend a slot. For normal cast, `castAtLevel = slotLevelChosen` so upcast Hold Person at level 3 records `castAtLevel = 3` (matters when something dispels lower-level spells).
+- **No effect dispatch yet** — the next slice (`EncounterService` per Doc 11, or a `SpellEffectDispatcher` per Doc 13) will consume `CastOutcome.success` and route to attack/save resolvers.
+
+Verification: `flutter analyze` 0 issues, `flutter test` 1213/1213 pass (1 skipped). +11 tests this turn.
+
+Next candidates: `EncounterService` (Doc 11 — turn rotation + condition ticking + applies damage outcomes), `SpellEffectDispatcher` (Doc 13 — wires `SpellCastOutcome` to compiled `EffectDescriptor` registry), or the Phase A structural unblock (Doc 04 Step 5/7 + Doc 42 wiring — still gated on `_backupV4DbBeforeReset`).
+
+### 2026-04-19 — Doc 12 SpellCastValidator (🟣) — Phase C service wiring kickoff
+
+First Phase C deliverable now that placeholder content exists for every Tier 2 codec. Pure pre-cast validator following Doc 12 §"Spell Casting Validator". Decoupled from `Combatant`/`Inventory` via a small `CasterContext` value type so it works equally well from combat services and pre-combat UI preview.
+
+- New: `flutter_app/lib/application/dnd5e/spell/spell_cast_validator.dart` — `SpellCastValidator.validate(...)` returns `null` when the cast may proceed, otherwise a single human-readable error. Pure: spends no slot, mutates no state.
+- New: `flutter_app/lib/application/dnd5e/spell/casting_method.dart` — enum `{normal, ritual}`. `alwaysPrepared` from the spec collapses into `normal` since the validator only cares about prepared-or-not, not the source.
+- New: `flutter_app/lib/application/dnd5e/spell/caster_context.dart` — `{silenced, hasFreeHand, hasFocus, hasComponentPouch, heldMaterialDescriptions}`. Specific-material check matches `MaterialComponent.description` verbatim, which keeps the validator data-driven (no enum of focus types).
+
+Branching:
+- Cantrip path: skips slot/prepared rules, still enforces components.
+- Ritual path: requires `Spell.ritual == true` + spell prepared OR present in `ritualBookSpellIds`. No slot expended.
+- Normal path: slot level non-null, slot level in `[spell.level, 9]`, slot available at chosen level, spell prepared, components valid.
+- Component sub-path (shared): V → reject if silenced; S → reject if no free hand; M consumed → require specific item in `heldMaterialDescriptions` (focus/pouch don't substitute); M non-consumed → focus OR pouch OR specific item.
+
+Tests: `test/application/dnd5e/spell/spell_cast_validator_test.dart` — 19 tests across 4 groups (cantrip/normal/ritual/components) covering happy path, every error message, ritual-from-book vs ritual-from-prepared, upcast at higher slot, and consumed-vs-non-consumed material rules.
+
+`flutter analyze`: 0 issues. Tests: 1202/1202 pass, 1 skipped (1182 → 1202, +20 from this file).
+
+DSL gap reminder: validator currently does not enforce one-leveled-spell-per-turn (needs `TurnState.appliedThisTurn`) — will land alongside `EncounterService` in next Doc 11 turn. Concentration override (replacing prior concentration when starting a new one) belongs to `SpellCastService`/`ConcentrationManager`, not the validator.
+
+Next candidate: `SpellCastService` (composes validator + `SpellSlots.spend` + `ConcentrationManager` + effect dispatch), or `EncounterService` (Doc 11 — wraps damage/death-save resolvers with turn rotation and condition ticking).
+
 ### 2026-04-19 — Doc 15 placeholder SRD content batch (🟣) — Phase B coverage stubs across all remaining Tier 2 categories
 
 Per user direction: ship 3-5 sample entries per remaining `srd_core` category instead of full SRD authoring. Goal: end-to-end exercise of every Tier 2 codec on disk while deferring exhaustive content authoring until the app is functional. Files added under `flutter_app/assets/packages/srd_core/`:
