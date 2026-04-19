@@ -192,6 +192,15 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 SRD weapon masteries asset (🟣)
+
+Shipped `flutter_app/assets/packages/srd_core/weapon_masteries.json` with the 8 canonical 2024 PHB weapon masteries — Cleave, Graze, Nick, Push, Sap, Slow, Topple, Vex. Body is `{"description": String}`. Count follows the PHB (8) rather than the Phase B plan's earlier "5 masteries" estimate; descriptions paraphrase the 2024 PHB mastery table. Behavior attaches at the Weapon level via `EffectDescriptor`s (per `weapon_mastery.dart`) — catalog entries here only carry the reference data.
+
+- New assets: `assets/packages/srd_core/weapon_masteries.json`.
+- Tests: 6 new (`test/assets/packages/srd_core/weapon_masteries_asset_test.dart`) — parse all 8, namespace + uniqueness, canonical 8-set, non-empty descriptions, Topple names Constitution save, Push distance 10 ft.
+- Result: `flutter analyze` clean, 966/966 tests pass (960 → 966, +6).
+- Next: spell schools (8), languages (~16), or weapon properties (~14).
+
 ### 2026-04-19 — Doc 15 SRD rarities asset (🟣)
 
 Shipped `flutter_app/assets/packages/srd_core/rarities.json` with 6 SRD magic-item rarities — Common, Uncommon, Rare, Very Rare, Legendary, Artifact. Body is `{"sortOrder": int, "attunementTierReq": int?}`. `sortOrder` runs 0..5 to give a stable rank across installed packages. `attunementTierReq` follows the DMG level guideline (Common/Uncommon 1+, Rare 5+, Very Rare 11+, Legendary 17+); Artifact is `null` — one-of-a-kind items handed out at DM discretion, no level floor.

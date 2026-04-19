@@ -1,0 +1,10 @@
+[
+  {"id": "cleave", "name": "Cleave", "body": {"description": "On a melee hit, you can make one extra attack roll against a different creature within 5 feet of the original target. Damage is the weapon's damage without the ability modifier."}},
+  {"id": "graze", "name": "Graze", "body": {"description": "On a melee miss, the target takes damage equal to the ability modifier used for the attack roll. Damage is the same type as the weapon's."}},
+  {"id": "nick", "name": "Nick", "body": {"description": "When you make the extra attack of the Light property with this weapon, you can make it as part of the Attack action instead of as a Bonus Action."}},
+  {"id": "push", "name": "Push", "body": {"description": "On a hit, you can push the target up to 10 feet straight away from you if it is Large or smaller."}},
+  {"id": "sap", "name": "Sap", "body": {"description": "On a hit, the target has Disadvantage on its next attack roll before the start of your next turn."}},
+  {"id": "slow", "name": "Slow", "body": {"description": "On a hit, the target's Speed is reduced by 10 feet until the start of your next turn. The effect doesn't stack with itself."}},
+  {"id": "topple", "name": "Topple", "body": {"description": "On a hit, the target must succeed on a Constitution saving throw (DC 8 + your ability modifier + your Proficiency Bonus) or have the Prone condition."}},
+  {"id": "vex", "name": "Vex", "body": {"description": "On a hit, you have Advantage on your next attack roll against the target before the end of your next turn."}}
+]
