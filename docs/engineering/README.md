@@ -192,6 +192,34 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 Item codec (🟣)
+
+Tier 2 Item JSON codec in `domain/dnd5e/item/item_json_codec.dart`: top-level `itemFromEntry`/`itemToEntry` dispatching on sealed `Item` variant tag (`weapon`/`armor`/`shield`/`gear`/`tool`/`ammunition`/`magicItem`) plus nested `AttunementPrereq` codec (4 variants — byClass, bySpecies, byAlignment, bySpellcaster). Base `id`/`name` on `CatalogEntry`; body carries `rarityId`, optional `weightLb`/`costCp` (elided when default 0), variant-specific fields, and `MagicItem.effects` routed through `EffectDescriptor` codec.
+
+- New: `item_json_codec.dart` (~380 lines).
+- Tests: 24 new (`test/domain/dnd5e/item/item_json_codec_test.dart`) — full weapon profile (melee + ranged with `RangePair`), sorted `propertyIds` output, Armor with strength requirement, default Shield acBonus=2 elision, Gear description, Tool proficiency, default Ammunition quantityPerStack=1 elision, all 4 AttunementPrereq variants, Ring-of-Protection integration with ModifyAc + ModifySave nested effects, unknown-tag / missing-field / non-object-body rejection with entry-id-prefixed messages.
+- Result: `flutter analyze` clean, 890/890 tests pass (866 → 890, +24).
+- Unblocks: SRD ~300 item authoring (weapons, armor, adventuring gear, tools, magic items).
+- Remaining Doc 15 codec surface: `Subclass` (class-feature wrapper). Tier 2 content codec surface otherwise complete.
+
+### 2026-04-19 — Doc 15 Monster codec + StatBlock / MonsterAction / LegendaryAction (🟣)
+
+Tier 2 Monster JSON codec in `domain/dnd5e/monster/monster_json_codec.dart`: top-level `monsterFromEntry`/`monsterToEntry` plus sub-codecs for `StatBlock` (incl. `MonsterSpeeds`, `MonsterSenses`, ability-score map, saving-throw map keyed on `Ability.name`, skill map, sorted damage/condition immunity sets, `ChallengeRating` canonical string), sealed `MonsterAction` (Attack/Multiattack/Save/Special — tagged on `"t"`), and `LegendaryAction` wrapper. Nested `traits` / `SpecialAction.effects` route through `EffectDescriptor` codec.
+
+- New: `monster_json_codec.dart` (~430 lines).
+- Tests: 21 new (`test/domain/dnd5e/monster/monster_json_codec_test.dart`) — per-action round-trips, default elision (reachFt=5, halfOnSave=true, multiattack default name, legendary cost=1), empty-senses elision, sorted-output determinism for string sets + saving-throw maps + skill maps, full Adult-Red-Dragon integration test (alignment, HP formula, multi-line speeds, traits, multiattack + attack + save actions, 2 legendary actions, languages), missing/invalid-CR/non-object-senses rejection.
+- Result: `flutter analyze` clean, 866/866 tests pass (845 → 866, +21).
+- Unblocks: SRD ~320 monster authoring. Doc 15 Tier 2 content codec surface now covers Condition + Spell + Monster; remaining picks are Item (smallest) and Subclass.
+
+### 2026-04-19 — Doc 15 Spell codec + sub-codecs (🟣)
+
+Full Tier 2 Spell JSON codec in `domain/dnd5e/spell/spell_json_codec.dart`: top-level `spellFromEntry`/`spellToEntry` plus sealed-family sub-codecs for `CastingTime` (5 variants), `SpellRange` (6), `AreaOfEffect` (6 — Sphere/Cone/Cube/Cylinder/Emanation/Line), `SpellDuration` (7), `SpellComponent` (V/S/M w/ cost + consumed). Spell body: `{level, schoolId, castingTime, range, components, duration, targets?, area?, effects?, ritual?, classListIds?, description?}`. Optional fields elided on encode; `effects` nests the existing `EffectDescriptor` codec.
+
+- New: `spell_json_codec.dart` (390 lines).
+- Tests: 33 new (`test/domain/dnd5e/spell/spell_json_codec_test.dart`) — per-variant round-trips, default elision, integration test for a full Fireball (L3 evocation, V/S/M, 150ft range, 20ft sphere, GrantCondition effect), Cure Wounds with Heal effect, Detect Magic with ritual + concentration duration, unknown-tag / missing-field / bad-enum rejection.
+- Result: `flutter analyze` clean, 845/845 tests pass (812 → 845, +33).
+- Unblocks: SRD ~361 spell authoring. Spell catalog entries now ship through the same `{id, name, bodyJson}` package shape as Tier 1 catalogs.
+
 ### 2026-04-19 — Doc 15 Condition.effects wired to EffectDescriptor codec (🟣)
 
 `conditionToEntry` / `conditionFromEntry` now serialize `Condition.effects` through the Tier 2 `encodeEffect`/`decodeEffect` bridge. `effects` key omitted when list empty; non-array and unknown-tag payloads rejected with `<entry.id>:`-prefixed `FormatException`.
