@@ -192,6 +192,44 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 11 EncounterService composition slice (🟣) — Phase C effect-modifier dispatch end-to-end
+
+10-step batch shipping every layer between the just-landed `EffectAccumulator` and the encounter aggregate. Pure pipelines fold descriptor effects into the existing resolvers; a top-level `EncounterService` plumbs them through the repository boundary using `Combatant.copyWith` for write-back.
+
+Files added (lib):
+- `lib/application/dnd5e/effect/combatant_effect_source.dart` — `CombatantEffectSource` walks a [Combatant]'s active conditions plus an optional `inherentEffects` callback, producing a flat `List<EffectDescriptor>` (inherent first, then conditions in insertion order). Both lookups are typedef'd (`ConditionEffectsLookup`, `InherentEffectsLookup`) so the SRD content registry can plug in later.
+- `lib/application/dnd5e/effect/effect_context_builder.dart` — `EffectContextBuilder` flattens [Combatant] state into [EffectContext]. Three constructors: `forAttack(attacker, target, reach, …)`, `forDamage(attacker, target, damageTypeId, …)`, `forSelfSave(saver, …)`. On a self-save the saver's conditions populate the `attackerConditions` slot since that slot reads as "carrier of this side of the effect".
+- `lib/application/dnd5e/combat/attack_pipeline.dart` — `AttackPipeline { effectSource, accumulator, contextBuilder, resolver }`. Collects descriptors on both sides, builds the context, accumulates `appliesTo: attacker` and `appliesTo: targeted` separately, sums their `flatBonus` with the caller's `weaponBonus`, combines their advantage states, and runs [AttackResolver]. Returns `AttackPipelineResult { roll, attackerContribution, targetContribution, extraAttackDice }`. Extra dice are surfaced for the damage step but **not** rolled here.
+- `lib/application/dnd5e/combat/damage_pipeline.dart` — `DamagePipeline { effectSource, accumulator, contextBuilder, applyPipeline }`. Folds attacker-side `ModifyDamageRoll.flatBonus` into a base `DamageInstance`, applies `damageTypeOverride` (last-wins per `EffectAccumulator` contract), then delegates to `ApplyDamagePipeline` for resistance/concentration. Surfaces `extraDice`/`extraTypedDice` via `DamagePipelineResult.contribution` — caller rolls them and runs additional pipeline calls per type so per-type resistances apply (Doc 11 §Multi-Type).
+- `lib/application/dnd5e/combat/save_pipeline.dart` — `SavePipeline { effectSource, accumulator, contextBuilder, resolver }`. Folds matching `ModifySave` `flatBonus`, combines descriptor `advantage` with caller-provided `baseAdvantage`, surfaces both auto-flags raw so [SaveResolver]'s `autoFail`-wins precedence applies in one place.
+- `lib/application/dnd5e/combat/turn_rotation_service.dart` — `TurnRotationService { skip }`. Pure rotation layered on `Encounter.advanceTurn`: walks forward until the active combatant fails the skip predicate (default: `currentHp == 0`). All-skip case (TPK) returns one-step advance — caller decides idle-round semantics.
+- `lib/application/dnd5e/combat/condition_tick_service.dart` — `ConditionTickService` decrements every `conditionDurationsRounds` entry by 1; entries hitting 0 are removed from both the duration map and the active condition set. Open-ended conditions (in the set, no duration entry) untouched. Returns `ConditionTickResult { combatant, expiredConditionIds }`. Sealed switch on `Combatant` to call the right `copyWith`.
+- `lib/application/dnd5e/combat/encounter_mutator.dart` — `EncounterMutator { replaceCombatant, replaceAll }`. Pure helpers; preserves id/name/order/round on every rebuild. `replaceCombatant` throws `StateError` for unknown id.
+- `lib/application/dnd5e/combat/encounter_repository.dart` — `EncounterRepository` interface (`findById` / `save` / `delete` / `listAll`) + `InMemoryEncounterRepository`. The map-backed impl unblocks service-layer tests and offline-mode bring-up before the Drift schema for combatants lands.
+- `lib/application/dnd5e/combat/encounter_service.dart` — `EncounterService` composer wiring: `runAttack(encounterId, attackerId, targetId, buildInput)`, `applyDamage(...)` (writes new HP back through `Combatant.copyWith` — `MonsterCombatant.instanceCurrentHp` direct, `PlayerCombatant.character.hp` via rebuilt [HitPoints]), `requestSave(...)`, `advanceTurn(...)` (delegates to `TurnRotationService`), `tickConditions(...)` (delegates to `ConditionTickService` + `EncounterMutator.replaceAll`). All throw `StateError` for missing encounter/combatant. Builders are caller-supplied closures so the service stays oblivious to ability-mod sourcing — that's the encounter UI's job once it lands.
+
+Files added (test): one parallel test file per lib file, +57 tests total. Highlights:
+- `attack_pipeline_test.dart` — bless flatBonus path, target-side `appliesTo: targeted`, advantage cancellation across sides, extraDice ordering, inherent-effect path.
+- `damage_pipeline_test.dart` — base passthrough, ModifyDamageRoll +N folded pre-mitigation, `damageTypeOverride` reroutes through resistance check on the new type, extra dice surfaced not rolled.
+- `save_pipeline_test.dart` — matching ability filter, autoFail beats autoSucceed when both surface, descriptor advantage combines with baseAdvantage.
+- `turn_rotation_service_test.dart` — default skip-at-0-hp, round increments only on wrap, TPK no-infinite-loop guarantee, custom predicate.
+- `condition_tick_service_test.dart` — duration decrement, 1→expire flow, open-ended conditions untouched.
+- `encounter_service_test.dart` — runAttack/applyDamage/requestSave/advanceTurn/tickConditions happy paths, StateError for missing ids, end-to-end attacker-effect flow through `applyDamage`.
+
+Decisions:
+- **Three pipelines instead of one polymorphic `runEffect`** — attack/damage/save have disjoint inputs (AC vs DC, ability filter vs not, target side vs not). Splitting matches the existing `AttackResolver`/`DamageResolver`/`SaveResolver` boundary one-to-one.
+- **`extraDice` not rolled inside the pipeline** — surfacing them lets the caller decide damage type per die (e.g. Sneak Attack rides the weapon damage type; Hexblade's Curse adds necrotic). Forcing rolls here would either need a second pass for typing or an opinionated default.
+- **`damageTypeOverride` applied before ApplyDamagePipeline** — resistance check needs to see the post-override type. Last-wins matches `EffectAccumulator` contract.
+- **TurnRotationService default skips at 0 HP, not per-condition** — keeping `unconscious` / `incapacitated` / `paralyzed` in scope here would couple to the SRD content registry. Caller can pass a custom predicate that consults a registry once it lands.
+- **`EncounterRepository` interface even though only one impl exists** — the Drift impl is genuinely separate work (blocked on Doc 03 row shapes for combatants). Splitting now keeps the seam visible.
+- **`EncounterService.buildInput` callbacks** — the service has no opinion on ability-mod sourcing (PC: derived from class/ability scores; monster: from stat block + actions list). Closures push that to the caller, which today is tests and tomorrow is the encounter UI.
+- **PC HP write-back rebuilds [HitPoints] rather than `withCurrent`** — no `withCurrent` exists; rebuild via factory preserves max + temp and re-runs invariants.
+- **Single switch on `Combatant` in `_writeHp` / `ConditionTickService.tick`** — sealed family means exhaustive; better than an abstract method on `Combatant` because the differing fields (`instanceCurrentHp` vs `character.hp`) belong on the concrete cases.
+
+Verification: `flutter analyze` 0 issues, `flutter test` 1359/1359 pass (1 skipped). +57 tests this turn (10-step batch).
+
+Next candidates: full `Doc 11 EncounterService` doc cross-check + lifecycle hook design (start-of-turn, end-of-turn, on-condition-apply); UI wiring (Doc 31 component lib needed first). Phase A structural unblock (Doc 04 Step 5/7 + Doc 42 main.dart) still gated on `_backupV4DbBeforeReset`.
+
 ### 2026-04-19 — Doc 11 Combatant.copyWith sweep (🟣) — Phase C foundation for EncounterService writes
 
 Added `copyWith` to both `PlayerCombatant` and `MonsterCombatant`. Foundation work — no behavior change yet, but unblocks the future `EncounterService` boundary where per-combatant state (HP, conditions, concentration, position, turn state) is mutated and written back through the repository layer.
