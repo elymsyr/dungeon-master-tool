@@ -115,7 +115,7 @@ The built-in dnd5e module ships **mechanics only** (rules engine, typed shapes, 
 | 11 | [`11-combat-engine-spec.md`](./11-combat-engine-spec.md) | Manual combat tracker (MVP): initiative, turn state, action economy, condition expiration. Auto-resolve = future. | 00, 01 | ⚪ |
 | 12 | [`12-spell-system-spec.md`](./12-spell-system-spec.md) | Slot tables, multiclass calculator, Pact Magic, concentration, AoE geometry. | 00, 01 | ⚪ |
 | 13 | [`13-damage-resolver-spec.md`](./13-damage-resolver-spec.md) | Attack pipeline: crit, resistance/vuln/immunity, save-half, temp HP, concentration check. | 00, 01, 11 | ⚪ |
-| 14 | [`14-package-system-redesign.md`](./14-package-system-redesign.md) | DnD5e-native typed package format (v2). Catalog content types, id namespacing, `requiredRuntimeExtensions`. | 01 | ⚪ |
+| 14 | [`14-package-system-redesign.md`](./14-package-system-redesign.md) | DnD5e-native typed package format (v2). Catalog content types, id namespacing, `requiredRuntimeExtensions`. | 01 | 🟣 |
 
 ## Phase 3: Online Multiplayer Specs (Sprint 5-7)
 
@@ -350,6 +350,39 @@ Design choices locked in this pass:
 
 10 tests cover: schema version, empty-on-create for all 20 tables, insert/select round-trips on distinctive shapes (Spells/Items/Monsters/SpeciesCatalog/Subclasses/Conditions), and uninstall-by-package cascade delete.
 
+### 2026-04-19 — Doc 14 typed package format (🟣 partial)
+
+First pass lands the in-memory package pipeline. JSON file parsing + export are deferred to Doc 15 when typed per-entity codecs get written alongside the SRD content.
+
+**New code:**
+
+| File | Purpose |
+|---|---|
+| [`domain/dnd5e/package/dnd5e_package.dart`](../../flutter_app/lib/domain/dnd5e/package/dnd5e_package.dart) | `Dnd5ePackage` container — metadata + 12 catalog lists + 8 content lists, all unmodifiable. `namespaced()` rewrites every local id + intra-package ref to `<slug>:<localId>`. |
+| [`domain/dnd5e/package/catalog_entry.dart`](../../flutter_app/lib/domain/dnd5e/package/catalog_entry.dart), [`content_entry.dart`](../../flutter_app/lib/domain/dnd5e/package/content_entry.dart) | Transport shapes matching Doc 03 Drift columns — carry `bodyJson` verbatim so the importer writes what it gets. |
+| [`domain/dnd5e/package/package_slug.dart`](../../flutter_app/lib/domain/dnd5e/package/package_slug.dart) | `[a-z][a-z0-9_]{0,31}` slug regex per Doc 14 §Validation. |
+| [`domain/dnd5e/package/content_hash.dart`](../../flutter_app/lib/domain/dnd5e/package/content_hash.dart) | `computeContentHash` — sha256 over canonical content form (sorted by id within each table, metadata excluded). |
+| [`domain/dnd5e/package/conflict_resolution.dart`](../../flutter_app/lib/domain/dnd5e/package/conflict_resolution.dart) | `ConflictResolution.{skip, overwrite, duplicate}` for same-source re-installs. |
+| [`domain/dnd5e/package/import_report.dart`](../../flutter_app/lib/domain/dnd5e/package/import_report.dart) | `ImportReport` (per-table insert counts + warnings) + sealed `PackageImportResult.{success, error}`. |
+| [`domain/dnd5e/package/package_validator.dart`](../../flutter_app/lib/domain/dnd5e/package/package_validator.dart) | Structural checks: formatVersion, gameSystemId, slug, duplicate local ids, spell level bounds, runtime-extension presence. |
+| [`data/database/tables/installed_packages_table.dart`](../../flutter_app/lib/data/database/tables/installed_packages_table.dart) | Tracks installed packages (distinct from legacy v5 `packages`). Schema v6 → **v7** additive. |
+| [`application/dnd5e/package/dnd5e_package_importer.dart`](../../flutter_app/lib/application/dnd5e/package/dnd5e_package_importer.dart) | Namespacing + validation + hash check + conflict handling + transactional catalog/content writes via `INSERT OR REPLACE`. |
+
+**Behaviour locked:**
+- **Idempotent namespacing** — already-namespaced ids (any `foo:bar`) pass through untouched, so `pkg.namespaced().namespaced()` equals `pkg.namespaced()`. Lets a package reference a dependency's already-installed catalog.
+- **Canonical content hash** — sorted by id within each table; metadata (id, name, version, author, tags, …) is explicitly *not* hashed, matching Doc 14 §File Format. Result: content-equivalent packages hash identically even if authored in different order or repackaged with new metadata.
+- **Conflict resolution on re-install** — match is by `sourcePackageId`, not slug (handles rename-on-duplicate correctly). `overwrite` deletes every catalog/content row tagged with the existing slug, then writes the new set. `skip` returns success with a warning. `duplicate` is an error because the caller must supply the fresh slug (e.g. `srd_2`) on the package itself — the importer does not invent one.
+- **Transactional writes** — every catalog + content insert for one package runs inside `db.transaction`. Validation short-circuits before any write, so a package with duplicate local ids leaves the DB untouched (verified by test).
+- **Runtime-extension gate** — `requiredRuntimeExtensions` must resolve against the process-wide `CustomEffectRegistry` (Doc 01 Tier 2) before import proceeds. Same-id handling fixes "user opens a package that needs `srd:wish` but the app doesn't ship it."
+
+**Deferred:**
+- **JSON file format** (`.dnd5e-pkg.json` parser/emitter) — lands with Doc 15 where typed codecs for Condition/Spell/Monster/etc. also arrive. Today's callers construct `Dnd5ePackage` in memory.
+- **Zip bundling + images** — out of scope per Doc 14 §Open Questions.
+- **Marketplace download + signature verification** — Doc 14 §Marketplace Integration, lands with Docs 20-25.
+- **Dangling-reference validator** (`contentRegistryValidator`) — stubbed-out for now; proper check requires Doc 15 typed decoder to inspect effect-descriptor references inside `bodyJson`. Current validator catches duplicate-ids + slug + extensions only.
+
+29 new tests (slug 3, hash 5, package 5, validator 8, importer 9) — namespacing idempotency, hash stability across order, hash excludes metadata, overwrite deletes prior rows, skip preserves them, duplicate errors without fresh slug, validator short-circuits before writes, runtime-extension enforced.
+
 ### Current test totals
 
-`flutter analyze`: 0 issues. `flutter test`: **516 / 516 passing, 1 skipped** (was 506 at end of Doc 02; +10 Doc 03 schema tests added).
+`flutter analyze`: 0 issues. `flutter test`: **545 / 545 passing, 1 skipped** (was 516 at end of Doc 03; +29 Doc 14 package-system tests added).

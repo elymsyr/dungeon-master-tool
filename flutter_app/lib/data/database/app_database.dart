@@ -19,6 +19,7 @@ import 'tables/combatants_table.dart';
 import 'tables/dnd5e_content_tables.dart';
 import 'tables/encounters_table.dart';
 import 'tables/entities_table.dart';
+import 'tables/installed_packages_table.dart';
 import 'tables/map_pins_table.dart';
 import 'tables/mind_map_edges_table.dart';
 import 'tables/mind_map_nodes_table.dart';
@@ -69,6 +70,8 @@ part 'app_database.g.dart';
     SpeciesCatalog,
     Subclasses,
     ClassProgressions,
+    // Doc 14 — Installed package registry (typed system).
+    InstalledPackages,
   ],
   daos: [
     CampaignDao,
@@ -89,7 +92,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -145,6 +148,11 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(speciesCatalog);
             await m.createTable(subclasses);
             await m.createTable(classProgressions);
+          }
+          if (from < 7) {
+            // v7: Doc 14 typed-package installed registry (coexists with v5
+            // template-coupled `packages` until Doc 04 Step 5 lands).
+            await m.createTable(installedPackages);
           }
         },
       );

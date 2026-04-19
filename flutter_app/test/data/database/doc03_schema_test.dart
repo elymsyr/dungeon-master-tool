@@ -4,8 +4,9 @@ import 'package:dungeon_master_tool/data/database/app_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Smoke test for Doc 03 typed Drift tables. Spins up an in-memory database,
-/// confirms schema version reports 6, and exercises insert/select on every
-/// new catalog + content table so codegen is verified end-to-end.
+/// confirms schema version reports 7 (bumped by Doc 14 InstalledPackages),
+/// and exercises insert/select on every new catalog + content table so
+/// codegen is verified end-to-end.
 void main() {
   late AppDatabase db;
 
@@ -17,8 +18,8 @@ void main() {
     await db.close();
   });
 
-  test('schemaVersion = 6', () {
-    expect(db.schemaVersion, 6);
+  test('schemaVersion = 7', () {
+    expect(db.schemaVersion, 7);
   });
 
   group('catalog tables empty on fresh create', () {
