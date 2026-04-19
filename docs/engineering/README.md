@@ -192,6 +192,24 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 11 ApplyDamagePipeline (🟣) — Phase C combat composition
+
+Composes the just-shipped `ConcentrationCheckResolver` with the existing `DamageResolver` so the EncounterService apply-damage flow becomes a single pure call. No `Combatant.copyWith` dependency yet — the pipeline returns a value and the caller writes back.
+
+Files added:
+- `lib/application/dnd5e/combat/apply_damage_outcome.dart` — `{damage: DamageOutcome, concentration: ConcentrationCheckOutcome?}` plus a `concentrationBroken` convenience getter. `concentration` is null when no save was rolled (no current concentration, immune/zero damage, or instant death).
+- `lib/application/dnd5e/combat/apply_damage_pipeline.dart` — `apply({target, damage, concentration?, conMod, saveProfBonus, saveAdvantage, autoSucceedSave, autoFailSave})`. Skips the concentration save when `instantDeath` (caller treats death as ending concentration without rolling).
+- `test/application/dnd5e/combat/apply_damage_pipeline_test.dart` — 9 tests across two groups: concentration gating (no concentration → no save, immune target → no save, instant death → no save) and save pipeline (pass keeps, fail breaks, resistance halves before DC, advantage picks higher d20, autoFail breaks regardless of mod, prof bonus added).
+
+Decisions:
+- **Skip-on-instant-death** — even though `concentrationCheckTriggered` is true on a killing blow, rolling the save is meaningless (the target is dead). Pipeline returns `concentration = null` in that case; callers reading `concentrationBroken` won't see a misleading "save passed" on a corpse.
+- **Save inputs flow through, not derived** — `conMod`, `saveProfBonus`, `saveAdvantage`, `autoFail`/`autoSucceed` are all caller-supplied. The pipeline doesn't read `Combatant` so it stays usable from preview UI ("if a Fireball lands, do I still keep Bless?").
+- **MVP scope is damage-driven only** — incapacitation breaks and "killed by other means" still belong to `EncounterService` / condition-tick code per Doc 12.
+
+Verification: `flutter analyze` 0 issues, `flutter test` 1233/1233 pass (1 skipped). +9 tests this turn.
+
+Next candidates: `Combatant.copyWith` sweep (unblocks `EncounterService` repository writes + the spec's `ConcentrationManager`), `SpellEffectDispatcher` (Doc 13 — wires `CastOutcome.success` to compiled `EffectDescriptor` registry), or the Phase A structural unblock (Doc 04 Step 5/7 + Doc 42 wiring — still gated on `_backupV4DbBeforeReset`).
+
 ### 2026-04-19 — Doc 12 ConcentrationCheckResolver (🟣) — Phase C damage→save→break/keep
 
 Pure damage-driven concentration check, decoupled from `Combatant`. Composes existing `ConcentrationDc.forDamage` (DC formula, capped at 30) with the existing `SaveResolver` (advantage / autoFail / autoSucceed mechanics), so the formula and the save mechanics stay in one place each.
