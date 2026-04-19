@@ -192,6 +192,36 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 11 EncounterService lifecycle integration tests (🟣) — Phase C end-to-end event ordering
+
+10-step batch locking down the multi-step event ordering of the lifecycle hook surface shipped in the previous turn. Per-method tests already cover individual emissions; this batch chains attack→damage→drop→advance→tick→condition flows through one `RecordingEncounterHook` and asserts the full event stream so future regressions in hook emission order, drop-guard semantics, or rotation/round interactions are caught at the integration boundary.
+
+Files added (test):
+- `test/application/dnd5e/combat/encounter_lifecycle_integration_test.dart` — 10 scenarios sharing one set of helpers (`_mc`, `_enc`, `_service`, `_hit`):
+  1. **Damage→drop chain** — lethal hit on `b` emits `[DamageDealt, CombatantDropped]`; verifies `newCurrentHp == 0` on the damage event and combatant id on the drop.
+  2. **Damage→break-concentration→advance** — damage with `autoFailSave: true` against a Bless-concentrating monster, then `advanceTurn`. Asserts full sequence `[DamageDealt, ConcentrationBroken, EndOfTurn, StartOfTurn]` and that the `spellId` survived from the pre-snapshot.
+  3. **Two-round wrap** — two consecutive `advanceTurn` calls emit `[End, Start, End, RoundAdvanced, Start]`; verifies `previousRound: 1, round: 2` and that the post-wrap start lands on `'a'`.
+  4. **Two-tick expiry** — `applyCondition(durationRounds: 2)` then `tickConditions` twice. First tick decrements silently (no expiry event); second tick fires `ConditionExpired`. Full stream is `[ConditionAdded, ConditionExpired]` — no spurious events between.
+  5. **Round wrap is not auto-tick** — apply duration-1 condition, advance turn so the round wraps. No `ConditionExpired` fires from the round advance — caller must invoke `tickConditions` explicitly. The follow-up tick then fires the expiry. Locks the contract that round-tracking and condition-tracking are decoupled.
+  6. **Sequential damage to two targets** — `applyDamage` to `b`, then to `c`. `of<DamageDealtEvent>` returns both in emission order with the right `targetId` + `amountAfterMitigation`; no drops.
+  7. **Apply→remove→re-apply** — emits `[Added, Removed, Added]`; the two `Added` events carry distinct `durationRounds` (10, 5).
+  8. **Drop guard across two hits** — first hit drops `b`, second hit at 0 HP emits only `DamageDealt` (no second `Dropped`). Full stream: `[Damage, Dropped, Damage]` — exactly two damage events, exactly one drop event.
+  9. **Composite hook fan-out** — wraps two `RecordingEncounterHook`s in `CompositeEncounterHook`, runs damage + advance, asserts both recorders receive the same length-5 stream `[Damage, Dropped, End, RoundAdvanced, Start]`. The round-advance comes from rotation skipping the dropped `b`, which surfaces a non-obvious interaction worth pinning: a drop during `applyDamage` then `advanceTurn` wraps because the only other combatant is now skip-eligible.
+  10. **`of<T>()` filters across mixed sequence** — apply condition to `c`, damage `b` to 0, advance, tick. Asserts per-type counts (1 each of `ConditionAdded`, `DamageDealt`, `CombatantDropped`, `EndOfTurn`, `StartOfTurn`, `ConditionExpired`), total event count equals the sum (6 — no event dropped by filtering), final event is the explicit-tick expiry.
+
+Decisions:
+- **Helpers duplicated, not shared, with `encounter_service_lifecycle_test.dart`** — both files are consumers of the same surface; sharing helpers via a test-utility file would couple their evolution. Per-method tests assert one event at a time; integration tests assert the whole stream — different contracts, different setups.
+- **Closure-based `_hit(amount, {concentration, autoFailSave})`** — collapses the verbose `buildInput` for plain damage cases so each scenario stays under ~20 lines and scenario intent reads at the call site.
+- **Step 9 expectation pinned at 5 events, not 4** — initially expected `[Damage, Dropped, End, Start]` (4 events). The actual stream is 5: `TurnRotationService` skips dropped `b` and wraps to `a`, surfacing an extra `RoundAdvancedEvent`. This is a real and useful behavior to lock — it documents that drops during the active actor's damage step affect the immediate next `advanceTurn`'s rotation arithmetic.
+- **No new lib code** — all 10 scenarios exercise the surface from the previous turn unchanged. If a scenario needed a new hook event or service method, it would belong in a separate batch (the lifecycle hook design is now considered closed for this slice).
+
+Verification: `flutter analyze` 0 issues, `flutter test` 1399/1399 pass + 1 skipped (1389 → 1399, +10).
+
+Next up:
+- Phase A structural unblock (Doc 04 Step 5/7 + Doc 42 `main.dart` wiring) — still gated on `_backupV4DbBeforeReset`.
+- Doc 31 component lib (precondition for Doc 10/32/33 UI work).
+- Phase B SRD content authoring continuation (8 catalogs remaining: armor_categories, weapon_masteries, rarities, spell_schools, alignments, creature_types, weapon_properties, languages).
+
 ### 2026-04-19 — Doc 11 EncounterService lifecycle hooks (🟣) — Phase C event surface
 
 10-step batch wrapping the EncounterService composer with an event/observer layer so UI, AI cues, session journal, and tests can react to combat lifecycle moments without diffing snapshots themselves. Hooks are pure observers — they cannot mutate the encounter (state changes still go through service methods), and the service is the only thing that emits events.
