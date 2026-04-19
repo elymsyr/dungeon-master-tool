@@ -4,6 +4,8 @@ import '../../../domain/dnd5e/core/hit_points.dart';
 import 'attack_pipeline.dart';
 import 'condition_tick_service.dart';
 import 'damage_pipeline.dart';
+import 'encounter_event.dart';
+import 'encounter_hook.dart';
 import 'encounter_mutator.dart';
 import 'encounter_repository.dart';
 import 'save_pipeline.dart';
@@ -60,10 +62,24 @@ class EncounterTickOutcome {
         });
 }
 
+/// Outcome for [EncounterService.applyCondition] / [removeCondition]: the
+/// post-mutation encounter and a `changed` flag indicating whether the
+/// combatant's condition set actually moved (so callers can suppress the
+/// hook event on a no-op).
+class EncounterConditionMutationOutcome {
+  final Encounter encounter;
+  final bool changed;
+
+  const EncounterConditionMutationOutcome({
+    required this.encounter,
+    required this.changed,
+  });
+}
+
 /// Top-level composer for one encounter's lifecycle. Owns no rules — every
 /// call delegates to a pipeline / service injected at construction. The
 /// service's job is plumbing: load → run pipeline → write back via mutator
-/// → save through the repository.
+/// → save through the repository → notify the [hook].
 ///
 /// Stateless across calls; the repository holds the current encounter
 /// snapshot. Callers pass the encounter id; the service loads, mutates, and
@@ -76,6 +92,7 @@ class EncounterService {
   final TurnRotationService rotation;
   final ConditionTickService conditionTick;
   final EncounterMutator mutator;
+  final EncounterHook hook;
   final TargetDefenses Function(Combatant) defensesFor;
 
   const EncounterService({
@@ -87,6 +104,7 @@ class EncounterService {
     this.rotation = const TurnRotationService(),
     this.conditionTick = const ConditionTickService(),
     this.mutator = const EncounterMutator(),
+    this.hook = const CompositeEncounterHook.empty(),
   });
 
   Future<Encounter> _load(String encounterId) async {
@@ -124,7 +142,10 @@ class EncounterService {
   }
 
   /// Applies damage to a combatant, writes the new HP back through
-  /// [TargetDefenses]→[Combatant.copyWith], and persists via repository.
+  /// [TargetDefenses]→[Combatant.copyWith], persists via repository, and
+  /// emits [DamageDealtEvent] (always), [CombatantDroppedEvent] (if HP
+  /// transitioned to 0 / instant-death), and [ConcentrationBrokenEvent]
+  /// (if the damage broke the target's concentration).
   Future<EncounterDamageOutcome> applyDamage({
     required String encounterId,
     required String attackerId,
@@ -136,10 +157,45 @@ class EncounterService {
     final e = await _load(encounterId);
     final atk = _require(e, attackerId);
     final tgt = _require(e, targetId);
+    final previousHp = tgt.currentHp;
+    final previousConcentration = tgt.concentration;
     final result = damagePipeline.run(buildInput(atk, tgt, defensesFor(tgt)));
     final updatedTarget = _writeHp(tgt, result.outcome.damage.newCurrentHp);
     final next = mutator.replaceCombatant(e, updatedTarget);
     await repository.save(next);
+
+    final dmg = result.outcome.damage;
+    hook.on(DamageDealtEvent(
+      encounterId: next.id,
+      round: next.round,
+      attackerId: attackerId,
+      targetId: targetId,
+      damageTypeId: result.modifiedDamage.typeId,
+      amountAfterMitigation: dmg.amountAfterMitigation,
+      previousCurrentHp: previousHp,
+      newCurrentHp: dmg.newCurrentHp,
+      dropsToZero: dmg.dropsToZero,
+      instantDeath: dmg.instantDeath,
+    ));
+    if ((dmg.dropsToZero || dmg.instantDeath) && previousHp > 0) {
+      hook.on(CombatantDroppedEvent(
+        encounterId: next.id,
+        round: next.round,
+        combatantId: targetId,
+        instantDeath: dmg.instantDeath,
+      ));
+    }
+    final conc = result.outcome.concentration;
+    if (conc != null && conc.broken) {
+      hook.on(ConcentrationBrokenEvent(
+        encounterId: next.id,
+        round: next.round,
+        combatantId: targetId,
+        spellId: previousConcentration?.spellId,
+        dc: conc.dc,
+      ));
+    }
+
     return EncounterDamageOutcome(encounter: next, result: result);
   }
 
@@ -156,16 +212,39 @@ class EncounterService {
   }
 
   /// Advances the active turn marker per [TurnRotationService] (skipping
-  /// 0-HP combatants by default), persists, and returns the new state.
+  /// 0-HP combatants by default), persists, and emits [EndOfTurnEvent] for
+  /// the prior actor, [RoundAdvancedEvent] when the order wraps, and
+  /// [StartOfTurnEvent] for the new actor.
   Future<Encounter> advanceTurn(String encounterId) async {
     final e = await _load(encounterId);
+    final priorActor = e.order.currentId;
+    final priorRound = e.round;
     final next = rotation.advance(e);
     await repository.save(next);
+
+    hook.on(EndOfTurnEvent(
+      encounterId: next.id,
+      round: priorRound,
+      combatantId: priorActor,
+    ));
+    if (next.round != priorRound) {
+      hook.on(RoundAdvancedEvent(
+        encounterId: next.id,
+        round: next.round,
+        previousRound: priorRound,
+      ));
+    }
+    hook.on(StartOfTurnEvent(
+      encounterId: next.id,
+      round: next.round,
+      combatantId: next.order.currentId,
+    ));
     return next;
   }
 
   /// Decrements every combatant's per-round condition durations, removes
-  /// expired entries, and persists. Use at end-of-round.
+  /// expired entries, persists, and emits one [ConditionExpiredEvent] per
+  /// expired (combatant, condition) pair.
   Future<EncounterTickOutcome> tickConditions(String encounterId) async {
     final e = await _load(encounterId);
     final results = conditionTick.tickAll(e.combatants);
@@ -174,6 +253,18 @@ class EncounterService {
       [for (final r in results) r.combatant],
     );
     await repository.save(next);
+
+    for (final r in results) {
+      for (final cid in r.expiredConditionIds) {
+        hook.on(ConditionExpiredEvent(
+          encounterId: next.id,
+          round: next.round,
+          combatantId: r.combatant.id,
+          conditionId: cid,
+        ));
+      }
+    }
+
     return EncounterTickOutcome(
       encounter: next,
       expiredByCombatant: {
@@ -182,6 +273,75 @@ class EncounterService {
             r.combatant.id: r.expiredConditionIds,
       },
     );
+  }
+
+  /// Adds a condition to a combatant. Persists + emits [ConditionAddedEvent]
+  /// on a real change. Re-applying an already-active condition with the
+  /// same duration is a no-op (returns `changed: false`, no event).
+  /// Re-applying with a different duration overwrites the existing entry
+  /// and counts as a change.
+  Future<EncounterConditionMutationOutcome> applyCondition({
+    required String encounterId,
+    required String combatantId,
+    required String conditionId,
+    int? durationRounds,
+  }) async {
+    final e = await _load(encounterId);
+    final c = _require(e, combatantId);
+    final hadCondition = c.conditionIds.contains(conditionId);
+    final existingDuration = c.conditionDurationsRounds[conditionId];
+    final unchanged = hadCondition && existingDuration == durationRounds;
+    if (unchanged) {
+      return EncounterConditionMutationOutcome(encounter: e, changed: false);
+    }
+
+    final newConditions = {...c.conditionIds, conditionId};
+    final newDurations = {...c.conditionDurationsRounds};
+    if (durationRounds == null) {
+      newDurations.remove(conditionId);
+    } else {
+      newDurations[conditionId] = durationRounds;
+    }
+    final updated = _writeConditions(c, newConditions, newDurations);
+    final next = mutator.replaceCombatant(e, updated);
+    await repository.save(next);
+
+    hook.on(ConditionAddedEvent(
+      encounterId: next.id,
+      round: next.round,
+      combatantId: combatantId,
+      conditionId: conditionId,
+      durationRounds: durationRounds,
+    ));
+    return EncounterConditionMutationOutcome(encounter: next, changed: true);
+  }
+
+  /// Removes a condition from a combatant. Persists + emits
+  /// [ConditionRemovedEvent] on a real removal. Removing a condition that
+  /// isn't present is a no-op.
+  Future<EncounterConditionMutationOutcome> removeCondition({
+    required String encounterId,
+    required String combatantId,
+    required String conditionId,
+  }) async {
+    final e = await _load(encounterId);
+    final c = _require(e, combatantId);
+    if (!c.conditionIds.contains(conditionId)) {
+      return EncounterConditionMutationOutcome(encounter: e, changed: false);
+    }
+    final newConditions = {...c.conditionIds}..remove(conditionId);
+    final newDurations = {...c.conditionDurationsRounds}..remove(conditionId);
+    final updated = _writeConditions(c, newConditions, newDurations);
+    final next = mutator.replaceCombatant(e, updated);
+    await repository.save(next);
+
+    hook.on(ConditionRemovedEvent(
+      encounterId: next.id,
+      round: next.round,
+      combatantId: combatantId,
+      conditionId: conditionId,
+    ));
+    return EncounterConditionMutationOutcome(encounter: next, changed: true);
   }
 
   Combatant _writeHp(Combatant c, int newHp) {
@@ -197,6 +357,23 @@ class EncounterService {
               temp: pc.character.hp.temp,
             ),
           ),
+        ),
+    };
+  }
+
+  Combatant _writeConditions(
+    Combatant c,
+    Set<String> conditionIds,
+    Map<String, int> durations,
+  ) {
+    return switch (c) {
+      MonsterCombatant mc => mc.copyWith(
+          conditionIds: conditionIds,
+          conditionDurationsRounds: durations,
+        ),
+      PlayerCombatant pc => pc.copyWith(
+          conditionIds: conditionIds,
+          conditionDurationsRounds: durations,
         ),
     };
   }

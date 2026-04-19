@@ -192,6 +192,47 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 11 EncounterService lifecycle hooks (🟣) — Phase C event surface
+
+10-step batch wrapping the EncounterService composer with an event/observer layer so UI, AI cues, session journal, and tests can react to combat lifecycle moments without diffing snapshots themselves. Hooks are pure observers — they cannot mutate the encounter (state changes still go through service methods), and the service is the only thing that emits events.
+
+Files added (lib):
+- `lib/application/dnd5e/combat/encounter_event.dart` — sealed `EncounterEvent` family (9 variants): `StartOfTurnEvent`, `EndOfTurnEvent`, `RoundAdvancedEvent`, `DamageDealtEvent` (with previous/new HP snapshot, attackerId, damage type, dropsToZero, instantDeath flags), `CombatantDroppedEvent` (transition-to-0 only — no spam if hit at 0), `ConcentrationBrokenEvent` (carries the spellId from the pre-check `Concentration` since the post-check value is null), `ConditionAddedEvent` / `ConditionRemovedEvent` / `ConditionExpiredEvent` (the latter only fired by the round tick — explicit removal vs natural expiration are distinguishable downstream).
+- `lib/application/dnd5e/combat/encounter_hook.dart` — `EncounterHook` abstract class with no-op default `on(event)` (subclasses override only what they care about via pattern match in one method) + `CompositeEncounterHook` fan-out (preserves order, unmodifiable list, `.empty()` const ctor used as `EncounterService` default).
+- `lib/application/dnd5e/combat/recording_encounter_hook.dart` — `RecordingEncounterHook` journaling helper. `events` exposes an unmodifiable snapshot, `of<T>()` filters by event subtype for ergonomic test assertions, `clear()` resets between scenarios.
+
+Files changed (lib):
+- `lib/application/dnd5e/combat/encounter_service.dart`:
+  - New `hook` field (defaults to `CompositeEncounterHook.empty()` so existing callers compile unchanged).
+  - `applyDamage` now snapshots `previousHp` + `previousConcentration` before the pipeline run, then emits `DamageDealtEvent` always, `CombatantDroppedEvent` only when `previousHp > 0` and `dropsToZero || instantDeath`, and `ConcentrationBrokenEvent` when the concentration check returned `broken`.
+  - `advanceTurn` snapshots prior actor + prior round, then emits `EndOfTurnEvent` (with prior round), `RoundAdvancedEvent` (only when round number changed), `StartOfTurnEvent` (with new round).
+  - `tickConditions` emits one `ConditionExpiredEvent` per `(combatant, expiredConditionId)` pair returned by `ConditionTickService.tickAll`.
+  - New `applyCondition({encounterId, combatantId, conditionId, durationRounds?})` returning `EncounterConditionMutationOutcome { encounter, changed }`. Same-condition+same-duration is a no-op (no event, no save). Different duration overwrites and emits. Null `durationRounds` removes any tracked counter (open-ended condition).
+  - New `removeCondition({encounterId, combatantId, conditionId})` mirror with `ConditionRemovedEvent`. Removing an absent condition is a no-op.
+  - New `_writeConditions(c, ids, durations)` sealed switch helper paralleling `_writeHp`.
+
+Files added (test): one parallel test file per lib file (`encounter_event_test.dart`, `encounter_hook_test.dart`, `recording_encounter_hook_test.dart`) plus `encounter_service_lifecycle_test.dart` covering the seven service-level wirings end-to-end. +30 tests total. Highlights:
+- `encounter_event_test.dart` — exhaustive sealed-switch coverage of all 9 variants.
+- `encounter_hook_test.dart` — empty composite drops events silently, fan-out preserves order, subclass-filtered hook ignores non-matching events, hook list unmodifiable.
+- `recording_encounter_hook_test.dart` — `of<T>()` filters by subtype across mixed event streams.
+- `encounter_service_lifecycle_test.dart` — DamageDealt with full HP snapshot; CombatantDropped on transition only (hit-at-0 emits no drop); ConcentrationBroken via `autoFailSave: true` on a Bless-concentrating monster; advanceTurn End→Start with no Round when not wrapping; advanceTurn End→Round→Start when wrapping (uses `InitiativeOrder.advance()` to start mid-order); tickConditions emits one event per expired pair across multiple combatants; applyCondition no-op when same duration, open-ended path with null duration; removeCondition no-op when absent.
+
+Decisions:
+- **Hooks are pure observers, not state machines** — the only way to mutate the encounter is through service methods. Hooks that need to trigger follow-up changes (e.g. an AI cue queue) must do that out-of-band. This keeps the event flow strictly downstream and removes the ambiguity of "did the hook's reaction fire before or after the next service call?"
+- **`previousCurrentHp` carried on the event, not derived** — saves every listener from re-loading the encounter or diffing snapshots themselves. The DamageOutcome already gives `dropsToZero`, but UI also wants the absolute starting HP for the "10 → 6" toast.
+- **`CombatantDroppedEvent` requires `previousHp > 0`** — without this guard, a hit on an already-0-HP target re-emits the drop event every round. PCs at 0 HP are unconscious, not dropping repeatedly; the second hit is for death-save failures (separate event family, future work).
+- **`ConcentrationBrokenEvent.spellId` is captured pre-check** — `ConcentrationCheckOutcome.concentrationAfter` is null on break, so the post-check value carries no spell id. The service snapshots `target.concentration` before the pipeline runs.
+- **`applyCondition` no-op semantics** — same condition + same duration returns `changed: false` and emits nothing. Different duration *does* emit (fresh stack), since the duration-rebase is a meaningful re-application. Null vs explicit duration are distinguishable.
+- **Default hook is `CompositeEncounterHook.empty()`, not nullable** — keeps the call sites flat (`hook.on(...)` always works, no `?.`) and existing constructor calls still compile because the field has a `const` default.
+- **No `OnConditionApplied` lifecycle distinct from `ConditionAddedEvent`** — the docstring originally tracked these as separate concepts but they collapsed: any add path goes through `applyCondition` and fires the same event. If a condition needs an "on-apply" trigger that runs effect resolution (e.g. Bless's bonus to attack rolls), that's effect-source / accumulator territory, not lifecycle.
+
+Verification: `flutter analyze` 0 issues, `flutter test` 1389/1389 pass + 1 skipped (1359 → 1389, +30).
+
+Next up:
+- Lifecycle integration tests at the encounter level (multi-step combat scenario combining attack → damage → drop → tick → expire flowing through one RecordingHook) to lock the end-to-end ordering.
+- Phase A structural unblock (Doc 04 Step 5/7 + Doc 42 main.dart wiring) — still gated on `_backupV4DbBeforeReset`.
+- Doc 31 component lib (precondition for Doc 10/32/33 UI work).
+
 ### 2026-04-19 — Doc 11 EncounterService composition slice (🟣) — Phase C effect-modifier dispatch end-to-end
 
 10-step batch shipping every layer between the just-landed `EffectAccumulator` and the encounter aggregate. Pure pipelines fold descriptor effects into the existing resolvers; a top-level `EncounterService` plumbs them through the repository boundary using `Combatant.copyWith` for write-back.
