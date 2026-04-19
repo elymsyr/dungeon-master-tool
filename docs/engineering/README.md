@@ -192,6 +192,24 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 11 Combatant.copyWith sweep (🟣) — Phase C foundation for EncounterService writes
+
+Added `copyWith` to both `PlayerCombatant` and `MonsterCombatant`. Foundation work — no behavior change yet, but unblocks the future `EncounterService` boundary where per-combatant state (HP, conditions, concentration, position, turn state) is mutated and written back through the repository layer.
+
+Files changed:
+- `lib/domain/dnd5e/combat/combatant.dart` — `PlayerCombatant.copyWith({character, initiativeRoll, conditionIds, conditionDurationsRounds, concentration, clearConcentration, turnState, mapPosition, clearMapPosition})` and parallel `MonsterCombatant.copyWith({instanceMaxHp, instanceCurrentHp, initiativeRoll, conditionIds, conditionDurationsRounds, concentration, clearConcentration, turnState, mapPosition, clearMapPosition})`. Both delegate to the existing factory so all factory invariants (HP range, content-id shape, etc.) re-run on every copy.
+- `test/domain/dnd5e/combat/combatant_test.dart` — 14 tests in 2 groups covering: identity copy preserves all fields; per-field overrides; HP delegation through replaced `Character`; `clearConcentration` / `clearMapPosition` semantics (including precedence over a non-null param in the same call); factory validation re-runs (out-of-range `instanceCurrentHp` rejected); immutability (`identical` is false; original untouched); `MonsterCombatant.definition` and `id` not exposed as overridable params (instance-identity preserved).
+
+Decisions:
+- **Convention for nullable fields**: explicit `clearConcentration` / `clearMapPosition` boolean params instead of a sentinel object. Standard Dart convention, no precedent for sentinels in this codebase.
+- **`MonsterCombatant.definition` and `id` not in `copyWith` signature**: a `MonsterCombatant` *is* an instance of one definition with a stable per-instance id. Replacing either would create a different combatant, not copy this one. Encoding this in the API prevents accidental swap.
+- **Factory re-runs validation**: `copyWith(instanceCurrentHp: -1)` throws, matching factory behavior. Avoids drift between construction and mutation paths.
+- **`Set`/`Map` parameters take pre-validated content ids (no re-walk)**: factory calls `validateContentId` on every entry — copyWith inherits this for free since it goes through the factory.
+
+Verification: `flutter analyze` 0 issues, `flutter test` 1302/1302 pass (1 skipped). +14 tests this turn.
+
+Next candidates: now that `Combatant.copyWith` exists, the `EncounterService` boundary work for Doc 11 can proceed (collects active `EffectDescriptor`s per combatant, runs the resolver chain, writes back via `copyWith`). Alternatively the Phase A structural unblock (Doc 04 Step 5/7 + Doc 42 wiring).
+
 ### 2026-04-19 — Doc 13 EffectAccumulator (🟣) — Phase C reducer over EffectDescriptor
 
 Second slice of the EffectDescriptor dispatch layer. Consumes the just-shipped `PredicateEvaluator` to fold a `List<EffectDescriptor>` into three structured contribution buckets that downstream resolvers (`AttackResolver` / `DamageResolver` / `SaveResolver`) consume.

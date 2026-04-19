@@ -97,6 +97,34 @@ class PlayerCombatant implements Combatant {
   int get maxHp => character.hp.max;
   @override
   int get armorClass => character.armorClassBase();
+
+  /// Returns a copy with the given overrides. Nullable fields ([concentration],
+  /// [mapPosition]) keep their existing value when the param is null; pass
+  /// `clearConcentration: true` / `clearMapPosition: true` to set them to null.
+  PlayerCombatant copyWith({
+    Character? character,
+    int? initiativeRoll,
+    Set<String>? conditionIds,
+    Map<String, int>? conditionDurationsRounds,
+    Concentration? concentration,
+    bool clearConcentration = false,
+    TurnState? turnState,
+    TokenPosition? mapPosition,
+    bool clearMapPosition = false,
+  }) {
+    return PlayerCombatant(
+      character: character ?? this.character,
+      initiativeRoll: initiativeRoll ?? this.initiativeRoll,
+      conditionIds: conditionIds ?? this.conditionIds,
+      conditionDurationsRounds:
+          conditionDurationsRounds ?? this.conditionDurationsRounds,
+      concentration:
+          clearConcentration ? null : (concentration ?? this.concentration),
+      turnState: turnState ?? this.turnState,
+      mapPosition:
+          clearMapPosition ? null : (mapPosition ?? this.mapPosition),
+    );
+  }
 }
 
 class MonsterCombatant implements Combatant {
@@ -180,4 +208,37 @@ class MonsterCombatant implements Combatant {
   int get maxHp => instanceMaxHp;
   @override
   int get armorClass => definition.stats.armorClass;
+
+  /// Returns a copy with the given overrides. Nullable fields ([concentration],
+  /// [mapPosition]) keep their existing value when the param is null; pass
+  /// `clearConcentration: true` / `clearMapPosition: true` to set them to null.
+  /// [definition] and [id] are immutable identifiers and cannot be replaced.
+  MonsterCombatant copyWith({
+    int? instanceMaxHp,
+    int? instanceCurrentHp,
+    int? initiativeRoll,
+    Set<String>? conditionIds,
+    Map<String, int>? conditionDurationsRounds,
+    Concentration? concentration,
+    bool clearConcentration = false,
+    TurnState? turnState,
+    TokenPosition? mapPosition,
+    bool clearMapPosition = false,
+  }) {
+    return MonsterCombatant(
+      definition: definition,
+      id: id,
+      instanceMaxHp: instanceMaxHp ?? this.instanceMaxHp,
+      instanceCurrentHp: instanceCurrentHp ?? this.instanceCurrentHp,
+      initiativeRoll: initiativeRoll ?? this.initiativeRoll,
+      conditionIds: conditionIds ?? this.conditionIds,
+      conditionDurationsRounds:
+          conditionDurationsRounds ?? this.conditionDurationsRounds,
+      concentration:
+          clearConcentration ? null : (concentration ?? this.concentration),
+      turnState: turnState ?? this.turnState,
+      mapPosition:
+          clearMapPosition ? null : (mapPosition ?? this.mapPosition),
+    );
+  }
 }
