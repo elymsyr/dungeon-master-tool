@@ -1,0 +1,102 @@
+[
+  {
+    "id": "dragonborn",
+    "name": "Dragonborn",
+    "body": {
+      "sizeId": "srd:medium",
+      "baseSpeedFt": 30,
+      "effects": [
+        {"t": "grantSenseOrSpeed", "kind": "darkvision", "value": 60}
+      ],
+      "description": "Dragonborn carry the magic of their draconic ancestors. At 1st level you choose a Draconic Ancestry, which sets the damage type of your Breath Weapon and the damage type you gain Resistance to. You have Darkvision to 60 feet."
+    }
+  },
+  {
+    "id": "dwarf",
+    "name": "Dwarf",
+    "body": {
+      "sizeId": "srd:medium",
+      "baseSpeedFt": 30,
+      "effects": [
+        {"t": "grantSenseOrSpeed", "kind": "darkvision", "value": 120},
+        {"t": "modifyResistances", "kind": "resistance", "add": ["srd:poison"]}
+      ],
+      "description": "Dwarves are dauntless explorers, warriors, and artisans. You have Darkvision to 120 feet, Dwarven Resilience (resistance to Poison damage and Advantage on saves to avoid or end the Poisoned condition), Dwarven Toughness (+1 Hit Point at each level), and Stonecunning (bonus-action Tremorsense 60 ft for 10 minutes, a number of times per Long Rest equal to your Proficiency Bonus)."
+    }
+  },
+  {
+    "id": "elf",
+    "name": "Elf",
+    "body": {
+      "sizeId": "srd:medium",
+      "baseSpeedFt": 30,
+      "effects": [
+        {"t": "grantSenseOrSpeed", "kind": "darkvision", "value": 60}
+      ],
+      "description": "Elves share a connection to the Feywild. At 1st level you choose an Elven Lineage (Drow, High Elf, or Wood Elf), which grants additional traits. You have Darkvision to 60 feet, Fey Ancestry (Advantage on saves to avoid or end the Charmed condition; magic can't put you to sleep), Keen Senses (proficiency in Insight, Perception, or Survival), and Trance (a 4-hour Long Rest)."
+    }
+  },
+  {
+    "id": "gnome",
+    "name": "Gnome",
+    "body": {
+      "sizeId": "srd:small",
+      "baseSpeedFt": 30,
+      "effects": [
+        {"t": "grantSenseOrSpeed", "kind": "darkvision", "value": 60}
+      ],
+      "description": "Gnomes are alert, inquisitive, and curious. At 1st level you choose a Gnomish Lineage (Forest Gnome or Rock Gnome). You have Darkvision to 60 feet and Gnomish Cunning (Advantage on Intelligence, Wisdom, and Charisma saving throws to avoid or end magical effects)."
+    }
+  },
+  {
+    "id": "goliath",
+    "name": "Goliath",
+    "body": {
+      "sizeId": "srd:medium",
+      "baseSpeedFt": 35,
+      "description": "Goliaths are strong and determined descendants of giants. At 1st level you choose a Giant Ancestry, granting a trait tied to one of six giant lineages. You have Large Form (as a Bonus Action grow Large for 10 minutes, a number of times per Long Rest equal to your Proficiency Bonus; requires enough space) and Powerful Build (count as one size larger for carrying capacity and push/drag/lift)."
+    }
+  },
+  {
+    "id": "halfling",
+    "name": "Halfling",
+    "body": {
+      "sizeId": "srd:small",
+      "baseSpeedFt": 30,
+      "description": "Halflings are cheerful folk with a knack for avoiding danger. You have Brave (Advantage on saves to avoid or end the Frightened condition), Halfling Nimbleness (move through the space of any creature one size larger), Luck (when rolling a 1 on a d20 Test, reroll and must use the new roll), and Naturally Stealthy (may attempt Hide even when obscured only by a creature one size larger)."
+    }
+  },
+  {
+    "id": "human",
+    "name": "Human",
+    "body": {
+      "sizeId": "srd:medium",
+      "baseSpeedFt": 30,
+      "description": "Humans are the most adaptable of peoples. You gain Heroic Inspiration at the start of each Long Rest (Resourceful), proficiency in one skill of your choice (Skillful), and a 1st-level Origin Feat of your choice (Versatile)."
+    }
+  },
+  {
+    "id": "orc",
+    "name": "Orc",
+    "body": {
+      "sizeId": "srd:medium",
+      "baseSpeedFt": 30,
+      "effects": [
+        {"t": "grantSenseOrSpeed", "kind": "darkvision", "value": 120}
+      ],
+      "description": "Orcs are courageous and strong. You have Darkvision to 120 feet, Adrenaline Rush (take the Dash action as a Bonus Action a number of times per Short or Long Rest equal to your Proficiency Bonus, gaining temporary HP equal to your Proficiency Bonus), Powerful Build (count as one size larger for carrying capacity and push/drag/lift), and Relentless Endurance (once per Long Rest, drop to 1 HP instead of 0)."
+    }
+  },
+  {
+    "id": "tiefling",
+    "name": "Tiefling",
+    "body": {
+      "sizeId": "srd:medium",
+      "baseSpeedFt": 30,
+      "effects": [
+        {"t": "grantSenseOrSpeed", "kind": "darkvision", "value": 60}
+      ],
+      "description": "Tieflings carry the magic of the Lower Planes. At 1st level you choose a Fiendish Legacy (Abyssal, Chthonic, or Infernal), granting damage Resistance and a list of innate spells that scale with level. You have Darkvision to 60 feet and Otherworldly Presence (know the Thaumaturgy cantrip, cast using Charisma)."
+    }
+  }
+]

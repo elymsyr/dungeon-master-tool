@@ -192,6 +192,16 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 SRD species asset (🟣) — Phase B Tier 2 content authoring start
+
+Shipped `flutter_app/assets/packages/srd_core/species.json` with all 9 2024 PHB SRD species — Dragonborn, Dwarf, Elf, Gnome, Goliath, Halfling, Human, Orc, Tiefling. Body shape matches `species_json_codec`: `{sizeId, baseSpeedFt, effects?, description?}`. `sizeId` references `srd:medium` / `srd:small` (Halfling + Gnome only); `baseSpeedFt` = 30 for all except Goliath = 35. Effects carry only the statically-encodable mechanical grants: `GrantSenseOrSpeed{darkvision, 60}` for Dragonborn/Elf/Gnome/Tiefling, `GrantSenseOrSpeed{darkvision, 120}` for Dwarf/Orc, and `ModifyResistances{resistance, add: [srd:poison]}` for Dwarf. Traits that depend on a build-time choice (Dragonborn ancestry, Tiefling legacy, Elven/Gnomish lineage, Giant Ancestry) or a triggering predicate (Halfling Brave/Luck, Gnomish Cunning, Human Heroic Inspiration, Orc Relentless Endurance) are covered in the description and will attach via Lineage or character-creation wiring later. Goliath/Halfling/Human carry no static effects for this reason.
+
+- New assets: `flutter_app/assets/packages/srd_core/species.json`.
+- Tests: 10 new (`test/assets/packages/srd_core/species_asset_test.dart`) — parse all 9 via `speciesFromEntry`, namespace uniqueness, canonical 9-species set match, size-id validity against the 6 SRD sizes, Small-vs-Medium partition (halfling/gnome = small; rest = medium), speed table, non-empty description, darkvision distribution (60 vs 120) matches 2024 PHB, dwarf poison resistance asserted, goliath/halfling/human empty-effects invariant.
+- Result: `flutter analyze` clean, 1041/1041 tests pass (1031 → 1041, +10).
+- Phase B status: Tier 1 catalogs 12/12 ✓. Tier 2 entity codecs 9/9 ✓. Tier 2 assets: species ✓ (new), lineages / backgrounds / feats / classes / subclasses / spells / monsters / items still pending.
+- Next (small-first path): `lineages.json` (Elven Drow/High/Wood + Gnomish Forest/Rock + any 2024 Fiendish Legacy ties to Tiefling — narrow scope matches Lineage domain), or `backgrounds.json` (16 entries, each `{effects?, description?}` — simple body), or first `feats.json` batch. Recommend lineages next since they immediately downstream of the just-shipped species.
+
 ### 2026-04-19 — Doc 15 CharacterClass codec (🟣) — Tier 2 entity codec #9 (codec surface COMPLETE)
 
 Shipped `flutter_app/lib/domain/dnd5e/character/character_class_json_codec.dart` — `characterClassFromEntry(CatalogEntry)` + `characterClassToEntry(CharacterClass)`. Body shape `{"hitDie": String, "casterKind": String, "spellcastingAbility"?: String, "savingThrows"?: [String...], "featureTable"?: [<row>...], "casterFraction"?: num, "description"?: String}`. Each row: `{"level": int, "featureIds"?: [String...], "effects"?: [<effect>...]}`. All enums (`Die`, `CasterKind`, `Ability`) encoded via `.name`. `casterFraction` omitted when it equals the default for `casterKind` (0/1.0/0.5/1/3/0 for none/full/half/third/pact) — homebrew fractional casters still round-trip exactly. Feature rows sorted by level on encode for deterministic output, matching subclass codec pattern.
