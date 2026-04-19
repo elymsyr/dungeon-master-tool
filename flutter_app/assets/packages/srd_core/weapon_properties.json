@@ -1,0 +1,82 @@
+[
+  {
+    "id": "ammunition",
+    "name": "Ammunition",
+    "body": {
+      "flags": ["ammunition"],
+      "description": "You can use a weapon that has the Ammunition property to make a ranged attack only if you have ammunition to fire from it. You must draw the ammunition as part of the attack. You can recover half your expended ammunition by taking 1 minute to search the battlefield after combat."
+    }
+  },
+  {
+    "id": "finesse",
+    "name": "Finesse",
+    "body": {
+      "flags": ["finesse"],
+      "description": "When making an attack with a Finesse weapon, you use your choice of your Strength or Dexterity modifier for the attack and damage rolls. You must use the same modifier for both rolls."
+    }
+  },
+  {
+    "id": "heavy",
+    "name": "Heavy",
+    "body": {
+      "flags": ["heavy"],
+      "description": "Small or Tiny creatures have Disadvantage on attack rolls with Heavy weapons. A Heavy weapon's size and bulk make it too large for them to use effectively."
+    }
+  },
+  {
+    "id": "light",
+    "name": "Light",
+    "body": {
+      "flags": ["light"],
+      "description": "A Light weapon is small and easy to handle, making it ideal for use when fighting with two weapons."
+    }
+  },
+  {
+    "id": "loading",
+    "name": "Loading",
+    "body": {
+      "flags": ["loading"],
+      "description": "You can fire only one piece of ammunition from a Loading weapon when you use an action, Bonus Action, or Reaction to fire it, regardless of the number of attacks you can normally make."
+    }
+  },
+  {
+    "id": "range",
+    "name": "Range",
+    "body": {
+      "flags": ["range"],
+      "description": "A Range weapon has a normal and long range in feet. Attack rolls beyond the normal range have Disadvantage, and you can't attack a target beyond the long range."
+    }
+  },
+  {
+    "id": "reach",
+    "name": "Reach",
+    "body": {
+      "flags": ["reach"],
+      "description": "A Reach weapon adds 5 feet to your reach when you attack with it, as well as when determining your reach for Opportunity Attacks with it."
+    }
+  },
+  {
+    "id": "thrown",
+    "name": "Thrown",
+    "body": {
+      "flags": ["thrown"],
+      "description": "If a weapon has the Thrown property, you can throw it to make a ranged attack. If it is a melee weapon, you use the same ability modifier for the attack and damage rolls that you would use for a melee attack with it. For example, if you throw a Handaxe, you use Strength; if you throw a Dagger, you can use Strength or Dexterity because the weapon also has the Finesse property."
+    }
+  },
+  {
+    "id": "two_handed",
+    "name": "Two-Handed",
+    "body": {
+      "flags": ["twoHanded"],
+      "description": "A Two-Handed weapon requires two hands when you attack with it."
+    }
+  },
+  {
+    "id": "versatile",
+    "name": "Versatile",
+    "body": {
+      "flags": ["versatile"],
+      "description": "A Versatile weapon can be used with one or two hands. A damage value in parentheses appears with the property — the damage when the weapon is used with two hands to make a melee attack."
+    }
+  }
+]

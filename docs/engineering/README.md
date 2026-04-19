@@ -192,6 +192,16 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 SRD weapon properties asset (🟣) — Tier 1 catalogs COMPLETE
+
+Shipped `flutter_app/assets/packages/srd_core/weapon_properties.json` with the 10 canonical 2024 PHB weapon properties — Ammunition, Finesse, Heavy, Light, Loading, Range, Reach, Thrown, Two-Handed, Versatile. Body is `{"flags": [<PropertyFlag.name>...], "description": String?}`. Each property carries exactly the matching `PropertyFlag` from `weapon_property_flag.dart` so engine dispatch works on the flag rather than the id (homebrew "arcane:graceful" with `finesse` flag behaves identically to `srd:finesse`). Count is 10 (not plan's "~14" estimate); material/imbue flags (`silvered`, `magical`, `appliesToSneakAttack`) are not PHB weapon properties — they attach at item level.
+
+- New assets: `assets/packages/srd_core/weapon_properties.json`.
+- Tests: 7 new (`test/assets/packages/srd_core/weapon_properties_asset_test.dart`) — parse all 10, namespace + uniqueness, canonical 10-set, flag mapping per property, non-empty descriptions, Reach description mentions "5 feet", `two_handed` carries `twoHanded` camelCase flag.
+- Result: `flutter analyze` clean, 985/985 tests pass (978 → 985, +7).
+- **Phase B Tier 1 catalogs are now COMPLETE** (12/12): conditions, damage_types, skills, sizes, creature_types, alignments, armor_categories, rarities, weapon_masteries, spell_schools, languages, weapon_properties.
+- Next: Tier 2 entity authoring starts — spells (~361), monsters (~320), items (~300), classes (12 + subclasses), species (9), backgrounds (16), feats (~40). Recommended batch cadence: ~50 per turn for spells/monsters/items.
+
 ### 2026-04-19 — Doc 15 SRD languages asset (🟣)
 
 Shipped `flutter_app/assets/packages/srd_core/languages.json` with 19 SRD 5.2.1 languages — 9 Standard (Common, Common Sign Language, Dwarvish, Elvish, Giant, Gnomish, Goblin, Halfling, Orc), 9 Rare (Abyssal, Celestial, Deep Speech, Draconic, Druidic, Infernal, Primordial, Sylvan, Undercommon), plus Thieves' Cant. Body is `{"script": String?}`. Scripts follow classic D&D lore (e.g. Dwarvish → Dwarvish runes; Elvish → Elvish; Goblin uses Common; Orc uses Dwarvish). Three entries have `null` script for unwritten/gestural/secret forms: Common Sign Language, Deep Speech, Thieves' Cant.
