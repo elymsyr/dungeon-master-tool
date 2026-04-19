@@ -192,6 +192,37 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 SRD monolith builder CLI (🟣) — Phase B asset assembly
+
+Phase B `tool:build_srd_pkg` CLI lands. Reads the 12 split catalog assets + 10 spell tier files + monsters/items/feats/backgrounds/species/lineages/subclasses/classes from `assets/packages/srd_core/`, namespaces every id under the `srd:` package slug, encodes via `Dnd5ePackageCodec`, computes the canonical `sha256:` content hash, and emits a single monolith JSON envelope at `assets/packages/srd_core.dnd5e-pkg.json`. This is the artifact `SrdBootstrapService` (next batch) will load from `rootBundle` on first launch.
+
+Files added:
+- `tool/build_srd_pkg.dart` — pure-Dart CLI. Public `buildSrdPackage({assetRoot})` returns a `BuildResult { package, contentHash, envelope }`; `main(args)` writes the pretty-printed envelope to `assets/packages/srd_core.dnd5e-pkg.json` (or the path passed as `args[0]`) and prints a per-table size report. Hard-coded package metadata (`id: 'srd-core-1'`, `slug: 'srd'`, `version: '1.0.0'`, `license: 'CC BY 4.0'`) lives at the top of the file.
+- `test/tool/build_srd_pkg_test.dart` — 9 tests. Exercises the build function against the live assets: builds without throwing; all 12 catalogs populated; all 8 content lists populated; every entry id namespaced under `srd:`; intra-package refs (`spell.schoolId`, `subclass.parentClassId`) namespaced; per-table id uniqueness; `contentHash` is `sha256:`-prefixed and stable across two builds (determinism); envelope round-trips through `Dnd5ePackageCodec.decode`; envelope carries top-level `contentHash` field for the importer.
+
+Files changed:
+- `flutter_app/.gitignore` — adds `/assets/packages/srd_core.dnd5e-pkg.json` to the ignore list. The monolith is a derived artifact regenerable at any time via `dart run tool/build_srd_pkg.dart`. It will be committed (or built in CI) once `SrdBootstrapService` exists and pubspec bundles it.
+
+CLI output on the current asset set:
+- contentHash: `sha256:5d33061ef7f604a3a0da3986433385ef59c6b7b3f53b503b04dff3f2f4ff3d66`
+- catalogs: 15 conditions, 13 damage types, 18 skills, 6 sizes, 14 creature types, 10 alignments, 19 languages, 8 spell schools, 10 weapon properties, 8 weapon masteries, 4 armor categories, 6 rarities (123 catalog rows total)
+- content: 109 spells, 5 monsters, 8 items, 22 feats, 16 backgrounds, 14 species (incl. lineages folded into the species list per the existing package shape), 5 subclasses, 5 class progressions
+
+Decisions:
+- **Lineages folded into species** — `Dnd5ePackage` has no separate `lineages` list; the package shape only knows `species: List<NamedEntry>`. Both files concatenate into `species`. The bodies still carry `parentSpeciesId` so consumers can rebuild the hierarchy at use time. If a dedicated `lineages` content type is needed later, the codec + builder both grow at once.
+- **Build is a tool, not a runtime step** — the runtime `SrdBootstrapService` (next batch) will load the pre-built monolith from `rootBundle`. Concatenating + namespacing on every cold start would be wasted work; the monolith is built once at dev/CI time and shipped as an asset.
+- **`contentHash` written into the envelope** — the canonical hash is computed over a stable representation of the typed entries (per `computeContentHash`), then stamped into the wire envelope as a top-level field. Lets the importer verify integrity without re-reading the entire payload back into typed entries first.
+- **Generated monolith gitignored, not committed** — keeps the diff size sane and avoids merge churn over the derived blob. When `SrdBootstrapService` lands and pubspec actually bundles the monolith, we'll either commit it (with regen-in-CI as a safety net) or generate at build time. That decision is part of the SrdBootstrapService batch, not this one.
+- **CLI is library-importable** — `buildSrdPackage()` is exported as a top-level function so the test can call it without spawning a subprocess. `main()` is a thin wrapper that handles file IO + stdout reporting only.
+
+Verification: `flutter analyze` 0 issues, `flutter test` 1408/1408 pass + 1 skipped (1399 → 1408, +9). CLI runs end-to-end (`dart run tool/build_srd_pkg.dart` succeeds, writes 156 KB monolith, prints the per-table report).
+
+Next up:
+- `SrdBootstrapService` — `Dnd5ePackageImporter.import(monolith)` on first launch in a per-user txn; flag in shared_prefs so subsequent launches no-op. Will need pubspec bundling of the monolith and a decision on commit-vs-CI-gen at that point.
+- 9 `CustomEffect` impls — Wish, WildShape, Polymorph, AnimateDead, Simulacrum, SummonFamily, ConjureFamily, Shapechange, GlyphOfWarding. Register at startup so `requiredRuntimeExtensions` validation passes when a spell body declares an effect with `t: "custom", implementationId: "srd:wish"`.
+- CC BY 4.0 attribution UI — small screen reachable from settings, displays `sourceLicense` + `authorName` from the loaded SRD package.
+- Phase A structural unblock (Doc 04 Step 5/7 + Doc 42 `main.dart` wiring) — still gated on `_backupV4DbBeforeReset`.
+
 ### 2026-04-19 — Doc 11 EncounterService lifecycle integration tests (🟣) — Phase C end-to-end event ordering
 
 10-step batch locking down the multi-step event ordering of the lifecycle hook surface shipped in the previous turn. Per-method tests already cover individual emissions; this batch chains attack→damage→drop→advance→tick→condition flows through one `RecordingEncounterHook` and asserts the full event stream so future regressions in hook emission order, drop-guard semantics, or rotation/round interactions are caught at the integration boundary.

@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Generated SRD monolith — built by `dart run tool/build_srd_pkg.dart` from
+# the split sources in assets/packages/srd_core/. Will be committed (or built
+# in CI) once SrdBootstrapService exists and pubspec bundles it.
+/assets/packages/srd_core.dnd5e-pkg.json
