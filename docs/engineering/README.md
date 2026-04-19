@@ -93,7 +93,7 @@ The app must remain fully usable on **mobile/tablet (Android, iOS)** and **deskt
 | # | Filename | Purpose | Deps | Status |
 |---|---|---|---|---|
 | 00 | [`00-dnd5e-mechanics-reference.md`](./00-dnd5e-mechanics-reference.md) | Normative SRD 5.2.1 mechanics reference. Source of truth for all engine behavior. | — | ⚪ |
-| 01 | [`01-domain-model-spec.md`](./01-domain-model-spec.md) | Typed Dart classes for Character, Monster, Spell, Item (sealed), Feat, Background, Species, CharacterClass, Subclass, Encounter, Combatant, Effect, etc. with invariants. | 00 | 🔵 |
+| 01 | [`01-domain-model-spec.md`](./01-domain-model-spec.md) | Typed Dart classes for Character, Monster, Spell, Item (sealed), Feat, Background, Species, CharacterClass, Subclass, Encounter, Combatant, Effect, etc. with invariants. | 00 | 🟢 |
 | 02 | [`02-game-system-abstraction.md`](./02-game-system-abstraction.md) | `GameSystem` interface for future Pathfinder/CoC modularity. Stub Pathfinder example. | 01 | ⚪ |
 | 03 | [`03-database-schema-spec.md`](./03-database-schema-spec.md) | Drift v5: drop `world_schemas` + template_* columns; add typed tables. Fresh-start reset (doc 42). | 01 | ⚪ |
 | 04 | [`04-template-removal-checklist.md`](./04-template-removal-checklist.md) | ~40-file deletion order; dependency graph; per-step regression test plan. | 01, 03 | 🟣 |
@@ -204,7 +204,7 @@ Steps 1-4, 6, 8-10 landed. Steps 5 (schema dir deletion) + 7 (drift v5 drop+recr
 
 RuleEngineV2 + rule_provider + tests deleted. `_formulaFor` in entity_card now returns null until Doc 01 class-feature pure functions replace it. `computedFieldsProvider` gone; entity_card uses `const <String, dynamic>{}` for computed values.
 
-### 2026-04-19 — Doc 01 domain model (🔵)
+### 2026-04-19 — Doc 01 domain model (🟢 COMPLETE)
 
 Target layout per spec §Directory Layout — `flutter_app/lib/domain/dnd5e/`.
 
@@ -276,13 +276,33 @@ Design choices locked in this tier:
 - **`Duration` renamed to `EffectDuration`** — Doc 01 uses the bare `Duration` name; the rename is mechanical and noted in the file header.
 - **Structural equality on `Predicate`** — engine may use predicate sets as cache keys or deduplicate; leaf cases implement `==`/`hashCode`/`toString`. `EffectDescriptor` cases skip it (not yet needed; add when consumers demand).
 
-**Now — larger entities:** `character/`, `spell/`, `item/`, `monster/`, `combat/`, `world/`. Begin with `character/` root + leaf value types (`SpellSlots`, `HitDicePool`, `ProficiencySet`, `Inventory`). Multiclass invariants enforced in `Character` factory per spec §Invariants.
+**Larger entities — COMPLETE.** 34 files across `character/`, `spell/`, `item/`, `monster/`, `combat/`, `world/` + 82 new tests.
 
-**Blockers that auto-unblock when Doc 01 lands:**
+**`character/`** — `character.dart` (root; total-level cap 20, derived `proficiencyBonus`/`initiativeMod`/`passivePerception`), `character_class_level.dart`, `character_class.dart` + `ClassFeatureRow`, `subclass.dart`, `species.dart`, `lineage.dart`, `background.dart`, `feat.dart` + `FeatCategory` enum, `proficiency_set.dart` (saves by Ability, everything else by namespaced id, + `alertFeat` flag), `inventory.dart` + `InventoryEntry` + `EquipSlot` enum (3-item attunement cap enforced), `spell_slots.dart` (levels 1..9), `pact_magic_slots.dart` (Warlock; slot level 1..5), `hit_dice_pool.dart` (per-Die buckets, `recoverLongRest` = half total), `prepared_spells.dart` + `PreparedSpellEntry`.
+
+**`spell/`** — `spell.dart` (Tier 1 root), `area_of_effect.dart` sealed (`Cone`/`Cube`/`Cylinder`/`Emanation`/`Line`/`Sphere`, each with `includesOrigin`), `casting_time.dart` sealed (`Action`/`Bonus`/`Reaction` with trigger text/`Minutes`/`Hours`), `spell_range.dart` sealed (`Self`/`Touch`/`Feet`/`Miles`/`Sight`/`Unlimited`), `spell_duration.dart` sealed (`Instantaneous`/`Rounds`/`Minutes`/`Hours`/`Days`/`UntilDispelled`/`Special`; concentration flag on duration cases), `spell_components.dart` sealed (`V`/`S`/`M` with cost-in-copper + consumed flag), `spell_target.dart` enum.
+
+**`item/`** — `item.dart` sealed `Item` (`id`/`name`/`weightLb`/`costCp`/`rarityId`) + concrete `Weapon`/`Armor`/`Shield`/`Gear`/`Tool`/`Ammunition`/`MagicItem`, `WeaponCategory`/`WeaponType` Tier 0 enums, `RangePair` (long ≥ normal), sealed `AttunementPrereq` (`ByClass`/`BySpecies`/`ByAlignment`/`BySpellcaster`). Ranged weapons must declare `RangePair`; attunement prereq requires `requiresAttunement = true`.
+
+**`monster/`** — `monster.dart` (Tier 1 root; legendary actions require slot budget ≥ 1), `stat_block.dart` (size/type/alignment refs, AC, HP, speeds, abilities, saves, skills, resistances/immunities/vulnerabilities, senses, languages, CR) + `MonsterSpeeds`/`MonsterSenses`, `monster_action.dart` sealed (`AttackAction`/`MultiattackAction`/`SaveAction`/`SpecialAction`), `legendary_action.dart`.
+
+**`combat/`** — Tier 0 stateful machines `concentration.dart`, `action_economy.dart`, `turn_state.dart` (with `move`/`dash`/`reset`). `attack_resolution.dart` (`AttackRoll`/`DamageRoll`/`SaveRoll` value types). `combatant.dart` sealed (`PlayerCombatant` wraps `Character`, `MonsterCombatant` wraps `Monster` + per-instance HP + unique id for multiple-goblin scenarios). `TokenPosition`. `initiative.dart` (`InitiativeOrder` + stable `sortIds` helper). `encounter.dart` (non-empty combatants, unique ids, round auto-increments on order wrap).
+
+**`world/`** — `world.dart` (installed-package registry, duplicate detection), `InstalledPackage`, `PackageVersion`, `campaign.dart` (narrative state; `lastPlayedAt` ≥ `createdAt`), `npc.dart` (tracked NPC with optional `monsterId` template reference).
+
+Design choices locked in this tier:
+- **Id-equality on all Tier 1 entities** — `Character`/`Spell`/`Monster`/`Item`/`World`/`Campaign`/`Npc` all `==` by namespaced id. Value types (`RangePair`, `TokenPosition`, `ActionEconomy`, `TurnState`, `TypedDice`, `SaveSpec`, `Concentration`) use field equality.
+- **`Character.armorClassBase()` is a placeholder** — returns `10 + dex.mod`. Full armor/shield/effect-aware AC computation deferred to Doc 11 combat engine; callers that need accuracy must use the engine, not this shortcut. Documented in the method comment.
+- **Sealed Item uses `implements`** — subclasses carry their own fields (no shared constructor), so `implements Item` beats `extends`. All subclasses in the same library so `sealed` still gates exhaustive switches.
+- **`SpellDuration` separate from `EffectDuration`** — spell durations carry concentration as a sibling flag (not a wrapper) so the UI's "Concentration, up to 1 minute" pattern renders naturally.
+- **`MonsterCombatant` carries its own id**, not the `Monster` definition's, so "Goblin #1" and "Goblin #2" share a definition but diverge in combat state.
+- **3-item attunement cap** enforced at the `Inventory` factory — matches SRD.
+
+**Blockers that auto-unblock now that Doc 01 has landed:**
 - Doc 04 Step 5 (schema dir deletion) — replace `WorldSchema` / `EntityCategorySchema` / `FieldSchema` consumers with typed entities file-by-file.
-- Doc 04 Step 7 (drift v5 drop+recreate) — needs Doc 03 typed tables which need Doc 01 types.
-- Docs 02 (GameSystem interface), 11 (combat engine), 12 (spell system), 13 (damage resolver), 14 (typed package format), 15 (SRD core package) all key off Doc 01 domain.
+- Doc 04 Step 7 (drift v5 drop+recreate) — needs Doc 03 typed tables.
+- Docs 02 (GameSystem interface), 11 (combat engine), 12 (spell system), 13 (damage resolver), 14 (typed package format), 15 (SRD core package) can now begin — all reference the domain types that now exist.
 
 ### Current test totals
 
-`flutter analyze`: 0 issues. `flutter test`: **415 / 415 passing, 1 skipped** (was 376 at end of Tier 1; +39 Tier 2 effect tests added).
+`flutter analyze`: 0 issues. `flutter test`: **497 / 497 passing, 1 skipped** (was 415 at end of Tier 2; +82 larger-entity tests added).
