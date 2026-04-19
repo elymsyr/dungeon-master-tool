@@ -105,7 +105,7 @@ The built-in dnd5e module ships **mechanics only** (rules engine, typed shapes, 
 
 | # | Filename | Purpose | Deps | Status |
 |---|---|---|---|---|
-| 15 | [`15-srd-core-package.md`](./15-srd-core-package.md) | SRD 5.2.1 shipped as a package (assets build step + auto-install flow). Defines the whitelisted `CustomEffect` registry. | 01, 14 | ⚪ |
+| 15 | [`15-srd-core-package.md`](./15-srd-core-package.md) | SRD 5.2.1 shipped as a package (assets build step + auto-install flow). Defines the whitelisted `CustomEffect` registry. | 01, 14 | 🟣 |
 
 ## Phase 2: Game Feature Specs (Sprint 2-4)
 
@@ -546,6 +546,35 @@ Pure wizard foundations — state types + per-step validators that Doc 15's cont
 
 23 new tests: `AbilityScoreValidator` — Standard Array accept/reject-dupes/reject-missing (3), Point Buy accept-27/reject-overspend/reject-below-8/reject-above-15/cost-table (5), Random accept-[3,18]/reject-below-3/reject-above-18 (3), Background Bonus +2/+1 + +1/+1/+1 + non-listed reject + total-≠-3 + shape reject + cap-20 (6). `CharacterCreationStep` — ordering / isFirst-isLast / next-previous chain (3). `CharacterDraft` — empty defaults / copyWith sentinel / copyWith null clears / totalLevel / DraftClassLevel equality / DraftClassLevel subclass clear (6). `CharacterCreationState` — initial / canAdvance false / canGoBack / null-message-is-clean (4). `CharacterDraftValidator` — per-step positive + negative paths across all 7 steps (~30 scenarios, merged into the five method files above).
 
+### 2026-04-19 — Doc 15 package file format codec (🟣 partial)
+
+Serialize/deserialize `Dnd5ePackage` ↔ JSON. Unblocks Doc 14's file-format parser/emitter and the Doc 15 asset-to-package bootstrap path. SRD content authoring itself (17 conditions, 14 damage types, ~361 spells, ~320 monsters, ...) still deferred — this turn ships only the pipes, not the content.
+
+**New code:**
+
+| File | Purpose |
+|---|---|
+| [`domain/dnd5e/package/dnd5e_package_codec.dart`](../../flutter_app/lib/domain/dnd5e/package/dnd5e_package_codec.dart) | `Dnd5ePackageCodec.encode(pkg) → Map<String, Object?>` + `decode(map) → Dnd5ePackage`. Defines the wire shape: top-level metadata + `catalogs: {...}` + `content: {...}`. Per-entity `body` / `statBlock` ride along as opaque JSON strings — domain-object decoders for Tier 1 entities (Condition, Spell, Monster, Item, Subclass) land with later turns without touching this file. |
+| [`application/dnd5e/package/package_json_reader.dart`](../../flutter_app/lib/application/dnd5e/package/package_json_reader.dart) | `PackageJsonReader.readJson(String)` / `readMap(Map)` — thin wrapper that calls `jsonDecode` then hands off to the codec. Pointed `FormatException` messages for malformed or wrong-type fields. `PackageJsonWriter.writeJson(pkg, pretty: ...)` emits the compact ship-form or the `build_artifacts/` pretty-printed diff copy (per Doc 15 Open Question 2). |
+
+**Behaviour locked:**
+- **Default-safe defaults.** `gameSystemId` defaults to `dnd5e`, `formatVersion` to `2`, `sourceLicense` to empty string, `tags` / `requiredRuntimeExtensions` / every catalog + content list to empty. A minimal payload with only the 6 required fields (`id`/`packageIdSlug`/`name`/`version`/`authorId`/`authorName`) decodes cleanly.
+- **Required fields fail loud.** Missing or wrong-typed required field → `FormatException('Missing or non-string field "x".')`. Wrong-typed catalog/content list entries → `FormatException('Field "conditions"[2] must be a JSON object …')` with the offending index.
+- **Bodies stay opaque.** `body` / `statBlock` fields round-trip as strings the same way the Doc 14 importer already writes them verbatim to Drift. Per-entity codecs (`Spell.fromJson`, `Monster.fromJson`, …) plug into these strings later without a wire-format break.
+- **Encode is idempotent.** `decode(encode(decode(encode(pkg))))` emits the same map as `decode(encode(pkg))` — verified by test.
+- **Optional vs. required disambiguated.** `description` is nullable (stays `null` when absent/null in JSON); `sourceLicense` defaults to empty string when absent. Matches the `Dnd5ePackage` constructor contract.
+
+**Deferred (remainder of Doc 15):**
+- **SRD content authoring** — `assets/packages/srd_core/` (manifest + 12 catalog JSONs + spells/monsters/items/classes/subclasses/species/backgrounds/feats split sources). Depends on domain-object JSON codecs landing first for each Tier 1 entity.
+- **Per-entity codecs** — `Condition.fromJson` / `DamageType.fromJson` / `Spell.fromJson` / `Monster.fromJson` / `Item.fromJson` / `Subclass.fromJson`. These turn the opaque `body` strings into typed domain objects at install time and feed the UI.
+- **`tool:build_srd_pkg` CLI** — concatenates the split sources into a committed monolith `assets/packages/srd_core.dnd5e-pkg.json` + computes its `contentHash`.
+- **`SrdBootstrapService`** — reads the monolith from `rootBundle`, calls `Dnd5ePackageImporter.import` inside a per-user transaction on first launch. Shows in `World > Settings > Installed Packages`.
+- **`CustomEffect` implementations** — 9 whitelisted impl classes (WishImpl, WildShapeImpl, PolymorphImpl, AnimateDeadImpl, SimulacrumImpl, SummonFamilyImpl, ConjureFamilyImpl, ShapechangeImpl, GlyphOfWardingImpl) + startup registration in the existing `CustomEffectRegistry`.
+- **CC BY 4.0 attribution UI** — `About > Content Licenses` screen + per-package detail view surfaces `sourceLicense` + `license_notice`.
+- **SRD upgrade flow** — one-tap `overwrite` on the installed-packages entry when the bundled monolith is newer than the installed version.
+
+11 new tests: codec round-trip on realistic fixture (1), encode idempotency (1), minimal-payload defaults (1), missing-required-field FormatException (1), wrong-type list FormatException with field name (1), null description preserved (1). Reader JSON-string parse (1), malformed JSON rejected (1), non-object root rejected (1). Writer compact-mode single-line (1), pretty-mode round-trips through reader (1).
+
 ### Current test totals
 
-`flutter analyze`: 0 issues. `flutter test`: **725 / 725 passing, 1 skipped** (was 673 at end of Doc 42; +52 Doc 10 wizard-foundation tests added).
+`flutter analyze`: 0 issues. `flutter test`: **736 / 736 passing, 1 skipped** (was 725 at end of Doc 10; +11 Doc 15 file-format codec tests added).
