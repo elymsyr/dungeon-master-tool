@@ -1,0 +1,210 @@
+[
+  {
+    "id": "blinded",
+    "name": "Blinded",
+    "body": {
+      "description": "A Blinded creature can't see and auto-fails any ability check that requires sight. Attacks against it have Advantage, and its own attacks have Disadvantage.",
+      "effects": [
+        {
+          "t": "conditionInteraction",
+          "imposedAdvantageOnAttacksAgainst": true,
+          "attacksHaveDisadvantage": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "charmed",
+    "name": "Charmed",
+    "body": {
+      "description": "A Charmed creature can't attack the charmer or target the charmer with damaging abilities or magical effects. The charmer has Advantage on any ability check to interact socially with the creature."
+    }
+  },
+  {
+    "id": "deafened",
+    "name": "Deafened",
+    "body": {
+      "description": "A Deafened creature can't hear and auto-fails any ability check that requires hearing."
+    }
+  },
+  {
+    "id": "exhaustion",
+    "name": "Exhaustion",
+    "body": {
+      "description": "Exhaustion is tracked as a level from 1 to 6. While Exhausted, D20 Tests are reduced by 2 times the level, and Speed is reduced by 5 feet times the level. A creature at Exhaustion level 6 dies. A Long Rest reduces Exhaustion by 1 level. Exhaustion is cumulative: additional sources add to the level."
+    }
+  },
+  {
+    "id": "frightened",
+    "name": "Frightened",
+    "body": {
+      "description": "A Frightened creature has Disadvantage on ability checks and attack rolls while the source of its fear is within line of sight. It also can't willingly move closer to the source of its fear.",
+      "effects": [
+        {
+          "t": "conditionInteraction",
+          "attacksHaveDisadvantage": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "grappled",
+    "name": "Grappled",
+    "body": {
+      "description": "A Grappled creature's Speed is 0 and can't benefit from any bonus to its Speed. The creature has Disadvantage on attack rolls against any target other than the grappler. The condition ends if the grappler is Incapacitated or if the creature is moved outside the grappler's reach.",
+      "effects": [
+        {
+          "t": "conditionInteraction",
+          "speedZero": true,
+          "grappled": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "incapacitated",
+    "name": "Incapacitated",
+    "body": {
+      "description": "An Incapacitated creature can't take any action, Bonus Action, or Reaction. Its concentration is broken. It can't speak. If the creature is Surprised, it has Disadvantage on Initiative rolls.",
+      "effects": [
+        {
+          "t": "conditionInteraction",
+          "incapacitated": true,
+          "cannotTakeActions": true,
+          "cannotTakeReactions": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "invisible",
+    "name": "Invisible",
+    "body": {
+      "description": "While Invisible, a creature is Heavily Obscured for the purpose of being found by sight and is Concealed. Attack rolls against it have Disadvantage, and its own attack rolls have Advantage. The creature has Advantage on Initiative rolls.",
+      "effects": [
+        {
+          "t": "conditionInteraction",
+          "invisibleToSight": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "paralyzed",
+    "name": "Paralyzed",
+    "body": {
+      "description": "A Paralyzed creature is Incapacitated, its Speed is 0, and it auto-fails Strength and Dexterity saving throws. Attacks against the creature have Advantage, and any attack that hits from within 5 feet is a critical hit.",
+      "effects": [
+        {
+          "t": "conditionInteraction",
+          "incapacitated": true,
+          "speedZero": true,
+          "autoFailSavesOf": ["dexterity", "strength"],
+          "imposedAdvantageOnAttacksAgainst": true,
+          "cannotTakeActions": true,
+          "cannotTakeReactions": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "petrified",
+    "name": "Petrified",
+    "body": {
+      "description": "A Petrified creature is transformed, along with any object it's wearing or carrying, into a solid inanimate substance (usually stone). Its weight increases by a factor of 10, and it ceases aging. The creature is Incapacitated, its Speed is 0, and it is unaware of its surroundings. Attacks against it have Advantage. It auto-fails Strength and Dexterity saving throws. It has Resistance to all damage and Immunity to the Poisoned condition.",
+      "effects": [
+        {
+          "t": "conditionInteraction",
+          "incapacitated": true,
+          "speedZero": true,
+          "autoFailSavesOf": ["dexterity", "strength"],
+          "imposedAdvantageOnAttacksAgainst": true,
+          "cannotTakeActions": true,
+          "cannotTakeReactions": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "poisoned",
+    "name": "Poisoned",
+    "body": {
+      "description": "A Poisoned creature has Disadvantage on attack rolls and ability checks.",
+      "effects": [
+        {
+          "t": "conditionInteraction",
+          "attacksHaveDisadvantage": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "prone",
+    "name": "Prone",
+    "body": {
+      "description": "A Prone creature's only movement options are to crawl or to spend half its Speed to stand up (ending the condition). The creature has Disadvantage on attack rolls. Attack rolls against the creature have Advantage if the attacker is within 5 feet; otherwise they have Disadvantage.",
+      "effects": [
+        {
+          "t": "conditionInteraction",
+          "attacksHaveDisadvantage": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "restrained",
+    "name": "Restrained",
+    "body": {
+      "description": "A Restrained creature's Speed is 0 and can't benefit from any bonus to its Speed. Attacks against it have Advantage, and its own attacks have Disadvantage. It has Disadvantage on Dexterity saving throws.",
+      "effects": [
+        {
+          "t": "conditionInteraction",
+          "speedZero": true,
+          "imposedAdvantageOnAttacksAgainst": true,
+          "attacksHaveDisadvantage": true
+        },
+        {
+          "t": "modifySave",
+          "ability": "dexterity",
+          "advantage": "disadvantage"
+        }
+      ]
+    }
+  },
+  {
+    "id": "stunned",
+    "name": "Stunned",
+    "body": {
+      "description": "A Stunned creature is Incapacitated, can't move, and can speak only falteringly. It auto-fails Strength and Dexterity saving throws. Attacks against it have Advantage.",
+      "effects": [
+        {
+          "t": "conditionInteraction",
+          "incapacitated": true,
+          "speedZero": true,
+          "autoFailSavesOf": ["dexterity", "strength"],
+          "imposedAdvantageOnAttacksAgainst": true,
+          "cannotTakeActions": true,
+          "cannotTakeReactions": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "unconscious",
+    "name": "Unconscious",
+    "body": {
+      "description": "An Unconscious creature is Incapacitated, can't move or speak, and is unaware of its surroundings. It drops whatever it's holding and falls Prone. Its Speed is 0. Attacks against it have Advantage. It auto-fails Strength and Dexterity saving throws. Any attack that hits from within 5 feet is a critical hit.",
+      "effects": [
+        {
+          "t": "conditionInteraction",
+          "incapacitated": true,
+          "speedZero": true,
+          "autoFailSavesOf": ["dexterity", "strength"],
+          "imposedAdvantageOnAttacksAgainst": true,
+          "cannotTakeActions": true,
+          "cannotTakeReactions": true
+        }
+      ]
+    }
+  }
+]

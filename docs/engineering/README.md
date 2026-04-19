@@ -192,6 +192,26 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### 2026-04-19 — Doc 15 SRD conditions asset (Phase B start) (🟣)
+
+First SRD content asset shipped: `flutter_app/assets/packages/srd_core/conditions.json` with all 15 SRD 5.2.1 conditions (Blinded, Charmed, Deafened, Exhaustion, Frightened, Grappled, Incapacitated, Invisible, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious). Authoring format is human-readable (`body` inline as object); the build step (future) stringifies to wire shape. Each entry encodes SRD description + representable mechanical flags via `ConditionInteraction` (incapacitated, speedZero, autoFailSavesOf, imposedAdvantageOnAttacksAgainst, attacksHaveDisadvantage, cannotTakeActions, cannotTakeReactions, grappled, invisibleToSight). Restrained adds a rider `ModifySave` for DEX disadvantage. Petrified's "resistance to all damage" + auto-crit-within-5ft on Paralyzed/Unconscious remain text-only (no DSL surface).
+
+- New assets: `flutter_app/assets/packages/srd_core/conditions.json`.
+- Tests: 13 new (`test/assets/packages/srd_core/conditions_asset_test.dart`) — setUpAll loads + namespaces under `srd:` + stringifies body + parses through `conditionFromEntry`; then per-condition flag assertions.
+- Result: `flutter analyze` clean, 915/915 tests pass (902 → 915, +13).
+- Marks start of **Phase B** (SRD content authoring). No longer codec-blocked.
+- Next: damage types catalog (14 entries) or skills catalog (18 entries). Smaller first.
+
+### 2026-04-19 — Doc 15 Subclass codec (🟣)
+
+Tier 1 Subclass JSON codec in `domain/dnd5e/character/subclass_json_codec.dart`: top-level `subclassFromEntry`/`subclassToEntry` with body shape `{parentClassId, featureTable?, description?}` and nested `ClassFeatureRow` shape `{level, featureIds?, effects?}`. Rows emitted sorted by level for deterministic output; empty `featureIds` / `effects` elided. Row `effects` route through `EffectDescriptor` codec (reused — no duplication of the 11 variant switch).
+
+- New: `subclass_json_codec.dart` (~130 lines).
+- Tests: 12 new (`test/domain/dnd5e/character/subclass_json_codec_test.dart`) — minimal + full (School of Evocation with `ModifySave` at lvl 6), row sort stability regardless of input order, empty-field elision, non-object body / missing parentClassId / non-array featureTable / missing row level / non-string featureId / non-object row rejection with entry-id-prefixed messages.
+- Result: `flutter analyze` clean, 902/902 tests pass (890 → 902, +12).
+- Unblocks: SRD subclass authoring (all 12 base-class subclasses) — last remaining Tier 2 content codec. **Codec surface for Doc 15 is now complete.**
+- Next: SRD content authoring (Phase B) or Doc 04 Step 5/7 + Doc 42 wiring bundle.
+
 ### 2026-04-19 — Doc 15 Item codec (🟣)
 
 Tier 2 Item JSON codec in `domain/dnd5e/item/item_json_codec.dart`: top-level `itemFromEntry`/`itemToEntry` dispatching on sealed `Item` variant tag (`weapon`/`armor`/`shield`/`gear`/`tool`/`ammunition`/`magicItem`) plus nested `AttunementPrereq` codec (4 variants — byClass, bySpecies, byAlignment, bySpellcaster). Base `id`/`name` on `CatalogEntry`; body carries `rarityId`, optional `weightLb`/`costCp` (elided when default 0), variant-specific fields, and `MagicItem.effects` routed through `EffectDescriptor` codec.
