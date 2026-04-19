@@ -1,10 +1,22 @@
+import 'grid_cell.dart';
+
 /// Sealed AoE shapes. Geometry on the battlemap resolves these; the spec
 /// method [includesOrigin] is honored by each case.
+///
+/// [coverage] returns every affected [GridCell] on a 5 ft-per-cell grid.
+/// Direction-agnostic shapes (Sphere, Emanation, Cylinder) ignore the
+/// `direction` argument; anchored shapes (Cone, Cube, Line) use it to
+/// orient the footprint. Total-cover line-of-effect filtering is the
+/// caller's responsibility (SRD §Total Cover).
 sealed class AreaOfEffect {
   const AreaOfEffect();
 
   bool includesOrigin();
+
+  Set<GridCell> coverage(GridCell origin, GridDirection direction);
 }
+
+int _cellsFromFt(double ft) => (ft / GridCell.feetPerCell).ceil();
 
 class ConeAoE extends AreaOfEffect {
   final double lengthFt;
@@ -16,6 +28,20 @@ class ConeAoE extends AreaOfEffect {
   @override
   bool includesOrigin() => false;
 
+  /// SRD cone: width at distance d equals d. On a grid, row at distance k
+  /// cells gets (2k + 1) cells wide, centred on the axis.
+  @override
+  Set<GridCell> coverage(GridCell origin, GridDirection direction) {
+    final cells = _cellsFromFt(lengthFt);
+    final out = <GridCell>{};
+    for (var d = 1; d <= cells; d++) {
+      for (var off = -d; off <= d; off++) {
+        out.add(_cellAt(origin, direction, forward: d, side: off));
+      }
+    }
+    return out;
+  }
+
   @override
   bool operator ==(Object other) =>
       other is ConeAoE && other.lengthFt == lengthFt;
@@ -23,6 +49,24 @@ class ConeAoE extends AreaOfEffect {
   int get hashCode => Object.hash('ConeAoE', lengthFt);
   @override
   String toString() => 'ConeAoE($lengthFt ft)';
+}
+
+GridCell _cellAt(
+  GridCell origin,
+  GridDirection dir, {
+  required int forward,
+  int side = 0,
+}) {
+  switch (dir) {
+    case GridDirection.north:
+      return origin.translate(side, -forward);
+    case GridDirection.south:
+      return origin.translate(side, forward);
+    case GridDirection.east:
+      return origin.translate(forward, side);
+    case GridDirection.west:
+      return origin.translate(-forward, side);
+  }
 }
 
 class CubeAoE extends AreaOfEffect {
@@ -34,6 +78,21 @@ class CubeAoE extends AreaOfEffect {
   }
   @override
   bool includesOrigin() => true;
+
+  /// Anchored at [origin]; one face flush with origin, extruded N cells in
+  /// [direction]. Width = N cells centred on origin axis.
+  @override
+  Set<GridCell> coverage(GridCell origin, GridDirection direction) {
+    final n = _cellsFromFt(sideFt);
+    final half = (n - 1) ~/ 2; // centre of (N-1)-wide span, floored
+    final out = <GridCell>{};
+    for (var d = 0; d < n; d++) {
+      for (var off = -half; off <= half + ((n - 1) % 2); off++) {
+        out.add(_cellAt(origin, direction, forward: d, side: off));
+      }
+    }
+    return out;
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -55,6 +114,12 @@ class CylinderAoE extends AreaOfEffect {
   }
   @override
   bool includesOrigin() => true;
+
+  /// On a 2D battlemap the cylinder's footprint collapses to a disc —
+  /// identical to [SphereAoE.coverage] of the same radius.
+  @override
+  Set<GridCell> coverage(GridCell origin, GridDirection direction) =>
+      SphereAoE(radiusFt).coverage(origin, direction);
 
   @override
   bool operator ==(Object other) =>
@@ -79,6 +144,19 @@ class EmanationAoE extends AreaOfEffect {
   @override
   bool includesOrigin() => true;
 
+  /// Chebyshev ring of cells at distance ≤ N from origin, including origin.
+  @override
+  Set<GridCell> coverage(GridCell origin, GridDirection direction) {
+    final n = _cellsFromFt(distanceFt);
+    final out = <GridCell>{};
+    for (var dc = -n; dc <= n; dc++) {
+      for (var dr = -n; dr <= n; dr++) {
+        out.add(origin.translate(dc, dr));
+      }
+    }
+    return out;
+  }
+
   @override
   bool operator ==(Object other) =>
       other is EmanationAoE && other.distanceFt == distanceFt;
@@ -100,6 +178,23 @@ class LineAoE extends AreaOfEffect {
   @override
   bool includesOrigin() => false;
 
+  /// Rectangular strip of [length]×[width] cells, starting one cell forward
+  /// of origin so the caster's square is not included.
+  @override
+  Set<GridCell> coverage(GridCell origin, GridDirection direction) {
+    final len = _cellsFromFt(lengthFt);
+    final w = _cellsFromFt(widthFt);
+    final halfLow = (w - 1) ~/ 2;
+    final halfHigh = w - 1 - halfLow;
+    final out = <GridCell>{};
+    for (var d = 1; d <= len; d++) {
+      for (var off = -halfLow; off <= halfHigh; off++) {
+        out.add(_cellAt(origin, direction, forward: d, side: off));
+      }
+    }
+    return out;
+  }
+
   @override
   bool operator ==(Object other) =>
       other is LineAoE &&
@@ -120,6 +215,20 @@ class SphereAoE extends AreaOfEffect {
   }
   @override
   bool includesOrigin() => true;
+
+  /// Chebyshev disc — cells where `chebyshevTo(origin) <= radius/5` per SRD
+  /// grid rules. Rounded up so e.g. radius 10 ft = 2 cells, radius 12 ft = 3.
+  @override
+  Set<GridCell> coverage(GridCell origin, GridDirection direction) {
+    final n = _cellsFromFt(radiusFt);
+    final out = <GridCell>{};
+    for (var dc = -n; dc <= n; dc++) {
+      for (var dr = -n; dr <= n; dr++) {
+        out.add(origin.translate(dc, dr));
+      }
+    }
+    return out;
+  }
 
   @override
   bool operator ==(Object other) =>

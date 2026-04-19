@@ -112,9 +112,9 @@ The built-in dnd5e module ships **mechanics only** (rules engine, typed shapes, 
 | # | Filename | Purpose | Deps | Status |
 |---|---|---|---|---|
 | 10 | [`10-character-creation-flow.md`](./10-character-creation-flow.md) | 5-step wizard. State machine, per-step validation, level-1 vs higher-level paths. | 00, 01, 15 | ⚪ |
-| 11 | [`11-combat-engine-spec.md`](./11-combat-engine-spec.md) | Manual combat tracker (MVP): initiative, turn state, action economy, condition expiration. Auto-resolve = future. | 00, 01 | ⚪ |
-| 12 | [`12-spell-system-spec.md`](./12-spell-system-spec.md) | Slot tables, multiclass calculator, Pact Magic, concentration, AoE geometry. | 00, 01 | ⚪ |
-| 13 | [`13-damage-resolver-spec.md`](./13-damage-resolver-spec.md) | Attack pipeline: crit, resistance/vuln/immunity, save-half, temp HP, concentration check. | 00, 01, 11 | ⚪ |
+| 11 | [`11-combat-engine-spec.md`](./11-combat-engine-spec.md) | Manual combat tracker (MVP): initiative, turn state, action economy, condition expiration. Auto-resolve = future. | 00, 01 | 🟣 |
+| 12 | [`12-spell-system-spec.md`](./12-spell-system-spec.md) | Slot tables, multiclass calculator, Pact Magic, concentration, AoE geometry. | 00, 01 | 🟣 |
+| 13 | [`13-damage-resolver-spec.md`](./13-damage-resolver-spec.md) | Attack pipeline: crit, resistance/vuln/immunity, save-half, temp HP, concentration check. | 00, 01, 11 | 🟣 |
 | 14 | [`14-package-system-redesign.md`](./14-package-system-redesign.md) | DnD5e-native typed package format (v2). Catalog content types, id namespacing, `requiredRuntimeExtensions`. | 01 | 🟣 |
 
 ## Phase 3: Online Multiplayer Specs (Sprint 5-7)
@@ -383,6 +383,113 @@ First pass lands the in-memory package pipeline. JSON file parsing + export are 
 
 29 new tests (slug 3, hash 5, package 5, validator 8, importer 9) — namespacing idempotency, hash stability across order, hash excludes metadata, overwrite deletes prior rows, skip preserves them, duplicate errors without fresh slug, validator short-circuits before writes, runtime-extension enforced.
 
+### 2026-04-19 — Doc 11 combat engine resolvers (🟣 partial)
+
+First crisp-piece pass: damage + death-save pure resolvers + dice facade. The remaining Doc 11 surface (EncounterService state machine, UI tracker, player view, player-action protocol) is deferred — builds directly on these pure pieces but needs combatant HP/tempHp/resistance plumbing that lands with the repository layer.
+
+**New code:**
+
+| File | Purpose |
+|---|---|
+| [`application/dnd5e/combat/dice.dart`](../../flutter_app/lib/application/dnd5e/combat/dice.dart) | `Dice` facade wrapping `dart:math.Random` — `d4`/`d6`/`d8`/`d10`/`d12`/`d20`/`d100` + `roll('2d6+3')` via the existing `DiceExpression` parser. Seedable for deterministic replay. |
+| [`application/dnd5e/combat/target_defenses.dart`](../../flutter_app/lib/application/dnd5e/combat/target_defenses.dart) | `TargetDefenses` read-only view (currentHp, maxHp, tempHp, resistances, vulnerabilities, damageImmunities, isPlayer) — lets the resolver stay pure without depending on the full `Combatant` sealed hierarchy. Validates HP bounds + namespaced damage-type ids. |
+| [`application/dnd5e/combat/damage_instance.dart`](../../flutter_app/lib/application/dnd5e/combat/damage_instance.dart) | `DamageInstance` — amount + typeId + isCritical + fromSavedThrow/savedSucceeded + optional sourceSpellId. Factory guards `savedSucceeded ⇒ fromSavedThrow`. |
+| [`application/dnd5e/combat/damage_outcome.dart`](../../flutter_app/lib/application/dnd5e/combat/damage_outcome.dart) | `DamageOutcome` — amountAfterMitigation, absorbedByTempHp, newCurrentHp, newTempHp, dropsToZero, concentration fields, instantDeath, deathSaveFailuresToAdd. |
+| [`application/dnd5e/combat/damage_resolver.dart`](../../flutter_app/lib/application/dnd5e/combat/damage_resolver.dart) | `DamageResolver.resolve(TargetDefenses, DamageInstance) → DamageOutcome`. Pure function implementing Doc 11 §Damage Application Pipeline order: immunity zeroes → resistance halves → vulnerability doubles → save-for-half halves → temp HP absorbs → subtract from currentHp → concentration DC max(10, floor(amt/2)) capped 30 → PC Massive Damage → death-save failures. |
+| [`application/dnd5e/combat/death_save_resolver.dart`](../../flutter_app/lib/application/dnd5e/combat/death_save_resolver.dart) | `DeathSaveResolver` — seedable roll + pure `apply(DeathSaves, roll) → DeathSaves`. Natural-20 regenerates 1 HP and clears state, natural-1 counts as two failures, 10+ success, 2..9 failure. |
+
+**Behaviour locked:**
+- **Resolver is pure** — no RNG, no Combatant mutation, no follow-up side effects. Callers write the outcome back and raise the concentration-save / death-save prompts. Makes the resolver trivially unit-testable + deterministic under replay.
+- **Order-sensitive mitigation** — resistance before vulnerability before save-for-half. A Fire-resistant wizard in a failed-save Fireball takes `amt/2`; succeed-save on the same hit takes `amt/4`. Verified with a test.
+- **Immunity short-circuits the whole pipeline** — no temp HP consumed, no concentration check fired, no death-save failure added. Prevents "0-damage hit still broke my wizard's concentration" regressions.
+- **Dropping to 0 ≠ hit at 0** — a PC crossing from >0 to 0 HP gets Unconscious (handled by caller), *no* death-save failure. Subsequent hits while already at 0 add 1 failure (2 on crit per SRD). Verified.
+- **Massive Damage** — `isPlayer && hpAfter == 0 && (remainder - currentHp) >= maxHp` triggers `instantDeath`. Monsters never trigger it (flag stays false).
+- **DeathSaves encapsulates transitions** — resolver delegates stable/dead logic to the existing `DeathSaves` value class so state machine + resolver cannot disagree.
+
+**Deferred (remainder of Doc 11):**
+- EncounterService (`startCombat` / `nextTurn` / `applyDamage` / `applyCondition` / etc.) — needs repository layer + Combatant tempHp/resistance fields.
+- Combat tracker UI + player read-only view — deferred to Docs 32/33/25.
+- Condition duration ticking integration + compiled-tag lookups (`ConditionInteraction`) — needs Doc 15 SRD content.
+- Turn-end hook + reaction refresh wiring on `Combatant.copyWith`.
+
+42 new tests: Dice range + seed stability, TargetDefenses bounds + content-id validation, DamageInstance guards, DamageResolver pipeline (base + temp HP + concentration + dropsToZero + Massive Damage + death-save failures; 22 cases), DeathSaveResolver branches + apply folds (8 cases).
+
+### 2026-04-19 — Doc 12 spell system foundations (🟣 partial)
+
+First pass covers pure-logic pieces: slot-table math, Pact progression, concentration DC formula, AoE grid coverage. The cast service + rest service + validator (component/prepared/slot checks) + UI overlay are deferred — all consume the pieces shipped here.
+
+**Extended:**
+
+| File | Purpose |
+|---|---|
+| [`domain/dnd5e/character/caster_kind.dart`](../../flutter_app/lib/domain/dnd5e/character/caster_kind.dart) | New `CasterKind.{none, full, half, third, pact}` enum. |
+| [`domain/dnd5e/character/character_class.dart`](../../flutter_app/lib/domain/dnd5e/character/character_class.dart) | Adds `casterKind` + `casterFraction` fields. Factory defaults `casterFraction` from kind (full→1.0, half→0.5, third→1/3, pact→0). Validates `fraction ∈ [0, 1]` and `kind == none ⇒ fraction == 0`. Additive — existing callers default to `none`. |
+
+**New code:**
+
+| File | Purpose |
+|---|---|
+| [`application/dnd5e/spell/spell_slot_progression.dart`](../../flutter_app/lib/application/dnd5e/spell/spell_slot_progression.dart) | Structural 20-row slot table from SRD §17.1. `slotsForCasterLevel(cl)` returns an unmodifiable 9-element list (level 1..9). `cl == 0` → all zeros. |
+| [`application/dnd5e/spell/multiclass_slot_calculator.dart`](../../flutter_app/lib/application/dnd5e/spell/multiclass_slot_calculator.dart) | `combinedCasterLevel = floor(sum(level * casterFraction))`. Pact classes + non-casters excluded. Unknown class ids skipped (future dangling-ref pass warns separately). Takes a `String → CharacterClass?` resolver so tests and prod share math without a live `ContentRegistry`. |
+| [`application/dnd5e/spell/pact_magic_table.dart`](../../flutter_app/lib/application/dnd5e/spell/pact_magic_table.dart) | `PactMagicTable.forLevel(1..20) → PactMagicEntry(slots, slotLevel)`. Separate progression for `casterKind == pact`; short-rest refresh handled by rest service, not here. |
+| [`application/dnd5e/spell/concentration_dc.dart`](../../flutter_app/lib/application/dnd5e/spell/concentration_dc.dart) | `ConcentrationDc.forDamage(n) = min(30, max(10, n~/2))`. Shared formula — Doc 11 DamageResolver and Doc 12 concentration check cannot drift. |
+| [`domain/dnd5e/spell/grid_cell.dart`](../../flutter_app/lib/domain/dnd5e/spell/grid_cell.dart) | `GridCell(col, row)` + `GridDirection.{north,south,east,west}`. Chebyshev distance helper + translate. 5 ft/cell constant. |
+| [`domain/dnd5e/spell/area_of_effect.dart`](../../flutter_app/lib/domain/dnd5e/spell/area_of_effect.dart) | Adds `coverage(GridCell origin, GridDirection dir) → Set<GridCell>` to the sealed AoE hierarchy. |
+
+**Coverage math locked:**
+- **Sphere / Emanation / Cylinder** — Chebyshev disc: cells where `chebyshevTo(origin) <= radius / 5` per SRD §8.2. Radius rounds up (10 ft = 2 cells, 12 ft = 3). Cylinder collapses to sphere on 2D maps.
+- **Cone** — width at distance d equals d. On the grid, row at k cells gets `2k + 1` cells wide centred on the cone's axis. Excludes origin. Direction rotates `(forward, side)` into cardinal `(dx, dy)`.
+- **Cube** — N-cell-wide face flush with origin, extruded N cells in direction. Square footprint.
+- **Line** — `length × width` rectangular strip starting one cell forward of origin. Excludes caster's square.
+- **Direction helper** `_cellAt` is the single rotation point — cones, cubes, and lines share the same four-direction map so orientation cannot disagree between shapes.
+- **Total-cover filtering is the caller's job** — Doc 12 §Total Cover. MVP: DM manually deselects. Raycast filtering lands with Doc 33 battlemap interaction.
+
+**Multiclass math locked:**
+- **Floor once at the end** — `floor(sum(level * fraction))`, not per-class. Paladin 5 + AT 7 = `floor(2.5 + 2.33) = 4`, not `2 + 2 = 4` by accident. Verified with a wizard-3 + paladin-5 + AT-3 test: `floor(3 + 2.5 + 1.0) = 6`.
+- **Pact excluded** — Warlock levels never add to the multiclass sum; they read `PactMagicTable` independently. A Warlock 5 / Wizard 3 gets the Wizard-3 slot array plus Warlock-5 pact slots side by side.
+- **Single-class collapses** — the calculator handles single-class casters without branching; callers never need two code paths.
+
+**Deferred (remainder of Doc 12):**
+- `SpellCastValidator` (component / prepared / slot-level / silenced / free-hand checks) + `SpellCastService` — need Tier 1 `Spell` typed decoder (Doc 15) and Combatant silenced state.
+- `SpellSlotRefreshService` (short-rest pact refresh, long-rest full-caster refresh, Wizard Arcane Recovery interactive flow) — needs live character persistence.
+- `ConcentrationManager.checkConcentration` — reads compiled `ConditionInteraction` tags (Doc 15 SRD content).
+- AoE preview widget + battlemap overlay — Doc 33 surface.
+- Total-cover raycast filter — Doc 33.
+- One-leveled-spell-per-turn enforcement — `TurnState.appliedThisTurn` already exists; wiring lands with `SpellCastService`.
+
+40 new tests: slot progression bounds + unmodifiability (6), multiclass calculator across single/half/third/pact/non-caster/empty/unknown combos (10), PactMagicTable endpoints + out-of-range (5), ConcentrationDc floor/cap/negative (4), AoE coverage for Sphere/Emanation/Cylinder/Cone/Cube/Line + GridCell helpers (15).
+
+### 2026-04-19 — Doc 13 damage pipeline foundations (🟣 partial)
+
+Pure-function pipeline pieces for the attack → damage → save flow. Builds on top of Doc 11's single-type `DamageResolver` + Doc 12's `ConcentrationDc` — adds advantage-aware d20 rolling, attack resolution with cover, multi-type damage bundling with per-type mitigation, and the saving-throw resolver.
+
+**New code:**
+
+| File | Purpose |
+|---|---|
+| [`application/dnd5e/combat/d20_roller.dart`](../../flutter_app/lib/application/dnd5e/combat/d20_roller.dart) | `D20Roller` + `D20Outcome` — one roll produces `{chosen, other}` so advantage/disadvantage UI can display both faces. Seedable. Shared by attack + save resolvers. |
+| [`application/dnd5e/combat/attack_roll.dart`](../../flutter_app/lib/application/dnd5e/combat/attack_roll.dart) | `AttackRollInput` (abilityMod + pb + flatBonus + AC + coverAcBonus + advantage), `AttackRollResult`, `AttackResolver`. Pure. Natural 20 always crits; natural 1 always fumbles (SRD). Cover folds into `effectiveArmorClass`. |
+| [`application/dnd5e/combat/typed_damage.dart`](../../flutter_app/lib/application/dnd5e/combat/typed_damage.dart) | `TypedDamage` — `Map<typeId, int>` bundle for weapon-with-rider + multi-element spells. Validates namespaced type ids + non-negative amounts + `savedSucceeded ⇒ fromSavedThrow` invariant. |
+| [`application/dnd5e/combat/multi_type_damage_resolver.dart`](../../flutter_app/lib/application/dnd5e/combat/multi_type_damage_resolver.dart) | `MultiTypeDamageResolver.resolve(TargetDefenses, TypedDamage) → MultiTypeDamageOutcome`. Applies immunity/resist/vuln **per type**, sums, halves on successful save, absorbs temp HP, subtracts HP, emits concentration DC + Massive Damage + death-save failures. Returns per-type `TypedDamageBreakdownRow` for UI explanation toasts. |
+| [`application/dnd5e/combat/save_resolver.dart`](../../flutter_app/lib/application/dnd5e/combat/save_resolver.dart) | `SaveResolver` + `SaveInput` + `SaveResult` + `SaveResolution.{rolled, autoSucceed, autoFail}`. Pure. Auto-fail wins when both auto-flags set (matches Doc 01 Tier 2 `ModifySave` invariant). |
+
+**Behaviour locked:**
+- **Per-type then total** — resist/vuln/imm applied inside each bundle entry; save-for-half halves the **sum** after per-type mitigation. Flametongue hit on a fire-resistant troll: slashing 7 full + fire 10 → 5 = 12 total (verified by test).
+- **Immunity short-circuits per type** — resistance and vulnerability both become no-ops when immunity is set on the same type. `TypedDamageBreakdownRow.resisted/vulnerable` fields stay false in that case so the UI doesn't show confusing "resisted but immune" chips.
+- **Shared d20 semantics** — attack + save both route through `D20Roller.roll(AdvantageState)`, which already exists in Doc 01 core. Advantage + disadvantage combine per SRD (cancel to normal on any mix).
+- **Natural-20 attack bypasses mitigation math** — a nat 20 always hits regardless of the modifier total being less than effective AC. Natural 1 always misses, even with a +12 bonus against AC 5.
+- **Auto-fail > auto-succeed** — prevents "Paralyzed (auto-fail STR/DEX) + Bless (no auto-succeed)" ambiguity. Matches the `ModifySave` descriptor's construction-time guard.
+- **Massive Damage + death-save accrual reuse the Doc 11 formula** — the multi-type resolver emits the same `DamageOutcome` shape so downstream (EncounterService) handles both single-type and multi-type paths identically.
+
+**Deferred (remainder of Doc 13):**
+- **Feature-effect driven attack/damage modification** — `FeatureEffect.modifyAttackRoll` / `modifyDamageRoll` / `modifyAttackAgainst` — needs the compiled `EffectDescriptor` dispatch layer from Doc 05 rule-engine replacement work.
+- **Weapon/spell damage builder** (assembles `DiceExpression[]` + mods + rider types from a Weapon/Spell definition, doubles dice on crit) — needs typed Weapon/Spell decoder from Doc 15.
+- **AoE orchestrator** (one roll, multi-target save-for-half) — wraps `MultiTypeDamageResolver` over a target set from `AreaOfEffect.coverage` (already landed in Doc 12). Trivial follow-up once combatant positioning is wired.
+- **ConditionInteraction auto-fail aggregation** (Paralyzed/Stunned auto-fail STR/DEX feeding into `SaveInput.autoFail`) — needs SRD conditions with compiled tags from Doc 15.
+- **Concentration save wiring** (Dc from Doc 12 + roll via `SaveResolver` + break vs keep) — trivial stitch, lives in `ConcentrationManager` (Doc 12 deferred).
+
+37 new tests: D20Roller advantage/disadvantage/normal + nat-20/nat-1 detection (4), AttackResolver hit/miss/crit/fumble/cover/advantage/flatBonus (8), TypedDamage guards (6), MultiTypeDamageResolver per-type mitigation + save-half + temp HP + drop-to-zero + Massive Damage + death-save accrual + concentration DC (13), SaveResolver pass/fail/auto-succeed/auto-fail precedence/advantage/flatBonus (7).
+
 ### Current test totals
 
-`flutter analyze`: 0 issues. `flutter test`: **545 / 545 passing, 1 skipped** (was 516 at end of Doc 03; +29 Doc 14 package-system tests added).
+`flutter analyze`: 0 issues. `flutter test`: **664 / 664 passing, 1 skipped** (was 627 at end of Doc 12; +37 Doc 13 attack/damage/save pipeline tests added).
