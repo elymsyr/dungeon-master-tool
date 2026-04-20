@@ -4,13 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/entity_summary_provider.dart';
 import '../../theme/dm_tool_colors.dart';
 import 'card_panel_scope.dart';
-import 'card_shell.dart' show CardTag;
 
-/// Tappable chip for cross-entity references (e.g. a spell's schoolId
-/// pointing at `srd:evocation`, a monster action's damage-type id, etc.).
-/// Tap opens the referenced entity in the opposite database panel via
-/// [CardPanelScope]. No hover preview — the entity summary resolves into
-/// the chip label itself.
+/// Inline cross-entity reference. Renders as plain text in the surrounding
+/// style — no chip shell, no icon, no border — just slightly muted color so
+/// it reads as "linked but quiet". Pointer cursor on hover. Tap opens the
+/// referenced entity in the opposite database panel via [CardPanelScope].
 class EntityLinkChip extends ConsumerWidget {
   final String entityId;
   final String? displayLabel;
@@ -27,63 +25,36 @@ class EntityLinkChip extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final summary = ref.watch(entitySummaryByIdProvider)[entityId];
-    final label = displayLabel ?? summary?.name ?? _localSlug(entityId);
+    final label = displayLabel ?? summary?.name ?? _titleCaseSlug(entityId);
     final scope = CardPanelScope.maybeOf(context);
+    final baseStyle = DefaultTextStyle.of(context).style;
+    final effectiveColor = color ?? palette.linkMuted;
+
+    final text = Text(
+      label,
+      style: baseStyle.copyWith(color: effectiveColor),
+    );
+
+    if (scope == null) return text;
 
     return MouseRegion(
-      cursor: scope == null
-          ? SystemMouseCursors.basic
-          : SystemMouseCursors.click,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: scope == null ? null : () => scope.openInOtherPanel(entityId),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: color ?? palette.tabBg,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: scope == null
-                  ? palette.sidebarDivider
-                  : palette.sidebarDivider.withValues(alpha: 0.9),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.link, size: 11),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => scope.openInOtherPanel(entityId),
+        behavior: HitTestBehavior.opaque,
+        child: text,
       ),
     );
   }
 }
 
-/// Non-interactive fallback used inside tag-row of cards when the id is
-/// not resolvable (e.g. raw slug without a matching entity). Kept for
-/// layout parity with [EntityLinkChip] so switching between tappable and
-/// non-tappable never changes sizing.
-class EntityStaticChip extends StatelessWidget {
-  final String label;
-  const EntityStaticChip(this.label, {super.key});
-
-  @override
-  Widget build(BuildContext context) => CardTag(label);
-}
-
-String _localSlug(String id) {
+String _titleCaseSlug(String id) {
   final idx = id.indexOf(':');
-  return idx < 0 ? id : id.substring(idx + 1);
+  final local = idx < 0 ? id : id.substring(idx + 1);
+  if (local.isEmpty) return id;
+  return local
+      .split(RegExp(r'[-_]'))
+      .where((p) => p.isNotEmpty)
+      .map((p) => '${p[0].toUpperCase()}${p.substring(1)}')
+      .join(' ');
 }

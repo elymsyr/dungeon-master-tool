@@ -41,12 +41,18 @@ class CardShell extends StatelessWidget {
           ),
           if (tags.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Wrap(spacing: 6, runSpacing: 6, children: tags),
+              padding: EdgeInsets.fromLTRB(
+                  palette.padLg, 0, palette.padLg, palette.padSm),
+              child: Wrap(
+                spacing: palette.gap6,
+                runSpacing: palette.gap6,
+                children: tags,
+              ),
             ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              padding: EdgeInsets.fromLTRB(palette.padLg, palette.padSm,
+                  palette.padLg, palette.padLg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: children,
@@ -75,7 +81,8 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: EdgeInsets.fromLTRB(
+          palette.padLg, palette.padMd, palette.padLg, palette.padSm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -92,7 +99,7 @@ class _Header extends StatelessWidget {
                 ),
                 if (subtitle != null && subtitle!.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: EdgeInsets.only(top: palette.gap2),
                     child: Text(
                       subtitle!,
                       style: TextStyle(
@@ -124,10 +131,11 @@ class CardTag extends StatelessWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final bg = color ?? palette.tabBg;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: EdgeInsets.symmetric(
+          horizontal: palette.padSm, vertical: palette.gap2 + 1),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(palette.radiusXl),
         border: Border.all(color: palette.sidebarDivider),
       ),
       child: Text(
@@ -149,7 +157,7 @@ class CardSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
+      padding: EdgeInsets.only(top: palette.gap12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -162,7 +170,7 @@ class CardSection extends StatelessWidget {
               color: palette.sidebarLabelSecondary,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: palette.gap4),
           child,
         ],
       ),
@@ -179,8 +187,9 @@ class CardKeyValue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: EdgeInsets.symmetric(vertical: palette.gap2),
       child: RichText(
         text: TextSpan(
           style: DefaultTextStyle.of(context).style,
@@ -222,7 +231,7 @@ class CardField extends StatelessWidget {
             color: palette.sidebarLabelSecondary,
           ),
         ),
-        const SizedBox(height: 2),
+        SizedBox(height: palette.gap2),
         child,
       ],
     );
@@ -234,23 +243,25 @@ class CardField extends StatelessWidget {
 class CardFieldGrid extends StatelessWidget {
   final List<CardField> fields;
   final int columns;
-  final double spacing;
+  final double? spacing;
 
   const CardFieldGrid({
     required this.fields,
     this.columns = 2,
-    this.spacing = 12,
+    this.spacing,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final gap = spacing ?? palette.gap12;
     return LayoutBuilder(builder: (context, c) {
       final cols = c.maxWidth < 420 ? 1 : columns;
-      final cellWidth = (c.maxWidth - spacing * (cols - 1)) / cols;
+      final cellWidth = (c.maxWidth - gap * (cols - 1)) / cols;
       return Wrap(
-        spacing: spacing,
-        runSpacing: spacing * 0.6,
+        spacing: gap,
+        runSpacing: gap * 0.6,
         children: [
           for (final f in fields)
             SizedBox(width: cellWidth, child: f),
@@ -274,7 +285,7 @@ class CardFieldGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     return Padding(
-      padding: const EdgeInsets.only(top: 14),
+      padding: EdgeInsets.only(top: palette.gap12 + 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -289,7 +300,7 @@ class CardFieldGroup extends StatelessWidget {
                   color: palette.sidebarLabelSecondary,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: palette.gap8),
               Expanded(
                 child: Container(
                   height: 1,
@@ -298,7 +309,7 @@ class CardFieldGroup extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: palette.gap8),
           ...children,
         ],
       ),
@@ -318,7 +329,7 @@ class CardPlaceholder extends StatelessWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     return Container(
       alignment: Alignment.center,
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(palette.gap32),
       color: palette.tabActiveBg,
       child: Text(
         message,

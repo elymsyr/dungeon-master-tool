@@ -159,3 +159,91 @@ final homebrewForActiveCampaignProvider =
   final dao = ref.watch(dnd5eContentDaoProvider);
   return dao.watchHomebrewForCampaign(campaignId);
 });
+
+// --- Shared catalog streams (Doc 03 Tier 1) ---
+//
+// Catalog tables (conditions, damage types, sizes, spell schools, rarities,
+// alignments, weapon properties, skills, creature types, languages, weapon
+// masteries, armor categories) are shared across campaigns — they don't
+// carry a `campaignId` column. We still expose them as per-app streams so
+// `entitySummaryByIdProvider` can resolve ids to their proper display name
+// (otherwise link chips fall back to a slug-cased guess).
+
+final allConditionsProvider = StreamProvider<List<Condition>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.conditions).watch();
+});
+
+final allDamageTypesProvider = StreamProvider<List<DamageType>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.damageTypes).watch();
+});
+
+final allSizesProvider = StreamProvider<List<Size>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.sizes).watch();
+});
+
+final allSpellSchoolsProvider = StreamProvider<List<SpellSchool>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.spellSchools).watch();
+});
+
+final allRaritiesProvider = StreamProvider<List<Rarity>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.rarities).watch();
+});
+
+final allAlignmentsProvider = StreamProvider<List<Alignment>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.alignments).watch();
+});
+
+final allWeaponPropertiesProvider =
+    StreamProvider<List<WeaponProperty>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.weaponProperties).watch();
+});
+
+final allWeaponMasteriesProvider =
+    StreamProvider<List<WeaponMastery>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.weaponMasteries).watch();
+});
+
+final allArmorCategoriesProvider =
+    StreamProvider<List<ArmorCategory>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.armorCategories).watch();
+});
+
+final allSkillsProvider = StreamProvider<List<Skill>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.skills).watch();
+});
+
+final allCreatureTypesProvider = StreamProvider<List<CreatureType>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.creatureTypes).watch();
+});
+
+final allLanguagesProvider = StreamProvider<List<Language>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.languages).watch();
+});
+
+final allSpeciesProvider = StreamProvider<List<SpeciesCatalogData>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.speciesCatalog).watch();
+});
+
+final allSubclassesProvider = StreamProvider<List<SubclassesData>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.subclasses).watch();
+});
+
+final allClassProgressionsProvider =
+    StreamProvider<List<ClassProgression>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.select(db.classProgressions).watch();
+});

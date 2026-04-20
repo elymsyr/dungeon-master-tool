@@ -16,6 +16,9 @@ import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
 import '../entity_link_chip.dart';
 import '../inline_field.dart';
+import '_body_cache.dart';
+
+final _monsterCache = BodyCache<(Monster, Map<String, Object?>)>();
 
 /// Typed renderer for a Tier 2 `Monster` row. Shows stat block summary +
 /// action blocks (actions / bonus / reactions / legendary). Name + flavor
@@ -79,12 +82,19 @@ class _MonsterCardState extends ConsumerState<MonsterCard> {
         final Monster monster;
         final Map<String, Object?> body;
         try {
-          body =
-              (jsonDecode(row.statBlockJson) as Map).cast<String, Object?>();
-          monster = monsterFromEntry(
-            CatalogEntry(
-                id: row.id, name: row.name, bodyJson: row.statBlockJson),
-          );
+          final cacheKey =
+              '${row.id}|${row.updatedAt.millisecondsSinceEpoch}';
+          final decoded = _monsterCache.getOrCompute(cacheKey, () {
+            final b = (jsonDecode(row.statBlockJson) as Map)
+                .cast<String, Object?>();
+            final m = monsterFromEntry(
+              CatalogEntry(
+                  id: row.id, name: row.name, bodyJson: row.statBlockJson),
+            );
+            return (m, b);
+          });
+          monster = decoded.$1;
+          body = decoded.$2;
         } catch (e) {
           return CardPlaceholder('Invalid monster body: $e');
         }

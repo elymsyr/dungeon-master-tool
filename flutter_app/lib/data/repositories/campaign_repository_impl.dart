@@ -16,6 +16,23 @@ import '../schema/schema_migration.dart';
 
 const _uuid = Uuid();
 
+/// Lazy-initialized serialized form of the built-in D&D 5e schema. The
+/// schema itself is static; serializing it fresh on every campaign load
+/// produced a new map reference that defeated `worldSchemaProvider`'s
+/// identity cache, forcing a deep Freezed re-parse on every world open.
+/// Sharing the single JSON map reference across campaigns fixes that.
+/// Serialized once at module load and deep-copied per campaign load.
+/// Avoids the expensive `generateDefaultDnd5eSchema()` Freezed build +
+/// `toJson()` walk on every world open while still handing each campaign
+/// an independent map it can freely mutate.
+final Map<String, dynamic> _defaultWorldSchemaJsonTemplate =
+    generateDefaultDnd5eSchema().toJson();
+
+Map<String, dynamic> _freshDefaultWorldSchemaJson() {
+  return jsonDecode(jsonEncode(_defaultWorldSchemaJsonTemplate))
+      as Map<String, dynamic>;
+}
+
 /// Drift-backed CampaignRepository implementasyonu.
 /// MsgPack legacy desteği: migration sırasında eski data.dat dosyalarını okur.
 class CampaignRepositoryImpl implements CampaignRepository {
@@ -165,9 +182,11 @@ class CampaignRepositoryImpl implements CampaignRepository {
     // Post-v9: every campaign uses the single hardcoded D&D 5e schema.
     // The `world_schemas` table is gone; we inject the built-in schema
     // here so downstream UI (EntityCard / SessionScreen / CharacterEditor)
-    // keeps rendering exactly as before.
-    final builtInSchema = generateDefaultDnd5eSchema();
-    final worldSchemaMap = builtInSchema.toJson();
+    // keeps rendering exactly as before. Serialized once at module load
+    // and shared across every campaign load — the schema is static, so
+    // reusing the identical map reference lets `worldSchemaProvider`'s
+    // identity cache actually hit between world opens.
+    final worldSchemaMap = _freshDefaultWorldSchemaJson();
 
     return {
       ...stateBlob, // combat_state, map_data, mind_maps, vb.

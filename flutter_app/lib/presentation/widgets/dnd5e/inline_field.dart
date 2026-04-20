@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/edit_mode_provider.dart';
+import '../../theme/dm_tool_colors.dart';
 
 /// Inline editable text cell used by typed cards. Renders as a plain text
 /// line; becomes a `TextField` on tap when the global [editModeProvider]
@@ -79,6 +80,7 @@ class _InlineTextFieldState extends ConsumerState<InlineTextField> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final palette = theme.extension<DmToolColors>()!;
     final baseStyle = widget.style ?? theme.textTheme.bodyMedium;
     final editMode = ref.watch(editModeProvider);
     // If edit mode flips off mid-edit, commit and drop to read-only.
@@ -96,11 +98,11 @@ class _InlineTextFieldState extends ConsumerState<InlineTextField> {
         style: baseStyle,
         textAlign: widget.textAlign,
         onSubmitted: (_) => _commit(),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           isDense: true,
-          border: UnderlineInputBorder(),
-          focusedBorder: UnderlineInputBorder(),
-          contentPadding: EdgeInsets.symmetric(vertical: 4),
+          border: const UnderlineInputBorder(),
+          focusedBorder: const UnderlineInputBorder(),
+          contentPadding: EdgeInsets.symmetric(vertical: palette.padXs),
         ),
       );
     }
@@ -109,7 +111,7 @@ class _InlineTextFieldState extends ConsumerState<InlineTextField> {
         : widget.value;
     final muted = widget.value.trim().isEmpty;
     final text = Container(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.symmetric(vertical: palette.padXs),
       width: double.infinity,
       child: Text(
         display,
@@ -123,7 +125,7 @@ class _InlineTextFieldState extends ConsumerState<InlineTextField> {
     if (!editMode) return text;
     return InkWell(
       onTap: _startEdit,
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(palette.radiusSm),
       child: text,
     );
   }

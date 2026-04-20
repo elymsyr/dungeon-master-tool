@@ -100,6 +100,45 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
   final double buttonPaddingV;
   final bool useBorders;
   final bool useSerif;
+
+  // --- Radius scale (doc51 token set) ---
+  // New theme-driven replacements for inline `BorderRadius.circular(N)`.
+  // Defaults keep existing rendered pixels identical across palettes.
+  final double radiusXs;   // 2
+  final double radiusSm;   // 4 — matches `borderRadius`
+  final double radiusMd;   // 6
+  final double radiusLg;   // 8 — matches `cardBorderRadius`
+  final double radiusXl;   // 10
+  final double radius2xl;  // 12
+  final double radius3xl;  // 16
+
+  // --- Spacing scale ---
+  final double gap2;   // 2
+  final double gap4;   // 4
+  final double gap6;   // 6
+  final double gap8;   // 8
+  final double gap12;  // 12
+  final double gap16;  // 16
+  final double gap24;  // 24
+  final double gap32;  // 32
+  final double padXs;  // 4
+  final double padSm;  // 8
+  final double padMd;  // 12
+  final double padLg;  // 16
+  final double padXl;  // 24
+
+  // --- Semantic text colors ---
+  /// Muted inline-link color (EntityLinkChip text, etc.). Reads as "linked
+  /// but quiet" — same size/family as surroundings, just slightly grayed.
+  final Color linkMuted;
+
+  /// Neutral category fallback (e.g. when a schema category is missing).
+  /// Replaces the hardcoded `0xFF808080` in the database screen.
+  final Color categoryNeutral;
+
+  /// Overlay scrim for modals / fog-of-war / drop-zones. Replaces
+  /// scattered hardcoded `Colors.black54` / `0xFF000000` alpha variants.
+  final Color overlayScrim;
   final Color primaryBtnBg;
   final Color primaryBtnText;
   final Color actionBtnBg;
@@ -188,6 +227,29 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     this.buttonDefaultText = const Color(0xFFE0E0E0),
     this.buttonHoverBg = const Color(0xFF4E5254),
     this.buttonPressBg = const Color(0xFF2B2B2B),
+    this.radiusXs = 2,
+    this.radiusSm = 4,
+    this.radiusMd = 6,
+    this.radiusLg = 8,
+    this.radiusXl = 10,
+    this.radius2xl = 12,
+    this.radius3xl = 16,
+    this.gap2 = 2,
+    this.gap4 = 4,
+    this.gap6 = 6,
+    this.gap8 = 8,
+    this.gap12 = 12,
+    this.gap16 = 16,
+    this.gap24 = 24,
+    this.gap32 = 32,
+    this.padXs = 4,
+    this.padSm = 8,
+    this.padMd = 12,
+    this.padLg = 16,
+    this.padXl = 24,
+    this.linkMuted = const Color(0xFF8A8A8A),
+    this.categoryNeutral = const Color(0xFF808080),
+    this.overlayScrim = const Color(0x8A000000),
     required this.mapBg,
   });
 
@@ -270,6 +332,29 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     Color? buttonDefaultText,
     Color? buttonHoverBg,
     Color? buttonPressBg,
+    double? radiusXs,
+    double? radiusSm,
+    double? radiusMd,
+    double? radiusLg,
+    double? radiusXl,
+    double? radius2xl,
+    double? radius3xl,
+    double? gap2,
+    double? gap4,
+    double? gap6,
+    double? gap8,
+    double? gap12,
+    double? gap16,
+    double? gap24,
+    double? gap32,
+    double? padXs,
+    double? padSm,
+    double? padMd,
+    double? padLg,
+    double? padXl,
+    Color? linkMuted,
+    Color? categoryNeutral,
+    Color? overlayScrim,
     Color? mapBg,
   }) {
     return DmToolColors(
@@ -347,6 +432,29 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       buttonDefaultText: buttonDefaultText ?? this.buttonDefaultText,
       buttonHoverBg: buttonHoverBg ?? this.buttonHoverBg,
       buttonPressBg: buttonPressBg ?? this.buttonPressBg,
+      radiusXs: radiusXs ?? this.radiusXs,
+      radiusSm: radiusSm ?? this.radiusSm,
+      radiusMd: radiusMd ?? this.radiusMd,
+      radiusLg: radiusLg ?? this.radiusLg,
+      radiusXl: radiusXl ?? this.radiusXl,
+      radius2xl: radius2xl ?? this.radius2xl,
+      radius3xl: radius3xl ?? this.radius3xl,
+      gap2: gap2 ?? this.gap2,
+      gap4: gap4 ?? this.gap4,
+      gap6: gap6 ?? this.gap6,
+      gap8: gap8 ?? this.gap8,
+      gap12: gap12 ?? this.gap12,
+      gap16: gap16 ?? this.gap16,
+      gap24: gap24 ?? this.gap24,
+      gap32: gap32 ?? this.gap32,
+      padXs: padXs ?? this.padXs,
+      padSm: padSm ?? this.padSm,
+      padMd: padMd ?? this.padMd,
+      padLg: padLg ?? this.padLg,
+      padXl: padXl ?? this.padXl,
+      linkMuted: linkMuted ?? this.linkMuted,
+      categoryNeutral: categoryNeutral ?? this.categoryNeutral,
+      overlayScrim: overlayScrim ?? this.overlayScrim,
       mapBg: mapBg ?? this.mapBg,
     );
   }
@@ -429,6 +537,29 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       buttonDefaultText: Color.lerp(buttonDefaultText, other.buttonDefaultText, t)!,
       buttonHoverBg: Color.lerp(buttonHoverBg, other.buttonHoverBg, t)!,
       buttonPressBg: Color.lerp(buttonPressBg, other.buttonPressBg, t)!,
+      radiusXs: t < 0.5 ? radiusXs : other.radiusXs,
+      radiusSm: t < 0.5 ? radiusSm : other.radiusSm,
+      radiusMd: t < 0.5 ? radiusMd : other.radiusMd,
+      radiusLg: t < 0.5 ? radiusLg : other.radiusLg,
+      radiusXl: t < 0.5 ? radiusXl : other.radiusXl,
+      radius2xl: t < 0.5 ? radius2xl : other.radius2xl,
+      radius3xl: t < 0.5 ? radius3xl : other.radius3xl,
+      gap2: t < 0.5 ? gap2 : other.gap2,
+      gap4: t < 0.5 ? gap4 : other.gap4,
+      gap6: t < 0.5 ? gap6 : other.gap6,
+      gap8: t < 0.5 ? gap8 : other.gap8,
+      gap12: t < 0.5 ? gap12 : other.gap12,
+      gap16: t < 0.5 ? gap16 : other.gap16,
+      gap24: t < 0.5 ? gap24 : other.gap24,
+      gap32: t < 0.5 ? gap32 : other.gap32,
+      padXs: t < 0.5 ? padXs : other.padXs,
+      padSm: t < 0.5 ? padSm : other.padSm,
+      padMd: t < 0.5 ? padMd : other.padMd,
+      padLg: t < 0.5 ? padLg : other.padLg,
+      padXl: t < 0.5 ? padXl : other.padXl,
+      linkMuted: Color.lerp(linkMuted, other.linkMuted, t)!,
+      categoryNeutral: Color.lerp(categoryNeutral, other.categoryNeutral, t)!,
+      overlayScrim: Color.lerp(overlayScrim, other.overlayScrim, t)!,
       mapBg: Color.lerp(mapBg, other.mapBg, t)!,
     );
   }

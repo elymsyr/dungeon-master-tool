@@ -13,6 +13,9 @@ import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
 import '../entity_link_chip.dart';
 import '../inline_field.dart';
+import '_body_cache.dart';
+
+final _itemCache = BodyCache<(Item, Map<String, Object?>)>();
 
 /// Typed renderer for a Tier 2 `Item` row (sealed: Weapon/Armor/Shield/Gear/
 /// Tool/Ammunition/MagicItem). Name + description are inline editable;
@@ -78,10 +81,19 @@ class _ItemCardState extends ConsumerState<ItemCard> {
         final Item item;
         final Map<String, Object?> body;
         try {
-          body = (jsonDecode(row.bodyJson) as Map).cast<String, Object?>();
-          item = itemFromEntry(
-            CatalogEntry(id: row.id, name: row.name, bodyJson: row.bodyJson),
-          );
+          final cacheKey =
+              '${row.id}|${row.updatedAt.millisecondsSinceEpoch}';
+          final decoded = _itemCache.getOrCompute(cacheKey, () {
+            final b = (jsonDecode(row.bodyJson) as Map)
+                .cast<String, Object?>();
+            final i = itemFromEntry(
+              CatalogEntry(
+                  id: row.id, name: row.name, bodyJson: row.bodyJson),
+            );
+            return (i, b);
+          });
+          item = decoded.$1;
+          body = decoded.$2;
         } catch (e) {
           return CardPlaceholder('Invalid item body: $e');
         }

@@ -17,6 +17,9 @@ import '../../../../domain/dnd5e/spell/spell_range.dart';
 import '../card_shell.dart';
 import '../entity_link_chip.dart';
 import '../inline_field.dart';
+import '_body_cache.dart';
+
+final _spellCache = BodyCache<(Spell, Map<String, Object?>)>();
 
 /// Typed renderer for a Tier 2 `Spell` row with inline editing. Edits go
 /// through [saveEditedEntity] which forks package-owned rows into the
@@ -83,10 +86,19 @@ class _SpellCardState extends ConsumerState<SpellCard> {
         final Spell spell;
         final Map<String, Object?> body;
         try {
-          body = (jsonDecode(row.bodyJson) as Map).cast<String, Object?>();
-          spell = spellFromEntry(
-            CatalogEntry(id: row.id, name: row.name, bodyJson: row.bodyJson),
-          );
+          final cacheKey =
+              '${row.id}|${row.updatedAt.millisecondsSinceEpoch}';
+          final decoded = _spellCache.getOrCompute(cacheKey, () {
+            final b = (jsonDecode(row.bodyJson) as Map)
+                .cast<String, Object?>();
+            final s = spellFromEntry(
+              CatalogEntry(
+                  id: row.id, name: row.name, bodyJson: row.bodyJson),
+            );
+            return (s, b);
+          });
+          spell = decoded.$1;
+          body = decoded.$2;
         } catch (e) {
           return CardPlaceholder('Invalid spell body: $e');
         }

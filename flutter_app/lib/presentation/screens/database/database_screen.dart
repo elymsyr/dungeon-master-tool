@@ -36,6 +36,17 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
   int _leftActiveIndex = -1;
   int _rightActiveIndex = -1;
 
+  // Stable callback references so `CardPanelScope.updateShouldNotify` does
+  // not fire on every parent rebuild — creating new lambdas inline each
+  // build invalidates the whole scope and forces descendant typed cards to
+  // re-decode their JSON bodies.
+  // ignore: prefer_function_declarations_over_variables
+  late final void Function(String) _openInLeft =
+      (eid) => _openTab(eid, panel: _Panel.left);
+  // ignore: prefer_function_declarations_over_variables
+  late final void Function(String) _openInRight =
+      (eid) => _openTab(eid, panel: _Panel.right);
+
   @override
   void didUpdateWidget(DatabaseScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -90,7 +101,8 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
     final resolvedCategorySlug =
         entity?.categorySlug ?? typedSummary?.categorySlug ?? '';
 
-    Color catColor = const Color(0xFF808080);
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    Color catColor = palette.categoryNeutral;
     if (resolvedCategorySlug.isNotEmpty) {
       final cat = _firstWhereOrNull(
           schema.categories, (c) => c.slug == resolvedCategorySlug);
@@ -192,7 +204,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
               schema: schema,
               editMode: widget.editMode,
               panelId: 'left',
-              onOpenLinked: (eid) => _openTab(eid, panel: _Panel.left),
+              onOpenLinked: _openInLeft,
             ),
           ),
         ],
@@ -221,7 +233,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
           editMode: widget.editMode,
           schema: schema,
           panelId: 'left',
-          onOpenLinked: (eid) => _openTab(eid, panel: _Panel.right),
+          onOpenLinked: _openInRight,
           onSelect: (i) { setState(() => _leftActiveIndex = i); _persistOpenTabs(); },
           onClose: (i) => _closeTab(i, _Panel.left),
         ),
@@ -236,7 +248,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
           editMode: widget.editMode,
           schema: schema,
           panelId: 'right',
-          onOpenLinked: (eid) => _openTab(eid, panel: _Panel.left),
+          onOpenLinked: _openInLeft,
           onSelect: (i) { setState(() => _rightActiveIndex = i); _persistOpenTabs(); },
           onClose: (i) => _closeTab(i, _Panel.right),
         ),
