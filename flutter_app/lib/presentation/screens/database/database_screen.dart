@@ -5,6 +5,7 @@ import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/dnd5e/typed_card_dispatcher.dart';
 import '../../widgets/resizable_split.dart';
 import 'entity_card.dart';
 
@@ -178,12 +179,10 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
             onClose: (i) => _closeTab(i, _Panel.left),
           ),
           Expanded(
-            child: EntityCard(
-              key: ValueKey(_leftTabs[active].entityId),
-              entityId: _leftTabs[active].entityId,
-              categorySchema: _firstWhereOrNull(
-                  schema.categories, (c) => c.slug == _leftTabs[active].categorySlug),
-              readOnly: !widget.editMode,
+            child: _buildDatabaseCard(
+              tab: _leftTabs[active],
+              schema: schema,
+              editMode: widget.editMode,
             ),
           ),
         ],
@@ -233,6 +232,34 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
 }
 
 enum _Panel { left, right }
+
+/// Per-tab card renderer. Routes typed entity ids (`srd:…`, `hb:…`) through
+/// `TypedCardDispatcher`; all other ids fall back to the schema-driven
+/// `EntityCard`. The dispatcher map grows per Doc 50 batches until Batch 3
+/// closes coverage on all 15 SRD slugs.
+Widget _buildDatabaseCard({
+  required _TabEntry tab,
+  required dynamic schema,
+  required bool editMode,
+}) {
+  if (isTypedEntityId(tab.entityId)) {
+    final typed = dispatchTypedCard(
+      categorySlug: tab.categorySlug,
+      entityId: tab.entityId,
+      categoryColor: tab.categoryColor,
+    );
+    if (typed != null) return typed;
+  }
+  return EntityCard(
+    key: ValueKey(tab.entityId),
+    entityId: tab.entityId,
+    categorySchema: schema == null
+        ? null
+        : _firstWhereOrNull(
+            schema.categories, (c) => c.slug == tab.categorySlug),
+    readOnly: !editMode,
+  );
+}
 
 T? _firstWhereOrNull<T>(Iterable<T> items, bool Function(T) test) {
   for (final item in items) {
@@ -288,12 +315,10 @@ class _TabPanel extends ConsumerWidget {
           onClose: onClose,
         ),
         Expanded(
-          child: EntityCard(
-            key: ValueKey(tabs[active].entityId),
-            entityId: tabs[active].entityId,
-            categorySchema: schema == null ? null : _firstWhereOrNull(
-                schema.categories, (c) => c.slug == tabs[active].categorySlug),
-            readOnly: !editMode,
+          child: _buildDatabaseCard(
+            tab: tabs[active],
+            schema: schema,
+            editMode: editMode,
           ),
         ),
       ],

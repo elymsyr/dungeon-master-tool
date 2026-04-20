@@ -1,8 +1,32 @@
 # 50 — Typed UI Migration (Phase D Master Plan)
 
 > **For Claude.** End-to-end plan for removing the generic schema-driven UI and replacing it with a typed, D&D-5e-native UI while **preserving every existing screen layout**. This is the work that finally closes Phase A's structural goal (delete `lib/domain/entities/schema/`) and opens Phase D (typed UI).
-> **Status:** 🟠 Drafting — plan authoritative, implementation not started.
+> **Status:** 🟡 Batches 1-7 landed (additive); Batch 8 blocked on legacy-consumer sweep.
 > **Last updated:** 2026-04-20
+
+## Implementation Status
+
+| Batch | Scope | Status |
+|---|---|---|
+| 1 | `Dnd5eContentDao` + typed providers + 5 cards + dispatcher + DatabaseScreen wiring | 🟢 Done |
+| 2 | Npc / Player / Class / Race / Action cards | 🟢 Done |
+| 3 | Location / Quest / Lore / Plane / Condition / StatusEffect cards | 🟢 Done |
+| 4 | `combinedEntitySummaryProvider` merging generic + typed rows; `EntitySidebar` swapped onto merged provider | 🟢 Done |
+| 5 | `entitySummaryByIdProvider` fallback in `mind_map_node_widget._buildEntityContent` + `battle_map_screen._categoryColor`; SessionScreen `WorldSchema` decoupling deferred (condition stat fields still schema-driven) | 🟡 Partial |
+| 6 | `Dnd5eCharacterSheetView` read-only 3-tab scaffold at `lib/presentation/screens/dnd5e/character/`; legacy `CharacterEditorScreen` still the router target | 🟡 Scaffold only |
+| 7 | `homebrew_entries` Drift table + v10 additive migration + DAO + `homebrewEntryRowProvider` + `HomebrewPlaceholderCard` renders real rows; legacy `entities` blob **NOT** dropped; bulk migration of legacy rows deferred | 🟡 Additive only |
+| 8 | Delete `lib/domain/entities/schema/`, `lib/data/schema/`, `field_widgets/`, `entity_sidebar.dart`, legacy `EntityCard`, legacy importers + dialogs | ⛔ Blocked — see Blockers |
+
+### Blockers on Batch 8
+
+`lib/domain/entities/schema/` cannot be deleted until every live consumer is either rewritten or retired. Current live consumers:
+
+- `CharacterEditorScreen` + `character_editor_screen.dart` (1166 LOC) — router still points here; typed editor + creation wizard (Doc 10) has not shipped.
+- `EntityCard` / `field_widgets/` — DatabaseScreen falls back here for generic blob ids; while the dispatcher covers every SRD slug, user-created entity blob rows still render via the legacy form path.
+- `SessionScreen` reads `EncounterConfig.conditionStatsFieldKey` + `WorldSchema.categories[].fields[].subFields` to render condition tooltips.
+- `package_import_service.dart` + `import_dialog.dart` — import flow for v5 `packages` / `package_schemas` / `package_entities` still the user-facing importer; typed `Dnd5ePackageImporter` (Doc 14) coexists but hasn't replaced it in the Hub.
+
+Unblocking Batch 8 requires Doc 10 (character creation wizard) + completing the typed package import path in the Hub UI + typed condition-stat surface.
 
 ## Mission
 

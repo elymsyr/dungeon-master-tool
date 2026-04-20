@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/combat_provider.dart';
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/entity_summary_provider.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../widgets/battle_map/battle_map_mobile_toolbar.dart';
@@ -171,12 +172,20 @@ class _BattleMapScreenState extends ConsumerState<BattleMapScreen> {
 
   Color _categoryColor(String? entityId, DmToolColors palette) {
     if (entityId == null) return palette.tokenBorderNeutral;
+    // Generic blob first, typed content (srd:/hb:) via summary fallback.
+    // Doc 50 Batch 5.
+    String? categorySlug;
     final entities = ref.read(entityProvider);
     final entity = entities[entityId];
-    if (entity == null) return palette.tokenBorderNeutral;
+    if (entity != null) {
+      categorySlug = entity.categorySlug;
+    } else {
+      categorySlug = ref.read(entitySummaryByIdProvider)[entityId]?.categorySlug;
+    }
+    if (categorySlug == null) return palette.tokenBorderNeutral;
     final schema = ref.read(worldSchemaProvider);
     for (final cat in schema.categories) {
-      if (cat.slug == entity.categorySlug) {
+      if (cat.slug == categorySlug) {
         final hex = cat.color;
         if (hex.startsWith('#') && hex.length == 7) {
           return Color(int.parse('FF${hex.substring(1)}', radix: 16));

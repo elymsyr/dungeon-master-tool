@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/entity_provider.dart';
+import '../../application/providers/entity_summary_provider.dart';
+import '../../application/providers/typed_content_provider.dart';
+import '../../core/utils/id_gen.dart';
+import '../../data/database/app_database.dart' hide Size;
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../l10n/app_localizations.dart';
@@ -36,17 +40,10 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   Widget build(BuildContext context) {
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    // Watch only the sidebar-relevant fields — avoids rebuild when entity
-    // fields (description, dmNotes, custom fields etc.) change.
-    final summaries = ref.watch(entityProvider.select((map) =>
-      map.values.map((e) => (
-        id: e.id,
-        name: e.name,
-        categorySlug: e.categorySlug,
-        source: e.source,
-        tags: e.tags,
-      )).toList(),
-    ));
+    // Merged generic + typed content summaries (Doc 50 Batch 4). Keeps the
+    // legacy `entityProvider` blob alongside Tier 2 Drift rows until the
+    // entities table drops in Batch 7; sidebar treats both uniformly.
+    final summaries = ref.watch(combinedEntitySummaryProvider);
     final categories = widget.schema?.categories
             .where((c) => !c.isArchived)
             .toList() ??
@@ -316,22 +313,49 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
             child: Text(L10n.of(context)!.btnCancel),
           ),
           FilledButton(
-            onPressed: () {
+            onPressed: () async {
               final name = nameController.text.trim();
-              if (name.isNotEmpty) {
-                final id = ref.read(entityProvider.notifier).create(
-                      selectedSlug,
-                      name: name,
-                    );
-                Navigator.pop(ctx);
-                widget.onEntitySelected?.call(id);
-              }
+              if (name.isEmpty) return;
+              final id = await _createEntity(selectedSlug, name);
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx);
+              widget.onEntitySelected?.call(id);
             },
             child: Text(L10n.of(context)!.btnCreate),
           ),
         ],
       ),
     ).whenComplete(nameController.dispose);
+  }
+
+  /// Routes "Create" button for typed-only world slugs to `homebrew_entries`
+  /// (Doc 50 Batch 7 follow-up). All other slugs land in the legacy entity
+  /// blob until Batch 8 retires it.
+  static const Set<String> _typedWorldSlugs = {
+    'location',
+    'quest',
+    'lore',
+    'plane',
+    'status-effect',
+  };
+
+  Future<String> _createEntity(String categorySlug, String name) async {
+    if (_typedWorldSlugs.contains(categorySlug)) {
+      final id = 'hb:${newId()}';
+      await ref.read(dnd5eContentDaoProvider).upsertHomebrewEntry(
+            HomebrewEntriesCompanion.insert(
+              id: id,
+              categorySlug: categorySlug,
+              name: name,
+              bodyJson: '{}',
+            ),
+          );
+      return id;
+    }
+    return ref.read(entityProvider.notifier).create(
+          categorySlug,
+          name: name,
+        );
   }
 
   Widget _dropdownLabel(String text, Color? dotColor, DmToolColors palette) {

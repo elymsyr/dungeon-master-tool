@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../core/config/app_paths.dart';
 import 'daos/campaign_dao.dart';
+import 'daos/dnd5e_content_dao.dart';
 import 'daos/entity_dao.dart';
 import 'daos/map_dao.dart';
 import 'daos/mind_map_dao.dart';
@@ -19,6 +20,7 @@ import 'tables/combatants_table.dart';
 import 'tables/dnd5e_content_tables.dart';
 import 'tables/encounters_table.dart';
 import 'tables/entities_table.dart';
+import 'tables/homebrew_entries_table.dart';
 import 'tables/installed_packages_table.dart';
 import 'tables/map_pins_table.dart';
 import 'tables/mind_map_edges_table.dart';
@@ -70,6 +72,9 @@ part 'app_database.g.dart';
     ClassProgressions,
     // Doc 14 — Installed package registry (typed system).
     InstalledPackages,
+    // Doc 50 — Homebrew world-content entries (quest/location/lore/plane/
+    // status-effect). Additive; legacy `entities` blob still live.
+    HomebrewEntries,
   ],
   daos: [
     CampaignDao,
@@ -78,6 +83,7 @@ part 'app_database.g.dart';
     MapDao,
     MindMapDao,
     PackageDao,
+    Dnd5eContentDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -90,7 +96,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -163,6 +169,12 @@ class AppDatabase extends _$AppDatabase {
             // LegacyDbBackup snapshots the pre-v9 DB to
             // `dmt.v4.backup.sqlite` before this fires.
             await m.deleteTable('world_schemas');
+          }
+          if (from < 10) {
+            // v10: Doc 50 Batch 7 — typed homebrew world-content entries.
+            // Additive only; the legacy `entities` blob stays live until
+            // Phase D's full typed-UI cutover retires it.
+            await m.createTable(homebrewEntries);
           }
         },
       );

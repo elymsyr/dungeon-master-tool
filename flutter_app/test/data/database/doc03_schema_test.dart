@@ -18,8 +18,8 @@ void main() {
     await db.close();
   });
 
-  test('schemaVersion = 9', () {
-    expect(db.schemaVersion, 9);
+  test('schemaVersion = 10', () {
+    expect(db.schemaVersion, 10);
   });
 
   group('catalog tables empty on fresh create', () {

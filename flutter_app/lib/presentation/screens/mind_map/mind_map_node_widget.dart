@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/entity_summary_provider.dart';
 import '../../../application/providers/media_provider.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../dialogs/media_gallery_dialog.dart';
@@ -611,6 +612,24 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
     // Watch only this specific entity — not the entire map
     final entity = ref.watch(entityProvider.select((map) => map[n.entityId]));
     if (entity == null) {
+      // Typed content (`srd:`, `hb:`) lives outside the generic blob; fall
+      // back to the summary index so the node still renders its name +
+      // category color. Doc 50 Batch 5.
+      final summary = ref
+          .watch(entitySummaryByIdProvider)[n.entityId];
+      if (summary != null) {
+        return Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(
+            summary.name,
+            style: TextStyle(
+              fontSize: 11,
+              color: palette.tabActiveText,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        );
+      }
       return Padding(
         padding: const EdgeInsets.all(8),
         child: Text(
