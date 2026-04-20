@@ -1,19 +1,27 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../application/dnd5e/content/copy_on_write_helper.dart';
+import '../../../../application/providers/campaign_provider.dart';
 import '../../../../application/providers/typed_content_provider.dart';
+import '../../../../data/database/database_provider.dart';
 import '../../../../domain/dnd5e/core/ability.dart';
 import '../../../../domain/dnd5e/core/ability_scores.dart';
 import '../../../../domain/dnd5e/monster/monster.dart';
-import '../../../../domain/dnd5e/monster/stat_block.dart';
 import '../../../../domain/dnd5e/monster/monster_json_codec.dart';
+import '../../../../domain/dnd5e/monster/stat_block.dart';
 import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
-import '../editors/entity_editor_dialog.dart';
+import '../entity_link_chip.dart';
+import '../inline_field.dart';
 
 /// Typed renderer for a Tier 2 `Monster` row. Shows stat block summary +
-/// action blocks (actions / bonus / reactions / legendary).
-class MonsterCard extends ConsumerWidget {
+/// action blocks (actions / bonus / reactions / legendary). Name + flavor
+/// description are inline editable; editing SRD-owned rows forks into the
+/// active campaign via [saveEditedEntity].
+class MonsterCard extends ConsumerStatefulWidget {
   final String entityId;
   final Color categoryColor;
 
@@ -24,27 +32,69 @@ class MonsterCard extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(monsterRowProvider(entityId));
+  ConsumerState<MonsterCard> createState() => _MonsterCardState();
+}
+
+class _MonsterCardState extends ConsumerState<MonsterCard> {
+  late String _effectiveId = widget.entityId;
+
+  @override
+  void didUpdateWidget(covariant MonsterCard old) {
+    super.didUpdateWidget(old);
+    if (old.entityId != widget.entityId) {
+      _effectiveId = widget.entityId;
+    }
+  }
+
+  Future<void> _save({
+    required String name,
+    required Map<String, Object?> body,
+  }) async {
+    final campaignId = ref.read(activeCampaignIdProvider);
+    if (campaignId == null) return;
+    final writtenId = await saveEditedEntity(
+      db: ref.read(appDatabaseProvider),
+      currentId: _effectiveId,
+      categorySlug: 'monster',
+      activeCampaignId: campaignId,
+      name: name,
+      bodyJson: body,
+    );
+    if (!mounted) return;
+    if (writtenId != _effectiveId) {
+      setState(() => _effectiveId = writtenId);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(monsterRowProvider(_effectiveId));
     return async.when(
       loading: () => const CardPlaceholder('Loading monster…'),
       error: (e, _) => CardPlaceholder('Failed to load monster: $e'),
       data: (row) {
         if (row == null) {
-          return CardPlaceholder('Monster "$entityId" not found');
+          return CardPlaceholder('Monster "$_effectiveId" not found');
         }
         final Monster monster;
+        final Map<String, Object?> body;
         try {
+          body =
+              (jsonDecode(row.statBlockJson) as Map).cast<String, Object?>();
           monster = monsterFromEntry(
-            CatalogEntry(id: row.id, name: row.name, bodyJson: row.statBlockJson),
+            CatalogEntry(
+                id: row.id, name: row.name, bodyJson: row.statBlockJson),
           );
         } catch (e) {
           return CardPlaceholder('Invalid monster body: $e');
         }
         return _MonsterBody(
-            monster: monster,
-            categoryColor: categoryColor,
-            entityId: entityId);
+          monster: monster,
+          name: row.name,
+          body: body,
+          categoryColor: widget.categoryColor,
+          onSave: _save,
+        );
       },
     );
   }
@@ -52,116 +102,129 @@ class MonsterCard extends ConsumerWidget {
 
 class _MonsterBody extends StatelessWidget {
   final Monster monster;
+  final String name;
+  final Map<String, Object?> body;
   final Color categoryColor;
-  final String entityId;
+  final Future<void> Function({
+    required String name,
+    required Map<String, Object?> body,
+  }) onSave;
 
-  const _MonsterBody(
-      {required this.monster,
-      required this.categoryColor,
-      required this.entityId});
+  const _MonsterBody({
+    required this.monster,
+    required this.name,
+    required this.body,
+    required this.categoryColor,
+    required this.onSave,
+  });
 
   @override
   Widget build(BuildContext context) {
     final sb = monster.stats;
     return CardShell(
-      title: monster.name,
+      title: name,
       subtitle:
           '${_localSlug(sb.sizeId)} ${_localSlug(sb.typeId)}${sb.alignmentId == null ? '' : ', ${_localSlug(sb.alignmentId!)}'}',
       categoryColor: categoryColor,
-      onEdit: () => showEntityEditor(
-        context: context,
-        entityId: entityId,
-        categorySlug: 'monster',
-      ),
       tags: [
         CardTag('CR ${sb.cr.canonical}'),
         CardTag('AC ${sb.armorClass}'),
         CardTag('HP ${sb.hitPoints}'),
       ],
       children: [
-        CardKeyValue(
-          'Speed',
-          _speedText(sb.speeds),
-        ),
-        const SizedBox(height: 8),
-        _AbilityRow(abilities: sb.abilities),
-        if (sb.savingThrows.isNotEmpty)
-          CardKeyValue(
-            'Saving Throws',
-            sb.savingThrows.entries
-                .map((e) => '${_ability(e.key)} ${e.value.name}')
-                .join(', '),
-          ),
-        if (sb.damageResistanceIds.isNotEmpty)
-          CardKeyValue(
-            'Resistances',
-            sb.damageResistanceIds.map(_localSlug).join(', '),
-          ),
-        if (sb.damageImmunityIds.isNotEmpty)
-          CardKeyValue(
-            'Immunities',
-            sb.damageImmunityIds.map(_localSlug).join(', '),
-          ),
-        if (sb.conditionImmunityIds.isNotEmpty)
-          CardKeyValue(
-            'Condition Immunities',
-            sb.conditionImmunityIds.map(_localSlug).join(', '),
-          ),
-        if (sb.languageIds.isNotEmpty)
-          CardKeyValue(
-            'Languages',
-            sb.languageIds.map(_localSlug).join(', '),
-          ),
+        CardFieldGroup(title: 'Identity', children: [
+          CardFieldGrid(columns: 2, fields: [
+            CardField(
+              label: 'Name',
+              child: InlineTextField(
+                value: name,
+                style: Theme.of(context).textTheme.titleMedium,
+                onCommit: (v) => onSave(name: v, body: body),
+              ),
+            ),
+            CardField(label: 'CR', child: Text(sb.cr.canonical)),
+            CardField(
+                label: 'Size',
+                child: EntityLinkChip(entityId: sb.sizeId)),
+            CardField(
+                label: 'Type',
+                child: EntityLinkChip(entityId: sb.typeId)),
+          ]),
+        ]),
+        CardFieldGroup(title: 'Combat', children: [
+          CardFieldGrid(columns: 3, fields: [
+            CardField(label: 'Armor Class', child: Text('${sb.armorClass}')),
+            CardField(label: 'Hit Points', child: Text('${sb.hitPoints}')),
+            CardField(label: 'Speed', child: Text(_speedText(sb.speeds))),
+          ]),
+        ]),
+        CardFieldGroup(title: 'Abilities', children: [
+          _AbilityRow(abilities: sb.abilities),
+        ]),
+        if (sb.savingThrows.isNotEmpty ||
+            sb.damageResistanceIds.isNotEmpty ||
+            sb.damageImmunityIds.isNotEmpty ||
+            sb.conditionImmunityIds.isNotEmpty ||
+            sb.languageIds.isNotEmpty)
+          CardFieldGroup(title: 'Resistances & Traits', children: [
+            if (sb.savingThrows.isNotEmpty)
+              CardKeyValue(
+                'Saving Throws',
+                sb.savingThrows.entries
+                    .map((e) => '${_ability(e.key)} ${e.value.name}')
+                    .join(', '),
+              ),
+            if (sb.damageResistanceIds.isNotEmpty)
+              _LabeledLinkRow(
+                label: 'Resistances',
+                ids: sb.damageResistanceIds,
+              ),
+            if (sb.damageImmunityIds.isNotEmpty)
+              _LabeledLinkRow(
+                label: 'Immunities',
+                ids: sb.damageImmunityIds,
+              ),
+            if (sb.conditionImmunityIds.isNotEmpty)
+              _LabeledLinkRow(
+                label: 'Condition Immunities',
+                ids: sb.conditionImmunityIds,
+              ),
+            if (sb.languageIds.isNotEmpty)
+              _LabeledLinkRow(
+                label: 'Languages',
+                ids: sb.languageIds,
+              ),
+          ]),
         if (monster.actions.isNotEmpty)
-          CardSection(
-            title: 'ACTIONS',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final a in monster.actions)
-                  _ActionLine(name: a.name, description: a.description),
-              ],
-            ),
-          ),
+          CardFieldGroup(title: 'Actions', children: [
+            for (final a in monster.actions)
+              _ActionLine(name: a.name, description: a.description),
+          ]),
         if (monster.bonusActions.isNotEmpty)
-          CardSection(
-            title: 'BONUS ACTIONS',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final a in monster.bonusActions)
-                  _ActionLine(name: a.name, description: a.description),
-              ],
-            ),
-          ),
+          CardFieldGroup(title: 'Bonus Actions', children: [
+            for (final a in monster.bonusActions)
+              _ActionLine(name: a.name, description: a.description),
+          ]),
         if (monster.reactions.isNotEmpty)
-          CardSection(
-            title: 'REACTIONS',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final a in monster.reactions)
-                  _ActionLine(name: a.name, description: a.description),
-              ],
-            ),
-          ),
+          CardFieldGroup(title: 'Reactions', children: [
+            for (final a in monster.reactions)
+              _ActionLine(name: a.name, description: a.description),
+          ]),
         if (monster.legendaryActions.isNotEmpty)
-          CardSection(
-            title: 'LEGENDARY ACTIONS',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Slots: ${monster.legendaryActionSlots}'),
-                for (final a in monster.legendaryActions)
-                  _ActionLine(name: a.name, description: a.description),
-              ],
-            ),
+          CardFieldGroup(title: 'Legendary Actions', children: [
+            Text('Slots: ${monster.legendaryActionSlots}'),
+            for (final a in monster.legendaryActions)
+              _ActionLine(name: a.name, description: a.description),
+          ]),
+        CardFieldGroup(title: 'Description', children: [
+          InlineTextField(
+            value: monster.description,
+            maxLines: 12,
+            placeholder: 'No description yet — tap to add…',
+            onCommit: (v) =>
+                onSave(name: name, body: {...body, 'description': v}),
           ),
-        if (monster.description.isNotEmpty)
-          CardSection(
-            title: 'DESCRIPTION',
-            child: Text(monster.description),
-          ),
+        ]),
       ],
     );
   }
@@ -194,11 +257,44 @@ class _AbilityRow extends StatelessWidget {
         for (final (label, score) in entries)
           Column(
             children: [
-              Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(label,
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
               Text(mod(score), style: const TextStyle(fontSize: 12)),
             ],
           ),
       ],
+    );
+  }
+}
+
+/// Label + wrapped row of [EntityLinkChip]s — used for resistances /
+/// immunities / language lists so every referenced id becomes a tappable,
+/// hoverable link to the other panel.
+class _LabeledLinkRow extends StatelessWidget {
+  final String label;
+  final Iterable<String> ids;
+  const _LabeledLinkRow({required this.label, required this.ids});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$label: ',
+              style: const TextStyle(fontWeight: FontWeight.w600)),
+          Expanded(
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final id in ids) EntityLinkChip(entityId: id),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

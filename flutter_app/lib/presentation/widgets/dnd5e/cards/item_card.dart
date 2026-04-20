@@ -1,17 +1,23 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../application/dnd5e/content/copy_on_write_helper.dart';
+import '../../../../application/providers/campaign_provider.dart';
 import '../../../../application/providers/typed_content_provider.dart';
+import '../../../../data/database/database_provider.dart';
 import '../../../../domain/dnd5e/item/item.dart';
 import '../../../../domain/dnd5e/item/item_json_codec.dart';
 import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
-import '../editors/entity_editor_dialog.dart';
+import '../entity_link_chip.dart';
+import '../inline_field.dart';
 
 /// Typed renderer for a Tier 2 `Item` row (sealed: Weapon/Armor/Shield/Gear/
-/// Tool/Ammunition/MagicItem). Dispatches on runtime case for category-specific
-/// fields.
-class ItemCard extends ConsumerWidget {
+/// Tool/Ammunition/MagicItem). Name + description are inline editable;
+/// variant-specific fields remain read-only in this pass.
+class ItemCard extends ConsumerStatefulWidget {
   final String entityId;
   final Color categoryColor;
 
@@ -22,17 +28,57 @@ class ItemCard extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(itemRowProvider(entityId));
+  ConsumerState<ItemCard> createState() => _ItemCardState();
+}
+
+class _ItemCardState extends ConsumerState<ItemCard> {
+  late String _effectiveId = widget.entityId;
+
+  @override
+  void didUpdateWidget(covariant ItemCard old) {
+    super.didUpdateWidget(old);
+    if (old.entityId != widget.entityId) {
+      _effectiveId = widget.entityId;
+    }
+  }
+
+  Future<void> _save({
+    required String name,
+    required Map<String, Object?> body,
+    required String itemType,
+    required String? rarityId,
+  }) async {
+    final campaignId = ref.read(activeCampaignIdProvider);
+    if (campaignId == null) return;
+    final writtenId = await saveEditedEntity(
+      db: ref.read(appDatabaseProvider),
+      currentId: _effectiveId,
+      categorySlug: 'item',
+      activeCampaignId: campaignId,
+      name: name,
+      bodyJson: body,
+      extras: {'itemType': itemType, 'rarityId': rarityId},
+    );
+    if (!mounted) return;
+    if (writtenId != _effectiveId) {
+      setState(() => _effectiveId = writtenId);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(itemRowProvider(_effectiveId));
     return async.when(
       loading: () => const CardPlaceholder('Loading item…'),
       error: (e, _) => CardPlaceholder('Failed to load item: $e'),
       data: (row) {
         if (row == null) {
-          return CardPlaceholder('Item "$entityId" not found');
+          return CardPlaceholder('Item "$_effectiveId" not found');
         }
         final Item item;
+        final Map<String, Object?> body;
         try {
+          body = (jsonDecode(row.bodyJson) as Map).cast<String, Object?>();
           item = itemFromEntry(
             CatalogEntry(id: row.id, name: row.name, bodyJson: row.bodyJson),
           );
@@ -41,9 +87,12 @@ class ItemCard extends ConsumerWidget {
         }
         return _ItemBody(
           item: item,
-          categoryColor: categoryColor,
+          name: row.name,
+          body: body,
           itemType: row.itemType,
-          entityId: entityId,
+          rarityId: row.rarityId,
+          categoryColor: widget.categoryColor,
+          onSave: _save,
         );
       },
     );
@@ -52,29 +101,35 @@ class ItemCard extends ConsumerWidget {
 
 class _ItemBody extends StatelessWidget {
   final Item item;
-  final Color categoryColor;
+  final String name;
+  final Map<String, Object?> body;
   final String itemType;
-  final String entityId;
+  final String? rarityId;
+  final Color categoryColor;
+  final Future<void> Function({
+    required String name,
+    required Map<String, Object?> body,
+    required String itemType,
+    required String? rarityId,
+  }) onSave;
 
   const _ItemBody({
     required this.item,
-    required this.categoryColor,
+    required this.name,
+    required this.body,
     required this.itemType,
-    required this.entityId,
+    required this.rarityId,
+    required this.categoryColor,
+    required this.onSave,
   });
 
   @override
   Widget build(BuildContext context) {
     final rarity = _localSlug(item.rarityId);
     return CardShell(
-      title: item.name,
+      title: name,
       subtitle: '${_capitalize(itemType)} • ${_capitalize(rarity)}',
       categoryColor: categoryColor,
-      onEdit: () => showEntityEditor(
-        context: context,
-        entityId: entityId,
-        categorySlug: 'item',
-      ),
       tags: [
         CardTag(_capitalize(itemType)),
         CardTag(_capitalize(rarity)),
@@ -82,7 +137,54 @@ class _ItemBody extends StatelessWidget {
         if (item.weightLb > 0) CardTag('${_trim(item.weightLb)} lb'),
       ],
       children: [
-        ..._variantLines(item),
+        CardFieldGroup(title: 'Identity', children: [
+          CardFieldGrid(columns: 2, fields: [
+            CardField(
+              label: 'Name',
+              child: InlineTextField(
+                value: name,
+                style: Theme.of(context).textTheme.titleMedium,
+                onCommit: (v) => onSave(
+                  name: v,
+                  body: body,
+                  itemType: itemType,
+                  rarityId: rarityId,
+                ),
+              ),
+            ),
+            CardField(
+                label: 'Type',
+                child: InlineTextField(
+                  value: itemType,
+                  onCommit: (v) => onSave(
+                    name: name,
+                    body: body,
+                    itemType: v.isEmpty ? 'gear' : v,
+                    rarityId: rarityId,
+                  ),
+                )),
+            CardField(
+                label: 'Rarity',
+                child: InlineTextField(
+                  value: rarityId ?? '',
+                  placeholder: '—',
+                  onCommit: (v) => onSave(
+                    name: name,
+                    body: body,
+                    itemType: itemType,
+                    rarityId: v.isEmpty ? null : v,
+                  ),
+                )),
+            CardField(label: 'Cost', child: Text(_costText(item.costCp))),
+          ]),
+        ]),
+        if (item.weightLb > 0)
+          CardFieldGroup(title: 'Physical', children: [
+            CardKeyValue('Weight', '${_trim(item.weightLb)} lb'),
+          ]),
+        CardFieldGroup(title: 'Variant', children: [
+          ..._variantLines(item),
+        ]),
       ],
     );
   }
@@ -91,24 +193,25 @@ class _ItemBody extends StatelessWidget {
     switch (item) {
       case Weapon w:
         return [
-          CardKeyValue('Category',
-              '${w.category.name} ${w.type.name}'),
-          CardKeyValue('Damage',
-              '${w.damage} ${_localSlug(w.damageTypeId)}'),
+          CardKeyValue('Category', '${w.category.name} ${w.type.name}'),
+          _KeyLinkRow(
+            label: 'Damage',
+            prefix: '${w.damage} ',
+            ids: [w.damageTypeId],
+          ),
           if (w.versatileDamage != null)
             CardKeyValue('Versatile', w.versatileDamage!.toString()),
           if (w.range != null)
             CardKeyValue(
                 'Range', '${w.range!.normal}/${w.range!.long} ft.'),
           if (w.propertyIds.isNotEmpty)
-            CardKeyValue('Properties',
-                w.propertyIds.map(_localSlug).join(', ')),
+            _KeyLinkRow(label: 'Properties', ids: w.propertyIds),
           if (w.masteryId != null)
-            CardKeyValue('Mastery', _localSlug(w.masteryId!)),
+            _KeyLinkRow(label: 'Mastery', ids: [w.masteryId!]),
         ];
       case Armor a:
         return [
-          CardKeyValue('Category', _localSlug(a.categoryId)),
+          _KeyLinkRow(label: 'Category', ids: [a.categoryId]),
           CardKeyValue('Base AC', '${a.baseAc}'),
           if (a.strengthRequirement != null)
             CardKeyValue('Strength', 'Str ${a.strengthRequirement}'),
@@ -119,13 +222,12 @@ class _ItemBody extends StatelessWidget {
         ];
       case Gear g:
         return [
-          if (g.description.isNotEmpty)
-            CardSection(title: 'DESCRIPTION', child: Text(g.description)),
+          if (g.description.isNotEmpty) Text(g.description),
         ];
       case Tool t:
         return [
           if (t.proficiencyId != null)
-            CardKeyValue('Proficiency', _localSlug(t.proficiencyId!)),
+            _KeyLinkRow(label: 'Proficiency', ids: [t.proficiencyId!]),
         ];
       case Ammunition am:
         return [
@@ -134,16 +236,45 @@ class _ItemBody extends StatelessWidget {
       case MagicItem m:
         return [
           if (m.baseItemId != null)
-            CardKeyValue('Base Item', _localSlug(m.baseItemId!)),
+            _KeyLinkRow(label: 'Base Item', ids: [m.baseItemId!]),
           CardKeyValue(
               'Attunement', m.requiresAttunement ? 'Required' : 'No'),
           if (m.effects.isNotEmpty)
-            CardSection(
-              title: 'EFFECTS',
-              child: Text('${m.effects.length} effect(s)'),
-            ),
+            Text('${m.effects.length} effect(s)'),
         ];
     }
+  }
+}
+
+/// Label + `prefix` + wrapped row of [EntityLinkChip]s.
+class _KeyLinkRow extends StatelessWidget {
+  final String label;
+  final String? prefix;
+  final Iterable<String> ids;
+  const _KeyLinkRow({required this.label, required this.ids, this.prefix});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$label: ',
+              style: const TextStyle(fontWeight: FontWeight.w600)),
+          if (prefix != null && prefix!.isNotEmpty) Text(prefix!),
+          Expanded(
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final id in ids) EntityLinkChip(entityId: id),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

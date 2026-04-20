@@ -1,7 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../application/dnd5e/content/copy_on_write_helper.dart';
+import '../../../../application/providers/campaign_provider.dart';
 import '../../../../application/providers/typed_content_provider.dart';
+import '../../../../data/database/database_provider.dart';
 import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../../../../domain/dnd5e/spell/casting_time.dart';
 import '../../../../domain/dnd5e/spell/spell.dart';
@@ -10,11 +15,14 @@ import '../../../../domain/dnd5e/spell/spell_duration.dart';
 import '../../../../domain/dnd5e/spell/spell_json_codec.dart';
 import '../../../../domain/dnd5e/spell/spell_range.dart';
 import '../card_shell.dart';
-import '../editors/entity_editor_dialog.dart';
+import '../entity_link_chip.dart';
+import '../inline_field.dart';
 
-/// Typed renderer for a Tier 2 `Spell` row. Decodes `bodyJson` via
-/// `spellFromEntry` and lays out level/school/components/duration + description.
-class SpellCard extends ConsumerWidget {
+/// Typed renderer for a Tier 2 `Spell` row with inline editing. Edits go
+/// through [saveEditedEntity] which forks package-owned rows into the
+/// active campaign as `hb:<cid>:<uuid>`; once forked, the card switches
+/// its read-id to the new homebrew row so further edits land on the copy.
+class SpellCard extends ConsumerStatefulWidget {
   final String entityId;
   final Color categoryColor;
 
@@ -25,78 +33,191 @@ class SpellCard extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(spellRowProvider(entityId));
+  ConsumerState<SpellCard> createState() => _SpellCardState();
+}
+
+class _SpellCardState extends ConsumerState<SpellCard> {
+  late String _effectiveId = widget.entityId;
+
+  @override
+  void didUpdateWidget(covariant SpellCard old) {
+    super.didUpdateWidget(old);
+    if (old.entityId != widget.entityId) {
+      _effectiveId = widget.entityId;
+    }
+  }
+
+  Future<void> _save({
+    required String name,
+    required Map<String, Object?> body,
+    required int level,
+    required String schoolId,
+  }) async {
+    final campaignId = ref.read(activeCampaignIdProvider);
+    if (campaignId == null) return;
+    final writtenId = await saveEditedEntity(
+      db: ref.read(appDatabaseProvider),
+      currentId: _effectiveId,
+      categorySlug: 'spell',
+      activeCampaignId: campaignId,
+      name: name,
+      bodyJson: body,
+      extras: {'level': level, 'schoolId': schoolId},
+    );
+    if (!mounted) return;
+    if (writtenId != _effectiveId) {
+      setState(() => _effectiveId = writtenId);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(spellRowProvider(_effectiveId));
     return async.when(
       loading: () => const CardPlaceholder('Loading spell…'),
       error: (e, _) => CardPlaceholder('Failed to load spell: $e'),
       data: (row) {
         if (row == null) {
-          return CardPlaceholder('Spell "$entityId" not found');
+          return CardPlaceholder('Spell "$_effectiveId" not found');
         }
         final Spell spell;
+        final Map<String, Object?> body;
         try {
+          body = (jsonDecode(row.bodyJson) as Map).cast<String, Object?>();
           spell = spellFromEntry(
             CatalogEntry(id: row.id, name: row.name, bodyJson: row.bodyJson),
           );
         } catch (e) {
           return CardPlaceholder('Invalid spell body: $e');
         }
-        return _SpellCardBody(
+        return _SpellBody(
           spell: spell,
-          categoryColor: categoryColor,
+          body: body,
           schoolId: row.schoolId,
-          entityId: entityId,
+          level: row.level,
+          name: row.name,
+          categoryColor: widget.categoryColor,
+          onSave: _save,
         );
       },
     );
   }
 }
 
-class _SpellCardBody extends StatelessWidget {
+class _SpellBody extends StatelessWidget {
   final Spell spell;
-  final Color categoryColor;
+  final Map<String, Object?> body;
+  final String name;
+  final int level;
   final String schoolId;
-  final String entityId;
+  final Color categoryColor;
+  final Future<void> Function({
+    required String name,
+    required Map<String, Object?> body,
+    required int level,
+    required String schoolId,
+  }) onSave;
 
-  const _SpellCardBody({
+  const _SpellBody({
     required this.spell,
-    required this.categoryColor,
+    required this.body,
+    required this.name,
+    required this.level,
     required this.schoolId,
-    required this.entityId,
+    required this.categoryColor,
+    required this.onSave,
   });
 
   @override
   Widget build(BuildContext context) {
-    final levelLabel = spell.level.value == 0
-        ? 'Cantrip'
-        : 'Level ${spell.level.value}';
+    final levelLabel = level == 0 ? 'Cantrip' : 'Level $level';
     final schoolLabel = _localSlug(schoolId);
     return CardShell(
-      title: spell.name,
+      title: name,
       subtitle: '$levelLabel • $schoolLabel${spell.ritual ? ' • Ritual' : ''}',
       categoryColor: categoryColor,
-      onEdit: () => showEntityEditor(
-        context: context,
-        entityId: entityId,
-        categorySlug: 'spell',
-      ),
       tags: [
         CardTag(levelLabel),
-        CardTag(schoolLabel),
+        EntityLinkChip(entityId: schoolId, displayLabel: schoolLabel),
         if (spell.ritual) const CardTag('Ritual'),
-        for (final cid in spell.classListIds) CardTag(_localSlug(cid)),
+        for (final cid in spell.classListIds)
+          EntityLinkChip(entityId: cid),
       ],
       children: [
-        CardKeyValue('Casting Time', _castingTimeText(spell.castingTime)),
-        CardKeyValue('Range', _rangeText(spell.range)),
-        CardKeyValue('Components', _componentsText(spell.components)),
-        CardKeyValue('Duration', _durationText(spell.duration)),
-        if (spell.description.isNotEmpty)
-          CardSection(
-            title: 'DESCRIPTION',
-            child: Text(spell.description),
+        // Editable name lives at the top so the header stays stable.
+        CardFieldGroup(title: 'Identity', children: [
+          CardFieldGrid(columns: 2, fields: [
+            CardField(
+              label: 'Name',
+              child: InlineTextField(
+                value: name,
+                style: Theme.of(context).textTheme.titleMedium,
+                onCommit: (v) => onSave(
+                  name: v,
+                  body: body,
+                  level: level,
+                  schoolId: schoolId,
+                ),
+              ),
+            ),
+            CardField(
+              label: 'Level',
+              child: InlineIntField(
+                value: level,
+                onCommit: (v) => onSave(
+                  name: name,
+                  body: {...body, 'level': v},
+                  level: v,
+                  schoolId: schoolId,
+                ),
+              ),
+            ),
+            CardField(
+              label: 'School',
+              child: InlineTextField(
+                value: schoolId,
+                onCommit: (v) => onSave(
+                  name: name,
+                  body: {...body, 'schoolId': v},
+                  level: level,
+                  schoolId: v,
+                ),
+              ),
+            ),
+            CardField(
+              label: 'Ritual',
+              child: Text(spell.ritual ? 'Yes' : 'No'),
+            ),
+          ]),
+        ]),
+        CardFieldGroup(title: 'Casting', children: [
+          CardFieldGrid(columns: 2, fields: [
+            CardField(
+                label: 'Casting Time',
+                child: Text(_castingTimeText(spell.castingTime))),
+            CardField(
+                label: 'Range', child: Text(_rangeText(spell.range))),
+            CardField(
+                label: 'Components',
+                child: Text(_componentsText(spell.components))),
+            CardField(
+                label: 'Duration',
+                child: Text(_durationText(spell.duration))),
+          ]),
+        ]),
+        CardFieldGroup(title: 'Description', children: [
+          InlineTextField(
+            value: spell.description,
+            maxLines: 16,
+            placeholder: 'No description yet — tap to add…',
+            onCommit: (v) => onSave(
+              name: name,
+              body: {...body, 'description': v},
+              level: level,
+              schoolId: schoolId,
+            ),
           ),
+        ]),
       ],
     );
   }

@@ -6,6 +6,7 @@ import '../../../application/providers/entity_summary_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/dnd5e/card_panel_scope.dart';
 import '../../widgets/dnd5e/typed_card_dispatcher.dart';
 import '../../widgets/resizable_split.dart';
 import 'entity_card.dart';
@@ -190,6 +191,8 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
               tab: _leftTabs[active],
               schema: schema,
               editMode: widget.editMode,
+              panelId: 'left',
+              onOpenLinked: (eid) => _openTab(eid, panel: _Panel.left),
             ),
           ),
         ],
@@ -217,6 +220,8 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
           palette: palette,
           editMode: widget.editMode,
           schema: schema,
+          panelId: 'left',
+          onOpenLinked: (eid) => _openTab(eid, panel: _Panel.right),
           onSelect: (i) { setState(() => _leftActiveIndex = i); _persistOpenTabs(); },
           onClose: (i) => _closeTab(i, _Panel.left),
         ),
@@ -230,6 +235,8 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
           palette: palette,
           editMode: widget.editMode,
           schema: schema,
+          panelId: 'right',
+          onOpenLinked: (eid) => _openTab(eid, panel: _Panel.left),
           onSelect: (i) { setState(() => _rightActiveIndex = i); _persistOpenTabs(); },
           onClose: (i) => _closeTab(i, _Panel.right),
         ),
@@ -242,12 +249,14 @@ enum _Panel { left, right }
 
 /// Per-tab card renderer. Routes typed entity ids (`srd:…`, `hb:…`) through
 /// `TypedCardDispatcher`; all other ids fall back to the schema-driven
-/// `EntityCard`. The dispatcher map grows per Doc 50 batches until Batch 3
-/// closes coverage on all 15 SRD slugs.
+/// `EntityCard`. Wraps the typed card in a [CardPanelScope] so link chips
+/// inside can open referenced entities in the opposite panel.
 Widget _buildDatabaseCard({
   required _TabEntry tab,
   required dynamic schema,
   required bool editMode,
+  required String panelId,
+  required void Function(String entityId) onOpenLinked,
 }) {
   if (isTypedEntityId(tab.entityId)) {
     final typed = dispatchTypedCard(
@@ -255,7 +264,13 @@ Widget _buildDatabaseCard({
       entityId: tab.entityId,
       categoryColor: tab.categoryColor,
     );
-    if (typed != null) return typed;
+    if (typed != null) {
+      return CardPanelScope(
+        panelId: panelId,
+        openInOtherPanel: onOpenLinked,
+        child: typed,
+      );
+    }
   }
   return EntityCard(
     key: ValueKey(tab.entityId),
@@ -291,6 +306,8 @@ class _TabPanel extends ConsumerWidget {
   final DmToolColors palette;
   final bool editMode;
   final dynamic schema;
+  final String panelId;
+  final void Function(String entityId) onOpenLinked;
   final ValueChanged<int> onSelect;
   final ValueChanged<int> onClose;
 
@@ -300,6 +317,8 @@ class _TabPanel extends ConsumerWidget {
     required this.palette,
     required this.editMode,
     this.schema,
+    required this.panelId,
+    required this.onOpenLinked,
     required this.onSelect,
     required this.onClose,
   });
@@ -326,6 +345,8 @@ class _TabPanel extends ConsumerWidget {
             tab: tabs[active],
             schema: schema,
             editMode: editMode,
+            panelId: panelId,
+            onOpenLinked: onOpenLinked,
           ),
         ),
       ],

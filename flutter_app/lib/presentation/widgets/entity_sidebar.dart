@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/entity_summary_provider.dart';
+import '../../application/providers/installed_packages_provider.dart';
 import '../../application/providers/typed_content_provider.dart';
 import '../../core/utils/id_gen.dart';
 import '../../data/database/app_database.dart' hide Size;
@@ -33,10 +34,36 @@ class EntitySidebar extends ConsumerStatefulWidget {
 
 enum _SortMode { name, category, source }
 
+/// Sidebar "filter by source" chip. Narrows the list to one provenance
+/// bucket. `all` = no filter; `builtIn` = rows owned by a package (any
+/// installed_package_id); `homebrewThisWorld` = user-created rows in the
+/// active campaign; `packageId(id)` = rows stamped with that specific
+/// install uuid. The sidebar uses `_SourceFilterValue` wrapper so the
+/// dropdown can hold "packageId(xxx)" entries dynamically.
+class _SourceFilterValue {
+  final String kind; // 'all' | 'builtIn' | 'homebrewThisWorld' | 'packageId'
+  final String? packageId;
+  const _SourceFilterValue(this.kind, {this.packageId});
+  static const all = _SourceFilterValue('all');
+  static const builtIn = _SourceFilterValue('builtIn');
+  static const homebrewThisWorld = _SourceFilterValue('homebrewThisWorld');
+  factory _SourceFilterValue.pkg(String id) =>
+      _SourceFilterValue('packageId', packageId: id);
+
+  @override
+  bool operator ==(Object other) =>
+      other is _SourceFilterValue &&
+      other.kind == kind &&
+      other.packageId == packageId;
+  @override
+  int get hashCode => Object.hash(kind, packageId);
+}
+
 class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   String _searchQuery = '';
   String? _selectedCategory; // null = tümü
   _SortMode _sortMode = _SortMode.name;
+  _SourceFilterValue _sourceFilter = _SourceFilterValue.all;
 
   @override
   Widget build(BuildContext context) {
@@ -58,15 +85,42 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     }
 
     // Filtrele (isim + tag arama)
+    //
+    // Search-is-active rule: when the user has typed a query, the source
+    // filter is bypassed so the search spans every row the user owns.
+    // Category filter also bypasses during search (query wins). Outside
+    // search, both filters apply.
     final query = _searchQuery.toLowerCase();
+    final searchActive = query.isNotEmpty;
+    final campaignIdForFilter = ref.watch(activeCampaignIdProvider);
+    bool matchesSource(EntitySummary e) {
+      switch (_sourceFilter.kind) {
+        case 'all':
+          return true;
+        case 'builtIn':
+          return e.installedPackageId != null;
+        case 'homebrewThisWorld':
+          if (campaignIdForFilter == null) return false;
+          return e.id.startsWith('hb:$campaignIdForFilter:') ||
+              e.source == 'homebrew';
+        case 'packageId':
+          return e.installedPackageId != null &&
+              e.installedPackageId == _sourceFilter.packageId;
+      }
+      return true;
+    }
+
     final filtered = summaries.where((e) {
-      if (_selectedCategory != null && e.categorySlug != _selectedCategory) return false;
-      if (query.isNotEmpty) {
+      if (searchActive) {
         final nameMatch = e.name.toLowerCase().contains(query);
         final tagMatch = e.tags.any((t) => t.toLowerCase().contains(query));
         final sourceMatch = e.source.toLowerCase().contains(query);
-        if (!nameMatch && !tagMatch && !sourceMatch) return false;
+        return nameMatch || tagMatch || sourceMatch;
       }
+      if (_selectedCategory != null && e.categorySlug != _selectedCategory) {
+        return false;
+      }
+      if (!matchesSource(e)) return false;
       return true;
     }).toList()
       ..sort((a, b) => switch (_sortMode) {
@@ -141,6 +195,64 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
               ),
             ),
           ),
+
+        // Source filter — narrows by provenance (built-in vs homebrew vs
+        // specific installed package). Bypassed when a search query is
+        // active so the user's text search can span every row.
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Consumer(builder: (context, ref, _) {
+            final installs =
+                ref.watch(installedAttributionsProvider).valueOrNull ??
+                    const [];
+            final items = <DropdownMenuItem<_SourceFilterValue>>[
+              DropdownMenuItem(
+                value: _SourceFilterValue.all,
+                child: Text('All Sources',
+                    style: TextStyle(
+                        fontSize: 12, color: palette.uiPopupText)),
+              ),
+              DropdownMenuItem(
+                value: _SourceFilterValue.builtIn,
+                child: Text('Built-in (any package)',
+                    style: TextStyle(
+                        fontSize: 12, color: palette.uiPopupText)),
+              ),
+              DropdownMenuItem(
+                value: _SourceFilterValue.homebrewThisWorld,
+                child: Text("This world's homebrew",
+                    style: TextStyle(
+                        fontSize: 12, color: palette.uiPopupText)),
+              ),
+              for (final p in installs)
+                DropdownMenuItem(
+                  value: _SourceFilterValue.pkg(p.id),
+                  child: Text(p.name,
+                      style: TextStyle(
+                          fontSize: 12, color: palette.uiPopupText)),
+                ),
+            ];
+            return DropdownButtonHideUnderline(
+              child: DropdownButton<_SourceFilterValue>(
+                value: _sourceFilter,
+                isExpanded: true,
+                isDense: true,
+                icon: Icon(Icons.arrow_drop_down,
+                    size: 18, color: palette.tabText),
+                style: TextStyle(
+                    fontSize: 12, color: palette.tabActiveText),
+                dropdownColor: palette.uiPopupBg,
+                borderRadius: BorderRadius.circular(4),
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _sourceFilter = v);
+                },
+                items: items,
+                menuMaxHeight: 400,
+              ),
+            );
+          }),
+        ),
 
         // Sort toggle
         Padding(
@@ -339,6 +451,12 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     'lore',
     'plane',
     'status-effect',
+    'npc',
+    'player',
+    'action',
+    'reaction',
+    'trait',
+    'legendary-action',
   };
 
   Future<String> _createEntity(String categorySlug, String name) async {

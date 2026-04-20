@@ -13,11 +13,6 @@ class CardShell extends StatelessWidget {
   final List<Widget> children;
   final Widget? trailing;
 
-  /// When set, renders a pencil icon button in the header that fires this
-  /// callback. Typed cards hook it up to open an entity-specific editor
-  /// dialog; leave null to suppress the affordance.
-  final VoidCallback? onEdit;
-
   const CardShell({
     required this.title,
     required this.categoryColor,
@@ -25,7 +20,6 @@ class CardShell extends StatelessWidget {
     this.tags = const [],
     this.children = const [],
     this.trailing,
-    this.onEdit,
     super.key,
   });
 
@@ -35,9 +29,6 @@ class CardShell extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: palette.tabActiveBg,
-        border: Border(
-          left: BorderSide(color: categoryColor, width: 4),
-        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -46,7 +37,6 @@ class CardShell extends StatelessWidget {
             title: title,
             subtitle: subtitle,
             trailing: trailing,
-            onEdit: onEdit,
             palette: palette,
           ),
           if (tags.isNotEmpty)
@@ -73,14 +63,12 @@ class _Header extends StatelessWidget {
   final String title;
   final String? subtitle;
   final Widget? trailing;
-  final VoidCallback? onEdit;
   final DmToolColors palette;
 
   const _Header({
     required this.title,
     required this.subtitle,
     required this.trailing,
-    required this.onEdit,
     required this.palette,
   });
 
@@ -117,13 +105,6 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
-          if (onEdit != null)
-            IconButton(
-              onPressed: onEdit,
-              icon: const Icon(Icons.edit_outlined, size: 18),
-              tooltip: 'Edit',
-              visualDensity: VisualDensity.compact,
-            ),
           ?trailing,
         ],
       ),
@@ -211,6 +192,115 @@ class CardKeyValue extends StatelessWidget {
             TextSpan(text: value),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Label + editable/read-only child pair, laid out as `LABEL` over the
+/// field on narrow grids. Used by [CardFieldGrid] to build a stat-block
+/// style grouping.
+class CardField extends StatelessWidget {
+  final String label;
+  final Widget child;
+
+  const CardField({required this.label, required this.child, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.9,
+            color: palette.sidebarLabelSecondary,
+          ),
+        ),
+        const SizedBox(height: 2),
+        child,
+      ],
+    );
+  }
+}
+
+/// Responsive N-column grid of [CardField]s. Flows to 1 column on narrow
+/// surfaces, [columns] on wider ones. Rows wrap automatically.
+class CardFieldGrid extends StatelessWidget {
+  final List<CardField> fields;
+  final int columns;
+  final double spacing;
+
+  const CardFieldGrid({
+    required this.fields,
+    this.columns = 2,
+    this.spacing = 12,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, c) {
+      final cols = c.maxWidth < 420 ? 1 : columns;
+      final cellWidth = (c.maxWidth - spacing * (cols - 1)) / cols;
+      return Wrap(
+        spacing: spacing,
+        runSpacing: spacing * 0.6,
+        children: [
+          for (final f in fields)
+            SizedBox(width: cellWidth, child: f),
+        ],
+      );
+    });
+  }
+}
+
+/// Titled group of fields — paper look + soft divider. Wrap one or more
+/// [CardFieldGrid]s / plain widgets as [children] to build a stat block
+/// section (e.g. "COMBAT", "ABILITIES").
+class CardFieldGroup extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+
+  const CardFieldGroup(
+      {required this.title, required this.children, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Text(
+                title.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                  color: palette.sidebarLabelSecondary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  height: 1,
+                  color: palette.sidebarDivider,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...children,
+        ],
       ),
     );
   }
