@@ -192,6 +192,18 @@ character creation, spells, combat, and items all reference SRD content.
 
 ## Implementation Log
 
+### Current snapshot (2026-04-20)
+
+- **Tests:** 1437 / 1437 pass, 1 skipped. `flutter analyze`: 0 issues.
+- **Drift schema:** `v8` (additive path; legacy v5 tables still present — Doc 04 Step 5/7 blocks their drop).
+- **Active branch:** `builtin`.
+- **Phase A (structural unblock):** 🟣 Doc 42 `V5ResetBootstrap` + `LegacyDbBackup` wired in `_BootstrapGate`; `V5UpgradeNoticeDialog` posts on first frame via `v5ResetOutcomeProvider`. Doc 04 Step 5 (delete `lib/domain/entities/schema/` — 13 files, ~48 lib consumers + 6 test consumers) + Step 7 (drift `v8→v9` onUpgrade drop of `worldSchemas`/`packages`/`packageSchemas`/`packageEntities`) still pending.
+- **Phase B (SRD content authoring):** 🟣 Tier 1 catalogs 12/12 ✓. Tier 2 codec surface 9/9 ✓. Assets shipped: species 9/9, lineages 5/5, backgrounds 16/16, feats 12/12 Origin + placeholder 3 General + 4 Fighting Style + 3 Epic Boon, cantrips 27/27, spells L1 50/50, spells L2-9 4 each (placeholder), classes 5/12 (placeholder), subclasses 5/12 (placeholder), monsters 5 (placeholder), items 8 (placeholder). Per-user direction after 2026-04-19: ship ≥3–5 samples per remaining Tier 2 category to exercise every codec end-to-end before finishing authoring; full asset fill deferred to post-app-functional.
+- **Phase B legal:** 🟣 CC BY 4.0 attribution UI shipped — `installed_packages` v8 carries `authorName`/`sourceLicense`/`description`; `AboutScreen` at `/about` + Settings entry; `DungeonMasterApp` listens on `srdBootstrapOutcomeProvider` for a one-shot Snackbar.
+- **Phase B runtime:** 🟣 `SrdBootstrapService` + 9 `CustomEffect` identity impls + monolith asset committed (`assets/packages/srd_core.dnd5e-pkg.json`, 156 KB, `sha256:5d33061e…`); wired into `UserSessionNotifier.activate` as fire-and-forget via `runSrdBootstrap`.
+- **Phase C (combat services):** 🟣 `EncounterService` composition (attack/damage/save pipelines + turn-rotation + condition-tick) + lifecycle hook surface (9-variant sealed `EncounterEvent` + `CompositeEncounterHook`) + 10-scenario end-to-end integration tests locked.
+- **Phases D (UI), E (online), F (quality):** ⚪ not started.
+
 ### 2026-04-20 — Doc 42 main.dart wiring + LegacyDbBackup helper (🟣) — Phase A bootstrap close-out (Task 3 of 3)
 
 Closes the third leg of the Phase A structural unblock by wiring the existing `V5ResetBootstrap` (purger glue, shipped earlier) into the live `_BootstrapGate` boot sequence and ships the `_backupV4DbBeforeReset` helper that the strategy plan called out as the gating dependency. After this batch, a launch on a v4 install: (1) backs up the v4 SQLite file to a sibling `.v4.backup.sqlite` *before* anything destructive runs, (2) purges the legacy template/rule caches + prefs keys, (3) marks the reset complete in `shared_preferences`, (4) posts the `V5UpgradeNoticeDialog` once on the first frame, surfacing the backup path to the user. Doc 04 Step 5 (delete `lib/domain/entities/schema/`) and Step 7 (drop legacy v5 tables in drift `onUpgrade` v9) are deliberately *not* in this batch — Step 5 alone touches 33 importer files spanning data + application + presentation + tests, which is several turns of focused refactor; bundling it here would balloon scope and risk a half-shipped state. Tasks 1–2 remain queued.
@@ -1380,9 +1392,11 @@ Second Doc 15 landing. Bridges opaque `CatalogEntry.bodyJson` strings ↔ typed 
 
 27 new tests: Condition (3), DamageType (2), Skill (3), Size (2), CreatureType (1), Alignment (2), Language (2), SpellSchool (2), WeaponProperty (4), WeaponMastery (1), ArmorCategory (2), Rarity (2), shared FormatException-prefix-is-entry-id (1).
 
-### Current test totals
+### Test totals — snapshot at Doc 15 Tier 1 catalog codec (2026-04-19)
 
 `flutter analyze`: 0 issues. `flutter test`: **763 / 763 passing, 1 skipped** (was 736 at end of Doc 15 file-format codec; +27 Tier 1 catalog codec tests added).
+
+> **Live totals as of 2026-04-20:** 1437 / 1437 passing, 1 skipped. `flutter analyze` clean. Drift `schemaVersion = 8`. See implementation log top-of-list for the most recent batch (Doc 42 `main.dart` wiring + `LegacyDbBackup`).
 
 ---
 
