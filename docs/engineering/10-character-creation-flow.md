@@ -3,6 +3,7 @@
 > **For Claude.** Step-by-step wizard implementing SRD §16. State machine, validation, UI shape.
 > **Source rules:** [00 §16-§22](./00-dnd5e-mechanics-reference.md#16-character-creation-pp-19-22)
 > **Target:** `flutter_app/lib/presentation/screens/dnd5e/character_creation/`
+> **UI migration:** Replaces the legacy schema-driven `CharacterEditorScreen` form at the "create new character" entry point. See [`50-typed-ui-migration.md`](./50-typed-ui-migration.md) Batch 6 — the wizard is authored on top of typed `Dnd5eCharacter` from day one; no schema-driven transitional form needed. The old "create character" button wiring in `characters_tab.dart` switches from the legacy editor to this wizard.
 
 ## Wizard Steps
 

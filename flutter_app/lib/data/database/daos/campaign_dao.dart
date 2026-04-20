@@ -11,13 +11,11 @@ import '../tables/mind_map_edges_table.dart';
 import '../tables/mind_map_nodes_table.dart';
 import '../tables/sessions_table.dart';
 import '../tables/timeline_pins_table.dart';
-import '../tables/world_schemas_table.dart';
 
 part 'campaign_dao.g.dart';
 
 @DriftAccessor(tables: [
   Campaigns,
-  WorldSchemas,
   Entities,
   Sessions,
   Encounters,
@@ -130,11 +128,6 @@ class CampaignDao extends DatabaseAccessor<AppDatabase>
             ..where((t) => t.campaignId.equals(campaignId)))
           .go();
 
-      // Schema
-      await (delete(worldSchemas)
-            ..where((t) => t.campaignId.equals(campaignId)))
-          .go();
-
       // Kampanya
       await (delete(campaigns)..where((t) => t.id.equals(campaignId))).go();
     });
@@ -145,24 +138,19 @@ class CampaignDao extends DatabaseAccessor<AppDatabase>
       select(campaigns).map((c) => c.worldName).get();
 
   /// Returns (id, worldName, schemaName) tuples for the hub campaign list.
-  /// Joins campaigns with world_schemas to get the template name without
-  /// loading the full campaign data.
+  /// Post-v9 the `world_schemas` join is gone; every campaign uses the
+  /// single hardcoded D&D 5e schema so templateName is constant.
   Future<List<({String id, String worldName, String templateName})>>
       getCampaignInfoList() async {
-    final query = select(campaigns).join([
-      leftOuterJoin(
-          worldSchemas, worldSchemas.campaignId.equalsExp(campaigns.id)),
-    ]);
-    query.orderBy([OrderingTerm.asc(campaigns.worldName)]);
-    final rows = await query.get();
-    return rows.map((row) {
-      final c = row.readTable(campaigns);
-      final s = row.readTableOrNull(worldSchemas);
-      return (
-        id: c.id,
-        worldName: c.worldName,
-        templateName: s?.name ?? 'Unknown',
-      );
-    }).toList();
+    final rows = await (select(campaigns)
+          ..orderBy([(t) => OrderingTerm.asc(t.worldName)]))
+        .get();
+    return rows
+        .map((c) => (
+              id: c.id,
+              worldName: c.worldName,
+              templateName: 'D&D 5e',
+            ))
+        .toList();
   }
 }

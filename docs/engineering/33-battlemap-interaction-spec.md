@@ -3,6 +3,7 @@
 > **For Claude.** Pan/zoom, token drag, drawing tools, measurement, AoE placement, fog brushes. Touch vs mouse vs stylus.
 > **Existing:** [battle_map_painter.dart:27](../../flutter_app/lib/presentation/screens/battle_map/battle_map_painter.dart#L27), 6-layer render, ViewTransform with ValueNotifier.
 > **Target:** `flutter_app/lib/presentation/screens/dnd5e/battlemap/`
+> **Typed entity refs:** Per [`50-typed-ui-migration.md`](./50-typed-ui-migration.md) Batch 5, tokens and map pins carry typed entity IDs (`srd:goblin`, `hb:<uuid>`, `hb:<campaignId>:<uuid>`) instead of legacy blob IDs. Pan/zoom/draw/fog/AoE geometry are **unchanged**; only the token's `entityId` field's resolution path changes (reads from typed content providers). Tool palette, layer order, and interaction gestures remain identical.
 
 ## Tool Palette
 

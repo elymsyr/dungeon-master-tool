@@ -2,6 +2,7 @@
 
 > **For Claude.** DM vs player view, public/private fields, mobile/tablet/desktop layouts.
 > **Target:** `flutter_app/lib/presentation/screens/dnd5e/character/`
+> **Migration:** The legacy `CharacterEditorScreen` (1166 LOC, `FieldSchema`-driven form) is replaced by a typed editor driven by `Dnd5eCharacter` — see [`50-typed-ui-migration.md`](./50-typed-ui-migration.md) Batch 6. The **three-pane layout / tab structure / save-cancel affordance / validation chip placement** from the legacy editor are **preserved verbatim**. Only the form contents change from generic `FieldGroup`s to typed ability-score / combat-stat / inventory / spell-list panels.
 
 ## Viewer Roles
 

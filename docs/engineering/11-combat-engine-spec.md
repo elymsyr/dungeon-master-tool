@@ -3,6 +3,7 @@
 > **For Claude.** Manual combat tracker (MVP). Auto-resolve = Future Work.
 > **Source rules:** [00 §6-§14](./00-dnd5e-mechanics-reference.md#7-combat-flow-pp-13-14)
 > **Target:** `flutter_app/lib/application/dnd5e/combat/`, `flutter_app/lib/presentation/screens/dnd5e/combat/`
+> **UI migration:** Legacy `SessionScreen` (1851 LOC, reads `EncounterConfig` + `EncounterLayout` from `WorldSchema`) is rewired to read from `EncounterService` + typed `Combatant` rows — see [`50-typed-ui-migration.md`](./50-typed-ui-migration.md) Batch 5. The **initiative column layout / HP bar / condition chip / turn arrow / action-log / AoE overlay** are **preserved verbatim**. Only the data source for each combatant's card content changes (typed `Monster` / `Dnd5eCharacter` row via `TypedCardDispatcher` inspector panel instead of schema-driven `EntityCard`).
 
 ## Scope
 

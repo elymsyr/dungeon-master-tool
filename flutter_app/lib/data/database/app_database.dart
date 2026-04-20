@@ -28,14 +28,12 @@ import 'tables/package_schemas_table.dart';
 import 'tables/packages_table.dart';
 import 'tables/sessions_table.dart';
 import 'tables/timeline_pins_table.dart';
-import 'tables/world_schemas_table.dart';
 
 part 'app_database.g.dart';
 
 @DriftDatabase(
   tables: [
     Campaigns,
-    WorldSchemas,
     Entities,
     Sessions,
     Encounters,
@@ -92,7 +90,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -103,19 +101,12 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(campaigns, campaigns.stateJson);
           }
           if (from < 3) {
-            // v3: world_schemas.template_id + template_hash — lazy
-            // template-sync drift detection.
-            await m.addColumn(worldSchemas, worldSchemas.templateId);
-            await m.addColumn(worldSchemas, worldSchemas.templateHash);
+            // v3: world_schemas.template_id + template_hash — legacy column
+            // adds on a since-dropped table. No-op under v9.
           }
           if (from < 4) {
-            // v4: world_schemas.template_original_hash — frozen lineage
-            // identifier alongside the existing template_hash (which is
-            // now the "current" hash at last sync). Lets the sync flow
-            // match a campaign back to its template even after the
-            // template's schemaId / current hash change.
-            await m.addColumn(
-                worldSchemas, worldSchemas.templateOriginalHash);
+            // v4: world_schemas.template_original_hash — legacy column add
+            // on a since-dropped table. No-op under v9.
           }
           if (from < 5) {
             // v5: Paket sistemi — packages, package_schemas, package_entities.
@@ -163,6 +154,15 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(
                 installedPackages, installedPackages.sourceLicense);
             await m.addColumn(installedPackages, installedPackages.description);
+          }
+          if (from < 9) {
+            // v9: Doc 04 Step 7 partial — drop the legacy `world_schemas`
+            // table. The single hardcoded D&D 5e schema is now always
+            // injected at read time via `generateDefaultDnd5eSchema()`,
+            // so per-campaign schema rows carry no value.
+            // LegacyDbBackup snapshots the pre-v9 DB to
+            // `dmt.v4.backup.sqlite` before this fires.
+            await m.deleteTable('world_schemas');
           }
         },
       );

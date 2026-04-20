@@ -9,7 +9,7 @@ import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/world_schema.dart' as domain;
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/package_repository.dart';
-import '../database/app_database.dart' hide WorldSchema;
+import '../database/app_database.dart';
 import '../datasources/local/package_local_ds.dart';
 
 const _uuid = Uuid();

@@ -12,6 +12,7 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/marketplace_panel.dart';
 import 'social_tab.dart';
+import '../../widgets/hub_card_grid.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
@@ -46,7 +47,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
+          constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,11 +102,9 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                           ),
                         ),
                       )
-                    : ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
+                    : HubCardGrid(
                         itemCount: characters.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 4),
+                        tileWidth: 360,
                         itemBuilder: (context, index) {
                           final c = characters[index];
                           final isSelected = index == _selectedIndex;

@@ -2,6 +2,33 @@
 
 > **For Claude.** Ordered file deletion + refactor steps. Each step compiles on its own (`flutter analyze` passes after each commit).
 > **Total scope:** ~40 files, ~3000 LOC.
+> **Status (2026-04-20):** 🟣 Partial. Steps 1-4, 6, 8-10 shipped (per prior batches). Step 7 partially shipped (v8→v9 `world_schemas` drop). Step 5 (delete `lib/domain/entities/schema/`) + remaining Step 7 drops (`packages`/`package_schemas`/`package_entities`/`entities`) are **absorbed into [50-typed-ui-migration.md](./50-typed-ui-migration.md)** because they require typed renderer replacements across 60+ consumer files — out of scope for a "delete only" pass. Treat Doc 50 Batches 1-8 as the authoritative continuation of this checklist.
+
+## Step Status Summary (2026-04-20)
+
+| Step | Title | Status | Notes |
+|---|---|---|---|
+| 1 | Delete Template UI | 🟢 Done | Template tab, editor, picker, drift dialogs gone. |
+| 2 | Delete Template Application Services | 🟢 Done | `template_sync_service.dart` + `template_compatibility_service.dart` removed. |
+| 3 | Delete Template Providers | 🟡 Partial | `applyTemplateUpdate` etc. methods + `templateHash`/`templateOriginalHash` state fields removed from `campaign_provider`. `template_provider.dart` (8 LOC, exposes `allTemplatesProvider`) still alive — still read by `packages_tab.dart` for the unused template dropdown; deletion deferred to Doc 50 Batch 8. |
+| 4 | Delete Template Datasources | 🟢 Done | `template_local_ds.dart` gone; `campaign_repository_impl.dart` no longer tracks `templateHash`/`templateId` columns. |
+| 5 | Delete Template Domain | 🟣 **Absorbed into [50](./50-typed-ui-migration.md) Batch 8.** | 13-file `lib/domain/entities/schema/` directory still in use by `EntityCard`, `CharacterEditor`, `SessionScreen`, `MindMap`, `BattleMap`, `WorldMap`, import dialogs. Cannot delete without typed replacement renderers shipping first. |
+| 6 | Delete Rule Engine V2 | 🟢 Done | `rule_engine_v2.dart` gone; last UI reference (`rule_builder_dialog.dart`, 1191 LOC, 0 callers) removed 2026-04-20. `rule_v2.dart` itself lives under `lib/domain/entities/schema/` → follows Step 5's fate. |
+| 7 | Drift Migration v4 → v5 | 🟡 **Partial.** | Drift migration path lives (now v8 → v9 after Plan B, not v4 → v5 as the original doc wrote). 2026-04-20: `world_schemas` dropped; `world_schemas_table.dart` deleted. `packages` / `package_schemas` / `package_entities` / `entities` drops deferred to [50](./50-typed-ui-migration.md) Batch 7-8 because `packages_tab.dart`, `package_screen.dart`, `entity_sidebar.dart`, `EntityCard`, and `entity_provider.dart` still write/read those tables. |
+| 8 | Marketplace Cleanup | 🟡 Partial | `marketplace_listing_provider.dart` no longer filters by template type. Minor schema-import cleanup in `marketplace_tab.dart` still pending (not user-visible). |
+| 9 | Final Sweep | 🟣 Deferred | Grep target still returns hits (schema/ dir + remaining `WorldSchema` imports in surviving screens). Final sweep runs as [50](./50-typed-ui-migration.md) Batch 8 acceptance. |
+| 10 | Update Imports & Barrel Files | 🟡 Partial | Done for deleted files; remaining work piggybacks on [50](./50-typed-ui-migration.md) deletion batches. |
+
+## Why Steps 5 + Remaining 7 Cannot Ship as a "Delete Only" Pass
+
+Per a 2026-04-20 audit, the `lib/domain/entities/schema/` directory has active consumers in **every UI layer**:
+
+- **Presentation:** `entity_card.dart` (897 LOC, schema-driven renderer), `character_editor_screen.dart` (1166 LOC, `FieldSchema`-driven form), `session_screen.dart` (1851 LOC, reads `EncounterConfig` + `EncounterLayout` from `WorldSchema`), `entity_sidebar.dart`, `import_dialog.dart`, `import_package_dialog.dart`, `package_screen.dart`, `field_widgets/` (entire directory), `mind_map_screen.dart`, `battle_map_screen.dart`, `world_map_screen.dart`.
+- **Application:** `package_import_service.dart`, `entity_provider.dart`, `character_provider.dart`, `combat_provider.dart`, `package_provider.dart`, `campaign_provider.dart`, `battle_map_snapshot_builder.dart`, `entity_snapshot_builder.dart`, `cloud_backup_provider.dart`, `marketplace_listing_provider.dart`, `user_session_provider.dart`.
+- **Data:** `campaign_repository_impl.dart` (schema injection point), `package_repository_impl.dart`, `marketplace_links_local_ds.dart`, `entity_parser.dart`.
+- **Domain:** `campaign.dart` (carries `WorldSchema` field), `package_repository.dart`, `campaign_repository.dart`.
+
+Deleting the directory without first replacing every renderer would produce a compile-broken repo with no path to a shippable intermediate state. The realistic plan is: **ship typed replacement renderers first (Doc 50 Batches 1-7), then delete the directory in one final pass (Doc 50 Batch 8)**. That is what Doc 50 spells out.
 
 ## Strategy
 

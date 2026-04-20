@@ -77,6 +77,71 @@ The app must remain fully usable on **mobile/tablet (Android, iOS)** and **deskt
 
 ---
 
+## Roadmap
+
+> Forward-looking plan. Implementation Log (bottom of this doc) tracks completed work; this section lists what ships next and in what order.
+
+### Milestones
+
+| # | Milestone | Gate Criteria | Est. Turns | Parallel Tracks |
+|---|---|---|---|---|
+| **M1** | **Typed UI live** (Phase D close) | All 15 category cards typed, editor + wizard typed, SessionScreen reads typed combatants, legacy `entities` blob dropped | ~40-60 | — (critical path) |
+| **M2** | **SRD content fill** (Phase B close) | `srd_core.dnd5e-pkg.json` ships full SRD 5.2.1: ~320 spells, ~400 monsters, ~250 items, 12 classes, 5 species, 4 backgrounds, conditions, feats | ~30 | Runs parallel to M1 after Batch 2 |
+| **M3** | **Combat edge cases** (Phase C close) | Concentration save flow, AoE geometry, multiclass spell slots, death saves, conditions interactions per [00](./00-dnd5e-mechanics-reference.md) + [11](./11-combat-engine-spec.md) | ~20 | Runs parallel to M1/M2 |
+| **M4** | **Alpha-playable (single-user)** | Offline DM can build world, create characters via wizard, run a full combat encounter end-to-end with typed UI + SRD content + polished mechanics. No online. No auto-combat. | Gate | Requires M1+M2+M3 |
+| **M5** | **Online mode** (Phase E) | Supabase wired, game-code join, battlemap + character + player-screen tabs sync realtime per docs [20-25](./20-online-mode-architecture.md) | ~46 | Serial after M4 |
+| **M6** | **MVP ship-ready** (Phase F) | Responsive polish ([30](./30-responsive-design-system.md)), onboarding, fresh-start migration ([42](./42-fresh-start-db-reset.md)), release gates ([43](./43-release-quality-gates.md)), TR + EN locale | ~40 | Serial after M5 |
+
+**Total MVP estimate: ~150 turns.**
+
+### Critical Path — Phase D (8 batches)
+
+Detail in [`50-typed-ui-migration.md`](./50-typed-ui-migration.md). Order matters: entity ID unification (Batch 2) blocks everything downstream.
+
+| Batch | Scope | Blocks |
+|---|---|---|
+| 1 | `TypedCardDispatcher` + 5 core cards (Spell, Monster, Item, Feat, Background) | UI-side typed reads |
+| 2 | Entity ID unification (`srd:` / `hb:` / `hb:<campaignId>:` prefix) + `homebrew_entries` table | All downstream batches |
+| 3 | Remaining 10 category cards (Class, Race, NPC, Player, Location, Quest, Lore, Plane, Condition, StatusEffect, Action) | Full grid parity |
+| 4 | User content migration (v9 → v10: blob `entities` → typed tables) | Legacy data access |
+| 5 | SessionScreen + battlemap typed combatant/token reads | Combat flows |
+| 6 | Character editor + creation wizard typed rewrite | Replaces `CharacterEditorScreen` (1166 LOC) |
+| 7 | Package format v2 — typed Dnd5e packages | SRD package publishing |
+| 8 | Drop legacy `entities` column + blob code paths | Phase D complete |
+
+### Parallel Tracks
+
+- **Content track (M2):** Populate `srd_core.dnd5e-pkg.json` under [`15-srd-content-package.md`](./15-srd-content-package.md). Can start after Batch 2 since entity ID shape is fixed.
+- **Combat polish (M3):** Sharpen `11-combat-engine-spec` edge cases. Independent of UI; only needs typed domain classes (already exist).
+
+### Risk Gates
+
+1. **Drift v9 → v10 migration** (Batch 4) — touches user data. Fresh-start fallback documented in [42](./42-fresh-start-db-reset.md).
+2. **Legacy card grid dispatch** (Batch 1-3) — must not regress existing grid layout. `HubCardGrid` already preserves.
+3. **Subclass/multiclass at wizard** (Batch 6) — deepest mechanics; may need schema adjustments.
+4. **Supabase realtime cost model** (M5) — validate early in Batch 5-equivalent for online.
+5. **SRD license compliance** (M2) — confirm CC BY 4.0 attribution per package.
+6. **i18n string extraction** (M6) — do not postpone past M5; retrofitting typed widgets is expensive.
+
+### Priority-Ordered Work Queue (next 14 items)
+
+1. Doc 50 Batch 1 — `TypedCardDispatcher` shell + dispatch table
+2. `SpellCard` typed widget
+3. `MonsterCard` typed widget
+4. `ItemCard` typed widget
+5. `FeatCard` + `BackgroundCard`
+6. Entity ID namespacing refactor (Batch 2)
+7. `homebrew_entries` Drift table + DAO
+8. Remaining 10 category cards (Batch 3)
+9. v9 → v10 migration (Batch 4)
+10. SessionScreen typed rewire (Batch 5)
+11. Character editor typed rewrite (Batch 6a)
+12. Character creation wizard (Batch 6b)
+13. Package format v2 + SRD content (Batch 7 + M2 merge)
+14. Drop legacy `entities` blob (Batch 8) → **M1 gate**
+
+---
+
 ## Status Legend
 
 - 🟢 **Complete** — merged, authoritative
@@ -133,9 +198,10 @@ The built-in dnd5e module ships **mechanics only** (rules engine, typed shapes, 
 | # | Filename | Purpose | Deps | Status |
 |---|---|---|---|---|
 | 30 | [`30-responsive-design-system.md`](./30-responsive-design-system.md) | Breakpoints, adaptive widget pattern, touch vs mouse vs stylus. | — | ⚪ |
-| 31 | [`31-ui-component-library.md`](./31-ui-component-library.md) | 24 DnD5e-specific reusable widgets. | 01, 30 | ⚪ |
+| 31 | [`31-ui-component-library.md`](./31-ui-component-library.md) | 24 DnD5e-specific reusable widgets + 15 typed content cards (`TypedCardDispatcher`). | 01, 30 | ⚪ |
 | 32 | [`32-character-sheet-views.md`](./32-character-sheet-views.md) | DM vs player views, field visibility matrix, mobile/tablet/desktop layouts. | 01, 30, 31 | ⚪ |
 | 33 | [`33-battlemap-interaction-spec.md`](./33-battlemap-interaction-spec.md) | Pan/zoom, token drag, drawing tools, measurement, AoE placement, fog brushes. | 23, 30 | ⚪ |
+| 50 | [`50-typed-ui-migration.md`](./50-typed-ui-migration.md) | **Master Phase D plan.** Typed-only UI migration preserving every existing layout. 8 batches; closes Phase A structural goal (delete `lib/domain/entities/schema/`) and opens Phase D. | 01, 03, 04, 11, 14, 31, 32, 33 | 🟠 |
 
 ## Phase 5: Quality & Operations (Sprint 8+)
 
@@ -195,14 +261,50 @@ character creation, spells, combat, and items all reference SRD content.
 ### Current snapshot (2026-04-20)
 
 - **Tests:** 1437 / 1437 pass, 1 skipped. `flutter analyze`: 0 issues.
-- **Drift schema:** `v8` (additive path; legacy v5 tables still present — Doc 04 Step 5/7 blocks their drop).
+- **Drift schema:** `v9` (2026-04-20 — `world_schemas` table dropped; legacy `packages`/`package_schemas`/`package_entities` + `entities` still present, slated for v10 drop per Doc 50 Batch 7/8).
 - **Active branch:** `builtin`.
-- **Phase A (structural unblock):** 🟣 Doc 42 `V5ResetBootstrap` + `LegacyDbBackup` wired in `_BootstrapGate`; `V5UpgradeNoticeDialog` posts on first frame via `v5ResetOutcomeProvider`. Doc 04 Step 5 (delete `lib/domain/entities/schema/` — 13 files, ~48 lib consumers + 6 test consumers) + Step 7 (drift `v8→v9` onUpgrade drop of `worldSchemas`/`packages`/`packageSchemas`/`packageEntities`) still pending.
+- **Phase A (structural unblock):** 🟣 Partial close. Doc 42 `V5ResetBootstrap` + `LegacyDbBackup` wired in `_BootstrapGate`; `V5UpgradeNoticeDialog` posts on first frame via `v5ResetOutcomeProvider`. Doc 04 Step 7 `world_schemas` drop shipped (v8→v9, `CampaignRepositoryImpl` injects hardcoded `generateDefaultDnd5eSchema()` at read time; `CampaignDao` `@DriftAccessor` trimmed; `rule_builder_dialog.dart` deleted). Doc 04 Step 5 (delete `lib/domain/entities/schema/` — 13 files) + remaining Step 7 table drops (`packages`/`package_schemas`/`package_entities`/`entities`) absorbed into **Doc 50 — Typed UI Migration (Phase D master plan)** because the structural deletion requires typed card widget replacements (15 cards per SRD category) which belong in Phase D.
+- **Phase D (typed UI migration, keeps all existing layouts):** 🟠 Plan published (Doc 50). 8 batches sequenced leaf-inward: typed card dispatcher + 15 cards, typed content providers, typed sidebar/session/map entity refs, typed character editor, homebrew create flow, `entities` blob migration, schema dir deletion.
 - **Phase B (SRD content authoring):** 🟣 Tier 1 catalogs 12/12 ✓. Tier 2 codec surface 9/9 ✓. Assets shipped: species 9/9, lineages 5/5, backgrounds 16/16, feats 12/12 Origin + placeholder 3 General + 4 Fighting Style + 3 Epic Boon, cantrips 27/27, spells L1 50/50, spells L2-9 4 each (placeholder), classes 5/12 (placeholder), subclasses 5/12 (placeholder), monsters 5 (placeholder), items 8 (placeholder). Per-user direction after 2026-04-19: ship ≥3–5 samples per remaining Tier 2 category to exercise every codec end-to-end before finishing authoring; full asset fill deferred to post-app-functional.
 - **Phase B legal:** 🟣 CC BY 4.0 attribution UI shipped — `installed_packages` v8 carries `authorName`/`sourceLicense`/`description`; `AboutScreen` at `/about` + Settings entry; `DungeonMasterApp` listens on `srdBootstrapOutcomeProvider` for a one-shot Snackbar.
 - **Phase B runtime:** 🟣 `SrdBootstrapService` + 9 `CustomEffect` identity impls + monolith asset committed (`assets/packages/srd_core.dnd5e-pkg.json`, 156 KB, `sha256:5d33061e…`); wired into `UserSessionNotifier.activate` as fire-and-forget via `runSrdBootstrap`.
 - **Phase C (combat services):** 🟣 `EncounterService` composition (attack/damage/save pipelines + turn-rotation + condition-tick) + lifecycle hook surface (9-variant sealed `EncounterEvent` + `CompositeEncounterHook`) + 10-scenario end-to-end integration tests locked.
 - **Phases D (UI), E (online), F (quality):** ⚪ not started.
+
+### 2026-04-20 — Plan B `world_schemas` drop (v8→v9) + `HubCardGrid` + Doc 50 publish (🟣) — Phase A partial close + Phase D kickoff
+
+Closes the safely-droppable portion of Doc 04 Step 7 under the user-mandated invariant "keep every existing UI layout functioning." The single-hardcoded-schema reality (`generateDefaultDnd5eSchema()` returns the same shape for every campaign; there is no user-facing schema editor) means the `world_schemas` Drift table carries no per-campaign variation and can be dropped cleanly without disturbing the domain classes, the screens that read them, or the `entities` user-content blob. The remaining schema-directory deletion + `packages`/`package_schemas`/`package_entities`/`entities` table drops cannot happen without typed replacement renderers for 15 SRD categories, so that structural work gets a dedicated master plan (Doc 50).
+
+Files changed:
+- `lib/data/database/app_database.dart` — `schemaVersion` 8 → 9. `@DriftDatabase` table list drops `WorldSchemas`. Import of `world_schemas_table.dart` removed. `onUpgrade` gains an `if (from < 9) { await m.deleteTable('world_schemas'); }` block; earlier `from < 3` and `from < 4` branches converted to inert no-op comments (their only work was adding columns to the now-dropped table). `LegacyDbBackup` (already wired in the prior batch) snapshots the pre-v9 DB to `dmt.v4.backup.sqlite` before the drop fires.
+- `lib/data/database/daos/campaign_dao.dart` — `@DriftAccessor` table list drops `WorldSchemas`; `world_schemas_table.dart` import dropped. `getCampaignInfoList()` no longer joins — returns a single `select(campaigns)` ordered by `worldName`, emitting `templateName: 'D&D 5e'` constant. `deleteCampaign()` cascade drops the `delete(worldSchemas)` line.
+- `lib/data/repositories/campaign_repository_impl.dart` — `create()` stops inserting the `worldSchemas` row (hardcoded schema is injected on load; no per-campaign persistence). `_loadFromDb()` no longer reads `worldSchemas`; unconditionally calls `generateDefaultDnd5eSchema().toJson()` into the `world_schema` key, stamps `template_id: builtinDnd5eSchemaId` + `template_original_hash: builtinDndOriginalHash`. `_saveToDb()` loses the `WorldSchemas` branch entirely. Imports trimmed (`world_schema_hash.dart` + `deep_copy.dart` no longer needed; `default_dnd5e_schema.dart` added; `hide WorldSchema` removed from the Drift import because the Drift-generated class is gone after regen).
+- `lib/data/repositories/package_repository_impl.dart` — `hide WorldSchema` removed from the `app_database.dart` import (same reason).
+- `lib/presentation/widgets/hub_card_grid.dart` (new) — `HubCardGrid` widget. `LayoutBuilder`-driven: single-column `Column` below the 640 px breakpoint (preserves the legacy narrow-screen look on phones / side panels), `Wrap`-of-fixed-width tiles above it (multi-column layout on wide desktop windows). Tiles self-size via intrinsic height. One shared grid usable by every Hub tab.
+- `lib/presentation/screens/hub/worlds_tab.dart`, `packages_tab.dart`, `characters_tab.dart` — `ListView.separated` → `HubCardGrid(tileWidth: 380 / 380 / 360)`. `BoxConstraints(maxWidth: 500)` → `BoxConstraints(maxWidth: 1200)` so wide screens can lay out 2-3 tiles per row instead of wasting horizontal space on margins.
+- `test/data/database/doc03_schema_test.dart` — `schemaVersion = 8` assertion → `9` (deliberate friction — failing this test is the signal that the schema is bumped without updating its guard).
+
+Files deleted:
+- `lib/data/database/tables/world_schemas_table.dart` — drift table class gone along with the table itself.
+- `lib/presentation/dialogs/rule_builder_dialog.dart` — 1191 LOC, zero callers (last widget that read `RuleV2`). `grep -rn 'RuleBuilderDialog\|rule_builder_dialog'` returns only the file itself, now removed.
+
+Files added:
+- `docs/engineering/50-typed-ui-migration.md` — master plan for Phase D. Lays out the 8-batch sequence that (a) ships 15 typed card widgets + a `TypedCardDispatcher`, (b) routes every `MindMapNode` / `MapPin` / `Combatant` / sidebar tree through typed content providers, (c) builds a typed `CharacterEditor` driven by `Dnd5eCharacter`, (d) migrates the `entities` blob to typed tables (including a new `homebrew_entries` table for categories without a Tier 2 counterpart), (e) drops the remaining legacy Drift tables in v9→v10, (f) deletes `lib/domain/entities/schema/` + `lib/data/schema/` + `lib/presentation/widgets/field_widgets/` + `entity_sidebar.dart` + `entity_card.dart` + the legacy package importer. Every batch ends green. Layout invariants enumerated explicitly so the migration can be verified visually without regression.
+
+Decisions:
+- **Only `world_schemas` dropped in this batch, not the full legacy set** — the user's constraint is "keep the existing UI functioning exactly." The surviving UI code (MainScreen, SessionScreen, CharacterEditor, DatabaseScreen, MindMap, BattleMap, WorldMap, EntityCard) reads `FieldSchema` + `FieldGroup` + `EncounterConfig` + `EncounterLayout` + `Entity` from the blob. Dropping the `entities` / `packages` / `package_schemas` / `package_entities` tables would require replacing every one of those call sites first. That replacement is its own 40-60-turn phase (now Doc 50). `world_schemas`, in contrast, carries a single hardcoded shape per install that the hardcoded-defaults function already produces verbatim, so it's safe to drop today without touching a single screen.
+- **`_loadFromDb` always injects the hardcoded schema** — the invariant "every campaign uses the same built-in D&D 5e schema" is already true in the live app (the Templates UI ships no editor; `allTemplatesProvider` returns a one-element list containing exactly this schema). Formalising it at the repository boundary means the removal of the persisted copy can't regress behaviour: every load after v9 produces the exact same `world_schema` JSON the pre-v9 load produced on any campaign created through the current `create()` path.
+- **`HubCardGrid` shipped alongside the DB change, not as a separate batch** — the user's explicit exception to "keep UI exactly the same" was "you may improve the category/character card grid design." Shipping the Wrap-based grid together with the DB trim means the user sees one coherent change rather than two and the `maxWidth: 500` → `1200` widening lands with tests passing in a single stable state.
+- **`rule_builder_dialog.dart` deletion bundled** — zero callers confirmed by grep; it's the only remaining UI reference to `RuleV2`. Deleting it now removes one of the blockers Doc 50 Batch 8 would otherwise have to carry. The file was 1191 LOC and hasn't been reachable from any route since templates shipped.
+- **Phase A reclassified as partial** — the structural half (DB trim + `LegacyDbBackup` + `V5ResetBootstrap` + `V5UpgradeNoticeDialog`) is done. The surface half (delete schema domain classes + replace every screen) is subsumed into Doc 50. Status flips from "🟣 partial (pending Step 5/7)" to "🟣 partial (Step 7 DB drop done for world_schemas; remainder absorbed into Doc 50)."
+- **Doc 50 published, implementation not started** — the plan is out for review before the first typed card widget ships. The batch sizing + layout invariant enumeration is the work; actual widget authoring is the next phase. User wants to see the plan first before touching 60+ consumer files.
+
+Verification: `flutter analyze` 0 issues, `flutter test` 1437 / 1437 pass + 1 skipped (unchanged count — only `schemaVersion` assertion bumped; no test added or deleted by this batch).
+
+Next up:
+- **Doc 50 Batch 1** — `TypedCardDispatcher` + 5 typed cards (`SpellCard`, `MonsterCard`, `ItemCard`, `FeatCard`, `BackgroundCard`). DatabaseScreen renders typed cards for those five categories; remaining 10 fall through to `EntityCard`.
+- **i18n the Hub tab titles + settings strings** — sweep-in pass with Doc 43 `intl` rollout (still not blocking).
+- **Per-user `srd_core.installed_version` `shared_preferences` key** — unchanged from prior batch's next-up list.
 
 ### 2026-04-20 — Doc 42 main.dart wiring + LegacyDbBackup helper (🟣) — Phase A bootstrap close-out (Task 3 of 3)
 

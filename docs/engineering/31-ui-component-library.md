@@ -3,6 +3,170 @@
 > **For Claude.** Reusable widgets specific to D&D 5e mechanics.
 > **Target:** `flutter_app/lib/presentation/widgets/dnd5e/`
 
+## Content Card Family (Typed — Phase D)
+
+**Per [`50-typed-ui-migration.md`](./50-typed-ui-migration.md):** the legacy `entity_card.dart` (897 LOC, schema-driven) is replaced by a family of 15 **typed content cards** dispatched by a single `TypedCardDispatcher`. Each card reads one typed Drift row (Tier 1 catalog or Tier 2 content table) and renders a layout specific to its SRD shape. The dispatcher + card family ships across Doc 50 Batches 1-3.
+
+### `TypedCardDispatcher`
+
+```dart
+class TypedCardDispatcher extends ConsumerWidget {
+  final String categorySlug;        // 'spell' | 'monster' | 'item' | …
+  final String entityId;            // 'srd:fireball' / 'hb:<uuid>' / 'hb:<campaignId>:<uuid>'
+  final bool readOnly;
+  final VoidCallback? onEdit;
+}
+```
+
+Dispatch table:
+
+| `categorySlug` | Card widget |
+|---|---|
+| `spell` | `SpellCard` |
+| `monster` | `MonsterCard` |
+| `item` / `equipment` | `ItemCard` |
+| `feat` | `FeatCard` |
+| `background` | `BackgroundCard` |
+| `class` | `ClassCard` |
+| `race` / `species` | `RaceCard` |
+| `npc` | `NpcCard` |
+| `player` | `PlayerCard` |
+| `location` | `LocationCard` |
+| `quest` | `QuestCard` |
+| `lore` | `LoreCard` |
+| `plane` | `PlaneCard` |
+| `condition` | `ConditionCard` |
+| `status-effect` | `StatusEffectCard` |
+| `trait` / `action` / `reaction` / `legendary-action` | `ActionCard` (variant prop) |
+
+Dispatcher reads from the matching typed provider set (e.g. `spellByIdProvider(entityId)`, `monsterByIdProvider`, etc.) and passes the resolved row to the card. Unknown slug → graceful placeholder (`_MissingCard(entityId, categorySlug)`) with a "Report missing renderer" button.
+
+### Shared card shell
+
+Every typed card shares a `_CardShell` base:
+
+- Left border strip in the category color.
+- Header row: icon + title + level/CR/tier badge + action menu (edit / delete / copy ID / export JSON).
+- Scrollable body (category-specific layout).
+- Tag chips + source-package attribution footer.
+
+Card body content is category-specific — see each card section below. Typical body length: 80-200 LOC.
+
+### 1. `SpellCard`
+
+Reads `Spell` row. Layout:
+
+- Header: level + school + ritual/concentration badges + casting time.
+- Body: range / components / duration, flavor description, expanded effect block (mechanical — auto-generated from `EffectDescriptor` list), at-higher-levels scaling.
+- Footer: classes that know it + source package + CC BY attribution.
+- Actions: "Cast" button (opens AoE / target picker, routes through `SpellCastService`).
+
+### 2. `MonsterCard`
+
+Reads `Monster` row (stat block JSON). Layout:
+
+- Header: size + creature type + alignment + CR + XP.
+- Body: `AC` / `HP` / `Speed` block; ability-score table with modifiers; saves / skills / vulnerabilities / resistances / immunities; senses + languages; traits / actions / reactions / legendary actions (each collapsible, renders as `ActionCard` inline).
+- Footer: environment tags + source.
+- Actions: "Add to encounter" button (routes through `EncounterMutator.addCombatant`).
+
+### 3. `ItemCard`
+
+Reads `Item` row. Layout:
+
+- Header: item type + rarity + attunement badge.
+- Body: cost + weight + damage (if weapon) + AC (if armor) + properties chips + full body text.
+- Footer: requirements + source.
+- Actions: "Equip" / "Add to inventory" contextual buttons.
+
+### 4. `FeatCard`
+
+Reads `Feat` row. Layout:
+
+- Header: category (Origin / General / Fighting Style / Epic Boon) + prerequisites.
+- Body: description + mechanical effects block (compiled from the feat's `EffectDescriptor` list).
+- Footer: source.
+
+### 5. `BackgroundCard`
+
+Reads `Background` row. Layout:
+
+- Header: background name.
+- Body: skill proficiencies + tool proficiencies + languages + starting equipment + feature description + feat grant.
+- Footer: source.
+
+### 6. `ClassCard`
+
+Reads `ClassProgression` row (full progression table). Layout:
+
+- Header: class name + hit die + primary abilities + saving throw proficiencies.
+- Body: features by level (expandable accordion per level 1-20), spellcasting table (if applicable), subclass list with `RaceCard`-style selector, ASI tracker markers.
+- Footer: source.
+
+### 7. `RaceCard` (Species)
+
+Reads `Species` row. Layout:
+
+- Header: species name + creature type + size.
+- Body: speed block, ability score increases, traits list, language list, lineages (if any — rendered as child cards).
+- Footer: source.
+
+### 8. `NpcCard`
+
+Reads `Monster` row with `source_package_id = 'homebrew'` OR a `homebrew_entries` row for custom NPCs. Layout identical to `MonsterCard` with an extra "Relationships" panel (linked location / faction / quest) and "DM Notes" (hidden from players per Doc 32 visibility matrix).
+
+### 9. `PlayerCard`
+
+Reads `Dnd5eCharacter` (full character record). Renders a condensed view of the character sheet (header + key combat stats + conditions + concentration indicator). Tapping opens the full `CharacterEditor` (Doc 32).
+
+### 10. `LocationCard`
+
+Reads `homebrew_entries` row with `categorySlug = 'location'` and typed `LocationBody`. Layout:
+
+- Header: danger level + environment badges.
+- Body: description (markdown), map reference (if any — renders an inline battle/world map thumbnail), linked NPCs, linked quests.
+- Footer: parent region + source.
+
+### 11. `QuestCard`
+
+Reads `homebrew_entries` row with typed `QuestBody`. Layout:
+
+- Header: status (Not Started / Active / Completed) + giver NPC.
+- Body: description (markdown), objectives list, reward, linked locations / NPCs.
+- Footer: source.
+
+### 12. `LoreCard`
+
+Reads `homebrew_entries` row with typed `LoreBody`. Layout:
+
+- Header: category (History / Geography / Religion / Culture / Other).
+- Body: description (markdown), secret info (DM-only redacted block for player view).
+- Footer: source.
+
+### 13. `PlaneCard`
+
+Reads `homebrew_entries` row with typed `PlaneBody`. Layout:
+
+- Header: plane type.
+- Body: description (markdown), denizens (linked monster list), physical properties.
+- Footer: source.
+
+### 14. `ConditionCard`
+
+Reads `Condition` row (Tier 1). Layout:
+
+- Header: condition name.
+- Body: mechanical effects (rendered from the condition's `EffectDescriptor` list), duration notes, stacking rules.
+- Footer: source (almost always `srd:` for Tier 1).
+
+### 15. `StatusEffectCard`
+
+Reads `homebrew_entries` row with typed `StatusEffectBody`. Renders like `ConditionCard` but with a linked-condition reference chip (for status effects that extend a base condition).
+
+### `ActionCard` (shared)
+
+Reads a `trait` / `action` / `reaction` / `legendary-action` row (typed `ActionBody`). Variant prop picks header color + icon. Body renders attack bonus / damage dice / recharge rule / save DC / effect descriptor block.
+
 ## Component List
 
 ### 1. `AbilityScoreInput`
@@ -356,7 +520,8 @@ extension Dnd5eThemeColors on ThemeData {
 
 ## Acceptance
 
-- All 24 components in `flutter_app/lib/presentation/widgets/dnd5e/`.
+- All 24 mechanic-level components in `flutter_app/lib/presentation/widgets/dnd5e/`.
+- 15 typed content cards + `TypedCardDispatcher` in `flutter_app/lib/presentation/widgets/dnd5e/cards/` (per [`50-typed-ui-migration.md`](./50-typed-ui-migration.md)).
 - Each compiles standalone with example usage in `examples/` (or in widget tests).
 - Each works on mobile + desktop layouts.
 - Golden tests for visual stability.
