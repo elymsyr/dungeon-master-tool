@@ -8,6 +8,7 @@ import '../../../../domain/dnd5e/character/character_class_json_codec.dart';
 import '../../../../domain/dnd5e/core/ability.dart';
 import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
+import '../editors/entity_editor_dialog.dart';
 
 /// Typed renderer for a `CharacterClass` progression row. Reads
 /// `class_progressions` — the Drift row carries the same JSON body shape.
@@ -44,6 +45,11 @@ class ClassCard extends ConsumerWidget {
           subtitle:
               'Hit Die ${cc.hitDie.name} • ${_casterLabel(cc.casterKind)}',
           categoryColor: categoryColor,
+          onEdit: () => showEntityEditor(
+            context: context,
+            entityId: entityId,
+            categorySlug: 'class',
+          ),
           tags: [
             CardTag('HD ${cc.hitDie.name}'),
             CardTag(_casterLabel(cc.casterKind)),

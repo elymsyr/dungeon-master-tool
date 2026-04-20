@@ -10,6 +10,7 @@ import '../../../../domain/dnd5e/spell/spell_duration.dart';
 import '../../../../domain/dnd5e/spell/spell_json_codec.dart';
 import '../../../../domain/dnd5e/spell/spell_range.dart';
 import '../card_shell.dart';
+import '../editors/entity_editor_dialog.dart';
 
 /// Typed renderer for a Tier 2 `Spell` row. Decodes `bodyJson` via
 /// `spellFromEntry` and lays out level/school/components/duration + description.
@@ -45,6 +46,7 @@ class SpellCard extends ConsumerWidget {
           spell: spell,
           categoryColor: categoryColor,
           schoolId: row.schoolId,
+          entityId: entityId,
         );
       },
     );
@@ -55,11 +57,13 @@ class _SpellCardBody extends StatelessWidget {
   final Spell spell;
   final Color categoryColor;
   final String schoolId;
+  final String entityId;
 
   const _SpellCardBody({
     required this.spell,
     required this.categoryColor,
     required this.schoolId,
+    required this.entityId,
   });
 
   @override
@@ -72,6 +76,11 @@ class _SpellCardBody extends StatelessWidget {
       title: spell.name,
       subtitle: '$levelLabel • $schoolLabel${spell.ritual ? ' • Ritual' : ''}',
       categoryColor: categoryColor,
+      onEdit: () => showEntityEditor(
+        context: context,
+        entityId: entityId,
+        categorySlug: 'spell',
+      ),
       tags: [
         CardTag(levelLabel),
         CardTag(schoolLabel),

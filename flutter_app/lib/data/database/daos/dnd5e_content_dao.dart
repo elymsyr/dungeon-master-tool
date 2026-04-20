@@ -171,6 +171,14 @@ class Dnd5eContentDao extends DatabaseAccessor<AppDatabase>
       into(feats).insertOnConflictUpdate(row);
   Future<void> upsertBackground(BackgroundsCompanion row) =>
       into(backgrounds).insertOnConflictUpdate(row);
+  Future<void> upsertSpecies(SpeciesCatalogCompanion row) =>
+      into(speciesCatalog).insertOnConflictUpdate(row);
+  Future<void> upsertSubclass(SubclassesCompanion row) =>
+      into(subclasses).insertOnConflictUpdate(row);
+  Future<void> upsertClassProgression(ClassProgressionsCompanion row) =>
+      into(classProgressions).insertOnConflictUpdate(row);
+  Future<void> upsertCondition(ConditionsCompanion row) =>
+      into(conditions).insertOnConflictUpdate(row);
 
   // --- Campaign ↔ package enablement ---
 

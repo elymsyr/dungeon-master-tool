@@ -3,9 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/dnd5e/package/bundled_srd_packages.dart';
+import '../../application/providers/campaign_packages_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/character_provider.dart';
 import '../../application/providers/entity_provider.dart';
+import '../../application/providers/installed_packages_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/services/package_import_service.dart';
 import '../../domain/entities/character.dart';
@@ -82,31 +85,51 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
   Widget _packagesBody(L10n l10n, DmToolColors palette,
       WorldSchema worldSchema) {
     final packageList = ref.watch(packageListProvider);
-    return packageList.when(
-      data: (packages) {
-        if (packages.isEmpty) {
-          return Center(
-            child: Text(l10n.noPackages,
-                style: TextStyle(color: palette.sidebarLabelSecondary)),
-          );
-        }
-        return ListView.separated(
-          itemCount: packages.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 6),
-          itemBuilder: (context, index) {
-            final info = packages[index];
-            return _PackageImportCard(
-              info: info,
-              palette: palette,
-              l10n: l10n,
-              importing: _importing,
-              onImport: () => _importPackage(info, worldSchema),
-            );
-          },
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _BundledPackagesSection(palette: palette, disabled: _importing),
+        const SizedBox(height: 12),
+        Text(
+          'Legacy packages',
+          style: TextStyle(
+              fontSize: 11,
+              letterSpacing: 0.8,
+              fontWeight: FontWeight.w600,
+              color: palette.sidebarLabelSecondary),
+        ),
+        const SizedBox(height: 6),
+        Expanded(
+          child: packageList.when(
+            data: (packages) {
+              if (packages.isEmpty) {
+                return Center(
+                  child: Text(l10n.noPackages,
+                      style:
+                          TextStyle(color: palette.sidebarLabelSecondary)),
+                );
+              }
+              return ListView.separated(
+                itemCount: packages.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 6),
+                itemBuilder: (context, index) {
+                  final info = packages[index];
+                  return _PackageImportCard(
+                    info: info,
+                    palette: palette,
+                    l10n: l10n,
+                    importing: _importing,
+                    onImport: () => _importPackage(info, worldSchema),
+                  );
+                },
+              );
+            },
+            loading: () =>
+                const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
+          ),
+        ),
+      ],
     );
   }
 
@@ -455,6 +478,161 @@ class _ImportSourcePillTabs extends StatelessWidget {
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+}
+
+/// Lists the 4 bundled SRD envelopes shipped in `assets/packages/`. Each row
+/// shows install state (via `installedPackageForBundleProvider`) and an
+/// "Install" button that calls `CampaignPackagesController.ensureInstalled`.
+///
+/// Installing does NOT auto-enable the package in the active world — per
+/// Doc 51 the enablement is an explicit per-world decision (World Settings
+/// → Packages).
+class _BundledPackagesSection extends ConsumerWidget {
+  final DmToolColors palette;
+  final bool disabled;
+
+  const _BundledPackagesSection({
+    required this.palette,
+    required this.disabled,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Built-in SRD packages',
+          style: TextStyle(
+              fontSize: 11,
+              letterSpacing: 0.8,
+              fontWeight: FontWeight.w600,
+              color: palette.sidebarLabelSecondary),
+        ),
+        const SizedBox(height: 6),
+        for (final bundle in bundledSrdPackages)
+          _BundledPackageRow(
+            bundle: bundle,
+            palette: palette,
+            disabled: disabled,
+          ),
+      ],
+    );
+  }
+}
+
+class _BundledPackageRow extends ConsumerStatefulWidget {
+  final BundledSrdPackage bundle;
+  final DmToolColors palette;
+  final bool disabled;
+
+  const _BundledPackageRow({
+    required this.bundle,
+    required this.palette,
+    required this.disabled,
+  });
+
+  @override
+  ConsumerState<_BundledPackageRow> createState() =>
+      _BundledPackageRowState();
+}
+
+class _BundledPackageRowState extends ConsumerState<_BundledPackageRow> {
+  bool _installing = false;
+
+  Future<void> _install() async {
+    setState(() => _installing = true);
+    try {
+      await ref
+          .read(campaignPackagesControllerProvider)
+          .ensureInstalled(widget.bundle);
+      ref
+        ..invalidate(installedPackageForBundleProvider(widget.bundle))
+        ..invalidate(installedAttributionsProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'Installed ${widget.bundle.name}. Enable it in a world via Settings → Packages.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Install failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _installing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final installedAsync =
+        ref.watch(installedPackageForBundleProvider(widget.bundle));
+    final installed = installedAsync.valueOrNull;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: widget.palette.featureCardBg,
+        borderRadius: widget.palette.br,
+        border: Border.all(color: widget.palette.featureCardBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(widget.bundle.name,
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: widget.palette.tabActiveText)),
+                const SizedBox(height: 2),
+                Text(widget.bundle.description,
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: widget.palette.sidebarLabelSecondary)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          if (installed != null)
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: widget.palette.successBtnBg.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'Installed',
+                style:
+                    TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+              ),
+            )
+          else
+            FilledButton(
+              onPressed:
+                  widget.disabled || _installing ? null : _install,
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 8),
+                minimumSize: const Size(0, 32),
+              ),
+              child: _installing
+                  ? const SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Install'),
+            ),
+        ],
       ),
     );
   }

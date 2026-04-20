@@ -6,6 +6,7 @@ import '../../../../domain/dnd5e/catalog/catalog_json_codecs.dart' as codecs;
 import '../../../../domain/dnd5e/catalog/condition.dart';
 import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
+import '../editors/entity_editor_dialog.dart';
 
 /// Typed renderer for a Tier 1 `Condition` catalog row.
 class ConditionCard extends ConsumerWidget {
@@ -40,6 +41,11 @@ class ConditionCard extends ConsumerWidget {
           title: c.name,
           subtitle: 'Condition',
           categoryColor: categoryColor,
+          onEdit: () => showEntityEditor(
+            context: context,
+            entityId: entityId,
+            categorySlug: 'condition',
+          ),
           tags: [
             if (c.effects.isNotEmpty) CardTag('${c.effects.length} effects'),
           ],

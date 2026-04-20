@@ -13,6 +13,11 @@ class CardShell extends StatelessWidget {
   final List<Widget> children;
   final Widget? trailing;
 
+  /// When set, renders a pencil icon button in the header that fires this
+  /// callback. Typed cards hook it up to open an entity-specific editor
+  /// dialog; leave null to suppress the affordance.
+  final VoidCallback? onEdit;
+
   const CardShell({
     required this.title,
     required this.categoryColor,
@@ -20,6 +25,7 @@ class CardShell extends StatelessWidget {
     this.tags = const [],
     this.children = const [],
     this.trailing,
+    this.onEdit,
     super.key,
   });
 
@@ -40,6 +46,7 @@ class CardShell extends StatelessWidget {
             title: title,
             subtitle: subtitle,
             trailing: trailing,
+            onEdit: onEdit,
             palette: palette,
           ),
           if (tags.isNotEmpty)
@@ -66,12 +73,14 @@ class _Header extends StatelessWidget {
   final String title;
   final String? subtitle;
   final Widget? trailing;
+  final VoidCallback? onEdit;
   final DmToolColors palette;
 
   const _Header({
     required this.title,
     required this.subtitle,
     required this.trailing,
+    required this.onEdit,
     required this.palette,
   });
 
@@ -108,6 +117,13 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
+          if (onEdit != null)
+            IconButton(
+              onPressed: onEdit,
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              tooltip: 'Edit',
+              visualDensity: VisualDensity.compact,
+            ),
           ?trailing,
         ],
       ),

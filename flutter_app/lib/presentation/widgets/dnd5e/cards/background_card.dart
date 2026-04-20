@@ -6,6 +6,7 @@ import '../../../../domain/dnd5e/character/background.dart';
 import '../../../../domain/dnd5e/character/background_json_codec.dart';
 import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
+import '../editors/entity_editor_dialog.dart';
 
 /// Typed renderer for a Tier 2 `Background` row.
 class BackgroundCard extends ConsumerWidget {
@@ -40,6 +41,11 @@ class BackgroundCard extends ConsumerWidget {
           title: bg.name,
           subtitle: 'Background',
           categoryColor: categoryColor,
+          onEdit: () => showEntityEditor(
+            context: context,
+            entityId: entityId,
+            categorySlug: 'background',
+          ),
           tags: [
             if (bg.effects.isNotEmpty) CardTag('${bg.effects.length} effects'),
           ],

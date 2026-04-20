@@ -6,6 +6,7 @@ import '../../../../domain/dnd5e/item/item.dart';
 import '../../../../domain/dnd5e/item/item_json_codec.dart';
 import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
+import '../editors/entity_editor_dialog.dart';
 
 /// Typed renderer for a Tier 2 `Item` row (sealed: Weapon/Armor/Shield/Gear/
 /// Tool/Ammunition/MagicItem). Dispatches on runtime case for category-specific
@@ -42,6 +43,7 @@ class ItemCard extends ConsumerWidget {
           item: item,
           categoryColor: categoryColor,
           itemType: row.itemType,
+          entityId: entityId,
         );
       },
     );
@@ -52,11 +54,13 @@ class _ItemBody extends StatelessWidget {
   final Item item;
   final Color categoryColor;
   final String itemType;
+  final String entityId;
 
   const _ItemBody({
     required this.item,
     required this.categoryColor,
     required this.itemType,
+    required this.entityId,
   });
 
   @override
@@ -66,6 +70,11 @@ class _ItemBody extends StatelessWidget {
       title: item.name,
       subtitle: '${_capitalize(itemType)} • ${_capitalize(rarity)}',
       categoryColor: categoryColor,
+      onEdit: () => showEntityEditor(
+        context: context,
+        entityId: entityId,
+        categorySlug: 'item',
+      ),
       tags: [
         CardTag(_capitalize(itemType)),
         CardTag(_capitalize(rarity)),

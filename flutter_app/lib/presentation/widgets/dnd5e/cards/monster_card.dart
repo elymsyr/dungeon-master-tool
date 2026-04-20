@@ -9,6 +9,7 @@ import '../../../../domain/dnd5e/monster/stat_block.dart';
 import '../../../../domain/dnd5e/monster/monster_json_codec.dart';
 import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
+import '../editors/entity_editor_dialog.dart';
 
 /// Typed renderer for a Tier 2 `Monster` row. Shows stat block summary +
 /// action blocks (actions / bonus / reactions / legendary).
@@ -40,7 +41,10 @@ class MonsterCard extends ConsumerWidget {
         } catch (e) {
           return CardPlaceholder('Invalid monster body: $e');
         }
-        return _MonsterBody(monster: monster, categoryColor: categoryColor);
+        return _MonsterBody(
+            monster: monster,
+            categoryColor: categoryColor,
+            entityId: entityId);
       },
     );
   }
@@ -49,8 +53,12 @@ class MonsterCard extends ConsumerWidget {
 class _MonsterBody extends StatelessWidget {
   final Monster monster;
   final Color categoryColor;
+  final String entityId;
 
-  const _MonsterBody({required this.monster, required this.categoryColor});
+  const _MonsterBody(
+      {required this.monster,
+      required this.categoryColor,
+      required this.entityId});
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +68,11 @@ class _MonsterBody extends StatelessWidget {
       subtitle:
           '${_localSlug(sb.sizeId)} ${_localSlug(sb.typeId)}${sb.alignmentId == null ? '' : ', ${_localSlug(sb.alignmentId!)}'}',
       categoryColor: categoryColor,
+      onEdit: () => showEntityEditor(
+        context: context,
+        entityId: entityId,
+        categorySlug: 'monster',
+      ),
       tags: [
         CardTag('CR ${sb.cr.canonical}'),
         CardTag('AC ${sb.armorClass}'),

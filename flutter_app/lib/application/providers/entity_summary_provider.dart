@@ -12,6 +12,7 @@ typedef EntitySummary = ({
   String name,
   String categorySlug,
   String source,
+  String? installedPackageId,
   List<String> tags,
 });
 
@@ -29,6 +30,7 @@ final combinedEntitySummaryProvider =
             name: e.name,
             categorySlug: e.categorySlug,
             source: e.source,
+            installedPackageId: null,
             tags: e.tags,
           ))
       .toList()));
@@ -57,12 +59,14 @@ final combinedEntitySummaryProvider =
     required String name,
     required String categorySlug,
     required String? sourcePackageId,
+    required String? installedPackageId,
   }) =>
       (
         id: id,
         name: name,
         categorySlug: categorySlug,
         source: sourcePackageId ?? 'typed',
+        installedPackageId: installedPackageId,
         tags: const <String>[],
       );
 
@@ -73,37 +77,43 @@ final combinedEntitySummaryProvider =
           id: r.id,
           name: r.name,
           categorySlug: 'spell',
-          sourcePackageId: r.sourcePackageId),
+          sourcePackageId: r.sourcePackageId,
+          installedPackageId: r.installedPackageId),
     for (final r in monsters)
       summary(
           id: r.id,
           name: r.name,
           categorySlug: 'monster',
-          sourcePackageId: r.sourcePackageId),
+          sourcePackageId: r.sourcePackageId,
+          installedPackageId: r.installedPackageId),
     for (final r in items)
       summary(
           id: r.id,
           name: r.name,
           categorySlug: 'equipment',
-          sourcePackageId: r.sourcePackageId),
+          sourcePackageId: r.sourcePackageId,
+          installedPackageId: r.installedPackageId),
     for (final r in feats)
       summary(
           id: r.id,
           name: r.name,
           categorySlug: 'feat',
-          sourcePackageId: r.sourcePackageId),
+          sourcePackageId: r.sourcePackageId,
+          installedPackageId: r.installedPackageId),
     for (final r in backgrounds)
       summary(
           id: r.id,
           name: r.name,
           categorySlug: 'background',
-          sourcePackageId: r.sourcePackageId),
+          sourcePackageId: r.sourcePackageId,
+          installedPackageId: r.installedPackageId),
     for (final r in homebrew)
       summary(
           id: r.id,
           name: r.name,
           categorySlug: r.categorySlug,
-          sourcePackageId: r.sourcePackageId),
+          sourcePackageId: r.sourcePackageId,
+          installedPackageId: null),
   ];
 });
 

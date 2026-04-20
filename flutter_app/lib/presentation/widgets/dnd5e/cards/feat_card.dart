@@ -6,6 +6,7 @@ import '../../../../domain/dnd5e/character/feat.dart';
 import '../../../../domain/dnd5e/character/feat_json_codec.dart';
 import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
+import '../editors/entity_editor_dialog.dart';
 
 /// Typed renderer for a Tier 2 `Feat` row.
 class FeatCard extends ConsumerWidget {
@@ -40,6 +41,11 @@ class FeatCard extends ConsumerWidget {
           title: feat.name,
           subtitle: _categoryLabel(feat.category),
           categoryColor: categoryColor,
+          onEdit: () => showEntityEditor(
+            context: context,
+            entityId: entityId,
+            categorySlug: 'feat',
+          ),
           tags: [
             CardTag(_categoryLabel(feat.category)),
             if (feat.repeatable) const CardTag('Repeatable'),

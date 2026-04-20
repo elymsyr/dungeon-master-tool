@@ -6,6 +6,7 @@ import '../../../../domain/dnd5e/character/species.dart';
 import '../../../../domain/dnd5e/character/species_json_codec.dart';
 import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
+import '../editors/entity_editor_dialog.dart';
 
 /// Typed renderer for a Tier 2 `Species` (race) row.
 class RaceCard extends ConsumerWidget {
@@ -40,6 +41,11 @@ class RaceCard extends ConsumerWidget {
           title: sp.name,
           subtitle: 'Species',
           categoryColor: categoryColor,
+          onEdit: () => showEntityEditor(
+            context: context,
+            entityId: entityId,
+            categorySlug: 'race',
+          ),
           tags: [
             CardTag(_localSlug(sp.sizeId)),
             CardTag('Speed ${sp.baseSpeedFt} ft.'),
