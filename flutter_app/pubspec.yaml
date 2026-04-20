@@ -82,6 +82,10 @@ flutter:
     - assets/app_icon_transparent.png
     - assets/profanity/
     - assets/packages/srd_core.dnd5e-pkg.json
+    - assets/packages/srd_rules.dnd5e-pkg.json
+    - assets/packages/srd_spells.dnd5e-pkg.json
+    - assets/packages/srd_bestiary.dnd5e-pkg.json
+    - assets/packages/srd_heroes.dnd5e-pkg.json
 
 flutter_launcher_icons:
   android: true

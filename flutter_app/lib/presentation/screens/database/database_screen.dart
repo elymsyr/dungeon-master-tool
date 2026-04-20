@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/entity_summary_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -82,17 +83,23 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
     final entities = ref.read(entityProvider);
     final entity = entities[entityId];
     final schema = ref.read(worldSchemaProvider);
+    final typedSummary = ref.read(entitySummaryByIdProvider)[entityId];
+
+    final resolvedName = entity?.name ?? typedSummary?.name ?? 'Unknown';
+    final resolvedCategorySlug =
+        entity?.categorySlug ?? typedSummary?.categorySlug ?? '';
 
     Color catColor = const Color(0xFF808080);
-    if (entity != null) {
-      final cat = _firstWhereOrNull(schema.categories, (c) => c.slug == entity.categorySlug);
+    if (resolvedCategorySlug.isNotEmpty) {
+      final cat = _firstWhereOrNull(
+          schema.categories, (c) => c.slug == resolvedCategorySlug);
       if (cat != null) catColor = _parseHexColor(cat.color);
     }
 
     final entry = _TabEntry(
       entityId: entityId,
-      title: entity?.name ?? 'Unknown',
-      categorySlug: entity?.categorySlug ?? '',
+      title: resolvedName,
+      categorySlug: resolvedCategorySlug,
       categoryColor: catColor,
     );
 

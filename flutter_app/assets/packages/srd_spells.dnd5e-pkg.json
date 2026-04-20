@@ -1,0 +1,803 @@
+{
+  "id": "srd-spells-1",
+  "packageIdSlug": "srd",
+  "name": "D&D 5e SRD — Spells",
+  "version": "1.0.0",
+  "gameSystemId": "dnd5e",
+  "formatVersion": "2",
+  "authorId": "wizards",
+  "authorName": "Wizards of the Coast",
+  "sourceLicense": "CC BY 4.0",
+  "description": "Cantrips through 9th-level spells from the SRD 5.2.1.",
+  "tags": [],
+  "requiredRuntimeExtensions": [],
+  "catalogs": {
+    "conditions": [],
+    "damageTypes": [],
+    "skills": [],
+    "sizes": [],
+    "creatureTypes": [],
+    "alignments": [],
+    "languages": [],
+    "spellSchools": [],
+    "weaponProperties": [],
+    "weaponMasteries": [],
+    "armorCategories": [],
+    "rarities": []
+  },
+  "content": {
+    "spells": [
+      {
+        "id": "srd:acid_splash",
+        "name": "Acid Splash",
+        "level": 0,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":0,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"You create an acidic bubble at a point within range, where it explodes in a 5-foot-radius Sphere. Each creature in the Sphere must succeed on a Dexterity saving throw or take 1d6 Acid damage. Cantrip Upgrade: The damage increases by 1d6 when you reach levels 5 (2d6), 11 (3d6), and 17 (4d6).\"}"
+      },
+      {
+        "id": "srd:dancing_lights",
+        "name": "Dancing Lights",
+        "level": 0,
+        "schoolId": "srd:illusion",
+        "body": "{\"level\":0,\"schoolId\":\"srd:illusion\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":120},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a bit of phosphorus or wychwood, or a glowworm\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"point\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"You create up to four torch-sized lights within range, making each light appear as a torch, a lantern, or a glowing orb that hovers in the air for the duration. You can also combine the four lights into one glowing vaguely humanoid form of Medium size. Whichever form you choose, each light sheds Dim Light in a 10-foot radius. As a Bonus Action, you can move the lights up to 60 feet to a new spot within range.\"}"
+      },
+      {
+        "id": "srd:druidcraft",
+        "name": "Druidcraft",
+        "level": 0,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"point\"],\"classListIds\":[\"srd:druid\"],\"description\":\"You create one of the following effects within range: a tiny, harmless sensory effect that predicts the next 24 hours of weather; a flower to instantly bloom, a seed pod to open, or a leaf bud to bloom; an instantaneous, harmless sensory effect (e.g., falling leaves, puff of wind, sound of an animal); or you light or snuff out a candle, torch, or small campfire.\"}"
+      },
+      {
+        "id": "srd:eldritch_blast",
+        "name": "Eldritch Blast",
+        "level": 0,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":120},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:warlock\"],\"description\":\"A beam of crackling energy streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 Force damage. Cantrip Upgrade: You create two beams at level 5, three beams at level 11, and four beams at level 17. You can direct the beams at the same target or at different ones. Make a separate attack roll for each beam.\"}"
+      },
+      {
+        "id": "srd:fire_bolt",
+        "name": "Fire Bolt",
+        "level": 0,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":120},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreatureOrObject\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"You hurl a mote of fire at a creature or an object within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 Fire damage. A flammable object hit by this spell starts burning if it isn't being worn or carried. Cantrip Upgrade: The damage increases by 1d10 when you reach levels 5 (2d10), 11 (3d10), and 17 (4d10).\"}"
+      },
+      {
+        "id": "srd:guidance",
+        "name": "Guidance",
+        "level": 0,
+        "schoolId": "srd:divination",
+        "body": "{\"level\":0,\"schoolId\":\"srd:divination\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:cleric\",\"srd:druid\"],\"description\":\"You touch a willing creature and choose a skill. Until the spell ends, the creature adds 1d4 to any ability check using the chosen skill. The spell then ends.\"}"
+      },
+      {
+        "id": "srd:light",
+        "name": "Light",
+        "level": 0,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"m\",\"description\":\"a firefly or phosphorescent moss\"}],\"duration\":{\"t\":\"hours\",\"hours\":1},\"targets\":[\"oneObject\"],\"classListIds\":[\"srd:bard\",\"srd:cleric\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"You touch one object that is no larger than 10 feet in any dimension. Until the spell ends, the object sheds Bright Light in a 20-foot radius and Dim Light for an additional 20 feet. The light can be colored as you like. Completely covering the object with something opaque blocks the light. The spell ends if you cast it again or dismiss it (no action required). If you target an object held or worn by a hostile creature, that creature must succeed on a Dexterity saving throw to avoid the spell.\"}"
+      },
+      {
+        "id": "srd:mage_hand",
+        "name": "Mage Hand",
+        "level": 0,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":0,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1},\"targets\":[\"point\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"A spectral, floating hand appears at a point you choose within range. The hand lasts for the duration or until you dismiss it (no action required). The hand vanishes if it is more than 30 feet from you or if you cast this spell again. As a Magic action, you can control the hand to manipulate an object, open an unlocked door or container, stow or retrieve an item from an open container, or pour the contents out of a vial. You can move the hand up to 30 feet each time you use it. The hand can't attack, activate magic items, or carry more than 10 pounds.\"}"
+      },
+      {
+        "id": "srd:mending",
+        "name": "Mending",
+        "level": 0,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"minutes\",\"minutes\":1},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"two lodestones\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneObject\"],\"classListIds\":[\"srd:bard\",\"srd:cleric\",\"srd:druid\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"This spell repairs a single break or tear in an object you touch, such as a broken chain link, two halves of a broken key, a torn cloak, or a leaking wineskin. As long as the break or tear is no larger than 1 foot in any dimension, you mend it, leaving no trace of the former damage. This spell can physically repair a magic item or construct, but it can't restore magic to such an object.\"}"
+      },
+      {
+        "id": "srd:message",
+        "name": "Message",
+        "level": 0,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":120},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a short piece of copper wire\"}],\"duration\":{\"t\":\"rounds\",\"rounds\":1},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"You point toward a creature within range and whisper a message. The target (and only the target) hears the message and can reply in a whisper that only you can hear. You can cast this spell through solid objects if you are familiar with the target and know it is beyond the barrier. Magical silence, 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood blocks the spell. The spell doesn't have to follow a straight line and can travel freely around corners or through openings.\"}"
+      },
+      {
+        "id": "srd:minor_illusion",
+        "name": "Minor Illusion",
+        "level": 0,
+        "schoolId": "srd:illusion",
+        "body": "{\"level\":0,\"schoolId\":\"srd:illusion\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a bit of fleece\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1},\"targets\":[\"point\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"You create a sound or an image of an object within range that lasts for the duration. See the Illusion description for the kinds of illusions you can create. The illusion ends if you cast this spell again or dismiss it (no action required). If you create a sound, its volume can range from a whisper to a scream. An image can be no larger than a 5-foot Cube. The image can't create sensory effects that a Light spell could. Physical interaction reveals it to be an illusion, and a creature using its action to examine the sound or image can identify it as illusory with a successful Investigation check against your spell save DC.\"}"
+      },
+      {
+        "id": "srd:poison_spray",
+        "name": "Poison Spray",
+        "level": 0,
+        "schoolId": "srd:necromancy",
+        "body": "{\"level\":0,\"schoolId\":\"srd:necromancy\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":10},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:druid\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"You extend your hand toward a creature you can see within range and project a puff of noxious gas from your palm. The target must succeed on a Constitution saving throw or take 1d12 Poison damage. Cantrip Upgrade: The damage increases by 1d12 when you reach levels 5 (2d12), 11 (3d12), and 17 (4d12).\"}"
+      },
+      {
+        "id": "srd:prestidigitation",
+        "name": "Prestidigitation",
+        "level": 0,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":10},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"hours\",\"hours\":1},\"targets\":[\"point\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"This spell is a minor magical trick that novice spellcasters use for practice. You create one of the following magical effects within range: an instantaneous, harmless sensory effect (shower of sparks, puff of wind, faint odor, soft note); an instantaneous fire-starter effect (light or snuff a candle, torch, or small campfire); clean or soil a 1-foot cube; chill, warm, or flavor 1 cubic foot of nonliving material for 1 hour; make a color, a small mark, or a symbol appear on an object or surface for 1 hour; or create a nonmagical trinket or illusory image that fits in your hand and lasts until the end of your next turn.\"}"
+      },
+      {
+        "id": "srd:produce_flame",
+        "name": "Produce Flame",
+        "level": 0,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":0,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":10},\"targets\":[\"self\"],\"classListIds\":[\"srd:druid\"],\"description\":\"A flickering flame appears in your hand. The flame remains there for the duration and harms neither you nor your equipment. The flame sheds Bright Light in a 10-foot radius and Dim Light for an additional 10 feet. The spell ends if you dismiss it (no action required) or if you cast it again. You can also attack with the flame: as a Magic action, hurl the flame at a creature or object within 60 feet. Make a ranged spell attack. On a hit, the target takes 1d8 Fire damage. This attack ends the spell. Cantrip Upgrade: damage increases by 1d8 at levels 5/11/17.\"}"
+      },
+      {
+        "id": "srd:ray_of_frost",
+        "name": "Ray of Frost",
+        "level": 0,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"A frigid beam of blue-white light streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 1d8 Cold damage, and its Speed is reduced by 10 feet until the start of your next turn. Cantrip Upgrade: The damage increases by 1d8 when you reach levels 5 (2d8), 11 (3d8), and 17 (4d8).\"}"
+      },
+      {
+        "id": "srd:resistance",
+        "name": "Resistance",
+        "level": 0,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":0,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a miniature cloak\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:cleric\",\"srd:druid\"],\"description\":\"You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice. It can roll the die before or after making the saving throw. The spell then ends.\"}"
+      },
+      {
+        "id": "srd:sacred_flame",
+        "name": "Sacred Flame",
+        "level": 0,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:cleric\"],\"description\":\"Flame-like radiance descends on a creature you can see within range. The target must succeed on a Dexterity saving throw or take 1d8 Radiant damage. The target gains no benefit from Half Cover or Three-Quarters Cover for this save. Cantrip Upgrade: The damage increases by 1d8 when you reach levels 5 (2d8), 11 (3d8), and 17 (4d8).\"}"
+      },
+      {
+        "id": "srd:shillelagh",
+        "name": "Shillelagh",
+        "level": 0,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"bonusAction\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"mistletoe, a shamrock leaf, and a Club or Quarterstaff\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1},\"targets\":[\"oneObject\"],\"classListIds\":[\"srd:druid\"],\"description\":\"A Club or Quarterstaff you are holding is imbued with nature's power. For the duration, you can use your spellcasting ability instead of Strength for the attack and damage rolls of melee attacks using that weapon, and the weapon's damage die becomes a d8. The weapon also becomes magical if it isn't already. The spell ends if you cast it again or if you let go of the weapon.\"}"
+      },
+      {
+        "id": "srd:shocking_grasp",
+        "name": "Shocking Grasp",
+        "level": 0,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Lightning springs from your hand to deliver a shock to a creature you try to touch. Make a melee spell attack against the target. You have Advantage on the roll if the target is wearing armor made of metal. On a hit, the target takes 1d8 Lightning damage, and it can't take Reactions until the start of its next turn. Cantrip Upgrade: The damage increases by 1d8 when you reach levels 5 (2d8), 11 (3d8), and 17 (4d8).\"}"
+      },
+      {
+        "id": "srd:spare_the_dying",
+        "name": "Spare the Dying",
+        "level": 0,
+        "schoolId": "srd:necromancy",
+        "body": "{\"level\":0,\"schoolId\":\"srd:necromancy\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":15},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:cleric\",\"srd:druid\"],\"description\":\"Choose a creature within range that has 0 Hit Points but isn't dead. The creature becomes Stable.\"}"
+      },
+      {
+        "id": "srd:starry_wisp",
+        "name": "Starry Wisp",
+        "level": 0,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a bit of phosphorescent material\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:druid\"],\"description\":\"You launch a mote of light at a creature or object within range. Make a ranged spell attack against the target. On a hit, the target takes 1d8 Radiant damage and emits Dim Light in a 10-foot radius for 1 minute or until a creature takes a Magic action to extinguish the light. The target also has Disadvantage on its next attack roll before the end of its next turn. Cantrip Upgrade: The damage increases by 1d8 when you reach levels 5 (2d8), 11 (3d8), and 17 (4d8).\"}"
+      },
+      {
+        "id": "srd:thaumaturgy",
+        "name": "Thaumaturgy",
+        "level": 0,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1},\"targets\":[\"point\"],\"classListIds\":[\"srd:cleric\"],\"description\":\"You manifest a minor wonder, a sign of supernatural power, within range. You create one of the following magical effects within range: your voice booms up to three times as loud as normal for 1 minute; cause flames to flicker, brighten, dim, or change color for 1 minute; cause harmless tremors in the ground for 1 minute; create an instantaneous sound that originates from a point of your choice within range; instantaneously cause an unlocked door or window to fly open or slam shut; or alter the appearance of your eyes for 1 minute. If you cast this spell multiple times, you can have up to three of its 1-minute effects active at a time, and you can dismiss such an effect as an action.\"}"
+      },
+      {
+        "id": "srd:thorn_whip",
+        "name": "Thorn Whip",
+        "level": 0,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"the stem of a plant with thorns\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:druid\"],\"description\":\"You create a long, vine-like whip covered in thorns that lashes out at a creature within range. Make a melee spell attack against the target. On a hit, the target takes 1d6 Piercing damage, and if the target is Large or smaller, you pull the target up to 10 feet closer to you. Cantrip Upgrade: The damage increases by 1d6 when you reach levels 5 (2d6), 11 (3d6), and 17 (4d6).\"}"
+      },
+      {
+        "id": "srd:toll_the_dead",
+        "name": "Toll the Dead",
+        "level": 0,
+        "schoolId": "srd:necromancy",
+        "body": "{\"level\":0,\"schoolId\":\"srd:necromancy\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:cleric\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"You point at one creature you can see within range, and the sound of a dolorous bell fills the air around it for a moment. The target must succeed on a Wisdom saving throw or take 1d8 Necrotic damage. If the target is missing any of its Hit Points, it instead takes 1d12 Necrotic damage. Cantrip Upgrade: The damage die changes when you reach levels 5 (2d8 or 2d12), 11 (3d8 or 3d12), and 17 (4d8 or 4d12).\"}"
+      },
+      {
+        "id": "srd:true_strike",
+        "name": "True Strike",
+        "level": 0,
+        "schoolId": "srd:divination",
+        "body": "{\"level\":0,\"schoolId\":\"srd:divination\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a weapon with which the caster has proficiency and that is worth at least 1 SP\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"self\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"Guided by a flash of magical insight, you make one attack with the weapon used in the spell's casting. The attack uses your spellcasting ability for the attack and damage rolls instead of using Strength or Dexterity. If the attack deals damage, it can be Radiant damage or the weapon's normal damage type (your choice). Cantrip Upgrade: The attack deals an extra 1d6 Radiant damage at levels 5 (+1d6), 11 (+2d6), and 17 (+3d6).\"}"
+      },
+      {
+        "id": "srd:vicious_mockery",
+        "name": "Vicious Mockery",
+        "level": 0,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":0,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\"],\"description\":\"You unleash a string of insults laced with subtle enchantments at a creature you can see within range. If the target can hear you, it must succeed on a Wisdom saving throw or take 1d6 Psychic damage and have Disadvantage on the next attack roll it makes before the end of its next turn. Cantrip Upgrade: The damage increases by 1d6 when you reach levels 5 (2d6), 11 (3d6), and 17 (4d6).\"}"
+      },
+      {
+        "id": "srd:word_of_radiance",
+        "name": "Word of Radiance",
+        "level": 0,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":0,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"m\",\"description\":\"a holy symbol\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"emanation\",\"distanceFt\":5},\"classListIds\":[\"srd:cleric\"],\"description\":\"You utter a divine word, and burning radiance erupts from you. Each creature of your choice that you can see within range must succeed on a Constitution saving throw or take 1d6 Radiant damage. Cantrip Upgrade: The damage increases by 1d6 when you reach levels 5 (2d6), 11 (3d6), and 17 (4d6).\"}"
+      },
+      {
+        "id": "srd:alarm",
+        "name": "Alarm",
+        "level": 1,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"minutes\",\"minutes\":1},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a tiny bell and a piece of fine silver wire\"}],\"duration\":{\"t\":\"hours\",\"hours\":8},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"cube\",\"sideFt\":20},\"ritual\":true,\"classListIds\":[\"srd:ranger\",\"srd:wizard\"],\"description\":\"You set an alarm against intrusion. Choose a Cube up to 20 feet on a side. Until the spell ends, an alarm alerts you whenever a Tiny or larger creature touches or enters the area. When you cast the spell, you can designate creatures that won't set off the alarm. Choose either a mental or audible alarm. The mental alarm alerts you with a ping in your mind if you are within 1 mile of the area. The audible alarm produces a loud bell sound audible within 60 feet for 10 seconds.\"}"
+      },
+      {
+        "id": "srd:animal_friendship",
+        "name": "Animal Friendship",
+        "level": 1,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":1,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a morsel of food\"}],\"duration\":{\"t\":\"hours\",\"hours\":24},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:druid\",\"srd:ranger\"],\"description\":\"Target one Beast you can see within range. The target must succeed on a Wisdom saving throw or have the Charmed condition for the duration. The spell ends early if the target takes damage. This spell has no effect if the target's Intelligence is 4 or higher. At Higher Levels: You can target one additional Beast for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:bane",
+        "name": "Bane",
+        "level": 1,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":1,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a drop of blood\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"multipleCreatures\"],\"classListIds\":[\"srd:bard\",\"srd:cleric\"],\"description\":\"Up to three creatures of your choice within range must succeed on a Charisma saving throw or be affected by this spell for the duration. Whenever an affected target makes an attack roll or a saving throw before the spell ends, the target must subtract 1d4 from the roll. At Higher Levels: Target one additional creature for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:bless",
+        "name": "Bless",
+        "level": 1,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":1,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a sprinkling of holy water\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"multipleCreatures\"],\"classListIds\":[\"srd:cleric\",\"srd:paladin\"],\"description\":\"Choose up to three creatures within range. Whenever a target makes an attack roll or a saving throw before the spell ends, the target can roll a d4 and add the number rolled to the attack roll or save. At Higher Levels: Target one additional creature for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:burning_hands",
+        "name": "Burning Hands",
+        "level": 1,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"cone\",\"lengthFt\":15},\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Each creature in a 15-foot Cone originating from you makes a Dexterity saving throw, taking 3d6 Fire damage on a failed save or half as much damage on a successful one. Flammable objects in the Cone that aren't being worn or carried start burning. At Higher Levels: The damage increases by 1d6 for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:charm_person",
+        "name": "Charm Person",
+        "level": 1,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":1,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"hours\",\"hours\":1},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:druid\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"One Humanoid you can see within range must succeed on a Wisdom saving throw or have the Charmed condition for the duration or until you or your allies damage it. The target has Advantage on the save if you or your allies are fighting it. When the spell ends, the target knows it was Charmed. At Higher Levels: Target one additional Humanoid for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:color_spray",
+        "name": "Color Spray",
+        "level": 1,
+        "schoolId": "srd:illusion",
+        "body": "{\"level\":1,\"schoolId\":\"srd:illusion\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a pinch of powder or sand colored red, yellow, and blue\"}],\"duration\":{\"t\":\"rounds\",\"rounds\":1},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"cone\",\"lengthFt\":15},\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Roll 6d10; the total is how many Hit Points of creatures this spell can affect. Creatures in a 15-foot Cone originating from you are affected in ascending order of their current Hit Points (ignoring unconscious creatures). Starting with the creature with the lowest current Hit Points, each creature affected has the Blinded condition until the end of your next turn. Subtract each creature's Hit Points from the total before moving to the next; a creature's Hit Points must be equal to or less than the remaining total. At Higher Levels: Roll an additional 2d10 for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:command",
+        "name": "Command",
+        "level": 1,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":1,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"}],\"duration\":{\"t\":\"rounds\",\"rounds\":1},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:cleric\",\"srd:paladin\"],\"description\":\"Speak a one-word command to a creature within range. The target must succeed on a Wisdom saving throw or follow the command on its next turn. The spell has no effect if the target is immune to the Charmed condition, doesn't understand your language, or if your command is directly harmful. Typical commands: Approach, Drop, Flee, Grovel, Halt. At Higher Levels: Target one additional creature for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:comprehend_languages",
+        "name": "Comprehend Languages",
+        "level": 1,
+        "schoolId": "srd:divination",
+        "body": "{\"level\":1,\"schoolId\":\"srd:divination\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a pinch of soot and salt\"}],\"duration\":{\"t\":\"hours\",\"hours\":1},\"targets\":[\"self\"],\"ritual\":true,\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"For the duration, you understand the literal meaning of any spoken or written language you hear or touch. It takes about 1 minute to read one page of text. This spell doesn't decode secret messages or glyphs.\"}"
+      },
+      {
+        "id": "srd:create_or_destroy_water",
+        "name": "Create or Destroy Water",
+        "level": 1,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a drop of water if creating water or a few grains of sand if destroying it\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"cube\",\"sideFt\":30},\"classListIds\":[\"srd:cleric\",\"srd:druid\"],\"description\":\"Create or destroy water as follows. Create Water: Create up to 10 gallons of clean water within range in an open container, or as rain in a 30-foot Cube extinguishing exposed flames. Destroy Water: Destroy up to 10 gallons of water in an open container, or fog in a 30-foot Cube. At Higher Levels: Add 10 gallons or cube size grows by 5 feet per spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:cure_wounds",
+        "name": "Cure Wounds",
+        "level": 1,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:cleric\",\"srd:druid\",\"srd:paladin\",\"srd:ranger\"],\"description\":\"A creature you touch regains a number of Hit Points equal to 2d8 plus your spellcasting ability modifier. This spell has no effect on Undead or Constructs. At Higher Levels: The healing increases by 2d8 for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:detect_evil_and_good",
+        "name": "Detect Evil and Good",
+        "level": 1,
+        "schoolId": "srd:divination",
+        "body": "{\"level\":1,\"schoolId\":\"srd:divination\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":10,\"concentration\":true},\"targets\":[\"self\"],\"classListIds\":[\"srd:cleric\",\"srd:paladin\"],\"description\":\"For the duration, you know if there is an Aberration, Celestial, Elemental, Fey, Fiend, or Undead within 30 feet of yourself, as well as where the creature is located. Similarly, you know if there is a place or object within 30 feet of you that has been magically consecrated or desecrated. The spell is blocked by 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood or dirt.\"}"
+      },
+      {
+        "id": "srd:detect_magic",
+        "name": "Detect Magic",
+        "level": 1,
+        "schoolId": "srd:divination",
+        "body": "{\"level\":1,\"schoolId\":\"srd:divination\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":10,\"concentration\":true},\"targets\":[\"self\"],\"ritual\":true,\"classListIds\":[\"srd:bard\",\"srd:cleric\",\"srd:druid\",\"srd:paladin\",\"srd:ranger\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"For the duration, you sense the presence of magical effects within 30 feet of yourself. If you sense such effects, you can take the Magic action to see a faint aura around any visible creature or object in the area that bears magic, and you learn its school of magic, if any. The spell is blocked by 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood or dirt.\"}"
+      },
+      {
+        "id": "srd:detect_poison_and_disease",
+        "name": "Detect Poison and Disease",
+        "level": 1,
+        "schoolId": "srd:divination",
+        "body": "{\"level\":1,\"schoolId\":\"srd:divination\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a yew leaf\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":10,\"concentration\":true},\"targets\":[\"self\"],\"ritual\":true,\"classListIds\":[\"srd:cleric\",\"srd:druid\",\"srd:paladin\",\"srd:ranger\"],\"description\":\"For the duration, you sense the presence and location of poisons, poisonous creatures, and diseases within 30 feet of yourself. You also identify the kind of poison, poisonous creature, or disease in each case. The spell is blocked by 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood or dirt.\"}"
+      },
+      {
+        "id": "srd:disguise_self",
+        "name": "Disguise Self",
+        "level": 1,
+        "schoolId": "srd:illusion",
+        "body": "{\"level\":1,\"schoolId\":\"srd:illusion\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"hours\",\"hours\":1},\"targets\":[\"self\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"You make yourself—including your clothing, armor, weapons, and other belongings on your person—look different until the spell ends. You can seem 1 foot shorter or taller and appear thin, fat, or in between. The changes don't hold up to physical inspection; a creature can take a Study action to discern the illusion with a successful Intelligence (Investigation) check against your spell save DC.\"}"
+      },
+      {
+        "id": "srd:divine_favor",
+        "name": "Divine Favor",
+        "level": 1,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"bonusAction\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"self\"],\"classListIds\":[\"srd:paladin\"],\"description\":\"Your prayer empowers you with divine radiance. Until the spell ends, your weapon attacks deal an extra 1d4 Radiant damage on a hit.\"}"
+      },
+      {
+        "id": "srd:entangle",
+        "name": "Entangle",
+        "level": 1,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":90},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"cube\",\"sideFt\":20},\"classListIds\":[\"srd:druid\",\"srd:ranger\"],\"description\":\"Grasping weeds and vines sprout from the ground in a 20-foot square within range. For the duration, these plants turn the ground in the area into Difficult Terrain. A creature in the area when you cast the spell must succeed on a Strength saving throw or have the Restrained condition until the spell ends. A Restrained creature can take an action to make a Strength (Athletics) check against your spell save DC; on a success, it frees itself.\"}"
+      },
+      {
+        "id": "srd:expeditious_retreat",
+        "name": "Expeditious Retreat",
+        "level": 1,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"bonusAction\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":10,\"concentration\":true},\"targets\":[\"self\"],\"classListIds\":[\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"This spell allows you to move at an incredible pace. When you cast this spell, and as a Bonus Action on each of your turns until the spell ends, you can take the Dash action.\"}"
+      },
+      {
+        "id": "srd:faerie_fire",
+        "name": "Faerie Fire",
+        "level": 1,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"cube\",\"sideFt\":20},\"classListIds\":[\"srd:bard\",\"srd:druid\"],\"description\":\"Each object in a 20-foot Cube within range is outlined in blue, green, or violet light (your choice). Any creature in the area when the spell is cast is also outlined in light if it fails a Dexterity saving throw. For the duration, outlined objects and creatures shed Dim Light in a 10-foot radius and can't benefit from the Invisible condition. Attack rolls against an affected creature or object have Advantage if the attacker can see it.\"}"
+      },
+      {
+        "id": "srd:false_life",
+        "name": "False Life",
+        "level": 1,
+        "schoolId": "srd:necromancy",
+        "body": "{\"level\":1,\"schoolId\":\"srd:necromancy\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a small amount of alcohol or distilled spirits\"}],\"duration\":{\"t\":\"hours\",\"hours\":1},\"targets\":[\"self\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Bolstering yourself with a necromantic facsimile of life, you gain 1d4 + 4 Temporary Hit Points for the duration. At Higher Levels: Temporary Hit Points increase by 5 for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:feather_fall",
+        "name": "Feather Fall",
+        "level": 1,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"reaction\",\"trigger\":\"you or a creature within 60 feet falls\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"m\",\"description\":\"a small feather or a piece of down\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1},\"targets\":[\"multipleCreatures\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Choose up to five falling creatures within range. A falling creature's rate of descent slows to 60 feet per round until the spell ends. If the creature lands before the spell ends, it takes no damage from the fall and the spell ends for that creature.\"}"
+      },
+      {
+        "id": "srd:find_familiar",
+        "name": "Find Familiar",
+        "level": 1,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"hours\",\"hours\":1},\"range\":{\"t\":\"feet\",\"feet\":10},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"10 gp worth of charcoal, incense, and herbs, which the spell consumes\",\"costCp\":1000,\"consumed\":true}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"point\"],\"ritual\":true,\"classListIds\":[\"srd:wizard\"],\"description\":\"You gain the service of a familiar—a spirit that takes an animal Form you choose (Cat, Frog, Owl, Rat, Raven, Spider, etc.). The familiar has the statistics of the chosen Form but is a Celestial, Fey, or Fiend (your choice). You can telepathically communicate with it while within 100 feet, and as an action see through its senses. You can dismiss it temporarily to a pocket dimension or permanently.\"}"
+      },
+      {
+        "id": "srd:fog_cloud",
+        "name": "Fog Cloud",
+        "level": 1,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":120},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"hours\",\"hours\":1,\"concentration\":true},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"sphere\",\"radiusFt\":20},\"classListIds\":[\"srd:druid\",\"srd:ranger\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"You create a 20-foot-radius Sphere of fog centered on a point within range. The Sphere is Heavily Obscured. It lasts for the duration or until a wind of moderate speed or greater disperses it. At Higher Levels: Radius increases by 20 feet per spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:goodberry",
+        "name": "Goodberry",
+        "level": 1,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a sprig of mistletoe\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"self\"],\"classListIds\":[\"srd:druid\",\"srd:ranger\"],\"description\":\"Up to ten berries appear in your hand and are infused with magic for the duration. A creature can take a Bonus Action to eat one berry, which restores 1 Hit Point and provides enough nourishment to sustain a creature for one day. The berries lose their potency if they have not been consumed within 24 hours of the casting of this spell.\"}"
+      },
+      {
+        "id": "srd:grease",
+        "name": "Grease",
+        "level": 1,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a bit of pork rind or butter\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"cube\",\"sideFt\":10},\"classListIds\":[\"srd:wizard\"],\"description\":\"Slick grease covers the ground in a 10-foot square centered on a point within range and turns it into Difficult Terrain for the duration. When the grease appears, each creature in the area must succeed on a Dexterity saving throw or fall Prone. A creature that enters the area or ends its turn there must also succeed on a Dexterity save or fall Prone.\"}"
+      },
+      {
+        "id": "srd:guiding_bolt",
+        "name": "Guiding Bolt",
+        "level": 1,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":120},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"rounds\",\"rounds\":1},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:cleric\"],\"description\":\"A flash of light streaks toward a creature of your choice within range. Make a ranged spell attack against the target. On a hit, the target takes 4d6 Radiant damage, and the next attack roll made against it before the end of your next turn has Advantage, thanks to the mystical dim light glittering on the target. At Higher Levels: The damage increases by 1d6 for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:healing_word",
+        "name": "Healing Word",
+        "level": 1,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"bonusAction\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:cleric\",\"srd:druid\"],\"description\":\"A creature of your choice that you can see within range regains Hit Points equal to 2d4 plus your spellcasting ability modifier. This spell has no effect on Undead or Constructs. At Higher Levels: The healing increases by 2d4 for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:hellish_rebuke",
+        "name": "Hellish Rebuke",
+        "level": 1,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"reaction\",\"trigger\":\"you are damaged by a creature within 60 feet that you can see\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:warlock\"],\"description\":\"You point your finger, and the creature that damaged you is momentarily surrounded by hellish flames. The creature must succeed on a Dexterity saving throw or take 2d10 Fire damage on a failed save, or half as much damage on a successful one. At Higher Levels: The damage increases by 1d10 for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:heroism",
+        "name": "Heroism",
+        "level": 1,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":1,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:paladin\"],\"description\":\"A willing creature you touch is imbued with bravery. Until the spell ends, the creature is immune to the Frightened condition and gains Temporary Hit Points equal to your spellcasting ability modifier at the start of each of its turns. When the spell ends, the target loses any remaining Temporary Hit Points from this spell. At Higher Levels: Target one additional creature for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:hunters_mark",
+        "name": "Hunter's Mark",
+        "level": 1,
+        "schoolId": "srd:divination",
+        "body": "{\"level\":1,\"schoolId\":\"srd:divination\",\"castingTime\":{\"t\":\"bonusAction\"},\"range\":{\"t\":\"feet\",\"feet\":90},\"components\":[{\"t\":\"v\"}],\"duration\":{\"t\":\"hours\",\"hours\":1,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:ranger\"],\"description\":\"You magically mark one creature you can see within range as your quarry. Until the spell ends, you deal an extra 1d6 damage to the target whenever you hit it with an attack roll, and you have Advantage on any Wisdom (Perception) and Wisdom (Survival) checks to find it. If the target drops to 0 Hit Points before the spell ends, you can take a Bonus Action on a later turn to mark a new creature. At Higher Levels: The damage becomes 1d6 (slots 1-2), 2d6 (slots 3-4), or 3d6 (slot 5+).\"}"
+      },
+      {
+        "id": "srd:identify",
+        "name": "Identify",
+        "level": 1,
+        "schoolId": "srd:divination",
+        "body": "{\"level\":1,\"schoolId\":\"srd:divination\",\"castingTime\":{\"t\":\"minutes\",\"minutes\":1},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a pearl worth 100+ GP and an owl feather\",\"costCp\":10000}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneObject\",\"oneCreature\"],\"ritual\":true,\"classListIds\":[\"srd:bard\",\"srd:wizard\"],\"description\":\"You choose one object or creature that you can see throughout the casting. If it is a magic item or some other magic-imbued object, you learn its properties and how to use them, whether it requires Attunement, and how many charges it has, if any. You learn whether any spells are affecting the item and what they are. If the item was created by a spell, you learn which spell created it. If you instead touch a creature throughout the casting, you learn what spells, if any, are currently affecting it.\"}"
+      },
+      {
+        "id": "srd:inflict_wounds",
+        "name": "Inflict Wounds",
+        "level": 1,
+        "schoolId": "srd:necromancy",
+        "body": "{\"level\":1,\"schoolId\":\"srd:necromancy\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:cleric\"],\"description\":\"Make a melee spell attack against a creature you can reach. On a hit, the target takes 2d10 Necrotic damage. At Higher Levels: The damage increases by 2d10 for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:jump",
+        "name": "Jump",
+        "level": 1,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a grasshopper's hind leg\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:druid\",\"srd:ranger\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"One willing creature you touch has its Long Jump and High Jump distances tripled until the spell ends.\"}"
+      },
+      {
+        "id": "srd:longstrider",
+        "name": "Longstrider",
+        "level": 1,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a pinch of dirt\"}],\"duration\":{\"t\":\"hours\",\"hours\":1},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:druid\",\"srd:ranger\",\"srd:wizard\"],\"description\":\"You touch a creature. The target's Speed increases by 10 feet until the spell ends. At Higher Levels: Target one additional creature for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:mage_armor",
+        "name": "Mage Armor",
+        "level": 1,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a piece of cured leather\"}],\"duration\":{\"t\":\"hours\",\"hours\":8},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"A willing creature you touch who isn't wearing armor is sheathed in protective magical force. The target's base AC becomes 13 plus its Dexterity modifier. The spell ends if the target dons armor or you dismiss the spell (no action required).\"}"
+      },
+      {
+        "id": "srd:magic_missile",
+        "name": "Magic Missile",
+        "level": 1,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":120},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"multipleCreatures\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"You create three glowing darts of magical Force. Each dart hits a creature of your choice that you can see within range. A dart deals 1d4 + 1 Force damage. The darts all strike simultaneously, and you can direct them to hit one creature or several. At Higher Levels: The spell creates one more dart for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:protection_from_evil_and_good",
+        "name": "Protection from Evil and Good",
+        "level": 1,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"holy water or powdered silver and iron, which the spell consumes\",\"consumed\":true}],\"duration\":{\"t\":\"minutes\",\"minutes\":10,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:cleric\",\"srd:paladin\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"Until the spell ends, one willing creature you touch is protected against Aberrations, Celestials, Elementals, Fey, Fiends, and Undead. The protection grants several benefits: creatures of those types have Disadvantage on attack rolls against the target, the target can't be Charmed, Frightened, or possessed by them, and if the target is already affected by those conditions from such a creature, it has Advantage on any new saving throw against the effect.\"}"
+      },
+      {
+        "id": "srd:purify_food_and_drink",
+        "name": "Purify Food and Drink",
+        "level": 1,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":10},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"sphere\",\"radiusFt\":5},\"ritual\":true,\"classListIds\":[\"srd:cleric\",\"srd:druid\",\"srd:paladin\"],\"description\":\"All nonmagical food and drink within a 5-foot-radius Sphere centered on a point of your choice within range is purified and rendered free of poison and disease.\"}"
+      },
+      {
+        "id": "srd:ray_of_sickness",
+        "name": "Ray of Sickness",
+        "level": 1,
+        "schoolId": "srd:necromancy",
+        "body": "{\"level\":1,\"schoolId\":\"srd:necromancy\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"A ray of sickening greenish energy lashes out toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 2d8 Poison damage and must succeed on a Constitution saving throw or have the Poisoned condition until the end of your next turn. At Higher Levels: The damage increases by 1d8 for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:sanctuary",
+        "name": "Sanctuary",
+        "level": 1,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"bonusAction\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a small silver mirror\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:cleric\"],\"description\":\"You ward a creature within range against attack. Until the spell ends, any creature who targets the warded creature with an attack or a harmful spell must first make a Wisdom saving throw. On a failed save, the creature must choose a new target or lose the attack or spell. The spell doesn't protect the warded creature from area effects. If the warded creature makes an attack, casts a spell that affects an enemy, or deals damage, the spell ends.\"}"
+      },
+      {
+        "id": "srd:shield",
+        "name": "Shield",
+        "level": 1,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"reaction\",\"trigger\":\"you are hit by an attack roll or targeted by Magic Missile\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"rounds\",\"rounds\":1},\"targets\":[\"self\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"An invisible barrier of magical force appears and protects you. Until the start of your next turn, you have a +5 bonus to AC, including against the triggering attack, and you take no damage from Magic Missile.\"}"
+      },
+      {
+        "id": "srd:shield_of_faith",
+        "name": "Shield of Faith",
+        "level": 1,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"bonusAction\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a small parchment with a bit of holy text written on it\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":10,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:cleric\",\"srd:paladin\"],\"description\":\"A shimmering field appears and surrounds a creature of your choice within range, granting it a +2 bonus to AC for the duration.\"}"
+      },
+      {
+        "id": "srd:silent_image",
+        "name": "Silent Image",
+        "level": 1,
+        "schoolId": "srd:illusion",
+        "body": "{\"level\":1,\"schoolId\":\"srd:illusion\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a bit of fleece\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":10,\"concentration\":true},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"cube\",\"sideFt\":15},\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"You create the visual image of an object, a creature, or some other visible phenomenon no larger than a 15-foot Cube. The image appears at a spot within range and lasts for the duration. The image is purely visual; it isn't accompanied by sound, smell, or other sensory effects. You can take the Magic action to move the image to any other spot within range. A creature that takes the Study action to examine the image can determine it is an illusion with a successful Intelligence (Investigation) check against your spell save DC.\"}"
+      },
+      {
+        "id": "srd:sleep",
+        "name": "Sleep",
+        "level": 1,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":1,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":90},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a pinch of fine sand, rose petals, or a cricket\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"sphere\",\"radiusFt\":5},\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Roll 5d8; the total is how many Hit Points of creatures this spell can affect. Each creature in a 5-foot-radius Sphere centered on a point you choose within range is affected in ascending order of their current Hit Points (ignoring unconscious creatures). Each affected creature must succeed on a Wisdom saving throw or have the Unconscious condition for the duration. The Unconscious condition ends on a creature if it takes damage or if another creature uses an action to shake or slap it awake. At Higher Levels: Roll an additional 1d8 for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:speak_with_animals",
+        "name": "Speak with Animals",
+        "level": 1,
+        "schoolId": "srd:divination",
+        "body": "{\"level\":1,\"schoolId\":\"srd:divination\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":10},\"targets\":[\"self\"],\"ritual\":true,\"classListIds\":[\"srd:bard\",\"srd:druid\",\"srd:ranger\"],\"description\":\"For the duration, you can comprehend and verbally communicate with Beasts. Most Beasts have little to say, but with the GM's permission, you can use the spell to gain information from a Beast about recent events, enemies nearby, or the like. At the GM's discretion, a Beast might make a request of you.\"}"
+      },
+      {
+        "id": "srd:hideous_laughter",
+        "name": "Hideous Laughter",
+        "level": 1,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":1,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"tiny tarts and a feather waved in the air\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:wizard\"],\"description\":\"A creature of your choice that you can see within range perceives everything as hilariously funny and falls into fits of laughter. The target must succeed on a Wisdom saving throw or have the Prone and Incapacitated conditions for the duration, unable to stand up. A creature with an Intelligence of 4 or less isn't affected. At the end of each of its turns, and each time it takes damage, the target makes another Wisdom saving throw, ending the spell on a success.\"}"
+      },
+      {
+        "id": "srd:thunderwave",
+        "name": "Thunderwave",
+        "level": 1,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"cube\",\"sideFt\":15},\"classListIds\":[\"srd:bard\",\"srd:druid\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"A wave of thunderous force sweeps out from you. Each creature in a 15-foot Cube originating from you makes a Constitution saving throw. On a failed save, a creature takes 2d8 Thunder damage and is pushed 10 feet away from you. On a successful save, it takes half as much damage and isn't pushed. The spell emits a thunderous boom audible out to 300 feet. At Higher Levels: The damage increases by 1d8 for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:unseen_servant",
+        "name": "Unseen Servant",
+        "level": 1,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":1,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a piece of string and a bit of wood\"}],\"duration\":{\"t\":\"hours\",\"hours\":1},\"targets\":[\"point\"],\"ritual\":true,\"classListIds\":[\"srd:bard\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"This spell creates an invisible, mindless, shapeless Medium force that performs simple tasks at your command until the spell ends. The servant has AC 10, 1 Hit Point, and a Strength of 2, and it can't attack. If reduced to 0 Hit Points, the spell ends. You can mentally command the servant to move up to 15 feet and interact with an object as a Bonus Action on each of your turns. The servant can perform tasks such as fetching things, cleaning, mending, folding clothes, lighting fires, serving food, and pouring wine.\"}"
+      },
+      {
+        "id": "srd:witch_bolt",
+        "name": "Witch Bolt",
+        "level": 1,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a twig from a tree that has been struck by lightning\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"A beam of crackling blue energy lashes out toward a creature within range, forming a sustained arc of lightning between you and the target. Make a ranged spell attack against the target. On a hit, the target takes 2d12 Lightning damage, and on each of your later turns, you can take the Magic action to deal 1d12 Lightning damage to the target automatically. The spell ends if the target is ever outside the spell's range or has total cover from you. At Higher Levels: The initial damage increases by 1d12 for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:chromatic_orb",
+        "name": "Chromatic Orb",
+        "level": 1,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":1,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":90},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a diamond worth 50+ GP\",\"costCp\":5000}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"You hurl a 4-inch-diameter sphere of energy at a creature within range. Choose Acid, Cold, Fire, Lightning, Poison, or Thunder for the type of orb you create, and then make a ranged spell attack against the target. On a hit, the target takes 3d8 damage of the chosen type. If you roll the same number on two or more of the d8s, the orb leaps to a different creature of your choice within 30 feet of the target. Make a new attack roll against the new target, and make a new damage roll. The orb can't leap again until you cast the spell again. At Higher Levels: The damage increases by 1d8 for each spell slot level above 1.\"}"
+      },
+      {
+        "id": "srd:aid",
+        "name": "Aid",
+        "level": 2,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":2,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":30},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a strip of white cloth\"}],\"duration\":{\"t\":\"hours\",\"hours\":8},\"targets\":[\"multipleCreatures\"],\"classListIds\":[\"srd:cleric\",\"srd:paladin\"],\"description\":\"Choose up to three creatures within range. Each target's HP maximum and current HP increase by 5 for the duration.\"}"
+      },
+      {
+        "id": "srd:hold_person",
+        "name": "Hold Person",
+        "level": 2,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":2,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a small, straight piece of iron\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:cleric\",\"srd:druid\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"Target a Humanoid you can see within range. The target must succeed on a Wisdom save or have the Paralyzed condition for the duration.\"}"
+      },
+      {
+        "id": "srd:misty_step",
+        "name": "Misty Step",
+        "level": 2,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":2,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"bonusAction\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"self\"],\"classListIds\":[\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"Briefly surrounded by silvery mist, you teleport up to 30 feet to an unoccupied space you can see.\"}"
+      },
+      {
+        "id": "srd:web",
+        "name": "Web",
+        "level": 2,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":2,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a bit of spiderweb\"}],\"duration\":{\"t\":\"hours\",\"hours\":1,\"concentration\":true},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"cube\",\"sideFt\":20},\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Conjure thick, sticky webs that fill a 20-foot Cube. The webs are difficult terrain and lightly obscure the area.\"}"
+      },
+      {
+        "id": "srd:counterspell",
+        "name": "Counterspell",
+        "level": 3,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":3,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"reaction\",\"trigger\":\"another creature within 60 feet of yourself casts a spell with Verbal or Somatic components\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"Attempt to interrupt a creature in the process of casting a spell. The target must succeed on a Constitution save (DC 10 + spell's level) or the spell fails.\"}"
+      },
+      {
+        "id": "srd:fireball",
+        "name": "Fireball",
+        "level": 3,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":3,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":150},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a ball of bat guano and sulfur\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"sphere\",\"radiusFt\":20},\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"A bright streak flashes from you to a point you choose within range and blossoms into an explosion of flame. Each creature in a 20-foot radius Sphere makes a Dexterity save, taking 8d6 fire damage on a fail or half on a success.\"}"
+      },
+      {
+        "id": "srd:fly",
+        "name": "Fly",
+        "level": 3,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":3,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a wing feather from any bird\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":10,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"A willing creature you touch gains a Fly Speed of 60 feet for the duration.\"}"
+      },
+      {
+        "id": "srd:revivify",
+        "name": "Revivify",
+        "level": 3,
+        "schoolId": "srd:necromancy",
+        "body": "{\"level\":3,\"schoolId\":\"srd:necromancy\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"diamonds worth 300+ GP, which the spell consumes\",\"costCp\":30000,\"consumed\":true}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:cleric\",\"srd:paladin\"],\"description\":\"Touch a creature that has died within the last minute. That creature returns to life with 1 HP. This spell can't return to life a creature that has died of old age, nor can it restore any missing body parts.\"}"
+      },
+      {
+        "id": "srd:banishment",
+        "name": "Banishment",
+        "level": 4,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":4,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a hairpin made of cold iron\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:cleric\",\"srd:paladin\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"Attempt to send one creature you can see within range to another plane of existence. The target must succeed on a Charisma save or be banished.\"}"
+      },
+      {
+        "id": "srd:greater_invisibility",
+        "name": "Greater Invisibility",
+        "level": 4,
+        "schoolId": "srd:illusion",
+        "body": "{\"level\":4,\"schoolId\":\"srd:illusion\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"A creature you touch has the Invisible condition for the duration.\"}"
+      },
+      {
+        "id": "srd:polymorph",
+        "name": "Polymorph",
+        "level": 4,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":4,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a caterpillar cocoon\"}],\"duration\":{\"t\":\"hours\",\"hours\":1,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:druid\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Transform a creature you can see within range into a Beast. An unwilling creature must succeed on a Wisdom save.\"}"
+      },
+      {
+        "id": "srd:wall_of_fire",
+        "name": "Wall of Fire",
+        "level": 4,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":4,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":120},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a piece of phosphorus\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"line\",\"lengthFt\":60,\"widthFt\":5},\"classListIds\":[\"srd:druid\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Create a wall of fire on a solid surface. Each creature in the wall's space makes a Dexterity save, taking 5d8 fire damage on a fail or half on a success.\"}"
+      },
+      {
+        "id": "srd:animate_objects",
+        "name": "Animate Objects",
+        "level": 5,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":5,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":120},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"multipleCreatures\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Up to 10 nonmagical objects within range animate at your command, becoming creatures under your control.\"}"
+      },
+      {
+        "id": "srd:cone_of_cold",
+        "name": "Cone of Cold",
+        "level": 5,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":5,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a small crystal or glass cone\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"cone\",\"lengthFt\":60},\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"A blast of cold air erupts from your hands. Each creature in a 60-foot Cone makes a Constitution save, taking 8d8 cold damage on a fail or half on a success.\"}"
+      },
+      {
+        "id": "srd:hold_monster",
+        "name": "Hold Monster",
+        "level": 5,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":5,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":90},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a small, straight piece of iron\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"Choose a creature you can see within range. The target must succeed on a Wisdom save or have the Paralyzed condition.\"}"
+      },
+      {
+        "id": "srd:raise_dead",
+        "name": "Raise Dead",
+        "level": 5,
+        "schoolId": "srd:necromancy",
+        "body": "{\"level\":5,\"schoolId\":\"srd:necromancy\",\"castingTime\":{\"t\":\"hours\",\"hours\":1},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a diamond worth 500+ GP, which the spell consumes\",\"costCp\":50000,\"consumed\":true}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:cleric\",\"srd:paladin\"],\"description\":\"Return a dead creature you touch to life, provided it has been dead no longer than 10 days.\"}"
+      },
+      {
+        "id": "srd:chain_lightning",
+        "name": "Chain Lightning",
+        "level": 6,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":6,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":150},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a bit of fur, a piece of amber, and a silver pin\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"multipleCreatures\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"A bolt of lightning strikes a target you choose, then arcs to up to 3 additional targets within 30 feet. Each target makes a Dexterity save, taking 10d8 lightning damage on a fail or half on a success.\"}"
+      },
+      {
+        "id": "srd:disintegrate",
+        "name": "Disintegrate",
+        "level": 6,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":6,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a lodestone and dust\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreatureOrObject\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"A thin green ray springs from your finger. The target must succeed on a Dexterity save or take 10d6+40 force damage; if reduced to 0 HP, it is disintegrated.\"}"
+      },
+      {
+        "id": "srd:heal",
+        "name": "Heal",
+        "level": 6,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":6,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:cleric\",\"srd:druid\"],\"description\":\"Choose a creature you can see within range. Surges of positive energy wash through it, restoring 70 HP and ending Blinded, Deafened, and any disease on it.\"}"
+      },
+      {
+        "id": "srd:true_seeing",
+        "name": "True Seeing",
+        "level": 6,
+        "schoolId": "srd:divination",
+        "body": "{\"level\":6,\"schoolId\":\"srd:divination\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"ointment for the eyes worth 25+ GP\",\"costCp\":2500,\"consumed\":true}],\"duration\":{\"t\":\"hours\",\"hours\":1},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:cleric\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"The willing creature you touch has Truesight with a range of 120 feet for the duration.\"}"
+      },
+      {
+        "id": "srd:finger_of_death",
+        "name": "Finger of Death",
+        "level": 7,
+        "schoolId": "srd:necromancy",
+        "body": "{\"level\":7,\"schoolId\":\"srd:necromancy\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"Send negative energy at a creature within range. The target makes a Constitution save, taking 7d8+30 necrotic damage on a fail or half on a success.\"}"
+      },
+      {
+        "id": "srd:plane_shift",
+        "name": "Plane Shift",
+        "level": 7,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":7,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"touch\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a forked metal rod worth 250+ GP, attuned to a plane\",\"costCp\":25000}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"multipleCreatures\"],\"classListIds\":[\"srd:cleric\",\"srd:druid\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"You and up to 8 willing creatures who join hands transport to a different plane of existence.\"}"
+      },
+      {
+        "id": "srd:reverse_gravity",
+        "name": "Reverse Gravity",
+        "level": 7,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":7,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":100},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"a lodestone and iron filings\"}],\"duration\":{\"t\":\"minutes\",\"minutes\":1,\"concentration\":true},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"cylinder\",\"radiusFt\":50,\"heightFt\":100},\"classListIds\":[\"srd:druid\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Reverse gravity in a 50-foot-radius, 100-foot-high cylinder. Loose objects and unattached creatures fall upward.\"}"
+      },
+      {
+        "id": "srd:teleport",
+        "name": "Teleport",
+        "level": 7,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":7,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":10},\"components\":[{\"t\":\"v\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"multipleCreatures\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Instantly transport yourself and up to 8 willing creatures (or one object) to a destination you select.\"}"
+      },
+      {
+        "id": "srd:antimagic_field",
+        "name": "Antimagic Field",
+        "level": 8,
+        "schoolId": "srd:abjuration",
+        "body": "{\"level\":8,\"schoolId\":\"srd:abjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"iron filings\"}],\"duration\":{\"t\":\"hours\",\"hours\":1,\"concentration\":true},\"targets\":[\"self\"],\"area\":{\"t\":\"emanation\",\"distanceFt\":10},\"classListIds\":[\"srd:cleric\",\"srd:wizard\"],\"description\":\"An invisible 10-foot-radius emanation surrounds you and suppresses magic within it for the duration.\"}"
+      },
+      {
+        "id": "srd:dominate_monster",
+        "name": "Dominate Monster",
+        "level": 8,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":8,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"hours\",\"hours\":1,\"concentration\":true},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"Attempt to beguile a creature you can see within range. The target must succeed on a Wisdom save or have the Charmed condition; you control its actions.\"}"
+      },
+      {
+        "id": "srd:power_word_stun",
+        "name": "Power Word Stun",
+        "level": 8,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":8,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"Speak a word of power to a creature you can see within range. If the target has 150 HP or fewer, it has the Stunned condition until it makes a Constitution save.\"}"
+      },
+      {
+        "id": "srd:sunburst",
+        "name": "Sunburst",
+        "level": 8,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":8,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":150},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"},{\"t\":\"m\",\"description\":\"fire and a piece of sunstone\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"sphere\",\"radiusFt\":60},\"classListIds\":[\"srd:druid\",\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Brilliant sunlight flashes in a 60-foot-radius Sphere. Each creature makes a Constitution save, taking 12d6 radiant damage on a fail or half on a success.\"}"
+      },
+      {
+        "id": "srd:meteor_swarm",
+        "name": "Meteor Swarm",
+        "level": 9,
+        "schoolId": "srd:evocation",
+        "body": "{\"level\":9,\"schoolId\":\"srd:evocation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"miles\",\"miles\":1},\"components\":[{\"t\":\"v\"},{\"t\":\"s\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"aoeOriginPoint\"],\"area\":{\"t\":\"sphere\",\"radiusFt\":40},\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Blazing orbs of fire plummet to the ground at four points within range. Each creature in a 40-foot-radius Sphere takes 20d6 fire damage and 20d6 bludgeoning damage on a failed Dexterity save.\"}"
+      },
+      {
+        "id": "srd:power_word_kill",
+        "name": "Power Word Kill",
+        "level": 9,
+        "schoolId": "srd:enchantment",
+        "body": "{\"level\":9,\"schoolId\":\"srd:enchantment\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"feet\",\"feet\":60},\"components\":[{\"t\":\"v\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"oneCreature\"],\"classListIds\":[\"srd:bard\",\"srd:sorcerer\",\"srd:warlock\",\"srd:wizard\"],\"description\":\"Utter a word of power that can compel one creature you can see within range to die instantly. If the target has 100 HP or fewer, it dies.\"}"
+      },
+      {
+        "id": "srd:time_stop",
+        "name": "Time Stop",
+        "level": 9,
+        "schoolId": "srd:transmutation",
+        "body": "{\"level\":9,\"schoolId\":\"srd:transmutation\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"self\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"Briefly stop the flow of time for everyone but yourself. Take 1d4+1 turns in a row, during which other creatures are frozen.\"}"
+      },
+      {
+        "id": "srd:wish",
+        "name": "Wish",
+        "level": 9,
+        "schoolId": "srd:conjuration",
+        "body": "{\"level\":9,\"schoolId\":\"srd:conjuration\",\"castingTime\":{\"t\":\"action\"},\"range\":{\"t\":\"self\"},\"components\":[{\"t\":\"v\"}],\"duration\":{\"t\":\"instantaneous\"},\"targets\":[\"self\"],\"classListIds\":[\"srd:sorcerer\",\"srd:wizard\"],\"description\":\"By simply speaking aloud, you can alter the very foundations of reality in accord with your desires.\"}"
+      }
+    ],
+    "monsters": [],
+    "items": [],
+    "feats": [],
+    "backgrounds": [],
+    "species": [],
+    "subclasses": [],
+    "classProgressions": []
+  },
+  "contentHash": "sha256:ebcedc8115c482f293c37dd184b9d3caa72c6d07b4e3eec8bd5638d974cd2866"
+}

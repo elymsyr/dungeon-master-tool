@@ -12,7 +12,6 @@ import '../../../application/providers/campaign_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
-import '../../widgets/hub_card_grid.dart';
 import '../../widgets/marketplace_panel.dart';
 import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
@@ -48,7 +47,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: 500),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,9 +102,11 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                           ),
                         ),
                       )
-                    : HubCardGrid(
+                    : ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: packages.length,
-                        tileWidth: 380,
+                        separatorBuilder: (_, _) => const SizedBox(height: 4),
                         itemBuilder: (context, index) {
                           final info = packages[index];
                           final isSelected = index == _selectedIndex;

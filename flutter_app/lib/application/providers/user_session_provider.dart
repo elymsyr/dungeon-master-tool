@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -10,7 +9,6 @@ import '../../core/config/app_paths.dart';
 import '../../data/database/database_provider.dart';
 import 'campaign_provider.dart';
 import 'cloud_backup_provider.dart';
-import 'srd_bootstrap_provider.dart';
 import 'template_provider.dart';
 
 /// Auth değişikliklerini dinleyerek AppPaths ve DB'yi kullanıcıya göre
@@ -33,12 +31,12 @@ class UserSessionNotifier extends StateNotifier<bool> {
     _invalidateAll();
     state = true;
 
-    // SRD Core install — version-keyed idempotent. Fire-and-forget so a
-    // slow first-run import never blocks user-session activation; the
-    // outcome lands in `srdBootstrapOutcomeProvider` for any UI that wants
-    // to surface a banner. Errors are swallowed-and-reported by the
-    // service itself (see [SrdBootstrapError]).
-    unawaited(runSrdBootstrap(_ref));
+    // SRD auto-install disabled: users opt in to bundled packages
+    // (srd_rules / srd_spells / srd_bestiary / srd_heroes) through the
+    // Packages tab instead of having content appear in every new world
+    // without consent. The bootstrap service + provider are still wired
+    // up for manual triggers; only the automatic fire on session activate
+    // is gone.
   }
 
   /// Kullanıcı oturumunu sonlandır — global path'lere dön.
