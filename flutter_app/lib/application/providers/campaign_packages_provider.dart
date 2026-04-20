@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -98,6 +99,26 @@ class CampaignPackagesController {
     final installedPackageId = await ensureInstalled(bundle);
     await enable(campaignId, installedPackageId);
     return installedPackageId;
+  }
+
+  /// Silently rewrites any lingering `installed_packages` row whose
+  /// `sourcePackageId` is in [retiredBundledSourcePackageIds] (e.g.
+  /// `srd-rules-1`, `srd-heroes-1` from the pre-merge split) onto the
+  /// current Core `sourcePackageId`. Preserves all content rows — the
+  /// primary-key `installedPackageId` is unchanged, only the outward-facing
+  /// bundle id is renormalized so `installedPackageForBundleProvider(core)`
+  /// finds them. Idempotent: no-op once no retired rows remain.
+  Future<int> migrateRetiredBundles() async {
+    final db = _ref.read(appDatabaseProvider);
+    final rewritten = await (db.update(db.installedPackages)
+          ..where((t) => t.sourcePackageId.isIn(retiredBundledSourcePackageIds)))
+        .write(const InstalledPackagesCompanion(
+      sourcePackageId: Value('srd-core-1'),
+    ));
+    if (rewritten > 0) {
+      _ref.invalidate(installedPackageForBundleProvider);
+    }
+    return rewritten;
   }
 }
 

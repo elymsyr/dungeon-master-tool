@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 
 import '../../core/utils/deep_copy.dart';
@@ -54,7 +56,29 @@ final worldSchemaProvider = Provider<WorldSchema>((ref) {
       _cachedWorldSchema = schema;
       return schema;
     } catch (e) {
-      debugPrint('WorldSchema parse error: $e');
+      debugPrint('WorldSchema parse error (first pass): $e');
+      // Recovery: some writer leaked typed Freezed objects (e.g.
+      // `_EntityCategorySchema`) into the `data['world_schema']` map.
+      // Round-trip through jsonEncode to renormalize everything back to
+      // primitive maps/lists, then reparse. Repair the stored map in
+      // place so subsequent rebuilds hit the happy path.
+      try {
+        final normalized =
+            jsonDecode(jsonEncode(rawSource)) as Map<String, dynamic>;
+        final schema = WorldSchema.fromJson(normalized);
+        if (data != null) {
+          data['world_schema'] = normalized;
+          _cachedWorldSchemaSource = normalized;
+        } else {
+          _cachedWorldSchemaSource = null;
+        }
+        _cachedWorldSchema = schema;
+        debugPrint('WorldSchema parse recovered via json-roundtrip');
+        return schema;
+      } catch (e2) {
+        debugPrint('WorldSchema parse unrecoverable: $e2');
+        assert(false, 'WorldSchema writer leaked typed objects: $e');
+      }
     }
   }
 

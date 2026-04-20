@@ -132,7 +132,13 @@ class _ItemBody extends StatelessWidget {
       categoryColor: categoryColor,
       tags: [
         CardTag(_capitalize(itemType)),
-        CardTag(_capitalize(rarity)),
+        if (rarityId != null && rarityId!.isNotEmpty)
+          EntityLinkChip(
+            entityId: rarityId!,
+            displayLabel: _capitalize(rarity),
+          )
+        else
+          CardTag(_capitalize(rarity)),
         CardTag(_costText(item.costCp)),
         if (item.weightLb > 0) CardTag('${_trim(item.weightLb)} lb'),
       ],

@@ -1,4 +1,4 @@
-/// Static registry of the 4 SRD packages bundled with the app (produced by
+/// Static registry of the SRD packages bundled with the app (produced by
 /// `tool/build_srd_pkg.dart`). Drives the world-create / world-edit package
 /// picker so users opt in to the SRD subsets they want per world.
 ///
@@ -25,16 +25,25 @@ class BundledSrdPackage {
   });
 }
 
+/// `sourcePackageId` values retired from the bundled registry. Lingering
+/// rows in `installed_packages` with these ids are silently cleaned up on
+/// boot (see `CampaignPackagesController.migrateRetiredBundles`).
+const List<String> retiredBundledSourcePackageIds = <String>[
+  'srd-rules-1',
+  'srd-heroes-1',
+];
+
 const List<BundledSrdPackage> bundledSrdPackages = <BundledSrdPackage>[
   BundledSrdPackage(
-    id: 'rules',
-    assetPath: 'assets/packages/srd_rules.dnd5e-pkg.json',
-    sourcePackageId: 'srd-rules-1',
-    name: 'SRD — Rules',
+    id: 'core',
+    assetPath: 'assets/packages/srd_core.dnd5e-pkg.json',
+    sourcePackageId: 'srd-core-1',
+    name: 'SRD — Core',
     description:
-        'Conditions, damage types, skills, sizes, spell-schools, weapon '
-            'properties, rarities, plus feats and backgrounds. Required for '
-            'the other SRD packages.',
+        'Rules + Heroes merged: conditions, damage types, skills, sizes, '
+            'spell-schools, weapon properties, rarities, feats, backgrounds, '
+            'species, lineages, classes, subclasses, and items. Required for '
+            'Spells and Bestiary.',
     recommended: true,
   ),
   BundledSrdPackage(
@@ -50,12 +59,5 @@ const List<BundledSrdPackage> bundledSrdPackages = <BundledSrdPackage>[
     sourcePackageId: 'srd-bestiary-1',
     name: 'SRD — Bestiary',
     description: 'Monster stat blocks from the SRD 5.2.1.',
-  ),
-  BundledSrdPackage(
-    id: 'heroes',
-    assetPath: 'assets/packages/srd_heroes.dnd5e-pkg.json',
-    sourcePackageId: 'srd-heroes-1',
-    name: 'SRD — Heroes',
-    description: 'Species, lineages, classes, subclasses, and items.',
   ),
 ];

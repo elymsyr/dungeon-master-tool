@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../application/providers/edit_mode_provider.dart';
 
 /// Inline editable text cell used by typed cards. Renders as a plain text
-/// line that becomes a `TextField` on tap; commits (via [onCommit]) when
-/// the user loses focus or presses Enter. Multi-line fields stay as a
-/// `TextFormField` with a subtle underline and no floating label so the
-/// paper look is preserved.
-class InlineTextField extends StatefulWidget {
+/// line; becomes a `TextField` on tap when the global [editModeProvider]
+/// is on. Commits (via [onCommit]) when the user loses focus or presses
+/// Enter. With edit mode off, tap is a no-op and the text renders as
+/// read-only (no hover affordance, no ripple).
+class InlineTextField extends ConsumerStatefulWidget {
   final String value;
   final ValueChanged<String> onCommit;
   final TextStyle? style;
@@ -25,10 +28,10 @@ class InlineTextField extends StatefulWidget {
   });
 
   @override
-  State<InlineTextField> createState() => _InlineTextFieldState();
+  ConsumerState<InlineTextField> createState() => _InlineTextFieldState();
 }
 
-class _InlineTextFieldState extends State<InlineTextField> {
+class _InlineTextFieldState extends ConsumerState<InlineTextField> {
   late final TextEditingController _ctrl;
   late final FocusNode _focus;
   bool _editing = false;
@@ -77,7 +80,14 @@ class _InlineTextFieldState extends State<InlineTextField> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final baseStyle = widget.style ?? theme.textTheme.bodyMedium;
-    if (_editing) {
+    final editMode = ref.watch(editModeProvider);
+    // If edit mode flips off mid-edit, commit and drop to read-only.
+    if (!editMode && _editing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _editing) _commit();
+      });
+    }
+    if (_editing && editMode) {
       return TextField(
         controller: _ctrl,
         focusNode: _focus,
@@ -98,21 +108,23 @@ class _InlineTextFieldState extends State<InlineTextField> {
         ? (widget.placeholder ?? '—')
         : widget.value;
     final muted = widget.value.trim().isEmpty;
+    final text = Container(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      width: double.infinity,
+      child: Text(
+        display,
+        textAlign: widget.textAlign,
+        style: baseStyle?.copyWith(
+          color: muted ? theme.hintColor : baseStyle.color,
+          fontStyle: muted ? FontStyle.italic : FontStyle.normal,
+        ),
+      ),
+    );
+    if (!editMode) return text;
     return InkWell(
       onTap: _startEdit,
       borderRadius: BorderRadius.circular(4),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        width: double.infinity,
-        child: Text(
-          display,
-          textAlign: widget.textAlign,
-          style: baseStyle?.copyWith(
-            color: muted ? theme.hintColor : baseStyle.color,
-            fontStyle: muted ? FontStyle.italic : FontStyle.normal,
-          ),
-        ),
-      ),
+      child: text,
     );
   }
 }

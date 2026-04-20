@@ -6,11 +6,11 @@ import '../../theme/dm_tool_colors.dart';
 import 'card_panel_scope.dart';
 import 'card_shell.dart' show CardTag;
 
-/// Tappable, hover-preview chip for cross-entity references (e.g. a
-/// spell's schoolId pointing at `srd:evocation`, a monster action's
-/// damage-type id, etc.). Tap opens the referenced entity in the opposite
-/// database panel via [CardPanelScope]; hover surfaces the entity's name
-/// + category via a built-in [Tooltip].
+/// Tappable chip for cross-entity references (e.g. a spell's schoolId
+/// pointing at `srd:evocation`, a monster action's damage-type id, etc.).
+/// Tap opens the referenced entity in the opposite database panel via
+/// [CardPanelScope]. No hover preview — the entity summary resolves into
+/// the chip label itself.
 class EntityLinkChip extends ConsumerWidget {
   final String entityId;
   final String? displayLabel;
@@ -28,55 +28,44 @@ class EntityLinkChip extends ConsumerWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final summary = ref.watch(entitySummaryByIdProvider)[entityId];
     final label = displayLabel ?? summary?.name ?? _localSlug(entityId);
-    final tooltipLines = <String>[
-      summary?.name ?? _localSlug(entityId),
-      if (summary != null) summary.categorySlug.toUpperCase(),
-      entityId,
-    ];
     final scope = CardPanelScope.maybeOf(context);
 
-    final chip = MouseRegion(
+    return MouseRegion(
       cursor: scope == null
           ? SystemMouseCursors.basic
           : SystemMouseCursors.click,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: color ?? palette.tabBg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: scope == null
-                ? palette.sidebarDivider
-                : palette.sidebarDivider.withValues(alpha: 0.9),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.link, size: 11),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    return Tooltip(
-      message: tooltipLines.join('\n'),
-      waitDuration: const Duration(milliseconds: 300),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: scope == null ? null : () => scope.openInOtherPanel(entityId),
-        child: chip,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: color ?? palette.tabBg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: scope == null
+                  ? palette.sidebarDivider
+                  : palette.sidebarDivider.withValues(alpha: 0.9),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.link, size: 11),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

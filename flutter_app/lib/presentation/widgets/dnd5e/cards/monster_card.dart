@@ -149,6 +149,10 @@ class _MonsterBody extends StatelessWidget {
             CardField(
                 label: 'Type',
                 child: EntityLinkChip(entityId: sb.typeId)),
+            if (sb.alignmentId != null)
+              CardField(
+                  label: 'Alignment',
+                  child: EntityLinkChip(entityId: sb.alignmentId!)),
           ]),
         ]),
         CardFieldGroup(title: 'Combat', children: [

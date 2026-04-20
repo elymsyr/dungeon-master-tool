@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/database/database_provider.dart';
 import '../dnd5e/bootstrap/srd_bootstrap_service.dart';
+import 'campaign_packages_provider.dart';
 import 'custom_effect_registry_provider.dart';
 
 /// User-scoped [SrdBootstrapService] — rebuilds when [appDatabaseProvider]
@@ -38,6 +39,13 @@ final srdBootstrapOutcomeProvider =
 Future<SrdBootstrapOutcome> runSrdBootstrap(Ref ref) async {
   final service = ref.read(srdBootstrapServiceProvider);
   final outcome = await service.runIfNeeded();
+  // After the monolith is in place, silently renormalize any legacy
+  // split-bundle ids (e.g. `srd-rules-1`, `srd-heroes-1`) so the merged
+  // Core bundle shows as installed instead of the user's world-settings
+  // listing retired bundles with no way to remove them.
+  await ref
+      .read(campaignPackagesControllerProvider)
+      .migrateRetiredBundles();
   ref.read(srdBootstrapOutcomeProvider.notifier).state = outcome;
   return outcome;
 }

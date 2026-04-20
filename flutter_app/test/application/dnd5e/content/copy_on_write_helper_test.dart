@@ -105,7 +105,7 @@ void main() {
           itemType: 'weapon',
           bodyJson: '{}',
           sourcePackageId: const Value('srd'),
-          installedPackageId: const Value('install:srd-heroes-1'),
+          installedPackageId: const Value('install:srd-core-1'),
         ));
 
     final writeId = await saveEditedEntity(

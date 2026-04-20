@@ -1,17 +1,17 @@
-/// Build the SRD Core monolith AND the 4-way split from the authoring
-/// assets in `assets/packages/srd_core/`:
+/// Build the SRD Core monolith + per-type splits from the authoring assets
+/// in `assets/packages/srd_core/`:
 ///
-/// - `assets/packages/srd_core.dnd5e-pkg.json` (monolith — legacy)
-/// - `assets/packages/srd_rules.dnd5e-pkg.json` (catalogs + feats + backgrounds)
-/// - `assets/packages/srd_spells.dnd5e-pkg.json` (spells)
-/// - `assets/packages/srd_bestiary.dnd5e-pkg.json` (monsters)
-/// - `assets/packages/srd_heroes.dnd5e-pkg.json` (species / lineages / classes / subclasses / items)
+/// - `assets/packages/srd_core.dnd5e-pkg.json` (monolith — rules + heroes +
+///   spells + bestiary; the primary bundle, installed by bootstrap and
+///   surfaced as "SRD — Core" in the bundled picker)
+/// - `assets/packages/srd_spells.dnd5e-pkg.json` (spells only — optional)
+/// - `assets/packages/srd_bestiary.dnd5e-pkg.json` (monsters only — optional)
 ///
-/// All 4 splits keep `packageIdSlug: 'srd'` so id namespacing stays `srd:*`
+/// All splits keep `packageIdSlug: 'srd'` so id namespacing stays `srd:*`
 /// and cross-package foreign keys (e.g. a spell referencing a spell-school
 /// row) remain valid once all packages are installed. Distinct `id` values
-/// (`srd-rules-1`, `srd-spells-1`, …) let the importer track install state
-/// per envelope.
+/// (`srd-core-1`, `srd-spells-1`, `srd-bestiary-1`) let the importer track
+/// install state per envelope.
 ///
 /// Run from `flutter_app/`:
 ///
@@ -41,13 +41,6 @@ const _monolithMeta = <String, String>{
 };
 
 const _splitMeta = <String, Map<String, String>>{
-  'rules': {
-    'id': 'srd-rules-1',
-    'name': 'D&D 5e SRD — Rules',
-    'description':
-        'Catalogs (conditions, damage types, skills, sizes, spell-schools, '
-            'etc.) plus feats and backgrounds. Prerequisite for the other SRD packages.',
-  },
   'spells': {
     'id': 'srd-spells-1',
     'name': 'D&D 5e SRD — Spells',
@@ -58,20 +51,12 @@ const _splitMeta = <String, Map<String, String>>{
     'name': 'D&D 5e SRD — Bestiary',
     'description': 'Monster stat blocks from the SRD 5.2.1.',
   },
-  'heroes': {
-    'id': 'srd-heroes-1',
-    'name': 'D&D 5e SRD — Heroes',
-    'description':
-        'Species, lineages, classes, subclasses, and items from the SRD 5.2.1.',
-  },
 };
 
 const defaultAssetRoot = 'assets/packages/srd_core';
 const defaultOutputPath = 'assets/packages/srd_core.dnd5e-pkg.json';
-const rulesOutputPath = 'assets/packages/srd_rules.dnd5e-pkg.json';
 const spellsOutputPath = 'assets/packages/srd_spells.dnd5e-pkg.json';
 const bestiaryOutputPath = 'assets/packages/srd_bestiary.dnd5e-pkg.json';
-const heroesOutputPath = 'assets/packages/srd_heroes.dnd5e-pkg.json';
 
 const _spellFiles = <String>[
   'spells_cantrips.json',
@@ -311,31 +296,6 @@ BuildResult buildSrdPackage({String assetRoot = defaultAssetRoot}) {
 Map<String, BuildResult> buildSrdSplit({String assetRoot = defaultAssetRoot}) {
   final s = _readSources(assetRoot);
 
-  final rules = Dnd5ePackage(
-    id: _splitMeta['rules']!['id']!,
-    packageIdSlug: _monolithMeta['packageIdSlug']!,
-    name: _splitMeta['rules']!['name']!,
-    version: _monolithMeta['version']!,
-    authorId: _monolithMeta['authorId']!,
-    authorName: _monolithMeta['authorName']!,
-    sourceLicense: _monolithMeta['sourceLicense']!,
-    description: _splitMeta['rules']!['description']!,
-    conditions: s.conditions,
-    damageTypes: s.damageTypes,
-    skills: s.skills,
-    sizes: s.sizes,
-    creatureTypes: s.creatureTypes,
-    alignments: s.alignments,
-    languages: s.languages,
-    spellSchools: s.spellSchools,
-    weaponProperties: s.weaponProperties,
-    weaponMasteries: s.weaponMasteries,
-    armorCategories: s.armorCategories,
-    rarities: s.rarities,
-    feats: s.feats,
-    backgrounds: s.backgrounds,
-  );
-
   final spells = Dnd5ePackage(
     id: _splitMeta['spells']!['id']!,
     packageIdSlug: _monolithMeta['packageIdSlug']!,
@@ -360,26 +320,9 @@ Map<String, BuildResult> buildSrdSplit({String assetRoot = defaultAssetRoot}) {
     monsters: s.monsters,
   );
 
-  final heroes = Dnd5ePackage(
-    id: _splitMeta['heroes']!['id']!,
-    packageIdSlug: _monolithMeta['packageIdSlug']!,
-    name: _splitMeta['heroes']!['name']!,
-    version: _monolithMeta['version']!,
-    authorId: _monolithMeta['authorId']!,
-    authorName: _monolithMeta['authorName']!,
-    sourceLicense: _monolithMeta['sourceLicense']!,
-    description: _splitMeta['heroes']!['description']!,
-    items: s.items,
-    species: s.species,
-    subclasses: s.subclasses,
-    classProgressions: s.classProgressions,
-  );
-
   return {
-    'rules': _finalize(rules),
     'spells': _finalize(spells),
     'bestiary': _finalize(bestiary),
-    'heroes': _finalize(heroes),
   };
 }
 
@@ -394,14 +337,12 @@ void main(List<String> args) {
   _write(outputPath, monolith);
 
   final splits = buildSrdSplit();
-  _write(rulesOutputPath, splits['rules']!);
   _write(spellsOutputPath, splits['spells']!);
   _write(bestiaryOutputPath, splits['bestiary']!);
-  _write(heroesOutputPath, splits['heroes']!);
 
   stdout.writeln('Wrote $outputPath (monolith)');
   stdout.writeln('  contentHash: ${monolith.contentHash}');
-  for (final k in const ['rules', 'spells', 'bestiary', 'heroes']) {
+  for (final k in const ['spells', 'bestiary']) {
     final r = splits[k]!;
     final p = r.package;
     final total = p.conditions.length +
