@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/dnd5e/package/bundled_srd_packages.dart';
+import '../../../application/providers/campaign_packages_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
-import '../../../application/providers/template_provider.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../data/database/database_provider.dart';
-import '../../../domain/entities/schema/world_schema.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/marketplace_panel.dart';
@@ -29,7 +29,14 @@ class WorldsTab extends ConsumerStatefulWidget {
 class _WorldsTabState extends ConsumerState<WorldsTab> {
   final _nameController = TextEditingController();
   int _selectedIndex = -1;
-  WorldSchema? _selectedTemplate;
+
+  /// Bundled SRD package ids the user has ticked for the next world create.
+  /// Defaults to just the recommended ones (rules). Empty set = a world
+  /// created with no SRD content at all.
+  late final Set<String> _selectedBundleIds = bundledSrdPackages
+      .where((b) => b.recommended)
+      .map((b) => b.id)
+      .toSet();
 
   @override
   void dispose() {
@@ -180,100 +187,60 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
 
               // Yeni kampanya
               Text('Create New World', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
+              const SizedBox(height: 4),
+              Text(
+                'Pick which SRD packages this world should use. You can change them later from the world\'s settings.',
+                style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary),
+              ),
               const SizedBox(height: 8),
-              ref.watch(allTemplatesProvider).when(
-                data: (templates) {
-                  if (templates.isEmpty) {
-                    // No template → a world cannot be created without one.
-                    // Redirect the user to the marketplace instead of silently
-                    // falling back to a built-in default template.
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: palette.featureCardBg,
-                        borderRadius: palette.br,
-                        border: Border.all(color: palette.featureCardBorder),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('No templates installed',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
-                          const SizedBox(height: 6),
-                          Text('You need at least one template to create a world. Visit the Marketplace to install one.',
-                              style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
-                          const SizedBox(height: 12),
-                          OutlinedButton.icon(
-                            onPressed: () {
-                              ref.read(socialSubTabProvider.notifier).state = 'marketplace';
-                              ref.read(hubTabIndexProvider.notifier).state = 0;
-                            },
-                            icon: const Icon(Icons.storefront, size: 16),
-                            label: const Text('Go to Marketplace'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  // Deduplicate by schemaId to avoid DropdownButton assertion.
-                  final seen = <String>{};
-                  final uniqueTemplates = templates.where((t) => seen.add(t.schemaId)).toList();
-                  // ALWAYS refresh `_selectedTemplate` to the matching object
-                  // from the freshly-fetched list. The schemaId stays stable
-                  // across template edits, so the old "only swap when the id
-                  // disappears" check kept us pointing at a stale in-memory
-                  // copy whenever the user edited a template — and the new
-                  // campaign would then be created from pre-edit columns
-                  // (e.g., the removed `lvl` column would reappear).
-                  final matched = uniqueTemplates
-                      .where((t) => t.schemaId == _selectedTemplate?.schemaId)
-                      .firstOrNull;
-                  _selectedTemplate = matched ?? uniqueTemplates.first;
-                  final finalId = _selectedTemplate!.schemaId;
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final b in bundledSrdPackages)
+                    CheckboxListTile(
+                      controlAffinity: ListTileControlAffinity.leading,
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      value: _selectedBundleIds.contains(b.id),
+                      onChanged: (v) => setState(() {
+                        if (v == true) {
+                          _selectedBundleIds.add(b.id);
+                        } else {
+                          _selectedBundleIds.remove(b.id);
+                        }
+                      }),
+                      title: Text(b.name,
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: palette.tabActiveText)),
+                      subtitle: Text(b.description,
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: palette.sidebarLabelSecondary)),
+                    ),
+                  const SizedBox(height: 8),
+                  Row(
                     children: [
-                      DropdownButtonFormField<String>(
-                        key: ValueKey('tmpl_${uniqueTemplates.length}'),
-                        initialValue: finalId,
-                        decoration: const InputDecoration(labelText: 'Template'),
-                        items: uniqueTemplates.map((t) => DropdownMenuItem(
-                          value: t.schemaId,
-                          child: Text('${t.name}  (${t.categories.length} cat)', style: const TextStyle(fontSize: 12)),
-                        )).toList(),
-                        onChanged: (id) {
-                          if (id == null) return;
-                          for (final t in templates) {
-                            if (t.schemaId == id) { _selectedTemplate = t; break; }
-                          }
-                        },
+                      Expanded(
+                        child: TextField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(hintText: 'World name'),
+                          onSubmitted: (_) => _createCampaign(),
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _nameController,
-                              decoration: const InputDecoration(hintText: 'World name'),
-                              onSubmitted: (_) => _createCampaign(),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          FilledButton.icon(
-                            onPressed: _createCampaign,
-                            icon: const Icon(Icons.add, size: 18),
-                            label: const Text('Create'),
-                            style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, foregroundColor: palette.successBtnText),
-                          ),
-                        ],
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        onPressed: _createCampaign,
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Create'),
+                        style: FilledButton.styleFrom(
+                            backgroundColor: palette.successBtnBg,
+                            foregroundColor: palette.successBtnText),
                       ),
                     ],
-                  );
-                },
-                loading: () => const LinearProgressIndicator(),
-                error: (e, _) => Text('Error: $e'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -407,6 +374,8 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                     () => workingMeta['cover_image_path'] = v),
               ),
               const SizedBox(height: 12),
+              _CampaignPackagesSection(campaignId: worldId),
+              const SizedBox(height: 12),
               SaveInfoSection(
                 itemName: campaignName,
                 itemId: worldId,
@@ -450,25 +419,105 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       return;
     }
 
-    final templateFinal = _selectedTemplate;
-    if (templateFinal == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Install a template from the Marketplace before creating a world')),
-        );
-      }
-      return;
-    }
+    final picked = bundledSrdPackages
+        .where((b) => _selectedBundleIds.contains(b.id))
+        .toList();
+
     final success = await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'create-world-$name',
       'Creating world "$name"...',
-      () => ref
-          .read(activeCampaignProvider.notifier)
-          .create(name, template: templateFinal),
+      () async {
+        final ok = await ref
+            .read(activeCampaignProvider.notifier)
+            .create(name);
+        if (!ok) return false;
+        // After create, `activeCampaignProvider.data['world_id']` holds the
+        // new campaign's DB id. Install + enable each picked bundled
+        // package in that campaign.
+        final campaignId = ref
+            .read(activeCampaignProvider.notifier)
+            .data?['world_id'] as String?;
+        if (campaignId == null) return true;
+        final controller =
+            ref.read(campaignPackagesControllerProvider);
+        for (final bundle in picked) {
+          await controller.ensureAndEnable(campaignId, bundle);
+        }
+        return true;
+      },
     );
     if (success && mounted) {
       context.go('/main');
     }
+  }
+}
+
+/// Campaign-settings section listing the 4 bundled SRD packages with toggle
+/// switches. Switching on triggers install-if-missing + enable in this
+/// campaign; switching off disables the package in this campaign only
+/// (other worlds are untouched). Lives inside the Campaign Settings dialog.
+class _CampaignPackagesSection extends ConsumerWidget {
+  final String campaignId;
+
+  const _CampaignPackagesSection({required this.campaignId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final enabledAsync =
+        ref.watch(enabledPackageIdsForCampaignProvider(campaignId));
+    final enabledSet = enabledAsync.valueOrNull ?? const <String>{};
+    final controller = ref.read(campaignPackagesControllerProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Packages',
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: palette.tabActiveText)),
+        const SizedBox(height: 4),
+        Text(
+          'Choose which SRD packages appear in this world. Disabling a package '
+          'here hides its content from this world only — other worlds are '
+          'unaffected and the package stays installed.',
+          style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary),
+        ),
+        const SizedBox(height: 8),
+        for (final bundle in bundledSrdPackages)
+          Consumer(builder: (context, ref, _) {
+            final installedAsync =
+                ref.watch(installedPackageForBundleProvider(bundle));
+            final installed = installedAsync.valueOrNull;
+            final enabled =
+                installed != null && enabledSet.contains(installed.id);
+            return SwitchListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              value: enabled,
+              title: Text(bundle.name,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: palette.tabActiveText)),
+              subtitle: Text(
+                installed == null ? 'Not installed' : bundle.description,
+                style: TextStyle(
+                    fontSize: 11, color: palette.sidebarLabelSecondary),
+              ),
+              onChanged: (v) async {
+                if (v == true) {
+                  await controller.ensureAndEnable(campaignId, bundle);
+                } else if (installed != null) {
+                  await controller.disable(campaignId, installed.id);
+                }
+                ref.invalidate(installedPackageForBundleProvider(bundle));
+              },
+            );
+          }),
+      ],
+    );
   }
 }

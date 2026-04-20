@@ -3,11 +3,17 @@ import 'package:drift/drift.dart';
 /// Doc 03 typed D&D 5e content tables. JSON-blob storage for the read-mostly
 /// catalog half — whole entity loaded for display, no per-field SQL queries
 /// beyond id/name/level/school/itemType. Shape evolves without DB migration.
+///
+/// `campaignId` column (v11, nullable): non-null rows are user-created
+/// homebrew scoped to a single world; null rows are package-owned catalog
+/// content visible everywhere the package is enabled via `campaign_packages`.
 
 class Monsters extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
   TextColumn get sourcePackageId => text().nullable()();
+  TextColumn get installedPackageId => text().nullable()();
+  TextColumn get campaignId => text().nullable()();
   TextColumn get statBlockJson => text()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
@@ -22,6 +28,8 @@ class Spells extends Table {
   IntColumn get level => integer()();
   TextColumn get schoolId => text()();
   TextColumn get sourcePackageId => text().nullable()();
+  TextColumn get installedPackageId => text().nullable()();
+  TextColumn get campaignId => text().nullable()();
   TextColumn get bodyJson => text()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
@@ -37,6 +45,8 @@ class Items extends Table {
       text()(); // 'weapon'|'armor'|'shield'|'gear'|'magic'|'tool'|'ammo'
   TextColumn get rarityId => text().nullable()();
   TextColumn get sourcePackageId => text().nullable()();
+  TextColumn get installedPackageId => text().nullable()();
+  TextColumn get campaignId => text().nullable()();
   TextColumn get bodyJson => text()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
@@ -50,6 +60,8 @@ abstract class _NamedJsonTable extends Table {
   TextColumn get name => text()();
   TextColumn get bodyJson => text()();
   TextColumn get sourcePackageId => text().nullable()();
+  TextColumn get installedPackageId => text().nullable()();
+  TextColumn get campaignId => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 

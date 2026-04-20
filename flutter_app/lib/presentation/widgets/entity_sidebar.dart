@@ -1,6 +1,8 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/entity_summary_provider.dart';
 import '../../application/providers/typed_content_provider.dart';
@@ -341,13 +343,20 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
 
   Future<String> _createEntity(String categorySlug, String name) async {
     if (_typedWorldSlugs.contains(categorySlug)) {
-      final id = 'hb:${newId()}';
+      final campaignId = ref.read(activeCampaignIdProvider);
+      // Namespace homebrew ids with the campaign id when available so two
+      // worlds can have independent `location:tavern` entries without
+      // colliding on the typed table's single-column primary key.
+      final id = campaignId != null
+          ? 'hb:$campaignId:${newId()}'
+          : 'hb:${newId()}';
       await ref.read(dnd5eContentDaoProvider).upsertHomebrewEntry(
             HomebrewEntriesCompanion.insert(
               id: id,
               categorySlug: categorySlug,
               name: name,
               bodyJson: '{}',
+              campaignId: Value(campaignId),
             ),
           );
       return id;

@@ -13,6 +13,7 @@ import 'daos/map_dao.dart';
 import 'daos/mind_map_dao.dart';
 import 'daos/package_dao.dart';
 import 'daos/session_dao.dart';
+import 'tables/campaign_packages_table.dart';
 import 'tables/campaigns_table.dart';
 import 'tables/catalog_tables.dart';
 import 'tables/combat_conditions_table.dart';
@@ -75,6 +76,8 @@ part 'app_database.g.dart';
     // Doc 50 — Homebrew world-content entries (quest/location/lore/plane/
     // status-effect). Additive; legacy `entities` blob still live.
     HomebrewEntries,
+    // Doc 51 — Per-world package enablement (M:N campaigns ↔ installed_packages).
+    CampaignPackages,
   ],
   daos: [
     CampaignDao,
@@ -96,7 +99,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -175,6 +178,35 @@ class AppDatabase extends _$AppDatabase {
             // Additive only; the legacy `entities` blob stays live until
             // Phase D's full typed-UI cutover retires it.
             await m.createTable(homebrewEntries);
+          }
+          if (from < 11) {
+            // v11: Doc 51 — per-world package enablement + typed-content
+            // campaignId scope. New `campaign_packages` join table; typed
+            // content tables gain nullable `campaignId` (user-created
+            // homebrew scoped to one world) and `installedPackageId`
+            // (points at `installed_packages.id` so content rows from
+            // splits that share a `packageIdSlug` — e.g. `srd-rules-1` and
+            // `srd-spells-1` under slug `srd` — can be enabled/disabled
+            // independently per world).
+            await m.createTable(campaignPackages);
+            await m.addColumn(spells, spells.campaignId);
+            await m.addColumn(spells, spells.installedPackageId);
+            await m.addColumn(monsters, monsters.campaignId);
+            await m.addColumn(monsters, monsters.installedPackageId);
+            await m.addColumn(items, items.campaignId);
+            await m.addColumn(items, items.installedPackageId);
+            await m.addColumn(feats, feats.campaignId);
+            await m.addColumn(feats, feats.installedPackageId);
+            await m.addColumn(backgrounds, backgrounds.campaignId);
+            await m.addColumn(backgrounds, backgrounds.installedPackageId);
+            await m.addColumn(speciesCatalog, speciesCatalog.campaignId);
+            await m.addColumn(
+                speciesCatalog, speciesCatalog.installedPackageId);
+            await m.addColumn(subclasses, subclasses.campaignId);
+            await m.addColumn(subclasses, subclasses.installedPackageId);
+            await m.addColumn(classProgressions, classProgressions.campaignId);
+            await m.addColumn(
+                classProgressions, classProgressions.installedPackageId);
           }
         },
       );

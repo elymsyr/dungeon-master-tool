@@ -59,7 +59,9 @@ class Dnd5ePackageImporter {
                 'Package ${pkg.id} already installed as ${existing.packageIdSlug}; skipped.');
           return PackageImportResult.success(report);
         case ConflictResolution.overwrite:
-          await _deleteBySlug(existing.packageIdSlug);
+          // Delete only this install's content rows, not everything under
+          // the slug — other SRD splits share `srd` as their packageIdSlug.
+          await _deleteByInstalledPackageId(existing.id);
           await (db.delete(db.installedPackages)
                 ..where((t) => t.id.equals(existing.id)))
               .go();
@@ -71,6 +73,7 @@ class Dnd5ePackageImporter {
       }
     }
 
+    final installedPackageId = _installId(pkg, normalized.packageIdSlug);
     final report = ImportReport();
     await db.transaction(() async {
       await _writeCatalog(db.conditions, normalized.conditions,
@@ -107,6 +110,7 @@ class Dnd5ePackageImporter {
                 schoolId: s.schoolId,
                 bodyJson: s.bodyJson,
                 sourcePackageId: Value(normalized.packageIdSlug),
+                installedPackageId: Value(installedPackageId),
               ),
               mode: InsertMode.insertOrReplace,
             );
@@ -120,6 +124,7 @@ class Dnd5ePackageImporter {
                 name: m.name,
                 statBlockJson: m.statBlockJson,
                 sourcePackageId: Value(normalized.packageIdSlug),
+                installedPackageId: Value(installedPackageId),
               ),
               mode: InsertMode.insertOrReplace,
             );
@@ -135,6 +140,7 @@ class Dnd5ePackageImporter {
                 bodyJson: i.bodyJson,
                 rarityId: Value(i.rarityId),
                 sourcePackageId: Value(normalized.packageIdSlug),
+                installedPackageId: Value(installedPackageId),
               ),
               mode: InsertMode.insertOrReplace,
             );
@@ -142,13 +148,14 @@ class Dnd5ePackageImporter {
       report.record('items', normalized.items.length);
 
       await _writeNamed(db.feats, normalized.feats,
-          normalized.packageIdSlug, 'feats', report);
+          normalized.packageIdSlug, installedPackageId, 'feats', report);
       await _writeNamed(db.backgrounds, normalized.backgrounds,
-          normalized.packageIdSlug, 'backgrounds', report);
+          normalized.packageIdSlug, installedPackageId, 'backgrounds', report);
       await _writeNamed(db.speciesCatalog, normalized.species,
-          normalized.packageIdSlug, 'species', report);
+          normalized.packageIdSlug, installedPackageId, 'species', report);
       await _writeNamed(db.classProgressions, normalized.classProgressions,
-          normalized.packageIdSlug, 'classProgressions', report);
+          normalized.packageIdSlug, installedPackageId, 'classProgressions',
+          report);
 
       for (final sc in normalized.subclasses) {
         await db.into(db.subclasses).insert(
@@ -158,6 +165,7 @@ class Dnd5ePackageImporter {
                 bodyJson: sc.bodyJson,
                 parentClassId: sc.parentClassId,
                 sourcePackageId: Value(normalized.packageIdSlug),
+                installedPackageId: Value(installedPackageId),
               ),
               mode: InsertMode.insertOrReplace,
             );
@@ -166,7 +174,7 @@ class Dnd5ePackageImporter {
 
       await db.into(db.installedPackages).insert(
             InstalledPackagesCompanion.insert(
-              id: _installId(pkg, normalized.packageIdSlug),
+              id: installedPackageId,
               sourcePackageId: pkg.id,
               packageIdSlug: normalized.packageIdSlug,
               name: pkg.name,
@@ -211,18 +219,21 @@ class Dnd5ePackageImporter {
     TableInfo<Table, dynamic> table,
     List<NamedEntry> rows,
     String slug,
+    String installedPackageId,
     String reportKey,
     ImportReport report,
   ) async {
     for (final e in rows) {
       await db.customInsert(
         'INSERT OR REPLACE INTO ${table.actualTableName} '
-        '(id, name, body_json, source_package_id) VALUES (?, ?, ?, ?)',
+        '(id, name, body_json, source_package_id, installed_package_id) '
+        'VALUES (?, ?, ?, ?, ?)',
         variables: [
           Variable.withString(e.id),
           Variable.withString(e.name),
           Variable.withString(e.bodyJson),
           Variable.withString(slug),
+          Variable.withString(installedPackageId),
         ],
         updates: {table},
       );
@@ -230,35 +241,55 @@ class Dnd5ePackageImporter {
     report.record(reportKey, rows.length);
   }
 
-  Future<void> _deleteBySlug(String slug) async {
+  /// Deletes every content row stamped with [installedPackageId] across the
+  /// typed content tables. Catalog tables (conditions/damage/etc.) do NOT
+  /// carry [installedPackageId] — they fall back to slug-keyed delete since
+  /// a given slug still owns all catalog rows of its kind.
+  Future<void> _deleteByInstalledPackageId(String installedPackageId) async {
     await db.transaction(() async {
-      Future<void> del(TableInfo<Table, dynamic> t) async {
+      Future<void> delByInstall(TableInfo<Table, dynamic> t) async {
+        await db.customStatement(
+          'DELETE FROM ${t.actualTableName} WHERE installed_package_id = ?',
+          [installedPackageId],
+        );
+      }
+
+      // Typed content tables (have installed_package_id column).
+      await delByInstall(db.spells);
+      await delByInstall(db.monsters);
+      await delByInstall(db.items);
+      await delByInstall(db.feats);
+      await delByInstall(db.backgrounds);
+      await delByInstall(db.speciesCatalog);
+      await delByInstall(db.subclasses);
+      await delByInstall(db.classProgressions);
+
+      // Catalog tables — still slug-keyed; look up the slug from the
+      // install row so we don't need to thread it through callers.
+      final existing = await (db.select(db.installedPackages)
+            ..where((t) => t.id.equals(installedPackageId)))
+          .getSingleOrNull();
+      if (existing == null) return;
+      final slug = existing.packageIdSlug;
+      Future<void> delBySlug(TableInfo<Table, dynamic> t) async {
         await db.customStatement(
           'DELETE FROM ${t.actualTableName} WHERE source_package_id = ?',
           [slug],
         );
       }
 
-      await del(db.conditions);
-      await del(db.damageTypes);
-      await del(db.skills);
-      await del(db.sizes);
-      await del(db.creatureTypes);
-      await del(db.alignments);
-      await del(db.languages);
-      await del(db.spellSchools);
-      await del(db.weaponProperties);
-      await del(db.weaponMasteries);
-      await del(db.armorCategories);
-      await del(db.rarities);
-      await del(db.spells);
-      await del(db.monsters);
-      await del(db.items);
-      await del(db.feats);
-      await del(db.backgrounds);
-      await del(db.speciesCatalog);
-      await del(db.subclasses);
-      await del(db.classProgressions);
+      await delBySlug(db.conditions);
+      await delBySlug(db.damageTypes);
+      await delBySlug(db.skills);
+      await delBySlug(db.sizes);
+      await delBySlug(db.creatureTypes);
+      await delBySlug(db.alignments);
+      await delBySlug(db.languages);
+      await delBySlug(db.spellSchools);
+      await delBySlug(db.weaponProperties);
+      await delBySlug(db.weaponMasteries);
+      await delBySlug(db.armorCategories);
+      await delBySlug(db.rarities);
     });
   }
 

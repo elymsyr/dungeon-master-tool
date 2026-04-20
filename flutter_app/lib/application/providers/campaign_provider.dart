@@ -198,6 +198,18 @@ final activeCampaignProvider =
   return ActiveCampaignNotifier(ref.watch(campaignRepositoryProvider), ref);
 });
 
+/// Active campaign's DB id (`world_id`), or null when none loaded. Pulled
+/// from the loaded campaign data map; updates whenever
+/// [campaignRevisionProvider] bumps.
+final activeCampaignIdProvider = Provider<String?>((ref) {
+  ref.watch(campaignRevisionProvider);
+  final notifier = ref.watch(activeCampaignProvider.notifier);
+  final data = notifier.data;
+  if (data == null) return null;
+  final id = data['world_id'];
+  return id is String ? id : null;
+});
+
 /// Trash'teki silinen kampanyalar.
 final trashListProvider = FutureProvider<List<TrashItem>>((ref) {
   return ref.read(campaignLocalDsProvider).listTrash();

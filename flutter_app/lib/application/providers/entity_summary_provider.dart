@@ -16,9 +16,11 @@ typedef EntitySummary = ({
 });
 
 /// Merged summary list for the left sidebar. Generic entities stream from
-/// [entityProvider]; typed content streams from the Tier 2 Drift tables.
-/// Missing typed streams fall back to empty so the sidebar never blocks on
-/// them. Doc 50 Batch 4.
+/// [entityProvider]; typed content streams from the per-campaign scoped
+/// providers in `typed_content_provider.dart` so the sidebar only shows
+/// content from packages the user has enabled in this world plus the
+/// world's own user-created homebrew. Outside an active campaign the typed
+/// streams are empty — the hub screens see only the generic blob.
 final combinedEntitySummaryProvider =
     Provider<List<EntitySummary>>((ref) {
   final generic = ref.watch(entityProvider.select((m) => m.values
@@ -32,22 +34,22 @@ final combinedEntitySummaryProvider =
       .toList()));
 
   final spells = ref
-      .watch(allSpellsProvider)
+      .watch(spellsForActiveCampaignProvider)
       .maybeWhen(data: (rows) => rows, orElse: () => const []);
   final monsters = ref
-      .watch(allMonstersProvider)
+      .watch(monstersForActiveCampaignProvider)
       .maybeWhen(data: (rows) => rows, orElse: () => const []);
   final items = ref
-      .watch(allItemsProvider)
+      .watch(itemsForActiveCampaignProvider)
       .maybeWhen(data: (rows) => rows, orElse: () => const []);
   final feats = ref
-      .watch(allFeatsProvider)
+      .watch(featsForActiveCampaignProvider)
       .maybeWhen(data: (rows) => rows, orElse: () => const []);
   final backgrounds = ref
-      .watch(allBackgroundsProvider)
+      .watch(backgroundsForActiveCampaignProvider)
       .maybeWhen(data: (rows) => rows, orElse: () => const []);
   final homebrew = ref
-      .watch(allHomebrewProvider)
+      .watch(homebrewForActiveCampaignProvider)
       .maybeWhen(data: (rows) => rows, orElse: () => const []);
 
   EntitySummary summary({

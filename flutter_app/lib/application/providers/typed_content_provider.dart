@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/database/app_database.dart';
 import '../../data/database/daos/dnd5e_content_dao.dart';
 import '../../data/database/database_provider.dart';
+import 'campaign_packages_provider.dart';
+import 'campaign_provider.dart';
 
 /// Tier 2 typed content providers — read Drift rows by id for
 /// `TypedCardDispatcher`. Rows still carry JSON bodies; per-card widgets
@@ -84,4 +86,76 @@ final allFeatsProvider = StreamProvider<List<Feat>>((ref) {
 
 final allBackgroundsProvider = StreamProvider<List<Background>>((ref) {
   return ref.watch(dnd5eContentDaoProvider).watchAllBackgrounds();
+});
+
+// --- Per-world scoped providers (Doc 51) ---
+
+/// Emits the list of typed rows visible in the currently-active campaign —
+/// either because the row's `installedPackageId` is enabled in the world
+/// (via `campaign_packages`) or because the row is user-created homebrew
+/// scoped to this world via `campaignId`.
+///
+/// When no campaign is active (hub screen with nothing loaded) these
+/// providers yield the empty list — they are strictly world-scoped.
+
+Stream<List<T>> _emptyStream<T>() => const Stream.empty();
+
+final spellsForActiveCampaignProvider = StreamProvider<List<Spell>>((ref) {
+  final campaignId = ref.watch(activeCampaignIdProvider);
+  if (campaignId == null) return _emptyStream();
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  final enabledAsync =
+      ref.watch(enabledPackageIdsForCampaignProvider(campaignId));
+  final enabled = enabledAsync.valueOrNull ?? const <String>{};
+  return dao.watchSpellsForCampaign(campaignId, enabled);
+});
+
+final monstersForActiveCampaignProvider =
+    StreamProvider<List<Monster>>((ref) {
+  final campaignId = ref.watch(activeCampaignIdProvider);
+  if (campaignId == null) return _emptyStream();
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  final enabledAsync =
+      ref.watch(enabledPackageIdsForCampaignProvider(campaignId));
+  final enabled = enabledAsync.valueOrNull ?? const <String>{};
+  return dao.watchMonstersForCampaign(campaignId, enabled);
+});
+
+final itemsForActiveCampaignProvider = StreamProvider<List<Item>>((ref) {
+  final campaignId = ref.watch(activeCampaignIdProvider);
+  if (campaignId == null) return _emptyStream();
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  final enabledAsync =
+      ref.watch(enabledPackageIdsForCampaignProvider(campaignId));
+  final enabled = enabledAsync.valueOrNull ?? const <String>{};
+  return dao.watchItemsForCampaign(campaignId, enabled);
+});
+
+final featsForActiveCampaignProvider = StreamProvider<List<Feat>>((ref) {
+  final campaignId = ref.watch(activeCampaignIdProvider);
+  if (campaignId == null) return _emptyStream();
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  final enabledAsync =
+      ref.watch(enabledPackageIdsForCampaignProvider(campaignId));
+  final enabled = enabledAsync.valueOrNull ?? const <String>{};
+  return dao.watchFeatsForCampaign(campaignId, enabled);
+});
+
+final backgroundsForActiveCampaignProvider =
+    StreamProvider<List<Background>>((ref) {
+  final campaignId = ref.watch(activeCampaignIdProvider);
+  if (campaignId == null) return _emptyStream();
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  final enabledAsync =
+      ref.watch(enabledPackageIdsForCampaignProvider(campaignId));
+  final enabled = enabledAsync.valueOrNull ?? const <String>{};
+  return dao.watchBackgroundsForCampaign(campaignId, enabled);
+});
+
+final homebrewForActiveCampaignProvider =
+    StreamProvider<List<HomebrewEntry>>((ref) {
+  final campaignId = ref.watch(activeCampaignIdProvider);
+  if (campaignId == null) return _emptyStream();
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  return dao.watchHomebrewForCampaign(campaignId);
 });
