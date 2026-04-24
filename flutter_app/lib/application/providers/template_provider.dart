@@ -37,10 +37,14 @@ class ActiveTemplateNotifier extends StateNotifier<String?> {
     state = schema.schemaId;
   }
 
-  /// Editor kapandığında çağrılır.
+  /// Editor kapandığında çağrılır. Widget dispose() içinden çağrılabildiği
+  /// için state mutation'ı microtask'a ertele — finalizeTree sırasında
+  /// provider modify Riverpod tarafından yasaklı.
   void close() {
     _schema = null;
-    state = null;
+    Future.microtask(() {
+      if (mounted) state = null;
+    });
   }
 
   /// Cloud sync için: aktif template varsa disk'e save et.

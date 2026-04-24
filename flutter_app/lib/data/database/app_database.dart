@@ -65,7 +65,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -78,6 +78,9 @@ class AppDatabase extends _$AppDatabase {
           if (from < 3) {
             // v3: world_schemas.template_id + template_hash — lazy
             // template-sync drift detection.
+            // Ensure table exists for DBs whose initial createAll predates
+            // worldSchemas registration (CREATE TABLE IF NOT EXISTS).
+            await m.createTable(worldSchemas);
             await m.addColumn(worldSchemas, worldSchemas.templateId);
             await m.addColumn(worldSchemas, worldSchemas.templateHash);
           }
@@ -95,6 +98,14 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(packages);
             await m.createTable(packageSchemas);
             await m.createTable(packageEntities);
+          }
+          if (from < 6) {
+            // v6: Heal DBs whose earlier createAll missed tables added later
+            // (e.g. world_schemas). createTable uses CREATE TABLE IF NOT
+            // EXISTS, so this is idempotent.
+            for (final table in allTables) {
+              await m.createTable(table);
+            }
           }
         },
       );
