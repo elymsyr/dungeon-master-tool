@@ -109,17 +109,13 @@ final adminAllGameListingsProvider =
   return ds.fetchAllGameListings();
 });
 
-/// Marketplace listing filter: null = hepsi, true = yalnızca built-in.
-final adminMarketplaceFilterProvider = StateProvider<bool?>((ref) => null);
-
-/// Tüm marketplace listing'leri (admin moderation + built-in tabs).
+/// Tüm marketplace listing'leri (admin moderation tab).
 final adminAllMarketplaceListingsProvider =
     FutureProvider.autoDispose<List<AdminMarketplaceListingRow>>((ref) async {
   final isAdmin = await ref.watch(isAdminProvider.future);
   if (!isAdmin) return const [];
   final ds = ref.watch(adminUsersDataSourceProvider);
-  final filter = ref.watch(adminMarketplaceFilterProvider);
-  return ds.fetchAllMarketplaceListings(builtinOnly: filter);
+  return ds.fetchAllMarketplaceListings();
 });
 
 /// Admin audit log — en yeni başta.

@@ -20,7 +20,6 @@ Future<MarketplaceListing?> showPublishSnapshotDialog({
   required String localId,
   required String defaultTitle,
   String? defaultDescription,
-  bool publishAsBuiltin = false,
 }) {
   return showDialog<MarketplaceListing?>(
     context: context,
@@ -29,7 +28,6 @@ Future<MarketplaceListing?> showPublishSnapshotDialog({
       localId: localId,
       defaultTitle: defaultTitle,
       defaultDescription: defaultDescription,
-      publishAsBuiltin: publishAsBuiltin,
     ),
   );
 }
@@ -39,14 +37,12 @@ class _PublishSnapshotDialog extends ConsumerStatefulWidget {
   final String localId;
   final String defaultTitle;
   final String? defaultDescription;
-  final bool publishAsBuiltin;
 
   const _PublishSnapshotDialog({
     required this.itemType,
     required this.localId,
     required this.defaultTitle,
     this.defaultDescription,
-    this.publishAsBuiltin = false,
   });
 
   @override
@@ -129,9 +125,7 @@ class _PublishSnapshotDialogState
     final palette = Theme.of(context).extension<DmToolColors>()!;
 
     return AlertDialog(
-      title: Text(widget.publishAsBuiltin
-          ? l10n.publishAsBuiltinHeading
-          : l10n.publishSnapshotDialogHeading),
+      title: Text(l10n.publishSnapshotDialogHeading),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: SingleChildScrollView(
@@ -140,10 +134,6 @@ class _PublishSnapshotDialogState
             mainAxisSize: MainAxisSize.min,
             children: [
               _ImmutabilityNotice(palette: palette),
-              if (widget.publishAsBuiltin) ...[
-                const SizedBox(height: 8),
-                _BuiltinNotice(palette: palette),
-              ],
               const SizedBox(height: 12),
               TextField(
                 controller: _titleCtrl,
@@ -267,33 +257,3 @@ class _ImmutabilityNotice extends StatelessWidget {
   }
 }
 
-class _BuiltinNotice extends StatelessWidget {
-  final DmToolColors palette;
-  const _BuiltinNotice({required this.palette});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = L10n.of(context)!;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: palette.featureCardAccent.withValues(alpha: 0.12),
-        border: Border.all(color: palette.featureCardAccent),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.star, size: 16, color: palette.featureCardAccent),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              l10n.publishAsBuiltinNotice,
-              style: TextStyle(fontSize: 11, color: palette.tabActiveText),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

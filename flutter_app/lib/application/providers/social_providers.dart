@@ -488,28 +488,21 @@ class MarketplaceFilters {
   final String type; // 'all' | 'world' | 'template' | 'package' | 'character'
   final String? language;
   final String? tag;
-  /// null = hepsi (built-in + user), true = yalnız built-in, false = yalnız user-generated.
-  final bool? builtinOnly;
   const MarketplaceFilters({
     this.type = 'all',
     this.language,
     this.tag,
-    this.builtinOnly,
   });
 
   MarketplaceFilters copyWith({
     String? type,
     Object? language = _sentinel,
     Object? tag = _sentinel,
-    Object? builtinOnly = _sentinel,
   }) =>
       MarketplaceFilters(
         type: type ?? this.type,
         language: language == _sentinel ? this.language : language as String?,
         tag: tag == _sentinel ? this.tag : tag as String?,
-        builtinOnly: builtinOnly == _sentinel
-            ? this.builtinOnly
-            : builtinOnly as bool?,
       );
 
   static const _sentinel = Object();
@@ -532,13 +525,12 @@ final marketplaceProvider = FutureProvider<List<MarketplaceListing>>((ref) async
   return cachedFetch(
     ref: ref,
     cacheKey:
-        'marketplace:${filters.type}:${filters.language}:${filters.tag}:${filters.builtinOnly}',
+        'marketplace:${filters.type}:${filters.language}:${filters.tag}',
     ttl: const Duration(minutes: 5),
     fetch: () => ref.read(marketplaceListingsRemoteDsProvider).listAllCurrent(
           itemType: filters.type == 'all' ? null : filters.type,
           language: filters.language,
           tag: filters.tag,
-          builtinOnly: filters.builtinOnly,
         ),
   );
 });
