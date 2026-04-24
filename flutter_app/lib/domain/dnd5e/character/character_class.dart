@@ -1,4 +1,5 @@
 import '../catalog/content_reference.dart';
+import '../catalog/skill.dart';
 import '../core/ability.dart';
 import '../core/die.dart';
 import '../effect/effect_descriptor.dart';
@@ -34,6 +35,11 @@ class ClassFeatureRow {
 
 /// Tier 1: a character class (Fighter, Wizard, ...). Spellcasting ability is
 /// Tier 0 because engine derives save DC/attack bonus from it.
+///
+/// Starting proficiencies: [savingThrows] is the save set; [startingArmorIds],
+/// [startingWeaponIds], [startingToolIds] feed the builder at character
+/// creation. Skill choice is [grantedSkillChoiceCount] from
+/// [grantedSkillOptions].
 class CharacterClass {
   final String id;
   final String name;
@@ -44,6 +50,12 @@ class CharacterClass {
   final String description;
   final CasterKind casterKind;
   final double casterFraction;
+  final List<String> startingArmorIds;
+  final List<String> startingWeaponIds;
+  final List<String> startingToolIds;
+  final int grantedSkillChoiceCount;
+  final List<ContentReference<Skill>> grantedSkillOptions;
+  final List<String> startingEquipmentIds;
 
   CharacterClass._(
     this.id,
@@ -55,6 +67,12 @@ class CharacterClass {
     this.description,
     this.casterKind,
     this.casterFraction,
+    this.startingArmorIds,
+    this.startingWeaponIds,
+    this.startingToolIds,
+    this.grantedSkillChoiceCount,
+    this.grantedSkillOptions,
+    this.startingEquipmentIds,
   );
 
   factory CharacterClass({
@@ -67,9 +85,17 @@ class CharacterClass {
     String description = '',
     CasterKind casterKind = CasterKind.none,
     double? casterFraction,
+    List<String> startingArmorIds = const [],
+    List<String> startingWeaponIds = const [],
+    List<String> startingToolIds = const [],
+    int grantedSkillChoiceCount = 0,
+    List<ContentReference<Skill>> grantedSkillOptions = const [],
+    List<String> startingEquipmentIds = const [],
   }) {
     validateContentId(id);
-    if (name.isEmpty) throw ArgumentError('CharacterClass.name must not be empty');
+    if (name.isEmpty) {
+      throw ArgumentError('CharacterClass.name must not be empty');
+    }
     if (savingThrows.length != 2 && savingThrows.isNotEmpty) {
       // SRD classes grant exactly 2 saves; homebrew may vary but not 1.
       // Accept 0 (unspecified) or 2+.
@@ -83,6 +109,26 @@ class CharacterClass {
       throw ArgumentError(
           'CharacterClass.casterFraction must be 0 when casterKind=none');
     }
+    if (grantedSkillChoiceCount < 0) {
+      throw ArgumentError(
+          'CharacterClass.grantedSkillChoiceCount must be >= 0');
+    }
+    if (grantedSkillChoiceCount > grantedSkillOptions.length) {
+      throw ArgumentError(
+          'CharacterClass.grantedSkillChoiceCount ($grantedSkillChoiceCount) '
+          'exceeds option count (${grantedSkillOptions.length})');
+    }
+    for (final ids in [
+      startingArmorIds,
+      startingWeaponIds,
+      startingToolIds,
+      grantedSkillOptions,
+      startingEquipmentIds,
+    ]) {
+      for (final id in ids) {
+        validateContentId(id);
+      }
+    }
     return CharacterClass._(
       id,
       name,
@@ -93,6 +139,12 @@ class CharacterClass {
       description,
       casterKind,
       fraction,
+      List.unmodifiable(startingArmorIds),
+      List.unmodifiable(startingWeaponIds),
+      List.unmodifiable(startingToolIds),
+      grantedSkillChoiceCount,
+      List.unmodifiable(grantedSkillOptions),
+      List.unmodifiable(startingEquipmentIds),
     );
   }
 

@@ -13,6 +13,7 @@ import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
 import '../entity_link_chip.dart';
 import '../inline_field.dart';
+import '../inline_field_extras.dart';
 
 /// Typed renderer for a Tier 2 `Species` (race) row.
 class RaceCard extends ConsumerStatefulWidget {
@@ -77,6 +78,12 @@ class _RaceCardState extends ConsumerState<RaceCard> {
         } catch (e) {
           return CardPlaceholder('Invalid species body: $e');
         }
+        final sizesAsync = ref.watch(allSizesProvider);
+        final sizeOptions = sizesAsync.maybeWhen(
+          data: (list) =>
+              list.map((s) => CatalogOption(id: s.id, name: s.name)).toList(),
+          orElse: () => const <CatalogOption>[],
+        );
         return CardShell(
           title: row.name,
           subtitle: 'Species',
@@ -99,10 +106,22 @@ class _RaceCardState extends ConsumerState<RaceCard> {
                   ),
                 ),
                 CardField(
-                    label: 'Size',
-                    child: EntityLinkChip(entityId: sp.sizeId)),
+                  label: 'Size',
+                  child: InlineCatalogRelationField(
+                    value: sp.sizeId,
+                    options: sizeOptions,
+                    onCommit: (v) =>
+                        _save(row.name, {...body, 'sizeId': v}),
+                  ),
+                ),
                 CardField(
-                    label: 'Base Speed', child: Text('${sp.baseSpeedFt} ft.')),
+                  label: 'Base Speed (ft.)',
+                  child: InlineIntField(
+                    value: sp.baseSpeedFt,
+                    onCommit: (v) =>
+                        _save(row.name, {...body, 'baseSpeedFt': v}),
+                  ),
+                ),
                 CardField(
                     label: 'Traits', child: Text('${sp.effects.length}')),
               ]),

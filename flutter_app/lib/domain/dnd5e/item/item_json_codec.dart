@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../core/ability.dart';
 import '../core/dice_expression.dart';
 import '../effect/effect_descriptor.dart';
 import '../effect/effect_descriptor_codec.dart';
@@ -271,6 +272,23 @@ void _encodeMagicItem(Map<String, Object?> body, MagicItem mi) {
   if (mi.effects.isNotEmpty) {
     body['effects'] = mi.effects.map(encodeEffect).toList();
   }
+  if (mi.grantsSpellIds.isNotEmpty) {
+    body['grantsSpellIds'] = mi.grantsSpellIds;
+  }
+  if (mi.grantsChargedSpells.isNotEmpty) {
+    body['grantsChargedSpells'] = mi.grantsChargedSpells
+        .map((cs) => <String, Object?>{
+              'spellId': cs.spellId,
+              if (cs.chargesCost != 1) 'chargesCost': cs.chargesCost,
+            })
+        .toList();
+  }
+  if (mi.acBonus != 0) body['acBonus'] = mi.acBonus;
+  if (mi.abilityBonuses.isNotEmpty) {
+    body['abilityBonuses'] = {
+      for (final e in mi.abilityBonuses.entries) e.key.short: e.value,
+    };
+  }
 }
 
 MagicItem _decodeMagicItem(CatalogEntry e, Map<String, Object?> body,
@@ -288,6 +306,25 @@ MagicItem _decodeMagicItem(CatalogEntry e, Map<String, Object?> body,
       effects.add(decodeEffect(eff, e.id));
     }
   }
+  final grantsChargedSpells = <ChargedSpell>[];
+  final rawCharged = body['grantsChargedSpells'];
+  if (rawCharged != null) {
+    if (rawCharged is! List) {
+      throw FormatException(
+          '${e.id}: "grantsChargedSpells" must be an array.');
+    }
+    for (final entry in rawCharged) {
+      if (entry is! Map) {
+        throw FormatException(
+            '${e.id}: "grantsChargedSpells" entries must be objects.');
+      }
+      final m = entry.cast<String, Object?>();
+      grantsChargedSpells.add(ChargedSpell(
+        spellId: _requireString(m, 'spellId', e.id),
+        chargesCost: _optInt(m, 'chargesCost', e.id) ?? 1,
+      ));
+    }
+  }
   return MagicItem(
     id: e.id,
     name: e.name,
@@ -298,7 +335,47 @@ MagicItem _decodeMagicItem(CatalogEntry e, Map<String, Object?> body,
     requiresAttunement: _optBool(body, 'requiresAttunement', e.id) ?? false,
     attunementPrereq: prereq,
     effects: effects,
+    grantsSpellIds: _decodeStringList(body, 'grantsSpellIds', e.id),
+    grantsChargedSpells: grantsChargedSpells,
+    acBonus: _optInt(body, 'acBonus', e.id) ?? 0,
+    abilityBonuses: _decodeAbilityBonuses(body, 'abilityBonuses', e.id),
   );
+}
+
+List<String> _decodeStringList(
+    Map<String, Object?> body, String key, String ctx) {
+  final raw = body[key];
+  if (raw == null) return const [];
+  if (raw is! List) {
+    throw FormatException('$ctx: "$key" must be an array when present.');
+  }
+  return raw.map((v) {
+    if (v is! String) {
+      throw FormatException('$ctx: "$key" entries must be strings.');
+    }
+    return v;
+  }).toList();
+}
+
+Map<Ability, int> _decodeAbilityBonuses(
+    Map<String, Object?> body, String key, String ctx) {
+  final raw = body[key];
+  if (raw == null) return const {};
+  if (raw is! Map) {
+    throw FormatException(
+        '$ctx: "$key" must be an object mapping ability shorts to ints.');
+  }
+  final out = <Ability, int>{};
+  raw.forEach((k, v) {
+    if (k is! String) {
+      throw FormatException('$ctx: "$key" keys must be strings (STR/DEX/...).');
+    }
+    if (v is! int) {
+      throw FormatException('$ctx: "$key.$k" must be int.');
+    }
+    out[Ability.fromShort(k)] = v;
+  });
+  return out;
 }
 
 // ----------------------------------------------------------------------------

@@ -117,7 +117,8 @@ class Dnd5eContentDao extends DatabaseAccessor<AppDatabase>
             ..where((t) =>
                 t.campaignId.equals(campaignId) |
                 t.installedPackageId.isIn(enabledInstalledPackageIds)))
-          .watch();
+          .watch()
+          .map((rows) => _hideOverridden(rows, campaignId, (r) => r.id));
 
   Stream<List<Monster>> watchMonstersForCampaign(
     String campaignId,
@@ -127,7 +128,8 @@ class Dnd5eContentDao extends DatabaseAccessor<AppDatabase>
             ..where((t) =>
                 t.campaignId.equals(campaignId) |
                 t.installedPackageId.isIn(enabledInstalledPackageIds)))
-          .watch();
+          .watch()
+          .map((rows) => _hideOverridden(rows, campaignId, (r) => r.id));
 
   Stream<List<Item>> watchItemsForCampaign(
     String campaignId,
@@ -137,7 +139,8 @@ class Dnd5eContentDao extends DatabaseAccessor<AppDatabase>
             ..where((t) =>
                 t.campaignId.equals(campaignId) |
                 t.installedPackageId.isIn(enabledInstalledPackageIds)))
-          .watch();
+          .watch()
+          .map((rows) => _hideOverridden(rows, campaignId, (r) => r.id));
 
   Stream<List<Feat>> watchFeatsForCampaign(
     String campaignId,
@@ -147,7 +150,8 @@ class Dnd5eContentDao extends DatabaseAccessor<AppDatabase>
             ..where((t) =>
                 t.campaignId.equals(campaignId) |
                 t.installedPackageId.isIn(enabledInstalledPackageIds)))
-          .watch();
+          .watch()
+          .map((rows) => _hideOverridden(rows, campaignId, (r) => r.id));
 
   Stream<List<Background>> watchBackgroundsForCampaign(
     String campaignId,
@@ -157,7 +161,31 @@ class Dnd5eContentDao extends DatabaseAccessor<AppDatabase>
             ..where((t) =>
                 t.campaignId.equals(campaignId) |
                 t.installedPackageId.isIn(enabledInstalledPackageIds)))
-          .watch();
+          .watch()
+          .map((rows) => _hideOverridden(rows, campaignId, (r) => r.id));
+
+  /// Hides a package-owned row when the campaign has a homebrew override
+/// with id `hb:<campaignId>:<origId>`. See `copy_on_write_helper.dart`
+/// for the id-minting convention this mirrors.
+  List<T> _hideOverridden<T>(
+    List<T> rows,
+    String campaignId,
+    String Function(T) idOf,
+  ) {
+    final prefix = 'hb:$campaignId:';
+    final overridden = <String>{};
+    for (final r in rows) {
+      final id = idOf(r);
+      if (id.startsWith(prefix)) {
+        overridden.add(id.substring(prefix.length));
+      }
+    }
+    if (overridden.isEmpty) return rows;
+    return [
+      for (final r in rows)
+        if (idOf(r).startsWith(prefix) || !overridden.contains(idOf(r))) r,
+    ];
+  }
 
   // --- Typed-content writes (homebrew) ---
 

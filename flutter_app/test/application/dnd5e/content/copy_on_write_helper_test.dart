@@ -28,16 +28,32 @@ void main() {
         ));
   }
 
-  test('resolveWriteId forks srd -> hb', () {
+  test('resolveWriteId mints deterministic override from srd id', () {
     final id = resolveWriteId(
         currentId: 'srd:fireball', activeCampaignId: 'w1');
-    expect(id, matches(r'^hb:w1:[0-9a-f-]{36}$'));
+    expect(id, 'hb:w1:srd:fireball');
   });
 
-  test('resolveWriteId keeps hb unchanged', () {
+  test('resolveWriteId keeps in-campaign hb id unchanged', () {
     final id = resolveWriteId(
         currentId: 'hb:w1:abc', activeCampaignId: 'w1');
     expect(id, 'hb:w1:abc');
+  });
+
+  test('resolveWriteId wraps foreign-campaign hb id as nested override',
+      () {
+    final id = resolveWriteId(
+        currentId: 'hb:w2:abc', activeCampaignId: 'w1');
+    expect(id, 'hb:w1:hb:w2:abc');
+  });
+
+  test('overriddenSourceId round-trips for active-campaign override', () {
+    expect(
+      overriddenSourceId('hb:w1:srd:fireball', 'w1'),
+      'srd:fireball',
+    );
+    expect(overriddenSourceId('hb:w2:srd:fireball', 'w1'), isNull);
+    expect(overriddenSourceId('srd:fireball', 'w1'), isNull);
   });
 
   test('saveEditedEntity forks SRD spell; leaves original intact', () async {
@@ -53,7 +69,7 @@ void main() {
       extras: const {'level': 3, 'schoolId': 'srd:evocation'},
     );
 
-    expect(writeId, startsWith('hb:w1:'));
+    expect(writeId, 'hb:w1:srd:fireball');
 
     final forked = await (db.select(db.spells)
           ..where((t) => t.id.equals(writeId)))
@@ -120,7 +136,7 @@ void main() {
 
     final row = await (db.select(db.items)..where((t) => t.id.equals(writeId)))
         .getSingle();
-    expect(writeId, startsWith('hb:w2:'));
+    expect(writeId, 'hb:w2:srd:longsword');
     expect(row.name, 'Custom Blade');
     expect(row.itemType, 'weapon');
     expect(row.rarityId, 'srd:rare');

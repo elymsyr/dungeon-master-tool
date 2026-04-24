@@ -42,6 +42,8 @@ Spell spellFromEntry(CatalogEntry e) {
     ritual: _optBool(body, 'ritual', e.id) ?? false,
     classListIds: _optStringList(body, 'classListIds', e.id),
     description: _optString(body, 'description', e.id) ?? '',
+    cantripUpgrade: _optString(body, 'cantripUpgrade', e.id) ?? '',
+    higherLevelSlot: _optString(body, 'higherLevelSlot', e.id) ?? '',
   );
 }
 
@@ -66,6 +68,8 @@ CatalogEntry spellToEntry(Spell s) {
     body['classListIds'] = s.classListIds.toList();
   }
   if (s.description.isNotEmpty) body['description'] = s.description;
+  if (s.cantripUpgrade.isNotEmpty) body['cantripUpgrade'] = s.cantripUpgrade;
+  if (s.higherLevelSlot.isNotEmpty) body['higherLevelSlot'] = s.higherLevelSlot;
   return CatalogEntry(id: s.id, name: s.name, bodyJson: jsonEncode(body));
 }
 

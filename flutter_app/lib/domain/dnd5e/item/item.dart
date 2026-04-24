@@ -1,4 +1,5 @@
 import '../catalog/content_reference.dart';
+import '../core/ability.dart';
 import '../core/dice_expression.dart';
 import '../effect/effect_descriptor.dart';
 
@@ -382,6 +383,36 @@ class Ammunition implements Item {
   int get hashCode => id.hashCode;
 }
 
+/// A spell granted by a magic item that consumes charges when cast.
+/// The item's charge pool and recharge cadence are tracked on the character's
+/// inventory (equipped-item state), not here.
+class ChargedSpell {
+  final ContentReference spellId;
+  final int chargesCost;
+
+  const ChargedSpell._(this.spellId, this.chargesCost);
+
+  factory ChargedSpell({required String spellId, int chargesCost = 1}) {
+    validateContentId(spellId);
+    if (chargesCost < 1) {
+      throw ArgumentError('ChargedSpell.chargesCost must be >= 1');
+    }
+    return ChargedSpell._(spellId, chargesCost);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is ChargedSpell &&
+      other.spellId == spellId &&
+      other.chargesCost == chargesCost;
+
+  @override
+  int get hashCode => Object.hash(spellId, chargesCost);
+
+  @override
+  String toString() => 'ChargedSpell($spellId, $chargesCost)';
+}
+
 class MagicItem implements Item {
   @override
   final String id;
@@ -398,6 +429,27 @@ class MagicItem implements Item {
   final AttunementPrereq? attunementPrereq;
   final List<EffectDescriptor> effects;
 
+  /// Spells that become known to the wielder while the item is equipped
+  /// (Cloak of Displacement: none; Ioun Stone of Mastery: none; but e.g.
+  /// Ring of Three Wishes grants Wish known — no save/att-roll bonus, a
+  /// pure "you now know this spell" grant). Distinguished from [effects]
+  /// because EffectDescriptor has no `GrantSpellKnown` variant today.
+  final List<ContentReference> grantsSpellIds;
+
+  /// Spells castable from the item's own charge pool (Wand of Fireballs:
+  /// 7 charges, fireball costs 3). Character doesn't "know" them — they
+  /// consume the item's charges, not the caster's slots.
+  final List<ChargedSpell> grantsChargedSpells;
+
+  /// Flat AC bonus while equipped (Cloak of Protection +1, Bracers of
+  /// Defense +2). Stacks with base armor per SRD attunement rules.
+  final int acBonus;
+
+  /// Fixed ability-score bonuses (Gauntlets of Ogre Power → STR 19
+  /// semantics are modeled via effects; simple +N bonuses like Amulet of
+  /// Health live here).
+  final Map<Ability, int> abilityBonuses;
+
   MagicItem._({
     required this.id,
     required this.name,
@@ -408,6 +460,10 @@ class MagicItem implements Item {
     required this.requiresAttunement,
     required this.attunementPrereq,
     required this.effects,
+    required this.grantsSpellIds,
+    required this.grantsChargedSpells,
+    required this.acBonus,
+    required this.abilityBonuses,
   });
 
   factory MagicItem({
@@ -420,6 +476,10 @@ class MagicItem implements Item {
     bool requiresAttunement = false,
     AttunementPrereq? attunementPrereq,
     List<EffectDescriptor> effects = const [],
+    List<ContentReference> grantsSpellIds = const [],
+    List<ChargedSpell> grantsChargedSpells = const [],
+    int acBonus = 0,
+    Map<Ability, int> abilityBonuses = const {},
   }) {
     _validateItemBase(id: id, name: name, weightLb: weightLb, costCp: costCp);
     validateContentId(rarityId);
@@ -427,6 +487,9 @@ class MagicItem implements Item {
     if (!requiresAttunement && attunementPrereq != null) {
       throw ArgumentError(
           'MagicItem.attunementPrereq requires requiresAttunement = true');
+    }
+    for (final spellId in grantsSpellIds) {
+      validateContentId(spellId);
     }
     return MagicItem._(
       id: id,
@@ -438,6 +501,10 @@ class MagicItem implements Item {
       requiresAttunement: requiresAttunement,
       attunementPrereq: attunementPrereq,
       effects: List.unmodifiable(effects),
+      grantsSpellIds: List.unmodifiable(grantsSpellIds),
+      grantsChargedSpells: List.unmodifiable(grantsChargedSpells),
+      acBonus: acBonus,
+      abilityBonuses: Map.unmodifiable(abilityBonuses),
     );
   }
 

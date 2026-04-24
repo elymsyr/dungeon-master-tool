@@ -13,6 +13,7 @@ import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
 import '../entity_link_chip.dart';
 import '../inline_field.dart';
+import '../inline_field_extras.dart';
 import '_body_cache.dart';
 
 final _itemCache = BodyCache<(Item, Map<String, Object?>)>();
@@ -111,7 +112,7 @@ class _ItemCardState extends ConsumerState<ItemCard> {
   }
 }
 
-class _ItemBody extends StatelessWidget {
+class _ItemBody extends ConsumerWidget {
   final Item item;
   final String name;
   final Map<String, Object?> body;
@@ -136,8 +137,23 @@ class _ItemBody extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final rarity = _localSlug(item.rarityId);
+    final raritiesAsync = ref.watch(allRaritiesProvider);
+    final rarityOptions = raritiesAsync.maybeWhen(
+      data: (list) =>
+          list.map((r) => CatalogOption(id: r.id, name: r.name)).toList(),
+      orElse: () => const <CatalogOption>[],
+    );
+    const itemTypes = [
+      'weapon',
+      'armor',
+      'shield',
+      'gear',
+      'tool',
+      'ammunition',
+      'magicItem',
+    ];
     return CardShell(
       title: name,
       subtitle: '${_capitalize(itemType)} • ${_capitalize(rarity)}',
@@ -171,29 +187,50 @@ class _ItemBody extends StatelessWidget {
               ),
             ),
             CardField(
-                label: 'Type',
-                child: InlineTextField(
-                  value: itemType,
-                  onCommit: (v) => onSave(
-                    name: name,
-                    body: body,
-                    itemType: v.isEmpty ? 'gear' : v,
-                    rarityId: rarityId,
-                  ),
-                )),
+              label: 'Type',
+              child: InlineEnumField<String>(
+                value: itemTypes.contains(itemType) ? itemType : 'gear',
+                options: itemTypes,
+                labelOf: _capitalize,
+                onCommit: (v) => onSave(
+                  name: name,
+                  body: body,
+                  itemType: v,
+                  rarityId: rarityId,
+                ),
+              ),
+            ),
             CardField(
-                label: 'Rarity',
-                child: InlineTextField(
-                  value: rarityId ?? '',
-                  placeholder: '—',
-                  onCommit: (v) => onSave(
-                    name: name,
-                    body: body,
-                    itemType: itemType,
-                    rarityId: v.isEmpty ? null : v,
-                  ),
-                )),
-            CardField(label: 'Cost', child: Text(_costText(item.costCp))),
+              label: 'Rarity',
+              child: InlineCatalogRelationField(
+                value: rarityId ?? '',
+                options: rarityOptions,
+                onClear: () => onSave(
+                  name: name,
+                  body: body,
+                  itemType: itemType,
+                  rarityId: null,
+                ),
+                onCommit: (v) => onSave(
+                  name: name,
+                  body: body,
+                  itemType: itemType,
+                  rarityId: v,
+                ),
+              ),
+            ),
+            CardField(
+              label: 'Cost (cp)',
+              child: InlineIntField(
+                value: item.costCp,
+                onCommit: (v) => onSave(
+                  name: name,
+                  body: {...body, 'costCp': v},
+                  itemType: itemType,
+                  rarityId: rarityId,
+                ),
+              ),
+            ),
           ]),
         ]),
         if (item.weightLb > 0)

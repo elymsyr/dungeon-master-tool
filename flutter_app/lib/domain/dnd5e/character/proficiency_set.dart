@@ -65,6 +65,31 @@ class ProficiencySet {
   Proficiency saveLevel(Ability a) => saves[a] ?? Proficiency.none;
   Proficiency skillLevel(String id) => skills[id] ?? Proficiency.none;
 
+  /// Idempotent union of two proficiency sets. Shared keys resolve to the
+  /// higher [Proficiency] level (expertise beats full, full beats half, etc.).
+  /// [alertFeat] OR-merges. Used by the character builder to aggregate
+  /// grants from species + background + class + feat + equipped items.
+  ProficiencySet merge(ProficiencySet other) {
+    Map<K, Proficiency> mergeMap<K>(
+            Map<K, Proficiency> a, Map<K, Proficiency> b) =>
+        {
+          for (final k in {...a.keys, ...b.keys})
+            k: _maxProficiency(a[k] ?? Proficiency.none, b[k] ?? Proficiency.none),
+        };
+    return ProficiencySet(
+      saves: mergeMap(saves, other.saves),
+      skills: mergeMap(skills, other.skills),
+      tools: mergeMap(tools, other.tools),
+      weapons: mergeMap(weapons, other.weapons),
+      armor: mergeMap(armor, other.armor),
+      languages: {...languages, ...other.languages},
+      alertFeat: alertFeat || other.alertFeat,
+    );
+  }
+
+  static Proficiency _maxProficiency(Proficiency a, Proficiency b) =>
+      a.index >= b.index ? a : b;
+
   ProficiencySet copyWith({
     Map<Ability, Proficiency>? saves,
     Map<String, Proficiency>? skills,

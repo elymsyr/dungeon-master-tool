@@ -6,10 +6,11 @@ import '../package/catalog_entry.dart';
 import 'background.dart';
 
 /// JSON codec for Tier 1 content class [Background]. Body shape:
-/// `{"effects"?: [<effect>...], "description"?: String}`
+/// `{"effects"?: [<effect>...], "grantedFeatId"?: String,
+///   "startingEquipmentIds"?: [String...], "description"?: String}`
 ///
-/// `effects` route through `effect_descriptor_codec`. Empty effect list and
-/// empty description are omitted from the encoded body.
+/// `effects` route through `effect_descriptor_codec`. Empty/unset fields are
+/// omitted from the encoded body so round-trip stays minimal.
 
 Background backgroundFromEntry(CatalogEntry e) {
   final body = _decodeBody(e, 'Background');
@@ -17,6 +18,8 @@ Background backgroundFromEntry(CatalogEntry e) {
     id: e.id,
     name: e.name,
     effects: _decodeEffectList(body, 'effects', e.id),
+    grantedFeatId: _optString(body, 'grantedFeatId', e.id),
+    startingEquipmentIds: _decodeStringList(body, 'startingEquipmentIds', e.id),
     description: _optString(body, 'description', e.id) ?? '',
   );
 }
@@ -28,9 +31,27 @@ CatalogEntry backgroundToEntry(Background b) {
     bodyJson: jsonEncode(<String, Object?>{
       if (b.effects.isNotEmpty)
         'effects': b.effects.map(encodeEffect).toList(),
+      if (b.grantedFeatId != null) 'grantedFeatId': b.grantedFeatId,
+      if (b.startingEquipmentIds.isNotEmpty)
+        'startingEquipmentIds': b.startingEquipmentIds,
       if (b.description.isNotEmpty) 'description': b.description,
     }),
   );
+}
+
+List<String> _decodeStringList(
+    Map<String, Object?> body, String key, String ctx) {
+  final raw = body[key];
+  if (raw == null) return const [];
+  if (raw is! List) {
+    throw FormatException('$ctx: "$key" must be an array when present.');
+  }
+  return raw.map((v) {
+    if (v is! String) {
+      throw FormatException('$ctx: "$key" entries must be strings.');
+    }
+    return v;
+  }).toList();
 }
 
 List<EffectDescriptor> _decodeEffectList(

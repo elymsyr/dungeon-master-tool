@@ -25,6 +25,8 @@ class Spell {
   final bool ritual;
   final List<String> classListIds;
   final String description;
+  final String cantripUpgrade;
+  final String higherLevelSlot;
 
   Spell._({
     required this.id,
@@ -41,6 +43,8 @@ class Spell {
     required this.ritual,
     required this.classListIds,
     required this.description,
+    required this.cantripUpgrade,
+    required this.higherLevelSlot,
   });
 
   factory Spell({
@@ -58,6 +62,8 @@ class Spell {
     bool ritual = false,
     List<ContentReference> classListIds = const [],
     String description = '',
+    String cantripUpgrade = '',
+    String higherLevelSlot = '',
   }) {
     validateContentId(id);
     if (name.isEmpty) throw ArgumentError('Spell.name must not be empty');
@@ -80,10 +86,23 @@ class Spell {
       ritual: ritual,
       classListIds: List.unmodifiable(classListIds),
       description: description,
+      cantripUpgrade: cantripUpgrade,
+      higherLevelSlot: higherLevelSlot,
     );
   }
 
   bool get isCantrip => level.isCantrip;
+
+  /// True when any variant of [duration] flags concentration. Card UI and the
+  /// combat tracker both need a one-bool answer without re-switching on the
+  /// sealed duration family at every read.
+  bool get concentration {
+    final d = duration;
+    if (d is SpellRounds) return d.concentration;
+    if (d is SpellMinutes) return d.concentration;
+    if (d is SpellHours) return d.concentration;
+    return false;
+  }
 
   @override
   bool operator ==(Object other) =>

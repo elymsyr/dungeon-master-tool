@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
-import '../../../core/utils/id_gen.dart';
 import '../../../data/database/app_database.dart';
 
 /// Copy-on-write write helper for typed D&D 5e entities.
@@ -10,27 +9,37 @@ import '../../../data/database/app_database.dart';
 /// All typed content rows live in Drift tables that carry both a
 /// `sourcePackageId` / `installedPackageId` column (package-owned SRD content)
 /// and a `campaignId` column (world-owned homebrew). The app never mutates
-/// package-owned rows — editing an `srd:*` entity forks it into a new
-/// `hb:<campaignId>:<uuid>` row in the same table, leaving the original
-/// intact so other worlds still see the vanilla SRD content.
+/// package-owned rows — editing an `srd:*` entity writes a campaign-scoped
+/// override row with a deterministic `hb:<cid>:<origId>` id, so the original
+/// package row stays pristine (other worlds + reinstall still see vanilla
+/// SRD content) while the edited campaign sees its override in the same
+/// slot. The DAO read path hides package rows that have a campaign
+/// override, so the user sees exactly one card per entity — their edited
+/// version — not a duplicate.
 ///
 /// Callers (editor dialogs) pass the current id + the updated body and we
-/// return the id that was actually written. When the current id already
-/// starts with `hb:` we upsert in place; when it starts with `srd:` (or
-/// anything else) we mint a fresh `hb:` id and insert a clone.
-///
-/// Category dispatch is string-based to keep the editor dialogs decoupled
-/// from the Drift row types.
+/// return the id that was actually written.
 
-/// Returns the id to write for a copy-on-write save. Already-homebrew ids
-/// pass through; every other id (SRD or imported) gets a fresh
-/// `hb:<campaignId>:<uuid>` minted.
+/// Returns the id to write for a copy-on-write save. Homebrew ids owned by
+/// the active campaign pass through; every other id (SRD, other-campaign
+/// homebrew, imported) maps to a deterministic `hb:<activeCampaignId>:<origId>`
+/// override so re-editing the same source lands on the same row.
 String resolveWriteId({
   required String currentId,
   required String activeCampaignId,
 }) {
-  if (currentId.startsWith('hb:')) return currentId;
-  return 'hb:$activeCampaignId:${newId()}';
+  final prefix = 'hb:$activeCampaignId:';
+  if (currentId.startsWith(prefix)) return currentId;
+  return '$prefix$currentId';
+}
+
+/// Extracts the package-owned source id encoded in a campaign-override
+/// id written by [resolveWriteId]. Returns `null` for ids that aren't
+/// in the `hb:<cid>:<origId>` shape.
+String? overriddenSourceId(String overrideId, String activeCampaignId) {
+  final prefix = 'hb:$activeCampaignId:';
+  if (!overrideId.startsWith(prefix)) return null;
+  return overrideId.substring(prefix.length);
 }
 
 /// Saves an edited entity, forking to homebrew if the source row is

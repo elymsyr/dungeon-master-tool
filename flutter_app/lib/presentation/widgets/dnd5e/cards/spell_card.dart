@@ -8,16 +8,14 @@ import '../../../../application/providers/campaign_provider.dart';
 import '../../../../application/providers/typed_content_provider.dart';
 import '../../../../data/database/database_provider.dart';
 import '../../../../domain/dnd5e/package/catalog_entry.dart';
-import '../../../../domain/dnd5e/spell/casting_time.dart';
 import '../../../../domain/dnd5e/spell/spell.dart';
-import '../../../../domain/dnd5e/spell/spell_components.dart';
-import '../../../../domain/dnd5e/spell/spell_duration.dart';
 import '../../../../domain/dnd5e/spell/spell_json_codec.dart';
-import '../../../../domain/dnd5e/spell/spell_range.dart';
 import '../card_shell.dart';
 import '../entity_link_chip.dart';
 import '../inline_field.dart';
+import '../inline_field_extras.dart';
 import '_body_cache.dart';
+import 'spell_field_editors.dart';
 
 final _spellCache = BodyCache<(Spell, Map<String, Object?>)>();
 
@@ -116,7 +114,7 @@ class _SpellCardState extends ConsumerState<SpellCard> {
   }
 }
 
-class _SpellBody extends StatelessWidget {
+class _SpellBody extends ConsumerWidget {
   final Spell spell;
   final Map<String, Object?> body;
   final String name;
@@ -141,22 +139,34 @@ class _SpellBody extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final schoolsAsync = ref.watch(allSpellSchoolsProvider);
+    final schoolOptions = schoolsAsync.maybeWhen(
+      data: (list) =>
+          list.map((s) => CatalogOption(id: s.id, name: s.name)).toList(),
+      orElse: () => const <CatalogOption>[],
+    );
+
     final levelLabel = level == 0 ? 'Cantrip' : 'Level $level';
-    final schoolLabel = _localSlug(schoolId);
+    final schoolName = schoolOptions
+        .where((o) => o.id == schoolId)
+        .map((o) => o.name)
+        .followedBy([_titleCaseSlug(schoolId)])
+        .first;
+    final isCantrip = level == 0;
+
     return CardShell(
       title: name,
-      subtitle: '$levelLabel • $schoolLabel${spell.ritual ? ' • Ritual' : ''}',
+      subtitle: '$levelLabel • $schoolName${spell.ritual ? ' • Ritual' : ''}',
       categoryColor: categoryColor,
       tags: [
         CardTag(levelLabel),
-        EntityLinkChip(entityId: schoolId, displayLabel: schoolLabel),
+        EntityLinkChip(entityId: schoolId, displayLabel: schoolName),
         if (spell.ritual) const CardTag('Ritual'),
         for (final cid in spell.classListIds)
           EntityLinkChip(entityId: cid),
       ],
       children: [
-        // Editable name lives at the top so the header stays stable.
         CardFieldGroup(title: 'Identity', children: [
           CardFieldGrid(columns: 2, fields: [
             CardField(
@@ -186,8 +196,9 @@ class _SpellBody extends StatelessWidget {
             ),
             CardField(
               label: 'School',
-              child: InlineTextField(
+              child: InlineCatalogRelationField(
                 value: schoolId,
+                options: schoolOptions,
                 onCommit: (v) => onSave(
                   name: name,
                   body: {...body, 'schoolId': v},
@@ -198,29 +209,79 @@ class _SpellBody extends StatelessWidget {
             ),
             CardField(
               label: 'Ritual',
-              child: Text(spell.ritual ? 'Yes' : 'No'),
+              child: InlineBoolField(
+                value: spell.ritual,
+                onCommit: (v) => onSave(
+                  name: name,
+                  body: {...body, if (v) 'ritual': true}
+                    ..removeWhere((k, _) => !v && k == 'ritual'),
+                  level: level,
+                  schoolId: schoolId,
+                ),
+              ),
             ),
           ]),
         ]),
         CardFieldGroup(title: 'Casting', children: [
           CardFieldGrid(columns: 2, fields: [
             CardField(
-                label: 'Casting Time',
-                child: Text(_castingTimeText(spell.castingTime))),
+              label: 'Casting Time',
+              child: SpellCastingTimeEditor(
+                value: spell.castingTime,
+                onCommit: (v) => onSave(
+                  name: name,
+                  body: {...body, 'castingTime': encodeCastingTime(v)},
+                  level: level,
+                  schoolId: schoolId,
+                ),
+              ),
+            ),
             CardField(
-                label: 'Range', child: Text(_rangeText(spell.range))),
+              label: 'Range',
+              child: SpellRangeEditor(
+                value: spell.range,
+                onCommit: (v) => onSave(
+                  name: name,
+                  body: {...body, 'range': encodeSpellRange(v)},
+                  level: level,
+                  schoolId: schoolId,
+                ),
+              ),
+            ),
             CardField(
-                label: 'Components',
-                child: Text(_componentsText(spell.components))),
+              label: 'Components',
+              child: SpellComponentsEditor(
+                value: spell.components,
+                onCommit: (cs) => onSave(
+                  name: name,
+                  body: {
+                    ...body,
+                    'components':
+                        cs.map(encodeSpellComponent).toList(),
+                  },
+                  level: level,
+                  schoolId: schoolId,
+                ),
+              ),
+            ),
             CardField(
-                label: 'Duration',
-                child: Text(_durationText(spell.duration))),
+              label: 'Duration',
+              child: SpellDurationEditor(
+                value: spell.duration,
+                onCommit: (v) => onSave(
+                  name: name,
+                  body: {...body, 'duration': encodeSpellDuration(v)},
+                  level: level,
+                  schoolId: schoolId,
+                ),
+              ),
+            ),
           ]),
         ]),
         CardFieldGroup(title: 'Description', children: [
           InlineTextField(
             value: spell.description,
-            maxLines: 16,
+            maxLines: 12,
             placeholder: 'No description yet — tap to add…',
             onCommit: (v) => onSave(
               name: name,
@@ -230,60 +291,58 @@ class _SpellBody extends StatelessWidget {
             ),
           ),
         ]),
+        if (isCantrip || spell.cantripUpgrade.isNotEmpty)
+          CardFieldGroup(title: 'Cantrip Upgrade', children: [
+            InlineTextField(
+              value: spell.cantripUpgrade,
+              maxLines: 6,
+              placeholder:
+                  'Scales at levels 5, 11, 17 — tap to add…',
+              onCommit: (v) => onSave(
+                name: name,
+                body: {
+                  ...body,
+                  if (v.isNotEmpty) 'cantripUpgrade': v,
+                }..removeWhere(
+                    (k, _) => v.isEmpty && k == 'cantripUpgrade'),
+                level: level,
+                schoolId: schoolId,
+              ),
+            ),
+          ]),
+        if (!isCantrip || spell.higherLevelSlot.isNotEmpty)
+          if (!isCantrip)
+            CardFieldGroup(
+                title: 'Using a Higher-Level Spell Slot', children: [
+              InlineTextField(
+                value: spell.higherLevelSlot,
+                maxLines: 6,
+                placeholder:
+                    'Upcasting effects — tap to add…',
+                onCommit: (v) => onSave(
+                  name: name,
+                  body: {
+                    ...body,
+                    if (v.isNotEmpty) 'higherLevelSlot': v,
+                  }..removeWhere(
+                      (k, _) => v.isEmpty && k == 'higherLevelSlot'),
+                  level: level,
+                  schoolId: schoolId,
+                ),
+              ),
+            ]),
       ],
     );
   }
 }
 
-String _localSlug(String id) {
+String _titleCaseSlug(String id) {
   final idx = id.indexOf(':');
-  return idx < 0 ? id : id.substring(idx + 1);
+  final local = idx < 0 ? id : id.substring(idx + 1);
+  if (local.isEmpty) return id;
+  return local
+      .split(RegExp(r'[-_]'))
+      .where((p) => p.isNotEmpty)
+      .map((p) => '${p[0].toUpperCase()}${p.substring(1)}')
+      .join(' ');
 }
-
-String _castingTimeText(CastingTime ct) => switch (ct) {
-      ActionCast() => '1 action',
-      BonusActionCast() => '1 bonus action',
-      ReactionCast(trigger: final t) => '1 reaction ($t)',
-      MinutesCast(minutes: final m) => '$m minute${m == 1 ? '' : 's'}',
-      HoursCast(hours: final h) => '$h hour${h == 1 ? '' : 's'}',
-    };
-
-String _rangeText(SpellRange r) => switch (r) {
-      SelfRange() => 'Self',
-      TouchRange() => 'Touch',
-      SightRange() => 'Sight',
-      UnlimitedRange() => 'Unlimited',
-      FeetRange(feet: final f) => '${f.toStringAsFixed(0)} ft.',
-      MilesRange(miles: final m) => '${m.toStringAsFixed(0)} mi.',
-    };
-
-String _componentsText(List<SpellComponent> cs) {
-  final parts = <String>[];
-  String? materials;
-  for (final c in cs) {
-    switch (c) {
-      case VerbalComponent():
-        parts.add('V');
-      case SomaticComponent():
-        parts.add('S');
-      case MaterialComponent(description: final d):
-        parts.add('M');
-        materials = d;
-    }
-  }
-  final base = parts.join(', ');
-  return materials == null ? base : '$base ($materials)';
-}
-
-String _durationText(SpellDuration d) => switch (d) {
-      SpellInstantaneous() => 'Instantaneous',
-      SpellRounds(rounds: final r, concentration: final c) =>
-        '${c ? 'Concentration, up to ' : ''}$r round${r == 1 ? '' : 's'}',
-      SpellMinutes(minutes: final m, concentration: final c) =>
-        '${c ? 'Concentration, up to ' : ''}$m minute${m == 1 ? '' : 's'}',
-      SpellHours(hours: final h, concentration: final c) =>
-        '${c ? 'Concentration, up to ' : ''}$h hour${h == 1 ? '' : 's'}',
-      SpellDays(days: final d) => '$d day${d == 1 ? '' : 's'}',
-      SpellUntilDispelled() => 'Until dispelled',
-      SpellSpecial(description: final d) => 'Special ($d)',
-    };

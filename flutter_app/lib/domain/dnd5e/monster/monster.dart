@@ -2,10 +2,15 @@ import '../catalog/content_reference.dart';
 import '../effect/effect_descriptor.dart';
 import 'legendary_action.dart';
 import 'monster_action.dart';
+import 'monster_spellcasting.dart';
 import 'stat_block.dart';
 
 /// Tier 1: immutable monster/NPC definition. Instances in combat wrap this in
 /// [MonsterCombatant] (see combat/combatant.dart) with per-instance HP.
+///
+/// [spellcasting] populates when the monster has a spellcasting trait —
+/// standard (prepared list + slots) or innate (fixed-frequency uses).
+/// Non-casting monsters leave it null.
 class Monster {
   final String id;
   final String name;
@@ -16,6 +21,7 @@ class Monster {
   final List<MonsterAction> reactions;
   final List<LegendaryAction> legendaryActions;
   final int legendaryActionSlots;
+  final MonsterSpellcasting? spellcasting;
   final String description;
 
   Monster._({
@@ -28,6 +34,7 @@ class Monster {
     required this.reactions,
     required this.legendaryActions,
     required this.legendaryActionSlots,
+    required this.spellcasting,
     required this.description,
   });
 
@@ -41,6 +48,7 @@ class Monster {
     List<MonsterAction> reactions = const [],
     List<LegendaryAction> legendaryActions = const [],
     int legendaryActionSlots = 0,
+    MonsterSpellcasting? spellcasting,
     String description = '',
   }) {
     validateContentId(id);
@@ -62,6 +70,7 @@ class Monster {
       reactions: List.unmodifiable(reactions),
       legendaryActions: List.unmodifiable(legendaryActions),
       legendaryActionSlots: legendaryActionSlots,
+      spellcasting: spellcasting,
       description: description,
     );
   }

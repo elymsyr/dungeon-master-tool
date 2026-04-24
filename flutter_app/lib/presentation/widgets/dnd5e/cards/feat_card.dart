@@ -12,6 +12,7 @@ import '../../../../domain/dnd5e/character/feat_json_codec.dart';
 import '../../../../domain/dnd5e/package/catalog_entry.dart';
 import '../card_shell.dart';
 import '../inline_field.dart';
+import '../inline_field_extras.dart';
 
 /// Typed renderer for a Tier 2 `Feat` row with inline name/prerequisite/
 /// description editing. Edits fork SRD-owned rows into the active
@@ -88,6 +89,8 @@ class _FeatCardState extends ConsumerState<FeatCard> {
           tags: [
             CardTag(_categoryLabel(feat.category)),
             if (feat.repeatable) const CardTag('Repeatable'),
+            if (feat.prerequisite != null)
+              CardTag('Prereq: ${feat.prerequisite}'),
           ],
           children: [
             CardFieldGroup(title: 'Identity', children: [
@@ -101,8 +104,30 @@ class _FeatCardState extends ConsumerState<FeatCard> {
                   ),
                 ),
                 CardField(
-                    label: 'Category',
-                    child: Text(_categoryLabel(feat.category))),
+                  label: 'Category',
+                  child: InlineEnumField<FeatCategory>(
+                    value: feat.category,
+                    options: FeatCategory.values,
+                    labelOf: _categoryLabel,
+                    onCommit: (v) => _save(
+                      name: row.name,
+                      body: {...body, 'category': v.name},
+                    ),
+                  ),
+                ),
+                CardField(
+                  label: 'Repeatable',
+                  child: InlineBoolField(
+                    value: feat.repeatable,
+                    onCommit: (v) => _save(
+                      name: row.name,
+                      body: {
+                        ...body,
+                        if (v) 'repeatable': true,
+                      }..removeWhere((k, _) => !v && k == 'repeatable'),
+                    ),
+                  ),
+                ),
                 CardField(
                   label: 'Prerequisite',
                   child: InlineTextField(

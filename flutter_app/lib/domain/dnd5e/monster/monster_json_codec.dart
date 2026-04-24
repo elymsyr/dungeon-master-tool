@@ -12,6 +12,7 @@ import '../package/catalog_entry.dart';
 import 'legendary_action.dart';
 import 'monster.dart';
 import 'monster_action.dart';
+import 'monster_spellcasting.dart';
 import 'stat_block.dart';
 
 /// JSON codec for Tier 2 content class [Monster] and its sub-families:
@@ -30,6 +31,7 @@ Monster monsterFromEntry(CatalogEntry e) {
   if (stats is! Map) {
     throw FormatException('${e.id}: missing or non-object "stats".');
   }
+  final rawSc = body['spellcasting'];
   return Monster(
     id: e.id,
     name: e.name,
@@ -41,6 +43,8 @@ Monster monsterFromEntry(CatalogEntry e) {
     legendaryActions: _decodeLegendaryList(body, 'legendaryActions', e.id),
     legendaryActionSlots:
         _optInt(body, 'legendaryActionSlots', e.id) ?? 0,
+    spellcasting:
+        rawSc == null ? null : _decodeSpellcasting(rawSc, e.id),
     description: _optString(body, 'description', e.id) ?? '',
   );
 }
@@ -69,8 +73,98 @@ CatalogEntry monsterToEntry(Monster m) {
   if (m.legendaryActionSlots > 0) {
     body['legendaryActionSlots'] = m.legendaryActionSlots;
   }
+  if (m.spellcasting case final sc?) {
+    body['spellcasting'] = _encodeSpellcasting(sc);
+  }
   if (m.description.isNotEmpty) body['description'] = m.description;
   return CatalogEntry(id: m.id, name: m.name, bodyJson: jsonEncode(body));
+}
+
+Map<String, Object?> _encodeSpellcasting(MonsterSpellcasting sc) {
+  return <String, Object?>{
+    'ability': sc.spellcastingAbility.short,
+    'saveDc': sc.spellSaveDc,
+    'attackBonus': sc.spellAttackBonus,
+    if (sc.preparedSpellIds.isNotEmpty)
+      'preparedSpellIds': sc.preparedSpellIds,
+    if (sc.spellSlots.isNotEmpty)
+      'spellSlots': {
+        for (final level in (sc.spellSlots.keys.toList()..sort()))
+          level.toString(): sc.spellSlots[level],
+      },
+    if (sc.innateSpells.isNotEmpty)
+      'innateSpells': sc.innateSpells
+          .map((u) => <String, Object?>{
+                'spellId': u.spellId,
+                'frequency': u.frequency.name,
+              })
+          .toList(),
+  };
+}
+
+MonsterSpellcasting _decodeSpellcasting(Object json, String ctx) {
+  final m = _asObject(json, ctx, 'MonsterSpellcasting');
+  final abilityShort = _requireString(m, 'ability', ctx);
+  final preparedIds = <String>[];
+  final rawPrepared = m['preparedSpellIds'];
+  if (rawPrepared != null) {
+    if (rawPrepared is! List) {
+      throw FormatException(
+          '$ctx: "preparedSpellIds" must be an array when present.');
+    }
+    for (final s in rawPrepared) {
+      if (s is! String) {
+        throw FormatException(
+            '$ctx: "preparedSpellIds" must contain only strings.');
+      }
+      preparedIds.add(s);
+    }
+  }
+  final slots = <int, int>{};
+  final rawSlots = m['spellSlots'];
+  if (rawSlots != null) {
+    if (rawSlots is! Map) {
+      throw FormatException('$ctx: "spellSlots" must be an object.');
+    }
+    rawSlots.forEach((k, v) {
+      if (k is! String) {
+        throw FormatException('$ctx: "spellSlots" keys must be string levels.');
+      }
+      final level = int.tryParse(k);
+      if (level == null) {
+        throw FormatException('$ctx: "spellSlots" key "$k" is not an integer.');
+      }
+      if (v is! int) {
+        throw FormatException('$ctx: "spellSlots.$k" must be int.');
+      }
+      slots[level] = v;
+    });
+  }
+  final innate = <InnateSpellUse>[];
+  final rawInnate = m['innateSpells'];
+  if (rawInnate != null) {
+    if (rawInnate is! List) {
+      throw FormatException('$ctx: "innateSpells" must be an array.');
+    }
+    for (final entry in rawInnate) {
+      if (entry is! Map) {
+        throw FormatException('$ctx: "innateSpells" entries must be objects.');
+      }
+      final em = entry.cast<String, Object?>();
+      innate.add(InnateSpellUse(
+        spellId: _requireString(em, 'spellId', ctx),
+        frequency: _requireEnum(em, 'frequency', ctx, InnateFrequency.values),
+      ));
+    }
+  }
+  return MonsterSpellcasting(
+    spellcastingAbility: Ability.fromShort(abilityShort),
+    spellSaveDc: _requireInt(m, 'saveDc', ctx),
+    spellAttackBonus: _requireInt(m, 'attackBonus', ctx),
+    preparedSpellIds: preparedIds,
+    spellSlots: slots,
+    innateSpells: innate,
+  );
 }
 
 // ----------------------------------------------------------------------------

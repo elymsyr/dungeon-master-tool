@@ -14,49 +14,77 @@ final dnd5eContentDaoProvider = Provider<Dnd5eContentDao>((ref) {
   return ref.watch(appDatabaseProvider).dnd5eContentDao;
 });
 
+/// When the active campaign has a homebrew override at `hb:<cid>:<id>`,
+/// typed-row reads transparently prefer that row so a single card opens
+/// the user's edit instead of the pristine package row.
+Future<T?> _withOverride<T>(
+  Ref ref,
+  String id,
+  Future<T?> Function(String) lookup,
+) async {
+  final cid = ref.watch(activeCampaignIdProvider);
+  if (cid != null) {
+    final prefix = 'hb:$cid:';
+    if (!id.startsWith(prefix)) {
+      final override = await lookup('$prefix$id');
+      if (override != null) return override;
+    }
+  }
+  return lookup(id);
+}
+
 final spellRowProvider =
     FutureProvider.family<Spell?, String>((ref, id) async {
-  return ref.watch(dnd5eContentDaoProvider).getSpell(id);
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  return _withOverride(ref, id, dao.getSpell);
 });
 
 final monsterRowProvider =
     FutureProvider.family<Monster?, String>((ref, id) async {
-  return ref.watch(dnd5eContentDaoProvider).getMonster(id);
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  return _withOverride(ref, id, dao.getMonster);
 });
 
 final itemRowProvider =
     FutureProvider.family<Item?, String>((ref, id) async {
-  return ref.watch(dnd5eContentDaoProvider).getItem(id);
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  return _withOverride(ref, id, dao.getItem);
 });
 
 final featRowProvider =
     FutureProvider.family<Feat?, String>((ref, id) async {
-  return ref.watch(dnd5eContentDaoProvider).getFeat(id);
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  return _withOverride(ref, id, dao.getFeat);
 });
 
 final backgroundRowProvider =
     FutureProvider.family<Background?, String>((ref, id) async {
-  return ref.watch(dnd5eContentDaoProvider).getBackground(id);
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  return _withOverride(ref, id, dao.getBackground);
 });
 
 final speciesRowProvider =
     FutureProvider.family<SpeciesCatalogData?, String>((ref, id) async {
-  return ref.watch(dnd5eContentDaoProvider).getSpecies(id);
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  return _withOverride(ref, id, dao.getSpecies);
 });
 
 final subclassRowProvider =
     FutureProvider.family<SubclassesData?, String>((ref, id) async {
-  return ref.watch(dnd5eContentDaoProvider).getSubclass(id);
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  return _withOverride(ref, id, dao.getSubclass);
 });
 
 final classProgressionRowProvider =
     FutureProvider.family<ClassProgression?, String>((ref, id) async {
-  return ref.watch(dnd5eContentDaoProvider).getClassProgression(id);
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  return _withOverride(ref, id, dao.getClassProgression);
 });
 
 final conditionRowProvider =
     FutureProvider.family<Condition?, String>((ref, id) async {
-  return ref.watch(dnd5eContentDaoProvider).getCondition(id);
+  final dao = ref.watch(dnd5eContentDaoProvider);
+  return _withOverride(ref, id, dao.getCondition);
 });
 
 final homebrewEntryRowProvider =

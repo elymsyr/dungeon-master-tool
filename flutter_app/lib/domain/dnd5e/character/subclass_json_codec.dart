@@ -21,21 +21,59 @@ Subclass subclassFromEntry(CatalogEntry e) {
     name: e.name,
     parentClassId: _requireString(body, 'parentClassId', e.id),
     featureTable: _decodeRows(body, 'featureTable', e.id),
+    bonusSpellIds: _decodeBonusSpellIds(body, 'bonusSpellIds', e.id),
     description: _optString(body, 'description', e.id) ?? '',
   );
 }
 
 CatalogEntry subclassToEntry(Subclass s) {
   final rows = [...s.featureTable]..sort((a, b) => a.level.compareTo(b.level));
+  final bonus = s.bonusSpellIds.isEmpty
+      ? null
+      : <String, Object?>{
+          for (final level in (s.bonusSpellIds.keys.toList()..sort()))
+            level.toString(): s.bonusSpellIds[level],
+        };
   return CatalogEntry(
     id: s.id,
     name: s.name,
     bodyJson: jsonEncode(<String, Object?>{
       'parentClassId': s.parentClassId,
       if (rows.isNotEmpty) 'featureTable': rows.map(_encodeRow).toList(),
+      if (bonus != null) 'bonusSpellIds': bonus,
       if (s.description.isNotEmpty) 'description': s.description,
     }),
   );
+}
+
+Map<int, List<String>> _decodeBonusSpellIds(
+    Map<String, Object?> body, String key, String ctx) {
+  final raw = body[key];
+  if (raw == null) return const {};
+  if (raw is! Map) {
+    throw FormatException(
+        '$ctx: "$key" must be an object mapping level strings to spell-id arrays.');
+  }
+  final out = <int, List<String>>{};
+  raw.forEach((k, v) {
+    if (k is! String) {
+      throw FormatException('$ctx: "$key" keys must be string levels.');
+    }
+    final level = int.tryParse(k);
+    if (level == null) {
+      throw FormatException('$ctx: "$key" key "$k" is not an integer level.');
+    }
+    if (v is! List) {
+      throw FormatException('$ctx: "$key.$k" must be an array of spell ids.');
+    }
+    out[level] = v.map((e) {
+      if (e is! String) {
+        throw FormatException('$ctx: "$key.$k" entries must be strings.');
+      }
+      return e;
+    }).toList();
+  });
+  return out;
 }
 
 Map<String, Object?> _encodeRow(ClassFeatureRow r) => <String, Object?>{

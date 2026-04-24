@@ -29,6 +29,13 @@ CharacterClass characterClassFromEntry(CatalogEntry e) {
     featureTable: _decodeRows(body, 'featureTable', e.id),
     casterFraction: _optNum(body, 'casterFraction', e.id)?.toDouble(),
     description: _optString(body, 'description', e.id) ?? '',
+    startingArmorIds: _optStringList(body, 'startingArmorIds', e.id),
+    startingWeaponIds: _optStringList(body, 'startingWeaponIds', e.id),
+    startingToolIds: _optStringList(body, 'startingToolIds', e.id),
+    grantedSkillChoiceCount:
+        _optInt(body, 'grantedSkillChoiceCount', e.id) ?? 0,
+    grantedSkillOptions: _optStringList(body, 'grantedSkillOptions', e.id),
+    startingEquipmentIds: _optStringList(body, 'startingEquipmentIds', e.id),
   );
 }
 
@@ -48,9 +55,30 @@ CatalogEntry characterClassToEntry(CharacterClass c) {
       if (rows.isNotEmpty) 'featureTable': rows.map(_encodeRow).toList(),
       if (c.casterFraction != defaultFraction)
         'casterFraction': c.casterFraction,
+      if (c.startingArmorIds.isNotEmpty)
+        'startingArmorIds': c.startingArmorIds,
+      if (c.startingWeaponIds.isNotEmpty)
+        'startingWeaponIds': c.startingWeaponIds,
+      if (c.startingToolIds.isNotEmpty)
+        'startingToolIds': c.startingToolIds,
+      if (c.grantedSkillChoiceCount != 0)
+        'grantedSkillChoiceCount': c.grantedSkillChoiceCount,
+      if (c.grantedSkillOptions.isNotEmpty)
+        'grantedSkillOptions': c.grantedSkillOptions,
+      if (c.startingEquipmentIds.isNotEmpty)
+        'startingEquipmentIds': c.startingEquipmentIds,
       if (c.description.isNotEmpty) 'description': c.description,
     }),
   );
+}
+
+int? _optInt(Map<String, Object?> m, String key, String ctx) {
+  final v = m[key];
+  if (v == null) return null;
+  if (v is! int) {
+    throw FormatException('$ctx: field "$key" must be an int when present.');
+  }
+  return v;
 }
 
 Map<String, Object?> _encodeRow(ClassFeatureRow r) => <String, Object?>{
