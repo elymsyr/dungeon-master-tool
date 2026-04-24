@@ -351,12 +351,6 @@
   "publishDialogFailed": "Échec de la publication : {error}",
   "@publishDialogFailed": { "placeholders": { "error": { "type": "String" } } },
 
-  "publishAsBuiltinButton": "Publier en intégré",
-  "publishAsBuiltinHeading": "Publier en intégré",
-  "publishAsBuiltinNotice": "Cet instantané sera ajouté au catalogue intégré officiel en plus de la publication normale. Les administrateurs peuvent retirer le marquage via Admin → Content.",
-  "publishAsBuiltinSuccess": "Publié en intégré.",
-  "publishAsBuiltinFlagFailed": "Publié, mais le marquage en intégré a échoué. Réessayez via Admin → Content.",
-
   "marketplaceErrorPrefix": "Erreur Marketplace : {error}",
   "@marketplaceErrorPrefix": { "placeholders": { "error": { "type": "String" } } },
   "marketplaceOwnerNotShared": "Pas encore partagé. Publiez un instantané immuable sur la Marketplace.",

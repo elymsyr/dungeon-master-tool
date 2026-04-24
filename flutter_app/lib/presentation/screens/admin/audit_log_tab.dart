@@ -7,7 +7,7 @@ import '../../../data/datasources/remote/admin_users_remote_ds.dart';
 import '../../theme/dm_tool_colors.dart';
 
 /// Admin audit log — tüm admin aksiyonları (ban/unban, restrict/unrestrict,
-/// delete_*, mark/unmark builtin) tarih sırasına göre.
+/// delete_*) tarih sırasına göre.
 class AuditLogTab extends ConsumerWidget {
   const AuditLogTab({super.key});
 
@@ -104,8 +104,6 @@ class AuditLogTab extends ConsumerWidget {
     if (action == 'unban') return Icons.check_circle_outline;
     if (action == 'online_restrict') return Icons.lock_outline;
     if (action == 'online_unrestrict') return Icons.lock_open;
-    if (action == 'mark_builtin') return Icons.star;
-    if (action == 'unmark_builtin') return Icons.star_border;
     return Icons.info_outline;
   }
 
@@ -114,7 +112,6 @@ class AuditLogTab extends ConsumerWidget {
         action == 'online_restrict') {
       return palette.dangerBtnBg;
     }
-    if (action == 'mark_builtin') return palette.featureCardAccent;
     return palette.sidebarLabelSecondary;
   }
 }

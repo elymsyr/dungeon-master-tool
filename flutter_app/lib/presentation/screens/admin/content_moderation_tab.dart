@@ -240,37 +240,13 @@ class _MarketplaceCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(row.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: palette.tabActiveText)),
-                    ),
-                    if (row.isBuiltin) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: palette.featureCardAccent.withValues(alpha: 0.18),
-                          border: Border.all(
-                              color: palette.featureCardAccent.withValues(alpha: 0.6)),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text('BUILTIN',
-                            style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.4)),
-                      ),
-                    ],
-                  ],
-                ),
+                Text(row.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: palette.tabActiveText)),
                 const SizedBox(height: 2),
                 Text(
                   '${row.itemType} · ${row.ownerName} · ${formatBytes(row.sizeBytes)} · ${formatRelative(row.createdAt)}',
@@ -279,17 +255,6 @@ class _MarketplaceCard extends ConsumerWidget {
                 ),
               ],
             ),
-          ),
-          IconButton(
-            icon: Icon(
-              row.isBuiltin ? Icons.star : Icons.star_border,
-              size: 18,
-              color: row.isBuiltin
-                  ? palette.featureCardAccent
-                  : palette.sidebarLabelSecondary,
-            ),
-            tooltip: row.isBuiltin ? 'Unmark built-in' : 'Mark built-in',
-            onPressed: () => _toggleBuiltin(context, ref),
           ),
           IconButton(
             icon: Icon(Icons.delete_outline,
@@ -314,21 +279,6 @@ class _MarketplaceCard extends ConsumerWidget {
         return Icons.person_outline;
       default:
         return Icons.extension_outlined;
-    }
-  }
-
-  Future<void> _toggleBuiltin(BuildContext context, WidgetRef ref) async {
-    try {
-      await ref
-          .read(adminUsersDataSourceProvider)
-          .setListingBuiltin(row.id, !row.isBuiltin);
-      ref.invalidate(adminAllMarketplaceListingsProvider);
-      ref.invalidate(adminAuditLogProvider);
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Toggle failed: $e')));
-      }
     }
   }
 

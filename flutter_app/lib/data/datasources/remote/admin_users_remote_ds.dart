@@ -202,7 +202,6 @@ class AdminMarketplaceListingRow {
   final String title;
   final String? language;
   final int sizeBytes;
-  final bool isBuiltin;
   final DateTime createdAt;
 
   const AdminMarketplaceListingRow({
@@ -213,7 +212,6 @@ class AdminMarketplaceListingRow {
     required this.title,
     required this.language,
     required this.sizeBytes,
-    required this.isBuiltin,
     required this.createdAt,
   });
 
@@ -226,7 +224,6 @@ class AdminMarketplaceListingRow {
         title: (row['title'] as String?) ?? '',
         language: row['language'] as String?,
         sizeBytes: (row['size_bytes'] as num?)?.toInt() ?? 0,
-        isBuiltin: row['is_builtin'] as bool? ?? false,
         createdAt: parseIsoOrNow(row['created_at']),
       );
 }
@@ -395,15 +392,6 @@ class AdminUsersRemoteDataSource {
     await _client.rpc('admin_delete_message', params: {'p_message': messageId});
   }
 
-  // ── Built-in toggle ───────────────────────────────────────────────────────
-
-  Future<void> setListingBuiltin(String listingId, bool builtin) async {
-    await _client.rpc('set_listing_builtin', params: {
-      'p_listing': listingId,
-      'p_builtin': builtin,
-    });
-  }
-
   // ── Admin listelemeler ────────────────────────────────────────────────────
 
   Future<List<AdminPostRow>> fetchAllPosts({int limit = 200}) async {
@@ -424,11 +412,9 @@ class AdminUsersRemoteDataSource {
   }
 
   Future<List<AdminMarketplaceListingRow>> fetchAllMarketplaceListings({
-    bool? builtinOnly,
     int limit = 200,
   }) async {
     final res = await _client.rpc('admin_list_marketplace_listings', params: {
-      'p_builtin_only': builtinOnly,
       'p_limit': limit,
     });
     return (res as List)

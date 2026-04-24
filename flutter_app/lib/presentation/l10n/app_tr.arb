@@ -351,12 +351,6 @@
   "publishDialogFailed": "Yayınlama başarısız: {error}",
   "@publishDialogFailed": { "placeholders": { "error": { "type": "String" } } },
 
-  "publishAsBuiltinButton": "Built-in olarak yayınla",
-  "publishAsBuiltinHeading": "Built-in olarak yayınla",
-  "publishAsBuiltinNotice": "Bu snapshot normal yayının üstüne resmi built-in kataloğa eklenecek. Admin'ler bu işareti Admin → Content sekmesinden geri alabilir.",
-  "publishAsBuiltinSuccess": "Built-in olarak yayınlandı.",
-  "publishAsBuiltinFlagFailed": "Yayınlandı ancak built-in işareti eklenemedi. Admin → Content sekmesinden yeniden dene.",
-
   "marketplaceErrorPrefix": "Marketplace hatası: {error}",
   "@marketplaceErrorPrefix": { "placeholders": { "error": { "type": "String" } } },
   "marketplaceOwnerNotShared": "Henüz paylaşılmadı. Marketplace'e değiştirilemez bir snapshot yayınla.",
