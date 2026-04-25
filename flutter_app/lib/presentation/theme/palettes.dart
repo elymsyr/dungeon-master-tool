@@ -61,11 +61,12 @@ const _dark = DmToolColors(
   featureCardBg: Color(0xFF1E1E1E),       // dark.qss: #1e1e1e
   featureCardBorder: Color(0xFF3E3E3E),   // dark.qss: #3e3e3e
   featureCardAccent: Color(0xFF42A5F5),   // dark.qss: #42a5f5
-  srdParchment: Color(0xFF2A231C),
-  srdInk: Color(0xFFE8DBC0),
-  srdHeadingRed: Color(0xFFC0392B),
-  srdRule: Color(0xFFC0392B),
-  srdSubtitle: Color(0xFFB8A584),
+  // Dark theme: cool slate parchment + steel-blue accent (no red).
+  srdParchment: Color(0xFF1F1F1F),
+  srdInk: Color(0xFFE0E0E0),
+  srdHeadingRed: Color(0xFF42A5F5),
+  srdRule: Color(0xFF42A5F5),
+  srdSubtitle: Color(0xFF9AA0A6),
   mapBg: Color(0xFF000000),
 );
 
@@ -73,8 +74,8 @@ final Map<String, DmToolColors> themePalettes = {
   'dark': _dark,
 
   'light': _dark.copyWith(
-    borderRadius: 6,
-    cardBorderRadius: 8,
+    borderRadius: 2,
+    cardBorderRadius: 4,
     buttonDefaultBg: const Color(0xFFEDF2F7),
     buttonDefaultText: const Color(0xFF1A202C),
     buttonHoverBg: const Color(0xFFCBD5E0),
@@ -84,11 +85,12 @@ final Map<String, DmToolColors> themePalettes = {
     featureCardBg: const Color(0xFFFFFFFF),
     featureCardBorder: const Color(0xFFCBD5E0),
     featureCardAccent: const Color(0xFF2C5282),
-    srdParchment: const Color(0xFFF5EFE0),
-    srdInk: const Color(0xFF1B1B1B),
-    srdHeadingRed: const Color(0xFF7A1F1F),
-    srdRule: const Color(0xFF7A1F1F),
-    srdSubtitle: const Color(0xFF5A4A3A),
+    // Light theme: clean white paper + navy heading (no red).
+    srdParchment: const Color(0xFFFFFFFF),
+    srdInk: const Color(0xFF1A202C),
+    srdHeadingRed: const Color(0xFF2C5282),
+    srdRule: const Color(0xFFA0AEC0),
+    srdSubtitle: const Color(0xFF4A5568),
     canvasBg: const Color(0xFFFBFCFE),
     gridColor: const Color(0xFFCBD5E0),
     nodeBgNote: const Color(0xFFFFFFFF),
@@ -134,11 +136,12 @@ final Map<String, DmToolColors> themePalettes = {
     featureCardBg: const Color(0xFFFDF5E3),
     featureCardBorder: const Color(0xFF8D6E63),
     featureCardAccent: const Color(0xFF5D4037),
+    // Parchment theme: aged paper + warm brown heading (no red).
     srdParchment: const Color(0xFFF5EBD0),
     srdInk: const Color(0xFF2B1B14),
-    srdHeadingRed: const Color(0xFF7A1F1F),
-    srdRule: const Color(0xFF7A1F1F),
-    srdSubtitle: const Color(0xFF5D4037),
+    srdHeadingRed: const Color(0xFF5D4037),
+    srdRule: const Color(0xFF8D6E63),
+    srdSubtitle: const Color(0xFF8D6E63),
     canvasBg: const Color(0xFFF5EBD0),
     gridColor: const Color(0x263E2723),
     nodeBgNote: const Color(0xFFFDFBF7),
@@ -171,8 +174,8 @@ final Map<String, DmToolColors> themePalettes = {
   ) as DmToolColors,
 
   'ocean': _dark.copyWith(
-    borderRadius: 8,
-    cardBorderRadius: 12,
+    borderRadius: 4,
+    cardBorderRadius: 6,
     featureCardBg: const Color(0xFF0A131A),
     featureCardBorder: const Color(0xFF37474F),
     featureCardAccent: const Color(0xFF00BCD4),
@@ -190,11 +193,16 @@ final Map<String, DmToolColors> themePalettes = {
     uiFloatingBorder: const Color(0xFF37474F),
     uiFloatingText: const Color(0xFFE0F7FA),
     uiFloatingHoverBg: const Color(0xFF00BCD4),
+    srdParchment: const Color(0xFF0F1B26),
+    srdInk: const Color(0xFFE0F7FA),
+    srdHeadingRed: const Color(0xFF26C6DA),
+    srdRule: const Color(0xFF26C6DA),
+    srdSubtitle: const Color(0xFF7FB5C0),
   ) as DmToolColors,
 
   'emerald': _dark.copyWith(
-    borderRadius: 10,
-    cardBorderRadius: 14,
+    borderRadius: 4,
+    cardBorderRadius: 6,
     featureCardBg: const Color(0xFF00150A),
     featureCardBorder: const Color(0xFF1B5E20),
     featureCardAccent: const Color(0xFF00E676),
@@ -210,6 +218,11 @@ final Map<String, DmToolColors> themePalettes = {
     htmlHeader: const Color(0xFF00E676),
     uiFloatingBg: const Color(0xE60A2718),
     uiFloatingHoverBg: const Color(0xFF00E676),
+    srdParchment: const Color(0xFF051E12),
+    srdInk: const Color(0xFFE8F5E9),
+    srdHeadingRed: const Color(0xFF66BB6A),
+    srdRule: const Color(0xFF66BB6A),
+    srdSubtitle: const Color(0xFF8DAB91),
   ) as DmToolColors,
 
   'midnight': _dark.copyWith(
@@ -230,11 +243,17 @@ final Map<String, DmToolColors> themePalettes = {
     htmlHeader: const Color(0xFF651FFF),
     uiFloatingBg: const Color(0xE6141414),
     uiFloatingHoverBg: const Color(0xFF651FFF),
+    srdParchment: const Color(0xFF0A0A12),
+    srdInk: const Color(0xFFCCD0E0),
+    srdHeadingRed: const Color(0xFFB388FF),
+    srdRule: const Color(0xFF7C4DFF),
+    srdSubtitle: const Color(0xFF7E7E92),
+    cardHeadingUppercase: true,
   ) as DmToolColors,
 
   'discord': _dark.copyWith(
-    borderRadius: 4,
-    cardBorderRadius: 8,
+    borderRadius: 6,
+    cardBorderRadius: 10,
     buttonPaddingH: 12,
     buttonPaddingV: 5,
     useBorders: false,
@@ -261,6 +280,14 @@ final Map<String, DmToolColors> themePalettes = {
     htmlHeader: const Color(0xFFFFFFFF),
     uiFloatingBg: const Color(0xFF2F3136),
     uiFloatingHoverBg: const Color(0xFF5865F2),
+    // Modern flat: no rule, uppercase headings, blurple accent.
+    srdParchment: const Color(0xFF36393F),
+    srdInk: const Color(0xFFDCDDDE),
+    srdHeadingRed: const Color(0xFFFFFFFF),
+    srdRule: const Color(0xFF42464D),
+    srdSubtitle: const Color(0xFFB9BBBE),
+    cardHeadingUppercase: true,
+    cardShowRule: false,
   ) as DmToolColors,
 
   'baldur': _dark.copyWith(
@@ -291,6 +318,12 @@ final Map<String, DmToolColors> themePalettes = {
     uiFloatingBg: const Color(0xE61A120B),
     uiFloatingHoverBg: const Color(0xFFB88E4A),
     uiFloatingHoverText: const Color(0xFF000000),
+    // Aged tome: deep brown parchment, gold heading, gold rule.
+    srdParchment: const Color(0xFF1A120B),
+    srdInk: const Color(0xFFE0CFA8),
+    srdHeadingRed: const Color(0xFFD4A24A),
+    srdRule: const Color(0xFFB88E4A),
+    srdSubtitle: const Color(0xFFA08868),
   ) as DmToolColors,
 
   'grim': _dark.copyWith(
@@ -320,11 +353,18 @@ final Map<String, DmToolColors> themePalettes = {
     htmlHeader: const Color(0xFF8C2323),
     uiFloatingBg: const Color(0xFF333333),
     uiFloatingHoverBg: const Color(0xFFA63A28),
+    // Gothic stone: dark slate parchment, blood-rust heading, uppercase carved look.
+    srdParchment: const Color(0xFF1C1A18),
+    srdInk: const Color(0xFFD7D7D7),
+    srdHeadingRed: const Color(0xFFC04030),
+    srdRule: const Color(0xFFA63A28),
+    srdSubtitle: const Color(0xFF8C8C8C),
+    cardHeadingUppercase: true,
   ) as DmToolColors,
 
   'frost': _dark.copyWith(
-    borderRadius: 12,
-    cardBorderRadius: 16,
+    borderRadius: 6,
+    cardBorderRadius: 8,
     buttonDefaultBg: const Color(0xFFB2F5EA),
     buttonDefaultText: const Color(0xFF234E52),
     buttonHoverBg: const Color(0xFF81E6D9),
@@ -361,11 +401,16 @@ final Map<String, DmToolColors> themePalettes = {
     uiPopupBorder: const Color(0xFFB2F5EA),
     uiPopupText: const Color(0xFF234E52),
     uiPopupSelected: const Color(0xFFB2F5EA),
+    srdParchment: const Color(0xFFE6FFFA),
+    srdInk: const Color(0xFF234E52),
+    srdHeadingRed: const Color(0xFF285E61),
+    srdRule: const Color(0xFF319795),
+    srdSubtitle: const Color(0xFF5F8A8C),
   ) as DmToolColors,
 
   'amethyst': _dark.copyWith(
-    borderRadius: 14,
-    cardBorderRadius: 18,
+    borderRadius: 6,
+    cardBorderRadius: 8,
     featureCardBg: const Color(0xFF18121C),
     featureCardBorder: const Color(0xFF4A148C),
     featureCardAccent: const Color(0xFFBA68C8),
@@ -381,6 +426,11 @@ final Map<String, DmToolColors> themePalettes = {
     htmlHeader: const Color(0xFFEA80FC),
     uiFloatingBg: const Color(0xE62D2436),
     uiFloatingHoverBg: const Color(0xFFAB47BC),
+    srdParchment: const Color(0xFF211A26),
+    srdInk: const Color(0xFFF3E5F5),
+    srdHeadingRed: const Color(0xFFEA80FC),
+    srdRule: const Color(0xFFAB47BC),
+    srdSubtitle: const Color(0xFFB0A0BC),
   ) as DmToolColors,
 };
 

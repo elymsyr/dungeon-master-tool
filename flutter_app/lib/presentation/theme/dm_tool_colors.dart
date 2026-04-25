@@ -100,6 +100,11 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
   final Color srdRule;          // thin divider line under headings
   final Color srdSubtitle;      // italic subtitle muted ink
 
+  // --- Entity Card Style Flags (per-theme look) ---
+  final bool cardHeadingUppercase;   // section heads uppercase + letter-spaced
+  final bool cardShowRule;           // 1px rule under headings (SRD) vs hidden
+  final bool cardBorderlessInputs;   // schema field inputs no border/fill
+
   // --- Style Parameters (tema-spesifik görünüm) ---
   final double borderRadius;
   final double cardBorderRadius;
@@ -181,13 +186,16 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     required this.featureCardBg,
     required this.featureCardBorder,
     required this.featureCardAccent,
-    this.srdParchment = const Color(0xFFF5EFE0),
-    this.srdInk = const Color(0xFF1B1B1B),
-    this.srdHeadingRed = const Color(0xFF7A1F1F),
-    this.srdRule = const Color(0xFF7A1F1F),
-    this.srdSubtitle = const Color(0xFF5A4A3A),
-    this.borderRadius = 4,
-    this.cardBorderRadius = 8,
+    this.srdParchment = const Color(0xFF1F1F1F),
+    this.srdInk = const Color(0xFFE0E0E0),
+    this.srdHeadingRed = const Color(0xFF42A5F5),
+    this.srdRule = const Color(0xFF42A5F5),
+    this.srdSubtitle = const Color(0xFF9CA3AF),
+    this.cardHeadingUppercase = false,
+    this.cardShowRule = true,
+    this.cardBorderlessInputs = true,
+    this.borderRadius = 2,
+    this.cardBorderRadius = 4,
     this.buttonPaddingH = 10,
     this.buttonPaddingV = 4,
     this.useBorders = true,
@@ -273,6 +281,9 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     Color? srdHeadingRed,
     Color? srdRule,
     Color? srdSubtitle,
+    bool? cardHeadingUppercase,
+    bool? cardShowRule,
+    bool? cardBorderlessInputs,
     double? borderRadius,
     double? cardBorderRadius,
     double? buttonPaddingH,
@@ -355,6 +366,9 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       srdHeadingRed: srdHeadingRed ?? this.srdHeadingRed,
       srdRule: srdRule ?? this.srdRule,
       srdSubtitle: srdSubtitle ?? this.srdSubtitle,
+      cardHeadingUppercase: cardHeadingUppercase ?? this.cardHeadingUppercase,
+      cardShowRule: cardShowRule ?? this.cardShowRule,
+      cardBorderlessInputs: cardBorderlessInputs ?? this.cardBorderlessInputs,
       borderRadius: borderRadius ?? this.borderRadius,
       cardBorderRadius: cardBorderRadius ?? this.cardBorderRadius,
       buttonPaddingH: buttonPaddingH ?? this.buttonPaddingH,
@@ -442,6 +456,9 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       srdHeadingRed: Color.lerp(srdHeadingRed, other.srdHeadingRed, t)!,
       srdRule: Color.lerp(srdRule, other.srdRule, t)!,
       srdSubtitle: Color.lerp(srdSubtitle, other.srdSubtitle, t)!,
+      cardHeadingUppercase: t < 0.5 ? cardHeadingUppercase : other.cardHeadingUppercase,
+      cardShowRule: t < 0.5 ? cardShowRule : other.cardShowRule,
+      cardBorderlessInputs: t < 0.5 ? cardBorderlessInputs : other.cardBorderlessInputs,
       borderRadius: t < 0.5 ? borderRadius : other.borderRadius,
       cardBorderRadius: t < 0.5 ? cardBorderRadius : other.cardBorderRadius,
       buttonPaddingH: t < 0.5 ? buttonPaddingH : other.buttonPaddingH,
