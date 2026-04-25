@@ -2,6 +2,8 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/config/supabase_config.dart';
+import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
+import '../../domain/entities/schema/world_schema.dart';
 import '../screens/admin/admin_screen.dart';
 import '../screens/characters/character_editor_screen.dart';
 import '../screens/hub/hub_screen.dart';
@@ -10,7 +12,6 @@ import '../screens/main_screen.dart';
 import '../screens/package_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/templates/template_editor_screen.dart';
-import '../../domain/entities/schema/world_schema.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -60,31 +61,17 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/template/edit',
       builder: (context, state) {
-        final args = state.extra as ({WorldSchema schema, bool isNew})?;
-        if (args == null) {
-          // Fallback: yeni template'e dön.
-          return TemplateEditorScreen(
-            initial: _blankTemplate(),
-            isNew: true,
-          );
+        final extra = state.extra;
+        WorldSchema schema;
+        if (extra is WorldSchema) {
+          schema = extra;
+        } else if (extra is ({WorldSchema schema, bool isNew})) {
+          schema = extra.schema;
+        } else {
+          schema = generateBuiltinDnd5eV2Schema().schema;
         }
-        return TemplateEditorScreen(
-          initial: args.schema,
-          isNew: args.isNew,
-        );
+        return TemplateEditorScreen(initial: schema);
       },
     ),
   ],
 );
-
-WorldSchema _blankTemplate() {
-  final now = DateTime.now().toUtc().toIso8601String();
-  return WorldSchema(
-    schemaId: 'tpl_${DateTime.now().millisecondsSinceEpoch}',
-    name: 'New Template',
-    version: '1.0.0',
-    description: '',
-    createdAt: now,
-    updatedAt: now,
-  );
-}

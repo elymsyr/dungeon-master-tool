@@ -8,7 +8,6 @@ import '../../../application/providers/ui_state_provider.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/dnd5e_constants.dart';
 import '../../../domain/entities/schema/field_schema.dart';
-import '../../../domain/entities/schema/rule_v2.dart';
 import '../../dialogs/entity_selector_dialog.dart';
 import '../../dialogs/media_gallery_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -24,9 +23,6 @@ class FieldWidgetFactory {
     required ValueChanged<dynamic> onChanged,
     Map<String, Entity>? entities,
     WidgetRef? ref,
-    bool computedMode = false,
-    Map<String, ItemStyle> itemStyles = const {},
-    Map<String, String> equipGates = const {},
     /// Aynı entity'deki diğer field değerleri — proficiencyTable gibi
     /// cross-field lookup (stat_block, proficiency_bonus) gereksinimleri için.
     Map<String, dynamic>? entityFields,
@@ -44,7 +40,7 @@ class FieldWidgetFactory {
         if (compact) {
           return _InlineRelationListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref);
         }
-        return _ReferenceListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref, computedMode: computedMode, itemStyles: itemStyles, equipGates: equipGates);
+        return _ReferenceListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref);
       }
       if (schema.fieldType == FieldType.image) {
         return _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, mediaDir: mediaDir);
@@ -64,7 +60,7 @@ class FieldWidgetFactory {
       FieldType.conditionStats => _CombatStatsFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.dice => _DiceFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.boolean_ => _BooleanFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.slot => _SlotFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entityFields: entityFields, ruleDriven: computedMode),
+      FieldType.slot => _SlotFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entityFields: entityFields),
       FieldType.levelTable => _LevelTableFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.levelTextTable => _LevelTextTableFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.proficiencyTable => _ProficiencyTableFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entityFields: entityFields),
@@ -927,50 +923,29 @@ class _ReferenceListFieldWidget extends StatefulWidget {
   final ValueChanged<dynamic> onChanged;
   final Map<String, Entity>? entities;
   final WidgetRef? ref;
-  final bool computedMode; // true = add/remove yok, equip sadece equipped kaynaklar için
-  final Map<String, ItemStyle> itemStyles;
-  final Map<String, String> equipGates;
 
-  const _ReferenceListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities, this.ref, this.computedMode = false, this.itemStyles = const {}, this.equipGates = const {}});
+  const _ReferenceListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities, this.ref});
 
   @override
   State<_ReferenceListFieldWidget> createState() => _ReferenceListFieldWidgetState();
 }
 
 class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
-  bool _showAllSources = false;
-
   FieldSchema get schema => widget.schema;
   dynamic get value => widget.value;
   bool get readOnly => widget.readOnly;
   ValueChanged<dynamic> get onChanged => widget.onChanged;
   Map<String, Entity>? get entities => widget.entities;
   WidgetRef? get ref => widget.ref;
-  bool get computedMode => widget.computedMode;
-  Map<String, ItemStyle> get itemStyles => widget.itemStyles;
-  Map<String, String> get equipGates => widget.equipGates;
 
   @override
   Widget build(BuildContext context) {
     // Değer iki formatta olabilir:
     // 1) List<String> — basit ID listesi (equip yok)
-    // 2) List<Map> — [{id: 'xxx', equipped: true, source: 'manual'|'rule:<id>'}, ...]
+    // 2) List<Map> — [{id: 'xxx', equipped: true}, ...]
     final items = _parseItems(value);
     final targetTypes = schema.validation.allowedTypes?.join(', ') ?? 'any';
     final showEquip = schema.hasEquip;
-    final hasRuleSourced = items.any((i) {
-      final src = i['source']?.toString() ?? 'manual';
-      return src != 'manual';
-    });
-    final filterActive = schema.showSourceFilter && hasRuleSourced;
-    // (origIndex, item) pairs — origIndex used for in-place mutation,
-    // avoids O(N²) items.indexOf during render.
-    final visibleItems = <MapEntry<int, Map<String, dynamic>>>[];
-    for (var idx = 0; idx < items.length; idx++) {
-      final it = items[idx];
-      if (filterActive && !_showAllSources && it['equipped'] != true) continue;
-      visibleItems.add(MapEntry(idx, it));
-    }
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -981,7 +956,7 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
           children: [
             Row(
               children: [
-                Expanded(child: Text('${schema.label} (${visibleItems.length}${filterActive ? '/${items.length}' : ''})', style: Theme.of(context).textTheme.titleSmall)),
+                Expanded(child: Text('${schema.label} (${items.length})', style: Theme.of(context).textTheme.titleSmall)),
                 Flexible(
                   child: Text(
                     '→ $targetTypes',
@@ -989,20 +964,7 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (filterActive)
-                  IconButton(
-                    tooltip: _showAllSources ? 'Showing all sources' : 'Showing only equipped',
-                    icon: Icon(
-                      _showAllSources ? Icons.visibility : Icons.visibility_off,
-                      size: 16,
-                      color: _showAllSources
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.outline,
-                    ),
-                    onPressed: () => setState(() => _showAllSources = !_showAllSources),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                if (!readOnly && !computedMode)
+                if (!readOnly)
                   IconButton(
                     icon: const Icon(Icons.add, size: 18),
                     onPressed: () async {
@@ -1026,115 +988,59 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                   ),
               ],
             ),
-            if (visibleItems.isEmpty)
+            if (items.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
-                  filterActive && !_showAllSources
-                      ? 'No equipped items — toggle to see all sources'
-                      : 'No items linked',
+                  'No items linked',
                   style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12),
                 ),
               ),
-            ...visibleItems.map((entry) {
+            ...items.asMap().entries.map((entry) {
               final i = entry.key;
               final item = entry.value;
               final isEquipped = item['equipped'] == true;
               final itemId = item['id']?.toString() ?? '';
-              final source = item['source']?.toString() ?? 'manual';
-              final isRuleSourced = source != 'manual';
-              final style = itemStyles[itemId];
-              final gateReason = equipGates[itemId];
-              final isGated = gateReason != null && gateReason.isNotEmpty;
 
               Widget itemRow = Padding(
                 padding: const EdgeInsets.only(bottom: 2),
                 child: Row(
                   children: [
                     // Equip toggle
-                    if (showEquip || computedMode) ...[
+                    if (showEquip) ...[
                       SizedBox(
                         width: 28,
-                        child: Builder(builder: (context) {
-                          // Computed mode: kaynak not equipped → disabled
-                          final sourceActive = item['_sourceActive'] != false;
-                          final sourceDisabled = computedMode && !sourceActive;
-                          // Gate: equip koşulu sağlanmıyorsa toggle devre dışı
-                          final gateDisabled = isGated && !isEquipped;
-                          final disabled = sourceDisabled || gateDisabled;
-                          return IconButton(
-                            icon: Icon(
-                              isEquipped ? Icons.shield : Icons.shield_outlined,
-                              size: 16,
-                              color: disabled
-                                  ? Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)
-                                  : isEquipped
-                                      ? (isGated ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.primary)
-                                      : Theme.of(context).colorScheme.outline,
-                            ),
-                            tooltip: gateDisabled
-                                ? gateReason
-                                : sourceDisabled
-                                    ? 'Source not equipped'
-                                    : isGated && isEquipped
-                                        ? 'Warning: $gateReason'
-                                        : isEquipped ? 'Equipped' : 'Not equipped',
-                            onPressed: disabled ? null : () {
-                              items[i] = {...item, 'equipped': !isEquipped};
-                              onChanged(_serializeItems(items, showEquip || computedMode));
-                            },
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                          );
-                        }),
+                        child: IconButton(
+                          icon: Icon(
+                            isEquipped ? Icons.shield : Icons.shield_outlined,
+                            size: 16,
+                            color: isEquipped
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.outline,
+                          ),
+                          tooltip: isEquipped ? 'Equipped' : 'Not equipped',
+                          onPressed: readOnly ? null : () {
+                            items[i] = {...item, 'equipped': !isEquipped};
+                            onChanged(_serializeItems(items, showEquip));
+                          },
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                        ),
                       ),
                     ],
-                    // Gate warning icon — item equipped ama koşul sağlanmıyor
-                    if (isGated && isEquipped)
-                      Tooltip(
-                        message: gateReason,
-                        child: Icon(Icons.warning_amber, size: 14, color: Theme.of(context).colorScheme.error),
-                      ),
                     const Icon(Icons.link, size: 14),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _resolveEntityName(itemId),
-                            style: TextStyle(
-                              fontSize: 12,
-                              decoration: style?.strikethrough == true || ((showEquip || computedMode) && !isEquipped)
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                              color: style?.color != null
-                                  ? _parseHexColor(style!.color!)
-                                  : (showEquip || computedMode) && !isEquipped
-                                      ? Theme.of(context).colorScheme.outline
-                                      : null,
-                            ),
-                          ),
-                          if (computedMode && item['from'] != null)
-                            Text(
-                              'from ${item['from']}',
-                              style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.outline),
-                            ),
-                          if (isRuleSourced && (computedMode || _showAllSources))
-                            Text(
-                              'from rule',
-                              style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.primary, fontStyle: FontStyle.italic),
-                            ),
-                          if (style?.tooltip != null)
-                            Text(
-                              style!.tooltip!,
-                              style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.error, fontStyle: FontStyle.italic),
-                            ),
-                        ],
+                      child: Text(
+                        _resolveEntityName(itemId),
+                        style: TextStyle(
+                          fontSize: 12,
+                          decoration: showEquip && !isEquipped ? TextDecoration.lineThrough : null,
+                          color: showEquip && !isEquipped ? Theme.of(context).colorScheme.outline : null,
+                        ),
                       ),
                     ),
-                    if (!readOnly && !computedMode && !isRuleSourced)
+                    if (!readOnly)
                       IconButton(
                         icon: const Icon(Icons.close, size: 14),
                         onPressed: () {
@@ -1146,11 +1052,6 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                   ],
                 ),
               );
-
-              // Faded style — reduced opacity
-              if (style?.faded == true) {
-                itemRow = Opacity(opacity: 0.4, child: itemRow);
-              }
 
               return itemRow;
             }),
@@ -1179,16 +1080,6 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
   dynamic _serializeItems(List<Map<String, dynamic>> items, bool withEquip) {
     if (!withEquip) return items.map((e) => e['id']).toList();
     return items;
-  }
-
-  /// Hex renk kodunu Color'a çevir (ör. '#FF0000' → Color).
-  static Color? _parseHexColor(String hex) {
-    try {
-      final clean = hex.replaceFirst('#', '');
-      return Color(int.parse('FF$clean', radix: 16));
-    } catch (_) {
-      return null;
-    }
   }
 }
 
@@ -1324,11 +1215,7 @@ class _SlotFieldWidget extends StatelessWidget {
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
-  /// Kural slot count'u sağlıyorsa, entity'nin kendi alanındaki states
-  /// bilgisi buradan okunur. States kullanıcı taplamalarıyla düzenlenir,
-  /// count rule-driven olduğu için değiştirilemez.
   final Map<String, dynamic>? entityFields;
-  final bool ruleDriven;
 
   const _SlotFieldWidget({
     required this.schema,
@@ -1336,27 +1223,9 @@ class _SlotFieldWidget extends StatelessWidget {
     required this.readOnly,
     required this.onChanged,
     this.entityFields,
-    this.ruleDriven = false,
   });
 
   ({int count, List<bool> states}) get _parsed {
-    // Rule-driven: value bir sayı (count), states entity'nin orijinal
-    // alanından okunur. Length count'a pad/trunc edilir.
-    if (ruleDriven && value is num) {
-      final count = (value as num).toInt().clamp(0, 99);
-      List<bool> raw = const [];
-      final own = entityFields?[schema.fieldKey];
-      if (own is Map) {
-        if (own['states'] is List) {
-          raw = (own['states'] as List).map((e) => e == true).toList();
-        } else if (own['filled'] is num) {
-          final filled = (own['filled'] as num).toInt().clamp(0, count);
-          raw = List.generate(count, (i) => i < filled);
-        }
-      }
-      final states = List.generate(count, (i) => i < raw.length && raw[i]);
-      return (count: count, states: states);
-    }
     if (value is Map) {
       final m = value as Map;
       final count = (m['count'] as num?)?.toInt().clamp(0, 99) ?? 0;
@@ -1399,15 +1268,7 @@ class _SlotFieldWidget extends StatelessWidget {
                   ),
                 ),
               ),
-              if (ruleDriven)
-                Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: Tooltip(
-                    message: 'Count is set by a rule',
-                    child: Icon(Icons.auto_fix_high, size: 14, color: palette.srdSubtitle),
-                  ),
-                ),
-              if (!readOnly && !ruleDriven) ...[
+              if (!readOnly) ...[
                 IconButton(
                   tooltip: 'Remove slot',
                   icon: const Icon(Icons.remove_circle_outline, size: 18),
@@ -1428,8 +1289,6 @@ class _SlotFieldWidget extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 ),
-              ],
-              if (!readOnly || ruleDriven)
                 IconButton(
                   tooltip: 'Refill',
                   icon: const Icon(Icons.refresh, size: 18),
@@ -1440,6 +1299,7 @@ class _SlotFieldWidget extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: 4),

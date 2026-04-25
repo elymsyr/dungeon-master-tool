@@ -14,7 +14,6 @@ import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/soundpad_provider.dart';
-import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../application/services/campaign_import_service.dart';
@@ -315,12 +314,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              if (item.type == 'Template') {
-                await ref.read(templateLocalDsProvider).restoreFromTrash(item.directoryName);
-                ref.invalidate(trashListProvider);
-                ref.invalidate(customTemplatesProvider);
-                ref.invalidate(allTemplatesProvider);
-              } else if (item.type == 'Package') {
+              if (item.type == 'Package') {
                 final ds = ref.read(packageLocalDsProvider);
                 final restoredData = await ds.restoreFromTrash(item.directoryName);
                 if (restoredData != null) {

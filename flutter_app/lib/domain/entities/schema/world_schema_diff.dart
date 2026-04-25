@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'encounter_config.dart';
-import 'rule_v2.dart';
 import 'field_schema.dart';
 import 'world_schema.dart';
 
@@ -72,29 +71,6 @@ void _diffCategories(WorldSchema old, WorldSchema now, List<String> out) {
         out.add('$name: modified field ${f.label}');
       }
     }
-
-    // Rules
-    final oldRules = {for (final r in oldCat.rules) r.name: r};
-    final newRules = {for (final r in newCat.rules) r.name: r};
-
-    for (final rName in newRules.keys) {
-      if (!oldRules.containsKey(rName)) {
-        out.add('$name: added rule $rName');
-      }
-    }
-    for (final rName in oldRules.keys) {
-      if (!newRules.containsKey(rName)) {
-        out.add('$name: removed rule $rName');
-      }
-    }
-    for (final rName in newRules.keys) {
-      final oldRule = oldRules[rName];
-      if (oldRule == null) continue;
-      final newRule = newRules[rName]!;
-      if (_ruleChanged(oldRule, newRule)) {
-        out.add('$name: modified rule $rName');
-      }
-    }
   }
 }
 
@@ -109,13 +85,6 @@ bool _fieldChanged(FieldSchema a, FieldSchema b) {
   final aSub = jsonEncode(a.subFields);
   final bSub = jsonEncode(b.subFields);
   return aSub != bSub;
-}
-
-bool _ruleChanged(RuleV2 a, RuleV2 b) {
-  if (a.enabled != b.enabled) return true;
-  if (a.priority != b.priority) return true;
-  // Compare by serialized form for deep equality (Freezed == is structural).
-  return a != b;
 }
 
 // ---------------------------------------------------------------------------

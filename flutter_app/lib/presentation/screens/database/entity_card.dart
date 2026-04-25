@@ -8,9 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/projection_provider.dart';
-import '../../../application/providers/rule_provider.dart';
-import '../../../application/services/rule_engine_v2.dart';
-import '../../../domain/entities/schema/rule_v2.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
@@ -223,10 +220,6 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final cat = widget.categorySchema;
 
-    // Rule engine v2 — reaktif computed değerleri (ilişkili entity + schema değişikliklerini izler)
-    final ruleResult = ref.watch(computedFieldsProvider(widget.entityId));
-    final computedValues = ruleResult.computedValues;
-
     // Controller sync — only update when the field is not focused
     _syncIfNotFocused(_nameController, _nameFocus, entity.name);
     _syncIfNotFocused(_descController, _descFocus, entity.description);
@@ -423,7 +416,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
             const SizedBox(height: 16),
 
             // === SCHEMA-DRIVEN FIELDS ===
-            if (cat != null) ..._buildSchemaFields(entity, cat, palette, computedValues, ruleResult.itemStyles, ruleResult.equipGates),
+            if (cat != null) ..._buildSchemaFields(entity, cat, palette),
 
             const SizedBox(height: 8),
 
@@ -559,75 +552,32 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     return cat.name;
   }
 
-  Widget _buildFieldWidget(FieldSchema field, Entity entity, Map<String, dynamic> computed, DmToolColors palette, {Map<String, ItemStyle> itemStyles = const {}, Map<String, String> equipGates = const {}, bool compact = false}) {
-    final hasComputed = computed.containsKey(field.fieldKey);
-    final fieldValue = hasComputed ? computed[field.fieldKey] : entity.fields[field.fieldKey];
-    final formula = hasComputed && !widget.readOnly ? _formulaFor(field.fieldKey) : null;
+  Widget _buildFieldWidget(FieldSchema field, Entity entity, DmToolColors palette, {bool compact = false}) {
+    final fieldValue = entity.fields[field.fieldKey];
 
     // Inline relation lists in multi-column groups — keep equip-tracked lists
     // (inventory/spells/etc.) in their full Card form regardless of compact.
     final useCompact = compact && field.isList && field.fieldType == FieldType.relation && !field.hasEquip;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        FieldWidgetFactory.create(
-          schema: field,
-          value: fieldValue,
-          readOnly: hasComputed && !(field.isList && field.fieldType == FieldType.relation) ? true : widget.readOnly,
-          onChanged: (v) => _updateField(field.fieldKey, v),
-          entities: ref.read(entityProvider),
-          ref: ref,
-          computedMode: hasComputed,
-          itemStyles: itemStyles,
-          equipGates: equipGates,
-          entityFields: entity.fields,
-          compact: useCompact,
-        ),
-        if (hasComputed)
-          Padding(
-            padding: const EdgeInsets.only(left: 12, top: 2),
-            child: Row(
-              children: [
-                Icon(Icons.auto_fix_high, size: 12, color: palette.srdSubtitle),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    formula != null ? '= $formula' : 'Auto-filled by rule',
-                    style: TextStyle(fontSize: 10, color: palette.srdSubtitle, fontStyle: FontStyle.italic),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
+    return FieldWidgetFactory.create(
+      schema: field,
+      value: fieldValue,
+      readOnly: widget.readOnly,
+      onChanged: (v) => _updateField(field.fieldKey, v),
+      entities: ref.read(entityProvider),
+      ref: ref,
+      entityFields: entity.fields,
+      compact: useCompact,
     );
   }
 
-  /// Bu entity'nin kategorisinde, [fieldKey] hedefli bir setValue kuralı
-  /// varsa, ValueExpression'ı stringify ederek formül string'i döner.
-  String? _formulaFor(String fieldKey) {
-    final cat = widget.categorySchema;
-    if (cat == null) return null;
-    for (final rule in cat.rules) {
-      if (!rule.enabled) continue;
-      final match = rule.then_.maybeWhen(
-        setValue: (target, value) => target == fieldKey ? value : null,
-        orElse: () => null,
-      );
-      if (match != null) return RuleEngineV2.stringify(match);
-    }
-    return null;
-  }
-
-  Widget _buildGroupGrid(List<FieldSchema> fields, int gridColumns, Entity entity, Map<String, dynamic> computed, DmToolColors palette, {Map<String, ItemStyle> itemStyles = const {}, Map<String, String> equipGates = const {}}) {
+  Widget _buildGroupGrid(List<FieldSchema> fields, int gridColumns, Entity entity, DmToolColors palette) {
     final compactRow = gridColumns > 1;
 
     if (gridColumns <= 1) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: fields.map((f) => _buildFieldWidget(f, entity, computed, palette, itemStyles: itemStyles, equipGates: equipGates)).toList(),
+        children: fields.map((f) => _buildFieldWidget(f, entity, palette)).toList(),
       );
     }
 
@@ -644,7 +594,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
           final span = rowFields[i].gridColumnSpan.clamp(1, gridColumns);
           children.add(Expanded(
             flex: span,
-            child: _buildFieldWidget(rowFields[i], entity, computed, palette, itemStyles: itemStyles, equipGates: equipGates, compact: compactRow),
+            child: _buildFieldWidget(rowFields[i], entity, palette, compact: compactRow),
           ));
         }
         return Row(
@@ -655,7 +605,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     );
   }
 
-  List<Widget> _buildSchemaFields(Entity entity, EntityCategorySchema cat, DmToolColors palette, Map<String, dynamic> computed, Map<String, ItemStyle> itemStyles, Map<String, String> equipGates) {
+  List<Widget> _buildSchemaFields(Entity entity, EntityCategorySchema cat, DmToolColors palette) {
     final cache = _getSchemaCache(cat);
     final ungrouped = cache.ungrouped;
     final grouped = cache.grouped;
@@ -670,7 +620,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       widgets.add(Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: ungrouped
-            .map((f) => _buildFieldWidget(f, entity, computed, palette, itemStyles: itemStyles, equipGates: equipGates))
+            .map((f) => _buildFieldWidget(f, entity, palette))
             .toList(),
       ));
     }
@@ -688,7 +638,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
         group: group,
         palette: palette,
         centered: centered,
-        child: _buildGroupGrid(groupFields, group.gridColumns, entity, computed, palette, itemStyles: itemStyles, equipGates: equipGates),
+        child: _buildGroupGrid(groupFields, group.gridColumns, entity, palette),
       ));
     }
 

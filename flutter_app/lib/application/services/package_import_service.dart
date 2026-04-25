@@ -14,7 +14,6 @@ const _uuid = Uuid();
 /// - categorySlug'ı isim bazlı eşler
 /// - Dünyada olmayan field'ları atar, eksik field'lara default verir
 /// - Relation field'larındaki eski ID'leri yeni ID'lere çevirir
-/// - Kuralları (RuleV2) yok sayar
 /// - Tüm import tek bir undo adımı olarak kaydedilir
 class PackageImportService {
   /// Import işlemini gerçekleştir.

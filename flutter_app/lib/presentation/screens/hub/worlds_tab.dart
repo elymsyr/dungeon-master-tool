@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/utils/deep_copy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/campaign_provider.dart';
-import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/template_provider.dart';
-import '../../../application/services/template_sync_service.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
-import '../../../domain/entities/schema/world_schema_hash.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/marketplace_panel.dart';
@@ -343,31 +339,11 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     );
 
     if (!success || !mounted) return;
-
-    // 4. Template drift check — uyarı dialogu göster (loading sonrası)
-    final drift = ref.read(pendingTemplateUpdateProvider);
-    if (drift != null) {
-      ref.read(pendingTemplateUpdateProvider.notifier).state = null;
-      final action = await _showPreOpenTemplateDialog(drift);
-      if (!mounted) return;
-      if (action == 'update') {
-        await ref.read(activeCampaignProvider.notifier).applyTemplateUpdate(drift.newTemplate);
-        await ref.read(characterListProvider.notifier).applyTemplateUpdate(
-              worldName: drift.campaignName,
-              newTemplate: drift.newTemplate,
-            );
-      } else if (action == 'mute') {
-        await ref.read(activeCampaignProvider.notifier).muteTemplateUpdates();
-      } else {
-        await ref.read(activeCampaignProvider.notifier).dismissTemplateUpdate(drift.newHash);
-      }
-    }
-
-    // 5. Navigate
     if (mounted) context.go('/main');
   }
 
-  Future<String?> _showPreOpenTemplateDialog(TemplateUpdatePrompt prompt) {
+  // ignore: unused_element
+  Future<String?> _showPreOpenTemplateDialogDead(dynamic prompt) {
     bool doNotShowAgain = false;
     final l10n = L10n.of(context)!;
     return showDialog<String>(
@@ -463,22 +439,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final localUpdatedAt = campaignRow?.updatedAt;
     final worldId = data['world_id'] as String? ?? campaignName;
 
-    TemplateUpdatePrompt? drift;
-    try {
-      final result = await ref.read(templateSyncServiceProvider).checkDrift(
-        campaignName: campaignName,
-        campaignData: data,
-        ignoreDismissed: true,
-      );
-      drift = result.prompt;
-      if (result.healedHash != null) {
-        data['template_hash'] = result.healedHash!;
-        await ref.read(campaignRepositoryProvider).save(campaignName, data);
-      }
-    } catch (_) {
-      // Best-effort — show the dialog without drift info.
-    }
-
     if (!mounted) return;
 
     final schemaMap = data['world_schema'] as Map<String, dynamic>?;
@@ -546,46 +506,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 localId: campaignName,
                 title: campaignName,
               ),
-              const SizedBox(height: 12),
-              Divider(height: 1, color: palette.featureCardBorder),
-              const SizedBox(height: 12),
-              if (drift == null)
-                Row(
-                  children: [
-                    Icon(Icons.check_circle, size: 16, color: palette.successBtnBg),
-                    const SizedBox(width: 6),
-                    Text(l10n.templateDriftUpToDate,
-                        style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
-                  ],
-                )
-              else ...[
-                Row(
-                  children: [
-                    Icon(Icons.info_outline, size: 16, color: palette.featureCardAccent),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(l10n.templateDriftBody(drift.templateName),
-                          style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
-                    ),
-                  ],
-                ),
-                if (drift.diffSummary.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(l10n.templateDriftChanges,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                  const SizedBox(height: 4),
-                  ...drift.diffSummary.map((line) => Padding(
-                    padding: const EdgeInsets.only(left: 8, bottom: 3),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('\u2022 ', style: TextStyle(fontSize: 12)),
-                        Expanded(child: Text(line, style: const TextStyle(fontSize: 12))),
-                      ],
-                    ),
-                  )),
-                ],
-              ],
             ],
           ),
           ),
@@ -595,14 +515,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(l10n.btnCancel),
           ),
-          if (drift != null)
-            FilledButton(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                await _applyTemplateFromSettings(campaignName, data, drift!);
-              },
-              child: Text(l10n.templateDriftUpdate),
-            ),
           FilledButton(
             onPressed: () async {
               await updateCampaignMetadata(ref, campaignName, workingMeta);
@@ -614,54 +526,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       ),
       ),
     );
-  }
-
-  /// Applies a template update from the settings dialog. Handles both the
-  /// active campaign (uses the notifier) and non-active campaigns (direct
-  /// repo save).
-  Future<void> _applyTemplateFromSettings(
-    String campaignName,
-    Map<String, dynamic> data,
-    TemplateUpdatePrompt drift,
-  ) async {
-    try {
-      final activeName = ref.read(activeCampaignProvider);
-      if (activeName == campaignName) {
-        await ref
-            .read(activeCampaignProvider.notifier)
-            .applyTemplateUpdate(drift.newTemplate);
-        await ref.read(characterListProvider.notifier).applyTemplateUpdate(
-              worldName: campaignName,
-              newTemplate: drift.newTemplate,
-            );
-      } else {
-        // Non-active campaign — mutate data map directly and save.
-        data['world_schema'] = deepCopyJson(drift.newTemplate.toJson());
-        data['template_id'] = drift.newTemplate.schemaId;
-        data['template_hash'] = computeWorldSchemaContentHash(drift.newTemplate);
-        if (drift.newTemplate.originalHash != null) {
-          data['template_original_hash'] = drift.newTemplate.originalHash;
-        }
-        data.remove('template_dismissed_hash');
-        await ref.read(campaignRepositoryProvider).save(campaignName, data);
-        await ref.read(characterListProvider.notifier).applyTemplateUpdate(
-              worldName: campaignName,
-              newTemplate: drift.newTemplate,
-            );
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(L10n.of(context)!.templateDriftUpdated)),
-        );
-      }
-    } catch (e, st) {
-      debugPrint('Template apply from settings failed: $e\n$st');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Update failed: $e')),
-        );
-      }
-    }
   }
 
   Future<void> _createCampaign() async {

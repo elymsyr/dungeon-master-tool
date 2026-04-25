@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
+import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../l10n/app_localizations.dart';
@@ -26,7 +26,7 @@ class CharactersTab extends ConsumerStatefulWidget {
 class _CharactersTabState extends ConsumerState<CharactersTab> {
   final _nameController = TextEditingController();
   int _selectedIndex = -1;
-  String? _selectedWorldName;
+  String? _selectedTemplateId;
   bool _creating = false;
 
   @override
@@ -194,45 +194,26 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       fontWeight: FontWeight.w600,
                       color: palette.tabActiveText)),
               const SizedBox(height: 8),
-              ref.watch(campaignInfoListProvider).when(
-                data: (worlds) {
-                  if (worlds.isEmpty) {
-                    // Karakter bir dünyaya bağlıdır. Dünya yoksa Worlds
-                    // sekmesine yönlendir.
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: palette.featureCardBg,
-                        borderRadius: palette.br,
-                        border: Border.all(color: palette.featureCardBorder),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('No worlds created',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
-                          const SizedBox(height: 6),
-                          Text('You need at least one world to create a character. Open the Worlds tab to create one.',
-                              style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
-                          const SizedBox(height: 12),
-                          OutlinedButton.icon(
-                            onPressed: () {
-                              ref.read(hubTabIndexProvider.notifier).state = 2;
-                            },
-                            icon: const Icon(Icons.public, size: 16),
-                            label: const Text('Go to Worlds'),
-                          ),
-                        ],
-                      ),
+              ref.watch(allTemplatesProvider).when(
+                data: (templates) {
+                  if (templates.isEmpty) {
+                    return Text(
+                      'No templates available.',
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: palette.sidebarLabelSecondary,
+                          fontStyle: FontStyle.italic),
                     );
+                  }
+                  // Auto-select first template if none chosen yet.
+                  if (_selectedTemplateId == null ||
+                      !templates.any((t) => t.schemaId == _selectedTemplateId)) {
+                    _selectedTemplateId = templates.first.schemaId;
                   }
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _worldPicker(palette, l10n),
-                      const SizedBox(height: 8),
-                      _inheritedTemplateRow(palette),
+                      _templatePicker(templates, palette),
                       const SizedBox(height: 8),
                       Row(
                         children: [
@@ -284,82 +265,29 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     return parts.join(' · ');
   }
 
-  Widget _worldPicker(DmToolColors palette, L10n l10n) {
-    final worldsAsync = ref.watch(campaignInfoListProvider);
-    return worldsAsync.when(
-      data: (worlds) {
-        if (worlds.isEmpty) {
-          return Text(
-            l10n.charCreateWorldRequired,
-            style: TextStyle(
-                fontSize: 12,
-                color: palette.sidebarLabelSecondary,
-                fontStyle: FontStyle.italic),
-          );
-        }
-        final names = worlds.map((w) => w.name).toList();
-        if (_selectedWorldName != null &&
-            !names.contains(_selectedWorldName)) {
-          _selectedWorldName = null;
-        }
-        // Key selection'a bağlı — setState tetiklenince widget fully remount
-        // olur ve yeni initialValue'yu direkt gösterir. FormField'in internal
-        // state ile initialValue arasındaki yarışı temizler.
-        return DropdownButtonFormField<String>(
-          key: ValueKey(
-              'char_world_${worlds.length}_${_selectedWorldName ?? "none"}'),
-          initialValue: _selectedWorldName,
-          decoration: InputDecoration(
-            labelText: '${l10n.charCreateWorldLabel} *',
-          ),
-          items: worlds
-              .map((w) => DropdownMenuItem(
-                    value: w.name,
-                    child: Text('${w.name}  (${w.templateName})',
-                        style: const TextStyle(fontSize: 12)),
-                  ))
-              .toList(),
-          onChanged: (v) => setState(() => _selectedWorldName = v),
-        );
-      },
-      loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('Error: $e'),
-    );
-  }
-
-  Widget _inheritedTemplateRow(DmToolColors palette) {
-    final worlds = ref.watch(campaignInfoListProvider).valueOrNull ?? const [];
-    final match = worlds.where((w) => w.name == _selectedWorldName).firstOrNull;
-    final templateText = match == null
-        ? '—'
-        : '${match.templateName}  (inherited from world)';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(Icons.description,
-              size: 14, color: palette.sidebarLabelSecondary),
-          const SizedBox(width: 6),
-          Text('Template: ',
-              style: TextStyle(
-                  fontSize: 12, color: palette.sidebarLabelSecondary)),
-          Expanded(
-            child: Text(
-              templateText,
-              style:
-                  TextStyle(fontSize: 12, color: palette.tabActiveText),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
+  Widget _templatePicker(List<WorldSchema> templates, DmToolColors palette) {
+    return DropdownButtonFormField<String>(
+      key: ValueKey(
+          'char_template_${templates.length}_${_selectedTemplateId ?? "none"}'),
+      initialValue: _selectedTemplateId,
+      decoration: const InputDecoration(
+        labelText: 'Template *',
       ),
+      items: templates
+          .map((t) => DropdownMenuItem(
+                value: t.schemaId,
+                child: Text(t.name,
+                    style: const TextStyle(fontSize: 12)),
+              ))
+          .toList(),
+      onChanged: (v) => setState(() => _selectedTemplateId = v),
     );
   }
 
   bool _canCreate() {
     if (_creating) return false;
     if (_nameController.text.trim().isEmpty) return false;
-    if (_selectedWorldName == null) return false;
+    if (_selectedTemplateId == null) return false;
     return true;
   }
 
@@ -405,32 +333,26 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
   Future<void> _createCharacter() async {
     if (!_canCreate()) return;
     final name = _nameController.text.trim();
-    final worldName = _selectedWorldName!;
+    final templateId = _selectedTemplateId!;
     setState(() => _creating = true);
     try {
-      final data =
-          await ref.read(campaignRepositoryProvider).load(worldName);
-      final schemaMap = data['world_schema'] as Map<String, dynamic>?;
-      if (schemaMap == null) {
-        _snack('World is missing a template schema.');
+      final templates =
+          await ref.read(allTemplatesProvider.future);
+      final template =
+          templates.where((t) => t.schemaId == templateId).firstOrNull;
+      if (template == null) {
+        _snack('Template not found.');
         return;
       }
-      // Campaign repo, world_schema.schemaId'yi kendi row-id'siyle
-      // (rotasyona uğramış) döndürüyor; kaynak template'i eşleştirmek için
-      // `template_id` alanını kullanıp schemaId'yi override ediyoruz.
-      final realTemplateId = (data['template_id'] as String?) ??
-          (schemaMap['schemaId'] as String? ?? '');
-      final template = WorldSchema.fromJson(Map<String, dynamic>.from(schemaMap))
-          .copyWith(schemaId: realTemplateId);
       if (!template.categories.any((c) => c.slug == playerCategorySlug)) {
-        _snack('This world\'s template has no Player category.');
+        _snack('This template has no Player category.');
         return;
       }
 
       final c = await ref.read(characterListProvider.notifier).create(
             name: name,
             template: template,
-            worldName: worldName,
+            worldName: '',
           );
       _nameController.clear();
       if (mounted) {
