@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/config/app_paths.dart';
+import '../../core/migrations/builtin_dnd5e_v2_seed.dart';
 import '../../data/database/database_provider.dart';
 import 'campaign_provider.dart';
 import 'cloud_backup_provider.dart';
@@ -27,6 +28,10 @@ class UserSessionNotifier extends StateNotifier<bool> {
     // İlk giriş migration: global path'te veri varsa user path'e kopyala.
     await _migrateGlobalDataIfNeeded(userId);
 
+    // Built-in template'leri user-scoped cache'e seed et (path az önce switch
+    // oldu — global path'teki seed buraya gelmedi).
+    await seedBuiltinDnd5eV2TemplateIfNeeded();
+
     // Downstream provider'ları invalidate et.
     _invalidateAll();
     state = true;
@@ -36,6 +41,8 @@ class UserSessionNotifier extends StateNotifier<bool> {
   Future<void> deactivate() async {
     await AppPaths.setUser(null);
     _ref.read(activeUserIdProvider.notifier).state = null;
+    // Global path'te de built-in template hazır olsun (offline mode için).
+    await seedBuiltinDnd5eV2TemplateIfNeeded();
     _invalidateAll();
     state = false;
   }

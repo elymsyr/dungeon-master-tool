@@ -1185,6 +1185,7 @@ class _RuleBuilderDialogState extends State<_RuleBuilderDialog> {
     FieldType.slot => 'slot',
     FieldType.proficiencyTable => 'proficiency',
     FieldType.levelTable => 'level table',
+    FieldType.levelTextTable => 'level text table',
   };
 }
 

@@ -28,6 +28,7 @@ enum FieldType {
   slot,           // Dolu/boş checkbox satırı: spell slot, ammo, charges, hit dice
   proficiencyTable, // D&D 5e skills/saving throws — her satır: name, ability, proficient, expertise, misc
   levelTable,     // Map<int,int> — level → value progression tablosu (spell slot count, hit dice, vs.)
+  levelTextTable, // Map<int,String> — level → free-form text (e.g. "At Higher Levels", per-level features narrative)
 }
 
 /// Alan görünürlüğü — online modda kimin görebileceğini belirler.

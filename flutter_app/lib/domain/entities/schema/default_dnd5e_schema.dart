@@ -279,7 +279,7 @@ WorldSchema generateDefaultDnd5eSchema() {
   return WorldSchema(
     schemaId: schemaId,
     name: 'D&D 5e (Default)',
-    version: '1.0.0',
+    version: '1.1.0',
     baseSystem: 'dnd5e',
     description: 'Built-in D&D 5e entity model with 15 categories.',
     categories: categories,

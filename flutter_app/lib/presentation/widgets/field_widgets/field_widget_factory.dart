@@ -59,6 +59,7 @@ class FieldWidgetFactory {
       FieldType.boolean_ => _BooleanFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.slot => _SlotFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entityFields: entityFields, ruleDriven: computedMode),
       FieldType.levelTable => _LevelTableFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.levelTextTable => _LevelTextTableFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.proficiencyTable => _ProficiencyTableFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entityFields: entityFields),
       FieldType.tagList => _TagListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.date => _DateFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
@@ -1505,6 +1506,150 @@ class _LevelTableFieldWidget extends StatelessWidget {
   }
 }
 
+// --- LEVEL TEXT TABLE ---
+class _LevelTextTableFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  const _LevelTextTableFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  List<MapEntry<int, String>> get _rows {
+    if (value is! Map) return [];
+    final m = value as Map;
+    final entries = <MapEntry<int, String>>[];
+    for (final e in m.entries) {
+      final k = int.tryParse(e.key.toString());
+      if (k == null) continue;
+      entries.add(MapEntry(k, e.value?.toString() ?? ''));
+    }
+    entries.sort((a, b) => a.key.compareTo(b.key));
+    return entries;
+  }
+
+  void _write(List<MapEntry<int, String>> rows) {
+    final out = <String, String>{};
+    for (final r in rows) {
+      out[r.key.toString()] = r.value;
+    }
+    onChanged(out);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _rows;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: Text(schema.label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+                if (!readOnly)
+                  IconButton(
+                    tooltip: 'Add row',
+                    icon: const Icon(Icons.add, size: 16),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      final nextLevel = rows.isEmpty ? 1 : rows.last.key + 1;
+                      _write([...rows, MapEntry(nextLevel, '')]);
+                    },
+                  ),
+              ],
+            ),
+            if (rows.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text('No rows — tap + to add', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+              )
+            else ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4, top: 2),
+                child: Row(
+                  children: [
+                    SizedBox(width: 60, child: Text('Level', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary))),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text('Description', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary))),
+                  ],
+                ),
+              ),
+              ...rows.asMap().entries.map((entry) {
+                final i = entry.key;
+                final row = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 60,
+                        child: TextFormField(
+                          key: ValueKey('${schema.fieldKey}_lvl_${row.key}_$i'),
+                          initialValue: row.key.toString(),
+                          readOnly: readOnly,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(fontSize: 12),
+                          decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 4)),
+                          onChanged: (v) {
+                            final newLevel = int.tryParse(v);
+                            if (newLevel == null) return;
+                            final updated = [...rows];
+                            updated[i] = MapEntry(newLevel, row.value);
+                            _write(updated);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          key: ValueKey('${schema.fieldKey}_txt_${row.key}_$i'),
+                          initialValue: row.value,
+                          readOnly: readOnly,
+                          maxLines: null,
+                          minLines: 1,
+                          style: const TextStyle(fontSize: 12),
+                          decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 6)),
+                          onChanged: (v) {
+                            final updated = [...rows];
+                            updated[i] = MapEntry(row.key, v);
+                            _write(updated);
+                          },
+                        ),
+                      ),
+                      if (!readOnly)
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 14),
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          onPressed: () {
+                            final updated = [...rows]..removeAt(i);
+                            _write(updated);
+                          },
+                        ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // --- IMAGE GALLERY ---
 class _ImageFieldWidget extends ConsumerStatefulWidget {
   final FieldSchema schema;
@@ -1981,8 +2126,22 @@ class _ProficiencyTableFieldWidget extends StatelessWidget {
 
   List<Map<String, dynamic>> get _rows {
     if (value is Map && (value as Map)['rows'] is List) {
-      return ((value as Map)['rows'] as List)
-          .map<Map<String, dynamic>>((r) => Map<String, dynamic>.from(r as Map))
+      final list = (value as Map)['rows'] as List;
+      if (list.isNotEmpty) {
+        return list
+            .map<Map<String, dynamic>>(
+                (r) => Map<String, dynamic>.from(r as Map))
+            .toList();
+      }
+    }
+    // Fallback: schema-provided default rows (preset skills / saves) when
+    // the entity's stored value is missing/empty. Lets cards filled before
+    // defaults landed still render the canonical row list.
+    final dv = schema.defaultValue;
+    if (dv is Map && dv['rows'] is List) {
+      return (dv['rows'] as List)
+          .map<Map<String, dynamic>>(
+              (r) => Map<String, dynamic>.from(r as Map))
           .toList();
     }
     return const [];
