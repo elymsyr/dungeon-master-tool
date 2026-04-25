@@ -1123,6 +1123,7 @@ class _CategoryEditor extends StatelessWidget {
     FieldType.slot => 'Slots',
     FieldType.proficiencyTable => 'Proficiency Table',
     FieldType.levelTable => 'Level Table',
+    FieldType.levelTextTable => 'Level Text Table',
   };
 
   IconData _fieldTypeIcon(FieldType t) => switch (t) {
@@ -1143,6 +1144,7 @@ class _CategoryEditor extends StatelessWidget {
     FieldType.slot => Icons.check_box_outlined,
     FieldType.proficiencyTable => Icons.fact_check,
     FieldType.levelTable => Icons.table_chart_outlined,
+    FieldType.levelTextTable => Icons.table_rows_outlined,
   };
 
   void _editGroup(BuildContext context, FieldGroup group, ValueChanged<FieldGroup> onUpdate) {

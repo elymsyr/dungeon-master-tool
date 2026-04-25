@@ -16,6 +16,7 @@ import 'application/services/projection_ipc.dart';
 import 'core/config/app_paths.dart';
 import 'core/config/supabase_config.dart';
 import 'core/constants.dart' show appVersion;
+import 'core/migrations/builtin_dnd5e_v2_seed.dart';
 import 'core/migrations/legacy_builtin_seed.dart';
 import 'core/services/log_buffer.dart';
 import 'presentation/screens/player_window/player_window_main.dart';
@@ -147,6 +148,7 @@ class _BootstrapGateState extends State<_BootstrapGate> {
       _setMessage('Preparing file system...');
       await AppPaths.initialize();
       await seedLegacyBuiltinTemplateIfNeeded();
+      await seedBuiltinDnd5eV2TemplateIfNeeded();
 
       if (SupabaseConfig.isConfigured) {
         _setMessage('Connecting to cloud...');

@@ -12,7 +12,7 @@ void main() {
 
     test('schema metadata is correct', () {
       expect(schema.name, 'D&D 5e (Default)');
-      expect(schema.version, '1.0.0');
+      expect(schema.version, '1.1.0');
       expect(schema.baseSystem, 'dnd5e');
     });
 

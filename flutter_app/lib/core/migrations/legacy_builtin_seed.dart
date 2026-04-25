@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart' show Variable;
@@ -13,27 +14,27 @@ import '../services/log_buffer.dart';
 const _seedFlag = 'seed_builtin_dnd5e_v1';
 const _legacyBuiltinId = 'builtin-dnd5e-default';
 
-/// One-shot migration that preserves the legacy hardcoded D&D 5e built-in
-/// template as a **personal local template** for users who previously
-/// relied on it. Hits the SharedPreferences flag on first call and never
-/// runs again.
+/// Preserves the legacy hardcoded D&D 5e built-in template as a personal
+/// local template for users who previously relied on it. Original first-run
+/// gate uses [SharedPreferences]; later runs re-seed when the bundled
+/// generator's version is newer than the on-disk file (so field-default
+/// additions ship to existing installs without manual deletion).
 ///
 /// The function is conditional on existing references: if nothing in the
 /// user's SQLite (world_schemas / package_schemas) points at
-/// `builtin-dnd5e-default`, the seed is skipped entirely so fresh
-/// installs stay clean. Returns true if the seed wrote a new template
-/// file, false otherwise (already-seeded, no references, or failure).
+/// `builtin-dnd5e-default`, the seed is skipped entirely so fresh installs
+/// stay clean. Returns true if a fresh template file was written.
 Future<bool> seedLegacyBuiltinTemplateIfNeeded() async {
-  final prefs = await SharedPreferences.getInstance();
-  if (prefs.getBool(_seedFlag) == true) return false;
-
   try {
     final hasReferences = await _hasLegacyBuiltinReferences();
-    if (hasReferences) {
-      await _writeTemplateIfMissing();
+    if (!hasReferences) {
+      // No campaigns reference v1; mark the original first-run flag so we
+      // don't keep checking, and bail out.
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_seedFlag, true);
+      return false;
     }
-    await prefs.setBool(_seedFlag, true);
-    return hasReferences;
+    return await _writeTemplateIfStale();
   } catch (e, st) {
     LogBuffer.instance.recordError(e, st, context: 'seedLegacyBuiltin');
     return false;
@@ -65,12 +66,43 @@ Future<bool> _hasLegacyBuiltinReferences() async {
   }
 }
 
-Future<void> _writeTemplateIfMissing() async {
+Future<bool> _writeTemplateIfStale() async {
   final targetDir = Directory(p.join(AppPaths.cacheDir, 'templates'));
   await targetDir.create(recursive: true);
   final targetFile = File(p.join(targetDir.path, '$_legacyBuiltinId.json'));
-  if (await targetFile.exists()) return;
 
   final schema = generateDefaultDnd5eSchema();
+
+  if (await targetFile.exists()) {
+    final onDisk = _readVersion(targetFile);
+    if (onDisk != null && _compareVersions(onDisk, schema.version) >= 0) {
+      return false;
+    }
+  }
+
   await TemplateLocalDataSource().save(schema);
+  return true;
+}
+
+String? _readVersion(File f) {
+  try {
+    final raw = f.readAsStringSync();
+    final json = jsonDecode(raw) as Map<String, dynamic>;
+    final v = json['version'];
+    return v is String ? v : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+int _compareVersions(String a, String b) {
+  final ap = a.split('.');
+  final bp = b.split('.');
+  final n = ap.length > bp.length ? ap.length : bp.length;
+  for (var i = 0; i < n; i++) {
+    final ai = i < ap.length ? int.tryParse(ap[i]) ?? 0 : 0;
+    final bi = i < bp.length ? int.tryParse(bp[i]) ?? 0 : 0;
+    if (ai != bi) return ai - bi;
+  }
+  return 0;
 }
