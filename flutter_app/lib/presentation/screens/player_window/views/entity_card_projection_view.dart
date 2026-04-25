@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import '../../../../domain/entities/projection/entity_snapshot.dart';
 import '../../../../domain/entities/projection/projection_item.dart';
 
+const _parchment = Color(0xFFF5EFE0);
+const _ink = Color(0xFF1B1B1B);
+const _headingRed = Color(0xFF7A1F1F);
+const _subtitle = Color(0xFF5A4A3A);
+
 /// Player-window view of an entity card. Renders from a serializable
-/// [EntitySnapshot] — the player sub-isolate doesn't need access to the
-/// entity provider or the world schema.
-///
-/// Layout: large portrait at the top, name + category badge, description,
-/// then a flat list of label/value rows grouped by section.
+/// [EntitySnapshot]. SRD source-book look: serif red title, italic subtitle,
+/// red rule, parchment background.
 class EntityCardProjectionView extends StatefulWidget {
   final EntityCardProjection item;
 
@@ -30,37 +32,63 @@ class _EntityCardProjectionViewState extends State<EntityCardProjectionView>
   Widget build(BuildContext context) {
     super.build(context);
     final snap = widget.item.snapshot;
-    final catColor = _hexColor(snap.categoryColorHex);
     return RepaintBoundary(
       child: Container(
-        color: const Color(0xFF1a1a1a),
-        padding: const EdgeInsets.all(40),
+        color: _parchment,
+        padding: const EdgeInsets.all(48),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1200),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (snap.imagePaths.isNotEmpty)
-                  _Portrait(path: snap.imagePaths.first),
-                if (snap.imagePaths.isNotEmpty) const SizedBox(width: 32),
-                Expanded(child: _RightColumn(snap: snap, catColor: catColor)),
-              ],
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    snap.name,
+                    style: const TextStyle(
+                      fontFamily: 'Georgia',
+                      fontSize: 56,
+                      fontWeight: FontWeight.bold,
+                      color: _headingRed,
+                      height: 1.1,
+                    ),
+                  ),
+                  // Italic subtitle = category name (DM card builds richer subtitle, but
+                  // projection EntitySnapshot only carries category name).
+                  if (snap.categoryName.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      snap.categoryName,
+                      style: const TextStyle(
+                        fontFamily: 'Georgia',
+                        fontSize: 20,
+                        fontStyle: FontStyle.italic,
+                        color: _subtitle,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Container(height: 1.5, color: _headingRed),
+                  const SizedBox(height: 20),
+                  // Body
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: _RightColumn(snap: snap)),
+                      if (snap.imagePaths.isNotEmpty) ...[
+                        const SizedBox(width: 32),
+                        _Portrait(path: snap.imagePaths.first),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
-  }
-
-  Color _hexColor(String hex) {
-    var clean = hex.replaceFirst('#', '');
-    if (clean.length == 6) clean = 'FF$clean';
-    try {
-      return Color(int.parse(clean, radix: 16));
-    } catch (_) {
-      return Colors.grey;
-    }
   }
 }
 
@@ -93,9 +121,8 @@ class _Portrait extends StatelessWidget {
 
 class _RightColumn extends StatelessWidget {
   final EntitySnapshot snap;
-  final Color catColor;
 
-  const _RightColumn({required this.snap, required this.catColor});
+  const _RightColumn({required this.snap});
 
   @override
   Widget build(BuildContext context) {
@@ -103,86 +130,58 @@ class _RightColumn extends StatelessWidget {
     for (final f in snap.fields) {
       groups.putIfAbsent(f.groupLabel, () => []).add(f);
     }
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Category badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: catColor.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              snap.categoryName,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: catColor,
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (snap.source.isNotEmpty) ...[
+          Text(
+            'Source: ${snap.source}',
+            style: const TextStyle(
+              fontFamily: 'Georgia',
+              fontSize: 14,
+              color: _subtitle,
+              fontStyle: FontStyle.italic,
             ),
           ),
           const SizedBox(height: 12),
+        ],
 
-          // Name
+        if (snap.description.isNotEmpty) ...[
           Text(
-            snap.name,
+            snap.description,
             style: const TextStyle(
-              fontSize: 42,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+              fontSize: 18,
+              color: _ink,
+              height: 1.5,
             ),
           ),
+          const SizedBox(height: 8),
+        ],
 
-          if (snap.source.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              snap.source,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.white54,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-
-          if (snap.description.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              snap.description,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.white70,
-                height: 1.5,
-              ),
-            ),
-          ],
-
-          if (snap.fields.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            const Divider(color: Colors.white24),
-            const SizedBox(height: 12),
-            for (final entry in groups.entries) ...[
-              if (entry.key != null && entry.key!.isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.only(top: 16, bottom: 8),
-                  child: Text(
-                    entry.key!,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                      color: catColor,
-                    ),
+        if (snap.fields.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          for (final entry in groups.entries) ...[
+            if (entry.key != null && entry.key!.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.only(top: 16, bottom: 4),
+                child: Text(
+                  entry.key!,
+                  style: const TextStyle(
+                    fontFamily: 'Georgia',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: _headingRed,
+                    letterSpacing: 0.3,
                   ),
                 ),
-              ],
-              for (final f in entry.value) _FieldRow(field: f),
+              ),
+              Container(height: 1, color: _headingRed),
+              const SizedBox(height: 8),
             ],
+            for (final f in entry.value) _FieldRow(field: f),
           ],
         ],
-      ),
+      ],
     );
   }
 }
@@ -199,20 +198,20 @@ class _FieldRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 180,
+            width: 200,
             child: Text(
-              field.label,
+              '${field.label}:',
               style: const TextStyle(
-                fontSize: 14,
-                color: Colors.white54,
-                fontWeight: FontWeight.w500,
+                fontSize: 16,
+                color: _ink,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
           Expanded(
             child: Text(
               field.value,
-              style: const TextStyle(fontSize: 14, color: Colors.white),
+              style: const TextStyle(fontSize: 16, color: _ink),
             ),
           ),
         ],

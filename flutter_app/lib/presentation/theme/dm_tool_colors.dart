@@ -93,6 +93,13 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
   final Color featureCardBorder;
   final Color featureCardAccent;   // Sol kenarlık (tek renk, tema accent)
 
+  // --- SRD Paper Look (entity card) ---
+  final Color srdParchment;     // page bg behind entity card
+  final Color srdInk;           // body text ink
+  final Color srdHeadingRed;    // title + section heads
+  final Color srdRule;          // thin divider line under headings
+  final Color srdSubtitle;      // italic subtitle muted ink
+
   // --- Style Parameters (tema-spesifik görünüm) ---
   final double borderRadius;
   final double cardBorderRadius;
@@ -174,6 +181,11 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     required this.featureCardBg,
     required this.featureCardBorder,
     required this.featureCardAccent,
+    this.srdParchment = const Color(0xFFF5EFE0),
+    this.srdInk = const Color(0xFF1B1B1B),
+    this.srdHeadingRed = const Color(0xFF7A1F1F),
+    this.srdRule = const Color(0xFF7A1F1F),
+    this.srdSubtitle = const Color(0xFF5A4A3A),
     this.borderRadius = 4,
     this.cardBorderRadius = 8,
     this.buttonPaddingH = 10,
@@ -256,6 +268,11 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     Color? featureCardBg,
     Color? featureCardBorder,
     Color? featureCardAccent,
+    Color? srdParchment,
+    Color? srdInk,
+    Color? srdHeadingRed,
+    Color? srdRule,
+    Color? srdSubtitle,
     double? borderRadius,
     double? cardBorderRadius,
     double? buttonPaddingH,
@@ -333,6 +350,11 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       featureCardBg: featureCardBg ?? this.featureCardBg,
       featureCardBorder: featureCardBorder ?? this.featureCardBorder,
       featureCardAccent: featureCardAccent ?? this.featureCardAccent,
+      srdParchment: srdParchment ?? this.srdParchment,
+      srdInk: srdInk ?? this.srdInk,
+      srdHeadingRed: srdHeadingRed ?? this.srdHeadingRed,
+      srdRule: srdRule ?? this.srdRule,
+      srdSubtitle: srdSubtitle ?? this.srdSubtitle,
       borderRadius: borderRadius ?? this.borderRadius,
       cardBorderRadius: cardBorderRadius ?? this.cardBorderRadius,
       buttonPaddingH: buttonPaddingH ?? this.buttonPaddingH,
@@ -415,6 +437,11 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       featureCardBg: Color.lerp(featureCardBg, other.featureCardBg, t)!,
       featureCardBorder: Color.lerp(featureCardBorder, other.featureCardBorder, t)!,
       featureCardAccent: Color.lerp(featureCardAccent, other.featureCardAccent, t)!,
+      srdParchment: Color.lerp(srdParchment, other.srdParchment, t)!,
+      srdInk: Color.lerp(srdInk, other.srdInk, t)!,
+      srdHeadingRed: Color.lerp(srdHeadingRed, other.srdHeadingRed, t)!,
+      srdRule: Color.lerp(srdRule, other.srdRule, t)!,
+      srdSubtitle: Color.lerp(srdSubtitle, other.srdSubtitle, t)!,
       borderRadius: t < 0.5 ? borderRadius : other.borderRadius,
       cardBorderRadius: t < 0.5 ? cardBorderRadius : other.cardBorderRadius,
       buttonPaddingH: t < 0.5 ? buttonPaddingH : other.buttonPaddingH,

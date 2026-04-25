@@ -30,6 +30,10 @@ class FieldWidgetFactory {
     /// Aynı entity'deki diğer field değerleri — proficiencyTable gibi
     /// cross-field lookup (stat_block, proficiency_bonus) gereksinimleri için.
     Map<String, dynamic>? entityFields,
+    /// Inline-list rendering: relation lists collapse to a single comma-separated
+    /// row instead of a Card with per-row entries. Used in grouped multi-column
+    /// layouts where the tall Card breaks row alignment.
+    bool compact = false,
   }) {
     // Media directory — image field'ları için galeri desteği.
     final mediaDir = ref?.read(mediaDirectoryProvider);
@@ -37,6 +41,9 @@ class FieldWidgetFactory {
     // isList → genel liste widget'ı
     if (schema.isList) {
       if (schema.fieldType == FieldType.relation) {
+        if (compact) {
+          return _InlineRelationListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref);
+        }
         return _ReferenceListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref, computedMode: computedMode, itemStyles: itemStyles, equipGates: equipGates);
       }
       if (schema.fieldType == FieldType.image) {
@@ -938,7 +945,13 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
             Row(
               children: [
                 Expanded(child: Text('${schema.label} (${visibleItems.length}${filterActive ? '/${items.length}' : ''})', style: Theme.of(context).textTheme.titleSmall)),
-                Text('→ $targetTypes', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline)),
+                Flexible(
+                  child: Text(
+                    '→ $targetTypes',
+                    style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 if (filterActive)
                   IconButton(
                     tooltip: _showAllSources ? 'Showing all sources' : 'Showing only equipped',
@@ -1138,6 +1151,115 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
     } catch (_) {
       return null;
     }
+  }
+}
+
+/// Inline relation-list — single-row "Label: name1, name2, name3" rendering
+/// for grouped multi-column layouts where the full Card form breaks alignment.
+/// Edit mode shows compact chips with × + a "+" add button.
+class _InlineRelationListFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+
+  const _InlineRelationListFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+    this.ref,
+  });
+
+  List<String> _parseIds(dynamic v) {
+    if (v is! List) return const [];
+    return v.map<String>((e) {
+      if (e is String) return e;
+      if (e is Map) return (e['id']?.toString() ?? '');
+      return e.toString();
+    }).where((s) => s.isNotEmpty).toList();
+  }
+
+  String _name(String id) => entities?[id]?.name ?? id;
+
+  @override
+  Widget build(BuildContext context) {
+    final ids = _parseIds(value);
+    final theme = Theme.of(context);
+
+    if (readOnly) {
+      final names = ids.map(_name).where((s) => s.isNotEmpty).toList();
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: RichText(
+          text: TextSpan(
+            style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface),
+            children: [
+              TextSpan(
+                text: '${schema.label}: ',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              TextSpan(text: names.isEmpty ? '—' : names.join(', ')),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            schema.label,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface),
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              for (final id in ids)
+                InputChip(
+                  label: Text(_name(id), style: const TextStyle(fontSize: 11)),
+                  onDeleted: () {
+                    final next = List<String>.from(ids)..remove(id);
+                    onChanged(next);
+                  },
+                  deleteIcon: const Icon(Icons.close, size: 14),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              IconButton(
+                icon: const Icon(Icons.add, size: 18),
+                tooltip: 'Add',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                padding: EdgeInsets.zero,
+                onPressed: () async {
+                  if (ref == null) return;
+                  final result = await showEntitySelectorDialog(
+                    context: context,
+                    ref: ref!,
+                    allowedTypes: schema.validation.allowedTypes,
+                    multiSelect: true,
+                    excludeIds: ids,
+                  );
+                  if (result != null && result.isNotEmpty) {
+                    onChanged([...ids, ...result]);
+                  }
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 

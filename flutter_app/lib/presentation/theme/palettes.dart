@@ -61,6 +61,11 @@ const _dark = DmToolColors(
   featureCardBg: Color(0xFF1E1E1E),       // dark.qss: #1e1e1e
   featureCardBorder: Color(0xFF3E3E3E),   // dark.qss: #3e3e3e
   featureCardAccent: Color(0xFF42A5F5),   // dark.qss: #42a5f5
+  srdParchment: Color(0xFF2A231C),
+  srdInk: Color(0xFFE8DBC0),
+  srdHeadingRed: Color(0xFFC0392B),
+  srdRule: Color(0xFFC0392B),
+  srdSubtitle: Color(0xFFB8A584),
   mapBg: Color(0xFF000000),
 );
 
@@ -79,6 +84,11 @@ final Map<String, DmToolColors> themePalettes = {
     featureCardBg: const Color(0xFFFFFFFF),
     featureCardBorder: const Color(0xFFCBD5E0),
     featureCardAccent: const Color(0xFF2C5282),
+    srdParchment: const Color(0xFFF5EFE0),
+    srdInk: const Color(0xFF1B1B1B),
+    srdHeadingRed: const Color(0xFF7A1F1F),
+    srdRule: const Color(0xFF7A1F1F),
+    srdSubtitle: const Color(0xFF5A4A3A),
     canvasBg: const Color(0xFFFBFCFE),
     gridColor: const Color(0xFFCBD5E0),
     nodeBgNote: const Color(0xFFFFFFFF),
@@ -124,6 +134,11 @@ final Map<String, DmToolColors> themePalettes = {
     featureCardBg: const Color(0xFFFDF5E3),
     featureCardBorder: const Color(0xFF8D6E63),
     featureCardAccent: const Color(0xFF5D4037),
+    srdParchment: const Color(0xFFF5EBD0),
+    srdInk: const Color(0xFF2B1B14),
+    srdHeadingRed: const Color(0xFF7A1F1F),
+    srdRule: const Color(0xFF7A1F1F),
+    srdSubtitle: const Color(0xFF5D4037),
     canvasBg: const Color(0xFFF5EBD0),
     gridColor: const Color(0x263E2723),
     nodeBgNote: const Color(0xFFFDFBF7),

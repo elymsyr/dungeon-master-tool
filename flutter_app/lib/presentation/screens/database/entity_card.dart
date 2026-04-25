@@ -141,7 +141,6 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final cat = widget.categorySchema;
-    final catColor = cat != null ? _parseColor(cat.color) : palette.tabIndicator;
 
     // Rule engine v2 — reaktif computed değerleri (ilişkili entity + schema değişikliklerini izler)
     final ruleResult = ref.watch(computedFieldsProvider(widget.entityId));
@@ -155,254 +154,297 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final tagsStr = entity.tags.join(', ');
     _syncIfNotFocused(_tagsController, _tagsFocus, tagsStr);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // === HEADER: Portre (sol) + İsim/Açıklama (sağ) ===
-          _FeatureCard(
-            palette: palette,
-            child: Row(
+    final subtitle = cat != null ? _buildSubtitle(entity, cat) : '';
+    final hasPortrait = entity.imagePath.isNotEmpty || entity.images.isNotEmpty;
+
+    return Container(
+      color: palette.srdParchment,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // === TITLE ROW: name (serif red) + project button ===
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Sol: Portre resim galerisi
-                _PortraitGallery(
-                  images: [
-                    if (entity.imagePath.isNotEmpty) entity.imagePath,
-                    ...entity.images,
-                  ],
-                  entityName: entity.name,
-                  readOnly: widget.readOnly,
-                  palette: palette,
-                  onImagesChanged: (newImages) {
-                    ref.read(entityProvider.notifier).update(
-                      entity.copyWith(imagePath: '', images: newImages),
-                    );
+                Expanded(
+                  child: widget.readOnly
+                      ? Text(
+                          entity.name.isEmpty ? '(Unnamed)' : entity.name,
+                          style: TextStyle(
+                            fontFamily: 'Georgia',
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                            color: palette.srdHeadingRed,
+                            height: 1.1,
+                          ),
+                        )
+                      : TextFormField(
+                          controller: _nameController,
+                          focusNode: _nameFocus,
+                          style: TextStyle(
+                            fontFamily: 'Georgia',
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                            color: palette.srdHeadingRed,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: 'Entity Name',
+                            border: InputBorder.none,
+                            isDense: true,
+                            filled: false,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          onChanged: (v) => _debouncedProviderUpdate(
+                            () => ref.read(entityProvider)[widget.entityId]!.copyWith(name: v),
+                          ),
+                        ),
+                ),
+                IconButton(
+                  tooltip: 'Project entity card to player screen',
+                  icon: Icon(Icons.cast, size: 18, color: palette.srdHeadingRed),
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    ref
+                        .read(projectionControllerProvider.notifier)
+                        .addEntityCard(entityId: widget.entityId);
+                    ScaffoldMessenger.of(context)
+                      ..hideCurrentSnackBar()
+                      ..showSnackBar(
+                        const SnackBar(
+                          duration: Duration(seconds: 2),
+                          content: Text('Entity card projected to player screen'),
+                        ),
+                      );
                   },
                 ),
-                const SizedBox(width: 12),
-                // Sağ: İsim, kategori, source, açıklama
+              ],
+            ),
+            // Subtitle (italic muted) — e.g. "Level 2 Evocation (Wizard)"
+            if (subtitle.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontFamily: 'Georgia',
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                  color: palette.srdSubtitle,
+                ),
+              ),
+            ],
+            const SizedBox(height: 6),
+            // Red rule under title
+            Container(height: 1, color: palette.srdRule),
+            const SizedBox(height: 12),
+
+            // === BODY: portrait (right, small) + description (left, expanded) ===
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Kategori badge + Project butonu
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: catColor.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              cat?.name ?? entity.categorySlug,
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: catColor),
-                            ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            tooltip: 'Project entity card to player screen',
-                            icon: const Icon(Icons.cast, size: 16),
-                            visualDensity: VisualDensity.compact,
-                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                            padding: EdgeInsets.zero,
-                            onPressed: () {
-                              ref
-                                  .read(projectionControllerProvider.notifier)
-                                  .addEntityCard(entityId: widget.entityId);
-                              ScaffoldMessenger.of(context)
-                                ..hideCurrentSnackBar()
-                                ..showSnackBar(
-                                  const SnackBar(
-                                    duration: Duration(seconds: 2),
-                                    content: Text('Entity card projected to player screen'),
-                                  ),
-                                );
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      // İsim
-                      TextFormField(
-                        controller: _nameController,
-                        focusNode: _nameFocus,
-                        readOnly: widget.readOnly,
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette.tabActiveText),
-                        decoration: InputDecoration(
-                          hintText: 'Entity Name',
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        ),
-                        onChanged: (v) => _debouncedProviderUpdate(
-                          () => ref.read(entityProvider)[widget.entityId]!.copyWith(name: v),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      // Description (markdown + @mention)
-                      Text('Description', style: TextStyle(fontSize: 11, color: palette.tabText)),
-                      const SizedBox(height: 4),
                       MarkdownTextArea(
                         controller: _descController,
                         focusNode: _descFocus,
                         readOnly: widget.readOnly,
                         minLines: widget.readOnly ? null : 3,
-                        textStyle: TextStyle(fontSize: 13, color: palette.htmlText),
+                        textStyle: TextStyle(fontSize: 14, color: palette.srdInk, height: 1.4),
                         decoration: InputDecoration(
                           hintText: 'Markdown supported... (@ to mention)',
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          border: InputBorder.none,
+                          isDense: true,
+                          filled: false,
+                          contentPadding: EdgeInsets.zero,
+                          hintStyle: TextStyle(color: palette.sidebarLabelSecondary),
                         ),
                         onChanged: (v) => _debouncedProviderUpdate(
                           () => ref.read(entityProvider)[widget.entityId]!.copyWith(description: v),
                         ),
                       ),
                       const SizedBox(height: 10),
-                      // Source + Tags yan yana
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _sourceController,
-                              focusNode: _sourceFocus,
-                              readOnly: widget.readOnly,
-                              style: TextStyle(fontSize: 12, color: palette.htmlText),
-                              decoration: InputDecoration(
-                                labelText: 'Source',
-                                hintText: widget.readOnly ? null : 'e.g. D&D 5e SRD',
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                              ),
-                              onChanged: (v) => _debouncedProviderUpdate(
-                                () => ref.read(entityProvider)[widget.entityId]!.copyWith(source: v),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _tagsController,
-                              focusNode: _tagsFocus,
-                              readOnly: widget.readOnly,
-                              style: TextStyle(fontSize: 12, color: palette.htmlText),
-                              decoration: InputDecoration(
-                                labelText: 'Tags',
-                                hintText: widget.readOnly ? null : 'comma separated',
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                              ),
-                              onChanged: (v) {
-                                final tags = v.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
-                                _debouncedProviderUpdate(
-                                  () => ref.read(entityProvider)[widget.entityId]!.copyWith(tags: tags),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
+                      // Source + Tags (compact, italic, no bordered fields in read-only)
+                      _SourceTagsRow(
+                        sourceController: _sourceController,
+                        sourceFocus: _sourceFocus,
+                        tagsController: _tagsController,
+                        tagsFocus: _tagsFocus,
+                        readOnly: widget.readOnly,
+                        palette: palette,
+                        onSourceChanged: (v) => _debouncedProviderUpdate(
+                          () => ref.read(entityProvider)[widget.entityId]!.copyWith(source: v),
+                        ),
+                        onTagsChanged: (v) {
+                          final tags = v.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
+                          _debouncedProviderUpdate(
+                            () => ref.read(entityProvider)[widget.entityId]!.copyWith(tags: tags),
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
+                if (hasPortrait || !widget.readOnly) ...[
+                  const SizedBox(width: 16),
+                  _PortraitGallery(
+                    images: [
+                      if (entity.imagePath.isNotEmpty) entity.imagePath,
+                      ...entity.images,
+                    ],
+                    entityName: entity.name,
+                    readOnly: widget.readOnly,
+                    palette: palette,
+                    onImagesChanged: (newImages) {
+                      ref.read(entityProvider.notifier).update(
+                        entity.copyWith(imagePath: '', images: newImages),
+                      );
+                    },
+                  ),
+                ],
               ],
             ),
-          ),
 
-          const SizedBox(height: 8),
-
-          // === SCHEMA-DRIVEN FIELDS ===
-          if (cat != null) ..._buildSchemaFields(entity, cat, palette, computedValues, ruleResult.itemStyles, ruleResult.equipGates),
-
-          const SizedBox(height: 8),
-
-          // === DM NOTES (kırmızı kenarlık — Python dm_note_border) ===
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: palette.featureCardBg,
-                border: Border.all(color: palette.dmNoteBorder),
-              ),
-              padding: const EdgeInsets.all(12),
-              child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.lock, size: 14, color: palette.dmNoteTitle),
-                    const SizedBox(width: 4),
-                    Text(
-                      'DM Notes',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.dmNoteTitle),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                MarkdownTextArea(
-                  controller: _dmNotesController,
-                  focusNode: _dmNotesFocus,
-                  readOnly: widget.readOnly,
-                  maxLines: widget.readOnly ? null : 4,
-                  textStyle: TextStyle(fontSize: 13, color: palette.htmlText),
-                  decoration: InputDecoration(
-                    hintText: 'Private DM notes... (@ to mention)',
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                    filled: false,
-                    hintStyle: TextStyle(color: palette.sidebarLabelSecondary),
-                  ),
-                  onChanged: (v) => _debouncedProviderUpdate(
-                    () => ref.read(entityProvider)[widget.entityId]!.copyWith(dmNotes: v),
-                  ),
-                ),
-              ],
-            ),
-          ), // Container
-          ), // ClipRRect
-
-          // === DELETE BUTTON ===
-          if (!widget.readOnly) ...[
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FilledButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Delete Entity'),
-                        content: Text('Are you sure you want to delete "${entity.name}"?'),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-                          FilledButton(
-                            onPressed: () {
-                              ref.read(entityProvider.notifier).delete(entity.id);
-                              Navigator.pop(ctx);
-                            },
-                            style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
-                            child: const Text('Delete'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.delete_outline, size: 16),
-                  label: const Text('Delete'),
-                  style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
-                ),
-              ],
+
+            // === SCHEMA-DRIVEN FIELDS ===
+            if (cat != null) ..._buildSchemaFields(entity, cat, palette, computedValues, ruleResult.itemStyles, ruleResult.equipGates),
+
+            const SizedBox(height: 8),
+
+            // === DM NOTES — heading + rule, no boxed border ===
+            _SectionHeading(title: 'DM Notes', palette: palette, leadingIcon: Icons.lock),
+            const SizedBox(height: 6),
+            MarkdownTextArea(
+              controller: _dmNotesController,
+              focusNode: _dmNotesFocus,
+              readOnly: widget.readOnly,
+              maxLines: widget.readOnly ? null : 4,
+              textStyle: TextStyle(fontSize: 13, color: palette.srdInk, height: 1.4),
+              decoration: InputDecoration(
+                hintText: 'Private DM notes... (@ to mention)',
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+                filled: false,
+                hintStyle: TextStyle(color: palette.sidebarLabelSecondary),
+              ),
+              onChanged: (v) => _debouncedProviderUpdate(
+                () => ref.read(entityProvider)[widget.entityId]!.copyWith(dmNotes: v),
+              ),
             ),
+
+            // === DELETE BUTTON ===
+            if (!widget.readOnly) ...[
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Delete Entity'),
+                          content: Text('Are you sure you want to delete "${entity.name}"?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                            FilledButton(
+                              onPressed: () {
+                                ref.read(entityProvider.notifier).delete(entity.id);
+                                Navigator.pop(ctx);
+                              },
+                              style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    label: const Text('Delete'),
+                    style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildFieldWidget(FieldSchema field, Entity entity, Map<String, dynamic> computed, DmToolColors palette, {Map<String, ItemStyle> itemStyles = const {}, Map<String, String> equipGates = const {}}) {
+  /// Build the SRD-style italic subtitle line for known categories.
+  /// e.g. spell → "Level 2 Evocation (Wizard)", monster → "Large Aberration, Lawful Evil",
+  /// magic item → "Wondrous Item, Rare (Requires Attunement)".
+  String _buildSubtitle(Entity entity, EntityCategorySchema cat) {
+    final f = entity.fields;
+    final slug = entity.categorySlug.toLowerCase();
+    String relName(String key) {
+      final id = f[key];
+      if (id is! String || id.isEmpty) return '';
+      final ent = ref.read(entityProvider)[id];
+      return ent?.name ?? '';
+    }
+    List<String> relNames(String key) {
+      final v = f[key];
+      if (v is! List) return const [];
+      final entities = ref.read(entityProvider);
+      return v
+          .whereType<String>()
+          .map((id) => entities[id]?.name ?? '')
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+
+    if (slug == 'spells' || slug == 'spell') {
+      final level = f['level'];
+      final school = relName('school_ref');
+      final classes = relNames('class_refs');
+      final ritual = f['is_ritual'] == true;
+      final lvlText = level == 0 ? 'Cantrip' : 'Level ${level ?? '?'}';
+      final base = school.isEmpty ? lvlText : '$lvlText $school';
+      final cls = classes.isEmpty ? '' : ' (${classes.join(', ')})';
+      return '$base$cls${ritual ? ' (Ritual)' : ''}';
+    }
+    if (slug == 'monsters' || slug == 'monster' || slug == 'npcs' || slug == 'npc') {
+      final size = relName('size_ref');
+      final type = relName('creature_type_ref');
+      final align = relName('alignment_ref');
+      final parts = <String>[];
+      if (size.isNotEmpty || type.isNotEmpty) {
+        parts.add([size, type].where((s) => s.isNotEmpty).join(' '));
+      }
+      if (align.isNotEmpty) parts.add(align);
+      return parts.join(', ');
+    }
+    if (slug == 'items' || slug == 'magic_items' || slug == 'magic_item' || slug == 'item') {
+      final magicCat = relName('magic_category_ref');
+      final rarity = relName('rarity_ref');
+      final attune = f['requires_attunement'] == true;
+      final parts = [magicCat, rarity].where((s) => s.isNotEmpty).join(', ');
+      return '$parts${attune ? ' (Requires Attunement)' : ''}';
+    }
+    if (slug == 'feats' || slug == 'feat') {
+      final fcat = relName('category_ref');
+      final repeatable = f['repeatable'] == true;
+      return repeatable ? '$fcat Feat (Repeatable)' : '$fcat Feat';
+    }
+    return cat.name;
+  }
+
+  Widget _buildFieldWidget(FieldSchema field, Entity entity, Map<String, dynamic> computed, DmToolColors palette, {Map<String, ItemStyle> itemStyles = const {}, Map<String, String> equipGates = const {}, bool compact = false}) {
     final hasComputed = computed.containsKey(field.fieldKey);
     final fieldValue = hasComputed ? computed[field.fieldKey] : entity.fields[field.fieldKey];
     final formula = hasComputed && !widget.readOnly ? _formulaFor(field.fieldKey) : null;
+
+    // Inline relation lists in multi-column groups — keep equip-tracked lists
+    // (inventory/spells/etc.) in their full Card form regardless of compact.
+    final useCompact = compact && field.isList && field.fieldType == FieldType.relation && !field.hasEquip;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -418,6 +460,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
           itemStyles: itemStyles,
           equipGates: equipGates,
           entityFields: entity.fields,
+          compact: useCompact,
         ),
         if (hasComputed)
           Padding(
@@ -457,6 +500,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   }
 
   Widget _buildGroupGrid(List<FieldSchema> fields, int gridColumns, Entity entity, Map<String, dynamic> computed, DmToolColors palette, {Map<String, ItemStyle> itemStyles = const {}, Map<String, String> equipGates = const {}}) {
+    final compactRow = gridColumns > 1;
+
     if (gridColumns <= 1) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,7 +534,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
           final span = rowFields[i].gridColumnSpan.clamp(1, gridColumns);
           children.add(Expanded(
             flex: span,
-            child: _buildFieldWidget(rowFields[i], entity, computed, palette, itemStyles: itemStyles, equipGates: equipGates),
+            child: _buildFieldWidget(rowFields[i], entity, computed, palette, itemStyles: itemStyles, equipGates: equipGates, compact: compactRow),
           ));
         }
         return Row(
@@ -521,31 +566,31 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 
     final widgets = <Widget>[];
 
-    // Grupsuz field'lar (geriye uyumluluk)
+    // Ungrouped fields — render under "Properties" heading, no boxed chrome.
     if (ungrouped.isNotEmpty) {
-      widgets.add(_FeatureCard(
-        palette: palette,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Properties', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.tabText)),
-            const SizedBox(height: 8),
-            ...ungrouped.map((f) => _buildFieldWidget(f, entity, computed, palette, itemStyles: itemStyles, equipGates: equipGates)),
-          ],
-        ),
+      widgets.add(_SectionHeading(title: 'Properties', palette: palette));
+      widgets.add(const SizedBox(height: 8));
+      widgets.add(Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: ungrouped
+            .map((f) => _buildFieldWidget(f, entity, computed, palette, itemStyles: itemStyles, equipGates: equipGates))
+            .toList(),
       ));
     }
 
-    // Gruplar (collapsible)
+    // Grouped fields — collapsible, no boxed chrome, optional centered.
     for (final group in sortedGroups) {
       final groupFields = grouped[group.groupId];
       if (groupFields == null || groupFields.isEmpty) continue;
 
-      if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 8));
+      if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 16));
+
+      final centered = _shouldCenterGroup(group.name);
 
       widgets.add(_CollapsibleGroupCard(
         group: group,
         palette: palette,
+        centered: centered,
         child: _buildGroupGrid(groupFields, group.gridColumns, entity, computed, palette, itemStyles: itemStyles, equipGates: equipGates),
       ));
     }
@@ -553,13 +598,134 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     return widgets;
   }
 
-  Color _parseColor(String hex) {
-    try {
-      final clean = hex.replaceFirst('#', '');
-      return Color(int.parse('FF$clean', radix: 16));
-    } catch (_) {
-      return Colors.grey;
+  /// Group-name match for SRD-style centered stat blocks.
+  bool _shouldCenterGroup(String name) {
+    final n = name.toLowerCase();
+    return n == 'stats' ||
+        n == 'ability scores' ||
+        n == 'combat' ||
+        n == 'combat stats' ||
+        n == 'saves' ||
+        n == 'saving throws';
+  }
+}
+
+/// Section heading: serif red title + 1px red rule. SRD source-book pattern.
+class _SectionHeading extends StatelessWidget {
+  final String title;
+  final DmToolColors palette;
+  final IconData? leadingIcon;
+
+  const _SectionHeading({
+    required this.title,
+    required this.palette,
+    this.leadingIcon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            if (leadingIcon != null) ...[
+              Icon(leadingIcon, size: 14, color: palette.srdHeadingRed),
+              const SizedBox(width: 6),
+            ],
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontFamily: 'Georgia',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: palette.srdHeadingRed,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Container(height: 1, color: palette.srdRule),
+      ],
+    );
+  }
+}
+
+/// Source + Tags row — italic small text in read mode, plain text fields in edit mode.
+class _SourceTagsRow extends StatelessWidget {
+  final TextEditingController sourceController;
+  final FocusNode sourceFocus;
+  final TextEditingController tagsController;
+  final FocusNode tagsFocus;
+  final bool readOnly;
+  final DmToolColors palette;
+  final ValueChanged<String> onSourceChanged;
+  final ValueChanged<String> onTagsChanged;
+
+  const _SourceTagsRow({
+    required this.sourceController,
+    required this.sourceFocus,
+    required this.tagsController,
+    required this.tagsFocus,
+    required this.readOnly,
+    required this.palette,
+    required this.onSourceChanged,
+    required this.onTagsChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (readOnly) {
+      final src = sourceController.text;
+      final tags = tagsController.text;
+      if (src.isEmpty && tags.isEmpty) return const SizedBox.shrink();
+      final parts = <String>[
+        if (src.isNotEmpty) 'Source: $src',
+        if (tags.isNotEmpty) 'Tags: $tags',
+      ];
+      return Text(
+        parts.join('   •   '),
+        style: TextStyle(
+          fontSize: 11,
+          fontStyle: FontStyle.italic,
+          color: palette.srdSubtitle,
+        ),
+      );
     }
+    return Row(
+      children: [
+        Expanded(
+          child: TextFormField(
+            controller: sourceController,
+            focusNode: sourceFocus,
+            style: TextStyle(fontSize: 12, color: palette.srdInk),
+            decoration: const InputDecoration(
+              labelText: 'Source',
+              hintText: 'e.g. D&D 5e SRD',
+              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            ),
+            onChanged: onSourceChanged,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: TextFormField(
+            controller: tagsController,
+            focusNode: tagsFocus,
+            style: TextStyle(fontSize: 12, color: palette.srdInk),
+            decoration: const InputDecoration(
+              labelText: 'Tags',
+              hintText: 'comma separated',
+              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            ),
+            onChanged: onTagsChanged,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -815,17 +981,18 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
   }
 }
 
-/// Basit section card — arka plan + padding, border yok.
-/// Collapsible grup kartı — başlığa tıklayarak açılıp kapanır.
+/// Collapsible group — SRD heading + red rule, no boxed chrome. Optional centered content.
 class _CollapsibleGroupCard extends StatefulWidget {
   final FieldGroup group;
   final DmToolColors palette;
   final Widget child;
+  final bool centered;
 
   const _CollapsibleGroupCard({
     required this.group,
     required this.palette,
     required this.child,
+    this.centered = false,
   });
 
   @override
@@ -843,69 +1010,52 @@ class _CollapsibleGroupCardState extends State<_CollapsibleGroupCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: widget.palette.featureCardBg,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Başlık — tıklanabilir
-          if (widget.group.name.isNotEmpty)
-            InkWell(
-              onTap: () => setState(() => _collapsed = !_collapsed),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                child: Row(
-                  children: [
-                    Icon(
-                      _collapsed ? Icons.chevron_right : Icons.expand_more,
-                      size: 16,
-                      color: widget.palette.tabText,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      widget.group.name,
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: widget.palette.tabText),
-                    ),
-                  ],
-                ),
+    final hasName = widget.group.name.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (hasName)
+          InkWell(
+            onTap: () => setState(() => _collapsed = !_collapsed),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        _collapsed ? Icons.chevron_right : Icons.expand_more,
+                        size: 16,
+                        color: widget.palette.srdHeadingRed,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          widget.group.name,
+                          style: TextStyle(
+                            fontFamily: 'Georgia',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: widget.palette.srdHeadingRed,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Container(height: 1, color: widget.palette.srdRule),
+                ],
               ),
             ),
-          // İçerik
-          if (!_collapsed)
-            Padding(
-              padding: EdgeInsets.fromLTRB(12, widget.group.name.isEmpty ? 12 : 0, 12, 12),
-              child: widget.child,
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FeatureCard extends StatelessWidget {
-  final DmToolColors palette;
-  final Widget child;
-
-  const _FeatureCard({
-    required this.palette,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: palette.featureCardBg,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: child,
+          ),
+        if (!_collapsed)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: hasName ? 8 : 0),
+            child: widget.centered ? Center(child: widget.child) : widget.child,
+          ),
+      ],
     );
   }
 }
