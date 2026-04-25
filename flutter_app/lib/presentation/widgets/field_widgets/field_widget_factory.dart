@@ -78,6 +78,64 @@ class FieldWidgetFactory {
   }
 }
 
+/// Unified field row: fixed-width bold label on left, value/input on right.
+/// Keeps every scalar field aligned at the same baseline. Always renders even
+/// when the value is empty.
+class _LabeledFieldRow extends StatelessWidget {
+  final String label;
+  final Widget child;
+  final CrossAxisAlignment alignment;
+
+  static const double labelWidth = 140;
+
+  const _LabeledFieldRow({
+    required this.label,
+    required this.child,
+    this.alignment = CrossAxisAlignment.center,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: alignment,
+        children: [
+          SizedBox(
+            width: labelWidth,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8, top: 1),
+              child: Text(
+                '$label:',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: palette?.srdInk ?? Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ),
+          Expanded(child: child),
+        ],
+      ),
+    );
+  }
+}
+
+TextStyle _fieldValueStyle(BuildContext context) {
+  final palette = Theme.of(context).extension<DmToolColors>();
+  return TextStyle(fontSize: 13, color: palette?.srdInk ?? Theme.of(context).colorScheme.onSurface);
+}
+
+TextStyle _fieldEmptyStyle(BuildContext context) {
+  return TextStyle(
+    fontSize: 13,
+    fontStyle: FontStyle.italic,
+    color: Theme.of(context).colorScheme.outline,
+  );
+}
+
 // --- TEXT ---
 class _TextFieldWidget extends StatefulWidget {
   final FieldSchema schema;
@@ -117,19 +175,23 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: TextFormField(
-        key: ValueKey('${widget.schema.fieldKey}_text'),
-        controller: _controller,
-        readOnly: widget.readOnly,
-        decoration: InputDecoration(
-          labelText: widget.schema.label,
-          hintText: widget.schema.placeholder.isNotEmpty ? widget.schema.placeholder : null,
-          isDense: true,
-        ),
-        onChanged: (v) => widget.onChanged(v),
-      ),
+    final text = widget.value?.toString() ?? '';
+    if (widget.readOnly && text.isEmpty) return const SizedBox.shrink();
+    return _LabeledFieldRow(
+      label: widget.schema.label,
+      child: widget.readOnly
+          ? Text(text, style: _fieldValueStyle(context))
+          : TextFormField(
+              key: ValueKey('${widget.schema.fieldKey}_text'),
+              controller: _controller,
+              style: _fieldValueStyle(context),
+              decoration: InputDecoration(
+                hintText: widget.schema.placeholder.isNotEmpty ? widget.schema.placeholder : null,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              ),
+              onChanged: (v) => widget.onChanged(v),
+            ),
     );
   }
 }
@@ -175,22 +237,27 @@ class _TextAreaFieldWidgetState extends ConsumerState<_TextAreaFieldWidget> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>();
+    final inkColor = palette?.srdInk ?? Theme.of(context).colorScheme.onSurface;
+    final headingColor = palette?.srdHeadingRed ?? Theme.of(context).colorScheme.primary;
+    final text = widget.value?.toString() ?? '';
+    if (widget.readOnly && text.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette?.tabText)),
+          Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: headingColor)),
           const SizedBox(height: 4),
           MarkdownTextArea(
             key: ValueKey('${widget.schema.fieldKey}_area'),
             controller: _controller,
             readOnly: widget.readOnly,
             maxLines: widget.readOnly ? null : 4,
-            textStyle: TextStyle(fontSize: 13, color: palette?.htmlText),
+            textStyle: TextStyle(fontSize: 13, color: inkColor),
             decoration: InputDecoration(
               hintText: 'Markdown supported (@ to mention)',
+              hintStyle: TextStyle(color: palette?.srdSubtitle, fontSize: 12, fontStyle: FontStyle.italic),
               isDense: true,
             ),
             onChanged: (v) => widget.onChanged(v),
@@ -224,7 +291,6 @@ class _MarkdownFieldWidget extends ConsumerStatefulWidget {
 }
 
 class _MarkdownFieldWidgetState extends ConsumerState<_MarkdownFieldWidget> {
-  bool _isPreview = false;
   late TextEditingController _controller;
 
   @override
@@ -253,6 +319,8 @@ class _MarkdownFieldWidgetState extends ConsumerState<_MarkdownFieldWidget> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>();
+    final inkColor = palette?.srdInk ?? Theme.of(context).colorScheme.onSurface;
+    final headingColor = palette?.srdHeadingRed ?? Theme.of(context).colorScheme.primary;
 
     if (widget.readOnly) {
       final text = widget.value?.toString() ?? '';
@@ -262,71 +330,36 @@ class _MarkdownFieldWidgetState extends ConsumerState<_MarkdownFieldWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette?.tabText)),
+            Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: headingColor)),
             const SizedBox(height: 4),
             MarkdownTextArea(
               controller: _controller,
               readOnly: true,
-              textStyle: TextStyle(fontSize: 13, color: palette?.htmlText),
+              textStyle: TextStyle(fontSize: 13, color: inkColor),
             ),
           ],
         ),
       );
     }
 
-    // Edit mode with toggle
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette?.tabText)),
-              const Spacer(),
-              SegmentedButton<bool>(
-                segments: const [
-                  ButtonSegment(value: false, label: Text('Edit', style: TextStyle(fontSize: 11))),
-                  ButtonSegment(value: true, label: Text('Preview', style: TextStyle(fontSize: 11))),
-                ],
-                selected: {_isPreview},
-                onSelectionChanged: (v) => setState(() => _isPreview = v.first),
-                style: ButtonStyle(
-                  visualDensity: VisualDensity.compact,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-            ],
-          ),
+          Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: headingColor)),
           const SizedBox(height: 4),
-          if (_isPreview)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                border: Border.all(color: palette?.featureCardBorder ?? Colors.grey),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              constraints: const BoxConstraints(minHeight: 100),
-              child: _controller.text.isEmpty
-                  ? Text('Nothing to preview', style: TextStyle(color: palette?.sidebarLabelSecondary, fontSize: 12, fontStyle: FontStyle.italic))
-                  : MarkdownTextArea(
-                      controller: _controller,
-                      readOnly: true,
-                      textStyle: TextStyle(fontSize: 13, color: palette?.htmlText),
-                    ),
-            )
-          else
-            MarkdownTextArea(
-              controller: _controller,
-              minLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Markdown supported. Use @ to mention entities.',
-                isDense: true,
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: (v) => widget.onChanged(v),
+          MarkdownTextArea(
+            controller: _controller,
+            minLines: 4,
+            textStyle: TextStyle(fontSize: 13, color: inkColor),
+            decoration: InputDecoration(
+              hintText: 'Markdown supported. Use @ to mention entities.',
+              hintStyle: TextStyle(color: palette?.srdSubtitle, fontSize: 12, fontStyle: FontStyle.italic),
+              isDense: true,
             ),
+            onChanged: (v) => widget.onChanged(v),
+          ),
         ],
       ),
     );
@@ -372,19 +405,24 @@ class _IntegerFieldWidgetState extends State<_IntegerFieldWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: TextFormField(
-        key: ValueKey('${widget.schema.fieldKey}_int'),
-        controller: _controller,
-        readOnly: widget.readOnly,
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-          labelText: widget.schema.label,
-          isDense: true,
-        ),
-        onChanged: (v) => widget.onChanged(int.tryParse(v) ?? 0),
-      ),
+    final raw = widget.value;
+    final hasValue = raw != null && raw.toString().isNotEmpty;
+    if (widget.readOnly && !hasValue) return const SizedBox.shrink();
+    return _LabeledFieldRow(
+      label: widget.schema.label,
+      child: widget.readOnly
+          ? Text(raw.toString(), style: _fieldValueStyle(context))
+          : TextFormField(
+              key: ValueKey('${widget.schema.fieldKey}_int'),
+              controller: _controller,
+              keyboardType: TextInputType.number,
+              style: _fieldValueStyle(context),
+              decoration: const InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              ),
+              onChanged: (v) => widget.onChanged(int.tryParse(v) ?? 0),
+            ),
     );
   }
 }
@@ -402,18 +440,27 @@ class _EnumFieldWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final options = schema.validation.allowedValues ?? [];
     final currentVal = value?.toString();
+    final hasValue = currentVal != null && currentVal.isNotEmpty;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: DropdownButtonFormField<String>(
-        initialValue: options.contains(currentVal) ? currentVal : null,
-        decoration: InputDecoration(
-          labelText: schema.label,
-          isDense: true,
-        ),
-        items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
-        onChanged: readOnly ? null : (v) => onChanged(v),
-      ),
+    if (readOnly && !hasValue) return const SizedBox.shrink();
+
+    return _LabeledFieldRow(
+      label: schema.label,
+      child: readOnly
+          ? Text(currentVal!, style: _fieldValueStyle(context))
+          : DropdownButtonFormField<String>(
+              initialValue: options.contains(currentVal) ? currentVal : null,
+              isDense: true,
+              isExpanded: true,
+              iconSize: 18,
+              style: _fieldValueStyle(context),
+              decoration: const InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              ),
+              items: options.map((o) => DropdownMenuItem(value: o, child: Text(o, overflow: TextOverflow.ellipsis))).toList(),
+              onChanged: (v) => onChanged(v),
+            ),
     );
   }
 }
@@ -436,59 +483,44 @@ class _RelationFieldWidget extends StatelessWidget {
     final linkedName = (linkedId.isNotEmpty && entities != null) ? entities![linkedId]?.name ?? linkedId : '';
     final hasValue = linkedId.isNotEmpty;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: schema.label,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 24),
-          child: Row(
-          children: [
-            if (hasValue) ...[
-              const Icon(Icons.link, size: 14),
-              const SizedBox(width: 6),
-              Expanded(child: Text(linkedName, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis)),
-              if (!readOnly)
-                InkWell(
-                  onTap: () => onChanged(''),
-                  child: const Padding(
-                    padding: EdgeInsets.all(4),
-                    child: Icon(Icons.close, size: 14),
-                  ),
-                ),
-            ] else ...[
-              Expanded(
-                child: Text(
-                  'None',
-                  style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outline, fontStyle: FontStyle.italic),
-                ),
+    if (readOnly && !hasValue) return const SizedBox.shrink();
+
+    return _LabeledFieldRow(
+      label: schema.label,
+      child: Row(
+        children: [
+          Expanded(
+            child: hasValue
+                ? Text(linkedName, style: _fieldValueStyle(context), overflow: TextOverflow.ellipsis)
+                : Text('—', style: _fieldEmptyStyle(context)),
+          ),
+          if (!readOnly && hasValue)
+            InkWell(
+              onTap: () => onChanged(''),
+              child: const Padding(
+                padding: EdgeInsets.all(2),
+                child: Icon(Icons.close, size: 14),
               ),
-            ],
-            if (!readOnly)
-              InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () async {
-                  if (ref == null) return;
-                  final result = await showEntitySelectorDialog(
-                    context: context,
-                    ref: ref!,
-                    allowedTypes: schema.validation.allowedTypes,
-                  );
-                  if (result != null && result.isNotEmpty) {
-                    onChanged(result.first);
-                  }
-                },
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(Icons.search, size: 16),
-                ),
+            ),
+          if (!readOnly)
+            InkWell(
+              onTap: () async {
+                if (ref == null) return;
+                final result = await showEntitySelectorDialog(
+                  context: context,
+                  ref: ref!,
+                  allowedTypes: schema.validation.allowedTypes,
+                );
+                if (result != null && result.isNotEmpty) {
+                  onChanged(result.first);
+                }
+              },
+              child: const Padding(
+                padding: EdgeInsets.all(2),
+                child: Icon(Icons.search, size: 14),
               ),
-          ],
-        ),
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -1188,74 +1220,54 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ids = _parseIds(value);
-    final theme = Theme.of(context);
 
     if (readOnly) {
       final names = ids.map(_name).where((s) => s.isNotEmpty).toList();
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: RichText(
-          text: TextSpan(
-            style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface),
-            children: [
-              TextSpan(
-                text: '${schema.label}: ',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              TextSpan(text: names.isEmpty ? '—' : names.join(', ')),
-            ],
-          ),
-        ),
+      if (names.isEmpty) return const SizedBox.shrink();
+      return _LabeledFieldRow(
+        label: schema.label,
+        child: Text(names.join(', '), style: _fieldValueStyle(context)),
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return _LabeledFieldRow(
+      label: schema.label,
+      alignment: CrossAxisAlignment.start,
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Text(
-            schema.label,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface),
-          ),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 4,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              for (final id in ids)
-                InputChip(
-                  label: Text(_name(id), style: const TextStyle(fontSize: 11)),
-                  onDeleted: () {
-                    final next = List<String>.from(ids)..remove(id);
-                    onChanged(next);
-                  },
-                  deleteIcon: const Icon(Icons.close, size: 14),
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              IconButton(
-                icon: const Icon(Icons.add, size: 18),
-                tooltip: 'Add',
-                visualDensity: VisualDensity.compact,
-                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                padding: EdgeInsets.zero,
-                onPressed: () async {
-                  if (ref == null) return;
-                  final result = await showEntitySelectorDialog(
-                    context: context,
-                    ref: ref!,
-                    allowedTypes: schema.validation.allowedTypes,
-                    multiSelect: true,
-                    excludeIds: ids,
-                  );
-                  if (result != null && result.isNotEmpty) {
-                    onChanged([...ids, ...result]);
-                  }
-                },
-              ),
-            ],
+          for (final id in ids)
+            InputChip(
+              label: Text(_name(id), style: const TextStyle(fontSize: 11)),
+              onDeleted: () {
+                final next = List<String>.from(ids)..remove(id);
+                onChanged(next);
+              },
+              deleteIcon: const Icon(Icons.close, size: 14),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          IconButton(
+            icon: const Icon(Icons.add, size: 18),
+            tooltip: 'Add',
+            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            padding: EdgeInsets.zero,
+            onPressed: () async {
+              if (ref == null) return;
+              final result = await showEntitySelectorDialog(
+                context: context,
+                ref: ref!,
+                allowedTypes: schema.validation.allowedTypes,
+                multiSelect: true,
+                excludeIds: ids,
+              );
+              if (result != null && result.isNotEmpty) {
+                onChanged([...ids, ...result]);
+              }
+            },
           ),
         ],
       ),
@@ -1274,11 +1286,23 @@ class _BooleanFieldWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
-      title: Text(schema.label, style: const TextStyle(fontSize: 13)),
-      value: value == true,
-      onChanged: readOnly ? null : (v) => onChanged(v),
-      dense: true,
+    final checked = value == true;
+    if (readOnly && !checked) return const SizedBox.shrink();
+    return _LabeledFieldRow(
+      label: schema.label,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: Checkbox(
+            value: checked,
+            onChanged: readOnly ? null : (v) => onChanged(v == true),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1374,7 +1398,7 @@ class _SlotFieldWidget extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 4),
                   child: Tooltip(
                     message: 'Count is set by a rule',
-                    child: Icon(Icons.auto_fix_high, size: 14, color: palette.sidebarLabelSecondary),
+                    child: Icon(Icons.auto_fix_high, size: 14, color: palette.srdSubtitle),
                   ),
                 ),
               if (!readOnly && !ruleDriven) ...[
@@ -1420,7 +1444,7 @@ class _SlotFieldWidget extends StatelessWidget {
                 'No slots — tap + to add',
                 style: TextStyle(
                   fontSize: 11,
-                  color: palette.sidebarLabelSecondary,
+                  color: palette.srdSubtitle,
                 ),
               ),
             )
@@ -1550,16 +1574,16 @@ class _LevelTableFieldWidget extends StatelessWidget {
             if (rows.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Text('No levels — tap + to add', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+                child: Text('No levels — tap + to add', style: TextStyle(fontSize: 11, color: palette.srdSubtitle)),
               )
             else ...[
               Padding(
                 padding: const EdgeInsets.only(bottom: 4, top: 2),
                 child: Row(
                   children: [
-                    SizedBox(width: 60, child: Text('Level', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary))),
+                    SizedBox(width: 60, child: Text('Level', style: TextStyle(fontSize: 10, color: palette.srdSubtitle))),
                     const SizedBox(width: 8),
-                    Expanded(child: Text('Value', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary))),
+                    Expanded(child: Text('Value', style: TextStyle(fontSize: 10, color: palette.srdSubtitle))),
                   ],
                 ),
               ),
@@ -1694,16 +1718,16 @@ class _LevelTextTableFieldWidget extends StatelessWidget {
             if (rows.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Text('No rows — tap + to add', style: TextStyle(fontSize: 11, color: palette.sidebarLabelSecondary)),
+                child: Text('No rows — tap + to add', style: TextStyle(fontSize: 11, color: palette.srdSubtitle)),
               )
             else ...[
               Padding(
                 padding: const EdgeInsets.only(bottom: 4, top: 2),
                 child: Row(
                   children: [
-                    SizedBox(width: 60, child: Text('Level', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary))),
+                    SizedBox(width: 60, child: Text('Level', style: TextStyle(fontSize: 10, color: palette.srdSubtitle))),
                     const SizedBox(width: 8),
-                    Expanded(child: Text('Description', style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary))),
+                    Expanded(child: Text('Description', style: TextStyle(fontSize: 10, color: palette.srdSubtitle))),
                   ],
                 ),
               ),
@@ -1888,7 +1912,7 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
                           cacheWidth: 600,
                           errorBuilder: (_, _, _) => Container(
                             color: palette?.canvasBg ?? Colors.grey.shade800,
-                            child: Center(child: Icon(Icons.broken_image, color: palette?.sidebarLabelSecondary)),
+                            child: Center(child: Icon(Icons.broken_image, color: palette?.srdSubtitle)),
                           ),
                         ),
                       ),
@@ -2119,59 +2143,56 @@ class _TagListFieldWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final tags = (value is List) ? List<String>.from(value as List) : <String>[];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: schema.label,
-          isDense: true,
-        ),
-        child: Wrap(
-          spacing: 4,
-          runSpacing: 4,
-          children: [
-            ...tags.map((tag) => Chip(
-                  label: Text(tag, style: const TextStyle(fontSize: 11)),
-                  deleteIcon: readOnly ? null : const Icon(Icons.close, size: 14),
-                  onDeleted: readOnly
-                      ? null
-                      : () {
-                          tags.remove(tag);
-                          onChanged(List<String>.from(tags));
-                        },
-                  visualDensity: VisualDensity.compact,
-                )),
-            if (!readOnly)
-              ActionChip(
-                label: const Icon(Icons.add, size: 14),
-                onPressed: () async {
-                  final controller = TextEditingController();
-                  final result = await showDialog<String>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('Add Tag'),
-                      content: TextField(
-                        controller: controller,
-                        autofocus: true,
-                        decoration: const InputDecoration(hintText: 'Tag name (comma separated)'),
-                        onSubmitted: (v) => Navigator.of(ctx).pop(v),
-                      ),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-                        TextButton(onPressed: () => Navigator.of(ctx).pop(controller.text), child: const Text('Add')),
-                      ],
-                    ),
-                  ).whenComplete(controller.dispose);
-                  if (result != null && result.trim().isNotEmpty) {
-                    final newTags = result.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
-                    onChanged([...tags, ...newTags]);
-                  }
-                },
-                visualDensity: VisualDensity.compact,
-              ),
-          ],
-        ),
-      ),
+    if (readOnly && tags.isEmpty) return const SizedBox.shrink();
+
+    return _LabeledFieldRow(
+      label: schema.label,
+      alignment: CrossAxisAlignment.start,
+      child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                ...tags.map((tag) => Chip(
+                      label: Text(tag, style: const TextStyle(fontSize: 11)),
+                      deleteIcon: readOnly ? null : const Icon(Icons.close, size: 14),
+                      onDeleted: readOnly
+                          ? null
+                          : () {
+                              tags.remove(tag);
+                              onChanged(List<String>.from(tags));
+                            },
+                      visualDensity: VisualDensity.compact,
+                    )),
+                if (!readOnly)
+                  ActionChip(
+                    label: const Icon(Icons.add, size: 14),
+                    onPressed: () async {
+                      final controller = TextEditingController();
+                      final result = await showDialog<String>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Add Tag'),
+                          content: TextField(
+                            controller: controller,
+                            autofocus: true,
+                            decoration: const InputDecoration(hintText: 'Tag name (comma separated)'),
+                            onSubmitted: (v) => Navigator.of(ctx).pop(v),
+                          ),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+                            TextButton(onPressed: () => Navigator.of(ctx).pop(controller.text), child: const Text('Add')),
+                          ],
+                        ),
+                      ).whenComplete(controller.dispose);
+                      if (result != null && result.trim().isNotEmpty) {
+                        final newTags = result.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
+                        onChanged([...tags, ...newTags]);
+                      }
+                    },
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
+            ),
     );
   }
 }
@@ -2192,35 +2213,42 @@ class _DateFieldWidget extends StatelessWidget {
     try {
       if (dateStr.isNotEmpty) parsed = DateTime.parse(dateStr);
     } catch (_) {}
+    final display = parsed != null
+        ? '${parsed.year}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}'
+        : dateStr;
+    final hasValue = display.isNotEmpty;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: TextFormField(
-        key: ValueKey('${schema.fieldKey}_date_$value'),
-        initialValue: parsed != null
-            ? '${parsed.year}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}'
-            : dateStr,
-        readOnly: true,
-        decoration: InputDecoration(
-          labelText: schema.label,
-          isDense: true,
-          suffixIcon: readOnly
-              ? null
-              : IconButton(
-                  icon: const Icon(Icons.calendar_today, size: 18),
-                  onPressed: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: parsed ?? DateTime.now(),
-                      firstDate: DateTime(1000),
-                      lastDate: DateTime(9999),
-                    );
-                    if (picked != null) {
-                      onChanged(picked.toIso8601String().split('T').first);
-                    }
-                  },
-                ),
-        ),
+    if (readOnly && !hasValue) return const SizedBox.shrink();
+
+    return _LabeledFieldRow(
+      label: schema.label,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              hasValue ? display : '—',
+              style: hasValue ? _fieldValueStyle(context) : _fieldEmptyStyle(context),
+            ),
+          ),
+          if (!readOnly)
+            InkWell(
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: parsed ?? DateTime.now(),
+                  firstDate: DateTime(1000),
+                  lastDate: DateTime(9999),
+                );
+                if (picked != null) {
+                  onChanged(picked.toIso8601String().split('T').first);
+                }
+              },
+              child: const Padding(
+                padding: EdgeInsets.all(2),
+                child: Icon(Icons.calendar_today, size: 14),
+              ),
+            ),
+        ],
       ),
     );
   }

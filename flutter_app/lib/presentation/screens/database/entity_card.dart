@@ -157,118 +157,153 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final subtitle = cat != null ? _buildSubtitle(entity, cat) : '';
     final hasPortrait = entity.imagePath.isNotEmpty || entity.images.isNotEmpty;
 
-    return Container(
+    final baseTheme = Theme.of(context);
+    final cardTheme = palette.cardBorderlessInputs
+        ? baseTheme.copyWith(
+            inputDecorationTheme: baseTheme.inputDecorationTheme.copyWith(
+              filled: false,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+            ),
+          )
+        : baseTheme;
+
+    return Theme(
+      data: cardTheme,
+      child: Container(
       color: palette.srdParchment,
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // === TITLE ROW: name (serif red) + project button ===
+            // === HEADER: portrait (top-left) | name + subtitle + desc + source/tags (right) ===
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: widget.readOnly
-                      ? Text(
-                          entity.name.isEmpty ? '(Unnamed)' : entity.name,
-                          style: TextStyle(
-                            fontFamily: 'Georgia',
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                            color: palette.srdHeadingRed,
-                            height: 1.1,
-                          ),
-                        )
-                      : TextFormField(
-                          controller: _nameController,
-                          focusNode: _nameFocus,
-                          style: TextStyle(
-                            fontFamily: 'Georgia',
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                            color: palette.srdHeadingRed,
-                          ),
-                          decoration: const InputDecoration(
-                            hintText: 'Entity Name',
-                            border: InputBorder.none,
-                            isDense: true,
-                            filled: false,
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                          onChanged: (v) => _debouncedProviderUpdate(
-                            () => ref.read(entityProvider)[widget.entityId]!.copyWith(name: v),
-                          ),
-                        ),
-                ),
-                IconButton(
-                  tooltip: 'Project entity card to player screen',
-                  icon: Icon(Icons.cast, size: 18, color: palette.srdHeadingRed),
-                  visualDensity: VisualDensity.compact,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  padding: EdgeInsets.zero,
-                  onPressed: () {
-                    ref
-                        .read(projectionControllerProvider.notifier)
-                        .addEntityCard(entityId: widget.entityId);
-                    ScaffoldMessenger.of(context)
-                      ..hideCurrentSnackBar()
-                      ..showSnackBar(
-                        const SnackBar(
-                          duration: Duration(seconds: 2),
-                          content: Text('Entity card projected to player screen'),
-                        ),
+                if (hasPortrait || !widget.readOnly) ...[
+                  _PortraitGallery(
+                    images: [
+                      if (entity.imagePath.isNotEmpty) entity.imagePath,
+                      ...entity.images,
+                    ],
+                    entityName: entity.name,
+                    readOnly: widget.readOnly,
+                    palette: palette,
+                    onImagesChanged: (newImages) {
+                      ref.read(entityProvider.notifier).update(
+                        entity.copyWith(imagePath: '', images: newImages),
                       );
-                  },
-                ),
-              ],
-            ),
-            // Subtitle (italic muted) — e.g. "Level 2 Evocation (Wizard)"
-            if (subtitle.isNotEmpty) ...[
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontFamily: 'Georgia',
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
-                  color: palette.srdSubtitle,
-                ),
-              ),
-            ],
-            const SizedBox(height: 6),
-            // Red rule under title
-            Container(height: 1, color: palette.srdRule),
-            const SizedBox(height: 12),
-
-            // === BODY: portrait (right, small) + description (left, expanded) ===
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                    },
+                  ),
+                  const SizedBox(width: 16),
+                ],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Name + project button row
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: widget.readOnly
+                                ? Text(
+                                    entity.name.isEmpty ? '(Unnamed)' : entity.name,
+                                    style: TextStyle(
+                                      fontFamily: palette.useSerif ? 'Georgia' : null,
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.bold,
+                                      color: palette.srdHeadingRed,
+                                      height: 1.1,
+                                      letterSpacing: palette.cardHeadingUppercase ? 1.2 : 0,
+                                    ),
+                                  )
+                                : TextFormField(
+                                    controller: _nameController,
+                                    focusNode: _nameFocus,
+                                    style: TextStyle(
+                                      fontFamily: palette.useSerif ? 'Georgia' : null,
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.bold,
+                                      color: palette.srdHeadingRed,
+                                      letterSpacing: palette.cardHeadingUppercase ? 1.2 : 0,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      hintText: 'Entity Name',
+                                      border: InputBorder.none,
+                                      isDense: true,
+                                      filled: false,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                    onChanged: (v) => _debouncedProviderUpdate(
+                                      () => ref.read(entityProvider)[widget.entityId]!.copyWith(name: v),
+                                    ),
+                                  ),
+                          ),
+                          IconButton(
+                            tooltip: 'Project entity card to player screen',
+                            icon: Icon(Icons.cast, size: 18, color: palette.srdHeadingRed),
+                            visualDensity: VisualDensity.compact,
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            padding: EdgeInsets.zero,
+                            onPressed: () {
+                              ref
+                                  .read(projectionControllerProvider.notifier)
+                                  .addEntityCard(entityId: widget.entityId);
+                              ScaffoldMessenger.of(context)
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(
+                                  const SnackBar(
+                                    duration: Duration(seconds: 2),
+                                    content: Text('Entity card projected to player screen'),
+                                  ),
+                                );
+                            },
+                          ),
+                        ],
+                      ),
+                      // Subtitle (italic muted) — e.g. "Level 2 Evocation (Wizard)"
+                      if (subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontFamily: palette.useSerif ? 'Georgia' : null,
+                            fontSize: 15,
+                            fontStyle: FontStyle.italic,
+                            color: palette.srdSubtitle,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 6),
+                      if (palette.cardShowRule)
+                        Container(height: 1, color: palette.srdRule),
+                      const SizedBox(height: 10),
+                      // Description (bigger ink)
                       MarkdownTextArea(
                         controller: _descController,
                         focusNode: _descFocus,
                         readOnly: widget.readOnly,
                         minLines: widget.readOnly ? null : 3,
-                        textStyle: TextStyle(fontSize: 14, color: palette.srdInk, height: 1.4),
+                        textStyle: TextStyle(fontSize: 16, color: palette.srdInk, height: 1.45),
                         decoration: InputDecoration(
                           hintText: 'Markdown supported... (@ to mention)',
                           border: InputBorder.none,
                           isDense: true,
                           filled: false,
                           contentPadding: EdgeInsets.zero,
-                          hintStyle: TextStyle(color: palette.sidebarLabelSecondary),
+                          hintStyle: TextStyle(color: palette.srdSubtitle, fontStyle: FontStyle.italic),
                         ),
                         onChanged: (v) => _debouncedProviderUpdate(
                           () => ref.read(entityProvider)[widget.entityId]!.copyWith(description: v),
                         ),
                       ),
                       const SizedBox(height: 10),
-                      // Source + Tags (compact, italic, no bordered fields in read-only)
+                      // Source + Tags
                       _SourceTagsRow(
                         sourceController: _sourceController,
                         sourceFocus: _sourceFocus,
@@ -289,23 +324,6 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                     ],
                   ),
                 ),
-                if (hasPortrait || !widget.readOnly) ...[
-                  const SizedBox(width: 16),
-                  _PortraitGallery(
-                    images: [
-                      if (entity.imagePath.isNotEmpty) entity.imagePath,
-                      ...entity.images,
-                    ],
-                    entityName: entity.name,
-                    readOnly: widget.readOnly,
-                    palette: palette,
-                    onImagesChanged: (newImages) {
-                      ref.read(entityProvider.notifier).update(
-                        entity.copyWith(imagePath: '', images: newImages),
-                      );
-                    },
-                  ),
-                ],
               ],
             ),
 
@@ -375,6 +393,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -467,12 +486,12 @@ class _EntityCardState extends ConsumerState<EntityCard> {
             padding: const EdgeInsets.only(left: 12, top: 2),
             child: Row(
               children: [
-                Icon(Icons.auto_fix_high, size: 12, color: palette.sidebarLabelSecondary),
+                Icon(Icons.auto_fix_high, size: 12, color: palette.srdSubtitle),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     formula != null ? '= $formula' : 'Auto-filled by rule',
-                    style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary, fontStyle: FontStyle.italic),
+                    style: TextStyle(fontSize: 10, color: palette.srdSubtitle, fontStyle: FontStyle.italic),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -610,7 +629,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   }
 }
 
-/// Section heading: serif red title + 1px red rule. SRD source-book pattern.
+/// Section heading: theme-aware title + optional red rule. SRD source-book pattern
+/// when palette.cardShowRule, modern flat when not. Uppercase per palette.cardHeadingUppercase.
 class _SectionHeading extends StatelessWidget {
   final String title;
   final DmToolColors palette;
@@ -624,6 +644,8 @@ class _SectionHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final upper = palette.cardHeadingUppercase;
+    final display = upper ? title.toUpperCase() : title;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -635,20 +657,23 @@ class _SectionHeading extends StatelessWidget {
             ],
             Expanded(
               child: Text(
-                title,
+                display,
                 style: TextStyle(
-                  fontFamily: 'Georgia',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontFamily: palette.useSerif ? 'Georgia' : null,
+                  fontSize: upper ? 13 : 16,
+                  fontWeight: FontWeight.w700,
                   color: palette.srdHeadingRed,
-                  letterSpacing: 0.3,
+                  letterSpacing: upper ? 1.5 : 0.3,
                 ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 2),
-        Container(height: 1, color: palette.srdRule),
+        if (palette.cardShowRule)
+          Container(height: 1, color: palette.srdRule)
+        else
+          const SizedBox(height: 4),
       ],
     );
   }
@@ -689,7 +714,7 @@ class _SourceTagsRow extends StatelessWidget {
       return Text(
         parts.join('   •   '),
         style: TextStyle(
-          fontSize: 11,
+          fontSize: 14,
           fontStyle: FontStyle.italic,
           color: palette.srdSubtitle,
         ),
@@ -701,7 +726,7 @@ class _SourceTagsRow extends StatelessWidget {
           child: TextFormField(
             controller: sourceController,
             focusNode: sourceFocus,
-            style: TextStyle(fontSize: 12, color: palette.srdInk),
+            style: TextStyle(fontSize: 14, color: palette.srdInk),
             decoration: const InputDecoration(
               labelText: 'Source',
               hintText: 'e.g. D&D 5e SRD',
@@ -715,7 +740,7 @@ class _SourceTagsRow extends StatelessWidget {
           child: TextFormField(
             controller: tagsController,
             focusNode: tagsFocus,
-            style: TextStyle(fontSize: 12, color: palette.srdInk),
+            style: TextStyle(fontSize: 14, color: palette.srdInk),
             decoration: const InputDecoration(
               labelText: 'Tags',
               hintText: 'comma separated',
@@ -972,9 +997,9 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.person_outline, size: 48, color: widget.palette.sidebarLabelSecondary.withValues(alpha: 0.4)),
+          Icon(Icons.person_outline, size: 48, color: widget.palette.srdSubtitle.withValues(alpha: 0.4)),
           const SizedBox(height: 4),
-          Text('No Image', style: TextStyle(fontSize: 10, color: widget.palette.sidebarLabelSecondary)),
+          Text('No Image', style: TextStyle(fontSize: 10, color: widget.palette.srdSubtitle)),
         ],
       ),
     );
@@ -1011,6 +1036,9 @@ class _CollapsibleGroupCardState extends State<_CollapsibleGroupCard> {
   @override
   Widget build(BuildContext context) {
     final hasName = widget.group.name.isNotEmpty;
+    final palette = widget.palette;
+    final upper = palette.cardHeadingUppercase;
+    final display = upper ? widget.group.name.toUpperCase() : widget.group.name;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1027,25 +1055,28 @@ class _CollapsibleGroupCardState extends State<_CollapsibleGroupCard> {
                       Icon(
                         _collapsed ? Icons.chevron_right : Icons.expand_more,
                         size: 16,
-                        color: widget.palette.srdHeadingRed,
+                        color: palette.srdHeadingRed,
                       ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          widget.group.name,
+                          display,
                           style: TextStyle(
-                            fontFamily: 'Georgia',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: widget.palette.srdHeadingRed,
-                            letterSpacing: 0.3,
+                            fontFamily: palette.useSerif ? 'Georgia' : null,
+                            fontSize: upper ? 13 : 16,
+                            fontWeight: FontWeight.w700,
+                            color: palette.srdHeadingRed,
+                            letterSpacing: upper ? 1.5 : 0.3,
                           ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Container(height: 1, color: widget.palette.srdRule),
+                  if (palette.cardShowRule)
+                    Container(height: 1, color: palette.srdRule)
+                  else
+                    const SizedBox(height: 4),
                 ],
               ),
             ),
