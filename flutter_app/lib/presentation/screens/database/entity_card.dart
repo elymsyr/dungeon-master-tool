@@ -23,6 +23,76 @@ import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/projection/projectable.dart';
 
+/// Module-level cache: sorted/filtered field schema lists per category.
+/// Key: identity of EntityCategorySchema. Cleared automatically when category
+/// instance is replaced (template reload, schema edit) since the new instance
+/// never matches an old key. Avoids re-sorting N fields on every build.
+class _SchemaFieldCache {
+  final List<FieldSchema> visibleSorted;
+  final List<FieldSchema> ungrouped;
+  final Map<String, List<FieldSchema>> grouped;
+  final List<FieldGroup> sortedGroups;
+  _SchemaFieldCache({
+    required this.visibleSorted,
+    required this.ungrouped,
+    required this.grouped,
+    required this.sortedGroups,
+  });
+}
+
+final Expando<_SchemaFieldCache> _schemaCache = Expando();
+
+/// Module cache for the row-split layout of grouped multi-column fields.
+/// Key: identity of the field-list (stable from _SchemaFieldCache).
+final Expando<List<List<FieldSchema>>> _gridRowsCache = Expando();
+
+List<List<FieldSchema>> _splitRows(List<FieldSchema> fields, int gridColumns) {
+  final cached = _gridRowsCache[fields];
+  if (cached != null) return cached;
+  final rows = <List<FieldSchema>>[];
+  var colsUsed = 0;
+  var currentRow = <FieldSchema>[];
+  for (final field in fields) {
+    final span = field.gridColumnSpan.clamp(1, gridColumns);
+    if (colsUsed + span > gridColumns && currentRow.isNotEmpty) {
+      rows.add(currentRow);
+      currentRow = [];
+      colsUsed = 0;
+    }
+    currentRow.add(field);
+    colsUsed += span;
+  }
+  if (currentRow.isNotEmpty) rows.add(currentRow);
+  _gridRowsCache[fields] = rows;
+  return rows;
+}
+
+_SchemaFieldCache _getSchemaCache(EntityCategorySchema cat) {
+  final cached = _schemaCache[cat];
+  if (cached != null) return cached;
+  final visible = cat.fields
+      .where((f) => f.visibility != FieldVisibility.private_)
+      .toList()
+    ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+  final ungrouped = visible.where((f) => f.groupId == null).toList();
+  final grouped = <String, List<FieldSchema>>{};
+  for (final f in visible) {
+    if (f.groupId != null) {
+      (grouped[f.groupId!] ??= []).add(f);
+    }
+  }
+  final sortedGroups = cat.fieldGroups.toList()
+    ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+  final result = _SchemaFieldCache(
+    visibleSorted: visible,
+    ungrouped: ungrouped,
+    grouped: grouped,
+    sortedGroups: sortedGroups,
+  );
+  _schemaCache[cat] = result;
+  return result;
+}
+
 /// Schema-driven entity card — Python ui/widgets/npc_sheet.py karşılığı.
 /// Sol kenarlık kategori renginde, tüm alanlar tema-uyumlu.
 class EntityCard extends ConsumerStatefulWidget {
@@ -47,6 +117,17 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   late TextEditingController _sourceController;
   late TextEditingController _tagsController;
   late TextEditingController _dmNotesController;
+
+  /// Cached scoped theme — invalidated only when palette flag flips.
+  ThemeData? _cachedCardTheme;
+  ThemeData? _cachedBaseTheme;
+  bool? _cachedBorderlessFlag;
+
+  /// Subtitle memo — invalidated when entity reference changes.
+  /// Entity is immutable (Freezed) ⇒ identity check suffices for staleness.
+  Entity? _subtitleEntity;
+  EntityCategorySchema? _subtitleCat;
+  String? _cachedSubtitle;
 
   final FocusNode _nameFocus = FocusNode();
   final FocusNode _descFocus = FocusNode();
@@ -154,34 +235,46 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final tagsStr = entity.tags.join(', ');
     _syncIfNotFocused(_tagsController, _tagsFocus, tagsStr);
 
-    final subtitle = cat != null ? _buildSubtitle(entity, cat) : '';
+    final String subtitle;
+    if (cat == null) {
+      subtitle = '';
+    } else if (identical(_subtitleEntity, entity) &&
+        identical(_subtitleCat, cat) &&
+        _cachedSubtitle != null) {
+      subtitle = _cachedSubtitle!;
+    } else {
+      subtitle = _buildSubtitle(entity, cat);
+      _subtitleEntity = entity;
+      _subtitleCat = cat;
+      _cachedSubtitle = subtitle;
+    }
     final hasPortrait = entity.imagePath.isNotEmpty || entity.images.isNotEmpty;
 
     final baseTheme = Theme.of(context);
-    final cardTheme = palette.cardBorderlessInputs
-        ? baseTheme.copyWith(
-            inputDecorationTheme: baseTheme.inputDecorationTheme.copyWith(
-              filled: false,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-            ),
-          )
-        : baseTheme;
+    if (!identical(_cachedBaseTheme, baseTheme) ||
+        _cachedBorderlessFlag != palette.cardBorderlessInputs) {
+      _cachedBaseTheme = baseTheme;
+      _cachedBorderlessFlag = palette.cardBorderlessInputs;
+      _cachedCardTheme = palette.cardBorderlessInputs
+          ? baseTheme.copyWith(
+              inputDecorationTheme:
+                  baseTheme.inputDecorationTheme.copyWith(
+                filled: false,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 4, vertical: 6),
+              ),
+            )
+          : baseTheme;
+    }
+    final cardTheme = _cachedCardTheme!;
 
-    return Theme(
-      data: cardTheme,
-      child: Container(
-      color: palette.srdParchment,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // === HEADER: portrait (top-left) | name + subtitle + desc + source/tags (right) ===
-            Row(
+    final children = <Widget>[
+      // === HEADER: portrait (top-left) | name + subtitle + desc + source/tags (right) ===
+      Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (hasPortrait || !widget.readOnly) ...[
@@ -390,10 +483,26 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                 ],
               ),
             ],
+    ];
+
+    return Theme(
+      data: cardTheme,
+      child: Container(
+        color: palette.srdParchment,
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (ctx, i) => children[i],
+                  childCount: children.length,
+                ),
+              ),
+            ),
           ],
         ),
       ),
-    ),
     );
   }
 
@@ -528,21 +637,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       );
     }
 
-    // Satır satır böl — her satırdaki field'lar IntrinsicHeight ile eşit yükseklikte
-    final rows = <List<FieldSchema>>[];
-    var colsUsed = 0;
-    var currentRow = <FieldSchema>[];
-    for (final field in fields) {
-      final span = field.gridColumnSpan.clamp(1, gridColumns);
-      if (colsUsed + span > gridColumns && currentRow.isNotEmpty) {
-        rows.add(currentRow);
-        currentRow = [];
-        colsUsed = 0;
-      }
-      currentRow.add(field);
-      colsUsed += span;
-    }
-    if (currentRow.isNotEmpty) rows.add(currentRow);
+    // Satır satır böl — her satırdaki field'lar IntrinsicHeight ile eşit yükseklikte.
+    // Cache key: fields list identity (stable from _SchemaFieldCache).
+    final rows = _splitRows(fields, gridColumns);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -565,23 +662,10 @@ class _EntityCardState extends ConsumerState<EntityCard> {
   }
 
   List<Widget> _buildSchemaFields(Entity entity, EntityCategorySchema cat, DmToolColors palette, Map<String, dynamic> computed, Map<String, ItemStyle> itemStyles, Map<String, String> equipGates) {
-    final allFields = cat.fields.where((f) => f.visibility != FieldVisibility.private_).toList()
-      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-
-    // Grupsuz field'lar
-    final ungrouped = allFields.where((f) => f.groupId == null).toList();
-
-    // Gruplu field'lar → Map<groupId, List<FieldSchema>>
-    final grouped = <String, List<FieldSchema>>{};
-    for (final f in allFields) {
-      if (f.groupId != null) {
-        (grouped[f.groupId!] ??= []).add(f);
-      }
-    }
-
-    // Gruplar sıralı
-    final sortedGroups = cat.fieldGroups.toList()
-      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    final cache = _getSchemaCache(cat);
+    final ungrouped = cache.ungrouped;
+    final grouped = cache.grouped;
+    final sortedGroups = cache.sortedGroups;
 
     final widgets = <Widget>[];
 

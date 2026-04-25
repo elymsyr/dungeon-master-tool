@@ -178,12 +178,19 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
             onClose: (i) => _closeTab(i, _Panel.left),
           ),
           Expanded(
-            child: EntityCard(
-              key: ValueKey(_leftTabs[active].entityId),
-              entityId: _leftTabs[active].entityId,
-              categorySchema: _firstWhereOrNull(
-                  schema.categories, (c) => c.slug == _leftTabs[active].categorySlug),
-              readOnly: !widget.editMode,
+            child: IndexedStack(
+              index: active,
+              sizing: StackFit.expand,
+              children: [
+                for (final t in _leftTabs)
+                  EntityCard(
+                    key: ValueKey(t.entityId),
+                    entityId: t.entityId,
+                    categorySchema: _firstWhereOrNull(
+                        schema.categories, (c) => c.slug == t.categorySlug),
+                    readOnly: !widget.editMode,
+                  ),
+              ],
             ),
           ),
         ],
@@ -278,6 +285,9 @@ class _TabPanel extends ConsumerWidget {
 
     final active = activeIndex.clamp(0, tabs.length - 1);
 
+    // IndexedStack keeps non-active tabs mounted (Offstage). Switching tabs
+    // skips re-running EntityCard initState + first computedFields evaluate.
+    // Memory cost: O(open tabs) — open tabs are user-controlled, low.
     return Column(
       children: [
         _TabBar(
@@ -288,12 +298,21 @@ class _TabPanel extends ConsumerWidget {
           onClose: onClose,
         ),
         Expanded(
-          child: EntityCard(
-            key: ValueKey(tabs[active].entityId),
-            entityId: tabs[active].entityId,
-            categorySchema: schema == null ? null : _firstWhereOrNull(
-                schema.categories, (c) => c.slug == tabs[active].categorySlug),
-            readOnly: !editMode,
+          child: IndexedStack(
+            index: active,
+            sizing: StackFit.expand,
+            children: [
+              for (final t in tabs)
+                EntityCard(
+                  key: ValueKey(t.entityId),
+                  entityId: t.entityId,
+                  categorySchema: schema == null
+                      ? null
+                      : _firstWhereOrNull(
+                          schema.categories, (c) => c.slug == t.categorySlug),
+                  readOnly: !editMode,
+                ),
+            ],
           ),
         ),
       ],
