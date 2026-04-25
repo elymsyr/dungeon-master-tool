@@ -963,9 +963,14 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
       return src != 'manual';
     });
     final filterActive = schema.showSourceFilter && hasRuleSourced;
-    final visibleItems = filterActive && !_showAllSources
-        ? items.where((i) => i['equipped'] == true).toList()
-        : items;
+    // (origIndex, item) pairs — origIndex used for in-place mutation,
+    // avoids O(N²) items.indexOf during render.
+    final visibleItems = <MapEntry<int, Map<String, dynamic>>>[];
+    for (var idx = 0; idx < items.length; idx++) {
+      final it = items[idx];
+      if (filterActive && !_showAllSources && it['equipped'] != true) continue;
+      visibleItems.add(MapEntry(idx, it));
+    }
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -1031,8 +1036,9 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                   style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12),
                 ),
               ),
-            ...visibleItems.map((item) {
-              final i = items.indexOf(item);
+            ...visibleItems.map((entry) {
+              final i = entry.key;
+              final item = entry.value;
               final isEquipped = item['equipped'] == true;
               final itemId = item['id']?.toString() ?? '';
               final source = item['source']?.toString() ?? 'manual';

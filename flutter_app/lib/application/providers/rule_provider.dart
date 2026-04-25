@@ -24,12 +24,17 @@ final computedFieldsProvider = Provider.family<RuleEvaluationResult, String>(
   // 3. Bağımlı entity ID'lerini topla
   final depIds = RuleEngineV2.collectDependencyIds(entity, cat);
 
-  // 4. Bağımlı entity'leri izle — sadece ilgili olanlar
-  //    Bu, herhangi bir bağımlı entity değiştiğinde yeniden hesaplamayı tetikler.
+  // 4. Bağımlı entity'leri izle — sadece ilgili olanlar.
+  //    Map yerine kombine hash int döndür: Map.== identity → her seferinde
+  //    farklı eşit ⇒ gereksiz rebuild. int eşitliği O(1), unrelated entity
+  //    update'lerinde rule re-eval'i iptal eder.
   if (depIds.isNotEmpty) {
     ref.watch(entityProvider.select((m) {
-      // Bağımlı entity'lerin snapshot'ını oluştur — değişiklik tespiti için
-      return {for (final id in depIds) id: m[id]?.hashCode};
+      var h = 0;
+      for (final id in depIds) {
+        h = Object.hash(h, m[id]?.hashCode);
+      }
+      return h;
     }));
   }
 
