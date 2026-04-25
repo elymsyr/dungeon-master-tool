@@ -5,7 +5,6 @@ import '../world_schema.dart';
 import 'content.dart';
 import 'dm.dart';
 import 'lookups.dart';
-import 'rules.dart';
 
 /// Schema id for the v2 built-in D&D 5e template.
 /// Lives beside `builtin-dnd5e-default` (v1) per design §9 #6 —
@@ -38,14 +37,11 @@ BuiltinDnd5eV2Build generateBuiltinDnd5eV2Schema() {
     startOrderIndex: tier0.length + tier1.length,
   );
 
-  final categoriesRaw = <EntityCategorySchema>[
+  final categories = <EntityCategorySchema>[
     for (final t in tier0) t.category,
     ...tier1,
     ...tier2,
   ];
-
-  final ruleSet = buildBuiltinRules();
-  final categories = attachBuiltinRules(categoriesRaw, ruleSet);
 
   final seedRows = <String, List<Map<String, dynamic>>>{
     for (final t in tier0) t.category.slug: t.seedRows,

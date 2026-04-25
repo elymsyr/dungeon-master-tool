@@ -431,57 +431,5 @@ void main() {
       final k = s.fields.firstWhere((f) => f.fieldKey == 'kind');
       expect(k.validation.allowedValues, ['Spellcasting', 'Transport', 'Shelter', 'Other']);
     });
-
-    // --- RuleV2 attachment ---------------------------------------------
-
-    test('monster carries initiative-from-DEX rule', () {
-      final m = schema.categories.firstWhere((c) => c.slug == 'monster');
-      expect(m.rules.length, 1);
-      expect(m.rules.first.name, 'Initiative from DEX');
-    });
-
-    test('animal mirrors monster rules', () {
-      final a = schema.categories.firstWhere((c) => c.slug == 'animal');
-      expect(a.rules.length, 1);
-      expect(a.rules.first.name, 'Initiative from DEX');
-    });
-
-    test('player-character carries 2 rules (passive perception, AC sum)', () {
-      final pc = schema.categories.firstWhere((c) => c.slug == 'player-character');
-      expect(pc.rules.length, 2);
-      final names = pc.rules.map((r) => r.name).toSet();
-      expect(names, {'Passive Perception from WIS', 'AC from Equipped Items'});
-    });
-
-    test('armor carries STR gate rule', () {
-      final a = schema.categories.firstWhere((c) => c.slug == 'armor');
-      expect(a.rules.length, 1);
-      expect(a.rules.first.name, 'Heavy Armor STR Gate');
-    });
-
-    test('magic-item carries attunement gate rule', () {
-      final mi = schema.categories.firstWhere((c) => c.slug == 'magic-item');
-      expect(mi.rules.length, 1);
-      expect(mi.rules.first.name, 'Attunement Gate');
-    });
-
-    test('spell carries fade-off-class rule', () {
-      final s = schema.categories.firstWhere((c) => c.slug == 'spell');
-      expect(s.rules.length, 1);
-      expect(s.rules.first.name, 'Fade Off-Class Spells');
-    });
-
-    test('categories without rules stay rule-empty', () {
-      final neverRuled = schema.categories.where((c) =>
-          c.slug != 'monster' &&
-          c.slug != 'animal' &&
-          c.slug != 'player-character' &&
-          c.slug != 'armor' &&
-          c.slug != 'magic-item' &&
-          c.slug != 'spell');
-      for (final c in neverRuled) {
-        expect(c.rules, isEmpty, reason: '${c.slug} should ship no rules');
-      }
-    });
   });
 }

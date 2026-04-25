@@ -6,13 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/datasources/local/campaign_local_ds.dart' show CampaignLocalDataSource, TrashItem;
 import '../../data/repositories/campaign_repository_impl.dart';
-import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart' show builtinDnd5eV2OriginalHash;
-import '../../domain/entities/schema/default_dnd5e_schema.dart' show builtinDndOriginalHash;
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../services/campaign_import_service.dart';
-import '../services/template_sync_service.dart';
 
 final campaignLocalDsProvider = Provider((_) => CampaignLocalDataSource());
 
@@ -122,43 +119,6 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     try {
       _data = await _repo.load(name);
       state = name;
-      // Lazy template-sync drift check — surfaces a prompt for the UI to
-      // show when the source template has been edited since this campaign
-      // was last synced. Failures here MUST NOT block the load.
-      try {
-        final result = await _ref
-            .read(templateSyncServiceProvider)
-            .checkDrift(campaignName: name, campaignData: _data!);
-        if (result.healedHash != null) {
-          // Non-semantic hash drift — store the fresh hash so the next
-          // open matches cleanly, no prompt shown.
-          _data!['template_hash'] = result.healedHash!;
-          await _repo.save(name, _data!);
-        }
-        // Auto-apply built-in v2 template updates silently — bundled template
-        // is authoritative, never user-customized, so additive shape changes
-        // (new fields, new defaults) flow into existing campaigns without a
-        // prompt. User-authored entity values are preserved by the merge.
-        final prompt = result.prompt;
-        final isBuiltinLineage = prompt != null &&
-            (prompt.newTemplate.originalHash == builtinDnd5eV2OriginalHash ||
-                prompt.newTemplate.originalHash == builtinDndOriginalHash);
-        if (isBuiltinLineage) {
-          _data!['world_schema'] = deepCopyJson(prompt.newTemplate.toJson());
-          _data!['template_id'] = prompt.newTemplate.schemaId;
-          _data!['template_hash'] = prompt.newHash;
-          if (prompt.newTemplate.originalHash != null) {
-            _data!['template_original_hash'] = prompt.newTemplate.originalHash;
-          }
-          _data!.remove('template_dismissed_hash');
-          await _repo.save(name, _data!);
-          _bumpRevision();
-        } else {
-          _ref.read(pendingTemplateUpdateProvider.notifier).state = prompt;
-        }
-      } catch (e, st) {
-        debugPrint('Template sync drift check failed: $e\n$st');
-      }
       return true;
     } catch (e, st) {
       debugPrint('Campaign load error: $e\n$st');

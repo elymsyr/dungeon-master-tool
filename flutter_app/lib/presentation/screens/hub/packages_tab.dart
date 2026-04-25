@@ -9,10 +9,7 @@ import '../../../application/providers/package_provider.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
-import '../../../application/services/template_sync_service.dart';
 import '../../../domain/entities/schema/world_schema.dart';
-import '../../../domain/entities/schema/world_schema_hash.dart';
-import '../../../core/utils/deep_copy.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/marketplace_panel.dart';
@@ -387,20 +384,6 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
         data['world_id'] as String? ??
         packageName;
 
-    TemplateUpdatePrompt? drift;
-    try {
-      final result = await ref.read(templateSyncServiceProvider).checkDrift(
-        campaignName: packageName,
-        campaignData: data,
-        ignoreDismissed: true,
-      );
-      drift = result.prompt;
-      if (result.healedHash != null) {
-        data['template_hash'] = result.healedHash!;
-        await ref.read(packageRepositoryProvider).save(packageName, data);
-      }
-    } catch (_) {}
-
     if (!mounted) return;
 
     final schemaMap = data['world_schema'] as Map<String, dynamic>?;
@@ -467,46 +450,6 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                 localId: packageName,
                 title: packageName,
               ),
-              const SizedBox(height: 12),
-              Divider(height: 1, color: palette.featureCardBorder),
-              const SizedBox(height: 12),
-              if (drift == null)
-                Row(
-                  children: [
-                    Icon(Icons.check_circle, size: 16, color: palette.successBtnBg),
-                    const SizedBox(width: 6),
-                    Text(l10n.templateDriftUpToDate,
-                        style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
-                  ],
-                )
-              else ...[
-                Row(
-                  children: [
-                    Icon(Icons.info_outline, size: 16, color: palette.featureCardAccent),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(l10n.templateDriftBody(drift.templateName),
-                          style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
-                    ),
-                  ],
-                ),
-                if (drift.diffSummary.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(l10n.templateDriftChanges,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                  const SizedBox(height: 4),
-                  ...drift.diffSummary.map((line) => Padding(
-                    padding: const EdgeInsets.only(left: 8, bottom: 3),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('\u2022 ', style: TextStyle(fontSize: 12)),
-                        Expanded(child: Text(line, style: const TextStyle(fontSize: 12))),
-                      ],
-                    ),
-                  )),
-                ],
-              ],
             ],
           ),
           ),
@@ -516,14 +459,6 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(l10n.btnCancel),
           ),
-          if (drift != null)
-            FilledButton(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                await _applyPackageTemplateUpdate(packageName, data, drift!);
-              },
-              child: Text(l10n.templateDriftUpdate),
-            ),
           FilledButton(
             onPressed: () async {
               await updatePackageMetadata(ref, packageName, workingMeta);
@@ -537,44 +472,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     );
   }
 
-  Future<void> _applyPackageTemplateUpdate(
-    String packageName,
-    Map<String, dynamic> data,
-    TemplateUpdatePrompt drift,
-  ) async {
-    try {
-      final activeName = ref.read(activePackageProvider);
-      if (activeName == packageName) {
-        await ref
-            .read(activePackageProvider.notifier)
-            .applyTemplateUpdate(drift.newTemplate);
-      } else {
-        // Non-active package — mutate data map directly and save.
-        data['world_schema'] = deepCopyJson(drift.newTemplate.toJson());
-        data['template_id'] = drift.newTemplate.schemaId;
-        data['template_hash'] = computeWorldSchemaContentHash(drift.newTemplate);
-        if (drift.newTemplate.originalHash != null) {
-          data['template_original_hash'] = drift.newTemplate.originalHash;
-        }
-        data.remove('template_dismissed_hash');
-        await ref.read(packageRepositoryProvider).save(packageName, data);
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Package template updated to "${drift.templateName}"')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Template update failed: $e')),
-        );
-      }
-    }
-  }
-
   Future<void> _loadPackage(String name) async {
-    // 1. Load (with global loading overlay)
     final success = await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'open-package-$name',
@@ -582,108 +480,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
       () => ref.read(activePackageProvider.notifier).load(name),
     );
     if (!success || !mounted) return;
-
-    // 2. Template drift check
-    final data = ref.read(activePackageProvider.notifier).data;
-    if (data != null) {
-      try {
-        final result = await ref.read(templateSyncServiceProvider).checkDrift(
-          campaignName: name,
-          campaignData: data,
-        );
-        if (result.healedHash != null) {
-          data['template_hash'] = result.healedHash!;
-          await ref.read(packageRepositoryProvider).save(name, data);
-        }
-        final drift = result.prompt;
-        if (drift != null && mounted) {
-          final action = await _showPreOpenTemplateDialog(drift);
-          if (!mounted) return;
-          if (action == 'update') {
-            await ref.read(activePackageProvider.notifier).applyTemplateUpdate(drift.newTemplate);
-          } else if (action == 'mute') {
-            await ref.read(activePackageProvider.notifier).muteTemplateUpdates();
-          } else {
-            await ref.read(activePackageProvider.notifier).dismissTemplateUpdate(drift.newHash);
-          }
-        }
-      } catch (_) {}
-    }
-
-    // 3. Navigate
     if (mounted) context.go('/package');
-  }
-
-  Future<String?> _showPreOpenTemplateDialog(TemplateUpdatePrompt prompt) {
-    bool doNotShowAgain = false;
-    final l10n = L10n.of(context)!;
-    return showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(l10n.templateDriftTitle),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.templateDriftBody(prompt.templateName)),
-                if (prompt.diffSummary.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(l10n.templateDriftChanges,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  ...prompt.diffSummary.map((line) => Padding(
-                    padding: const EdgeInsets.only(left: 8, bottom: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('\u2022 ',
-                            style: TextStyle(fontSize: 13)),
-                        Expanded(
-                            child: Text(line,
-                                style: const TextStyle(fontSize: 13))),
-                      ],
-                    ),
-                  )),
-                ],
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: Checkbox(
-                        value: doNotShowAgain,
-                        onChanged: (v) =>
-                            setDialogState(() => doNotShowAgain = v ?? false),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(l10n.templateDriftDoNotShowAgain,
-                          style: const TextStyle(fontSize: 13)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.pop(ctx, doNotShowAgain ? 'mute' : 'ignore'),
-              child: Text(l10n.templateDriftIgnore),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, 'update'),
-              child: Text(l10n.templateDriftUpdate),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _createPackage() async {
