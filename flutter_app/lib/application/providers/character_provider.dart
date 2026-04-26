@@ -210,6 +210,9 @@ Map<String, dynamic> _defaultFieldsFor(EntityCategorySchema cat) {
         },
       FieldType.dice => '',
       FieldType.proficiencyTable => const {'rows': <dynamic>[]},
+      FieldType.classFeatures => const <Map<String, dynamic>>[],
+      FieldType.spellEffectList => const <Map<String, dynamic>>[],
+      FieldType.rangedSenseList => const <Map<String, dynamic>>[],
       _ => null,
     };
   }

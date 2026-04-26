@@ -557,21 +557,29 @@ Tier0CategoryBuild _damageTypeCategory(String schemaId, String now) {
           label: 'Physical (B/P/S)',
           order: o,
         ),
+    (o) => _boolField(
+          categoryId: catId,
+          now: now,
+          key: 'bypassable_by_magical',
+          label: 'Bypassable by Magical Weapons',
+          order: o,
+          helpText: 'Physical types: nonmagical resistance bypassed by magical/silvered/adamantine.',
+        ),
   ]);
   const rows = [
-    {'name': 'Acid', 'examples': 'Corrosive liquids, digestive enzymes', 'physical': false},
-    {'name': 'Bludgeoning', 'examples': 'Blunt force — falling, crushing, clubs', 'physical': true},
-    {'name': 'Cold', 'examples': 'Icy blasts, frost', 'physical': false},
-    {'name': 'Fire', 'examples': 'Flames, intense heat', 'physical': false},
-    {'name': 'Force', 'examples': 'Pure magical energy', 'physical': false},
-    {'name': 'Lightning', 'examples': 'Electricity', 'physical': false},
-    {'name': 'Necrotic', 'examples': 'Draining life force', 'physical': false},
-    {'name': 'Piercing', 'examples': 'Puncturing — spears, arrows, bites', 'physical': true},
-    {'name': 'Poison', 'examples': 'Toxins, venom', 'physical': false},
-    {'name': 'Psychic', 'examples': 'Mental energy', 'physical': false},
-    {'name': 'Radiant', 'examples': 'Divine radiance, positive energy', 'physical': false},
-    {'name': 'Slashing', 'examples': 'Cuts and slices — swords, claws', 'physical': true},
-    {'name': 'Thunder', 'examples': 'Concussive sound', 'physical': false},
+    {'name': 'Acid', 'examples': 'Corrosive liquids, digestive enzymes', 'physical': false, 'bypass': false},
+    {'name': 'Bludgeoning', 'examples': 'Blunt force — falling, crushing, clubs', 'physical': true, 'bypass': true},
+    {'name': 'Cold', 'examples': 'Icy blasts, frost', 'physical': false, 'bypass': false},
+    {'name': 'Fire', 'examples': 'Flames, intense heat', 'physical': false, 'bypass': false},
+    {'name': 'Force', 'examples': 'Pure magical energy', 'physical': false, 'bypass': false},
+    {'name': 'Lightning', 'examples': 'Electricity', 'physical': false, 'bypass': false},
+    {'name': 'Necrotic', 'examples': 'Draining life force', 'physical': false, 'bypass': false},
+    {'name': 'Piercing', 'examples': 'Puncturing — spears, arrows, bites', 'physical': true, 'bypass': true},
+    {'name': 'Poison', 'examples': 'Toxins, venom', 'physical': false, 'bypass': false},
+    {'name': 'Psychic', 'examples': 'Mental energy', 'physical': false, 'bypass': false},
+    {'name': 'Radiant', 'examples': 'Divine radiance, positive energy', 'physical': false, 'bypass': false},
+    {'name': 'Slashing', 'examples': 'Cuts and slices — swords, claws', 'physical': true, 'bypass': true},
+    {'name': 'Thunder', 'examples': 'Concussive sound', 'physical': false, 'bypass': false},
   ];
   final seed = rows
       .map((r) => {
@@ -579,6 +587,7 @@ Tier0CategoryBuild _damageTypeCategory(String schemaId, String now) {
             'fields': {
               'example_sources': r['examples'],
               'is_physical': r['physical'],
+              'bypassable_by_magical': r['bypass'],
             },
           })
       .toList();
@@ -683,14 +692,23 @@ Tier0CategoryBuild _sizeCategory(String schemaId, String now) {
           order: o,
           values: ['d4', 'd6', 'd8', 'd10', 'd12', 'd20'],
         ),
+    (o) => _floatField(
+          categoryId: catId,
+          now: now,
+          key: 'carrying_multiplier',
+          label: 'Carrying Multiplier',
+          order: o,
+          minValue: 0,
+          helpText: 'Carrying capacity = STR × 15 × multiplier (s.16)',
+        ),
   ]);
   const rows = [
-    {'name': 'Tiny', 'space_ft': 2.5, 'squares': 0.25, 'hit_die_size': 'd4'},
-    {'name': 'Small', 'space_ft': 5.0, 'squares': 1.0, 'hit_die_size': 'd6'},
-    {'name': 'Medium', 'space_ft': 5.0, 'squares': 1.0, 'hit_die_size': 'd8'},
-    {'name': 'Large', 'space_ft': 10.0, 'squares': 4.0, 'hit_die_size': 'd10'},
-    {'name': 'Huge', 'space_ft': 15.0, 'squares': 9.0, 'hit_die_size': 'd12'},
-    {'name': 'Gargantuan', 'space_ft': 20.0, 'squares': 16.0, 'hit_die_size': 'd20'},
+    {'name': 'Tiny', 'space_ft': 2.5, 'squares': 0.25, 'hit_die_size': 'd4', 'carry': 0.5},
+    {'name': 'Small', 'space_ft': 5.0, 'squares': 1.0, 'hit_die_size': 'd6', 'carry': 1.0},
+    {'name': 'Medium', 'space_ft': 5.0, 'squares': 1.0, 'hit_die_size': 'd8', 'carry': 1.0},
+    {'name': 'Large', 'space_ft': 10.0, 'squares': 4.0, 'hit_die_size': 'd10', 'carry': 2.0},
+    {'name': 'Huge', 'space_ft': 15.0, 'squares': 9.0, 'hit_die_size': 'd12', 'carry': 4.0},
+    {'name': 'Gargantuan', 'space_ft': 20.0, 'squares': 16.0, 'hit_die_size': 'd20', 'carry': 8.0},
   ];
   final seed = rows
       .map((r) => {
@@ -699,6 +717,7 @@ Tier0CategoryBuild _sizeCategory(String schemaId, String now) {
               'space_ft': r['space_ft'],
               'squares': r['squares'],
               'hit_die_size': r['hit_die_size'],
+              'carrying_multiplier': r['carry'],
             },
           })
       .toList();
@@ -1071,16 +1090,48 @@ Tier0CategoryBuild _speedTypeCategory(String schemaId, String now) => _simpleLoo
       rowNames: const ['Walking', 'Burrow', 'Climb', 'Fly', 'Swim'],
     );
 
-Tier0CategoryBuild _senseCategory(String schemaId, String now) => _simpleLookup(
+Tier0CategoryBuild _senseCategory(String schemaId, String now) {
+  final catId = _uuid.v4();
+  final common = _commonLookupFields(categoryId: catId, now: now);
+  final fields = _withExtras(common, [
+    (o) => _integerField(
+          categoryId: catId,
+          now: now,
+          key: 'default_range_ft',
+          label: 'Default Range (ft)',
+          order: o,
+          minValue: 0,
+          maxValue: 1000,
+          helpText: 'SRD typical: Darkvision 60, Truesight 120, Blindsight 30',
+        ),
+  ]);
+  const rows = [
+    {'name': 'Blindsight', 'range': 30},
+    {'name': 'Darkvision', 'range': 60},
+    {'name': 'Tremorsense', 'range': 60},
+    {'name': 'Truesight', 'range': 120},
+  ];
+  final seed = rows
+      .map((r) => {
+            'name': r['name'],
+            'fields': {'default_range_ft': r['range']},
+          })
+      .toList();
+  return Tier0CategoryBuild(
+    _makeCategory(
       schemaId: schemaId,
-      now: now,
-      slug: 'sense',
+      categoryId: catId,
       name: 'Sense',
+      slug: 'sense',
       color: '#00838f',
       icon: 'visibility',
+      fields: fields,
       orderIndex: 17,
-      rowNames: const ['Blindsight', 'Darkvision', 'Tremorsense', 'Truesight'],
-    );
+      now: now,
+    ),
+    seed,
+  );
+}
 
 Tier0CategoryBuild _actionCategory(String schemaId, String now) => _simpleLookup(
       schemaId: schemaId,

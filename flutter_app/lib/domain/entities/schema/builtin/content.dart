@@ -199,6 +199,36 @@ class _FB {
   void levelTextTable(String k, String l, {String g = grpProgression}) =>
       _base(key: k, label: l, type: FieldType.levelTextTable, groupId: g, gridSpan: 2);
 
+  void classFeatures(String k, String l, {String g = grpFeatures}) =>
+      _base(
+        key: k,
+        label: l,
+        type: FieldType.classFeatures,
+        groupId: g,
+        gridSpan: 2,
+        defaultValue: const <Map<String, dynamic>>[],
+      );
+
+  void spellEffectList(String k, String l, {String g = grpRules}) =>
+      _base(
+        key: k,
+        label: l,
+        type: FieldType.spellEffectList,
+        groupId: g,
+        gridSpan: 2,
+        defaultValue: const <Map<String, dynamic>>[],
+      );
+
+  void rangedSenseList(String k, String l, {String g = grpSensesLanguages}) =>
+      _base(
+        key: k,
+        label: l,
+        type: FieldType.rangedSenseList,
+        groupId: g,
+        gridSpan: 2,
+        defaultValue: const <Map<String, dynamic>>[],
+      );
+
   void statBlock(String k, String l, {String g = grpAbilityScores}) =>
       _base(
         key: k,
@@ -275,8 +305,8 @@ EntityCategorySchema _classCategory(String schemaId, String now, int orderIndex)
   fb.enum_('complexity', 'Complexity', const ['Low', 'Average', 'High'], g: grpProgression);
   fb.relation('casting_ability_ref', 'Casting Ability', const ['ability'], g: grpSpellcasting);
   fb.enum_('caster_kind', 'Caster Kind', const ['None', 'Full', 'Half', 'Third', 'Pact', 'Ritual'], required_: true, g: grpSpellcasting);
-  fb.text('spellcasting_focus', 'Spellcasting Focus', g: grpSpellcasting);
-  fb.levelTable('feature_table', 'Feature Table', g: grpFeatures);
+  fb.relation('spellcasting_focus_ref', 'Spellcasting Focus', const ['arcane-focus', 'druidic-focus', 'holy-symbol'], g: grpSpellcasting);
+  fb.classFeatures('features', 'Features by Level', g: grpFeatures);
   fb.levelTable('cantrips_known_by_level', 'Cantrips Known', g: grpSpellcasting);
   fb.levelTable('prepared_spells_by_level', 'Prepared Spells', g: grpSpellcasting);
   fb.levelTable('spell_slots_by_level', 'Spell Slots', g: grpSpellcasting);
@@ -307,7 +337,7 @@ EntityCategorySchema _subclassCategory(String schemaId, String now, int orderInd
   final fb = _FB(catId, now);
   fb.relation('parent_class_ref', 'Parent Class', const ['class'], required_: true);
   fb.integer('granted_at_level', 'Granted at Level', required_: true, min: 1, max: 20);
-  fb.levelTable('feature_table', 'Feature Table', g: grpFeatures);
+  fb.classFeatures('features', 'Features by Level', g: grpFeatures);
   fb.markdown('flavor_description', 'Flavor', g: grpFeatures);
 
   return _mk(
@@ -433,12 +463,14 @@ EntityCategorySchema _spellCategory(String schemaId, String now, int orderIndex)
   fb.relation('duration_unit_ref', 'Duration Unit', const ['duration-unit'], required_: true);
   fb.integer('duration_amount', 'Duration Amount', min: 0);
   fb.boolean('requires_concentration', 'Concentration', required_: true);
-  fb.markdown('description', 'Description', required_: true, g: grpRules);
-  fb.levelTextTable('at_higher_levels', 'At Higher Levels', g: grpRules);
+  fb.markdown('description', 'Narrative Description', required_: true, g: grpRules);
+  fb.spellEffectList('effects', 'Effects (typed DSL)', g: grpRules);
+  fb.levelTextTable('at_higher_levels_text', 'At Higher Levels (narrative)', g: grpRules);
   fb.relation('class_refs', 'Class Spell Lists', const ['class'], isList: true, required_: true);
   fb.relation('damage_type_refs', 'Damage Types', const ['damage-type'], isList: true);
   fb.relation('save_ability_ref', 'Save Ability', const ['ability']);
   fb.enum_('attack_type', 'Attack Type', const ['None', 'Melee', 'Ranged']);
+  fb.relation('applied_condition_refs', 'Applied Conditions', const ['condition'], isList: true);
 
   return _mk(
     schemaId: schemaId,
@@ -789,7 +821,7 @@ EntityCategorySchema _monsterCategory(String schemaId, String now, int orderInde
   fb.relation('damage_immunity_refs', 'Damage Immunities', const ['damage-type'], isList: true, g: grpResistances);
   fb.relation('condition_immunity_refs', 'Condition Immunities', const ['condition'], isList: true, g: grpResistances);
   // Senses & Languages
-  fb.textarea('sense_grants', 'Senses', g: grpSensesLanguages);
+  fb.rangedSenseList('senses', 'Senses (sense + range)', g: grpSensesLanguages);
   fb.integer('passive_perception', 'Passive Perception', required_: true, min: 0, max: 30, g: grpSensesLanguages);
   fb.relation('language_refs', 'Languages', const ['language'], isList: true, g: grpSensesLanguages);
   fb.integer('telepathy_ft', 'Telepathy (ft)', min: 0, g: grpSensesLanguages);
@@ -799,15 +831,15 @@ EntityCategorySchema _monsterCategory(String schemaId, String now, int orderInde
       required_: true, g: grpMeta);
   fb.integer('xp', 'XP', required_: true, min: 0, g: grpMeta);
   fb.integer('proficiency_bonus', 'Proficiency Bonus', required_: true, min: 2, max: 9, g: grpMeta);
-  // Traits / actions
-  fb.markdown('traits', 'Traits', g: grpTraitsActions);
-  fb.markdown('actions', 'Actions', required_: true, g: grpTraitsActions);
-  fb.markdown('bonus_actions', 'Bonus Actions', g: grpTraitsActions);
-  fb.markdown('reactions', 'Reactions', g: grpTraitsActions);
+  // Traits / actions — NPC parite (typed refs)
+  fb.relation('trait_refs', 'Traits', const ['trait'], isList: true, g: grpTraitsActions);
+  fb.relation('action_refs', 'Actions', const ['creature-action'], isList: true, required_: true, g: grpTraitsActions);
+  fb.relation('bonus_action_refs', 'Bonus Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
+  fb.relation('reaction_refs', 'Reactions', const ['creature-action'], isList: true, g: grpTraitsActions);
   fb.integer('legendary_action_uses', 'Legendary Action Uses', min: 0, max: 5, g: grpTraitsActions);
-  fb.markdown('legendary_actions', 'Legendary Actions', g: grpTraitsActions);
-  fb.markdown('lair_actions', 'Lair Actions', g: grpTraitsActions);
-  fb.markdown('spellcasting_block', 'Spellcasting', g: grpSpells);
+  fb.relation('legendary_action_refs', 'Legendary Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
+  fb.relation('lair_action_refs', 'Lair Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
+  fb.relation('spell_refs', 'Spells', const ['spell'], isList: true, g: grpSpells);
   fb.relation('gear_refs', 'Gear', const ['adventuring-gear', 'weapon', 'armor'], isList: true, g: grpTraitsActions);
 
   return _mk(
@@ -895,7 +927,8 @@ EntityCategorySchema _creatureActionCategory(String schemaId, String now, int or
   fb.integer('range_long_ft', 'Range Long (ft)', min: 0);
   fb.dice('damage_dice', 'Damage Dice');
   fb.relation('damage_type_ref', 'Damage Type', const ['damage-type']);
-  fb.text('save_dc', 'Save DC', help: 'e.g. "DC 13 DEX"');
+  fb.integer('save_dc', 'Save DC', min: 1, max: 30);
+  fb.relation('save_ability_ref', 'Save Ability', const ['ability']);
   fb.markdown('description', 'Description', required_: true, g: grpRules);
 
   return _mk(

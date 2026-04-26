@@ -209,6 +209,9 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
               FieldType.combatStats => {'hp': '', 'max_hp': '', 'ac': '', 'speed': '', 'cr': '', 'xp': '', 'initiative': ''},
               FieldType.dice => '',
               FieldType.proficiencyTable => const {'rows': <dynamic>[]},
+              FieldType.classFeatures => const <Map<String, dynamic>>[],
+              FieldType.spellEffectList => const <Map<String, dynamic>>[],
+              FieldType.rangedSenseList => const <Map<String, dynamic>>[],
               _ => null,
             };
           }

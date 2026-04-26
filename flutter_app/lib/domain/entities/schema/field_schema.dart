@@ -29,6 +29,9 @@ enum FieldType {
   proficiencyTable, // D&D 5e skills/saving throws — her satır: name, ability, proficient, expertise, misc
   levelTable,     // Map<int,int> — level → value progression tablosu (spell slot count, hit dice, vs.)
   levelTextTable, // Map<int,String> — level → free-form text (e.g. "At Higher Levels", per-level features narrative)
+  classFeatures,  // List<{level:int, name, kind: passive|resource|extra-attack|spellcasting-bump|ability-improvement, dice, uses, recharge, description}>
+  spellEffectList,// List<{kind: damage|heal|condition|buff|debuff, dice, type_ref, save_ability_ref, save_effect: none|half|negate|partial, condition_refs[], scaling_dice}>
+  rangedSenseList,// List<{sense_ref, range_ft}> — sense ref + range pair listesi (Darkvision 60ft, Truesight 120ft)
 }
 
 /// Alan görünürlüğü — online modda kimin görebileceğini belirler.
