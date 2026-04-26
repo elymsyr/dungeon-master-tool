@@ -471,7 +471,13 @@ EntityCategorySchema _questCategory(String schemaId, String now, int orderIndex)
   final fb = _FB(catId, now);
   fb.enum_('status', 'Status', const ['Not Started', 'Active', 'Completed', 'Failed']);
   fb.relation('giver_ref', 'Quest Giver', const ['npc']);
-  fb.markdown('reward', 'Reward', g: grpRules);
+  // Typed reward (auto-grant on completion).
+  fb.relation('reward_item_refs', 'Reward Items',
+      const ['magic-item', 'adventuring-gear', 'weapon', 'armor', 'trinket'],
+      isList: true, g: grpRules);
+  fb.integer('reward_xp', 'Reward XP', min: 0, g: grpRules);
+  fb.integer('reward_gp', 'Reward Gold (gp)', min: 0, g: grpRules);
+  fb.markdown('reward', 'Reward (narrative)', g: grpRules);
   fb.markdown('objective', 'Objective', g: grpRules);
   fb.markdown('secrets', 'Secrets (DM-only)', g: grpRules, vis: FieldVisibility.dmOnly);
 
@@ -529,14 +535,20 @@ EntityCategorySchema _encounterCategory(String schemaId, String now, int orderIn
 EntityCategorySchema _trapCategory(String schemaId, String now, int orderIndex) {
   final catId = _uuid.v4();
   final fb = _FB(catId, now);
-  fb.markdown('trigger', 'Trigger', g: grpRules);
+  fb.enum_('trigger_kind', 'Trigger Kind',
+      const ['Pressure', 'Tripwire', 'Proximity', 'Sound', 'Magical', 'Touch', 'Other'],
+      g: grpRules);
+  fb.markdown('trigger', 'Trigger (narrative)', g: grpRules);
   fb.integer('save_dc', 'Save DC', min: 1, max: 30);
   fb.relation('save_ability_ref', 'Save Ability', const ['ability']);
   fb.dice('damage_dice', 'Damage Dice');
   fb.relation('damage_type_ref', 'Damage Type', const ['damage-type']);
+  fb.relation('applied_condition_refs', 'Applied Conditions',
+      const ['condition'], isList: true, g: grpRules);
   fb.integer('detection_dc', 'Detection DC', min: 1, max: 30);
   fb.integer('disable_dc', 'Disable DC', min: 1, max: 30);
-  fb.markdown('countermeasures', 'Countermeasures', g: grpRules);
+  fb.relation('disable_ability_ref', 'Disable Ability', const ['ability'], g: grpRules);
+  fb.markdown('countermeasures', 'Countermeasures (narrative)', g: grpRules);
 
   return _mk(
     schemaId: schemaId,
@@ -562,7 +574,12 @@ EntityCategorySchema _poisonCategory(String schemaId, String now, int orderIndex
   fb.enum_('poison_kind', 'Kind', const ['Contact', 'Ingested', 'Inhaled', 'Injury'], required_: true);
   fb.integer('save_dc', 'Save DC', min: 1, max: 30);
   fb.relation('save_ability_ref', 'Save Ability', const ['ability']);
-  fb.markdown('effect', 'Effect', g: grpRules, vis: FieldVisibility.shared);
+  fb.dice('damage_dice', 'Damage Dice', g: grpRules);
+  fb.relation('damage_type_ref', 'Damage Type', const ['damage-type'], g: grpRules);
+  fb.relation('applied_condition_refs', 'Applied Conditions',
+      const ['condition'], isList: true, g: grpRules);
+  fb.integer('duration_rounds', 'Duration (rounds)', min: 0, g: grpRules);
+  fb.markdown('effect', 'Effect (narrative)', g: grpRules, vis: FieldVisibility.shared);
   fb.integer('cost_gp', 'Cost (gp)', min: 0);
 
   return _mk(
@@ -586,9 +603,13 @@ EntityCategorySchema _poisonCategory(String schemaId, String now, int orderIndex
 EntityCategorySchema _curseCategory(String schemaId, String now, int orderIndex) {
   final catId = _uuid.v4();
   final fb = _FB(catId, now);
-  fb.markdown('trigger', 'Trigger', g: grpRules);
-  fb.markdown('effect', 'Effect', g: grpRules);
-  fb.markdown('removed_by', 'Removed By', g: grpRules);
+  fb.markdown('trigger', 'Trigger (narrative)', g: grpRules);
+  fb.relation('applied_condition_refs', 'Applied Conditions',
+      const ['condition'], isList: true, g: grpRules);
+  fb.relation('removed_by_spell_refs', 'Removed By Spells',
+      const ['spell'], isList: true, g: grpRules);
+  fb.markdown('effect', 'Effect (narrative)', g: grpRules);
+  fb.markdown('removed_by', 'Removed By (narrative)', g: grpRules);
 
   return _mk(
     schemaId: schemaId,
@@ -610,7 +631,11 @@ EntityCategorySchema _curseCategory(String schemaId, String now, int orderIndex)
 EntityCategorySchema _environmentalEffectCategory(String schemaId, String now, int orderIndex) {
   final catId = _uuid.v4();
   final fb = _FB(catId, now);
-  fb.markdown('effect', 'Effect', g: grpRules);
+  fb.dice('damage_dice', 'Damage Dice', g: grpRules);
+  fb.relation('damage_type_ref', 'Damage Type', const ['damage-type'], g: grpRules);
+  fb.relation('applied_condition_refs', 'Applied Conditions',
+      const ['condition'], isList: true, g: grpRules);
+  fb.markdown('effect', 'Effect (narrative)', g: grpRules);
   fb.integer('save_dc', 'Save DC', min: 1, max: 30);
   fb.relation('save_ability_ref', 'Save Ability', const ['ability']);
 
