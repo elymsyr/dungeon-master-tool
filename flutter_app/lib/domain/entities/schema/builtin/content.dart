@@ -325,7 +325,13 @@ EntityCategorySchema _classCategory(String schemaId, String now, int orderIndex)
   fb.levelTable('cantrips_known_by_level', 'Cantrips Known', g: grpSpellcasting);
   fb.levelTable('prepared_spells_by_level', 'Prepared Spells', g: grpSpellcasting);
   fb.levelTable('spell_slots_by_level', 'Spell Slots', g: grpSpellcasting);
-  fb.markdown('multiclass_requirements', 'Multiclass Requirements', g: grpProgression);
+  // Typed multiclass prereqs (SRD s.24): one or more abilities ≥ N to qualify.
+  // PC must have *every* listed ability ≥ multiclass_prereq_min_score.
+  fb.relation('multiclass_prereq_ability_refs', 'Multiclass Prereq Abilities',
+      const ['ability'], isList: true, g: grpProgression);
+  fb.integer('multiclass_prereq_min_score', 'Multiclass Prereq Min Score',
+      min: 1, max: 30, g: grpProgression);
+  fb.markdown('multiclass_requirements', 'Multiclass Requirements (narrative)', g: grpProgression);
 
   return _mk(
     schemaId: schemaId,
@@ -992,7 +998,13 @@ EntityCategorySchema _creatureActionCategory(String schemaId, String now, int or
   fb.relation('damage_type_ref', 'Damage Type', const ['damage-type']);
   fb.integer('save_dc', 'Save DC', min: 1, max: 30);
   fb.relation('save_ability_ref', 'Save Ability', const ['ability']);
-  fb.markdown('description', 'Description', required_: true, g: grpRules);
+  // Conditions inflicted on hit / failed save (e.g. Stinking Cloud → Poisoned).
+  fb.relation('applied_condition_refs', 'Applied Conditions', const ['condition'],
+      isList: true, g: grpRules);
+  // Multi-target / multi-effect actions (e.g. Dragon Breath cone, multiple
+  // damage rolls, secondary save effect). Mirrors Spell.effects.
+  fb.spellEffectList('effects', 'Effect Rows (typed)', g: grpRules);
+  fb.markdown('description', 'Description (narrative)', required_: true, g: grpRules);
 
   return _mk(
     schemaId: schemaId,

@@ -1069,7 +1069,7 @@ user picks spell from prepared_spells (or spells_known if cantrip)
 
 Şema-vs-SRD uyuşmazlıkları. Numaralar §2/§3 satırlarındaki çapraz referanslara karşılık gelir.
 
-**Schema değişikliği uygulananlar (✅):** #1, #6 (Tier-B), #9 (kısmen), T1, T2, T3, T4, T5, T6, T7, T8, K10, K11, +Location/Scene refs, +Sense range, +Size carrying, +DamageType bypass, +Feat prereq/ASI typed, +MagicItem attunement typed, +Background/Class default_inventory_refs, +Pack content_refs+quantities, +AdvGear utilize_check, +Poison/Curse/EnvEffect typed effects, +Trap trigger_kind/conditions, +Quest typed reward, +Species/Feat/MagicItem/Trait `granted_modifiers` (Tier-B DSL), +creature-action recharge typed, +weapon-property/mastery typed effects.
+**Schema değişikliği uygulananlar (✅):** #1, #6 (Tier-B), #9 (kısmen), T1, T2, T3, T4, T5, T6, T7, T8, K10, K11, +Location/Scene refs, +Sense range, +Size carrying, +DamageType bypass, +Feat prereq/ASI typed, +MagicItem attunement typed, +Background/Class default_inventory_refs, +Pack content_refs+quantities, +AdvGear utilize_check, +Poison/Curse/EnvEffect typed effects, +Trap trigger_kind/conditions, +Quest typed reward, +Species/Feat/MagicItem/Trait `granted_modifiers` (Tier-B DSL), +creature-action recharge typed, +weapon-property/mastery typed effects, **+Class typed multiclass prereqs (`multiclass_prereq_ability_refs[]`+`multiclass_prereq_min_score`)**, **+creature-action `applied_condition_refs[]` + `effects` (spellEffectList)**, **+Curse/EnvEffect `granted_modifiers` (typed ongoing modifiers)**.
 
 1. ✅ **`Class.features` / `Subclass.features` `classFeatures` typed list** — Rage uses, Sneak Attack dice, Bardic Inspiration die, Extra Attack count typed encode. (Önceden levelTable Map<int,int>.)
 
