@@ -71,7 +71,8 @@ class FieldWidgetFactory {
       FieldType.pdf => _PdfFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, ref: ref),
       FieldType.classFeatures ||
       FieldType.spellEffectList ||
-      FieldType.rangedSenseList =>
+      FieldType.rangedSenseList ||
+      FieldType.grantedModifiers =>
         _StructuredListPlaceholderWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       _ => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
     };
