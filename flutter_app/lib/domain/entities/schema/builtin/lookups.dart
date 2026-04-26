@@ -318,6 +318,36 @@ FieldSchema _floatField({
   );
 }
 
+FieldSchema _intField({
+  required String categoryId,
+  required String now,
+  required String key,
+  required String label,
+  required int order,
+  int? minValue,
+  int? maxValue,
+  String? helpText,
+  String? groupId,
+}) {
+  return FieldSchema(
+    fieldId: _uuid.v4(),
+    categoryId: categoryId,
+    fieldKey: key,
+    label: label,
+    fieldType: FieldType.integer,
+    helpText: helpText ?? '',
+    validation: FieldValidation(
+      minValue: minValue?.toDouble(),
+      maxValue: maxValue?.toDouble(),
+    ),
+    orderIndex: order,
+    isBuiltin: true,
+    groupId: groupId ?? grpLookupMeta,
+    createdAt: now,
+    updatedAt: now,
+  );
+}
+
 FieldSchema _boolField({
   required String categoryId,
   required String now,
@@ -924,30 +954,140 @@ Tier0CategoryBuild _weaponCategoryCategory(String schemaId, String now) => _simp
       rowNames: const ['Simple', 'Martial'],
     );
 
-Tier0CategoryBuild _weaponPropertyCategory(String schemaId, String now) => _simpleLookup(
+Tier0CategoryBuild _weaponPropertyCategory(String schemaId, String now) {
+  final catId = _uuid.v4();
+  final common = _commonLookupFields(categoryId: catId, now: now);
+  final fields = _withExtras(common, [
+    (o) => _enumField(
+          categoryId: catId,
+          now: now,
+          key: 'mechanic_kind',
+          label: 'Mechanic Kind',
+          order: o,
+          values: const [
+            'ammunition_required', // Ammunition: must consume ammo per attack
+            'ability_choice_str_dex', // Finesse: choose STR or DEX for attack/damage
+            'small_creature_disadv',  // Heavy: Small creatures have disadv
+            'two_weapon_fighting',    // Light: eligible for off-hand TWF
+            'one_attack_per_turn',    // Loading: 1 attack/turn cap
+            'has_range',              // Range: ranged attack with normal/long
+            'extended_reach',         // Reach: +5ft reach
+            'thrown_attack',          // Thrown: ranged via STR (or DEX if Finesse)
+            'two_handed',             // Two-Handed: requires 2 hands
+            'versatile_damage',       // Versatile: alt damage die when 2H
+            'improvised',             // Improvised: not designed as weapon
+          ],
+        ),
+  ]);
+  const rows = [
+    {'name': 'Ammunition', 'mk': 'ammunition_required'},
+    {'name': 'Finesse',    'mk': 'ability_choice_str_dex'},
+    {'name': 'Heavy',      'mk': 'small_creature_disadv'},
+    {'name': 'Light',      'mk': 'two_weapon_fighting'},
+    {'name': 'Loading',    'mk': 'one_attack_per_turn'},
+    {'name': 'Range',      'mk': 'has_range'},
+    {'name': 'Reach',      'mk': 'extended_reach'},
+    {'name': 'Thrown',     'mk': 'thrown_attack'},
+    {'name': 'Two-Handed', 'mk': 'two_handed'},
+    {'name': 'Versatile',  'mk': 'versatile_damage'},
+    {'name': 'Improvised', 'mk': 'improvised'},
+  ];
+  final seed = rows
+      .map((r) => {
+            'name': r['name'],
+            'fields': {'mechanic_kind': r['mk']},
+          })
+      .toList();
+  return Tier0CategoryBuild(
+    _makeCategory(
       schemaId: schemaId,
-      now: now,
-      slug: 'weapon-property',
+      categoryId: catId,
       name: 'Weapon Property',
+      slug: 'weapon-property',
       color: '#455a64',
       icon: 'handyman',
+      fields: fields,
       orderIndex: 9,
-      rowNames: const [
-        'Ammunition', 'Finesse', 'Heavy', 'Light', 'Loading',
-        'Range', 'Reach', 'Thrown', 'Two-Handed', 'Versatile', 'Improvised',
-      ],
-    );
-
-Tier0CategoryBuild _weaponMasteryCategory(String schemaId, String now) => _simpleLookup(
-      schemaId: schemaId,
       now: now,
-      slug: 'weapon-mastery',
+    ),
+    seed,
+  );
+}
+
+Tier0CategoryBuild _weaponMasteryCategory(String schemaId, String now) {
+  final catId = _uuid.v4();
+  final common = _commonLookupFields(categoryId: catId, now: now);
+  final fields = _withExtras(common, [
+    (o) => _enumField(
+          categoryId: catId,
+          now: now,
+          key: 'effect_kind',
+          label: 'Effect Kind',
+          order: o,
+          values: const [
+            'extra_damage_attack', // Cleave: hit second creature within 5ft
+            'damage_on_miss',      // Graze: ability mod damage on miss
+            'extra_attack_light',  // Nick: light off-hand free
+            'forced_move',         // Push: 10ft away on hit
+            'attack_disadv_next',  // Sap: target disadv on next attack
+            'speed_reduce',        // Slow: −10ft until start of next turn
+            'save_or_prone',       // Topple: CON save or knocked prone
+            'attack_advantage_next', // Vex: adv on next attack vs same target
+          ],
+        ),
+    (o) => _intField(
+          categoryId: catId,
+          now: now,
+          key: 'effect_value',
+          label: 'Effect Value',
+          order: o,
+          helpText: 'Damage/distance/speed (ft or dice). Push=10, Slow=10, Cleave/Graze use weapon damage.',
+        ),
+    (o) => _enumField(
+          categoryId: catId,
+          now: now,
+          key: 'save_ability',
+          label: 'Save Ability',
+          order: o,
+          values: const ['', 'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'],
+          helpText: 'For Topple = STR or CON (target choice). Empty if no save.',
+        ),
+  ]);
+  const rows = [
+    {'name': 'Cleave',  'effect_kind': 'extra_damage_attack',   'effect_value': 0,  'save_ability': ''},
+    {'name': 'Graze',   'effect_kind': 'damage_on_miss',         'effect_value': 0,  'save_ability': ''},
+    {'name': 'Nick',    'effect_kind': 'extra_attack_light',     'effect_value': 0,  'save_ability': ''},
+    {'name': 'Push',    'effect_kind': 'forced_move',            'effect_value': 10, 'save_ability': ''},
+    {'name': 'Sap',     'effect_kind': 'attack_disadv_next',     'effect_value': 0,  'save_ability': ''},
+    {'name': 'Slow',    'effect_kind': 'speed_reduce',           'effect_value': 10, 'save_ability': ''},
+    {'name': 'Topple',  'effect_kind': 'save_or_prone',          'effect_value': 0,  'save_ability': 'CON'},
+    {'name': 'Vex',     'effect_kind': 'attack_advantage_next',  'effect_value': 0,  'save_ability': ''},
+  ];
+  final seed = rows
+      .map((r) => {
+            'name': r['name'],
+            'fields': {
+              'effect_kind': r['effect_kind'],
+              'effect_value': r['effect_value'],
+              'save_ability': r['save_ability'],
+            },
+          })
+      .toList();
+  return Tier0CategoryBuild(
+    _makeCategory(
+      schemaId: schemaId,
+      categoryId: catId,
       name: 'Weapon Mastery',
+      slug: 'weapon-mastery',
       color: '#37474f',
       icon: 'military_tech',
+      fields: fields,
       orderIndex: 10,
-      rowNames: const ['Cleave', 'Graze', 'Nick', 'Push', 'Sap', 'Slow', 'Topple', 'Vex'],
-    );
+      now: now,
+    ),
+    seed,
+  );
+}
 
 Tier0CategoryBuild _armorCategoryCategory(String schemaId, String now) => _simpleLookup(
       schemaId: schemaId,

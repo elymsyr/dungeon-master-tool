@@ -196,6 +196,10 @@ Tier-0 lookup *kendi field'ları arasında* bazıları doğrudan mekanik üretir
 | **`condition.grants_incapacitated`** | boolean | apply | derived: incapacitated flag chain | enum-tag | s.184. Stunned/Paralyzed/Petrified/Unconscious `true` → no actions/BA/Reaction + concentration broken. |
 | **`damage-type.is_physical`** | boolean | damage-roll | weapon/spell damage classification | enum-tag | Bludgeoning/Piercing/Slashing `true`. Magic weapon resistance bypass kontrolü. |
 | **`duration-unit.is_concentration_compatible`** | boolean | cast | derived: spell needs concentration check | enum-tag | s.179. Rounds/Minutes/Hours `true`; Instantaneous false. |
+| **`weapon-property.mechanic_kind`** | enum (11 kinds) | attack/equip | derived: property dispatch | enum-tag | s.89. Ammunition/Finesse/Heavy/Light/Loading/Range/Reach/Thrown/Two-Handed/Versatile/Improvised. Resolver tag üstünden mekanikleri açar (Finesse → STR/DEX choice, Reach → +5ft, vs.). **K10 kapandı.** |
+| **`weapon-mastery.effect_kind`** | enum (8 kinds) | attack-hit/miss | mastery effect | enum-tag | s.221. Cleave (extra damage attack), Graze (dmg on miss), Nick (off-hand free), Push (10ft), Sap (next attack disadv), Slow (−10ft speed), Topple (CON save vs prone), Vex (next attack adv). **K11 kapandı.** |
+| **`weapon-mastery.effect_value`** | int | attack | distance/damage value | lookup | Push=10ft, Slow=10ft. Cleave/Graze 0 (uses weapon damage). |
+| **`weapon-mastery.save_ability`** | enum{STR,DEX,CON,INT,WIS,CHA, ''} | save-roll | save attempt ability | enum-tag | Topple=CON. Empty = no save. |
 
 ---
 
@@ -374,8 +378,8 @@ SRD §6.4-6.6 (s.89-90).
 | **`is_melee`** \* | boolean | attack | derived: attack ability default (STR melee, DEX ranged; Finesse override) | enum-tag | n/a | s.15. |
 | **`damage_dice`** \* | dice | damage-roll | derived: damage roll | formula(`damage_dice + ability_mod`) | n/a | s.16. Min 0. |
 | **`damage_type_ref`** \* | relation→damage-type | damage-roll | derived: damage type for resistance | enum-tag | n/a | s.180. |
-| **`property_refs`** [] | relation→weapon-property[] | attack/equip | derived: behavior modifiers | enum-tag | n/a | s.89-90. Finesse/Heavy/Light/Loading/Range/Reach/Thrown/Two-Handed/Versatile/Ammunition. |
-| **`mastery_ref`** \* | relation→weapon-mastery | attack (if PC has mastery slot for this weapon) | derived: mastery effect (Cleave/Graze/Nick/Push/Sap/Slow/Topple/Vex) | enum-tag | non-stack: yalnız aktif mastery slotundaki weapon | s.90. Class.feature_table mastery slot count belirler. |
+| **`property_refs`** [] | relation→weapon-property[] | attack/equip | derived: behavior modifiers (per `weapon-property.mechanic_kind`) | enum-tag | n/a | s.89-90. **K10 kapandı:** her property `mechanic_kind` enum üstünden typed dispatch (Finesse, Heavy, Light, etc. → §1.2). |
+| **`mastery_ref`** \* | relation→weapon-mastery | attack | derived: mastery effect (per `weapon-mastery.effect_kind`) | enum-tag | non-stack: yalnız aktif mastery slotundaki weapon | s.90. **K11 kapandı:** mastery effect typed (effect_kind + effect_value + save_ability) → §1.2. Class.feature_table mastery slot count belirler. |
 | **`normal_range_ft`** | integer (≥0) | attack (ranged) | derived: normal range | set | n/a | s.90. Beyond → disadv. |
 | **`long_range_ft`** | integer (≥0) | attack (ranged) | derived: long range cap | set | n/a | s.90. Beyond → auto miss. |
 | **`versatile_damage_dice`** | dice | damage-roll (2H grip) | derived: alternate damage | replace-if-2H | n/a | s.90. Versatile property gerekli. |
@@ -459,8 +463,9 @@ SRD §6.10 packs (s.94-99).
 |---|---|---|---|---|---|---|
 | **`cost_gp`** \* | integer (≥0) | buy | `PlayerCharacter.gp` | sub | n/a | s.94+. |
 | **`weight_lb`** | float (≥0) | always | derived: carry total | sum | n/a | s.178. |
-| **`content_refs`** [] | relation→[adventuring-gear,weapon,armor,tool,ammunition][] | open/buy | `PlayerCharacter.inventory[]` | union (auto-import) | n/a | s.94+. Typed item refs; quantity narrative `contents` markdown'da. |
-| **`contents`** | markdown | open/buy | UI: quantity narrative | manual | n/a | s.94+. **Açık mekanik T5:** Quantity-on-relation desteklenmiyor; sayılar burada metin olarak. |
+| **`content_refs`** [] | relation→[adventuring-gear,weapon,armor,tool,ammunition][] | open/buy | `PlayerCharacter.inventory[]` | union (auto-import) | n/a | s.94+. Typed item refs. |
+| **`content_quantities`** | levelTable (Map<id,int>) | open/buy | `PlayerCharacter.inventory[]` qty | per-id (key=item entity ID, value=qty) | n/a | s.94+. **T5 kapandı:** Map<entity_id, qty> üstünden quantity-on-relation. e.g. {torch_id: 10}. |
+| **`contents`** | markdown | open/buy | UI: narrative | manual | n/a | s.94+. Narrative açıklama; typed `content_refs + content_quantities`. |
 
 ---
 
@@ -564,7 +569,9 @@ NPC/Monster action entry'leri. Bir attack veya non-attack action olarak çalış
 |---|---|---|---|---|---|---|
 | **`source`** | text | n/a | UI: origin (monster/NPC/class name) | manual | n/a | Grouping. |
 | **`action_type`** \* | enum{Action,Bonus Action,Reaction,Legendary Action,Lair Action,Mythic Action,Free} | use | derived: action economy slot | enum-tag | n/a | s.9-10. |
-| **`recharge`** | text | turn-start | derived: recharge dice (5-6/SR/Day) | parse-and-roll | n/a | Free-form parser gerek (e.g. "5-6" → roll d6 each turn-start). |
+| **`recharge_kind`** | enum{None,Roll,Short Rest,Long Rest,Day,Dawn,Dusk} | turn-start / rest | derived: recharge trigger | enum-tag | n/a | **T3 kapandı:** typed kind. |
+| **`recharge_min_roll`** | integer (1–6) | turn-start | derived: success roll threshold | gate (roll d6 ≥ value) | n/a | recharge_kind=Roll için. e.g. 5 = "Recharge 5–6" (66%). |
+| **`recharge`** | text | n/a | UI: narrative fallback | manual | n/a | Narrative; typed `recharge_kind + recharge_min_roll`. |
 | **`uses_per_day`** | integer (≥0) | use | derived: daily charge | sub-on-use | n/a | s.255. |
 | **`is_attack`** | boolean | attack | derived: attack roll branch | gate | n/a | true → attack_kind/attack_bonus/reach/range zorunlu. |
 | **`attack_kind`** | enum{Melee Weapon,Ranged Weapon,Melee Spell,Ranged Spell} | attack | derived: attack flow | enum-tag | n/a | **Açık mekanik #9:** spell.attack_type ile vokabüler farklı (3 vs 4 değer). |
@@ -1062,7 +1069,7 @@ user picks spell from prepared_spells (or spells_known if cantrip)
 
 Şema-vs-SRD uyuşmazlıkları. Numaralar §2/§3 satırlarındaki çapraz referanslara karşılık gelir.
 
-**Schema değişikliği uygulananlar (✅):** #1, #6 (Tier-B), #9 (kısmen), T1, T2, T4, T6, T7, T8, +Location/Scene refs, +Sense range, +Size carrying, +DamageType bypass, +Feat prereq/ASI typed, +MagicItem attunement typed, +Background/Class default_inventory_refs, +Pack content_refs (T5 kısmen), +AdvGear utilize_check, +Poison/Curse/EnvEffect typed effects, +Trap trigger_kind/conditions, +Quest typed reward, +Species/Feat/MagicItem/Trait `granted_modifiers` (Tier-B DSL).
+**Schema değişikliği uygulananlar (✅):** #1, #6 (Tier-B), #9 (kısmen), T1, T2, T3, T4, T5, T6, T7, T8, K10, K11, +Location/Scene refs, +Sense range, +Size carrying, +DamageType bypass, +Feat prereq/ASI typed, +MagicItem attunement typed, +Background/Class default_inventory_refs, +Pack content_refs+quantities, +AdvGear utilize_check, +Poison/Curse/EnvEffect typed effects, +Trap trigger_kind/conditions, +Quest typed reward, +Species/Feat/MagicItem/Trait `granted_modifiers` (Tier-B DSL), +creature-action recharge typed, +weapon-property/mastery typed effects.
 
 1. ✅ **`Class.features` / `Subclass.features` `classFeatures` typed list** — Rage uses, Sneak Attack dice, Bardic Inspiration die, Extra Attack count typed encode. (Önceden levelTable Map<int,int>.)
 
@@ -1130,12 +1137,16 @@ user picks spell from prepared_spells (or spells_known if cantrip)
 
 **Yeni FieldType enum entry'leri:** `classFeatures`, `spellEffectList`, `rangedSenseList` (Tier-A); `grantedModifiers` (Tier-B). `defaultValue: <Map<String,dynamic>>[]`. UI editor TBD; şimdilik placeholder widget.
 
+**Schema değişikliği uygulananlar — Tier-C (parser-ready typed splits):**
+- ✅ **T3** creature-action.recharge text → `recharge_kind` enum + `recharge_min_roll` int. Roll/Short Rest/Long Rest/Day/Dawn/Dusk + d6 threshold typed.
+- ✅ **T5 (tam kapanış)** Pack.content_quantities `levelTable` (Map<entity_id, int>) — quantity-on-relation paired map.
+- ✅ **K10** weapon-property.mechanic_kind enum (11 values) — typed property dispatch (Finesse/Heavy/Light/Loading/Range/Reach/Thrown/Two-Handed/Versatile/Ammunition/Improvised).
+- ✅ **K11** weapon-mastery.effect_kind enum (8 values) + effect_value int + save_ability enum — typed mastery effect (Cleave/Graze/Nick/Push/Sap/Slow/Topple/Vex).
+
 **Kalan yapısal eksikler:**
-- `creature-action.recharge` `text` ("5-6", "Short Rest") — parser gerek (T3).
-- Pack quantity-on-relation hâlâ desteklenmiyor (T5 tam kapanmadı; sayılar narrative).
-- Weapon-property + Weapon-mastery effect DSL — markdown kalıyor (K10/K11).
 - PC derived stats engine (AC formula, PB derive, passive scores) — resolver kod, schema değil (K9, V2, V4).
 - `granted_modifiers` UI editor — şu an `_StructuredListPlaceholderWidget` (TBD).
+- `classFeatures`, `spellEffectList`, `rangedSenseList` UI editor — TBD.
 
 ---
 
