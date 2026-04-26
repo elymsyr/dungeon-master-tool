@@ -300,7 +300,12 @@ EntityCategorySchema _classCategory(String schemaId, String now, int orderIndex)
   fb.integer('tool_proficiency_count', 'Tool Choice Count', min: 0, max: 3, g: grpProgression);
   fb.relation('tool_proficiency_options', 'Tool Options', const ['tool'], isList: true, g: grpProgression);
   fb.relation('armor_training_refs', 'Armor Training', const ['armor-category'], isList: true, g: grpProgression);
-  fb.markdown('starting_equipment_options', 'Starting Equipment', g: grpProgression);
+  // Typed starting inventory (auto-import to PC.inventory). Markdown options for
+  // narrative choice (Option A vs B etc.).
+  fb.relation('default_inventory_refs', 'Default Inventory',
+      const ['adventuring-gear', 'weapon', 'armor', 'tool', 'pack', 'ammunition'],
+      isList: true, g: grpProgression);
+  fb.markdown('starting_equipment_options', 'Starting Equipment Options (narrative)', g: grpProgression);
   fb.dice('starting_gold_dice', 'Starting Gold Dice', g: grpProgression);
   fb.enum_('complexity', 'Complexity', const ['Low', 'Average', 'High'], g: grpProgression);
   fb.relation('casting_ability_ref', 'Casting Ability', const ['ability'], g: grpSpellcasting);
@@ -395,8 +400,14 @@ EntityCategorySchema _backgroundCategory(String schemaId, String now, int orderI
   fb.integer('granted_language_count', 'Granted Language Count', min: 0, max: 5);
   fb.relation('ability_score_options', 'Ability Score Options', const ['ability'], isList: true, required_: true);
   fb.relation('origin_feat_ref', 'Origin Feat', const ['feat'], required_: true);
-  fb.markdown('starting_equipment', 'Starting Equipment', g: grpRules, required_: true);
+  // Typed starting equipment (auto-import to PC.inventory). Markdown kept for narrative.
+  fb.relation('default_inventory_refs', 'Default Inventory',
+      const ['adventuring-gear', 'weapon', 'armor', 'tool', 'pack', 'ammunition'],
+      isList: true, g: grpRules);
+  fb.markdown('starting_equipment', 'Starting Equipment (narrative)', g: grpRules, required_: true);
   fb.integer('starting_gold_gp', 'Starting Gold (gp)', min: 0);
+  fb.integer('gold_alternative_gp', 'Gold Alternative (gp)', min: 0,
+      help: 'Choose this gp instead of default_inventory_refs');
 
   return _mk(
     schemaId: schemaId,
@@ -419,10 +430,21 @@ EntityCategorySchema _featCategory(String schemaId, String now, int orderIndex) 
   final catId = _uuid.v4();
   final fb = _FB(catId, now);
   fb.relation('category_ref', 'Category', const ['feat-category'], required_: true);
-  fb.markdown('prerequisite', 'Prerequisite', g: grpIdentity, span: 2);
+  // Typed prerequisites (gate machinery; freeform `prerequisite_text` for narrative).
+  fb.relation('prereq_ability_ref', 'Prereq Ability', const ['ability'], g: grpIdentity);
+  fb.integer('prereq_min_score', 'Prereq Min Score', min: 1, max: 30, g: grpIdentity);
+  fb.relation('prereq_class_refs', 'Prereq Classes', const ['class'], isList: true, g: grpIdentity);
+  fb.relation('prereq_species_refs', 'Prereq Species', const ['species'], isList: true, g: grpIdentity);
+  fb.integer('prereq_min_character_level', 'Prereq Min Char Level', min: 1, max: 20, g: grpIdentity);
+  fb.boolean('prereq_requires_spellcasting', 'Requires Spellcasting', g: grpIdentity);
+  fb.markdown('prerequisite', 'Prerequisite (narrative)', g: grpIdentity, span: 2);
   fb.boolean('repeatable', 'Repeatable', required_: true);
   fb.integer('repeatable_limit', 'Repeat Limit', min: 1, max: 20, help: 'null = unlimited');
-  fb.markdown('ability_score_increase', 'Ability Score Increase', g: grpRules);
+  // Typed Ability Score Increase. ASI options + amount (often +1, sometimes +2).
+  fb.relation('asi_ability_options', 'ASI Ability Options', const ['ability'], isList: true, g: grpRules);
+  fb.integer('asi_amount', 'ASI Amount', min: 0, max: 2, defaultValue: 0, g: grpRules);
+  fb.integer('asi_max_score', 'ASI Max Score Cap', min: 1, max: 30, defaultValue: 20, g: grpRules);
+  fb.markdown('ability_score_increase', 'Ability Score Increase (narrative)', g: grpRules);
   fb.markdown('benefits', 'Benefits', g: grpRules, required_: true);
 
   return _mk(
@@ -591,7 +613,9 @@ EntityCategorySchema _adventuringGearCategory(String schemaId, String now, int o
   final fb = _FB(catId, now);
   fb.integer('cost_cp', 'Cost (cp)', required_: true, min: 0);
   fb.floatF('weight_lb', 'Weight (lb)', required_: true, min: 0);
-  fb.markdown('utilize_description', 'Utilize');
+  fb.integer('utilize_check_dc', 'Utilize Check DC', min: 0, max: 30);
+  fb.relation('utilize_ability_ref', 'Utilize Ability', const ['ability']);
+  fb.markdown('utilize_description', 'Utilize (narrative)');
   fb.boolean('consumable', 'Consumable', required_: true);
   fb.boolean('is_focus', 'Is Spellcasting Focus');
   fb.relation('focus_kind_ref', 'Focus Kind', const ['arcane-focus', 'druidic-focus', 'holy-symbol']);
@@ -642,8 +666,12 @@ EntityCategorySchema _packCategory(String schemaId, String now, int orderIndex) 
   final fb = _FB(catId, now);
   fb.integer('cost_gp', 'Cost (gp)', required_: true, min: 0);
   fb.floatF('weight_lb', 'Weight (lb)', min: 0);
-  // Quantity on relation is not supported; list contents as markdown for v1 (§9 #2).
-  fb.markdown('contents', 'Contents (markdown)', g: grpRules);
+  // Typed item refs; quantities listed in narrative markdown until quantity-on-
+  // relation is supported (T5 in field_mechanics.md §5).
+  fb.relation('content_refs', 'Content Items',
+      const ['adventuring-gear', 'weapon', 'armor', 'tool', 'ammunition'],
+      isList: true, g: grpRules);
+  fb.markdown('contents', 'Contents (narrative w/ qty)', g: grpRules);
 
   return _mk(
     schemaId: schemaId,
@@ -745,7 +773,20 @@ EntityCategorySchema _magicItemCategory(String schemaId, String now, int orderIn
   fb.relation('magic_category_ref', 'Category', const ['magic-item-category'], required_: true);
   fb.relation('rarity_ref', 'Rarity', const ['rarity'], required_: true);
   fb.boolean('requires_attunement', 'Requires Attunement', required_: true);
-  fb.markdown('attunement_prereq', 'Attunement Prerequisite', g: grpProperties);
+  // Typed attunement gates.
+  fb.relation('attunement_class_refs', 'Attunement: Classes', const ['class'],
+      isList: true, g: grpProperties);
+  fb.relation('attunement_species_refs', 'Attunement: Species', const ['species'],
+      isList: true, g: grpProperties);
+  fb.relation('attunement_alignment_refs', 'Attunement: Alignments',
+      const ['alignment'], isList: true, g: grpProperties);
+  fb.relation('attunement_min_ability_ref', 'Attunement: Min Ability',
+      const ['ability'], g: grpProperties);
+  fb.integer('attunement_min_ability_score', 'Attunement: Min Score',
+      min: 1, max: 30, g: grpProperties);
+  fb.boolean('attunement_spellcaster_only', 'Attunement: Spellcaster Only',
+      g: grpProperties);
+  fb.markdown('attunement_prereq', 'Attunement Prerequisite (narrative)', g: grpProperties);
   fb.boolean('is_cursed', 'Cursed', required_: true);
   fb.relation('base_item_ref', 'Base Item', const ['weapon', 'armor', 'adventuring-gear']);
   fb.integer('charges_max', 'Max Charges', min: 0);

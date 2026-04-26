@@ -167,7 +167,8 @@ SRD §1.4–1.8 (s.22–26).
 | **`tool_proficiency_count`** | integer (0–3) | assign (first class) | UI: tool seçim kutusu sayısı | set | first-class-only | s.25. |
 | **`tool_proficiency_options`** [] | relation→tool[] | assign (first class) | `PlayerCharacter.tool_proficiencies[]` | source | first-class-only | s.25. |
 | **`armor_training_refs`** [] | relation→armor-category[] | assign | `PlayerCharacter.armor_trainings[]` | union | per-class subset (Light+Medium+Shield genelde; Heavy & Martial sınıfa özel) | s.25, §6.8. Heavy worn without training → disadv all Str/Dex tests + no spells. |
-| **`starting_equipment_options`** | markdown | assign (first class) | `PlayerCharacter.inventory[]` | manual-import | first-class-only | s.25. Multiclass'ta gear gelmez. |
+| **`default_inventory_refs`** [] | relation→[adventuring-gear,weapon,armor,tool,pack,ammunition][] | assign (first class) | `PlayerCharacter.inventory[]` | union (auto-import) | first-class-only | s.25. Auto-import: ilk sınıf seçildiğinde PC.inventory'ye kopyalanır. |
+| **`starting_equipment_options`** | markdown | assign (first class) | UI: choice prompt | manual | first-class-only | s.25. Sadece narratif "Option A vs B" — typed import `default_inventory_refs` üstünden. |
 | **`starting_gold_dice`** | dice | assign (first class) | `PlayerCharacter.gp` | roll-and-set | first-class-only | s.83. Background ile karşılıklı (biri seçilir). |
 | **`complexity`** | enum{Low,Average,High} | n/a | — | none | n/a | UI yardımcı, mekanik yok. |
 | **`casting_ability_ref`** | relation→ability | assign | derived: `spell_save_dc`, `spell_attack_bonus` (when this class's spells used) | formula | per-class: her caster sınıf kendi ability'sini kullanır | s.106, §8.10. `spell_save_dc = 8 + PB + ability_mod(casting_ability_ref)`; `spell_attack_bonus = PB + ability_mod(casting_ability_ref)`. |
@@ -241,8 +242,10 @@ SRD §10.1 (s.83). Karakter yaratımında bir kez seçilir.
 | **`granted_language_count`** | integer (0–5) | assign | UI: language seçim sayısı → `PlayerCharacter.languages[]` | set | n/a | s.20, s.83. SRD 2024'te background language vermez genelde (0); custom homebrew için. |
 | **`ability_score_options`** \*[] | relation→ability[] | assign | `PlayerCharacter.stat_block` | manual-distribute (+2/+1 OR +1/+1/+1, max 20) | n/a | s.21, s.83. **Açık mekanik #12:** Dağılım UI seçimi; hangi alana hangi bonus gittiği schema'da yok. |
 | **`origin_feat_ref`** \* | relation→feat | assign | `PlayerCharacter.feats[]` | append | n/a | s.83. Each background bir Origin feat sağlar (Acolyte=Magic Initiate Cleric, Criminal=Alert, vs.). |
-| **`starting_equipment`** \* | markdown | assign | `PlayerCharacter.inventory[]` | manual-import | n/a | s.83. Background equipment package OR `starting_gold_gp` seçimi. |
-| **`starting_gold_gp`** | integer | assign | `PlayerCharacter.gp` | set (override) | n/a | s.83. Equipment package alternatifi (genelde 50 GP). Class.starting_gold_dice ile karşılıklı (sadece biri kullanılır). |
+| **`default_inventory_refs`** [] | relation→[adventuring-gear,weapon,armor,tool,pack,ammunition][] | assign | `PlayerCharacter.inventory[]` | union (auto-import) | n/a | s.83. Background equipment package — typed auto-import. |
+| **`starting_equipment`** \* | markdown | assign | UI: choice narrative | manual | n/a | s.83. Narrative açıklama; typed import `default_inventory_refs` üstünden. |
+| **`starting_gold_gp`** | integer | assign | `PlayerCharacter.gp` | set (override) | n/a | s.83. Default starting gold (varsa). Class.starting_gold_dice ile karşılıklı. |
+| **`gold_alternative_gp`** | integer | assign | `PlayerCharacter.gp` | set (override, replaces default_inventory_refs) | n/a | s.83. Equipment alternatifi: default_inventory yerine bu altın seçilir (genelde 50 GP). |
 
 ---
 
@@ -253,11 +256,20 @@ SRD §11 (s.87-88). 4 kategori: Origin, General, Fighting Style, Epic Boon.
 | Alan | Tip / Liste | Tetik | Hedef Stat | Operasyon | Multiclass | SRD / Notlar |
 |---|---|---|---|---|---|---|
 | **`category_ref`** \* | relation→feat-category | assign | derived: gating (origin = L1, general = L4+ ASI slot, fighting style = class-feature, epic boon = L19) | gate | n/a | s.87. |
-| **`prerequisite`** | markdown | assign | derived: eligibility | manual-validate | n/a | s.87. Free-form metin → resolver okuyup karşılaştıramaz; UI advisory. |
+| **`prereq_ability_ref`** | relation→ability | assign | derived: eligibility | gate (PC.stat_block[ability] ≥ prereq_min_score) | n/a | Typed ability prereq. |
+| **`prereq_min_score`** | integer (1–30) | assign | derived: eligibility | gate | n/a | Typed ability score gate (e.g. STR 13 for Heavy Armor Master). |
+| **`prereq_class_refs`** [] | relation→class[] | assign | derived: eligibility | gate (PC has any of these classes) | n/a | Typed class-list gate. |
+| **`prereq_species_refs`** [] | relation→species[] | assign | derived: eligibility | gate (PC.species_ref ∈ list) | n/a | Typed species gate. |
+| **`prereq_min_character_level`** | integer (1–20) | assign | derived: eligibility | gate (total_level ≥ N) | n/a | Typed level gate (Epic Boons require L19). |
+| **`prereq_requires_spellcasting`** | boolean | assign | derived: eligibility | gate (PC has any caster_kind ≠ None) | n/a | Typed spellcasting gate (Magic Initiate, Ritual Caster). |
+| **`prerequisite`** | markdown | assign | UI: narrative | manual | n/a | s.87. Narrative açıklama; gating tipli alanlar üstünden. |
 | **`repeatable`** \* | boolean | n/a | UI: same feat tekrar alınabilir flag | enum-tag | n/a | s.87. Most feats once; ASI/Skilled/Magic Initiate-variant repeatable. |
 | **`repeatable_limit`** | integer (1–20) | assign (each take) | UI: max take count | set | n/a | s.87. null = unlimited. |
-| **`ability_score_increase`** | markdown | assign | `PlayerCharacter.stat_block` | manual-distribute | n/a | s.87. Genelde "+1 STR/DEX/CON/INT/WIS/CHA (max 20)". Numeric çıkarımı manuel. |
-| **`benefits`** \* | markdown | always | derived: feat effects | manual-import | n/a | s.87. **Açık mekanik #6:** Free-form; Alert Init-bonus, Lucky reroll-on-1 gibi numeric/trigger feat'ları structurally encode edilemez. |
+| **`asi_ability_options`** [] | relation→ability[] | assign | `PlayerCharacter.stat_block[choice]` | manual-distribute | n/a | Typed ASI option list (örn. ["STR","DEX"] = STR veya DEX). |
+| **`asi_amount`** | integer (0–2) | assign | `PlayerCharacter.stat_block[choice]` | sum (within asi_max_score cap) | n/a | Typed ASI miktarı (genelde +1, bazı feat'lar +2). |
+| **`asi_max_score`** | integer (1–30) | assign | UI: cap warning | gate | n/a | ASI uygulamasında üst sınır (default 20; Epic Boons 30). |
+| **`ability_score_increase`** | markdown | assign | UI: narrative | manual | n/a | s.87. Narrative; typed alanlar `asi_*`. |
+| **`benefits`** \* | markdown | always | derived: feat effects | manual-import | n/a | s.87. **Açık mekanik #6:** Free-form; structured `granted_modifiers[]` typed DSL deferred. |
 
 ---
 
@@ -360,7 +372,9 @@ SRD §6.10 (s.94-99).
 |---|---|---|---|---|---|---|
 | **`cost_cp`** \* | integer (≥0) | buy/sell | `PlayerCharacter.{cp,sp,ep,gp,pp}` | sub/add (cp denomination) | n/a | s.94+. CP precision (Coin lookup convert). |
 | **`weight_lb`** \* | float (≥0) | always | derived: carry total | sum | n/a | s.178. |
-| **`utilize_description`** | markdown | check (Utilize action) | derived: effect | manual | n/a | s.10, s.94+. Healer's Kit, Holy Water, Caltrops, vs. |
+| **`utilize_check_dc`** | integer (0–30) | check (Utilize action) | derived: ability check DC | gate | n/a | s.10. Healer's Kit DC10 / Caltrops DC15 etc. |
+| **`utilize_ability_ref`** | relation→ability | check (Utilize action) | derived: which ability rolls check | lookup | n/a | s.10. Pair with utilize_check_dc. |
+| **`utilize_description`** | markdown | check (Utilize action) | UI: narrative effect | manual | n/a | s.10, s.94+. Narrative; typed gate `utilize_check_dc + utilize_ability_ref`. |
 | **`consumable`** \* | boolean | use | inventory remove | dec-on-use | n/a | s.94. Potion/Holy Water/Healer's Kit charge. |
 | **`is_focus`** | boolean | cast | derived: V/S/M satisfy (M slot via focus) | gate | n/a | s.96-97. Class.spellcasting_focus ile eşleşmeli. |
 | **`focus_kind_ref`** | relation→{arcane-focus,druidic-focus,holy-symbol} | cast | derived: focus kind check | enum-tag | n/a | s.96-97. is_focus=true ise dolu. |
@@ -388,7 +402,8 @@ SRD §6.10 packs (s.94-99).
 |---|---|---|---|---|---|---|
 | **`cost_gp`** \* | integer (≥0) | buy | `PlayerCharacter.gp` | sub | n/a | s.94+. |
 | **`weight_lb`** | float (≥0) | always | derived: carry total | sum | n/a | s.178. |
-| **`contents`** | markdown | open/buy | `PlayerCharacter.inventory[]` | manual-import | n/a | s.94+. **Açık konu:** Quantity-on-relation desteklenmiyor; içerik markdown olarak listelenir (notes design §9 #2). |
+| **`content_refs`** [] | relation→[adventuring-gear,weapon,armor,tool,ammunition][] | open/buy | `PlayerCharacter.inventory[]` | union (auto-import) | n/a | s.94+. Typed item refs; quantity narrative `contents` markdown'da. |
+| **`contents`** | markdown | open/buy | UI: quantity narrative | manual | n/a | s.94+. **Açık mekanik T5:** Quantity-on-relation desteklenmiyor; sayılar burada metin olarak. |
 
 ---
 
@@ -443,7 +458,13 @@ SRD §12 (s.204-253). Karaktere `inventory[]`'e girer; bazıları `attuned_items
 | **`magic_category_ref`** \* | relation→magic-item-category | n/a | UI grouping | enum-tag | n/a | s.204. Armor/Potion/Ring/Rod/Scroll/Staff/Wand/Weapon/Wondrous. |
 | **`rarity_ref`** \* | relation→rarity | buy/sell | `PlayerCharacter.gp`; UI: filter | lookup | n/a | s.205-206. Rarity.value_gp formülü (§1.2). |
 | **`requires_attunement`** \* | boolean | attune | `PlayerCharacter.attuned_items[]` | gate (max 3) | n/a | s.102. Untuned magic item still functional but limited. |
-| **`attunement_prereq`** | markdown | attune | derived: eligibility | manual-validate | n/a | s.102. Class/race/alignment-restricted attunement (Holy Avenger = Paladin). |
+| **`attunement_class_refs`** [] | relation→class[] | attune | derived: eligibility | gate (PC has any of these classes) | n/a | s.102. Holy Avenger = Paladin etc. |
+| **`attunement_species_refs`** [] | relation→species[] | attune | derived: eligibility | gate (PC.species_ref ∈ list) | n/a | s.102. Race-restricted attunement. |
+| **`attunement_alignment_refs`** [] | relation→alignment[] | attune | derived: eligibility | gate (PC.alignment_ref ∈ list) | n/a | s.102. Holy Avenger requires good alignment. |
+| **`attunement_min_ability_ref`** | relation→ability | attune | derived: eligibility | gate | n/a | Pair with attunement_min_ability_score. |
+| **`attunement_min_ability_score`** | integer (1–30) | attune | derived: eligibility | gate (PC.stat_block[ability] ≥ score) | n/a | s.102. |
+| **`attunement_spellcaster_only`** | boolean | attune | derived: eligibility | gate (PC has any caster_kind ≠ None) | n/a | s.102. |
+| **`attunement_prereq`** | markdown | attune | UI: narrative | manual | n/a | s.102. Narrative açıklama; gating tipli alanlar üstünden. |
 | **`is_cursed`** \* | boolean | attune/use | derived: cursed flag | enum-tag | n/a | s.206. Identification gizler curse'u. |
 | **`base_item_ref`** | relation→{weapon,armor,adventuring-gear} | equip | derived: base stats inheritance | source | n/a | s.207. Longsword +1 → base weapon Longsword stats + bonus. |
 | **`charges_max`** | integer (≥0) | use | derived: charge pool cap | set | n/a | s.206. |
@@ -719,7 +740,10 @@ SRD §13.4 (s.192+).
 |---|---|---|---|---|---|---|
 | **`status`** | enum{Not Started,Active,Completed,Failed} | quest-progress | UI | enum-tag | n/a | DM tracking. |
 | **`giver_ref`** | relation→npc | n/a | UI | source | n/a | Quest-giver NPC. |
-| **`reward`** | markdown | quest-complete | XP / gold / loot grant | manual-import | n/a | Free-form. |
+| **`reward_item_refs`** [] | relation→[magic-item,adventuring-gear,weapon,armor,trinket][] | quest-complete | `PlayerCharacter.inventory[]` | union (auto-grant) | n/a | Typed loot. |
+| **`reward_xp`** | integer (≥0) | quest-complete | `PlayerCharacter.xp` | sum | n/a | Typed XP grant. |
+| **`reward_gp`** | integer (≥0) | quest-complete | `PlayerCharacter.gp` | sum | n/a | Typed gold grant. |
+| **`reward`** | markdown | quest-complete | UI: narrative | manual | n/a | Narrative; typed alanlar yukarıda. |
 | **`objective`** | markdown | n/a | UI | manual | n/a | Player-visible. |
 | **`secrets`** *(dmOnly)* | markdown | n/a | UI/DM-only | manual | n/a | Hidden twist. |
 
@@ -749,14 +773,17 @@ SRD §13.4 traps (s.199).
 
 | Alan | Tip / Liste | Tetik | Hedef Stat | Operasyon | Multiclass | SRD / Notlar |
 |---|---|---|---|---|---|---|
-| **`trigger`** | markdown | n/a | UI: tetiklenme şartı | manual | n/a | s.199. |
+| **`trigger_kind`** | enum{Pressure,Tripwire,Proximity,Sound,Magical,Touch,Other} | trap-trigger | derived: trigger machinery | enum-tag | n/a | s.199. |
+| **`trigger`** | markdown | n/a | UI: narrative | manual | n/a | s.199. Narrative; typed `trigger_kind`. |
 | **`save_dc`** | integer (1–30) | save-roll | target.save attempt DC | set | n/a | s.199. |
 | **`save_ability_ref`** | relation→ability | save-roll | save attempt ability | enum-tag | n/a | s.199. |
 | **`damage_dice`** | dice | damage-roll | damage | formula | n/a | **T1 kapandı:** typed dice (önceden text). |
 | **`damage_type_ref`** | relation→damage-type | damage-roll | damage type | enum-tag | n/a | s.180. |
+| **`applied_condition_refs`** [] | relation→condition[] | save-fail | target.current_conditions | union | n/a | Typed condition grant. |
 | **`detection_dc`** | integer (1–30) | check (Perception) | derived: detect threshold | set | n/a | s.199. |
-| **`disable_dc`** | integer (1–30) | check (Thieves' Tools/Investigation) | derived: disable threshold | set | n/a | s.199. |
-| **`countermeasures`** | markdown | n/a | UI | manual | n/a | DM helper. |
+| **`disable_dc`** | integer (1–30) | check | derived: disable threshold | set | n/a | s.199. |
+| **`disable_ability_ref`** | relation→ability | check | which ability rolls disable | enum-tag | n/a | s.199. Genelde DEX (Thieves' Tools) veya INT (Investigation). |
+| **`countermeasures`** | markdown | n/a | UI: narrative | manual | n/a | DM helper. |
 
 ---
 
@@ -769,7 +796,11 @@ SRD §13.3 (s.197).
 | **`poison_kind`** \* | enum{Contact,Ingested,Inhaled,Injury} | apply | derived: delivery flow | enum-tag | n/a | s.197. |
 | **`save_dc`** | integer (1–30) | save-roll | target save DC | set | n/a | s.197. |
 | **`save_ability_ref`** | relation→ability | save-roll | save ability | enum-tag | n/a | s.197. Genelde CON. |
-| **`effect`** | markdown | apply | derived: damage/condition | manual-import | n/a | s.197. Free-form. |
+| **`damage_dice`** | dice | save-fail (or apply) | damage | formula | n/a | Typed dice — Drow Poison 3d6, Wyvern Poison 7d6, vs. |
+| **`damage_type_ref`** | relation→damage-type | damage-roll | damage type | enum-tag | n/a | s.180. Genelde Poison. |
+| **`applied_condition_refs`** [] | relation→condition[] | save-fail | target.current_conditions | union | n/a | Typed condition grant (Poisoned, Unconscious). |
+| **`duration_rounds`** | integer (≥0) | save-fail | target.condition.remaining_rounds | set | n/a | Effect süresi. |
+| **`effect`** | markdown | apply | UI: narrative | manual | n/a | s.197. Narrative; typed alanlar yukarıda. |
 | **`cost_gp`** | integer (≥0) | buy/sell | `PlayerCharacter.gp` | sub/add | n/a | s.197. |
 
 ---
@@ -780,9 +811,11 @@ SRD §13.2 (s.193).
 
 | Alan | Tip / Liste | Tetik | Hedef Stat | Operasyon | Multiclass | SRD / Notlar |
 |---|---|---|---|---|---|---|
-| **`trigger`** | markdown | n/a | UI: tetiklenme | manual | n/a | s.193. |
-| **`effect`** | markdown | apply | derived: stat modifications | manual-import | n/a | s.193. |
-| **`removed_by`** | markdown | n/a | UI: cure | manual | n/a | s.193. Remove Curse spell vs DM-defined ritual. |
+| **`trigger`** | markdown | n/a | UI: narrative | manual | n/a | s.193. |
+| **`applied_condition_refs`** [] | relation→condition[] | apply | target.current_conditions | union | n/a | Typed condition grant. |
+| **`removed_by_spell_refs`** [] | relation→spell[] | spell-cast | curse cleared | gate | n/a | Typed: Remove Curse, Greater Restoration, Wish vs. |
+| **`effect`** | markdown | apply | UI: narrative | manual | n/a | s.193. Narrative; typed `applied_condition_refs`. |
+| **`removed_by`** | markdown | n/a | UI: cure narrative | manual | n/a | s.193. Narrative; typed `removed_by_spell_refs`. |
 
 ---
 
@@ -792,7 +825,10 @@ SRD §13.4 (s.195).
 
 | Alan | Tip / Liste | Tetik | Hedef Stat | Operasyon | Multiclass | SRD / Notlar |
 |---|---|---|---|---|---|---|
-| **`effect`** | markdown | start-of-encounter / per-round | derived: damage/condition | manual-import | n/a | s.195. |
+| **`damage_dice`** | dice | save-fail | damage | formula | n/a | Typed damage (Heat, Cold, Fall vs.). |
+| **`damage_type_ref`** | relation→damage-type | damage-roll | damage type | enum-tag | n/a | s.180. |
+| **`applied_condition_refs`** [] | relation→condition[] | save-fail | target.current_conditions | union | n/a | Typed condition (Exhaustion, Frightened). |
+| **`effect`** | markdown | start-of-encounter / per-round | UI: narrative | manual | n/a | s.195. Narrative; typed alanlar yukarıda. |
 | **`save_dc`** | integer (1–30) | save-roll | target save DC | set | n/a | s.195. |
 | **`save_ability_ref`** | relation→ability | save-roll | save ability | enum-tag | n/a | s.195. |
 
@@ -967,7 +1003,7 @@ user picks spell from prepared_spells (or spells_known if cantrip)
 
 Şema-vs-SRD uyuşmazlıkları. Numaralar §2/§3 satırlarındaki çapraz referanslara karşılık gelir.
 
-**Schema değişikliği uygulananlar (✅):** #1, #9 (kısmen), T1, T2, T4, T6, T7, T8, +Location/Scene refs, +Sense range, +Size carrying, +DamageType bypass.
+**Schema değişikliği uygulananlar (✅):** #1, #9 (kısmen), T1, T2, T4, T6, T7, T8, +Location/Scene refs, +Sense range, +Size carrying, +DamageType bypass, +Feat prereq/ASI typed, +MagicItem attunement typed, +Background/Class default_inventory_refs, +Pack content_refs (T5 kısmen), +AdvGear utilize_check, +Poison/Curse/EnvEffect typed effects, +Trap trigger_kind/conditions, +Quest typed reward.
 
 1. ✅ **`Class.features` / `Subclass.features` `classFeatures` typed list** — Rage uses, Sneak Attack dice, Bardic Inspiration die, Extra Attack count typed encode. (Önceden levelTable Map<int,int>.)
 
@@ -997,7 +1033,7 @@ user picks spell from prepared_spells (or spells_known if cantrip)
 
 14. **`Animal` slug Monster duplicate** — şema seviyesinde `_animalCategory()` Monster field listesini `copyWith` ile rebuild eder. Field semantikleri özdeş; doc §2.20 sadece delta paragraf. UI/import/codec ayrı slug filter için ayrı.
 
-**Schema değişikliği uygulananlar bu iterasyonda:**
+**Schema değişikliği uygulananlar — Tier-A (önceki):**
 - ✅ **K1** Class.features / Subclass.features → `classFeatures` typed.
 - ✅ **K5/E1-E4** Spell.effects → `spellEffectList` typed (damage/heal/condition/save_effect/scaling).
 - ✅ **K5/E2** Spell.applied_condition_refs → `relation→condition[]`.
@@ -1013,12 +1049,25 @@ user picks spell from prepared_spells (or spells_known if cantrip)
 - ✅ **+Location** Location.illumination_ref + hazard_refs[] eklendi (doc-cited).
 - ✅ **+Scene** Scene.illumination_ref + travel_pace_ref eklendi (doc-cited).
 
-**Yeni FieldType enum entry'leri:** `classFeatures`, `spellEffectList`, `rangedSenseList`. `defaultValue: <Map<String,dynamic>>[]`. UI editor TBD; şimdilik placeholder widget.
+**Schema değişikliği uygulananlar — Tier-A.2 (pass-2 audit):**
+- ✅ **Class.default_inventory_refs** — `relation→[adventuring-gear,weapon,armor,tool,pack,ammunition][]` typed inventory auto-import; `starting_equipment_options` markdown narrative kalır.
+- ✅ **Background.default_inventory_refs + gold_alternative_gp** — typed equipment package + alternatif altın seçim.
+- ✅ **Feat typed prereqs:** `prereq_ability_ref`, `prereq_min_score`, `prereq_class_refs[]`, `prereq_species_refs[]`, `prereq_min_character_level`, `prereq_requires_spellcasting`. **Açık #6 kısmen kapandı:** ASI typed (`asi_ability_options[]`, `asi_amount`, `asi_max_score`); `benefits` markdown kalır (granted_modifiers Tier-B).
+- ✅ **MagicItem typed attunement:** `attunement_class_refs[]`, `attunement_species_refs[]`, `attunement_alignment_refs[]`, `attunement_min_ability_ref + attunement_min_ability_score`, `attunement_spellcaster_only`. Holy Avenger (Paladin), Defender (good), gating typed.
+- ✅ **Pack.content_refs** — T5 kısmen kapandı (typed item refs; quantity hâlâ markdown).
+- ✅ **Adventuring Gear.utilize_check_dc + utilize_ability_ref** — typed Utilize action gate (Healer's Kit DC10 WIS, vs.).
+- ✅ **Poison typed effects:** `damage_dice`, `damage_type_ref`, `applied_condition_refs[]`, `duration_rounds`. `effect` markdown narrative kalır.
+- ✅ **Curse typed:** `applied_condition_refs[]`, `removed_by_spell_refs[]` (Remove Curse, Greater Restoration, Wish).
+- ✅ **EnvEffect typed:** `damage_dice`, `damage_type_ref`, `applied_condition_refs[]`.
+- ✅ **Trap typed:** `trigger_kind` enum, `applied_condition_refs[]`, `disable_ability_ref`.
+- ✅ **Quest typed reward:** `reward_item_refs[]`, `reward_xp`, `reward_gp`. `reward` markdown narrative kalır.
 
-**Ek notlar (kalan yapısal eksikler — bu iterasyonda dokunulmadı):**
+**Yeni FieldType enum entry'leri (Tier-A):** `classFeatures`, `spellEffectList`, `rangedSenseList`. `defaultValue: <Map<String,dynamic>>[]`. UI editor TBD; şimdilik placeholder widget. Pass-2 yeni FieldType eklemedi — mevcut `relation/integer/dice/enum/boolean` tipleri yeterli.
+
+**Kalan yapısal eksikler:**
 - `creature-action.recharge` `text` ("5-6", "Short Rest") — parser gerek (T3).
-- `Pack.contents` markdown — quantity-on-relation desteği yok (T5; design §9 #2).
-- Species/Feat/MagicItem `granted_modifiers[]` typed bonus listesi — büyük yapısal değişiklik (Tier-B).
+- Pack quantity-on-relation hâlâ desteklenmiyor (T5 tam kapanmadı; sayılar narrative).
+- Species/Feat/MagicItem/Trait `granted_modifiers[]` typed bonus listesi — büyük yapısal değişiklik (Tier-B). Numeric trait bonuses (Lucky reroll, Tough +HP, Cloak of Protection +1 AC/save).
 - Weapon-property + Weapon-mastery effect DSL — markdown kalıyor (K10/K11).
 - PC derived stats engine (AC formula, PB derive, passive scores) — resolver kod, schema değil (K9, V2, V4).
 
