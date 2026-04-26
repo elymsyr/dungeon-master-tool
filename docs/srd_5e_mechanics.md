@@ -119,11 +119,11 @@ Sayfa referansları PDF'in 364-sayfa SRD v5.2.1 ile birebir hizalanmıştır (ya
 - [x] [x] [ ] **Weapon proficiency** — PB to attack roll (s.6, 89)
 
 ### 2.5 Advantage / Disadvantage (s.7-8)
-- [x] [x] [ ] **Roll 2d20, take higher (adv) / lower (disadv)** (s.8)
+- [ ] [x] [ ] **Roll 2d20, take higher (adv) / lower (disadv)** (s.8)
 - [x] [x] [ ] **Stack-iptal** — birden fazla adv/disadv aynı roll'da olunca biri varsa diğeri = neither (s.8)
 - [x] [x] [ ] **Cancel even if multiple sides** — 2 disadv + 1 adv = neither, hala (s.8)
 - [x] [x] [ ] **Reroll ile etkileşim** — adv/disadv ile rollanmış 2 zardan sadece biri reroll (s.8)
-- [x] [x] [ ] **Heroic Inspiration reroll** — d20 sonrası reroll, yeni sonuç kullanılır; aynı anda max 1 (s.8)
+- [ ] [x] [ ] **Heroic Inspiration reroll** — d20 sonrası reroll, yeni sonuç kullanılır; aynı anda max 1 (s.8)
 
 ---
 
@@ -132,7 +132,7 @@ Sayfa referansları PDF'in 364-sayfa SRD v5.2.1 ile birebir hizalanmıştır (ya
 ### 3.1 Combat Akışı (s.13)
 - [x] [x] [ ] **3 Adım** — Establish Positions → Roll Initiative → Take Turns (s.13)
 - [x] [x] [ ] **Initiative = d20 + Dex (or 10+Dex score)** — yüksekten düşüğe sıralanır (s.13)
-- [x] [x] [ ] **Surprise = Disadvantage on Initiative roll** (s.13, 189)
+- [ ] [x] [ ] **Surprise = Disadvantage on Initiative roll** (s.13, 189)
 - [x] [x] [ ] **Round = ~6 saniye** (s.13)
 - [x] [x] [ ] **Tie: monsters arası GM, players arası player, mixed GM seçer** (s.13)
 - [x] [x] [ ] **Ending Combat** — bir taraf yenildiğinde / surrender / flee / mutual end (s.14)
@@ -196,7 +196,7 @@ Sayfa referansları PDF'in 364-sayfa SRD v5.2.1 ile birebir hizalanmıştır (ya
 - [ ] [x] [ ] **Roll 1 = automatic miss** (s.7)
 - [ ] [x] [ ] **Critical Hit = damage dice ×2 + mod** (Sneak Attack vs dahil) (s.16, 179)
 - [x] [x] [ ] **Unseen Attacker** — disadv on attack vs unseen target; adv vs seen-but-can't-see-you target (s.14)
-- [x] [x] [ ] **Unseen Target reveals on hit/miss** — pozisyon belli olur (s.14)
+- [ ] [x] [ ] **Unseen Target reveals on hit/miss** — pozisyon belli olur (s.14)
 
 ### 3.9 Cover (s.15)
 - [x] [x] [ ] **Half Cover** — +2 AC, +2 Dex saves (en az ½ kaplı) (s.15)
@@ -206,7 +206,7 @@ Sayfa referansları PDF'in 364-sayfa SRD v5.2.1 ile birebir hizalanmıştır (ya
 
 ### 3.10 Ranged Attacks (s.15)
 - [x] [x] [ ] **Range = (normal/long) ft** — long beyond = disadv, beyond long = miss (s.15)
-- [x] [x] [ ] **Ranged in close combat = disadv** if hostile within 5ft, sees, not Incapacitated (s.15)
+- [ ] [x] [ ] **Ranged in close combat = disadv** if hostile within 5ft, sees, not Incapacitated (s.15)
 
 ### 3.11 Melee Attacks (s.15)
 - [x] [x] [ ] **Reach default 5 ft** (s.15, 186)
@@ -229,12 +229,12 @@ Sayfa referansları PDF'in 364-sayfa SRD v5.2.1 ile birebir hizalanmıştır (ya
 - [x] [x] [ ] **Mount/Dismount = ½ Speed cost** (s.15)
 - [x] [x] [ ] **Controlled mount: Initiative değişir, mount Dash/Disengage/Dodge yapar** (s.16)
 - [x] [x] [ ] **Independent mount: kendi Initiative'i, kendi davranır** (s.16)
-- [x] [x] [ ] **Forced movement → DC 10 Dex save or Prone** (s.16)
-- [x] [x] [ ] **Knocked Prone (mount or rider) → save same DC** (s.16)
+- [ ] [x] [ ] **Forced movement → DC 10 Dex save or Prone** (s.16)
+- [ ] [x] [ ] **Knocked Prone (mount or rider) → save same DC** (s.16)
 
 ### 3.15 Underwater Combat (s.16)
-- [x] [x] [ ] **Melee weapon underwater (no Swim Speed) = disadv unless Piercing** (s.16)
-- [x] [x] [ ] **Ranged: long range auto-miss, normal range disadv** (s.16)
+- [ ] [x] [ ] **Melee weapon underwater (no Swim Speed) = disadv unless Piercing** (s.16)
+- [ ] [x] [ ] **Ranged: long range auto-miss, normal range disadv** (s.16)
 - [x] [x] [ ] **Fire Resistance underwater** (s.16)
 
 ### 3.16 Two-Weapon Fighting (Light property) (s.89)
@@ -252,10 +252,10 @@ Sayfa referansları PDF'in 364-sayfa SRD v5.2.1 ile birebir hizalanmıştır (ya
 - [ ] [x] [ ] **HP loss no capability impact until 0** (s.16)
 
 ### 4.2 Damage Roll (s.16)
-- [x] [x] [ ] **Weapon: damage die + ability mod** (s.16)
+- [ ] [x] [ ] **Weapon: damage die + ability mod** (s.16)
 - [x] [x] [ ] **Spell: per spell description** (s.16)
 - [ ] [x] [ ] **Min 0 dmg (no negative)** (s.16)
-- [x] [x] [ ] **No mod to fixed damage (e.g. Blowgun)** (s.16)
+- [ ] [x] [ ] **No mod to fixed damage (e.g. Blowgun)** (s.16)
 
 ### 4.3 Damage Types (13) (s.16, 180)
 - [x] [x] [ ] **Acid / Bludgeoning / Cold / Fire / Force / Lightning / Necrotic / Piercing / Poison / Psychic / Radiant / Slashing / Thunder** (s.180)
@@ -313,7 +313,7 @@ Sayfa referansları PDF'in 364-sayfa SRD v5.2.1 ile birebir hizalanmıştır (ya
 - [x] [x] [ ] **Spend Hit Dice during SR — d + Con** min 1 HP (s.187)
 - [x] [x] [ ] **SR Interrupt** — Initiative / non-cantrip cast / damage (s.187)
 - [x] [x] [ ] **Long Rest = 8 hours** (≥6 sleep + ≤2 light activity) (s.185)
-- [x] [x] [ ] **LR: full HP + ½ HD restore + scores reset + −1 Exhaustion** (s.185)
+- [ ] [x] [ ] **LR: full HP + ½ HD restore + scores reset + −1 Exhaustion** (s.185)
 - [x] [x] [ ] **LR Interrupt** — Initiative / non-cantrip cast / damage / 1h walking; ≥1h before interrupt → SR benefit (s.185)
 - [x] [x] [ ] **No 2nd LR within 16 hours** (s.185)
 
@@ -409,14 +409,14 @@ Tüm conditions: stack-etmez (Exhaustion hariç). Source: s.179.
 - [x] [x] [ ] **Versatile (dN)** — 2-handed = dN damage (s.90)
 
 ### 6.5 Weapon Mastery (8 properties) (s.90)
-- [x] [x] [ ] **Cleave** — hit + extra atk vs creature within 5ft (no mod dmg), 1/turn (s.90)
-- [x] [x] [ ] **Graze** — miss → ability mod damage (s.90)
+- [ ] [x] [ ] **Cleave** — hit + extra atk vs creature within 5ft (no mod dmg), 1/turn (s.90)
+- [ ] [x] [ ] **Graze** — miss → ability mod damage (s.90)
 - [x] [x] [ ] **Nick** — Light extra attack within Attack action instead of BA (s.90)
-- [x] [x] [ ] **Push** — hit Large or smaller → push 10 ft (s.90)
-- [x] [x] [ ] **Sap** — hit → target's next attack disadv (s.90)
-- [x] [x] [ ] **Slow** — hit → Speed −10 ft (max −10) (s.90)
-- [x] [x] [ ] **Topple** — hit → Con save DC 8+abil+PB or Prone (s.90)
-- [x] [x] [ ] **Vex** — hit → adv on next attack vs same target (s.90)
+- [ ] [x] [ ] **Push** — hit Large or smaller → push 10 ft (s.90)
+- [ ] [x] [ ] **Sap** — hit → target's next attack disadv (s.90)
+- [ ] [x] [ ] **Slow** — hit → Speed −10 ft (max −10) (s.90)
+- [ ] [x] [ ] **Topple** — hit → Con save DC 8+abil+PB or Prone (s.90)
+- [ ] [x] [ ] **Vex** — hit → adv on next attack vs same target (s.90)
 - [x] [x] [ ] **Mastery requires class feature** — not all weapon users get it (s.90)
 
 ### 6.6 Improvised Weapons (s.90, 183)
@@ -1044,7 +1044,7 @@ Tüm conditions: stack-etmez (Exhaustion hariç). Source: s.179.
 
 ### 13.2 Falling (s.182)
 - [x] [x] [ ] **1d6 / 10ft, max 20d6** (s.182)
-- [x] [x] [ ] **Prone unless avoided damage** (s.182)
+- [ ] [x] [ ] **Prone unless avoided damage** (s.182)
 - [x] [x] [ ] **Falls into water/liquid → DC 15 Athletics/Acrobatics → ½ dmg** (s.182)
 
 ### 13.3 Dehydration (s.181)
@@ -1089,7 +1089,7 @@ Tüm conditions: stack-etmez (Exhaustion hariç). Source: s.179.
 
 ### 13.9 Fear & Mental Stress (s.196)
 - [x] [x] [ ] **Fear DC examples**: harmless apparition 10, fear-trap 15, Abyss portal 20 (s.196)
-- [x] [x] [ ] **Frightened condition + extra effects (Dash away, attacks vs adv, BA limits)** (s.196)
+- [ ] [x] [ ] **Frightened condition + extra effects (Dash away, attacks vs adv, BA limits)** (s.196)
 - [x] [x] [ ] **Mental Stress = Psychic damage; Wis save (sometimes Int/Cha)** (s.196)
 - [x] [x] [ ] **Sample stress DCs**: hallucinogen DC 10/1d6, fiendish idol DC 15/3d6, Far Realm DC 20/9d6 (s.196)
 - [x] [x] [ ] **Prolonged effects**: Short-term (1d10m Frightened/Incapac/Stunned), Long-term (1d10×10h disadv), Indefinite (Greater Restoration only) (s.196)
