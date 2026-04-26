@@ -12,6 +12,7 @@ import '../../dialogs/entity_selector_dialog.dart';
 import '../../dialogs/media_gallery_dialog.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../markdown_text_area.dart';
+import 'structured_list_field_widgets.dart';
 
 /// Schema-driven field widget factory.
 /// Her FieldType için uygun widget döndürür.
@@ -69,11 +70,14 @@ class FieldWidgetFactory {
       FieldType.image => _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, mediaDir: mediaDir),
       FieldType.file => _FileFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.pdf => _PdfFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, ref: ref),
-      FieldType.classFeatures ||
-      FieldType.spellEffectList ||
-      FieldType.rangedSenseList ||
-      FieldType.grantedModifiers =>
-        _StructuredListPlaceholderWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.classFeatures => ClassFeaturesFieldWidget(
+          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+      FieldType.spellEffectList => SpellEffectListFieldWidget(
+          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
+      FieldType.rangedSenseList => RangedSenseListFieldWidget(
+          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
+      FieldType.grantedModifiers => GrantedModifiersFieldWidget(
+          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
       _ => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
     };
   }
@@ -2412,39 +2416,6 @@ class _DiceFieldWidgetState extends State<_DiceFieldWidget> {
           prefixIcon: const Icon(Icons.casino, size: 18),
         ),
         onChanged: (v) => widget.onChanged(v),
-      ),
-    );
-  }
-}
-
-/// Placeholder for typed-list field types (classFeatures, spellEffectList,
-/// rangedSenseList). JSON read-only display until structured editor lands.
-class _StructuredListPlaceholderWidget extends StatelessWidget {
-  final FieldSchema schema;
-  final dynamic value;
-  final bool readOnly;
-  final ValueChanged<dynamic> onChanged;
-
-  const _StructuredListPlaceholderWidget({
-    required this.schema,
-    required this.value,
-    required this.readOnly,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final list = value is List ? value as List : const [];
-    final summary = list.isEmpty ? '— empty —' : '${list.length} entries (typed list, structured editor TBD)';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: schema.label,
-          isDense: true,
-          prefixIcon: const Icon(Icons.list_alt, size: 18),
-        ),
-        child: Text(summary, style: Theme.of(context).textTheme.bodySmall),
       ),
     );
   }
