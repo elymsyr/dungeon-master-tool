@@ -6,6 +6,7 @@ import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/package_provider.dart';
+import '../../../application/services/srd_core_package_bootstrap.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
@@ -110,10 +111,14 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                         itemBuilder: (context, index) {
                           final info = packages[index];
                           final isSelected = index == _selectedIndex;
+                          final isBuiltin = info.name == srdCorePackageName;
                           final metaAsync =
                               ref.watch(packageMetadataProvider(info.name));
                           final meta =
                               metaAsync.valueOrNull ?? const <String, dynamic>{};
+                          final subtitle = isBuiltin
+                              ? 'Built-in · ${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}'
+                              : '${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}';
                           return InkWell(
                             borderRadius: palette.br,
                             onTap: () =>
@@ -134,10 +139,11 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                                 ),
                               ),
                               child: MetadataListTile(
-                                icon: Icons.inventory_2,
+                                icon: isBuiltin
+                                    ? Icons.auto_stories
+                                    : Icons.inventory_2,
                                 name: info.name,
-                                subtitle:
-                                    '${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}',
+                                subtitle: subtitle,
                                 description:
                                     (meta['description'] as String?) ?? '',
                                 tags: ((meta['tags'] as List?) ?? const [])
@@ -182,9 +188,16 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                     ),
                   ),
                   const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: _selectedIndex >= 0 ? _copyPackage : null,
+                    icon: const Icon(Icons.content_copy, size: 18),
+                    label: const Text('Copy'),
+                  ),
+                  const SizedBox(width: 8),
                   FilledButton.icon(
-                    onPressed:
-                        _selectedIndex >= 0 ? () => _deletePackage() : null,
+                    onPressed: _selectedIndex >= 0 && !_isBuiltinSelected()
+                        ? () => _deletePackage()
+                        : null,
                     icon: const Icon(Icons.delete_outline, size: 18),
                     label: Text(l10n.btnDelete),
                     style: FilledButton.styleFrom(
@@ -309,6 +322,84 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
         ),
       ),
     );
+  }
+
+  Future<void> _copyPackage() async {
+    final packages = ref.read(packageListProvider).valueOrNull ?? [];
+    if (_selectedIndex < 0 || _selectedIndex >= packages.length) return;
+    final source = packages[_selectedIndex].name;
+
+    // Suggest a unique destination name. For the built-in pack the convention
+    // is "<name> (Copy)"; on collisions append " (Copy 2)", " (Copy 3)", …
+    String dest = source == srdCorePackageName
+        ? '$source (Copy)'
+        : '$source (Copy)';
+    final existingNames =
+        packages.map((p) => p.name).toSet();
+    var n = 2;
+    while (existingNames.contains(dest)) {
+      dest = '$source (Copy $n)';
+      n++;
+    }
+
+    final controller = TextEditingController(text: dest);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Copy Package'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'New package name'),
+          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Copy'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (newName == null || newName.isEmpty) return;
+    if (existingNames.contains(newName)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Package "$newName" already exists')),
+        );
+      }
+      return;
+    }
+
+    try {
+      await ref.read(packageRepositoryProvider).copy(
+            sourceName: source,
+            destinationName: newName,
+          );
+      ref.invalidate(packageListProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Copied "$source" → "$newName"')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Copy failed: $e')),
+        );
+      }
+    }
+  }
+
+  bool _isBuiltinSelected() {
+    final packages = ref.read(packageListProvider).valueOrNull ?? [];
+    if (_selectedIndex < 0 || _selectedIndex >= packages.length) return false;
+    return packages[_selectedIndex].name == srdCorePackageName;
   }
 
   void _deletePackage() {

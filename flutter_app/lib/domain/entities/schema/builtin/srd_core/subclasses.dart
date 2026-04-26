@@ -1,0 +1,3 @@
+// SRD 5.2.1 Subclasses (one per class; embedded in each class section
+// pp. 28–82). e.g. Path of the Berserker, College of Lore, Life Domain, …
+List<Map<String, dynamic>> srdSubclasses() => const [];
