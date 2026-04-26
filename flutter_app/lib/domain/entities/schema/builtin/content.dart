@@ -683,7 +683,11 @@ EntityCategorySchema _packCategory(String schemaId, String now, int orderIndex) 
   fb.relation('content_refs', 'Content Items',
       const ['adventuring-gear', 'weapon', 'armor', 'tool', 'ammunition'],
       isList: true, g: grpRules);
-  fb.markdown('contents', 'Contents (narrative w/ qty)', g: grpRules);
+  // Map<entity_id, quantity> — paired with content_refs to give per-item counts
+  // (e.g. "10 torches"). Stored as levelTable shape (Map<String,int>) since FieldType
+  // does not have a generic "id->int" map; key is item entity ID, value is quantity.
+  fb.levelTable('content_quantities', 'Content Quantities (id→qty)', g: grpRules);
+  fb.markdown('contents', 'Contents (narrative)', g: grpRules);
 
   return _mk(
     schemaId: schemaId,
@@ -967,7 +971,11 @@ EntityCategorySchema _creatureActionCategory(String schemaId, String now, int or
     'Mythic Action',
     'Free',
   ], required_: true);
-  fb.text('recharge', 'Recharge', help: 'e.g. "5-6", "Short Rest", "Day"');
+  fb.enum_('recharge_kind', 'Recharge Kind',
+      const ['None', 'Roll', 'Short Rest', 'Long Rest', 'Day', 'Dawn', 'Dusk']);
+  fb.integer('recharge_min_roll', 'Recharge Min Roll', min: 1, max: 6,
+      help: 'Roll d6; success if ≥ this. e.g. 5 means "Recharge 5–6"');
+  fb.text('recharge', 'Recharge (narrative)', help: 'Free-form fallback');
   fb.integer('uses_per_day', 'Uses / Day', min: 0);
   fb.boolean('is_attack', 'Is Attack');
   fb.enum_('attack_kind', 'Attack Kind', const [
