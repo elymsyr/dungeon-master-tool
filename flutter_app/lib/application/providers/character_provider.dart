@@ -213,6 +213,7 @@ Map<String, dynamic> _defaultFieldsFor(EntityCategorySchema cat) {
       FieldType.classFeatures => const <Map<String, dynamic>>[],
       FieldType.spellEffectList => const <Map<String, dynamic>>[],
       FieldType.rangedSenseList => const <Map<String, dynamic>>[],
+      FieldType.grantedModifiers => const <Map<String, dynamic>>[],
       _ => null,
     };
   }

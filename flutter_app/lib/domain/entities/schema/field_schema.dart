@@ -32,6 +32,7 @@ enum FieldType {
   classFeatures,  // List<{level:int, name, kind: passive|resource|extra-attack|spellcasting-bump|ability-improvement, dice, uses, recharge, description}>
   spellEffectList,// List<{kind: damage|heal|condition|buff|debuff, dice, type_ref, save_ability_ref, save_effect: none|half|negate|partial, condition_refs[], scaling_dice}>
   rangedSenseList,// List<{sense_ref, range_ft}> — sense ref + range pair listesi (Darkvision 60ft, Truesight 120ft)
+  grantedModifiers,// List<{kind, target_kind, target_ref, value, condition_ref, scaling}> — typed bonus DSL: AC/save/skill/HP/speed/proficiency/sense/spell grants. Species traits, feat benefits, magic item effects.
 }
 
 /// Alan görünürlüğü — online modda kimin görebileceğini belirler.

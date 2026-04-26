@@ -229,6 +229,16 @@ class _FB {
         defaultValue: const <Map<String, dynamic>>[],
       );
 
+  void grantedModifiers(String k, String l, {String g = grpRules}) =>
+      _base(
+        key: k,
+        label: l,
+        type: FieldType.grantedModifiers,
+        groupId: g,
+        gridSpan: 2,
+        defaultValue: const <Map<String, dynamic>>[],
+      );
+
   void statBlock(String k, String l, {String g = grpAbilityScores}) =>
       _base(
         key: k,
@@ -368,7 +378,8 @@ EntityCategorySchema _speciesCategory(String schemaId, String now, int orderInde
   fb.relation('size_ref', 'Size', const ['size'], required_: true);
   fb.integer('speed_ft', 'Speed (ft)', required_: true, min: 0, max: 120);
   fb.relation('creature_type_ref', 'Creature Type', const ['creature-type'], required_: true);
-  fb.markdown('traits', 'Traits', g: grpRules, required_: true);
+  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
+  fb.markdown('traits', 'Traits (narrative)', g: grpRules, required_: true);
   fb.relation('granted_languages', 'Granted Languages', const ['language'], isList: true);
   fb.relation('granted_senses', 'Granted Senses', const ['sense'], isList: true);
   fb.relation('granted_damage_resistances', 'Damage Resistances', const ['damage-type'], isList: true);
@@ -445,7 +456,8 @@ EntityCategorySchema _featCategory(String schemaId, String now, int orderIndex) 
   fb.integer('asi_amount', 'ASI Amount', min: 0, max: 2, defaultValue: 0, g: grpRules);
   fb.integer('asi_max_score', 'ASI Max Score Cap', min: 1, max: 30, defaultValue: 20, g: grpRules);
   fb.markdown('ability_score_increase', 'Ability Score Increase (narrative)', g: grpRules);
-  fb.markdown('benefits', 'Benefits', g: grpRules, required_: true);
+  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
+  fb.markdown('benefits', 'Benefits (narrative)', g: grpRules, required_: true);
 
   return _mk(
     schemaId: schemaId,
@@ -798,7 +810,8 @@ EntityCategorySchema _magicItemCategory(String schemaId, String now, int orderIn
     required_: true,
   );
   fb.text('command_word', 'Command Word');
-  fb.markdown('effects', 'Effects', required_: true, g: grpRules);
+  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
+  fb.markdown('effects', 'Effects (narrative)', required_: true, g: grpRules);
   fb.integer('cost_gp', 'Cost (gp)', min: 0, g: grpCostWeight);
   fb.floatF('weight_lb', 'Weight (lb)', min: 0, g: grpCostWeight);
   fb.boolean('is_sentient', 'Sentient', required_: true);
@@ -920,7 +933,8 @@ EntityCategorySchema _traitCategory(String schemaId, String now, int orderIndex)
     'Spellcasting',
     'Other',
   ]);
-  fb.markdown('description', 'Description', g: grpRules);
+  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
+  fb.markdown('description', 'Description (narrative)', g: grpRules);
 
   return _mk(
     schemaId: schemaId,
