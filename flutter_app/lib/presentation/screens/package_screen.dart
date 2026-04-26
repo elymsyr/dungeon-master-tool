@@ -13,6 +13,7 @@ import '../../application/providers/media_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
+import '../../application/services/srd_core_package_bootstrap.dart';
 import '../../core/config/app_paths.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/repositories/campaign_repository.dart';
@@ -357,15 +358,26 @@ class _PackageScreenContentState
               }
             },
           ),
-          // Edit Mode toggle
-          IconButton(
-            icon: Icon(
-              _editMode ? Icons.lock_open : Icons.lock,
-              color: _editMode ? palette.tokenBorderActive : null,
-            ),
-            tooltip: 'Edit Mode',
-            onPressed: () => setState(() => _editMode = !_editMode),
-          ),
+          // Edit Mode toggle — disabled for built-in (read-only) packages.
+          Builder(builder: (_) {
+            final isBuiltin = widget.packageName == srdCorePackageName;
+            return IconButton(
+              icon: Icon(
+                isBuiltin
+                    ? Icons.lock_outline
+                    : (_editMode ? Icons.lock_open : Icons.lock),
+                color: _editMode && !isBuiltin
+                    ? palette.tokenBorderActive
+                    : null,
+              ),
+              tooltip: isBuiltin
+                  ? 'Built-in package — read only. Use "Copy" from the Packages tab to make an editable clone.'
+                  : 'Edit Mode',
+              onPressed: isBuiltin
+                  ? null
+                  : () => setState(() => _editMode = !_editMode),
+            );
+          }),
           const SizedBox(width: 4),
         ],
       ),

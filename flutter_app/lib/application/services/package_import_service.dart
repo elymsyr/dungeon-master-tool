@@ -18,11 +18,14 @@ const _uuid = Uuid();
 class PackageImportService {
   /// Import işlemini gerçekleştir.
   /// Dönen değer: import edilen entity sayısı.
+  ///
+  /// [pushUndo] = false → undo stack'e basma (built-in SRD bootstrap için).
   int importPackage({
     required Map<String, dynamic> packageEntities,
     required WorldSchema packageSchema,
     required WorldSchema worldSchema,
     required EntityNotifier entityNotifier,
+    bool pushUndo = true,
   }) {
     if (packageEntities.isEmpty) return 0;
 
@@ -44,8 +47,10 @@ class PackageImportService {
       idMapping[oldId] = _uuid.v4();
     }
 
-    // Mevcut state'i undo stack'e kaydet (tek adım)
-    entityNotifier.pushUndo(entityNotifier.currentEntities);
+    // Mevcut state'i undo stack'e kaydet (tek adım) — bootstrap path skip eder.
+    if (pushUndo) {
+      entityNotifier.pushUndo(entityNotifier.currentEntities);
+    }
 
     var importCount = 0;
     final newEntities = <String, Entity>{};
@@ -215,5 +220,37 @@ class PackageImportService {
   List<String> _toStringList(dynamic value) {
     if (value is List) return value.map((e) => e.toString()).toList();
     return [];
+  }
+
+  /// SRD pack'inde Tier-0 lookup'lara `{'_lookup': '<slug>', 'name': '<row>'}`
+  /// placeholder ile referans verilir (UUID kampanyaya göre değişir).
+  /// Import sırasında [tier0NameToId] üzerinden gerçek UUID'ye çevrilir.
+  /// `tier0NameToId[slug] = { rowName -> rowUuid }`.
+  ///
+  /// Map değerleri her zaman `Map<String, dynamic>` döner (jsonEncode +
+  /// drift companion'ları bunu bekler).
+  static dynamic resolveLookupPlaceholder(
+      dynamic value, Map<String, Map<String, String>> tier0NameToId) {
+    if (value is Map) {
+      final lookup = value['_lookup'];
+      final name = value['name'];
+      if (lookup is String && name is String) {
+        return tier0NameToId[lookup]?[name] ?? '';
+      }
+      // Nested map (e.g. structured field) — recurse on values, preserving
+      // the strong String→dynamic typing so downstream jsonEncode doesn't
+      // see _Map<dynamic, dynamic>.
+      final out = <String, dynamic>{};
+      value.forEach((k, v) {
+        out[k.toString()] = resolveLookupPlaceholder(v, tier0NameToId);
+      });
+      return out;
+    }
+    if (value is List) {
+      return value
+          .map((e) => resolveLookupPlaceholder(e, tier0NameToId))
+          .toList();
+    }
+    return value;
   }
 }

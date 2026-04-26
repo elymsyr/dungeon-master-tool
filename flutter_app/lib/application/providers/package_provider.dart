@@ -9,6 +9,7 @@ import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/package_repository.dart';
+import '../services/srd_core_package_bootstrap.dart';
 import 'campaign_provider.dart' show campaignRevisionProvider;
 
 final packageLocalDsProvider = Provider((_) => PackageLocalDataSource());
@@ -20,8 +21,18 @@ final packageRepositoryProvider = Provider<PackageRepository>(
   ),
 );
 
+/// Built-in SRD content pack auto-install gate. Runs once per app session;
+/// materialises the hand-authored SRD 5.2.1 pack as a real Packages row so
+/// the Packages tab can list it like any user package.
+final srdCorePackageBootstrapProvider = FutureProvider<void>((ref) async {
+  final db = ref.watch(appDatabaseProvider);
+  await SrdCorePackageBootstrap(db).ensureInstalled();
+});
+
 /// Paket listesi — hub ekranında gösterim için.
-final packageListProvider = FutureProvider<List<PackageInfo>>((ref) {
+/// SRD content pack startup'ta install edilir, sonra listing fetch edilir.
+final packageListProvider = FutureProvider<List<PackageInfo>>((ref) async {
+  await ref.watch(srdCorePackageBootstrapProvider.future);
   return ref.watch(packageRepositoryProvider).getPackageInfoList();
 });
 

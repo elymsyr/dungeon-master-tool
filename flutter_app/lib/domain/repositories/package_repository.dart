@@ -20,4 +20,12 @@ abstract class PackageRepository {
 
   /// Yeni paket oluştur, template ile.
   Future<String> create(String packageName, {WorldSchema? template});
+
+  /// Mevcut bir paketi yeni bir adla klonla (entity'ler + schema dahil).
+  /// Built-in pack'i kopyalayıp kullanıcı tarafından düzenlenebilir hale
+  /// getirmek için kullanılır.
+  Future<String> copy({
+    required String sourceName,
+    required String destinationName,
+  });
 }
