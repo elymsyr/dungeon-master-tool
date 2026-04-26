@@ -1198,6 +1198,18 @@ Tüm conditions: stack-etmez (Exhaustion hariç). Source: s.179.
 
 ---
 
+## 18. Şema → Mekanik Eşlemesi
+
+Bu döküman SRD kuralını atomic checkbox'lar olarak listeler. Her kuralın hangi `EntityCategorySchema` field'ına bağlandığı ve o field'ın bir karaktere/NPC/monster'a nasıl yansıdığı (tetik, hedef stat, operasyon, multiclass davranışı) ayrı bir döküman tarafından kapsanır:
+
+- **[`docs/srd_5e_field_mechanics.md`](srd_5e_field_mechanics.md)** — Şema alanı → mekanik aktarım tabloları.
+
+Yapı: ~70 kategori (36 Tier-0 lookup + 20 Tier-1 content + 13 Tier-2 DM/play) × 7-sütunlu sabit tablo formatı (Alan / Tip / Tetik / Hedef Stat / Operasyon / Multiclass / SRD-Notlar). Multiclass her satırda zorunlu sütun. Schema-vs-SRD uyuşmazlıkları "Açık Mekanikler" listesinde flag'lenir.
+
+Şema (`v2.x`) ile SRD (5.2.1) bağımsız evrildiği için iki döküman ayrı tutulur. Bu dökümandaki bir SRD kuralının schema karşılığını öğrenmek için yan dosyada ilgili field-key satırını okuyun.
+
+---
+
 ## Notlar
 
 - Bu döküman SRD 5.2.1'i temel alır. PHB 2024'teki ek opsiyonlar (extra spells, subclasses, races, feats) buraya dahil değildir.
