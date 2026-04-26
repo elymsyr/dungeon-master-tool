@@ -134,6 +134,8 @@ class _FB {
       _base(key: k, label: l, type: FieldType.levelTable, groupId: g, gridSpan: 2);
   void slot(String k, String l, {String g = grpSpellcasting}) =>
       _base(key: k, label: l, type: FieldType.slot, groupId: g, gridSpan: 2);
+  void dice(String k, String l, {bool required_ = false, String g = grpIdentity}) =>
+      _base(key: k, label: l, type: FieldType.dice, required_: required_, groupId: g);
   void proficiencyTable(String k, String l, {String g = grpCombat, dynamic defaultValue}) =>
       _base(
         key: k,
@@ -410,6 +412,8 @@ EntityCategorySchema _locationCategory(String schemaId, String now, int orderInd
   fb.text('environment', 'Environment');
   fb.relation('parent_location_ref', 'Parent Location', const ['location']);
   fb.relation('plane_ref', 'Plane', const ['plane']);
+  fb.relation('illumination_ref', 'Illumination', const ['illumination']);
+  fb.relation('hazard_refs', 'Hazards', const ['hazard'], isList: true);
   fb.markdown('description_long', 'Description', g: grpRules);
   fb.markdown('secrets', 'Secrets (DM-only)', g: grpRules, vis: FieldVisibility.dmOnly);
 
@@ -437,6 +441,8 @@ EntityCategorySchema _sceneCategory(String schemaId, String now, int orderIndex)
   final fb = _FB(catId, now);
   fb.relation('location_ref', 'Location', const ['location']);
   fb.enum_('status', 'Status', const ['Planned', 'Active', 'Completed', 'Skipped']);
+  fb.relation('illumination_ref', 'Illumination', const ['illumination']);
+  fb.relation('travel_pace_ref', 'Travel Pace', const ['travel-pace']);
   fb.markdown('beats', 'Beats / Outline', g: grpRules);
   fb.relation('npc_refs', 'NPCs Involved', const ['npc'], isList: true);
   fb.relation('quest_refs', 'Quests Tied', const ['quest'], isList: true);
@@ -526,7 +532,7 @@ EntityCategorySchema _trapCategory(String schemaId, String now, int orderIndex) 
   fb.markdown('trigger', 'Trigger', g: grpRules);
   fb.integer('save_dc', 'Save DC', min: 1, max: 30);
   fb.relation('save_ability_ref', 'Save Ability', const ['ability']);
-  fb.text('damage_dice', 'Damage Dice');
+  fb.dice('damage_dice', 'Damage Dice');
   fb.relation('damage_type_ref', 'Damage Type', const ['damage-type']);
   fb.integer('detection_dc', 'Detection DC', min: 1, max: 30);
   fb.integer('disable_dc', 'Disable DC', min: 1, max: 30);

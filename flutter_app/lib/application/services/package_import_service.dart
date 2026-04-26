@@ -204,6 +204,9 @@ class PackageImportService {
         },
       FieldType.dice => '',
       FieldType.proficiencyTable => const {'rows': <dynamic>[]},
+      FieldType.classFeatures => const <Map<String, dynamic>>[],
+      FieldType.spellEffectList => const <Map<String, dynamic>>[],
+      FieldType.rangedSenseList => const <Map<String, dynamic>>[],
       _ => null,
     };
   }
