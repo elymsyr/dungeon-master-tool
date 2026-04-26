@@ -46,7 +46,7 @@ void main() {
           onChanged: (_) {},
         ),
       ));
-      expect(find.text('Character Name'), findsOneWidget);
+      expect(find.text('Character Name:'), findsOneWidget);
       expect(find.byType(TextFormField), findsOneWidget);
     });
 
@@ -78,7 +78,7 @@ void main() {
       expect(captured, 'Frodo');
     });
 
-    testWidgets('readOnly mode prevents editing', (tester) async {
+    testWidgets('readOnly mode shows static text', (tester) async {
       final schema = _makeSchema(FieldType.text, label: 'Name');
       await tester.pumpWidget(_wrap(
         FieldWidgetFactory.create(
@@ -88,8 +88,8 @@ void main() {
           onChanged: (_) {},
         ),
       ));
-      final field = tester.widget<TextField>(find.byType(TextField));
-      expect(field.readOnly, isTrue);
+      expect(find.byType(TextFormField), findsNothing);
+      expect(find.text('Locked'), findsOneWidget);
     });
   });
 
@@ -170,7 +170,7 @@ void main() {
           onChanged: (_) {},
         ),
       ));
-      expect(find.text('Level'), findsOneWidget);
+      expect(find.text('Level:'), findsOneWidget);
       expect(find.byType(TextFormField), findsOneWidget);
     });
 
@@ -216,7 +216,7 @@ void main() {
       expect(captured, 42);
     });
 
-    testWidgets('readOnly mode prevents editing', (tester) async {
+    testWidgets('readOnly mode shows static text', (tester) async {
       final schema = _makeSchema(FieldType.integer, label: 'HP');
       await tester.pumpWidget(_wrap(
         FieldWidgetFactory.create(
@@ -226,8 +226,8 @@ void main() {
           onChanged: (_) {},
         ),
       ));
-      final field = tester.widget<TextField>(find.byType(TextField));
-      expect(field.readOnly, isTrue);
+      expect(find.byType(TextFormField), findsNothing);
+      expect(find.text('10'), findsOneWidget);
     });
   });
 
@@ -245,8 +245,8 @@ void main() {
           onChanged: (_) {},
         ),
       ));
-      expect(find.text('Is Active'), findsOneWidget);
-      expect(find.byType(SwitchListTile), findsOneWidget);
+      expect(find.text('Is Active:'), findsOneWidget);
+      expect(find.byType(Checkbox), findsOneWidget);
     });
 
     testWidgets('shows initial true value', (tester) async {
@@ -259,9 +259,8 @@ void main() {
           onChanged: (_) {},
         ),
       ));
-      final switchTile =
-          tester.widget<SwitchListTile>(find.byType(SwitchListTile));
-      expect(switchTile.value, isTrue);
+      final cb = tester.widget<Checkbox>(find.byType(Checkbox));
+      expect(cb.value, isTrue);
     });
 
     testWidgets('shows initial false value', (tester) async {
@@ -274,9 +273,8 @@ void main() {
           onChanged: (_) {},
         ),
       ));
-      final switchTile =
-          tester.widget<SwitchListTile>(find.byType(SwitchListTile));
-      expect(switchTile.value, isFalse);
+      final cb = tester.widget<Checkbox>(find.byType(Checkbox));
+      expect(cb.value, isFalse);
     });
 
     testWidgets('toggle calls onChanged', (tester) async {
@@ -290,12 +288,12 @@ void main() {
           onChanged: (v) => captured = v,
         ),
       ));
-      await tester.tap(find.byType(Switch));
+      await tester.tap(find.byType(Checkbox));
       await tester.pump();
       expect(captured, isTrue);
     });
 
-    testWidgets('readOnly mode disables toggle', (tester) async {
+    testWidgets('readOnly true value still renders disabled checkbox', (tester) async {
       final schema = _makeSchema(FieldType.boolean_, label: 'Active');
       await tester.pumpWidget(_wrap(
         FieldWidgetFactory.create(
@@ -305,9 +303,8 @@ void main() {
           onChanged: (_) {},
         ),
       ));
-      final switchTile =
-          tester.widget<SwitchListTile>(find.byType(SwitchListTile));
-      expect(switchTile.onChanged, isNull);
+      final cb = tester.widget<Checkbox>(find.byType(Checkbox));
+      expect(cb.onChanged, isNull);
     });
   });
 
@@ -331,7 +328,7 @@ void main() {
           onChanged: (_) {},
         ),
       ));
-      expect(find.text('Alignment'), findsOneWidget);
+      expect(find.text('Alignment:'), findsOneWidget);
       expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
     });
 
@@ -380,7 +377,7 @@ void main() {
       expect(find.text('Medium'), findsOneWidget);
     });
 
-    testWidgets('readOnly mode disables dropdown', (tester) async {
+    testWidgets('readOnly mode shows static text', (tester) async {
       final schema = _makeSchema(
         FieldType.enum_,
         label: 'Size',
@@ -396,10 +393,8 @@ void main() {
           onChanged: (_) {},
         ),
       ));
-      final dropdown = tester.widget<DropdownButtonFormField<String>>(
-        find.byType(DropdownButtonFormField<String>),
-      );
-      expect(dropdown.onChanged, isNull);
+      expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+      expect(find.text('Small'), findsOneWidget);
     });
   });
 

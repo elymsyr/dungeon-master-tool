@@ -26,6 +26,7 @@ class _StructuredListShell extends StatelessWidget {
   final ValueChanged<List<Map<String, dynamic>>> onChanged;
   final Map<String, dynamic> Function() makeEmptyRow;
   final Widget Function(int index, Map<String, dynamic> row, ValueChanged<Map<String, dynamic>> onRowChanged) buildRow;
+  final List<Widget>? headerActions;
 
   const _StructuredListShell({
     required this.schema,
@@ -34,6 +35,7 @@ class _StructuredListShell extends StatelessWidget {
     required this.onChanged,
     required this.makeEmptyRow,
     required this.buildRow,
+    this.headerActions,
   });
 
   void _addRow() {
@@ -49,6 +51,14 @@ class _StructuredListShell extends StatelessWidget {
   void _updateRow(int i, Map<String, dynamic> row) {
     final updated = [...rows];
     updated[i] = row;
+    onChanged(updated);
+  }
+
+  void _reorder(int oldIndex, int newIndex) {
+    final updated = [...rows];
+    final adjusted = newIndex > oldIndex ? newIndex - 1 : newIndex;
+    final item = updated.removeAt(oldIndex);
+    updated.insert(adjusted, item);
     onChanged(updated);
   }
 
@@ -73,6 +83,7 @@ class _StructuredListShell extends StatelessWidget {
                   schema.fieldType.name,
                   style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline),
                 ),
+                if (!readOnly && headerActions != null) ...headerActions!,
                 if (!readOnly)
                   IconButton(
                     icon: const Icon(Icons.add, size: 18),
@@ -90,36 +101,57 @@ class _StructuredListShell extends StatelessWidget {
                   style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12),
                 ),
               ),
-            ...rows.asMap().entries.map((entry) {
-              final i = entry.key;
-              final row = entry.value;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        '${i + 1}.',
-                        style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outline),
-                      ),
+            if (rows.isNotEmpty)
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                buildDefaultDragHandles: false,
+                itemCount: rows.length,
+                onReorder: readOnly ? (a, b) {} : _reorder,
+                itemBuilder: (context, i) {
+                  final row = rows[i];
+                  return Padding(
+                    key: ValueKey('${schema.fieldKey}_row_$i'),
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (!readOnly)
+                          ReorderableDragStartListener(
+                            index: i,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Icon(
+                                Icons.drag_handle,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(width: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            '${i + 1}.',
+                            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outline),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: buildRow(i, row, (r) => _updateRow(i, r)),
+                        ),
+                        if (!readOnly)
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 14),
+                            tooltip: 'Remove',
+                            onPressed: () => _removeRow(i),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                      ],
                     ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: buildRow(i, row, (r) => _updateRow(i, r)),
-                    ),
-                    if (!readOnly)
-                      IconButton(
-                        icon: const Icon(Icons.close, size: 14),
-                        tooltip: 'Remove',
-                        onPressed: () => _removeRow(i),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                  ],
-                ),
-              );
-            }),
+                  );
+                },
+              ),
           ],
         ),
       ),
@@ -728,6 +760,155 @@ const _modifierScalings = [
   'per-proficiency-bonus',
 ];
 
+/// SRD common modifier presets. Each preset has a label and a list of one or
+/// more pre-filled rows. Inserted at the end of the existing rows list.
+const _modifierPresets = <String, List<Map<String, dynamic>>>{
+  'Tough (feat)': [
+    {
+      'kind': 'hp_bonus_per_level',
+      'target_kind': null,
+      'target_ref': null,
+      'value': 2,
+      'scaling': 'per-level',
+      'condition_ref': null,
+      'notes': 'Tough: +2 HP per character level',
+    },
+  ],
+  'Resilient: CON': [
+    {
+      'kind': 'proficiency_grant',
+      'target_kind': 'save',
+      'target_ref': 'ability-con',
+      'value': null,
+      'scaling': '',
+      'condition_ref': null,
+      'notes': 'Resilient (CON) saving throw proficiency',
+    },
+    {
+      'kind': 'ability_score_bonus',
+      'target_kind': 'ability',
+      'target_ref': 'ability-con',
+      'value': 1,
+      'scaling': 'flat',
+      'condition_ref': null,
+      'notes': 'Resilient: +1 CON',
+    },
+  ],
+  'Alert (feat)': [
+    {
+      'kind': 'initiative_bonus',
+      'target_kind': null,
+      'target_ref': null,
+      'value': 5,
+      'scaling': 'flat',
+      'condition_ref': null,
+      'notes': 'Alert: +5 initiative (2024 rules: PB, swap if needed)',
+    },
+  ],
+  'Lucky (feat)': [
+    {
+      'kind': 'feature_text',
+      'target_kind': null,
+      'target_ref': null,
+      'value': 3,
+      'scaling': '',
+      'condition_ref': null,
+      'notes': 'Lucky: 3 luck points / long rest, reroll 1 d20',
+    },
+  ],
+  'Magic Initiate: cantrip + 1st': [
+    {
+      'kind': 'spell_known_grant',
+      'target_kind': 'spell',
+      'target_ref': null,
+      'value': null,
+      'scaling': '',
+      'condition_ref': null,
+      'notes': 'Cantrip from chosen list',
+    },
+    {
+      'kind': 'spell_known_grant',
+      'target_kind': 'spell',
+      'target_ref': null,
+      'value': null,
+      'scaling': '',
+      'condition_ref': null,
+      'notes': '1st-level spell from chosen list',
+    },
+    {
+      'kind': 'spell_at_will_grant',
+      'target_kind': 'spell',
+      'target_ref': null,
+      'value': 1,
+      'scaling': '',
+      'condition_ref': null,
+      'notes': '1×/long rest cast of 1st-level without slot',
+    },
+  ],
+  'Darkvision 60 ft': [
+    {
+      'kind': 'sense_grant',
+      'target_kind': 'sense',
+      'target_ref': 'sense-darkvision',
+      'value': 60,
+      'scaling': '',
+      'condition_ref': null,
+      'notes': 'Darkvision 60 ft',
+    },
+  ],
+  'Fire resistance': [
+    {
+      'kind': 'resistance_grant',
+      'target_kind': 'damage-type',
+      'target_ref': 'damage-type-fire',
+      'value': null,
+      'scaling': '',
+      'condition_ref': null,
+      'notes': 'Resistance to fire damage',
+    },
+  ],
+  'Poison immunity + advantage': [
+    {
+      'kind': 'immunity_grant',
+      'target_kind': 'damage-type',
+      'target_ref': 'damage-type-poison',
+      'value': null,
+      'scaling': '',
+      'condition_ref': null,
+      'notes': 'Immunity to poison damage',
+    },
+    {
+      'kind': 'condition_save_advantage',
+      'target_kind': 'condition',
+      'target_ref': 'condition-poisoned',
+      'value': null,
+      'scaling': '',
+      'condition_ref': 'condition-poisoned',
+      'notes': 'Advantage on saves vs being poisoned',
+    },
+  ],
+  'Heavy Armor Master': [
+    {
+      'kind': 'ability_score_bonus',
+      'target_kind': 'ability',
+      'target_ref': 'ability-str',
+      'value': 1,
+      'scaling': 'flat',
+      'condition_ref': null,
+      'notes': 'HAM: +1 STR',
+    },
+    {
+      'kind': 'damage_bonus',
+      'target_kind': 'damage-type',
+      'target_ref': null,
+      'value': -2,
+      'scaling': 'flat',
+      'condition_ref': null,
+      'notes': 'While wearing heavy armor: reduce bludg/pierc/slash by 2 (negative = reduction)',
+    },
+  ],
+};
+
 /// Maps a `target_kind` string to the entity slug(s) accepted by
 /// [showEntitySelectorDialog]. Lookup categories share their slug with the
 /// target_kind value (e.g. 'ability' → 'ability'), but a few aliases exist
@@ -785,6 +966,20 @@ class GrantedModifiersFieldWidget extends StatelessWidget {
       rows: rows,
       readOnly: readOnly,
       onChanged: onChanged,
+      headerActions: [
+        PopupMenuButton<String>(
+          tooltip: 'Add preset',
+          icon: const Icon(Icons.bolt, size: 18),
+          itemBuilder: (ctx) => _modifierPresets.keys
+              .map((label) => PopupMenuItem<String>(value: label, child: Text(label, style: const TextStyle(fontSize: 13))))
+              .toList(),
+          onSelected: (label) {
+            final preset = _modifierPresets[label];
+            if (preset == null) return;
+            onChanged([...rows, ...preset.map((r) => Map<String, dynamic>.from(r))]);
+          },
+        ),
+      ],
       makeEmptyRow: () => {
         'kind': null,
         'target_kind': null,
