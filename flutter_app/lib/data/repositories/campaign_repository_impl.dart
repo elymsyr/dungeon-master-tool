@@ -331,6 +331,9 @@ class CampaignRepositoryImpl implements CampaignRepository {
             pdfsJson: Value(jsonEncode(m['pdfs'] ?? [])),
             locationId: Value(m['location_id'] as String?),
             fieldsJson: Value(jsonEncode(m['attributes'] ?? {})),
+            packageId: Value(m['package_id'] as String?),
+            packageEntityId: Value(m['package_entity_id'] as String?),
+            linked: Value((m['linked'] as bool?) ?? false),
           );
         }).toList();
         await _db.entityDao.insertAll(companions);

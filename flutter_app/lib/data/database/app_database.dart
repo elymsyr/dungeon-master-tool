@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../core/config/app_paths.dart';
 import 'daos/campaign_dao.dart';
 import 'daos/entity_dao.dart';
+import 'daos/installed_package_dao.dart';
 import 'daos/map_dao.dart';
 import 'daos/mind_map_dao.dart';
 import 'daos/package_dao.dart';
@@ -17,6 +18,7 @@ import 'tables/combat_conditions_table.dart';
 import 'tables/combatants_table.dart';
 import 'tables/encounters_table.dart';
 import 'tables/entities_table.dart';
+import 'tables/installed_packages_table.dart';
 import 'tables/map_pins_table.dart';
 import 'tables/mind_map_edges_table.dart';
 import 'tables/mind_map_nodes_table.dart';
@@ -45,6 +47,7 @@ part 'app_database.g.dart';
     Packages,
     PackageSchemas,
     PackageEntities,
+    InstalledPackages,
   ],
   daos: [
     CampaignDao,
@@ -53,6 +56,7 @@ part 'app_database.g.dart';
     MapDao,
     MindMapDao,
     PackageDao,
+    InstalledPackageDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -65,7 +69,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -106,6 +110,21 @@ class AppDatabase extends _$AppDatabase {
             for (final table in allTables) {
               await m.createTable(table);
             }
+          }
+          if (from < 7) {
+            // v7: Live-linked package installs.
+            await m.addColumn(entities, entities.packageId);
+            await m.addColumn(entities, entities.packageEntityId);
+            await m.addColumn(entities, entities.linked);
+            await m.createTable(installedPackages);
+          }
+          if (from < 8) {
+            // v8: Heal dev DBs whose v7 installed_packages was created
+            // with an outdated schema. Drop + recreate is safe — no
+            // production data depends on this table yet (live-link
+            // sync hadn't shipped).
+            await customStatement('DROP TABLE IF EXISTS installed_packages');
+            await m.createTable(installedPackages);
           }
         },
       );

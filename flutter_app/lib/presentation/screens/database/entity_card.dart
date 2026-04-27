@@ -389,6 +389,49 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                         ),
                       ),
                       const SizedBox(height: 10),
+                      if (entity.linked) ...[
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: palette.tabActiveText.withValues(
+                                    alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                    color: palette.tabActiveText.withValues(
+                                        alpha: 0.4)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.link,
+                                      size: 12,
+                                      color: palette.tabActiveText),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Linked to package',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: palette.tabActiveText,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Tooltip(
+                              message:
+                                  'Edits will detach this entity from the package and turn it into a homebrew copy.',
+                              child: Icon(Icons.info_outline,
+                                  size: 14,
+                                  color: palette.sidebarLabelSecondary),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                      ],
                       // Source + Tags
                       _SourceTagsRow(
                         sourceController: _sourceController,

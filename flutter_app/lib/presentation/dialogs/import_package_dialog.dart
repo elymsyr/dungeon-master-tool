@@ -9,7 +9,12 @@ import '../../application/providers/entity_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/template_provider.dart';
 import '../../application/services/package_import_service.dart';
+import '../../application/services/package_sync_service.dart';
 import '../../application/services/template_compatibility_service.dart';
+import '../../data/database/database_provider.dart';
+import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
+import 'package:drift/drift.dart' hide Column, Table;
+import '../../data/database/app_database.dart' show InstalledPackagesCompanion;
 import '../../domain/entities/character.dart';
 import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/template_compatibility.dart';
@@ -160,40 +165,68 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     setState(() => _importing = true);
 
     try {
-      final packageData =
-          await ref.read(packageRepositoryProvider).load(info.name);
-
-      final schemaMap = packageData['world_schema'] as Map<String, dynamic>?;
-      if (schemaMap == null) {
+      final db = ref.read(appDatabaseProvider);
+      final pkgRow = await db.packageDao.getByName(info.name);
+      if (pkgRow == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Package has no template')),
+            const SnackBar(content: Text('Package not found')),
           );
         }
-        setState(() => _importing = false);
         return;
       }
 
-      final packageSchema =
-          WorldSchema.fromJson(Map<String, dynamic>.from(schemaMap));
-      final packageEntities =
-          packageData['entities'] as Map<String, dynamic>? ?? {};
+      final activeNotifier = ref.read(activeCampaignProvider.notifier);
+      final campaignId = activeNotifier.data?['world_id'] as String?;
+      if (campaignId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No active world')),
+          );
+        }
+        return;
+      }
 
-      final importService = PackageImportService();
-      final entityNotifier = ref.read(entityProvider.notifier);
+      // Live-link install: register the package, then sync. New pack rows
+      // come in as linked entities — pack updates propagate, user edits
+      // detach to homebrew.
+      await db.installedPackageDao.upsert(InstalledPackagesCompanion.insert(
+        campaignId: campaignId,
+        packageId: pkgRow.id,
+        packageName: Value(pkgRow.name),
+      ));
 
-      final count = importService.importPackage(
-        packageEntities: packageEntities,
-        packageSchema: packageSchema,
-        worldSchema: worldSchema,
-        entityNotifier: entityNotifier,
+      // Build Tier-0 (slug,name) → uuid index from this campaign's seeded
+      // entities so pack-side `_lookup` placeholders resolve.
+      final build = generateBuiltinDnd5eV2Schema();
+      final tier0Slugs = build.seedRows.keys.toSet();
+      final tier0Rows = await (db.select(db.entities)
+            ..where((t) =>
+                t.campaignId.equals(campaignId) &
+                t.categorySlug.isIn(tier0Slugs)))
+          .get();
+      final tier0Index = <String, Map<String, String>>{};
+      for (final r in tier0Rows) {
+        tier0Index
+            .putIfAbsent(r.categorySlug, () => <String, String>{})[r.name] =
+            r.id;
+      }
+
+      final result = await PackageSyncService(db).sync(
+        campaignId: campaignId,
+        packageId: pkgRow.id,
+        resolveAttrs: (attrs) =>
+            PackageImportService.resolveLookupPlaceholder(attrs, tier0Index)
+                as Map<String, dynamic>,
       );
+      // Reload campaign so the entity provider picks up the new rows.
+      await activeNotifier.reload();
 
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(L10n.of(context)!.importSuccess(count))),
+              content: Text(L10n.of(context)!.importSuccess(result.added))),
         );
       }
     } catch (e) {

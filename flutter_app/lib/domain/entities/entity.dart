@@ -19,6 +19,9 @@ abstract class Entity with _$Entity {
     @Default([]) List<String> pdfs,
     String? locationId,
     @Default({}) Map<String, dynamic> fields,
+    String? packageId,
+    String? packageEntityId,
+    @Default(false) bool linked,
   }) = _Entity;
 
   factory Entity.fromJson(Map<String, dynamic> json) =>

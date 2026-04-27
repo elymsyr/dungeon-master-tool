@@ -17,6 +17,7 @@ import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
+import '../../widgets/world_packages_section.dart';
 
 
 class WorldsTab extends ConsumerStatefulWidget {
@@ -506,6 +507,10 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 localId: campaignName,
                 title: campaignName,
               ),
+              const SizedBox(height: 12),
+              Divider(height: 1, color: palette.featureCardBorder),
+              const SizedBox(height: 12),
+              WorldPackagesSection(campaignId: worldId),
             ],
           ),
           ),
