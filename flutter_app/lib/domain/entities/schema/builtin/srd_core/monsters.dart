@@ -1474,4 +1474,618 @@ List<Map<String, dynamic>> srdMonsters() => [
           ],
         },
       ),
+
+      // ─── Adult Black Dragon (CR 14) ─────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Adult Black Dragon',
+        description: 'A cruel chromatic dragon that dwells in fetid swamps and ruined keeps. Its breath is a deadly stream of acid.',
+        attributes: {
+          'size_ref': lookup('size', 'Huge'),
+          'creature_type_ref': lookup('creature-type', 'Dragon'),
+          'alignment_ref': lookup('alignment', 'Chaotic Evil'),
+          'ac': 19, 'initiative_modifier': 3, 'initiative_score': 13,
+          'hp_average': 195, 'hp_dice': '17d12+85', 'speed_walk_ft': 40, 'speed_swim_ft': 40, 'speed_fly_ft': 80,
+          'stat_block': {'STR': 23, 'DEX': 14, 'CON': 21, 'INT': 14, 'WIS': 13, 'CHA': 17},
+          'cr': '14', 'xp': 11500, 'proficiency_bonus': 5, 'passive_perception': 21,
+          'senses': [
+            {'sense': 'Blindsight', 'range_ft': 60},
+            {'sense': 'Darkvision', 'range_ft': 120},
+          ],
+          'language_refs': [lookup('language', 'Common'), lookup('language', 'Draconic')],
+          'damage_immunity_refs': [lookup('damage-type', 'Acid')],
+          'trait_refs': [
+            ref('trait', 'Amphibious (Dragon)'),
+            ref('trait', 'Legendary Resistance (3/Day, or 4/Day in Lair)'),
+          ],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Bite (Adult Black Dragon)'),
+            ref('creature-action', 'Claw (Adult Black Dragon)'),
+            ref('creature-action', 'Acid Breath'),
+          ],
+          'legendary_action_uses': 3,
+          'legendary_action_refs': [
+            ref('creature-action', 'Tail (Adult Black Dragon)'),
+            ref('creature-action', 'Wing Attack'),
+            ref('creature-action', 'Frightful Presence (Dragon)'),
+          ],
+        },
+      ),
+
+      // ─── Adult Blue Dragon (CR 16) ──────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Adult Blue Dragon',
+        description: 'A territorial chromatic dragon that rules deserts and arid plains. Its breath is a crackling line of lightning.',
+        attributes: {
+          'size_ref': lookup('size', 'Huge'),
+          'creature_type_ref': lookup('creature-type', 'Dragon'),
+          'alignment_ref': lookup('alignment', 'Lawful Evil'),
+          'ac': 19, 'initiative_modifier': 2, 'initiative_score': 12,
+          'hp_average': 225, 'hp_dice': '18d12+108', 'speed_walk_ft': 40, 'speed_burrow_ft': 30, 'speed_fly_ft': 80,
+          'stat_block': {'STR': 25, 'DEX': 10, 'CON': 23, 'INT': 16, 'WIS': 15, 'CHA': 19},
+          'cr': '16', 'xp': 15000, 'proficiency_bonus': 5, 'passive_perception': 22,
+          'senses': [
+            {'sense': 'Blindsight', 'range_ft': 60},
+            {'sense': 'Darkvision', 'range_ft': 120},
+          ],
+          'language_refs': [lookup('language', 'Common'), lookup('language', 'Draconic')],
+          'damage_immunity_refs': [lookup('damage-type', 'Lightning')],
+          'trait_refs': [ref('trait', 'Legendary Resistance (3/Day, or 4/Day in Lair)')],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Bite (Adult Blue Dragon)'),
+            ref('creature-action', 'Claw (Adult Blue Dragon)'),
+            ref('creature-action', 'Lightning Breath'),
+          ],
+          'legendary_action_uses': 3,
+          'legendary_action_refs': [
+            ref('creature-action', 'Tail (Adult Blue Dragon)'),
+            ref('creature-action', 'Wing Attack'),
+            ref('creature-action', 'Frightful Presence (Dragon)'),
+          ],
+        },
+      ),
+
+      // ─── Adult Green Dragon (CR 15) ─────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Adult Green Dragon',
+        description: 'A cunning chromatic dragon of deep forests. Its poisonous breath corrupts everything it touches.',
+        attributes: {
+          'size_ref': lookup('size', 'Huge'),
+          'creature_type_ref': lookup('creature-type', 'Dragon'),
+          'alignment_ref': lookup('alignment', 'Lawful Evil'),
+          'ac': 19, 'initiative_modifier': 2, 'initiative_score': 12,
+          'hp_average': 207, 'hp_dice': '18d12+90', 'speed_walk_ft': 40, 'speed_swim_ft': 40, 'speed_fly_ft': 80,
+          'stat_block': {'STR': 23, 'DEX': 12, 'CON': 21, 'INT': 18, 'WIS': 15, 'CHA': 17},
+          'cr': '15', 'xp': 13000, 'proficiency_bonus': 5, 'passive_perception': 22,
+          'senses': [
+            {'sense': 'Blindsight', 'range_ft': 60},
+            {'sense': 'Darkvision', 'range_ft': 120},
+          ],
+          'language_refs': [lookup('language', 'Common'), lookup('language', 'Draconic')],
+          'damage_immunity_refs': [lookup('damage-type', 'Poison')],
+          'condition_immunity_refs': [lookup('condition', 'Poisoned')],
+          'trait_refs': [
+            ref('trait', 'Amphibious (Dragon)'),
+            ref('trait', 'Legendary Resistance (3/Day, or 4/Day in Lair)'),
+          ],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Bite (Adult Green Dragon)'),
+            ref('creature-action', 'Claw (Adult Green Dragon)'),
+            ref('creature-action', 'Poison Breath'),
+          ],
+          'legendary_action_uses': 3,
+          'legendary_action_refs': [
+            ref('creature-action', 'Tail (Adult Green Dragon)'),
+            ref('creature-action', 'Wing Attack'),
+            ref('creature-action', 'Frightful Presence (Dragon)'),
+          ],
+        },
+      ),
+
+      // ─── Adult White Dragon (CR 13) ─────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Adult White Dragon',
+        description: 'A primitive chromatic dragon of glaciers and frozen peaks. Vicious and territorial.',
+        attributes: {
+          'size_ref': lookup('size', 'Huge'),
+          'creature_type_ref': lookup('creature-type', 'Dragon'),
+          'alignment_ref': lookup('alignment', 'Chaotic Evil'),
+          'ac': 18, 'initiative_modifier': 0, 'initiative_score': 10,
+          'hp_average': 200, 'hp_dice': '16d12+96', 'speed_walk_ft': 40, 'speed_burrow_ft': 30, 'speed_swim_ft': 40, 'speed_fly_ft': 80,
+          'stat_block': {'STR': 22, 'DEX': 10, 'CON': 22, 'INT': 8, 'WIS': 12, 'CHA': 12},
+          'cr': '13', 'xp': 10000, 'proficiency_bonus': 5, 'passive_perception': 21,
+          'senses': [
+            {'sense': 'Blindsight', 'range_ft': 60},
+            {'sense': 'Darkvision', 'range_ft': 120},
+          ],
+          'language_refs': [lookup('language', 'Common'), lookup('language', 'Draconic')],
+          'damage_immunity_refs': [lookup('damage-type', 'Cold')],
+          'trait_refs': [
+            ref('trait', 'Ice Walk'),
+            ref('trait', 'Legendary Resistance (3/Day, or 4/Day in Lair)'),
+          ],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Bite (Adult White Dragon)'),
+            ref('creature-action', 'Claw (Adult White Dragon)'),
+            ref('creature-action', 'Cold Breath'),
+          ],
+          'legendary_action_uses': 3,
+          'legendary_action_refs': [
+            ref('creature-action', 'Tail (Adult White Dragon)'),
+            ref('creature-action', 'Wing Attack'),
+            ref('creature-action', 'Frightful Presence (Dragon)'),
+          ],
+        },
+      ),
+
+      // ─── Chuul (CR 4) ───────────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Chuul',
+        description: 'A horrid lobster-like aberration that lurks in submerged ruins serving ancient masters.',
+        attributes: {
+          'size_ref': lookup('size', 'Large'),
+          'creature_type_ref': lookup('creature-type', 'Aberration'),
+          'alignment_ref': lookup('alignment', 'Chaotic Evil'),
+          'ac': 16, 'initiative_modifier': 0, 'initiative_score': 10,
+          'hp_average': 76, 'hp_dice': '9d10+27', 'speed_walk_ft': 30, 'speed_swim_ft': 30,
+          'stat_block': {'STR': 19, 'DEX': 10, 'CON': 16, 'INT': 5, 'WIS': 11, 'CHA': 5},
+          'cr': '4', 'xp': 1100, 'proficiency_bonus': 2, 'passive_perception': 14,
+          'senses': [{'sense': 'Darkvision', 'range_ft': 60}],
+          'language_refs': [lookup('language', 'Deep Speech')],
+          'damage_immunity_refs': [lookup('damage-type', 'Poison')],
+          'condition_immunity_refs': [lookup('condition', 'Poisoned')],
+          'trait_refs': [
+            ref('trait', 'Amphibious'),
+            ref('trait', 'Sense Magic'),
+          ],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Pincer (Chuul)'),
+          ],
+          'bonus_action_refs': [ref('creature-action', 'Paralyzing Tentacles')],
+        },
+      ),
+
+      // ─── Otyugh (CR 5) ──────────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Otyugh',
+        description: 'A foul, three-legged aberration that lairs in middens, sewers, and refuse heaps.',
+        attributes: {
+          'size_ref': lookup('size', 'Large'),
+          'creature_type_ref': lookup('creature-type', 'Aberration'),
+          'alignment_ref': lookup('alignment', 'Neutral'),
+          'ac': 14, 'initiative_modifier': 0, 'initiative_score': 10,
+          'hp_average': 114, 'hp_dice': '12d10+48', 'speed_walk_ft': 30,
+          'stat_block': {'STR': 16, 'DEX': 11, 'CON': 19, 'INT': 6, 'WIS': 13, 'CHA': 6},
+          'cr': '5', 'xp': 1800, 'proficiency_bonus': 3, 'passive_perception': 17,
+          'senses': [{'sense': 'Darkvision', 'range_ft': 120}],
+          'language_refs': [lookup('language', 'Deep Speech')],
+          'telepathy_ft': 120,
+          'trait_refs': [ref('trait', 'Tentacles')],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Bite (Otyugh)'),
+            ref('creature-action', 'Tentacle (Otyugh)'),
+          ],
+        },
+      ),
+
+      // ─── Roper (CR 5) ───────────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Roper',
+        description: 'A predatory aberration that perfectly mimics a stalagmite or stalactite, snaring prey with sticky tendrils.',
+        attributes: {
+          'size_ref': lookup('size', 'Large'),
+          'creature_type_ref': lookup('creature-type', 'Aberration'),
+          'alignment_ref': lookup('alignment', 'Neutral Evil'),
+          'ac': 20, 'initiative_modifier': 0, 'initiative_score': 10,
+          'hp_average': 93, 'hp_dice': '11d10+33', 'speed_walk_ft': 10, 'speed_climb_ft': 10,
+          'stat_block': {'STR': 18, 'DEX': 8, 'CON': 17, 'INT': 7, 'WIS': 16, 'CHA': 6},
+          'cr': '5', 'xp': 1800, 'proficiency_bonus': 3, 'passive_perception': 16,
+          'senses': [{'sense': 'Darkvision', 'range_ft': 60}],
+          'trait_refs': [
+            ref('trait', 'False Appearance'),
+            ref('trait', 'Spider Climb (Roper)'),
+          ],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Bite (Roper)'),
+            ref('creature-action', 'Tendril (Roper)'),
+          ],
+          'bonus_action_refs': [ref('creature-action', 'Reel In')],
+        },
+      ),
+
+      // ─── Nothic (CR 2) ──────────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Nothic',
+        description: 'A grotesque, one-eyed aberration cursed by failed magical ambition. It hoards arcane secrets.',
+        attributes: {
+          'size_ref': lookup('size', 'Medium'),
+          'creature_type_ref': lookup('creature-type', 'Aberration'),
+          'alignment_ref': lookup('alignment', 'Neutral Evil'),
+          'ac': 15, 'initiative_modifier': 3, 'initiative_score': 13,
+          'hp_average': 45, 'hp_dice': '6d8+18', 'speed_walk_ft': 30,
+          'stat_block': {'STR': 14, 'DEX': 16, 'CON': 16, 'INT': 13, 'WIS': 10, 'CHA': 8},
+          'cr': '2', 'xp': 450, 'proficiency_bonus': 2, 'passive_perception': 12,
+          'senses': [
+            {'sense': 'Truesight', 'range_ft': 120},
+          ],
+          'language_refs': [lookup('language', 'Undercommon')],
+          'trait_refs': [ref('trait', 'Aversion to Light')],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Claw (Nothic)'),
+            ref('creature-action', 'Rotting Gaze'),
+            ref('creature-action', 'Weird Insight'),
+          ],
+        },
+      ),
+
+      // ─── Dryad (CR 1) ───────────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Dryad',
+        description: 'A fey spirit bound to a single tree. Beautiful and reclusive, dryads protect their forest homes.',
+        attributes: {
+          'size_ref': lookup('size', 'Medium'),
+          'creature_type_ref': lookup('creature-type', 'Fey'),
+          'alignment_ref': lookup('alignment', 'Neutral'),
+          'ac': 16, 'initiative_modifier': 1, 'initiative_score': 11,
+          'hp_average': 22, 'hp_dice': '5d8', 'speed_walk_ft': 30,
+          'stat_block': {'STR': 10, 'DEX': 12, 'CON': 11, 'INT': 14, 'WIS': 15, 'CHA': 18},
+          'cr': '1', 'xp': 200, 'proficiency_bonus': 2, 'passive_perception': 14,
+          'senses': [{'sense': 'Darkvision', 'range_ft': 60}],
+          'language_refs': [lookup('language', 'Elvish'), lookup('language', 'Sylvan')],
+          'trait_refs': [
+            ref('trait', 'Magic Resistance'),
+            ref('trait', 'Speak with Beasts and Plants'),
+            ref('trait', 'Tree Stride'),
+          ],
+          'action_refs': [
+            ref('creature-action', 'Vine Whip (Dryad)'),
+            ref('creature-action', 'Fey Charm'),
+          ],
+        },
+      ),
+
+      // ─── Gargoyle (CR 2) ────────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Gargoyle',
+        description: 'A grotesque stone-skinned elemental, often perched motionless on rooftops awaiting the chance to attack.',
+        attributes: {
+          'size_ref': lookup('size', 'Medium'),
+          'creature_type_ref': lookup('creature-type', 'Elemental'),
+          'alignment_ref': lookup('alignment', 'Chaotic Evil'),
+          'ac': 15, 'initiative_modifier': 2, 'initiative_score': 12,
+          'hp_average': 67, 'hp_dice': '9d8+27', 'speed_walk_ft': 30, 'speed_fly_ft': 60,
+          'stat_block': {'STR': 15, 'DEX': 11, 'CON': 16, 'INT': 6, 'WIS': 11, 'CHA': 7},
+          'cr': '2', 'xp': 450, 'proficiency_bonus': 2, 'passive_perception': 10,
+          'senses': [{'sense': 'Darkvision', 'range_ft': 60}],
+          'language_refs': [lookup('language', 'Primordial')],
+          'damage_immunity_refs': [lookup('damage-type', 'Poison')],
+          'resistance_refs': [
+            lookup('damage-type', 'Bludgeoning'),
+            lookup('damage-type', 'Piercing'),
+            lookup('damage-type', 'Slashing'),
+          ],
+          'condition_immunity_refs': [
+            lookup('condition', 'Exhaustion'),
+            lookup('condition', 'Petrified'),
+            lookup('condition', 'Poisoned'),
+          ],
+          'trait_refs': [ref('trait', 'False Appearance (Gargoyle)')],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Bite (Gargoyle)'),
+            ref('creature-action', 'Claws (Gargoyle)'),
+          ],
+        },
+      ),
+
+      // ─── Couatl (CR 4) ──────────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Couatl',
+        description: 'A divine, feathered serpent — a benevolent celestial guardian created by the gods to watch over the world.',
+        attributes: {
+          'size_ref': lookup('size', 'Medium'),
+          'creature_type_ref': lookup('creature-type', 'Celestial'),
+          'alignment_ref': lookup('alignment', 'Lawful Good'),
+          'ac': 19, 'initiative_modifier': 5, 'initiative_score': 15,
+          'hp_average': 60, 'hp_dice': '8d8+24', 'speed_walk_ft': 30, 'speed_fly_ft': 90,
+          'stat_block': {'STR': 16, 'DEX': 20, 'CON': 17, 'INT': 18, 'WIS': 20, 'CHA': 18},
+          'cr': '4', 'xp': 1100, 'proficiency_bonus': 2, 'passive_perception': 15,
+          'senses': [
+            {'sense': 'Truesight', 'range_ft': 120},
+          ],
+          'language_refs': [lookup('language', 'Celestial'), lookup('language', 'Common')],
+          'telepathy_ft': 120,
+          'damage_immunity_refs': [
+            lookup('damage-type', 'Psychic'),
+            lookup('damage-type', 'Radiant'),
+          ],
+          'resistance_refs': [
+            lookup('damage-type', 'Bludgeoning'),
+            lookup('damage-type', 'Piercing'),
+            lookup('damage-type', 'Slashing'),
+          ],
+          'trait_refs': [
+            ref('trait', 'Shielded Mind'),
+            ref('trait', 'Spell Resistance'),
+          ],
+          'action_refs': [
+            ref('creature-action', 'Bite (Couatl)'),
+            ref('creature-action', 'Constrict (Couatl)'),
+          ],
+        },
+      ),
+
+      // ─── Sphinx of Lore / Wonder placeholder (CR 11 generic) ────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Sphinx',
+        description: 'A guardian celestial with the body of a great cat and the head of a wise being. Sphinxes pose riddles to those they encounter.',
+        attributes: {
+          'size_ref': lookup('size', 'Large'),
+          'creature_type_ref': lookup('creature-type', 'Celestial'),
+          'alignment_ref': lookup('alignment', 'Lawful Neutral'),
+          'ac': 17, 'initiative_modifier': 2, 'initiative_score': 12,
+          'hp_average': 199, 'hp_dice': '19d10+95', 'speed_walk_ft': 40, 'speed_fly_ft': 60,
+          'stat_block': {'STR': 22, 'DEX': 10, 'CON': 20, 'INT': 16, 'WIS': 18, 'CHA': 23},
+          'cr': '11', 'xp': 7200, 'proficiency_bonus': 4, 'passive_perception': 18,
+          'senses': [
+            {'sense': 'Truesight', 'range_ft': 120},
+          ],
+          'language_refs': [lookup('language', 'Celestial'), lookup('language', 'Common')],
+          'damage_immunity_refs': [
+            lookup('damage-type', 'Necrotic'),
+            lookup('damage-type', 'Radiant'),
+          ],
+          'resistance_refs': [
+            lookup('damage-type', 'Bludgeoning'),
+            lookup('damage-type', 'Piercing'),
+            lookup('damage-type', 'Slashing'),
+          ],
+          'condition_immunity_refs': [
+            lookup('condition', 'Charmed'),
+            lookup('condition', 'Frightened'),
+          ],
+          'trait_refs': [
+            ref('trait', 'Inscrutable'),
+            ref('trait', 'Innate Spellcasting (Sphinx)'),
+          ],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Claws (Sphinx)'),
+            ref('creature-action', 'Roar (Sphinx)'),
+          ],
+        },
+      ),
+
+      // ─── Death Dog (CR 1) ───────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Death Dog',
+        description: 'A two-headed dog that prowls deserts and ruins, infecting bite victims with a wasting disease.',
+        attributes: {
+          'size_ref': lookup('size', 'Medium'),
+          'creature_type_ref': lookup('creature-type', 'Monstrosity'),
+          'alignment_ref': lookup('alignment', 'Neutral Evil'),
+          'ac': 12, 'initiative_modifier': 2, 'initiative_score': 12,
+          'hp_average': 39, 'hp_dice': '6d8+12', 'speed_walk_ft': 40,
+          'stat_block': {'STR': 15, 'DEX': 14, 'CON': 14, 'INT': 3, 'WIS': 13, 'CHA': 6},
+          'cr': '1', 'xp': 200, 'proficiency_bonus': 2, 'passive_perception': 15,
+          'senses': [{'sense': 'Darkvision', 'range_ft': 120}],
+          'trait_refs': [
+            ref('trait', 'Pack Tactics (Death Dog)'),
+            ref('trait', 'Two-Headed (Death Dog)'),
+          ],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Bite (Death Dog)'),
+          ],
+        },
+      ),
+
+      // ─── Knight (CR 3) ─────────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Knight',
+        description: 'A heavily armored warrior bound by a code of chivalry to serve a noble lord, faith, or ideal.',
+        attributes: {
+          'size_ref': lookup('size', 'Medium'),
+          'creature_type_ref': lookup('creature-type', 'Humanoid'),
+          'alignment_ref': lookup('alignment', 'Lawful Neutral'),
+          'ac': 18, 'initiative_modifier': 0, 'initiative_score': 10,
+          'hp_average': 52, 'hp_dice': '8d8+16', 'speed_walk_ft': 30,
+          'stat_block': {'STR': 16, 'DEX': 11, 'CON': 14, 'INT': 11, 'WIS': 11, 'CHA': 15},
+          'cr': '3', 'xp': 700, 'proficiency_bonus': 2, 'passive_perception': 12,
+          'language_refs': [lookup('language', 'Common')],
+          'condition_immunity_refs': [lookup('condition', 'Frightened')],
+          'trait_refs': [ref('trait', 'Brave')],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Greatsword (Knight)'),
+            ref('creature-action', 'Heavy Crossbow (Knight)'),
+          ],
+          'bonus_action_refs': [ref('creature-action', 'Leadership')],
+        },
+      ),
+
+      // ─── Veteran (CR 3) ────────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Veteran',
+        description: 'A seasoned mercenary fighter, hard-bitten and skilled with sword and crossbow.',
+        attributes: {
+          'size_ref': lookup('size', 'Medium'),
+          'creature_type_ref': lookup('creature-type', 'Humanoid'),
+          'alignment_ref': lookup('alignment', 'Neutral'),
+          'ac': 17, 'initiative_modifier': 1, 'initiative_score': 11,
+          'hp_average': 58, 'hp_dice': '9d8+18', 'speed_walk_ft': 30,
+          'stat_block': {'STR': 16, 'DEX': 13, 'CON': 14, 'INT': 10, 'WIS': 11, 'CHA': 10},
+          'cr': '3', 'xp': 700, 'proficiency_bonus': 2, 'passive_perception': 12,
+          'language_refs': [lookup('language', 'Common')],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Longsword (Veteran)'),
+            ref('creature-action', 'Shortsword (Veteran)'),
+            ref('creature-action', 'Heavy Crossbow (Veteran)'),
+          ],
+        },
+      ),
+
+      // ─── Gladiator (CR 5) ──────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Gladiator',
+        description: 'A celebrated arena fighter — equal parts warrior, performer, and crowd-pleaser.',
+        attributes: {
+          'size_ref': lookup('size', 'Medium'),
+          'creature_type_ref': lookup('creature-type', 'Humanoid'),
+          'alignment_ref': lookup('alignment', 'Neutral'),
+          'ac': 16, 'initiative_modifier': 2, 'initiative_score': 12,
+          'hp_average': 112, 'hp_dice': '15d8+45', 'speed_walk_ft': 30,
+          'stat_block': {'STR': 18, 'DEX': 15, 'CON': 16, 'INT': 10, 'WIS': 12, 'CHA': 15},
+          'cr': '5', 'xp': 1800, 'proficiency_bonus': 3, 'passive_perception': 11,
+          'language_refs': [lookup('language', 'Common')],
+          'trait_refs': [ref('trait', 'Brave')],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Spear (Gladiator)'),
+            ref('creature-action', 'Shield Bash'),
+          ],
+          'reaction_refs': [ref('creature-action', 'Parry')],
+        },
+      ),
+
+      // ─── Mage (CR 6) ───────────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Mage',
+        description: 'A wizard versed in evocation and divination, often serving as advisor to nobles or kings.',
+        attributes: {
+          'size_ref': lookup('size', 'Medium'),
+          'creature_type_ref': lookup('creature-type', 'Humanoid'),
+          'alignment_ref': lookup('alignment', 'Neutral'),
+          'ac': 12, 'initiative_modifier': 2, 'initiative_score': 12,
+          'hp_average': 81, 'hp_dice': '18d8', 'speed_walk_ft': 30,
+          'stat_block': {'STR': 9, 'DEX': 14, 'CON': 11, 'INT': 17, 'WIS': 12, 'CHA': 11},
+          'cr': '6', 'xp': 2300, 'proficiency_bonus': 3, 'passive_perception': 11,
+          'language_refs': [lookup('language', 'Common')],
+          'trait_refs': [ref('trait', 'Spellcasting (Mage)')],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Arcane Burst'),
+          ],
+        },
+      ),
+
+      // ─── Priest (CR 2) ─────────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Priest',
+        description: 'A devout cleric who serves a deity and ministers to a flock — and, when called upon, fights for the faith.',
+        attributes: {
+          'size_ref': lookup('size', 'Medium'),
+          'creature_type_ref': lookup('creature-type', 'Humanoid'),
+          'alignment_ref': lookup('alignment', 'Neutral'),
+          'ac': 13, 'initiative_modifier': 0, 'initiative_score': 10,
+          'hp_average': 38, 'hp_dice': '7d8+7', 'speed_walk_ft': 30,
+          'stat_block': {'STR': 10, 'DEX': 10, 'CON': 12, 'INT': 13, 'WIS': 16, 'CHA': 13},
+          'cr': '2', 'xp': 450, 'proficiency_bonus': 2, 'passive_perception': 13,
+          'language_refs': [lookup('language', 'Common')],
+          'trait_refs': [ref('trait', 'Spellcasting (Priest)')],
+          'action_refs': [
+            ref('creature-action', 'Mace (Priest)'),
+            ref('creature-action', 'Radiance of the Dawn'),
+          ],
+        },
+      ),
+
+      // ─── Cult Fanatic (CR 2) ───────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Cult Fanatic',
+        description: 'A zealous priest of a dark cause, willing to commit any atrocity in the name of their cause.',
+        attributes: {
+          'size_ref': lookup('size', 'Medium'),
+          'creature_type_ref': lookup('creature-type', 'Humanoid'),
+          'alignment_ref': lookup('alignment', 'Neutral Evil'),
+          'ac': 13, 'initiative_modifier': 2, 'initiative_score': 12,
+          'hp_average': 33, 'hp_dice': '6d8+6', 'speed_walk_ft': 30,
+          'stat_block': {'STR': 11, 'DEX': 14, 'CON': 12, 'INT': 10, 'WIS': 13, 'CHA': 14},
+          'cr': '2', 'xp': 450, 'proficiency_bonus': 2, 'passive_perception': 11,
+          'language_refs': [lookup('language', 'Common')],
+          'trait_refs': [ref('trait', 'Spellcasting (Cult Fanatic)')],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Dagger (Fanatic)'),
+          ],
+        },
+      ),
+
+      // ─── Spy (CR 1) ────────────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Spy',
+        description: 'An information-gatherer trained to deceive and infiltrate. Skilled in stealth and disguise.',
+        attributes: {
+          'size_ref': lookup('size', 'Medium'),
+          'creature_type_ref': lookup('creature-type', 'Humanoid'),
+          'alignment_ref': lookup('alignment', 'Neutral'),
+          'ac': 12, 'initiative_modifier': 4, 'initiative_score': 14,
+          'hp_average': 27, 'hp_dice': '6d8', 'speed_walk_ft': 30,
+          'stat_block': {'STR': 10, 'DEX': 15, 'CON': 10, 'INT': 12, 'WIS': 14, 'CHA': 16},
+          'cr': '1', 'xp': 200, 'proficiency_bonus': 2, 'passive_perception': 16,
+          'language_refs': [lookup('language', 'Common')],
+          'trait_refs': [ref('trait', 'Cunning Action'), ref('trait', 'Sneak Attack')],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Shortsword (Spy)'),
+            ref('creature-action', 'Hand Crossbow (Spy)'),
+          ],
+        },
+      ),
+
+      // ─── Assassin (CR 8) ───────────────────────────────────────────────
+      packEntity(
+        slug: 'monster',
+        name: 'Assassin',
+        description: 'A trained killer schooled in stealth, poisons, and the precise placement of a blade.',
+        attributes: {
+          'size_ref': lookup('size', 'Medium'),
+          'creature_type_ref': lookup('creature-type', 'Humanoid'),
+          'alignment_ref': lookup('alignment', 'Neutral Evil'),
+          'ac': 15, 'initiative_modifier': 6, 'initiative_score': 16,
+          'hp_average': 78, 'hp_dice': '12d8+24', 'speed_walk_ft': 30,
+          'stat_block': {'STR': 11, 'DEX': 16, 'CON': 14, 'INT': 13, 'WIS': 11, 'CHA': 10},
+          'cr': '8', 'xp': 3900, 'proficiency_bonus': 3, 'passive_perception': 13,
+          'language_refs': [lookup('language', 'Common'), lookup('language', 'Thieves\' Cant')],
+          'resistance_refs': [lookup('damage-type', 'Poison')],
+          'trait_refs': [
+            ref('trait', 'Cunning Action'),
+            ref('trait', 'Evasion'),
+            ref('trait', 'Sneak Attack'),
+          ],
+          'action_refs': [
+            ref('creature-action', 'Multiattack'),
+            ref('creature-action', 'Shortsword (Assassin)'),
+            ref('creature-action', 'Light Crossbow (Assassin)'),
+          ],
+        },
+      ),
     ];
