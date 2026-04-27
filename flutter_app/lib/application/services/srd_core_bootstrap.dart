@@ -7,6 +7,7 @@ import '../../data/database/app_database.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import 'package_import_service.dart';
+import 'srd_core_package_bootstrap.dart' show srdCorePackageName;
 
 const _uuid = Uuid();
 
@@ -52,10 +53,23 @@ class SrdCoreBootstrap {
     final inserted = await _db.transaction(() async {
       final tier0Count =
           await _seedTier0(campaignId: campaignId, build: build);
+      final pkg = await _db.packageDao.getByName(srdCorePackageName);
       final tier1Count = await _importSrdCore(
         campaignId: campaignId,
         build: build,
+        packageId: pkg?.id,
       );
+      // Record install row so the Packages tab + sync service know this
+      // campaign is live-linked to the SRD pack.
+      if (pkg != null) {
+        await _db.installedPackageDao.upsert(
+          InstalledPackagesCompanion.insert(
+            campaignId: campaignId,
+            packageId: pkg.id,
+            packageName: Value(pkg.name),
+          ),
+        );
+      }
       return tier0Count + tier1Count;
     });
 
@@ -127,9 +141,19 @@ class SrdCoreBootstrap {
   Future<int> _importSrdCore({
     required String campaignId,
     required BuiltinDnd5eV2Build build,
+    String? packageId,
   }) async {
     final pack = buildSrdCorePack();
     if (pack.entities.isEmpty) return 0;
+
+    // First pass: mint campaign-side UUIDs for every pack entity. The pack
+    // build resolves inter-Tier-1 `_ref` placeholders to pack-side UUIDs,
+    // but each campaign needs its own UUIDs (entities table PK is global).
+    // Build a pack_id → campaign_id map so the second pass can rewrite
+    // every relation in attrs to point at this campaign's row UUIDs.
+    final packToCampaign = <String, String>{
+      for (final id in pack.entities.keys) id: _uuid.v4(),
+    };
 
     final rows = <EntitiesCompanion>[];
     for (final entry in pack.entities.entries) {
@@ -143,8 +167,14 @@ class SrdCoreBootstrap {
       final resolvedAttrs =
           PackageImportService.resolveLookupPlaceholder(attrs, _tier0Ids)
               as Map<String, dynamic>;
+      // Rewrite any pack-side Tier-1 UUID inside the resolved attrs to the
+      // matching campaign-side UUID so spell.class_refs etc. resolve
+      // correctly post-import.
+      final remappedAttrs =
+          _remapPackRefs(resolvedAttrs, packToCampaign) as Map<String, dynamic>;
+      final campaignEntityId = packToCampaign[id]!;
       rows.add(EntitiesCompanion.insert(
-        id: id,
+        id: campaignEntityId,
         campaignId: campaignId,
         categorySlug: raw['type'] as String? ?? 'unknown',
         name: raw['name'] as String? ?? 'Unnamed',
@@ -156,12 +186,36 @@ class SrdCoreBootstrap {
         dmNotes: Value((raw['dm_notes'] as String?) ?? ''),
         pdfsJson: Value(jsonEncode(raw['pdfs'] ?? const [])),
         locationId: Value(raw['location_id'] as String?),
-        fieldsJson: Value(jsonEncode(resolvedAttrs)),
+        fieldsJson: Value(jsonEncode(remappedAttrs)),
+        packageId: Value(packageId),
+        packageEntityId: Value(id),
+        linked: Value(packageId != null),
       ));
     }
 
     if (rows.isEmpty) return 0;
     await _db.entityDao.insertAll(rows);
     return rows.length;
+  }
+
+  /// Walks [value] and replaces any string that matches a key in
+  /// [packToCampaign] with the mapped campaign-side UUID. Used to rewrite
+  /// inter-Tier-1 relations (class_refs, trait_refs, action_refs, …) so
+  /// they point at this campaign's freshly minted row IDs instead of the
+  /// pack-side UUIDs that are scoped to the package_entities table.
+  static dynamic _remapPackRefs(
+      dynamic value, Map<String, String> packToCampaign) {
+    if (value is String) return packToCampaign[value] ?? value;
+    if (value is Map) {
+      final out = <String, dynamic>{};
+      value.forEach((k, v) {
+        out[k.toString()] = _remapPackRefs(v, packToCampaign);
+      });
+      return out;
+    }
+    if (value is List) {
+      return value.map((e) => _remapPackRefs(e, packToCampaign)).toList();
+    }
+    return value;
   }
 }

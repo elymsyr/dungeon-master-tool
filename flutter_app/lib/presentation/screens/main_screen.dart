@@ -10,6 +10,7 @@ import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/locale_provider.dart';
+import '../../application/providers/package_provider.dart';
 import '../../application/providers/projection_output_provider.dart';
 import '../../application/providers/projection_provider.dart';
 import '../../domain/entities/projection/projection_output_mode.dart';
@@ -297,6 +298,11 @@ class _MainScreenState extends ConsumerState<MainScreen>
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final campaignName = ref.read(activeCampaignProvider) ?? '';
+
+    // Fire-and-forget: trigger live-link sync against installed packages
+    // when the active campaign loads. Picks up new SRD pack content on
+    // app restart without the user opening Packages settings.
+    ref.watch(activeCampaignSyncProvider);
     final screen = getScreenType(context);
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;

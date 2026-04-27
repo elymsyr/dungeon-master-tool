@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 
 import '../../core/utils/deep_copy.dart';
@@ -132,6 +134,9 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
           pdfs: _toStringList(map['pdfs']),
           locationId: map['location_id'] as String?,
           fields: _extractFields(map),
+          packageId: map['package_id'] as String?,
+          packageEntityId: map['package_entity_id'] as String?,
+          linked: (map['linked'] as bool?) ?? false,
         );
       } catch (e) {
         debugPrint('Entity parse error for ${entry.key}: $e');
@@ -239,13 +244,53 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   void update(Entity entity) {
     if (identical(state[entity.id], entity)) return;
     pushUndo(state);
-    state = {...state, entity.id: entity};
+    // Detach-on-edit: when a user edits an entity that was live-linked
+    // to a package, the link breaks. The entity becomes a homebrew
+    // copy that no longer mirrors pack updates and survives package
+    // removal. The pack-side entity is unaffected.
+    final prev = state[entity.id];
+    var next = entity;
+    if (prev != null && prev.linked && _isContentChanged(prev, entity)) {
+      next = entity.copyWith(linked: false, source: 'Homebrew');
+    }
+    state = {...state, next.id: next};
     _syncToCampaign();
     _eventBus.emit(EventEnvelope.now(
       EventTypes.entityUpdated,
-      {'entity_id': entity.id, 'changed_fields': const <String>[]},
+      {'entity_id': next.id, 'changed_fields': const <String>[]},
       campaignId: _campaignId,
     ));
+  }
+
+  /// True when [next] differs from [prev] in any user-editable surface.
+  /// Pack-link metadata changes alone don't trigger detach.
+  bool _isContentChanged(Entity prev, Entity next) {
+    return prev.name != next.name ||
+        prev.description != next.description ||
+        prev.imagePath != next.imagePath ||
+        prev.dmNotes != next.dmNotes ||
+        prev.locationId != next.locationId ||
+        !_listEquals(prev.images, next.images) ||
+        !_listEquals(prev.tags, next.tags) ||
+        !_listEquals(prev.pdfs, next.pdfs) ||
+        !_mapEquals(prev.fields, next.fields);
+  }
+
+  bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  bool _mapEquals(Map<String, dynamic> a, Map<String, dynamic> b) {
+    if (a.length != b.length) return false;
+    for (final key in a.keys) {
+      if (!b.containsKey(key)) return false;
+      if (jsonEncode(a[key]) != jsonEncode(b[key])) return false;
+    }
+    return true;
   }
 
   /// Birden fazla entity'yi tek seferde ekle (paket import için).
@@ -303,6 +348,9 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       'pdfs': e.pdfs,
       'location_id': e.locationId,
       'attributes': e.fields,
+      if (e.packageId != null) 'package_id': e.packageId,
+      if (e.packageEntityId != null) 'package_entity_id': e.packageEntityId,
+      if (e.linked) 'linked': true,
     };
   }
 
