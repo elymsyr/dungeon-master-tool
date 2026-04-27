@@ -14,38 +14,17 @@ const tier0Slugs = <String>[
   'skill',
   'damage-type',
   'condition',
-  'size',
   'creature-type',
-  'alignment',
   'language',
-  'weapon-category',
   'weapon-property',
   'weapon-mastery',
-  'armor-category',
-  'tool-category',
   'spell-school',
   'magic-item-category',
-  'rarity',
-  'speed-type',
   'sense',
-  'action',
-  'area-shape',
-  'attitude',
-  'cover',
-  'illumination',
   'hazard',
-  'feat-category',
-  'lifestyle',
-  'coin',
-  'tier-of-play',
-  'travel-pace',
   'arcane-focus',
   'druidic-focus',
   'holy-symbol',
-  'plane',
-  'casting-component',
-  'casting-time-unit',
-  'duration-unit',
 ];
 
 /// One row of the Tier-0 category output: the category schema plus its
@@ -67,38 +46,17 @@ List<Tier0CategoryBuild> buildTier0Lookups({
     _skillCategory(schemaId, now),
     _damageTypeCategory(schemaId, now),
     _conditionCategory(schemaId, now),
-    _sizeCategory(schemaId, now),
     _creatureTypeCategory(schemaId, now),
-    _alignmentCategory(schemaId, now),
     _languageCategory(schemaId, now),
-    _weaponCategoryCategory(schemaId, now),
     _weaponPropertyCategory(schemaId, now),
     _weaponMasteryCategory(schemaId, now),
-    _armorCategoryCategory(schemaId, now),
-    _toolCategoryCategory(schemaId, now),
     _spellSchoolCategory(schemaId, now),
     _magicItemCategoryCategory(schemaId, now),
-    _rarityCategory(schemaId, now),
-    _speedTypeCategory(schemaId, now),
     _senseCategory(schemaId, now),
-    _actionCategory(schemaId, now),
-    _areaShapeCategory(schemaId, now),
-    _attitudeCategory(schemaId, now),
-    _coverCategory(schemaId, now),
-    _illuminationCategory(schemaId, now),
     _hazardCategory(schemaId, now),
-    _featCategoryCategory(schemaId, now),
-    _lifestyleCategory(schemaId, now),
-    _coinCategory(schemaId, now),
-    _tierOfPlayCategory(schemaId, now),
-    _travelPaceCategory(schemaId, now),
     _arcaneFocusCategory(schemaId, now),
     _druidicFocusCategory(schemaId, now),
     _holySymbolCategory(schemaId, now),
-    _planeCategory(schemaId, now),
-    _castingComponentCategory(schemaId, now),
-    _castingTimeUnitCategory(schemaId, now),
-    _durationUnitCategory(schemaId, now),
   ];
 }
 
@@ -291,32 +249,6 @@ FieldSchema _integerField({
   );
 }
 
-FieldSchema _floatField({
-  required String categoryId,
-  required String now,
-  required String key,
-  required String label,
-  required int order,
-  double? minValue,
-  double? maxValue,
-  String? helpText,
-  String? groupId,
-}) {
-  return FieldSchema(
-    fieldId: _uuid.v4(),
-    categoryId: categoryId,
-    fieldKey: key,
-    label: label,
-    fieldType: FieldType.float_,
-    helpText: helpText ?? '',
-    validation: FieldValidation(minValue: minValue, maxValue: maxValue),
-    orderIndex: order,
-    isBuiltin: true,
-    groupId: groupId ?? grpLookupMeta,
-    createdAt: now,
-    updatedAt: now,
-  );
-}
 
 FieldSchema _intField({
   required String categoryId,
@@ -695,78 +627,6 @@ Tier0CategoryBuild _conditionCategory(String schemaId, String now) {
   );
 }
 
-Tier0CategoryBuild _sizeCategory(String schemaId, String now) {
-  final catId = _uuid.v4();
-  final common = _commonLookupFields(categoryId: catId, now: now);
-  final fields = _withExtras(common, [
-    (o) => _floatField(
-          categoryId: catId,
-          now: now,
-          key: 'space_ft',
-          label: 'Space (ft)',
-          order: o,
-          helpText: 'Diameter of the creature\'s space',
-        ),
-    (o) => _floatField(
-          categoryId: catId,
-          now: now,
-          key: 'squares',
-          label: 'Squares',
-          order: o,
-        ),
-    (o) => _enumField(
-          categoryId: catId,
-          now: now,
-          key: 'hit_die_size',
-          label: 'Hit Die',
-          order: o,
-          values: ['d4', 'd6', 'd8', 'd10', 'd12', 'd20'],
-        ),
-    (o) => _floatField(
-          categoryId: catId,
-          now: now,
-          key: 'carrying_multiplier',
-          label: 'Carrying Multiplier',
-          order: o,
-          minValue: 0,
-          helpText: 'Carrying capacity = STR × 15 × multiplier (s.16)',
-        ),
-  ]);
-  const rows = [
-    {'name': 'Tiny', 'space_ft': 2.5, 'squares': 0.25, 'hit_die_size': 'd4', 'carry': 0.5},
-    {'name': 'Small', 'space_ft': 5.0, 'squares': 1.0, 'hit_die_size': 'd6', 'carry': 1.0},
-    {'name': 'Medium', 'space_ft': 5.0, 'squares': 1.0, 'hit_die_size': 'd8', 'carry': 1.0},
-    {'name': 'Large', 'space_ft': 10.0, 'squares': 4.0, 'hit_die_size': 'd10', 'carry': 2.0},
-    {'name': 'Huge', 'space_ft': 15.0, 'squares': 9.0, 'hit_die_size': 'd12', 'carry': 4.0},
-    {'name': 'Gargantuan', 'space_ft': 20.0, 'squares': 16.0, 'hit_die_size': 'd20', 'carry': 8.0},
-  ];
-  final seed = rows
-      .map((r) => {
-            'name': r['name'],
-            'fields': {
-              'space_ft': r['space_ft'],
-              'squares': r['squares'],
-              'hit_die_size': r['hit_die_size'],
-              'carrying_multiplier': r['carry'],
-            },
-          })
-      .toList();
-  return Tier0CategoryBuild(
-    _makeCategory(
-      schemaId: schemaId,
-      categoryId: catId,
-      name: 'Size',
-      slug: 'size',
-      color: '#8d6e63',
-      icon: 'aspect_ratio',
-      fields: fields,
-      orderIndex: 4,
-      now: now,
-    ),
-    seed,
-  );
-}
-
 Tier0CategoryBuild _creatureTypeCategory(String schemaId, String now) {
   final catId = _uuid.v4();
   final common = _commonLookupFields(categoryId: catId, now: now);
@@ -794,66 +654,7 @@ Tier0CategoryBuild _creatureTypeCategory(String schemaId, String now) {
       color: '#6d4c41',
       icon: 'pets',
       fields: fields,
-      orderIndex: 5,
-      now: now,
-    ),
-    seed,
-  );
-}
-
-Tier0CategoryBuild _alignmentCategory(String schemaId, String now) {
-  final catId = _uuid.v4();
-  final common = _commonLookupFields(categoryId: catId, now: now);
-  final fields = _withExtras(common, [
-    (o) => _enumField(
-          categoryId: catId,
-          now: now,
-          key: 'morality',
-          label: 'Morality',
-          order: o,
-          values: ['Good', 'Neutral', 'Evil'],
-        ),
-    (o) => _enumField(
-          categoryId: catId,
-          now: now,
-          key: 'order',
-          label: 'Order',
-          order: o,
-          values: ['Lawful', 'Neutral', 'Chaotic'],
-        ),
-  ]);
-  const rows = [
-    {'name': 'Lawful Good', 'abbr': 'LG', 'order': 'Lawful', 'morality': 'Good'},
-    {'name': 'Neutral Good', 'abbr': 'NG', 'order': 'Neutral', 'morality': 'Good'},
-    {'name': 'Chaotic Good', 'abbr': 'CG', 'order': 'Chaotic', 'morality': 'Good'},
-    {'name': 'Lawful Neutral', 'abbr': 'LN', 'order': 'Lawful', 'morality': 'Neutral'},
-    {'name': 'Neutral', 'abbr': 'N', 'order': 'Neutral', 'morality': 'Neutral'},
-    {'name': 'Chaotic Neutral', 'abbr': 'CN', 'order': 'Chaotic', 'morality': 'Neutral'},
-    {'name': 'Lawful Evil', 'abbr': 'LE', 'order': 'Lawful', 'morality': 'Evil'},
-    {'name': 'Neutral Evil', 'abbr': 'NE', 'order': 'Neutral', 'morality': 'Evil'},
-    {'name': 'Chaotic Evil', 'abbr': 'CE', 'order': 'Chaotic', 'morality': 'Evil'},
-    {'name': 'Unaligned', 'abbr': '—', 'order': 'Neutral', 'morality': 'Neutral'},
-  ];
-  final seed = rows
-      .map((r) => {
-            'name': r['name'],
-            'fields': {
-              'abbreviation': r['abbr'],
-              'morality': r['morality'],
-              'order': r['order'],
-            },
-          })
-      .toList();
-  return Tier0CategoryBuild(
-    _makeCategory(
-      schemaId: schemaId,
-      categoryId: catId,
-      name: 'Alignment',
-      slug: 'alignment',
-      color: '#607d8b',
-      icon: 'balance',
-      fields: fields,
-      orderIndex: 6,
+      orderIndex: 4,
       now: now,
     ),
     seed,
@@ -903,7 +704,7 @@ Tier0CategoryBuild _languageCategory(String schemaId, String now) {
       color: '#5c6bc0',
       icon: 'translate',
       fields: fields,
-      orderIndex: 7,
+      orderIndex: 5,
       now: now,
     ),
     seed,
@@ -942,17 +743,6 @@ Tier0CategoryBuild _simpleLookup({
     seed,
   );
 }
-
-Tier0CategoryBuild _weaponCategoryCategory(String schemaId, String now) => _simpleLookup(
-      schemaId: schemaId,
-      now: now,
-      slug: 'weapon-category',
-      name: 'Weapon Category',
-      color: '#455a64',
-      icon: 'category',
-      orderIndex: 8,
-      rowNames: const ['Simple', 'Martial'],
-    );
 
 Tier0CategoryBuild _weaponPropertyCategory(String schemaId, String now) {
   final catId = _uuid.v4();
@@ -1007,7 +797,7 @@ Tier0CategoryBuild _weaponPropertyCategory(String schemaId, String now) {
       color: '#455a64',
       icon: 'handyman',
       fields: fields,
-      orderIndex: 9,
+      orderIndex: 6,
       now: now,
     ),
     seed,
@@ -1082,34 +872,12 @@ Tier0CategoryBuild _weaponMasteryCategory(String schemaId, String now) {
       color: '#37474f',
       icon: 'military_tech',
       fields: fields,
-      orderIndex: 10,
+      orderIndex: 7,
       now: now,
     ),
     seed,
   );
 }
-
-Tier0CategoryBuild _armorCategoryCategory(String schemaId, String now) => _simpleLookup(
-      schemaId: schemaId,
-      now: now,
-      slug: 'armor-category',
-      name: 'Armor Category',
-      color: '#5d4037',
-      icon: 'shield',
-      orderIndex: 11,
-      rowNames: const ['Light', 'Medium', 'Heavy', 'Shield'],
-    );
-
-Tier0CategoryBuild _toolCategoryCategory(String schemaId, String now) => _simpleLookup(
-      schemaId: schemaId,
-      now: now,
-      slug: 'tool-category',
-      name: 'Tool Category',
-      color: '#795548',
-      icon: 'build',
-      orderIndex: 12,
-      rowNames: const ['Artisan\'s Tools', 'Other Tools', 'Gaming Set', 'Musical Instrument'],
-    );
 
 Tier0CategoryBuild _spellSchoolCategory(String schemaId, String now) => _simpleLookup(
       schemaId: schemaId,
@@ -1118,7 +886,7 @@ Tier0CategoryBuild _spellSchoolCategory(String schemaId, String now) => _simpleL
       name: 'Spell School',
       color: '#7b1fa2',
       icon: 'auto_awesome',
-      orderIndex: 13,
+      orderIndex: 8,
       rowNames: const [
         'Abjuration', 'Conjuration', 'Divination', 'Enchantment',
         'Evocation', 'Illusion', 'Necromancy', 'Transmutation',
@@ -1149,86 +917,12 @@ Tier0CategoryBuild _magicItemCategoryCategory(String schemaId, String now) {
       color: '#8e24aa',
       icon: 'auto_fix_high',
       fields: fields,
-      orderIndex: 14,
+      orderIndex: 9,
       now: now,
     ),
     seed,
   );
 }
-
-Tier0CategoryBuild _rarityCategory(String schemaId, String now) {
-  final catId = _uuid.v4();
-  final common = _commonLookupFields(categoryId: catId, now: now);
-  final fields = _withExtras(common, [
-    (o) => _integerField(
-          categoryId: catId,
-          now: now,
-          key: 'value_gp',
-          label: 'Value (gp)',
-          order: o,
-          minValue: 0,
-        ),
-    (o) => _integerField(
-          categoryId: catId,
-          now: now,
-          key: 'crafting_time_days',
-          label: 'Crafting Time (days)',
-          order: o,
-          minValue: 0,
-        ),
-    (o) => _integerField(
-          categoryId: catId,
-          now: now,
-          key: 'crafting_cost_gp',
-          label: 'Crafting Cost (gp)',
-          order: o,
-          minValue: 0,
-        ),
-  ]);
-  const rows = [
-    {'name': 'Common', 'value_gp': 100, 'days': 5, 'cost_gp': 50},
-    {'name': 'Uncommon', 'value_gp': 400, 'days': 10, 'cost_gp': 200},
-    {'name': 'Rare', 'value_gp': 4000, 'days': 50, 'cost_gp': 2000},
-    {'name': 'Very Rare', 'value_gp': 40000, 'days': 125, 'cost_gp': 20000},
-    {'name': 'Legendary', 'value_gp': 200000, 'days': 250, 'cost_gp': 100000},
-    {'name': 'Artifact', 'value_gp': 0, 'days': 0, 'cost_gp': 0},
-  ];
-  final seed = rows
-      .map((r) => {
-            'name': r['name'],
-            'fields': {
-              'value_gp': r['value_gp'],
-              'crafting_time_days': r['days'],
-              'crafting_cost_gp': r['cost_gp'],
-            },
-          })
-      .toList();
-  return Tier0CategoryBuild(
-    _makeCategory(
-      schemaId: schemaId,
-      categoryId: catId,
-      name: 'Rarity',
-      slug: 'rarity',
-      color: '#d81b60',
-      icon: 'workspace_premium',
-      fields: fields,
-      orderIndex: 15,
-      now: now,
-    ),
-    seed,
-  );
-}
-
-Tier0CategoryBuild _speedTypeCategory(String schemaId, String now) => _simpleLookup(
-      schemaId: schemaId,
-      now: now,
-      slug: 'speed-type',
-      name: 'Speed Type',
-      color: '#0097a7',
-      icon: 'directions_run',
-      orderIndex: 16,
-      rowNames: const ['Walking', 'Burrow', 'Climb', 'Fly', 'Swim'],
-    );
 
 Tier0CategoryBuild _senseCategory(String schemaId, String now) {
   final catId = _uuid.v4();
@@ -1266,102 +960,12 @@ Tier0CategoryBuild _senseCategory(String schemaId, String now) {
       color: '#00838f',
       icon: 'visibility',
       fields: fields,
-      orderIndex: 17,
+      orderIndex: 10,
       now: now,
     ),
     seed,
   );
 }
-
-Tier0CategoryBuild _actionCategory(String schemaId, String now) => _simpleLookup(
-      schemaId: schemaId,
-      now: now,
-      slug: 'action',
-      name: 'Action',
-      color: '#ef6c00',
-      icon: 'flash_on',
-      orderIndex: 18,
-      rowNames: const [
-        'Attack', 'Dash', 'Disengage', 'Dodge', 'Help',
-        'Hide', 'Influence', 'Magic', 'Ready', 'Search', 'Study', 'Utilize',
-      ],
-    );
-
-Tier0CategoryBuild _areaShapeCategory(String schemaId, String now) {
-  final catId = _uuid.v4();
-  final common = _commonLookupFields(categoryId: catId, now: now);
-  final fields = _withExtras(common, [
-    (o) => _textField(
-          categoryId: catId,
-          now: now,
-          key: 'origin_behavior',
-          label: 'Origin Behavior',
-          order: o,
-          helpText: 'e.g. cube: face, cone: tip, sphere: center',
-        ),
-  ]);
-  const rows = [
-    {'name': 'Cone', 'origin': 'Tip of cone at a point you can see'},
-    {'name': 'Cube', 'origin': 'Face of cube at origin point'},
-    {'name': 'Cylinder', 'origin': 'Center of flat face'},
-    {'name': 'Emanation', 'origin': 'Around the creature'},
-    {'name': 'Line', 'origin': 'Path from origin point'},
-    {'name': 'Sphere', 'origin': 'Center point'},
-  ];
-  final seed = rows
-      .map((r) => {
-            'name': r['name'],
-            'fields': {'origin_behavior': r['origin']},
-          })
-      .toList();
-  return Tier0CategoryBuild(
-    _makeCategory(
-      schemaId: schemaId,
-      categoryId: catId,
-      name: 'Area of Effect Shape',
-      slug: 'area-shape',
-      color: '#00acc1',
-      icon: 'crop_free',
-      fields: fields,
-      orderIndex: 19,
-      now: now,
-    ),
-    seed,
-  );
-}
-
-Tier0CategoryBuild _attitudeCategory(String schemaId, String now) => _simpleLookup(
-      schemaId: schemaId,
-      now: now,
-      slug: 'attitude',
-      name: 'Attitude',
-      color: '#fdd835',
-      icon: 'mood',
-      orderIndex: 20,
-      rowNames: const ['Friendly', 'Indifferent', 'Hostile'],
-    );
-
-Tier0CategoryBuild _coverCategory(String schemaId, String now) => _simpleLookup(
-      schemaId: schemaId,
-      now: now,
-      slug: 'cover',
-      name: 'Cover',
-      color: '#546e7a',
-      icon: 'grid_on',
-      orderIndex: 21,
-      rowNames: const ['Half Cover', 'Three-Quarters Cover', 'Total Cover'],
-    );
-
-Tier0CategoryBuild _illuminationCategory(String schemaId, String now) => _simpleLookup(
-      schemaId: schemaId,
-      now: now,
-      slug: 'illumination',
-      name: 'Illumination',
-      color: '#fbc02d',
-      icon: 'lightbulb',
-      orderIndex: 22,
-      rowNames: const ['Bright Light', 'Dim Light', 'Darkness'],
-    );
 
 Tier0CategoryBuild _hazardCategory(String schemaId, String now) => _simpleLookup(
       schemaId: schemaId,
@@ -1370,170 +974,8 @@ Tier0CategoryBuild _hazardCategory(String schemaId, String now) => _simpleLookup
       name: 'Hazard',
       color: '#c62828',
       icon: 'warning',
-      orderIndex: 23,
+      orderIndex: 11,
       rowNames: const ['Burning', 'Dehydration', 'Falling', 'Malnutrition', 'Suffocation'],
-    );
-
-Tier0CategoryBuild _featCategoryCategory(String schemaId, String now) => _simpleLookup(
-      schemaId: schemaId,
-      now: now,
-      slug: 'feat-category',
-      name: 'Feat Category',
-      color: '#ff7043',
-      icon: 'stars',
-      orderIndex: 24,
-      rowNames: const ['Origin', 'General', 'Fighting Style', 'Epic Boon'],
-    );
-
-Tier0CategoryBuild _lifestyleCategory(String schemaId, String now) {
-  final catId = _uuid.v4();
-  final common = _commonLookupFields(categoryId: catId, now: now);
-  final fields = _withExtras(common, [
-    (o) => _floatField(
-          categoryId: catId,
-          now: now,
-          key: 'cost_per_day_gp',
-          label: 'Cost / Day (gp)',
-          order: o,
-          minValue: 0,
-        ),
-  ]);
-  const rows = [
-    {'name': 'Wretched', 'cost': 0.0},
-    {'name': 'Squalid', 'cost': 0.1},
-    {'name': 'Poor', 'cost': 0.2},
-    {'name': 'Modest', 'cost': 1.0},
-    {'name': 'Comfortable', 'cost': 2.0},
-    {'name': 'Wealthy', 'cost': 4.0},
-    {'name': 'Aristocratic', 'cost': 10.0},
-  ];
-  final seed = rows
-      .map((r) => {
-            'name': r['name'],
-            'fields': {'cost_per_day_gp': r['cost']},
-          })
-      .toList();
-  return Tier0CategoryBuild(
-    _makeCategory(
-      schemaId: schemaId,
-      categoryId: catId,
-      name: 'Lifestyle',
-      slug: 'lifestyle',
-      color: '#8d6e63',
-      icon: 'home',
-      fields: fields,
-      orderIndex: 25,
-      now: now,
-    ),
-    seed,
-  );
-}
-
-Tier0CategoryBuild _coinCategory(String schemaId, String now) {
-  final catId = _uuid.v4();
-  final common = _commonLookupFields(categoryId: catId, now: now);
-  final fields = _withExtras(common, [
-    (o) => _floatField(
-          categoryId: catId,
-          now: now,
-          key: 'value_in_gp',
-          label: 'Value (gp)',
-          order: o,
-          minValue: 0,
-        ),
-  ]);
-  const rows = [
-    {'name': 'Copper Piece', 'abbr': 'CP', 'gp': 0.01},
-    {'name': 'Silver Piece', 'abbr': 'SP', 'gp': 0.1},
-    {'name': 'Electrum Piece', 'abbr': 'EP', 'gp': 0.5},
-    {'name': 'Gold Piece', 'abbr': 'GP', 'gp': 1.0},
-    {'name': 'Platinum Piece', 'abbr': 'PP', 'gp': 10.0},
-  ];
-  final seed = rows
-      .map((r) => {
-            'name': r['name'],
-            'fields': {
-              'abbreviation': r['abbr'],
-              'value_in_gp': r['gp'],
-            },
-          })
-      .toList();
-  return Tier0CategoryBuild(
-    _makeCategory(
-      schemaId: schemaId,
-      categoryId: catId,
-      name: 'Coin',
-      slug: 'coin',
-      color: '#fdd835',
-      icon: 'monetization_on',
-      fields: fields,
-      orderIndex: 26,
-      now: now,
-    ),
-    seed,
-  );
-}
-
-Tier0CategoryBuild _tierOfPlayCategory(String schemaId, String now) {
-  final catId = _uuid.v4();
-  final common = _commonLookupFields(categoryId: catId, now: now);
-  final fields = _withExtras(common, [
-    (o) => _integerField(
-          categoryId: catId,
-          now: now,
-          key: 'min_level',
-          label: 'Min Level',
-          order: o,
-          minValue: 1,
-          maxValue: 20,
-        ),
-    (o) => _integerField(
-          categoryId: catId,
-          now: now,
-          key: 'max_level',
-          label: 'Max Level',
-          order: o,
-          minValue: 1,
-          maxValue: 20,
-        ),
-  ]);
-  const rows = [
-    {'name': 'Tier 1', 'min': 1, 'max': 4},
-    {'name': 'Tier 2', 'min': 5, 'max': 10},
-    {'name': 'Tier 3', 'min': 11, 'max': 16},
-    {'name': 'Tier 4', 'min': 17, 'max': 20},
-  ];
-  final seed = rows
-      .map((r) => {
-            'name': r['name'],
-            'fields': {'min_level': r['min'], 'max_level': r['max']},
-          })
-      .toList();
-  return Tier0CategoryBuild(
-    _makeCategory(
-      schemaId: schemaId,
-      categoryId: catId,
-      name: 'Tier of Play',
-      slug: 'tier-of-play',
-      color: '#3949ab',
-      icon: 'emoji_events',
-      fields: fields,
-      orderIndex: 27,
-      now: now,
-    ),
-    seed,
-  );
-}
-
-Tier0CategoryBuild _travelPaceCategory(String schemaId, String now) => _simpleLookup(
-      schemaId: schemaId,
-      now: now,
-      slug: 'travel-pace',
-      name: 'Travel Pace',
-      color: '#43a047',
-      icon: 'directions_walk',
-      orderIndex: 28,
-      rowNames: const ['Fast', 'Normal', 'Slow'],
     );
 
 Tier0CategoryBuild _arcaneFocusCategory(String schemaId, String now) => _simpleLookup(
@@ -1543,7 +985,7 @@ Tier0CategoryBuild _arcaneFocusCategory(String schemaId, String now) => _simpleL
       name: 'Arcane Focus',
       color: '#5e35b1',
       icon: 'casino',
-      orderIndex: 29,
+      orderIndex: 12,
       rowNames: const ['Crystal', 'Orb', 'Rod', 'Staff', 'Wand'],
     );
 
@@ -1554,7 +996,7 @@ Tier0CategoryBuild _druidicFocusCategory(String schemaId, String now) => _simple
       name: 'Druidic Focus',
       color: '#388e3c',
       icon: 'park',
-      orderIndex: 30,
+      orderIndex: 13,
       rowNames: const ['Sprig of Mistletoe', 'Wooden Staff', 'Yew Wand'],
     );
 
@@ -1565,136 +1007,7 @@ Tier0CategoryBuild _holySymbolCategory(String schemaId, String now) => _simpleLo
       name: 'Holy Symbol',
       color: '#fbc02d',
       icon: 'auto_awesome',
-      orderIndex: 31,
+      orderIndex: 14,
       rowNames: const ['Amulet', 'Emblem', 'Reliquary'],
     );
 
-Tier0CategoryBuild _planeCategory(String schemaId, String now) {
-  final catId = _uuid.v4();
-  final common = _commonLookupFields(categoryId: catId, now: now);
-  final fields = _withExtras(common, [
-    (o) => _enumField(
-          categoryId: catId,
-          now: now,
-          key: 'group',
-          label: 'Group',
-          order: o,
-          values: ['Material', 'Transitive', 'Inner', 'Outer-Upper', 'Outer-Lower'],
-        ),
-  ]);
-  const rows = [
-    {'name': 'Material Plane', 'group': 'Material'},
-    {'name': 'Astral Plane', 'group': 'Transitive'},
-    {'name': 'Ethereal Plane', 'group': 'Transitive'},
-    {'name': 'Feywild', 'group': 'Transitive'},
-    {'name': 'Shadowfell', 'group': 'Transitive'},
-    // Inner (Elemental)
-    {'name': 'Plane of Air', 'group': 'Inner'},
-    {'name': 'Plane of Earth', 'group': 'Inner'},
-    {'name': 'Plane of Fire', 'group': 'Inner'},
-    {'name': 'Plane of Water', 'group': 'Inner'},
-    // Outer upper (Good-leaning)
-    {'name': 'Mount Celestia', 'group': 'Outer-Upper'},
-    {'name': 'Bytopia', 'group': 'Outer-Upper'},
-    {'name': 'Elysium', 'group': 'Outer-Upper'},
-    {'name': 'The Beastlands', 'group': 'Outer-Upper'},
-    {'name': 'Arborea', 'group': 'Outer-Upper'},
-    {'name': 'Ysgard', 'group': 'Outer-Upper'},
-    {'name': 'Limbo', 'group': 'Outer-Upper'},
-    {'name': 'Pandemonium', 'group': 'Outer-Lower'},
-    {'name': 'The Abyss', 'group': 'Outer-Lower'},
-    {'name': 'Carceri', 'group': 'Outer-Lower'},
-    {'name': 'Hades', 'group': 'Outer-Lower'},
-    {'name': 'Gehenna', 'group': 'Outer-Lower'},
-    {'name': 'The Nine Hells', 'group': 'Outer-Lower'},
-    {'name': 'Acheron', 'group': 'Outer-Lower'},
-    {'name': 'Mechanus', 'group': 'Outer-Upper'},
-    {'name': 'Arcadia', 'group': 'Outer-Upper'},
-  ];
-  final seed = rows
-      .map((r) => {
-            'name': r['name'],
-            'fields': {'group': r['group']},
-          })
-      .toList();
-  return Tier0CategoryBuild(
-    _makeCategory(
-      schemaId: schemaId,
-      categoryId: catId,
-      name: 'Plane',
-      slug: 'plane',
-      color: '#26c6da',
-      icon: 'public',
-      fields: fields,
-      orderIndex: 32,
-      now: now,
-    ),
-    seed,
-  );
-}
-
-Tier0CategoryBuild _castingComponentCategory(String schemaId, String now) => _simpleLookup(
-      schemaId: schemaId,
-      now: now,
-      slug: 'casting-component',
-      name: 'Casting Component',
-      color: '#9c27b0',
-      icon: 'record_voice_over',
-      orderIndex: 33,
-      rowNames: const ['Verbal', 'Somatic', 'Material'],
-    );
-
-Tier0CategoryBuild _castingTimeUnitCategory(String schemaId, String now) => _simpleLookup(
-      schemaId: schemaId,
-      now: now,
-      slug: 'casting-time-unit',
-      name: 'Casting Time Unit',
-      color: '#6a1b9a',
-      icon: 'schedule',
-      orderIndex: 34,
-      rowNames: const [
-        'Action', 'Bonus Action', 'Reaction',
-        'Minute', 'Hour', 'Ritual', 'Special',
-      ],
-    );
-
-Tier0CategoryBuild _durationUnitCategory(String schemaId, String now) {
-  final catId = _uuid.v4();
-  final common = _commonLookupFields(categoryId: catId, now: now);
-  final fields = _withExtras(common, [
-    (o) => _boolField(
-          categoryId: catId,
-          now: now,
-          key: 'is_concentration_compatible',
-          label: 'Concentration Compatible',
-          order: o,
-        ),
-  ]);
-  const rows = [
-    {'name': 'Instantaneous', 'conc': false},
-    {'name': 'Rounds', 'conc': true},
-    {'name': 'Minutes', 'conc': true},
-    {'name': 'Hours', 'conc': true},
-    {'name': 'Days', 'conc': true},
-  ];
-  final seed = rows
-      .map((r) => {
-            'name': r['name'],
-            'fields': {'is_concentration_compatible': r['conc']},
-          })
-      .toList();
-  return Tier0CategoryBuild(
-    _makeCategory(
-      schemaId: schemaId,
-      categoryId: catId,
-      name: 'Duration Unit',
-      slug: 'duration-unit',
-      color: '#ad1457',
-      icon: 'hourglass_bottom',
-      fields: fields,
-      orderIndex: 35,
-      now: now,
-    ),
-    seed,
-  );
-}

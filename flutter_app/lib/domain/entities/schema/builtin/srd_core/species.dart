@@ -14,7 +14,7 @@ List<Map<String, dynamic>> srdSpecies() => [
             'Descendants of dragons, bearing scales, breath weapon, and damage resistance keyed to a chosen ancestry.',
         attributes: {
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
-          'size_ref': lookup('size', 'Medium'),
+          'size_ref': 'Medium',
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
           'traits':
@@ -37,7 +37,7 @@ List<Map<String, dynamic>> srdSpecies() => [
             'Stout, hardy folk with poison resistance, tremorsense on stone, and heightened toughness.',
         attributes: {
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
-          'size_ref': lookup('size', 'Medium'),
+          'size_ref': 'Medium',
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
           'granted_damage_resistances': [lookup('damage-type', 'Poison')],
@@ -56,7 +56,7 @@ List<Map<String, dynamic>> srdSpecies() => [
             'Fey-touched folk with Trance, charm resistance, keen senses, and a chosen Drow / High Elf / Wood Elf lineage.',
         attributes: {
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
-          'size_ref': lookup('size', 'Medium'),
+          'size_ref': 'Medium',
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
           'traits':
@@ -81,7 +81,7 @@ List<Map<String, dynamic>> srdSpecies() => [
             'Small inventive folk with mental save advantage and a Forest / Rock lineage of innate magic.',
         attributes: {
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
-          'size_ref': lookup('size', 'Small'),
+          'size_ref': 'Small',
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
           'traits':
@@ -99,7 +99,7 @@ List<Map<String, dynamic>> srdSpecies() => [
             'Giant-blooded Medium folk with a chosen Cloud / Fire / Frost / Hill / Stone / Storm Giant ancestry boon, plus optional Large Form starting at level 5.',
         attributes: {
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
-          'size_ref': lookup('size', 'Medium'),
+          'size_ref': 'Medium',
           'speed_ft': 35,
           'traits':
               '**Giant Ancestry.** You are descended from Giants. Choose one of the following benefits—a supernatural boon from your ancestry; you can use the chosen benefit a number of times equal to your Proficiency Bonus, and you regain all expended uses when you finish a Long Rest:\n\n'
@@ -120,7 +120,7 @@ List<Map<String, dynamic>> srdSpecies() => [
             'Small, lucky folk who can hide behind larger creatures and reroll natural 1s.',
         attributes: {
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
-          'size_ref': lookup('size', 'Small'),
+          'size_ref': 'Small',
           'speed_ft': 30,
           'traits':
               '**Brave.** You have Advantage on saving throws you make to avoid or end the Frightened condition.\n\n'
@@ -136,7 +136,7 @@ List<Map<String, dynamic>> srdSpecies() => [
             'Adaptable folk with bonus Heroic Inspiration on Long Rests, a free skill, and an Origin feat.',
         attributes: {
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
-          'size_ref': lookup('size', 'Medium'),
+          'size_ref': 'Medium',
           'speed_ft': 30,
           'traits':
               '**Resourceful.** You gain Heroic Inspiration whenever you finish a Long Rest.\n\n'
@@ -151,7 +151,7 @@ List<Map<String, dynamic>> srdSpecies() => [
             'Adrenaline-driven warriors with bonus-action Dash, temporary HP, and Relentless Endurance.',
         attributes: {
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
-          'size_ref': lookup('size', 'Medium'),
+          'size_ref': 'Medium',
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
           'traits':
@@ -168,7 +168,7 @@ List<Map<String, dynamic>> srdSpecies() => [
             'Fiend-blooded folk with a chosen Abyssal / Chthonic / Infernal legacy granting damage resistance and innate spells.',
         attributes: {
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
-          'size_ref': lookup('size', 'Medium'),
+          'size_ref': 'Medium',
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
           'traits':

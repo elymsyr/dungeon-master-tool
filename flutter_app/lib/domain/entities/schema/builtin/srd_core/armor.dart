@@ -20,7 +20,7 @@ Map<String, dynamic> _a({
   required double weightLb,
 }) {
   final attrs = <String, dynamic>{
-    'category_ref': lookup('armor-category', category),
+    'category_ref': category,
     'base_ac': baseAc,
     'adds_dex': addsDex,
     'stealth_disadvantage': stealthDis,

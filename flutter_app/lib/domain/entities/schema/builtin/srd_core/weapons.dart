@@ -25,7 +25,7 @@ Map<String, dynamic> _w({
   String? ammoType, // ammunition row name (e.g. "Arrows")
 }) {
   final attrs = <String, dynamic>{
-    'category_ref': lookup('weapon-category', category),
+    'category_ref': category,
     'is_melee': melee,
     'damage_dice': dice,
     'damage_type_ref': lookup('damage-type', dmgType),
