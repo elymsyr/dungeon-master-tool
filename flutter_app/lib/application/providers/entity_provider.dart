@@ -177,6 +177,21 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       }
     }
 
+    // Preserve identity of unchanged entities so widgets like EntityCard
+    // that watch via `.select((map) => map[id])` don't rebuild when a
+    // background reload (e.g. PackageSync auto-trigger) re-parses the
+    // exact same content. New instances would otherwise propagate to
+    // every open card and discard their cached subtitle / schema layout.
+    final prev = state;
+    if (prev.isNotEmpty) {
+      for (final entry in entities.entries) {
+        final existing = prev[entry.key];
+        if (existing != null && existing == entry.value) {
+          entities[entry.key] = existing;
+        }
+      }
+    }
+
     state = entities;
   }
 

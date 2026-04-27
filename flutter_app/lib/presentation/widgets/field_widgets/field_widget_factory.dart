@@ -104,6 +104,9 @@ class FieldWidgetFactory {
       if (schema.fieldType == FieldType.image) {
         return _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, mediaDir: mediaDir);
       }
+      if (schema.fieldType == FieldType.enum_) {
+        return _EnumListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged);
+      }
       return _GenericListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged);
     }
 
@@ -524,6 +527,68 @@ class _EnumFieldWidget extends StatelessWidget {
               items: options.map((o) => DropdownMenuItem(value: o, child: Text(o, overflow: TextOverflow.ellipsis))).toList(),
               onChanged: (v) => onChanged(v),
             ),
+    );
+  }
+}
+
+/// Multi-select enum list. Read-only renders as comma-separated inline
+/// values; editable shows FilterChip wrap so the user can toggle members.
+class _EnumListFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+
+  const _EnumListFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  List<String> _parse(dynamic v) {
+    if (v is! List) return const [];
+    return v.whereType<String>().where((s) => s.isNotEmpty).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final options = schema.validation.allowedValues ?? const <String>[];
+    final selected = _parse(value);
+
+    if (readOnly) {
+      if (selected.isEmpty) return const SizedBox.shrink();
+      return _LabeledFieldRow(
+        label: schema.label,
+        child: Text(selected.join(', '), style: _fieldValueStyle(context)),
+      );
+    }
+
+    return _LabeledFieldRow(
+      label: schema.label,
+      alignment: CrossAxisAlignment.start,
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        children: options.map((opt) {
+          final on = selected.contains(opt);
+          return FilterChip(
+            label: Text(opt, style: const TextStyle(fontSize: 11)),
+            selected: on,
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            onSelected: (sel) {
+              final next = List<String>.from(selected);
+              if (sel) {
+                if (!next.contains(opt)) next.add(opt);
+              } else {
+                next.remove(opt);
+              }
+              onChanged(next);
+            },
+          );
+        }).toList(),
+      ),
     );
   }
 }

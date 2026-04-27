@@ -42,6 +42,17 @@ class SrdCorePack {
 
 const _uuid = Uuid();
 
+/// Stable namespace UUID for SRD 5.2.1 Core pack entity ids. UUIDv5 inputs
+/// (this namespace + the row's "slug:name") produce deterministic ids that
+/// stay identical across app starts — critical because pack entity ids
+/// are persisted as `package_entity_id` foreign keys in installed
+/// campaigns. If the ids changed every session, [PackageSyncService]
+/// would treat every existing campaign-side row as orphaned (its
+/// `package_entity_id` no longer matches any pack row) and delete them
+/// in the remove sweep, then re-insert from the pack with new ids —
+/// stranding any open EntityCard tab on a now-invalid entity id.
+const _srdNamespaceUuid = '6e7d2a4a-2c2d-4d2c-8a3a-7f0c1b2c3d4e';
+
 /// Returns the per-slug raw row lists the pack ships, in stable order.
 /// Order matters for deterministic UUID assignment when needed.
 Map<String, List<Map<String, dynamic>>> _rawRowsBySlug() => {
@@ -84,17 +95,23 @@ Map<String, List<Map<String, dynamic>>> _rawRowsBySlug() => {
 SrdCorePack buildSrdCorePack() {
   final raw = _rawRowsBySlug();
 
-  // Pass 1: mint UUIDs. Track `(slug, name) -> uuid` so pass 2 can resolve
-  // inter-row `_ref` placeholders.
+  // Pass 1: mint deterministic UUIDv5s keyed on "slug:name". Stable across
+  // sessions so installed-campaign foreign keys (package_entity_id) keep
+  // resolving — see `_srdNamespaceUuid` doc for the failure mode this
+  // prevents. Track `(slug, name) -> uuid` so pass 2 can resolve inter-row
+  // `_ref` placeholders.
   final entities = <String, dynamic>{};
   final refIndex = <String, Map<String, String>>{};
   for (final entry in raw.entries) {
     final slug = entry.key;
     final slugIndex = refIndex.putIfAbsent(slug, () => <String, String>{});
     for (final row in entry.value) {
-      final id = _uuid.v4();
-      entities[id] = row;
       final name = row['name'] as String?;
+      // Fallback for nameless rows: position-based key so two unnamed rows
+      // in the same slug don't collide.
+      final key = name ?? 'row-${slugIndex.length}';
+      final id = _uuid.v5(_srdNamespaceUuid, '$slug:$key');
+      entities[id] = row;
       if (name != null) slugIndex[name] = id;
     }
   }

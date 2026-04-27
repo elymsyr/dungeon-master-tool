@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:drift/drift.dart' show Value;
+import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../data/database/app_database.dart';
@@ -130,6 +130,39 @@ class SrdCorePackageBootstrap {
       }
 
       await _db.packageDao.insertAllEntities(companions);
+
+      // One-shot migration: rewrite stale `package_entity_id` foreign keys
+      // on installed campaigns. Pack entity ids switched from random v4
+      // (per-session) to deterministic v5 (slug:name). Without this fix,
+      // PackageSync.sync would see every existing linked entity as
+      // orphaned and delete-and-reinsert, stranding any open EntityCard
+      // tab on a now-invalid id.
+      final packIdsBySlugName = <String, Map<String, String>>{};
+      for (final entry in pack.entities.entries) {
+        final raw = entry.value as Map;
+        final slug = raw['type'] as String?;
+        final name = raw['name'] as String?;
+        if (slug != null && name != null) {
+          packIdsBySlugName.putIfAbsent(slug, () => <String, String>{})[name] =
+              entry.key;
+        }
+      }
+      final installedRows = await (_db.select(_db.entities)
+            ..where((t) =>
+                t.packageId.equalsExp(Variable<String>(packageId)) &
+                t.packageEntityId.isNotNull()))
+          .get();
+      for (final row in installedRows) {
+        final newPackId =
+            packIdsBySlugName[row.categorySlug]?[row.name];
+        if (newPackId != null && row.packageEntityId != newPackId) {
+          await _db.entityDao.updateEntity(EntitiesCompanion(
+            id: Value(row.id),
+            packageEntityId: Value(newPackId),
+          ));
+        }
+      }
+
       return companions.length;
     });
   }
