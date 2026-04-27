@@ -223,7 +223,18 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     }
 
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final cat = widget.categorySchema;
+    // Re-resolve category from the live entity.categorySlug so a sync that
+    // rewrites an entity's slug (e.g., package re-install with a renamed
+    // category) doesn't strand the open card with a stale schema lookup
+    // and render an empty body.
+    final widgetCat = widget.categorySchema;
+    final cat = widgetCat != null && widgetCat.slug == entity.categorySlug
+        ? widgetCat
+        : ref
+            .read(worldSchemaProvider)
+            .categories
+            .where((c) => c.slug == entity.categorySlug)
+            .firstOrNull;
 
     // Controller sync — only update when the field is not focused
     _syncIfNotFocused(_nameController, _nameFocus, entity.name);
