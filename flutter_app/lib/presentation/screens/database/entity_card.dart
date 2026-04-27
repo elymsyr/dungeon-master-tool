@@ -96,11 +96,16 @@ class EntityCard extends ConsumerStatefulWidget {
   final String entityId;
   final EntityCategorySchema? categorySchema;
   final bool readOnly;
+  /// Hint passed down to relation widgets so a tap on a referenced entity
+  /// opens it in the OPPOSITE panel rather than replacing the current
+  /// card. Null = no hint, navigation goes to the default panel.
+  final String? panelId;
 
   const EntityCard({
     required this.entityId,
     this.categorySchema,
     this.readOnly = true,
+    this.panelId,
     super.key,
   });
 
@@ -398,7 +403,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                               decoration: BoxDecoration(
                                 color: palette.tabActiveText.withValues(
                                     alpha: 0.12),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: palette.chr,
                                 border: Border.all(
                                     color: palette.tabActiveText.withValues(
                                         alpha: 0.4)),
@@ -611,6 +616,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       ref: ref,
       entityFields: entity.fields,
       compact: useCompact,
+      panelId: widget.panelId,
     );
   }
 

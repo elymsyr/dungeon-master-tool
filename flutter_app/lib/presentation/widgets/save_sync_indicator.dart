@@ -165,7 +165,7 @@ class _SaveSyncDialog extends ConsumerWidget {
     final syncState = hasCloud ? ref.watch(cloudSyncProvider) : null;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: palette.cbr),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420, maxHeight: 560),
         child: SingleChildScrollView(
@@ -539,7 +539,7 @@ class _SettingsCheckbox extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => onChanged(!value),
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: palette.br,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
@@ -618,7 +618,7 @@ class _StorageUsageBar extends ConsumerWidget {
               children: [
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: palette.br,
                     child: LinearProgressIndicator(
                       value: ratio,
                       minHeight: 8,
@@ -800,7 +800,7 @@ class _ResultRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
           color: palette.featureCardBg,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: palette.cbr,
           border: Border.all(color: palette.featureCardBorder),
         ),
         child: Row(
@@ -878,7 +878,7 @@ class _CompactBackupList extends ConsumerWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: palette.featureCardBg,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: palette.cbr,
               border: Border.all(color: palette.featureCardBorder),
             ),
             child: Row(
@@ -900,7 +900,7 @@ class _CompactBackupList extends ConsumerWidget {
           child: Container(
             decoration: BoxDecoration(
               color: palette.featureCardBg,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: palette.cbr,
               border: Border.all(color: palette.featureCardBorder),
             ),
             child: ListView.separated(

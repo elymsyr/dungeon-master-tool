@@ -76,6 +76,7 @@ final Map<String, DmToolColors> themePalettes = {
   'light': _dark.copyWith(
     borderRadius: 2,
     cardBorderRadius: 4,
+    chipBorderRadius: 6,
     buttonDefaultBg: const Color(0xFFEDF2F7),
     buttonDefaultText: const Color(0xFF1A202C),
     buttonHoverBg: const Color(0xFFCBD5E0),
@@ -124,6 +125,7 @@ final Map<String, DmToolColors> themePalettes = {
   'parchment': _dark.copyWith(
     borderRadius: 2,
     cardBorderRadius: 2,
+    chipBorderRadius: 3,
     useSerif: true,
     primaryBtnBg: const Color(0xFF5D4037),
     primaryBtnText: const Color(0xFFFDFBF7),
@@ -176,6 +178,7 @@ final Map<String, DmToolColors> themePalettes = {
   'ocean': _dark.copyWith(
     borderRadius: 4,
     cardBorderRadius: 6,
+    chipBorderRadius: 8,
     featureCardBg: const Color(0xFF0A131A),
     featureCardBorder: const Color(0xFF37474F),
     featureCardAccent: const Color(0xFF00BCD4),
@@ -203,6 +206,7 @@ final Map<String, DmToolColors> themePalettes = {
   'emerald': _dark.copyWith(
     borderRadius: 4,
     cardBorderRadius: 6,
+    chipBorderRadius: 8,
     featureCardBg: const Color(0xFF00150A),
     featureCardBorder: const Color(0xFF1B5E20),
     featureCardAccent: const Color(0xFF00E676),
@@ -228,6 +232,7 @@ final Map<String, DmToolColors> themePalettes = {
   'midnight': _dark.copyWith(
     borderRadius: 2,
     cardBorderRadius: 4,
+    chipBorderRadius: 6,
     featureCardBg: const Color(0xFF1E1E1E),
     featureCardBorder: const Color(0xFF333333),
     featureCardAccent: const Color(0xFF7C4DFF),
@@ -254,6 +259,7 @@ final Map<String, DmToolColors> themePalettes = {
   'discord': _dark.copyWith(
     borderRadius: 6,
     cardBorderRadius: 10,
+    chipBorderRadius: 999,
     buttonPaddingH: 12,
     buttonPaddingV: 5,
     useBorders: false,
@@ -293,6 +299,7 @@ final Map<String, DmToolColors> themePalettes = {
   'baldur': _dark.copyWith(
     borderRadius: 2,
     cardBorderRadius: 2,
+    chipBorderRadius: 3,
     useSerif: true,
     primaryBtnBg: const Color(0xFF5D4037),
     primaryBtnText: const Color(0xFFFFD700),
@@ -329,6 +336,7 @@ final Map<String, DmToolColors> themePalettes = {
   'grim': _dark.copyWith(
     borderRadius: 0,
     cardBorderRadius: 0,
+    chipBorderRadius: 0,
     useSerif: true,
     primaryBtnBg: const Color(0xFF7F2A1E),
     primaryBtnText: const Color(0xFFFFFFFF),
@@ -365,6 +373,7 @@ final Map<String, DmToolColors> themePalettes = {
   'frost': _dark.copyWith(
     borderRadius: 6,
     cardBorderRadius: 8,
+    chipBorderRadius: 999,
     buttonDefaultBg: const Color(0xFFB2F5EA),
     buttonDefaultText: const Color(0xFF234E52),
     buttonHoverBg: const Color(0xFF81E6D9),
@@ -411,6 +420,7 @@ final Map<String, DmToolColors> themePalettes = {
   'amethyst': _dark.copyWith(
     borderRadius: 6,
     cardBorderRadius: 8,
+    chipBorderRadius: 10,
     featureCardBg: const Color(0xFF18121C),
     featureCardBorder: const Color(0xFF4A148C),
     featureCardAccent: const Color(0xFFBA68C8),
@@ -565,7 +575,7 @@ ThemeData buildThemeData(String themeName) {
     chipTheme: base.chipTheme.copyWith(
       backgroundColor: palette.sidebarFilterBg,
       labelStyle: TextStyle(color: palette.tabText, fontSize: 11, fontFamily: fontFamily),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(palette.borderRadius + 8)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(palette.chipBorderRadius)),
       side: borderSide,
     ),
 

@@ -219,7 +219,7 @@ class _MetadataEditorSectionState
               alignment: Alignment.topLeft,
               child: Material(
                 elevation: 3,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: palette.cbr,
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(
                       maxWidth: 360, maxHeight: 200),
@@ -267,12 +267,12 @@ class _MetadataEditorSectionState
 
     return InkWell(
       onTap: _pickCover,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: palette.cbr,
       child: Container(
         height: 160,
         decoration: BoxDecoration(
           color: palette.featureCardBg,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: palette.cbr,
           border: Border.all(color: palette.featureCardBorder),
           image: hasImage
               ? DecorationImage(

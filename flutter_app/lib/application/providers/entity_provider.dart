@@ -103,9 +103,24 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     });
     // Linked karakter edit'leri hub'dan geldiğinde world görünümünü
     // otomatik tazele — kopya olmadığı için güncellemeler anında
-    // yansımalı.
-    _ref.listen(characterListProvider, (_, _) {
-      if (_linkedCharacterIds.isNotEmpty) _loadFromCampaign();
+    // yansımalı. Sadece linked karakter entity'lerinin diff'ini enjekte
+    // et; tüm map'i yeniden parse etme — aksi halde aktif kart Open'ken
+    // entity referansı her hub güncellemesinde değişir ve UI flicker'lar.
+    _ref.listen(characterListProvider, (_, next) {
+      if (_linkedCharacterIds.isEmpty) return;
+      final list = next.valueOrNull;
+      if (list == null) return;
+      var changed = false;
+      final patched = Map<String, Entity>.from(state);
+      for (final c in list) {
+        if (!_linkedCharacterIds.contains(c.id)) continue;
+        final existing = patched[c.entity.id];
+        if (!identical(existing, c.entity)) {
+          patched[c.entity.id] = c.entity;
+          changed = true;
+        }
+      }
+      if (changed) state = patched;
     });
   }
 

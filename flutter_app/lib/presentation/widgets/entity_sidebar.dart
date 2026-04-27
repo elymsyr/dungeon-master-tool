@@ -561,13 +561,13 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
         dragAnchorStrategy: pointerDragAnchorStrategy,
         feedback: Material(
           elevation: 2,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: palette.cbr,
           child: Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
                 color: palette.featureCardBg,
-                borderRadius: BorderRadius.circular(4)),
+                borderRadius: palette.cbr),
             child: Text(entity.name,
                 style: TextStyle(
                     fontSize: 12, color: palette.tabActiveText)),

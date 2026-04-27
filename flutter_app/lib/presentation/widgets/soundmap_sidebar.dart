@@ -225,9 +225,9 @@ class _ThemeSelector extends StatelessWidget {
         labelStyle: TextStyle(fontSize: 13, color: palette.tabText),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+        border: OutlineInputBorder(borderRadius: palette.br),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: palette.br,
           borderSide: BorderSide(color: palette.sidebarDivider),
         ),
       ),
@@ -397,9 +397,9 @@ class _AmbienceSlotCard extends StatelessWidget {
               decoration: InputDecoration(
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+                border: OutlineInputBorder(borderRadius: palette.br),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: palette.br,
                   borderSide: BorderSide(color: palette.sidebarDivider),
                 ),
               ),
@@ -511,13 +511,13 @@ class _SfxButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: palette.tabBg,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: palette.cbr,
       child: InkWell(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: palette.cbr,
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: palette.cbr,
             border: Border.all(color: palette.sidebarDivider),
           ),
           alignment: Alignment.center,

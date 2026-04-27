@@ -237,7 +237,7 @@ class _ImmutabilityNotice extends StatelessWidget {
       decoration: BoxDecoration(
         color: palette.featureCardBg,
         border: Border.all(color: palette.featureCardBorder),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: palette.cbr,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

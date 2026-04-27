@@ -215,7 +215,7 @@ class MetadataListTile extends StatelessWidget {
                           horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
                         color: palette.sidebarFilterBg,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: palette.chr,
                       ),
                       child: Text(t,
                           style: TextStyle(

@@ -14,6 +14,60 @@ import '../../theme/dm_tool_colors.dart';
 import '../markdown_text_area.dart';
 import 'structured_list_field_widgets.dart';
 
+/// Short subtitle for a related entity, surfaced under the chip name in
+/// relation list fields. Lets readers scan a relation without opening
+/// the linked card. Slug-specific — falls back to category label / null.
+String? _relationSubtitle(Entity e) {
+  final f = e.fields;
+  switch (e.categorySlug) {
+    case 'spell':
+      final lvl = f['level'];
+      final lvlStr = lvl is int
+          ? (lvl == 0 ? 'Cantrip' : 'Level $lvl')
+          : null;
+      // school_ref is a Tier-0 UUID; resolving needs the entity map. Skip
+      // — keep subtitle lightweight; the level is the load-bearing bit.
+      return lvlStr;
+    case 'monster':
+    case 'animal':
+      final cr = f['cr'];
+      return cr == null || cr == '' ? null : 'CR $cr';
+    case 'magic-item':
+      // rarity_ref → UUID; can't resolve here without entity map. Skip.
+      return null;
+    case 'class':
+    case 'subclass':
+      return e.categorySlug == 'class' ? 'Class' : 'Subclass';
+    case 'weapon':
+      final dmg = f['damage_dice'];
+      return dmg == null || dmg == '' ? null : '$dmg';
+    case 'armor':
+      final ac = f['base_ac'];
+      return ac == null ? null : 'AC $ac';
+    case 'feat':
+      return 'Feat';
+    case 'species':
+      return 'Species';
+    case 'background':
+      return 'Background';
+    default:
+      return null;
+  }
+}
+
+/// Set the entity-navigation provider so the database screen opens [id]
+/// in the OPPOSITE panel from [sourcePanel]. Call site (relation chip
+/// tap) supplies the source panel; null source → default routing.
+void _navigateToEntity(WidgetRef ref, String id, String? sourcePanel) {
+  final target = switch (sourcePanel) {
+    'left' => 'right',
+    'right' => 'left',
+    _ => null,
+  };
+  ref.read(entityNavigationTargetPanelProvider.notifier).state = target;
+  ref.read(entityNavigationProvider.notifier).state = id;
+}
+
 /// Schema-driven field widget factory.
 /// Her FieldType için uygun widget döndürür.
 class FieldWidgetFactory {
@@ -31,6 +85,10 @@ class FieldWidgetFactory {
     /// row instead of a Card with per-row entries. Used in grouped multi-column
     /// layouts where the tall Card breaks row alignment.
     bool compact = false,
+    /// Panel ('left'/'right') the host card lives in. Relation widgets use
+    /// it so a tap on a referenced entity opens the target in the OPPOSITE
+    /// panel rather than replacing the source card.
+    String? panelId,
   }) {
     // Media directory — image field'ları için galeri desteği.
     final mediaDir = ref?.read(mediaDirectoryProvider);
@@ -39,9 +97,9 @@ class FieldWidgetFactory {
     if (schema.isList) {
       if (schema.fieldType == FieldType.relation) {
         if (compact) {
-          return _InlineRelationListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref);
+          return _InlineRelationListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref, panelId: panelId);
         }
-        return _ReferenceListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref);
+        return _ReferenceListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref, panelId: panelId);
       }
       if (schema.fieldType == FieldType.image) {
         return _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, mediaDir: mediaDir);
@@ -55,7 +113,7 @@ class FieldWidgetFactory {
       FieldType.markdown => _MarkdownFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
       FieldType.integer => _IntegerFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.enum_ => _EnumFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.relation => _RelationFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
+      FieldType.relation => _RelationFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref, panelId: panelId),
       FieldType.statBlock => _StatBlockFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.combatStats => _CombatStatsFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
       FieldType.conditionStats => _CombatStatsFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
@@ -479,13 +537,20 @@ class _RelationFieldWidget extends StatelessWidget {
   final ValueChanged<dynamic> onChanged;
   final Map<String, Entity>? entities;
   final WidgetRef? ref;
+  final String? panelId;
 
-  const _RelationFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities, this.ref});
+  const _RelationFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities, this.ref, this.panelId});
 
   @override
   Widget build(BuildContext context) {
     final linkedId = value?.toString() ?? '';
-    final linkedName = (linkedId.isNotEmpty && entities != null) ? entities![linkedId]?.name ?? linkedId : '';
+    final linkedEntity = (linkedId.isNotEmpty && entities != null)
+        ? entities![linkedId]
+        : null;
+    final linkedName = linkedEntity?.name ??
+        (linkedId.isNotEmpty ? linkedId : '');
+    final subtitle =
+        linkedEntity == null ? null : _relationSubtitle(linkedEntity);
     final hasValue = linkedId.isNotEmpty;
 
     if (readOnly && !hasValue) return const SizedBox.shrink();
@@ -496,7 +561,35 @@ class _RelationFieldWidget extends StatelessWidget {
         children: [
           Expanded(
             child: hasValue
-                ? Text(linkedName, style: _fieldValueStyle(context), overflow: TextOverflow.ellipsis)
+                ? InkWell(
+                    onTap: ref == null || linkedEntity == null
+                        ? null
+                        : () => _navigateToEntity(ref!, linkedId, panelId),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            linkedName,
+                            style: _fieldValueStyle(context).copyWith(
+                              decoration: linkedEntity != null
+                                  ? TextDecoration.underline
+                                  : null,
+                              decorationStyle: TextDecorationStyle.dotted,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (subtitle != null) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            '· $subtitle',
+                            style: _fieldEmptyStyle(context),
+                          ),
+                        ],
+                      ],
+                    ),
+                  )
                 : Text('—', style: _fieldEmptyStyle(context)),
           ),
           if (!readOnly && hasValue)
@@ -932,8 +1025,9 @@ class _ReferenceListFieldWidget extends StatefulWidget {
   final ValueChanged<dynamic> onChanged;
   final Map<String, Entity>? entities;
   final WidgetRef? ref;
+  final String? panelId;
 
-  const _ReferenceListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities, this.ref});
+  const _ReferenceListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities, this.ref, this.panelId});
 
   @override
   State<_ReferenceListFieldWidget> createState() => _ReferenceListFieldWidgetState();
@@ -946,6 +1040,7 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
   ValueChanged<dynamic> get onChanged => widget.onChanged;
   Map<String, Entity>? get entities => widget.entities;
   WidgetRef? get ref => widget.ref;
+  String? get panelId => widget.panelId;
 
   @override
   Widget build(BuildContext context) {
@@ -1040,12 +1135,47 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                     const Icon(Icons.link, size: 14),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text(
-                        _resolveEntityName(itemId),
-                        style: TextStyle(
-                          fontSize: 12,
-                          decoration: showEquip && !isEquipped ? TextDecoration.lineThrough : null,
-                          color: showEquip && !isEquipped ? Theme.of(context).colorScheme.outline : null,
+                      child: InkWell(
+                        onTap: ref == null || entities?[itemId] == null
+                            ? null
+                            : () => _navigateToEntity(ref!, itemId, panelId),
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                _resolveEntityName(itemId),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  decoration: showEquip && !isEquipped
+                                      ? TextDecoration.lineThrough
+                                      : (entities?[itemId] != null
+                                          ? TextDecoration.underline
+                                          : null),
+                                  decorationStyle:
+                                      TextDecorationStyle.dotted,
+                                  color: showEquip && !isEquipped
+                                      ? Theme.of(context).colorScheme.outline
+                                      : null,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (entities?[itemId] != null) ...[
+                              const SizedBox(width: 6),
+                              Builder(builder: (ctx) {
+                                final sub =
+                                    _relationSubtitle(entities![itemId]!);
+                                if (sub == null) return const SizedBox.shrink();
+                                return Text(
+                                  '· $sub',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Theme.of(context).colorScheme.outline,
+                                  ),
+                                );
+                              }),
+                            ],
+                          ],
                         ),
                       ),
                     ),
@@ -1102,6 +1232,7 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
   final ValueChanged<dynamic> onChanged;
   final Map<String, Entity>? entities;
   final WidgetRef? ref;
+  final String? panelId;
 
   const _InlineRelationListFieldWidget({
     required this.schema,
@@ -1110,6 +1241,7 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
     required this.onChanged,
     this.entities,
     this.ref,
+    this.panelId,
   });
 
   List<String> _parseIds(dynamic v) {
@@ -1122,17 +1254,80 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
   }
 
   String _name(String id) => entities?[id]?.name ?? id;
+  String? _subtitle(String id) {
+    final e = entities?[id];
+    return e == null ? null : _relationSubtitle(e);
+  }
+
+  Widget _chipLabel(String id) {
+    final name = _name(id);
+    final sub = _subtitle(id);
+    if (sub == null) {
+      return Text(name,
+          style: const TextStyle(fontSize: 11),
+          overflow: TextOverflow.ellipsis);
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(name,
+              style: const TextStyle(fontSize: 11),
+              overflow: TextOverflow.ellipsis),
+        ),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text('· $sub',
+              style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w400),
+              overflow: TextOverflow.ellipsis),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final ids = _parseIds(value);
 
     if (readOnly) {
-      final names = ids.map(_name).where((s) => s.isNotEmpty).toList();
-      if (names.isEmpty) return const SizedBox.shrink();
+      final visible = ids.where((id) => entities?[id] != null).toList();
+      if (visible.isEmpty && ids.every((id) => entities?[id] == null)) {
+        // Fall back to raw ids when nothing resolves so debugging remains
+        // possible (rather than showing an empty value).
+        if (ids.isEmpty) return const SizedBox.shrink();
+      }
       return _LabeledFieldRow(
         label: schema.label,
-        child: Text(names.join(', '), style: _fieldValueStyle(context)),
+        alignment: CrossAxisAlignment.start,
+        child: Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          children: [
+            for (final id in ids)
+              InkWell(
+                onTap: ref == null || entities?[id] == null
+                    ? null
+                    : () => _navigateToEntity(ref!, id, panelId),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .secondaryContainer
+                        .withValues(alpha: 0.4),
+                    borderRadius: Theme.of(context)
+                            .extension<DmToolColors>()
+                            ?.chr ??
+                        BorderRadius.circular(6),
+                  ),
+                  child: _chipLabel(id),
+                ),
+              ),
+          ],
+        ),
       );
     }
 
@@ -1146,7 +1341,10 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
         children: [
           for (final id in ids)
             InputChip(
-              label: Text(_name(id), style: const TextStyle(fontSize: 11)),
+              label: _chipLabel(id),
+              onPressed: ref == null || entities?[id] == null
+                  ? null
+                  : () => _navigateToEntity(ref!, id, panelId),
               onDeleted: () {
                 final next = List<String>.from(ids)..remove(id);
                 onChanged(next);
@@ -1779,7 +1977,7 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
                     GestureDetector(
                       onTap: () => _showFullScreen(context, images[_currentIndex]),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: palette?.cbr ?? BorderRadius.circular(4),
                         child: Image.file(
                           File(images[_currentIndex]),
                           fit: BoxFit.contain,
@@ -1817,7 +2015,7 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.black54,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: palette?.chr ?? BorderRadius.circular(10),
                           ),
                           child: Text(
                             '${_currentIndex + 1}/${images.length}',

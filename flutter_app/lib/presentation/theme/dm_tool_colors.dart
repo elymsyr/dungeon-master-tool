@@ -108,6 +108,7 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
   // --- Style Parameters (tema-spesifik görünüm) ---
   final double borderRadius;
   final double cardBorderRadius;
+  final double chipBorderRadius;
   final double buttonPaddingH;
   final double buttonPaddingV;
   final bool useBorders;
@@ -196,6 +197,7 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     this.cardBorderlessInputs = true,
     this.borderRadius = 2,
     this.cardBorderRadius = 4,
+    this.chipBorderRadius = 6,
     this.buttonPaddingH = 10,
     this.buttonPaddingV = 4,
     this.useBorders = true,
@@ -213,6 +215,7 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
 
   BorderRadius get br => BorderRadius.circular(borderRadius);
   BorderRadius get cbr => BorderRadius.circular(cardBorderRadius);
+  BorderRadius get chr => BorderRadius.circular(chipBorderRadius);
 
   @override
   ThemeExtension<DmToolColors> copyWith({
@@ -286,6 +289,7 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     bool? cardBorderlessInputs,
     double? borderRadius,
     double? cardBorderRadius,
+    double? chipBorderRadius,
     double? buttonPaddingH,
     double? buttonPaddingV,
     bool? useBorders,
@@ -371,6 +375,7 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       cardBorderlessInputs: cardBorderlessInputs ?? this.cardBorderlessInputs,
       borderRadius: borderRadius ?? this.borderRadius,
       cardBorderRadius: cardBorderRadius ?? this.cardBorderRadius,
+      chipBorderRadius: chipBorderRadius ?? this.chipBorderRadius,
       buttonPaddingH: buttonPaddingH ?? this.buttonPaddingH,
       buttonPaddingV: buttonPaddingV ?? this.buttonPaddingV,
       useBorders: useBorders ?? this.useBorders,
@@ -461,6 +466,7 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       cardBorderlessInputs: t < 0.5 ? cardBorderlessInputs : other.cardBorderlessInputs,
       borderRadius: t < 0.5 ? borderRadius : other.borderRadius,
       cardBorderRadius: t < 0.5 ? cardBorderRadius : other.cardBorderRadius,
+      chipBorderRadius: t < 0.5 ? chipBorderRadius : other.chipBorderRadius,
       buttonPaddingH: t < 0.5 ? buttonPaddingH : other.buttonPaddingH,
       buttonPaddingV: t < 0.5 ? buttonPaddingV : other.buttonPaddingV,
       useBorders: t < 0.5 ? useBorders : other.useBorders,

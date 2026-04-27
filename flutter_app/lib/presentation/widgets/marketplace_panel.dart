@@ -84,7 +84,7 @@ class _MarketplacePanelState extends ConsumerState<MarketplacePanel> {
               decoration: BoxDecoration(
                 color: palette.featureCardBg,
                 border: Border.all(color: palette.featureCardBorder),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: palette.cbr,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -179,8 +179,7 @@ class _OwnerSection extends StatelessWidget {
               padding: const EdgeInsets.symmetric(
                   horizontal: 12, vertical: 6),
               minimumSize: const Size(0, 30),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(borderRadius: palette.cbr),
             ),
           ),
         ),
