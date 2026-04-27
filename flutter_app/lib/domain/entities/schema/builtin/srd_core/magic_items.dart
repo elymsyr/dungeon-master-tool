@@ -24,7 +24,7 @@ Map<String, dynamic> _mi({
 }) {
   final attrs = <String, dynamic>{
     'magic_category_ref': lookup('magic-item-category', category),
-    'rarity_ref': lookup('rarity', rarity),
+    'rarity_ref': rarity,
     'requires_attunement': requiresAttunement,
     'is_cursed': isCursed,
     'activation': activation,

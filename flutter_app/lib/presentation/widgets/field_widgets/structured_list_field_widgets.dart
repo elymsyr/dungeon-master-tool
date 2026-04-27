@@ -742,9 +742,6 @@ const _modifierTargetKinds = [
   'damage-type',
   'condition',
   'sense',
-  'speed-type',
-  'weapon-category',
-  'armor-category',
   'class',
   'spell',
   'feat',
@@ -920,9 +917,6 @@ List<String> _allowedTypesForTargetKind(String? targetKind) {
     case 'damage-type':
     case 'condition':
     case 'sense':
-    case 'speed-type':
-    case 'weapon-category':
-    case 'armor-category':
     case 'language':
       return [targetKind!];
     case 'class':

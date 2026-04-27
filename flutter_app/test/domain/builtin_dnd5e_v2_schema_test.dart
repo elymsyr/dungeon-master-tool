@@ -10,18 +10,18 @@ void main() {
   final schema = build.schema;
 
   group('Builtin D&D 5e v2 Schema', () {
-    test('ships 36 Tier-0 + 20 Tier-1 + 13 Tier-2 = 69 categories', () {
-      expect(schema.categories.length, 69);
-      expect(tier0Slugs.length, 36);
+    test('ships 15 Tier-0 + 20 Tier-1 + 13 Tier-2 = 48 categories', () {
+      expect(schema.categories.length, 48);
+      expect(tier0Slugs.length, 15);
       expect(tier1Slugs.length, 20);
       expect(tier2Slugs.length, 13);
     });
 
     test('Tier order in catalog: Tier-0, Tier-1, Tier-2', () {
       final slugs = schema.categories.map((c) => c.slug).toList();
-      expect(slugs.sublist(0, 36), tier0Slugs);
-      expect(slugs.sublist(36, 56), tier1Slugs);
-      expect(slugs.sublist(56, 69), tier2Slugs);
+      expect(slugs.sublist(0, 15), tier0Slugs);
+      expect(slugs.sublist(15, 35), tier1Slugs);
+      expect(slugs.sublist(35, 48), tier2Slugs);
     });
 
     test('schema metadata', () {
@@ -42,21 +42,21 @@ void main() {
 
     test('Tier-0 slugs match tier0Slugs list', () {
       expect(
-        schema.categories.take(36).map((c) => c.slug).toList(),
+        schema.categories.take(15).map((c) => c.slug).toList(),
         tier0Slugs,
       );
     });
 
     test('Tier-1 slugs match tier1Slugs list', () {
       expect(
-        schema.categories.skip(36).take(20).map((c) => c.slug).toList(),
+        schema.categories.skip(15).take(20).map((c) => c.slug).toList(),
         tier1Slugs,
       );
     });
 
     test('Tier-2 slugs match tier2Slugs list', () {
       expect(
-        schema.categories.skip(56).map((c) => c.slug).toList(),
+        schema.categories.skip(35).map((c) => c.slug).toList(),
         tier2Slugs,
       );
     });
@@ -70,7 +70,7 @@ void main() {
 
     test('every Tier-0 category carries common lookup fields', () {
       const commonKeys = {'summary', 'icon_name', 'color'};
-      for (final cat in schema.categories.take(36)) {
+      for (final cat in schema.categories.take(15)) {
         final keys = cat.fields.map((f) => f.fieldKey).toSet();
         expect(keys.containsAll(commonKeys), true,
             reason: '${cat.slug} missing common fields');
@@ -130,25 +130,8 @@ void main() {
       expect(grants, {'Paralyzed', 'Petrified', 'Stunned', 'Unconscious'});
     });
 
-    test('size has 6 rows with hit_die_size', () {
-      final rows = build.seedRows['size']!;
-      expect(rows.length, 6);
-      expect(rows.map((r) => r['name']).toList(),
-          ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']);
-    });
-
     test('creature-type has 14 rows', () {
       expect(build.seedRows['creature-type']!.length, 14);
-    });
-
-    test('alignment has 10 rows with morality+order', () {
-      final rows = build.seedRows['alignment']!;
-      expect(rows.length, 10);
-      for (final r in rows) {
-        final fields = r['fields'] as Map;
-        expect(fields['morality'], isNotNull);
-        expect(fields['order'], isNotNull);
-      }
     });
 
     test('language has 10 Standard + 9 Rare', () {
@@ -164,54 +147,8 @@ void main() {
       expect(build.seedRows['weapon-mastery']!.length, 8);
     });
 
-    test('armor-category has 4 rows', () {
-      expect(build.seedRows['armor-category']!.length, 4);
-    });
-
     test('spell-school has 8 rows', () {
       expect(build.seedRows['spell-school']!.length, 8);
-    });
-
-    test('rarity has 6 rows with gp/crafting fields', () {
-      final rows = build.seedRows['rarity']!;
-      expect(rows.length, 6);
-      final common = rows.firstWhere((r) => r['name'] == 'Common');
-      expect((common['fields'] as Map)['value_gp'], 100);
-    });
-
-    test('action has 12 2024-SRD actions', () {
-      final names = build.seedRows['action']!.map((r) => r['name']).toSet();
-      expect(names, containsAll([
-        'Attack', 'Dash', 'Disengage', 'Dodge', 'Help', 'Hide',
-        'Influence', 'Magic', 'Ready', 'Search', 'Study', 'Utilize',
-      ]));
-      expect(build.seedRows['action']!.length, 12);
-    });
-
-    test('area-shape has 6 rows', () {
-      expect(build.seedRows['area-shape']!.length, 6);
-    });
-
-    test('coin has 5 rows with value_in_gp', () {
-      final rows = build.seedRows['coin']!;
-      expect(rows.length, 5);
-      final gp = rows.firstWhere((r) => r['name'] == 'Gold Piece');
-      expect((gp['fields'] as Map)['value_in_gp'], 1.0);
-    });
-
-    test('tier-of-play has 4 rows with min/max level', () {
-      final rows = build.seedRows['tier-of-play']!;
-      expect(rows.length, 4);
-      final t1 = rows.firstWhere((r) => r['name'] == 'Tier 1');
-      expect((t1['fields'] as Map)['min_level'], 1);
-      expect((t1['fields'] as Map)['max_level'], 4);
-    });
-
-    test('duration-unit has 5 rows; Instantaneous not concentration-compatible', () {
-      final rows = build.seedRows['duration-unit']!;
-      expect(rows.length, 5);
-      final inst = rows.firstWhere((r) => r['name'] == 'Instantaneous');
-      expect((inst['fields'] as Map)['is_concentration_compatible'], false);
     });
 
     test('skill fields include ability_ref relation to ability', () {

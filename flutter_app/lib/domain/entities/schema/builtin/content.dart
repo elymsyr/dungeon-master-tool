@@ -82,6 +82,28 @@ List<EntityCategorySchema> buildTier1Content({
 }
 
 // ---------------------------------------------------------------------------
+// Hardcoded enum value lists (replaces former Tier-0 lookup categories).
+// These are SRD-fixed mechanical sets; users don't need to homebrew them.
+// ---------------------------------------------------------------------------
+
+const _enumSizes = <String>['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];
+const _enumAlignments = <String>[
+  'Lawful Good', 'Neutral Good', 'Chaotic Good',
+  'Lawful Neutral', 'True Neutral', 'Chaotic Neutral',
+  'Lawful Evil', 'Neutral Evil', 'Chaotic Evil',
+  'Unaligned',
+];
+const _enumRarities = <String>['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary', 'Artifact'];
+const _enumWeaponCategories = <String>['Simple Melee', 'Simple Ranged', 'Martial Melee', 'Martial Ranged'];
+const _enumArmorCategories = <String>['Light', 'Medium', 'Heavy', 'Shield'];
+const _enumToolCategories = <String>["Artisan's Tools", 'Gaming Set', 'Musical Instrument', 'Other Tool'];
+const _enumFeatCategories = <String>['Origin', 'General', 'Fighting Style', 'Epic Boon'];
+const _enumCastingTimeUnits = <String>['Action', 'Bonus Action', 'Reaction', 'Minute', 'Hour', 'Ritual', 'Special'];
+const _enumDurationUnits = <String>['Instantaneous', 'Rounds', 'Minutes', 'Hours', 'Days'];
+const _enumCastingComponents = <String>['Verbal', 'Somatic', 'Material'];
+const _enumAreaShapes = <String>['Cone', 'Cube', 'Cylinder', 'Line', 'Sphere', 'Emanation'];
+
+// ---------------------------------------------------------------------------
 // Field helpers
 // ---------------------------------------------------------------------------
 
@@ -168,12 +190,14 @@ class _FB {
   void boolean(String k, String l, {String g = grpIdentity, bool required_ = false, String? help}) =>
       _base(key: k, label: l, type: FieldType.boolean_, groupId: g, required_: required_, helpText: help);
 
-  void enum_(String k, String l, List<String> vals, {bool required_ = false, String g = grpIdentity}) =>
+  void enum_(String k, String l, List<String> vals,
+          {bool required_ = false, bool isList = false, String g = grpIdentity}) =>
       _base(
         key: k,
         label: l,
         type: FieldType.enum_,
         required_: required_,
+        isList: isList,
         groupId: g,
         validation: FieldValidation(allowedValues: vals),
       );
@@ -305,11 +329,13 @@ EntityCategorySchema _classCategory(String schemaId, String now, int orderIndex)
   fb.relation('saving_throw_refs', 'Saving Throw Proficiencies', const ['ability'], isList: true, required_: true);
   fb.integer('skill_proficiency_choice_count', 'Skill Choice Count', min: 0, max: 4, g: grpProgression);
   fb.relation('skill_proficiency_options', 'Skill Options', const ['skill'], isList: true, g: grpProgression);
-  fb.relation('weapon_proficiency_categories', 'Weapon Category Proficiencies', const ['weapon-category'], isList: true, g: grpProgression);
+  fb.enum_('weapon_proficiency_categories', 'Weapon Category Proficiencies',
+      _enumWeaponCategories, isList: true, g: grpProgression);
   fb.relation('weapon_proficiency_specifics', 'Specific Weapon Proficiencies', const ['weapon'], isList: true, g: grpProgression);
   fb.integer('tool_proficiency_count', 'Tool Choice Count', min: 0, max: 3, g: grpProgression);
   fb.relation('tool_proficiency_options', 'Tool Options', const ['tool'], isList: true, g: grpProgression);
-  fb.relation('armor_training_refs', 'Armor Training', const ['armor-category'], isList: true, g: grpProgression);
+  fb.enum_('armor_training_refs', 'Armor Training', _enumArmorCategories,
+      isList: true, g: grpProgression);
   // Typed starting inventory (auto-import to PC.inventory). Markdown options for
   // narrative choice (Option A vs B etc.).
   fb.relation('default_inventory_refs', 'Default Inventory',
@@ -381,7 +407,7 @@ EntityCategorySchema _subclassCategory(String schemaId, String now, int orderInd
 EntityCategorySchema _speciesCategory(String schemaId, String now, int orderIndex) {
   final catId = _uuid.v4();
   final fb = _FB(catId, now);
-  fb.relation('size_ref', 'Size', const ['size'], required_: true);
+  fb.enum_('size_ref', 'Size', _enumSizes, required_: true);
   fb.integer('speed_ft', 'Speed (ft)', required_: true, min: 0, max: 120);
   fb.relation('creature_type_ref', 'Creature Type', const ['creature-type'], required_: true);
   fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
@@ -446,7 +472,7 @@ EntityCategorySchema _backgroundCategory(String schemaId, String now, int orderI
 EntityCategorySchema _featCategory(String schemaId, String now, int orderIndex) {
   final catId = _uuid.v4();
   final fb = _FB(catId, now);
-  fb.relation('category_ref', 'Category', const ['feat-category'], required_: true);
+  fb.enum_('category_ref', 'Category', _enumFeatCategories, required_: true);
   // Typed prerequisites (gate machinery; freeform `prerequisite_text` for narrative).
   fb.relation('prereq_ability_ref', 'Prereq Ability', const ['ability'], g: grpIdentity);
   fb.integer('prereq_min_score', 'Prereq Min Score', min: 1, max: 30, g: grpIdentity);
@@ -489,18 +515,18 @@ EntityCategorySchema _spellCategory(String schemaId, String now, int orderIndex)
   fb.integer('level', 'Level', required_: true, min: 0, max: 9);
   fb.relation('school_ref', 'School', const ['spell-school'], required_: true);
   fb.integer('casting_time_amount', 'Casting Time Amount', required_: true, min: 1, defaultValue: 1);
-  fb.relation('casting_time_unit_ref', 'Casting Time Unit', const ['casting-time-unit'], required_: true);
+  fb.enum_('casting_time_unit_ref', 'Casting Time Unit', _enumCastingTimeUnits, required_: true);
   fb.text('reaction_trigger', 'Reaction Trigger', help: 'Only for Reaction casting time');
   fb.boolean('is_ritual', 'Ritual', required_: true);
   fb.enum_('range_type', 'Range Type', const ['Self', 'Touch', 'Ranged', 'Sight', 'Unlimited'], required_: true);
   fb.integer('range_ft', 'Range (ft)', min: 0);
-  fb.relation('area_shape_ref', 'Area Shape', const ['area-shape']);
+  fb.enum_('area_shape_ref', 'Area Shape', _enumAreaShapes);
   fb.integer('area_size_ft', 'Area Size (ft)', min: 0);
-  fb.relation('components', 'Components', const ['casting-component'], isList: true, required_: true);
+  fb.enum_('components', 'Components', _enumCastingComponents, isList: true, required_: true);
   fb.text('material_description', 'Material Description');
   fb.integer('material_cost_gp', 'Material Cost (gp)', min: 0);
   fb.boolean('material_consumed', 'Material Consumed');
-  fb.relation('duration_unit_ref', 'Duration Unit', const ['duration-unit'], required_: true);
+  fb.enum_('duration_unit_ref', 'Duration Unit', _enumDurationUnits, required_: true);
   fb.integer('duration_amount', 'Duration Amount', min: 0);
   fb.boolean('requires_concentration', 'Concentration', required_: true);
   fb.markdown('description', 'Narrative Description', required_: true, g: grpRules);
@@ -533,7 +559,7 @@ EntityCategorySchema _spellCategory(String schemaId, String now, int orderIndex)
 EntityCategorySchema _weaponCategory(String schemaId, String now, int orderIndex) {
   final catId = _uuid.v4();
   final fb = _FB(catId, now);
-  fb.relation('category_ref', 'Category', const ['weapon-category'], required_: true);
+  fb.enum_('category_ref', 'Category', _enumWeaponCategories, required_: true);
   fb.boolean('is_melee', 'Melee', required_: true);
   fb.dice('damage_dice', 'Damage Dice', required_: true);
   fb.relation('damage_type_ref', 'Damage Type', const ['damage-type'], required_: true);
@@ -568,7 +594,7 @@ EntityCategorySchema _weaponCategory(String schemaId, String now, int orderIndex
 EntityCategorySchema _armorCategory(String schemaId, String now, int orderIndex) {
   final catId = _uuid.v4();
   final fb = _FB(catId, now);
-  fb.relation('category_ref', 'Category', const ['armor-category'], required_: true);
+  fb.enum_('category_ref', 'Category', _enumArmorCategories, required_: true);
   fb.integer('base_ac', 'Base AC', required_: true, min: 10, max: 20);
   fb.boolean('adds_dex', 'Adds DEX', required_: true);
   fb.integer('dex_cap', 'DEX Cap', min: 0, max: 10);
@@ -600,7 +626,7 @@ EntityCategorySchema _armorCategory(String schemaId, String now, int orderIndex)
 EntityCategorySchema _toolCategory(String schemaId, String now, int orderIndex) {
   final catId = _uuid.v4();
   final fb = _FB(catId, now);
-  fb.relation('category_ref', 'Category', const ['tool-category'], required_: true);
+  fb.enum_('category_ref', 'Category', _enumToolCategories, required_: true);
   fb.relation('variant_of_ref', 'Variant Of', const ['tool']);
   fb.relation('ability_ref', 'Ability', const ['ability'], required_: true);
   fb.integer('utilize_check_dc', 'Utilize DC', min: 0, max: 30);
@@ -793,15 +819,15 @@ EntityCategorySchema _magicItemCategory(String schemaId, String now, int orderIn
   final catId = _uuid.v4();
   final fb = _FB(catId, now);
   fb.relation('magic_category_ref', 'Category', const ['magic-item-category'], required_: true);
-  fb.relation('rarity_ref', 'Rarity', const ['rarity'], required_: true);
+  fb.enum_('rarity_ref', 'Rarity', _enumRarities, required_: true);
   fb.boolean('requires_attunement', 'Requires Attunement', required_: true);
   // Typed attunement gates.
   fb.relation('attunement_class_refs', 'Attunement: Classes', const ['class'],
       isList: true, g: grpProperties);
   fb.relation('attunement_species_refs', 'Attunement: Species', const ['species'],
       isList: true, g: grpProperties);
-  fb.relation('attunement_alignment_refs', 'Attunement: Alignments',
-      const ['alignment'], isList: true, g: grpProperties);
+  fb.enum_('attunement_alignment_refs', 'Attunement: Alignments',
+      _enumAlignments, isList: true, g: grpProperties);
   fb.relation('attunement_min_ability_ref', 'Attunement: Min Ability',
       const ['ability'], g: grpProperties);
   fb.integer('attunement_min_ability_score', 'Attunement: Min Score',
@@ -828,7 +854,7 @@ EntityCategorySchema _magicItemCategory(String schemaId, String now, int orderIn
   fb.integer('sentient_int', 'INT', min: 3, max: 30);
   fb.integer('sentient_wis', 'WIS', min: 3, max: 30);
   fb.integer('sentient_cha', 'CHA', min: 3, max: 30);
-  fb.relation('sentient_alignment_ref', 'Sentient Alignment', const ['alignment']);
+  fb.enum_('sentient_alignment_ref', 'Sentient Alignment', _enumAlignments);
   fb.text('sentient_communication', 'Communication');
   fb.text('sentient_senses', 'Senses');
   fb.text('sentient_special_purpose', 'Special Purpose');
@@ -856,10 +882,10 @@ EntityCategorySchema _magicItemCategory(String schemaId, String now, int orderIn
 EntityCategorySchema _monsterCategory(String schemaId, String now, int orderIndex) {
   final catId = _uuid.v4();
   final fb = _FB(catId, now);
-  fb.relation('size_ref', 'Size', const ['size'], required_: true);
+  fb.enum_('size_ref', 'Size', _enumSizes, required_: true);
   fb.relation('creature_type_ref', 'Creature Type', const ['creature-type'], required_: true);
   fb.text('tags_line', 'Tags (e.g. "(goblinoid)")');
-  fb.relation('alignment_ref', 'Alignment', const ['alignment']);
+  fb.enum_('alignment_ref', 'Alignment', _enumAlignments);
   // Combat
   fb.integer('ac', 'AC', required_: true, min: 0, max: 30, g: grpCombat);
   fb.text('ac_note', 'AC Note', g: grpCombat);

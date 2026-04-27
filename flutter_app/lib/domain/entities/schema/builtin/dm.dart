@@ -51,6 +51,50 @@ List<EntityCategorySchema> buildTier2Dm({
 }
 
 // ---------------------------------------------------------------------------
+// Hardcoded enum value lists (former Tier-0 lookup categories).
+// ---------------------------------------------------------------------------
+
+const _enumAlignments = <String>[
+  'Lawful Good', 'Neutral Good', 'Chaotic Good',
+  'Lawful Neutral', 'True Neutral', 'Chaotic Neutral',
+  'Lawful Evil', 'Neutral Evil', 'Chaotic Evil',
+  'Unaligned',
+];
+const _enumAttitudes = <String>['Friendly', 'Indifferent', 'Hostile'];
+const _enumIllumination = <String>['Bright', 'Dim', 'Darkness'];
+const _enumTravelPaces = <String>['Slow', 'Normal', 'Fast'];
+const _enumWeaponCategories = <String>['Simple Melee', 'Simple Ranged', 'Martial Melee', 'Martial Ranged'];
+const _enumArmorCategories = <String>['Light', 'Medium', 'Heavy', 'Shield'];
+const _enumPlanes = <String>[
+  'Material Plane',
+  'Astral Plane',
+  'Ethereal Plane',
+  'Feywild',
+  'Shadowfell',
+  'Plane of Air',
+  'Plane of Earth',
+  'Plane of Fire',
+  'Plane of Water',
+  'Mount Celestia',
+  'Bytopia',
+  'Elysium',
+  'Beastlands',
+  'Arborea',
+  'Ysgard',
+  'Limbo',
+  'Pandemonium',
+  'Abyss',
+  'Carceri',
+  'Hades',
+  'Gehenna',
+  'Nine Hells',
+  'Acheron',
+  'Mechanus',
+  'Arcadia',
+  'Outlands',
+];
+
+// ---------------------------------------------------------------------------
 // Field builder (mirrors content.dart's _FB)
 // ---------------------------------------------------------------------------
 
@@ -118,8 +162,17 @@ class _FB {
       );
   void boolean(String k, String l, {String g = grpIdentity, bool required_ = false, dynamic defaultValue}) =>
       _base(key: k, label: l, type: FieldType.boolean_, groupId: g, required_: required_, defaultValue: defaultValue);
-  void enum_(String k, String l, List<String> vals, {bool required_ = false, String g = grpIdentity}) =>
-      _base(key: k, label: l, type: FieldType.enum_, required_: required_, groupId: g, validation: FieldValidation(allowedValues: vals));
+  void enum_(String k, String l, List<String> vals,
+          {bool required_ = false, bool isList = false, String g = grpIdentity}) =>
+      _base(
+        key: k,
+        label: l,
+        type: FieldType.enum_,
+        required_: required_,
+        isList: isList,
+        groupId: g,
+        validation: FieldValidation(allowedValues: vals),
+      );
   void relation(String k, String l, List<String> allowed, {bool isList = false, bool required_ = false, String g = grpIdentity}) =>
       _base(
         key: k,
@@ -219,8 +272,8 @@ EntityCategorySchema _npcCategory(String schemaId, String now, int orderIndex) {
   fb.relation('class_refs', 'Classes', const ['class'], isList: true);
   fb.integer('level', 'Level', min: 1, max: 20);
   fb.relation('background_ref', 'Background', const ['background']);
-  fb.relation('alignment_ref', 'Alignment', const ['alignment']);
-  fb.relation('attitude_ref', 'Attitude', const ['attitude'], required_: true);
+  fb.enum_('alignment_ref', 'Alignment', _enumAlignments);
+  fb.enum_('attitude_ref', 'Attitude', _enumAttitudes, required_: true);
   fb.relation('location_ref', 'Location', const ['location']);
   fb.text('faction', 'Faction');
   // Stat block
@@ -286,14 +339,17 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
   fb.levelTable('class_levels', 'Class Levels', g: grpProgression);
   fb.relation('subclass_refs', 'Subclasses', const ['subclass'], isList: true);
   fb.relation('background_ref', 'Background', const ['background'], required_: true);
-  fb.relation('alignment_ref', 'Alignment', const ['alignment']);
+  fb.enum_('alignment_ref', 'Alignment', _enumAlignments);
   fb.integer('xp', 'XP', required_: true, min: 0, defaultValue: 0);
   fb.integer('proficiency_bonus', 'Proficiency Bonus', required_: true, min: 2, max: 6, defaultValue: 2);
   fb.relation('feats', 'Feats', const ['feat'], isList: true);
   fb.relation('languages', 'Languages', const ['language'], isList: true, required_: true);
   fb.relation('tool_proficiencies', 'Tool Proficiencies', const ['tool'], isList: true);
-  fb.relation('weapon_proficiencies', 'Weapon Proficiencies', const ['weapon-category', 'weapon'], isList: true);
-  fb.relation('armor_trainings', 'Armor Trainings', const ['armor-category'], isList: true);
+  fb.enum_('weapon_proficiency_categories', 'Weapon Category Proficiencies',
+      _enumWeaponCategories, isList: true);
+  fb.relation('weapon_proficiency_specifics', 'Specific Weapon Proficiencies',
+      const ['weapon'], isList: true);
+  fb.enum_('armor_trainings', 'Armor Trainings', _enumArmorCategories, isList: true);
   fb.relation('skill_proficiencies', 'Skill Proficiencies', const ['skill'], isList: true);
   fb.relation('expertise_skills', 'Expertise Skills', const ['skill'], isList: true);
   fb.relation('saving_throw_proficiencies', 'Save Proficiencies', const ['ability'], isList: true, required_: true);
@@ -413,8 +469,8 @@ EntityCategorySchema _locationCategory(String schemaId, String now, int orderInd
   fb.enum_('danger_level', 'Danger Level', const ['Safe', 'Low', 'Medium', 'High', 'Deadly']);
   fb.text('environment', 'Environment');
   fb.relation('parent_location_ref', 'Parent Location', const ['location']);
-  fb.relation('plane_ref', 'Plane', const ['plane']);
-  fb.relation('illumination_ref', 'Illumination', const ['illumination']);
+  fb.enum_('plane_ref', 'Plane', _enumPlanes);
+  fb.enum_('illumination_ref', 'Illumination', _enumIllumination);
   fb.relation('hazard_refs', 'Hazards', const ['hazard'], isList: true);
   fb.markdown('description_long', 'Description', g: grpRules);
   fb.markdown('secrets', 'Secrets (DM-only)', g: grpRules, vis: FieldVisibility.dmOnly);
@@ -443,8 +499,8 @@ EntityCategorySchema _sceneCategory(String schemaId, String now, int orderIndex)
   final fb = _FB(catId, now);
   fb.relation('location_ref', 'Location', const ['location']);
   fb.enum_('status', 'Status', const ['Planned', 'Active', 'Completed', 'Skipped']);
-  fb.relation('illumination_ref', 'Illumination', const ['illumination']);
-  fb.relation('travel_pace_ref', 'Travel Pace', const ['travel-pace']);
+  fb.enum_('illumination_ref', 'Illumination', _enumIllumination);
+  fb.enum_('travel_pace_ref', 'Travel Pace', _enumTravelPaces);
   fb.markdown('beats', 'Beats / Outline', g: grpRules);
   fb.relation('npc_refs', 'NPCs Involved', const ['npc'], isList: true);
   fb.relation('quest_refs', 'Quests Tied', const ['quest'], isList: true);

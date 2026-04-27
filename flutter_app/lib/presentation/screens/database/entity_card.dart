@@ -575,9 +575,9 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       return '$base$cls${ritual ? ' (Ritual)' : ''}';
     }
     if (slug == 'monsters' || slug == 'monster' || slug == 'npcs' || slug == 'npc') {
-      final size = relName('size_ref');
+      final size = (f['size_ref'] as String?) ?? '';
       final type = relName('creature_type_ref');
-      final align = relName('alignment_ref');
+      final align = (f['alignment_ref'] as String?) ?? '';
       final parts = <String>[];
       if (size.isNotEmpty || type.isNotEmpty) {
         parts.add([size, type].where((s) => s.isNotEmpty).join(' '));
@@ -587,13 +587,13 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     }
     if (slug == 'items' || slug == 'magic_items' || slug == 'magic_item' || slug == 'item') {
       final magicCat = relName('magic_category_ref');
-      final rarity = relName('rarity_ref');
+      final rarity = (f['rarity_ref'] as String?) ?? '';
       final attune = f['requires_attunement'] == true;
       final parts = [magicCat, rarity].where((s) => s.isNotEmpty).join(', ');
       return '$parts${attune ? ' (Requires Attunement)' : ''}';
     }
     if (slug == 'feats' || slug == 'feat') {
-      final fcat = relName('category_ref');
+      final fcat = (f['category_ref'] as String?) ?? '';
       final repeatable = f['repeatable'] == true;
       return repeatable ? '$fcat Feat (Repeatable)' : '$fcat Feat';
     }
