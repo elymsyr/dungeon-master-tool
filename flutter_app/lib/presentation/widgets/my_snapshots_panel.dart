@@ -154,7 +154,7 @@ class _SnapshotRowState extends ConsumerState<_SnapshotRow> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         border: Border.all(color: palette.featureCardBorder),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: palette.cbr,
       ),
       child: Row(
         children: [

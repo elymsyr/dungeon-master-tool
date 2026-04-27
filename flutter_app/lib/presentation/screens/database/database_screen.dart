@@ -15,11 +15,17 @@ class DatabaseScreen extends ConsumerStatefulWidget {
   final bool editMode;
   final String? selectedEntityId;
   final ValueChanged<String>? onEntitySelected;
+  /// Optional panel hint paired with [selectedEntityId]. 'left' or
+  /// 'right' opens the target in that panel (if both panels are visible).
+  /// 'opposite' isn't passed in directly — relation taps resolve it to a
+  /// concrete 'left'/'right' before propagating.
+  final String? selectedEntityPanel;
 
   const DatabaseScreen({
     this.editMode = false,
     this.selectedEntityId,
     this.onEntitySelected,
+    this.selectedEntityPanel,
     super.key,
   });
 
@@ -40,8 +46,12 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
         widget.selectedEntityId != oldWidget.selectedEntityId) {
       // Build sırasında provider değiştirilemez — frame sonrasına ertele
       final eid = widget.selectedEntityId!;
+      final targetPanel = switch (widget.selectedEntityPanel) {
+        'right' => _Panel.right,
+        _ => _Panel.left,
+      };
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _openTab(eid, panel: _Panel.left);
+        if (mounted) _openTab(eid, panel: targetPanel);
       });
     }
   }
@@ -189,6 +199,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
                     categorySchema: _firstWhereOrNull(
                         schema.categories, (c) => c.slug == t.categorySlug),
                     readOnly: !widget.editMode,
+                    panelId: 'left',
                   ),
               ],
             ),
@@ -218,6 +229,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
           palette: palette,
           editMode: widget.editMode,
           schema: schema,
+          panelId: 'left',
           onSelect: (i) { setState(() => _leftActiveIndex = i); _persistOpenTabs(); },
           onClose: (i) => _closeTab(i, _Panel.left),
         ),
@@ -231,6 +243,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
           palette: palette,
           editMode: widget.editMode,
           schema: schema,
+          panelId: 'right',
           onSelect: (i) { setState(() => _rightActiveIndex = i); _persistOpenTabs(); },
           onClose: (i) => _closeTab(i, _Panel.right),
         ),
@@ -264,6 +277,7 @@ class _TabPanel extends ConsumerWidget {
   final DmToolColors palette;
   final bool editMode;
   final dynamic schema;
+  final String? panelId;
   final ValueChanged<int> onSelect;
   final ValueChanged<int> onClose;
 
@@ -273,6 +287,7 @@ class _TabPanel extends ConsumerWidget {
     required this.palette,
     required this.editMode,
     this.schema,
+    this.panelId,
     required this.onSelect,
     required this.onClose,
   });
@@ -311,6 +326,7 @@ class _TabPanel extends ConsumerWidget {
                       : _firstWhereOrNull(
                           schema.categories, (c) => c.slug == t.categorySlug),
                   readOnly: !editMode,
+                  panelId: panelId,
                 ),
             ],
           ),

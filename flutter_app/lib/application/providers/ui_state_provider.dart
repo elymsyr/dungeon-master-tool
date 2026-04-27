@@ -234,6 +234,12 @@ final uiStateProvider = StateNotifierProvider<UiStateNotifier, UiState>((ref) {
 /// Consumers should reset to null after handling.
 final entityNavigationProvider = StateProvider<String?>((ref) => null);
 
+/// Optional panel hint paired with [entityNavigationProvider]. 'left',
+/// 'right', or 'opposite' (open in the panel that doesn't already host
+/// the source card). null = default (left).
+final entityNavigationTargetPanelProvider =
+    StateProvider<String?>((ref) => null);
+
 /// Set this to a PDF file path to open it in the PDF sidebar.
 /// Consumers should reset to null after handling.
 final pdfNavigationProvider = StateProvider<String?>((ref) => null);

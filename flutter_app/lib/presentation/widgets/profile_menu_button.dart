@@ -63,7 +63,7 @@ class ProfileMenuButton extends ConsumerWidget {
     return PopupMenuButton<String>(
       tooltip: 'Profile',
       offset: const Offset(0, 44),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      shape: RoundedRectangleBorder(borderRadius: palette.cbr),
       onSelected: (value) {
         switch (value) {
           case 'view':

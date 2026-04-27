@@ -55,6 +55,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
   int _tabIndex = 0;
   bool _editMode = false;
   String? _selectedEntityId;
+  String? _selectedEntityPanel;
 
   // Left sidebar state
   bool _sidebarOpen = true;
@@ -319,12 +320,15 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // Listen for entity navigation requests from anywhere in the app
     ref.listen<String?>(entityNavigationProvider, (_, entityId) {
       if (entityId != null) {
+        final panel = ref.read(entityNavigationTargetPanelProvider);
         setState(() {
           _selectedEntityId = entityId;
+          _selectedEntityPanel = panel;
           _tabIndex = 0;
         });
         _persistUiState();
         ref.read(entityNavigationProvider.notifier).state = null;
+        ref.read(entityNavigationTargetPanelProvider.notifier).state = null;
       }
     });
 
@@ -379,6 +383,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
         DatabaseScreen(
           editMode: _editMode,
           selectedEntityId: _selectedEntityId,
+          selectedEntityPanel: _selectedEntityPanel,
           onEntitySelected: (id) => setState(() => _selectedEntityId = id),
         ),
         const SessionScreen(),

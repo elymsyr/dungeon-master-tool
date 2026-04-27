@@ -34,7 +34,7 @@ class ProjectionThumbChip extends StatelessWidget {
           width: 110,
           decoration: BoxDecoration(
             border: Border.all(color: borderColor, width: isActive ? 2 : 1),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: palette.cbr,
             color: palette.featureCardBg,
           ),
           clipBehavior: Clip.antiAlias,
