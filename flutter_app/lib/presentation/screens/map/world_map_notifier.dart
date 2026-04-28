@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -181,10 +182,20 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
   Offset _focalBase = Offset.zero;
   Offset _panBase = Offset.zero;
 
+  // Debounce coalesces drag/pan storms into one save per ~300ms idle window.
+  Timer? _saveDebounceTimer;
+  static const Duration _saveDebounceWindow = Duration(milliseconds: 300);
+
+  // Image dimension cache keyed by file path. Decode is GPU-bound and cannot
+  // run on a worker isolate (ui.Image is not transferable), so the win is
+  // skipping the redundant decode on resetView / repeat _fitImageInViewport.
+  final Map<String, Size> _imageSizeCache = <String, Size>{};
+
   WorldMapNotifier(this._ref) : super(const WorldMapState());
 
   @override
   void dispose() {
+    _saveDebounceTimer?.cancel();
     viewTransform.dispose();
     disposeUndoRedo();
     super.dispose();
@@ -404,22 +415,30 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     return names;
   }
 
+  static final RegExp _digitsLikeRe = RegExp(r'^[\d./-]+$');
+  static final RegExp _wsRe = RegExp(r'\s+');
+
   /// Short display label for a waypoint.
   static String _waypointDisplayLabel(EpochWaypoint wp) {
     if (wp.label.isEmpty) return '?';
     // If it looks like a number or date, show as-is
-    if (RegExp(r'^[\d./-]+$').hasMatch(wp.label)) return wp.label;
+    if (_digitsLikeRe.hasMatch(wp.label)) return wp.label;
     // Otherwise show uppercase initials
     return wp.label
-        .split(RegExp(r'\s+'))
+        .split(_wsRe)
         .where((w) => w.isNotEmpty)
         .map((w) => w[0].toUpperCase())
         .join();
   }
 
   void _debouncedSave() {
-    syncToCampaignData();
-    _ref.read(saveStateProvider.notifier).markDirty();
+    _saveDebounceTimer?.cancel();
+    _saveDebounceTimer = Timer(_saveDebounceWindow, () {
+      _saveDebounceTimer = null;
+      if (!mounted) return;
+      syncToCampaignData();
+      _ref.read(saveStateProvider.notifier).markDirty();
+    });
   }
 
   void undo() {
@@ -734,12 +753,10 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
       return;
     }
     try {
-      final bytes = await file.readAsBytes();
-      final codec = await ui.instantiateImageCodec(bytes);
-      final frame = await codec.getNextFrame();
-      final imgW = frame.image.width.toDouble();
-      final imgH = frame.image.height.toDouble();
-      frame.image.dispose();
+      final size = _imageSizeCache[path] ?? await _decodeImageSize(file);
+      _imageSizeCache[path] = size;
+      final imgW = size.width;
+      final imgH = size.height;
 
       final scaleX = _viewportSize.width / imgW;
       final scaleY = _viewportSize.height / imgH;
@@ -751,6 +768,18 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     } catch (_) {
       viewTransform.value = const WorldMapViewTransform();
     }
+  }
+
+  Future<Size> _decodeImageSize(File file) async {
+    final bytes = await file.readAsBytes();
+    final codec = await ui.instantiateImageCodec(bytes);
+    final frame = await codec.getNextFrame();
+    final size = Size(
+      frame.image.width.toDouble(),
+      frame.image.height.toDouble(),
+    );
+    frame.image.dispose();
+    return size;
   }
 
   // -------------------------------------------------------------------------
@@ -1078,32 +1107,79 @@ class WorldMapNotifier extends StateNotifier<WorldMapState>
     state = state.copyWith(activeEntityFilters: const {});
   }
 
+  // Memoized visible-pin slices. Identity-keyed on the immutable inputs the
+  // filter reads — pin list, hiddenPinTypes set, activeEntityFilters set, and
+  // the two visibility flags. Avoids re-filtering on every consumer rebuild.
+  List<MapPin>? _cachedVisiblePins;
+  List<MapPin>? _cachedVisiblePinsKeyPins;
+  Set<String>? _cachedVisiblePinsKeyHidden;
+  Set<String>? _cachedVisiblePinsKeyFilters;
+  bool? _cachedVisiblePinsKeyShow;
+
+  List<TimelinePin>? _cachedVisibleTimelinePins;
+  List<TimelinePin>? _cachedVisibleTimelinePinsKeyPins;
+  Set<String>? _cachedVisibleTimelinePinsKeyFilters;
+  bool? _cachedVisibleTimelinePinsKeyShow;
+
   /// Visible map pins (filtered by type + entity filter).
   List<MapPin> get visiblePins {
-    if (!state.showMapPins) return [];
-    var pins = state.pins.where(
-        (p) => !state.hiddenPinTypes.contains(p.pinType));
-    if (state.activeEntityFilters.isNotEmpty) {
-      pins = pins.where((p) =>
-          p.entityId != null &&
-          state.activeEntityFilters.contains(p.entityId));
+    if (identical(_cachedVisiblePinsKeyPins, state.pins) &&
+        identical(_cachedVisiblePinsKeyHidden, state.hiddenPinTypes) &&
+        identical(_cachedVisiblePinsKeyFilters, state.activeEntityFilters) &&
+        _cachedVisiblePinsKeyShow == state.showMapPins &&
+        _cachedVisiblePins != null) {
+      return _cachedVisiblePins!;
     }
-    return pins.toList();
+    final List<MapPin> result;
+    if (!state.showMapPins) {
+      result = const [];
+    } else {
+      var pins = state.pins.where(
+          (p) => !state.hiddenPinTypes.contains(p.pinType));
+      if (state.activeEntityFilters.isNotEmpty) {
+        pins = pins.where((p) =>
+            p.entityId != null &&
+            state.activeEntityFilters.contains(p.entityId));
+      }
+      result = pins.toList(growable: false);
+    }
+    _cachedVisiblePins = result;
+    _cachedVisiblePinsKeyPins = state.pins;
+    _cachedVisiblePinsKeyHidden = state.hiddenPinTypes;
+    _cachedVisiblePinsKeyFilters = state.activeEntityFilters;
+    _cachedVisiblePinsKeyShow = state.showMapPins;
+    return result;
   }
 
   /// Visible timeline pins (filtered by entity filter).
   List<TimelinePin> get visibleTimelinePins {
-    if (!state.showTimeline) return [];
-    var pins = state.timelinePins;
-    if (state.activeEntityFilters.isNotEmpty) {
-      pins = pins
-          .where((t) =>
-              t.entityIds.isEmpty ||
-              t.entityIds.any(
-                  (e) => state.activeEntityFilters.contains(e)))
-          .toList();
+    if (identical(_cachedVisibleTimelinePinsKeyPins, state.timelinePins) &&
+        identical(_cachedVisibleTimelinePinsKeyFilters,
+            state.activeEntityFilters) &&
+        _cachedVisibleTimelinePinsKeyShow == state.showTimeline &&
+        _cachedVisibleTimelinePins != null) {
+      return _cachedVisibleTimelinePins!;
     }
-    return pins;
+    final List<TimelinePin> result;
+    if (!state.showTimeline) {
+      result = const [];
+    } else {
+      var pins = state.timelinePins;
+      if (state.activeEntityFilters.isNotEmpty) {
+        pins = pins
+            .where((t) =>
+                t.entityIds.isEmpty ||
+                t.entityIds.any(
+                    (e) => state.activeEntityFilters.contains(e)))
+            .toList(growable: false);
+      }
+      result = pins;
+    }
+    _cachedVisibleTimelinePins = result;
+    _cachedVisibleTimelinePinsKeyPins = state.timelinePins;
+    _cachedVisibleTimelinePinsKeyFilters = state.activeEntityFilters;
+    _cachedVisibleTimelinePinsKeyShow = state.showTimeline;
+    return result;
   }
 
   // -------------------------------------------------------------------------
