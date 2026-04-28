@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/media_provider.dart';
@@ -1171,87 +1172,114 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
               final isEquipped = item['equipped'] == true;
               final itemId = item['id']?.toString() ?? '';
 
+              final linkedEntity = entities?[itemId];
+              final description = linkedEntity?.description ?? '';
+              // Indent description to align with the entity name (past the
+               // equip toggle, link icon, and spacers).
+              final descIndent = (showEquip ? 28.0 : 0.0) + 14 + 6;
+
               Widget itemRow = Padding(
-                padding: const EdgeInsets.only(bottom: 2),
-                child: Row(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Equip toggle
-                    if (showEquip) ...[
-                      SizedBox(
-                        width: 28,
-                        child: IconButton(
-                          icon: Icon(
-                            isEquipped ? Icons.shield : Icons.shield_outlined,
-                            size: 16,
-                            color: isEquipped
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.outline,
-                          ),
-                          tooltip: isEquipped ? 'Equipped' : 'Not equipped',
-                          onPressed: readOnly ? null : () {
-                            items[i] = {...item, 'equipped': !isEquipped};
-                            onChanged(_serializeItems(items, showEquip));
-                          },
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ],
-                    const Icon(Icons.link, size: 14),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: InkWell(
-                        onTap: ref == null || entities?[itemId] == null
-                            ? null
-                            : () => _navigateToEntity(ref!, itemId, panelId),
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                _resolveEntityName(itemId),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  decoration: showEquip && !isEquipped
-                                      ? TextDecoration.lineThrough
-                                      : (entities?[itemId] != null
-                                          ? TextDecoration.underline
-                                          : null),
-                                  decorationStyle:
-                                      TextDecorationStyle.dotted,
-                                  color: showEquip && !isEquipped
-                                      ? Theme.of(context).colorScheme.outline
-                                      : null,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        // Equip toggle
+                        if (showEquip) ...[
+                          SizedBox(
+                            width: 28,
+                            child: IconButton(
+                              icon: Icon(
+                                isEquipped ? Icons.shield : Icons.shield_outlined,
+                                size: 16,
+                                color: isEquipped
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context).colorScheme.outline,
                               ),
+                              tooltip: isEquipped ? 'Equipped' : 'Not equipped',
+                              onPressed: readOnly ? null : () {
+                                items[i] = {...item, 'equipped': !isEquipped};
+                                onChanged(_serializeItems(items, showEquip));
+                              },
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
                             ),
-                            if (entities?[itemId] != null) ...[
-                              const SizedBox(width: 6),
-                              Builder(builder: (ctx) {
-                                final sub =
-                                    _relationSubtitle(entities![itemId]!);
-                                if (sub == null) return const SizedBox.shrink();
-                                return Text(
-                                  '· $sub',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Theme.of(context).colorScheme.outline,
+                          ),
+                        ],
+                        const Icon(Icons.link, size: 14),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: InkWell(
+                            onTap: ref == null || linkedEntity == null
+                                ? null
+                                : () => _navigateToEntity(ref!, itemId, panelId),
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    _resolveEntityName(itemId),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      decoration: showEquip && !isEquipped
+                                          ? TextDecoration.lineThrough
+                                          : (linkedEntity != null
+                                              ? TextDecoration.underline
+                                              : null),
+                                      decorationStyle:
+                                          TextDecorationStyle.dotted,
+                                      color: showEquip && !isEquipped
+                                          ? Theme.of(context).colorScheme.outline
+                                          : null,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                );
-                              }),
-                            ],
-                          ],
+                                ),
+                                if (linkedEntity != null) ...[
+                                  const SizedBox(width: 6),
+                                  Builder(builder: (ctx) {
+                                    final sub = _relationSubtitle(linkedEntity);
+                                    if (sub == null) return const SizedBox.shrink();
+                                    return Text(
+                                      '· $sub',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Theme.of(context).colorScheme.outline,
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                        if (!readOnly)
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 14),
+                            onPressed: () {
+                              items.removeAt(i);
+                              onChanged(_serializeItems(items, showEquip));
+                            },
+                            visualDensity: VisualDensity.compact,
+                          ),
+                      ],
                     ),
-                    if (!readOnly)
-                      IconButton(
-                        icon: const Icon(Icons.close, size: 14),
-                        onPressed: () {
-                          items.removeAt(i);
-                          onChanged(_serializeItems(items, showEquip));
-                        },
-                        visualDensity: VisualDensity.compact,
+                    if (description.isNotEmpty)
+                      Padding(
+                        padding: EdgeInsets.only(left: descIndent, top: 2, right: 4),
+                        child: MarkdownBody(
+                          data: description,
+                          selectable: true,
+                          styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                            p: TextStyle(
+                              fontSize: 12,
+                              height: 1.35,
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85),
+                            ),
+                            listBullet: const TextStyle(fontSize: 12),
+                          ),
+                        ),
                       ),
                   ],
                 ),

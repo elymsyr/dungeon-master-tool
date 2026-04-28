@@ -178,11 +178,18 @@ class PackageSyncService {
   /// rows were seeded without a packageId — caller passes the SRD pack's
   /// Tier-0 slugs so they get removed too. Only applied when
   /// [purgeDetached] is true.
+  ///
+  /// [extraScrubSource]: when set, only orphan rows whose `source` matches
+  /// this value are deleted. Without it, every user-authored entity in a
+  /// Tier-0 slug (e.g. a custom damage type) would be treated as pack
+  /// debris and nuked. Caller passes the pack's source tag (`SRD 5.2.1`)
+  /// to scope the scrub to pack-originated rows.
   Future<PackageSyncResult> uninstall({
     required String campaignId,
     required String packageId,
     bool purgeDetached = false,
     Set<String> extraScrubSlugs = const {},
+    String? extraScrubSource,
   }) async {
     return _db.transaction(() async {
       final rows = await (_db.select(_db.entities)
@@ -208,12 +215,15 @@ class PackageSyncService {
         }
       }
       if (purgeDetached && extraScrubSlugs.isNotEmpty) {
-        final orphans = await (_db.select(_db.entities)
-              ..where((t) =>
-                  t.campaignId.equals(campaignId) &
-                  t.categorySlug.isIn(extraScrubSlugs) &
-                  t.packageId.isNull()))
-            .get();
+        final query = _db.select(_db.entities)
+          ..where((t) =>
+              t.campaignId.equals(campaignId) &
+              t.categorySlug.isIn(extraScrubSlugs) &
+              t.packageId.isNull());
+        if (extraScrubSource != null) {
+          query.where((t) => t.source.equals(extraScrubSource));
+        }
+        final orphans = await query.get();
         for (final row in orphans) {
           await _db.entityDao.deleteEntity(row.id);
           removed++;

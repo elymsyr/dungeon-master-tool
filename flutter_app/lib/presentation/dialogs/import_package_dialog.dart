@@ -10,8 +10,6 @@ import '../../application/providers/package_provider.dart';
 import '../../application/providers/template_provider.dart';
 import '../../application/services/package_import_service.dart';
 import '../../application/services/package_sync_service.dart';
-import '../../application/services/srd_core_package_bootstrap.dart'
-    show srdCorePackageName;
 import '../../application/services/template_compatibility_service.dart';
 import '../../data/database/database_provider.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
@@ -185,54 +183,26 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
 
   Future<void> _removePackage(PackageInfo info) async {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    var purgeAll = true;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => StatefulBuilder(builder: (ctx, setDialogState) {
-        return AlertDialog(
-          title: Text('Remove "${info.name}" from this world?'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Linked entities from this package will be deleted.',
-              ),
-              const SizedBox(height: 8),
-              CheckboxListTile(
-                value: purgeAll,
-                onChanged: (v) =>
-                    setDialogState(() => purgeAll = v ?? true),
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                dense: true,
-                title: const Text(
-                  'Also delete user-edited (detached) copies',
-                  style: TextStyle(fontSize: 13),
-                ),
-                subtitle: Text(
-                  purgeAll
-                      ? 'All entities from this package will be removed.'
-                      : 'Edited copies will be kept as homebrew.',
-                  style: const TextStyle(fontSize: 11),
-                ),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: Text('Remove "${info.name}" from this world?'),
+        content: const Text(
+          'Linked entities from this package will be deleted. '
+          'User-edited copies are kept as homebrew.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                  backgroundColor: palette.dangerBtnBg),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Remove'),
-            ),
-          ],
-        );
-      }),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
     );
     if (confirmed != true) return;
 
@@ -250,18 +220,9 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
         }
         return;
       }
-      final tier0Slugs =
-          generateBuiltinDnd5eV2Schema().seedRows.keys.toSet();
       final result = await PackageSyncService(db).uninstall(
         campaignId: campaignId,
         packageId: pkgRow.id,
-        purgeDetached: purgeAll,
-        // Legacy worlds seeded Tier-0 lookups without a packageId tag.
-        // Scrub them alongside the SRD pack so a remove leaves nothing
-        // behind. Safe for non-SRD packs because their entities don't
-        // live in Tier-0 categories.
-        extraScrubSlugs:
-            info.name == srdCorePackageName ? tier0Slugs : const {},
       );
       await activeNotifier.reload();
       await _loadInstalled();

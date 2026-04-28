@@ -217,6 +217,11 @@ class CampaignRepositoryImpl implements CampaignRepository {
         'pdfs': jsonDecode(e.pdfsJson),
         'location_id': e.locationId,
         'attributes': jsonDecode(e.fieldsJson),
+        // Package linkage must round-trip through load→save or autosave
+        // strips it and uninstall later finds nothing to delete.
+        if (e.packageId != null) 'package_id': e.packageId,
+        if (e.packageEntityId != null) 'package_entity_id': e.packageEntityId,
+        if (e.linked) 'linked': true,
       };
     }
 
