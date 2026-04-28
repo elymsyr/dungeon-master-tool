@@ -112,7 +112,6 @@ List<Map<String, dynamic>> srdTraits() => [
       _t(name: 'Speak with Beasts and Plants', kind: 'Other', description: 'The dryad can communicate with Beasts and Plants as if they shared a language.'),
       _t(name: 'Speak with Plants', kind: 'Other', description: 'The creature can communicate with Plants as if they shared a language.'),
       _t(name: 'False Appearance (Gargoyle)', kind: 'Passive', description: 'While the gargoyle remains motionless, it is indistinguishable from an inanimate statue.'),
-      _t(name: 'Reel In', kind: 'Other', description: 'The roper can pull each creature Grappled by it up to 50 feet straight toward it as a Bonus Action.'),
       _t(name: 'Spider Climb (Roper)', kind: 'Movement', description: 'The roper can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check.'),
       _t(name: 'Aversion to Light', kind: 'Defensive', description: 'When in sunlight, the nothic has Disadvantage on attack rolls and ability checks.'),
       _t(name: 'Tentacles', kind: 'Passive', description: 'A creature Grappled by the otyugh can\'t use Bite attacks against the otyugh and is at risk of being infected with disease.'),
@@ -189,4 +188,10 @@ List<Map<String, dynamic>> srdTraits() => [
       _t(name: 'Sphinx Spellcasting', kind: 'Spellcasting', description: 'The sphinx casts spells using Intelligence as the spellcasting ability. Spell save DC scales with stat block.'),
       _t(name: 'Whelm', kind: 'Passive', description: 'When the creature drops to 0 HP, it doesn\'t die. Instead, it falls Unconscious and rerolls (resurrects) at full HP at the start of its next turn (limited uses per stat block).'),
       _t(name: 'Spell Storing (Lich)', kind: 'Spellcasting', description: 'The lich can magically store one spell of 5th level or lower in its bones, casting it later at no cost.'),
+      _t(name: 'Incorporeal Movement', kind: 'Movement', description: 'The creature can move through other creatures and objects as if they were Difficult Terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object.'),
+      _t(name: 'Divine Awareness', kind: 'Passive', description: 'The creature knows when it hears a lie.'),
+      _t(name: 'Iron Scent', kind: 'Passive', description: 'The rust monster can pinpoint the location of ferrous metal within 30 feet of it.'),
+      _t(name: 'Ooze Cube', kind: 'Passive', description: 'The cube takes up its entire space. Other creatures can enter the space, but a creature that does so is subjected to the cube\'s Engulf and has Disadvantage on the saving throw. Creatures inside the cube can be seen but have Total Cover. A creature within 5 feet of the cube can take an action to pull a creature or object out, succeeding on a DC 12 Strength check. The cube can hold one Large creature or up to four Medium or smaller creatures.'),
+      _t(name: 'Reflective Carapace', kind: 'Defensive', description: 'If the creature is targeted by a Magic Missile spell or a line spell, or if a spell attack roll is made against it, roll a d6. On a 1–5, the creature is unaffected. On a 6, the creature is unaffected and the effect is reflected back at the caster.'),
+      _t(name: 'Tunneler', kind: 'Movement', description: 'The creature can burrow through solid rock, leaving a 10-foot-diameter tunnel in its wake.'),
     ];

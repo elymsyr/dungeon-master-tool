@@ -331,6 +331,21 @@ List<Map<String, dynamic>> srdAdventuringGear() => [
       _g(name: 'Reliquary', costCp: 5 * _cpPerGp, weightLb: 2,
           isFocus: true,
           focusKindSlug: 'holy-symbol', focusKindName: 'Reliquary'),
+
+      // ── Gap closure: missed common SRD 5.2.1 adventuring gear ─────
+      _g(name: 'Chalk', costCp: 1, weightLb: 0),
+      _g(name: 'Fishing Tackle', costCp: 1 * _cpPerGp, weightLb: 4),
+      _g(name: 'Hammer', costCp: 1 * _cpPerGp, weightLb: 3),
+      _g(name: 'Hourglass', costCp: 25 * _cpPerGp, weightLb: 1),
+      _g(name: 'Mess Kit', costCp: 2 * _cpPerSp, weightLb: 1),
+      _g(name: 'Pick, Miner\'s', costCp: 2 * _cpPerGp, weightLb: 10),
+      _g(name: 'Piton', costCp: 5, weightLb: 0.25),
+      _g(name: 'Scale, Merchant\'s', costCp: 5 * _cpPerGp, weightLb: 3),
+      _g(name: 'Sealing Wax', costCp: 5 * _cpPerSp, weightLb: 0),
+      _g(name: 'Signet Ring', costCp: 5 * _cpPerGp, weightLb: 0),
+      _g(name: 'Soap', costCp: 2 * _cpPerCp(), weightLb: 0),
+      _g(name: 'Spellbook', costCp: 50 * _cpPerGp, weightLb: 3),
+      _g(name: 'Whetstone', costCp: 1 * _cpPerCp(), weightLb: 1),
     ];
 
 int _cpPerCp() => 1; // syntactic helper for "X CP" rows.

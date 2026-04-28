@@ -44,6 +44,25 @@ enum _ImportSource { packages, characters }
 class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
   bool _importing = false;
   _ImportSource _source = _ImportSource.packages;
+  Set<String> _installedPackageNames = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInstalled();
+  }
+
+  Future<void> _loadInstalled() async {
+    final db = ref.read(appDatabaseProvider);
+    final campaignId =
+        ref.read(activeCampaignProvider.notifier).data?['world_id'] as String?;
+    if (campaignId == null) return;
+    final rows = await db.installedPackageDao.listForCampaign(campaignId);
+    if (!mounted) return;
+    setState(() {
+      _installedPackageNames = rows.map((r) => r.packageName).toSet();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +130,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
               palette: palette,
               l10n: l10n,
               importing: _importing,
+              alreadyInstalled: _installedPackageNames.contains(info.name),
               onImport: () => _importPackage(info, worldSchema),
             );
           },
@@ -303,6 +323,7 @@ class _PackageImportCard extends StatefulWidget {
   final DmToolColors palette;
   final L10n l10n;
   final bool importing;
+  final bool alreadyInstalled;
   final VoidCallback onImport;
 
   const _PackageImportCard({
@@ -312,6 +333,7 @@ class _PackageImportCard extends StatefulWidget {
     required this.palette,
     required this.l10n,
     required this.importing,
+    required this.alreadyInstalled,
     required this.onImport,
   });
 
@@ -364,28 +386,30 @@ class _PackageImportCardState extends State<_PackageImportCard> {
 
     final (IconData icon, Color color, String label) = _loading
         ? (Icons.hourglass_empty, palette.sidebarLabelSecondary, '...')
-        : switch (_compat?.level) {
-            CompatibilityLevel.perfect => (
-                Icons.check_circle,
-                palette.successBtnBg,
-                l10n.importCompatPerfect,
-              ),
-            CompatibilityLevel.compatible => (
-                Icons.warning_amber,
-                palette.uiAutosaveTextEditing,
-                l10n.importCompatWarning,
-              ),
-            CompatibilityLevel.incompatible => (
-                Icons.cancel,
-                palette.dangerBtnBg,
-                l10n.importCompatIncompatible,
-              ),
-            null => (
-                Icons.help_outline,
-                palette.sidebarLabelSecondary,
-                'Unknown',
-              ),
-          };
+        : widget.alreadyInstalled
+            ? (Icons.check_circle, palette.successBtnBg, 'Imported')
+            : switch (_compat?.level) {
+                CompatibilityLevel.perfect => (
+                    Icons.check_circle,
+                    palette.successBtnBg,
+                    l10n.importCompatPerfect,
+                  ),
+                CompatibilityLevel.compatible => (
+                    Icons.warning_amber,
+                    palette.uiAutosaveTextEditing,
+                    l10n.importCompatWarning,
+                  ),
+                CompatibilityLevel.incompatible => (
+                    Icons.cancel,
+                    palette.dangerBtnBg,
+                    l10n.importCompatIncompatible,
+                  ),
+                null => (
+                    Icons.help_outline,
+                    palette.sidebarLabelSecondary,
+                    'Unknown',
+                  ),
+              };
 
     final isIncompatible = _compat?.level == CompatibilityLevel.incompatible;
     final canImport = !_loading && !widget.importing && _compat != null;
@@ -445,32 +469,33 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                     ],
                   ),
                   const SizedBox(width: 8),
-                  SizedBox(
-                    height: 28,
-                    child: isIncompatible
-                        ? OutlinedButton(
-                            onPressed: canImport
-                                ? () => _confirmForceImport(context)
-                                : null,
-                            style: OutlinedButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              textStyle: const TextStyle(fontSize: 12),
-                              foregroundColor: palette.dangerBtnBg,
-                              side: BorderSide(color: palette.dangerBtnBg),
+                  if (!widget.alreadyInstalled)
+                    SizedBox(
+                      height: 28,
+                      child: isIncompatible
+                          ? OutlinedButton(
+                              onPressed: canImport
+                                  ? () => _confirmForceImport(context)
+                                  : null,
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12),
+                                textStyle: const TextStyle(fontSize: 12),
+                                foregroundColor: palette.dangerBtnBg,
+                                side: BorderSide(color: palette.dangerBtnBg),
+                              ),
+                              child: const Text('Force'),
+                            )
+                          : FilledButton(
+                              onPressed: canImport ? widget.onImport : null,
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12),
+                                textStyle: const TextStyle(fontSize: 12),
+                              ),
+                              child: Text(l10n.btnImport),
                             ),
-                            child: const Text('Force'),
-                          )
-                        : FilledButton(
-                            onPressed: canImport ? widget.onImport : null,
-                            style: FilledButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              textStyle: const TextStyle(fontSize: 12),
-                            ),
-                            child: Text(l10n.btnImport),
-                          ),
-                  ),
+                    ),
                   if (hasDetails)
                     Icon(
                       _expanded

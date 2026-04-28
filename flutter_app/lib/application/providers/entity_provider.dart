@@ -260,6 +260,7 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       name: name,
       categorySlug: categorySlug,
       fields: defaultFields,
+      source: 'Homebrew',
     );
     state = {...state, id: entity};
     _syncToCampaign();
@@ -274,14 +275,18 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   void update(Entity entity) {
     if (identical(state[entity.id], entity)) return;
     pushUndo(state);
-    // Detach-on-edit: when a user edits an entity that was live-linked
-    // to a package, the link breaks. The entity becomes a homebrew
-    // copy that no longer mirrors pack updates and survives package
-    // removal. The pack-side entity is unaffected.
+    // Detach-on-edit: any content change marks the entity as homebrew.
+    // Linked pack entities break the link; pack-side row is unaffected.
+    // Manual source edits (source field changed in this update) are
+    // preserved — only auto-stamp Homebrew when the user didn't set one.
     final prev = state[entity.id];
     var next = entity;
-    if (prev != null && prev.linked && _isContentChanged(prev, entity)) {
-      next = entity.copyWith(linked: false, source: 'Homebrew');
+    if (prev != null && _isContentChanged(prev, entity)) {
+      final userEditedSource = entity.source != prev.source;
+      next = entity.copyWith(
+        linked: false,
+        source: userEditedSource ? entity.source : 'Homebrew',
+      );
     }
     state = {...state, next.id: next};
     _syncToCampaign();
