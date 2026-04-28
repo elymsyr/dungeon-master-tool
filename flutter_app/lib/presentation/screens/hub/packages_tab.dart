@@ -13,6 +13,7 @@ import '../../../application/providers/campaign_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../dialogs/export_package_dialog.dart';
 import '../../widgets/marketplace_panel.dart';
 import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
@@ -62,6 +63,17 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                             fontWeight: FontWeight.bold,
                             color: palette.tabActiveText)),
                   ),
+                  OutlinedButton.icon(
+                    onPressed: _openExportDialog,
+                    icon: const Icon(Icons.upload_file, size: 16),
+                    label: const Text('Export'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      minimumSize: const Size(0, 32),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
                   OutlinedButton.icon(
                     onPressed: () {
                       ref.read(socialSubTabProvider.notifier).state = 'marketplace';
@@ -321,6 +333,13 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _openExportDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => const ExportPackageDialog(),
     );
   }
 
