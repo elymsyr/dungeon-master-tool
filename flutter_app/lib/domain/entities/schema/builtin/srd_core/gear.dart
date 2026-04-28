@@ -129,6 +129,7 @@ List<Map<String, dynamic>> srdAdventuringGear() => [
       _g(name: 'Crowbar', costCp: 2 * _cpPerGp, weightLb: 5,
           utilizeDescription:
               'Advantage on Strength checks where the leverage can be applied.'),
+      _g(name: "Burglar's Pack", costCp: 16 * _cpPerGp, weightLb: 42),
       _g(name: "Diplomat's Pack", costCp: 39 * _cpPerGp, weightLb: 39),
       _g(name: "Dungeoneer's Pack", costCp: 12 * _cpPerGp, weightLb: 55),
       _g(name: "Entertainer's Pack", costCp: 40 * _cpPerGp, weightLb: 58),
@@ -271,6 +272,23 @@ List<Map<String, dynamic>> srdAdventuringGear() => [
           utilizeDescription: 'Holds up to 4 ounces.'),
       _g(name: 'Waterskin', costCp: 2 * _cpPerSp, weightLb: 5,
           utilizeDescription: 'Holds up to 4 pints.'),
+
+      // ── Tack and Harness (SRD p. 100) ─────────────────────────────
+      _g(name: 'Saddle, Exotic', costCp: 60 * _cpPerGp, weightLb: 40,
+          utilizeDescription:
+              'Required to ride awakened or magical mounts (e.g. Pegasus, Griffon).'),
+      _g(name: 'Saddle, Military', costCp: 20 * _cpPerGp, weightLb: 30,
+          utilizeDescription:
+              "Advantage on saves vs. being knocked off the mount in combat."),
+      _g(name: 'Saddle, Riding', costCp: 10 * _cpPerGp, weightLb: 25,
+          utilizeDescription:
+              'Standard saddle for ordinary mounts.'),
+      _g(name: 'Feed', costCp: 5, weightLb: 10,
+          consumable: true,
+          utilizeDescription: 'One day of feed for one mount.'),
+      _g(name: 'Stabling', costCp: 5 * _cpPerSp, weightLb: 0,
+          consumable: true,
+          utilizeDescription: 'One day of stabling for one mount.'),
 
       // ── Arcane Foci ───────────────────────────────────────────────
       _g(name: 'Crystal', costCp: 10 * _cpPerGp, weightLb: 1,
