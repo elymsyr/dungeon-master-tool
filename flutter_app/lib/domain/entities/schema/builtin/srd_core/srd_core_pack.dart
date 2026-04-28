@@ -53,6 +53,12 @@ const _uuid = Uuid();
 /// stranding any open EntityCard tab on a now-invalid entity id.
 const _srdNamespaceUuid = '6e7d2a4a-2c2d-4d2c-8a3a-7f0c1b2c3d4e';
 
+/// Deterministic v5 UUID for an SRD pack entity keyed on `slug:name`. Shared
+/// by `buildSrdCorePack` (Tier-1 ids) and `SrdCorePackageBootstrap` (Tier-0
+/// mirror rows) so both tiers land in `package_entities` with stable ids.
+String srdStableEntityId(String slug, String name) =>
+    _uuid.v5(_srdNamespaceUuid, '$slug:$name');
+
 /// Returns the per-slug raw row lists the pack ships, in stable order.
 /// Order matters for deterministic UUID assignment when needed.
 Map<String, List<Map<String, dynamic>>> _rawRowsBySlug() => {
@@ -110,7 +116,7 @@ SrdCorePack buildSrdCorePack() {
       // Fallback for nameless rows: position-based key so two unnamed rows
       // in the same slug don't collide.
       final key = name ?? 'row-${slugIndex.length}';
-      final id = _uuid.v5(_srdNamespaceUuid, '$slug:$key');
+      final id = srdStableEntityId(slug, key);
       entities[id] = row;
       if (name != null) slugIndex[name] = id;
     }

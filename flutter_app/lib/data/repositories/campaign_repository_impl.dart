@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 import '../../application/services/srd_core_bootstrap.dart';
+import '../../application/services/srd_core_package_bootstrap.dart';
 import '../../core/config/app_paths.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/world_schema.dart' as domain;
@@ -171,7 +172,15 @@ class CampaignRepositoryImpl implements CampaignRepository {
 
     // Bootstrap built-in SRD content for v2 D&D 5e campaigns. Seeds Tier-0
     // lookup rows + the hand-authored SRD 5.2.1 content pack.
+    //
+    // Order matters: ensure the SRD `Packages` row exists FIRST so
+    // `SrdCoreBootstrap` can tag every seeded entity with the right
+    // `packageId` + `packageEntityId` and write an `installed_packages`
+    // row. Without this, a fresh world creates 2057 untagged rows that
+    // `PackageSyncService.sync` later treats as missing — re-inserting
+    // every pack entity and doubling the world's entity count.
     if (schema.schemaId == builtinDnd5eV2SchemaId) {
+      await SrdCorePackageBootstrap(_db).ensureInstalled();
       await SrdCoreBootstrap(_db).ensureImported(
         campaignId: campaignId,
         build: generateBuiltinDnd5eV2Schema(),

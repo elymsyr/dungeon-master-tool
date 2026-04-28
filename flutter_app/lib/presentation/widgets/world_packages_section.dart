@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/services/package_import_service.dart';
 import '../../application/services/package_sync_service.dart';
+import '../../application/services/srd_core_package_bootstrap.dart'
+    show srdCorePackageName;
 import '../../data/database/app_database.dart';
 import '../../data/database/database_provider.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
@@ -78,33 +80,69 @@ class _WorldPackagesSectionState extends ConsumerState<WorldPackagesSection> {
 
   Future<void> _remove(InstalledPackage row) async {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    var purgeAll = true;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Remove "${row.packageName}"?'),
-        content: const Text(
-            'Linked entities from this package will be deleted. '
-            'Detached (user-edited) copies survive as homebrew.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setDialogState) {
+        return AlertDialog(
+          title: Text('Remove "${row.packageName}"?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                  'Linked entities from this package will be deleted.'),
+              const SizedBox(height: 8),
+              CheckboxListTile(
+                value: purgeAll,
+                onChanged: (v) =>
+                    setDialogState(() => purgeAll = v ?? true),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                dense: true,
+                title: const Text(
+                  'Also delete user-edited (detached) copies',
+                  style: TextStyle(fontSize: 13),
+                ),
+                subtitle: Text(
+                  purgeAll
+                      ? 'All entities from this package will be removed.'
+                      : 'Edited copies will be kept as homebrew.',
+                  style: const TextStyle(fontSize: 11),
+                ),
+              ),
+            ],
           ),
-          FilledButton(
-            style:
-                FilledButton.styleFrom(backgroundColor: palette.tabActiveText),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                  backgroundColor: palette.tabActiveText),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Remove'),
+            ),
+          ],
+        );
+      }),
     );
     if (confirmed != true) return;
 
     final db = ref.read(appDatabaseProvider);
+    final tier0Slugs =
+        generateBuiltinDnd5eV2Schema().seedRows.keys.toSet();
     final result = await PackageSyncService(db).uninstall(
       campaignId: widget.campaignId,
       packageId: row.packageId,
+      purgeDetached: purgeAll,
+      // Legacy worlds seeded Tier-0 lookups without a packageId tag.
+      // Scrub them alongside the SRD pack so a remove leaves nothing
+      // behind. Safe for non-SRD packs because their entities don't
+      // live in Tier-0 categories.
+      extraScrubSlugs:
+          row.packageName == srdCorePackageName ? tier0Slugs : const {},
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(

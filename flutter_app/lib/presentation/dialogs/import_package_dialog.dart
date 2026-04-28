@@ -10,6 +10,8 @@ import '../../application/providers/package_provider.dart';
 import '../../application/providers/template_provider.dart';
 import '../../application/services/package_import_service.dart';
 import '../../application/services/package_sync_service.dart';
+import '../../application/services/srd_core_package_bootstrap.dart'
+    show srdCorePackageName;
 import '../../application/services/template_compatibility_service.dart';
 import '../../data/database/database_provider.dart';
 import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
@@ -132,6 +134,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
               importing: _importing,
               alreadyInstalled: _installedPackageNames.contains(info.name),
               onImport: () => _importPackage(info, worldSchema),
+              onRemove: () => _removePackage(info),
             );
           },
         );
@@ -178,6 +181,107 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
     );
+  }
+
+  Future<void> _removePackage(PackageInfo info) async {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    var purgeAll = true;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setDialogState) {
+        return AlertDialog(
+          title: Text('Remove "${info.name}" from this world?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Linked entities from this package will be deleted.',
+              ),
+              const SizedBox(height: 8),
+              CheckboxListTile(
+                value: purgeAll,
+                onChanged: (v) =>
+                    setDialogState(() => purgeAll = v ?? true),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                dense: true,
+                title: const Text(
+                  'Also delete user-edited (detached) copies',
+                  style: TextStyle(fontSize: 13),
+                ),
+                subtitle: Text(
+                  purgeAll
+                      ? 'All entities from this package will be removed.'
+                      : 'Edited copies will be kept as homebrew.',
+                  style: const TextStyle(fontSize: 11),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                  backgroundColor: palette.dangerBtnBg),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Remove'),
+            ),
+          ],
+        );
+      }),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _importing = true);
+    try {
+      final db = ref.read(appDatabaseProvider);
+      final pkgRow = await db.packageDao.getByName(info.name);
+      final activeNotifier = ref.read(activeCampaignProvider.notifier);
+      final campaignId = activeNotifier.data?['world_id'] as String?;
+      if (pkgRow == null || campaignId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cannot remove: missing context')),
+          );
+        }
+        return;
+      }
+      final tier0Slugs =
+          generateBuiltinDnd5eV2Schema().seedRows.keys.toSet();
+      final result = await PackageSyncService(db).uninstall(
+        campaignId: campaignId,
+        packageId: pkgRow.id,
+        purgeDetached: purgeAll,
+        // Legacy worlds seeded Tier-0 lookups without a packageId tag.
+        // Scrub them alongside the SRD pack so a remove leaves nothing
+        // behind. Safe for non-SRD packs because their entities don't
+        // live in Tier-0 categories.
+        extraScrubSlugs:
+            info.name == srdCorePackageName ? tier0Slugs : const {},
+      );
+      await activeNotifier.reload();
+      await _loadInstalled();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Removed "${info.name}": ${result.removed} deleted, ${result.detachedSurvived} kept as homebrew.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Remove failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _importing = false);
+    }
   }
 
   Future<void> _importPackage(
@@ -325,6 +429,7 @@ class _PackageImportCard extends StatefulWidget {
   final bool importing;
   final bool alreadyInstalled;
   final VoidCallback onImport;
+  final VoidCallback onRemove;
 
   const _PackageImportCard({
     required this.info,
@@ -335,6 +440,7 @@ class _PackageImportCard extends StatefulWidget {
     required this.importing,
     required this.alreadyInstalled,
     required this.onImport,
+    required this.onRemove,
   });
 
   @override
@@ -469,7 +575,23 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                     ],
                   ),
                   const SizedBox(width: 8),
-                  if (!widget.alreadyInstalled)
+                  if (widget.alreadyInstalled)
+                    SizedBox(
+                      height: 28,
+                      child: OutlinedButton.icon(
+                        onPressed: widget.importing ? null : widget.onRemove,
+                        icon: const Icon(Icons.delete_outline, size: 14),
+                        label: const Text('Remove'),
+                        style: OutlinedButton.styleFrom(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 10),
+                          textStyle: const TextStyle(fontSize: 12),
+                          foregroundColor: palette.dangerBtnBg,
+                          side: BorderSide(color: palette.dangerBtnBg),
+                        ),
+                      ),
+                    )
+                  else
                     SizedBox(
                       height: 28,
                       child: isIncompatible
