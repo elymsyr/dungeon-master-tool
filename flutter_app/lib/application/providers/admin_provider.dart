@@ -33,7 +33,7 @@ final adminUsersDataSourceProvider = Provider<AdminUsersRemoteDataSource>((ref) 
 });
 
 /// Admin panelindeki arama kutusu state'i. Boşken tüm kullanıcılar listelenir.
-final adminUserSearchQueryProvider = StateProvider<String>((ref) => '');
+final adminUserSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
 
 /// Tüm kullanıcılar (arama sorgusuna göre filtreli). Admin değilse boş döner.
 final adminUserListProvider = FutureProvider.autoDispose<List<AdminUserSummary>>((ref) async {

@@ -318,6 +318,21 @@ class _EpochScrollPainter extends CustomPainter {
     required this.endLabel,
   });
 
+  static final RegExp _digitsLikeRe = RegExp(r'^[\d./-]+$');
+  static final RegExp _wsRe = RegExp(r'\s+');
+
+  late final Paint _activeSegPaint = Paint()
+    ..color = palette.tabIndicator.withValues(alpha: 0.2);
+  late final Paint _hoverSegPaint = Paint()
+    ..color = palette.uiFloatingText.withValues(alpha: 0.05);
+  late final Paint _trackPaint = Paint()
+    ..color = palette.uiFloatingBorder
+    ..strokeWidth = 2;
+  late final Paint _endpointPaint = Paint()..color = palette.uiFloatingBorder;
+  late final Paint _waypointPaint = Paint()
+    ..color = palette.uiFloatingText.withValues(alpha: 0.7);
+  late final Paint _waypointHoverPaint = Paint()..color = palette.tabIndicator;
+
   @override
   void paint(Canvas canvas, Size size) {
     final trackLength = trackEnd - trackStart;
@@ -348,7 +363,7 @@ class _EpochScrollPainter extends CustomPainter {
         RRect.fromRectAndRadius(
             Rect.fromLTRB(l, trackY - 8, r, trackY + 8),
             const Radius.circular(3)),
-        Paint()..color = palette.tabIndicator.withValues(alpha: 0.2),
+        _activeSegPaint,
       );
     }
 
@@ -361,7 +376,7 @@ class _EpochScrollPainter extends CustomPainter {
         RRect.fromRectAndRadius(
             Rect.fromLTRB(l, trackY - 8, r, trackY + 8),
             const Radius.circular(3)),
-        Paint()..color = palette.uiFloatingText.withValues(alpha: 0.05),
+        _hoverSegPaint,
       );
     }
 
@@ -369,9 +384,7 @@ class _EpochScrollPainter extends CustomPainter {
     canvas.drawLine(
       Offset(trackStart, trackY),
       Offset(trackEnd, trackY),
-      Paint()
-        ..color = palette.uiFloatingBorder
-        ..strokeWidth = 2,
+      _trackPaint,
     );
 
     // Draw endpoint markers
@@ -404,11 +417,7 @@ class _EpochScrollPainter extends CustomPainter {
   }
 
   void _drawEndpoint(Canvas canvas, double x, double y, String label) {
-    canvas.drawCircle(
-      Offset(x, y),
-      4,
-      Paint()..color = palette.uiFloatingBorder,
-    );
+    canvas.drawCircle(Offset(x, y), 4, _endpointPaint);
     final display = _shortLabel(label);
     final tp = TextPainter(
       text: TextSpan(
@@ -430,10 +439,7 @@ class _EpochScrollPainter extends CustomPainter {
     canvas.drawCircle(
       Offset(x, y),
       wpRadius,
-      Paint()
-        ..color = isHovered
-            ? palette.tabIndicator
-            : palette.uiFloatingText.withValues(alpha: 0.7),
+      isHovered ? _waypointHoverPaint : _waypointPaint,
     );
 
     // Label
@@ -456,9 +462,9 @@ class _EpochScrollPainter extends CustomPainter {
 
   String _shortLabel(String label) {
     if (label.isEmpty) return '?';
-    if (RegExp(r'^[\d./-]+$').hasMatch(label)) return label;
+    if (_digitsLikeRe.hasMatch(label)) return label;
     return label
-        .split(RegExp(r'\s+'))
+        .split(_wsRe)
         .where((w) => w.isNotEmpty)
         .map((w) => w[0].toUpperCase())
         .join();

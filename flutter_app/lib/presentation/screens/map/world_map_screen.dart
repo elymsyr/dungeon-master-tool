@@ -71,38 +71,73 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final notifier = ref.read(worldMapProvider.notifier);
-    final mapState = ref.watch(worldMapProvider);
 
+    // Each Consumer subtree watches the world map provider independently so a
+    // toolbar toggle does not invalidate the canvas, and an epoch switch does
+    // not rebuild the toolbar. The canvas Consumer holds the heaviest paint
+    // workload, so isolating its rebuild surface is the highest-leverage win.
     return Column(
       children: [
-        _buildToolbar(palette, notifier, mapState),
+        Consumer(
+          builder: (context, ref, _) {
+            final mapState = ref.watch(worldMapProvider);
+            return _buildToolbar(palette, notifier, mapState);
+          },
+        ),
         Expanded(
           child: Stack(
             children: [
-              _buildCanvas(palette, notifier, mapState),
-              if (mapState.epochs.length > 1)
-                Positioned(
-                  left: 16,
-                  bottom: 16,
-                  child: EpochScrollBar(
-                    epochs: mapState.epochs,
-                    waypoints: mapState.waypoints,
-                    activeEpochIndex: mapState.activeEpochIndex,
-                    epochNames: notifier.epochNames,
-                    palette: palette,
-                    startLabel: mapState.epochStartLabel,
-                    endLabel: mapState.epochEndLabel,
-                    onSwitchEpoch: notifier.switchEpoch,
-                    onAddWaypoint: (insertIdx) =>
-                        _showAddWaypointDialog(insertIdx, notifier, palette),
-                    onDeleteWaypoint: (wpIdx) =>
-                        _showDeleteWaypointDialog(wpIdx, notifier, palette),
-                    onRenameWaypoint: (wpIdx) =>
-                        _showRenameWaypointDialog(wpIdx, notifier, palette),
-                    onRenameBoundary: (s, e) => notifier
-                        .updateEpochBoundaryLabels(startLabel: s, endLabel: e),
-                  ),
+              Consumer(
+                builder: (context, ref, _) {
+                  final mapState = ref.watch(worldMapProvider);
+                  return _buildCanvas(palette, notifier, mapState);
+                },
+              ),
+              Positioned(
+                left: 16,
+                bottom: 16,
+                child: Consumer(
+                  builder: (context, ref, _) {
+                    final epochs = ref.watch(
+                      worldMapProvider.select((s) => s.epochs),
+                    );
+                    if (epochs.length <= 1) return const SizedBox.shrink();
+                    final waypoints = ref.watch(
+                      worldMapProvider.select((s) => s.waypoints),
+                    );
+                    final activeEpochIndex = ref.watch(
+                      worldMapProvider.select((s) => s.activeEpochIndex),
+                    );
+                    final startLabel = ref.watch(
+                      worldMapProvider.select((s) => s.epochStartLabel),
+                    );
+                    final endLabel = ref.watch(
+                      worldMapProvider.select((s) => s.epochEndLabel),
+                    );
+                    return EpochScrollBar(
+                      epochs: epochs,
+                      waypoints: waypoints,
+                      activeEpochIndex: activeEpochIndex,
+                      epochNames: notifier.epochNames,
+                      palette: palette,
+                      startLabel: startLabel,
+                      endLabel: endLabel,
+                      onSwitchEpoch: notifier.switchEpoch,
+                      onAddWaypoint: (insertIdx) =>
+                          _showAddWaypointDialog(insertIdx, notifier, palette),
+                      onDeleteWaypoint: (wpIdx) =>
+                          _showDeleteWaypointDialog(wpIdx, notifier, palette),
+                      onRenameWaypoint: (wpIdx) =>
+                          _showRenameWaypointDialog(wpIdx, notifier, palette),
+                      onRenameBoundary: (s, e) =>
+                          notifier.updateEpochBoundaryLabels(
+                            startLabel: s,
+                            endLabel: e,
+                          ),
+                    );
+                  },
                 ),
+              ),
             ],
           ),
         ),
@@ -459,13 +494,23 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
             children: [
               // Background image — OverflowBox removes parent constraints
               // so Image renders at full natural size (Transform handles zoom).
+              // RepaintBoundary keeps the static image layer cached across
+              // pan/zoom so pin movements don't invalidate the image picture.
+              // cacheHeight caps decoded RAM for oversized maps; 4096 is the
+              // safe ceiling that still allows pixel-clean zoom for 4K assets.
               if (mapState.imagePath.isNotEmpty &&
                   File(mapState.imagePath).existsSync())
-                OverflowBox(
-                  alignment: Alignment.topLeft,
-                  maxWidth: double.infinity,
-                  maxHeight: double.infinity,
-                  child: Image.file(File(mapState.imagePath), fit: BoxFit.none),
+                RepaintBoundary(
+                  child: OverflowBox(
+                    alignment: Alignment.topLeft,
+                    maxWidth: double.infinity,
+                    maxHeight: double.infinity,
+                    child: Image.file(
+                      File(mapState.imagePath),
+                      fit: BoxFit.none,
+                      cacheHeight: 4096,
+                    ),
+                  ),
                 )
               else
                 _buildEmptyMapPlaceholder(palette),
@@ -1342,7 +1387,7 @@ class _DraggablePinState extends State<_DraggablePin> {
   Widget build(BuildContext context) {
     final pin = widget.pin;
     final displayColor = pin.color.isNotEmpty
-        ? Color(int.parse(pin.color.replaceAll('#', 'FF'), radix: 16))
+        ? _parseHexColor(pin.color)
         : _pinColor(pin.pinType);
 
     final x = _dragOffset?.dx ?? pin.x;
@@ -1536,7 +1581,7 @@ class _DraggableTimelinePinState extends State<_DraggableTimelinePin> {
   Widget build(BuildContext context) {
     final pin = widget.pin;
     final palette = widget.palette;
-    final color = Color(int.parse(pin.color.replaceAll('#', 'FF'), radix: 16));
+    final color = _parseHexColor(pin.color);
 
     final x = _dragOffset?.dx ?? pin.x;
     final y = _dragOffset?.dy ?? pin.y;
@@ -1849,52 +1894,77 @@ Widget _menuRow(
 
 class _TimelineConnectionPainter extends CustomPainter {
   final List<TimelinePin> pins;
+  late final Map<String, TimelinePin> _pinMap = {
+    for (final p in pins) p.id: p,
+  };
+  late final int _fingerprint = _computeFingerprint(pins);
+
+  // Cache the per-color stroke Paint. withValues allocates on every call;
+  // memoizing here avoids one allocation per dashed line.
+  static final Map<int, Paint> _paintCache = <int, Paint>{};
+
+  // Cache the dashed Path geometry per segment key. Key encodes endpoints;
+  // flips when a parent or child pin moves. Bounded — drag spam can churn it.
+  static final Map<String, Path> _dashedPathCache = <String, Path>{};
+  static const int _dashedPathCacheCap = 512;
+
+  static const double _dashLen = 8.0;
+  static const double _gapLen = 4.0;
 
   _TimelineConnectionPainter({required this.pins});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (pins.isEmpty) return;
-    final pinMap = {for (final p in pins) p.id: p};
 
     for (final pin in pins) {
+      if (pin.parentIds.isEmpty) continue;
       for (final parentId in pin.parentIds) {
-        final parent = pinMap[parentId];
+        final parent = _pinMap[parentId];
         if (parent == null) continue;
 
-        final color = Color(
-          int.parse(pin.color.replaceAll('#', 'FF'), radix: 16),
-        );
-        _drawDashedLine(
-          canvas,
-          Offset(parent.x, parent.y),
-          Offset(pin.x, pin.y),
-          color,
-        );
+        final color = _parseHexColor(pin.color);
+        final paint = _paintFor(color);
+        final segKey =
+            '${parent.x.toStringAsFixed(2)},${parent.y.toStringAsFixed(2)}->'
+            '${pin.x.toStringAsFixed(2)},${pin.y.toStringAsFixed(2)}';
+        final dashedPath = _dashedPathCache.putIfAbsent(segKey, () {
+          if (_dashedPathCache.length >= _dashedPathCacheCap) {
+            _dashedPathCache.clear();
+          }
+          return _buildDashedPath(
+            Offset(parent.x, parent.y),
+            Offset(pin.x, pin.y),
+          );
+        });
+        canvas.drawPath(dashedPath, paint);
       }
     }
   }
 
-  void _drawDashedLine(Canvas canvas, Offset start, Offset end, Color color) {
-    final paint = Paint()
-      ..color = color.withValues(alpha: 0.7)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+  static Paint _paintFor(Color color) {
+    final faded = color.withValues(alpha: 0.7);
+    return _paintCache.putIfAbsent(
+      faded.toARGB32(),
+      () => Paint()
+        ..color = faded
+        ..strokeWidth = 3
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+  }
 
+  static Path _buildDashedPath(Offset start, Offset end) {
     final path = Path()
       ..moveTo(start.dx, start.dy)
       ..lineTo(end.dx, end.dy);
-
-    const dashLen = 8.0;
-    const gapLen = 4.0;
     final dashedPath = Path();
     for (final metric in path.computeMetrics()) {
       var distance = 0.0;
       var draw = true;
       while (distance < metric.length) {
         final segLen = math.min(
-          draw ? dashLen : gapLen,
+          draw ? _dashLen : _gapLen,
           metric.length - distance,
         );
         if (draw) {
@@ -1907,12 +1977,22 @@ class _TimelineConnectionPainter extends CustomPainter {
         draw = !draw;
       }
     }
-    canvas.drawPath(dashedPath, paint);
+    return dashedPath;
+  }
+
+  // Cheap content fingerprint over fields that influence the drawn output.
+  // Parent list joined into the hash so re-parenting invalidates.
+  static int _computeFingerprint(List<TimelinePin> pins) {
+    var h = pins.length;
+    for (final p in pins) {
+      h = Object.hash(h, p.id, p.x, p.y, p.color, Object.hashAll(p.parentIds));
+    }
+    return h;
   }
 
   @override
   bool shouldRepaint(covariant _TimelineConnectionPainter old) {
-    return old.pins != pins;
+    return old._fingerprint != _fingerprint;
   }
 }
 
@@ -2239,6 +2319,15 @@ Color _pinColor(String pinType) {
     'event' => Colors.purple,
     _ => Colors.grey,
   };
+}
+
+final Map<String, Color> _hexColorCache = <String, Color>{};
+
+Color _parseHexColor(String hex) {
+  return _hexColorCache.putIfAbsent(
+    hex,
+    () => Color(int.parse(hex.replaceAll('#', 'FF'), radix: 16)),
+  );
 }
 
 class _VertDiv extends StatelessWidget {

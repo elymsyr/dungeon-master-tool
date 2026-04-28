@@ -8,7 +8,8 @@ final bugReportsDataSourceProvider = Provider<BugReportsRemoteDataSource>(
 );
 
 /// Admin Reports tab filter state: 'open' | 'read' | 'resolved' | 'all'.
-final bugReportStatusFilterProvider = StateProvider<String>((ref) => 'open');
+final bugReportStatusFilterProvider =
+    StateProvider.autoDispose<String>((ref) => 'open');
 
 /// Admin listesi — filter state'ine göre yeniden yüklenir.
 final adminBugReportsProvider =

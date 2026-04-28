@@ -209,9 +209,17 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   Future<void> applyTemplateUpdate(WorldSchema newTemplate) async {
     if (state == null || _data == null) return;
     final currentHash = computeWorldSchemaContentHash(newTemplate);
-    _data!['world_schema'] = deepCopyJson(newTemplate.toJson());
-    _data!['template_id'] = newTemplate.schemaId;
-    _data!['template_hash'] = currentHash;
+    final prevHash = _data!['template_hash'];
+    final prevTemplateId = _data!['template_id'];
+    // Hash gate: skip the expensive deepCopyJson(toJson()) when the schema
+    // is already at this exact version. Bookkeeping (dismiss/mute clear) +
+    // save still run so the caller's intent — "user accepted this template" —
+    // is honoured even on a no-op content match.
+    if (prevHash != currentHash || prevTemplateId != newTemplate.schemaId) {
+      _data!['world_schema'] = deepCopyJson(newTemplate.toJson());
+      _data!['template_id'] = newTemplate.schemaId;
+      _data!['template_hash'] = currentHash;
+    }
     if (newTemplate.originalHash != null) {
       _data!['template_original_hash'] = newTemplate.originalHash;
     }
