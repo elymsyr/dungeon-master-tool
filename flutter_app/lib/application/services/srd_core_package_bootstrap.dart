@@ -99,9 +99,34 @@ class SrdCorePackageBootstrap {
             ..where((t) => t.packageId.equals(packageId)))
           .go();
 
-      if (pack.entities.isEmpty) return 0;
-
       final companions = <PackageEntitiesCompanion>[];
+
+      // Mirror Tier-0 lookup seedRows (abilities, skills, damage types,
+      // conditions, …) into package_entities so the package's visible
+      // entity count matches the rows materialised in a fresh world. Ids
+      // are deterministic v5 (`slug:name`) so SrdCoreBootstrap can tag the
+      // freshly seeded campaign rows with a matching `package_entity_id`
+      // and keep PackageSync from treating them as orphans.
+      for (final entry in build.seedRows.entries) {
+        final slug = entry.key;
+        for (final row in entry.value) {
+          final name = (row['name'] as String?) ?? '';
+          if (name.isEmpty) continue;
+          companions.add(PackageEntitiesCompanion.insert(
+            id: srdStableEntityId(slug, name),
+            packageId: packageId,
+            categorySlug: slug,
+            name: name,
+            source: const Value(srdSourceTag),
+            description: Value((row['description'] as String?) ?? ''),
+            fieldsJson:
+                Value(jsonEncode(row['fields'] ?? <String, dynamic>{})),
+          ));
+        }
+      }
+
+      if (pack.entities.isEmpty && companions.isEmpty) return 0;
+
       for (final entry in pack.entities.entries) {
         final id = entry.key;
         final raw = Map<String, dynamic>.from(entry.value as Map);
@@ -159,6 +184,33 @@ class SrdCorePackageBootstrap {
           await _db.entityDao.updateEntity(EntitiesCompanion(
             id: Value(row.id),
             packageEntityId: Value(newPackId),
+          ));
+        }
+      }
+
+      // Backfill: legacy worlds seeded Tier-0 rows with packageId only and
+      // no packageEntityId. Now that Tier-0 lives in package_entities with
+      // deterministic v5 ids, link those existing campaign rows to the
+      // matching pack row so PackageSync sees them as already-installed
+      // (otherwise the next sync would insert duplicates).
+      final tier0Slugs = build.seedRows.keys.toSet();
+      if (tier0Slugs.isNotEmpty) {
+        final unlinked = await (_db.select(_db.entities)
+              ..where((t) =>
+                  t.packageId.equalsExp(Variable<String>(packageId)) &
+                  t.packageEntityId.isNull() &
+                  t.categorySlug.isIn(tier0Slugs)))
+            .get();
+        for (final row in unlinked) {
+          // Leave `linked` alone: legacy worlds may have user-edited Tier-0
+          // rows the bootstrap can't distinguish from pristine ones. Keeping
+          // them detached means sync won't overwrite local edits — at the
+          // cost of those rows not auto-updating from the pack. Users can
+          // re-link manually if they want pack updates to flow through.
+          await _db.entityDao.updateEntity(EntitiesCompanion(
+            id: Value(row.id),
+            packageEntityId:
+                Value(srdStableEntityId(row.categorySlug, row.name)),
           ));
         }
       }

@@ -51,9 +51,13 @@ class SrdCoreBootstrap {
     if (meta['srdCoreImportedAt'] is String) return 0;
 
     final inserted = await _db.transaction(() async {
-      final tier0Count =
-          await _seedTier0(campaignId: campaignId, build: build);
+      // Resolve pack id BEFORE seeding so Tier-0 lookups can be tagged with
+      // it — that lets `uninstall` see and purge them when the SRD pack is
+      // removed, instead of leaving orphaned creature_type / spell_school
+      // / damage_type / … rows behind.
       final pkg = await _db.packageDao.getByName(srdCorePackageName);
+      final tier0Count = await _seedTier0(
+          campaignId: campaignId, build: build, packageId: pkg?.id);
       final tier1Count = await _importSrdCore(
         campaignId: campaignId,
         build: build,
@@ -104,6 +108,7 @@ class SrdCoreBootstrap {
   Future<int> _seedTier0({
     required String campaignId,
     required BuiltinDnd5eV2Build build,
+    String? packageId,
   }) async {
     final rows = <EntitiesCompanion>[];
     final index = <String, Map<String, String>>{};
@@ -124,6 +129,14 @@ class SrdCoreBootstrap {
           source: const Value(srdSourceTag),
           description: Value((row['description'] as String?) ?? ''),
           fieldsJson: Value(jsonEncode(row['fields'] ?? <String, dynamic>{})),
+          // Tag with the SRD pack id and the matching v5 `package_entity_id`
+          // so PackageSync recognises these rows as already-installed Tier-0
+          // entries (mirrored into `package_entities` by
+          // SrdCorePackageBootstrap) instead of treating them as new inserts.
+          packageId: Value(packageId),
+          packageEntityId:
+              packageId == null ? const Value.absent() : Value(srdStableEntityId(slug, name)),
+          linked: Value(packageId != null),
         ));
       }
     }

@@ -165,13 +165,24 @@ class PackageSyncService {
     });
   }
 
-  /// Remove a package from a campaign:
-  ///   - delete all linked entities tied to this package
-  ///   - detached entities lose their package_id and become homebrew
-  ///   - drop the installed_packages row
+  /// Remove a package from a campaign.
+  ///
+  /// [purgeDetached]:
+  ///   - false (default): linked rows deleted, detached (user-edited) rows
+  ///     kept as homebrew (package_id cleared, source → "Homebrew").
+  ///   - true: every row tied to this package is deleted, including
+  ///     user-edited detached copies.
+  ///
+  /// [extraScrubSlugs]: extra category slugs to wipe alongside the normal
+  /// packageId match. Used to clean up legacy worlds where Tier-0 lookup
+  /// rows were seeded without a packageId — caller passes the SRD pack's
+  /// Tier-0 slugs so they get removed too. Only applied when
+  /// [purgeDetached] is true.
   Future<PackageSyncResult> uninstall({
     required String campaignId,
     required String packageId,
+    bool purgeDetached = false,
+    Set<String> extraScrubSlugs = const {},
   }) async {
     return _db.transaction(() async {
       final rows = await (_db.select(_db.entities)
@@ -182,7 +193,7 @@ class PackageSyncService {
       var removed = 0;
       var detachedSurvived = 0;
       for (final row in rows) {
-        if (row.linked) {
+        if (row.linked || purgeDetached) {
           await _db.entityDao.deleteEntity(row.id);
           removed++;
         } else {
@@ -194,6 +205,18 @@ class PackageSyncService {
             updatedAt: Value(DateTime.now()),
           ));
           detachedSurvived++;
+        }
+      }
+      if (purgeDetached && extraScrubSlugs.isNotEmpty) {
+        final orphans = await (_db.select(_db.entities)
+              ..where((t) =>
+                  t.campaignId.equals(campaignId) &
+                  t.categorySlug.isIn(extraScrubSlugs) &
+                  t.packageId.isNull()))
+            .get();
+        for (final row in orphans) {
+          await _db.entityDao.deleteEntity(row.id);
+          removed++;
         }
       }
       await _db.installedPackageDao.remove(campaignId, packageId);
