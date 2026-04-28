@@ -43,9 +43,12 @@ final Expando<_SchemaFieldCache> _schemaCache = Expando();
 /// Key: identity of the field-list (stable from _SchemaFieldCache).
 final Expando<List<List<FieldSchema>>> _gridRowsCache = Expando();
 
-List<List<FieldSchema>> _splitRows(List<FieldSchema> fields, int gridColumns) {
-  final cached = _gridRowsCache[fields];
-  if (cached != null) return cached;
+List<List<FieldSchema>> _splitRows(List<FieldSchema> fields, int gridColumns,
+    {bool useCache = true}) {
+  if (useCache) {
+    final cached = _gridRowsCache[fields];
+    if (cached != null) return cached;
+  }
   final rows = <List<FieldSchema>>[];
   var colsUsed = 0;
   var currentRow = <FieldSchema>[];
@@ -60,8 +63,39 @@ List<List<FieldSchema>> _splitRows(List<FieldSchema> fields, int gridColumns) {
     colsUsed += span;
   }
   if (currentRow.isNotEmpty) rows.add(currentRow);
-  _gridRowsCache[fields] = rows;
+  if (useCache) _gridRowsCache[fields] = rows;
   return rows;
+}
+
+/// Read-only visibility test — empty fields are skipped so cards render
+/// only the data the entity actually has. Edit mode shows everything so
+/// users can fill blanks in.
+bool _isFieldVisibleInReadOnly(FieldSchema f, dynamic v) {
+  if (v == null) return false;
+  if (v is bool) return v;
+  if (v is num) return true;
+  if (v is String) return v.isNotEmpty;
+  if (v is List) return v.isNotEmpty;
+  if (v is Map) {
+    if (v.isEmpty) return false;
+    if (v.containsKey('count')) {
+      final c = v['count'];
+      return c is num && c > 0;
+    }
+    if (v.containsKey('rows')) {
+      final r = v['rows'];
+      return r is List && r.isNotEmpty;
+    }
+    return v.values.any((vv) {
+      if (vv == null) return false;
+      if (vv is String) return vv.isNotEmpty;
+      if (vv is List) return vv.isNotEmpty;
+      if (vv is Map) return vv.isNotEmpty;
+      if (vv is bool) return vv;
+      return true;
+    });
+  }
+  return true;
 }
 
 _SchemaFieldCache _getSchemaCache(EntityCategorySchema cat) {
@@ -405,50 +439,8 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      if (entity.linked) ...[
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: palette.tabActiveText.withValues(
-                                    alpha: 0.12),
-                                borderRadius: palette.chr,
-                                border: Border.all(
-                                    color: palette.tabActiveText.withValues(
-                                        alpha: 0.4)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.link,
-                                      size: 12,
-                                      color: palette.tabActiveText),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Linked to package',
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        color: palette.tabActiveText,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Tooltip(
-                              message:
-                                  'Edits will detach this entity from the package and turn it into a homebrew copy.',
-                              child: Icon(Icons.info_outline,
-                                  size: 14,
-                                  color: palette.sidebarLabelSecondary),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                      // Source + Tags
+                      // Source + Tags (link icon prefix when entity is
+                      // linked to a package)
                       _SourceTagsRow(
                         sourceController: _sourceController,
                         sourceFocus: _sourceFocus,
@@ -456,6 +448,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                         tagsFocus: _tagsFocus,
                         readOnly: widget.readOnly,
                         palette: palette,
+                        linked: entity.linked,
                         onSourceChanged: (v) => _debouncedProviderUpdate(
                           () => ref.read(entityProvider)[widget.entityId]!.copyWith(source: v),
                         ),
@@ -631,7 +624,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     );
   }
 
-  Widget _buildGroupGrid(List<FieldSchema> fields, int gridColumns, Entity entity, DmToolColors palette) {
+  Widget _buildGroupGrid(List<FieldSchema> fields, int gridColumns, Entity entity, DmToolColors palette, {bool cached = true}) {
     final compactRow = gridColumns > 1;
 
     if (gridColumns <= 1) {
@@ -642,19 +635,33 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     }
 
     // Satır satır böl — her satırdaki field'lar IntrinsicHeight ile eşit yükseklikte.
-    // Cache key: fields list identity (stable from _SchemaFieldCache).
-    final rows = _splitRows(fields, gridColumns);
+    // Cached path uses the stable list identity from _SchemaFieldCache.
+    // Filtered (read-only) path skips cache since the list is rebuilt per build.
+    final rows = _splitRows(fields, gridColumns, useCache: cached);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: rows.map((rowFields) {
         final children = <Widget>[];
+        var totalSpan = 0;
         for (var i = 0; i < rowFields.length; i++) {
           if (i > 0) children.add(const SizedBox(width: 8));
           final span = rowFields[i].gridColumnSpan.clamp(1, gridColumns);
+          totalSpan += span;
           children.add(Expanded(
             flex: span,
             child: _buildFieldWidget(rowFields[i], entity, palette, compact: compactRow),
+          ));
+        }
+        // Pad short rows with a flex spacer so a partially-filled row keeps
+        // each cell at the column width it would occupy if the row were full.
+        // Without this, an Expanded(flex: 1) in a 2-col row stretches across
+        // the whole width and breaks vertical alignment with neighbouring rows.
+        if (totalSpan < gridColumns) {
+          children.add(const SizedBox(width: 8));
+          children.add(Expanded(
+            flex: gridColumns - totalSpan,
+            child: const SizedBox.shrink(),
           ));
         }
         return Row(
@@ -667,10 +674,19 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 
   List<Widget> _buildSchemaFields(Entity entity, EntityCategorySchema cat, DmToolColors palette) {
     final cache = _getSchemaCache(cat);
-    final ungrouped = cache.ungrouped;
+    final readOnly = widget.readOnly;
+    final fullUngrouped = cache.ungrouped;
     final grouped = cache.grouped;
     final sortedGroups = cache.sortedGroups;
 
+    List<FieldSchema> filterVisible(List<FieldSchema> fields) {
+      if (!readOnly) return fields;
+      return fields
+          .where((f) => _isFieldVisibleInReadOnly(f, entity.fields[f.fieldKey]))
+          .toList();
+    }
+
+    final ungrouped = filterVisible(fullUngrouped);
     final widgets = <Widget>[];
 
     // Ungrouped fields — render under "Properties" heading, no boxed chrome.
@@ -687,18 +703,22 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 
     // Grouped fields — collapsible, no boxed chrome, optional centered.
     for (final group in sortedGroups) {
-      final groupFields = grouped[group.groupId];
-      if (groupFields == null || groupFields.isEmpty) continue;
+      final fullGroupFields = grouped[group.groupId];
+      if (fullGroupFields == null || fullGroupFields.isEmpty) continue;
+      final groupFields = filterVisible(fullGroupFields);
+      if (groupFields.isEmpty) continue;
 
       if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 16));
 
       final centered = _shouldCenterGroup(group.name);
+      // Cache row-split only when rendering the unfiltered list (edit mode).
+      final useCache = identical(groupFields, fullGroupFields);
 
       widgets.add(_CollapsibleGroupCard(
         group: group,
         palette: palette,
         centered: centered,
-        child: _buildGroupGrid(groupFields, group.gridColumns, entity, palette),
+        child: _buildGroupGrid(groupFields, group.gridColumns, entity, palette, cached: useCache),
       ));
     }
 
@@ -775,6 +795,7 @@ class _SourceTagsRow extends StatelessWidget {
   final FocusNode tagsFocus;
   final bool readOnly;
   final DmToolColors palette;
+  final bool linked;
   final ValueChanged<String> onSourceChanged;
   final ValueChanged<String> onTagsChanged;
 
@@ -787,19 +808,31 @@ class _SourceTagsRow extends StatelessWidget {
     required this.palette,
     required this.onSourceChanged,
     required this.onTagsChanged,
+    this.linked = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final linkBadge = linked
+        ? Tooltip(
+            message:
+                'Linked to package — edits will detach this entity into a homebrew copy.',
+            child: Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Icon(Icons.link, size: 14, color: palette.tabActiveText),
+            ),
+          )
+        : null;
+
     if (readOnly) {
       final src = sourceController.text;
       final tags = tagsController.text;
-      if (src.isEmpty && tags.isEmpty) return const SizedBox.shrink();
+      if (src.isEmpty && tags.isEmpty && !linked) return const SizedBox.shrink();
       final parts = <String>[
         if (src.isNotEmpty) 'Source: $src',
         if (tags.isNotEmpty) 'Tags: $tags',
       ];
-      return Text(
+      final text = Text(
         parts.join('   •   '),
         style: TextStyle(
           fontSize: 14,
@@ -807,9 +840,18 @@ class _SourceTagsRow extends StatelessWidget {
           color: palette.srdSubtitle,
         ),
       );
+      if (linkBadge == null) return text;
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          linkBadge,
+          Flexible(child: text),
+        ],
+      );
     }
     return Row(
       children: [
+        ?linkBadge,
         Expanded(
           child: TextFormField(
             controller: sourceController,
