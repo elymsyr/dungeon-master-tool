@@ -216,7 +216,11 @@ class _HubScreenState extends ConsumerState<HubScreen> {
       case 2:
         return (title: l10n.helpWorldsTitle, body: l10n.helpWorldsBody);
       case 3:
-        return (title: 'Characters', body: 'Your characters, across all templates. Create new characters from any template that has a Player category.');
+        return (
+          title: 'Characters',
+          body:
+              'View, edit, and delete every character across your worlds. Create new characters from inside a world via the Characters sidebar.',
+        );
       case 4:
         return (title: l10n.helpTemplatesTitle, body: l10n.helpTemplatesBody);
       case 5:

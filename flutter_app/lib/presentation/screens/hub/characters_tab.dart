@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
+import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
-import '../../../application/providers/template_provider.dart';
 import '../../../domain/entities/character.dart';
-import '../../../domain/entities/schema/world_schema.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/marketplace_panel.dart';
@@ -16,6 +16,8 @@ import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
 
+/// View + manage all characters across worlds. Creation also available here;
+/// per-world creation lives in the campaign Characters sidebar.
 class CharactersTab extends ConsumerStatefulWidget {
   const CharactersTab({super.key});
 
@@ -24,16 +26,7 @@ class CharactersTab extends ConsumerStatefulWidget {
 }
 
 class _CharactersTabState extends ConsumerState<CharactersTab> {
-  final _nameController = TextEditingController();
   int _selectedIndex = -1;
-  String? _selectedTemplateId;
-  bool _creating = false;
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,13 +55,15 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                   ),
                   OutlinedButton.icon(
                     onPressed: () {
-                      ref.read(socialSubTabProvider.notifier).state = 'marketplace';
+                      ref.read(socialSubTabProvider.notifier).state =
+                          'marketplace';
                       ref.read(hubTabIndexProvider.notifier).state = 0;
                     },
                     icon: const Icon(Icons.storefront, size: 16),
                     label: const Text('Marketplace'),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       minimumSize: const Size(0, 32),
                       visualDensity: VisualDensity.compact,
                     ),
@@ -76,75 +71,85 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                 ],
               ),
               const SizedBox(height: 4),
-              Text('Select or create a character.',
+              Text('Open or manage your characters.',
                   style: TextStyle(
-                      fontSize: 12, color: palette.sidebarLabelSecondary)),
+                      fontSize: 12,
+                      color: palette.sidebarLabelSecondary)),
               const SizedBox(height: 16),
 
               charactersAsync.when(
-                data: (characters) => characters.isEmpty
-                    ? Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: palette.featureCardBg,
-                          borderRadius: palette.br,
-                          border:
-                              Border.all(color: palette.featureCardBorder),
+                data: (all) {
+                  // Sort by updatedAt DESC — last edited/opened first.
+                  final sorted = [...all]
+                    ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+                  if (sorted.isEmpty) {
+                    return Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: palette.featureCardBg,
+                        borderRadius: palette.br,
+                        border:
+                            Border.all(color: palette.featureCardBorder),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'No characters yet.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: palette.sidebarLabelSecondary,
+                              fontSize: 12),
                         ),
-                        child: Center(
-                          child: Text(
-                            'No characters found.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                color: palette.sidebarLabelSecondary,
-                                fontSize: 12),
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: characters.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 4),
-                        itemBuilder: (context, index) {
-                          final c = characters[index];
-                          final isSelected = index == _selectedIndex;
-                          return InkWell(
-                            borderRadius: palette.br,
-                            onTap: () =>
-                                setState(() => _selectedIndex = index),
-                            onDoubleTap: () => _loadCharacter(c.id),
-                            child: Container(
-                              clipBehavior: Clip.antiAlias,
-                              decoration: BoxDecoration(
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: sorted.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 6),
+                    itemBuilder: (context, index) {
+                      final c = sorted[index];
+                      final isSelected = index == _selectedIndex;
+                      return InkWell(
+                        borderRadius: palette.br,
+                        onTap: () =>
+                            setState(() => _selectedIndex = index),
+                        onDoubleTap: () => _openCharacter(c),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 140),
+                          child: Container(
+                            clipBehavior: Clip.antiAlias,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? palette.featureCardAccent
+                                      .withValues(alpha: 0.1)
+                                  : palette.featureCardBg,
+                              borderRadius: palette.br,
+                              border: Border.all(
                                 color: isSelected
                                     ? palette.featureCardAccent
-                                        .withValues(alpha: 0.1)
-                                    : palette.featureCardBg,
-                                borderRadius: palette.br,
-                                border: Border.all(
-                                  color: isSelected
-                                      ? palette.featureCardAccent
-                                      : palette.featureCardBorder,
-                                ),
-                              ),
-                              child: MetadataListTile(
-                                icon: Icons.person,
-                                name: c.entity.name,
-                                subtitle: _subInfo(c, l10n),
-                                description: c.entity.description,
-                                tags: c.entity.tags,
-                                coverImagePath: c.entity.imagePath,
-                                isSelected: isSelected,
-                                palette: palette,
-                                layout: MetadataTileLayout.leftAvatar,
-                                onSettings: () =>
-                                    _showCharacterSettings(c.id, palette),
+                                    : palette.featureCardBorder,
                               ),
                             ),
-                          );
-                        },
-                      ),
+                            child: MetadataListTile(
+                              icon: Icons.person,
+                              name: c.entity.name,
+                              subtitle: _subInfo(c, l10n),
+                              description: c.entity.description,
+                              tags: c.entity.tags,
+                              coverImagePath: c.entity.imagePath,
+                              isSelected: isSelected,
+                              palette: palette,
+                              layout: MetadataTileLayout.leftAvatar,
+                              onSettings: () =>
+                                  _showCharacterSettings(c.id, palette),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Text('Error: $e'),
@@ -158,22 +163,20 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                     child: FilledButton.icon(
                       onPressed: _selectedIndex >= 0
                           ? () {
-                              final list = ref
-                                      .read(characterListProvider)
-                                      .valueOrNull ??
-                                  [];
+                              final list = _sortedList();
                               if (_selectedIndex < list.length) {
-                                _loadCharacter(list[_selectedIndex].id);
+                                _openCharacter(list[_selectedIndex]);
                               }
                             }
                           : null,
                       icon: const Icon(Icons.folder_open, size: 18),
-                      label: const Text('Load Character'),
+                      label: const Text('Open Character'),
                     ),
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
-                    onPressed: _selectedIndex >= 0 ? _deleteCharacter : null,
+                    onPressed:
+                        _selectedIndex >= 0 ? _deleteSelected : null,
                     icon: const Icon(Icons.delete_outline, size: 18),
                     label: const Text('Delete'),
                     style: FilledButton.styleFrom(
@@ -194,59 +197,18 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       fontWeight: FontWeight.w600,
                       color: palette.tabActiveText)),
               const SizedBox(height: 8),
-              ref.watch(allTemplatesProvider).when(
-                data: (templates) {
-                  if (templates.isEmpty) {
-                    return Text(
-                      'No templates available.',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: palette.sidebarLabelSecondary,
-                          fontStyle: FontStyle.italic),
-                    );
-                  }
-                  // Auto-select first template if none chosen yet.
-                  if (_selectedTemplateId == null ||
-                      !templates.any((t) => t.schemaId == _selectedTemplateId)) {
-                    _selectedTemplateId = templates.first.schemaId;
-                  }
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _templatePicker(templates, palette),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _nameController,
-                              decoration:
-                                  const InputDecoration(hintText: 'Character name'),
-                              onSubmitted: (_) => _createCharacter(),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          FilledButton.icon(
-                            onPressed: _canCreate() ? _createCharacter : null,
-                            icon: _creating
-                                ? const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.add, size: 18),
-                            label: const Text('Create'),
-                            style: FilledButton.styleFrom(
-                                backgroundColor: palette.successBtnBg,
-                                foregroundColor: palette.successBtnText),
-                          ),
-                        ],
-                      ),
-                    ],
-                  );
-                },
-                loading: () => const LinearProgressIndicator(),
-                error: (e, _) => Text('Error: $e'),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => context.push('/character/new'),
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: const Text('Create Character'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: palette.successBtnBg,
+                    foregroundColor: palette.successBtnText,
+                    minimumSize: const Size(0, 38),
+                  ),
+                ),
               ),
             ],
           ),
@@ -255,46 +217,39 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     );
   }
 
+  /// Loads the character's world (so entityProvider populates and relation
+  /// fields resolve names) before pushing to the editor.
+  Future<void> _openCharacter(Character c) async {
+    if (c.worldName.isNotEmpty) {
+      final active = ref.read(activeCampaignProvider);
+      if (active != c.worldName) {
+        await withLoading(
+          ref.read(globalLoadingProvider.notifier),
+          'open-world-${c.worldName}',
+          'Opening world "${c.worldName}"...',
+          () => ref
+              .read(activeCampaignProvider.notifier)
+              .load(c.worldName),
+        );
+      }
+    }
+    if (!mounted) return;
+    context.push('/character/${c.id}');
+  }
+
+  List<Character> _sortedList() {
+    final all = ref.read(characterListProvider).valueOrNull ?? const [];
+    return [...all]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+  }
+
   String _subInfo(Character c, L10n l10n) {
     final parts = <String>[c.templateName];
-    if (c.worldName.isNotEmpty) {
-      parts.add(c.worldName);
-    } else {
-      parts.add(l10n.charWorldOrphan);
-    }
+    parts.add(c.worldName.isEmpty ? l10n.charWorldOrphan : c.worldName);
     return parts.join(' · ');
   }
 
-  Widget _templatePicker(List<WorldSchema> templates, DmToolColors palette) {
-    return DropdownButtonFormField<String>(
-      key: ValueKey(
-          'char_template_${templates.length}_${_selectedTemplateId ?? "none"}'),
-      initialValue: _selectedTemplateId,
-      decoration: const InputDecoration(
-        labelText: 'Template *',
-      ),
-      items: templates
-          .map((t) => DropdownMenuItem(
-                value: t.schemaId,
-                child: Text(t.name,
-                    style: const TextStyle(fontSize: 12)),
-              ))
-          .toList(),
-      onChanged: (v) => setState(() => _selectedTemplateId = v),
-    );
-  }
-
-  bool _canCreate() {
-    if (_creating) return false;
-    if (_nameController.text.trim().isEmpty) return false;
-    if (_selectedTemplateId == null) return false;
-    return true;
-  }
-
-  void _loadCharacter(String id) => context.push('/character/$id');
-
-  Future<void> _deleteCharacter() async {
-    final list = ref.read(characterListProvider).valueOrNull ?? [];
+  Future<void> _deleteSelected() async {
+    final list = _sortedList();
     if (_selectedIndex < 0 || _selectedIndex >= list.length) return;
     final c = list[_selectedIndex];
     final palette = Theme.of(context).extension<DmToolColors>()!;
@@ -311,9 +266,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await ref
-                  .read(characterListProvider.notifier)
-                  .delete(c.id);
+              await ref.read(characterListProvider.notifier).delete(c.id);
               await ref
                   .read(cloudBackupOperationProvider.notifier)
                   .deleteBackupByItem(c.id, 'character');
@@ -330,51 +283,9 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     );
   }
 
-  Future<void> _createCharacter() async {
-    if (!_canCreate()) return;
-    final name = _nameController.text.trim();
-    final templateId = _selectedTemplateId!;
-    setState(() => _creating = true);
-    try {
-      final templates =
-          await ref.read(allTemplatesProvider.future);
-      final template =
-          templates.where((t) => t.schemaId == templateId).firstOrNull;
-      if (template == null) {
-        _snack('Template not found.');
-        return;
-      }
-      if (!template.categories.any((c) => c.slug == playerCategorySlug)) {
-        _snack('This template has no Player category.');
-        return;
-      }
-
-      final c = await ref.read(characterListProvider.notifier).create(
-            name: name,
-            template: template,
-            worldName: '',
-          );
-      _nameController.clear();
-      if (mounted) {
-        setState(() {});
-        context.push('/character/${c.id}');
-      }
-    } catch (e) {
-      _snack('Failed to create character: $e');
-    } finally {
-      if (mounted) setState(() => _creating = false);
-    }
-  }
-
-  void _snack(String msg) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
-  }
-
   Future<void> _showCharacterSettings(
       String characterId, DmToolColors palette) async {
-    final list = ref.read(characterListProvider).valueOrNull ?? [];
+    final list = ref.read(characterListProvider).valueOrNull ?? const [];
     final c = list.where((x) => x.id == characterId).firstOrNull;
     if (c == null) return;
 
@@ -440,8 +351,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                               ? L10n.of(context)!.charWorldOrphan
                               : 'World: ${c.worldName}',
                           style: TextStyle(
-                              fontSize: 13,
-                              color: palette.tabActiveText),
+                              fontSize: 13, color: palette.tabActiveText),
                         ),
                       ),
                     ],
@@ -501,5 +411,4 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       ),
     );
   }
-
 }

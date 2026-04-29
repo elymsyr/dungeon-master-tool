@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 const _key = 'ui_state';
 
 /// Which right sidebar is currently open (mutually exclusive).
-enum RightSidebar { none, pdf, soundmap }
+enum RightSidebar { none, pdf, soundmap, characters }
 
 /// Kalıcı UI state — PyQt'deki closeEvent/restoreState karşılığı.
 /// SharedPreferences ile kaydedilir, uygulama açılışında restore edilir.

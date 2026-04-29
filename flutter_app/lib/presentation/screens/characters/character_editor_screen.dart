@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
+import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/global_tags_provider.dart';
@@ -31,7 +32,9 @@ import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
 import '../../widgets/app_icon_image.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
+import '../../widgets/markdown_text_area.dart';
 import '../../widgets/save_info_section.dart';
+import '../database/entity_card.dart';
 
 /// Standalone character editor. Hub-level Characters tab'dan push edilir.
 /// Bir Character'ı template'inin Player kategorisine göre render eder.
@@ -50,6 +53,15 @@ class _CharacterEditorScreenState
   Character? _working;
   Timer? _autoSaveTimer;
   bool _saving = false;
+  bool _readOnly = true;
+
+  // Markdown controllers — kept in sync with `_working.entity` so user input
+  // doesn't fight the rebuild loop. Initialized lazily on first build.
+  final TextEditingController _descController = TextEditingController();
+  final FocusNode _descFocus = FocusNode();
+  final TextEditingController _dmNotesController = TextEditingController();
+  final FocusNode _dmNotesFocus = FocusNode();
+  bool _controllersPrimed = false;
 
   // Undo/redo — character scoped. Idle timer coalesces rapid mutations into
   // a single undo step so typing doesn't produce per-keystroke history.
@@ -62,7 +74,25 @@ class _CharacterEditorScreenState
   void dispose() {
     _autoSaveTimer?.cancel();
     _undoIdleTimer?.cancel();
+    _descController.dispose();
+    _descFocus.dispose();
+    _dmNotesController.dispose();
+    _dmNotesFocus.dispose();
     super.dispose();
+  }
+
+  void _primeControllers(Character c) {
+    if (_controllersPrimed) return;
+    _descController.text = c.entity.description;
+    _dmNotesController.text = c.entity.dmNotes;
+    _controllersPrimed = true;
+  }
+
+  /// Sync controller text from entity only when not focused — avoids
+  /// fighting in-flight typing.
+  void _syncIfNotFocused(
+      TextEditingController ctrl, FocusNode focus, String value) {
+    if (!focus.hasFocus && ctrl.text != value) ctrl.text = value;
   }
 
   /// Central mutation entry point — records undo baseline, updates state,
@@ -164,9 +194,7 @@ class _CharacterEditorScreenState
             ),
           );
         }
-        final playerCat = template.categories
-            .where((c) => c.slug == playerCategorySlug)
-            .firstOrNull;
+        final playerCat = findPlayerCategory(template);
         if (playerCat == null) {
           return Scaffold(
             appBar: AppBar(title: Text(character.entity.name)),
@@ -229,18 +257,26 @@ class _CharacterEditorScreenState
             ],
           ),
           actions: [
+            // View / Edit toggle — mirrors EntityCard's read-only default.
+            IconButton(
+              icon: Icon(_readOnly ? Icons.edit : Icons.visibility,
+                  size: 20),
+              tooltip: _readOnly ? 'Edit' : 'View',
+              onPressed: () => setState(() => _readOnly = !_readOnly),
+              visualDensity: VisualDensity.compact,
+            ),
             // Undo / Redo
             IconButton(
               icon: const Icon(Icons.undo, size: 18),
               tooltip: 'Undo',
-              onPressed: _canUndo ? _undo : null,
+              onPressed: _readOnly || !_canUndo ? null : _undo,
               iconSize: 18,
               visualDensity: VisualDensity.compact,
             ),
             IconButton(
               icon: const Icon(Icons.redo, size: 18),
               tooltip: 'Redo',
-              onPressed: _canRedo ? _redo : null,
+              onPressed: _readOnly || !_canRedo ? null : _redo,
               iconSize: 18,
               visualDensity: VisualDensity.compact,
             ),
@@ -305,18 +341,87 @@ class _CharacterEditorScreenState
             const SizedBox(width: 4),
           ],
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+        body: _buildCardBody(context, palette, character, playerCat, template),
+      ),
+    );
+  }
+
+  Widget _buildCardBody(
+    BuildContext context,
+    DmToolColors palette,
+    Character character,
+    EntityCategorySchema playerCat,
+    WorldSchema template,
+  ) {
+    _primeControllers(character);
+    _syncIfNotFocused(
+        _descController, _descFocus, character.entity.description);
+    _syncIfNotFocused(
+        _dmNotesController, _dmNotesFocus, character.entity.dmNotes);
+
+    final baseTheme = Theme.of(context);
+    final cardTheme = palette.cardBorderlessInputs
+        ? baseTheme.copyWith(
+            inputDecorationTheme: baseTheme.inputDecorationTheme.copyWith(
+              filled: false,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              isDense: true,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+            ),
+          )
+        : baseTheme;
+
+    return Theme(
+      data: cardTheme,
+      child: Container(
+        color: palette.srdParchment,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
           child: Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
+              constraints: const BoxConstraints(maxWidth: 760),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _entityHeader(palette, character),
+                  _entityHeader(palette, character, template),
                   const SizedBox(height: 16),
-                  _renderFields(palette, playerCat),
+                  ..._renderSchemaFields(palette, playerCat, character),
+                  const SizedBox(height: 8),
+                  EntityCardSectionHeading(
+                    title: 'DM Notes',
+                    palette: palette,
+                    leadingIcon: Icons.lock,
+                  ),
+                  const SizedBox(height: 6),
+                  MarkdownTextArea(
+                    controller: _dmNotesController,
+                    focusNode: _dmNotesFocus,
+                    readOnly: _readOnly,
+                    minLines: _readOnly ? null : 3,
+                    textStyle: TextStyle(
+                        fontSize: 13,
+                        color: palette.srdInk,
+                        height: 1.4),
+                    decoration: InputDecoration(
+                      hintText: 'Private DM notes... (@ to mention)',
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                      filled: false,
+                      hintStyle:
+                          TextStyle(color: palette.sidebarLabelSecondary),
+                    ),
+                    onChanged: (v) {
+                      final c = _working;
+                      if (c == null) return;
+                      _mutate(c.copyWith(
+                          entity: c.entity.copyWith(dmNotes: v)));
+                    },
+                  ),
                 ],
               ),
             ),
@@ -326,66 +431,148 @@ class _CharacterEditorScreenState
     );
   }
 
-  /// Entity header — portrait + name + description + tags + world link.
-  Widget _entityHeader(DmToolColors palette, Character c) {
+  /// EntityCard-style header — square portrait left, big serif red name +
+  /// italic subtitle (template · world) + red rule + markdown description +
+  /// tags row on the right.
+  Widget _entityHeader(
+      DmToolColors palette, Character c, WorldSchema template) {
     final entity = c.entity;
     final hasImage =
         entity.imagePath.isNotEmpty && File(entity.imagePath).existsSync();
     final globalTags = ref.watch(globalTagsProvider);
+    final l10n = L10n.of(context)!;
+    final subtitle = c.worldName.isEmpty
+        ? '${template.name} · ${l10n.charWorldOrphan}'
+        : '${template.name} · ${c.worldName}';
 
-    const portraitWidth = 140.0;
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: palette.featureCardBg,
-        borderRadius: palette.br,
-        border: Border.all(color: palette.featureCardBorder),
-      ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-                portraitWidth + 16, 14, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
+    const portraitSize = 200.0;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: _readOnly ? null : _pickPortrait,
+          child: Container(
+            width: portraitSize,
+            height: 260,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: palette.featureCardBg,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: palette.featureCardBorder),
+            ),
+            child: hasImage
+                ? Image.file(File(entity.imagePath), fit: BoxFit.cover)
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.person,
+                          size: 56,
+                          color: palette.sidebarLabelSecondary),
+                      if (!_readOnly) ...[
+                        const SizedBox(height: 4),
+                        Text('Add photo',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: palette.sidebarLabelSecondary)),
+                      ],
+                    ],
+                  ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_readOnly)
+                Text(
+                  entity.name.isEmpty ? '(Unnamed)' : entity.name,
+                  style: TextStyle(
+                    fontFamily: palette.useSerif ? 'Georgia' : null,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: palette.srdHeadingRed,
+                    letterSpacing: palette.cardHeadingUppercase ? 1.2 : 0,
+                    height: 1.1,
+                  ),
+                )
+              else
                 TextFormField(
                   key: ValueKey('hdr_name_${c.id}'),
                   initialValue: entity.name,
                   style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: palette.tabActiveText),
+                    fontFamily: palette.useSerif ? 'Georgia' : null,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: palette.srdHeadingRed,
+                    letterSpacing: palette.cardHeadingUppercase ? 1.2 : 0,
+                    height: 1.1,
+                  ),
                   decoration: const InputDecoration(
                     hintText: 'Character Name',
-                    isDense: true,
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 4),
+                    isDense: true,
+                    filled: false,
+                    contentPadding: EdgeInsets.zero,
                   ),
                   onChanged: (v) {
                     _mutate(c.copyWith(entity: c.entity.copyWith(name: v)));
                   },
                 ),
-                const SizedBox(height: 4),
-                TextFormField(
-                  key: ValueKey('hdr_desc_${c.id}'),
-                  initialValue: entity.description,
-                  minLines: 1,
-                  maxLines: 3,
-                  style: TextStyle(fontSize: 12, color: palette.tabText),
-                  decoration: const InputDecoration(
-                    hintText: 'Short description...',
-                    isDense: true,
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
+              const SizedBox(height: 2),
+              InkWell(
+                onTap: c.worldName.isEmpty ? null : () => _openWorld(c.worldName),
+                child: Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontFamily: palette.useSerif ? 'Georgia' : null,
+                    fontSize: 15,
+                    fontStyle: FontStyle.italic,
+                    color: palette.srdSubtitle,
                   ),
-                  onChanged: (v) {
-                    _mutate(c.copyWith(
-                        entity: c.entity.copyWith(description: v)));
-                  },
                 ),
-                const SizedBox(height: 8),
+              ),
+              const SizedBox(height: 6),
+              if (palette.cardShowRule)
+                Container(height: 1, color: palette.srdRule),
+              const SizedBox(height: 10),
+              MarkdownTextArea(
+                controller: _descController,
+                focusNode: _descFocus,
+                readOnly: _readOnly,
+                minLines: _readOnly ? null : 3,
+                textStyle: TextStyle(
+                    fontSize: 16, color: palette.srdInk, height: 1.45),
+                decoration: InputDecoration(
+                  hintText: 'Markdown supported... (@ to mention)',
+                  border: InputBorder.none,
+                  isDense: true,
+                  filled: false,
+                  contentPadding: EdgeInsets.zero,
+                  hintStyle: TextStyle(
+                      color: palette.srdSubtitle,
+                      fontStyle: FontStyle.italic),
+                ),
+                onChanged: (v) {
+                  final cur = _working;
+                  if (cur == null) return;
+                  _mutate(cur.copyWith(
+                      entity: cur.entity.copyWith(description: v)));
+                },
+              ),
+              const SizedBox(height: 10),
+              if (_readOnly)
+                entity.tags.isEmpty
+                    ? const SizedBox.shrink()
+                    : Text(
+                        'Tags: ${entity.tags.join(', ')}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                          color: palette.srdSubtitle,
+                        ),
+                      )
+              else
                 _HeaderTagsField(
                   initial: entity.tags.join(', '),
                   globalTags: globalTags,
@@ -394,50 +581,10 @@ class _CharacterEditorScreenState
                         c.copyWith(entity: c.entity.copyWith(tags: tags)));
                   },
                 ),
-                const SizedBox(height: 10),
-                _WorldLink(
-                  worldName: c.worldName,
-                  palette: palette,
-                  onOpen: c.worldName.isEmpty
-                      ? null
-                      : () => _openWorld(c.worldName),
-                ),
-              ],
-            ),
+            ],
           ),
-          Positioned(
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: portraitWidth,
-            child: InkWell(
-              onTap: _pickPortrait,
-              child: hasImage
-                  ? Image.file(
-                      File(entity.imagePath),
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      alignment: Alignment.center,
-                      color: palette.featureCardBg,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.person,
-                              size: 40,
-                              color: palette.sidebarLabelSecondary),
-                          const SizedBox(height: 2),
-                          Text('Add photo',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: palette.sidebarLabelSecondary)),
-                        ],
-                      ),
-                    ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -467,53 +614,61 @@ class _CharacterEditorScreenState
   }
 
 
-  Widget _renderFields(DmToolColors palette, EntityCategorySchema cat) {
-    final character = _working!;
+  /// EntityCard-style schema render — ungrouped fields under a "Properties"
+  /// heading, grouped fields wrapped in a collapsible card per group.
+  List<Widget> _renderSchemaFields(
+      DmToolColors palette, EntityCategorySchema cat, Character character) {
     final fieldsByGroup = <String?, List<FieldSchema>>{};
     for (final f in cat.fields) {
       fieldsByGroup.putIfAbsent(f.groupId, () => []).add(f);
     }
+    for (final list in fieldsByGroup.values) {
+      list.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    }
     final groupsInOrder = [...cat.fieldGroups]
       ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
 
-    final children = <Widget>[];
-
-    final orphans = fieldsByGroup[null] ?? const <FieldSchema>[];
-    for (final f in orphans) {
-      children.add(_fieldTile(f, character));
+    final widgets = <Widget>[];
+    final ungrouped = fieldsByGroup[null] ?? const <FieldSchema>[];
+    if (ungrouped.isNotEmpty) {
+      widgets.add(EntityCardSectionHeading(
+          title: 'Properties', palette: palette));
+      widgets.add(const SizedBox(height: 8));
+      widgets.add(Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: ungrouped.map((f) => _fieldTile(f, character)).toList(),
+      ));
     }
 
     for (final g in groupsInOrder) {
       final list = fieldsByGroup[g.groupId] ?? const <FieldSchema>[];
       if (list.isEmpty) continue;
-      children.add(Padding(
-        padding: const EdgeInsets.only(top: 16, bottom: 4),
-        child: Text(
-          g.name,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: palette.tabActiveText,
-          ),
+      if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 16));
+      widgets.add(EntityCardCollapsibleGroupCard(
+        group: g,
+        palette: palette,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: list.map((f) => _fieldTile(f, character)).toList(),
         ),
       ));
-      for (final f in list) {
-        children.add(_fieldTile(f, character));
-      }
     }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: children,
-    );
+    return widgets;
   }
 
   Widget _fieldTile(FieldSchema f, Character character) {
     final value = character.entity.fields[f.fieldKey];
+    // Resolve relation refs only when the active campaign matches this
+    // character's world — entityProvider is scoped per-campaign, so a
+    // mismatched map would be wrong/empty.
+    final activeCampaign = ref.watch(activeCampaignProvider);
+    final entities = activeCampaign == character.worldName
+        ? ref.watch(entityProvider)
+        : null;
     return FieldWidgetFactory.create(
       schema: f,
       value: value,
-      readOnly: false,
+      readOnly: _readOnly,
       onChanged: (v) {
         final updatedFields = {
           ...character.entity.fields,
@@ -523,6 +678,7 @@ class _CharacterEditorScreenState
           entity: character.entity.copyWith(fields: updatedFields),
         ));
       },
+      entities: entities,
       entityFields: character.entity.fields,
       ref: ref,
     );
@@ -553,62 +709,6 @@ class _CharacterEditorScreenState
     _autoSaveTimer?.cancel();
     await _save(silent: true);
     if (context.mounted) context.pop();
-  }
-}
-
-/// Inline world link inside the character header. Plain text with a small
-/// globe icon — no border/chip. Tapping opens the linked world (if any)
-/// after saving the current character.
-class _WorldLink extends StatelessWidget {
-  final String worldName;
-  final DmToolColors palette;
-  final VoidCallback? onOpen;
-
-  const _WorldLink({
-    required this.worldName,
-    required this.palette,
-    required this.onOpen,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = L10n.of(context)!;
-    if (worldName.isEmpty) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.warning_amber, size: 13, color: palette.dangerBtnBg),
-          const SizedBox(width: 4),
-          Text(
-            l10n.charWorldOrphan,
-            style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
-          ),
-        ],
-      );
-    }
-    return InkWell(
-      onTap: onOpen,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.public, size: 13, color: palette.featureCardAccent),
-            const SizedBox(width: 4),
-            Text(
-              worldName,
-              style: TextStyle(
-                fontSize: 12,
-                color: palette.featureCardAccent,
-                decoration: TextDecoration.underline,
-                decorationColor:
-                    palette.featureCardAccent.withValues(alpha: 0.6),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
