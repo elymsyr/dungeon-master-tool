@@ -1057,3 +1057,132 @@ class GrantedModifiersFieldWidget extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// 5. equipmentChoiceGroups — read-only structured display.
+// Shape: List<{group_id, label, prompt, options:[{option_id, label,
+//   items:[{ref, quantity}], gold_gp?}]}>
+// Editor lives in the character creation wizard (equipment_step.dart);
+// this widget renders the groups so an entity card doesn't dump raw maps.
+// ─────────────────────────────────────────────────────────────────────────
+
+class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+
+  const EquipmentChoiceGroupsFieldWidget({
+    super.key,
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+  });
+
+  List<Map<String, dynamic>> _coerceGroups(dynamic raw) {
+    if (raw is! List) return const [];
+    return [
+      for (final g in raw)
+        if (g is Map) Map<String, dynamic>.from(g),
+    ];
+  }
+
+  String _resolveRef(String? id) {
+    if (id == null || id.isEmpty) return '';
+    final e = entities?[id];
+    if (e != null) return e.name;
+    return id.length > 8 ? '${id.substring(0, 8)}…' : id;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final groups = _coerceGroups(value);
+    if (groups.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 4),
+        child: Text('—', style: TextStyle(color: Colors.grey)),
+      );
+    }
+    final theme = Theme.of(context);
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var gi = 0; gi < groups.length; gi++) ...[
+              if (gi > 0) const Divider(height: 16),
+              _buildGroup(theme, groups[gi]),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGroup(ThemeData theme, Map<String, dynamic> g) {
+    final label = (g['label'] ?? 'Choice').toString();
+    final prompt = (g['prompt'] ?? 'Choose one').toString();
+    final rawOpts = g['options'];
+    final options = rawOpts is List
+        ? [for (final o in rawOpts) if (o is Map) Map<String, dynamic>.from(o)]
+        : const <Map<String, dynamic>>[];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+        if (prompt.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 2, bottom: 6),
+            child: Text(prompt, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
+          ),
+        for (final o in options) _buildOption(theme, o),
+      ],
+    );
+  }
+
+  Widget _buildOption(ThemeData theme, Map<String, dynamic> o) {
+    final optionId = (o['option_id'] ?? '').toString();
+    final optLabel = (o['label'] ?? '').toString();
+    final rawItems = o['items'];
+    final items = rawItems is List
+        ? [for (final i in rawItems) if (i is Map) Map<String, dynamic>.from(i)]
+        : const <Map<String, dynamic>>[];
+    final goldGp = o['gold_gp'];
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, top: 4, bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            optionId.isEmpty ? optLabel : '$optionId. $optLabel',
+            style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          for (final it in items)
+            Padding(
+              padding: const EdgeInsets.only(left: 12, top: 2),
+              child: _buildItemLine(theme, it),
+            ),
+          if (goldGp is num && goldGp > 0)
+            Padding(
+              padding: const EdgeInsets.only(left: 12, top: 2),
+              child: Text('• $goldGp gp',
+                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.amber.shade800)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemLine(ThemeData theme, Map<String, dynamic> it) {
+    final refId = it['ref']?.toString();
+    final qty = it['quantity'];
+    final name = _resolveRef(refId);
+    final qtyStr = qty is int && qty > 1 ? ' × $qty' : '';
+    return Text('• $name$qtyStr', style: theme.textTheme.bodySmall);
+  }
+}
