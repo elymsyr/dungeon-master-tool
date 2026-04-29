@@ -218,7 +218,7 @@ void main() {
     test('species has size/speed/creature_type', () {
       final sp = schema.categories.firstWhere((c) => c.slug == 'species');
       final keys = sp.fields.map((f) => f.fieldKey).toSet();
-      expect(keys, containsAll({'size_ref', 'speed_ft', 'creature_type_ref', 'traits'}));
+      expect(keys, containsAll({'size_ref', 'speed_ft', 'creature_type_ref', 'trait_refs'}));
     });
 
     test('spell has level 0..9 and damage-type relation list', () {

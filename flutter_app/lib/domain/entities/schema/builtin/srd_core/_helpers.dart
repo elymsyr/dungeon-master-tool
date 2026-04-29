@@ -14,6 +14,54 @@ Map<String, String> lookup(String slug, String name) =>
 Map<String, String> ref(String slug, String name) =>
     {'_ref': slug, 'name': name};
 
+/// equipmentChoiceGroups option item entry: `{ref, quantity}`.
+Map<String, dynamic> eqItem(String slug, String name, {int qty = 1}) =>
+    {'ref': ref(slug, name), 'quantity': qty};
+
+/// equipmentChoiceGroups option: `{option_id, label, items, gold_gp?}`.
+Map<String, dynamic> eqOption({
+  required String optionId,
+  required String label,
+  List<Map<String, dynamic>> items = const [],
+  int? goldGp,
+}) => {
+  'option_id': optionId,
+  'label': label,
+  'items': items,
+  'gold_gp': ?goldGp,
+};
+
+/// equipmentChoiceGroups group: `{group_id, label, prompt, options}`.
+Map<String, dynamic> eqGroup({
+  required String groupId,
+  required String label,
+  String prompt = 'Choose one',
+  required List<Map<String, dynamic>> options,
+}) => {
+  'group_id': groupId,
+  'label': label,
+  'prompt': prompt,
+  'options': options,
+};
+
+/// featEffectList entry: `{kind, target_kind?, target_ref?, value?, payload?}`.
+/// Kinds: class_level_grant, proficiency_grant, language_grant, spell_grant,
+/// cantrip_grant, ac_bonus, speed_bonus, hp_bonus_per_level, initiative_bonus,
+/// attack_bonus, extra_attack_bump, choice_group.
+Map<String, dynamic> effect(
+  String kind, {
+  String? targetKind,
+  Map<String, String>? targetRef,
+  Object? value,
+  Object? payload,
+}) => {
+  'kind': kind,
+  'target_kind': ?targetKind,
+  'target_ref': ?targetRef,
+  'value': ?value,
+  'payload': ?payload,
+};
+
 /// One package entity in the wire format `PackageImportService` consumes.
 /// `attributes` keys must match the target category's `FieldSchema.fieldKey`.
 Map<String, dynamic> packEntity({

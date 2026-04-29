@@ -213,6 +213,8 @@ class PackageImportService {
       FieldType.spellEffectList => const <Map<String, dynamic>>[],
       FieldType.rangedSenseList => const <Map<String, dynamic>>[],
       FieldType.grantedModifiers => const <Map<String, dynamic>>[],
+      FieldType.equipmentChoiceGroups => const <Map<String, dynamic>>[],
+      FieldType.featEffectList => const <Map<String, dynamic>>[],
       _ => null,
     };
   }

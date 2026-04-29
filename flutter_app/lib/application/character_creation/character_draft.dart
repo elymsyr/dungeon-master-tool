@@ -43,6 +43,24 @@ abstract class CharacterDraft with _$CharacterDraft {
     String? classId,
     String? backgroundId,
 
+    /// Optional subclass entity ID. Wizard always shows the subclass step
+    /// when the chosen class declares a subclass relationship; the resolver
+    /// gates feature application by `granted_at_level`.
+    String? subclassId,
+
+    /// Selected equipment-choice option per group. Key = `group_id` from
+    /// the class/background `equipment_choice_groups` field; value =
+    /// `option_id` (e.g. 'A', 'B', 'C').
+    @Default({}) Map<String, String> equipmentChoices,
+
+    /// Feats taken during creation. Background's `origin_feat_ref` is added
+    /// implicitly by the wizard; level-up feats land here too.
+    @Default([]) List<String> featIds,
+
+    /// Sub-picks for feats with `choice_group` payloads (e.g. Magic Initiate
+    /// spell list). Key = `<feat_id>:<group_id>`; value = option_id.
+    @Default({}) Map<String, String> originFeatChoices,
+
     @Default(AbilityScoreMethod.standardArray) AbilityScoreMethod abilityMethod,
 
     /// Six-key ability map. Default = all 10s; wizard updates via the

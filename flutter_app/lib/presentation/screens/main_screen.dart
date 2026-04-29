@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/edit_mode_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/locale_provider.dart';
@@ -54,7 +55,6 @@ class MainScreen extends ConsumerStatefulWidget {
 class _MainScreenState extends ConsumerState<MainScreen>
     with WidgetsBindingObserver {
   int _tabIndex = 0;
-  bool _editMode = false;
   String? _selectedEntityId;
   String? _selectedEntityPanel;
 
@@ -357,6 +357,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
     ref.watch(projectionBattleMapSyncProvider);
     ref.watch(projectionEntitySyncProvider);
 
+    final editMode = ref.watch(editModeProvider);
+
     // Listen for projection panel navigation requests
     ref.listen<bool?>(projectionPanelNavigationProvider, (_, value) {
       if (value == true) {
@@ -382,14 +384,14 @@ class _MainScreenState extends ConsumerState<MainScreen>
       index: _tabIndex,
       children: [
         DatabaseScreen(
-          editMode: _editMode,
+          editMode: editMode,
           selectedEntityId: _selectedEntityId,
           selectedEntityPanel: _selectedEntityPanel,
           onEntitySelected: (id) => setState(() => _selectedEntityId = id),
         ),
         const SessionScreen(),
         MindMapScreen(
-          editMode: _editMode,
+          editMode: editMode,
           onOpenEntity: (entityId) {
             setState(() {
               _selectedEntityId = entityId;
@@ -466,11 +468,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
           // Edit Mode toggle
           IconButton(
             icon: Icon(
-              _editMode ? Icons.edit : Icons.visibility,
-              color: _editMode ? palette.tokenBorderActive : null,
+              editMode ? Icons.edit : Icons.visibility,
+              color: editMode ? palette.tokenBorderActive : null,
             ),
-            tooltip: _editMode ? 'View mode' : 'Edit mode',
-            onPressed: () => setState(() => _editMode = !_editMode),
+            tooltip: editMode ? 'Edit mode' : 'View mode',
+            onPressed: () => ref
+                .read(editModeProvider.notifier)
+                .update((s) => !s),
           ),
           // Player window status — always visible, jumps to projection panel
           const ProjectionStatusIcon(),
@@ -892,7 +896,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
     // Ctrl+E: always toggle edit mode (even when a text field has focus)
     if (event.logicalKey == LogicalKeyboardKey.keyE) {
-      setState(() => _editMode = !_editMode);
+      ref.read(editModeProvider.notifier).update((s) => !s);
       return true;
     }
 

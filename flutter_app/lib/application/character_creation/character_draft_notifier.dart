@@ -21,8 +21,33 @@ class CharacterDraftNotifier extends StateNotifier<CharacterDraft> {
   void setLevel(int v) => state = state.copyWith(level: v.clamp(1, 20));
   void setAlignment(String v) => state = state.copyWith(alignment: v);
   void setRace(String? id) => state = state.copyWith(raceId: id);
-  void setClass(String? id) => state = state.copyWith(classId: id);
+  void setClass(String? id) =>
+      state = state.copyWith(classId: id, subclassId: null);
   void setBackground(String? id) => state = state.copyWith(backgroundId: id);
+  void setSubclass(String? id) => state = state.copyWith(subclassId: id);
+
+  void setEquipmentChoice(String groupId, String optionId) {
+    state = state.copyWith(
+      equipmentChoices: {...state.equipmentChoices, groupId: optionId},
+    );
+  }
+
+  void setFeatIds(List<String> ids) =>
+      state = state.copyWith(featIds: List.unmodifiable(ids));
+  void addFeatId(String id) {
+    if (state.featIds.contains(id)) return;
+    state = state.copyWith(featIds: [...state.featIds, id]);
+  }
+  void removeFeatId(String id) {
+    state = state.copyWith(
+      featIds: [for (final f in state.featIds) if (f != id) f],
+    );
+  }
+  void setOriginFeatChoice(String key, String optionId) {
+    state = state.copyWith(
+      originFeatChoices: {...state.originFeatChoices, key: optionId},
+    );
+  }
 
   void setTemplate({required String id, required String name}) =>
       state = state.copyWith(templateId: id, templateName: name);

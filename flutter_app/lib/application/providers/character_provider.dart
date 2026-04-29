@@ -3,10 +3,13 @@ import 'package:uuid/uuid.dart';
 
 import '../../data/repositories/character_repository.dart';
 import '../../domain/entities/character.dart';
+import '../../domain/entities/character/effective_character.dart';
 import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../../domain/services/character_resolver.dart';
+import 'entity_provider.dart';
 
 const _uuid = Uuid();
 
@@ -205,6 +208,19 @@ final characterByIdProvider = Provider.family<Character?, String>((ref, id) {
   return null;
 });
 
+/// Read-time resolved view of a character: applies feat effects, class
+/// features by level, equipment choice resolutions, etc. Recomputes when
+/// either the character entity or the campaign-wide entity map changes.
+///
+/// Returns null when the character is missing.
+final effectiveCharacterProvider =
+    Provider.family<EffectiveCharacter?, String>((ref, id) {
+  final pc = ref.watch(characterByIdProvider(id));
+  if (pc == null) return null;
+  final entities = ref.watch(entityProvider);
+  return CharacterResolver.resolve(pc, entities);
+});
+
 /// Player kategorisi field'ları için default değer üretir.
 /// `entity_provider.dart`'daki mantığın küçük bir kopyası — karakterler
 /// kampanya dışında yaşadığı için aynı provider'a erişemiyoruz.
@@ -244,6 +260,8 @@ Map<String, dynamic> _defaultFieldsFor(EntityCategorySchema cat) {
       FieldType.spellEffectList => const <Map<String, dynamic>>[],
       FieldType.rangedSenseList => const <Map<String, dynamic>>[],
       FieldType.grantedModifiers => const <Map<String, dynamic>>[],
+      FieldType.equipmentChoiceGroups => const <Map<String, dynamic>>[],
+      FieldType.featEffectList => const <Map<String, dynamic>>[],
       _ => null,
     };
   }

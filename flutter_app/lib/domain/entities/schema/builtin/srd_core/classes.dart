@@ -52,17 +52,24 @@ List<Map<String, dynamic>> srdClasses() => [
           'complexity': 'Low',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Strength')],
           'multiclass_prereq_min_score': 13,
-          'starting_equipment_options':
-              'Choose **A** or **B**:\n\n'
-                  '- **(A)** Greataxe, 4 Handaxes, Explorer\'s Pack, 15 GP\n'
-                  '- **(B)** 75 GP',
-          'default_inventory_refs': [
-            ref('weapon', 'Greataxe'),
-            ref('weapon', 'Handaxe'),
-            ref('weapon', 'Handaxe'),
-            ref('weapon', 'Handaxe'),
-            ref('weapon', 'Handaxe'),
-            ref('pack', 'Explorer\'s Pack'),
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Greataxe, 4 Handaxes, Explorer\'s Pack, 15 GP',
+                  items: [
+                    eqItem('weapon', 'Greataxe'),
+                    eqItem('weapon', 'Handaxe', qty: 4),
+                    eqItem('pack', 'Explorer\'s Pack'),
+                  ],
+                  goldGp: 15,
+                ),
+                eqOption(optionId: 'B', label: '75 GP', goldGp: 75),
+              ],
+            ),
           ],
           'starting_gold_dice': '2d4 × 10',
           'features': [
@@ -133,15 +140,24 @@ List<Map<String, dynamic>> srdClasses() => [
           'complexity': 'Average',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Charisma')],
           'multiclass_prereq_min_score': 13,
-          'starting_equipment_options':
-              'Choose **A** or **B**:\n\n'
-                  '- **(A)** Leather Armor, 2 Daggers, Musical Instrument of choice, Entertainer\'s Pack, 19 GP\n'
-                  '- **(B)** 90 GP',
-          'default_inventory_refs': [
-            ref('armor', 'Leather Armor'),
-            ref('weapon', 'Dagger'),
-            ref('weapon', 'Dagger'),
-            ref('pack', 'Entertainer\'s Pack'),
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Leather Armor, 2 Daggers, Entertainer\'s Pack, 19 GP',
+                  items: [
+                    eqItem('armor', 'Leather Armor'),
+                    eqItem('weapon', 'Dagger', qty: 2),
+                    eqItem('pack', 'Entertainer\'s Pack'),
+                  ],
+                  goldGp: 19,
+                ),
+                eqOption(optionId: 'B', label: '90 GP', goldGp: 90),
+              ],
+            ),
           ],
           'starting_gold_dice': '5d4 × 10',
           'features': [
@@ -208,16 +224,26 @@ List<Map<String, dynamic>> srdClasses() => [
           'complexity': 'Average',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Wisdom')],
           'multiclass_prereq_min_score': 13,
-          'starting_equipment_options':
-              'Choose **A** or **B**:\n\n'
-                  '- **(A)** Chain Shirt, Shield, Mace, Holy Symbol, Priest\'s Pack, 7 GP\n'
-                  '- **(B)** 110 GP',
-          'default_inventory_refs': [
-            ref('armor', 'Chain Shirt'),
-            ref('armor', 'Shield'),
-            ref('weapon', 'Mace'),
-            ref('adventuring-gear', 'Amulet (Holy Symbol)'),
-            ref('pack', 'Priest\'s Pack'),
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Chain Shirt, Shield, Mace, Holy Symbol, Priest\'s Pack, 7 GP',
+                  items: [
+                    eqItem('armor', 'Chain Shirt'),
+                    eqItem('armor', 'Shield'),
+                    eqItem('weapon', 'Mace'),
+                    eqItem('adventuring-gear', 'Amulet (Holy Symbol)'),
+                    eqItem('pack', 'Priest\'s Pack'),
+                  ],
+                  goldGp: 7,
+                ),
+                eqOption(optionId: 'B', label: '110 GP', goldGp: 110),
+              ],
+            ),
           ],
           'starting_gold_dice': '5d4 × 10',
           'features': [
@@ -269,17 +295,27 @@ List<Map<String, dynamic>> srdClasses() => [
           'complexity': 'High',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Wisdom')],
           'multiclass_prereq_min_score': 13,
-          'starting_equipment_options':
-              'Choose **A** or **B**:\n\n'
-                  '- **(A)** Leather Armor, Shield, Sickle, Druidic Focus (Quarterstaff), Explorer\'s Pack, Herbalism Kit, 9 GP\n'
-                  '- **(B)** 50 GP',
-          'default_inventory_refs': [
-            ref('armor', 'Leather Armor'),
-            ref('armor', 'Shield'),
-            ref('weapon', 'Sickle'),
-            ref('weapon', 'Quarterstaff'),
-            ref('pack', 'Explorer\'s Pack'),
-            ref('tool', 'Herbalism Kit'),
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Leather Armor, Shield, Sickle, Quarterstaff, Explorer\'s Pack, Herbalism Kit, 9 GP',
+                  items: [
+                    eqItem('armor', 'Leather Armor'),
+                    eqItem('armor', 'Shield'),
+                    eqItem('weapon', 'Sickle'),
+                    eqItem('weapon', 'Quarterstaff'),
+                    eqItem('pack', 'Explorer\'s Pack'),
+                    eqItem('tool', 'Herbalism Kit'),
+                  ],
+                  goldGp: 9,
+                ),
+                eqOption(optionId: 'B', label: '50 GP', goldGp: 50),
+              ],
+            ),
           ],
           'starting_gold_dice': '2d4 × 10',
           'features': [
@@ -342,17 +378,40 @@ List<Map<String, dynamic>> srdClasses() => [
             lookup('ability', 'Dexterity'),
           ],
           'multiclass_prereq_min_score': 13,
-          'starting_equipment_options':
-              'Choose **A**, **B**, or **C**:\n\n'
-                  '- **(A)** Chain Mail, Greatsword, Flail, 8 Javelins, Dungeoneer\'s Pack, 4 GP\n'
-                  '- **(B)** Studded Leather, Scimitar, Shortsword, Longbow, 20 Arrows, Quiver, Dungeoneer\'s Pack, 11 GP\n'
-                  '- **(C)** 155 GP',
-          'default_inventory_refs': [
-            ref('armor', 'Chain Mail'),
-            ref('weapon', 'Greatsword'),
-            ref('weapon', 'Flail'),
-            ref('weapon', 'Javelin'),
-            ref('pack', 'Dungeoneer\'s Pack'),
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Chain Mail, Greatsword, Flail, 8 Javelins, Dungeoneer\'s Pack, 4 GP',
+                  items: [
+                    eqItem('armor', 'Chain Mail'),
+                    eqItem('weapon', 'Greatsword'),
+                    eqItem('weapon', 'Flail'),
+                    eqItem('weapon', 'Javelin', qty: 8),
+                    eqItem('pack', 'Dungeoneer\'s Pack'),
+                  ],
+                  goldGp: 4,
+                ),
+                eqOption(
+                  optionId: 'B',
+                  label: 'Studded Leather, Scimitar, Shortsword, Longbow, 20 Arrows, Quiver, Dungeoneer\'s Pack, 11 GP',
+                  items: [
+                    eqItem('armor', 'Studded Leather Armor'),
+                    eqItem('weapon', 'Scimitar'),
+                    eqItem('weapon', 'Shortsword'),
+                    eqItem('weapon', 'Longbow'),
+                    eqItem('ammunition', 'Arrows', qty: 20),
+                    eqItem('adventuring-gear', 'Quiver'),
+                    eqItem('pack', 'Dungeoneer\'s Pack'),
+                  ],
+                  goldGp: 11,
+                ),
+                eqOption(optionId: 'C', label: '155 GP', goldGp: 155),
+              ],
+            ),
           ],
           'starting_gold_dice': '5d4 × 10',
           'features': [
@@ -404,18 +463,24 @@ List<Map<String, dynamic>> srdClasses() => [
             lookup('ability', 'Wisdom'),
           ],
           'multiclass_prereq_min_score': 13,
-          'starting_equipment_options':
-              'Choose **A** or **B**:\n\n'
-                  '- **(A)** Spear, 5 Daggers, Artisan\'s Tools or Musical Instrument, Explorer\'s Pack, 11 GP\n'
-                  '- **(B)** 50 GP',
-          'default_inventory_refs': [
-            ref('weapon', 'Spear'),
-            ref('weapon', 'Dagger'),
-            ref('weapon', 'Dagger'),
-            ref('weapon', 'Dagger'),
-            ref('weapon', 'Dagger'),
-            ref('weapon', 'Dagger'),
-            ref('pack', 'Explorer\'s Pack'),
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Spear, 5 Daggers, Explorer\'s Pack, 11 GP',
+                  items: [
+                    eqItem('weapon', 'Spear'),
+                    eqItem('weapon', 'Dagger', qty: 5),
+                    eqItem('pack', 'Explorer\'s Pack'),
+                  ],
+                  goldGp: 11,
+                ),
+                eqOption(optionId: 'B', label: '50 GP', goldGp: 50),
+              ],
+            ),
           ],
           'starting_gold_dice': '2d4 × 10',
           'features': [
@@ -480,17 +545,27 @@ List<Map<String, dynamic>> srdClasses() => [
             lookup('ability', 'Charisma'),
           ],
           'multiclass_prereq_min_score': 13,
-          'starting_equipment_options':
-              'Choose **A** or **B**:\n\n'
-                  '- **(A)** Chain Mail, Shield, Longsword, Holy Symbol, Priest\'s Pack, 6 Javelins, 9 GP\n'
-                  '- **(B)** 150 GP',
-          'default_inventory_refs': [
-            ref('armor', 'Chain Mail'),
-            ref('armor', 'Shield'),
-            ref('weapon', 'Longsword'),
-            ref('weapon', 'Javelin'),
-            ref('adventuring-gear', 'Amulet (Holy Symbol)'),
-            ref('pack', 'Priest\'s Pack'),
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Chain Mail, Shield, Longsword, 6 Javelins, Holy Symbol, Priest\'s Pack, 9 GP',
+                  items: [
+                    eqItem('armor', 'Chain Mail'),
+                    eqItem('armor', 'Shield'),
+                    eqItem('weapon', 'Longsword'),
+                    eqItem('weapon', 'Javelin', qty: 6),
+                    eqItem('adventuring-gear', 'Amulet (Holy Symbol)'),
+                    eqItem('pack', 'Priest\'s Pack'),
+                  ],
+                  goldGp: 9,
+                ),
+                eqOption(optionId: 'B', label: '150 GP', goldGp: 150),
+              ],
+            ),
           ],
           'starting_gold_dice': '5d4 × 10',
           'features': [
@@ -553,18 +628,28 @@ List<Map<String, dynamic>> srdClasses() => [
             lookup('ability', 'Wisdom'),
           ],
           'multiclass_prereq_min_score': 13,
-          'starting_equipment_options':
-              'Choose **A** or **B**:\n\n'
-                  '- **(A)** Studded Leather, Scimitar, Shortsword, Longbow, 20 Arrows, Quiver, Druidic Focus (Sprig of Mistletoe), Explorer\'s Pack, 7 GP\n'
-                  '- **(B)** 150 GP',
-          'default_inventory_refs': [
-            ref('armor', 'Studded Leather Armor'),
-            ref('weapon', 'Scimitar'),
-            ref('weapon', 'Shortsword'),
-            ref('weapon', 'Longbow'),
-            ref('ammunition', 'Arrows'),
-            ref('adventuring-gear', 'Quiver'),
-            ref('pack', 'Explorer\'s Pack'),
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Studded Leather, Scimitar, Shortsword, Longbow, 20 Arrows, Quiver, Explorer\'s Pack, 7 GP',
+                  items: [
+                    eqItem('armor', 'Studded Leather Armor'),
+                    eqItem('weapon', 'Scimitar'),
+                    eqItem('weapon', 'Shortsword'),
+                    eqItem('weapon', 'Longbow'),
+                    eqItem('ammunition', 'Arrows', qty: 20),
+                    eqItem('adventuring-gear', 'Quiver'),
+                    eqItem('pack', 'Explorer\'s Pack'),
+                  ],
+                  goldGp: 7,
+                ),
+                eqOption(optionId: 'B', label: '150 GP', goldGp: 150),
+              ],
+            ),
           ],
           'starting_gold_dice': '5d4 × 10',
           'features': [
@@ -616,20 +701,29 @@ List<Map<String, dynamic>> srdClasses() => [
           'complexity': 'Average',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Dexterity')],
           'multiclass_prereq_min_score': 13,
-          'starting_equipment_options':
-              'Choose **A** or **B**:\n\n'
-                  '- **(A)** Leather Armor, 2 Daggers, Shortsword, Shortbow, 20 Arrows, Quiver, Thieves\' Tools, Burglar\'s Pack, 8 GP\n'
-                  '- **(B)** 100 GP',
-          'default_inventory_refs': [
-            ref('armor', 'Leather Armor'),
-            ref('weapon', 'Dagger'),
-            ref('weapon', 'Dagger'),
-            ref('weapon', 'Shortsword'),
-            ref('weapon', 'Shortbow'),
-            ref('ammunition', 'Arrows'),
-            ref('adventuring-gear', 'Quiver'),
-            ref('tool', 'Thieves\' Tools'),
-            ref('pack', 'Burglar\'s Pack'),
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Leather Armor, 2 Daggers, Shortsword, Shortbow, 20 Arrows, Quiver, Thieves\' Tools, Burglar\'s Pack, 8 GP',
+                  items: [
+                    eqItem('armor', 'Leather Armor'),
+                    eqItem('weapon', 'Dagger', qty: 2),
+                    eqItem('weapon', 'Shortsword'),
+                    eqItem('weapon', 'Shortbow'),
+                    eqItem('ammunition', 'Arrows', qty: 20),
+                    eqItem('adventuring-gear', 'Quiver'),
+                    eqItem('tool', 'Thieves\' Tools'),
+                    eqItem('pack', 'Burglar\'s Pack'),
+                  ],
+                  goldGp: 8,
+                ),
+                eqOption(optionId: 'B', label: '100 GP', goldGp: 100),
+              ],
+            ),
           ],
           'starting_gold_dice': '4d4 × 10',
           'features': [
@@ -688,16 +782,25 @@ List<Map<String, dynamic>> srdClasses() => [
           'complexity': 'High',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Charisma')],
           'multiclass_prereq_min_score': 13,
-          'starting_equipment_options':
-              'Choose **A** or **B**:\n\n'
-                  '- **(A)** Spear, 2 Daggers, Arcane Focus (Crystal), Dungeoneer\'s Pack, 28 GP\n'
-                  '- **(B)** 50 GP',
-          'default_inventory_refs': [
-            ref('weapon', 'Spear'),
-            ref('weapon', 'Dagger'),
-            ref('weapon', 'Dagger'),
-            ref('adventuring-gear', 'Crystal'),
-            ref('pack', 'Dungeoneer\'s Pack'),
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Spear, 2 Daggers, Arcane Focus (Crystal), Dungeoneer\'s Pack, 28 GP',
+                  items: [
+                    eqItem('weapon', 'Spear'),
+                    eqItem('weapon', 'Dagger', qty: 2),
+                    eqItem('adventuring-gear', 'Crystal'),
+                    eqItem('pack', 'Dungeoneer\'s Pack'),
+                  ],
+                  goldGp: 28,
+                ),
+                eqOption(optionId: 'B', label: '50 GP', goldGp: 50),
+              ],
+            ),
           ],
           'starting_gold_dice': '3d4 × 10',
           'features': [
@@ -744,18 +847,27 @@ List<Map<String, dynamic>> srdClasses() => [
           'complexity': 'High',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Charisma')],
           'multiclass_prereq_min_score': 13,
-          'starting_equipment_options':
-              'Choose **A** or **B**:\n\n'
-                  '- **(A)** Leather Armor, Sickle, 2 Daggers, Arcane Focus (Orb), Book (lore), Scholar\'s Pack, 15 GP\n'
-                  '- **(B)** 100 GP',
-          'default_inventory_refs': [
-            ref('armor', 'Leather Armor'),
-            ref('weapon', 'Sickle'),
-            ref('weapon', 'Dagger'),
-            ref('weapon', 'Dagger'),
-            ref('adventuring-gear', 'Orb'),
-            ref('adventuring-gear', 'Book'),
-            ref('pack', 'Scholar\'s Pack'),
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Leather Armor, Sickle, 2 Daggers, Arcane Focus (Orb), Book, Scholar\'s Pack, 15 GP',
+                  items: [
+                    eqItem('armor', 'Leather Armor'),
+                    eqItem('weapon', 'Sickle'),
+                    eqItem('weapon', 'Dagger', qty: 2),
+                    eqItem('adventuring-gear', 'Orb'),
+                    eqItem('adventuring-gear', 'Book'),
+                    eqItem('pack', 'Scholar\'s Pack'),
+                  ],
+                  goldGp: 15,
+                ),
+                eqOption(optionId: 'B', label: '100 GP', goldGp: 100),
+              ],
+            ),
           ],
           'starting_gold_dice': '4d4 × 10',
           'features': [
@@ -801,16 +913,25 @@ List<Map<String, dynamic>> srdClasses() => [
           'complexity': 'High',
           'multiclass_prereq_ability_refs': [lookup('ability', 'Intelligence')],
           'multiclass_prereq_min_score': 13,
-          'starting_equipment_options':
-              'Choose **A** or **B**:\n\n'
-                  '- **(A)** 2 Daggers, Arcane Focus (Quarterstaff), Robe, Spellbook, Scholar\'s Pack, 5 GP\n'
-                  '- **(B)** 55 GP',
-          'default_inventory_refs': [
-            ref('weapon', 'Dagger'),
-            ref('weapon', 'Dagger'),
-            ref('weapon', 'Quarterstaff'),
-            ref('adventuring-gear', 'Robe'),
-            ref('pack', 'Scholar\'s Pack'),
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: '2 Daggers, Arcane Focus (Quarterstaff), Robe, Spellbook, Scholar\'s Pack, 5 GP',
+                  items: [
+                    eqItem('weapon', 'Dagger', qty: 2),
+                    eqItem('weapon', 'Quarterstaff'),
+                    eqItem('adventuring-gear', 'Robe'),
+                    eqItem('pack', 'Scholar\'s Pack'),
+                  ],
+                  goldGp: 5,
+                ),
+                eqOption(optionId: 'B', label: '55 GP', goldGp: 55),
+              ],
+            ),
           ],
           'starting_gold_dice': '4d4 × 10',
           'features': [

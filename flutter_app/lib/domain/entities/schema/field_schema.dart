@@ -29,10 +29,12 @@ enum FieldType {
   proficiencyTable, // D&D 5e skills/saving throws — her satır: name, ability, proficient, expertise, misc
   levelTable,     // Map<int,int> — level → value progression tablosu (spell slot count, hit dice, vs.)
   levelTextTable, // Map<int,String> — level → free-form text (e.g. "At Higher Levels", per-level features narrative)
-  classFeatures,  // List<{level:int, name, kind: passive|resource|extra-attack|spellcasting-bump|ability-improvement, dice, uses, recharge, description}>
+  classFeatures,  // List<{level:int, name, kind: passive|resource|extra-attack|spellcasting-bump|ability-improvement, dice, uses, recharge, description, effects: featEffectList}> — row-level `effects` consumed by CharacterResolver.
   spellEffectList,// List<{kind: damage|heal|condition|buff|debuff, dice, type_ref, save_ability_ref, save_effect: none|half|negate|partial, condition_refs[], scaling_dice}>
   rangedSenseList,// List<{sense_ref, range_ft}> — sense ref + range pair listesi (Darkvision 60ft, Truesight 120ft)
   grantedModifiers,// List<{kind, target_kind, target_ref, value, condition_ref, scaling}> — typed bonus DSL: AC/save/skill/HP/speed/proficiency/sense/spell grants. Species traits, feat benefits, magic item effects.
+  equipmentChoiceGroups, // List<{group_id, label, prompt, options:[{option_id, label, items:[{ref, quantity}], gold_gp?}]}> — class/background starting equipment "Choose A or B" structure.
+  featEffectList, // List<{kind, target_kind?, target_ref?, value?, payload?}> — richer feat/feature effect DSL. Kinds: class_level_grant, proficiency_grant, language_grant, spell_grant, cantrip_grant, ac_bonus, speed_bonus, hp_bonus_per_level, initiative_bonus, attack_bonus, extra_attack_bump, choice_group.
 }
 
 /// Alan görünürlüğü — online modda kimin görebileceğini belirler.

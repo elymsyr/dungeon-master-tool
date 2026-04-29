@@ -7,11 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/character_provider.dart';
-import '../../application/providers/cloud_backup_provider.dart';
+import '../../application/providers/edit_mode_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/global_tags_provider.dart';
 import '../../application/providers/template_provider.dart';
-import '../../application/providers/ui_state_provider.dart';
 import '../../application/services/tag_moderation.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
@@ -92,16 +91,22 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.close, size: 16),
-                tooltip: 'Close',
-                visualDensity: VisualDensity.compact,
-                onPressed: () {
-                  ref.read(uiStateProvider.notifier).update(
-                        (s) => s.copyWith(rightSidebar: RightSidebar.none),
-                      );
-                },
-              ),
+              if (_selectedId != null) ...[
+                IconButton(
+                  icon: const Icon(Icons.folder_open, size: 16),
+                  tooltip: 'Open character',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () =>
+                      setState(() => _openedId = _selectedId),
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete_outline,
+                      size: 16, color: palette.dangerBtnBg),
+                  tooltip: 'Remove from world',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: _deleteSelected,
+                ),
+              ],
             ],
           ),
         ),
@@ -154,8 +159,7 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
                   return InkWell(
                     borderRadius: palette.br,
                     onTap: () => setState(() {
-                      _selectedId = c.id;
-                      _openedId = c.id;
+                      _selectedId = isSelected ? null : c.id;
                     }),
                     child: Container(
                       clipBehavior: Clip.antiAlias,
@@ -195,58 +199,20 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
         Divider(height: 1, color: palette.sidebarDivider),
         Padding(
           padding: const EdgeInsets.all(8),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _selectedId != null
-                          ? () =>
-                              setState(() => _openedId = _selectedId)
-                          : null,
-                      icon: const Icon(Icons.folder_open, size: 16),
-                      label: const Text('Open',
-                          style: TextStyle(fontSize: 12)),
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(0, 32),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  FilledButton.icon(
-                    onPressed:
-                        _selectedId != null ? _deleteSelected : null,
-                    icon: const Icon(Icons.delete_outline, size: 16),
-                    label: const Text('Delete',
-                        style: TextStyle(fontSize: 12)),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(0, 32),
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      backgroundColor: palette.dangerBtnBg,
-                      foregroundColor: palette.dangerBtnText,
-                    ),
-                  ),
-                ],
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: activeWorld == null
+                  ? null
+                  : () => _createCharacter(),
+              icon: const Icon(Icons.auto_awesome, size: 18),
+              label: const Text('Create Character'),
+              style: FilledButton.styleFrom(
+                backgroundColor: palette.successBtnBg,
+                foregroundColor: palette.successBtnText,
+                minimumSize: const Size(0, 38),
               ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: activeWorld == null
-                      ? null
-                      : () => _createCharacter(),
-                  icon: const Icon(Icons.auto_awesome, size: 18),
-                  label: const Text('Create Character'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: palette.successBtnBg,
-                    foregroundColor: palette.successBtnText,
-                    minimumSize: const Size(0, 38),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ],
@@ -266,12 +232,15 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
     final c = list.where((x) => x.id == id).firstOrNull;
     if (c == null) return;
     final palette = widget.palette;
+    final worldName = c.worldName;
 
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Character'),
-        content: Text('Delete "${c.entity.name}"? This cannot be undone.'),
+        title: const Text('Remove from World'),
+        content: Text(
+            'Remove "${c.entity.name}" from "$worldName"? '
+            'The character itself is kept and can be reattached to a world later.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
@@ -279,17 +248,16 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await ref.read(characterListProvider.notifier).delete(c.id);
               await ref
-                  .read(cloudBackupOperationProvider.notifier)
-                  .deleteBackupByItem(c.id, 'character');
+                  .read(characterListProvider.notifier)
+                  .update(c.copyWith(worldName: ''));
               if (mounted) setState(() => _selectedId = null);
             },
             style: FilledButton.styleFrom(
               backgroundColor: palette.dangerBtnBg,
               foregroundColor: palette.dangerBtnText,
             ),
-            child: const Text('Delete'),
+            child: const Text('Remove'),
           ),
         ],
       ),
@@ -455,7 +423,11 @@ class _SidebarCharacterEditorState
   Character? _working;
   Timer? _autoSaveTimer;
   bool _saving = false;
-  bool _readOnly = true;
+
+  /// Read-only when global edit mode is off. Mirrors database/mind-map
+  /// view/edit toggle. Read via getter so any rebuild picks up provider
+  /// changes automatically.
+  bool get _readOnly => !ref.watch(editModeProvider);
 
   final TextEditingController _descController = TextEditingController();
   final FocusNode _descFocus = FocusNode();
@@ -593,12 +565,7 @@ class _SidebarCharacterEditorState
           ),
           child: Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, size: 18),
-                tooltip: 'Back to list',
-                visualDensity: VisualDensity.compact,
-                onPressed: _flushAndBack,
-              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
@@ -623,24 +590,10 @@ class _SidebarCharacterEditorState
                   ),
                 ),
               IconButton(
-                icon: Icon(_readOnly ? Icons.edit : Icons.visibility,
-                    size: 18),
-                tooltip: _readOnly ? 'Edit' : 'View',
-                visualDensity: VisualDensity.compact,
-                onPressed: () => setState(() => _readOnly = !_readOnly),
-              ),
-              IconButton(
                 icon: const Icon(Icons.close, size: 18),
-                tooltip: 'Close sidebar',
+                tooltip: 'Close character',
                 visualDensity: VisualDensity.compact,
-                onPressed: () async {
-                  await _flushAndBack();
-                  if (!mounted) return;
-                  ref.read(uiStateProvider.notifier).update(
-                        (s) =>
-                            s.copyWith(rightSidebar: RightSidebar.none),
-                      );
-                },
+                onPressed: _flushAndBack,
               ),
             ],
           ),
