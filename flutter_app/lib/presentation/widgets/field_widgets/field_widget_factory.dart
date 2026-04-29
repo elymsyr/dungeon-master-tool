@@ -140,6 +140,8 @@ class FieldWidgetFactory {
           schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
       FieldType.grantedModifiers => GrantedModifiersFieldWidget(
           schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
+      FieldType.equipmentChoiceGroups => EquipmentChoiceGroupsFieldWidget(
+          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities),
       _ => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
     };
   }

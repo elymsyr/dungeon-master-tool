@@ -54,45 +54,9 @@ List<EntityCategorySchema> buildTier2Dm({
 // Hardcoded enum value lists (former Tier-0 lookup categories).
 // ---------------------------------------------------------------------------
 
-const _enumAlignments = <String>[
-  'Lawful Good', 'Neutral Good', 'Chaotic Good',
-  'Lawful Neutral', 'True Neutral', 'Chaotic Neutral',
-  'Lawful Evil', 'Neutral Evil', 'Chaotic Evil',
-  'Unaligned',
-];
-const _enumAttitudes = <String>['Friendly', 'Indifferent', 'Hostile'];
-const _enumIllumination = <String>['Bright', 'Dim', 'Darkness'];
-const _enumTravelPaces = <String>['Slow', 'Normal', 'Fast'];
-const _enumWeaponCategories = <String>['Simple Melee', 'Simple Ranged', 'Martial Melee', 'Martial Ranged'];
-const _enumArmorCategories = <String>['Light', 'Medium', 'Heavy', 'Shield'];
-const _enumPlanes = <String>[
-  'Material Plane',
-  'Astral Plane',
-  'Ethereal Plane',
-  'Feywild',
-  'Shadowfell',
-  'Plane of Air',
-  'Plane of Earth',
-  'Plane of Fire',
-  'Plane of Water',
-  'Mount Celestia',
-  'Bytopia',
-  'Elysium',
-  'Beastlands',
-  'Arborea',
-  'Ysgard',
-  'Limbo',
-  'Pandemonium',
-  'Abyss',
-  'Carceri',
-  'Hades',
-  'Gehenna',
-  'Nine Hells',
-  'Acheron',
-  'Mechanus',
-  'Arcadia',
-  'Outlands',
-];
+// PR-2 (2026-04-29): alignment, attitude, illumination, travel-pace,
+// weapon-category, armor-category, plane promoted to Tier-0 lookups.
+// Consumers reference them via relation fields.
 
 // ---------------------------------------------------------------------------
 // Field builder (mirrors content.dart's _FB)
@@ -272,8 +236,8 @@ EntityCategorySchema _npcCategory(String schemaId, String now, int orderIndex) {
   fb.relation('class_refs', 'Classes', const ['class'], isList: true);
   fb.integer('level', 'Level', min: 1, max: 20);
   fb.relation('background_ref', 'Background', const ['background']);
-  fb.enum_('alignment_ref', 'Alignment', _enumAlignments);
-  fb.enum_('attitude_ref', 'Attitude', _enumAttitudes, required_: true);
+  fb.relation('alignment_ref', 'Alignment', const ['alignment']);
+  fb.relation('attitude_ref', 'Attitude', const ['attitude'], required_: true);
   fb.relation('location_ref', 'Location', const ['location']);
   fb.text('faction', 'Faction');
   // Stat block
@@ -339,17 +303,17 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
   fb.levelTable('class_levels', 'Class Levels', g: grpProgression);
   fb.relation('subclass_refs', 'Subclasses', const ['subclass'], isList: true);
   fb.relation('background_ref', 'Background', const ['background'], required_: true);
-  fb.enum_('alignment_ref', 'Alignment', _enumAlignments);
+  fb.relation('alignment_ref', 'Alignment', const ['alignment']);
   fb.integer('xp', 'XP', required_: true, min: 0, defaultValue: 0);
   fb.integer('proficiency_bonus', 'Proficiency Bonus', required_: true, min: 2, max: 6, defaultValue: 2);
   fb.relation('feats', 'Feats', const ['feat'], isList: true);
   fb.relation('languages', 'Languages', const ['language'], isList: true, required_: true);
   fb.relation('tool_proficiencies', 'Tool Proficiencies', const ['tool'], isList: true);
-  fb.enum_('weapon_proficiency_categories', 'Weapon Category Proficiencies',
-      _enumWeaponCategories, isList: true);
+  fb.relation('weapon_proficiency_categories', 'Weapon Category Proficiencies',
+      const ['weapon-category'], isList: true);
   fb.relation('weapon_proficiency_specifics', 'Specific Weapon Proficiencies',
       const ['weapon'], isList: true);
-  fb.enum_('armor_trainings', 'Armor Trainings', _enumArmorCategories, isList: true);
+  fb.relation('armor_trainings', 'Armor Trainings', const ['armor-category'], isList: true);
   fb.relation('skill_proficiencies', 'Skill Proficiencies', const ['skill'], isList: true);
   fb.relation('expertise_skills', 'Expertise Skills', const ['skill'], isList: true);
   fb.relation('saving_throw_proficiencies', 'Save Proficiencies', const ['ability'], isList: true, required_: true);
@@ -374,17 +338,35 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
   // Inventory & Resources
   fb.relation('inventory', 'Inventory', const ['weapon', 'armor', 'adventuring-gear', 'magic-item'], isList: true, g: grpProperties);
   fb.relation('attuned_items', 'Attuned Items (max 3)', const ['magic-item'], isList: true, g: grpProperties);
+  // Equipped state — drives AC, attack, and don/doff actions.
+  fb.relation('equipped_armor_ref', 'Equipped Armor', const ['armor', 'magic-item'], g: grpProperties);
+  fb.relation('equipped_shield_ref', 'Equipped Shield', const ['armor', 'magic-item'], g: grpProperties);
+  fb.relation('held_weapons', 'Held Weapons (max 2)', const ['weapon', 'magic-item'], isList: true, g: grpProperties);
+  // Equipped magic items (wearables — head/neck/finger/etc.). Resolver groups
+  // by each item's body_slot_ref and enforces body-slot.max_equipped.
+  // Armor + shield + held_weapons live in their own dedicated fields.
+  fb.relation('equipped_magic_items', 'Equipped Magic Items', const ['magic-item'],
+      isList: true, g: grpProperties);
+  // Downtime
+  fb.relation('current_lifestyle_ref', 'Current Lifestyle', const ['lifestyle'], g: grpProperties);
   // Currency
   fb.integer('cp', 'Copper (cp)', min: 0, defaultValue: 0, g: grpCostWeight);
   fb.integer('sp', 'Silver (sp)', min: 0, defaultValue: 0, g: grpCostWeight);
   fb.integer('ep', 'Electrum (ep)', min: 0, defaultValue: 0, g: grpCostWeight);
   fb.integer('gp', 'Gold (gp)', min: 0, defaultValue: 0, g: grpCostWeight);
   fb.integer('pp', 'Platinum (pp)', min: 0, defaultValue: 0, g: grpCostWeight);
+  // Defenses (parallel NPC/Monster — resistance/vulnerability/immunity tracking)
+  fb.relation('resistance_refs', 'Resistances', const ['damage-type'], isList: true, g: grpResistances);
+  fb.relation('vulnerability_refs', 'Vulnerabilities', const ['damage-type'], isList: true, g: grpResistances);
+  fb.relation('damage_immunity_refs', 'Damage Immunities', const ['damage-type'], isList: true, g: grpResistances);
+  fb.relation('condition_immunity_refs', 'Condition Immunities', const ['condition'], isList: true, g: grpResistances);
   fb.relation('current_conditions', 'Current Conditions', const ['applied-condition'], isList: true, g: grpResistances);
   // Spells
   fb.relation('casting_ability_ref', 'Casting Ability', const ['ability'], g: grpSpellcasting);
   fb.integer('spell_save_dc', 'Spell Save DC', min: 0, max: 30, g: grpSpellcasting);
   fb.integer('spell_attack_bonus', 'Spell Attack Bonus', g: grpSpellcasting);
+  fb.relation('concentration_spell_ref', 'Concentrating On', const ['spell'], g: grpSpellcasting);
+  fb.integer('concentration_remaining_rounds', 'Concentration Rounds Left', min: 0, max: 10000, g: grpSpellcasting);
   fb.relation('spells_known', 'Spells Known', const ['spell'], isList: true, g: grpSpells);
   fb.relation('prepared_spells', 'Prepared Spells', const ['spell'], isList: true, g: grpSpells);
   fb.slot('spell_slots', 'Spell Slots', g: grpSpellcasting);
@@ -421,7 +403,7 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
       FieldGroup(groupId: grpAbilityScores, name: 'Ability Scores', gridColumns: 1, orderIndex: 2),
       FieldGroup(groupId: grpCombat, name: 'Combat', gridColumns: 2, orderIndex: 3),
       FieldGroup(groupId: grpProperties, name: 'Inventory', gridColumns: 1, orderIndex: 4),
-      FieldGroup(groupId: grpResistances, name: 'Active Conditions', gridColumns: 1, orderIndex: 5),
+      FieldGroup(groupId: grpResistances, name: 'Defenses', gridColumns: 1, orderIndex: 5),
       FieldGroup(groupId: grpSpells, name: 'Spells', gridColumns: 1, orderIndex: 6),
       FieldGroup(groupId: grpSpellcasting, name: 'Slots', gridColumns: 1, orderIndex: 7),
       FieldGroup(groupId: grpFeatures, name: 'Class Resources', gridColumns: 1, orderIndex: 8),
@@ -469,8 +451,8 @@ EntityCategorySchema _locationCategory(String schemaId, String now, int orderInd
   fb.enum_('danger_level', 'Danger Level', const ['Safe', 'Low', 'Medium', 'High', 'Deadly']);
   fb.text('environment', 'Environment');
   fb.relation('parent_location_ref', 'Parent Location', const ['location']);
-  fb.enum_('plane_ref', 'Plane', _enumPlanes);
-  fb.enum_('illumination_ref', 'Illumination', _enumIllumination);
+  fb.relation('plane_ref', 'Plane', const ['plane']);
+  fb.relation('illumination_ref', 'Illumination', const ['illumination']);
   fb.relation('hazard_refs', 'Hazards', const ['hazard'], isList: true);
   fb.markdown('description_long', 'Description', g: grpRules);
   fb.markdown('secrets', 'Secrets (DM-only)', g: grpRules, vis: FieldVisibility.dmOnly);
@@ -499,8 +481,8 @@ EntityCategorySchema _sceneCategory(String schemaId, String now, int orderIndex)
   final fb = _FB(catId, now);
   fb.relation('location_ref', 'Location', const ['location']);
   fb.enum_('status', 'Status', const ['Planned', 'Active', 'Completed', 'Skipped']);
-  fb.enum_('illumination_ref', 'Illumination', _enumIllumination);
-  fb.enum_('travel_pace_ref', 'Travel Pace', _enumTravelPaces);
+  fb.relation('illumination_ref', 'Illumination', const ['illumination']);
+  fb.relation('travel_pace_ref', 'Travel Pace', const ['travel-pace']);
   fb.markdown('beats', 'Beats / Outline', g: grpRules);
   fb.relation('npc_refs', 'NPCs Involved', const ['npc'], isList: true);
   fb.relation('quest_refs', 'Quests Tied', const ['quest'], isList: true);

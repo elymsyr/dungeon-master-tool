@@ -19,7 +19,7 @@ Map<String, dynamic> _t({
   String? variantOf,
 }) {
   final attrs = <String, dynamic>{
-    'category_ref': category,
+    'category_ref': lookup('tool-category', category),
     'ability_ref': lookup('ability', ability),
     'cost_gp': costGp,
     'weight_lb': weightLb,

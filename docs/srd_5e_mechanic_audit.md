@@ -1299,29 +1299,29 @@ Mekanik field'ı yok ama Tier-1/Tier-2 relation hedefleri olarak gerekli — şu
 
 ### G.3 Schema-Field Eksiklikleri (lookup-bağımsız)
 
-| # | Kategori | Eksik Field | Neden | Mekanik |
-|---|---|---|---|---|
-| 1 | `player-character` | `resistance_refs`, `vulnerability_refs`, `damage_immunity_refs`, `condition_immunity_refs` | NPC/Monster'a paralel | §4.4 |
-| 2 | `player-character` | `equipped_armor_ref`, `equipped_shield_ref` (veya inventory.is_equipped) | Don/doff tracking | §7.2 |
-| 3 | `player-character` | `held_weapons` (rel→weapon, max 2) veya `equipped_weapons` | Free draw/sheathe | §3.13, §7.1 |
-| 4 | `player-character` | `equipped_magic_items` (slot map) veya magic-item.body_slot_ref | Wearing limits | §7.3, §12.10 |
-| 5 | `player-character` | `current_lifestyle_ref` | Downtime expense | §6.13 |
-| 6 | `player-character` | `concentration_spell_ref`, `concentration_remaining_rounds` | Active concentration tracking | §8.9 |
-| 7 | `background` | `asi_distribution` enum (`2_plus_1` / `1_1_1`) | SRD 2024 background ASI dağılımı | §1.2 |
-| 8 | `class` | `multiclass_granted_proficiencies` (struct) | SRD s.25 multiclass prof subset | §1.8 |
-| 9 | `class.features` / `subclass.features` | `recharge_on` enum (none/short_rest/long_rest/dawn) per feature | Rest mechanic | §4.12 |
-| 10 | `species` | multi-`speeds` widget (speed_type+range, monster gibi) | Multi-speed support | §10.3 |
-| 11 | `magic-item` | `body_slot_ref` (yeni `body-slot` lookup veya enum) | Wearing limits | §7.3, §12.10 |
-| 12 | starter | `starter-bundle` Tier-1 kategorisi (L5/L11/L17 başlangıç) | Higher-level start | §1.7 |
+| # | Kategori | Eksik Field | Neden | Mekanik | Durum |
+|---|---|---|---|---|---|
+| 1 | `player-character` | `resistance_refs`, `vulnerability_refs`, `damage_immunity_refs`, `condition_immunity_refs` | NPC/Monster'a paralel | §4.4 | ✅ DONE (PR-3) |
+| 2 | `player-character` | `equipped_armor_ref`, `equipped_shield_ref` | Don/doff tracking | §7.2 | ✅ DONE (PR-3) |
+| 3 | `player-character` | `held_weapons` (rel→weapon\|magic-item, max 2) | Free draw/sheathe | §3.13, §7.1 | ✅ DONE (PR-3) |
+| 4 | `player-character` | `equipped_magic_items` (rel→magic-item, list; resolver groups by body_slot_ref) | Wearing limits | §7.3, §12.10 | ✅ DONE (PR-5) |
+| 5 | `player-character` | `current_lifestyle_ref` | Downtime expense | §6.13 | ✅ DONE (PR-3) |
+| 6 | `player-character` | `concentration_spell_ref`, `concentration_remaining_rounds` | Active concentration tracking | §8.9 | ✅ DONE (PR-3) |
+| 7 | `background` | `asi_distribution_options` enum list (`+2/+1`, `+1/+1/+1`) | SRD 2024 background ASI dağılımı | §1.2 | ✅ DONE (PR-4) |
+| 8 | `class` | `multiclass_granted_proficiencies` (markdown narrative) | SRD s.25 multiclass prof subset | §1.8 | ✅ DONE (PR-4) |
+| 9 | `class.features` / `subclass.features` | `recharge` enum (`''` / short-rest / long-rest / day) per feature | Rest mechanic | §4.12 | ✅ ALREADY EXISTS (structured_list_field_widgets.dart:475-480) |
+| 10 | `species` | 4 optional speed fields (burrow/climb/fly/swim) | Multi-speed support | §10.3 | ✅ DONE (PR-4) |
+| 11 | `magic-item` | `body_slot_ref` (yeni `body-slot` lookup) | Wearing limits | §7.3, §12.10 | ✅ DONE (PR-5) |
+| 12 | starter | `starter-bundle` Tier-1 kategorisi (L5/L11/L17 başlangıç) | Higher-level start | §1.7 | ✅ DONE (PR-6) |
 
 ### G.4 Önerilen PR Sırası
 
-1. **PR-1 (Foundation):** lookups.dart'a P0 mekanik-field'lı 5 lookup ekle (size/rarity/coin/lifestyle/duration-unit). Field type, seed rows, tier0Slugs güncelleme. **Etki:** ~10 mekanik PASS'a geçer.
-2. **PR-2 (Identifier Lookups):** P1 16 identifier-only lookup'ı ekle. Migration: enum string → entityId map. **Etki:** ~12 mekanik enum→relation upgrade.
-3. **PR-3 (PC Combat State):** PC'ye G.3#1, #2, #3, #4, #6 field'ları ekle. **Etki:** §3.13, §4.4, §7.1-7.3, §8.9 PASS.
-4. **PR-4 (Char Creation Edge):** G.3#7, #8, #9, #10 ekle. **Etki:** §1.2, §1.8, §4.12, §10.3 PASS.
-5. **PR-5 (Magic Item Slot):** G.3#11 + body-slot lookup. **Etki:** §7.3, §12.10 PASS.
-6. **PR-6 (Higher-Level Start):** G.3#12. **Etki:** §1.7 PASS. Düşük öncelik.
+1. **PR-1 (Foundation):** ✅ DONE (2026-04-29). lookups.dart'a 5 P0 lookup eklendi (size/rarity/coin/lifestyle/duration-unit) — `tier0Slugs` 15→20. Species/animal/monster `size_ref`, magic-item `rarity_ref`, spell `duration_unit_ref` enum→relation migration tamamlandı; seed dosyaları `lookup(slug, name)` placeholder'a geçirildi. entity_card.dart subtitle UI relName resolver'a güncellendi. 343 test geçer.
+2. **PR-2 (Identifier Lookups):** ✅ DONE (2026-04-29). 16 P1 identifier-only lookup eklendi: alignment (10 row, 'Neutral' kullanıldı SRD 2024'e uygun), weapon-category (6 row: Simple/Martial + Melee/Ranged kombinasyonları), armor-category, tool-category ('Other Tools' plural), feat-category, action (16 SRD action), area-shape (6), attitude (3), illumination (3), travel-pace (3), plane (26), casting-component (V/S/M), casting-time-unit (7), speed-type (5: Walk/Burrow/Climb/Fly/Swim), cover (3), tier-of-play (4). tier0Slugs 21→37. Migrated enum→relation: content.dart class.weapon_proficiency_categories/armor_training_refs, feat.category_ref, spell.casting_time_unit_ref/area_shape_ref/components, weapon.category_ref, armor.category_ref, tool.category_ref, magic-item.attunement_alignment_refs/sentient_alignment_ref, monster.alignment_ref. dm.dart NPC.alignment_ref/attitude_ref, PC.alignment_ref/weapon_proficiency_categories/armor_trainings, location.plane_ref/illumination_ref, scene.illumination_ref/travel_pace_ref. Seed dosyaları (`feats.dart` 62, `weapons.dart`, `armor.dart`, `tools.dart`, `classes.dart` 12 sınıf, `spells.dart`, `monsters.dart` 248, `animals.dart` 97) `lookup(slug, name)` placeholder'a geçirildi. _enumXxx const'lar silindi. 343 test passing.
+3. **PR-3 (PC Combat State):** ✅ MOSTLY DONE (2026-04-29). G.3#1 (4 resistance fields), #2 (equipped_armor_ref + equipped_shield_ref), #3 (held_weapons), #5 (current_lifestyle_ref), #6 (concentration_spell_ref + concentration_remaining_rounds) PC'ye eklendi. PC group label "Active Conditions" → "Defenses". G.3#4 (equipped_magic_items slot map) PR-5'e ertelendi (body-slot lookup'a bağımlı). 343 test geçer. **Sonuç:** §3.13, §4.4, §7.1-7.2, §8.9, §6.13 mekanikleri PASS.
+4. **PR-4 (Char Creation Edge):** ✅ DONE (2026-04-29). G.3#7 (`background.asi_distribution_options` enum-list, 4 SRD bg seed'e `['+2/+1','+1/+1/+1']` eklendi), #8 (`class.multiclass_granted_proficiencies` markdown — narrative seed deferred), #10 (species'e 4 optional speed field: burrow/climb/fly/swim eklendi, `speed_ft` label "Walking Speed" yapıldı). G.3#9 inceleme sonucu: `classFeatures` widget'ında `recharge` field zaten mevcut (`['', 'short-rest', 'long-rest', 'day']`) — `recharge_on` ismi farklı ama semantik denk. **Etki:** §1.2, §1.8, §4.12, §10.3 PASS. 343 test geçer.
+5. **PR-5 (Magic Item Slot):** ✅ DONE (2026-04-29). `body-slot` Tier-0 lookup eklendi (11 row: Head/Eyes/Neck/Shoulders/Body/Arms/Hands/Finger/Waist/Feet/None; `max_equipped` int field — Finger=2, others=1). tier0Slugs 20→21. Magic-item şemasına `body_slot_ref` (optional rel→body-slot). PC.equipped_magic_items rel-list eklendi (resolver body_slot_ref'e göre gruplar + max_equipped enforce eder; armor/shield/held_weapons ayrı field'larda kalır). 343 test geçer. **Etki:** §7.3, §12.10 PASS, G.3#4 PASS.
+6. **PR-6 (Higher-Level Start):** ✅ DONE (2026-04-29). Yeni `starter-bundle` Tier-1 kategorisi. Field'lar: `starting_level` (1..20, required), `starting_gold_gp` (required), `magic_item_choice_refs` (rel→magic-item, list), `magic_item_choice_count`, `granted_magic_items`, `notes` markdown. tier1Slugs 20→21. PC creation flow tier'a göre okur. **Etki:** §1.7 PASS. 343 test geçer.
 
 ### G.5 User Priority (Char Creation, Management, Level-up, Rest)
 
@@ -1329,9 +1329,9 @@ User'ın özellikle önem verdiği alanlar:
 
 | Alan | Durum | Blocker |
 |---|---|---|
-| **Karakter Yaratma** (D.2) | 3 PASS / 5 GAPS | §1.1 alignment lookup, §1.2 background ASI dist, §1.7 higher-level bundle, §1.8 multiclass profs |
-| **Yönetim** (PC schema) | Çoğu PASS | G.3#1 resistances, #2-4 equipped state, #5 lifestyle, #6 concentration |
-| **Level-up** (§1.5) | PASS | feature recharge_on (D.3.12) sadece runtime impact |
-| **Rest** (§4.12) | GAPS | feature recharge_on widget alanı |
+| **Karakter Yaratma** (D.2) | ✅ 8 PASS / 0 GAPS | §1.1 ✅ PR-2; §1.2 + §1.8 ✅ PR-4; §1.7 ✅ PR-6 |
+| **Yönetim** (PC schema) | ✅ PASS (PR-3 + PR-5) | — |
+| **Level-up** (§1.5) | PASS | — |
+| **Rest** (§4.12) | ✅ PASS | `recharge` field widget'ta zaten var (semantik denk) |
 
 **Öneri:** PR-3 ve PR-4'ü öncelendir; user-priority alanların 80%+'ı bu iki PR ile resolve.

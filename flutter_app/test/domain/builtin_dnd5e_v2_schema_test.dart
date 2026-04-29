@@ -10,18 +10,18 @@ void main() {
   final schema = build.schema;
 
   group('Builtin D&D 5e v2 Schema', () {
-    test('ships 15 Tier-0 + 20 Tier-1 + 13 Tier-2 = 48 categories', () {
-      expect(schema.categories.length, 48);
-      expect(tier0Slugs.length, 15);
-      expect(tier1Slugs.length, 20);
+    test('ships 37 Tier-0 + 21 Tier-1 + 13 Tier-2 = 71 categories', () {
+      expect(schema.categories.length, 71);
+      expect(tier0Slugs.length, 37);
+      expect(tier1Slugs.length, 21);
       expect(tier2Slugs.length, 13);
     });
 
     test('Tier order in catalog: Tier-0, Tier-1, Tier-2', () {
       final slugs = schema.categories.map((c) => c.slug).toList();
-      expect(slugs.sublist(0, 15), tier0Slugs);
-      expect(slugs.sublist(15, 35), tier1Slugs);
-      expect(slugs.sublist(35, 48), tier2Slugs);
+      expect(slugs.sublist(0, 37), tier0Slugs);
+      expect(slugs.sublist(37, 58), tier1Slugs);
+      expect(slugs.sublist(58, 71), tier2Slugs);
     });
 
     test('schema metadata', () {
@@ -42,21 +42,21 @@ void main() {
 
     test('Tier-0 slugs match tier0Slugs list', () {
       expect(
-        schema.categories.take(15).map((c) => c.slug).toList(),
+        schema.categories.take(37).map((c) => c.slug).toList(),
         tier0Slugs,
       );
     });
 
     test('Tier-1 slugs match tier1Slugs list', () {
       expect(
-        schema.categories.skip(15).take(20).map((c) => c.slug).toList(),
+        schema.categories.skip(37).take(21).map((c) => c.slug).toList(),
         tier1Slugs,
       );
     });
 
     test('Tier-2 slugs match tier2Slugs list', () {
       expect(
-        schema.categories.skip(35).map((c) => c.slug).toList(),
+        schema.categories.skip(58).map((c) => c.slug).toList(),
         tier2Slugs,
       );
     });
@@ -70,7 +70,7 @@ void main() {
 
     test('every Tier-0 category carries common lookup fields', () {
       const commonKeys = {'summary', 'icon_name', 'color'};
-      for (final cat in schema.categories.take(15)) {
+      for (final cat in schema.categories.take(37)) {
         final keys = cat.fields.map((f) => f.fieldKey).toSet();
         expect(keys.containsAll(commonKeys), true,
             reason: '${cat.slug} missing common fields');

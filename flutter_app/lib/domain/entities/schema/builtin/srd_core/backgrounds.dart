@@ -17,6 +17,7 @@ List<Map<String, dynamic>> srdBackgrounds() => [
             lookup('ability', 'Wisdom'),
             lookup('ability', 'Charisma'),
           ],
+          'asi_distribution_options': const ['+2/+1', '+1/+1/+1'],
           'origin_feat_ref': ref('feat', 'Magic Initiate'),
           'granted_skill_refs': [
             lookup('skill', 'Insight'),
@@ -61,6 +62,7 @@ List<Map<String, dynamic>> srdBackgrounds() => [
             lookup('ability', 'Constitution'),
             lookup('ability', 'Intelligence'),
           ],
+          'asi_distribution_options': const ['+2/+1', '+1/+1/+1'],
           'origin_feat_ref': ref('feat', 'Alert'),
           'granted_skill_refs': [
             lookup('skill', 'Sleight of Hand'),
@@ -105,6 +107,7 @@ List<Map<String, dynamic>> srdBackgrounds() => [
             lookup('ability', 'Intelligence'),
             lookup('ability', 'Wisdom'),
           ],
+          'asi_distribution_options': const ['+2/+1', '+1/+1/+1'],
           'origin_feat_ref': ref('feat', 'Magic Initiate'),
           'granted_skill_refs': [
             lookup('skill', 'Arcana'),
@@ -149,6 +152,7 @@ List<Map<String, dynamic>> srdBackgrounds() => [
             lookup('ability', 'Dexterity'),
             lookup('ability', 'Constitution'),
           ],
+          'asi_distribution_options': const ['+2/+1', '+1/+1/+1'],
           'origin_feat_ref': ref('feat', 'Savage Attacker'),
           'granted_skill_refs': [
             lookup('skill', 'Athletics'),
