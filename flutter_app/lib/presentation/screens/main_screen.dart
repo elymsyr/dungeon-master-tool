@@ -29,6 +29,7 @@ import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
 import '../widgets/app_icon_image.dart';
+import '../widgets/characters_sidebar.dart';
 import '../widgets/entity_sidebar.dart';
 import '../widgets/lazy_indexed_stack.dart';
 import '../widgets/pdf_sidebar.dart';
@@ -465,10 +466,10 @@ class _MainScreenState extends ConsumerState<MainScreen>
           // Edit Mode toggle
           IconButton(
             icon: Icon(
-              _editMode ? Icons.lock_open : Icons.lock,
+              _editMode ? Icons.edit : Icons.visibility,
               color: _editMode ? palette.tokenBorderActive : null,
             ),
-            tooltip: 'Edit Mode',
+            tooltip: _editMode ? 'View mode' : 'Edit mode',
             onPressed: () => setState(() => _editMode = !_editMode),
           ),
           // Player window status — always visible, jumps to projection panel
@@ -735,6 +736,19 @@ class _MainScreenState extends ConsumerState<MainScreen>
                                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                                 padding: const EdgeInsets.symmetric(horizontal: 8),
                               ),
+                              // Characters sidebar toggle
+                              IconButton(
+                                icon: Icon(
+                                  _rightSidebar == RightSidebar.characters ? Icons.people : Icons.people_outline,
+                                  size: 18,
+                                ),
+                                tooltip: _rightSidebar == RightSidebar.characters ? 'Close Characters' : 'Open Characters',
+                                color: _rightSidebar == RightSidebar.characters ? palette.tabIndicator : palette.tabText,
+                                onPressed: () { setState(() => _rightSidebar = _rightSidebar == RightSidebar.characters ? RightSidebar.none : RightSidebar.characters); _persistUiState(); },
+                                iconSize: 18,
+                                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                              ),
                             ],
                           ),
                         ),
@@ -784,16 +798,19 @@ class _MainScreenState extends ConsumerState<MainScreen>
                             ),
                           ],
                         ),
-                        child: _rightSidebar == RightSidebar.pdf
-                            ? PdfSidebar(
-                                openPaths: _pdfOpenPaths,
-                                activeIndex: _pdfActiveIndex,
-                                palette: palette,
-                                onTabSelect: (i) { setState(() => _pdfActiveIndex = i); _persistUiState(); },
-                                onTabClose: _closePdfTab,
-                                onOpenFile: _openPdfTab,
-                              )
-                            : SoundmapSidebar(palette: palette),
+                        child: switch (_rightSidebar) {
+                          RightSidebar.pdf => PdfSidebar(
+                              openPaths: _pdfOpenPaths,
+                              activeIndex: _pdfActiveIndex,
+                              palette: palette,
+                              onTabSelect: (i) { setState(() => _pdfActiveIndex = i); _persistUiState(); },
+                              onTabClose: _closePdfTab,
+                              onOpenFile: _openPdfTab,
+                            ),
+                          RightSidebar.soundmap => SoundmapSidebar(palette: palette),
+                          RightSidebar.characters => CharactersSidebar(palette: palette),
+                          RightSidebar.none => const SizedBox.shrink(),
+                        },
                       ),
                     ),
                   ],
@@ -910,6 +927,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // Ctrl+M: toggle Soundmap sidebar
     if (event.logicalKey == LogicalKeyboardKey.keyM) {
       setState(() => _rightSidebar = _rightSidebar == RightSidebar.soundmap ? RightSidebar.none : RightSidebar.soundmap);
+      _persistUiState();
+      return true;
+    }
+
+    // Ctrl+H: toggle Characters sidebar
+    if (event.logicalKey == LogicalKeyboardKey.keyH) {
+      setState(() => _rightSidebar = _rightSidebar == RightSidebar.characters ? RightSidebar.none : RightSidebar.characters);
       _persistUiState();
       return true;
     }

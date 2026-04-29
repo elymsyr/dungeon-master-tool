@@ -364,15 +364,15 @@ class _PackageScreenContentState
             return IconButton(
               icon: Icon(
                 isBuiltin
-                    ? Icons.lock_outline
-                    : (_editMode ? Icons.lock_open : Icons.lock),
+                    ? Icons.visibility_off_outlined
+                    : (_editMode ? Icons.edit : Icons.visibility),
                 color: _editMode && !isBuiltin
                     ? palette.tokenBorderActive
                     : null,
               ),
               tooltip: isBuiltin
                   ? 'Built-in package — read only. Use "Copy" from the Packages tab to make an editable clone.'
-                  : 'Edit Mode',
+                  : (_editMode ? 'View mode' : 'Edit mode'),
               onPressed: isBuiltin
                   ? null
                   : () => setState(() => _editMode = !_editMode),

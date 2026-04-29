@@ -9,7 +9,25 @@ import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 
 const _uuid = Uuid();
-const playerCategorySlug = 'player';
+
+/// Category slugs treated as a "Player" category for character creation
+/// purposes. `player-character` is the 2024 builtin v2 schema slug;
+/// `player` is the legacy default schema slug. Wizard + character editor
+/// accept either.
+const kPlayerCategorySlugs = ['player-character', 'player'];
+
+/// Legacy single-slug constant — kept so older call-sites keep working.
+/// Prefer [kPlayerCategorySlugs] + [findPlayerCategory] for new code.
+const playerCategorySlug = 'player-character';
+
+/// Resolve a Player-like category from a template, or null if absent.
+EntityCategorySchema? findPlayerCategory(WorldSchema template) {
+  for (final slug in kPlayerCategorySlugs) {
+    final cat = template.categories.where((c) => c.slug == slug).firstOrNull;
+    if (cat != null) return cat;
+  }
+  return null;
+}
 
 final characterRepositoryProvider =
     Provider<CharacterRepository>((_) => CharacterRepository());
@@ -36,15 +54,29 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     required String name,
     required WorldSchema template,
     required String worldName,
+    String description = '',
+    List<String> tags = const [],
+    String portraitPath = '',
+    Map<String, dynamic> seedFields = const {},
   }) async {
-    final playerCategory =
-        template.categories.firstWhere((c) => c.slug == playerCategorySlug);
+    final playerCategory = findPlayerCategory(template);
+    if (playerCategory == null) {
+      throw StateError(
+          'Template "${template.name}" has no Player category.');
+    }
     final now = DateTime.now().toUtc().toIso8601String();
+    final fields = _defaultFieldsFor(playerCategory);
+    for (final entry in seedFields.entries) {
+      fields[entry.key] = entry.value;
+    }
     final entity = Entity(
       id: _uuid.v4(),
       name: name,
-      categorySlug: playerCategorySlug,
-      fields: _defaultFieldsFor(playerCategory),
+      categorySlug: playerCategory.slug,
+      description: description,
+      imagePath: portraitPath,
+      tags: tags,
+      fields: fields,
     );
     final character = Character(
       id: _uuid.v4(),
@@ -67,9 +99,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     required String worldName,
     required WorldSchema newTemplate,
   }) async {
-    final playerCat = newTemplate.categories
-        .where((c) => c.slug == playerCategorySlug)
-        .firstOrNull;
+    final playerCat = findPlayerCategory(newTemplate);
     if (playerCat == null) return;
     final list = [...(state.valueOrNull ?? const <Character>[])];
     final defaults = _defaultFieldsFor(playerCat);

@@ -411,7 +411,8 @@ EntityCategorySchema _speciesCategory(String schemaId, String now, int orderInde
   fb.integer('speed_ft', 'Speed (ft)', required_: true, min: 0, max: 120);
   fb.relation('creature_type_ref', 'Creature Type', const ['creature-type'], required_: true);
   fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
-  fb.markdown('traits', 'Traits (narrative)', g: grpRules, required_: true);
+  fb.relation('trait_refs', 'Traits', const ['trait'], isList: true, g: grpRules);
+  fb.markdown('traits', 'Traits (narrative)', g: grpRules);
   fb.relation('granted_languages', 'Granted Languages', const ['language'], isList: true);
   fb.relation('granted_senses', 'Granted Senses', const ['sense'], isList: true);
   fb.relation('granted_damage_resistances', 'Damage Resistances', const ['damage-type'], isList: true);

@@ -6,6 +6,7 @@ import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../screens/admin/admin_screen.dart';
 import '../screens/characters/character_editor_screen.dart';
+import '../screens/characters/wizard/character_creation_wizard_screen.dart';
 import '../screens/hub/hub_screen.dart';
 import '../screens/landing/landing_screen.dart';
 import '../screens/main_screen.dart';
@@ -52,6 +53,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/admin',
       builder: (context, state) => const AdminScreen(),
+    ),
+    GoRoute(
+      path: '/character/new',
+      builder: (context, state) => const CharacterCreationWizardScreen(),
     ),
     GoRoute(
       path: '/character/:id',

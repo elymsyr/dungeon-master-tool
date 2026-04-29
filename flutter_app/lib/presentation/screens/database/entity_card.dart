@@ -473,7 +473,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
             const SizedBox(height: 8),
 
             // === DM NOTES — heading + rule, no boxed border ===
-            _SectionHeading(title: 'DM Notes', palette: palette, leadingIcon: Icons.lock),
+            EntityCardSectionHeading(title: 'DM Notes', palette: palette, leadingIcon: Icons.lock),
             const SizedBox(height: 6),
             MarkdownTextArea(
               controller: _dmNotesController,
@@ -691,7 +691,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 
     // Ungrouped fields — render under "Properties" heading, no boxed chrome.
     if (ungrouped.isNotEmpty) {
-      widgets.add(_SectionHeading(title: 'Properties', palette: palette));
+      widgets.add(EntityCardSectionHeading(title: 'Properties', palette: palette));
       widgets.add(const SizedBox(height: 8));
       widgets.add(Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -714,7 +714,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       // Cache row-split only when rendering the unfiltered list (edit mode).
       final useCache = identical(groupFields, fullGroupFields);
 
-      widgets.add(_CollapsibleGroupCard(
+      widgets.add(EntityCardCollapsibleGroupCard(
         group: group,
         palette: palette,
         centered: centered,
@@ -739,12 +739,13 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 
 /// Section heading: theme-aware title + optional red rule. SRD source-book pattern
 /// when palette.cardShowRule, modern flat when not. Uppercase per palette.cardHeadingUppercase.
-class _SectionHeading extends StatelessWidget {
+class EntityCardSectionHeading extends StatelessWidget {
   final String title;
   final DmToolColors palette;
   final IconData? leadingIcon;
 
-  const _SectionHeading({
+  const EntityCardSectionHeading({
+    super.key,
     required this.title,
     required this.palette,
     this.leadingIcon,
@@ -1137,13 +1138,14 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
 }
 
 /// Collapsible group — SRD heading + red rule, no boxed chrome. Optional centered content.
-class _CollapsibleGroupCard extends StatefulWidget {
+class EntityCardCollapsibleGroupCard extends StatefulWidget {
   final FieldGroup group;
   final DmToolColors palette;
   final Widget child;
   final bool centered;
 
-  const _CollapsibleGroupCard({
+  const EntityCardCollapsibleGroupCard({
+    super.key,
     required this.group,
     required this.palette,
     required this.child,
@@ -1151,10 +1153,10 @@ class _CollapsibleGroupCard extends StatefulWidget {
   });
 
   @override
-  State<_CollapsibleGroupCard> createState() => _CollapsibleGroupCardState();
+  State<EntityCardCollapsibleGroupCard> createState() => EntityCardCollapsibleGroupCardState();
 }
 
-class _CollapsibleGroupCardState extends State<_CollapsibleGroupCard> {
+class EntityCardCollapsibleGroupCardState extends State<EntityCardCollapsibleGroupCard> {
   late bool _collapsed;
 
   @override

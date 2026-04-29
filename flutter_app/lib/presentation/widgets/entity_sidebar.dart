@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../application/providers/character_provider.dart' show kPlayerCategorySlugs;
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../domain/entities/schema/builtin/content.dart' show tier1Slugs;
@@ -124,7 +126,8 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       )).toList(),
     ));
     final categories = widget.schema?.categories
-            .where((c) => !c.isArchived)
+            .where((c) =>
+                !c.isArchived && !kPlayerCategorySlugs.contains(c.slug))
             .toList() ??
         [];
 
@@ -442,19 +445,41 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
         Divider(height: 1, color: palette.sidebarDivider),
         Padding(
           padding: const EdgeInsets.all(8),
-          child: Row(
+          child: Column(
             children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: () => _showCreateDialog(context, categories),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: Text(l10n.btnCreate),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: palette.successBtnBg,
-                    foregroundColor: palette.successBtnText,
-                    minimumSize: const Size(0, 36),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () => _showCreateDialog(context, categories),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: Text(l10n.btnCreate),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: palette.successBtnBg,
+                        foregroundColor: palette.successBtnText,
+                        minimumSize: const Size(0, 36),
+                      ),
+                    ),
                   ),
-                ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.push('/character/new'),
+                      icon: const Icon(Icons.person_add, size: 16),
+                      label: const Text('Create Character',
+                          style: TextStyle(fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 32),
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
