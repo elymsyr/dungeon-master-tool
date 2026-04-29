@@ -25,20 +25,29 @@ List<Map<String, dynamic>> srdBackgrounds() => [
           'granted_tool_refs': [
             ref('tool', 'Calligrapher\'s Supplies'),
           ],
-          'default_inventory_refs': [
-            ref('tool', 'Calligrapher\'s Supplies'),
-            ref('adventuring-gear', 'Book'),
-            ref('adventuring-gear', 'Amulet (Holy Symbol)'),
-            ref('adventuring-gear', 'Parchment'),
-            ref('adventuring-gear', 'Robe'),
-          ],
           'starting_gold_gp': 8,
           'gold_alternative_gp': 50,
-          'starting_equipment':
-              'Choose A or B:\n\n'
-                  '- **(A)** Calligrapher\'s Supplies, Book (prayers), Holy Symbol, Parchment (10 sheets), Robe, 8 GP\n'
-                  '- **(B)** 50 GP\n\n'
-                  'The Magic Initiate feat granted by this background uses the Cleric spell list.',
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Calligrapher\'s Supplies, Book, Holy Symbol, Parchment, Robe, 8 GP',
+                  items: [
+                    eqItem('tool', 'Calligrapher\'s Supplies'),
+                    eqItem('adventuring-gear', 'Book'),
+                    eqItem('adventuring-gear', 'Amulet (Holy Symbol)'),
+                    eqItem('adventuring-gear', 'Parchment', qty: 10),
+                    eqItem('adventuring-gear', 'Robe'),
+                  ],
+                  goldGp: 8,
+                ),
+                eqOption(optionId: 'B', label: '50 GP', goldGp: 50),
+              ],
+            ),
+          ],
         },
       ),
       packEntity(
@@ -60,21 +69,29 @@ List<Map<String, dynamic>> srdBackgrounds() => [
           'granted_tool_refs': [
             ref('tool', 'Thieves\' Tools'),
           ],
-          'default_inventory_refs': [
-            ref('weapon', 'Dagger'),
-            ref('weapon', 'Dagger'),
-            ref('tool', 'Thieves\' Tools'),
-            ref('adventuring-gear', 'Crowbar'),
-            ref('adventuring-gear', 'Pouch'),
-            ref('adventuring-gear', 'Pouch'),
-            ref('adventuring-gear', 'Clothes, Traveler\'s'),
-          ],
           'starting_gold_gp': 16,
           'gold_alternative_gp': 50,
-          'starting_equipment':
-              'Choose A or B:\n\n'
-                  '- **(A)** 2 Daggers, Thieves\' Tools, Crowbar, 2 Pouches, Traveler\'s Clothes, 16 GP\n'
-                  '- **(B)** 50 GP',
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: '2 Daggers, Thieves\' Tools, Crowbar, 2 Pouches, Traveler\'s Clothes, 16 GP',
+                  items: [
+                    eqItem('weapon', 'Dagger', qty: 2),
+                    eqItem('tool', 'Thieves\' Tools'),
+                    eqItem('adventuring-gear', 'Crowbar'),
+                    eqItem('adventuring-gear', 'Pouch', qty: 2),
+                    eqItem('adventuring-gear', 'Clothes, Traveler\'s'),
+                  ],
+                  goldGp: 16,
+                ),
+                eqOption(optionId: 'B', label: '50 GP', goldGp: 50),
+              ],
+            ),
+          ],
         },
       ),
       packEntity(
@@ -96,20 +113,29 @@ List<Map<String, dynamic>> srdBackgrounds() => [
           'granted_tool_refs': [
             ref('tool', 'Calligrapher\'s Supplies'),
           ],
-          'default_inventory_refs': [
-            ref('weapon', 'Quarterstaff'),
-            ref('tool', 'Calligrapher\'s Supplies'),
-            ref('adventuring-gear', 'Book'),
-            ref('adventuring-gear', 'Parchment'),
-            ref('adventuring-gear', 'Robe'),
-          ],
           'starting_gold_gp': 8,
           'gold_alternative_gp': 50,
-          'starting_equipment':
-              'Choose A or B:\n\n'
-                  '- **(A)** Quarterstaff, Calligrapher\'s Supplies, Book (history), Parchment (8 sheets), Robe, 8 GP\n'
-                  '- **(B)** 50 GP\n\n'
-                  'The Magic Initiate feat granted by this background uses the Wizard spell list.',
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Quarterstaff, Calligrapher\'s Supplies, Book, Parchment, Robe, 8 GP',
+                  items: [
+                    eqItem('weapon', 'Quarterstaff'),
+                    eqItem('tool', 'Calligrapher\'s Supplies'),
+                    eqItem('adventuring-gear', 'Book'),
+                    eqItem('adventuring-gear', 'Parchment', qty: 8),
+                    eqItem('adventuring-gear', 'Robe'),
+                  ],
+                  goldGp: 8,
+                ),
+                eqOption(optionId: 'B', label: '50 GP', goldGp: 50),
+              ],
+            ),
+          ],
         },
       ),
       packEntity(
@@ -128,23 +154,30 @@ List<Map<String, dynamic>> srdBackgrounds() => [
             lookup('skill', 'Athletics'),
             lookup('skill', 'Intimidation'),
           ],
-          // Tool: one chosen Gaming Set kind. The pack-level `tool` slug only
-          // ships the generic "Gaming Set" tool; the variant is a player choice.
-          'default_inventory_refs': [
-            ref('weapon', 'Spear'),
-            ref('weapon', 'Shortbow'),
-            ref('ammunition', 'Arrows'),
-            ref('adventuring-gear', 'Healer\'s Kit'),
-            ref('adventuring-gear', 'Quiver'),
-            ref('adventuring-gear', 'Clothes, Traveler\'s'),
-          ],
           'starting_gold_gp': 14,
           'gold_alternative_gp': 50,
-          'starting_equipment':
-              'Choose A or B:\n\n'
-                  '- **(A)** Spear, Shortbow, 20 Arrows, Gaming Set (one chosen kind), Healer\'s Kit, Quiver, Traveler\'s Clothes, 14 GP\n'
-                  '- **(B)** 50 GP\n\n'
-                  '**Tool Proficiency.** Choose one kind of Gaming Set (Dice, Dragonchess, Playing Cards, or Three-Dragon Ante).',
+          'equipment_choice_groups': [
+            eqGroup(
+              groupId: 'starting_kit',
+              label: 'Starting Equipment',
+              options: [
+                eqOption(
+                  optionId: 'A',
+                  label: 'Spear, Shortbow, 20 Arrows, Gaming Set, Healer\'s Kit, Quiver, Traveler\'s Clothes, 14 GP',
+                  items: [
+                    eqItem('weapon', 'Spear'),
+                    eqItem('weapon', 'Shortbow'),
+                    eqItem('ammunition', 'Arrows', qty: 20),
+                    eqItem('adventuring-gear', 'Healer\'s Kit'),
+                    eqItem('adventuring-gear', 'Quiver'),
+                    eqItem('adventuring-gear', 'Clothes, Traveler\'s'),
+                  ],
+                  goldGp: 14,
+                ),
+                eqOption(optionId: 'B', label: '50 GP', goldGp: 50),
+              ],
+            ),
+          ],
         },
       ),
     ];

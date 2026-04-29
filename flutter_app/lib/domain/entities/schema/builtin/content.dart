@@ -263,6 +263,26 @@ class _FB {
         defaultValue: const <Map<String, dynamic>>[],
       );
 
+  void equipmentChoiceGroups(String k, String l, {String g = grpProgression}) =>
+      _base(
+        key: k,
+        label: l,
+        type: FieldType.equipmentChoiceGroups,
+        groupId: g,
+        gridSpan: 2,
+        defaultValue: const <Map<String, dynamic>>[],
+      );
+
+  void featEffectList(String k, String l, {String g = grpRules}) =>
+      _base(
+        key: k,
+        label: l,
+        type: FieldType.featEffectList,
+        groupId: g,
+        gridSpan: 2,
+        defaultValue: const <Map<String, dynamic>>[],
+      );
+
   void statBlock(String k, String l, {String g = grpAbilityScores}) =>
       _base(
         key: k,
@@ -336,12 +356,12 @@ EntityCategorySchema _classCategory(String schemaId, String now, int orderIndex)
   fb.relation('tool_proficiency_options', 'Tool Options', const ['tool'], isList: true, g: grpProgression);
   fb.enum_('armor_training_refs', 'Armor Training', _enumArmorCategories,
       isList: true, g: grpProgression);
-  // Typed starting inventory (auto-import to PC.inventory). Markdown options for
-  // narrative choice (Option A vs B etc.).
+  // Typed starting inventory (auto-import to PC.inventory) — granted unconditionally.
+  // Use equipment_choice_groups for "Choose A or B" structured picks; resolver merges both.
   fb.relation('default_inventory_refs', 'Default Inventory',
       const ['adventuring-gear', 'weapon', 'armor', 'tool', 'pack', 'ammunition'],
       isList: true, g: grpProgression);
-  fb.markdown('starting_equipment_options', 'Starting Equipment Options (narrative)', g: grpProgression);
+  fb.equipmentChoiceGroups('equipment_choice_groups', 'Starting Equipment Choices', g: grpProgression);
   fb.dice('starting_gold_dice', 'Starting Gold Dice', g: grpProgression);
   fb.enum_('complexity', 'Complexity', const ['Low', 'Average', 'High'], g: grpProgression);
   fb.relation('casting_ability_ref', 'Casting Ability', const ['ability'], g: grpSpellcasting);
@@ -412,7 +432,6 @@ EntityCategorySchema _speciesCategory(String schemaId, String now, int orderInde
   fb.relation('creature_type_ref', 'Creature Type', const ['creature-type'], required_: true);
   fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
   fb.relation('trait_refs', 'Traits', const ['trait'], isList: true, g: grpRules);
-  fb.markdown('traits', 'Traits (narrative)', g: grpRules);
   fb.relation('granted_languages', 'Granted Languages', const ['language'], isList: true);
   fb.relation('granted_senses', 'Granted Senses', const ['sense'], isList: true);
   fb.relation('granted_damage_resistances', 'Damage Resistances', const ['damage-type'], isList: true);
@@ -444,11 +463,12 @@ EntityCategorySchema _backgroundCategory(String schemaId, String now, int orderI
   fb.integer('granted_language_count', 'Granted Language Count', min: 0, max: 5);
   fb.relation('ability_score_options', 'Ability Score Options', const ['ability'], isList: true, required_: true);
   fb.relation('origin_feat_ref', 'Origin Feat', const ['feat'], required_: true);
-  // Typed starting equipment (auto-import to PC.inventory). Markdown kept for narrative.
+  // Typed starting equipment (auto-import to PC.inventory) — granted unconditionally.
+  // Use equipment_choice_groups for structured A/B picks; resolver merges both.
   fb.relation('default_inventory_refs', 'Default Inventory',
       const ['adventuring-gear', 'weapon', 'armor', 'tool', 'pack', 'ammunition'],
       isList: true, g: grpRules);
-  fb.markdown('starting_equipment', 'Starting Equipment (narrative)', g: grpRules, required_: true);
+  fb.equipmentChoiceGroups('equipment_choice_groups', 'Starting Equipment Choices', g: grpRules);
   fb.integer('starting_gold_gp', 'Starting Gold (gp)', min: 0);
   fb.integer('gold_alternative_gp', 'Gold Alternative (gp)', min: 0,
       help: 'Choose this gp instead of default_inventory_refs');
@@ -488,9 +508,14 @@ EntityCategorySchema _featCategory(String schemaId, String now, int orderIndex) 
   fb.relation('asi_ability_options', 'ASI Ability Options', const ['ability'], isList: true, g: grpRules);
   fb.integer('asi_amount', 'ASI Amount', min: 0, max: 2, defaultValue: 0, g: grpRules);
   fb.integer('asi_max_score', 'ASI Max Score Cap', min: 1, max: 30, defaultValue: 20, g: grpRules);
-  fb.markdown('ability_score_increase', 'Ability Score Increase (narrative)', g: grpRules);
+  // Typed effect DSL — applied by CharacterResolver. Covers level grants,
+  // proficiency / language / spell / cantrip grants, AC / speed / HP / initiative
+  // / attack bonuses, extra-attack bumps, and choice-group sub-pickers.
+  fb.featEffectList('effects', 'Effects (typed)', g: grpRules);
+  // Legacy typed bonus DSL — narrower than `effects` but still rendered.
+  // Resolver consumes both; new content should prefer `effects`.
   fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
-  fb.markdown('benefits', 'Benefits (narrative)', g: grpRules, required_: true);
+  fb.markdown('benefits', 'Flavor / Edge Cases (narrative)', g: grpRules);
 
   return _mk(
     schemaId: schemaId,

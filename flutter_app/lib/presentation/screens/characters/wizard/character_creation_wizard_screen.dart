@@ -17,6 +17,8 @@ import '../../../../domain/entities/entity.dart';
 import '../../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../../domain/entities/schema/world_schema.dart';
 import '../../../theme/dm_tool_colors.dart';
+import 'steps/equipment_step.dart';
+import 'steps/subclass_step.dart';
 
 /// Multi-step D&D 5e character creation wizard. Authors a [CharacterDraft]
 /// across six steps then commits via `characterListProvider.create`,
@@ -220,9 +222,16 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Background'),
+                      title: const Text('Subclass'),
                       isActive: _currentStep >= 3,
                       state: _stateFor(3, draft),
+                      content:
+                          SubclassStep(draft: draft, notifier: notifier),
+                    ),
+                    Step(
+                      title: const Text('Background'),
+                      isActive: _currentStep >= 4,
+                      state: _stateFor(4, draft),
                       content: _EntityPickStep(
                         title: 'Background',
                         slugs: const ['background'],
@@ -232,16 +241,23 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
+                      title: const Text('Equipment'),
+                      isActive: _currentStep >= 5,
+                      state: _stateFor(5, draft),
+                      content:
+                          EquipmentStep(draft: draft, notifier: notifier),
+                    ),
+                    Step(
                       title: const Text('Abilities'),
-                      isActive: _currentStep >= 4,
-                      state: _stateFor(4, draft),
+                      isActive: _currentStep >= 6,
+                      state: _stateFor(6, draft),
                       content:
                           _AbilitiesStep(draft: draft, notifier: notifier),
                     ),
                     Step(
                       title: const Text('Review'),
-                      isActive: _currentStep >= 5,
-                      state: _stateFor(5, draft),
+                      isActive: _currentStep >= 7,
+                      state: _stateFor(7, draft),
                       content: _ReviewStep(draft: draft),
                     ),
                   ],
@@ -254,7 +270,7 @@ class _CharacterCreationWizardScreenState
     );
   }
 
-  static const _stepCount = 6;
+  static const _stepCount = 8;
 
   StepState _stateFor(int index, CharacterDraft draft) {
     if (_currentStep == index) return StepState.editing;
@@ -276,11 +292,13 @@ class _CharacterCreationWizardScreenState
       1 => draft.raceId == null ? 'Pick a race.' : null,
       2 => draft.classId == null ? 'Pick a class.' : null,
       3 => null,
-      4 => AbilityScoreValidator.validate(
+      4 => null,
+      5 => null,
+      6 => AbilityScoreValidator.validate(
           method: draft.abilityMethod,
           scores: draft.baseAbilities,
         ),
-      5 => null,
+      7 => null,
       _ => null,
     };
   }
@@ -436,6 +454,21 @@ Map<String, dynamic> _buildSeedFields({
   if (characterClass != null && fieldsByKey.containsKey('class_levels')) {
     out['class_levels'] = {characterClass.id: draft.level};
   }
+
+  // Resolver inputs — these keys are read by CharacterResolver. They live
+  // outside the player-category schema (template-agnostic) so we always
+  // write them regardless of fieldsByKey.
+  out['race_id'] = draft.raceId ?? '';
+  out['background_id'] = draft.backgroundId ?? '';
+  out['subclass_id'] = draft.subclassId ?? '';
+  out['feat_ids'] = [
+    if (background?.fields['origin_feat_ref'] is String)
+      background!.fields['origin_feat_ref'] as String,
+    ...draft.featIds,
+  ];
+  out['equipment_choices'] = Map<String, String>.from(draft.equipmentChoices);
+  out['feat_choices'] = Map<String, String>.from(draft.originFeatChoices);
+  out['base_abilities'] = stat;
 
   // Inherit race / species traits + granted refs onto the PC. Species
   // exposes them as `trait_refs` / `granted_languages` / `granted_senses`

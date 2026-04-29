@@ -92,8 +92,6 @@ List<Map<String, dynamic>> srdFeats() => [
           ],
           'asi_amount': 2,
           'asi_max_score': 20,
-          'ability_score_increase':
-              'Increase one ability score of your choice by 2, or increase two ability scores of your choice by 1. This feat can\'t increase an ability score above 20.',
           'benefits':
               'Increase one ability score of your choice by 2, or increase two ability scores of your choice by 1. This feat can\'t increase an ability score above 20.\n\n'
                   '**Repeatable.** You can take this feat more than once.',
@@ -117,8 +115,6 @@ List<Map<String, dynamic>> srdFeats() => [
           ],
           'asi_amount': 1,
           'asi_max_score': 20,
-          'ability_score_increase':
-              'Increase your Strength or Dexterity score by 1, to a maximum of 20.',
           'benefits':
               'You gain the following benefits.\n\n'
                   '**Ability Score Increase.** Increase your Strength or Dexterity score by 1, to a maximum of 20.\n\n'
@@ -201,8 +197,6 @@ List<Map<String, dynamic>> srdFeats() => [
           ],
           'asi_amount': 1,
           'asi_max_score': 30,
-          'ability_score_increase':
-              'Increase one ability score of your choice by 1, to a maximum of 30.',
           'benefits':
               'You gain the following benefits.\n\n'
                   '**Ability Score Increase.** Increase one ability score of your choice by 1, to a maximum of 30.\n\n'
@@ -229,8 +223,6 @@ List<Map<String, dynamic>> srdFeats() => [
           ],
           'asi_amount': 1,
           'asi_max_score': 30,
-          'ability_score_increase':
-              'Increase one ability score of your choice by 1, to a maximum of 30.',
           'benefits':
               'You gain the following benefits.\n\n'
                   '**Ability Score Increase.** Increase one ability score of your choice by 1, to a maximum of 30.\n\n'
@@ -257,8 +249,6 @@ List<Map<String, dynamic>> srdFeats() => [
           ],
           'asi_amount': 1,
           'asi_max_score': 30,
-          'ability_score_increase':
-              'Increase one ability score of your choice by 1, to a maximum of 30.',
           'benefits':
               'You gain the following benefits.\n\n'
                   '**Ability Score Increase.** Increase one ability score of your choice by 1, to a maximum of 30.\n\n'
@@ -281,8 +271,6 @@ List<Map<String, dynamic>> srdFeats() => [
           ],
           'asi_amount': 1,
           'asi_max_score': 30,
-          'ability_score_increase':
-              'Increase your Strength or Dexterity score by 1, to a maximum of 30.',
           'benefits':
               'You gain the following benefits.\n\n'
                   '**Ability Score Increase.** Increase your Strength or Dexterity score by 1, to a maximum of 30.\n\n'
@@ -308,8 +296,6 @@ List<Map<String, dynamic>> srdFeats() => [
           ],
           'asi_amount': 1,
           'asi_max_score': 30,
-          'ability_score_increase':
-              'Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 30.',
           'benefits':
               'You gain the following benefits.\n\n'
                   '**Ability Score Increase.** Increase your Intelligence, Wisdom, or Charisma score by 1, to a maximum of 30.\n\n'
@@ -336,8 +322,6 @@ List<Map<String, dynamic>> srdFeats() => [
           ],
           'asi_amount': 1,
           'asi_max_score': 30,
-          'ability_score_increase':
-              'Increase one ability score of your choice by 1, to a maximum of 30.',
           'benefits':
               'You gain the following benefits.\n\n'
                   '**Ability Score Increase.** Increase one ability score of your choice by 1, to a maximum of 30.\n\n'
@@ -364,8 +348,6 @@ List<Map<String, dynamic>> srdFeats() => [
           ],
           'asi_amount': 1,
           'asi_max_score': 30,
-          'ability_score_increase':
-              'Increase one ability score of your choice by 1, to a maximum of 30.',
           'benefits':
               'You gain the following benefits.\n\n'
                   '**Ability Score Increase.** Increase one ability score of your choice by 1, to a maximum of 30.\n\n'
