@@ -552,17 +552,18 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final f = entity.fields;
     final slug = entity.categorySlug.toLowerCase();
     String relName(String key) {
-      final id = f[key];
-      if (id is! String || id.isEmpty) return '';
-      final ent = ref.read(entityProvider)[id];
-      return ent?.name ?? '';
+      final entities = ref.read(entityProvider);
+      final id = resolveRelationId(f[key], entities);
+      if (id.isEmpty) return '';
+      return entities[id]?.name ?? '';
     }
     List<String> relNames(String key) {
       final v = f[key];
       if (v is! List) return const [];
       final entities = ref.read(entityProvider);
       return v
-          .whereType<String>()
+          .map((e) => resolveRelationId(e, entities))
+          .where((id) => id.isNotEmpty)
           .map((id) => entities[id]?.name ?? '')
           .where((s) => s.isNotEmpty)
           .toList();

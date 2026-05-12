@@ -15,6 +15,28 @@ import '../../theme/dm_tool_colors.dart';
 import '../markdown_text_area.dart';
 import 'structured_list_field_widgets.dart';
 
+/// Resolve a relation field value to an entity UUID. Handles three formats
+/// stored in `fields`:
+///   * String UUID (normal resolved relation).
+///   * `{_lookup: <slug>, name: <row>}` — Tier-0 placeholder that escaped
+///     import-time resolution (stale data from earlier app version).
+///   * `{_ref: <slug>, name: <row>}` — Tier-1 placeholder, treated the same.
+/// Returns the matching entity's UUID or '' when nothing fits.
+String resolveRelationId(dynamic value, Map<String, Entity>? entities) {
+  if (value is String) return value;
+  if (value is Map) {
+    final slug = (value['_lookup'] ?? value['_ref']);
+    final name = value['name'];
+    if (slug is String && name is String && entities != null) {
+      for (final e in entities.values) {
+        if (e.categorySlug == slug && e.name == name) return e.id;
+      }
+    }
+    return '';
+  }
+  return '';
+}
+
 /// Short subtitle for a related entity, surfaced under the chip name in
 /// relation list fields. Lets readers scan a relation without opening
 /// the linked card. Slug-specific — falls back to category label / null.
@@ -728,7 +750,7 @@ class _RelationFieldWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final linkedId = value?.toString() ?? '';
+    final linkedId = resolveRelationId(value, entities);
     final linkedEntity = (linkedId.isNotEmpty && entities != null)
         ? entities![linkedId]
         : null;
@@ -1452,7 +1474,12 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
   List<Map<String, dynamic>> _parseItems(dynamic value) {
     if (value is! List) return [];
     return value.map<Map<String, dynamic>>((e) {
-      if (e is Map) return Map<String, dynamic>.from(e);
+      if (e is Map) {
+        if (e['_lookup'] != null || e['_ref'] != null) {
+          return {'id': resolveRelationId(e, entities), 'equipped': false};
+        }
+        return Map<String, dynamic>.from(e);
+      }
       if (e is String) return {'id': e, 'equipped': false};
       return {'id': e.toString(), 'equipped': false};
     }).toList();
@@ -1491,7 +1518,12 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
     if (v is! List) return const [];
     return v.map<String>((e) {
       if (e is String) return e;
-      if (e is Map) return (e['id']?.toString() ?? '');
+      if (e is Map) {
+        if (e['_lookup'] != null || e['_ref'] != null) {
+          return resolveRelationId(e, entities);
+        }
+        return (e['id']?.toString() ?? '');
+      }
       return e.toString();
     }).where((s) => s.isNotEmpty).toList();
   }
