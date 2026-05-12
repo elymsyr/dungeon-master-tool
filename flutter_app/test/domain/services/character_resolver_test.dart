@@ -265,6 +265,184 @@ void main() {
       );
     });
 
+    test('subclass saving_throw_refs add proficient saves beyond class', () {
+      final strAbility = _e(
+        id: 'ab_str',
+        slug: 'ability',
+        name: 'Strength',
+      );
+      final wisAbility = _e(
+        id: 'ab_wis',
+        slug: 'ability',
+        name: 'Wisdom',
+      );
+      final cls = _e(
+        id: 'cls_fighter',
+        slug: 'class',
+        name: 'Fighter',
+        fields: {
+          'saving_throw_refs': [
+            {'slug': 'ability', 'name': 'Strength'},
+          ],
+        },
+      );
+      final sub = _e(
+        id: 'sub_eldritch_knight',
+        slug: 'subclass',
+        name: 'Eldritch Knight',
+        fields: {
+          'granted_at_level': 3,
+          'saving_throw_refs': [
+            {'slug': 'ability', 'name': 'Wisdom'},
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'class_levels': {'cls_fighter': 3},
+        'subclass_id': 'sub_eldritch_knight',
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        cls.id: cls,
+        sub.id: sub,
+        strAbility.id: strAbility,
+        wisAbility.id: wisAbility,
+      });
+      expect(
+        eff.proficiencies.savingThrowAbilityIds,
+        containsAll(['ab_str', 'ab_wis']),
+      );
+    });
+
+    test('subspecies row folds granted_damage_resistances into character', () {
+      final fire = _e(
+        id: 'dmg_fire',
+        slug: 'damage-type',
+        name: 'Fire',
+      );
+      final dragonborn = _e(
+        id: 'species_dragonborn',
+        slug: 'species',
+        name: 'Dragonborn',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Red',
+              'granted_damage_resistances': [
+                {'slug': 'damage-type', 'name': 'Fire'},
+              ],
+            },
+            {
+              'name': 'Black',
+              'granted_damage_resistances': [
+                {'slug': 'damage-type', 'name': 'Acid'},
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_dragonborn',
+        'subspecies_id': 'Red',
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        dragonborn.id: dragonborn,
+        fire.id: fire,
+      });
+      expect(eff.damageResistanceIds, contains('dmg_fire'));
+    });
+
+    test('subspecies row speed_bonus modifier stacks with base speed', () {
+      final elf = _e(
+        id: 'species_elf',
+        slug: 'species',
+        name: 'Elf',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Wood Elf',
+              'granted_modifiers': [
+                {'kind': 'speed_bonus', 'value': 5},
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_elf',
+        'subspecies_id': 'Wood Elf',
+      });
+      final eff = CharacterResolver.resolve(pc, {elf.id: elf});
+      expect(eff.speedBonus, 5);
+    });
+
+    test('subspecies_id with no matching row is a no-op', () {
+      final elf = _e(
+        id: 'species_elf',
+        slug: 'species',
+        name: 'Elf',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Wood Elf',
+              'granted_modifiers': [
+                {'kind': 'speed_bonus', 'value': 5},
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_elf',
+        'subspecies_id': 'High Elf',
+      });
+      final eff = CharacterResolver.resolve(pc, {elf.id: elf});
+      expect(eff.speedBonus, 0);
+    });
+
+    test('subclass feature with proficiency_grant (saving_throw) folds in', () {
+      final chaAbility = _e(
+        id: 'ab_cha',
+        slug: 'ability',
+        name: 'Charisma',
+      );
+      final cls = _e(
+        id: 'cls_sorcerer',
+        slug: 'class',
+        name: 'Sorcerer',
+      );
+      final sub = _e(
+        id: 'sub_soul',
+        slug: 'subclass',
+        name: 'Soul of Sorcery',
+        fields: {
+          'granted_at_level': 1,
+          'features': [
+            {
+              'level': 1,
+              'name': 'Soul Save',
+              'effects': [
+                {
+                  'kind': 'proficiency_grant',
+                  'target_kind': 'saving_throw',
+                  'target_ref': {'slug': 'ability', 'name': 'Charisma'},
+                },
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'class_levels': {'cls_sorcerer': 1},
+        'subclass_id': 'sub_soul',
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        cls.id: cls,
+        sub.id: sub,
+        chaAbility.id: chaAbility,
+      });
+      expect(eff.proficiencies.savingThrowAbilityIds, contains('ab_cha'));
+    });
+
     test('feat level_grant fixed-point terminates with mutual cycle', () {
       final wizard = _e(id: 'cls_wiz', slug: 'class', name: 'Wizard');
       final fighter = _e(id: 'cls_ftr', slug: 'class', name: 'Fighter');

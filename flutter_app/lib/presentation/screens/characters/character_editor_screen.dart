@@ -774,6 +774,7 @@ class _CharacterEditorScreenState
       toLevel: toLvl,
       classEntity: classEntity,
       subclassEntity: subclassEntity,
+      entities: entities,
     );
     if (!plan.isLevelUp) return;
 
@@ -807,12 +808,28 @@ class _CharacterEditorScreenState
       }
     }
 
+    // Spells already on the sheet — cantrips + leveled spells are both
+    // stored in `spells_known`; merging `prepared_spells` keeps the
+    // picker from re-offering a prepared-but-not-yet-known spell.
+    final existingSpellIds = <String>{};
+    void collectSpells(Object? raw) {
+      if (raw is List) {
+        for (final id in raw) {
+          if (id is String && id.isNotEmpty) existingSpellIds.add(id);
+        }
+      }
+    }
+    collectSpells(base.entity.fields['spells_known']);
+    collectSpells(base.entity.fields['prepared_spells']);
+
     final result = await LevelUpDialog.show(
       context,
       plan,
       entities: entities,
       abilityScores: scoresEntries,
       existingFeatIds: existingFeatIds,
+      classId: classId,
+      existingSpellIds: existingSpellIds,
     );
     if (!mounted || result == null || !result.applied) return;
 
@@ -854,6 +871,58 @@ class _CharacterEditorScreenState
       updated['max_hp'] = asInt(updated['max_hp']) + result.hpDelta;
       updated['hp'] = asInt(updated['hp']) + result.hpDelta;
     }
+
+    // SRD §1.6: gain one Hit Die per level. Max is derived from `level`
+    // (no separate field), so we only carry forward `hit_dice_remaining`
+    // and add the levels gained, clamped to the new max. When the field
+    // was never written we assume the character was at full dice for
+    // their old level — matches the fallback used by Short/Long Rest.
+    final levelsGained = plan.levelsGained;
+    if (levelsGained > 0) {
+      final newMaxHd = plan.toLevel;
+      final prevHd = updated.containsKey('hit_dice_remaining')
+          ? asInt(updated['hit_dice_remaining'])
+          : plan.fromLevel;
+      updated['hit_dice_remaining'] =
+          (prevHd + levelsGained).clamp(0, newMaxHd);
+    }
+
+    // SRD §1.5: writing the new slot pool. Max is rewritten outright so
+    // pact-tier shifts (L2 → L3) discard the old entry. Remaining keeps
+    // any spent slots the player carried over (so leveling up doesn't
+    // restore slots), then adds the per-spell-level delta as fresh
+    // capacity — clamped to the new max.
+    final newSlots = plan.newSpellSlots;
+    if (newSlots != null && newSlots.isNotEmpty) {
+      final prevSlots = plan.prevSpellSlots ?? const <int, int>{};
+      final prevRemainingRaw = updated['spell_slots_remaining_by_level'];
+      int prevRem(int spellLevel) {
+        if (prevRemainingRaw is Map) {
+          final v = prevRemainingRaw[spellLevel.toString()] ??
+              prevRemainingRaw[spellLevel];
+          if (v is int) return v;
+          if (v is String) {
+            return int.tryParse(v) ?? (prevSlots[spellLevel] ?? 0);
+          }
+        }
+        return prevSlots[spellLevel] ?? 0;
+      }
+
+      final maxOut = <String, dynamic>{};
+      final remainingOut = <String, dynamic>{};
+      for (final entry in newSlots.entries) {
+        final k = entry.key;
+        final keyStr = k.toString();
+        final newMax = entry.value;
+        maxOut[keyStr] = newMax;
+        final delta = newMax - (prevSlots[k] ?? 0);
+        final base = prevRem(k);
+        remainingOut[keyStr] = (base + delta).clamp(0, newMax);
+      }
+      updated['spell_slots_by_level'] = maxOut;
+      updated['spell_slots_remaining_by_level'] = remainingOut;
+    }
+
     if (result.newProfBonus > 0) {
       updated['proficiency_bonus'] = result.newProfBonus;
     }
@@ -872,6 +941,49 @@ class _CharacterEditorScreenState
 
     appendFeatId(result.newFeatId);
     appendFeatId(result.newFightingStyleId);
+
+    if (result.newSpellIds.isNotEmpty) {
+      final list = updated['spells_known'];
+      final next = list is List
+          ? List<String>.from(list.whereType<String>())
+          : <String>[];
+      for (final id in result.newSpellIds) {
+        if (id.isEmpty) continue;
+        if (!next.contains(id)) next.add(id);
+      }
+      updated['spells_known'] = next;
+    }
+
+    // SRD §1.5: class resource pool maxes (Rage, Ki, Bardic Inspiration,
+    // …) computed from class+subclass features. The character carries
+    // *remaining* counts forward where they existed before and adds the
+    // delta as fresh capacity; a pool that goes away (rare) is dropped.
+    if (plan.newResourcePools.isNotEmpty ||
+        plan.prevResourcePools.isNotEmpty) {
+      final maxOut = <String, dynamic>{};
+      final remainingOut = <String, dynamic>{};
+      final prevRemainingRaw = updated['class_resource_pools_remaining'];
+      int prevRem(String pool, int prevMax) {
+        if (prevRemainingRaw is Map) {
+          final v = prevRemainingRaw[pool];
+          if (v is int) return v;
+          if (v is String) return int.tryParse(v) ?? prevMax;
+        }
+        return prevMax;
+      }
+
+      for (final entry in plan.newResourcePools.entries) {
+        final pool = entry.key;
+        final newMax = entry.value;
+        maxOut[pool] = newMax;
+        final prevMax = plan.prevResourcePools[pool] ?? 0;
+        final base = prevRem(pool, prevMax);
+        final delta = newMax - prevMax;
+        remainingOut[pool] = (base + delta).clamp(0, newMax);
+      }
+      updated['class_resource_pools'] = maxOut;
+      updated['class_resource_pools_remaining'] = remainingOut;
+    }
 
     _mutate(base.copyWith(
       entity: base.entity.copyWith(fields: updated),

@@ -438,6 +438,14 @@ EntityCategorySchema _speciesCategory(String schemaId, String now, int orderInde
   fb.relation('granted_senses', 'Granted Senses', const ['sense'], isList: true);
   fb.relation('granted_damage_resistances', 'Damage Resistances', const ['damage-type'], isList: true);
   fb.relation('granted_skill_proficiencies', 'Skill Proficiencies', const ['skill'], isList: true);
+  // Lineage / subspecies / ancestry options. Each row carries a name, a
+  // narrative description, and (optionally) the same ref-list grant fields
+  // available at the species level — folded by CharacterResolver when the
+  // character entity declares a matching `subspecies_id`. The schema field
+  // is registered as markdown so the wire key is allowed; the actual rows
+  // are authored in code (SRD seed data).
+  fb.markdown('subspecies_options', 'Subspecies / Lineage Options',
+      g: grpRules);
   fb.text('age', 'Typical Lifespan');
 
   return _mk(

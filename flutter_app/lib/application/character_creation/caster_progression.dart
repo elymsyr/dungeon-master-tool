@@ -92,3 +92,137 @@ int maxPreparableSpellLevel(CasterKind kind, int level) {
     CasterKind.none => 0,
   };
 }
+
+// SRD §1.5 spell-slot tables, indexed by character level - 1.
+// Each row is `[slots at L1, L2, ..., LMax]`; zeros are sparse-encoded
+// (omitted) in the public map.
+
+const _fullCasterSlots = <List<int>>[
+  [2, 0, 0, 0, 0, 0, 0, 0, 0],
+  [3, 0, 0, 0, 0, 0, 0, 0, 0],
+  [4, 2, 0, 0, 0, 0, 0, 0, 0],
+  [4, 3, 0, 0, 0, 0, 0, 0, 0],
+  [4, 3, 2, 0, 0, 0, 0, 0, 0],
+  [4, 3, 3, 0, 0, 0, 0, 0, 0],
+  [4, 3, 3, 1, 0, 0, 0, 0, 0],
+  [4, 3, 3, 2, 0, 0, 0, 0, 0],
+  [4, 3, 3, 3, 1, 0, 0, 0, 0],
+  [4, 3, 3, 3, 2, 0, 0, 0, 0],
+  [4, 3, 3, 3, 2, 1, 0, 0, 0],
+  [4, 3, 3, 3, 2, 1, 0, 0, 0],
+  [4, 3, 3, 3, 2, 1, 1, 0, 0],
+  [4, 3, 3, 3, 2, 1, 1, 0, 0],
+  [4, 3, 3, 3, 2, 1, 1, 1, 0],
+  [4, 3, 3, 3, 2, 1, 1, 1, 0],
+  [4, 3, 3, 3, 2, 1, 1, 1, 1],
+  [4, 3, 3, 3, 3, 1, 1, 1, 1],
+  [4, 3, 3, 3, 3, 2, 1, 1, 1],
+  [4, 3, 3, 3, 3, 2, 2, 1, 1],
+];
+
+const _halfCasterSlots = <List<int>>[
+  [0, 0, 0, 0, 0],
+  [2, 0, 0, 0, 0],
+  [3, 0, 0, 0, 0],
+  [3, 0, 0, 0, 0],
+  [4, 2, 0, 0, 0],
+  [4, 2, 0, 0, 0],
+  [4, 3, 0, 0, 0],
+  [4, 3, 0, 0, 0],
+  [4, 3, 2, 0, 0],
+  [4, 3, 2, 0, 0],
+  [4, 3, 3, 0, 0],
+  [4, 3, 3, 0, 0],
+  [4, 3, 3, 1, 0],
+  [4, 3, 3, 1, 0],
+  [4, 3, 3, 2, 0],
+  [4, 3, 3, 2, 0],
+  [4, 3, 3, 3, 1],
+  [4, 3, 3, 3, 1],
+  [4, 3, 3, 3, 2],
+  [4, 3, 3, 3, 2],
+];
+
+const _thirdCasterSlots = <List<int>>[
+  [0, 0, 0, 0],
+  [0, 0, 0, 0],
+  [2, 0, 0, 0],
+  [3, 0, 0, 0],
+  [3, 0, 0, 0],
+  [3, 0, 0, 0],
+  [4, 2, 0, 0],
+  [4, 2, 0, 0],
+  [4, 2, 0, 0],
+  [4, 3, 0, 0],
+  [4, 3, 0, 0],
+  [4, 3, 0, 0],
+  [4, 3, 2, 0],
+  [4, 3, 2, 0],
+  [4, 3, 2, 0],
+  [4, 3, 3, 0],
+  [4, 3, 3, 0],
+  [4, 3, 3, 0],
+  [4, 3, 3, 1],
+  [4, 3, 3, 1],
+];
+
+// Pact (Warlock): `[count, slotLevel]` — all slots are at the same level
+// and recharge on a short rest, not a long one.
+const _pactSlots = <List<int>>[
+  [1, 1],
+  [2, 1],
+  [2, 2],
+  [2, 2],
+  [2, 3],
+  [2, 3],
+  [2, 4],
+  [2, 4],
+  [2, 5],
+  [2, 5],
+  [3, 5],
+  [3, 5],
+  [3, 5],
+  [3, 5],
+  [3, 5],
+  [3, 5],
+  [4, 5],
+  [4, 5],
+  [4, 5],
+  [4, 5],
+];
+
+/// SRD §1.5 default spell-slot map at character level [level]. The result
+/// keys are spell levels (1..9), values are slot counts. Empty map for
+/// non-casters or sub-progression levels (Half before L2, Third before
+/// L3). Pact returns a single entry `{slotLevel: count}` because Warlock
+/// slots all share one level and recharge on a short rest — the caller
+/// must use `spell_slots_remaining_by_level` *and* know the recharge
+/// cadence.
+Map<int, int> defaultSpellSlotsByLevel(CasterKind kind, int level) {
+  if (level < 1) return const {};
+  final lvl = level.clamp(1, 20);
+  final out = <int, int>{};
+  switch (kind) {
+    case CasterKind.full:
+      final row = _fullCasterSlots[lvl - 1];
+      for (var i = 0; i < row.length; i++) {
+        if (row[i] > 0) out[i + 1] = row[i];
+      }
+    case CasterKind.half:
+      final row = _halfCasterSlots[lvl - 1];
+      for (var i = 0; i < row.length; i++) {
+        if (row[i] > 0) out[i + 1] = row[i];
+      }
+    case CasterKind.third:
+      final row = _thirdCasterSlots[lvl - 1];
+      for (var i = 0; i < row.length; i++) {
+        if (row[i] > 0) out[i + 1] = row[i];
+      }
+    case CasterKind.pact:
+      final p = _pactSlots[lvl - 1];
+      if (p[0] > 0) out[p[1]] = p[0];
+    case CasterKind.none:
+      break;
+  }
+  return out;
+}

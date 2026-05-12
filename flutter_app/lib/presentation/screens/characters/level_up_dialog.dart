@@ -19,6 +19,11 @@ class LevelUpResult {
   final String? newFeatId;
   final String? newFightingStyleId;
 
+  /// Spell ids (cantrips + leveled spells combined) the player added on
+  /// this level-up. Editor appends them to the character's
+  /// `spells_known` list. Empty list means nothing to apply.
+  final List<String> newSpellIds;
+
   const LevelUpResult({
     required this.applied,
     required this.hpDelta,
@@ -26,6 +31,7 @@ class LevelUpResult {
     this.abilityBumps = const {},
     this.newFeatId,
     this.newFightingStyleId,
+    this.newSpellIds = const [],
   });
 
   static const LevelUpResult skipped = LevelUpResult(
@@ -57,12 +63,23 @@ class LevelUpDialog extends StatefulWidget {
   /// (unless the feat declares `repeatable: true`).
   final Set<String> existingFeatIds;
 
+  /// Character's primary class entity id. The spell picker uses it to
+  /// filter spells whose `class_refs` includes this class.
+  final String? classId;
+
+  /// Spells the character already has — combined cantrips + leveled
+  /// known/prepared spells (all stored in `spells_known`). The picker
+  /// hides these so the player can only add new ones.
+  final Set<String> existingSpellIds;
+
   const LevelUpDialog({
     super.key,
     required this.plan,
     this.entities = const {},
     this.abilityScores = const {},
     this.existingFeatIds = const {},
+    this.classId,
+    this.existingSpellIds = const {},
   });
 
   static Future<LevelUpResult?> show(
@@ -71,6 +88,8 @@ class LevelUpDialog extends StatefulWidget {
     Map<String, Entity> entities = const {},
     Map<String, int> abilityScores = const {},
     Set<String> existingFeatIds = const {},
+    String? classId,
+    Set<String> existingSpellIds = const {},
   }) {
     return showDialog<LevelUpResult>(
       context: context,
@@ -79,6 +98,8 @@ class LevelUpDialog extends StatefulWidget {
         entities: entities,
         abilityScores: abilityScores,
         existingFeatIds: existingFeatIds,
+        classId: classId,
+        existingSpellIds: existingSpellIds,
       ),
     );
   }
@@ -113,6 +134,8 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
   String? _asiSplitB;
   String? _featId;
   String? _fightingStyleId;
+  final Set<String> _pickedCantrips = <String>{};
+  final Set<String> _pickedSpells = <String>{};
 
   @override
   void initState() {
@@ -188,7 +211,48 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
     if (widget.plan.isFightingStyleLevel && _fightingStyleFeats().isNotEmpty) {
       if (_fightingStyleId == null) return false;
     }
+    final cantripDelta = widget.plan.cantripsKnownDelta;
+    final spellDelta = widget.plan.preparedSpellsDelta;
+    if (cantripDelta > 0 && _eligibleSpells(cantripOnly: true).isNotEmpty) {
+      if (_pickedCantrips.length != cantripDelta) return false;
+    }
+    if (spellDelta > 0 && _eligibleSpells(cantripOnly: false).isNotEmpty) {
+      if (_pickedSpells.length != spellDelta) return false;
+    }
     return true;
+  }
+
+  /// Spells (or cantrips) eligible for this level-up: same class as the
+  /// character, level in range, not already known. Returns const-empty
+  /// when no class id was passed in — the dialog then hides the picker.
+  List<Entity> _eligibleSpells({required bool cantripOnly}) {
+    if (widget.entities.isEmpty) return const [];
+    final classId = widget.classId;
+    if (classId == null || classId.isEmpty) return const [];
+    final maxLvl = widget.plan.maxSpellLevelAtNewLevel ?? 0;
+    final out = <Entity>[];
+    for (final e in widget.entities.values) {
+      if (e.categorySlug != 'spell') continue;
+      final f = e.fields;
+      final lvlRaw = f['level'];
+      final lvl = lvlRaw is int ? lvlRaw : int.tryParse('$lvlRaw');
+      if (lvl == null) continue;
+      if (cantripOnly && lvl != 0) continue;
+      if (!cantripOnly && (lvl < 1 || lvl > maxLvl)) continue;
+      final refs = f['class_refs'];
+      if (refs is! List) continue;
+      if (!refs.contains(classId)) continue;
+      if (widget.existingSpellIds.contains(e.id)) continue;
+      out.add(e);
+    }
+    out.sort((a, b) {
+      final aLvl = a.fields['level'] is int ? a.fields['level'] as int : 0;
+      final bLvl = b.fields['level'] is int ? b.fields['level'] as int : 0;
+      final byLevel = aLvl.compareTo(bLvl);
+      if (byLevel != 0) return byLevel;
+      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    });
+    return out;
   }
 
   bool _canBump(String key, int by) {
@@ -263,6 +327,15 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
                     : '+${plan.prevProfBonus} → +${plan.newProfBonus}',
                 hint: hint,
               ),
+              if (plan.hitDieFaces > 0 && plan.levelsGained > 0) ...[
+                const SizedBox(height: 6),
+                _stat(
+                  label: 'Hit Dice',
+                  value:
+                      '${plan.fromLevel}${plan.hitDie} → ${plan.toLevel}${plan.hitDie}',
+                  hint: hint,
+                ),
+              ],
               if (plan.isAsiOrFeatLevel) ...[
                 const SizedBox(height: 12),
                 _asiSection(hint),
@@ -274,10 +347,11 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
               if (plan.isExtraAttackLevel)
                 _notice(
                   icon: Icons.bolt,
-                  text:
-                      'Extra Attack — you can now attack twice per Attack action.',
+                  text: _extraAttackText(plan),
                 ),
               if (plan.casterKind != CasterKind.none) _casterBlock(hint),
+              if (plan.casterKind != CasterKind.none) _spellsSection(hint),
+              _resourcePoolBlock(hint),
               const SizedBox(height: 12),
               const Text(
                 'New Features',
@@ -307,6 +381,16 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
                             f.description,
                             style: TextStyle(fontSize: 11, color: hint),
                           ),
+                        if (f.grantedSaveProficiencyNames.isNotEmpty)
+                          Text(
+                            'You gain proficiency in '
+                            '${f.grantedSaveProficiencyNames.join(", ")} '
+                            'saving throws.',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -329,6 +413,10 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
                     abilityBumps: _abilityBumps,
                     newFeatId: _asiChoice == _AsiChoice.feat ? _featId : null,
                     newFightingStyleId: _fightingStyleId,
+                    newSpellIds: [
+                      ..._pickedCantrips,
+                      ..._pickedSpells,
+                    ],
                   ))
               : null,
           child: const Text('Apply'),
@@ -639,6 +727,22 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
     );
   }
 
+  String _extraAttackText(LevelUpPlan plan) {
+    const words = {2: 'twice', 3: 'three times', 4: 'four times'};
+    final count = plan.newExtraAttackCount;
+    final phrase = words[count];
+    if (count <= 0) {
+      return 'Extra Attack — you can now attack twice per Attack action.';
+    }
+    if (plan.prevExtraAttackCount == 0) {
+      return 'Extra Attack — you can now attack ${phrase ?? '$count times'} '
+          'per Attack action.';
+    }
+    return 'Extra Attack improves — you can now attack '
+        '${phrase ?? '$count times'} per Attack action '
+        '(was ${plan.prevExtraAttackCount}).';
+  }
+
   Widget _notice({required IconData icon, required String text}) {
     return Padding(
       padding: const EdgeInsets.only(top: 4, bottom: 4),
@@ -668,6 +772,24 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
         plan.maxSpellLevelAtNewLevel! > 0) {
       lines.add('Max spell level: ${plan.maxSpellLevelAtNewLevel}');
     }
+    final newSlots = plan.newSpellSlots;
+    final prevSlots = plan.prevSpellSlots;
+    if (newSlots != null && newSlots.isNotEmpty) {
+      final keys = newSlots.keys.toList()..sort();
+      final cells = keys.map((k) {
+        final prev = prevSlots?[k] ?? 0;
+        final now = newSlots[k]!;
+        return prev == now ? 'L$k:$now' : 'L$k:$prev→$now';
+      }).join('  ');
+      lines.add('Slots — $cells');
+      final delta = plan.spellSlotsDelta;
+      if (delta.isNotEmpty) {
+        final gain = (delta.keys.toList()..sort())
+            .map((k) => '+${delta[k]} at L$k')
+            .join(', ');
+        lines.add('New: $gain');
+      }
+    }
     if (lines.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(top: 4),
@@ -681,6 +803,148 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
           for (final l in lines)
             Text('• $l', style: TextStyle(fontSize: 12, color: hint)),
         ],
+      ),
+    );
+  }
+
+  /// Cantrip + spell pickers — rendered only when the new caster level
+  /// unlocks more known/prepared spells than the previous level had.
+  /// Each picker is a multi-select chip grid capped at the SRD delta so
+  /// the player can't over-pick.
+  Widget _spellsSection(Color hint) {
+    final cantripDelta = widget.plan.cantripsKnownDelta;
+    final spellDelta = widget.plan.preparedSpellsDelta;
+    if (cantripDelta == 0 && spellDelta == 0) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (cantripDelta > 0) ...[
+            Text(
+              'Pick $cantripDelta new '
+              '${cantripDelta == 1 ? 'cantrip' : 'cantrips'}',
+              style: const TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            _spellChips(
+              cantripOnly: true,
+              cap: cantripDelta,
+              picked: _pickedCantrips,
+              hint: hint,
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (spellDelta > 0) ...[
+            Text(
+              'Pick $spellDelta new '
+              '${spellDelta == 1 ? 'spell' : 'spells'}'
+              ' (up to L${widget.plan.maxSpellLevelAtNewLevel ?? 0})',
+              style: const TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            _spellChips(
+              cantripOnly: false,
+              cap: spellDelta,
+              picked: _pickedSpells,
+              hint: hint,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _resourcePoolBlock(Color hint) {
+    final newPools = widget.plan.newResourcePools;
+    final prevPools = widget.plan.prevResourcePools;
+    if (newPools.isEmpty && prevPools.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final keys = {...prevPools.keys, ...newPools.keys}.toList()..sort();
+    final rows = <String>[];
+    for (final k in keys) {
+      final prev = prevPools[k] ?? 0;
+      final now = newPools[k] ?? 0;
+      if (prev == now && prev == 0) continue;
+      final label = _prettyPoolName(k);
+      rows.add(prev == now ? '$label: $now' : '$label: $prev → $now');
+    }
+    if (rows.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Class Resources',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          for (final r in rows)
+            Text('• $r', style: TextStyle(fontSize: 12, color: hint)),
+        ],
+      ),
+    );
+  }
+
+  String _prettyPoolName(String key) {
+    var s = key;
+    if (s.startsWith('pool:')) s = s.substring(5);
+    s = s.replaceAll('_', ' ');
+    if (s.isEmpty) return s;
+    return s
+        .split(' ')
+        .map((w) => w.isEmpty
+            ? w
+            : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
+  }
+
+  Widget _spellChips({
+    required bool cantripOnly,
+    required int cap,
+    required Set<String> picked,
+    required Color hint,
+  }) {
+    final spells = _eligibleSpells(cantripOnly: cantripOnly);
+    if (spells.isEmpty) {
+      return Text(
+        cantripOnly
+            ? 'No eligible cantrips in this campaign.'
+            : 'No eligible spells in this campaign.',
+        style: TextStyle(fontSize: 11, color: hint),
+      );
+    }
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 180),
+      child: SingleChildScrollView(
+        child: Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          children: [
+            for (final e in spells)
+              _chip(
+                label: cantripOnly
+                    ? e.name
+                    : 'L${e.fields['level']} · ${e.name}',
+                selected: picked.contains(e.id),
+                disabled:
+                    !picked.contains(e.id) && picked.length >= cap,
+                onTap: () => setState(() {
+                  if (picked.contains(e.id)) {
+                    picked.remove(e.id);
+                  } else if (picked.length < cap) {
+                    picked.add(e.id);
+                  }
+                }),
+              ),
+          ],
+        ),
       ),
     );
   }

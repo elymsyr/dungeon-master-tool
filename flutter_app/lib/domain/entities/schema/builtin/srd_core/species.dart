@@ -17,6 +17,58 @@ List<Map<String, dynamic>> srdSpecies() => [
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
+          'subspecies_options': [
+            {
+              'name': 'Black',
+              'description': 'Acid breath weapon and Acid resistance.',
+              'granted_damage_resistances': [lookup('damage-type', 'Acid')],
+            },
+            {
+              'name': 'Blue',
+              'description': 'Lightning breath weapon and Lightning resistance.',
+              'granted_damage_resistances': [lookup('damage-type', 'Lightning')],
+            },
+            {
+              'name': 'Brass',
+              'description': 'Fire breath weapon and Fire resistance.',
+              'granted_damage_resistances': [lookup('damage-type', 'Fire')],
+            },
+            {
+              'name': 'Bronze',
+              'description': 'Lightning breath weapon and Lightning resistance.',
+              'granted_damage_resistances': [lookup('damage-type', 'Lightning')],
+            },
+            {
+              'name': 'Copper',
+              'description': 'Acid breath weapon and Acid resistance.',
+              'granted_damage_resistances': [lookup('damage-type', 'Acid')],
+            },
+            {
+              'name': 'Gold',
+              'description': 'Fire breath weapon and Fire resistance.',
+              'granted_damage_resistances': [lookup('damage-type', 'Fire')],
+            },
+            {
+              'name': 'Green',
+              'description': 'Poison breath weapon and Poison resistance.',
+              'granted_damage_resistances': [lookup('damage-type', 'Poison')],
+            },
+            {
+              'name': 'Red',
+              'description': 'Fire breath weapon and Fire resistance.',
+              'granted_damage_resistances': [lookup('damage-type', 'Fire')],
+            },
+            {
+              'name': 'Silver',
+              'description': 'Cold breath weapon and Cold resistance.',
+              'granted_damage_resistances': [lookup('damage-type', 'Cold')],
+            },
+            {
+              'name': 'White',
+              'description': 'Cold breath weapon and Cold resistance.',
+              'granted_damage_resistances': [lookup('damage-type', 'Cold')],
+            },
+          ],
         },
       ),
       packEntity(
@@ -42,6 +94,28 @@ List<Map<String, dynamic>> srdSpecies() => [
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
+          'subspecies_options': [
+            {
+              'name': 'Drow',
+              'description':
+                  'Superior Darkvision (120 ft. — replaces base Darkvision). Innate spells: Dancing Lights (L1), Faerie Fire (L3, 1/day), Darkness (L5, 1/day).',
+              'granted_modifiers': const <Map<String, dynamic>>[],
+            },
+            {
+              'name': 'High Elf',
+              'description':
+                  'Innate spells: a Wizard cantrip (L1), Detect Magic (L3, 1/day), Misty Step (L5, 1/day).',
+              'granted_modifiers': const <Map<String, dynamic>>[],
+            },
+            {
+              'name': 'Wood Elf',
+              'description':
+                  'Speed 35 ft (+5 ft from base). Innate spells: Druidcraft (L1), Longstrider (L3, 1/day), Pass without Trace (L5, 1/day).',
+              'granted_modifiers': [
+                {'kind': 'speed_bonus', 'value': 5},
+              ],
+            },
+          ],
         },
       ),
       packEntity(
@@ -54,6 +128,20 @@ List<Map<String, dynamic>> srdSpecies() => [
           'size_ref': lookup('size', 'Small'),
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
+          'subspecies_options': [
+            {
+              'name': 'Forest Gnome',
+              'description':
+                  'Minor Illusion cantrip. Speak with Small Beasts (telepathic).',
+              'granted_modifiers': const <Map<String, dynamic>>[],
+            },
+            {
+              'name': 'Rock Gnome',
+              'description':
+                  "Artificer's Lore (double prof on magic-item History). Tinker (Mending + Prestidigitation, build clockwork toys).",
+              'granted_modifiers': const <Map<String, dynamic>>[],
+            },
+          ],
         },
       ),
       packEntity(
@@ -65,6 +153,44 @@ List<Map<String, dynamic>> srdSpecies() => [
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 35,
+          'subspecies_options': [
+            {
+              'name': 'Cloud Giant',
+              'description':
+                  "Cloud's Jaunt — Bonus Action teleport 30 ft to an unoccupied space you can see; uses = PB per Long Rest.",
+              'granted_modifiers': const <Map<String, dynamic>>[],
+            },
+            {
+              'name': 'Fire Giant',
+              'description': 'Fire resistance.',
+              'granted_damage_resistances': [lookup('damage-type', 'Fire')],
+            },
+            {
+              'name': 'Frost Giant',
+              'description': 'Cold resistance.',
+              'granted_damage_resistances': [lookup('damage-type', 'Cold')],
+            },
+            {
+              'name': 'Hill Giant',
+              'description':
+                  "Hill's Tumble — when you hit with a melee attack you can knock Large or smaller creatures Prone; uses = PB per Long Rest.",
+              'granted_modifiers': const <Map<String, dynamic>>[],
+            },
+            {
+              'name': 'Stone Giant',
+              'description':
+                  "Stone's Endurance — Reaction: roll d12 + Con mod, reduce damage taken by that amount; uses = PB per Long Rest.",
+              'granted_modifiers': const <Map<String, dynamic>>[],
+            },
+            {
+              'name': 'Storm Giant',
+              'description': 'Lightning and Thunder resistance.',
+              'granted_damage_resistances': [
+                lookup('damage-type', 'Lightning'),
+                lookup('damage-type', 'Thunder'),
+              ],
+            },
+          ],
         },
       ),
       packEntity(
@@ -111,6 +237,26 @@ List<Map<String, dynamic>> srdSpecies() => [
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
+          'subspecies_options': [
+            {
+              'name': 'Abyssal',
+              'description':
+                  'Poison resistance. Innate spells: Poison Spray (L1), Ray of Sickness (L3, 1/day), Hold Person (L5, 1/day).',
+              'granted_damage_resistances': [lookup('damage-type', 'Poison')],
+            },
+            {
+              'name': 'Chthonic',
+              'description':
+                  'Necrotic resistance. Innate spells: Chill Touch (L1), False Life (L3, 1/day), Ray of Enfeeblement (L5, 1/day).',
+              'granted_damage_resistances': [lookup('damage-type', 'Necrotic')],
+            },
+            {
+              'name': 'Infernal',
+              'description':
+                  'Fire resistance. Innate spells: Fire Bolt (L1), Hellish Rebuke (L3, 1/day), Darkness (L5, 1/day).',
+              'granted_damage_resistances': [lookup('damage-type', 'Fire')],
+            },
+          ],
         },
       ),
     ];

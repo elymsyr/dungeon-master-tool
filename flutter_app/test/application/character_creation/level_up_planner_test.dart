@@ -372,4 +372,385 @@ void main() {
       expect(effectiveHpDelta(plan: p, conModifier: 5), 0);
     });
   });
+
+  group('defaultSpellSlotsByLevel (SRD §1.5)', () {
+    test('full caster L1 → {1:2}', () {
+      expect(defaultSpellSlotsByLevel(CasterKind.full, 1), {1: 2});
+    });
+    test('full caster L5 → L1/L2/L3', () {
+      expect(defaultSpellSlotsByLevel(CasterKind.full, 5),
+          {1: 4, 2: 3, 3: 2});
+    });
+    test('full caster L20 → all 9 spell levels', () {
+      expect(defaultSpellSlotsByLevel(CasterKind.full, 20),
+          {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1});
+    });
+    test('half caster L1 → empty (Paladin gets nothing yet)', () {
+      expect(defaultSpellSlotsByLevel(CasterKind.half, 1), <int, int>{});
+    });
+    test('half caster L5 → {1:4, 2:2}', () {
+      expect(defaultSpellSlotsByLevel(CasterKind.half, 5), {1: 4, 2: 2});
+    });
+    test('third caster L3 → {1:2}', () {
+      expect(defaultSpellSlotsByLevel(CasterKind.third, 3), {1: 2});
+    });
+    test('third caster L1/L2 → empty', () {
+      expect(defaultSpellSlotsByLevel(CasterKind.third, 1), <int, int>{});
+      expect(defaultSpellSlotsByLevel(CasterKind.third, 2), <int, int>{});
+    });
+    test('pact slot level scales with character level', () {
+      expect(defaultSpellSlotsByLevel(CasterKind.pact, 1), {1: 1});
+      expect(defaultSpellSlotsByLevel(CasterKind.pact, 5), {3: 2});
+      expect(defaultSpellSlotsByLevel(CasterKind.pact, 11), {5: 3});
+      expect(defaultSpellSlotsByLevel(CasterKind.pact, 17), {5: 4});
+    });
+    test('none kind always empty', () {
+      expect(defaultSpellSlotsByLevel(CasterKind.none, 5), <int, int>{});
+    });
+  });
+
+  group('planLevelUp spell slot fields', () {
+    test('non-caster has null slot maps', () {
+      final p = planLevelUp(
+        fromLevel: 1,
+        toLevel: 2,
+        classEntity: _makeClass(name: 'Barb', hitDie: 'd12'),
+        subclassEntity: null,
+      );
+      expect(p.prevSpellSlots, isNull);
+      expect(p.newSpellSlots, isNull);
+      expect(p.spellSlotsDelta, isEmpty);
+    });
+
+    test('full caster 4→5 unlocks L3 slot, bumps L1', () {
+      final cls = _makeClass(
+        name: 'Wizard',
+        hitDie: 'd6',
+        casterKind: 'Full',
+      );
+      final p = planLevelUp(
+        fromLevel: 4,
+        toLevel: 5,
+        classEntity: cls,
+        subclassEntity: null,
+      );
+      expect(p.prevSpellSlots, {1: 4, 2: 3});
+      expect(p.newSpellSlots, {1: 4, 2: 3, 3: 2});
+      expect(p.spellSlotsDelta, {3: 2});
+    });
+
+    test('half caster 1→2 unlocks L1 slots from nothing', () {
+      final cls = _makeClass(
+        name: 'Paladin',
+        hitDie: 'd10',
+        casterKind: 'Half',
+      );
+      final p = planLevelUp(
+        fromLevel: 1,
+        toLevel: 2,
+        classEntity: cls,
+        subclassEntity: null,
+      );
+      expect(p.prevSpellSlots, <int, int>{});
+      expect(p.newSpellSlots, {1: 2});
+      expect(p.spellSlotsDelta, {1: 2});
+    });
+
+    test('pact slot level scales: 4→5 swaps L2 for L3', () {
+      final cls = _makeClass(
+        name: 'Warlock',
+        hitDie: 'd8',
+        casterKind: 'Pact',
+      );
+      final p = planLevelUp(
+        fromLevel: 4,
+        toLevel: 5,
+        classEntity: cls,
+        subclassEntity: null,
+      );
+      expect(p.prevSpellSlots, {2: 2});
+      expect(p.newSpellSlots, {3: 2});
+      // Slot level changed entirely — delta exposes only the new tier.
+      expect(p.spellSlotsDelta, {3: 2});
+    });
+
+    test('authored class table overrides default', () {
+      final cls = _makeClass(
+        name: 'CustomFull',
+        hitDie: 'd6',
+        casterKind: 'Full',
+        extraFields: {
+          'spell_slots_by_level': {
+            1: {1: 99},
+          },
+        },
+      );
+      final p = planLevelUp(
+        fromLevel: 0,
+        toLevel: 1,
+        classEntity: cls,
+        subclassEntity: null,
+      );
+      expect(p.newSpellSlots, {1: 99});
+    });
+  });
+
+  group('planLevelUp spell pick deltas', () {
+    test('non-caster has zero cantrip and spell deltas', () {
+      final p = planLevelUp(
+        fromLevel: 1,
+        toLevel: 2,
+        classEntity: _makeClass(name: 'Barb', hitDie: 'd12'),
+        subclassEntity: null,
+      );
+      expect(p.cantripsKnownDelta, 0);
+      expect(p.preparedSpellsDelta, 0);
+    });
+
+    test('full caster L1 (from 0) opens initial pick budget', () {
+      final p = planLevelUp(
+        fromLevel: 0,
+        toLevel: 1,
+        classEntity: _makeClass(
+          name: 'Wizard',
+          hitDie: 'd6',
+          casterKind: 'Full',
+        ),
+        subclassEntity: null,
+      );
+      expect(p.cantripsKnownAtPrevLevel, 0);
+      expect(p.cantripsKnownDelta, p.cantripsKnownAtNewLevel);
+      expect(p.preparedSpellsAtPrevLevel, 0);
+      expect(p.preparedSpellsDelta, p.preparedSpellsAtNewLevel);
+    });
+
+    test('full caster 4→5: cantrips unchanged, spells +1 (Wizard-ish curve)', () {
+      final cls = _makeClass(
+        name: 'Wizard',
+        hitDie: 'd6',
+        casterKind: 'Full',
+      );
+      final p = planLevelUp(
+        fromLevel: 4,
+        toLevel: 5,
+        classEntity: cls,
+        subclassEntity: null,
+      );
+      expect(p.cantripsKnownDelta, 0);
+      expect(p.preparedSpellsDelta, 1); // default curve = level + 3
+    });
+
+    test('downgrade clamps deltas to 0', () {
+      final p = planLevelUp(
+        fromLevel: 5,
+        toLevel: 4,
+        classEntity: _makeClass(
+          name: 'Wizard',
+          hitDie: 'd6',
+          casterKind: 'Full',
+        ),
+        subclassEntity: null,
+      );
+      expect(p.cantripsKnownDelta, 0);
+      expect(p.preparedSpellsDelta, 0);
+    });
+  });
+
+  group('planLevelUp save-proficiency grants (SRD §1.4)', () {
+    test('feature with proficiency_grant surfaces ability name on LevelGain',
+        () {
+      final cls = _makeClass(
+        name: 'Sorcerer',
+        hitDie: 'd6',
+        features: [
+          {
+            'level': 1,
+            'name': 'Soul Save',
+            'description': 'You gain Charisma save proficiency.',
+            'effects': [
+              {
+                'kind': 'proficiency_grant',
+                'target_kind': 'saving_throw',
+                'target_ref': {'slug': 'ability', 'name': 'Charisma'},
+              },
+            ],
+          },
+        ],
+      );
+      final p = planLevelUp(
+        fromLevel: 0,
+        toLevel: 1,
+        classEntity: cls,
+        subclassEntity: null,
+      );
+      expect(p.newFeatures, hasLength(1));
+      expect(p.newFeatures.single.grantedSaveProficiencyNames, ['Charisma']);
+    });
+
+    test('subclass feature save grant surfaces too', () {
+      final sub = _makeSubclass(
+        name: 'Eldritch Knight',
+        features: [
+          {
+            'level': 7,
+            'name': 'War Magic',
+            'description': 'You gain Wisdom save proficiency.',
+            'effects': [
+              {
+                'kind': 'proficiency_grant',
+                'target_kind': 'ability',
+                'target_ref': {'slug': 'ability', 'name': 'Wisdom'},
+              },
+            ],
+          },
+        ],
+      );
+      final p = planLevelUp(
+        fromLevel: 6,
+        toLevel: 7,
+        classEntity: _makeClass(name: 'Fighter', hitDie: 'd10'),
+        subclassEntity: sub,
+      );
+      final eldritch =
+          p.newFeatures.firstWhere((f) => f.source == 'Eldritch Knight');
+      expect(eldritch.grantedSaveProficiencyNames, ['Wisdom']);
+    });
+
+    test('features without proficiency_grant leave list empty', () {
+      final cls = _makeClass(
+        name: 'Rogue',
+        hitDie: 'd8',
+        features: [
+          {
+            'level': 1,
+            'name': 'Sneak Attack',
+            'description': 'You deal extra damage.',
+          },
+        ],
+      );
+      final p = planLevelUp(
+        fromLevel: 0,
+        toLevel: 1,
+        classEntity: cls,
+        subclassEntity: null,
+      );
+      expect(p.newFeatures.single.grantedSaveProficiencyNames, isEmpty);
+    });
+  });
+
+  group('planLevelUp extra-attack fields (SRD §1.5)', () {
+    Entity featExtra({
+      required String id,
+      required String className,
+      required int atLevel,
+      required int value,
+    }) =>
+        Entity(
+          id: id,
+          name: 'Extra Attack $id',
+          categorySlug: 'feat',
+          fields: {
+            'auto_granted_by': [
+              {
+                'source': 'class',
+                'source_ref': {'slug': 'class', 'name': className},
+                'at_level': atLevel,
+              },
+            ],
+            'effects': [
+              {'kind': 'extra_attack_count', 'value': value},
+            ],
+          },
+        );
+
+    Map<String, Entity> fighterFeats() {
+      final l5 = featExtra(
+        id: 'fighter-extra-5',
+        className: 'Fighter',
+        atLevel: 5,
+        value: 2,
+      );
+      final l11 = featExtra(
+        id: 'fighter-extra-11',
+        className: 'Fighter',
+        atLevel: 11,
+        value: 3,
+      );
+      final l20 = featExtra(
+        id: 'fighter-extra-20',
+        className: 'Fighter',
+        atLevel: 20,
+        value: 4,
+      );
+      return {l5.id: l5, l11.id: l11, l20.id: l20};
+    }
+
+    test('Fighter 4→5 flags Extra Attack with count 0→2', () {
+      final p = planLevelUp(
+        fromLevel: 4,
+        toLevel: 5,
+        classEntity: _makeClass(name: 'Fighter', hitDie: 'd10'),
+        subclassEntity: null,
+        entities: fighterFeats(),
+      );
+      expect(p.prevExtraAttackCount, 0);
+      expect(p.newExtraAttackCount, 2);
+      expect(p.extraAttackCountDelta, 2);
+      expect(p.isExtraAttackLevel, isTrue);
+    });
+
+    test('Fighter 10→11 flags Extra Attack with count 2→3', () {
+      final p = planLevelUp(
+        fromLevel: 10,
+        toLevel: 11,
+        classEntity: _makeClass(name: 'Fighter', hitDie: 'd10'),
+        subclassEntity: null,
+        entities: fighterFeats(),
+      );
+      expect(p.prevExtraAttackCount, 2);
+      expect(p.newExtraAttackCount, 3);
+      expect(p.extraAttackCountDelta, 1);
+      expect(p.isExtraAttackLevel, isTrue);
+    });
+
+    test('Fighter 19→20 flags Extra Attack with count 3→4', () {
+      final p = planLevelUp(
+        fromLevel: 19,
+        toLevel: 20,
+        classEntity: _makeClass(name: 'Fighter', hitDie: 'd10'),
+        subclassEntity: null,
+        entities: fighterFeats(),
+      );
+      expect(p.prevExtraAttackCount, 3);
+      expect(p.newExtraAttackCount, 4);
+      expect(p.extraAttackCountDelta, 1);
+      expect(p.isExtraAttackLevel, isTrue);
+    });
+
+    test('Paladin 4→5 fires fallback L5 flag with no scaling data', () {
+      final p = planLevelUp(
+        fromLevel: 4,
+        toLevel: 5,
+        classEntity: _makeClass(name: 'Paladin', hitDie: 'd10'),
+        subclassEntity: null,
+      );
+      expect(p.isExtraAttackLevel, isTrue);
+      expect(p.prevExtraAttackCount, 0);
+      expect(p.newExtraAttackCount, 0);
+    });
+
+    test('Fighter 11→12 does not re-flag (no count change)', () {
+      final p = planLevelUp(
+        fromLevel: 11,
+        toLevel: 12,
+        classEntity: _makeClass(name: 'Fighter', hitDie: 'd10'),
+        subclassEntity: null,
+        entities: fighterFeats(),
+      );
+      expect(p.prevExtraAttackCount, 3);
+      expect(p.newExtraAttackCount, 3);
+      expect(p.extraAttackCountDelta, 0);
+      expect(p.isExtraAttackLevel, isFalse);
+    });
+  });
 }

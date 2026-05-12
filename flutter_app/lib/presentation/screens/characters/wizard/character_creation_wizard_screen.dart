@@ -222,12 +222,7 @@ class _CharacterCreationWizardScreenState
                       title: const Text('Race / Species'),
                       isActive: _currentStep >= 1,
                       state: _stateFor(1, draft),
-                      content: _EntityPickStep(
-                        title: 'Race',
-                        slugs: const ['species', 'race'],
-                        selectedId: draft.raceId,
-                        onChanged: notifier.setRace,
-                      ),
+                      content: _RaceStep(draft: draft, notifier: notifier),
                     ),
                     Step(
                       title: const Text('Class'),
@@ -632,6 +627,7 @@ Map<String, dynamic> _buildSeedFields({
   // outside the player-category schema (template-agnostic) so we always
   // write them regardless of fieldsByKey.
   out['race_id'] = draft.raceId ?? '';
+  out['subspecies_id'] = draft.subspeciesId ?? '';
   out['background_id'] = draft.backgroundId ?? '';
   out['subclass_id'] = draft.subclassId ?? '';
   out['feat_ids'] = [
@@ -1204,6 +1200,88 @@ class _PortraitTile extends StatelessWidget {
           ),
       ],
     );
+  }
+}
+
+/// Race / Species picker. Composes the standard entity picker with a
+/// second-tier subspecies (lineage / ancestry / legacy) picker that
+/// appears when the chosen species declares `subspecies_options`.
+class _RaceStep extends ConsumerWidget {
+  final CharacterDraft draft;
+  final CharacterDraftNotifier notifier;
+
+  const _RaceStep({required this.draft, required this.notifier});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final builtin = ref.watch(builtinSrdEntitiesProvider);
+    final campaign = draft.worldName.isEmpty
+        ? const <String, Entity>{}
+        : ref.watch(entityProvider);
+    final entities = mergeWithBuiltinSrd(
+      campaign,
+      builtin,
+      useCampaign: campaign.isNotEmpty,
+    );
+    final raceEntity =
+        draft.raceId == null ? null : entities[draft.raceId];
+    final options = _subspeciesOptions(raceEntity);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _EntityPickStep(
+          title: 'Race',
+          slugs: const ['species', 'race'],
+          selectedId: draft.raceId,
+          onChanged: notifier.setRace,
+        ),
+        if (options.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text(
+            _subspeciesPickerLabel(raceEntity),
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          for (final opt in options)
+            RadioListTile<String?>(
+              value: opt['name']?.toString(),
+              // ignore: deprecated_member_use
+              groupValue: draft.subspeciesId,
+              // ignore: deprecated_member_use
+              onChanged: notifier.setSubspecies,
+              dense: true,
+              title: Text(opt['name']?.toString() ?? ''),
+              subtitle: (opt['description']?.toString().isNotEmpty ?? false)
+                  ? Text(opt['description']!.toString())
+                  : null,
+            ),
+        ],
+      ],
+    );
+  }
+
+  static List<Map<String, dynamic>> _subspeciesOptions(Entity? e) {
+    if (e == null) return const [];
+    final raw = e.fields['subspecies_options'];
+    if (raw is! List) return const [];
+    return [
+      for (final r in raw)
+        if (r is Map) Map<String, dynamic>.from(r),
+    ];
+  }
+
+  static String _subspeciesPickerLabel(Entity? e) {
+    if (e == null) return 'Lineage';
+    switch (e.name) {
+      case 'Dragonborn':
+        return 'Draconic Ancestry';
+      case 'Goliath':
+        return 'Giant Ancestry';
+      case 'Tiefling':
+        return 'Fiendish Legacy';
+      default:
+        return 'Lineage';
+    }
   }
 }
 

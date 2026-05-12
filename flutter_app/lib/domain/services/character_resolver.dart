@@ -27,6 +27,7 @@ class CharacterResolver {
     final subclassId = _readNullableString(fields['subclass_id']);
     var classLevels = _readIntMap(fields['class_levels']);
     final raceId = _readNullableString(fields['race_id']);
+    final subspeciesId = _readNullableString(fields['subspecies_id']);
     final backgroundId = _readNullableString(fields['background_id']);
     final baseAbilities = _readIntMap(fields['base_abilities']);
 
@@ -483,6 +484,37 @@ class CharacterResolver {
         for (final sk in _readRefList(sp.fields['granted_skill_proficiencies'], entitiesById)) {
           if (!skills.contains(sk)) skills.add(sk);
         }
+
+        // Subspecies / lineage row — fold the matching entry's grants in
+        // the same way as the top-level species fields. Looks up by name
+        // because subspecies rows are scoped to the species entity and
+        // don't have stable global IDs.
+        if (subspeciesId != null && subspeciesId.isNotEmpty) {
+          final options = _readMapList(sp.fields['subspecies_options']);
+          for (final row in options) {
+            if (row['name']?.toString() != subspeciesId) continue;
+            final subMods = _readMapList(row['granted_modifiers']);
+            for (final m in subMods) {
+              applyEffect(_modifierAsEffect(m),
+                  'subspecies:${sp.name}/$subspeciesId');
+            }
+            for (final s in _readRefList(row['granted_senses'], entitiesById)) {
+              if (!senses.contains(s)) senses.add(s);
+            }
+            for (final r in _readRefList(
+                row['granted_damage_resistances'], entitiesById)) {
+              if (!damageRes.contains(r)) damageRes.add(r);
+            }
+            for (final l in _readRefList(row['granted_languages'], entitiesById)) {
+              if (!languages.contains(l)) languages.add(l);
+            }
+            for (final sk in _readRefList(
+                row['granted_skill_proficiencies'], entitiesById)) {
+              if (!skills.contains(sk)) skills.add(sk);
+            }
+            break;
+          }
+        }
       }
     }
     if (backgroundId != null) {
@@ -514,6 +546,30 @@ class CharacterResolver {
       if (acats is List) {
         for (final v in acats) {
           if (v is String && !armorCats.contains(v)) armorCats.add(v);
+        }
+      }
+    }
+    // Subclass-level proficiency grants (some subclasses extend saves /
+    // weapon / armor training beyond the parent class). Feature-row effects
+    // already flow through Pass 4 via `proficiency_grant`; these top-level
+    // refs cover authored subclass entities that declare grants directly.
+    if (subclassId != null) {
+      final sub = entitiesById[subclassId];
+      if (sub != null) {
+        for (final s in _readRefList(sub.fields['saving_throw_refs'], entitiesById)) {
+          if (!saves.contains(s)) saves.add(s);
+        }
+        final wcats = sub.fields['weapon_proficiency_categories'];
+        if (wcats is List) {
+          for (final v in wcats) {
+            if (v is String && !weaponCats.contains(v)) weaponCats.add(v);
+          }
+        }
+        final acats = sub.fields['armor_training_refs'];
+        if (acats is List) {
+          for (final v in acats) {
+            if (v is String && !armorCats.contains(v)) armorCats.add(v);
+          }
         }
       }
     }

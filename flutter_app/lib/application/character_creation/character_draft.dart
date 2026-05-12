@@ -48,6 +48,12 @@ abstract class CharacterDraft with _$CharacterDraft {
     /// gates feature application by `granted_at_level`.
     String? subclassId,
 
+    /// Optional lineage / subspecies key (e.g. 'High Elf', 'Wood Elf',
+    /// 'Black Dragonborn'). Resolved against the active species entity's
+    /// `subspecies_options` list. The race step renders a second picker
+    /// when the chosen species declares any options.
+    String? subspeciesId,
+
     /// Selected equipment-choice option per group. Key = `group_id` from
     /// the class/background `equipment_choice_groups` field; value =
     /// `option_id` (e.g. 'A', 'B', 'C').

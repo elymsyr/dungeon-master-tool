@@ -20,7 +20,14 @@ class CharacterDraftNotifier extends StateNotifier<CharacterDraft> {
   void setWorld(String name) => state = state.copyWith(worldName: name);
   void setLevel(int v) => state = state.copyWith(level: v.clamp(1, 20));
   void setAlignment(String v) => state = state.copyWith(alignment: v);
-  void setRace(String? id) => state = state.copyWith(raceId: id);
+  void setRace(String? id) => state = state.copyWith(
+        raceId: id,
+        // Subspecies is scoped to the parent species — switching species
+        // invalidates any prior pick.
+        subspeciesId: null,
+      );
+  void setSubspecies(String? key) =>
+      state = state.copyWith(subspeciesId: key);
   void setClass(String? id) => state = state.copyWith(
         classId: id,
         subclassId: null,
