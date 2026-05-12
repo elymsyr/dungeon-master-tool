@@ -171,8 +171,8 @@ class _FB {
         validation: FieldValidation(minValue: min, maxValue: max),
       );
 
-  void boolean(String k, String l, {String g = grpIdentity, bool required_ = false, String? help}) =>
-      _base(key: k, label: l, type: FieldType.boolean_, groupId: g, required_: required_, helpText: help);
+  void boolean(String k, String l, {String g = grpIdentity, bool required_ = false, String? help, bool? defaultValue}) =>
+      _base(key: k, label: l, type: FieldType.boolean_, groupId: g, required_: required_, helpText: help, defaultValue: defaultValue);
 
   void enum_(String k, String l, List<String> vals,
           {bool required_ = false, bool isList = false, String g = grpIdentity}) =>
@@ -262,6 +262,16 @@ class _FB {
         key: k,
         label: l,
         type: FieldType.featEffectList,
+        groupId: g,
+        gridSpan: 2,
+        defaultValue: const <Map<String, dynamic>>[],
+      );
+
+  void autoGrantSources(String k, String l, {String g = grpRules}) =>
+      _base(
+        key: k,
+        label: l,
+        type: FieldType.autoGrantSources,
         groupId: g,
         gridSpan: 2,
         defaultValue: const <Map<String, dynamic>>[],
@@ -502,6 +512,15 @@ EntityCategorySchema _featCategory(String schemaId, String now, int orderIndex) 
   fb.markdown('prerequisite', 'Prerequisite (narrative)', g: grpIdentity, span: 2);
   fb.boolean('repeatable', 'Repeatable', required_: true);
   fb.integer('repeatable_limit', 'Repeat Limit', min: 1, max: 20, help: 'null = unlimited');
+  // Player-facing? When false (e.g. auto-granted class features like Rage),
+  // the feat is hidden from the player feat-picker UI but still rendered on
+  // the character sheet via the auto-grant walker. Default true.
+  fb.boolean('chooseable', 'Player-Chooseable',
+      defaultValue: true, g: grpIdentity);
+  // Inverse edge of class.granted_feat_refs / species.granted_feat_refs /
+  // background.granted_feat_refs. Resolver walks these to auto-apply the feat
+  // when the character meets the source criteria (class level, species, background).
+  fb.autoGrantSources('auto_granted_by', 'Auto-Granted By', g: grpIdentity);
   // Typed Ability Score Increase. ASI options + amount (often +1, sometimes +2).
   fb.relation('asi_ability_options', 'ASI Ability Options', const ['ability'], isList: true, g: grpRules);
   fb.integer('asi_amount', 'ASI Amount', min: 0, max: 2, defaultValue: 0, g: grpRules);
@@ -998,6 +1017,17 @@ EntityCategorySchema _traitCategory(String schemaId, String now, int orderIndex)
   ]);
   fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
   fb.markdown('description', 'Description (narrative)', g: grpRules);
+  fb.markdown('benefits', 'Flavor / Edge Cases (narrative)', g: grpRules);
+  // Player-facing? Narrative class/species traits are auto-granted and should
+  // not appear in any player-picker UI. Default false to keep the trait
+  // catalogue out of choice surfaces unless explicitly opted in.
+  fb.boolean('chooseable', 'Player-Chooseable',
+      defaultValue: false, g: grpIdentity);
+  // Inverse edge of class.granted_trait_refs / species.granted_trait_refs /
+  // background.granted_trait_refs. Resolver does NOT walk trait effects (traits
+  // are narrative-only); the auto-grant walker only adds the trait to the
+  // character's Features list for display.
+  fb.autoGrantSources('auto_granted_by', 'Auto-Granted By', g: grpIdentity);
 
   return _mk(
     schemaId: schemaId,

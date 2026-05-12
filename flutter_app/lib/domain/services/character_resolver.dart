@@ -105,10 +105,19 @@ class CharacterResolver {
     var hpBonusFlat = 0;
     var hpBonusPerLevel = 0;
     var initiativeBonus = 0;
+    var extraAttackCount = 0; // multiclass takes max, not sum
+    var critRangeMin = 20;
     final grantedSpellIds = <String>[];
     final grantedCantripIds = <String>[];
     final senses = <String>[];
     final damageRes = <String>[];
+    final damageImmunities = <String>[];
+    final damageVulnerabilities = <String>[];
+    final conditionImmunities = <String>[];
+    final expertiseSkills = <String>[];
+    final alwaysPreparedSpells = <String>[];
+    final unarmoredFormulas = <Map<String, dynamic>>[];
+    final resourcePools = <Map<String, dynamic>>[];
     final skills = <String>[];
     final tools = <String>[];
     final saves = <String>[];
@@ -116,7 +125,105 @@ class CharacterResolver {
     final weaponCats = <String>[];
     final armorCats = <String>[];
 
+    // Predicate evaluator. Closed-enum predicate kinds are AND-combined per
+    // effect row. Unknown kinds return false (conservative — better to skip
+    // than mis-apply). State predicates always return false at resolve time
+    // (states are runtime); the resolver re-runs when state flips.
+    bool evalPredicate(Map<String, dynamic> p) {
+      final kind = p['kind'];
+      final args = p['args'];
+      final argMap = (args is Map) ? Map<String, dynamic>.from(args) : const <String, dynamic>{};
+      switch (kind) {
+        case 'class_level_at_least':
+          // args: {class_ref: {_ref: 'class', name: 'Barbarian'}, level: int}
+          // OR args: {class_ref: '<class id>', level: int}
+          final ref = argMap['class_ref'];
+          final needLvl = _intOf(argMap['level']);
+          final classId = (ref is String) ? ref : _resolveRef(ref, entitiesById);
+          if (classId == null) return false;
+          return (classLevels[classId] ?? 0) >= needLvl;
+        case 'equipped_armor_kind':
+          // args: {value: 'none'|'light'|'medium'|'heavy'|'not_heavy'}
+          // Read PC's equipped_armor_ref → resolve → check armor's category.
+          // For now: 'none' is true iff no equipped_armor_ref set; 'not_heavy'
+          // is true unless the ref resolves to heavy. Light/medium/heavy each
+          // require the ref to resolve to the matching category.
+          final want = argMap['value']?.toString() ?? '';
+          final armorRef = fields['equipped_armor_ref'];
+          final armorId = _resolveRef(armorRef, entitiesById);
+          if (armorId == null) return want == 'none' || want == 'not_heavy';
+          final armor = entitiesById[armorId];
+          final catRef = armor?.fields['armor_category_ref'];
+          final catId = _resolveRef(catRef, entitiesById);
+          final cat = (catId != null) ? entitiesById[catId]?.name.toLowerCase() ?? '' : '';
+          if (want == 'none') return false;
+          if (want == 'not_heavy') return !cat.contains('heavy');
+          return cat.contains(want);
+        case 'equipped_shield':
+          final want = argMap['value']?.toString() ?? 'any';
+          final shieldRef = fields['equipped_shield_ref'];
+          final has = _resolveRef(shieldRef, entitiesById) != null;
+          if (want == 'any') return true;
+          if (want == 'true') return has;
+          if (want == 'false') return !has;
+          return false;
+        case 'has_state':
+        case 'has_condition':
+        case 'target_has_condition':
+          // Runtime state — at resolve time we don't gate on these. The
+          // resolver attaches the predicate to the resulting accumulator
+          // entry (e.g. conditionalResistances) so the runtime can apply at
+          // combat time. For now, return false to avoid premature application.
+          return false;
+        case 'not_incapacitated':
+          return true;
+        default:
+          return false;
+      }
+    }
+
+    bool predicatesPass(Object? rawPredicates) {
+      if (rawPredicates is! List) return true;
+      for (final p in rawPredicates) {
+        if (p is Map) {
+          if (!evalPredicate(Map<String, dynamic>.from(p))) return false;
+        }
+      }
+      return true;
+    }
+
+    /// Resolve a `scales_with` table down to a single value for the current
+    /// character context. Returns null if the table doesn't apply.
+    Object? evalScalesWith(Object? rawScales) {
+      if (rawScales is! Map) return null;
+      final s = Map<String, dynamic>.from(rawScales);
+      final kind = s['kind']?.toString();
+      final tableRaw = s['table'];
+      if (tableRaw is! List) return null;
+      int lookupLvl = 0;
+      if (kind == 'class_level' || kind == 'class_level_table') {
+        final ref = s['class_ref'];
+        final classId = (ref is String) ? ref : _resolveRef(ref, entitiesById);
+        if (classId != null) lookupLvl = classLevels[classId] ?? 0;
+      } else if (kind == 'character_level') {
+        lookupLvl = classLevels.values.fold<int>(0, (a, b) => a + b);
+      }
+      Object? best;
+      var bestLvl = -1;
+      for (final row in tableRaw) {
+        if (row is! Map) continue;
+        final lvl = _intOf(row['lvl']);
+        if (lvl <= lookupLvl && lvl > bestLvl) {
+          bestLvl = lvl;
+          best = row['v'];
+        }
+      }
+      return best;
+    }
+
     void applyEffect(Map<String, dynamic> eff, String source) {
+      // Row-level predicate gate.
+      if (!predicatesPass(eff['predicates'])) return;
       switch (eff['kind']) {
         case 'class_level_grant':
           break; // already applied in pass 1
@@ -127,6 +234,7 @@ class CharacterResolver {
         case 'hp_bonus_per_level':
           hpBonusPerLevel += _intOf(eff['value']);
         case 'hp_bonus_flat':
+        case 'hp_max_bonus_total':
           hpBonusFlat += _intOf(eff['value']);
         case 'initiative_bonus':
           initiativeBonus += _intOf(eff['value']);
@@ -156,13 +264,162 @@ class CharacterResolver {
           if (id != null && !grantedCantripIds.contains(id)) {
             grantedCantripIds.add(id);
           }
+        case 'spell_always_prepared':
+          final id = _refIdFor(eff, entitiesById);
+          if (id != null && !alwaysPreparedSpells.contains(id)) {
+            alwaysPreparedSpells.add(id);
+          }
+        case 'damage_resistance':
+          final id = _refIdFor(eff, entitiesById);
+          if (id != null && !damageRes.contains(id)) damageRes.add(id);
+        case 'damage_immunity':
+          final id = _refIdFor(eff, entitiesById);
+          if (id != null && !damageImmunities.contains(id)) {
+            damageImmunities.add(id);
+          }
+        case 'damage_vulnerability':
+          final id = _refIdFor(eff, entitiesById);
+          if (id != null && !damageVulnerabilities.contains(id)) {
+            damageVulnerabilities.add(id);
+          }
+        case 'condition_immunity_grant':
+          final id = _refIdFor(eff, entitiesById);
+          if (id != null && !conditionImmunities.contains(id)) {
+            conditionImmunities.add(id);
+          }
+        case 'sense_grant':
+        case 'truesight_grant':
+        case 'blindsight_grant':
+          final id = _refIdFor(eff, entitiesById);
+          if (id != null && !senses.contains(id)) senses.add(id);
+        case 'expertise_grant':
+          final id = _refIdFor(eff, entitiesById);
+          if (id != null && !expertiseSkills.contains(id)) {
+            expertiseSkills.add(id);
+          }
+        case 'unarmored_ac_formula':
+          unarmoredFormulas.add(Map<String, dynamic>.from(eff));
+        case 'extra_attack_count':
+        case 'extra_attack_bump':
+          final v = _intOf(eff['value']);
+          if (v > extraAttackCount) extraAttackCount = v;
+        case 'crit_range_extend':
+          final payload = eff['payload'];
+          final t = (payload is Map) ? _intOf(payload['threshold']) : _intOf(eff['value']);
+          if (t > 0 && t < critRangeMin) critRangeMin = t;
+        case 'resource_pool_grant':
+          // Compute pool max from count_formula + scales_with; runtime tracks current.
+          final payload = (eff['payload'] is Map)
+              ? Map<String, dynamic>.from(eff['payload'] as Map)
+              : <String, dynamic>{};
+          final scaledMax = evalScalesWith(eff['scales_with']);
+          final entry = <String, dynamic>{
+            'pool_ref': payload['pool_ref'] ?? eff['target_ref'],
+            'max': scaledMax ?? payload['count'] ?? eff['value'],
+            'recharge': payload['recharge'] ?? eff['recharge'],
+          };
+          resourcePools.add(entry);
+        case 'state_grant':
+        case 'recovery_grant':
+        case 'slot_recovery_short_rest':
+        case 'concentration_advantage':
+        case 'concentration_immune_to_damage_break':
+        case 'reaction_attack_grant':
+        case 'reaction_damage_reduction':
+        case 'reaction_negate_via_save':
+        case 'opportunity_attack_immunity_when_disengage_redundant':
+        case 'enemy_cant_disengage_oa':
+        case 'oa_stops_movement':
+        case 'damage_reduction_flat':
+        case 'ignore_cover':
+        case 'ignore_long_range_disadvantage':
+        case 'advantage_on':
+        case 'disadvantage_on':
+        case 'extra_damage_on_attack':
+        case 'reroll_damage':
+        case 'reroll_d20':
+        case 'attack_bonus_typed':
+        case 'damage_bonus_typed':
+        case 'half_proficiency_to_unproficient_checks':
+        case 'passive_score_bonus':
+        case 'reliable_talent':
+        case 'min_die_value':
+        case 'swim_speed_equals_speed':
+        case 'climb_speed_equals_speed':
+        case 'fly_speed':
+        case 'walk_on_liquid':
+        case 'magical_unarmed_strikes':
+        case 'damage_type_override':
+        case 'spellcasting_ability_to_damage':
+        case 'cantrip_count_bonus':
+        case 'spell_cast_from_item':
+        case 'weapon_mastery_grant':
+        case 'weapon_mastery_count_bonus':
+        case 'expertise_count':
+        case 'temp_hp_grant':
+        case 'choice_group':
+          // Recognized kinds reserved for later passes (combat tracker, choice
+          // resolution, weapon-specific attack pipeline). Silently accept here
+          // so authoring data with these kinds doesn't spam warnings.
+          break;
         default:
           warnings.add('Unhandled effect kind "${eff['kind']}" from $source');
       }
     }
 
+    // ── 4b. Auto-grant walker. Scan every feat AND trait in the entity map;
+    // if its `auto_granted_by` list matches the character's current
+    // class+level / subclass / species / background, add it to the working
+    // set. Feats also have their `effects` applied below; traits are
+    // narrative-only and only surface on the sheet for display.
+    final autoGrantedFeatIds = <String>[];
+    final autoGrantedTraitIds = <String>[];
+    bool matchesAutoGrant(List<Map<String, dynamic>> autoSources) {
+      for (final src in autoSources) {
+        final source = src['source']?.toString();
+        final ref = src['source_ref'];
+        final at = src['at_level'];
+        final atLevel = (at is int) ? at : _intOf(at);
+        switch (source) {
+          case 'class':
+            final classId = _resolveRef(ref, entitiesById);
+            final lvl = (classId != null) ? (classLevels[classId] ?? 0) : 0;
+            if (classId != null && lvl >= (atLevel == 0 ? 1 : atLevel)) {
+              return true;
+            }
+          case 'subclass':
+            final subId = _resolveRef(ref, entitiesById);
+            if (subId != null && subId == subclassId) return true;
+          case 'species':
+            final spId = _resolveRef(ref, entitiesById);
+            if (spId != null && spId == raceId) return true;
+          case 'background':
+            final bgId = _resolveRef(ref, entitiesById);
+            if (bgId != null && bgId == backgroundId) return true;
+        }
+      }
+      return false;
+    }
+
+    for (final e in entitiesById.values) {
+      final autoSources = _readMapList(e.fields['auto_granted_by']);
+      if (autoSources.isEmpty) continue;
+      if (!matchesAutoGrant(autoSources)) continue;
+      switch (e.categorySlug) {
+        case 'feat':
+          if (!featIds.contains(e.id) && !autoGrantedFeatIds.contains(e.id)) {
+            autoGrantedFeatIds.add(e.id);
+          }
+        case 'trait':
+          if (!autoGrantedTraitIds.contains(e.id)) {
+            autoGrantedTraitIds.add(e.id);
+          }
+      }
+    }
+
     // ── 5. Pass 3: feat effects (excluding level grants) ───────────────
-    for (final fid in featIds) {
+    final allFeatIds = [...featIds, ...autoGrantedFeatIds];
+    for (final fid in allFeatIds) {
       final feat = entitiesById[fid];
       if (feat == null) {
         warnings.add('Missing feat entity $fid');
@@ -328,6 +585,17 @@ class CharacterResolver {
       inventory: inventory,
       senseEntityIds: senses,
       damageResistanceIds: damageRes,
+      damageImmunityIds: damageImmunities,
+      damageVulnerabilityIds: damageVulnerabilities,
+      conditionImmunityIds: conditionImmunities,
+      expertiseSkillIds: expertiseSkills,
+      alwaysPreparedSpellIds: alwaysPreparedSpells,
+      autoGrantedFeatIds: autoGrantedFeatIds,
+      autoGrantedTraitIds: autoGrantedTraitIds,
+      unarmoredFormulas: unarmoredFormulas,
+      extraAttackCount: extraAttackCount,
+      critRangeMin: critRangeMin,
+      resourcePools: resourcePools,
       warnings: warnings,
     );
   }
@@ -346,11 +614,12 @@ class CharacterResolver {
       if (lvl > level) continue;
       out.add(ResolvedFeatureRow(
         level: lvl,
-        name: (r['name'] ?? '').toString(),
-        kind: (r['kind'] ?? '').toString(),
         description: (r['description'] ?? '').toString(),
         sourceEntityId: src.id,
       ));
+      // Legacy inline effects on the row still applied for backwards compat
+      // during migration; new content delegates to `auto_granted_by` on the
+      // ref'd feat/trait entity, picked up in Pass 4b.
       final effs = _readMapList(r['effects']);
       pendingEffects.addAll(effs);
     }

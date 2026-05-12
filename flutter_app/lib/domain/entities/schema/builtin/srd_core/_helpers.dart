@@ -44,23 +44,75 @@ Map<String, dynamic> eqGroup({
   'options': options,
 };
 
-/// featEffectList entry: `{kind, target_kind?, target_ref?, value?, payload?}`.
-/// Kinds: class_level_grant, proficiency_grant, language_grant, spell_grant,
-/// cantrip_grant, ac_bonus, speed_bonus, hp_bonus_per_level, initiative_bonus,
-/// attack_bonus, extra_attack_bump, choice_group.
+/// featEffectList entry: `{kind, target_kind?, target_ref?, value?, payload?,
+/// predicates?, scales_with?, activation?}`. Wrappers honored by
+/// `CharacterResolver`: predicates AND-combined per row, scales_with picks
+/// largest table row ≤ char's class level, activation describes action-
+/// economy + duration + uses (no resolver effect — combat tracker reads it).
 Map<String, dynamic> effect(
   String kind, {
   String? targetKind,
   Map<String, String>? targetRef,
   Object? value,
   Object? payload,
+  List<Map<String, dynamic>>? predicates,
+  Map<String, dynamic>? scalesWith,
+  Map<String, dynamic>? activation,
 }) => {
   'kind': kind,
   'target_kind': ?targetKind,
   'target_ref': ?targetRef,
   'value': ?value,
   'payload': ?payload,
+  'predicates': ?predicates,
+  'scales_with': ?scalesWith,
+  'activation': ?activation,
 };
+
+/// Closed-enum predicate `{kind, args}` AND-combined per effect row.
+Map<String, dynamic> predicate(String kind, [Map<String, dynamic>? args]) =>
+    {'kind': kind, 'args': ?args};
+
+/// `scales_with` rule: pick the table row with the largest `lvl` ≤ character's
+/// level in `classRef` (or character_level if classRef omitted).
+Map<String, dynamic> scalesByClass(String className, List<List<Object>> rows) =>
+    {
+      'kind': 'class_level',
+      'class_ref': ref('class', className),
+      'table': [for (final r in rows) {'lvl': r[0], 'v': r[1]}],
+    };
+
+/// `activation` block describing action-economy + duration + uses.
+Map<String, dynamic> activation({
+  required String actionType,
+  Map<String, dynamic>? duration,
+  Map<String, dynamic>? uses,
+  String? triggersStateRef,
+  List<String>? endConditions,
+}) => {
+  'action_type': actionType,
+  'duration': ?duration,
+  'uses': ?uses,
+  'triggers_state_ref': ?triggersStateRef,
+  'end_conditions': ?endConditions,
+};
+
+/// `auto_granted_by` entry — declares the feat is auto-applied when the
+/// character has the matching class+level / species / background.
+Map<String, dynamic> autoGrantBy({
+  required String source,
+  required String sourceName,
+  int? atLevel,
+  bool? choiceRequired,
+}) {
+  final slug = source; // 'class' | 'subclass' | 'species' | 'background'
+  return {
+    'source': source,
+    'source_ref': ref(slug, sourceName),
+    'at_level': ?atLevel,
+    'choice_required': ?choiceRequired,
+  };
+}
 
 /// One package entity in the wire format `PackageImportService` consumes.
 /// `attributes` keys must match the target category's `FieldSchema.fieldKey`.

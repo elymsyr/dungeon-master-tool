@@ -123,7 +123,7 @@ void main() {
       expect(find.text('No entries'), findsOneWidget);
     });
 
-    testWidgets('add appends empty feature row with all keys', (tester) async {
+    testWidgets('add appends empty feature row with level + description', (tester) async {
       dynamic captured;
       await tester.pumpWidget(_wrap(FieldWidgetFactory.create(
         schema: _schema(FieldType.classFeatures, label: 'Features'),
@@ -134,23 +134,22 @@ void main() {
       await tester.tap(find.byIcon(Icons.add));
       await tester.pump();
       final row = (captured as List).first as Map;
-      expect(row.keys, containsAll(<String>[
-        'level', 'name', 'kind', 'dice', 'uses', 'recharge', 'description',
-      ]));
+      expect(row.keys, containsAll(<String>['level', 'description']));
     });
 
-    testWidgets('shows row with name and dice fields', (tester) async {
+    testWidgets('shows row with level + summary fields only', (tester) async {
       await tester.pumpWidget(_wrap(FieldWidgetFactory.create(
         schema: _schema(FieldType.classFeatures, label: 'Features'),
         value: const [
-          {'level': 1, 'name': 'Rage', 'kind': 'resource', 'dice': '', 'uses': 2, 'recharge': 'long-rest', 'description': ''},
+          {'level': 1, 'description': 'Rage etc.'},
         ],
         readOnly: false,
         onChanged: (_) {},
       )));
       expect(find.text('Level'), findsOneWidget);
-      expect(find.text('Name'), findsOneWidget);
-      expect(find.text('Kind'), findsOneWidget);
+      expect(find.text('Summary'), findsOneWidget);
+      expect(find.text('Feat'), findsNothing);
+      expect(find.text('Trait'), findsNothing);
     });
   });
 
