@@ -5,6 +5,7 @@ import '../../../../../application/character_creation/character_draft.dart';
 import '../../../../../application/character_creation/character_draft_notifier.dart';
 import '../../../../../application/providers/entity_provider.dart';
 import '../../../../../domain/entities/entity.dart';
+import '../../../../widgets/class_level_up_table.dart';
 
 /// Subclass picker. Always shown when the chosen class has at least one
 /// subclass entity referencing it via `parent_class_ref`. Selection is
@@ -41,6 +42,10 @@ class SubclassStep extends ConsumerWidget {
         child: Text('No subclasses available for this class.'),
       );
     }
+    final classEntity =
+        draft.classId == null ? null : entities[draft.classId];
+    final subclassEntity =
+        draft.subclassId == null ? null : entities[draft.subclassId];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -62,6 +67,14 @@ class SubclassStep extends ConsumerWidget {
               onPressed: () => notifier.setSubclass(null),
             ),
           ),
+        if (classEntity != null && subclassEntity != null) ...[
+          const SizedBox(height: 12),
+          ClassLevelUpTable(
+            classEntity: classEntity,
+            subclassEntity: subclassEntity,
+            currentLevel: draft.level,
+          ),
+        ],
       ],
     );
   }

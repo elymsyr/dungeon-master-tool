@@ -45,9 +45,7 @@ String? _relationSubtitle(Entity e) {
   switch (e.categorySlug) {
     case 'spell':
       final lvl = f['level'];
-      final lvlStr = lvl is int
-          ? (lvl == 0 ? 'Cantrip' : 'Level $lvl')
-          : null;
+      final lvlStr = lvl is int ? (lvl == 0 ? 'Cantrip' : 'Level $lvl') : null;
       // school_ref is a Tier-0 UUID; resolving needs the entity map. Skip
       // — keep subtitle lightweight; the level is the load-bearing bit.
       return lvlStr;
@@ -101,13 +99,16 @@ class FieldWidgetFactory {
     required ValueChanged<dynamic> onChanged,
     Map<String, Entity>? entities,
     WidgetRef? ref,
+
     /// Aynı entity'deki diğer field değerleri — proficiencyTable gibi
     /// cross-field lookup (stat_block, proficiency_bonus) gereksinimleri için.
     Map<String, dynamic>? entityFields,
+
     /// Inline-list rendering: relation lists collapse to a single comma-separated
     /// row instead of a Card with per-row entries. Used in grouped multi-column
     /// layouts where the tall Card breaks row alignment.
     bool compact = false,
+
     /// Panel ('left'/'right') the host card lives in. Relation widgets use
     /// it so a tap on a referenced entity opens the target in the OPPOSITE
     /// panel rather than replacing the source card.
@@ -120,55 +121,241 @@ class FieldWidgetFactory {
     if (schema.isList) {
       if (schema.fieldType == FieldType.relation) {
         if (compact) {
-          return _InlineRelationListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref, panelId: panelId);
+          return _InlineRelationListFieldWidget(
+            schema: schema,
+            value: value,
+            readOnly: readOnly,
+            onChanged: onChanged,
+            entities: entities,
+            ref: ref,
+            panelId: panelId,
+          );
         }
-        return _ReferenceListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref, panelId: panelId);
+        return _ReferenceListFieldWidget(
+          schema: schema,
+          value: value,
+          readOnly: readOnly,
+          onChanged: onChanged,
+          entities: entities,
+          ref: ref,
+          panelId: panelId,
+        );
       }
       if (schema.fieldType == FieldType.image) {
-        return _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, mediaDir: mediaDir);
+        return _ImageFieldWidget(
+          schema: schema,
+          value: value,
+          readOnly: readOnly,
+          onChanged: onChanged,
+          mediaDir: mediaDir,
+        );
       }
       if (schema.fieldType == FieldType.enum_) {
-        return _EnumListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged);
+        return _EnumListFieldWidget(
+          schema: schema,
+          value: value,
+          readOnly: readOnly,
+          onChanged: onChanged,
+        );
       }
-      return _GenericListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged);
+      return _GenericListFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      );
     }
 
     return switch (schema.fieldType) {
-      FieldType.text => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.textarea => _TextAreaFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities),
-      FieldType.markdown => _MarkdownFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
-      FieldType.integer => _IntegerFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.enum_ => _EnumFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.relation => _RelationFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref, panelId: panelId),
-      FieldType.statBlock => _StatBlockFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.combatStats => _CombatStatsFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.conditionStats => _CombatStatsFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.dice => _DiceFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.boolean_ => _BooleanFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.slot => _SlotFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entityFields: entityFields),
-      FieldType.levelTable => _LevelTableFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.levelTextTable => _LevelTextTableFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.proficiencyTable => _ProficiencyTableFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entityFields: entityFields),
-      FieldType.tagList => _TagListFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.date => _DateFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.image => _ImageFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, mediaDir: mediaDir),
-      FieldType.file => _FileFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
-      FieldType.pdf => _PdfFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, ref: ref),
+      FieldType.text => _TextFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.textarea => _TextAreaFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+      ),
+      FieldType.markdown => _MarkdownFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
+      FieldType.integer => _IntegerFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.enum_ => _EnumFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.relation => _RelationFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+        panelId: panelId,
+      ),
+      FieldType.statBlock => _StatBlockFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.combatStats => _CombatStatsFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.conditionStats => _CombatStatsFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.dice => _DiceFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.boolean_ => _BooleanFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.slot => _SlotFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entityFields: entityFields,
+      ),
+      FieldType.levelTable => _LevelTableFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.levelTextTable => _LevelTextTableFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.proficiencyTable => _ProficiencyTableFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entityFields: entityFields,
+      ),
+      FieldType.tagList => _TagListFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.date => _DateFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.image => _ImageFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        mediaDir: mediaDir,
+      ),
+      FieldType.file => _FileFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
+      FieldType.pdf => _PdfFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        ref: ref,
+      ),
       FieldType.classFeatures => ClassFeaturesFieldWidget(
-          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
       FieldType.spellEffectList => SpellEffectListFieldWidget(
-          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
       FieldType.rangedSenseList => RangedSenseListFieldWidget(
-          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
       FieldType.grantedModifiers => GrantedModifiersFieldWidget(
-          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
       FieldType.equipmentChoiceGroups => EquipmentChoiceGroupsFieldWidget(
-          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities),
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+      ),
       FieldType.featEffectList => FeatEffectListFieldWidget(
-          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
       FieldType.autoGrantSources => AutoGrantSourcesFieldWidget(
-          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
-      _ => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
+      _ => _TextFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+      ),
     };
   }
 }
@@ -206,7 +393,9 @@ class _LabeledFieldRow extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: palette?.srdInk ?? Theme.of(context).colorScheme.onSurface,
+                  color:
+                      palette?.srdInk ??
+                      Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -220,7 +409,10 @@ class _LabeledFieldRow extends StatelessWidget {
 
 TextStyle _fieldValueStyle(BuildContext context) {
   final palette = Theme.of(context).extension<DmToolColors>();
-  return TextStyle(fontSize: 13, color: palette?.srdInk ?? Theme.of(context).colorScheme.onSurface);
+  return TextStyle(
+    fontSize: 13,
+    color: palette?.srdInk ?? Theme.of(context).colorScheme.onSurface,
+  );
 }
 
 TextStyle _fieldEmptyStyle(BuildContext context) {
@@ -239,10 +431,6 @@ enum _StepperMode { none, editOnly, always }
 
 _StepperMode _stepperModeForKey(String key) {
   switch (key) {
-    case 'hp':
-    case 'max_hp':
-    case 'temp_hp':
-      return _StepperMode.always;
     case 'level':
     case 'ac':
     case 'xp':
@@ -252,6 +440,9 @@ _StepperMode _stepperModeForKey(String key) {
       return _StepperMode.none;
   }
 }
+
+bool _alwaysEditableIntKey(String key) =>
+    key == 'hp' || key == 'max_hp' || key == 'temp_hp';
 
 /// Two-button column (+ on top, − on bottom) sitting on the right of a value.
 /// HP-style fields use the dedicated red/green theme tokens; other fields
@@ -291,7 +482,13 @@ class _QuickStepper extends StatelessWidget {
     );
   }
 
-  Widget _btn(IconData icon, Color bg, Color fg, double radius, VoidCallback onTap) {
+  Widget _btn(
+    IconData icon,
+    Color bg,
+    Color fg,
+    double radius,
+    VoidCallback onTap,
+  ) {
     return Material(
       color: bg,
       borderRadius: BorderRadius.circular(radius),
@@ -321,7 +518,12 @@ class _TextFieldWidget extends StatefulWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
-  const _TextFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _TextFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
 
   @override
   State<_TextFieldWidget> createState() => _TextFieldWidgetState();
@@ -364,9 +566,14 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
               controller: _controller,
               style: _fieldValueStyle(context),
               decoration: InputDecoration(
-                hintText: widget.schema.placeholder.isNotEmpty ? widget.schema.placeholder : null,
+                hintText: widget.schema.placeholder.isNotEmpty
+                    ? widget.schema.placeholder
+                    : null,
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 4,
+                ),
               ),
               onChanged: (v) => widget.onChanged(v),
             ),
@@ -382,10 +589,17 @@ class _TextAreaFieldWidget extends ConsumerStatefulWidget {
   final ValueChanged<dynamic> onChanged;
   final Map<String, Entity>? entities;
 
-  const _TextAreaFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities});
+  const _TextAreaFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+  });
 
   @override
-  ConsumerState<_TextAreaFieldWidget> createState() => _TextAreaFieldWidgetState();
+  ConsumerState<_TextAreaFieldWidget> createState() =>
+      _TextAreaFieldWidgetState();
 }
 
 class _TextAreaFieldWidgetState extends ConsumerState<_TextAreaFieldWidget> {
@@ -416,7 +630,8 @@ class _TextAreaFieldWidgetState extends ConsumerState<_TextAreaFieldWidget> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>();
     final inkColor = palette?.srdInk ?? Theme.of(context).colorScheme.onSurface;
-    final headingColor = palette?.srdHeadingRed ?? Theme.of(context).colorScheme.primary;
+    final headingColor =
+        palette?.srdHeadingRed ?? Theme.of(context).colorScheme.primary;
     final text = widget.value?.toString() ?? '';
     if (widget.readOnly && text.isEmpty) return const SizedBox.shrink();
 
@@ -425,7 +640,14 @@ class _TextAreaFieldWidgetState extends ConsumerState<_TextAreaFieldWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: headingColor)),
+          Text(
+            widget.schema.label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: headingColor,
+            ),
+          ),
           const SizedBox(height: 4),
           MarkdownTextArea(
             key: ValueKey('${widget.schema.fieldKey}_area'),
@@ -435,7 +657,11 @@ class _TextAreaFieldWidgetState extends ConsumerState<_TextAreaFieldWidget> {
             textStyle: TextStyle(fontSize: 13, color: inkColor),
             decoration: InputDecoration(
               hintText: 'Markdown supported (@ to mention)',
-              hintStyle: TextStyle(color: palette?.srdSubtitle, fontSize: 12, fontStyle: FontStyle.italic),
+              hintStyle: TextStyle(
+                color: palette?.srdSubtitle,
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
               isDense: true,
             ),
             onChanged: (v) => widget.onChanged(v),
@@ -465,7 +691,8 @@ class _MarkdownFieldWidget extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_MarkdownFieldWidget> createState() => _MarkdownFieldWidgetState();
+  ConsumerState<_MarkdownFieldWidget> createState() =>
+      _MarkdownFieldWidgetState();
 }
 
 class _MarkdownFieldWidgetState extends ConsumerState<_MarkdownFieldWidget> {
@@ -498,7 +725,8 @@ class _MarkdownFieldWidgetState extends ConsumerState<_MarkdownFieldWidget> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>();
     final inkColor = palette?.srdInk ?? Theme.of(context).colorScheme.onSurface;
-    final headingColor = palette?.srdHeadingRed ?? Theme.of(context).colorScheme.primary;
+    final headingColor =
+        palette?.srdHeadingRed ?? Theme.of(context).colorScheme.primary;
 
     if (widget.readOnly) {
       final text = widget.value?.toString() ?? '';
@@ -508,7 +736,14 @@ class _MarkdownFieldWidgetState extends ConsumerState<_MarkdownFieldWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: headingColor)),
+            Text(
+              widget.schema.label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: headingColor,
+              ),
+            ),
             const SizedBox(height: 4),
             MarkdownTextArea(
               controller: _controller,
@@ -525,7 +760,14 @@ class _MarkdownFieldWidgetState extends ConsumerState<_MarkdownFieldWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.schema.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: headingColor)),
+          Text(
+            widget.schema.label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: headingColor,
+            ),
+          ),
           const SizedBox(height: 4),
           MarkdownTextArea(
             controller: _controller,
@@ -533,7 +775,11 @@ class _MarkdownFieldWidgetState extends ConsumerState<_MarkdownFieldWidget> {
             textStyle: TextStyle(fontSize: 13, color: inkColor),
             decoration: InputDecoration(
               hintText: 'Markdown supported. Use @ to mention entities.',
-              hintStyle: TextStyle(color: palette?.srdSubtitle, fontSize: 12, fontStyle: FontStyle.italic),
+              hintStyle: TextStyle(
+                color: palette?.srdSubtitle,
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
               isDense: true,
             ),
             onChanged: (v) => widget.onChanged(v),
@@ -551,7 +797,12 @@ class _IntegerFieldWidget extends StatefulWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
-  const _IntegerFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _IntegerFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
 
   @override
   State<_IntegerFieldWidget> createState() => _IntegerFieldWidgetState();
@@ -598,12 +849,19 @@ class _IntegerFieldWidgetState extends State<_IntegerFieldWidget> {
     final raw = widget.value;
     final hasValue = raw != null && raw.toString().isNotEmpty;
     final mode = _stepperModeForKey(widget.schema.fieldKey);
-    final showStepper = mode == _StepperMode.always ||
+    final forceEditable = _alwaysEditableIntKey(widget.schema.fieldKey);
+    final effectiveReadOnly = widget.readOnly && !forceEditable;
+    final showStepper =
+        mode == _StepperMode.always ||
         (mode == _StepperMode.editOnly && !widget.readOnly);
-    if (widget.readOnly && !hasValue && !showStepper) return const SizedBox.shrink();
+    if (effectiveReadOnly && !hasValue && !showStepper)
+      return const SizedBox.shrink();
 
-    final valueChild = widget.readOnly
-        ? Text(hasValue ? raw.toString() : '—', style: _fieldValueStyle(context))
+    final valueChild = effectiveReadOnly
+        ? Text(
+            hasValue ? raw.toString() : '—',
+            style: _fieldValueStyle(context),
+          )
         : TextFormField(
             key: ValueKey('${widget.schema.fieldKey}_int'),
             controller: _controller,
@@ -642,7 +900,12 @@ class _EnumFieldWidget extends StatelessWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
-  const _EnumFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _EnumFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -664,9 +927,19 @@ class _EnumFieldWidget extends StatelessWidget {
               style: _fieldValueStyle(context),
               decoration: const InputDecoration(
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 4,
+                ),
               ),
-              items: options.map((o) => DropdownMenuItem(value: o, child: Text(o, overflow: TextOverflow.ellipsis))).toList(),
+              items: options
+                  .map(
+                    (o) => DropdownMenuItem(
+                      value: o,
+                      child: Text(o, overflow: TextOverflow.ellipsis),
+                    ),
+                  )
+                  .toList(),
               onChanged: (v) => onChanged(v),
             ),
     );
@@ -746,7 +1019,15 @@ class _RelationFieldWidget extends StatelessWidget {
   final WidgetRef? ref;
   final String? panelId;
 
-  const _RelationFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities, this.ref, this.panelId});
+  const _RelationFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+    this.ref,
+    this.panelId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -754,10 +1035,11 @@ class _RelationFieldWidget extends StatelessWidget {
     final linkedEntity = (linkedId.isNotEmpty && entities != null)
         ? entities![linkedId]
         : null;
-    final linkedName = linkedEntity?.name ??
-        (linkedId.isNotEmpty ? linkedId : '');
-    final subtitle =
-        linkedEntity == null ? null : _relationSubtitle(linkedEntity);
+    final linkedName =
+        linkedEntity?.name ?? (linkedId.isNotEmpty ? linkedId : '');
+    final subtitle = linkedEntity == null
+        ? null
+        : _relationSubtitle(linkedEntity);
     final hasValue = linkedId.isNotEmpty;
 
     if (readOnly && !hasValue) return const SizedBox.shrink();
@@ -789,10 +1071,7 @@ class _RelationFieldWidget extends StatelessWidget {
                         ),
                         if (subtitle != null) ...[
                           const SizedBox(width: 6),
-                          Text(
-                            '· $subtitle',
-                            style: _fieldEmptyStyle(context),
-                          ),
+                          Text('· $subtitle', style: _fieldEmptyStyle(context)),
                         ],
                       ],
                     ),
@@ -838,7 +1117,12 @@ class _StatBlockFieldWidget extends StatefulWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
-  const _StatBlockFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _StatBlockFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
 
   @override
   State<_StatBlockFieldWidget> createState() => _StatBlockFieldWidgetState();
@@ -848,15 +1132,18 @@ class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
   static const _keys = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
   final Map<String, TextEditingController> _controllers = {};
 
-  Map<String, dynamic> get _stats =>
-      (widget.value is Map) ? Map<String, dynamic>.from(widget.value as Map) : <String, dynamic>{};
+  Map<String, dynamic> get _stats => (widget.value is Map)
+      ? Map<String, dynamic>.from(widget.value as Map)
+      : <String, dynamic>{};
 
   @override
   void initState() {
     super.initState();
     final stats = _stats;
     for (final key in _keys) {
-      _controllers[key] = TextEditingController(text: (stats[key] ?? 10).toString());
+      _controllers[key] = TextEditingController(
+        text: (stats[key] ?? 10).toString(),
+      );
     }
   }
 
@@ -894,7 +1181,10 @@ class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.schema.label, style: Theme.of(context).textTheme.titleSmall),
+            Text(
+              widget.schema.label,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
             const SizedBox(height: 8),
             Row(
               children: _keys.map((key) {
@@ -905,7 +1195,13 @@ class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
                 return Expanded(
                   child: Column(
                     children: [
-                      Text(key, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      Text(
+                        key,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       SizedBox(
                         width: 44,
@@ -915,7 +1211,10 @@ class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
                           readOnly: widget.readOnly,
                           textAlign: TextAlign.center,
                           keyboardType: TextInputType.number,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                           decoration: const InputDecoration(
                             isDense: true,
                             contentPadding: EdgeInsets.symmetric(vertical: 8),
@@ -928,7 +1227,13 @@ class _StatBlockFieldWidgetState extends State<_StatBlockFieldWidget> {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(modStr, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outline)),
+                      Text(
+                        modStr,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -948,28 +1253,54 @@ class _CombatStatsFieldWidget extends StatefulWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
-  const _CombatStatsFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _CombatStatsFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
 
   @override
-  State<_CombatStatsFieldWidget> createState() => _CombatStatsFieldWidgetState();
+  State<_CombatStatsFieldWidget> createState() =>
+      _CombatStatsFieldWidgetState();
 }
 
 class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
   final Map<String, TextEditingController> _controllers = {};
 
-  Map<String, dynamic> get _stats =>
-      (widget.value is Map) ? Map<String, dynamic>.from(widget.value as Map) : <String, dynamic>{};
+  Map<String, dynamic> get _stats => (widget.value is Map)
+      ? Map<String, dynamic>.from(widget.value as Map)
+      : <String, dynamic>{};
 
-  List<(String, String, String)> get _fields => widget.schema.subFields.isNotEmpty
-      ? widget.schema.subFields.map((sf) => (sf['key'] ?? '', sf['label'] ?? sf['key'] ?? '', sf['type'] ?? 'text')).toList()
-      : const [('hp', 'HP', 'integer'), ('max_hp', 'Max HP', 'integer'), ('ac', 'AC', 'integer'), ('speed', 'Speed', 'text'), ('initiative', 'Init', 'integer'), ('cr', 'CR', 'text'), ('xp', 'XP', 'integer')];
+  List<(String, String, String)> get _fields =>
+      widget.schema.subFields.isNotEmpty
+      ? widget.schema.subFields
+            .map(
+              (sf) => (
+                sf['key'] ?? '',
+                sf['label'] ?? sf['key'] ?? '',
+                sf['type'] ?? 'text',
+              ),
+            )
+            .toList()
+      : const [
+          ('hp', 'HP', 'integer'),
+          ('max_hp', 'Max HP', 'integer'),
+          ('ac', 'AC', 'integer'),
+          ('speed', 'Speed', 'text'),
+          ('initiative', 'Init', 'integer'),
+          ('cr', 'CR', 'text'),
+          ('xp', 'XP', 'integer'),
+        ];
 
   @override
   void initState() {
     super.initState();
     final stats = _stats;
     for (final f in _fields) {
-      _controllers[f.$1] = TextEditingController(text: stats[f.$1]?.toString() ?? '');
+      _controllers[f.$1] = TextEditingController(
+        text: stats[f.$1]?.toString() ?? '',
+      );
     }
   }
 
@@ -998,17 +1329,6 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
     super.dispose();
   }
 
-  void _bumpStat(String key, int delta) {
-    final stats = _stats;
-    final cur = int.tryParse(stats[key]?.toString() ?? '') ?? 0;
-    final newVal = (cur + delta).toString();
-    final ctrl = _controllers[key];
-    if (ctrl != null) ctrl.text = newVal;
-    final updated = Map<String, dynamic>.from(stats);
-    updated[key] = newVal;
-    widget.onChanged(updated);
-  }
-
   @override
   Widget build(BuildContext context) {
     final stats = _stats;
@@ -1023,63 +1343,70 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.schema.label, style: Theme.of(context).textTheme.titleSmall),
+            Text(
+              widget.schema.label,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
             const SizedBox(height: 8),
             if (gridFields.isNotEmpty)
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final cols = (constraints.maxWidth / 88).floor().clamp(1, gridFields.length);
+                  final cols = (constraints.maxWidth / 88).floor().clamp(
+                    1,
+                    gridFields.length,
+                  );
                   final rows = <Widget>[];
                   for (var i = 0; i < gridFields.length; i += cols) {
-                    final rowFields = gridFields.sublist(i, (i + cols).clamp(0, gridFields.length));
-                    rows.add(Padding(
-                      padding: EdgeInsets.only(bottom: i + cols < gridFields.length ? 8 : 0),
-                      child: Row(
-                        children: rowFields.map((f) {
-                          final mode = f.$3 == 'integer'
-                              ? _stepperModeForKey(f.$1)
-                              : _StepperMode.none;
-                          final showStepper = mode == _StepperMode.always ||
-                              (mode == _StepperMode.editOnly && !widget.readOnly);
-                          final field = TextFormField(
-                            key: ValueKey('cs_${f.$1}'),
-                            controller: _controllers[f.$1],
-                            readOnly: widget.readOnly,
-                            textAlign: TextAlign.center,
-                            decoration: InputDecoration(
-                              labelText: f.$2,
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                            ),
-                            onChanged: (v) {
-                              final updated = Map<String, dynamic>.from(stats);
-                              updated[f.$1] = v;
-                              widget.onChanged(updated);
-                            },
-                          );
-                          final cell = showStepper
-                              ? Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Expanded(child: field),
-                                    const SizedBox(width: 4),
-                                    _QuickStepper(
-                                      hp: mode == _StepperMode.always,
-                                      onIncrement: () => _bumpStat(f.$1, 1),
-                                      onDecrement: () => _bumpStat(f.$1, -1),
-                                    ),
-                                  ],
-                                )
-                              : field;
-                          return Expanded(
-                            child: Padding(
-                              padding: EdgeInsets.only(right: f != rowFields.last ? 8 : 0),
-                              child: cell,
-                            ),
-                          );
-                        }).toList(),
+                    final rowFields = gridFields.sublist(
+                      i,
+                      (i + cols).clamp(0, gridFields.length),
+                    );
+                    rows.add(
+                      Padding(
+                        padding: EdgeInsets.only(
+                          bottom: i + cols < gridFields.length ? 8 : 0,
+                        ),
+                        child: Row(
+                          children: rowFields.map((f) {
+                            // HP-family stays editable even in view mode so
+                            // mid-session damage/heal doesn't require an edit
+                            // toggle. Other combat stats follow widget.readOnly.
+                            final alwaysEditable = f.$1 == 'hp' ||
+                                f.$1 == 'max_hp' ||
+                                f.$1 == 'temp_hp';
+                            final field = TextFormField(
+                              key: ValueKey('cs_${f.$1}'),
+                              controller: _controllers[f.$1],
+                              readOnly: widget.readOnly && !alwaysEditable,
+                              textAlign: TextAlign.center,
+                              decoration: InputDecoration(
+                                labelText: f.$2,
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                  horizontal: 4,
+                                ),
+                              ),
+                              onChanged: (v) {
+                                final updated = Map<String, dynamic>.from(
+                                  stats,
+                                );
+                                updated[f.$1] = v;
+                                widget.onChanged(updated);
+                              },
+                            );
+                            return Expanded(
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  right: f != rowFields.last ? 8 : 0,
+                                ),
+                                child: field,
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
-                    ));
+                    );
                   }
                   return Column(children: rows);
                 },
@@ -1093,7 +1420,14 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(f.$2, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p?.tabText)),
+                    Text(
+                      f.$2,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: p?.tabText,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     MarkdownTextArea(
                       key: ValueKey('cs_${f.$1}'),
@@ -1130,17 +1464,24 @@ class _GenericListFieldWidget extends StatefulWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
-  const _GenericListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _GenericListFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
 
   @override
-  State<_GenericListFieldWidget> createState() => _GenericListFieldWidgetState();
+  State<_GenericListFieldWidget> createState() =>
+      _GenericListFieldWidgetState();
 }
 
 class _GenericListFieldWidgetState extends State<_GenericListFieldWidget> {
   final List<TextEditingController> _controllers = [];
 
-  List<String> get _items =>
-      (widget.value is List) ? List<String>.from((widget.value as List).map((e) => e.toString())) : <String>[];
+  List<String> get _items => (widget.value is List)
+      ? List<String>.from((widget.value as List).map((e) => e.toString()))
+      : <String>[];
 
   @override
   void initState() {
@@ -1194,8 +1535,19 @@ class _GenericListFieldWidgetState extends State<_GenericListFieldWidget> {
           children: [
             Row(
               children: [
-                Expanded(child: Text('${widget.schema.label} (${items.length})', style: Theme.of(context).textTheme.titleSmall)),
-                Text(typeName, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline)),
+                Expanded(
+                  child: Text(
+                    '${widget.schema.label} (${items.length})',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                Text(
+                  typeName,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
                 if (!widget.readOnly)
                   IconButton(
                     icon: const Icon(Icons.add, size: 18),
@@ -1210,7 +1562,13 @@ class _GenericListFieldWidgetState extends State<_GenericListFieldWidget> {
             if (items.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text('No items', style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12)),
+                child: Text(
+                  'No items',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.outline,
+                    fontSize: 12,
+                  ),
+                ),
               ),
             ...items.asMap().entries.map((entry) {
               final i = entry.key;
@@ -1218,16 +1576,31 @@ class _GenericListFieldWidgetState extends State<_GenericListFieldWidget> {
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
                   children: [
-                    Text('${i + 1}.', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outline)),
+                    Text(
+                      '${i + 1}.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextFormField(
                         key: ValueKey('${widget.schema.fieldKey}_list_$i'),
-                        controller: _controllers.length > i ? _controllers[i] : null,
+                        controller: _controllers.length > i
+                            ? _controllers[i]
+                            : null,
                         readOnly: widget.readOnly,
                         style: const TextStyle(fontSize: 12),
-                        decoration: const InputDecoration(isDense: true, filled: false, border: InputBorder.none),
-                        keyboardType: widget.schema.fieldType == FieldType.integer ? TextInputType.number : null,
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          filled: false,
+                          border: InputBorder.none,
+                        ),
+                        keyboardType:
+                            widget.schema.fieldType == FieldType.integer
+                            ? TextInputType.number
+                            : null,
                         onChanged: (v) {
                           final updated = List<String>.from(items);
                           updated[i] = v;
@@ -1265,10 +1638,19 @@ class _ReferenceListFieldWidget extends StatefulWidget {
   final WidgetRef? ref;
   final String? panelId;
 
-  const _ReferenceListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.entities, this.ref, this.panelId});
+  const _ReferenceListFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+    this.ref,
+    this.panelId,
+  });
 
   @override
-  State<_ReferenceListFieldWidget> createState() => _ReferenceListFieldWidgetState();
+  State<_ReferenceListFieldWidget> createState() =>
+      _ReferenceListFieldWidgetState();
 }
 
 class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
@@ -1298,11 +1680,19 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
           children: [
             Row(
               children: [
-                Expanded(child: Text('${schema.label} (${items.length})', style: Theme.of(context).textTheme.titleSmall)),
+                Expanded(
+                  child: Text(
+                    '${schema.label} (${items.length})',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
                 Flexible(
                   child: Text(
                     '→ $targetTypes',
-                    style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outline),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -1311,7 +1701,9 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                     icon: const Icon(Icons.add, size: 18),
                     onPressed: () async {
                       if (ref == null) return;
-                      final existingIds = items.map((e) => e['id']?.toString() ?? '').toList();
+                      final existingIds = items
+                          .map((e) => e['id']?.toString() ?? '')
+                          .toList();
                       final result = await showEntitySelectorDialog(
                         context: context,
                         ref: ref!,
@@ -1321,7 +1713,11 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                       );
                       if (result != null) {
                         for (final id in result) {
-                          items.add({'id': id, 'equipped': false, 'source': 'manual'});
+                          items.add({
+                            'id': id,
+                            'equipped': false,
+                            'source': 'manual',
+                          });
                         }
                         onChanged(_serializeItems(items, showEquip));
                       }
@@ -1335,7 +1731,10 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
                   'No items linked',
-                  style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.outline,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ...items.asMap().entries.map((entry) {
@@ -1347,7 +1746,7 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
               final linkedEntity = entities?[itemId];
               final description = linkedEntity?.description ?? '';
               // Indent description to align with the entity name (past the
-               // equip toggle, link icon, and spacers).
+              // equip toggle, link icon, and spacers).
               final descIndent = (showEquip ? 28.0 : 0.0) + 14 + 6;
 
               Widget itemRow = Padding(
@@ -1363,17 +1762,26 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                             width: 28,
                             child: IconButton(
                               icon: Icon(
-                                isEquipped ? Icons.shield : Icons.shield_outlined,
+                                isEquipped
+                                    ? Icons.shield
+                                    : Icons.shield_outlined,
                                 size: 16,
                                 color: isEquipped
                                     ? Theme.of(context).colorScheme.primary
                                     : Theme.of(context).colorScheme.outline,
                               ),
                               tooltip: isEquipped ? 'Equipped' : 'Not equipped',
-                              onPressed: readOnly ? null : () {
-                                items[i] = {...item, 'equipped': !isEquipped};
-                                onChanged(_serializeItems(items, showEquip));
-                              },
+                              onPressed: readOnly
+                                  ? null
+                                  : () {
+                                      items[i] = {
+                                        ...item,
+                                        'equipped': !isEquipped,
+                                      };
+                                      onChanged(
+                                        _serializeItems(items, showEquip),
+                                      );
+                                    },
                               visualDensity: VisualDensity.compact,
                               padding: EdgeInsets.zero,
                             ),
@@ -1385,7 +1793,8 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                           child: InkWell(
                             onTap: ref == null || linkedEntity == null
                                 ? null
-                                : () => _navigateToEntity(ref!, itemId, panelId),
+                                : () =>
+                                      _navigateToEntity(ref!, itemId, panelId),
                             child: Row(
                               children: [
                                 Flexible(
@@ -1397,12 +1806,14 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                                       decoration: showEquip && !isEquipped
                                           ? TextDecoration.lineThrough
                                           : (linkedEntity != null
-                                              ? TextDecoration.underline
-                                              : null),
+                                                ? TextDecoration.underline
+                                                : null),
                                       decorationStyle:
                                           TextDecorationStyle.dotted,
                                       color: showEquip && !isEquipped
-                                          ? Theme.of(context).colorScheme.outline
+                                          ? Theme.of(
+                                              context,
+                                            ).colorScheme.outline
                                           : null,
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -1410,17 +1821,24 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                                 ),
                                 if (linkedEntity != null) ...[
                                   const SizedBox(width: 6),
-                                  Builder(builder: (ctx) {
-                                    final sub = _relationSubtitle(linkedEntity);
-                                    if (sub == null) return const SizedBox.shrink();
-                                    return Text(
-                                      '· $sub',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Theme.of(context).colorScheme.outline,
-                                      ),
-                                    );
-                                  }),
+                                  Builder(
+                                    builder: (ctx) {
+                                      final sub = _relationSubtitle(
+                                        linkedEntity,
+                                      );
+                                      if (sub == null)
+                                        return const SizedBox.shrink();
+                                      return Text(
+                                        '· $sub',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.outline,
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ],
                               ],
                             ),
@@ -1439,18 +1857,26 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                     ),
                     if (description.isNotEmpty)
                       Padding(
-                        padding: EdgeInsets.only(left: descIndent, top: 2, right: 4),
+                        padding: EdgeInsets.only(
+                          left: descIndent,
+                          top: 2,
+                          right: 4,
+                        ),
                         child: MarkdownBody(
                           data: description,
                           selectable: true,
-                          styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                            p: TextStyle(
-                              fontSize: 12,
-                              height: 1.35,
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85),
-                            ),
-                            listBullet: const TextStyle(fontSize: 12),
-                          ),
+                          styleSheet:
+                              MarkdownStyleSheet.fromTheme(
+                                Theme.of(context),
+                              ).copyWith(
+                                p: TextStyle(
+                                  fontSize: 12,
+                                  height: 1.35,
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.85),
+                                ),
+                                listBullet: const TextStyle(fontSize: 12),
+                              ),
                         ),
                       ),
                   ],
@@ -1516,16 +1942,19 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
 
   List<String> _parseIds(dynamic v) {
     if (v is! List) return const [];
-    return v.map<String>((e) {
-      if (e is String) return e;
-      if (e is Map) {
-        if (e['_lookup'] != null || e['_ref'] != null) {
-          return resolveRelationId(e, entities);
-        }
-        return (e['id']?.toString() ?? '');
-      }
-      return e.toString();
-    }).where((s) => s.isNotEmpty).toList();
+    return v
+        .map<String>((e) {
+          if (e is String) return e;
+          if (e is Map) {
+            if (e['_lookup'] != null || e['_ref'] != null) {
+              return resolveRelationId(e, entities);
+            }
+            return (e['id']?.toString() ?? '');
+          }
+          return e.toString();
+        })
+        .where((s) => s.isNotEmpty)
+        .toList();
   }
 
   String _name(String id) => entities?[id]?.name ?? id;
@@ -1538,26 +1967,33 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
     final name = _name(id);
     final sub = _subtitle(id);
     if (sub == null) {
-      return Text(name,
-          style: const TextStyle(fontSize: 11),
-          overflow: TextOverflow.ellipsis);
+      return Text(
+        name,
+        style: const TextStyle(fontSize: 11),
+        overflow: TextOverflow.ellipsis,
+      );
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Flexible(
-          child: Text(name,
-              style: const TextStyle(fontSize: 11),
-              overflow: TextOverflow.ellipsis),
+          child: Text(
+            name,
+            style: const TextStyle(fontSize: 11),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         const SizedBox(width: 4),
         Flexible(
-          child: Text('· $sub',
-              style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w400),
-              overflow: TextOverflow.ellipsis),
+          child: Text(
+            '· $sub',
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w400,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -1587,15 +2023,16 @@ class _InlineRelationListFieldWidget extends StatelessWidget {
                     ? null
                     : () => _navigateToEntity(ref!, id, panelId),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .secondaryContainer
-                        .withValues(alpha: 0.4),
-                    borderRadius: Theme.of(context)
-                            .extension<DmToolColors>()
-                            ?.chr ??
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.secondaryContainer.withValues(alpha: 0.4),
+                    borderRadius:
+                        Theme.of(context).extension<DmToolColors>()?.chr ??
                         BorderRadius.circular(6),
                   ),
                   child: _chipLabel(id),
@@ -1661,7 +2098,12 @@ class _BooleanFieldWidget extends StatelessWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
-  const _BooleanFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _BooleanFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1756,30 +2198,48 @@ class _SlotFieldWidget extends StatelessWidget {
                   icon: const Icon(Icons.remove_circle_outline, size: 18),
                   onPressed: count == 0
                       ? null
-                      : () => _write(count: count - 1, states: states.sublist(0, count - 1)),
+                      : () => _write(
+                          count: count - 1,
+                          states: states.sublist(0, count - 1),
+                        ),
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  constraints: const BoxConstraints(
+                    minWidth: 28,
+                    minHeight: 28,
+                  ),
                 ),
                 IconButton(
                   tooltip: 'Add slot',
                   icon: const Icon(Icons.add_circle_outline, size: 18),
                   onPressed: count >= 99
                       ? null
-                      : () => _write(count: count + 1, states: [...states, false]),
+                      : () => _write(
+                          count: count + 1,
+                          states: [...states, false],
+                        ),
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  constraints: const BoxConstraints(
+                    minWidth: 28,
+                    minHeight: 28,
+                  ),
                 ),
                 IconButton(
                   tooltip: 'Refill',
                   icon: const Icon(Icons.refresh, size: 18),
-                  onPressed: !anyFilled
+                  onPressed: anyFilled
                       ? null
-                      : () => _write(count: count, states: List.filled(count, false)),
+                      : () => _write(
+                          count: count,
+                          states: List.filled(count, true),
+                        ),
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  constraints: const BoxConstraints(
+                    minWidth: 28,
+                    minHeight: 28,
+                  ),
                 ),
               ],
             ],
@@ -1790,10 +2250,7 @@ class _SlotFieldWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
                 'No slots — tap + to add',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: palette.srdSubtitle,
-                ),
+                style: TextStyle(fontSize: 11, color: palette.srdSubtitle),
               ),
             )
           else
@@ -1875,7 +2332,9 @@ class _LevelTableFieldWidget extends StatelessWidget {
     for (final e in m.entries) {
       final k = int.tryParse(e.key.toString());
       if (k == null) continue;
-      final v = e.value is num ? e.value as num : num.tryParse(e.value.toString());
+      final v = e.value is num
+          ? e.value as num
+          : num.tryParse(e.value.toString());
       if (v == null) continue;
       entries.add(MapEntry(k, v));
     }
@@ -1905,7 +2364,15 @@ class _LevelTableFieldWidget extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text(schema.label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+                Expanded(
+                  child: Text(
+                    schema.label,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
                 if (!readOnly)
                   IconButton(
                     tooltip: 'Add row',
@@ -1922,16 +2389,36 @@ class _LevelTableFieldWidget extends StatelessWidget {
             if (rows.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Text('No levels — tap + to add', style: TextStyle(fontSize: 11, color: palette.srdSubtitle)),
+                child: Text(
+                  'No levels — tap + to add',
+                  style: TextStyle(fontSize: 11, color: palette.srdSubtitle),
+                ),
               )
             else ...[
               Padding(
                 padding: const EdgeInsets.only(bottom: 4, top: 2),
                 child: Row(
                   children: [
-                    SizedBox(width: 60, child: Text('Level', style: TextStyle(fontSize: 10, color: palette.srdSubtitle))),
+                    SizedBox(
+                      width: 60,
+                      child: Text(
+                        'Level',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: palette.srdSubtitle,
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: Text('Value', style: TextStyle(fontSize: 10, color: palette.srdSubtitle))),
+                    Expanded(
+                      child: Text(
+                        'Value',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: palette.srdSubtitle,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -1950,7 +2437,13 @@ class _LevelTableFieldWidget extends StatelessWidget {
                           readOnly: readOnly,
                           keyboardType: TextInputType.number,
                           style: const TextStyle(fontSize: 12),
-                          decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 4)),
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 4,
+                            ),
+                          ),
                           onChanged: (v) {
                             final newLevel = int.tryParse(v);
                             if (newLevel == null) return;
@@ -1966,9 +2459,17 @@ class _LevelTableFieldWidget extends StatelessWidget {
                           key: ValueKey('${schema.fieldKey}_val_${row.key}_$i'),
                           initialValue: row.value.toString(),
                           readOnly: readOnly,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           style: const TextStyle(fontSize: 12),
-                          decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 4)),
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 4,
+                            ),
+                          ),
                           onChanged: (v) {
                             final newVal = num.tryParse(v);
                             if (newVal == null) return;
@@ -2049,7 +2550,15 @@ class _LevelTextTableFieldWidget extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text(schema.label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+                Expanded(
+                  child: Text(
+                    schema.label,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
                 if (!readOnly)
                   IconButton(
                     tooltip: 'Add row',
@@ -2066,16 +2575,36 @@ class _LevelTextTableFieldWidget extends StatelessWidget {
             if (rows.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Text('No rows — tap + to add', style: TextStyle(fontSize: 11, color: palette.srdSubtitle)),
+                child: Text(
+                  'No rows — tap + to add',
+                  style: TextStyle(fontSize: 11, color: palette.srdSubtitle),
+                ),
               )
             else ...[
               Padding(
                 padding: const EdgeInsets.only(bottom: 4, top: 2),
                 child: Row(
                   children: [
-                    SizedBox(width: 60, child: Text('Level', style: TextStyle(fontSize: 10, color: palette.srdSubtitle))),
+                    SizedBox(
+                      width: 60,
+                      child: Text(
+                        'Level',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: palette.srdSubtitle,
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: Text('Description', style: TextStyle(fontSize: 10, color: palette.srdSubtitle))),
+                    Expanded(
+                      child: Text(
+                        'Description',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: palette.srdSubtitle,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -2095,7 +2624,13 @@ class _LevelTextTableFieldWidget extends StatelessWidget {
                           readOnly: readOnly,
                           keyboardType: TextInputType.number,
                           style: const TextStyle(fontSize: 12),
-                          decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 4)),
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 4,
+                            ),
+                          ),
                           onChanged: (v) {
                             final newLevel = int.tryParse(v);
                             if (newLevel == null) return;
@@ -2114,7 +2649,13 @@ class _LevelTextTableFieldWidget extends StatelessWidget {
                           maxLines: null,
                           minLines: 1,
                           style: const TextStyle(fontSize: 12),
-                          decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 6)),
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 6,
+                            ),
+                          ),
                           onChanged: (v) {
                             final updated = [...rows];
                             updated[i] = MapEntry(row.key, v);
@@ -2152,7 +2693,13 @@ class _ImageFieldWidget extends ConsumerStatefulWidget {
   final ValueChanged<dynamic> onChanged;
   final String? mediaDir;
 
-  const _ImageFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.mediaDir});
+  const _ImageFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.mediaDir,
+  });
 
   @override
   ConsumerState<_ImageFieldWidget> createState() => _ImageFieldWidgetState();
@@ -2163,7 +2710,8 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
 
   List<String> get _images {
     if (widget.value is List) return List<String>.from(widget.value as List);
-    if (widget.value is String && (widget.value as String).isNotEmpty) return [widget.value as String];
+    if (widget.value is String && (widget.value as String).isNotEmpty)
+      return [widget.value as String];
     return [];
   }
 
@@ -2187,7 +2735,10 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
       allowMultiple: true,
     );
     if (result == null || result.files.isEmpty) return;
-    final newPaths = result.files.where((f) => f.path != null).map((f) => f.path!).toList();
+    final newPaths = result.files
+        .where((f) => f.path != null)
+        .map((f) => f.path!)
+        .toList();
     widget.onChanged([..._images, ...newPaths]);
   }
 
@@ -2228,7 +2779,8 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
   @override
   Widget build(BuildContext context) {
     final images = _images;
-    if (_currentIndex >= images.length) _currentIndex = images.isEmpty ? 0 : images.length - 1;
+    if (_currentIndex >= images.length)
+      _currentIndex = images.isEmpty ? 0 : images.length - 1;
 
     final palette = Theme.of(context).extension<DmToolColors>();
 
@@ -2250,7 +2802,8 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
                   alignment: Alignment.center,
                   children: [
                     GestureDetector(
-                      onTap: () => _showFullScreen(context, images[_currentIndex]),
+                      onTap: () =>
+                          _showFullScreen(context, images[_currentIndex]),
                       child: ClipRRect(
                         borderRadius: palette?.cbr ?? BorderRadius.circular(4),
                         child: Image.file(
@@ -2260,7 +2813,12 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
                           cacheWidth: 600,
                           errorBuilder: (_, _, _) => Container(
                             color: palette?.canvasBg ?? Colors.grey.shade800,
-                            child: Center(child: Icon(Icons.broken_image, color: palette?.srdSubtitle)),
+                            child: Center(
+                              child: Icon(
+                                Icons.broken_image,
+                                color: palette?.srdSubtitle,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -2270,15 +2828,31 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
                       Positioned(
                         left: 4,
                         child: IconButton(
-                          icon: const Icon(Icons.chevron_left, color: Colors.white70),
-                          onPressed: () => setState(() => _currentIndex = (_currentIndex - 1).clamp(0, images.length - 1)),
+                          icon: const Icon(
+                            Icons.chevron_left,
+                            color: Colors.white70,
+                          ),
+                          onPressed: () => setState(
+                            () => _currentIndex = (_currentIndex - 1).clamp(
+                              0,
+                              images.length - 1,
+                            ),
+                          ),
                         ),
                       ),
                       Positioned(
                         right: 4,
                         child: IconButton(
-                          icon: const Icon(Icons.chevron_right, color: Colors.white70),
-                          onPressed: () => setState(() => _currentIndex = (_currentIndex + 1).clamp(0, images.length - 1)),
+                          icon: const Icon(
+                            Icons.chevron_right,
+                            color: Colors.white70,
+                          ),
+                          onPressed: () => setState(
+                            () => _currentIndex = (_currentIndex + 1).clamp(
+                              0,
+                              images.length - 1,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -2287,14 +2861,21 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
                       Positioned(
                         bottom: 4,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.black54,
-                            borderRadius: palette?.chr ?? BorderRadius.circular(10),
+                            borderRadius:
+                                palette?.chr ?? BorderRadius.circular(10),
                           ),
                           child: Text(
                             '${_currentIndex + 1}/${images.length}',
-                            style: const TextStyle(color: Colors.white, fontSize: 11),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                            ),
                           ),
                         ),
                       ),
@@ -2312,12 +2893,18 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
                     TextButton.icon(
                       onPressed: () => _removeImage(_currentIndex),
                       icon: const Icon(Icons.delete, size: 16),
-                      label: const Text('Remove', style: TextStyle(fontSize: 12)),
+                      label: const Text(
+                        'Remove',
+                        style: TextStyle(fontSize: 12),
+                      ),
                     ),
                   TextButton.icon(
                     onPressed: _pickImages,
                     icon: const Icon(Icons.add_photo_alternate, size: 16),
-                    label: const Text('Add Image', style: TextStyle(fontSize: 12)),
+                    label: const Text(
+                      'Add Image',
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ),
                 ],
               ),
@@ -2335,11 +2922,18 @@ class _FileFieldWidget extends StatelessWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
-  const _FileFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _FileFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final files = (value is List) ? List<String>.from(value as List) : <String>[];
+    final files = (value is List)
+        ? List<String>.from(value as List)
+        : <String>[];
     final palette = Theme.of(context).extension<DmToolColors>();
 
     return Padding(
@@ -2360,14 +2954,23 @@ class _FileFieldWidget extends StatelessWidget {
                 return ListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.picture_as_pdf, size: 20, color: palette?.tokenBorderHostile ?? Colors.red),
-                  title: Text(fileName, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
+                  leading: Icon(
+                    Icons.picture_as_pdf,
+                    size: 20,
+                    color: palette?.tokenBorderHostile ?? Colors.red,
+                  ),
+                  title: Text(
+                    fileName,
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   trailing: readOnly
                       ? null
                       : IconButton(
                           icon: const Icon(Icons.close, size: 16),
                           onPressed: () {
-                            final updated = List<String>.from(files)..removeAt(i);
+                            final updated = List<String>.from(files)
+                              ..removeAt(i);
                             onChanged(updated);
                           },
                         ),
@@ -2380,12 +2983,19 @@ class _FileFieldWidget extends StatelessWidget {
                   onPressed: () async {
                     final allowed = schema.validation.allowedExtensions;
                     final result = await FilePicker.platform.pickFiles(
-                      type: allowed != null && allowed.isNotEmpty ? FileType.custom : FileType.any,
-                      allowedExtensions: allowed != null && allowed.isNotEmpty ? allowed : null,
+                      type: allowed != null && allowed.isNotEmpty
+                          ? FileType.custom
+                          : FileType.any,
+                      allowedExtensions: allowed != null && allowed.isNotEmpty
+                          ? allowed
+                          : null,
                       allowMultiple: true,
                     );
                     if (result == null || result.files.isEmpty) return;
-                    final newPaths = result.files.where((f) => f.path != null).map((f) => f.path!).toList();
+                    final newPaths = result.files
+                        .where((f) => f.path != null)
+                        .map((f) => f.path!)
+                        .toList();
                     onChanged([...files, ...newPaths]);
                   },
                   icon: const Icon(Icons.attach_file, size: 16),
@@ -2407,11 +3017,19 @@ class _PdfFieldWidget extends StatelessWidget {
   final ValueChanged<dynamic> onChanged;
   final WidgetRef? ref;
 
-  const _PdfFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged, this.ref});
+  const _PdfFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.ref,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final files = (value is List) ? List<String>.from(value as List) : <String>[];
+    final files = (value is List)
+        ? List<String>.from(value as List)
+        : <String>[];
     final palette = Theme.of(context).extension<DmToolColors>();
 
     return Padding(
@@ -2432,8 +3050,16 @@ class _PdfFieldWidget extends StatelessWidget {
                 return ListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.picture_as_pdf, size: 20, color: palette?.tokenBorderHostile ?? Colors.red),
-                  title: Text(fileName, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
+                  leading: Icon(
+                    Icons.picture_as_pdf,
+                    size: 20,
+                    color: palette?.tokenBorderHostile ?? Colors.red,
+                  ),
+                  title: Text(
+                    fileName,
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   onTap: () {
                     if (ref != null) {
                       ref!.read(pdfNavigationProvider.notifier).state = path;
@@ -2447,7 +3073,8 @@ class _PdfFieldWidget extends StatelessWidget {
                       : IconButton(
                           icon: const Icon(Icons.close, size: 16),
                           onPressed: () {
-                            final updated = List<String>.from(files)..removeAt(i);
+                            final updated = List<String>.from(files)
+                              ..removeAt(i);
                             onChanged(updated);
                           },
                         ),
@@ -2464,7 +3091,10 @@ class _PdfFieldWidget extends StatelessWidget {
                       allowMultiple: true,
                     );
                     if (result == null || result.files.isEmpty) return;
-                    final newPaths = result.files.where((f) => f.path != null).map((f) => f.path!).toList();
+                    final newPaths = result.files
+                        .where((f) => f.path != null)
+                        .map((f) => f.path!)
+                        .toList();
                     onChanged([...files, ...newPaths]);
                   },
                   icon: const Icon(Icons.picture_as_pdf, size: 16),
@@ -2485,11 +3115,18 @@ class _TagListFieldWidget extends StatelessWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
-  const _TagListFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _TagListFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final tags = (value is List) ? List<String>.from(value as List) : <String>[];
+    final tags = (value is List)
+        ? List<String>.from(value as List)
+        : <String>[];
 
     if (readOnly && tags.isEmpty) return const SizedBox.shrink();
 
@@ -2497,50 +3134,64 @@ class _TagListFieldWidget extends StatelessWidget {
       label: schema.label,
       alignment: CrossAxisAlignment.start,
       child: Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: [
-                ...tags.map((tag) => Chip(
-                      label: Text(tag, style: const TextStyle(fontSize: 11)),
-                      deleteIcon: readOnly ? null : const Icon(Icons.close, size: 14),
-                      onDeleted: readOnly
-                          ? null
-                          : () {
-                              tags.remove(tag);
-                              onChanged(List<String>.from(tags));
-                            },
-                      visualDensity: VisualDensity.compact,
-                    )),
-                if (!readOnly)
-                  ActionChip(
-                    label: const Icon(Icons.add, size: 14),
-                    onPressed: () async {
-                      final controller = TextEditingController();
-                      final result = await showDialog<String>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Add Tag'),
-                          content: TextField(
-                            controller: controller,
-                            autofocus: true,
-                            decoration: const InputDecoration(hintText: 'Tag name (comma separated)'),
-                            onSubmitted: (v) => Navigator.of(ctx).pop(v),
-                          ),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-                            TextButton(onPressed: () => Navigator.of(ctx).pop(controller.text), child: const Text('Add')),
-                          ],
-                        ),
-                      ).whenComplete(controller.dispose);
-                      if (result != null && result.trim().isNotEmpty) {
-                        final newTags = result.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
-                        onChanged([...tags, ...newTags]);
-                      }
+        spacing: 4,
+        runSpacing: 4,
+        children: [
+          ...tags.map(
+            (tag) => Chip(
+              label: Text(tag, style: const TextStyle(fontSize: 11)),
+              deleteIcon: readOnly ? null : const Icon(Icons.close, size: 14),
+              onDeleted: readOnly
+                  ? null
+                  : () {
+                      tags.remove(tag);
+                      onChanged(List<String>.from(tags));
                     },
-                    visualDensity: VisualDensity.compact,
-                  ),
-              ],
+              visualDensity: VisualDensity.compact,
             ),
+          ),
+          if (!readOnly)
+            ActionChip(
+              label: const Icon(Icons.add, size: 14),
+              onPressed: () async {
+                final controller = TextEditingController();
+                final result = await showDialog<String>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Add Tag'),
+                    content: TextField(
+                      controller: controller,
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        hintText: 'Tag name (comma separated)',
+                      ),
+                      onSubmitted: (v) => Navigator.of(ctx).pop(v),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(controller.text),
+                        child: const Text('Add'),
+                      ),
+                    ],
+                  ),
+                ).whenComplete(controller.dispose);
+                if (result != null && result.trim().isNotEmpty) {
+                  final newTags = result
+                      .split(',')
+                      .map((t) => t.trim())
+                      .where((t) => t.isNotEmpty)
+                      .toList();
+                  onChanged([...tags, ...newTags]);
+                }
+              },
+              visualDensity: VisualDensity.compact,
+            ),
+        ],
+      ),
     );
   }
 }
@@ -2552,7 +3203,12 @@ class _DateFieldWidget extends StatelessWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
-  const _DateFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _DateFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -2575,7 +3231,9 @@ class _DateFieldWidget extends StatelessWidget {
           Expanded(
             child: Text(
               hasValue ? display : '—',
-              style: hasValue ? _fieldValueStyle(context) : _fieldEmptyStyle(context),
+              style: hasValue
+                  ? _fieldValueStyle(context)
+                  : _fieldEmptyStyle(context),
             ),
           ),
           if (!readOnly)
@@ -2628,7 +3286,8 @@ class _ProficiencyTableFieldWidget extends StatelessWidget {
       if (list.isNotEmpty) {
         return list
             .map<Map<String, dynamic>>(
-                (r) => Map<String, dynamic>.from(r as Map))
+              (r) => Map<String, dynamic>.from(r as Map),
+            )
             .toList();
       }
     }
@@ -2638,8 +3297,7 @@ class _ProficiencyTableFieldWidget extends StatelessWidget {
     final dv = schema.defaultValue;
     if (dv is Map && dv['rows'] is List) {
       return (dv['rows'] as List)
-          .map<Map<String, dynamic>>(
-              (r) => Map<String, dynamic>.from(r as Map))
+          .map<Map<String, dynamic>>((r) => Map<String, dynamic>.from(r as Map))
           .toList();
     }
     return const [];
@@ -2691,9 +3349,17 @@ class _ProficiencyTableFieldWidget extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text(schema.label, style: Theme.of(context).textTheme.titleSmall)),
+                Expanded(
+                  child: Text(
+                    schema.label,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
                 if (entityFields != null)
-                  Text('PB +$pb', style: TextStyle(fontSize: 11, color: outline)),
+                  Text(
+                    'PB +$pb',
+                    style: TextStyle(fontSize: 11, color: outline),
+                  ),
               ],
             ),
             const SizedBox(height: 6),
@@ -2702,10 +3368,36 @@ class _ProficiencyTableFieldWidget extends StatelessWidget {
               children: [
                 const SizedBox(width: 24), // prof
                 const SizedBox(width: 24), // exp
-                Expanded(flex: 4, child: Text('Skill', style: TextStyle(fontSize: 10, color: outline))),
-                SizedBox(width: 34, child: Text('Abil', style: TextStyle(fontSize: 10, color: outline))),
-                SizedBox(width: 44, child: Text('Misc', style: TextStyle(fontSize: 10, color: outline), textAlign: TextAlign.center)),
-                SizedBox(width: 40, child: Text('Total', style: TextStyle(fontSize: 10, color: outline), textAlign: TextAlign.right)),
+                Expanded(
+                  flex: 4,
+                  child: Text(
+                    'Skill',
+                    style: TextStyle(fontSize: 10, color: outline),
+                  ),
+                ),
+                SizedBox(
+                  width: 34,
+                  child: Text(
+                    'Abil',
+                    style: TextStyle(fontSize: 10, color: outline),
+                  ),
+                ),
+                SizedBox(
+                  width: 44,
+                  child: Text(
+                    'Misc',
+                    style: TextStyle(fontSize: 10, color: outline),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                SizedBox(
+                  width: 40,
+                  child: Text(
+                    'Total',
+                    style: TextStyle(fontSize: 10, color: outline),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
               ],
             ),
             const Divider(height: 8),
@@ -2725,7 +3417,8 @@ class _ProficiencyTableFieldWidget extends StatelessWidget {
 
                 final score = _abilityScore(ability);
                 final mod = score != null ? abilityModifier(score) : null;
-                final total = (mod ?? 0) +
+                final total =
+                    (mod ?? 0) +
                     (proficient ? pb : 0) +
                     (expertise ? pb : 0) +
                     misc;
@@ -2740,16 +3433,29 @@ class _ProficiencyTableFieldWidget extends StatelessWidget {
                       _ProfDot(
                         active: proficient,
                         tooltip: 'Proficient',
-                        onTap: readOnly ? null : () => _updateRow(i, {'proficient': !proficient}),
+                        onTap: readOnly
+                            ? null
+                            : () => _updateRow(i, {'proficient': !proficient}),
                       ),
                       _ProfDot(
                         active: expertise,
                         doubled: true,
                         tooltip: 'Expertise',
-                        onTap: readOnly ? null : () => _updateRow(i, {'expertise': !expertise}),
+                        onTap: readOnly
+                            ? null
+                            : () => _updateRow(i, {'expertise': !expertise}),
                       ),
-                      Expanded(flex: 4, child: Text(name, style: const TextStyle(fontSize: 12))),
-                      SizedBox(width: 34, child: Text(ability, style: TextStyle(fontSize: 10, color: outline))),
+                      Expanded(
+                        flex: 4,
+                        child: Text(name, style: const TextStyle(fontSize: 12)),
+                      ),
+                      SizedBox(
+                        width: 34,
+                        child: Text(
+                          ability,
+                          style: TextStyle(fontSize: 10, color: outline),
+                        ),
+                      ),
                       SizedBox(
                         width: 44,
                         child: TextFormField(
@@ -2761,11 +3467,15 @@ class _ProficiencyTableFieldWidget extends StatelessWidget {
                           style: const TextStyle(fontSize: 12),
                           decoration: const InputDecoration(
                             isDense: true,
-                            contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 4,
+                              horizontal: 2,
+                            ),
                             border: InputBorder.none,
                             hintText: '0',
                           ),
-                          onChanged: (v) => _updateRow(i, {'misc': int.tryParse(v) ?? 0}),
+                          onChanged: (v) =>
+                              _updateRow(i, {'misc': int.tryParse(v) ?? 0}),
                         ),
                       ),
                       SizedBox(
@@ -2844,7 +3554,12 @@ class _DiceFieldWidget extends StatefulWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
 
-  const _DiceFieldWidget({required this.schema, required this.value, required this.readOnly, required this.onChanged});
+  const _DiceFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+  });
 
   @override
   State<_DiceFieldWidget> createState() => _DiceFieldWidgetState();
@@ -2893,4 +3608,3 @@ class _DiceFieldWidgetState extends State<_DiceFieldWidget> {
     );
   }
 }
-

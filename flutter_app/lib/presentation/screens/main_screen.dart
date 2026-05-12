@@ -248,7 +248,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Wrap(
             alignment: WrapAlignment.center,
-            children: List.generate(6, (i) {
+            children: List.generate(7, (i) {
               final isActive = i == _tabIndex;
               return InkWell(
                 onTap: () {
@@ -293,6 +293,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
     Icons.map,              // Map
     Icons.picture_as_pdf,   // PDF (mobile/tablet only)
     Icons.music_note,       // Soundmap (mobile/tablet only)
+    Icons.people,           // Characters (mobile/tablet only)
   ];
 
   @override
@@ -316,6 +317,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
       l10n.tabMap,
       l10n.tabPdf,
       l10n.tabSoundmap,
+      'Characters',
     ];
 
     // Listen for entity navigation requests from anywhere in the app
@@ -420,6 +422,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
         ),
         // Soundmap tab (mobile/tablet only — desktop uses overlay sidebar)
         SoundmapSidebar(palette: palette),
+        // Characters tab (mobile/tablet only — desktop uses overlay sidebar)
+        CharactersSidebar(palette: palette),
       ],
     );
 
@@ -835,7 +839,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                       onDestinationSelected: (i) { setState(() => _tabIndex = i); _persistUiState(); },
                       labelType: NavigationRailLabelType.selected,
                       destinations: List.generate(
-                        6,
+                        7,
                         (i) => NavigationRailDestination(
                           icon: Icon(_tabIcons[i]),
                           label: Text(tabLabels[i]),
@@ -869,7 +873,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
               selectedIndex: _tabIndex,
               onDestinationSelected: (i) { setState(() => _tabIndex = i); _persistUiState(); },
               destinations: List.generate(
-                6,
+                7,
                 (i) => NavigationDestination(
                   icon: Icon(_tabIcons[i]),
                   label: tabLabels[i],
