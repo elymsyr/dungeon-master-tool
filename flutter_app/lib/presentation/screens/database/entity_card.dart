@@ -581,7 +581,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     if (slug == 'monsters' || slug == 'monster' || slug == 'npcs' || slug == 'npc') {
       final size = relName('size_ref');
       final type = relName('creature_type_ref');
-      final align = (f['alignment_ref'] as String?) ?? '';
+      final align = relName('alignment_ref');
       final parts = <String>[];
       if (size.isNotEmpty || type.isNotEmpty) {
         parts.add([size, type].where((s) => s.isNotEmpty).join(' '));
@@ -597,7 +597,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       return '$parts${attune ? ' (Requires Attunement)' : ''}';
     }
     if (slug == 'feats' || slug == 'feat') {
-      final fcat = (f['category_ref'] as String?) ?? '';
+      final fcat = relName('category_ref');
       final repeatable = f['repeatable'] == true;
       return repeatable ? '$fcat Feat (Repeatable)' : '$fcat Feat';
     }
