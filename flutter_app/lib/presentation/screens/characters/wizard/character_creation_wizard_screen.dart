@@ -51,18 +51,10 @@ class _CharacterCreationWizardScreenState
   @override
   void initState() {
     super.initState();
-    // Default world = already-active campaign so race/class/background
-    // entity lists render immediately. Picking another world in the
-    // Identity step calls `_activateWorld` which loads + bumps revision.
-    // If no campaign is active the wizard runs against the bundled SRD
-    // entity map via [builtinSrdEntitiesProvider] — no world is created.
-    final active = ref.read(activeCampaignProvider);
-    if (active != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        ref.read(characterDraftProvider.notifier).setWorld(active);
-      });
-    }
+    // Default world is the bundled SRD package — empty `worldName` routes
+    // the wizard's entity reads to [builtinSrdEntitiesProvider]. Picking a
+    // campaign in the Identity step is opt-in and calls `_activateWorld`
+    // to load + bump revision.
   }
 
   /// Entity source the wizard reads from. Active campaign's entities when
@@ -374,11 +366,14 @@ class _CharacterCreationWizardScreenState
         .length;
     if (spellCount == 0) return null;
 
-    if (cantripCap > 0 && draft.cantripIds.length != cantripCap) {
-      return 'Pick $cantripCap cantrip(s).';
+    // Spell slots are no longer required to be filled — players may leave
+    // them empty and pick remaining spells in the editor later. Only fail
+    // when the draft somehow holds *more* than the SRD cap.
+    if (cantripCap > 0 && draft.cantripIds.length > cantripCap) {
+      return 'Pick at most $cantripCap cantrip(s).';
     }
-    if (preparedCap > 0 && draft.preparedSpellIds.length != preparedCap) {
-      return 'Pick $preparedCap spell(s).';
+    if (preparedCap > 0 && draft.preparedSpellIds.length > preparedCap) {
+      return 'Pick at most $preparedCap spell(s).';
     }
     return null;
   }
@@ -891,15 +886,11 @@ class _IdentityStep extends StatelessWidget {
         );
       });
     }
-    if (draft.worldName.isEmpty && worlds.length == 1) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        notifier.setWorld(worlds.first);
-        onWorldPicked(worlds.first);
-      });
-    } else if (draft.worldName.isNotEmpty) {
+    if (draft.worldName.isNotEmpty) {
       // Make sure the picked world's entities are loaded so race/class/
       // background steps see them. Idempotent — `_activateWorld` no-ops
-      // when already active.
+      // when already active. Empty `worldName` is the SRD-default mode
+      // and intentionally activates no campaign.
       WidgetsBinding.instance
           .addPostFrameCallback((_) => onWorldPicked(draft.worldName));
     }
@@ -951,18 +942,18 @@ class _IdentityStep extends StatelessWidget {
               child: Builder(builder: (_) {
                 // Dedupe — getAvailable() can return duplicates if a world
                 // was created twice in past sessions. DropdownButton asserts
-                // exactly-one match for its value, so we collapse duplicates
-                // and fall back to null when the draft's pick isn't visible
-                // yet (e.g. mid-provision race).
+                // exactly-one match for its value, so we collapse duplicates.
+                // Empty string is the sentinel for "Built-in SRD" — that's
+                // the default; picking a campaign loads its entities on top.
                 final uniqueWorlds = <String>{...worlds}.toList();
                 final pickerValue = draft.worldName.isNotEmpty &&
                         uniqueWorlds.contains(draft.worldName)
                     ? draft.worldName
-                    : null;
+                    : '';
                 return DropdownButtonFormField<String>(
                   initialValue: pickerValue,
                   decoration: InputDecoration(
-                    labelText: 'World',
+                    labelText: 'World / Package',
                     suffixIcon: activatingWorld
                         ? const Padding(
                             padding: EdgeInsets.all(8),
@@ -975,16 +966,21 @@ class _IdentityStep extends StatelessWidget {
                           )
                         : null,
                   ),
-                  items: uniqueWorlds
-                      .map((w) =>
-                          DropdownMenuItem(value: w, child: Text(w)))
-                      .toList(),
+                  items: [
+                    const DropdownMenuItem(
+                      value: '',
+                      child: Text('Built-in SRD (default)'),
+                    ),
+                    ...uniqueWorlds.map(
+                      (w) => DropdownMenuItem(value: w, child: Text(w)),
+                    ),
+                  ],
                   onChanged: activatingWorld
                       ? null
                       : (v) {
                           if (v == null) return;
                           notifier.setWorld(v);
-                          onWorldPicked(v);
+                          if (v.isNotEmpty) onWorldPicked(v);
                         },
                 );
               }),

@@ -211,13 +211,16 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
     if (widget.plan.isFightingStyleLevel && _fightingStyleFeats().isNotEmpty) {
       if (_fightingStyleId == null) return false;
     }
+    // Spell picks are no longer mandatory — players may leave some slots
+    // empty and fill them in the editor later. Only block when the user
+    // somehow exceeds the SRD delta.
     final cantripDelta = widget.plan.cantripsKnownDelta;
     final spellDelta = widget.plan.preparedSpellsDelta;
-    if (cantripDelta > 0 && _eligibleSpells(cantripOnly: true).isNotEmpty) {
-      if (_pickedCantrips.length != cantripDelta) return false;
+    if (cantripDelta > 0 && _pickedCantrips.length > cantripDelta) {
+      return false;
     }
-    if (spellDelta > 0 && _eligibleSpells(cantripOnly: false).isNotEmpty) {
-      if (_pickedSpells.length != spellDelta) return false;
+    if (spellDelta > 0 && _pickedSpells.length > spellDelta) {
+      return false;
     }
     return true;
   }

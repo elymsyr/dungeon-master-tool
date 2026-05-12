@@ -277,11 +277,12 @@ class _SpellRow extends StatelessWidget {
     final level = (entity.fields['level'] is int)
         ? entity.fields['level'] as int
         : int.tryParse(entity.fields['level']?.toString() ?? '') ?? 0;
+    final description = entity.description.trim();
     return InkWell(
       onTap: disabled ? null : onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        margin: const EdgeInsets.symmetric(vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           border: Border.all(
             color: selected
@@ -292,47 +293,74 @@ class _SpellRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              selected
-                  ? Icons.check_box
-                  : Icons.check_box_outline_blank,
-              size: 16,
-              color: disabled
-                  ? palette.sidebarLabelSecondary
-                  : selected
-                      ? palette.featureCardAccent
-                      : null,
-            ),
-            const SizedBox(width: 8),
-            if (showLevelChip)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 6, vertical: 1),
-                margin: const EdgeInsets.only(right: 8),
-                decoration: BoxDecoration(
-                  color: palette.featureCardBg,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: palette.featureCardBorder),
-                ),
-                child: Text(
-                  'L$level',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: palette.tabActiveText,
-                  ),
-                ),
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Icon(
+                selected
+                    ? Icons.check_box
+                    : Icons.check_box_outline_blank,
+                size: 18,
+                color: disabled
+                    ? palette.sidebarLabelSecondary
+                    : selected
+                        ? palette.featureCardAccent
+                        : null,
               ),
+            ),
+            const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                entity.name,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: disabled
-                      ? palette.sidebarLabelSecondary
-                      : palette.tabActiveText,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      if (showLevelChip)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1),
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            color: palette.featureCardBg,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                                color: palette.featureCardBorder),
+                          ),
+                          child: Text(
+                            'L$level',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: palette.tabActiveText,
+                            ),
+                          ),
+                        ),
+                      Expanded(
+                        child: Text(
+                          entity.name,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: disabled
+                                ? palette.sidebarLabelSecondary
+                                : palette.tabActiveText,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: palette.sidebarLabelSecondary,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],
