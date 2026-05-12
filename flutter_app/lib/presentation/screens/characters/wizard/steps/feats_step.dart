@@ -444,7 +444,8 @@ class _ChoiceGroupSection extends StatelessWidget {
         final tools = cache.toolsByCategoryName[catName] ?? const <Entity>[];
         return _ChipPicker(
           options: [
-            for (final t in tools) _Option(id: t.id, label: t.name),
+            for (final t in tools)
+              _Option(id: t.id, label: t.name, description: t.description),
           ],
           picked: current,
           pick: pick,
@@ -463,7 +464,9 @@ class _ChoiceGroupSection extends StatelessWidget {
               _GroupLabel(text: 'Skills', palette: palette),
               _ChipPicker(
                 options: [
-                  for (final s in skills) _Option(id: s.id, label: s.name),
+                  for (final s in skills)
+                    _Option(
+                        id: s.id, label: s.name, description: s.description),
                 ],
                 picked: current,
                 pick: pick,
@@ -477,7 +480,9 @@ class _ChoiceGroupSection extends StatelessWidget {
               _GroupLabel(text: 'Tools', palette: palette),
               _ChipPicker(
                 options: [
-                  for (final t in tools) _Option(id: t.id, label: t.name),
+                  for (final t in tools)
+                    _Option(
+                        id: t.id, label: t.name, description: t.description),
                 ],
                 picked: current,
                 pick: pick,
@@ -509,7 +514,8 @@ class _ChoiceGroupSection extends StatelessWidget {
         final spells = cache.spellsFor(listValue, spellLevel);
         return _ChipPicker(
           options: [
-            for (final s in spells) _Option(id: s.id, label: s.name),
+            for (final s in spells)
+              _Option(id: s.id, label: s.name, description: s.description),
           ],
           picked: current,
           pick: pick,
@@ -580,7 +586,12 @@ class _ChoiceGroupSection extends StatelessWidget {
 class _Option {
   final String id;
   final String label;
-  const _Option({required this.id, required this.label});
+  final String description;
+  const _Option({
+    required this.id,
+    required this.label,
+    this.description = '',
+  });
 }
 
 class _GroupLabel extends StatelessWidget {
@@ -635,13 +646,13 @@ class _ChipPicker extends StatelessWidget {
     }
     final pickedSet = picked.toSet();
     final atCap = picked.length >= pick;
-    return Wrap(
-      spacing: 6,
-      runSpacing: 4,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final o in options)
-          _Chip(
+          _OptionRow(
             label: o.label,
+            description: o.description,
             selected: pickedSet.contains(o.id),
             disabled: atCap && !pickedSet.contains(o.id),
             onTap: () => onToggle(o.id),
@@ -652,15 +663,17 @@ class _ChipPicker extends StatelessWidget {
   }
 }
 
-class _Chip extends StatelessWidget {
+class _OptionRow extends StatelessWidget {
   final String label;
+  final String description;
   final bool selected;
   final bool disabled;
   final VoidCallback onTap;
   final DmToolColors palette;
 
-  const _Chip({
+  const _OptionRow({
     required this.label,
+    required this.description,
     required this.selected,
     required this.disabled,
     required this.onTap,
@@ -669,33 +682,63 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = selected ? palette.featureCardAccent : palette.featureCardBg;
-    final fg = disabled
-        ? palette.sidebarLabelSecondary
-        : selected
-            ? palette.canvasBg
-            : palette.tabActiveText;
-    final border =
-        selected ? palette.featureCardAccent : palette.featureCardBorder;
     return InkWell(
       onTap: disabled ? null : onTap,
-      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        margin: const EdgeInsets.symmetric(vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: border),
+          border: Border.all(
+            color: selected
+                ? palette.featureCardAccent
+                : palette.featureCardBorder,
+            width: selected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (selected)
-              Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: Icon(Icons.check, size: 12, color: fg),
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Icon(
+                selected ? Icons.check_box : Icons.check_box_outline_blank,
+                size: 18,
+                color: disabled
+                    ? palette.sidebarLabelSecondary
+                    : selected
+                        ? palette.featureCardAccent
+                        : null,
               ),
-            Text(label, style: TextStyle(fontSize: 11, color: fg)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: disabled
+                          ? palette.sidebarLabelSecondary
+                          : palette.tabActiveText,
+                    ),
+                  ),
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: palette.sidebarLabelSecondary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
       ),

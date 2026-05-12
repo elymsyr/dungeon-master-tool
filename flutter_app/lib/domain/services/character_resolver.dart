@@ -79,17 +79,25 @@ class CharacterResolver {
     if (subclassId != null) {
       final sub = entitiesById[subclassId];
       if (sub != null) {
-        // Subclass-grant level lives on the parent class; assume player chose
-        // a subclass that's reached by the largest class level. Resolver picks
-        // max class level as the gate — refine if multi-class subclasses exist.
-        final maxClassLevel = classLevels.values.fold<int>(0, (a, b) => a > b ? a : b);
+        // SRD §1.10: subclass features gate on the *parent class's* level,
+        // not the character's total or max-of-all-classes level. Look up
+        // parent_class_ref, find its current level in classLevels, fall
+        // back to the max heuristic only when the ref is missing.
+        final parentRef = sub.fields['parent_class_ref'];
+        final parentId = _resolveRef(parentRef, entitiesById);
+        var gateLevel = 0;
+        if (parentId != null && classLevels.containsKey(parentId)) {
+          gateLevel = classLevels[parentId] ?? 0;
+        } else {
+          gateLevel = classLevels.values.fold<int>(0, (a, b) => a > b ? a : b);
+        }
         final grantedAt = (sub.fields['granted_at_level'] is int)
             ? sub.fields['granted_at_level'] as int
             : 1;
-        if (maxClassLevel >= grantedAt) {
+        if (gateLevel >= grantedAt) {
           _collectFeaturesByLevel(
             sub,
-            maxClassLevel,
+            gateLevel,
             activeFeatures,
             pendingFeatureEffects,
           );

@@ -241,6 +241,89 @@ void main() {
       );
     });
 
+    test('multiclass: subclass features gate on parent class level, not max', () {
+      // Cleric 2 / Wizard 5. Life Domain (Cleric subclass) grants at L3.
+      // Old heuristic used max(class_levels)=5 and would have wrongly fired
+      // the subclass feature; SRD §1.10 says subclass gates on parent class.
+      final cleric = _e(
+        id: 'cls_cleric',
+        slug: 'class',
+        name: 'Cleric',
+        fields: const {},
+      );
+      final wizard = _e(
+        id: 'cls_wizard',
+        slug: 'class',
+        name: 'Wizard',
+        fields: const {},
+      );
+      final life = _e(
+        id: 'sub_life',
+        slug: 'subclass',
+        name: 'Life Domain',
+        fields: {
+          'parent_class_ref': 'cls_cleric',
+          'granted_at_level': 3,
+          'features': [
+            {'level': 3, 'description': 'Disciple of Life'},
+          ],
+        },
+      );
+      final pc = _pc(id: 'pcMc', fields: {
+        'class_levels': {'cls_cleric': 2, 'cls_wizard': 5},
+        'subclass_id': 'sub_life',
+      });
+      final eff = CharacterResolver.resolve(
+        pc,
+        {cleric.id: cleric, wizard.id: wizard, life.id: life},
+      );
+      expect(
+        eff.activeFeatures.any((r) => r.description == 'Disciple of Life'),
+        isFalse,
+        reason: 'Cleric 2 < granted_at_level 3 — subclass must not fire even '
+            'though Wizard 5 > 3.',
+      );
+    });
+
+    test('multiclass: subclass fires at parent class level once it crosses gate', () {
+      final cleric = _e(
+        id: 'cls_cleric',
+        slug: 'class',
+        name: 'Cleric',
+        fields: const {},
+      );
+      final wizard = _e(
+        id: 'cls_wizard',
+        slug: 'class',
+        name: 'Wizard',
+        fields: const {},
+      );
+      final life = _e(
+        id: 'sub_life',
+        slug: 'subclass',
+        name: 'Life Domain',
+        fields: {
+          'parent_class_ref': 'cls_cleric',
+          'granted_at_level': 3,
+          'features': [
+            {'level': 3, 'description': 'Disciple of Life'},
+          ],
+        },
+      );
+      final pc = _pc(id: 'pcMc2', fields: {
+        'class_levels': {'cls_cleric': 3, 'cls_wizard': 1},
+        'subclass_id': 'sub_life',
+      });
+      final eff = CharacterResolver.resolve(
+        pc,
+        {cleric.id: cleric, wizard.id: wizard, life.id: life},
+      );
+      expect(
+        eff.activeFeatures.any((r) => r.description == 'Disciple of Life'),
+        isTrue,
+      );
+    });
+
     test('class saving_throw_refs become proficient saves', () {
       final cls = _e(
         id: 'cls_fighter',

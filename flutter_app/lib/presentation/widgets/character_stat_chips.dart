@@ -54,15 +54,19 @@ List<CharacterStatLine> characterStatLines(
     return null;
   }
 
-  final hp = asInt(fields['hp']);
+  // Most templates author hp / max_hp / ac / level inside the
+  // `combat_stats` Map field rather than at the flat-field root. Read both
+  // and prefer whichever produces a non-zero value.
+  var hp = asInt(fields['hp']);
   var maxHp = asInt(fields['max_hp']);
-  // Some templates only store the HP pair inside `combat_stats`; fall back
-  // to that when the flat keys are zero.
   final combat = fields['combat_stats'];
   int? combatAc;
+  int? combatLevel;
   if (combat is Map) {
+    if (hp == 0) hp = asInt(combat['hp']);
     if (maxHp == 0) maxHp = asInt(combat['max_hp']);
     if (combat['ac'] != null) combatAc = asInt(combat['ac']);
+    if (combat['level'] != null) combatLevel = asInt(combat['level']);
   }
   final ac = asInt(fields['ac']);
   final acDisplay = ac > 0
@@ -73,7 +77,8 @@ List<CharacterStatLine> characterStatLines(
   final classId = firstId(const ['class_refs', 'class_']);
   final raceName = raceId == null ? '—' : (entities[raceId]?.name ?? '—');
   final className = classId == null ? '—' : (entities[classId]?.name ?? '—');
-  final level = asInt(fields['level']);
+  var level = asInt(fields['level']);
+  if (level == 0 && combatLevel != null) level = combatLevel;
 
   return [
     CharacterStatLine(
@@ -136,34 +141,31 @@ class CharacterStatChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fontSize = compact ? 10.0 : 12.0;
-    final iconSize = compact ? 10.0 : 12.0;
-    final padH = compact ? 5.0 : 8.0;
-    final padV = compact ? 1.0 : 3.0;
+    // Icon-only grid laid directly onto the card (no background, no border).
+    // Hover/long-press surfaces the label via Tooltip so users can still
+    // disambiguate the icons.
+    final fontSize = compact ? 13.0 : 16.0;
+    final iconSize = compact ? 14.0 : 18.0;
+    final gap = compact ? 4.0 : 6.0;
     return Wrap(
-      spacing: 4,
-      runSpacing: 3,
+      spacing: compact ? 12 : 18,
+      runSpacing: compact ? 4 : 8,
       children: [
         for (final l in lines)
-          Container(
-            padding:
-                EdgeInsets.symmetric(horizontal: padH, vertical: padV),
-            decoration: BoxDecoration(
-              color: palette.sidebarFilterBg,
-              borderRadius: palette.chr,
-              border: Border.all(color: palette.featureCardBorder),
-            ),
+          Tooltip(
+            message: l.label,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(l.icon,
                     size: iconSize, color: palette.sidebarLabelSecondary),
-                const SizedBox(width: 4),
+                SizedBox(width: gap),
                 Text(
-                  '${l.label}: ${l.value}',
+                  l.value,
                   style: TextStyle(
                     fontSize: fontSize,
-                    color: palette.tabText,
+                    fontWeight: FontWeight.w600,
+                    color: palette.tabActiveText,
                   ),
                 ),
               ],

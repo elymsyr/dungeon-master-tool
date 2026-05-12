@@ -21,7 +21,7 @@ Severity legend: 🔴 correctness bug · 🟠 missing mechanic · 🟡 content/U
 | 7 | Saving throw proficiency from subclass | 🟠 | ✅ DONE 2026-05-12 | resolver + planner + dialog |
 | 8 | Extra Attack L11 / L20 Fighter scaling | 🟠 | ✅ DONE 2026-05-12 | resolver + planner + dialog |
 | 9 | Subrace / lineage picker | 🟡 | ✅ DONE 2026-05-13 | race step + species data + resolver |
-| 10 | Multiclass support | 🟠 | TODO | wizard + editor + planner (large) |
+| 10 | Multiclass support | 🟠 | ✅ DONE 2026-05-13 (MVP) | helper + resolver + editor (large) |
 
 ---
 
@@ -194,7 +194,29 @@ Severity legend: 🔴 correctness bug · 🟠 missing mechanic · 🟡 content/U
 
 ---
 
-## #10 · Multiclass support 🟠
+## #10 · Multiclass support 🟠 — ✅ DONE 2026-05-13 (MVP)
+
+**Resolution.** New [multiclass_helper.dart](../flutter_app/lib/application/character_creation/multiclass_helper.dart) ships four pure functions: `checkMulticlassPrereq` (SRD §1.10 ability gate with `AND` / `any_of` semantics + 13-default min), `totalCharacterLevel`, `combinedCasterLevel` (full = level, half = floor/2 from L2, third = floor/3 from L3, pact excluded), and `multiclassSpellSlotsFor` (returns the full-caster table at the blended level when 2+ caster classes share a sheet, `null` otherwise so single-class falls through to the planner's progression).
+
+`CharacterResolver` Pass 2 [character_resolver.dart](../flutter_app/lib/domain/services/character_resolver.dart) replaces the prior `max(class_levels)` subclass heuristic with a `parent_class_ref`-driven gate: the active subclass fires its features at the **parent class's** level, not the character's max class level. So a Cleric 2 / Wizard 5 with Life Domain (granted_at_level 3) **doesn't** prematurely unlock Disciple of Life.
+
+`character_editor_screen.dart` gains a multi-class level-up flow:
+- `_levelUp(character)` opens a `_LevelUpClassPicker` listing each current class with its level plus an "Add new class (multiclass)" row. The secondary picker enumerates every class entity the character doesn't yet have; on tap, `checkMulticlassPrereq` runs and a warning dialog fires when the SRD §1.10 ability prereq isn't met (player can confirm anyway for rule-zero / homebrew).
+- `_maybeRunLevelUp` takes an optional `targetClassId` (the class being advanced) and an `isNewClass` flag. The planner is still single-class — `_maybeRunLevelUp` passes the *target* class's entity and per-class from/to levels so HP / PB / features / spell-slot / resource deltas track the right table.
+- `_subclassForClass` walks `subclass_refs` and matches each candidate's `parent_class_ref.name` to the target class entity's name; falls back to first entry for legacy single-subclass sheets.
+- Write-back updates `class_levels[targetClassId]`, appends the class id to `class_refs`, and rewrites `level` as `totalCharacterLevel(class_levels)` so the rest of the sheet (rest dialogs, level-up table, sheet) keep working off the existing flat `level` field.
+- Hit-dice pool max is now `totalCharacterLevel(class_levels)` rather than `plan.toLevel` (the prior code under-clamped when adding a new class at L1 to a higher-level character).
+- Multi-caster spell slots: when `isMulticlassCaster` fires, the write block overrides `plan.newSpellSlots` with `multiclassSpellSlotsFor(...)` and recomputes the previous map by reverting the target class to its from-level — so the delta = blended-now minus blended-prev. Single-caster characters keep the planner's authored / SRD table.
+
+13 new tests (`multiclass_helper_test.dart`: 12; `character_resolver_test.dart`: 2 multiclass subclass-gate cases). 477-test suite green (was 463).
+
+**Deferred (post-MVP):**
+- Per-class hit-dice pool (current single combined `hit_dice_remaining` doesn't preserve the d8 vs. d10 distinction for short-rest dice spending).
+- ASI/feat gating per class level vs. character total (SRD §1.10 says per class). Planner's `_asiOrFeatLevels` runs against the *class level*, which is correct — but the editor doesn't currently surface the ASI-from-class-1-only nuance.
+- Spell-list partitioning (spells known per class, vs. one merged `spells_known`).
+- Per-class hit-die in long-rest restore formula.
+- Multiclass starting proficiencies (the limited-proficiency entry-grant per SRD §1.10 — class entities ship a `multiclass_granted_proficiencies` markdown field but the editor doesn't auto-apply it on entry yet).
+- Multi-subclass support (Fighter 5 / Wizard 3 currently picks one subclass total). Schema accepts `subclass_refs` list; resolver loops would need extending.
 
 **Problem.** No multiclass. Wizard assumes single class. Planner takes a single class entity.
 
@@ -224,7 +246,7 @@ Severity legend: 🔴 correctness bug · 🟠 missing mechanic · 🟡 content/U
 7. ✅ #7 Saving throws
 8. ✅ #6 Backgrounds content
 9. ✅ #9 Subrace picker
-10. #10 Multiclass (large, last)
+10. ✅ #10 Multiclass (large, last)
 
 **Rationale.** #2 + #4 unlock the most player-visible value (casters get usable spell access on level-up). #5 is cheap and enables short-rest economy. #3 + #7 + #8 polish the level-up dialog. #6 is independent content. #9 + #10 are larger scope, save for dedicated sprints.
 

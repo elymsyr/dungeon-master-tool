@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/character_creation/level_up_planner.dart';
+import '../../../application/character_creation/multiclass_helper.dart';
 import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
@@ -738,6 +739,8 @@ class _CharacterEditorScreenState
     required Object? to,
     required Character base,
     required Map<String, Entity> entities,
+    String? targetClassId,
+    bool isNewClass = false,
   }) async {
     final fromLvl = from is int
         ? from
@@ -763,8 +766,19 @@ class _CharacterEditorScreenState
       return null;
     }
 
-    final classId = firstId(const ['class_refs', 'class_']);
-    final subclassId = firstId(const ['subclass_refs', 'subclass_id']);
+    // Multiclass: target class is the one the level-up button just bumped.
+    // Fall back to the legacy "first class_refs" lookup so the bare `level`
+    // field edit path still works for single-class characters.
+    final classId =
+        targetClassId ?? firstId(const ['class_refs', 'class_']);
+    // SRD §1.10: pick the subclass whose parent_class_ref matches the
+    // target class. Falls back to the first subclass_refs entry when
+    // none match — preserves legacy single-class behaviour.
+    final subclassId = _subclassForClass(
+      base: base,
+      entities: entities,
+      classId: classId,
+    );
     final classEntity = classId == null ? null : entities[classId];
     final subclassEntity =
         subclassId == null ? null : entities[subclassId];
@@ -877,24 +891,60 @@ class _CharacterEditorScreenState
     // and add the levels gained, clamped to the new max. When the field
     // was never written we assume the character was at full dice for
     // their old level — matches the fallback used by Short/Long Rest.
+    final postClassLevels = _readClassLevels(base);
     final levelsGained = plan.levelsGained;
     if (levelsGained > 0) {
-      final newMaxHd = plan.toLevel;
+      // SRD §1.6: max hit dice = total character level (sum of class
+      // levels). Multiclass adds the new class's hit die alongside the
+      // existing pool — but until per-class hit-die tracking lands, we
+      // keep a single combined pool keyed off the character total.
+      final newMaxHd = totalCharacterLevel(postClassLevels);
+      final prevTotal = newMaxHd - levelsGained;
       final prevHd = updated.containsKey('hit_dice_remaining')
           ? asInt(updated['hit_dice_remaining'])
-          : plan.fromLevel;
+          : (prevTotal < 0 ? 0 : prevTotal);
       updated['hit_dice_remaining'] =
           (prevHd + levelsGained).clamp(0, newMaxHd);
     }
 
-    // SRD §1.5: writing the new slot pool. Max is rewritten outright so
-    // pact-tier shifts (L2 → L3) discard the old entry. Remaining keeps
+    // SRD §1.5 / §1.10: writing the new slot pool. Max is rewritten outright
+    // so pact-tier shifts (L2 → L3) discard the old entry. Remaining keeps
     // any spent slots the player carried over (so leveling up doesn't
-    // restore slots), then adds the per-spell-level delta as fresh
-    // capacity — clamped to the new max.
-    final newSlots = plan.newSpellSlots;
+    // restore slots), then adds the per-spell-level delta as fresh capacity
+    // — clamped to the new max.
+    //
+    // Multi-caster override: when the character has two or more caster
+    // classes, the planner's single-class slot map is wrong. Compute the
+    // combined caster level table off `class_levels` (Warlock pact slots
+    // stay separate — they ride on their own pool field).
+    final blendedNow = multiclassSpellSlotsFor(
+      classLevels: postClassLevels,
+      entities: entities,
+    );
+    Map<int, int>? newSlots;
+    Map<int, int>? prevSlotsOverride;
+    if (blendedNow != null) {
+      newSlots = blendedNow;
+      // Recompute the previous blended map by reverting the target class
+      // back to its from-level so the slot delta = blendedNow - prev.
+      if (targetClassId != null) {
+        final prevClassLevels = {
+          ...postClassLevels,
+          targetClassId: plan.fromLevel,
+        };
+        prevSlotsOverride = multiclassSpellSlotsFor(
+              classLevels: prevClassLevels,
+              entities: entities,
+            ) ??
+            const {};
+      }
+    } else {
+      newSlots = plan.newSpellSlots;
+    }
     if (newSlots != null && newSlots.isNotEmpty) {
-      final prevSlots = plan.prevSpellSlots ?? const <int, int>{};
+      final prevSlots = prevSlotsOverride ??
+          plan.prevSpellSlots ??
+          const <int, int>{};
       final prevRemainingRaw = updated['spell_slots_remaining_by_level'];
       int prevRem(int spellLevel) {
         if (prevRemainingRaw is Map) {
@@ -1081,28 +1131,185 @@ class _CharacterEditorScreenState
   }
 
   Future<void> _levelUp(Character character) async {
-    final level = _asInt(character.entity.fields['level'], 1);
-    if (level >= 20) {
+    final totalLevel = _asInt(character.entity.fields['level'], 1);
+    if (totalLevel >= 20) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Already at level 20.')),
       );
       return;
     }
-    final next = level + 1;
+    final entities = _activeEntities(character);
+    final classLevels = _readClassLevels(character);
+
+    // Multiclass picker: existing classes + "Add new class". Single-class
+    // characters (one entry) bypass the dialog when there's no scenario
+    // to disambiguate — straight to the level-up flow.
+    final pick = await _pickLevelUpClass(
+      character: character,
+      entities: entities,
+      classLevels: classLevels,
+    );
+    if (pick == null || !mounted) return;
+    final targetClassId = pick.classId;
+    final isNewClass = pick.isNew;
+
+    final prevClassLevel = classLevels[targetClassId] ?? 0;
+    if (prevClassLevel >= 20) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${pick.classLabel} already at level 20.')),
+      );
+      return;
+    }
+    final nextClassLevel = prevClassLevel + 1;
+    final nextClassLevels = {
+      ...classLevels,
+      targetClassId: nextClassLevel,
+    };
+    final newTotal = totalCharacterLevel(nextClassLevels);
+
+    final classRefs = <String>{
+      ...?_readStringList(character.entity.fields['class_refs']),
+      targetClassId,
+    }.toList();
+
     final updated = {
       ...character.entity.fields,
-      'level': next,
+      'class_levels': nextClassLevels.map((k, v) => MapEntry(k, v)),
+      'class_refs': classRefs,
+      'level': newTotal,
     };
     final nextCharacter = character.copyWith(
       entity: character.entity.copyWith(fields: updated),
     );
     _mutate(nextCharacter);
     await _maybeRunLevelUp(
-      from: level,
-      to: next,
+      from: prevClassLevel,
+      to: nextClassLevel,
       base: nextCharacter,
-      entities: _activeEntities(nextCharacter),
+      entities: entities,
+      targetClassId: targetClassId,
+      isNewClass: isNewClass,
     );
+  }
+
+  Map<String, int> _readClassLevels(Character character) {
+    final raw = character.entity.fields['class_levels'];
+    final out = <String, int>{};
+    if (raw is Map) {
+      for (final e in raw.entries) {
+        final k = e.key?.toString();
+        if (k == null || k.isEmpty) continue;
+        final v = e.value;
+        final lvl = v is int ? v : int.tryParse('$v');
+        if (lvl == null || lvl <= 0) continue;
+        out[k] = lvl;
+      }
+    }
+    // Back-compat: pre-multiclass characters set `class_refs` + flat `level`
+    // and never wrote `class_levels`. Treat the primary class_ref + level
+    // as the canonical single-class map so `_levelUp` works on legacy data.
+    if (out.isEmpty) {
+      final refs = character.entity.fields['class_refs'];
+      String? primary;
+      if (refs is List) {
+        for (final r in refs) {
+          if (r is String && r.isNotEmpty) {
+            primary = r;
+            break;
+          }
+        }
+      } else if (refs is String && refs.isNotEmpty) {
+        primary = refs;
+      }
+      final lvl = _asInt(character.entity.fields['level'], 1);
+      if (primary != null && lvl > 0) {
+        out[primary] = lvl;
+      }
+    }
+    return out;
+  }
+
+  List<String>? _readStringList(Object? raw) {
+    if (raw is List) {
+      return raw.whereType<String>().where((e) => e.isNotEmpty).toList();
+    }
+    if (raw is String && raw.isNotEmpty) return [raw];
+    return null;
+  }
+
+  /// Class picker for level-up. Single-class characters with no `class_refs`
+  /// entries beyond the primary class auto-pick that one. Otherwise shows
+  /// a dialog listing each current class (with its current level) plus an
+  /// "Add new class" row that opens a secondary picker over every class
+  /// entity not already taken. SRD §1.10 prereq is checked on entry to a
+  /// new class; failure shows a warning banner but doesn't block.
+  Future<_LevelUpPick?> _pickLevelUpClass({
+    required Character character,
+    required Map<String, Entity> entities,
+    required Map<String, int> classLevels,
+  }) async {
+    if (classLevels.isEmpty) {
+      return null;
+    }
+    final picked = await showDialog<_LevelUpPick>(
+      context: context,
+      builder: (ctx) => _LevelUpClassPicker(
+        classLevels: classLevels,
+        entities: entities,
+        abilityScores: _readAbilityScores(character),
+      ),
+    );
+    return picked;
+  }
+
+  /// Pick the subclass id matching [classId] via its `parent_class_ref`.
+  /// Single-subclass characters with a list-typed `subclass_refs` still work
+  /// (returns the first / only entry) — only the rare multi-subclass case
+  /// needs the parent-class match. Returns null when no match exists.
+  String? _subclassForClass({
+    required Character base,
+    required Map<String, Entity> entities,
+    required String? classId,
+  }) {
+    final raw = base.entity.fields['subclass_refs'] ??
+        base.entity.fields['subclass_id'];
+    final ids = <String>[];
+    if (raw is List) {
+      for (final r in raw) {
+        if (r is String && r.isNotEmpty) ids.add(r);
+      }
+    } else if (raw is String && raw.isNotEmpty) {
+      ids.add(raw);
+    }
+    if (ids.isEmpty) return null;
+    if (classId == null || ids.length == 1) return ids.first;
+    for (final id in ids) {
+      final sub = entities[id];
+      if (sub == null) continue;
+      final parentRef = sub.fields['parent_class_ref'];
+      if (parentRef is Map) {
+        final parentName = parentRef['name']?.toString();
+        if (parentName != null && entities[classId]?.name == parentName) {
+          return id;
+        }
+      }
+    }
+    return ids.first;
+  }
+
+  Map<String, int> _readAbilityScores(Character character) {
+    final out = <String, int>{};
+    final stat = character.entity.fields['stat_block'];
+    final statMap = stat is Map ? Map<String, dynamic>.from(stat) : null;
+    for (final k in const ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']) {
+      final lower = k.toLowerCase();
+      final v = character.entity.fields[lower] ??
+          character.entity.fields[k] ??
+          statMap?[k] ??
+          statMap?[lower];
+      out[k] = _asInt(v, 10);
+    }
+    return out;
   }
 
   Future<void> _shortRest(Character character) async {
@@ -1222,6 +1429,147 @@ class _CharacterEditorScreenState
     _autoSaveTimer?.cancel();
     await _save(silent: true);
     if (context.mounted) context.pop();
+  }
+}
+
+/// Outcome of [_LevelUpClassPicker]. [classId] names the class being
+/// advanced; [isNew] is true when the user picked "Add new class" and
+/// confirmed the SRD §1.10 prereq dialog. [classLabel] is the entity name
+/// for snackbar/error messages.
+class _LevelUpPick {
+  final String classId;
+  final String classLabel;
+  final bool isNew;
+  const _LevelUpPick({
+    required this.classId,
+    required this.classLabel,
+    required this.isNew,
+  });
+}
+
+/// First-step dialog of the multi-class level-up flow. Shows each existing
+/// class with its current level + an "Add new class" row. The secondary
+/// picker shows all class entities not already taken and validates SRD
+/// §1.10 ability prereqs against [abilityScores] — failures show a
+/// warning banner but the player can confirm anyway (rule-zero / homebrew).
+class _LevelUpClassPicker extends StatelessWidget {
+  final Map<String, int> classLevels;
+  final Map<String, Entity> entities;
+  final Map<String, int> abilityScores;
+
+  const _LevelUpClassPicker({
+    required this.classLevels,
+    required this.entities,
+    required this.abilityScores,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Widget>[];
+    classLevels.forEach((classId, level) {
+      final entity = entities[classId];
+      final label = entity?.name ?? classId;
+      rows.add(ListTile(
+        dense: true,
+        title: Text(label),
+        subtitle: Text('Current level $level → ${level + 1}'),
+        onTap: level >= 20
+            ? null
+            : () => Navigator.of(context).pop(
+                  _LevelUpPick(
+                      classId: classId, classLabel: label, isNew: false),
+                ),
+        enabled: level < 20,
+      ));
+    });
+    rows.add(const Divider());
+    rows.add(ListTile(
+      dense: true,
+      leading: const Icon(Icons.add_circle_outline),
+      title: const Text('Add new class (multiclass)'),
+      onTap: () async {
+        final pick = await _showAddClassDialog(context);
+        if (pick != null && context.mounted) {
+          Navigator.of(context).pop(pick);
+        }
+      },
+    ));
+
+    return AlertDialog(
+      title: const Text('Level Up — Choose Class'),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 380, maxHeight: 420),
+        child: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, children: rows),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+      ],
+    );
+  }
+
+  Future<_LevelUpPick?> _showAddClassDialog(BuildContext context) {
+    final available = entities.values
+        .where((e) => e.categorySlug == 'class')
+        .where((e) => !classLevels.containsKey(e.id))
+        .toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+    if (available.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No other classes available.')),
+      );
+      return Future.value(null);
+    }
+    return showDialog<_LevelUpPick>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Multiclass: New Class'),
+        children: [
+          for (final cls in available)
+            SimpleDialogOption(
+              onPressed: () async {
+                final check = checkMulticlassPrereq(
+                  classEntity: cls,
+                  entities: entities,
+                  abilityScores: abilityScores,
+                );
+                if (!check.met) {
+                  final ok = await showDialog<bool>(
+                    context: ctx,
+                    builder: (warn) => AlertDialog(
+                      title: Text('${cls.name} prereq not met'),
+                      content: Text(
+                        '${check.reason}\n\nProceed anyway (homebrew / rule-zero)?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(warn, false),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(warn, true),
+                          child: const Text('Proceed'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (ok != true || !ctx.mounted) return;
+                }
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop(
+                  _LevelUpPick(
+                      classId: cls.id, classLabel: cls.name, isNew: true),
+                );
+              },
+              child: Text(cls.name),
+            ),
+        ],
+      ),
+    );
   }
 }
 
