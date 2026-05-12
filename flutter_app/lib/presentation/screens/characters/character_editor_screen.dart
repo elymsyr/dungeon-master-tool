@@ -31,6 +31,7 @@ import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../theme/palettes.dart';
 import '../../widgets/app_icon_image.dart';
+import '../../widgets/class_level_up_table.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
 import '../../widgets/save_info_section.dart';
@@ -390,6 +391,7 @@ class _CharacterEditorScreenState
                   _entityHeader(palette, character, template),
                   const SizedBox(height: 16),
                   ..._renderSchemaFields(palette, playerCat, character),
+                  ..._renderLevelUpTable(palette, character),
                   const SizedBox(height: 8),
                   EntityCardSectionHeading(
                     title: 'DM Notes',
@@ -614,12 +616,18 @@ class _CharacterEditorScreenState
   }
 
 
+  static const _hiddenCharacterFieldKeys = <String>{
+    'class_levels',
+    'class_resources',
+  };
+
   /// EntityCard-style schema render — ungrouped fields under a "Properties"
   /// heading, grouped fields wrapped in a collapsible card per group.
   List<Widget> _renderSchemaFields(
       DmToolColors palette, EntityCategorySchema cat, Character character) {
     final fieldsByGroup = <String?, List<FieldSchema>>{};
     for (final f in cat.fields) {
+      if (_hiddenCharacterFieldKeys.contains(f.fieldKey)) continue;
       fieldsByGroup.putIfAbsent(f.groupId, () => []).add(f);
     }
     for (final list in fieldsByGroup.values) {
@@ -654,6 +662,49 @@ class _CharacterEditorScreenState
       ));
     }
     return widgets;
+  }
+
+  /// Render a level-up progression table when the character has both a
+  /// class and a subclass resolved in the active campaign. Returns empty
+  /// list otherwise (no header so the rest of the layout is unaffected).
+  List<Widget> _renderLevelUpTable(DmToolColors palette, Character character) {
+    final activeCampaign = ref.watch(activeCampaignProvider);
+    if (activeCampaign != character.worldName) return const [];
+    final entities = ref.watch(entityProvider);
+    final fields = character.entity.fields;
+
+    String? firstId(Iterable<String> keys) {
+      for (final k in keys) {
+        final v = fields[k];
+        if (v is String && v.isNotEmpty) return v;
+        if (v is List) {
+          final s = v.whereType<String>().firstWhere(
+                (e) => e.isNotEmpty,
+                orElse: () => '',
+              );
+          if (s.isNotEmpty) return s;
+        }
+      }
+      return null;
+    }
+
+    final classId = firstId(const ['class_refs', 'class_']);
+    final subclassId = firstId(const ['subclass_refs', 'subclass_id']);
+    final classEntity = classId == null ? null : entities[classId];
+    final subclassEntity = subclassId == null ? null : entities[subclassId];
+    if (classEntity == null || subclassEntity == null) return const [];
+
+    final level = fields['level'] is int ? fields['level'] as int : null;
+    return [
+      const SizedBox(height: 16),
+      EntityCardSectionHeading(title: 'Level Up Table', palette: palette),
+      const SizedBox(height: 8),
+      ClassLevelUpTable(
+        classEntity: classEntity,
+        subclassEntity: subclassEntity,
+        currentLevel: level,
+      ),
+    ];
   }
 
   Widget _fieldTile(FieldSchema f, Character character) {
