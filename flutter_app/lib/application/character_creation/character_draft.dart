@@ -53,6 +53,45 @@ abstract class CharacterDraft with _$CharacterDraft {
     /// `option_id` (e.g. 'A', 'B', 'C').
     @Default({}) Map<String, String> equipmentChoices,
 
+    /// Skill proficiency IDs picked from the chosen class's
+    /// `skill_proficiency_options` list. Wizard caps selection at the
+    /// class's `skill_proficiency_choice_count`. Background-granted skills
+    /// (`granted_skill_refs`) are auto-applied separately and not stored
+    /// here.
+    @Default([]) List<String> skillChoiceIds,
+
+    /// Tool proficiency IDs picked from the chosen class's
+    /// `tool_proficiency_options`. Cap = class's `tool_proficiency_count`.
+    @Default([]) List<String> toolChoiceIds,
+
+    /// Language IDs picked from the active campaign's `language` lookups.
+    /// Cap = background's `granted_language_count`.
+    @Default([]) List<String> languageChoiceIds,
+
+    /// Cantrip spell IDs (spell entities where `level == 0`). Cap derived
+    /// from the class's `cantrips_known_by_level` or fallback by caster
+    /// kind when the table is unpopulated.
+    @Default([]) List<String> cantripIds,
+
+    /// Prepared/known spell IDs of level >= 1. Cap derived from the
+    /// class's `prepared_spells_by_level`; max spell level filtered by the
+    /// caster-kind slot table.
+    @Default([]) List<String> preparedSpellIds,
+
+    /// SRD personality components — short prose written by the player on
+    /// the Personality & Flavor step. Empty strings are valid; the wizard
+    /// doesn't gate progression on them.
+    @Default('') String personalityTraits,
+    @Default('') String ideals,
+    @Default('') String bonds,
+    @Default('') String flaws,
+    @Default('') String backstory,
+
+    /// Optional Tiny trinket (SRD §1 Trinkets). Free-text so the user can
+    /// roll on the d100 table, pick from a curated list, or invent their
+    /// own.
+    @Default('') String trinket,
+
     /// Feats taken during creation. Background's `origin_feat_ref` is added
     /// implicitly by the wizard; level-up feats land here too.
     @Default([]) List<String> featIds,

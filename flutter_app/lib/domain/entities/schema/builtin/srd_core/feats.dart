@@ -37,6 +37,47 @@ List<Map<String, dynamic>> srdFeats() => [
         attributes: {
           'category_ref': lookup('feat-category', 'Origin'),
           'repeatable': true,
+          'effects': [
+            {
+              'kind': 'choice_group',
+              'payload': {
+                'group_id': 'list',
+                'label': 'Spell List',
+                'prompt': 'Choose which class list this feat draws from.',
+                'pick_kind': 'enum',
+                'pick': 1,
+                'options': [
+                  {'id': 'Cleric', 'label': 'Cleric'},
+                  {'id': 'Druid', 'label': 'Druid'},
+                  {'id': 'Wizard', 'label': 'Wizard'},
+                ],
+              },
+            },
+            {
+              'kind': 'choice_group',
+              'payload': {
+                'group_id': 'cantrips',
+                'label': 'Cantrips',
+                'prompt': 'Pick two cantrips from the chosen list.',
+                'pick_kind': 'spell_from_list',
+                'pick': 2,
+                'list_group_id': 'list',
+                'spell_level': 0,
+              },
+            },
+            {
+              'kind': 'choice_group',
+              'payload': {
+                'group_id': 'level1',
+                'label': 'Level 1 Spell',
+                'prompt': 'Pick one level-1 spell from the chosen list.',
+                'pick_kind': 'spell_from_list',
+                'pick': 1,
+                'list_group_id': 'list',
+                'spell_level': 1,
+              },
+            },
+          ],
           'benefits':
               'You gain the following benefits.\n\n'
                   '**Two Cantrips.** You learn two cantrips of your choice from the Cleric, Druid, or Wizard spell list. Intelligence, Wisdom, or Charisma is your spellcasting ability for this feat\'s spells (choose when you select this feat).\n\n'
@@ -65,6 +106,19 @@ List<Map<String, dynamic>> srdFeats() => [
         attributes: {
           'category_ref': lookup('feat-category', 'Origin'),
           'repeatable': true,
+          'effects': [
+            {
+              'kind': 'choice_group',
+              'payload': {
+                'group_id': 'picks',
+                'label': 'Skill or Tool',
+                'prompt':
+                    'Pick three — any combination of skills and tools.',
+                'pick_kind': 'skill_or_tool',
+                'pick': 3,
+              },
+            },
+          ],
           'benefits':
               'You gain proficiency in any combination of three skills or tools of your choice.\n\n'
                   '**Repeatable.** You can take this feat more than once.',
@@ -356,11 +410,47 @@ List<Map<String, dynamic>> srdFeats() => [
       ),
 
       // ─── More Origin Feats ──────────────────────────────────────────────
-      packEntity(slug: 'feat', name: 'Crafter', description: 'You gain proficiency with three Artisan\'s Tools and craft items more efficiently.', attributes: {'category_ref': lookup('feat-category', 'Origin'), 'repeatable': false, 'benefits': '**Tool Proficiency.** You gain proficiency with three different Artisan\'s Tools of your choice.\n\n**Discount.** Whenever you buy a nonmagical item, you receive a 20% discount.\n\n**Faster Crafting.** Whenever you craft a nonmagical item, you can do so in only a fifth of the normal crafting time.'}),
+      packEntity(slug: 'feat', name: 'Crafter', description: 'You gain proficiency with three Artisan\'s Tools and craft items more efficiently.', attributes: {'category_ref': lookup('feat-category', 'Origin'), 'repeatable': false, 'effects': [
+        {
+          'kind': 'choice_group',
+          'payload': {
+            'group_id': 'tools',
+            'label': "Artisan's Tools",
+            'prompt': "Pick three Artisan's Tools.",
+            'pick_kind': 'tool_category',
+            'pick': 3,
+            'tool_category_name': "Artisan's Tools",
+          },
+        },
+      ], 'benefits': '**Tool Proficiency.** You gain proficiency with three different Artisan\'s Tools of your choice.\n\n**Discount.** Whenever you buy a nonmagical item, you receive a 20% discount.\n\n**Faster Crafting.** Whenever you craft a nonmagical item, you can do so in only a fifth of the normal crafting time.'}),
       packEntity(slug: 'feat', name: 'Healer', description: 'You can stabilize and heal others with great efficiency, restoring HP with a use of a Healer\'s Kit.', attributes: {'category_ref': lookup('feat-category', 'Origin'), 'repeatable': false, 'benefits': '**Battle Medic.** If you have a Healer\'s Kit, you can take a Utilize action to expend one of its uses and tend to a creature within 5 feet of you. That creature can spend one of its Hit Point Dice, and you then roll that die. The creature regains a number of HP equal to the roll plus your Proficiency Bonus.\n\n**Healing Surge.** Once per turn when you roll a 1 on a Hit Point Die you spent during a Short or Long Rest, you can re-roll the die and use the higher result.'}),
       packEntity(slug: 'feat', name: 'Lucky', description: 'You have a knack for being in the right place. You can spend Luck Points to alter d20 Tests.', attributes: {'category_ref': lookup('feat-category', 'Origin'), 'repeatable': false, 'benefits': '**Luck Points.** You have a number of Luck Points equal to your Proficiency Bonus, and you regain all expended Luck Points when you finish a Long Rest.\n\n**Advantage.** You can spend a Luck Point when you make a d20 Test (attack roll, ability check, or saving throw); you have Advantage on the roll.\n\n**Disadvantage on Attacker.** When another creature rolls an attack roll against you, you can spend a Luck Point to give them Disadvantage.'}),
-      packEntity(slug: 'feat', name: 'Musician', description: 'You can inspire allies with music, granting Bardic-like inspiration once per Long Rest.', attributes: {'category_ref': lookup('feat-category', 'Origin'), 'repeatable': false, 'benefits': '**Tool Proficiency.** You gain proficiency with three musical instruments of your choice.\n\n**Encouraging Song.** As you finish a Short or Long Rest, you can play a song on a musical instrument with which you have proficiency and give Heroic Inspiration to allies who hear the song. The number of allies you can affect equals your Proficiency Bonus.'}),
-      packEntity(slug: 'feat', name: 'Tavern Brawler', description: 'You learned to fight with whatever\'s at hand — chairs, mugs, fists.', attributes: {'category_ref': lookup('feat-category', 'Origin'), 'repeatable': false, 'asi_amount': 1, 'asi_max_score': 20, 'asi_ability_options': ['Strength', 'Constitution'], 'benefits': '**Ability Score Increase.** Increase your Strength or Constitution score by 1, to a maximum of 20.\n\n**Enhanced Unarmed Strike.** When you hit with your Unarmed Strike, you can deal Bludgeoning damage equal to 1d4 + your Strength modifier instead of normal damage.\n\n**Damaging Improvisation.** You are proficient with Improvised Weapons.\n\n**Push.** When you hit a creature with an Unarmed Strike as part of the Attack action on your turn, you can deal damage to the target and also push it 5 feet from you.'}),
+      packEntity(slug: 'feat', name: 'Musician', description: 'You can inspire allies with music, granting Bardic-like inspiration once per Long Rest.', attributes: {'category_ref': lookup('feat-category', 'Origin'), 'repeatable': false, 'effects': [
+        {
+          'kind': 'choice_group',
+          'payload': {
+            'group_id': 'instruments',
+            'label': 'Musical Instruments',
+            'prompt': 'Pick three Musical Instruments.',
+            'pick_kind': 'tool_category',
+            'pick': 3,
+            'tool_category_name': 'Musical Instrument',
+          },
+        },
+      ], 'benefits': '**Tool Proficiency.** You gain proficiency with three musical instruments of your choice.\n\n**Encouraging Song.** As you finish a Short or Long Rest, you can play a song on a musical instrument with which you have proficiency and give Heroic Inspiration to allies who hear the song. The number of allies you can affect equals your Proficiency Bonus.'}),
+      packEntity(slug: 'feat', name: 'Tavern Brawler', description: 'You learned to fight with whatever\'s at hand — chairs, mugs, fists.', attributes: {'category_ref': lookup('feat-category', 'Origin'), 'repeatable': false, 'asi_amount': 1, 'asi_max_score': 20, 'asi_ability_options': ['Strength', 'Constitution'], 'effects': [
+        {
+          'kind': 'choice_group',
+          'payload': {
+            'group_id': 'asi',
+            'label': 'Ability Score Increase',
+            'prompt': 'Pick which score to raise by +1.',
+            'pick_kind': 'ability',
+            'pick': 1,
+            'ability_options': ['STR', 'CON'],
+          },
+        },
+      ], 'benefits': '**Ability Score Increase.** Increase your Strength or Constitution score by 1, to a maximum of 20.\n\n**Enhanced Unarmed Strike.** When you hit with your Unarmed Strike, you can deal Bludgeoning damage equal to 1d4 + your Strength modifier instead of normal damage.\n\n**Damaging Improvisation.** You are proficient with Improvised Weapons.\n\n**Push.** When you hit a creature with an Unarmed Strike as part of the Attack action on your turn, you can deal damage to the target and also push it 5 feet from you.'}),
       packEntity(slug: 'feat', name: 'Tough', description: 'Your HP maximum increases.', attributes: {'category_ref': lookup('feat-category', 'Origin'), 'repeatable': false, 'benefits': 'Your Hit Point maximum increases by an amount equal to twice your character level when you choose this feat. Whenever you gain a level thereafter, your HP maximum increases by an additional 2.'}),
 
       // ─── More General Feats ─────────────────────────────────────────────

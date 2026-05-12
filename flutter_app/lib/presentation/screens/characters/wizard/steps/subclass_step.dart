@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../application/character_creation/character_draft.dart';
 import '../../../../../application/character_creation/character_draft_notifier.dart';
-import '../../../../../application/providers/entity_provider.dart';
+import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
 import '../../../../widgets/class_level_up_table.dart';
 
@@ -29,7 +29,7 @@ class SubclassStep extends ConsumerWidget {
         child: Text('Pick a class first.'),
       );
     }
-    final entities = ref.watch(entityProvider);
+    final entities = ref.watch(wizardEntitiesProvider);
     final subclasses = <Entity>[
       for (final e in entities.values)
         if (e.categorySlug == 'subclass' &&
@@ -42,21 +42,48 @@ class SubclassStep extends ConsumerWidget {
         child: Text('No subclasses available for this class.'),
       );
     }
-    final classEntity =
-        draft.classId == null ? null : entities[draft.classId];
+    subclasses.sort((a, b) {
+      final la = _grantedAtLevel(a);
+      final lb = _grantedAtLevel(b);
+      if (la != lb) return la.compareTo(lb);
+      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    });
+
+    // Per SRD §1.5, a subclass cannot be picked before the class's
+    // declared `granted_at_level`. If everything is gated, clear any
+    // stale selection so the wizard's "complete" state matches.
+    final minGranted = subclasses
+        .map(_grantedAtLevel)
+        .fold<int>(20, (acc, l) => l < acc ? l : acc);
+    final allLocked = minGranted > draft.level;
+    if (allLocked && draft.subclassId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifier.setSubclass(null);
+      });
+    }
+
+    final classEntity = entities[draft.classId];
     final subclassEntity =
         draft.subclassId == null ? null : entities[draft.subclassId];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (allLocked)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              'This class chooses a subclass at level $minGranted. '
+              'Bump the level on the Identity step to unlock subclass picks.',
+              style: const TextStyle(fontStyle: FontStyle.italic),
+            ),
+          ),
         for (final s in subclasses)
-          RadioListTile<String>(
-            value: s.id,
-            groupValue: draft.subclassId,
-            onChanged: (v) => notifier.setSubclass(v),
-            title: Text(s.name),
-            subtitle: s.description.isEmpty ? null : Text(s.description),
-            dense: true,
+          _SubclassRow(
+            entity: s,
+            grantedAtLevel: _grantedAtLevel(s),
+            draftLevel: draft.level,
+            selected: draft.subclassId == s.id,
+            onTap: () => notifier.setSubclass(s.id),
           ),
         if (draft.subclassId != null)
           Align(
@@ -83,5 +110,74 @@ class SubclassStep extends ConsumerWidget {
     final v = e.fields['parent_class_ref'];
     if (v is String && v.isNotEmpty) return v;
     return null;
+  }
+
+  static int _grantedAtLevel(Entity e) {
+    final v = e.fields['granted_at_level'];
+    if (v is int) return v;
+    if (v is String) return int.tryParse(v) ?? 1;
+    return 1;
+  }
+}
+
+class _SubclassRow extends StatelessWidget {
+  final Entity entity;
+  final int grantedAtLevel;
+  final int draftLevel;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _SubclassRow({
+    required this.entity,
+    required this.grantedAtLevel,
+    required this.draftLevel,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final locked = grantedAtLevel > draftLevel;
+    final lockedHint = 'Unlocks at level $grantedAtLevel';
+    return RadioListTile<bool>(
+      value: true,
+      // ignore: deprecated_member_use
+      groupValue: selected ? true : null,
+      // ignore: deprecated_member_use
+      onChanged: locked ? null : (_) => onTap(),
+      dense: true,
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              entity.name,
+              style: locked
+                  ? TextStyle(color: Theme.of(context).disabledColor)
+                  : null,
+            ),
+          ),
+          if (locked)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                lockedHint,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontStyle: FontStyle.italic,
+                  color: Theme.of(context).disabledColor,
+                ),
+              ),
+            ),
+        ],
+      ),
+      subtitle: entity.description.isEmpty
+          ? null
+          : Text(
+              entity.description,
+              style: locked
+                  ? TextStyle(color: Theme.of(context).disabledColor)
+                  : null,
+            ),
+    );
   }
 }

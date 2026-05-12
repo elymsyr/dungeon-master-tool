@@ -10,6 +10,7 @@ import '../../../application/providers/hub_tab_provider.dart';
 import '../../../domain/entities/character.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/character_stat_chips.dart';
 import '../../widgets/marketplace_panel.dart';
 import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
@@ -143,6 +144,12 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                               layout: MetadataTileLayout.leftAvatar,
                               onSettings: () =>
                                   _showCharacterSettings(c.id, palette),
+                              infoChips: CharacterStatChips(
+                                lines: characterStatLines(
+                                    c, readCharacterEntities(ref, c)),
+                                palette: palette,
+                                compact: true,
+                              ),
                             ),
                           ),
                         ),
