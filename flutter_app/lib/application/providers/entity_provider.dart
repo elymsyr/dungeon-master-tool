@@ -10,6 +10,7 @@ import '../../domain/entities/entity.dart';
 import '../../domain/entities/events/event_envelope.dart';
 import '../../domain/entities/events/event_types.dart';
 import '../../domain/entities/schema/default_dnd5e_schema.dart';
+import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../services/event_bus.dart';
@@ -49,10 +50,20 @@ final worldSchemaProvider = Provider<WorldSchema>((ref) {
 
   if (rawSource is Map) {
     try {
-      final schema = WorldSchema.fromJson(
+      var schema = WorldSchema.fromJson(
         Map<String, dynamic>.from(rawSource),
       );
-      _cachedWorldSchemaSource = rawSource;
+      final migrated = _migrateStaleEnumRelations(schema);
+      if (migrated != null) {
+        schema = migrated;
+        if (data != null) {
+          final serialized = deepCopyJson(schema.toJson());
+          data['world_schema'] = serialized;
+          _cachedWorldSchemaSource = serialized;
+        }
+      } else {
+        _cachedWorldSchemaSource = rawSource;
+      }
       _cachedWorldSchema = schema;
       return schema;
     } catch (e) {
@@ -73,6 +84,48 @@ final worldSchemaProvider = Provider<WorldSchema>((ref) {
   }
   return schema;
 });
+
+/// Fix legacy campaigns whose stored `world_schema` left these keys as
+/// `FieldType.enum_` after the code migrated them to `relation`. The
+/// stored entity values are already real Tier-0 UUIDs (resolved at SRD
+/// import time), so flipping the schema type makes the relation widget
+/// render names instead of raw UUIDs. Returns a new schema if any field
+/// was patched, otherwise null.
+const Map<String, List<String>> _staleEnumToRelation = {
+  'weapon_proficiency_categories': ['weapon-category'],
+  'armor_training_refs': ['armor-category'],
+  'armor_trainings': ['armor-category'],
+  'weapon_proficiency_specifics': ['weapon'],
+};
+
+WorldSchema? _migrateStaleEnumRelations(WorldSchema schema) {
+  var dirty = false;
+  final newCats = <EntityCategorySchema>[];
+  for (final cat in schema.categories) {
+    var catDirty = false;
+    final newFields = <FieldSchema>[];
+    for (final f in cat.fields) {
+      final expectedTypes = _staleEnumToRelation[f.fieldKey];
+      if (expectedTypes != null && f.fieldType == FieldType.enum_) {
+        newFields.add(f.copyWith(
+          fieldType: FieldType.relation,
+          isList: true,
+          validation: f.validation.copyWith(
+            allowedTypes: List<String>.from(expectedTypes),
+            allowedValues: null,
+          ),
+        ));
+        catDirty = true;
+        dirty = true;
+      } else {
+        newFields.add(f);
+      }
+    }
+    newCats.add(catDirty ? cat.copyWith(fields: newFields) : cat);
+  }
+  if (!dirty) return null;
+  return schema.copyWith(categories: newCats);
+}
 
 /// Aktif kampanyadaki entity'lerin reactive state'i.
 class EntityNotifier extends StateNotifier<Map<String, Entity>>

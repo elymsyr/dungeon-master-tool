@@ -40,10 +40,10 @@ void main() {
         fields: {
           'hit_die': 'd10',
           'features': [
-            {'level': 1, 'name': 'Second Wind'},
-            {'level': 2, 'name': 'Action Surge'},
-            {'level': 5, 'name': 'Extra Attack'},
-            {'level': 11, 'name': 'Improved Critical'},
+            {'level': 1, 'description': 'Second Wind'},
+            {'level': 2, 'description': 'Action Surge'},
+            {'level': 5, 'description': 'Extra Attack'},
+            {'level': 11, 'description': 'Improved Critical'},
           ],
         },
       );
@@ -51,9 +51,9 @@ void main() {
         'class_levels': {'cls_fighter': 5},
       });
       final eff = CharacterResolver.resolve(pc, {fighter.id: fighter});
-      final names = eff.activeFeatures.map((r) => r.name).toList();
-      expect(names, containsAll(['Second Wind', 'Action Surge', 'Extra Attack']));
-      expect(names, isNot(contains('Improved Critical')));
+      final descs = eff.activeFeatures.map((r) => r.description).toList();
+      expect(descs, containsAll(['Second Wind', 'Action Surge', 'Extra Attack']));
+      expect(descs, isNot(contains('Improved Critical')));
     });
 
     test('feat with class_level_grant bumps effective class level', () {
@@ -63,7 +63,7 @@ void main() {
         name: 'Wizard',
         fields: {
           'features': [
-            {'level': 1, 'name': 'Wizard Spellcasting'},
+            {'level': 1, 'description': 'Wizard Spellcasting'},
           ],
         },
       );
@@ -91,7 +91,7 @@ void main() {
       });
       expect(eff.classLevels['cls_wiz'], 1);
       expect(
-        eff.activeFeatures.any((r) => r.name == 'Wizard Spellcasting'),
+        eff.activeFeatures.any((r) => r.description == 'Wizard Spellcasting'),
         true,
       );
     });
@@ -201,7 +201,7 @@ void main() {
         name: 'Cleric',
         fields: {
           'features': [
-            {'level': 1, 'name': 'Spellcasting'},
+            {'level': 1, 'description': 'Spellcasting'},
           ],
         },
       );
@@ -213,7 +213,7 @@ void main() {
           'parent_class_ref': 'cls_cleric',
           'granted_at_level': 3,
           'features': [
-            {'level': 3, 'name': 'Disciple of Life'},
+            {'level': 3, 'description': 'Disciple of Life'},
           ],
         },
       );
@@ -225,7 +225,7 @@ void main() {
       final effLow =
           CharacterResolver.resolve(pcLow, {cls.id: cls, sub.id: sub});
       expect(
-        effLow.activeFeatures.any((r) => r.name == 'Disciple of Life'),
+        effLow.activeFeatures.any((r) => r.description == 'Disciple of Life'),
         false,
       );
       // At threshold
@@ -236,7 +236,7 @@ void main() {
       final effHi =
           CharacterResolver.resolve(pcHi, {cls.id: cls, sub.id: sub});
       expect(
-        effHi.activeFeatures.any((r) => r.name == 'Disciple of Life'),
+        effHi.activeFeatures.any((r) => r.description == 'Disciple of Life'),
         true,
       );
     });
@@ -309,6 +309,211 @@ void main() {
       });
       expect(eff.classLevels['cls_wiz'], greaterThanOrEqualTo(1));
       expect(eff.classLevels['cls_ftr'], greaterThanOrEqualTo(1));
+    });
+
+    test('auto_granted_by walker applies feat when class level matches', () {
+      final cls = _e(
+        id: 'cls_barb',
+        slug: 'class',
+        name: 'Barbarian',
+      );
+      final feat = _e(
+        id: 'feat_unarmored_barb',
+        slug: 'feat',
+        name: 'Unarmored Defense (Barbarian)',
+        fields: {
+          'auto_granted_by': [
+            {
+              'source': 'class',
+              'source_ref': 'cls_barb',
+              'at_level': 1,
+            },
+          ],
+          'effects': [
+            {
+              'kind': 'unarmored_ac_formula',
+              'payload': {
+                'base': 10,
+                'ability_mods': ['DEX', 'CON'],
+                'shield_allowed': true,
+              },
+              'predicates': [
+                {'kind': 'equipped_armor_kind', 'args': {'value': 'none'}},
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc_barb', fields: {
+        'class_levels': {'cls_barb': 1},
+      });
+      final eff = CharacterResolver.resolve(pc, {cls.id: cls, feat.id: feat});
+      expect(eff.autoGrantedFeatIds, contains('feat_unarmored_barb'));
+      expect(eff.unarmoredFormulas, isNotEmpty);
+      expect(eff.unarmoredFormulas.first['kind'], 'unarmored_ac_formula');
+    });
+
+    test('auto_granted_by below required level does not apply', () {
+      final cls = _e(
+        id: 'cls_barb',
+        slug: 'class',
+        name: 'Barbarian',
+      );
+      final feat = _e(
+        id: 'feat_brutal_strike',
+        slug: 'feat',
+        name: 'Brutal Strike',
+        fields: {
+          'auto_granted_by': [
+            {'source': 'class', 'source_ref': 'cls_barb', 'at_level': 9},
+          ],
+          'effects': [
+            {'kind': 'damage_resistance', 'target_ref': 'd_b'},
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'class_levels': {'cls_barb': 5},
+      });
+      final eff = CharacterResolver.resolve(pc, {cls.id: cls, feat.id: feat});
+      expect(eff.autoGrantedFeatIds, isNot(contains('feat_brutal_strike')));
+    });
+
+    test('damage_resistance + damage_immunity + condition_immunity flow', () {
+      final dmgB = _e(id: 'd_b', slug: 'damage-type', name: 'Bludgeoning');
+      final dmgF = _e(id: 'd_f', slug: 'damage-type', name: 'Fire');
+      final condC = _e(id: 'c_charm', slug: 'condition', name: 'Charmed');
+      final feat = _e(
+        id: 'feat_x',
+        slug: 'feat',
+        name: 'Hardiness',
+        fields: {
+          'effects': [
+            {'kind': 'damage_resistance', 'target_ref': 'd_b'},
+            {'kind': 'damage_immunity', 'target_ref': 'd_f'},
+            {'kind': 'condition_immunity_grant', 'target_ref': 'c_charm'},
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['feat_x']});
+      final eff = CharacterResolver.resolve(pc, {
+        dmgB.id: dmgB, dmgF.id: dmgF, condC.id: condC, feat.id: feat,
+      });
+      expect(eff.damageResistanceIds, contains('d_b'));
+      expect(eff.damageImmunityIds, contains('d_f'));
+      expect(eff.conditionImmunityIds, contains('c_charm'));
+    });
+
+    test('extra_attack_count multiclass takes max not sum', () {
+      final featA = _e(
+        id: 'fa', slug: 'feat', name: 'A',
+        fields: {'effects': [{'kind': 'extra_attack_count', 'value': 2}]},
+      );
+      final featB = _e(
+        id: 'fb', slug: 'feat', name: 'B',
+        fields: {'effects': [{'kind': 'extra_attack_count', 'value': 3}]},
+      );
+      final pc = _pc(id: 'pc1', fields: {'feat_ids': ['fa', 'fb']});
+      final eff = CharacterResolver.resolve(pc, {featA.id: featA, featB.id: featB});
+      expect(eff.extraAttackCount, 3);
+    });
+
+    test('class_level_at_least predicate gates effect', () {
+      final cls = _e(id: 'cls_barb', slug: 'class', name: 'Barbarian');
+      final dmgB = _e(id: 'd_b', slug: 'damage-type', name: 'Bludgeoning');
+      final feat = _e(
+        id: 'feat_late',
+        slug: 'feat',
+        name: 'Late',
+        fields: {
+          'auto_granted_by': [
+            {'source': 'class', 'source_ref': 'cls_barb', 'at_level': 1},
+          ],
+          'effects': [
+            {
+              'kind': 'damage_resistance',
+              'target_ref': 'd_b',
+              'predicates': [
+                {
+                  'kind': 'class_level_at_least',
+                  'args': {'class_ref': 'cls_barb', 'level': 9},
+                },
+              ],
+            },
+          ],
+        },
+      );
+      // L5: feat is auto-granted but the per-effect predicate fails.
+      final pc5 = _pc(id: 'pc5', fields: {'class_levels': {'cls_barb': 5}});
+      final eff5 = CharacterResolver.resolve(pc5, {
+        cls.id: cls, dmgB.id: dmgB, feat.id: feat,
+      });
+      expect(eff5.autoGrantedFeatIds, contains('feat_late'));
+      expect(eff5.damageResistanceIds, isNot(contains('d_b')));
+      // L9: predicate passes; resistance applies.
+      final pc9 = _pc(id: 'pc9', fields: {'class_levels': {'cls_barb': 9}});
+      final eff9 = CharacterResolver.resolve(pc9, {
+        cls.id: cls, dmgB.id: dmgB, feat.id: feat,
+      });
+      expect(eff9.damageResistanceIds, contains('d_b'));
+    });
+
+    test('trait auto_granted_by surfaces in autoGrantedTraitIds', () {
+      final cls = _e(
+        id: 'cls_druid',
+        slug: 'class',
+        name: 'Druid',
+        fields: {'features': const <Map<String, dynamic>>[]},
+      );
+      final trait = _e(
+        id: 'trait_druidic',
+        slug: 'trait',
+        name: 'Druidic',
+        fields: {
+          'description': 'You know Druidic, the secret language of druids.',
+          'auto_granted_by': [
+            {
+              'source': 'class',
+              'source_ref': {'_ref': 'class', 'name': 'Druid'},
+              'at_level': 1,
+            }
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'class_levels': {'cls_druid': 1},
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        cls.id: cls,
+        trait.id: trait,
+      });
+      expect(eff.autoGrantedTraitIds, contains('trait_druidic'));
+      // Trait must NOT be in autoGrantedFeatIds.
+      expect(eff.autoGrantedFeatIds, isNot(contains('trait_druidic')));
+    });
+
+    test('level row surfaces level + description only (no ref fields)', () {
+      final cls = _e(
+        id: 'cls_barb',
+        slug: 'class',
+        name: 'Barbarian',
+        fields: {
+          'features': [
+            {
+              'level': 1,
+              'feat_ref': {'_ref': 'feat', 'name': 'Rage'}, // legacy, ignored
+              'description': 'Rage / Unarmored Defense / Weapon Mastery.',
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'class_levels': {'cls_barb': 1},
+      });
+      final eff = CharacterResolver.resolve(pc, {cls.id: cls});
+      final row = eff.activeFeatures.firstWhere((r) => r.level == 1);
+      expect(row.description, 'Rage / Unarmored Defense / Weapon Mastery.');
+      expect(row.sourceEntityId, 'cls_barb');
     });
   });
 }

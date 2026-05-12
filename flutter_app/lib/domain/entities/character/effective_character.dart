@@ -18,14 +18,13 @@ abstract class ResolvedInventoryItem with _$ResolvedInventoryItem {
       _$ResolvedInventoryItemFromJson(json);
 }
 
-/// One resolved class/subclass feature row, attached to a specific source
-/// entity at a specific level threshold.
+/// One resolved class/subclass level upgrade row — narrative summary line.
+/// Mechanics are applied via auto-grant on the Feat/Trait entity, not via
+/// this row.
 @freezed
 abstract class ResolvedFeatureRow with _$ResolvedFeatureRow {
   const factory ResolvedFeatureRow({
     required int level,
-    required String name,
-    @Default('') String kind,
     @Default('') String description,
     @Default('') String sourceEntityId,
   }) = _ResolvedFeatureRow;
@@ -73,6 +72,36 @@ abstract class EffectiveCharacter with _$EffectiveCharacter {
     @Default([]) List<ResolvedInventoryItem> inventory,
     @Default([]) List<String> senseEntityIds,
     @Default([]) List<String> damageResistanceIds,
+    @Default([]) List<String> damageImmunityIds,
+    @Default([]) List<String> damageVulnerabilityIds,
+    @Default([]) List<String> conditionImmunityIds,
+    @Default([]) List<String> expertiseSkillIds,
+    @Default([]) List<String> alwaysPreparedSpellIds,
+    /// Feat IDs auto-granted by class level / species / background that the
+    /// character did NOT explicitly pick. Resolver applies their effects but
+    /// surfaces them separately so the UI can render them under "Class
+    /// Features" rather than "Chosen Feats".
+    @Default([]) List<String> autoGrantedFeatIds,
+    /// Trait IDs auto-granted by class level / species / background via
+    /// `auto_granted_by`. Traits carry no mechanical effects; this list
+    /// drives display of narrative class/species/background features (e.g.
+    /// Druidic, Thieves' Cant, Fey Ancestry) on the character sheet.
+    @Default([]) List<String> autoGrantedTraitIds,
+    /// Unarmored AC formulas registered by feats with `unarmored_ac_formula`
+    /// effects whose predicates are satisfied. Each entry is the raw effect
+    /// row preserved as-is so downstream UI can read `payload.base`,
+    /// `payload.ability_mods`, `payload.shield_allowed`. Final AC composition
+    /// (max of armored AC vs each formula) is the consumer's job.
+    @Default([]) List<Map<String, dynamic>> unarmoredFormulas,
+    /// Max extra-attack count (e.g. 2 / 3 / 4). Multiclass takes the max,
+    /// not the sum (Fighter L11 + Barbarian L5 = 3 attacks, not 5).
+    @Default(0) int extraAttackCount,
+    /// Crit threshold floor. Default 20; Champion-style features lower this.
+    @Default(20) int critRangeMin,
+    /// Resource pools whose max was computed at resolve time. Runtime tracks
+    /// `current` separately on the character. Each entry: `{pool_ref, max,
+    /// recharge}`.
+    @Default([]) List<Map<String, dynamic>> resourcePools,
     @Default([]) List<String> warnings,
   }) = _EffectiveCharacter;
 

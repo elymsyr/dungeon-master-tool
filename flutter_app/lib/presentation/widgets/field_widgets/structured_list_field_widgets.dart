@@ -461,23 +461,8 @@ class RangedSenseListFieldWidget extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// 2. classFeatures — {level, name, kind, dice, uses, recharge, description}
+// 2. classFeatures — {level, description}
 // ─────────────────────────────────────────────────────────────────────────
-
-const _classFeatureKinds = [
-  'passive',
-  'resource',
-  'extra-attack',
-  'spellcasting-bump',
-  'ability-improvement',
-];
-
-const _classFeatureRechargeKinds = [
-  '',
-  'short-rest',
-  'long-rest',
-  'day',
-];
 
 class ClassFeaturesFieldWidget extends StatelessWidget {
   final FieldSchema schema;
@@ -503,11 +488,6 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
       onChanged: onChanged,
       makeEmptyRow: () => {
         'level': null,
-        'name': '',
-        'kind': null,
-        'dice': '',
-        'uses': null,
-        'recharge': '',
         'description': '',
       },
       buildRow: (i, row, onRowChanged) {
@@ -524,48 +504,11 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
               width: 60,
             ),
             _miniText(
-              label: 'Name',
-              value: (row['name'] ?? '').toString(),
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'name': v}),
-              width: 160,
-            ),
-            _miniEnum(
-              label: 'Kind',
-              value: row['kind'] as String?,
-              options: _classFeatureKinds,
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'kind': v}),
-              width: 150,
-            ),
-            _miniText(
-              label: 'Dice',
-              value: (row['dice'] ?? '').toString(),
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'dice': v}),
-              width: 80,
-            ),
-            _miniInt(
-              label: 'Uses',
-              value: row['uses'] is int ? row['uses'] as int : null,
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'uses': v}),
-              width: 60,
-            ),
-            _miniEnum(
-              label: 'Recharge',
-              value: row['recharge'] as String?,
-              options: _classFeatureRechargeKinds,
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'recharge': v ?? ''}),
-              width: 120,
-            ),
-            _miniText(
-              label: 'Description',
+              label: 'Summary',
               value: (row['description'] ?? '').toString(),
               readOnly: readOnly,
               onChanged: (v) => onRowChanged({...row, 'description': v}),
-              width: 300,
+              width: 480,
             ),
           ],
         );
@@ -1184,5 +1127,246 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
     final name = _resolveRef(refId);
     final qtyStr = qty is int && qty > 1 ? ' × $qty' : '';
     return Text('• $name$qtyStr', style: theme.textTheme.bodySmall);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// featEffectList — {kind, target_kind?, target_ref?, value?, payload?, predicates?, scales_with?, activation?}
+//
+// MVP editor: kind dropdown + value int + target relation. Predicates,
+// scales_with, activation render as read-only badges (count). Authoring those
+// nested structures from the UI is a follow-up; for now SRD content authors
+// edit the data file directly when complex shapes are needed.
+// ─────────────────────────────────────────────────────────────────────────
+
+const _featEffectKinds = [
+  // Existing
+  'class_level_grant', 'proficiency_grant', 'language_grant', 'spell_grant',
+  'cantrip_grant', 'ac_bonus', 'speed_bonus', 'hp_bonus_per_level',
+  'hp_bonus_flat', 'initiative_bonus', 'attack_bonus', 'extra_attack_bump',
+  'choice_group',
+  // New (PR-7c+)
+  'unarmored_ac_formula', 'damage_resistance', 'damage_immunity',
+  'damage_vulnerability', 'condition_immunity_grant',
+  'condition_advantage_on_save_grant', 'crit_range_extend',
+  'extra_damage_on_attack', 'reroll_damage', 'reroll_d20',
+  'attack_bonus_typed', 'damage_bonus_typed', 'ignore_cover',
+  'ignore_long_range_disadvantage', 'damage_reduction_flat',
+  'swim_speed_equals_speed', 'climb_speed_equals_speed', 'fly_speed',
+  'sense_grant', 'truesight_grant', 'blindsight_grant', 'walk_on_liquid',
+  'advantage_on', 'disadvantage_on', 'expertise_grant',
+  'half_proficiency_to_unproficient_checks', 'passive_score_bonus',
+  'reliable_talent', 'min_die_value', 'state_grant', 'resource_pool_grant',
+  'recovery_grant', 'slot_recovery_short_rest', 'spell_always_prepared',
+  'spell_cast_from_item', 'spellcasting_ability_to_damage',
+  'cantrip_count_bonus', 'magical_unarmed_strikes', 'damage_type_override',
+  'concentration_advantage', 'concentration_immune_to_damage_break',
+  'reaction_attack_grant', 'reaction_damage_reduction',
+  'reaction_negate_via_save',
+  'opportunity_attack_immunity_when_disengage_redundant',
+  'enemy_cant_disengage_oa', 'oa_stops_movement', 'weapon_mastery_grant',
+  'weapon_mastery_count_bonus', 'expertise_count', 'extra_attack_count',
+  'hp_max_bonus_total', 'temp_hp_grant',
+];
+
+const _featEffectTargetKinds = [
+  '', 'ac', 'save', 'skill', 'speed', 'hp', 'sense', 'damage_type', 'condition',
+  'class', 'spell', 'cantrip', 'language', 'feat', 'tool', 'weapon', 'ability',
+];
+
+class FeatEffectListFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+
+  const FeatEffectListFieldWidget({
+    super.key,
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+    this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _coerceRows(value);
+    return _StructuredListShell(
+      schema: schema,
+      rows: rows,
+      readOnly: readOnly,
+      onChanged: onChanged,
+      makeEmptyRow: () => {
+        'kind': null,
+        'target_kind': null,
+        'target_ref': null,
+        'value': null,
+      },
+      buildRow: (i, row, onRowChanged) {
+        final targetKind = row['target_kind'] as String?;
+        final allowed = _allowedTypesForTargetKind(
+          targetKind == '' ? null : targetKind,
+        );
+        final preds = row['predicates'];
+        final predCount = (preds is List) ? preds.length : 0;
+        final hasScales = row['scales_with'] is Map;
+        final hasActivation = row['activation'] is Map;
+        final hasPayload = row['payload'] is Map;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _miniEnum(
+              label: 'Kind',
+              value: row['kind'] as String?,
+              options: _featEffectKinds,
+              readOnly: readOnly,
+              onChanged: (v) => onRowChanged({...row, 'kind': v}),
+              width: 240,
+            ),
+            _miniEnum(
+              label: 'Target Kind',
+              value: targetKind,
+              options: _featEffectTargetKinds,
+              readOnly: readOnly,
+              onChanged: (v) => onRowChanged({
+                ...row,
+                'target_kind': v == '' ? null : v,
+                'target_ref': null,
+              }),
+              width: 140,
+            ),
+            if (allowed.isNotEmpty)
+              _MiniRelationField(
+                label: 'Target',
+                value: row['target_ref'] is String
+                    ? row['target_ref'] as String
+                    : null,
+                allowedTypes: allowed,
+                entities: entities,
+                ref: ref,
+                readOnly: readOnly,
+                onChanged: (v) => onRowChanged({...row, 'target_ref': v}),
+              ),
+            _miniInt(
+              label: 'Value',
+              value: row['value'] is int ? row['value'] as int : null,
+              readOnly: readOnly,
+              onChanged: (v) => onRowChanged({...row, 'value': v}),
+              width: 70,
+            ),
+            // Read-only badges for nested shapes the MVP editor can't author yet.
+            if (predCount > 0) _badge('predicates×$predCount', Colors.deepPurple),
+            if (hasScales) _badge('scales_with', Colors.teal),
+            if (hasActivation) _badge('activation', Colors.indigo),
+            if (hasPayload) _badge('payload', Colors.brown),
+          ],
+        );
+      },
+    );
+  }
+}
+
+Widget _badge(String label, Color color) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Text(label,
+          style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
+    );
+
+// ─────────────────────────────────────────────────────────────────────────
+// autoGrantSources — {source: 'class'|'subclass'|'species'|'background',
+//                     source_ref, at_level?, choice_required?}
+// ─────────────────────────────────────────────────────────────────────────
+
+const _autoGrantSources = ['class', 'subclass', 'species', 'background'];
+
+class AutoGrantSourcesFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+
+  const AutoGrantSourcesFieldWidget({
+    super.key,
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+    this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _coerceRows(value);
+    return _StructuredListShell(
+      schema: schema,
+      rows: rows,
+      readOnly: readOnly,
+      onChanged: onChanged,
+      makeEmptyRow: () => {
+        'source': null,
+        'source_ref': null,
+        'at_level': null,
+      },
+      buildRow: (i, row, onRowChanged) {
+        final source = row['source'] as String?;
+        final allowed = (source == null || source.isEmpty)
+            ? const <String>[]
+            : <String>[source];
+        return Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _miniEnum(
+              label: 'Source',
+              value: source,
+              options: _autoGrantSources,
+              readOnly: readOnly,
+              onChanged: (v) => onRowChanged({
+                ...row,
+                'source': v,
+                'source_ref': null,
+              }),
+              width: 130,
+            ),
+            if (allowed.isNotEmpty)
+              _MiniRelationField(
+                label: 'Source Ref',
+                value: row['source_ref'] is String
+                    ? row['source_ref'] as String
+                    : null,
+                allowedTypes: allowed,
+                entities: entities,
+                ref: ref,
+                readOnly: readOnly,
+                onChanged: (v) => onRowChanged({...row, 'source_ref': v}),
+              ),
+            _miniInt(
+              label: 'At Level',
+              value: row['at_level'] is int ? row['at_level'] as int : null,
+              readOnly: readOnly,
+              onChanged: (v) => onRowChanged({...row, 'at_level': v}),
+              width: 80,
+            ),
+            if (row['choice_required'] == true)
+              _badge('choice_required', Colors.orange),
+          ],
+        );
+      },
+    );
   }
 }

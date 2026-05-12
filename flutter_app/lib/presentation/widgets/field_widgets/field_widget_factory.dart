@@ -142,6 +142,10 @@ class FieldWidgetFactory {
           schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
       FieldType.equipmentChoiceGroups => EquipmentChoiceGroupsFieldWidget(
           schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities),
+      FieldType.featEffectList => FeatEffectListFieldWidget(
+          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
+      FieldType.autoGrantSources => AutoGrantSourcesFieldWidget(
+          schema: schema, value: value, readOnly: readOnly, onChanged: onChanged, entities: entities, ref: ref),
       _ => _TextFieldWidget(schema: schema, value: value, readOnly: readOnly, onChanged: onChanged),
     };
   }
@@ -203,6 +207,89 @@ TextStyle _fieldEmptyStyle(BuildContext context) {
     fontStyle: FontStyle.italic,
     color: Theme.of(context).colorScheme.outline,
   );
+}
+
+/// Stepper visibility policy per field key.
+/// - [always]: +/- visible in both view and edit modes (mid-session adjustments like HP).
+/// - [editOnly]: +/- visible only when not readOnly (level, AC — set during build, not combat).
+/// - [none]: no stepper.
+enum _StepperMode { none, editOnly, always }
+
+_StepperMode _stepperModeForKey(String key) {
+  switch (key) {
+    case 'hp':
+    case 'max_hp':
+    case 'temp_hp':
+      return _StepperMode.always;
+    case 'level':
+    case 'ac':
+    case 'xp':
+    case 'proficiency_bonus':
+      return _StepperMode.editOnly;
+    default:
+      return _StepperMode.none;
+  }
+}
+
+/// Two-button column (+ on top, − on bottom) sitting on the right of a value.
+/// HP-style fields use the dedicated red/green theme tokens; other fields
+/// fall back to the neutral default button palette so the stepper inherits
+/// the active theme without screaming "HP" in every context.
+class _QuickStepper extends StatelessWidget {
+  final VoidCallback onIncrement;
+  final VoidCallback onDecrement;
+  final bool hp;
+
+  const _QuickStepper({
+    required this.onIncrement,
+    required this.onDecrement,
+    this.hp = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>();
+    final incBg = hp
+        ? (palette?.hpBtnIncreaseBg ?? Colors.green)
+        : (palette?.buttonDefaultBg ?? Colors.grey.shade700);
+    final decBg = hp
+        ? (palette?.hpBtnDecreaseBg ?? Colors.red)
+        : (palette?.buttonDefaultBg ?? Colors.grey.shade700);
+    final fg = hp
+        ? (palette?.hpBtnText ?? Colors.white)
+        : (palette?.buttonDefaultText ?? Colors.white);
+    final radius = palette?.borderRadius ?? 2;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _btn(Icons.add, incBg, fg, radius, onIncrement),
+        const SizedBox(height: 2),
+        _btn(Icons.remove, decBg, fg, radius, onDecrement),
+      ],
+    );
+  }
+
+  Widget _btn(IconData icon, Color bg, Color fg, double radius, VoidCallback onTap) {
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(radius),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(radius),
+        child: SizedBox(
+          width: 22,
+          height: 16,
+          child: Icon(icon, size: 12, color: fg),
+        ),
+      ),
+    );
+  }
+}
+
+int _clampInt(int v, num? min, num? max) {
+  if (min != null && v < min) return min.toInt();
+  if (max != null && v > max) return max.toInt();
+  return v;
 }
 
 // --- TEXT ---
@@ -472,27 +559,57 @@ class _IntegerFieldWidgetState extends State<_IntegerFieldWidget> {
     super.dispose();
   }
 
+  void _bump(int delta) {
+    final cur = int.tryParse(widget.value?.toString() ?? '') ?? 0;
+    final clamped = _clampInt(
+      cur + delta,
+      widget.schema.validation.minValue,
+      widget.schema.validation.maxValue,
+    );
+    if (clamped == cur) return;
+    _controller.text = clamped.toString();
+    widget.onChanged(clamped);
+  }
+
   @override
   Widget build(BuildContext context) {
     final raw = widget.value;
     final hasValue = raw != null && raw.toString().isNotEmpty;
-    if (widget.readOnly && !hasValue) return const SizedBox.shrink();
-    return _LabeledFieldRow(
-      label: widget.schema.label,
-      child: widget.readOnly
-          ? Text(raw.toString(), style: _fieldValueStyle(context))
-          : TextFormField(
-              key: ValueKey('${widget.schema.fieldKey}_int'),
-              controller: _controller,
-              keyboardType: TextInputType.number,
-              style: _fieldValueStyle(context),
-              decoration: const InputDecoration(
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              ),
-              onChanged: (v) => widget.onChanged(int.tryParse(v) ?? 0),
+    final mode = _stepperModeForKey(widget.schema.fieldKey);
+    final showStepper = mode == _StepperMode.always ||
+        (mode == _StepperMode.editOnly && !widget.readOnly);
+    if (widget.readOnly && !hasValue && !showStepper) return const SizedBox.shrink();
+
+    final valueChild = widget.readOnly
+        ? Text(hasValue ? raw.toString() : '—', style: _fieldValueStyle(context))
+        : TextFormField(
+            key: ValueKey('${widget.schema.fieldKey}_int'),
+            controller: _controller,
+            keyboardType: TextInputType.number,
+            style: _fieldValueStyle(context),
+            decoration: const InputDecoration(
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             ),
-    );
+            onChanged: (v) => widget.onChanged(int.tryParse(v) ?? 0),
+          );
+
+    final Widget child = showStepper
+        ? Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: valueChild),
+              const SizedBox(width: 6),
+              _QuickStepper(
+                hp: mode == _StepperMode.always,
+                onIncrement: () => _bump(1),
+                onDecrement: () => _bump(-1),
+              ),
+            ],
+          )
+        : valueChild;
+
+    return _LabeledFieldRow(label: widget.schema.label, child: child);
   }
 }
 
@@ -859,6 +976,17 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
     super.dispose();
   }
 
+  void _bumpStat(String key, int delta) {
+    final stats = _stats;
+    final cur = int.tryParse(stats[key]?.toString() ?? '') ?? 0;
+    final newVal = (cur + delta).toString();
+    final ctrl = _controllers[key];
+    if (ctrl != null) ctrl.text = newVal;
+    final updated = Map<String, dynamic>.from(stats);
+    updated[key] = newVal;
+    widget.onChanged(updated);
+  }
+
   @override
   Widget build(BuildContext context) {
     final stats = _stats;
@@ -886,25 +1014,45 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
                       padding: EdgeInsets.only(bottom: i + cols < gridFields.length ? 8 : 0),
                       child: Row(
                         children: rowFields.map((f) {
+                          final mode = f.$3 == 'integer'
+                              ? _stepperModeForKey(f.$1)
+                              : _StepperMode.none;
+                          final showStepper = mode == _StepperMode.always ||
+                              (mode == _StepperMode.editOnly && !widget.readOnly);
+                          final field = TextFormField(
+                            key: ValueKey('cs_${f.$1}'),
+                            controller: _controllers[f.$1],
+                            readOnly: widget.readOnly,
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                              labelText: f.$2,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            ),
+                            onChanged: (v) {
+                              final updated = Map<String, dynamic>.from(stats);
+                              updated[f.$1] = v;
+                              widget.onChanged(updated);
+                            },
+                          );
+                          final cell = showStepper
+                              ? Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Expanded(child: field),
+                                    const SizedBox(width: 4),
+                                    _QuickStepper(
+                                      hp: mode == _StepperMode.always,
+                                      onIncrement: () => _bumpStat(f.$1, 1),
+                                      onDecrement: () => _bumpStat(f.$1, -1),
+                                    ),
+                                  ],
+                                )
+                              : field;
                           return Expanded(
                             child: Padding(
                               padding: EdgeInsets.only(right: f != rowFields.last ? 8 : 0),
-                              child: TextFormField(
-                                key: ValueKey('cs_${f.$1}'),
-                                controller: _controllers[f.$1],
-                                readOnly: widget.readOnly,
-                                textAlign: TextAlign.center,
-                                decoration: InputDecoration(
-                                  labelText: f.$2,
-                                  isDense: true,
-                                  contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                                ),
-                                onChanged: (v) {
-                                  final updated = Map<String, dynamic>.from(stats);
-                                  updated[f.$1] = v;
-                                  widget.onChanged(updated);
-                                },
-                              ),
+                              child: cell,
                             ),
                           );
                         }).toList(),

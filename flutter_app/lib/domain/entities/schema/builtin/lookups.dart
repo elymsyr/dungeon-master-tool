@@ -47,6 +47,8 @@ const tier0Slugs = <String>[
   'speed-type',
   'cover',
   'tier-of-play',
+  'character-state',
+  'resource-pool',
 ];
 
 /// One row of the Tier-0 category output: the category schema plus its
@@ -101,6 +103,8 @@ List<Tier0CategoryBuild> buildTier0Lookups({
     _speedTypeCategory(schemaId, now),
     _coverCategory(schemaId, now),
     _tierOfPlayCategory(schemaId, now),
+    _characterStateCategory(schemaId, now),
+    _resourcePoolCategory(schemaId, now),
   ];
 }
 
@@ -1490,7 +1494,12 @@ Tier0CategoryBuild _featCategoryCategory(String schemaId, String now) =>
       schemaId: schemaId, now: now,
       name: 'Feat Category', slug: 'feat-category',
       color: '#558b2f', icon: 'military_tech', orderIndex: 25,
-      rows: const ['Origin', 'General', 'Fighting Style', 'Epic Boon'],
+      // Player-pickable: Origin / General / Fighting Style / Epic Boon.
+      // Auto-granted (chooseable=false): Class Feature / Subclass Feature / Species Feature.
+      rows: const [
+        'Origin', 'General', 'Fighting Style', 'Epic Boon',
+        'Class Feature', 'Subclass Feature', 'Species Feature',
+      ],
     );
 
 Tier0CategoryBuild _actionCategory(String schemaId, String now) =>
@@ -1595,6 +1604,102 @@ Tier0CategoryBuild _tierOfPlayCategory(String schemaId, String now) =>
         'Heroes of the Realm',
         'Masters of the Realm',
         'Masters of the World',
+      ],
+    );
+
+// Mechanical toggles tracked at runtime on the character (raging, action_surge_used,
+// concentrating, sneak_attack_used_this_turn, etc.). Distinct from `condition` —
+// conditions are SRD rules text (Prone, Frightened); states are mechanical flags
+// authored by feat/class-feature effects via `state_grant` and gated by the
+// `has_state` predicate. Walked at resolve time but only as no-ops; runtime
+// tracks current state in `character.active_states[]`.
+Tier0CategoryBuild _characterStateCategory(String schemaId, String now) =>
+    _identifierLookup(
+      schemaId: schemaId, now: now,
+      name: 'Character State', slug: 'character-state',
+      color: '#6a1b9a', icon: 'flash_on', orderIndex: 37,
+      rows: const [
+        // Barbarian
+        'state:raging',
+        'state:reckless_attacking',
+        'state:relentless_rage_dc_current',
+        'state:rage_time_remaining',
+        // Bard
+        'state:bardic_inspiration_target',
+        // Cleric / Paladin
+        'state:channel_divinity_used',
+        // Druid
+        'state:wild_shape_active',
+        // Fighter
+        'state:action_surge_used',
+        'state:second_wind_recovery_used',
+        // Monk
+        'state:stunning_strike_eligible_this_hit',
+        'state:deflecting',
+        'state:flurry_of_blows_armed',
+        'state:patient_defense_armed',
+        'state:step_of_the_wind_armed',
+        // Ranger
+        'state:hunters_mark_target',
+        'state:invisibility_from_natures_veil',
+        // Rogue
+        'state:sneak_attack_used_this_turn',
+        'state:cunning_strike_dice_committed',
+        'state:steady_aim_active',
+        // Sorcerer
+        'state:innate_sorcery_active',
+        'state:metamagic_applied_this_cast',
+        // Warlock
+        'state:eldritch_invocation_active',
+        // Wizard
+        'state:arcane_recovery_used',
+        // Universal
+        'state:concentrating',
+        'state:invisibility_from_item',
+        'state:item_charges_per_item',
+        // Feat-driven
+        'state:luck_points_remaining',
+        'state:superiority_dice_remaining',
+      ],
+    );
+
+// Numeric resource pools tracked at runtime on the character (Sorcery Points,
+// Focus Points, Lay-on-Hands HP pool, Bardic Inspiration uses, Channel Divinity
+// uses, etc.). Authored by feat/class-feature effects via `resource_pool_grant`;
+// recharge cadence carried per pool. Resolver computes the pool max; runtime
+// tracks current.
+Tier0CategoryBuild _resourcePoolCategory(String schemaId, String now) =>
+    _identifierLookup(
+      schemaId: schemaId, now: now,
+      name: 'Resource Pool', slug: 'resource-pool',
+      color: '#00897b', icon: 'battery_charging_full', orderIndex: 38,
+      rows: const [
+        // Class
+        'pool:rage_uses',
+        'pool:second_wind',
+        'pool:bardic_inspiration',
+        'pool:channel_divinity',
+        'pool:wild_shape',
+        'pool:focus_points',
+        'pool:action_surge',
+        'pool:lay_on_hands_hp',
+        'pool:hunters_mark_no_slot_uses',
+        'pool:tireless_temp_hp_uses',
+        'pool:sorcery_points',
+        'pool:pact_slots',
+        'pool:mystic_arcanum_6',
+        'pool:mystic_arcanum_7',
+        'pool:mystic_arcanum_8',
+        'pool:mystic_arcanum_9',
+        'pool:arcane_recovery_per_day',
+        'pool:divine_intervention',
+        'pool:eldritch_master',
+        'pool:lay_on_hands_uses_per_long_rest',
+        // Feat
+        'pool:luck_points',
+        'pool:superiority_dice',
+        // Item
+        'pool:item_charges',
       ],
     );
 
