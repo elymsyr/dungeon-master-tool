@@ -21,6 +21,7 @@ import 'package:go_router/go_router.dart';
 import '../l10n/app_localizations.dart';
 import '../screens/database/entity_card.dart';
 import '../theme/dm_tool_colors.dart';
+import 'character_stat_chips.dart';
 import 'field_widgets/field_widget_factory.dart';
 import 'marketplace_panel.dart';
 import 'markdown_text_area.dart';
@@ -91,22 +92,14 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (_selectedId != null) ...[
-                IconButton(
-                  icon: const Icon(Icons.folder_open, size: 16),
-                  tooltip: 'Open character',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () =>
-                      setState(() => _openedId = _selectedId),
-                ),
+              if (_selectedId != null)
                 IconButton(
                   icon: Icon(Icons.delete_outline,
                       size: 16, color: palette.dangerBtnBg),
-                  tooltip: 'Remove from world',
+                  tooltip: 'Remove from world (long-press a row to select)',
                   visualDensity: VisualDensity.compact,
                   onPressed: _deleteSelected,
                 ),
-              ],
             ],
           ),
         ),
@@ -159,6 +152,9 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
                   return InkWell(
                     borderRadius: palette.br,
                     onTap: () => setState(() {
+                      _openedId = c.id;
+                    }),
+                    onLongPress: () => setState(() {
                       _selectedId = isSelected ? null : c.id;
                     }),
                     child: Container(
@@ -186,6 +182,12 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
                         palette: palette,
                         layout: MetadataTileLayout.leftAvatar,
                         onSettings: () => _showCharacterSettings(c.id, palette),
+                        infoChips: CharacterStatChips(
+                          lines: characterStatLines(
+                              c, readCharacterEntities(ref, c)),
+                          palette: palette,
+                          compact: true,
+                        ),
                       ),
                     ),
                   );

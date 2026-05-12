@@ -68,6 +68,32 @@ class AbilityScoreValidator {
     }
     return null;
   }
+
+  /// Validates the 2024 SRD Background ASI distribution. Returns null when
+  /// `bonuses` is fully unset (sum 0) — wizard treats that as "not yet
+  /// assigned" rather than an error to surface on intermediate steps.
+  /// Otherwise the sorted-descending non-zero pattern must be `[2, 1]` or
+  /// `[1, 1, 1]`.
+  static String? validateBackgroundAsi(Map<String, int> bonuses) {
+    var total = 0;
+    final nonZero = <int>[];
+    for (final k in kAbilityKeys) {
+      final v = bonuses[k] ?? 0;
+      if (v < 0) return 'ASI bonuses cannot be negative.';
+      total += v;
+      if (v > 0) nonZero.add(v);
+    }
+    if (total == 0) return null;
+    if (total > 3) return 'Background ASI total $total exceeds 3.';
+    nonZero.sort((a, b) => b.compareTo(a));
+    final isTwoOne = nonZero.length == 2 && nonZero[0] == 2 && nonZero[1] == 1;
+    final isOneOneOne =
+        nonZero.length == 3 && nonZero.every((v) => v == 1);
+    if (!(isTwoOne || isOneOneOne)) {
+      return 'Background ASI must follow +2/+1 across two abilities or +1/+1/+1 across three.';
+    }
+    return null;
+  }
 }
 
 /// Pure SRD ability modifier: floor((score - 10) / 2). Negative scores allowed.

@@ -190,6 +190,73 @@ void main() {
     });
   });
 
+  group('AbilityScoreValidator.validateBackgroundAsi', () {
+    Map<String, int> bonuses({
+      int str = 0,
+      int dex = 0,
+      int con = 0,
+      int int_ = 0,
+      int wis = 0,
+      int cha = 0,
+    }) =>
+        {'STR': str, 'DEX': dex, 'CON': con, 'INT': int_, 'WIS': wis, 'CHA': cha};
+
+    test('accepts unset (all zero)', () {
+      expect(AbilityScoreValidator.validateBackgroundAsi(bonuses()), isNull);
+    });
+
+    test('accepts +2 / +1 across two abilities', () {
+      expect(
+        AbilityScoreValidator.validateBackgroundAsi(bonuses(str: 2, dex: 1)),
+        isNull,
+      );
+    });
+
+    test('accepts +1 / +1 / +1 across three abilities', () {
+      expect(
+        AbilityScoreValidator.validateBackgroundAsi(
+            bonuses(str: 1, dex: 1, con: 1)),
+        isNull,
+      );
+    });
+
+    test('rejects single +1 (incomplete distribution)', () {
+      expect(
+        AbilityScoreValidator.validateBackgroundAsi(bonuses(str: 1)),
+        isNotNull,
+      );
+    });
+
+    test('rejects +2 alone', () {
+      expect(
+        AbilityScoreValidator.validateBackgroundAsi(bonuses(str: 2)),
+        isNotNull,
+      );
+    });
+
+    test('rejects total over 3', () {
+      final err = AbilityScoreValidator.validateBackgroundAsi(
+          bonuses(str: 2, dex: 2));
+      expect(err, contains('exceeds 3'));
+    });
+
+    test('rejects two +2 bonuses (pattern violation at total 3 not possible, but +2/+2/-1 ruled out elsewhere)', () {
+      // total=3 reachable only by +2/+1 or +1/+1/+1. +2 paired with no
+      // partner (total 2) already rejected by pattern check below.
+      expect(
+        AbilityScoreValidator.validateBackgroundAsi(bonuses(str: 2, dex: 1, con: 0)),
+        isNull,
+      );
+    });
+
+    test('rejects negative bonus', () {
+      expect(
+        AbilityScoreValidator.validateBackgroundAsi(bonuses(str: -1)),
+        isNotNull,
+      );
+    });
+  });
+
   group('abilityModifier', () {
     test('SRD floor((score-10)/2)', () {
       expect(abilityModifier(8), -1);

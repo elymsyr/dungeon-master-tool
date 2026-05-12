@@ -29,6 +29,7 @@ void _showConversationContextMenu({
   required Conversation conversation,
   required String? myUserId,
   required Offset globalPosition,
+
   /// Called after a destructive action (leave/delete) so the caller can pop.
   VoidCallback? onLeft,
 }) {
@@ -51,18 +52,20 @@ void _showConversationContextMenu({
   final items = <PopupMenuEntry<String>>[];
 
   // Members header
-  items.add(PopupMenuItem(
-    enabled: false,
-    height: 32,
-    child: Text(
-      l10n.chatMenuMembers,
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        color: palette.sidebarLabelSecondary,
+  items.add(
+    PopupMenuItem(
+      enabled: false,
+      height: 32,
+      child: Text(
+        l10n.chatMenuMembers,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: palette.sidebarLabelSecondary,
+        ),
       ),
     ),
-  ));
+  );
 
   for (var i = 0; i < conversation.memberIds.length; i++) {
     final memberId = conversation.memberIds[i];
@@ -72,101 +75,118 @@ void _showConversationContextMenu({
     final isMemberAdmin = memberId == conversation.createdBy;
     final canKick = isAdmin && !isMemberAdmin && memberId != myUserId;
 
-    items.add(PopupMenuItem(
-      enabled: canKick,
-      value: 'kick:$memberId',
-      child: Row(
-        children: [
-          ProfileAvatar(fallbackText: username, size: 22),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '@$username',
-              style: const TextStyle(fontSize: 12),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (isMemberAdmin)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              decoration: BoxDecoration(
-                color: palette.featureCardAccent.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(3),
-              ),
+    items.add(
+      PopupMenuItem(
+        enabled: canKick,
+        value: 'kick:$memberId',
+        child: Row(
+          children: [
+            ProfileAvatar(fallbackText: username, size: 22),
+            const SizedBox(width: 8),
+            Expanded(
               child: Text(
-                'ADMIN',
-                style: TextStyle(
-                  fontSize: 8,
-                  fontWeight: FontWeight.w700,
-                  color: palette.featureCardAccent,
+                '@$username',
+                style: const TextStyle(fontSize: 12),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (isMemberAdmin)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: palette.featureCardAccent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Text(
+                  'ADMIN',
+                  style: TextStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w700,
+                    color: palette.featureCardAccent,
+                  ),
                 ),
               ),
-            ),
-          if (canKick)
-            Icon(Icons.person_remove_outlined, size: 16, color: errorColor),
-        ],
+            if (canKick)
+              Icon(Icons.person_remove_outlined, size: 16, color: errorColor),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   items.add(const PopupMenuDivider());
 
   // Add member (admin only)
   if (isAdmin) {
-    items.add(PopupMenuItem(
-      value: 'add_member',
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.person_add_outlined, size: 18, color: palette.featureCardAccent),
-          const SizedBox(width: 8),
-          Text(l10n.chatMenuAddMember, style: TextStyle(color: palette.featureCardAccent)),
-        ],
+    items.add(
+      PopupMenuItem(
+        value: 'add_member',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.person_add_outlined,
+              size: 18,
+              color: palette.featureCardAccent,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              l10n.chatMenuAddMember,
+              style: TextStyle(color: palette.featureCardAccent),
+            ),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   // Rename (admin only)
   if (isAdmin) {
-    items.add(PopupMenuItem(
-      value: 'rename',
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.edit_outlined, size: 18, color: palette.tabText),
-          const SizedBox(width: 8),
-          Text(l10n.chatMenuRenameGroup),
-        ],
+    items.add(
+      PopupMenuItem(
+        value: 'rename',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.edit_outlined, size: 18, color: palette.tabText),
+            const SizedBox(width: 8),
+            Text(l10n.chatMenuRenameGroup),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   // Leave
-  items.add(PopupMenuItem(
-    value: 'leave',
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.exit_to_app, size: 18, color: errorColor),
-        const SizedBox(width: 8),
-        Text(l10n.chatMenuLeaveGroup, style: TextStyle(color: errorColor)),
-      ],
-    ),
-  ));
-
-  // Delete group (admin only)
-  if (isAdmin) {
-    items.add(PopupMenuItem(
-      value: 'delete_group',
+  items.add(
+    PopupMenuItem(
+      value: 'leave',
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.delete_forever, size: 18, color: errorColor),
+          Icon(Icons.exit_to_app, size: 18, color: errorColor),
           const SizedBox(width: 8),
-          Text(l10n.chatMenuDeleteGroup, style: TextStyle(color: errorColor)),
+          Text(l10n.chatMenuLeaveGroup, style: TextStyle(color: errorColor)),
         ],
       ),
-    ));
+    ),
+  );
+
+  // Delete group (admin only)
+  if (isAdmin) {
+    items.add(
+      PopupMenuItem(
+        value: 'delete_group',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.delete_forever, size: 18, color: errorColor),
+            const SizedBox(width: 8),
+            Text(l10n.chatMenuDeleteGroup, style: TextStyle(color: errorColor)),
+          ],
+        ),
+      ),
+    );
   }
 
   showMenu<String>(
@@ -181,11 +201,32 @@ void _showConversationContextMenu({
   ).then((value) {
     if (value == null) return;
     if (!context.mounted) return;
-    if (value == 'add_member') _addMemberFlow(context: context, ref: ref, conversation: conversation);
-    if (value == 'rename') _renameGroupFlow(context: context, ref: ref, conversation: conversation);
-    if (value == 'leave') _leaveGroupFlow(context: context, ref: ref, conversation: conversation, myUserId: myUserId, onLeft: onLeft);
-    if (value == 'delete_group') _deleteGroupFlow(context: context, ref: ref, conversation: conversation, onLeft: onLeft);
-    if (value.startsWith('kick:')) _kickMemberFlow(context: context, ref: ref, conversation: conversation, targetUserId: value.substring(5));
+    if (value == 'add_member')
+      _addMemberFlow(context: context, ref: ref, conversation: conversation);
+    if (value == 'rename')
+      _renameGroupFlow(context: context, ref: ref, conversation: conversation);
+    if (value == 'leave')
+      _leaveGroupFlow(
+        context: context,
+        ref: ref,
+        conversation: conversation,
+        myUserId: myUserId,
+        onLeft: onLeft,
+      );
+    if (value == 'delete_group')
+      _deleteGroupFlow(
+        context: context,
+        ref: ref,
+        conversation: conversation,
+        onLeft: onLeft,
+      );
+    if (value.startsWith('kick:'))
+      _kickMemberFlow(
+        context: context,
+        ref: ref,
+        conversation: conversation,
+        targetUserId: value.substring(5),
+      );
   });
 }
 
@@ -246,23 +287,33 @@ Future<void> _deleteDmFlow({
       title: Text(l10n.dmDeleteTitle),
       content: Text(l10n.dmDeleteBody),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancel'),
+        ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: Text(l10n.dmDeleteConfirm, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          child: Text(
+            l10n.dmDeleteConfirm,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         ),
       ],
     ),
   );
   if (confirmed != true) return;
   try {
-    await ref.read(messagesRemoteDsProvider).deleteConversation(conversation.id);
+    await ref
+        .read(messagesRemoteDsProvider)
+        .deleteConversation(conversation.id);
     invalidateCache('conversations');
     ref.invalidate(myConversationsProvider);
     onLeft?.call();
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(formatError(e))));
     }
   }
 }
@@ -290,9 +341,9 @@ Future<void> _addMemberFlow({
   if (!context.mounted) return;
 
   if (candidates.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.discoverEmptyState)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.discoverEmptyState)));
     return;
   }
 
@@ -307,15 +358,21 @@ Future<void> _addMemberFlow({
   if (picked == null || !context.mounted) return;
 
   try {
-    await ref.read(messagesRemoteDsProvider).addMember(conversation.id, picked.userId);
+    await ref
+        .read(messagesRemoteDsProvider)
+        .addMember(conversation.id, picked.userId);
     invalidateCache('conversations');
     ref.invalidate(myConversationsProvider);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.chatMemberAdded)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.chatMemberAdded)));
     }
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(formatError(e))));
     }
   }
 }
@@ -345,22 +402,33 @@ Future<void> _renameGroupFlow({
           onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: const Text('Save')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Save'),
+          ),
         ],
       ),
     );
   } finally {
     ctrl.dispose();
   }
-  if (newTitle == null || newTitle.isEmpty || newTitle == conversation.title) return;
+  if (newTitle == null || newTitle.isEmpty || newTitle == conversation.title)
+    return;
   try {
-    await ref.read(messagesRemoteDsProvider).renameConversation(conversation.id, newTitle);
+    await ref
+        .read(messagesRemoteDsProvider)
+        .renameConversation(conversation.id, newTitle);
     invalidateCache('conversations');
     ref.invalidate(myConversationsProvider);
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(formatError(e))));
     }
   }
 }
@@ -378,12 +446,22 @@ Future<void> _leaveGroupFlow({
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(l10n.groupSettingsLeaveTitle),
-      content: Text(isAdmin ? l10n.groupSettingsLeaveBodyAdmin : l10n.groupSettingsLeaveBody),
+      content: Text(
+        isAdmin
+            ? l10n.groupSettingsLeaveBodyAdmin
+            : l10n.groupSettingsLeaveBody,
+      ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancel'),
+        ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: Text(l10n.groupSettingsLeave, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          child: Text(
+            l10n.groupSettingsLeave,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         ),
       ],
     ),
@@ -396,7 +474,9 @@ Future<void> _leaveGroupFlow({
     onLeft?.call();
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(formatError(e))));
     }
   }
 }
@@ -414,23 +494,33 @@ Future<void> _deleteGroupFlow({
       title: Text(l10n.groupSettingsDeleteTitle),
       content: Text(l10n.groupSettingsDeleteBody),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancel'),
+        ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: Text(l10n.groupSettingsDelete, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          child: Text(
+            l10n.groupSettingsDelete,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         ),
       ],
     ),
   );
   if (confirmed != true) return;
   try {
-    await ref.read(messagesRemoteDsProvider).deleteConversation(conversation.id);
+    await ref
+        .read(messagesRemoteDsProvider)
+        .deleteConversation(conversation.id);
     invalidateCache('conversations');
     ref.invalidate(myConversationsProvider);
     onLeft?.call();
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(formatError(e))));
     }
   }
 }
@@ -443,18 +533,25 @@ Future<void> _kickMemberFlow({
 }) async {
   final l10n = L10n.of(context)!;
   try {
-    await ref.read(messagesRemoteDsProvider).kickMember(conversation.id, targetUserId);
+    await ref
+        .read(messagesRemoteDsProvider)
+        .kickMember(conversation.id, targetUserId);
     invalidateCache('conversations');
     ref.invalidate(myConversationsProvider);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.chatMemberKicked)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.chatMemberKicked)));
     }
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(formatError(e))));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(formatError(e))));
     }
   }
 }
+
 const double _kChatMaxWidth = 760;
 
 String _relativeTime(DateTime dt) {
@@ -583,7 +680,8 @@ class MessagesTab extends ConsumerWidget {
                     : ListView.builder(
                         padding: const EdgeInsets.fromLTRB(8, 8, 8, 96),
                         itemCount: convs.length,
-                        itemBuilder: (_, i) => _ConvTile(conversation: convs[i]),
+                        itemBuilder: (_, i) =>
+                            _ConvTile(conversation: convs[i]),
                       ),
               ),
             ),
@@ -616,13 +714,18 @@ class MessagesTab extends ConsumerWidget {
 class _SearchableUserPickerDialog extends StatefulWidget {
   final String title;
   final List<UserProfile> candidates;
-  const _SearchableUserPickerDialog({required this.title, required this.candidates});
+  const _SearchableUserPickerDialog({
+    required this.title,
+    required this.candidates,
+  });
 
   @override
-  State<_SearchableUserPickerDialog> createState() => _SearchableUserPickerDialogState();
+  State<_SearchableUserPickerDialog> createState() =>
+      _SearchableUserPickerDialogState();
 }
 
-class _SearchableUserPickerDialogState extends State<_SearchableUserPickerDialog> {
+class _SearchableUserPickerDialogState
+    extends State<_SearchableUserPickerDialog> {
   final _searchCtrl = TextEditingController();
   List<UserProfile> _filtered = const [];
 
@@ -640,9 +743,11 @@ class _SearchableUserPickerDialogState extends State<_SearchableUserPickerDialog
         _filtered = widget.candidates;
       } else {
         _filtered = widget.candidates
-            .where((p) =>
-                p.username.toLowerCase().contains(q) ||
-                (p.displayName?.toLowerCase().contains(q) ?? false))
+            .where(
+              (p) =>
+                  p.username.toLowerCase().contains(q) ||
+                  (p.displayName?.toLowerCase().contains(q) ?? false),
+            )
             .toList();
       }
     });
@@ -772,102 +877,115 @@ class _ConvTile extends ConsumerWidget {
 
     return GestureDetector(
       onLongPressStart: (details) => _showConversationContextMenu(
-            context: context, ref: ref,
-            conversation: conversation,
-            myUserId: myId,
-            globalPosition: details.globalPosition,
-          ),
+        context: context,
+        ref: ref,
+        conversation: conversation,
+        myUserId: myId,
+        globalPosition: details.globalPosition,
+      ),
       onSecondaryTapDown: (details) => _showConversationContextMenu(
-            context: context, ref: ref,
-            conversation: conversation,
-            myUserId: myId,
-            globalPosition: details.globalPosition,
-          ),
+        context: context,
+        ref: ref,
+        conversation: conversation,
+        myUserId: myId,
+        globalPosition: details.globalPosition,
+      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: palette.cbr,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => ChatScreen(conversation: conversation, myUserId: myId),
+              builder: (_) =>
+                  ChatScreen(conversation: conversation, myUserId: myId),
             ),
           ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              ProfileAvatar(fallbackText: fallback, size: 44),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            displayTitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 14.5,
-                              fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w600,
-                              color: palette.tabActiveText,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ProfileAvatar(fallbackText: fallback, size: 44),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              displayTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14.5,
+                                fontWeight: hasUnread
+                                    ? FontWeight.w700
+                                    : FontWeight.w600,
+                                color: palette.tabActiveText,
+                              ),
                             ),
                           ),
-                        ),
-                        if (conversation.lastMessageAt != null) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            _relativeTime(conversation.lastMessageAt!),
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: hasUnread ? palette.featureCardAccent : palette.sidebarLabelSecondary,
-                              fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
+                          if (conversation.lastMessageAt != null) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              _relativeTime(conversation.lastMessageAt!),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: hasUnread
+                                    ? palette.featureCardAccent
+                                    : palette.sidebarLabelSecondary,
+                                fontWeight: hasUnread
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            preview,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: hasUnread ? palette.tabActiveText : palette.sidebarLabelSecondary,
-                              fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
-                              fontStyle: previewIsPlaceholder
-                                  ? FontStyle.italic
-                                  : FontStyle.normal,
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              preview,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: hasUnread
+                                    ? palette.tabActiveText
+                                    : palette.sidebarLabelSecondary,
+                                fontWeight: hasUnread
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                                fontStyle: previewIsPlaceholder
+                                    ? FontStyle.italic
+                                    : FontStyle.normal,
+                              ),
                             ),
                           ),
-                        ),
-                        if (hasUnread) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: palette.featureCardAccent,
-                              shape: BoxShape.circle,
+                          if (hasUnread) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: palette.featureCardAccent,
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -876,7 +994,11 @@ class _ConvTile extends ConsumerWidget {
 class ChatScreen extends ConsumerStatefulWidget {
   final Conversation conversation;
   final String? myUserId;
-  const ChatScreen({super.key, required this.conversation, required this.myUserId});
+  const ChatScreen({
+    super.key,
+    required this.conversation,
+    required this.myUserId,
+  });
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -923,7 +1045,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (text.isEmpty) return;
     setState(() => _sending = true);
     try {
-      await ref.read(messagesRemoteDsProvider).send(widget.conversation.id, text);
+      await ref
+          .read(messagesRemoteDsProvider)
+          .send(widget.conversation.id, text);
       _ctrl.clear();
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -934,8 +1058,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
-    final messagesAsync =
-        ref.watch(messagesStreamProvider(widget.conversation.id));
+    final messagesAsync = ref.watch(
+      messagesStreamProvider(widget.conversation.id),
+    );
     final title = widget.conversation.isGroup
         ? (widget.conversation.title ?? 'Group')
         : _dmOtherName(widget.conversation, widget.myUserId);
@@ -949,24 +1074,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           onTap: (widget.conversation.isGroup)
               ? () {
                   final box = context.findRenderObject() as RenderBox?;
-                  final pos = box?.localToGlobal(Offset(box.size.width / 2, box.size.height)) ?? Offset.zero;
+                  final pos =
+                      box?.localToGlobal(
+                        Offset(box.size.width / 2, box.size.height),
+                      ) ??
+                      Offset.zero;
                   _showConversationContextMenu(
-                    context: context, ref: ref,
+                    context: context,
+                    ref: ref,
                     conversation: widget.conversation,
                     myUserId: widget.myUserId,
                     globalPosition: pos,
-                    onLeft: () { if (mounted) Navigator.of(context).pop(); },
+                    onLeft: () {
+                      if (mounted) Navigator.of(context).pop();
+                    },
                   );
                 }
               : null,
           onSecondaryTapDown: (widget.conversation.isGroup)
               ? (details) => _showConversationContextMenu(
-                    context: context, ref: ref,
-                    conversation: widget.conversation,
-                    myUserId: widget.myUserId,
-                    globalPosition: details.globalPosition,
-                    onLeft: () { if (mounted) Navigator.of(context).pop(); },
-                  )
+                  context: context,
+                  ref: ref,
+                  conversation: widget.conversation,
+                  myUserId: widget.myUserId,
+                  globalPosition: details.globalPosition,
+                  onLeft: () {
+                    if (mounted) Navigator.of(context).pop();
+                  },
+                )
               : null,
           child: Row(
             children: [
@@ -982,7 +1117,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w600),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     if (widget.conversation.isGroup &&
                         widget.conversation.memberUsernames.isNotEmpty)
@@ -1037,25 +1174,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         final m = reversed[i];
                         final mine = m.authorId == widget.myUserId;
                         // In reversed list: visually above = i+1, below = i-1
-                        final above =
-                            i < reversed.length - 1 ? reversed[i + 1] : null;
+                        final above = i < reversed.length - 1
+                            ? reversed[i + 1]
+                            : null;
                         final below = i > 0 ? reversed[i - 1] : null;
-                        final sameAbove = above != null &&
+                        final sameAbove =
+                            above != null &&
                             above.authorId == m.authorId &&
-                            m.createdAt
-                                    .difference(above.createdAt)
-                                    .inMinutes <
+                            m.createdAt.difference(above.createdAt).inMinutes <
                                 3;
-                        final sameBelow = below != null &&
+                        final sameBelow =
+                            below != null &&
                             below.authorId == m.authorId &&
-                            below.createdAt
-                                    .difference(m.createdAt)
-                                    .inMinutes <
+                            below.createdAt.difference(m.createdAt).inMinutes <
                                 3;
 
                         // Date separator: show below this message if it's a
                         // different day than the message visually above it
-                        final showDateSeparator = above == null ||
+                        final showDateSeparator =
+                            above == null ||
                             _isDifferentDay(m.createdAt, above.createdAt);
 
                         return Column(
@@ -1063,13 +1200,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             if (showDateSeparator)
                               _DateSeparator(
                                 label: _dateSeparatorLabel(
-                                    m.createdAt.toLocal()),
+                                  m.createdAt.toLocal(),
+                                ),
                                 palette: palette,
                               ),
                             _MessageBubble(
                               message: m,
                               mine: mine,
-                              showAuthor: !mine &&
+                              showAuthor:
+                                  !mine &&
                                   widget.conversation.isGroup &&
                                   !sameAbove,
                               topTight: sameAbove,
@@ -1144,8 +1283,9 @@ class _MessageBubble extends StatelessWidget {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final bubbleRadius = palette.cbr;
 
-    final bubbleColor =
-        mine ? palette.featureCardAccent : palette.featureCardBg;
+    final bubbleColor = mine
+        ? palette.featureCardAccent
+        : palette.featureCardBg;
     final timeStr = DateFormat.Hm().format(message.createdAt.toLocal());
 
     final bubble = ConstrainedBox(
@@ -1196,8 +1336,9 @@ class _MessageBubble extends StatelessWidget {
       child: Align(
         alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
         child: Column(
-          crossAxisAlignment:
-              mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: mine
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             if (showAuthor && message.authorUsername != null)
               Padding(
@@ -1247,7 +1388,10 @@ class _Composer extends StatelessWidget {
           children: [
             Expanded(
               child: Container(
-                constraints: const BoxConstraints(minHeight: 40, maxHeight: 140),
+                constraints: const BoxConstraints(
+                  minHeight: 40,
+                  maxHeight: 140,
+                ),
                 decoration: BoxDecoration(
                   color: palette.featureCardBg,
                   borderRadius: palette.cbr,
@@ -1261,15 +1405,17 @@ class _Composer extends StatelessWidget {
                     hintText: hint,
                     border: InputBorder.none,
                     isDense: true,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 11,
+                    ),
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 6),
             AnimatedScale(
-              scale: canSend ? 1.0 : 0.86,
+              scale: canSend ? 1.0 : 1.0,
               duration: const Duration(milliseconds: 140),
               curve: Curves.easeOut,
               child: AnimatedOpacity(
@@ -1292,8 +1438,11 @@ class _Composer extends StatelessWidget {
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.send_rounded,
-                              color: Colors.white, size: 18),
+                          : const Icon(
+                              Icons.send_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                     ),
                   ),
                 ),

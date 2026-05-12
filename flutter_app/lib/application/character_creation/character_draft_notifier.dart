@@ -21,15 +21,118 @@ class CharacterDraftNotifier extends StateNotifier<CharacterDraft> {
   void setLevel(int v) => state = state.copyWith(level: v.clamp(1, 20));
   void setAlignment(String v) => state = state.copyWith(alignment: v);
   void setRace(String? id) => state = state.copyWith(raceId: id);
-  void setClass(String? id) =>
-      state = state.copyWith(classId: id, subclassId: null);
-  void setBackground(String? id) => state = state.copyWith(backgroundId: id);
+  void setClass(String? id) => state = state.copyWith(
+        classId: id,
+        subclassId: null,
+        // Skill/tool/spell choices are class-scoped — switching class
+        // invalidates them.
+        skillChoiceIds: const [],
+        toolChoiceIds: const [],
+        cantripIds: const [],
+        preparedSpellIds: const [],
+      );
+  void setBackground(String? id) => state = state.copyWith(
+        backgroundId: id,
+        // Language picks are sized by background's
+        // `granted_language_count` — reset on background swap.
+        languageChoiceIds: const [],
+      );
   void setSubclass(String? id) => state = state.copyWith(subclassId: id);
 
   void setEquipmentChoice(String groupId, String optionId) {
     state = state.copyWith(
       equipmentChoices: {...state.equipmentChoices, groupId: optionId},
     );
+  }
+
+  /// Toggle a skill choice. Caller is responsible for capping the picked
+  /// list against the class's `skill_proficiency_choice_count` — when the
+  /// cap is exceeded we no-op so the UI's disabled state matches stored
+  /// state.
+  void toggleSkillChoice(String id, {required int cap}) {
+    final ids = [...state.skillChoiceIds];
+    if (ids.contains(id)) {
+      ids.remove(id);
+    } else {
+      if (ids.length >= cap) return;
+      ids.add(id);
+    }
+    state = state.copyWith(skillChoiceIds: ids);
+  }
+
+  void clearSkillChoices() =>
+      state = state.copyWith(skillChoiceIds: const []);
+
+  void toggleToolChoice(String id, {required int cap}) {
+    final ids = [...state.toolChoiceIds];
+    if (ids.contains(id)) {
+      ids.remove(id);
+    } else {
+      if (ids.length >= cap) return;
+      ids.add(id);
+    }
+    state = state.copyWith(toolChoiceIds: ids);
+  }
+
+  void clearToolChoices() =>
+      state = state.copyWith(toolChoiceIds: const []);
+
+  void toggleLanguageChoice(String id, {required int cap}) {
+    final ids = [...state.languageChoiceIds];
+    if (ids.contains(id)) {
+      ids.remove(id);
+    } else {
+      if (ids.length >= cap) return;
+      ids.add(id);
+    }
+    state = state.copyWith(languageChoiceIds: ids);
+  }
+
+  void clearLanguageChoices() =>
+      state = state.copyWith(languageChoiceIds: const []);
+
+  void toggleCantrip(String id, {required int cap}) {
+    final ids = [...state.cantripIds];
+    if (ids.contains(id)) {
+      ids.remove(id);
+    } else {
+      if (ids.length >= cap) return;
+      ids.add(id);
+    }
+    state = state.copyWith(cantripIds: ids);
+  }
+
+  void togglePreparedSpell(String id, {required int cap}) {
+    final ids = [...state.preparedSpellIds];
+    if (ids.contains(id)) {
+      ids.remove(id);
+    } else {
+      if (ids.length >= cap) return;
+      ids.add(id);
+    }
+    state = state.copyWith(preparedSpellIds: ids);
+  }
+
+  void clearSpellChoices() => state = state.copyWith(
+        cantripIds: const [],
+        preparedSpellIds: const [],
+      );
+
+  void setPersonalityTraits(String v) =>
+      state = state.copyWith(personalityTraits: v);
+  void setIdeals(String v) => state = state.copyWith(ideals: v);
+  void setBonds(String v) => state = state.copyWith(bonds: v);
+  void setFlaws(String v) => state = state.copyWith(flaws: v);
+  void setBackstory(String v) => state = state.copyWith(backstory: v);
+  void setTrinket(String v) => state = state.copyWith(trinket: v);
+
+  /// Roll a Tiny trinket from the SRD d100 table. Caller provides the
+  /// table so the notifier stays Flutter-free; the personality step
+  /// passes [kSrdTrinkets].
+  void rollTrinket(List<String> table) {
+    if (table.isEmpty) return;
+    final pick = table[_rng.nextInt(table.length)];
+    state = state.copyWith(trinket: pick);
   }
 
   void setFeatIds(List<String> ids) =>

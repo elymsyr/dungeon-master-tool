@@ -33,6 +33,11 @@ class MetadataListTile extends StatelessWidget {
   /// Ek header badge'leri — "Built-in" gibi metadata'ya bağlı olmayan flag'ler.
   final List<Widget> trailingBadges;
 
+  /// Optional chip strip rendered *in place of* the tag wrap. Character
+  /// tiles pass the HP/Species/Class/Level/AC/User stat chips here so the
+  /// row shows live combat info instead of authored tags.
+  final Widget? infoChips;
+
   const MetadataListTile({
     super.key,
     required this.icon,
@@ -46,6 +51,7 @@ class MetadataListTile extends StatelessWidget {
     required this.onSettings,
     this.layout = MetadataTileLayout.leftAvatar,
     this.trailingBadges = const [],
+    this.infoChips,
   });
 
   bool get _hasImage =>
@@ -203,7 +209,10 @@ class MetadataListTile extends StatelessWidget {
             style: TextStyle(fontSize: 11, color: palette.tabText),
           ),
         ],
-        if (tags.isNotEmpty) ...[
+        if (infoChips != null) ...[
+          const SizedBox(height: 4),
+          infoChips!,
+        ] else if (tags.isNotEmpty) ...[
           const SizedBox(height: 4),
           Wrap(
             spacing: 4,

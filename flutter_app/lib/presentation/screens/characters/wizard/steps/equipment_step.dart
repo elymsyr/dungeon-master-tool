@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../application/character_creation/character_draft.dart';
 import '../../../../../application/character_creation/character_draft_notifier.dart';
-import '../../../../../application/providers/entity_provider.dart';
+import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
 
 /// Aggregates `equipment_choice_groups` from the chosen class, subclass and
@@ -23,7 +23,7 @@ class EquipmentStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entities = ref.watch(entityProvider);
+    final entities = ref.watch(wizardEntitiesProvider);
     final groups = <_GroupRow>[];
     void collect(String? id, String sourceLabel) {
       if (id == null) return;
@@ -35,11 +35,16 @@ class EquipmentStep extends ConsumerWidget {
         if (g is! Map) continue;
         groups.add(_GroupRow(
           source: sourceLabel,
+          sourceId: id,
           map: Map<String, dynamic>.from(g),
         ));
       }
     }
 
+    // SRD 5.2.1: class and background each grant an *independent* starting
+    // equipment pick — both apply. Group keys are scoped by source entity
+    // id so identical group_ids (e.g. two 'A's) don't collide and
+    // cross-select.
     collect(draft.classId, 'Class');
     collect(draft.subclassId, 'Subclass');
     collect(draft.backgroundId, 'Background');
@@ -57,9 +62,9 @@ class EquipmentStep extends ConsumerWidget {
           _GroupCard(
             group: g,
             entities: entities,
-            selectedOptionId: draft.equipmentChoices[g.groupId],
+            selectedOptionId: draft.equipmentChoices[g.storageKey],
             onPicked: (optionId) =>
-                notifier.setEquipmentChoice(g.groupId, optionId),
+                notifier.setEquipmentChoice(g.storageKey, optionId),
           ),
       ],
     );
@@ -68,10 +73,16 @@ class EquipmentStep extends ConsumerWidget {
 
 class _GroupRow {
   final String source;
+  final String sourceId;
   final Map<String, dynamic> map;
-  _GroupRow({required this.source, required this.map});
+  _GroupRow({
+    required this.source,
+    required this.sourceId,
+    required this.map,
+  });
 
   String get groupId => map['group_id']?.toString() ?? '';
+  String get storageKey => '$sourceId:$groupId';
   String get label => map['label']?.toString() ?? 'Choice';
   String get prompt => map['prompt']?.toString() ?? 'Choose one';
   List<Map<String, dynamic>> get options {

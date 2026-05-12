@@ -1,27 +1,31 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../application/character_creation/level_up_planner.dart';
 import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
-import '../../../application/providers/global_tags_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
-import '../../../application/services/tag_moderation.dart';
+import '../../../application/services/builtin_srd_entities.dart';
+import '../../widgets/character_stat_chips.dart';
+import 'level_up_dialog.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../data/datasources/remote/cloud_backup_remote_ds.dart';
 import '../../../data/repositories/cloud_backup_repository_impl.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/cloud_backup_meta.dart';
+import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
@@ -389,6 +393,8 @@ class _CharacterEditorScreenState
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _entityHeader(palette, character, template),
+                  const SizedBox(height: 12),
+                  _renderRestActions(palette, character),
                   const SizedBox(height: 16),
                   ..._renderSchemaFields(palette, playerCat, character),
                   ..._renderLevelUpTable(palette, character),
@@ -441,7 +447,6 @@ class _CharacterEditorScreenState
     final entity = c.entity;
     final hasImage =
         entity.imagePath.isNotEmpty && File(entity.imagePath).existsSync();
-    final globalTags = ref.watch(globalTagsProvider);
     final l10n = L10n.of(context)!;
     final subtitle = c.worldName.isEmpty
         ? '${template.name} · ${l10n.charWorldOrphan}'
@@ -563,26 +568,10 @@ class _CharacterEditorScreenState
                 },
               ),
               const SizedBox(height: 10),
-              if (_readOnly)
-                entity.tags.isEmpty
-                    ? const SizedBox.shrink()
-                    : Text(
-                        'Tags: ${entity.tags.join(', ')}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontStyle: FontStyle.italic,
-                          color: palette.srdSubtitle,
-                        ),
-                      )
-              else
-                _HeaderTagsField(
-                  initial: entity.tags.join(', '),
-                  globalTags: globalTags,
-                  onCommit: (tags) {
-                    _mutate(
-                        c.copyWith(entity: c.entity.copyWith(tags: tags)));
-                  },
-                ),
+              CharacterStatChips(
+                lines: characterStatLines(c, _readEntitiesFor(c)),
+                palette: palette,
+              ),
             ],
           ),
         ),
@@ -668,9 +657,8 @@ class _CharacterEditorScreenState
   /// class and a subclass resolved in the active campaign. Returns empty
   /// list otherwise (no header so the rest of the layout is unaffected).
   List<Widget> _renderLevelUpTable(DmToolColors palette, Character character) {
-    final activeCampaign = ref.watch(activeCampaignProvider);
-    if (activeCampaign != character.worldName) return const [];
-    final entities = ref.watch(entityProvider);
+    final entities = _readEntitiesFor(character);
+    if (entities.isEmpty) return const [];
     final fields = character.entity.fields;
 
     String? firstId(Iterable<String> keys) {
@@ -709,13 +697,10 @@ class _CharacterEditorScreenState
 
   Widget _fieldTile(FieldSchema f, Character character) {
     final value = character.entity.fields[f.fieldKey];
-    // Resolve relation refs only when the active campaign matches this
-    // character's world — entityProvider is scoped per-campaign, so a
-    // mismatched map would be wrong/empty.
-    final activeCampaign = ref.watch(activeCampaignProvider);
-    final entities = activeCampaign == character.worldName
-        ? ref.watch(entityProvider)
-        : null;
+    // Resolve relation refs against the active campaign (world-bound
+    // character) or the bundled SRD map (worldless character). Either
+    // path returns a non-null map so feat / class / race chips render.
+    final entities = _readEntitiesFor(character);
     return FieldWidgetFactory.create(
       schema: f,
       value: value,
@@ -725,14 +710,379 @@ class _CharacterEditorScreenState
           ...character.entity.fields,
           f.fieldKey: v,
         };
-        _mutate(character.copyWith(
+        final nextCharacter = character.copyWith(
           entity: character.entity.copyWith(fields: updatedFields),
-        ));
+        );
+        _mutate(nextCharacter);
+        if (f.fieldKey == 'level') {
+          _maybeRunLevelUp(
+            from: value,
+            to: v,
+            base: nextCharacter,
+            entities: entities,
+          );
+        }
       },
       entities: entities,
       entityFields: character.entity.fields,
       ref: ref,
     );
+  }
+
+  /// Open the level-up dialog when the level field grew. Looks up class
+  /// + subclass via the active campaign so HP / PB / new-feature deltas
+  /// reflect the SRD entity tables. No-op if [from]/[to] aren't ints or
+  /// the new value is not strictly greater.
+  Future<void> _maybeRunLevelUp({
+    required Object? from,
+    required Object? to,
+    required Character base,
+    required Map<String, Entity> entities,
+  }) async {
+    final fromLvl = from is int
+        ? from
+        : (from is String ? int.tryParse(from) : null);
+    final toLvl = to is int
+        ? to
+        : (to is String ? int.tryParse(to) : null);
+    if (fromLvl == null || toLvl == null) return;
+    if (toLvl <= fromLvl) return;
+
+    String? firstId(Iterable<String> keys) {
+      for (final k in keys) {
+        final v = base.entity.fields[k];
+        if (v is String && v.isNotEmpty) return v;
+        if (v is List) {
+          final s = v.whereType<String>().firstWhere(
+                (e) => e.isNotEmpty,
+                orElse: () => '',
+              );
+          if (s.isNotEmpty) return s;
+        }
+      }
+      return null;
+    }
+
+    final classId = firstId(const ['class_refs', 'class_']);
+    final subclassId = firstId(const ['subclass_refs', 'subclass_id']);
+    final classEntity = classId == null ? null : entities[classId];
+    final subclassEntity =
+        subclassId == null ? null : entities[subclassId];
+
+    final plan = planLevelUp(
+      fromLevel: fromLvl,
+      toLevel: toLvl,
+      classEntity: classEntity,
+      subclassEntity: subclassEntity,
+    );
+    if (!plan.isLevelUp) return;
+
+    // Snapshot ability scores + feat list so the dialog's ASI/Feat picker
+    // can enforce caps and skip non-repeatable feats the character already
+    // has. Falls back to the stat_block map when individual `str` keys
+    // aren't populated.
+    final scoresEntries = <String, int>{};
+    final statBlock = base.entity.fields['stat_block'];
+    final statBlockMap =
+        statBlock is Map ? Map<String, dynamic>.from(statBlock) : null;
+    int asInt(Object? raw) {
+      if (raw is int) return raw;
+      if (raw is String) return int.tryParse(raw) ?? 0;
+      return 0;
+    }
+
+    for (final k in const ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']) {
+      final lower = k.toLowerCase();
+      final v = base.entity.fields[lower] ??
+          base.entity.fields[k] ??
+          statBlockMap?[k] ??
+          statBlockMap?[lower];
+      scoresEntries[k] = asInt(v).clamp(1, 30);
+    }
+    final existingFeatIds = <String>{};
+    final rawFeats = base.entity.fields['feat_ids'];
+    if (rawFeats is List) {
+      for (final id in rawFeats) {
+        if (id is String && id.isNotEmpty) existingFeatIds.add(id);
+      }
+    }
+
+    final result = await LevelUpDialog.show(
+      context,
+      plan,
+      entities: entities,
+      abilityScores: scoresEntries,
+      existingFeatIds: existingFeatIds,
+    );
+    if (!mounted || result == null || !result.applied) return;
+
+    final updated = Map<String, dynamic>.from(base.entity.fields);
+
+    // Apply ASI bumps to per-ability keys + stat_block (when present)
+    // before recomputing derived HP so Constitution increases stack into
+    // the HP delta consistently with SRD §1.
+    final bumps = result.abilityBumps;
+    if (bumps.isNotEmpty) {
+      final nextStat = statBlockMap == null
+          ? null
+          : Map<String, dynamic>.from(statBlockMap);
+      for (final entry in bumps.entries) {
+        final code = entry.key;
+        final lower = code.toLowerCase();
+        if (updated.containsKey(lower)) {
+          updated[lower] = asInt(updated[lower]) + entry.value;
+        } else if (updated.containsKey(code)) {
+          updated[code] = asInt(updated[code]) + entry.value;
+        }
+        if (nextStat != null) {
+          final at = nextStat[code] ?? nextStat[lower];
+          if (at != null) {
+            if (nextStat.containsKey(code)) {
+              nextStat[code] = asInt(at) + entry.value;
+            } else {
+              nextStat[lower] = asInt(at) + entry.value;
+            }
+          } else {
+            nextStat[code] = (scoresEntries[code] ?? 10) + entry.value;
+          }
+        }
+      }
+      if (nextStat != null) updated['stat_block'] = nextStat;
+    }
+
+    if (result.hpDelta > 0) {
+      updated['max_hp'] = asInt(updated['max_hp']) + result.hpDelta;
+      updated['hp'] = asInt(updated['hp']) + result.hpDelta;
+    }
+    if (result.newProfBonus > 0) {
+      updated['proficiency_bonus'] = result.newProfBonus;
+    }
+
+    // New feat pick OR fighting-style pick — append to the resolver's
+    // `feat_ids` list (deduped). Resolver picks up effects on next render.
+    void appendFeatId(String? id) {
+      if (id == null || id.isEmpty) return;
+      final list = updated['feat_ids'];
+      final next = list is List
+          ? List<String>.from(list.whereType<String>())
+          : <String>[];
+      if (!next.contains(id)) next.add(id);
+      updated['feat_ids'] = next;
+    }
+
+    appendFeatId(result.newFeatId);
+    appendFeatId(result.newFightingStyleId);
+
+    _mutate(base.copyWith(
+      entity: base.entity.copyWith(fields: updated),
+    ));
+  }
+
+  /// Action bar shown above the schema fields. Three quick verbs — Level
+  /// Up, Short Rest, Long Rest — that wrap the longer-form dialogs so the
+  /// player doesn't need to find the level field and bump it by hand.
+  Widget _renderRestActions(DmToolColors palette, Character character) {
+    final readOnly = _readOnly;
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: readOnly ? null : () => _levelUp(character),
+            icon: const Icon(Icons.arrow_upward, size: 16),
+            label: const Text('Level Up'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: readOnly ? null : () => _shortRest(character),
+            icon: const Icon(Icons.bedtime_outlined, size: 16),
+            label: const Text('Short Rest'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: readOnly ? null : () => _longRest(character),
+            icon: const Icon(Icons.nightlight_round, size: 16),
+            label: const Text('Long Rest'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  int _asInt(Object? raw, [int fallback = 0]) {
+    if (raw is int) return raw;
+    if (raw is String) return int.tryParse(raw) ?? fallback;
+    return fallback;
+  }
+
+  /// Hit die max value parsed from class entity's `hit_die` field
+  /// ('d8' → 8). Returns 0 when unknown.
+  int _hitDieMax(Character character, Map<String, Entity> entities) {
+    String? firstId(Iterable<String> keys) {
+      for (final k in keys) {
+        final v = character.entity.fields[k];
+        if (v is String && v.isNotEmpty) return v;
+        if (v is List) {
+          final s = v.whereType<String>().firstWhere(
+                (e) => e.isNotEmpty,
+                orElse: () => '',
+              );
+          if (s.isNotEmpty) return s;
+        }
+      }
+      return null;
+    }
+
+    final classId = firstId(const ['class_refs', 'class_']);
+    if (classId == null) return 0;
+    final classEntity = entities[classId];
+    final die = classEntity?.fields['hit_die'];
+    if (die is! String) return 0;
+    final m = RegExp(r'd(\d+)').firstMatch(die);
+    return m == null ? 0 : int.tryParse(m.group(1)!) ?? 0;
+  }
+
+  int _conModifier(Character character) {
+    final score = _asInt(character.entity.fields['con'], 10);
+    return ((score - 10) / 2).floor();
+  }
+
+  Map<String, Entity> _activeEntities(Character character) {
+    return _readEntitiesFor(character);
+  }
+
+  /// Entity lookup for [character]. Characters created via the wizard
+  /// without picking a world store `worldName == ''` and resolve against
+  /// the bundled SRD map. World-bound characters get the active
+  /// campaign's entities (merged with builtin so resolver lookups still
+  /// find Tier-0 rows on a half-seeded world).
+  Map<String, Entity> _readEntitiesFor(Character character) {
+    final builtin = ref.watch(builtinSrdEntitiesProvider);
+    if (character.worldName.isEmpty) return builtin;
+    final activeCampaign = ref.watch(activeCampaignProvider);
+    if (activeCampaign != character.worldName) return builtin;
+    final campaign = ref.watch(entityProvider);
+    return mergeWithBuiltinSrd(campaign, builtin, useCampaign: true);
+  }
+
+  Future<void> _levelUp(Character character) async {
+    final level = _asInt(character.entity.fields['level'], 1);
+    if (level >= 20) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Already at level 20.')),
+      );
+      return;
+    }
+    final next = level + 1;
+    final updated = {
+      ...character.entity.fields,
+      'level': next,
+    };
+    final nextCharacter = character.copyWith(
+      entity: character.entity.copyWith(fields: updated),
+    );
+    _mutate(nextCharacter);
+    await _maybeRunLevelUp(
+      from: level,
+      to: next,
+      base: nextCharacter,
+      entities: _activeEntities(nextCharacter),
+    );
+  }
+
+  Future<void> _shortRest(Character character) async {
+    final entities = _activeEntities(character);
+    final fields = character.entity.fields;
+    final level = _asInt(fields['level'], 1);
+    final maxHp = _asInt(fields['max_hp'], 0);
+    final hp = _asInt(fields['hp'], 0);
+    final dieMax = _hitDieMax(character, entities);
+    final conMod = _conModifier(character);
+    final maxHd = level;
+    final hdRemaining = fields.containsKey('hit_dice_remaining')
+        ? _asInt(fields['hit_dice_remaining'], maxHd)
+        : maxHd;
+
+    if (hdRemaining <= 0 || dieMax <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(dieMax <= 0
+              ? 'No class hit die data — set a class first.'
+              : 'No hit dice left to spend.'),
+        ),
+      );
+      return;
+    }
+
+    final spent = await _ShortRestDialog.show(
+      context,
+      hdRemaining: hdRemaining,
+      dieMax: dieMax,
+      conMod: conMod,
+    );
+    if (spent == null || !mounted) return;
+    final dice = spent.dice;
+    final restored = spent.restored;
+    if (dice <= 0) return;
+
+    final newHp = (hp + restored).clamp(0, maxHp);
+    final newHdRemaining = (hdRemaining - dice).clamp(0, maxHd);
+    final updated = {
+      ...fields,
+      'hp': newHp,
+      'hit_dice_remaining': newHdRemaining,
+    };
+    _mutate(character.copyWith(
+      entity: character.entity.copyWith(fields: updated),
+    ));
+  }
+
+  Future<void> _longRest(Character character) async {
+    final fields = character.entity.fields;
+    final level = _asInt(fields['level'], 1);
+    final maxHp = _asInt(fields['max_hp'], 0);
+    final maxHd = level;
+    final hdRemaining = fields.containsKey('hit_dice_remaining')
+        ? _asInt(fields['hit_dice_remaining'], maxHd)
+        : maxHd;
+    final regained = (maxHd ~/ 2).clamp(1, maxHd);
+    final newHd = (hdRemaining + regained).clamp(0, maxHd);
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Long Rest'),
+        content: Text(
+          'Restore HP to full ($maxHp), regain $regained Hit Die'
+          '${regained == 1 ? '' : 's'} '
+          '(now $newHd/$maxHd), and reset class resources. '
+          'Continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Rest'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+
+    final updated = {
+      ...fields,
+      if (maxHp > 0) 'hp': maxHp,
+      'hit_dice_remaining': newHd,
+    };
+    _mutate(character.copyWith(
+      entity: character.entity.copyWith(fields: updated),
+    ));
   }
 
   Future<void> _save({bool silent = false}) async {
@@ -760,6 +1110,145 @@ class _CharacterEditorScreenState
     _autoSaveTimer?.cancel();
     await _save(silent: true);
     if (context.mounted) context.pop();
+  }
+}
+
+class _ShortRestSpend {
+  final int dice;
+  final int restored;
+  const _ShortRestSpend({required this.dice, required this.restored});
+}
+
+/// Modal for SRD short rest: pick N hit dice, sum die roll + Con modifier
+/// per die, return total HP to restore. Returns null on cancel.
+class _ShortRestDialog extends StatefulWidget {
+  final int hdRemaining;
+  final int dieMax;
+  final int conMod;
+
+  const _ShortRestDialog({
+    required this.hdRemaining,
+    required this.dieMax,
+    required this.conMod,
+  });
+
+  static Future<_ShortRestSpend?> show(
+    BuildContext context, {
+    required int hdRemaining,
+    required int dieMax,
+    required int conMod,
+  }) {
+    return showDialog<_ShortRestSpend>(
+      context: context,
+      builder: (_) => _ShortRestDialog(
+        hdRemaining: hdRemaining,
+        dieMax: dieMax,
+        conMod: conMod,
+      ),
+    );
+  }
+
+  @override
+  State<_ShortRestDialog> createState() => _ShortRestDialogState();
+}
+
+class _ShortRestDialogState extends State<_ShortRestDialog> {
+  int _dice = 1;
+  List<int> _rolls = const [];
+  final Random _rng = Random();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>();
+    final hint =
+        palette?.sidebarLabelSecondary ?? Theme.of(context).hintColor;
+    final restored = _rolls.fold<int>(0, (a, b) => a + b) +
+        (_rolls.length * widget.conMod);
+    return AlertDialog(
+      title: const Text('Short Rest'),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Hit Dice available: ${widget.hdRemaining}  ·  d${widget.dieMax}  ·  '
+              'Con mod: ${widget.conMod >= 0 ? '+' : ''}${widget.conMod}',
+              style: TextStyle(fontSize: 12, color: hint),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Text('Dice to spend:'),
+                const SizedBox(width: 12),
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  onPressed: _dice <= 1
+                      ? null
+                      : () => setState(() {
+                            _dice -= 1;
+                            _rolls = const [];
+                          }),
+                ),
+                Text('$_dice',
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
+                  onPressed: _dice >= widget.hdRemaining
+                      ? null
+                      : () => setState(() {
+                            _dice += 1;
+                            _rolls = const [];
+                          }),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              icon: const Icon(Icons.casino, size: 16),
+              label: Text(_rolls.isEmpty
+                  ? 'Roll ${_dice}d${widget.dieMax}'
+                  : 'Re-roll ${_dice}d${widget.dieMax}'),
+              onPressed: () => setState(() {
+                _rolls = [
+                  for (var i = 0; i < _dice; i++)
+                    1 + _rng.nextInt(widget.dieMax),
+                ];
+              }),
+            ),
+            if (_rolls.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Rolls: ${_rolls.join(', ')}  '
+                '(+ ${_rolls.length} × ${widget.conMod} Con)',
+                style: TextStyle(fontSize: 12, color: hint),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'HP restored: $restored',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _rolls.isEmpty
+              ? null
+              : () => Navigator.pop(
+                    context,
+                    _ShortRestSpend(dice: _dice, restored: restored),
+                  ),
+          child: const Text('Apply'),
+        ),
+      ],
+    );
   }
 }
 
@@ -1168,149 +1657,6 @@ class _CharacterStorageBar extends ConsumerWidget {
         'Could not load storage info',
         style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
       ),
-    );
-  }
-}
-
-/// Compact comma-separated tags field with global autocomplete + moderation.
-class _HeaderTagsField extends StatefulWidget {
-  final String initial;
-  final Set<String> globalTags;
-  final ValueChanged<List<String>> onCommit;
-
-  const _HeaderTagsField({
-    required this.initial,
-    required this.globalTags,
-    required this.onCommit,
-  });
-
-  @override
-  State<_HeaderTagsField> createState() => _HeaderTagsFieldState();
-}
-
-class _HeaderTagsFieldState extends State<_HeaderTagsField> {
-  late final TextEditingController _ctrl;
-  final FocusNode _focus = FocusNode();
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = TextEditingController(text: widget.initial);
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    _focus.dispose();
-    super.dispose();
-  }
-
-  void _commit(String raw) {
-    final parts = raw
-        .split(',')
-        .map((t) => t.trim())
-        .where((t) => t.isNotEmpty)
-        .toList();
-    String? err;
-    final accepted = <String>[];
-    for (final p in parts) {
-      final reason = TagModeration.validate(p);
-      if (reason != null) {
-        err = '"$p": $reason';
-        continue;
-      }
-      if (!accepted.contains(p)) accepted.add(p);
-    }
-    setState(() => _error = err);
-    widget.onCommit(accepted);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return RawAutocomplete<String>(
-      focusNode: _focus,
-      textEditingController: _ctrl,
-      optionsBuilder: (value) {
-        final text = value.text;
-        final lastComma = text.lastIndexOf(',');
-        final current =
-            (lastComma >= 0 ? text.substring(lastComma + 1) : text)
-                .trim()
-                .toLowerCase();
-        if (current.isEmpty) return const Iterable<String>.empty();
-        final already =
-            text.split(',').map((s) => s.trim().toLowerCase()).toSet();
-        return widget.globalTags
-            .where((t) =>
-                t.toLowerCase().contains(current) &&
-                !already.contains(t.toLowerCase()))
-            .take(8);
-      },
-      fieldViewBuilder: (context, controller, focus, onSubmit) {
-        return TextField(
-          controller: controller,
-          focusNode: focus,
-          decoration: InputDecoration(
-            hintText: 'tags, comma, separated',
-            errorText: _error,
-            isDense: true,
-            prefixIcon: const Icon(Icons.tag, size: 14),
-            prefixIconConstraints:
-                const BoxConstraints(minWidth: 24, minHeight: 24),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-          ),
-          style: const TextStyle(fontSize: 11),
-          onChanged: _commit,
-          onSubmitted: (_) {
-            onSubmit();
-            _commit(controller.text);
-          },
-        );
-      },
-      onSelected: (option) {
-        final text = _ctrl.text;
-        final lastComma = text.lastIndexOf(',');
-        final head =
-            lastComma >= 0 ? '${text.substring(0, lastComma + 1)} ' : '';
-        final replaced = '$head$option, ';
-        _ctrl.value = TextEditingValue(
-          text: replaced,
-          selection: TextSelection.collapsed(offset: replaced.length),
-        );
-        _commit(replaced);
-      },
-      optionsViewBuilder: (context, onSelected, options) {
-        return Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 3,
-            borderRadius: BorderRadius.circular(4),
-            child: ConstrainedBox(
-              constraints:
-                  const BoxConstraints(maxWidth: 360, maxHeight: 200),
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemCount: options.length,
-                itemBuilder: (_, i) {
-                  final opt = options.elementAt(i);
-                  return InkWell(
-                    onTap: () => onSelected(opt),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      child:
-                          Text(opt, style: const TextStyle(fontSize: 13)),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }

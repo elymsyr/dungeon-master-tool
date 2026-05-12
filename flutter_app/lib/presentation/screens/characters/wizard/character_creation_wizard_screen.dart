@@ -13,11 +13,17 @@ import '../../../../application/providers/campaign_provider.dart';
 import '../../../../application/providers/character_provider.dart';
 import '../../../../application/providers/entity_provider.dart';
 import '../../../../application/providers/template_provider.dart';
+import '../../../../application/services/builtin_srd_entities.dart';
 import '../../../../domain/entities/entity.dart';
 import '../../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../../domain/entities/schema/world_schema.dart';
 import '../../../theme/dm_tool_colors.dart';
+import '../../../../application/character_creation/caster_progression.dart';
 import 'steps/equipment_step.dart';
+import 'steps/feats_step.dart';
+import 'steps/personality_step.dart';
+import 'steps/proficiencies_step.dart';
+import 'steps/spells_step.dart';
 import 'steps/subclass_step.dart';
 
 /// Multi-step D&D 5e character creation wizard. Authors a [CharacterDraft]
@@ -48,6 +54,8 @@ class _CharacterCreationWizardScreenState
     // Default world = already-active campaign so race/class/background
     // entity lists render immediately. Picking another world in the
     // Identity step calls `_activateWorld` which loads + bumps revision.
+    // If no campaign is active the wizard runs against the bundled SRD
+    // entity map via [builtinSrdEntitiesProvider] — no world is created.
     final active = ref.read(activeCampaignProvider);
     if (active != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -55,6 +63,17 @@ class _CharacterCreationWizardScreenState
         ref.read(characterDraftProvider.notifier).setWorld(active);
       });
     }
+  }
+
+  /// Entity source the wizard reads from. Active campaign's entities when
+  /// the user picked a world, otherwise the bundled SRD map so race /
+  /// class / background pickers stay populated without any DB write.
+  Map<String, Entity> _wizardEntities() {
+    final draft = ref.read(characterDraftProvider);
+    final builtin = ref.read(builtinSrdEntitiesProvider);
+    if (draft.worldName.isEmpty) return builtin;
+    final campaign = ref.read(entityProvider);
+    return mergeWithBuiltinSrd(campaign, builtin, useCampaign: true);
   }
 
   Future<void> _activateWorld(String name) async {
@@ -241,23 +260,49 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Equipment'),
+                      title: const Text('Feats'),
                       isActive: _currentStep >= 5,
                       state: _stateFor(5, draft),
+                      content: FeatsStep(draft: draft, notifier: notifier),
+                    ),
+                    Step(
+                      title: const Text('Proficiencies & Languages'),
+                      isActive: _currentStep >= 6,
+                      state: _stateFor(6, draft),
+                      content: ProficienciesStep(
+                          draft: draft, notifier: notifier),
+                    ),
+                    Step(
+                      title: const Text('Spells'),
+                      isActive: _currentStep >= 7,
+                      state: _stateFor(7, draft),
+                      content: SpellsStep(draft: draft, notifier: notifier),
+                    ),
+                    Step(
+                      title: const Text('Equipment'),
+                      isActive: _currentStep >= 8,
+                      state: _stateFor(8, draft),
                       content:
                           EquipmentStep(draft: draft, notifier: notifier),
                     ),
                     Step(
                       title: const Text('Abilities'),
-                      isActive: _currentStep >= 6,
-                      state: _stateFor(6, draft),
+                      isActive: _currentStep >= 9,
+                      state: _stateFor(9, draft),
                       content:
                           _AbilitiesStep(draft: draft, notifier: notifier),
                     ),
                     Step(
+                      title: const Text('Personality & Flavor'),
+                      isActive: _currentStep >= 10,
+                      state: _stateFor(10, draft),
+                      content: PersonalityStep(
+                          draft: draft, notifier: notifier),
+                    ),
+                    Step(
                       title: const Text('Review'),
-                      isActive: _currentStep >= 7,
-                      state: _stateFor(7, draft),
+                      isActive: _currentStep >= 11,
+                      state: _stateFor(11, draft),
                       content: _ReviewStep(draft: draft),
                     ),
                   ],
@@ -270,7 +315,7 @@ class _CharacterCreationWizardScreenState
     );
   }
 
-  static const _stepCount = 8;
+  static const _stepCount = 12;
 
   StepState _stateFor(int index, CharacterDraft draft) {
     if (_currentStep == index) return StepState.editing;
@@ -293,20 +338,113 @@ class _CharacterCreationWizardScreenState
       2 => draft.classId == null ? 'Pick a class.' : null,
       3 => null,
       4 => null,
-      5 => null,
-      6 => AbilityScoreValidator.validate(
-          method: draft.abilityMethod,
-          scores: draft.baseAbilities,
-        ),
-      7 => null,
+      5 => validateFeatsStep(draft, _wizardEntities()),
+      6 => _validateProficiencies(draft),
+      7 => _validateSpells(draft),
+      8 => null,
+      9 => AbilityScoreValidator.validate(
+              method: draft.abilityMethod,
+              scores: draft.baseAbilities,
+            ) ??
+            AbilityScoreValidator.validateBackgroundAsi(draft.racialBonuses),
+      10 => null, // personality is optional
+      11 => null,
       _ => null,
     };
+  }
+
+  /// Spell-pick caps check. Mirrors the Spells step's own derivation so
+  /// the wizard can flag an incomplete picker. Empty spell catalogs in
+  /// the active campaign suppress the check — no fail on missing data.
+  String? _validateSpells(CharacterDraft draft) {
+    final entities = _wizardEntities();
+    final classEntity =
+        draft.classId == null ? null : entities[draft.classId];
+    if (classEntity == null) return null;
+    final kind = parseCasterKind(classEntity.fields['caster_kind']);
+    if (kind == CasterKind.none) return null;
+
+    final cantripCap = levelTableValue(
+            classEntity.fields['cantrips_known_by_level'], draft.level) ??
+        defaultCantripsKnown(kind, draft.level);
+    final preparedCap = levelTableValue(
+            classEntity.fields['prepared_spells_by_level'], draft.level) ??
+        defaultPreparedSpells(kind, draft.level);
+
+    final spellCount = entities.values
+        .where((e) =>
+            e.categorySlug == 'spell' &&
+            (e.fields['class_refs'] is List) &&
+            (e.fields['class_refs'] as List).contains(draft.classId))
+        .length;
+    if (spellCount == 0) return null;
+
+    if (cantripCap > 0 && draft.cantripIds.length != cantripCap) {
+      return 'Pick $cantripCap cantrip(s).';
+    }
+    if (preparedCap > 0 && draft.preparedSpellIds.length != preparedCap) {
+      return 'Pick $preparedCap spell(s).';
+    }
+    return null;
+  }
+
+  /// Caps check for the Proficiencies & Languages step. We can only know
+  /// the caps when the class and background entities are already loaded,
+  /// so look them up here rather than relying on draft-only data. Empty
+  /// option lists in the active campaign suppress the cap — the wizard
+  /// shouldn't block when the world author hasn't seeded the lookup yet.
+  String? _validateProficiencies(CharacterDraft draft) {
+    final entities = _wizardEntities();
+    int intField(Entity? e, String key) {
+      final v = e?.fields[key];
+      if (v is int) return v;
+      if (v is String) return int.tryParse(v) ?? 0;
+      return 0;
+    }
+
+    List<String> listField(Entity? e, String key) {
+      final v = e?.fields[key];
+      if (v is List) return v.whereType<String>().toList();
+      return const [];
+    }
+
+    final classEntity =
+        draft.classId == null ? null : entities[draft.classId];
+    final background =
+        draft.backgroundId == null ? null : entities[draft.backgroundId];
+    final skillCap = intField(classEntity, 'skill_proficiency_choice_count');
+    final toolCap = intField(classEntity, 'tool_proficiency_count');
+    final languageCap = intField(background, 'granted_language_count');
+    final skillOptionsCount =
+        listField(classEntity, 'skill_proficiency_options').length;
+    final toolOptionsCount =
+        listField(classEntity, 'tool_proficiency_options').length;
+    final languageOptionsCount =
+        entities.values.where((e) => e.categorySlug == 'language').length;
+
+    if (skillCap > 0 &&
+        skillOptionsCount > 0 &&
+        draft.skillChoiceIds.length != skillCap) {
+      return 'Pick $skillCap class skill(s).';
+    }
+    if (toolCap > 0 &&
+        toolOptionsCount > 0 &&
+        draft.toolChoiceIds.length != toolCap) {
+      return 'Pick $toolCap class tool(s).';
+    }
+    if (languageCap > 0 &&
+        languageOptionsCount > 0 &&
+        draft.languageChoiceIds.length != languageCap) {
+      return 'Pick $languageCap language(s).';
+    }
+    return null;
   }
 
   String? _validateIdentity(CharacterDraft d) {
     if (d.name.trim().isEmpty) return 'Name required.';
     if (d.templateId.isEmpty) return 'Template required.';
-    if (d.worldName.isEmpty) return 'World required.';
+    // World is optional — when left blank the commit step falls back to
+    // the auto-provisioned SRD 5.2.1 default world.
     if (d.level < 1 || d.level > 20) return 'Level must be 1-20.';
     return null;
   }
@@ -329,23 +467,30 @@ class _CharacterCreationWizardScreenState
     }
     setState(() => _committing = true);
     try {
-      final entities = ref.read(entityProvider);
+      // Empty world is intentional — the character runs against the
+      // bundled SRD entity map. Editor falls back to
+      // [builtinSrdEntitiesProvider] when [worldName] is empty.
+      final worldName = draft.worldName;
+      final entities = _wizardEntities();
       Entity? lookup(String? id) =>
           id == null ? null : entities[id];
 
+      final featContributions =
+          deriveFeatChoiceContributions(draft, entities);
       final seed = _buildSeedFields(
         draft: draft,
         playerCat: playerCat,
         race: lookup(draft.raceId),
         characterClass: lookup(draft.classId),
         background: lookup(draft.backgroundId),
+        featContributions: featContributions,
       );
 
       final created =
           await ref.read(characterListProvider.notifier).create(
                 name: draft.name.trim(),
                 template: template,
-                worldName: draft.worldName,
+                worldName: worldName,
                 description: draft.description.trim(),
                 tags: draft.tags,
                 portraitPath: draft.portraitPath,
@@ -379,10 +524,14 @@ Map<String, dynamic> _buildSeedFields({
   required Entity? race,
   required Entity? characterClass,
   required Entity? background,
+  FeatChoiceContributions? featContributions,
 }) {
+  final featBumps = featContributions?.abilityBumps ?? const <String, int>{};
   final stat = <String, int>{
     for (final k in kAbilityKeys)
-      k: (draft.baseAbilities[k] ?? 10) + (draft.racialBonuses[k] ?? 0),
+      k: (draft.baseAbilities[k] ?? 10) +
+          (draft.racialBonuses[k] ?? 0) +
+          (featBumps[k] ?? 0),
   };
   final conMod = abilityModifier(stat['CON'] ?? 10);
   final dexMod = abilityModifier(stat['DEX'] ?? 10);
@@ -432,17 +581,41 @@ Map<String, dynamic> _buildSeedFields({
   writeRelation(out, const ['class_refs', 'class_'], characterClass?.id);
   writeRelation(out, const ['background_ref', 'background'], background?.id);
   writeScalar(out, const ['proficiency_bonus'], profBonus);
+  // Species drives Walk speed & size — fall back to SRD medium humanoid
+  // defaults when the species entity hasn't been populated yet.
+  final speedFt = race?.fields['speed_ft'] is int
+      ? race!.fields['speed_ft'] as int
+      : 30;
+  final sizeRef = race?.fields['size_ref'] is String
+      ? race!.fields['size_ref'] as String
+      : null;
   if (fieldsByKey.containsKey('combat_stats')) {
     out['combat_stats'] = {
       'hp': maxHp,
       'max_hp': maxHp,
       'ac': 10 + dexMod,
-      'speed': '30 ft',
+      'speed': '$speedFt ft',
       'level': draft.level,
       'initiative': dexMod >= 0 ? '+$dexMod' : '$dexMod',
       'cr': '',
       'xp': 0,
     };
+  }
+  if (fieldsByKey.containsKey('speed_walk_ft')) {
+    out['speed_walk_ft'] = speedFt;
+  }
+  for (final extra in const [
+    'speed_burrow_ft',
+    'speed_climb_ft',
+    'speed_fly_ft',
+    'speed_swim_ft',
+  ]) {
+    if (!fieldsByKey.containsKey(extra)) continue;
+    final v = race?.fields[extra];
+    if (v is int && v > 0) out[extra] = v;
+  }
+  if (sizeRef != null && fieldsByKey.containsKey('size_ref')) {
+    out['size_ref'] = sizeRef;
   }
   if (fieldsByKey.containsKey('xp')) out['xp'] = 0;
   if (fieldsByKey.containsKey('initiative_modifier')) {
@@ -469,6 +642,176 @@ Map<String, dynamic> _buildSeedFields({
   out['equipment_choices'] = Map<String, String>.from(draft.equipmentChoices);
   out['feat_choices'] = Map<String, String>.from(draft.originFeatChoices);
   out['base_abilities'] = stat;
+  // Class skill/tool picks + background language picks. Mirrored to the PC
+  // category's matching ref lists when present so the editor renders them
+  // without further work.
+  final featSkillIds = featContributions?.skillIds ?? const <String>[];
+  final featToolIds = featContributions?.toolIds ?? const <String>[];
+  final featCantripIds = featContributions?.cantripIds ?? const <String>[];
+  final featPreparedIds = featContributions?.preparedSpellIds ?? const <String>[];
+  out['skill_choice_ids'] = [
+    ...draft.skillChoiceIds,
+    for (final id in featSkillIds)
+      if (!draft.skillChoiceIds.contains(id)) id,
+  ];
+  out['tool_choice_ids'] = [
+    ...draft.toolChoiceIds,
+    for (final id in featToolIds)
+      if (!draft.toolChoiceIds.contains(id)) id,
+  ];
+  out['language_choice_ids'] = List<String>.from(draft.languageChoiceIds);
+
+  void appendIds(List<String> targetKeys, Iterable<String> ids) {
+    if (ids.isEmpty) return;
+    for (final to in targetKeys) {
+      if (!fieldsByKey.containsKey(to)) continue;
+      final existing = (out[to] is List)
+          ? List<String>.from(out[to] as List)
+          : <String>[];
+      for (final id in ids) {
+        if (id.isEmpty) continue;
+        if (!existing.contains(id)) existing.add(id);
+      }
+      out[to] = existing;
+      return;
+    }
+  }
+
+  appendIds(
+    const ['skill_proficiencies'],
+    [
+      ...draft.skillChoiceIds,
+      for (final id in featSkillIds)
+        if (!draft.skillChoiceIds.contains(id)) id,
+    ],
+  );
+  appendIds(
+    const ['tool_proficiencies'],
+    [
+      ...draft.toolChoiceIds,
+      for (final id in featToolIds)
+        if (!draft.toolChoiceIds.contains(id)) id,
+    ],
+  );
+  appendIds(const ['language_refs', 'languages'], draft.languageChoiceIds);
+  appendIds(
+    const ['spell_refs', 'spells'],
+    [
+      ...draft.cantripIds,
+      ...draft.preparedSpellIds,
+      ...featCantripIds,
+      ...featPreparedIds,
+    ],
+  );
+  out['cantrip_ids'] = [
+    ...draft.cantripIds,
+    for (final id in featCantripIds)
+      if (!draft.cantripIds.contains(id)) id,
+  ];
+  out['prepared_spell_ids'] = [
+    ...draft.preparedSpellIds,
+    for (final id in featPreparedIds)
+      if (!draft.preparedSpellIds.contains(id)) id,
+  ];
+
+  // Personality / flavor — write to dedicated PC fields when the
+  // template declares them; otherwise stash under a single
+  // `personality` map so editor can surface them later.
+  void writeText(List<String> candidateKeys, String value) {
+    if (value.isEmpty) return;
+    for (final key in candidateKeys) {
+      if (!fieldsByKey.containsKey(key)) continue;
+      out[key] = value;
+      return;
+    }
+  }
+
+  writeText(const ['personality_traits'], draft.personalityTraits);
+  writeText(const ['ideals'], draft.ideals);
+  writeText(const ['bonds'], draft.bonds);
+  writeText(const ['flaws'], draft.flaws);
+  writeText(const ['backstory'], draft.backstory);
+  writeText(const ['trinket'], draft.trinket);
+  // Mirror unconditionally on the resolver-input side so future editor
+  // features can read these without going through the player category.
+  out['personality_traits'] = draft.personalityTraits;
+  out['ideals'] = draft.ideals;
+  out['bonds'] = draft.bonds;
+  out['flaws'] = draft.flaws;
+  out['backstory'] = draft.backstory;
+  out['trinket'] = draft.trinket;
+  // Background also has `granted_skill_refs` — fold those into the PC's
+  // skill list as well so the wizard's "no further user action needed"
+  // promise holds without the resolver running first.
+  if (background?.fields['granted_skill_refs'] is List) {
+    appendIds(
+      const ['skill_proficiencies'],
+      (background!.fields['granted_skill_refs'] as List).whereType<String>(),
+    );
+  }
+
+  // Materialise the equipment-choice selection. For each picked
+  // {group_id: option_id} pair, walk the source entity's
+  // `equipment_choice_groups` list, find the chosen option, then append
+  // its `items[].ref` entity IDs to the PC's inventory and sum
+  // `gold_gp` into the gp purse.
+  final equipmentItemIds = <String>[];
+  var goldGain = 0;
+  void absorbFrom(Entity? src) {
+    if (src == null) return;
+    final raw = src.fields['equipment_choice_groups'];
+    if (raw is! List) return;
+    for (final g in raw) {
+      if (g is! Map) continue;
+      final groupId = g['group_id']?.toString() ?? '';
+      // Storage key is scoped by source entity id so class + background
+      // picks don't collide on identical group_ids (e.g. both 'A').
+      final optionId = draft.equipmentChoices['${src.id}:$groupId'];
+      if (optionId == null || optionId.isEmpty) continue;
+      final options = g['options'];
+      if (options is! List) continue;
+      for (final o in options) {
+        if (o is! Map) continue;
+        if (o['option_id']?.toString() != optionId) continue;
+        final items = o['items'];
+        if (items is List) {
+          for (final i in items) {
+            if (i is! Map) continue;
+            final ref = i['ref'];
+            final qty = i['quantity'] is int ? i['quantity'] as int : 1;
+            if (ref is String && ref.isNotEmpty) {
+              for (var n = 0; n < qty; n++) {
+                equipmentItemIds.add(ref);
+              }
+            }
+          }
+        }
+        final gold = o['gold_gp'];
+        if (gold is int) goldGain += gold;
+      }
+    }
+  }
+
+  absorbFrom(characterClass);
+  absorbFrom(background);
+
+  if (equipmentItemIds.isNotEmpty) {
+    // Inventory keeps duplicates — 2× handaxe is two list entries, not
+    // one. We deliberately don't dedupe like appendIds does.
+    for (final key in const ['inventory', 'equipment_refs']) {
+      if (!fieldsByKey.containsKey(key)) continue;
+      final existing = (out[key] is List)
+          ? List<String>.from(out[key] as List)
+          : <String>[];
+      existing.addAll(equipmentItemIds);
+      out[key] = existing;
+      break;
+    }
+  }
+  if (goldGain > 0 && fieldsByKey.containsKey('gp')) {
+    final existing = (out['gp'] is int) ? out['gp'] as int : 0;
+    out['gp'] = existing + goldGain;
+  }
 
   // Inherit race / species traits + granted refs onto the PC. Species
   // exposes them as `trait_refs` / `granted_languages` / `granted_senses`
@@ -609,34 +952,46 @@ class _IdentityStep extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: DropdownButtonFormField<String>(
-                initialValue: draft.worldName.isEmpty ? null : draft.worldName,
-                decoration: InputDecoration(
-                  labelText: 'World *',
-                  suffixIcon: activatingWorld
-                      ? const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: SizedBox(
-                            width: 14,
-                            height: 14,
-                            child:
-                                CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
-                      : null,
-                ),
-                items: worlds
-                    .map((w) =>
-                        DropdownMenuItem(value: w, child: Text(w)))
-                    .toList(),
-                onChanged: activatingWorld
-                    ? null
-                    : (v) {
-                        if (v == null) return;
-                        notifier.setWorld(v);
-                        onWorldPicked(v);
-                      },
-              ),
+              child: Builder(builder: (_) {
+                // Dedupe — getAvailable() can return duplicates if a world
+                // was created twice in past sessions. DropdownButton asserts
+                // exactly-one match for its value, so we collapse duplicates
+                // and fall back to null when the draft's pick isn't visible
+                // yet (e.g. mid-provision race).
+                final uniqueWorlds = <String>{...worlds}.toList();
+                final pickerValue = draft.worldName.isNotEmpty &&
+                        uniqueWorlds.contains(draft.worldName)
+                    ? draft.worldName
+                    : null;
+                return DropdownButtonFormField<String>(
+                  initialValue: pickerValue,
+                  decoration: InputDecoration(
+                    labelText: 'World',
+                    suffixIcon: activatingWorld
+                        ? const Padding(
+                            padding: EdgeInsets.all(8),
+                            child: SizedBox(
+                              width: 14,
+                              height: 14,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : null,
+                  ),
+                  items: uniqueWorlds
+                      .map((w) =>
+                          DropdownMenuItem(value: w, child: Text(w)))
+                      .toList(),
+                  onChanged: activatingWorld
+                      ? null
+                      : (v) {
+                          if (v == null) return;
+                          notifier.setWorld(v);
+                          onWorldPicked(v);
+                        },
+                );
+              }),
             ),
           ],
         ),
@@ -701,7 +1056,103 @@ class _IdentityStep extends StatelessWidget {
             ),
           ],
         ),
+        if (draft.level > 1) _HigherLevelStartPanel(level: draft.level),
       ],
+    );
+  }
+}
+
+/// Read-only advisory shown on the Identity step when starting level > 1.
+/// Lists the SRD §1 "Starting at Higher Levels" bundle (extra GP + magic
+/// items) so the player and DM can stock the character accordingly — the
+/// wizard does not auto-grant these items yet (follow-up: A11 commit).
+class _HigherLevelStartPanel extends StatelessWidget {
+  final int level;
+  const _HigherLevelStartPanel({required this.level});
+
+  ({String money, String items}) _bundle(int lvl) {
+    if (lvl <= 4) {
+      return (money: 'Normal starting equipment.', items: '1 Common');
+    }
+    if (lvl <= 10) {
+      return (
+        money: '500 GP plus 1d10 × 25 GP plus normal starting equipment.',
+        items: '1 Common, 1 Uncommon',
+      );
+    }
+    if (lvl <= 16) {
+      return (
+        money:
+            '5,000 GP plus 1d10 × 250 GP plus normal starting equipment.',
+        items: '2 Common, 3 Uncommon, 1 Rare',
+      );
+    }
+    return (
+      money:
+          '20,000 GP plus 1d10 × 250 GP plus normal starting equipment.',
+      items: '2 Common, 4 Uncommon, 3 Rare, 1 Very Rare',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final bundle = _bundle(level);
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: palette.featureCardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, size: 14, color: palette.tabActiveText),
+              const SizedBox(width: 6),
+              Text(
+                'Starting at Higher Levels (Level $level)',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: palette.tabActiveText,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'SRD §1 recommends the DM grant this bundle in addition to '
+            'standard starting equipment:',
+            style: TextStyle(
+              fontSize: 11,
+              color: palette.sidebarLabelSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '• Money: ${bundle.money}',
+            style: TextStyle(fontSize: 11, color: palette.tabActiveText),
+          ),
+          Text(
+            '• Magic items: ${bundle.items}',
+            style: TextStyle(fontSize: 11, color: palette.tabActiveText),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Add the GP and magic-item picks manually in the editor — the '
+            'wizard does not auto-grant these yet.',
+            style: TextStyle(
+              fontSize: 10,
+              fontStyle: FontStyle.italic,
+              color: palette.sidebarLabelSecondary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -774,7 +1225,15 @@ class _EntityPickStep extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final entities = ref.watch(entityProvider);
+    final draft = ref.watch(characterDraftProvider);
+    final builtin = ref.watch(builtinSrdEntitiesProvider);
+    final campaign =
+        draft.worldName.isEmpty ? const <String, Entity>{} : ref.watch(entityProvider);
+    final entities = mergeWithBuiltinSrd(
+      campaign,
+      builtin,
+      useCampaign: campaign.isNotEmpty,
+    );
     final candidates = entities.values
         .where((e) => slugs.contains(e.categorySlug))
         .toList()
@@ -786,8 +1245,8 @@ class _EntityPickStep extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
           optional
-              ? 'No "$slugLabel" entities in this world. You can add one later in the editor.'
-              : 'No "$slugLabel" entities in this world. Create one in the Database tab first.',
+              ? 'No "$slugLabel" entities available. You can add one later in the editor.'
+              : 'No "$slugLabel" entities available. Create one in the Database tab first.',
           style: TextStyle(color: palette.sidebarLabelSecondary),
         ),
       );
@@ -836,6 +1295,10 @@ class _AbilitiesStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    final asiTotal = _asiTotal(draft);
+    final asiError = AbilityScoreValidator.validateBackgroundAsi(
+      draft.racialBonuses,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -890,15 +1353,48 @@ class _AbilitiesStep extends StatelessWidget {
               abilityKey: k,
               base: draft.baseAbilities[k] ?? 10,
               racial: draft.racialBonuses[k] ?? 0,
+              asiTotal: asiTotal,
+              asiPattern: _asiPattern(draft),
               method: draft.abilityMethod,
               standardArrayUsed: _standardArrayUsageFor(draft, k),
               onBase: (v) => notifier.setAbility(k, v),
               onRacial: (v) => notifier.setRacialBonus(k, v),
             )),
         const SizedBox(height: 8),
-        _RacialBonusHint(palette: palette),
+        _BackgroundAsiHeader(
+          total: asiTotal,
+          error: asiError,
+          palette: palette,
+          onClear: () {
+            for (final k in kAbilityKeys) {
+              notifier.setRacialBonus(k, 0);
+            }
+          },
+        ),
       ],
     );
+  }
+
+  static int _asiTotal(CharacterDraft d) {
+    var t = 0;
+    for (final k in kAbilityKeys) {
+      t += d.racialBonuses[k] ?? 0;
+    }
+    return t;
+  }
+
+  /// Sorted-descending list of the non-zero ASI bonuses. Used by the row
+  /// dropdown to decide which option values are still legal (so the
+  /// widget locks out picks that would break the +2/+1 or +1/+1/+1
+  /// pattern before validation runs).
+  static List<int> _asiPattern(CharacterDraft d) {
+    final nonZero = <int>[];
+    for (final k in kAbilityKeys) {
+      final v = d.racialBonuses[k] ?? 0;
+      if (v > 0) nonZero.add(v);
+    }
+    nonZero.sort((a, b) => b.compareTo(a));
+    return nonZero;
   }
 
   /// For Standard Array UI: which values are still available given other
@@ -956,18 +1452,76 @@ class _PointBuyHeader extends StatelessWidget {
   }
 }
 
-class _RacialBonusHint extends StatelessWidget {
+class _BackgroundAsiHeader extends StatelessWidget {
+  final int total;
+  final String? error;
   final DmToolColors palette;
-  const _RacialBonusHint({required this.palette});
+  final VoidCallback onClear;
+
+  const _BackgroundAsiHeader({
+    required this.total,
+    required this.error,
+    required this.palette,
+    required this.onClear,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      '2024 SRD Origin: distribute +3 across abilities (e.g. +2/+1 or +1/+1/+1).',
-      style: TextStyle(
-        fontSize: 11,
-        color: palette.sidebarLabelSecondary,
-      ),
+    final ok = error == null && total == 3;
+    final iconColor = error != null
+        ? palette.dangerBtnBg
+        : ok
+            ? palette.successBtnBg
+            : palette.sidebarLabelSecondary;
+    final iconData = error != null
+        ? Icons.warning_amber
+        : ok
+            ? Icons.check_circle
+            : Icons.info_outline;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(iconData, size: 16, color: iconColor),
+            const SizedBox(width: 6),
+            Text(
+              'Background ASI: $total / 3',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: error != null
+                    ? palette.dangerBtnBg
+                    : palette.tabActiveText,
+              ),
+            ),
+            const Spacer(),
+            if (total > 0)
+              TextButton.icon(
+                icon: const Icon(Icons.clear, size: 14),
+                label: const Text('Reset'),
+                style: TextButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                  minimumSize: const Size(0, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: onClear,
+              ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          error ??
+              '2024 SRD: distribute +3 from your background — either +2 to one ability and +1 to another, or +1 to three different abilities.',
+          style: TextStyle(
+            fontSize: 11,
+            color: error != null
+                ? palette.dangerBtnBg
+                : palette.sidebarLabelSecondary,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -976,6 +1530,8 @@ class _AbilityRow extends StatelessWidget {
   final String abilityKey;
   final int base;
   final int racial;
+  final int asiTotal;
+  final List<int> asiPattern;
   final AbilityScoreMethod method;
   final List<int> standardArrayUsed;
   final ValueChanged<int> onBase;
@@ -985,6 +1541,8 @@ class _AbilityRow extends StatelessWidget {
     required this.abilityKey,
     required this.base,
     required this.racial,
+    required this.asiTotal,
+    required this.asiPattern,
     required this.method,
     required this.standardArrayUsed,
     required this.onBase,
@@ -1010,16 +1568,23 @@ class _AbilityRow extends StatelessWidget {
           SizedBox(width: 110, child: _baseEditor()),
           const SizedBox(width: 8),
           SizedBox(
-            width: 80,
+            width: 90,
             child: DropdownButtonFormField<int>(
               initialValue: racial,
-              decoration: const InputDecoration(labelText: 'Racial'),
-              items: const [0, 1, 2, 3]
-                  .map((v) => DropdownMenuItem(
-                        value: v,
-                        child: Text('+$v'),
-                      ))
-                  .toList(),
+              decoration: const InputDecoration(labelText: 'ASI'),
+              items: const [0, 1, 2].map((v) {
+                final enabled = _asiOptionEnabled(v);
+                return DropdownMenuItem(
+                  value: v,
+                  enabled: enabled,
+                  child: Text(
+                    '+$v',
+                    style: TextStyle(
+                      color: enabled ? null : palette.sidebarLabelSecondary,
+                    ),
+                  ),
+                );
+              }).toList(),
               onChanged: (v) {
                 if (v != null) onRacial(v);
               },
@@ -1087,6 +1652,21 @@ class _AbilityRow extends StatelessWidget {
   }
 
   int _countOf(List<int> arr, int v) => arr.where((x) => x == v).length;
+
+  /// Locks ASI dropdown picks that would break the 2024 SRD background
+  /// pattern (+2/+1 across two abilities, or +1/+1/+1 across three).
+  /// The current ability's contribution is removed from the running totals
+  /// so the user can always re-select their own current value.
+  bool _asiOptionEnabled(int candidate) {
+    final othersTotal = asiTotal - racial;
+    if (othersTotal + candidate > 3) return false;
+    if (candidate == 2) {
+      final othersHaveTwo =
+          asiPattern.where((v) => v == 2).length > (racial == 2 ? 1 : 0);
+      if (othersHaveTwo) return false;
+    }
+    return true;
+  }
 }
 
 class _ReviewStep extends ConsumerWidget {
@@ -1096,21 +1676,64 @@ class _ReviewStep extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final entities = ref.watch(entityProvider);
+    final builtin = ref.watch(builtinSrdEntitiesProvider);
+    final campaign =
+        draft.worldName.isEmpty ? const <String, Entity>{} : ref.watch(entityProvider);
+    final entities = mergeWithBuiltinSrd(
+      campaign,
+      builtin,
+      useCampaign: campaign.isNotEmpty,
+    );
     String nameOf(String? id) =>
         id == null ? '—' : (entities[id]?.name ?? '—');
+    String namesOf(Iterable<String> ids) {
+      final names = ids
+          .map((id) => entities[id]?.name ?? id)
+          .where((n) => n.isNotEmpty)
+          .toList();
+      return names.isEmpty ? '—' : names.join(', ');
+    }
 
     final stat = <String, int>{
       for (final k in kAbilityKeys)
         k: (draft.baseAbilities[k] ?? 10) + (draft.racialBonuses[k] ?? 0),
     };
+    final conMod = abilityModifier(stat['CON'] ?? 10);
+    final dexMod = abilityModifier(stat['DEX'] ?? 10);
+    final wisMod = abilityModifier(stat['WIS'] ?? 10);
+    final classEntity =
+        draft.classId == null ? null : entities[draft.classId];
+    final race = draft.raceId == null ? null : entities[draft.raceId];
+    final hitDie = _parseHitDie(classEntity?.fields['hit_die']);
+    final maxHp = hitDie +
+        conMod +
+        (draft.level - 1) * ((hitDie ~/ 2) + 1 + conMod);
+    final profBonus = 2 + ((draft.level - 1) ~/ 4);
+    final speedFt = race?.fields['speed_ft'] is int
+        ? race!.fields['speed_ft'] as int
+        : 30;
+
+    // Spellcasting summary — null when caster_kind = None.
+    final casterKind =
+        parseCasterKind(classEntity?.fields['caster_kind']);
+    int? castingMod;
+    if (classEntity != null && casterKind != CasterKind.none) {
+      final ref = classEntity.fields['casting_ability_ref'];
+      if (ref is String) {
+        final abilityEntity = entities[ref];
+        final key = abilityEntity?.name.substring(0, 3).toUpperCase();
+        if (key != null && kAbilityKeys.contains(key)) {
+          castingMod = abilityModifier(stat[key] ?? 10);
+        }
+      }
+    }
 
     Widget row(String label, String value) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 3),
           child: Row(
             children: [
               SizedBox(
-                width: 110,
+                width: 130,
                 child: Text(
                   label,
                   style: TextStyle(
@@ -1133,9 +1756,31 @@ class _ReviewStep extends ConsumerWidget {
           ),
         );
 
+    Widget heading(String t) => Padding(
+          padding: const EdgeInsets.only(top: 12, bottom: 4),
+          child: Text(
+            t,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: palette.tabActiveText,
+            ),
+          ),
+        );
+
+    Widget chip(String t) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: palette.featureCardBg,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: palette.featureCardBorder),
+          ),
+          child: Text(t, style: const TextStyle(fontSize: 12)),
+        );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        heading('Identity'),
         row('Name', draft.name),
         row('World', draft.worldName),
         row('Template', draft.templateName),
@@ -1143,38 +1788,71 @@ class _ReviewStep extends ConsumerWidget {
         row('Alignment', draft.alignment.isEmpty ? '—' : draft.alignment),
         row('Race', nameOf(draft.raceId)),
         row('Class', nameOf(draft.classId)),
+        row('Subclass', nameOf(draft.subclassId)),
         row('Background', nameOf(draft.backgroundId)),
-        row('Ability method', draft.abilityMethod.label),
-        const SizedBox(height: 8),
-        Text(
-          'Ability Scores',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: palette.tabActiveText,
-          ),
-        ),
-        const SizedBox(height: 4),
+        heading('Ability Scores'),
         Wrap(
           spacing: 12,
           runSpacing: 4,
           children: kAbilityKeys.map((k) {
             final v = stat[k] ?? 10;
             final mod = abilityModifier(v);
-            return Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: palette.featureCardBg,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: palette.featureCardBorder),
-              ),
-              child: Text(
-                '$k $v (${mod >= 0 ? '+' : ''}$mod)',
-                style: const TextStyle(fontSize: 12),
-              ),
-            );
+            return chip('$k $v (${mod >= 0 ? '+' : ''}$mod)');
           }).toList(),
         ),
+        heading('Derived Stats'),
+        row('Hit Points', '$maxHp'),
+        row('Armor Class', '${10 + dexMod} (unarmored)'),
+        row('Initiative', dexMod >= 0 ? '+$dexMod' : '$dexMod'),
+        row('Speed', '$speedFt ft'),
+        row('Proficiency Bonus', '+$profBonus'),
+        row('Passive Perception', '${10 + wisMod}'),
+        if (castingMod != null) ...[
+          row(
+            'Spell Save DC',
+            '${8 + profBonus + castingMod}',
+          ),
+          row(
+            'Spell Attack Bonus',
+            '+${profBonus + castingMod}',
+          ),
+        ],
+        heading('Proficiencies & Languages'),
+        row('Skills', namesOf(draft.skillChoiceIds)),
+        row('Tools', namesOf(draft.toolChoiceIds)),
+        row('Languages', namesOf(draft.languageChoiceIds)),
+        if (draft.cantripIds.isNotEmpty ||
+            draft.preparedSpellIds.isNotEmpty) ...[
+          heading('Spells'),
+          row('Cantrips', namesOf(draft.cantripIds)),
+          row(
+            'Prepared / Known',
+            namesOf(draft.preparedSpellIds),
+          ),
+        ],
+        if (draft.equipmentChoices.isNotEmpty) ...[
+          heading('Equipment'),
+          row(
+            'Picks',
+            '${draft.equipmentChoices.length} option(s) selected',
+          ),
+        ],
+        if (draft.personalityTraits.isNotEmpty ||
+            draft.ideals.isNotEmpty ||
+            draft.bonds.isNotEmpty ||
+            draft.flaws.isNotEmpty ||
+            draft.backstory.isNotEmpty ||
+            draft.trinket.isNotEmpty) ...[
+          heading('Personality & Flavor'),
+          if (draft.personalityTraits.isNotEmpty)
+            row('Traits', draft.personalityTraits),
+          if (draft.ideals.isNotEmpty) row('Ideals', draft.ideals),
+          if (draft.bonds.isNotEmpty) row('Bonds', draft.bonds),
+          if (draft.flaws.isNotEmpty) row('Flaws', draft.flaws),
+          if (draft.backstory.isNotEmpty)
+            row('Backstory', draft.backstory),
+          if (draft.trinket.isNotEmpty) row('Trinket', draft.trinket),
+        ],
       ],
     );
   }
