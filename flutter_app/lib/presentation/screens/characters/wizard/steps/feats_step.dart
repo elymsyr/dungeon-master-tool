@@ -422,7 +422,7 @@ class _ChoiceGroupSection extends StatelessWidget {
     switch (kind) {
       case 'enum':
         final options = _readEnumOptions(group['options']);
-        return _ChipPicker(
+        return _RowPicker(
           options: options,
           picked: current,
           pick: pick,
@@ -432,7 +432,7 @@ class _ChoiceGroupSection extends StatelessWidget {
         );
       case 'ability':
         final abilities = _readAbilityOptions(group['ability_options']);
-        return _ChipPicker(
+        return _RowPicker(
           options: [
             for (final a in abilities) _Option(id: a, label: _abilityLabel(a)),
           ],
@@ -445,7 +445,7 @@ class _ChoiceGroupSection extends StatelessWidget {
       case 'tool_category':
         final catName = group['tool_category_name']?.toString() ?? '';
         final tools = cache.toolsByCategoryName[catName] ?? const <Entity>[];
-        return _ChipPicker(
+        return _RowPicker(
           options: [
             for (final t in tools)
               _Option(id: t.id, label: t.name, description: t.description),
@@ -460,6 +460,7 @@ class _ChoiceGroupSection extends StatelessWidget {
       case 'skill_or_tool':
         final skills = cache.skills;
         final tools = cache.tools;
+        final grantedSkills = _grantedSkillIds();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -474,6 +475,8 @@ class _ChoiceGroupSection extends StatelessWidget {
                 picked: current,
                 pick: pick,
                 palette: palette,
+                disabledIds: grantedSkills,
+                disabledHint: 'proficient',
                 onToggle: (id) =>
                     _toggle(storageKey, current, pick, id),
               ),
@@ -481,7 +484,7 @@ class _ChoiceGroupSection extends StatelessWidget {
             ],
             if (tools.isNotEmpty) ...[
               _GroupLabel(text: 'Tools', palette: palette),
-              _ChipPicker(
+              _RowPicker(
                 options: [
                   for (final t in tools)
                     _Option(
@@ -515,7 +518,7 @@ class _ChoiceGroupSection extends StatelessWidget {
         final spellLevel =
             (group['spell_level'] is int) ? group['spell_level'] as int : 0;
         final spells = cache.spellsFor(listValue, spellLevel);
-        return _ChipPicker(
+        return _RowPicker(
           options: [
             for (final s in spells)
               _Option(id: s.id, label: s.name, description: s.description),
@@ -537,6 +540,21 @@ class _ChoiceGroupSection extends StatelessWidget {
           ),
         );
     }
+  }
+
+  /// Union of skills the draft is already proficient in via background,
+  /// race, or class skill picks — surfaced as an "(proficient)" hint on
+  /// the feat skill chip and prevents double-picking.
+  Set<String> _grantedSkillIds() {
+    final out = <String>{};
+    final bg = draft.backgroundId == null ? null : entities[draft.backgroundId];
+    final race = draft.raceId == null ? null : entities[draft.raceId];
+    final bgRefs = bg?.fields['granted_skill_refs'];
+    if (bgRefs is List) out.addAll(bgRefs.whereType<String>());
+    final raceRefs = race?.fields['granted_skill_proficiencies'];
+    if (raceRefs is List) out.addAll(raceRefs.whereType<String>());
+    out.addAll(draft.skillChoiceIds);
+    return out;
   }
 
   void _toggle(String storageKey, List<String> current, int pick, String id) {
@@ -624,9 +642,144 @@ class _ChipPicker extends StatelessWidget {
   final int pick;
   final ValueChanged<String> onToggle;
   final DmToolColors palette;
-  final String? emptyHint;
+  final Set<String> disabledIds;
+  final String disabledHint;
 
   const _ChipPicker({
+    required this.options,
+    required this.picked,
+    required this.pick,
+    required this.onToggle,
+    required this.palette,
+    this.disabledIds = const {},
+    this.disabledHint = '',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (options.isEmpty) {
+      return Text(
+        'No options available.',
+        style: TextStyle(
+          fontSize: 11,
+          color: palette.sidebarLabelSecondary,
+          fontStyle: FontStyle.italic,
+        ),
+      );
+    }
+    // W8: skip `toSet()` — `picked` is the user's selection list (cap
+    // ~4). Linear `contains` on a tiny list is cheaper than allocating
+    // a Set + hashing per row.
+    final atCap = picked.length >= pick;
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      children: [
+        for (final o in options)
+          _OptionChip(
+            label: o.label,
+            description: o.description,
+            selected: picked.contains(o.id),
+            disabled: disabledIds.contains(o.id) ||
+                (atCap && !picked.contains(o.id)),
+            disabledHint:
+                disabledIds.contains(o.id) ? disabledHint : '',
+            onTap: () => onToggle(o.id),
+            palette: palette,
+          ),
+      ],
+    );
+  }
+}
+
+class _OptionChip extends StatelessWidget {
+  final String label;
+  final String description;
+  final bool selected;
+  final bool disabled;
+  final String disabledHint;
+  final VoidCallback onTap;
+  final DmToolColors palette;
+
+  const _OptionChip({
+    required this.label,
+    required this.description,
+    required this.selected,
+    required this.disabled,
+    required this.disabledHint,
+    required this.onTap,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = selected
+        ? palette.featureCardAccent
+        : palette.featureCardBg;
+    final fg = disabled
+        ? palette.sidebarLabelSecondary
+        : selected
+            ? palette.canvasBg
+            : palette.tabActiveText;
+    final border = selected
+        ? palette.featureCardAccent
+        : palette.featureCardBorder;
+
+    final chip = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: palette.chr,
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (selected)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Icon(Icons.check, size: 12, color: fg),
+            ),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: fg),
+          ),
+          if (disabled && disabledHint.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                '($disabledHint)',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontStyle: FontStyle.italic,
+                  color: fg,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+
+    final tappable = InkWell(
+      onTap: disabled ? null : onTap,
+      borderRadius: palette.chr,
+      child: chip,
+    );
+
+    if (description.isEmpty) return tappable;
+    return Tooltip(message: description, child: tappable);
+  }
+}
+
+class _RowPicker extends StatelessWidget {
+  final List<_Option> options;
+  final List<String> picked;
+  final int pick;
+  final ValueChanged<String> onToggle;
+  final DmToolColors palette;
+  final String? emptyHint;
+
+  const _RowPicker({
     required this.options,
     required this.picked,
     required this.pick,
@@ -647,9 +800,6 @@ class _ChipPicker extends StatelessWidget {
         ),
       );
     }
-    // W8: skip `toSet()` — `picked` is the user's selection list (cap
-    // ~4). Linear `contains` on a tiny list is cheaper than allocating
-    // a Set + hashing per row.
     final atCap = picked.length >= pick;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

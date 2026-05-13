@@ -220,17 +220,24 @@ void main() {
       );
     });
 
-    test('rejects single +1 (incomplete distribution)', () {
+    test('accepts +1 / +1 across two abilities (partial)', () {
       expect(
-        AbilityScoreValidator.validateBackgroundAsi(bonuses(str: 1)),
-        isNotNull,
+        AbilityScoreValidator.validateBackgroundAsi(bonuses(str: 1, dex: 1)),
+        isNull,
       );
     });
 
-    test('rejects +2 alone', () {
+    test('accepts single +1 (partial)', () {
+      expect(
+        AbilityScoreValidator.validateBackgroundAsi(bonuses(str: 1)),
+        isNull,
+      );
+    });
+
+    test('accepts +2 alone (partial)', () {
       expect(
         AbilityScoreValidator.validateBackgroundAsi(bonuses(str: 2)),
-        isNotNull,
+        isNull,
       );
     });
 
@@ -240,13 +247,10 @@ void main() {
       expect(err, contains('exceeds 3'));
     });
 
-    test('rejects two +2 bonuses (pattern violation at total 3 not possible, but +2/+2/-1 ruled out elsewhere)', () {
-      // total=3 reachable only by +2/+1 or +1/+1/+1. +2 paired with no
-      // partner (total 2) already rejected by pattern check below.
-      expect(
-        AbilityScoreValidator.validateBackgroundAsi(bonuses(str: 2, dex: 1, con: 0)),
-        isNull,
-      );
+    test('rejects per-ability over +2', () {
+      final err = AbilityScoreValidator.validateBackgroundAsi(
+          bonuses(str: 3));
+      expect(err, contains('cannot exceed +2'));
     });
 
     test('rejects negative bonus', () {
