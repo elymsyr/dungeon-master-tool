@@ -24,6 +24,9 @@ List<Map<String, dynamic>> srdSpecies() => [
           'granted_action_refs': [
             ref('creature-action', 'Breath Weapon (Dragonborn)'),
           ],
+          'granted_bonus_action_refs': [
+            ref('creature-action', 'Draconic Flight'),
+          ],
           'subspecies_options': [
             {
               'name': 'Black',
@@ -91,6 +94,7 @@ List<Map<String, dynamic>> srdSpecies() => [
           'granted_damage_resistances': [lookup('damage-type', 'Poison')],
           'trait_refs': [
             ref('trait', 'Dwarven Resilience'),
+            ref('trait', 'Dwarven Toughness'),
             ref('trait', 'Stonecunning'),
             ref('trait', 'Forge Wise'),
           ],
@@ -191,13 +195,19 @@ List<Map<String, dynamic>> srdSpecies() => [
             },
             {
               'name': 'Fire Giant',
-              'description': 'Fire resistance.',
-              'granted_damage_resistances': [lookup('damage-type', 'Fire')],
+              'description':
+                  "Fire's Burn — when you hit a target and deal damage, also deal 1d10 Fire damage.",
+              'granted_action_refs': [
+                ref('creature-action', "Fire's Burn"),
+              ],
             },
             {
               'name': 'Frost Giant',
-              'description': 'Cold resistance.',
-              'granted_damage_resistances': [lookup('damage-type', 'Cold')],
+              'description':
+                  "Frost's Chill — when you hit a target and deal damage, also deal 1d6 Cold damage and reduce its Speed by 10 ft.",
+              'granted_action_refs': [
+                ref('creature-action', "Frost's Chill"),
+              ],
             },
             {
               'name': 'Hill Giant',
@@ -219,10 +229,10 @@ List<Map<String, dynamic>> srdSpecies() => [
             },
             {
               'name': 'Storm Giant',
-              'description': 'Lightning and Thunder resistance.',
-              'granted_damage_resistances': [
-                lookup('damage-type', 'Lightning'),
-                lookup('damage-type', 'Thunder'),
+              'description':
+                  "Storm's Thunder — when you take damage from a creature within 60 ft, Reaction to deal 1d8 Thunder damage.",
+              'granted_reaction_refs': [
+                ref('creature-action', "Storm's Thunder"),
               ],
             },
           ],

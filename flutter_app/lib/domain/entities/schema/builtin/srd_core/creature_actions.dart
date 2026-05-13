@@ -1902,4 +1902,124 @@ List<Map<String, dynamic>> srdCreatureActions() => [
         description:
             'When you take damage, roll 1d12 + your Constitution modifier and reduce the damage by that amount. Uses = PB per Long Rest.',
       ),
+      _a(
+        name: 'Storm\'s Thunder',
+        actionType: 'Reaction',
+        description:
+            'When you take damage from a creature within 60 feet of you, you can deal 1d8 Thunder damage to that creature. Uses = PB per Long Rest.',
+      ),
+      _a(
+        name: 'Fire\'s Burn',
+        actionType: 'Free Action',
+        description:
+            'When you hit a target with an attack roll and deal damage to it, you can also deal 1d10 Fire damage to that target.',
+      ),
+      _a(
+        name: 'Frost\'s Chill',
+        actionType: 'Free Action',
+        description:
+            'When you hit a target with an attack roll and deal damage to it, you can also deal 1d6 Cold damage to that target and reduce its Speed by 10 feet until the start of your next turn.',
+      ),
+      _a(
+        name: 'Draconic Flight',
+        actionType: 'Bonus Action',
+        description:
+            'Starting at character level 5, you can channel draconic magic to give yourself temporary flight. Sprout spectral wings on your back that last for 10 minutes or until you retract them (no action required). During that time, you have a Fly Speed equal to your Speed. Once per Long Rest.',
+      ),
+
+      // ── Class-feature reactions / bonus actions ──────────────────────────
+      _a(
+        name: 'Cutting Words',
+        actionType: 'Reaction',
+        description:
+            'When a creature within 60 feet of you that you can see makes an attack roll, ability check, or damage roll, you can expend one use of Bardic Inspiration and subtract that die\'s roll from the creature\'s result.',
+      ),
+      _a(
+        name: 'Retaliation',
+        actionType: 'Reaction',
+        description:
+            'When you take damage from a creature that is within 5 feet of you, you can take a Reaction to make one melee attack against that creature, using a weapon or an Unarmed Strike.',
+      ),
+      _a(
+        name: 'Intimidating Presence',
+        actionType: 'Bonus Action',
+        description:
+            'Strike terror into others. Each creature of your choice in a 30-foot Emanation originating from you must make a Wisdom save (DC 8 + Str + PB) or have the Frightened condition for 1 minute. Save repeats at end of each turn.',
+      ),
+      _a(
+        name: 'Preserve Life',
+        actionType: 'Magic Action',
+        description:
+            'Expend one use of Channel Divinity. Present your Holy Symbol and evoke healing energy that can restore HP = 5 × Cleric level. Choose Bloodied creatures within 30 feet and divide HP among them; no creature healed above half maximum.',
+      ),
+      _a(
+        name: 'Sacred Weapon',
+        actionType: 'Free Action',
+        description:
+            'Expend one use of Channel Divinity to imbue one Melee weapon you\'re holding with positive energy. For 10 minutes (or until you use this again), add Cha mod (min +1) to attack rolls with that weapon and it deals Radiant damage instead of its normal type. The weapon emits Bright Light 20 ft + Dim 20 ft.',
+      ),
+      _a(
+        name: 'Abjure Foes',
+        actionType: 'Magic Action',
+        description:
+            'Expend one use of Channel Divinity to overwhelm foes with awe. Target creatures equal to your Cha mod within 60 feet. Each makes a Wisdom save or has Frightened condition for 1 minute or until taking damage. Once per Long Rest.',
+      ),
+      _a(
+        name: 'Wholeness of Body',
+        actionType: 'Bonus Action',
+        description:
+            'Roll your Martial Arts die. Regain HP equal to the roll + your Wisdom modifier (min 1). Uses = Wis mod per Long Rest.',
+      ),
+      _a(
+        name: 'Land\'s Aid',
+        actionType: 'Magic Action',
+        description:
+            'Expend one use of Wild Shape. Choose a point within 60 feet; vitality-giving flowers + life-draining thorns appear in a 10-foot-radius Sphere there. Each creature you choose in the sphere makes a Con save: 2d6 Necrotic on fail (half on success). One creature in area regains 2d6 HP. Damage + heal scale with Druid level.',
+      ),
+      _a(
+        name: 'Nature\'s Sanctuary',
+        actionType: 'Magic Action',
+        description:
+            'Expend one use of Wild Shape to summon spectral trees and vines in a 15-foot Cube on the ground within 120 feet. Lasts 1 minute. You + allies in the area gain Half Cover and Resistance to your current land\'s damage type.',
+      ),
+      _a(
+        name: 'Dragon Wings',
+        actionType: 'Bonus Action',
+        description:
+            'Cause draconic wings to appear on your back. They last for 1 hour or until you dismiss them (no action required). For the duration, you have a Fly Speed of 60 feet. Once per Long Rest unless you spend 3 Sorcery Points (no action required) to restore the use.',
+      ),
+
+      // ── Monk class actions ───────────────────────────────────────────────
+      _a(
+        name: 'Deflect Attacks',
+        actionType: 'Reaction',
+        description:
+            'When an attack roll hits you and the attack deals Bludgeoning, Piercing, or Slashing damage, you can take a Reaction to reduce the attack\'s total damage by 1d10 + your Dex modifier + Monk level. If reduced to 0 and ranged, you can spend 1 Focus Point to redirect at a target within 5 ft (melee) or 60 ft (ranged) with a Dex save.',
+      ),
+      _a(
+        name: 'Slow Fall',
+        actionType: 'Reaction',
+        description:
+            'When you fall, you can take a Reaction to reduce any damage you take from the fall by 5 × your Monk level.',
+      ),
+
+      // ── Rogue / Thief class actions ──────────────────────────────────────
+      _a(
+        name: 'Steady Aim',
+        actionType: 'Bonus Action',
+        description:
+            'Give yourself Advantage on your next attack roll on the current turn. You can only use this if you haven\'t moved during this turn, and after you use it your Speed is 0 until the end of the current turn.',
+      ),
+      _a(
+        name: 'Uncanny Dodge',
+        actionType: 'Reaction',
+        description:
+            'When an attacker that you can see hits you with an attack roll, you can take a Reaction to halve the attack\'s damage against you (round down).',
+      ),
+      _a(
+        name: 'Fast Hands',
+        actionType: 'Bonus Action',
+        description:
+            'Take one of the following: Sleight of Hand (Dex check to pick a lock or disarm a trap with Thieves\' Tools or pick a pocket); or Use an Object (take the Utilize action, or take the Magic action to use a magic item that requires that action).',
+      ),
     ];

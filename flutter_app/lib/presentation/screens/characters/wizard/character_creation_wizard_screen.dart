@@ -275,52 +275,52 @@ class _CharacterCreationWizardScreenState
                       ),
                     ),
                     Step(
-                      title: const Text('Feats'),
+                      title: const Text('Abilities'),
                       isActive: _currentStep >= 5,
                       state: _stateFor(5, draft),
                       content: _StepBody(
                         active: _currentStep == 5,
+                        child:
+                            _AbilitiesStep(draft: draft, notifier: notifier),
+                      ),
+                    ),
+                    Step(
+                      title: const Text('Feats'),
+                      isActive: _currentStep >= 6,
+                      state: _stateFor(6, draft),
+                      content: _StepBody(
+                        active: _currentStep == 6,
                         child: FeatsStep(draft: draft, notifier: notifier),
                       ),
                     ),
                     Step(
                       title: const Text('Proficiencies & Languages'),
-                      isActive: _currentStep >= 6,
-                      state: _stateFor(6, draft),
+                      isActive: _currentStep >= 7,
+                      state: _stateFor(7, draft),
                       content: _StepBody(
-                        active: _currentStep == 6,
+                        active: _currentStep == 7,
                         child: ProficienciesStep(
                             draft: draft, notifier: notifier),
                       ),
                     ),
                     Step(
                       title: const Text('Spells'),
-                      isActive: _currentStep >= 7,
-                      state: _stateFor(7, draft),
+                      isActive: _currentStep >= 8,
+                      state: _stateFor(8, draft),
                       content: _StepBody(
-                        active: _currentStep == 7,
+                        active: _currentStep == 8,
                         child:
                             SpellsStep(draft: draft, notifier: notifier),
                       ),
                     ),
                     Step(
                       title: const Text('Equipment'),
-                      isActive: _currentStep >= 8,
-                      state: _stateFor(8, draft),
-                      content: _StepBody(
-                        active: _currentStep == 8,
-                        child:
-                            EquipmentStep(draft: draft, notifier: notifier),
-                      ),
-                    ),
-                    Step(
-                      title: const Text('Abilities'),
                       isActive: _currentStep >= 9,
                       state: _stateFor(9, draft),
                       content: _StepBody(
                         active: _currentStep == 9,
                         child:
-                            _AbilitiesStep(draft: draft, notifier: notifier),
+                            EquipmentStep(draft: draft, notifier: notifier),
                       ),
                     ),
                     Step(
@@ -375,15 +375,15 @@ class _CharacterCreationWizardScreenState
       2 => draft.classId == null ? 'Pick a class.' : null,
       3 => null,
       4 => null,
-      5 => validateFeatsStep(draft, _wizardEntities()),
-      6 => _validateProficiencies(draft),
-      7 => _validateSpells(draft),
-      8 => null,
-      9 => AbilityScoreValidator.validate(
+      5 => AbilityScoreValidator.validate(
               method: draft.abilityMethod,
               scores: draft.baseAbilities,
             ) ??
             AbilityScoreValidator.validateBackgroundAsi(draft.racialBonuses),
+      6 => validateFeatsStep(draft, _wizardEntities()),
+      7 => _validateProficiencies(draft),
+      8 => _validateSpells(draft),
+      9 => null,
       10 => null, // personality is optional
       11 => null,
       _ => null,
@@ -1616,9 +1616,6 @@ class _AbilitiesStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final asiTotal = _asiTotal(draft);
-    final asiError = AbilityScoreValidator.validateBackgroundAsi(
-      draft.racialBonuses,
-    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1674,7 +1671,6 @@ class _AbilitiesStep extends StatelessWidget {
               base: draft.baseAbilities[k] ?? 10,
               racial: draft.racialBonuses[k] ?? 0,
               asiTotal: asiTotal,
-              asiPattern: _asiPattern(draft),
               method: draft.abilityMethod,
               standardArrayUsed: _standardArrayUsageFor(draft, k),
               onBase: (v) => notifier.setAbility(k, v),
@@ -1683,7 +1679,6 @@ class _AbilitiesStep extends StatelessWidget {
         const SizedBox(height: 8),
         _BackgroundAsiHeader(
           total: asiTotal,
-          error: asiError,
           palette: palette,
           onClear: () {
             for (final k in kAbilityKeys) {
@@ -1701,20 +1696,6 @@ class _AbilitiesStep extends StatelessWidget {
       t += d.racialBonuses[k] ?? 0;
     }
     return t;
-  }
-
-  /// Sorted-descending list of the non-zero ASI bonuses. Used by the row
-  /// dropdown to decide which option values are still legal (so the
-  /// widget locks out picks that would break the +2/+1 or +1/+1/+1
-  /// pattern before validation runs).
-  static List<int> _asiPattern(CharacterDraft d) {
-    final nonZero = <int>[];
-    for (final k in kAbilityKeys) {
-      final v = d.racialBonuses[k] ?? 0;
-      if (v > 0) nonZero.add(v);
-    }
-    nonZero.sort((a, b) => b.compareTo(a));
-    return nonZero;
   }
 
   /// For Standard Array UI: which values are still available given other
@@ -1774,73 +1755,41 @@ class _PointBuyHeader extends StatelessWidget {
 
 class _BackgroundAsiHeader extends StatelessWidget {
   final int total;
-  final String? error;
   final DmToolColors palette;
   final VoidCallback onClear;
 
   const _BackgroundAsiHeader({
     required this.total,
-    required this.error,
     required this.palette,
     required this.onClear,
   });
 
   @override
   Widget build(BuildContext context) {
-    final ok = error == null && total == 3;
-    final iconColor = error != null
-        ? palette.dangerBtnBg
-        : ok
-            ? palette.successBtnBg
-            : palette.sidebarLabelSecondary;
-    final iconData = error != null
-        ? Icons.warning_amber
-        : ok
-            ? Icons.check_circle
-            : Icons.info_outline;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Row(
-          children: [
-            Icon(iconData, size: 16, color: iconColor),
-            const SizedBox(width: 6),
-            Text(
-              'Background ASI: $total / 3',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: error != null
-                    ? palette.dangerBtnBg
-                    : palette.tabActiveText,
-              ),
-            ),
-            const Spacer(),
-            if (total > 0)
-              TextButton.icon(
-                icon: const Icon(Icons.clear, size: 14),
-                label: const Text('Reset'),
-                style: TextButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                  minimumSize: const Size(0, 28),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                onPressed: onClear,
-              ),
-          ],
-        ),
-        const SizedBox(height: 2),
+        Icon(Icons.info_outline, size: 16, color: palette.sidebarLabelSecondary),
+        const SizedBox(width: 6),
         Text(
-          error ??
-              '2024 SRD: distribute +3 from your background — either +2 to one ability and +1 to another, or +1 to three different abilities.',
+          'Background ASI: $total / 3',
           style: TextStyle(
-            fontSize: 11,
-            color: error != null
-                ? palette.dangerBtnBg
-                : palette.sidebarLabelSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: palette.tabActiveText,
           ),
         ),
+        const Spacer(),
+        if (total > 0)
+          TextButton.icon(
+            icon: const Icon(Icons.clear, size: 14),
+            label: const Text('Reset'),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+              minimumSize: const Size(0, 28),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            onPressed: onClear,
+          ),
       ],
     );
   }
@@ -1851,7 +1800,6 @@ class _AbilityRow extends StatelessWidget {
   final int base;
   final int racial;
   final int asiTotal;
-  final List<int> asiPattern;
   final AbilityScoreMethod method;
   final List<int> standardArrayUsed;
   final ValueChanged<int> onBase;
@@ -1862,7 +1810,6 @@ class _AbilityRow extends StatelessWidget {
     required this.base,
     required this.racial,
     required this.asiTotal,
-    required this.asiPattern,
     required this.method,
     required this.standardArrayUsed,
     required this.onBase,
@@ -1974,18 +1921,12 @@ class _AbilityRow extends StatelessWidget {
 
   int _countOf(List<int> arr, int v) => arr.where((x) => x == v).length;
 
-  /// Locks ASI dropdown picks that would break the 2024 SRD background
-  /// pattern (+2/+1 across two abilities, or +1/+1/+1 across three).
-  /// The current ability's contribution is removed from the running totals
-  /// so the user can always re-select their own current value.
+  /// Soft cap: each ability ≤ +2, total ≤ +3. Patterns +2/+1, +1/+1,
+  /// +1/+1/+1 all reachable.
   bool _asiOptionEnabled(int candidate) {
     final othersTotal = asiTotal - racial;
     if (othersTotal + candidate > 3) return false;
-    if (candidate == 2) {
-      final othersHaveTwo =
-          asiPattern.where((v) => v == 2).length > (racial == 2 ? 1 : 0);
-      if (othersHaveTwo) return false;
-    }
+    if (candidate > 2) return false;
     return true;
   }
 }
