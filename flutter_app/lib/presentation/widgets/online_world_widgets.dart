@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../application/providers/world_membership_provider.dart';
 import '../../domain/entities/online/world_member.dart';
@@ -176,7 +177,10 @@ class MemberRow extends StatelessWidget {
             ? '@${member.username}'
             : member.userId.substring(0, 8));
     final isDm = member.role == WorldRole.dm;
-    return Padding(
+    return InkWell(
+      onTap: () => context.push('/profile/${member.userId}'),
+      borderRadius: palette.br,
+      child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       child: Row(
         children: [
@@ -229,6 +233,7 @@ class MemberRow extends StatelessWidget {
             ),
           ],
         ],
+      ),
       ),
     );
   }

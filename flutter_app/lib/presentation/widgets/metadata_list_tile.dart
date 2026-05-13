@@ -38,6 +38,10 @@ class MetadataListTile extends StatelessWidget {
   /// row shows live combat info instead of authored tags.
   final Widget? infoChips;
 
+  /// Small icons overlaid on the top-right corner of the card cover area.
+  /// Used for role/online status indicators on world cards.
+  final List<Widget> topRightOverlay;
+
   const MetadataListTile({
     super.key,
     required this.icon,
@@ -52,6 +56,7 @@ class MetadataListTile extends StatelessWidget {
     this.layout = MetadataTileLayout.leftAvatar,
     this.trailingBadges = const [],
     this.infoChips,
+    this.topRightOverlay = const [],
   });
 
   bool get _hasImage =>
@@ -96,7 +101,21 @@ class MetadataListTile extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _topCover(),
+        topRightOverlay.isEmpty
+            ? _topCover()
+            : Stack(
+                children: [
+                  _topCover(),
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: topRightOverlay,
+                    ),
+                  ),
+                ],
+              ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
           child: Row(

@@ -680,8 +680,12 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
     final worldId = (data?['world_id'] as String?) ?? campaignName;
     final onlineIds = ref.watch(onlineWorldIdsProvider);
     final isOnline = onlineIds.contains(worldId);
+    final role =
+        ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
+    final isDm = role == WorldRole.dm;
 
     if (isOnline) {
+      final label = isDm ? 'Online · Auto-sync' : 'Online · Player';
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -700,7 +704,7 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
                     size: 14, color: palette.successBtnBg),
                 const SizedBox(width: 6),
                 Text(
-                  'Online · Auto-sync',
+                  label,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -710,19 +714,28 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
               ],
             ),
           ),
-          const SizedBox(width: 4),
-          IconButton(
-            tooltip: 'Make Offline',
-            icon: const Icon(Icons.cloud_off, size: 16),
-            onPressed: _busy ? null : () => _confirmOffline(worldId),
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.zero,
-            constraints:
-                const BoxConstraints(minWidth: 28, minHeight: 28),
-          ),
+          // Make Offline yalnızca DM'e açık — player unpublishing yapamaz
+          // (RLS reddediyor). Buton player'a görünmüyor.
+          if (isDm) ...[
+            const SizedBox(width: 4),
+            IconButton(
+              tooltip: 'Make Offline',
+              icon: const Icon(Icons.cloud_off, size: 16),
+              onPressed: _busy ? null : () => _confirmOffline(worldId),
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints:
+                  const BoxConstraints(minWidth: 28, minHeight: 28),
+            ),
+          ],
         ],
       );
     }
+
+    // Offline world → sadece DM "Make Online" yapabilir. Player rolündeki
+    // user offline world görmemeli (joined world her zaman online'dır),
+    // ama defansif olarak: sadece DM/none için butonu render et.
+    if (role == WorldRole.player) return const SizedBox.shrink();
 
     return _ActionButton(
       icon: Icons.cloud_upload,
