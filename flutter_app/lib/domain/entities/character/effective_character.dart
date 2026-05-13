@@ -87,6 +87,19 @@ abstract class EffectiveCharacter with _$EffectiveCharacter {
     /// drives display of narrative class/species/background features (e.g.
     /// Druidic, Thieves' Cant, Fey Ancestry) on the character sheet.
     @Default([]) List<String> autoGrantedTraitIds,
+    /// Creature-action IDs auto-granted by species / subspecies via
+    /// `granted_action_refs`. Surfaced to the sheet under the Actions
+    /// section so racial actions (e.g. Dragonborn Breath Weapon) render
+    /// alongside class actions.
+    @Default([]) List<String> grantedActionIds,
+    /// Creature-action IDs granted as bonus actions (e.g. Orc Adrenaline
+    /// Rush, Wood Elf bonus speeds). Sourced from
+    /// `granted_bonus_action_refs` on species + subspecies rows.
+    @Default([]) List<String> grantedBonusActionIds,
+    /// Creature-action IDs granted as reactions (e.g. Orc Relentless
+    /// Endurance, Goliath Stone's Endurance). Sourced from
+    /// `granted_reaction_refs` on species + subspecies rows.
+    @Default([]) List<String> grantedReactionIds,
     /// Unarmored AC formulas registered by feats with `unarmored_ac_formula`
     /// effects whose predicates are satisfied. Each entry is the raw effect
     /// row preserved as-is so downstream UI can read `payload.base`,

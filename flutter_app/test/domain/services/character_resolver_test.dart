@@ -458,6 +458,419 @@ void main() {
       expect(eff.speedBonus, 5);
     });
 
+    test('species ability_score_bonus modifier raises target ability', () {
+      final dwarf = _e(
+        id: 'species_dwarf',
+        slug: 'species',
+        name: 'Dwarf',
+        fields: {
+          'granted_modifiers': [
+            {'kind': 'ability_score_bonus', 'ability': 'CON', 'value': 2},
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_dwarf',
+        'base_abilities': {
+          'STR': 10, 'DEX': 10, 'CON': 14,
+          'INT': 10, 'WIS': 10, 'CHA': 10,
+        },
+      });
+      final eff = CharacterResolver.resolve(pc, {dwarf.id: dwarf});
+      expect(eff.effectiveAbilities['CON'], 16);
+    });
+
+    test('ability_score_bonus accepts full ability name + clamps at max 20', () {
+      final boon = _e(
+        id: 'species_boon',
+        slug: 'species',
+        name: 'Boon',
+        fields: {
+          'granted_modifiers': [
+            {'kind': 'ability_score_bonus', 'ability': 'Strength', 'value': 5},
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_boon',
+        'base_abilities': {
+          'STR': 18, 'DEX': 10, 'CON': 10,
+          'INT': 10, 'WIS': 10, 'CHA': 10,
+        },
+      });
+      final eff = CharacterResolver.resolve(pc, {boon.id: boon});
+      expect(eff.effectiveAbilities['STR'], 20);
+    });
+
+    test('subspecies ability_score_bonus stacks with species bonus', () {
+      final dwarf = _e(
+        id: 'species_dwarf',
+        slug: 'species',
+        name: 'Dwarf',
+        fields: {
+          'granted_modifiers': [
+            {'kind': 'ability_score_bonus', 'ability': 'CON', 'value': 2},
+          ],
+          'subspecies_options': [
+            {
+              'name': 'Hill',
+              'granted_modifiers': [
+                {'kind': 'ability_score_bonus', 'ability': 'WIS', 'value': 1},
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_dwarf',
+        'subspecies_id': 'Hill',
+        'base_abilities': {
+          'STR': 10, 'DEX': 10, 'CON': 14,
+          'INT': 10, 'WIS': 12, 'CHA': 10,
+        },
+      });
+      final eff = CharacterResolver.resolve(pc, {dwarf.id: dwarf});
+      expect(eff.effectiveAbilities['CON'], 16);
+      expect(eff.effectiveAbilities['WIS'], 13);
+    });
+
+    test('species trait_refs populate autoGrantedTraitIds', () {
+      final trait = _e(
+        id: 'trait_resilience',
+        slug: 'trait',
+        name: 'Dwarven Resilience',
+      );
+      final dwarf = _e(
+        id: 'species_dwarf',
+        slug: 'species',
+        name: 'Dwarf',
+        fields: {
+          'trait_refs': [
+            {'slug': 'trait', 'name': 'Dwarven Resilience'},
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {'race_id': 'species_dwarf'});
+      final eff = CharacterResolver.resolve(pc, {
+        dwarf.id: dwarf,
+        trait.id: trait,
+      });
+      expect(eff.autoGrantedTraitIds, contains('trait_resilience'));
+      expect(eff.grantSources['trait_resilience'], contains('Dwarf'));
+    });
+
+    test('species granted_action_refs populate grantedActionIds', () {
+      final breath = _e(
+        id: 'action_breath',
+        slug: 'creature-action',
+        name: 'Breath Weapon',
+      );
+      final dragonborn = _e(
+        id: 'species_dragonborn',
+        slug: 'species',
+        name: 'Dragonborn',
+        fields: {
+          'granted_action_refs': [
+            {'slug': 'creature-action', 'name': 'Breath Weapon'},
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {'race_id': 'species_dragonborn'});
+      final eff = CharacterResolver.resolve(pc, {
+        dragonborn.id: dragonborn,
+        breath.id: breath,
+      });
+      expect(eff.grantedActionIds, contains('action_breath'));
+    });
+
+    test('subspecies action/bonus_action/reaction refs fold in', () {
+      final relentless = _e(
+        id: 'action_relentless',
+        slug: 'creature-action',
+        name: "Stone's Endurance",
+      );
+      final jaunt = _e(
+        id: 'action_jaunt',
+        slug: 'creature-action',
+        name: "Cloud's Jaunt",
+      );
+      final burn = _e(
+        id: 'action_burn',
+        slug: 'creature-action',
+        name: "Fire's Burn",
+      );
+      final goliath = _e(
+        id: 'species_goliath',
+        slug: 'species',
+        name: 'Goliath',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Hill Giant',
+              'granted_action_refs': [
+                {'slug': 'creature-action', 'name': "Fire's Burn"},
+              ],
+              'granted_bonus_action_refs': [
+                {'slug': 'creature-action', 'name': "Cloud's Jaunt"},
+              ],
+              'granted_reaction_refs': [
+                {'slug': 'creature-action', 'name': "Stone's Endurance"},
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_goliath',
+        'subspecies_id': 'Hill Giant',
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        goliath.id: goliath,
+        relentless.id: relentless,
+        jaunt.id: jaunt,
+        burn.id: burn,
+      });
+      expect(eff.grantedActionIds, contains('action_burn'));
+      expect(eff.grantedBonusActionIds, contains('action_jaunt'));
+      expect(eff.grantedReactionIds, contains('action_relentless'));
+    });
+
+    test('background_asi bumps abilities gated by ability_score_options', () {
+      final str = _e(id: 'ab_str', slug: 'ability', name: 'Strength');
+      final con = _e(id: 'ab_con', slug: 'ability', name: 'Constitution');
+      final dex = _e(id: 'ab_dex', slug: 'ability', name: 'Dexterity');
+      final bg = _e(
+        id: 'bg_soldier',
+        slug: 'background',
+        name: 'Soldier',
+        fields: {
+          'ability_score_options': [
+            {'slug': 'ability', 'name': 'Strength'},
+            {'slug': 'ability', 'name': 'Constitution'},
+            {'slug': 'ability', 'name': 'Dexterity'},
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'background_id': 'bg_soldier',
+        'background_asi': {'STR': 2, 'CON': 1},
+        'base_abilities': {
+          'STR': 13, 'DEX': 12, 'CON': 14,
+          'INT': 10, 'WIS': 10, 'CHA': 10,
+        },
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        bg.id: bg,
+        str.id: str,
+        con.id: con,
+        dex.id: dex,
+      });
+      expect(eff.effectiveAbilities['STR'], 15);
+      expect(eff.effectiveAbilities['CON'], 15);
+      expect(eff.effectiveAbilities['DEX'], 12);
+    });
+
+    test('background_asi rejects abilities not in ability_score_options', () {
+      final str = _e(id: 'ab_str', slug: 'ability', name: 'Strength');
+      final bg = _e(
+        id: 'bg_acolyte',
+        slug: 'background',
+        name: 'Acolyte',
+        fields: {
+          'ability_score_options': [
+            {'slug': 'ability', 'name': 'Strength'},
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'background_id': 'bg_acolyte',
+        'background_asi': {'CHA': 2},
+        'base_abilities': {
+          'STR': 10, 'DEX': 10, 'CON': 10,
+          'INT': 10, 'WIS': 10, 'CHA': 10,
+        },
+      });
+      final eff = CharacterResolver.resolve(pc, {bg.id: bg, str.id: str});
+      expect(eff.effectiveAbilities['CHA'], 10);
+      expect(eff.warnings, anyElement(contains('background_asi CHA')));
+    });
+
+    test('background_asi caps at 20', () {
+      final str = _e(id: 'ab_str', slug: 'ability', name: 'Strength');
+      final bg = _e(
+        id: 'bg_x',
+        slug: 'background',
+        name: 'X',
+        fields: {
+          'ability_score_options': [
+            {'slug': 'ability', 'name': 'Strength'},
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'background_id': 'bg_x',
+        'background_asi': {'STR': 5},
+        'base_abilities': {
+          'STR': 18, 'DEX': 10, 'CON': 10,
+          'INT': 10, 'WIS': 10, 'CHA': 10,
+        },
+      });
+      final eff = CharacterResolver.resolve(pc, {bg.id: bg, str.id: str});
+      expect(eff.effectiveAbilities['STR'], 20);
+    });
+
+    test('species + subspecies innate spells fold into granted spells/cantrips', () {
+      final firebolt = _e(id: 'sp_firebolt', slug: 'spell', name: 'Fire Bolt');
+      final hellish = _e(id: 'sp_hellish', slug: 'spell', name: 'Hellish Rebuke');
+      final tiefling = _e(
+        id: 'species_tiefling',
+        slug: 'species',
+        name: 'Tiefling',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Infernal',
+              'granted_cantrip_refs': [
+                {'slug': 'spell', 'name': 'Fire Bolt'},
+              ],
+              'granted_spell_refs': [
+                {'slug': 'spell', 'name': 'Hellish Rebuke'},
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_tiefling',
+        'subspecies_id': 'Infernal',
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        tiefling.id: tiefling,
+        firebolt.id: firebolt,
+        hellish.id: hellish,
+      });
+      expect(eff.grantedCantripIds, contains('sp_firebolt'));
+      expect(eff.grantedSpellIds, contains('sp_hellish'));
+      expect(eff.grantSources['sp_firebolt'], contains('Infernal Tiefling'));
+    });
+
+    test('granted_spells_at_level gates by total character level', () {
+      final faerie = _e(id: 'sp_faerie', slug: 'spell', name: 'Faerie Fire');
+      final darkness = _e(id: 'sp_darkness', slug: 'spell', name: 'Darkness');
+      final elf = _e(
+        id: 'species_elf',
+        slug: 'species',
+        name: 'Elf',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Drow',
+              'granted_spells_at_level': [
+                {
+                  'spell_ref': {'slug': 'spell', 'name': 'Faerie Fire'},
+                  'at_level': 3,
+                },
+                {
+                  'spell_ref': {'slug': 'spell', 'name': 'Darkness'},
+                  'at_level': 5,
+                },
+              ],
+            },
+          ],
+        },
+      );
+      final cls = _e(id: 'cls_wizard', slug: 'class', name: 'Wizard');
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_elf',
+        'subspecies_id': 'Drow',
+        'class_levels': {'cls_wizard': 3},
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        elf.id: elf,
+        faerie.id: faerie,
+        darkness.id: darkness,
+        cls.id: cls,
+      });
+      expect(eff.grantedSpellIds, contains('sp_faerie'));
+      expect(eff.grantedSpellIds, isNot(contains('sp_darkness')));
+    });
+
+    test('granted_spells_at_level with is_cantrip routes to cantrip list', () {
+      final firebolt = _e(id: 'sp_firebolt', slug: 'spell', name: 'Fire Bolt');
+      final tief = _e(
+        id: 'species_tief',
+        slug: 'species',
+        name: 'Tiefling',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Infernal',
+              'granted_spells_at_level': [
+                {
+                  'spell_ref': {'slug': 'spell', 'name': 'Fire Bolt'},
+                  'at_level': 1,
+                  'is_cantrip': true,
+                },
+              ],
+            },
+          ],
+        },
+      );
+      final cls = _e(id: 'cls_x', slug: 'class', name: 'X');
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_tief',
+        'subspecies_id': 'Infernal',
+        'class_levels': {'cls_x': 1},
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        tief.id: tief,
+        firebolt.id: firebolt,
+        cls.id: cls,
+      });
+      expect(eff.grantedCantripIds, contains('sp_firebolt'));
+      expect(eff.grantedSpellIds, isNot(contains('sp_firebolt')));
+    });
+
+    test('granted_spells_at_level uses_per_long_rest creates resource pool', () {
+      final faerie = _e(id: 'sp_faerie', slug: 'spell', name: 'Faerie Fire');
+      final elf = _e(
+        id: 'species_elf',
+        slug: 'species',
+        name: 'Elf',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Drow',
+              'granted_spells_at_level': [
+                {
+                  'spell_ref': {'slug': 'spell', 'name': 'Faerie Fire'},
+                  'at_level': 3,
+                  'uses_per_long_rest': 1,
+                },
+              ],
+            },
+          ],
+        },
+      );
+      final cls = _e(id: 'cls_x', slug: 'class', name: 'X');
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_elf',
+        'subspecies_id': 'Drow',
+        'class_levels': {'cls_x': 3},
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        elf.id: elf,
+        faerie.id: faerie,
+        cls.id: cls,
+      });
+      final pool = eff.resourcePools.firstWhere(
+        (p) => p['pool_ref'] == 'sp_faerie',
+        orElse: () => const {},
+      );
+      expect(pool['max'], 1);
+      expect(pool['recharge'], 'long_rest');
+    });
+
     test('subspecies_id with no matching row is a no-op', () {
       final elf = _e(
         id: 'species_elf',
@@ -480,6 +893,183 @@ void main() {
       });
       final eff = CharacterResolver.resolve(pc, {elf.id: elf});
       expect(eff.speedBonus, 0);
+    });
+
+    test('Hill Dwarf legacy subspecies grants Insight skill proficiency', () {
+      final insight = _e(id: 'sk_insight', slug: 'skill', name: 'Insight');
+      final dwarf = _e(
+        id: 'species_dwarf',
+        slug: 'species',
+        name: 'Dwarf',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Hill Dwarf',
+              'granted_skill_proficiencies': [
+                {'slug': 'skill', 'name': 'Insight'},
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_dwarf',
+        'subspecies_id': 'Hill Dwarf',
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        dwarf.id: dwarf,
+        insight.id: insight,
+      });
+      expect(eff.proficiencies.skillIds, contains('sk_insight'));
+    });
+
+    test('Mountain Dwarf legacy subspecies grants +2 flat HP', () {
+      final dwarf = _e(
+        id: 'species_dwarf',
+        slug: 'species',
+        name: 'Dwarf',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Mountain Dwarf',
+              'granted_modifiers': [
+                {'kind': 'hp_bonus_flat', 'value': 2},
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_dwarf',
+        'subspecies_id': 'Mountain Dwarf',
+      });
+      final eff = CharacterResolver.resolve(pc, {dwarf.id: dwarf});
+      expect(eff.hpBonusFlat, 2);
+    });
+
+    test('Lightfoot Halfling legacy subspecies grants Stealth proficiency', () {
+      final stealth = _e(id: 'sk_stealth', slug: 'skill', name: 'Stealth');
+      final hf = _e(
+        id: 'species_halfling',
+        slug: 'species',
+        name: 'Halfling',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Lightfoot Halfling',
+              'granted_skill_proficiencies': [
+                {'slug': 'skill', 'name': 'Stealth'},
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_halfling',
+        'subspecies_id': 'Lightfoot Halfling',
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        hf.id: hf,
+        stealth.id: stealth,
+      });
+      expect(eff.proficiencies.skillIds, contains('sk_stealth'));
+    });
+
+    test('Stout Halfling legacy subspecies grants poison damage resistance',
+        () {
+      final poison = _e(id: 'dmg_poison', slug: 'damage-type', name: 'Poison');
+      final hf = _e(
+        id: 'species_halfling',
+        slug: 'species',
+        name: 'Halfling',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Stout Halfling',
+              'granted_damage_resistances': [
+                {'slug': 'damage-type', 'name': 'Poison'},
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_halfling',
+        'subspecies_id': 'Stout Halfling',
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        hf.id: hf,
+        poison.id: poison,
+      });
+      expect(eff.damageResistanceIds, contains('dmg_poison'));
+    });
+
+    test('Standard Human legacy subspecies grants +1 to all six abilities',
+        () {
+      final human = _e(
+        id: 'species_human',
+        slug: 'species',
+        name: 'Human',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Standard Human',
+              'granted_modifiers': [
+                {'kind': 'ability_score_bonus', 'ability': 'STR', 'value': 1},
+                {'kind': 'ability_score_bonus', 'ability': 'DEX', 'value': 1},
+                {'kind': 'ability_score_bonus', 'ability': 'CON', 'value': 1},
+                {'kind': 'ability_score_bonus', 'ability': 'INT', 'value': 1},
+                {'kind': 'ability_score_bonus', 'ability': 'WIS', 'value': 1},
+                {'kind': 'ability_score_bonus', 'ability': 'CHA', 'value': 1},
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_human',
+        'subspecies_id': 'Standard Human',
+        'base_abilities': {
+          'STR': 10, 'DEX': 10, 'CON': 10,
+          'INT': 10, 'WIS': 10, 'CHA': 10,
+        },
+      });
+      final eff = CharacterResolver.resolve(pc, {human.id: human});
+      for (final k in const ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']) {
+        expect(eff.effectiveAbilities[k], 11, reason: 'ability $k');
+      }
+    });
+
+    test('Half-Orc legacy subspecies grants Intimidation proficiency', () {
+      final intim = _e(
+        id: 'sk_intimidation',
+        slug: 'skill',
+        name: 'Intimidation',
+      );
+      final orc = _e(
+        id: 'species_orc',
+        slug: 'species',
+        name: 'Orc',
+        fields: {
+          'subspecies_options': [
+            {
+              'name': 'Half-Orc',
+              'granted_skill_proficiencies': [
+                {'slug': 'skill', 'name': 'Intimidation'},
+              ],
+            },
+          ],
+        },
+      );
+      final pc = _pc(id: 'pc1', fields: {
+        'race_id': 'species_orc',
+        'subspecies_id': 'Half-Orc',
+      });
+      final eff = CharacterResolver.resolve(pc, {
+        orc.id: orc,
+        intim.id: intim,
+      });
+      expect(eff.proficiencies.skillIds, contains('sk_intimidation'));
     });
 
     test('subclass feature with proficiency_grant (saving_throw) folds in', () {

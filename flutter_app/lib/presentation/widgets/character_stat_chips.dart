@@ -115,6 +115,10 @@ List<CharacterStatLine> characterStatLinesWithNames(
   var level = asInt(fields['level']);
   if (level == 0 && combatLevel != null) level = combatLevel;
 
+  final subspeciesRaw = fields['subspecies_id'];
+  final subspeciesName =
+      subspeciesRaw is String && subspeciesRaw.isNotEmpty ? subspeciesRaw : '';
+
   return [
     CharacterStatLine(
       icon: Icons.favorite,
@@ -126,6 +130,12 @@ List<CharacterStatLine> characterStatLinesWithNames(
       label: 'Species',
       value: raceName,
     ),
+    if (subspeciesName.isNotEmpty)
+      CharacterStatLine(
+        icon: Icons.diversity_3,
+        label: 'Ancestry',
+        value: subspeciesName,
+      ),
     CharacterStatLine(
       icon: Icons.shield_moon_outlined,
       label: 'Class',

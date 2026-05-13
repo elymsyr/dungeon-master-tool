@@ -572,11 +572,25 @@ Map<String, dynamic> buildSeedFields({
   Map<String, Entity> entities = const {},
 }) {
   final featBumps = featContributions?.abilityBumps ?? const <String, int>{};
+  // SRD 2024 p.83: background ASIs (`draft.racialBonuses`) flow through the
+  // separate `background_asi` field so [CharacterResolver] can gate them by
+  // `background.ability_score_options` and surface the source on the sheet.
+  // `base_abilities` stays the raw allocation (point buy / standard array /
+  // random) plus feat choice-group ability picks (which the wizard resolves
+  // pre-save because the resolver does not currently walk feat choice groups).
+  // `stat_block` keeps the fully summed view so the editor stat chips render
+  // without re-running the resolver.
+  final rawWithFeat = <String, int>{
+    for (final k in kAbilityKeys)
+      k: (draft.baseAbilities[k] ?? 10) + (featBumps[k] ?? 0),
+  };
   final stat = <String, int>{
     for (final k in kAbilityKeys)
-      k: (draft.baseAbilities[k] ?? 10) +
-          (draft.racialBonuses[k] ?? 0) +
-          (featBumps[k] ?? 0),
+      k: rawWithFeat[k]! + (draft.racialBonuses[k] ?? 0),
+  };
+  final backgroundAsi = <String, int>{
+    for (final k in kAbilityKeys)
+      if ((draft.racialBonuses[k] ?? 0) != 0) k: draft.racialBonuses[k]!,
   };
   final conMod = abilityModifier(stat['CON'] ?? 10);
   final dexMod = abilityModifier(stat['DEX'] ?? 10);
@@ -692,7 +706,8 @@ Map<String, dynamic> buildSeedFields({
   }
   out['equipment_choices'] = Map<String, String>.from(draft.equipmentChoices);
   out['feat_choices'] = Map<String, String>.from(draft.originFeatChoices);
-  out['base_abilities'] = stat;
+  out['base_abilities'] = rawWithFeat;
+  out['background_asi'] = backgroundAsi;
   // Class skill/tool picks + background language picks. Mirrored to the PC
   // category's matching ref lists when present so the editor renders them
   // without further work.

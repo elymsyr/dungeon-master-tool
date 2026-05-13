@@ -126,6 +126,12 @@ class CharacterResolver {
     final damageImmunities = <String>[];
     final damageVulnerabilities = <String>[];
     final conditionImmunities = <String>[];
+    // Creature-action IDs picked up from species/subspecies grant fields.
+    // Populated in Pass 5; surfaced separately so the sheet can render them
+    // under the Actions section.
+    final grantedActionIds = <String>[];
+    final grantedBonusActionIds = <String>[];
+    final grantedReactionIds = <String>[];
     // id → ordered list of source names (deduped). Populated everywhere a
     // grant lands on senses/damageRes/damageImmunities/damageVulnerabilities/
     // conditionImmunities so the sheet can render "<Grant> — <Source>".
@@ -261,6 +267,20 @@ class CharacterResolver {
       switch (eff['kind']) {
         case 'class_level_grant':
           break; // already applied in pass 1
+        case 'ability_score_bonus':
+          // Species/subspecies/feat ASI grant. `ability` accepts full names
+          // ("Constitution") or abbreviations ("CON"). `max` caps the post-
+          // grant score; defaults to 20.
+          final raw = (eff['ability'] ?? eff['target_kind'] ?? '').toString();
+          final abbrev = _abilityAbbrev(raw) ?? raw.toUpperCase();
+          const valid = {'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'};
+          if (!valid.contains(abbrev)) break;
+          final amt = _intOf(eff['value']);
+          if (amt == 0) break;
+          final cap = (eff['max'] is int) ? eff['max'] as int : 20;
+          final cur = abilities[abbrev] ?? 10;
+          final next = cur + amt;
+          abilities[abbrev] = next > cap ? cap : next;
         case 'ac_bonus':
           acBonus += _intOf(eff['value']);
         case 'speed_bonus':
@@ -545,6 +565,39 @@ class CharacterResolver {
         for (final sk in _readRefList(sp.fields['granted_skill_proficiencies'], entitiesById)) {
           if (!skills.contains(sk)) skills.add(sk);
         }
+        for (final t in _readRefList(sp.fields['trait_refs'], entitiesById)) {
+          if (!autoGrantedTraitIds.contains(t)) autoGrantedTraitIds.add(t);
+          noteSource(t, speciesSource);
+        }
+        for (final a in _readRefList(sp.fields['granted_action_refs'], entitiesById)) {
+          if (!grantedActionIds.contains(a)) grantedActionIds.add(a);
+          noteSource(a, speciesSource);
+        }
+        for (final a in _readRefList(sp.fields['granted_bonus_action_refs'], entitiesById)) {
+          if (!grantedBonusActionIds.contains(a)) grantedBonusActionIds.add(a);
+          noteSource(a, speciesSource);
+        }
+        for (final a in _readRefList(sp.fields['granted_reaction_refs'], entitiesById)) {
+          if (!grantedReactionIds.contains(a)) grantedReactionIds.add(a);
+          noteSource(a, speciesSource);
+        }
+        for (final sp_ in _readRefList(sp.fields['granted_spell_refs'], entitiesById)) {
+          if (!grantedSpellIds.contains(sp_)) grantedSpellIds.add(sp_);
+          noteSource(sp_, speciesSource);
+        }
+        for (final sp_ in _readRefList(sp.fields['granted_cantrip_refs'], entitiesById)) {
+          if (!grantedCantripIds.contains(sp_)) grantedCantripIds.add(sp_);
+          noteSource(sp_, speciesSource);
+        }
+        _applyLevelGatedSpells(
+          rows: _readMapList(sp.fields['granted_spells_at_level']),
+          totalLevel: classLevels.values.fold<int>(0, (a, b) => a + b),
+          entitiesById: entitiesById,
+          grantedSpellIds: grantedSpellIds,
+          grantedCantripIds: grantedCantripIds,
+          resourcePools: resourcePools,
+          noteSource: (id) => noteSource(id, speciesSource),
+        );
 
         // Subspecies / lineage row — fold the matching entry's grants in
         // the same way as the top-level species fields. Looks up by name
@@ -594,6 +647,47 @@ class CharacterResolver {
                 row['granted_skill_proficiencies'], entitiesById)) {
               if (!skills.contains(sk)) skills.add(sk);
             }
+            for (final t in _readRefList(row['trait_refs'], entitiesById)) {
+              if (!autoGrantedTraitIds.contains(t)) autoGrantedTraitIds.add(t);
+              noteSource(t, subSource);
+            }
+            for (final a in _readRefList(
+                row['granted_action_refs'], entitiesById)) {
+              if (!grantedActionIds.contains(a)) grantedActionIds.add(a);
+              noteSource(a, subSource);
+            }
+            for (final a in _readRefList(
+                row['granted_bonus_action_refs'], entitiesById)) {
+              if (!grantedBonusActionIds.contains(a)) {
+                grantedBonusActionIds.add(a);
+              }
+              noteSource(a, subSource);
+            }
+            for (final a in _readRefList(
+                row['granted_reaction_refs'], entitiesById)) {
+              if (!grantedReactionIds.contains(a)) grantedReactionIds.add(a);
+              noteSource(a, subSource);
+            }
+            for (final sp_ in _readRefList(
+                row['granted_spell_refs'], entitiesById)) {
+              if (!grantedSpellIds.contains(sp_)) grantedSpellIds.add(sp_);
+              noteSource(sp_, subSource);
+            }
+            for (final sp_ in _readRefList(
+                row['granted_cantrip_refs'], entitiesById)) {
+              if (!grantedCantripIds.contains(sp_)) grantedCantripIds.add(sp_);
+              noteSource(sp_, subSource);
+            }
+            _applyLevelGatedSpells(
+              rows: _readMapList(row['granted_spells_at_level']),
+              totalLevel:
+                  classLevels.values.fold<int>(0, (a, b) => a + b),
+              entitiesById: entitiesById,
+              grantedSpellIds: grantedSpellIds,
+              grantedCantripIds: grantedCantripIds,
+              resourcePools: resourcePools,
+              noteSource: (id) => noteSource(id, subSource),
+            );
             break;
           }
         }
@@ -607,6 +701,36 @@ class CharacterResolver {
         }
         for (final t in _readRefList(bg.fields['granted_tool_refs'], entitiesById)) {
           if (!tools.contains(t)) tools.add(t);
+        }
+        // SRD 2024 p.83: each background allows either +2/+1 to two abilities
+        // or +1/+1/+1 to three. PC stores the chosen distribution as
+        // `background_asi: {STR: 2, CON: 1}` — resolver bumps the abilities
+        // here. Total must be 3; resolver applies whatever is stored without
+        // re-validating, so the wizard/editor enforces the distribution rule.
+        // Bumps gated by ability_score_options when present; out-of-list
+        // entries are dropped with a warning. Cap at 20.
+        final asi = _readIntMap(fields['background_asi']);
+        if (asi.isNotEmpty) {
+          final allowed = <String>{};
+          for (final r in _readRefList(
+              bg.fields['ability_score_options'], entitiesById)) {
+            final name = entitiesById[r]?.name ?? '';
+            final abbrev = _abilityAbbrev(name);
+            if (abbrev != null) allowed.add(abbrev);
+          }
+          for (final entry in asi.entries) {
+            final abbrev = _abilityAbbrev(entry.key) ?? entry.key.toUpperCase();
+            const valid = {'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'};
+            if (!valid.contains(abbrev)) continue;
+            if (allowed.isNotEmpty && !allowed.contains(abbrev)) {
+              warnings.add(
+                  'background_asi $abbrev not in ${bg.name}.ability_score_options');
+              continue;
+            }
+            final cur = abilities[abbrev] ?? 10;
+            final next = cur + entry.value;
+            abilities[abbrev] = next > 20 ? 20 : next;
+          }
         }
       }
     }
@@ -730,6 +854,9 @@ class CharacterResolver {
       alwaysPreparedSpellIds: alwaysPreparedSpells,
       autoGrantedFeatIds: autoGrantedFeatIds,
       autoGrantedTraitIds: autoGrantedTraitIds,
+      grantedActionIds: grantedActionIds,
+      grantedBonusActionIds: grantedBonusActionIds,
+      grantedReactionIds: grantedReactionIds,
       unarmoredFormulas: unarmoredFormulas,
       extraAttackCount: extraAttackCount,
       critRangeMin: critRangeMin,
@@ -876,6 +1003,7 @@ class CharacterResolver {
       case 'language_grant':
       case 'spell_grant':
       case 'cantrip_grant':
+      case 'ability_score_bonus':
         // already same kind name
         break;
       default:
@@ -935,6 +1063,48 @@ class CharacterResolver {
     if (v is num) return v.toInt();
     if (v is String) return int.tryParse(v) ?? 0;
     return 0;
+  }
+
+  /// Process subspecies / species `granted_spells_at_level` rows. Row shape:
+  /// `{spell_ref: {slug, name}, at_level: int, is_cantrip?: bool,
+  /// uses_per_long_rest?: int}`. Rows with `at_level > totalLevel` are
+  /// skipped. If `is_cantrip` is true the spell goes to cantrips; otherwise
+  /// to leveled spells. When `uses_per_long_rest` is set, a resource pool
+  /// keyed by the spell id is appended so the sheet can render a daily
+  /// counter (SRD 5.2.1 innate spells are 1/day).
+  static void _applyLevelGatedSpells({
+    required List<Map<String, dynamic>> rows,
+    required int totalLevel,
+    required Map<String, Entity> entitiesById,
+    required List<String> grantedSpellIds,
+    required List<String> grantedCantripIds,
+    required List<Map<String, dynamic>> resourcePools,
+    required void Function(String id) noteSource,
+  }) {
+    for (final row in rows) {
+      final atLevel = _intOf(row['at_level']);
+      if (atLevel > totalLevel) continue;
+      final id = _resolveRef(row['spell_ref'], entitiesById);
+      if (id == null) continue;
+      final isCantrip = row['is_cantrip'] == true;
+      if (isCantrip) {
+        if (!grantedCantripIds.contains(id)) grantedCantripIds.add(id);
+      } else {
+        if (!grantedSpellIds.contains(id)) grantedSpellIds.add(id);
+      }
+      noteSource(id);
+      final uses = _intOf(row['uses_per_long_rest']);
+      if (uses > 0) {
+        final already = resourcePools.any((p) => p['pool_ref'] == id);
+        if (!already) {
+          resourcePools.add({
+            'pool_ref': id,
+            'max': uses,
+            'recharge': 'long_rest',
+          });
+        }
+      }
+    }
   }
 
   static String? _abilityAbbrev(String name) {

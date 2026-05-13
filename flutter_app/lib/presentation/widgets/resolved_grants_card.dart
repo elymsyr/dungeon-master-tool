@@ -15,11 +15,21 @@ class ResolvedGrantsCard extends StatelessWidget {
   final Map<String, Entity> entities;
   final DmToolColors palette;
 
+  /// Remaining-uses map for granted resource pools, keyed by entity id
+  /// (e.g. innate spell id). Missing keys default to pool max.
+  final Map<String, int> poolRemaining;
+
+  /// Fires when player taps -/+ or rest button. Receives the full updated
+  /// map (sparse — only non-default entries kept).
+  final ValueChanged<Map<String, int>>? onPoolRemainingChanged;
+
   const ResolvedGrantsCard({
     super.key,
     required this.effective,
     required this.entities,
     required this.palette,
+    this.poolRemaining = const {},
+    this.onPoolRemainingChanged,
   });
 
   String _nameOf(String id) => entities[id]?.name ?? id;
@@ -80,6 +90,94 @@ class ResolvedGrantsCard extends StatelessWidget {
     );
   }
 
+  /// Pool entries whose `pool_ref` resolves to a granted entity id (innate
+  /// spells). Class pools use a Map for `pool_ref` and are skipped here.
+  List<Map<String, dynamic>> _grantedPoolEntries() {
+    final out = <Map<String, dynamic>>[];
+    for (final p in effective.resourcePools) {
+      final ref = p['pool_ref'];
+      if (ref is String && entities.containsKey(ref)) out.add(p);
+    }
+    return out;
+  }
+
+  Widget _poolCounterRow(Map<String, dynamic> entry) {
+    final id = entry['pool_ref'] as String;
+    final maxRaw = entry['max'];
+    final max = maxRaw is int ? maxRaw : int.tryParse('$maxRaw') ?? 1;
+    final cur = poolRemaining[id] ?? max;
+    final name = _nameOf(id);
+    final sources = effective.grantSources[id] ?? const <String>[];
+    final sourceTxt = sources.isEmpty ? '' : ' — ${sources.join(', ')}';
+    final readOnly = onPoolRemainingChanged == null;
+
+    void emit(int next) {
+      if (readOnly) return;
+      final clamped = next.clamp(0, max);
+      final updated = Map<String, int>.from(poolRemaining);
+      if (clamped == max) {
+        updated.remove(id);
+      } else {
+        updated[id] = clamped;
+      }
+      onPoolRemainingChanged!(updated);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '$name$sourceTxt',
+              style: TextStyle(fontSize: 12, color: palette.srdInk),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            iconSize: 18,
+            tooltip: 'Spend one',
+            onPressed: readOnly || cur <= 0 ? null : () => emit(cur - 1),
+            icon: const Icon(Icons.remove_circle_outline),
+          ),
+          SizedBox(
+            width: 48,
+            child: Text(
+              '$cur / $max',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: palette.srdInk,
+              ),
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            iconSize: 18,
+            tooltip: 'Restore one',
+            onPressed: readOnly || cur >= max ? null : () => emit(cur + 1),
+            icon: const Icon(Icons.add_circle_outline),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            iconSize: 18,
+            tooltip: 'Reset (long rest)',
+            onPressed: readOnly || cur >= max ? null : () => emit(max),
+            icon: const Icon(Icons.bedtime_outlined),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final senses = effective.senseEntityIds;
@@ -87,11 +185,21 @@ class ResolvedGrantsCard extends StatelessWidget {
     final imm = effective.damageImmunityIds;
     final vuln = effective.damageVulnerabilityIds;
     final cimm = effective.conditionImmunityIds;
+    final traits = effective.autoGrantedTraitIds;
+    final actions = effective.grantedActionIds;
+    final bonusActions = effective.grantedBonusActionIds;
+    final reactions = effective.grantedReactionIds;
+    final pools = _grantedPoolEntries();
     if (senses.isEmpty &&
         res.isEmpty &&
         imm.isEmpty &&
         vuln.isEmpty &&
-        cimm.isEmpty) {
+        cimm.isEmpty &&
+        traits.isEmpty &&
+        actions.isEmpty &&
+        bonusActions.isEmpty &&
+        reactions.isEmpty &&
+        pools.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -118,6 +226,23 @@ class ResolvedGrantsCard extends StatelessWidget {
             _chipRow('Immunities', imm, Colors.blue),
             _chipRow('Vulnerabilities', vuln, Colors.deepOrange),
             _chipRow('Condition Imm.', cimm, Colors.purple),
+            _chipRow('Traits', traits, Colors.teal),
+            _chipRow('Actions', actions, Colors.red),
+            _chipRow('Bonus Actions', bonusActions, Colors.amber),
+            _chipRow('Reactions', reactions, Colors.cyan),
+            if (pools.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Granted Pools',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: palette.sidebarLabelSecondary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              for (final p in pools) _poolCounterRow(p),
+            ],
           ],
         ),
       ),
