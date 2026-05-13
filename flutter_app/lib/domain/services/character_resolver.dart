@@ -483,6 +483,15 @@ class CharacterResolver {
         for (final r in _readRefList(sp.fields['granted_damage_resistances'], entitiesById)) {
           if (!damageRes.contains(r)) damageRes.add(r);
         }
+        for (final r in _readRefList(sp.fields['granted_damage_immunities'], entitiesById)) {
+          if (!damageImmunities.contains(r)) damageImmunities.add(r);
+        }
+        for (final r in _readRefList(sp.fields['granted_damage_vulnerabilities'], entitiesById)) {
+          if (!damageVulnerabilities.contains(r)) damageVulnerabilities.add(r);
+        }
+        for (final r in _readRefList(sp.fields['granted_condition_immunities'], entitiesById)) {
+          if (!conditionImmunities.contains(r)) conditionImmunities.add(r);
+        }
         for (final l in _readRefList(sp.fields['granted_languages'], entitiesById)) {
           if (!languages.contains(l)) languages.add(l);
         }
@@ -509,6 +518,22 @@ class CharacterResolver {
             for (final r in _readRefList(
                 row['granted_damage_resistances'], entitiesById)) {
               if (!damageRes.contains(r)) damageRes.add(r);
+            }
+            for (final r in _readRefList(
+                row['granted_damage_immunities'], entitiesById)) {
+              if (!damageImmunities.contains(r)) damageImmunities.add(r);
+            }
+            for (final r in _readRefList(
+                row['granted_damage_vulnerabilities'], entitiesById)) {
+              if (!damageVulnerabilities.contains(r)) {
+                damageVulnerabilities.add(r);
+              }
+            }
+            for (final r in _readRefList(
+                row['granted_condition_immunities'], entitiesById)) {
+              if (!conditionImmunities.contains(r)) {
+                conditionImmunities.add(r);
+              }
             }
             for (final l in _readRefList(row['granted_languages'], entitiesById)) {
               if (!languages.contains(l)) languages.add(l);

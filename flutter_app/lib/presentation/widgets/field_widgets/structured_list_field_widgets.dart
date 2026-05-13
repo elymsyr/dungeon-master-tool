@@ -469,6 +469,11 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
   final dynamic value;
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+  /// Sibling fields of the entity hosting this widget — used to surface
+  /// validation hints (e.g. subclass feature row level < `granted_at_level`).
+  final Map<String, dynamic>? entityFields;
 
   const ClassFeaturesFieldWidget({
     super.key,
@@ -476,11 +481,26 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
     required this.value,
     required this.readOnly,
     required this.onChanged,
+    this.entities,
+    this.ref,
+    this.entityFields,
   });
+
+  static List<String> _readStrList(Map row, String key) {
+    final v = row[key];
+    if (v is List) return v.whereType<String>().toList();
+    return const <String>[];
+  }
 
   @override
   Widget build(BuildContext context) {
     final rows = _coerceRows(value);
+    // Subclass gating hint: `granted_at_level` is declared on subclass
+    // entities only. Class entities don't carry it so the warning never
+    // fires there. Pulls the value off the hosting entity's siblings.
+    final grantedAtLevelRaw = entityFields?['granted_at_level'];
+    final int? grantedAtLevel =
+        grantedAtLevelRaw is int ? grantedAtLevelRaw : null;
     return _StructuredListShell(
       schema: schema,
       rows: rows,
@@ -489,26 +509,160 @@ class ClassFeaturesFieldWidget extends StatelessWidget {
       makeEmptyRow: () => {
         'level': null,
         'description': '',
+        'granted_damage_resistances': <String>[],
+        'granted_damage_immunities': <String>[],
+        'granted_condition_immunities': <String>[],
+        'granted_senses': <String>[],
+        'granted_languages': <String>[],
+        'granted_feat_refs': <String>[],
+        'granted_trait_refs': <String>[],
+        'granted_action_refs': <String>[],
+        'granted_bonus_action_refs': <String>[],
+        'granted_reaction_refs': <String>[],
       },
       buildRow: (i, row, onRowChanged) {
-        return Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
+        final rowLvl = row['level'] is int ? row['level'] as int : null;
+        final gateMiss = grantedAtLevel != null &&
+            rowLvl != null &&
+            rowLvl < grantedAtLevel;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _miniInt(
-              label: 'Level',
-              value: row['level'] is int ? row['level'] as int : null,
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'level': v}),
-              width: 60,
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                _miniInt(
+                  label: 'Level',
+                  value: rowLvl,
+                  readOnly: readOnly,
+                  onChanged: (v) => onRowChanged({...row, 'level': v}),
+                  width: 60,
+                ),
+                _miniText(
+                  label: 'Summary',
+                  value: (row['description'] ?? '').toString(),
+                  readOnly: readOnly,
+                  onChanged: (v) => onRowChanged({...row, 'description': v}),
+                  width: 480,
+                ),
+                if (gateMiss)
+                  Tooltip(
+                    message:
+                        'Row level $rowLvl is below subclass granted_at_level '
+                        '$grantedAtLevel — resolver will skip this feature.',
+                    child: const Icon(Icons.warning_amber,
+                        size: 16, color: Colors.orange),
+                  ),
+              ],
             ),
-            _miniText(
-              label: 'Summary',
-              value: (row['description'] ?? '').toString(),
-              readOnly: readOnly,
-              onChanged: (v) => onRowChanged({...row, 'description': v}),
-              width: 480,
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                _MiniRelationListField(
+                  label: 'Resistances',
+                  values: _readStrList(row, 'granted_damage_resistances'),
+                  allowedTypes: const ['damage-type'],
+                  entities: entities,
+                  ref: ref,
+                  readOnly: readOnly,
+                  onChanged: (v) => onRowChanged(
+                      {...row, 'granted_damage_resistances': v}),
+                ),
+                _MiniRelationListField(
+                  label: 'Immunities',
+                  values: _readStrList(row, 'granted_damage_immunities'),
+                  allowedTypes: const ['damage-type'],
+                  entities: entities,
+                  ref: ref,
+                  readOnly: readOnly,
+                  onChanged: (v) => onRowChanged(
+                      {...row, 'granted_damage_immunities': v}),
+                ),
+                _MiniRelationListField(
+                  label: 'Condition Imm.',
+                  values: _readStrList(row, 'granted_condition_immunities'),
+                  allowedTypes: const ['condition'],
+                  entities: entities,
+                  ref: ref,
+                  readOnly: readOnly,
+                  onChanged: (v) => onRowChanged(
+                      {...row, 'granted_condition_immunities': v}),
+                ),
+                _MiniRelationListField(
+                  label: 'Senses',
+                  values: _readStrList(row, 'granted_senses'),
+                  allowedTypes: const ['sense'],
+                  entities: entities,
+                  ref: ref,
+                  readOnly: readOnly,
+                  onChanged: (v) =>
+                      onRowChanged({...row, 'granted_senses': v}),
+                ),
+                _MiniRelationListField(
+                  label: 'Languages',
+                  values: _readStrList(row, 'granted_languages'),
+                  allowedTypes: const ['language'],
+                  entities: entities,
+                  ref: ref,
+                  readOnly: readOnly,
+                  onChanged: (v) =>
+                      onRowChanged({...row, 'granted_languages': v}),
+                ),
+                _MiniRelationListField(
+                  label: 'Feats',
+                  values: _readStrList(row, 'granted_feat_refs'),
+                  allowedTypes: const ['feat'],
+                  entities: entities,
+                  ref: ref,
+                  readOnly: readOnly,
+                  onChanged: (v) =>
+                      onRowChanged({...row, 'granted_feat_refs': v}),
+                ),
+                _MiniRelationListField(
+                  label: 'Traits',
+                  values: _readStrList(row, 'granted_trait_refs'),
+                  allowedTypes: const ['trait'],
+                  entities: entities,
+                  ref: ref,
+                  readOnly: readOnly,
+                  onChanged: (v) =>
+                      onRowChanged({...row, 'granted_trait_refs': v}),
+                ),
+                _MiniRelationListField(
+                  label: 'Actions',
+                  values: _readStrList(row, 'granted_action_refs'),
+                  allowedTypes: const ['creature-action'],
+                  entities: entities,
+                  ref: ref,
+                  readOnly: readOnly,
+                  onChanged: (v) =>
+                      onRowChanged({...row, 'granted_action_refs': v}),
+                ),
+                _MiniRelationListField(
+                  label: 'Bonus Actions',
+                  values: _readStrList(row, 'granted_bonus_action_refs'),
+                  allowedTypes: const ['creature-action'],
+                  entities: entities,
+                  ref: ref,
+                  readOnly: readOnly,
+                  onChanged: (v) =>
+                      onRowChanged({...row, 'granted_bonus_action_refs': v}),
+                ),
+                _MiniRelationListField(
+                  label: 'Reactions',
+                  values: _readStrList(row, 'granted_reaction_refs'),
+                  allowedTypes: const ['creature-action'],
+                  entities: entities,
+                  ref: ref,
+                  readOnly: readOnly,
+                  onChanged: (v) =>
+                      onRowChanged({...row, 'granted_reaction_refs': v}),
+                ),
+              ],
             ),
           ],
         );

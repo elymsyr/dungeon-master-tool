@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../application/character_creation/character_draft.dart';
@@ -305,11 +306,14 @@ class _FeatCard extends StatelessWidget {
           ),
           if (feat.description.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(
-              feat.description,
-              style: TextStyle(
-                fontSize: 11,
-                color: palette.sidebarLabelSecondary,
+            MarkdownBody(
+              data: feat.description,
+              styleSheet:
+                  MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                p: TextStyle(
+                  fontSize: 11,
+                  color: palette.sidebarLabelSecondary,
+                ),
               ),
             ),
           ],
@@ -780,9 +784,12 @@ String? validateFeatsStep(CharacterDraft draft, Map<String, Entity> entities) {
         if (listValue == null || listValue.isEmpty) continue;
       }
 
-      if (current.length < pick) {
+      // Picks are upper bounds — players may leave choice groups empty and
+      // come back later. Fail only when more than [pick] options are
+      // selected (UI should prevent this, but defensive check stays).
+      if (current.length > pick) {
         final label = group['label']?.toString() ?? groupId;
-        return '${feat.name}: pick $pick "$label" choice(s).';
+        return '${feat.name}: pick at most $pick "$label" choice(s).';
       }
     }
   }

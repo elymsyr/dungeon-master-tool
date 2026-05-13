@@ -40,6 +40,7 @@ import '../../widgets/app_icon_image.dart';
 import '../../widgets/class_level_up_table.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
+import '../../widgets/resolved_grants_card.dart';
 import '../../widgets/save_info_section.dart';
 import '../database/entity_card.dart';
 
@@ -61,6 +62,7 @@ class _CharacterEditorScreenState
   Timer? _autoSaveTimer;
   bool _saving = false;
   bool _readOnly = true;
+  bool _grantsBackfilled = false;
 
   // Markdown controllers — kept in sync with `_working.entity` so user input
   // doesn't fight the rebuild loop. Initialized lazily on first build.
@@ -177,6 +179,7 @@ class _CharacterEditorScreenState
     }
 
     _working ??= character;
+    _backfillDefensesFromResolverIfNeeded();
 
     final templatesAsync = ref.watch(allTemplatesProvider);
     return templatesAsync.when(
@@ -398,6 +401,7 @@ class _CharacterEditorScreenState
                   const SizedBox(height: 12),
                   _renderRestActions(palette, character),
                   const SizedBox(height: 16),
+                  ..._renderResolvedGrants(palette, character),
                   ..._renderSchemaFields(palette, playerCat, character),
                   ..._renderLevelUpTable(palette, character),
                   const SizedBox(height: 8),
@@ -662,6 +666,69 @@ class _CharacterEditorScreenState
       ));
     }
     return widgets;
+  }
+
+  /// One-shot defensive backfill: if the PC's raw defense ref fields are
+  /// empty but the resolver computed grants from race / class / subclass,
+  /// copy those resolved ids onto the PC entity. Fixes the common case
+  /// where a character was created before PR-A1 landed, or where the
+  /// wizard's seed never wrote the fields for some reason. Runs once per
+  /// editor lifecycle so manual edits aren't fought.
+  void _backfillDefensesFromResolverIfNeeded() {
+    if (_grantsBackfilled) return;
+    final w = _working;
+    if (w == null) return;
+    final effective =
+        ref.read(effectiveCharacterProvider(w.entity.id));
+    if (effective == null) return;
+    final fields = w.entity.fields;
+
+    bool isEmptyList(Object? raw) {
+      if (raw == null) return true;
+      if (raw is List) return raw.isEmpty;
+      return false;
+    }
+
+    final pairs = <(String, List<String>)>[
+      ('resistance_refs', effective.damageResistanceIds),
+      ('damage_immunity_refs', effective.damageImmunityIds),
+      ('vulnerability_refs', effective.damageVulnerabilityIds),
+      ('condition_immunity_refs', effective.conditionImmunityIds),
+      ('senses', effective.senseEntityIds),
+    ];
+
+    final updated = <String, dynamic>{};
+    for (final pair in pairs) {
+      final key = pair.$1;
+      final resolvedIds = pair.$2;
+      if (resolvedIds.isEmpty) continue;
+      if (!isEmptyList(fields[key])) continue;
+      updated[key] = List<String>.from(resolvedIds);
+    }
+    _grantsBackfilled = true;
+    if (updated.isEmpty) return;
+    final nextFields = {...fields, ...updated};
+    _working = w.copyWith(entity: w.entity.copyWith(fields: nextFields));
+    _scheduleAutoSave();
+  }
+
+  /// Render the resolver-derived grant summary (senses, resistances,
+  /// immunities, condition immunities, vulnerabilities). Reads from the
+  /// `effectiveCharacterProvider` so feat / class-feature auto-grants that
+  /// don't land on raw PC ref fields still surface to the player.
+  List<Widget> _renderResolvedGrants(
+      DmToolColors palette, Character character) {
+    final effective =
+        ref.watch(effectiveCharacterProvider(character.entity.id));
+    if (effective == null) return const [];
+    final entities = _readEntitiesFor(character);
+    return [
+      ResolvedGrantsCard(
+        effective: effective,
+        entities: entities,
+        palette: palette,
+      ),
+    ];
   }
 
   /// Render a level-up progression table when the character has both a
@@ -1060,6 +1127,58 @@ class _CharacterEditorScreenState
       updated['class_resource_pools'] = maxOut;
       updated['class_resource_pools_remaining'] = remainingOut;
     }
+
+    // Per-level grant absorption — mirrors PR-A1 wizard logic for the
+    // level-up path. Walk the class & subclass feature tables for rows
+    // unlocked in the (fromLevel, toLevel] window and fold any ref-list
+    // grants (resistances / immunities / senses / languages / feats) onto
+    // the PC raw fields so they appear on the sheet immediately.
+    void absorbFeatureRowsInRange(Entity? src) {
+      if (src == null) return;
+      final rows = src.fields['features'];
+      if (rows is! List) return;
+      for (final row in rows) {
+        if (row is! Map) continue;
+        final lvl = row['level'];
+        if (lvl is! int) continue;
+        if (lvl <= fromLvl || lvl > toLvl) continue;
+        void copyRow(String fromKey, List<String> toKeys) {
+          final raw = row[fromKey];
+          if (raw is! List) return;
+          final ids = raw.whereType<String>().toList();
+          if (ids.isEmpty) return;
+          for (final to in toKeys) {
+            final existing = (updated[to] is List)
+                ? List<String>.from(updated[to] as List)
+                : <String>[];
+            for (final id in ids) {
+              if (!existing.contains(id)) existing.add(id);
+            }
+            updated[to] = existing;
+            return;
+          }
+        }
+
+        copyRow('granted_damage_resistances',
+            const ['resistance_refs', 'damage_resistances']);
+        copyRow('granted_damage_immunities',
+            const ['damage_immunity_refs', 'damage_immunities']);
+        copyRow('granted_damage_vulnerabilities',
+            const ['vulnerability_refs', 'damage_vulnerabilities']);
+        copyRow('granted_condition_immunities',
+            const ['condition_immunity_refs', 'condition_immunities']);
+        copyRow('granted_senses', const ['senses']);
+        copyRow('granted_languages', const ['language_refs', 'languages']);
+        copyRow('granted_feat_refs', const ['feats']);
+        copyRow('granted_trait_refs', const ['trait_refs']);
+        copyRow('granted_action_refs', const ['action_refs']);
+        copyRow('granted_bonus_action_refs', const ['bonus_action_refs']);
+        copyRow('granted_reaction_refs', const ['reaction_refs']);
+      }
+    }
+
+    absorbFeatureRowsInRange(classEntity);
+    absorbFeatureRowsInRange(subclassEntity);
 
     _mutate(base.copyWith(
       entity: base.entity.copyWith(fields: updated),

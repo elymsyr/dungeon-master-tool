@@ -462,20 +462,23 @@ class _CharacterCreationWizardScreenState
     final languageOptionsCount =
         entities.values.where((e) => e.categorySlug == 'language').length;
 
+    // Caps are upper bounds only — players may leave some slots empty and
+    // pick remaining proficiencies in the editor later. Only fail when the
+    // draft exceeds the SRD cap.
     if (skillCap > 0 &&
         skillOptionsCount > 0 &&
-        draft.skillChoiceIds.length != skillCap) {
-      return 'Pick $skillCap class skill(s).';
+        draft.skillChoiceIds.length > skillCap) {
+      return 'Pick at most $skillCap class skill(s).';
     }
     if (toolCap > 0 &&
         toolOptionsCount > 0 &&
-        draft.toolChoiceIds.length != toolCap) {
-      return 'Pick $toolCap class tool(s).';
+        draft.toolChoiceIds.length > toolCap) {
+      return 'Pick at most $toolCap class tool(s).';
     }
     if (languageCap > 0 &&
         languageOptionsCount > 0 &&
-        draft.languageChoiceIds.length != languageCap) {
-      return 'Pick $languageCap language(s).';
+        draft.languageChoiceIds.length > languageCap) {
+      return 'Pick at most $languageCap language(s).';
     }
     return null;
   }
@@ -517,7 +520,7 @@ class _CharacterCreationWizardScreenState
 
       final featContributions =
           deriveFeatChoiceContributions(draft, entities);
-      final seed = _buildSeedFields(
+      final seed = buildSeedFields(
         draft: draft,
         playerCat: playerCat,
         race: lookup(draft.raceId),
@@ -559,7 +562,7 @@ class _CharacterCreationWizardScreenState
 /// `race` / `class_` / `background` / `alignment`). Each conceptual seed
 /// resolves to whichever key the [playerCat] actually exposes, so the
 /// wizard works on both schemas without forking.
-Map<String, dynamic> _buildSeedFields({
+Map<String, dynamic> buildSeedFields({
   required CharacterDraft draft,
   required EntityCategorySchema playerCat,
   required Entity? race,
@@ -927,36 +930,150 @@ Map<String, dynamic> _buildSeedFields({
     out['gp'] = existing + goldGain;
   }
 
-  // Inherit race / species traits + granted refs onto the PC. Species
-  // exposes them as `trait_refs` / `granted_languages` / `granted_senses`
-  // / `granted_damage_resistances` / `granted_skill_proficiencies`; PC
-  // surface keys differ slightly so we map per pair.
-  if (race != null) {
-    void copyList(String fromKey, List<String> toKeys) {
-      final src = race.fields[fromKey];
-      if (src is! List) return;
-      final ids = src.whereType<String>().toList();
-      if (ids.isEmpty) return;
-      for (final to in toKeys) {
-        if (!fieldsByKey.containsKey(to)) continue;
-        final existing = (out[to] is List)
-            ? List<String>.from(out[to] as List)
-            : <String>[];
-        for (final id in ids) {
-          if (!existing.contains(id)) existing.add(id);
-        }
-        out[to] = existing;
-        return;
+  // Inherit granted refs from each source entity (race / class / subclass)
+  // onto the PC. Source keys (`granted_*`) come from the producer schemas;
+  // PC sink keys differ per category (e.g. `resistance_refs` not
+  // `granted_damage_resistances`), so we map per pair and write into the
+  // first sink key that the PC schema actually exposes.
+  void copyListFrom(
+    Entity src,
+    String fromKey,
+    List<String> toKeys,
+  ) {
+    final raw = src.fields[fromKey];
+    if (raw is! List) return;
+    final ids = raw.whereType<String>().toList();
+    if (ids.isEmpty) return;
+    for (final to in toKeys) {
+      if (!fieldsByKey.containsKey(to)) continue;
+      final existing = (out[to] is List)
+          ? List<String>.from(out[to] as List)
+          : <String>[];
+      for (final id in ids) {
+        if (!existing.contains(id)) existing.add(id);
       }
+      out[to] = existing;
+      return;
     }
+  }
 
-    copyList('trait_refs', const ['trait_refs']);
-    copyList('granted_languages', const ['language_refs', 'languages']);
-    copyList('granted_senses', const ['senses']);
-    copyList('granted_damage_resistances',
+  void absorbGrants(Entity? src) {
+    if (src == null) return;
+    copyListFrom(src, 'trait_refs', const ['trait_refs']);
+    copyListFrom(src, 'action_refs', const ['action_refs']);
+    copyListFrom(src, 'bonus_action_refs', const ['bonus_action_refs']);
+    copyListFrom(src, 'reaction_refs', const ['reaction_refs']);
+    copyListFrom(src, 'granted_action_refs', const ['action_refs']);
+    copyListFrom(src, 'granted_bonus_action_refs', const ['bonus_action_refs']);
+    copyListFrom(src, 'granted_reaction_refs', const ['reaction_refs']);
+    copyListFrom(src, 'granted_languages', const ['language_refs', 'languages']);
+    copyListFrom(src, 'granted_senses', const ['senses']);
+    copyListFrom(src, 'granted_damage_resistances',
         const ['resistance_refs', 'damage_resistances']);
+    copyListFrom(src, 'granted_damage_immunities',
+        const ['damage_immunity_refs', 'damage_immunities']);
+    copyListFrom(src, 'granted_damage_vulnerabilities',
+        const ['vulnerability_refs', 'damage_vulnerabilities']);
+    copyListFrom(src, 'granted_condition_immunities',
+        const ['condition_immunity_refs', 'condition_immunities']);
     // `granted_skill_proficiencies` is folded into the `skills` table above.
   }
+
+  // Race first so its grants land before class/subclass — order is cosmetic
+  // (lists dedupe), but keeps trait_refs in a predictable layer.
+  absorbGrants(race);
+  absorbGrants(characterClass);
+  final subclassEntity =
+      draft.subclassId == null ? null : entities[draft.subclassId];
+  absorbGrants(subclassEntity);
+
+  // Subspecies / ancestry — `subspecies_id` carries the picked option's
+  // *name*. Find the matching row in `subspecies_options` and absorb the
+  // same granted_*_refs fields the species top-level uses.
+  if (draft.subspeciesId != null && draft.subspeciesId!.isNotEmpty && race != null) {
+    final raw = race.fields['subspecies_options'];
+    if (raw is List) {
+      for (final row in raw) {
+        if (row is! Map) continue;
+        if (row['name']?.toString() != draft.subspeciesId) continue;
+        // Wrap the row in a synthetic Entity so absorbGrants can reuse the
+        // same `copyListFrom(src, fromKey, toKeys)` walker.
+        final syntheticFields = <String, dynamic>{};
+        for (final entry in row.entries) {
+          syntheticFields[entry.key.toString()] = entry.value;
+        }
+        final syn = Entity(
+          id: '__subspecies__',
+          name: row['name']?.toString() ?? '',
+          categorySlug: 'species',
+          source: 'srd',
+          description: '',
+          images: const [],
+          imagePath: '',
+          tags: const [],
+          dmNotes: '',
+          pdfs: const [],
+          locationId: null,
+          fields: syntheticFields,
+        );
+        absorbGrants(syn);
+        break;
+      }
+    }
+  }
+
+  // Per-level class & subclass feature grants. `features` rows are
+  // narrative-only by schema, but custom content can attach
+  // `granted_modifiers` / `granted_*` ref lists on a row; absorb those
+  // for rows whose level ≤ the draft level. Feature-row `effects` flow
+  // through the resolver at read time; we only mirror ref-list grants
+  // onto the PC entity here so the editor surface picks them up.
+  void absorbFeatureRows(Entity? src) {
+    if (src == null) return;
+    final rows = src.fields['features'];
+    if (rows is! List) return;
+    for (final row in rows) {
+      if (row is! Map) continue;
+      final lvl = row['level'];
+      if (lvl is! int || lvl > draft.level) continue;
+      void copyRow(String fromKey, List<String> toKeys) {
+        final raw = row[fromKey];
+        if (raw is! List) return;
+        final ids = raw.whereType<String>().toList();
+        if (ids.isEmpty) return;
+        for (final to in toKeys) {
+          if (!fieldsByKey.containsKey(to)) continue;
+          final existing = (out[to] is List)
+              ? List<String>.from(out[to] as List)
+              : <String>[];
+          for (final id in ids) {
+            if (!existing.contains(id)) existing.add(id);
+          }
+          out[to] = existing;
+          return;
+        }
+      }
+
+      copyRow('granted_damage_resistances',
+          const ['resistance_refs', 'damage_resistances']);
+      copyRow('granted_damage_immunities',
+          const ['damage_immunity_refs', 'damage_immunities']);
+      copyRow('granted_damage_vulnerabilities',
+          const ['vulnerability_refs', 'damage_vulnerabilities']);
+      copyRow('granted_condition_immunities',
+          const ['condition_immunity_refs', 'condition_immunities']);
+      copyRow('granted_senses', const ['senses']);
+      copyRow('granted_languages', const ['language_refs', 'languages']);
+      copyRow('granted_feat_refs', const ['feats']);
+      copyRow('granted_trait_refs', const ['trait_refs']);
+      copyRow('granted_action_refs', const ['action_refs']);
+      copyRow('granted_bonus_action_refs', const ['bonus_action_refs']);
+      copyRow('granted_reaction_refs', const ['reaction_refs']);
+    }
+  }
+
+  absorbFeatureRows(characterClass);
+  absorbFeatureRows(subclassEntity);
 
   // Spell slots — derive from class caster_kind + level so a fresh
   // character spawns with the correct slot maxes without the user touching

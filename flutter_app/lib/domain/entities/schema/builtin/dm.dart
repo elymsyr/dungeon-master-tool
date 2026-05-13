@@ -364,6 +364,13 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
   fb.relation('damage_immunity_refs', 'Damage Immunities', const ['damage-type'], isList: true, g: grpResistances);
   fb.relation('condition_immunity_refs', 'Condition Immunities', const ['condition'], isList: true, g: grpResistances);
   fb.relation('current_conditions', 'Current Conditions', const ['applied-condition'], isList: true, g: grpResistances);
+  // Traits / Actions / Reactions — populated from species top-level trait_refs
+  // and class/subclass per-level granted_*_refs at creation + level-up. PC
+  // owns the same field shape NPC/monster uses so card rendering is uniform.
+  fb.relation('trait_refs', 'Traits', const ['trait'], isList: true, g: grpTraitsActions);
+  fb.relation('action_refs', 'Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
+  fb.relation('bonus_action_refs', 'Bonus Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
+  fb.relation('reaction_refs', 'Reactions', const ['creature-action'], isList: true, g: grpTraitsActions);
   // Spells — single list with a per-row "prepared" toggle (hasEquip). Slot
   // grid lives in the same group; slot maxes auto-derive from class levels.
   fb.integer('spell_save_dc', 'Spell Save DC', min: 0, max: 30, g: grpSpells);
@@ -404,9 +411,10 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
       FieldGroup(groupId: grpCombat, name: 'Combat', gridColumns: 2, orderIndex: 3),
       FieldGroup(groupId: grpProperties, name: 'Inventory', gridColumns: 1, orderIndex: 4),
       FieldGroup(groupId: grpResistances, name: 'Defenses', gridColumns: 1, orderIndex: 5),
-      FieldGroup(groupId: grpSpells, name: 'Spells', gridColumns: 1, orderIndex: 6),
-      FieldGroup(groupId: grpFeatures, name: 'Class Resources', gridColumns: 1, orderIndex: 7),
-      FieldGroup(groupId: grpRules, name: 'Roleplay', gridColumns: 1, orderIndex: 8),
+      FieldGroup(groupId: grpTraitsActions, name: 'Traits & Actions', gridColumns: 1, orderIndex: 6),
+      FieldGroup(groupId: grpSpells, name: 'Spells', gridColumns: 1, orderIndex: 7),
+      FieldGroup(groupId: grpFeatures, name: 'Class Resources', gridColumns: 1, orderIndex: 8),
+      FieldGroup(groupId: grpRules, name: 'Roleplay', gridColumns: 1, orderIndex: 9),
     ],
     orderIndex: orderIndex,
     now: now,

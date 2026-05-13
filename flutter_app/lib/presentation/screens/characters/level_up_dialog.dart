@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 import '../../../application/character_creation/caster_progression.dart';
 import '../../../application/character_creation/level_up_planner.dart';
@@ -208,23 +209,28 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
   }
 
   bool get _isComplete {
+    // ASI / Feat picks at qualifying levels are optional — the user can
+    // commit the level-up with nothing picked and revisit later via the
+    // editor. We still validate consistency when a *partial* pick is in
+    // progress so the dialog can't fire a malformed ASI bump.
     if (widget.plan.isAsiOrFeatLevel) {
       switch (_asiChoice) {
         case _AsiChoice.asiSingle:
-          if (_asiSingleKey == null) return false;
-          if (!_canBump(_asiSingleKey!, 2)) return false;
+          if (_asiSingleKey != null && !_canBump(_asiSingleKey!, 2)) {
+            return false;
+          }
         case _AsiChoice.asiSplit:
           final a = _asiSplitA;
           final b = _asiSplitB;
-          if (a == null || b == null || a == b) return false;
-          if (!_canBump(a, 1) || !_canBump(b, 1)) return false;
+          if (a != null && b != null && a == b) return false;
+          if (a != null && !_canBump(a, 1)) return false;
+          if (b != null && !_canBump(b, 1)) return false;
         case _AsiChoice.feat:
-          if (_featId == null) return false;
+          // _featId may be null — picking is optional now.
+          break;
       }
     }
-    if (widget.plan.isFightingStyleLevel && _fightingStyleFeats().isNotEmpty) {
-      if (_fightingStyleId == null) return false;
-    }
+    // Fighting style pick is optional — same flow as the ASI picker.
     // Spell picks are no longer mandatory — players may leave some slots
     // empty and fill them in the editor later. Only block when the user
     // somehow exceeds the SRD delta.
@@ -794,9 +800,13 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
                       ),
                       if (description.isNotEmpty) ...[
                         const SizedBox(height: 3),
-                        Text(
-                          description,
-                          style: TextStyle(fontSize: 11, color: hint),
+                        MarkdownBody(
+                          data: description,
+                          styleSheet:
+                              MarkdownStyleSheet.fromTheme(Theme.of(context))
+                                  .copyWith(
+                            p: TextStyle(fontSize: 11, color: hint),
+                          ),
                         ),
                       ],
                     ],
