@@ -1769,4 +1769,137 @@ List<Map<String, dynamic>> srdCreatureActions() => [
       _a(name: 'Wail (Banshee)', actionType: 'Action', usesPerDay: 1, saveDc: 13, saveAbility: 'Constitution', description: 'The banshee releases a mournful wail, audible within 5 miles. Each creature within 30 feet that isn\'t Deafened makes a DC 13 Con save. *Failure:* Reduced to 0 HP. *Success:* 10 (3d6) Psychic damage.'),
       _a(name: 'Superior Invisibility (Pixie)', actionType: 'Magic Action', description: 'The pixie magically turns Invisible. The Invisibility ends if the pixie attacks or casts a spell, or if its concentration ends.'),
       _a(name: 'Reel In (Roper)', actionType: 'Bonus Action', description: 'The roper pulls each creature Grappled by it up to 50 feet straight toward it.'),
+
+      // ─── Player Character class actions ──────────────────────────────────
+      // These are referenced from `classes.dart` per-level feature rows via
+      // `granted_action_refs` / `granted_bonus_action_refs` / `granted_reaction_refs`
+      // so the wizard + level-up commit fold them onto the PC entity.
+      _a(
+        name: 'Rage',
+        actionType: 'Bonus Action',
+        description:
+            'Imbue yourself with primal power while not in Heavy armor. While raging: Resistance to Bludgeoning, Piercing, and Slashing damage; bonus damage on Strength attacks; Advantage on Strength checks/saves; can\'t cast or maintain Concentration. Lasts to the end of your next turn; extend by attacking, forcing a save, or another Bonus Action. Up to 10 minutes per Rage.',
+      ),
+      _a(
+        name: 'Second Wind',
+        actionType: 'Bonus Action',
+        description:
+            'Regain 1d10 + Fighter level HP. Uses recharge on a Short or Long Rest. Number of uses scales with Fighter level (2 at L4, 3 at L10, 4 at L15).',
+      ),
+      _a(
+        name: 'Action Surge',
+        actionType: 'Free Action',
+        description:
+            'On your turn, take one additional Action (not Bonus Action). One use per Short or Long Rest at L2; two uses at L17.',
+      ),
+      _a(
+        name: 'Bardic Inspiration',
+        actionType: 'Bonus Action',
+        description:
+            'Choose a creature within 60 feet (other than yourself); they gain a Bardic Inspiration die (d6 at L1, d8 at L5, d10 at L10, d12 at L15). They can roll the die within 10 minutes and add it to one ability check, attack roll, or saving throw — deciding after the d20 but before the result is known. Uses = your Charisma modifier (min 1) per Long Rest.',
+      ),
+      _a(
+        name: 'Lay on Hands',
+        actionType: 'Bonus Action',
+        description:
+            'Touch a creature and draw from your pool of healing power equal to your Paladin level × 5. You can restore HP, or expend 5 points to end one disease or one Poisoned condition.',
+      ),
+      _a(
+        name: 'Divine Sense',
+        actionType: 'Bonus Action',
+        description:
+            'Until the end of your next turn, you sense the location of any Celestial, Fiend, or Undead within 60 feet that isn\'t behind Total Cover, plus the location of any Hallow spell or place consecrated/desecrated by such an effect. Uses = your Charisma modifier (min 1) per Long Rest.',
+      ),
+      _a(
+        name: 'Channel Divinity',
+        actionType: 'Action',
+        description:
+            'Channel divine energy directly from your deity. Use to fuel a specific Channel Divinity effect granted by your Cleric subclass or by Cleric features (e.g. Turn Undead). Uses scale: 2 at L2, 3 at L6. Recharge on a Short or Long Rest.',
+      ),
+      _a(
+        name: 'Turn Undead',
+        actionType: 'Action',
+        description:
+            'Each Undead within 30 feet of you that can see or hear you must make a Wisdom save (DC = your Cleric spell save DC). On a failure, the Undead is Frightened of you for 1 minute or until it takes damage. Expends one use of Channel Divinity.',
+      ),
+      _a(
+        name: 'Wild Shape',
+        actionType: 'Magic Action',
+        description:
+            'Transform into a Beast you have seen (challenge rating per Druid level rules). You retain mental ability scores; physical scores become the Beast\'s. You can revert as a Bonus Action. Uses recharge on a Short or Long Rest.',
+      ),
+      _a(
+        name: 'Flurry of Blows',
+        actionType: 'Bonus Action',
+        description:
+            'Spend 1 Focus point to make two Unarmed Strikes. Replaces the standard Martial Arts bonus-action Unarmed Strike.',
+      ),
+      _a(
+        name: 'Patient Defense',
+        actionType: 'Bonus Action',
+        description:
+            'Take the Disengage action. You can also spend 1 Focus point to take both Disengage and Dodge on the same Bonus Action.',
+      ),
+      _a(
+        name: 'Step of the Wind',
+        actionType: 'Bonus Action',
+        description:
+            'Take the Dash action. You can spend 1 Focus point to also take the Disengage action, and your jump distance is doubled for the turn.',
+      ),
+      _a(
+        name: 'Hunter\'s Mark (Class)',
+        actionType: 'Bonus Action',
+        description:
+            'Mark a creature you can see within 90 feet. The next time you hit that creature with a weapon attack on your turn, it takes extra 1d6 Force damage. Move the mark as a Bonus Action. Concentration, up to 1 hour.',
+      ),
+      _a(
+        name: 'Sorcery Points',
+        actionType: 'Bonus Action',
+        description:
+            'Spend Sorcery Points to fuel Metamagic options or to convert into spell slots (and vice versa). Sorcery Point pool = Sorcerer level (refreshes on Long Rest).',
+      ),
+      _a(
+        name: 'Eldritch Blast (Class Action)',
+        actionType: 'Magic Action',
+        description:
+            'Cantrip-level eldritch energy attack. A beam of crackling energy streaks toward a creature within 120 feet. Ranged spell attack; on a hit, the target takes 1d10 Force damage. Beam count scales with character level.',
+      ),
+      _a(
+        name: 'Breath Weapon (Dragonborn)',
+        actionType: 'Action',
+        rechargeKind: 'Short or Long Rest',
+        description:
+            'Exhale destructive energy as instinctive magic. Choose a 15-foot Cone or a 30-foot Line (5 ft. wide). Each creature in the area makes a Dexterity save (DC = 8 + Con mod + PB). *Failure:* (5×CharLevel)d10 damage scaled to character tier — see SRD table. *Success:* Half damage. Damage type matches your ancestry (Acid, Cold, Fire, Lightning, or Poison).',
+      ),
+      _a(
+        name: 'Relentless Endurance',
+        actionType: 'Reaction',
+        usesPerDay: 1,
+        description:
+            'When you are reduced to 0 HP but not killed outright, you can drop to 1 HP instead. Once per Long Rest.',
+      ),
+      _a(
+        name: 'Adrenaline Rush',
+        actionType: 'Bonus Action',
+        description:
+            'Take the Dash action and gain Temporary HP equal to your Proficiency Bonus. Uses = PB per Short or Long Rest.',
+      ),
+      _a(
+        name: 'Cloud\'s Jaunt',
+        actionType: 'Bonus Action',
+        description:
+            'Magically teleport up to 30 feet to an unoccupied space you can see. Uses = PB per Long Rest.',
+      ),
+      _a(
+        name: 'Hill\'s Tumble',
+        actionType: 'Reaction',
+        description:
+            'When you hit a Large or smaller creature with a melee attack, you can knock the target Prone. Uses = PB per Long Rest.',
+      ),
+      _a(
+        name: 'Stone\'s Endurance',
+        actionType: 'Reaction',
+        description:
+            'When you take damage, roll 1d12 + your Constitution modifier and reduce the damage by that amount. Uses = PB per Long Rest.',
+      ),
     ];
