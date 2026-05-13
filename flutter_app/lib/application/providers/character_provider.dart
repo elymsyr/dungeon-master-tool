@@ -10,7 +10,10 @@ import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/services/character_resolver.dart';
 import '../services/builtin_srd_entities.dart';
+import 'campaign_provider.dart';
 import 'entity_provider.dart';
+import 'online_worlds_provider.dart';
+import 'world_mirror_provider.dart';
 
 const _uuid = Uuid();
 
@@ -38,11 +41,54 @@ final characterRepositoryProvider =
 
 /// Hub-level karakter listesi. Senkron kalsın diye StateNotifier.
 class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
-  CharacterListNotifier(this._repo) : super(const AsyncValue.loading()) {
+  CharacterListNotifier(this._repo, this._ref)
+      : super(const AsyncValue.loading()) {
     _load();
   }
 
   final CharacterRepository _repo;
+  final Ref _ref;
+
+  /// World name → world id (UUID) eşlemesi. campaignInfoListProvider'dan
+  /// senkron okur; henüz yüklenmediyse null döner ve push skip edilir.
+  String? _worldIdFor(String worldName) {
+    if (worldName.isEmpty) return null;
+    final list =
+        _ref.read(campaignInfoListProvider).valueOrNull ?? const [];
+    return list
+        .where((c) => c.name == worldName)
+        .firstOrNull
+        ?.id;
+  }
+
+  void _mirrorPush(Character c) {
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) return;
+    final worldId = _worldIdFor(c.worldName);
+    if (worldId == null) return;
+    // Offline world → push'u atla (RLS gürültüsünü engeller).
+    final onlineIds = _ref.read(onlineWorldIdsProvider);
+    if (!onlineIds.contains(worldId)) return;
+    // ignore: discarded_futures
+    mirror.pushCharacter(
+      worldId: worldId,
+      character: c,
+      referencedEntityIds: const <String>{},
+    );
+  }
+
+  void _mirrorDelete(String characterId, {String? worldName}) {
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) return;
+    if (worldName != null) {
+      final worldId = _worldIdFor(worldName);
+      if (worldId == null) return;
+      final onlineIds = _ref.read(onlineWorldIdsProvider);
+      if (!onlineIds.contains(worldId)) return;
+    }
+    // ignore: discarded_futures
+    mirror.deleteCharacter(characterId: characterId);
+  }
 
   Future<void> _load() async {
     try {
@@ -93,6 +139,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     );
     await _repo.save(character);
     state = AsyncValue.data([character, ...state.valueOrNull ?? const []]);
+    _mirrorPush(character);
     return character;
   }
 
@@ -145,6 +192,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     }
     list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     state = AsyncValue.data(list);
+    _mirrorPush(bumped);
   }
 
   /// Partial metadata update — name/description/tags/cover/rename combined.
@@ -176,6 +224,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     final displayName = existing?.entity.name;
     await _repo.delete(id, displayName: displayName);
     state = AsyncValue.data(list.where((c) => c.id != id).toList());
+    _mirrorDelete(id, worldName: existing?.worldName);
   }
 
   /// Trash'ten karakteri geri yükle. UI tarafı settings_tab'tan çağırır.
@@ -196,7 +245,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
 
 final characterListProvider = StateNotifierProvider<CharacterListNotifier,
     AsyncValue<List<Character>>>((ref) {
-  return CharacterListNotifier(ref.watch(characterRepositoryProvider));
+  return CharacterListNotifier(ref.watch(characterRepositoryProvider), ref);
 });
 
 /// H3: characters tab "Recents-first" listesi. Sort `updatedAt` DESC

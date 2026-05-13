@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/character_provider.dart' show kPlayerCategorySlugs;
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
+import '../../application/providers/visible_entity_provider.dart';
 import '../../domain/entities/schema/builtin/content.dart' show tier1Slugs;
 import '../../domain/entities/schema/builtin/lookups.dart' show tier0Slugs;
 import '../../domain/entities/schema/entity_category_schema.dart';
@@ -115,7 +116,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     // Watch only the sidebar-relevant fields — avoids rebuild when entity
     // fields (description, dmNotes, custom fields etc.) change.
-    final summaries = ref.watch(entityProvider.select((map) =>
+    final summaries = ref.watch(visibleEntityProvider.select((map) =>
       map.values.map((e) => (
         id: e.id,
         name: e.name,

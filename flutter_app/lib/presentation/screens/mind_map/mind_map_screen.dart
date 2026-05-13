@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/mind_map_id_provider.dart';
 import '../../../application/providers/save_state_provider.dart';
 import '../../../domain/entities/mind_map.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -40,10 +41,11 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
     final data = ref.read(activeCampaignProvider.notifier).data;
     if (data == null) return;
     final mindMaps = data['mind_maps'] as Map? ?? {};
-    final defaultMap = Map<String, dynamic>.from(
-      mindMaps['default'] as Map? ?? {},
+    final mapId = ref.read(currentMindMapIdProvider);
+    final scoped = Map<String, dynamic>.from(
+      mindMaps[mapId] as Map? ?? {},
     );
-    _notifier.init(defaultMap);
+    _notifier.init(scoped);
   }
 
   @override

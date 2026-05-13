@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -7,9 +10,15 @@ import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/cloud_backup_provider.dart';
 import '../../application/providers/cloud_sync_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
+import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
+import '../../application/providers/role_provider.dart';
+import '../../application/providers/world_membership_provider.dart';
+import '../../application/providers/world_online_status_provider.dart';
+import '../../domain/entities/online/world_member.dart';
+import '../../domain/entities/online/world_role.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
 import '../../data/database/database_provider.dart';
@@ -233,47 +242,17 @@ class _SaveSyncDialog extends ConsumerWidget {
                   // ── Actions (full mode only) ──
                   _SectionLabel('Actions', palette),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _ActionButton(
-                        icon: Icons.save,
-                        label: saveStatus == SaveStatus.saving
-                            ? 'Saving...'
-                            : 'Save Locally',
-                        onPressed: saveStatus == SaveStatus.saving
-                            ? null
-                            : () => withLoading(
-                                  ref.read(globalLoadingProvider.notifier),
-                                  'manual-save-local',
-                                  'Saving locally...',
-                                  () => ref
-                                      .read(saveStateProvider.notifier)
-                                      .saveNow(),
-                                ),
-                        palette: palette,
-                      ),
-                      if (hasCloud)
-                        _ActionButton(
-                          icon: Icons.cloud_upload_outlined,
-                          label: syncState?.status == CloudSyncStatus.syncing
-                              ? 'Syncing...'
-                              : 'Backup to Cloud',
-                          onPressed: syncState?.status == CloudSyncStatus.syncing
-                              ? null
-                              : () => _backupToCloud(context, ref),
-                          palette: palette,
-                        ),
-                      if (hasCloud)
-                        _ActionButton(
-                          icon: Icons.cloud_download_outlined,
-                          label: 'Sync from Cloud',
-                          onPressed: () => _syncFromCloud(context, ref),
-                          palette: palette,
-                        ),
-                    ],
+                  _ActionsRow(
+                    palette: palette,
+                    saveStatus: saveStatus,
+                    syncState: syncState,
+                    hasCloud: hasCloud,
+                    onBackup: () => _backupToCloud(context, ref),
+                    onSync: () => _syncFromCloud(context, ref),
                   ),
+
+                  // ── Online world panel: invite code + members ──
+                  _OnlineWorldPanel(palette: palette),
                 ],
 
                 // ── Backups (compact mode: show list above storage) ──
@@ -563,6 +542,480 @@ class _SettingsCheckbox extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Online world panel — invite code (copy + regenerate) ve member listesini
+/// gösterir. World offline iken hiçbir şey render etmez.
+class _OnlineWorldPanel extends ConsumerWidget {
+  final DmToolColors palette;
+  const _OnlineWorldPanel({required this.palette});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final campaignName = ref.watch(activeCampaignProvider);
+    if (campaignName == null) return const SizedBox.shrink();
+    final data = ref.read(activeCampaignProvider.notifier).data;
+    final worldId = (data?['world_id'] as String?) ?? campaignName;
+    final onlineIds = ref.watch(onlineWorldIdsProvider);
+    if (!onlineIds.contains(worldId)) return const SizedBox.shrink();
+    final role =
+        ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
+    final membersAsync = ref.watch(worldMembersProvider(worldId));
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (role == WorldRole.dm) ...[
+            _SectionLabel('Invite Code', palette),
+            const SizedBox(height: 8),
+            _InviteCodeRow(palette: palette, worldId: worldId),
+            const SizedBox(height: 16),
+          ],
+          _SectionLabel('Members', palette),
+          const SizedBox(height: 8),
+          membersAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+            error: (e, _) => Text(
+              'Could not load members: $e',
+              style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
+            ),
+            data: (members) {
+              if (members.isEmpty) {
+                return Text(
+                  'No members yet.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: palette.sidebarLabelSecondary,
+                  ),
+                );
+              }
+              return Column(
+                children: [
+                  for (final m in members)
+                    _MemberRow(member: m, palette: palette),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InviteCodeRow extends ConsumerStatefulWidget {
+  final DmToolColors palette;
+  final String worldId;
+  const _InviteCodeRow({required this.palette, required this.worldId});
+
+  @override
+  ConsumerState<_InviteCodeRow> createState() => _InviteCodeRowState();
+}
+
+class _InviteCodeRowState extends ConsumerState<_InviteCodeRow> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = widget.palette;
+    final codeAsync =
+        ref.watch(worldActiveInviteCodeProvider(widget.worldId));
+    return codeAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      error: (e, _) => Text(
+        'Could not load invite: $e',
+        style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
+      ),
+      data: (code) {
+        if (code == null) {
+          return Text(
+            'No invite available.',
+            style:
+                TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
+          );
+        }
+        return Row(
+            children: [
+              Expanded(
+                child: SelectableText(
+                  code,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 4,
+                    color: palette.tabActiveText,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Copy',
+                icon: const Icon(Icons.copy, size: 16),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 28, minHeight: 28),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: code));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invite code copied')),
+                  );
+                },
+              ),
+              IconButton(
+                tooltip: 'Regenerate (invalidates old code)',
+                icon: const Icon(Icons.refresh, size: 16),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 28, minHeight: 28),
+                onPressed: _busy ? null : _regenerate,
+              ),
+            ],
+        );
+      },
+    );
+  }
+
+  Future<void> _regenerate() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Regenerate invite?'),
+        content: const Text(
+            'This invalidates the current code. Anyone using the old code '
+            'will need the new one to join.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Regenerate')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(worldMembershipServiceProvider)
+          .regenerateInvite(widget.worldId);
+      ref.invalidate(worldActiveInviteCodeProvider(widget.worldId));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invite code regenerated')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Regenerate failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+}
+
+class _MemberRow extends StatelessWidget {
+  final WorldMember member;
+  final DmToolColors palette;
+  const _MemberRow({required this.member, required this.palette});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = member.displayName?.isNotEmpty == true
+        ? member.displayName!
+        : (member.username?.isNotEmpty == true
+            ? '@${member.username}'
+            : member.userId.substring(0, 8));
+    final isDm = member.role == WorldRole.dm;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 12,
+            backgroundColor: palette.featureCardAccent.withValues(alpha: 0.2),
+            backgroundImage: (member.avatarUrl?.isNotEmpty == true)
+                ? NetworkImage(member.avatarUrl!)
+                : null,
+            child: (member.avatarUrl?.isEmpty ?? true)
+                ? Icon(Icons.person, size: 12, color: palette.tabActiveText)
+                : null,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              name,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12, color: palette.tabActiveText),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: isDm
+                  ? palette.featureCardAccent.withValues(alpha: 0.2)
+                  : palette.sidebarDivider,
+              borderRadius: palette.br,
+            ),
+            child: Text(
+              isDm ? 'DM' : 'PLAYER',
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+                color: isDm ? palette.tabIndicator : palette.tabActiveText,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Actions panel — world açıkken "Save Locally" + "Make Online" (toggle);
+/// package açıkken klasik "Save Locally" + "Backup to Cloud" + "Sync from
+/// Cloud". Worldler online olunca otomatik sync olur, manuel backup/restore
+/// gerekmez.
+class _ActionsRow extends ConsumerWidget {
+  final DmToolColors palette;
+  final SaveStatus saveStatus;
+  final CloudSyncState? syncState;
+  final bool hasCloud;
+  final VoidCallback onBackup;
+  final VoidCallback onSync;
+
+  const _ActionsRow({
+    required this.palette,
+    required this.saveStatus,
+    required this.syncState,
+    required this.hasCloud,
+    required this.onBackup,
+    required this.onSync,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final campaignName = ref.watch(activeCampaignProvider);
+    final isWorld = campaignName != null;
+
+    final saveBtn = _ActionButton(
+      icon: Icons.save,
+      label: saveStatus == SaveStatus.saving ? 'Saving...' : 'Save Locally',
+      onPressed: saveStatus == SaveStatus.saving
+          ? null
+          : () => withLoading(
+                ref.read(globalLoadingProvider.notifier),
+                'manual-save-local',
+                'Saving locally...',
+                () => ref.read(saveStateProvider.notifier).saveNow(),
+              ),
+      palette: palette,
+    );
+
+    if (isWorld) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          saveBtn,
+          if (hasCloud) _MakeOnlineButton(palette: palette),
+        ],
+      );
+    }
+
+    // Package context — keep cloud backup/sync.
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        saveBtn,
+        if (hasCloud)
+          _ActionButton(
+            icon: Icons.cloud_upload_outlined,
+            label: syncState?.status == CloudSyncStatus.syncing
+                ? 'Syncing...'
+                : 'Backup to Cloud',
+            onPressed: syncState?.status == CloudSyncStatus.syncing
+                ? null
+                : onBackup,
+            palette: palette,
+          ),
+        if (hasCloud)
+          _ActionButton(
+            icon: Icons.cloud_download_outlined,
+            label: 'Sync from Cloud',
+            onPressed: onSync,
+            palette: palette,
+          ),
+      ],
+    );
+  }
+}
+
+/// Active world için online toggle. Online ise yeşil "Online · Auto-sync"
+/// pill + sağında "Make Offline" küçük ikon. Offline ise "Make Online" CTA.
+class _MakeOnlineButton extends ConsumerStatefulWidget {
+  final DmToolColors palette;
+  const _MakeOnlineButton({required this.palette});
+
+  @override
+  ConsumerState<_MakeOnlineButton> createState() => _MakeOnlineButtonState();
+}
+
+class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = widget.palette;
+    final campaignName = ref.watch(activeCampaignProvider);
+    if (campaignName == null) return const SizedBox.shrink();
+    final data = ref.read(activeCampaignProvider.notifier).data;
+    final worldId = (data?['world_id'] as String?) ?? campaignName;
+    final onlineIds = ref.watch(onlineWorldIdsProvider);
+    final isOnline = onlineIds.contains(worldId);
+
+    if (isOnline) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: palette.successBtnBg.withValues(alpha: 0.15),
+              borderRadius: palette.br,
+              border: Border.all(color: palette.successBtnBg),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.cloud_done,
+                    size: 14, color: palette.successBtnBg),
+                const SizedBox(width: 6),
+                Text(
+                  'Online · Auto-sync',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: palette.successBtnBg,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            tooltip: 'Make Offline',
+            icon: const Icon(Icons.cloud_off, size: 16),
+            onPressed: _busy ? null : () => _confirmOffline(worldId),
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints:
+                const BoxConstraints(minWidth: 28, minHeight: 28),
+          ),
+        ],
+      );
+    }
+
+    return _ActionButton(
+      icon: Icons.cloud_upload,
+      label: _busy ? 'Publishing...' : 'Make Online',
+      onPressed: _busy ? null : () => _makeOnline(campaignName, worldId),
+      palette: palette,
+    );
+  }
+
+  Future<void> _makeOnline(String campaignName, String worldId) async {
+    setState(() => _busy = true);
+    try {
+      final repo = ref.read(campaignRepositoryProvider);
+      final data = await repo.load(campaignName);
+      final stateJson = jsonEncode(data);
+      final templateId =
+          (data['world_schema'] as Map?)?['schemaId'] as String?;
+      final templateHash = data['template_hash'] as String?;
+      await ref.read(worldMembershipServiceProvider).publishWorld(
+            worldId: worldId,
+            worldName: campaignName,
+            templateId: templateId,
+            templateHash: templateHash,
+            stateJson: stateJson,
+          );
+      ref.read(onlineWorldIdsProvider.notifier).add(worldId);
+      ref.invalidate(worldOnlineStatusProvider(worldId));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('World is now online')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Publish failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _confirmOffline(String worldId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Make Offline'),
+        content: const Text(
+            'This removes the world and all member data from the cloud. '
+            'Local data is preserved. Continue?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Make Offline')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(worldMembershipServiceProvider)
+          .unpublishWorld(worldId);
+      ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
+      ref.invalidate(worldOnlineStatusProvider(worldId));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('World is now offline')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unpublish failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 }
 

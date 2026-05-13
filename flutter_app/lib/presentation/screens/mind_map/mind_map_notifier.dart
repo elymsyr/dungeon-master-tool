@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/mind_map_id_provider.dart';
 import '../../../application/providers/save_state_provider.dart';
 import '../../../application/services/undo_redo_mixin.dart';
 import '../../../domain/entities/mind_map.dart';
@@ -168,7 +169,8 @@ class MindMapNotifier extends StateNotifier<MindMapState>
 
     final mindMaps =
         Map<String, dynamic>.from(campaign.data!['mind_maps'] as Map? ?? {});
-    mindMaps['default'] = mindMapData;
+    final mapId = _ref.read(currentMindMapIdProvider);
+    mindMaps[mapId] = mindMapData;
     campaign.data!['mind_maps'] = mindMaps;
   }
 

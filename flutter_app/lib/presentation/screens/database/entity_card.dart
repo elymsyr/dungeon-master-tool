@@ -8,6 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/projection_provider.dart';
+import '../../../application/providers/role_provider.dart';
+import '../../../domain/entities/online/world_role.dart';
+import '../../dialogs/share_entity_dialog.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
@@ -400,6 +403,29 @@ class _EntityCardState extends ConsumerState<EntityCard> {
                                 );
                             },
                           ),
+                          if (ref.watch(currentWorldRoleProvider).valueOrNull ==
+                              WorldRole.dm)
+                            Builder(builder: (ctx) {
+                              final worldId = ref
+                                  .watch(activeCampaignIdProvider)
+                                  .valueOrNull;
+                              if (worldId == null) return const SizedBox.shrink();
+                              return IconButton(
+                                tooltip: 'Share with players',
+                                icon: Icon(Icons.share,
+                                    size: 18, color: palette.srdHeadingRed),
+                                visualDensity: VisualDensity.compact,
+                                constraints: const BoxConstraints(
+                                    minWidth: 32, minHeight: 32),
+                                padding: EdgeInsets.zero,
+                                onPressed: () => ShareEntityDialog.show(
+                                  ctx,
+                                  entityId: widget.entityId,
+                                  entityName: entity.name,
+                                  worldId: worldId,
+                                ),
+                              );
+                            }),
                         ],
                       ),
                       // Subtitle (italic muted) — e.g. "Level 2 Evocation (Wizard)"
