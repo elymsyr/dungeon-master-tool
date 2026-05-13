@@ -6,6 +6,7 @@ import '../../../../../application/character_creation/character_draft_notifier.d
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
 import '../../../../theme/dm_tool_colors.dart';
+import 'skill_mod_helper.dart';
 
 /// Wizard step that asks the player to spend the proficiency / language
 /// "choice slots" their class and background grant:
@@ -73,6 +74,13 @@ class ProficienciesStep extends ConsumerWidget {
       );
     }
 
+    String? skillSuffix(String id) {
+      final e = entities[id];
+      if (e == null) return null;
+      final mod = skillAbilityModFor(e, entities, draft);
+      return mod == null ? null : formatModifier(mod);
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -82,6 +90,7 @@ class ProficienciesStep extends ConsumerWidget {
             ids: grantedSkillIds,
             entities: entities,
             palette: palette,
+            suffixForId: skillSuffix,
           ),
         if (grantedLanguageIds.isNotEmpty)
           _GrantedSection(
@@ -102,6 +111,7 @@ class ProficienciesStep extends ConsumerWidget {
             onToggle: (id) =>
                 notifier.toggleSkillChoice(id, cap: skillCap),
             palette: palette,
+            suffixForId: skillSuffix,
           ),
         if (toolCap > 0)
           _PickerSection(
@@ -154,21 +164,23 @@ class _GrantedSection extends StatelessWidget {
   final Iterable<String> ids;
   final Map<String, Entity> entities;
   final DmToolColors palette;
+  final String? Function(String id)? suffixForId;
 
   const _GrantedSection({
     required this.title,
     required this.ids,
     required this.entities,
     required this.palette,
+    this.suffixForId,
   });
 
   @override
   Widget build(BuildContext context) {
-    final names = ids
-        .map((id) => entities[id]?.name ?? id)
+    final rows = ids
+        .map((id) => (id: id, name: entities[id]?.name ?? id))
         .toList()
-      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-    if (names.isEmpty) return const SizedBox.shrink();
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    if (rows.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -187,7 +199,7 @@ class _GrantedSection extends StatelessWidget {
             spacing: 6,
             runSpacing: 4,
             children: [
-              for (final n in names)
+              for (final r in rows)
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 3),
@@ -196,12 +208,30 @@ class _GrantedSection extends StatelessWidget {
                     borderRadius: palette.chr,
                     border: Border.all(color: palette.featureCardBorder),
                   ),
-                  child: Text(
-                    n,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: palette.tabActiveText,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        r.name,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: palette.tabActiveText,
+                        ),
+                      ),
+                      if (suffixForId?.call(r.id) case final s?
+                          when s.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Text(
+                            s,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: palette.sidebarLabelSecondary,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
             ],
@@ -222,6 +252,7 @@ class _PickerSection extends StatelessWidget {
   final String disabledHint;
   final ValueChanged<String> onToggle;
   final DmToolColors palette;
+  final String? Function(String id)? suffixForId;
 
   const _PickerSection({
     required this.title,
@@ -233,6 +264,7 @@ class _PickerSection extends StatelessWidget {
     required this.disabledHint,
     required this.onToggle,
     required this.palette,
+    this.suffixForId,
   });
 
   @override
@@ -295,6 +327,7 @@ class _PickerSection extends StatelessWidget {
                 for (final id in sortedOptions)
                   _OptionChip(
                     label: entities[id]?.name ?? id,
+                    suffix: suffixForId?.call(id) ?? '',
                     selected: pickedSet.contains(id),
                     disabled: disabledIds.contains(id) ||
                         (atCap && !pickedSet.contains(id)),
@@ -313,6 +346,7 @@ class _PickerSection extends StatelessWidget {
 
 class _OptionChip extends StatelessWidget {
   final String label;
+  final String suffix;
   final bool selected;
   final bool disabled;
   final String disabledHint;
@@ -321,6 +355,7 @@ class _OptionChip extends StatelessWidget {
 
   const _OptionChip({
     required this.label,
+    required this.suffix,
     required this.selected,
     required this.disabled,
     required this.disabledHint,
@@ -361,6 +396,18 @@ class _OptionChip extends StatelessWidget {
             label,
             style: TextStyle(fontSize: 11, color: fg),
           ),
+          if (suffix.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                suffix,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
+                ),
+              ),
+            ),
           if (disabled && disabledHint.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(left: 4),

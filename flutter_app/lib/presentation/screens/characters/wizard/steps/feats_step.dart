@@ -7,6 +7,7 @@ import '../../../../../application/character_creation/character_draft_notifier.d
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
 import '../../../../theme/dm_tool_colors.dart';
+import 'skill_mod_helper.dart';
 
 /// Wizard step that surfaces per-feat sub-choices.
 ///
@@ -470,7 +471,14 @@ class _ChoiceGroupSection extends StatelessWidget {
                 options: [
                   for (final s in skills)
                     _Option(
-                        id: s.id, label: s.name, description: s.description),
+                      id: s.id,
+                      label: s.name,
+                      description: s.description,
+                      suffix: () {
+                        final m = skillAbilityModFor(s, entities, draft);
+                        return m == null ? '' : formatModifier(m);
+                      }(),
+                    ),
                 ],
                 picked: current,
                 pick: pick,
@@ -608,10 +616,12 @@ class _Option {
   final String id;
   final String label;
   final String description;
+  final String suffix;
   const _Option({
     required this.id,
     required this.label,
     this.description = '',
+    this.suffix = '',
   });
 }
 
@@ -678,6 +688,7 @@ class _ChipPicker extends StatelessWidget {
         for (final o in options)
           _OptionChip(
             label: o.label,
+            suffix: o.suffix,
             description: o.description,
             selected: picked.contains(o.id),
             disabled: disabledIds.contains(o.id) ||
@@ -694,6 +705,7 @@ class _ChipPicker extends StatelessWidget {
 
 class _OptionChip extends StatelessWidget {
   final String label;
+  final String suffix;
   final String description;
   final bool selected;
   final bool disabled;
@@ -703,6 +715,7 @@ class _OptionChip extends StatelessWidget {
 
   const _OptionChip({
     required this.label,
+    required this.suffix,
     required this.description,
     required this.selected,
     required this.disabled,
@@ -744,6 +757,18 @@ class _OptionChip extends StatelessWidget {
             label,
             style: TextStyle(fontSize: 11, color: fg),
           ),
+          if (suffix.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                suffix,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
+                ),
+              ),
+            ),
           if (disabled && disabledHint.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(left: 4),
