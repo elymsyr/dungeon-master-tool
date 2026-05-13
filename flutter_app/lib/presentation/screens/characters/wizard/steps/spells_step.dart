@@ -278,21 +278,28 @@ class _SpellRow extends StatelessWidget {
         ? entity.fields['level'] as int
         : int.tryParse(entity.fields['level']?.toString() ?? '') ?? 0;
     final description = entity.description.trim();
-    return InkWell(
-      onTap: disabled ? null : onTap,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 3),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: selected
-                ? palette.featureCardAccent
-                : palette.featureCardBorder,
-            width: selected ? 2 : 1,
-          ),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: palette.cbr,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: disabled ? null : onTap,
+          borderRadius: palette.cbr,
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: selected
+                    ? palette.featureCardAccent
+                    : palette.featureCardBorder,
+                width: selected ? 2 : 1,
+              ),
+              borderRadius: palette.cbr,
+            ),
+            child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
@@ -364,6 +371,8 @@ class _SpellRow extends StatelessWidget {
               ),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );

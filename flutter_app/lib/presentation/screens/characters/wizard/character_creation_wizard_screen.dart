@@ -110,6 +110,7 @@ class _CharacterCreationWizardScreenState
           onPressed: _committing ? null : () => context.pop(),
         ),
       ),
+      backgroundColor: palette.srdParchment,
       body: templatesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Template load error: $e')),
@@ -672,6 +673,11 @@ Map<String, dynamic> _buildSeedFields({
       background!.fields['origin_feat_ref'] as String,
     ...draft.featIds,
   ];
+  // Mirror onto the visible `feats` relation list so the card renders them.
+  if (fieldsByKey.containsKey('feats')) {
+    final featIds = (out['feat_ids'] as List).whereType<String>().toList();
+    out['feats'] = featIds;
+  }
   out['equipment_choices'] = Map<String, String>.from(draft.equipmentChoices);
   out['feat_choices'] = Map<String, String>.from(draft.originFeatChoices);
   out['base_abilities'] = stat;
@@ -779,15 +785,36 @@ Map<String, dynamic> _buildSeedFields({
     ],
   );
   appendIds(const ['language_refs', 'languages'], draft.languageChoiceIds);
-  appendIds(
-    const ['spell_refs', 'spells'],
-    [
-      ...draft.cantripIds,
-      ...draft.preparedSpellIds,
-      ...featCantripIds,
-      ...featPreparedIds,
-    ],
-  );
+  // PC schema's spell list is `spells_known` with hasEquip-style per-row
+  // "prepared" flag. Cantrips have no slot cost so we flag them prepared by
+  // default; chosen prepared spells get the same. The widget parses both
+  // flat-id and `{id, equipped}` shapes — write the richer shape so the
+  // prepared flag survives the round-trip.
+  if (fieldsByKey.containsKey('spells_known')) {
+    final existing = (out['spells_known'] is List)
+        ? List<Map<String, dynamic>>.from(
+            (out['spells_known'] as List).whereType<Map>().map(
+                  (m) => Map<String, dynamic>.from(m),
+                ),
+          )
+        : <Map<String, dynamic>>[];
+    final seen = {
+      for (final r in existing) r['id']?.toString(): true,
+    };
+    void add(Iterable<String> ids, {required bool prepared}) {
+      for (final id in ids) {
+        if (id.isEmpty || seen.containsKey(id)) continue;
+        existing.add({'id': id, 'equipped': prepared, 'source': 'auto'});
+        seen[id] = true;
+      }
+    }
+
+    add(draft.cantripIds, prepared: true);
+    add(featCantripIds, prepared: true);
+    add(draft.preparedSpellIds, prepared: true);
+    add(featPreparedIds, prepared: true);
+    out['spells_known'] = existing;
+  }
   out['cantrip_ids'] = [
     ...draft.cantripIds,
     for (final id in featCantripIds)
@@ -924,10 +951,10 @@ Map<String, dynamic> _buildSeedFields({
 
   // Spell slots — derive from class caster_kind + level so a fresh
   // character spawns with the correct slot maxes without the user touching
-  // the level-up dialog. Stored on `spell_slots_by_level` (max) and
-  // `spell_slots_remaining_by_level` (current pool), keyed by spell level
-  // string. The editor's runtime reads these maps; the schema's slot field
-  // is just the legacy display target.
+  // the level-up dialog. Stored on the `spell_slots` field as
+  // `{max: {spellLevel: count}, remaining: {spellLevel: count}}`. The
+  // `_SpellSlotGridFieldWidget` renders one row per spell level with
+  // tappable pips for remaining slots.
   if (characterClass != null) {
     final kind = parseCasterKind(characterClass.fields['caster_kind']);
     final slots = defaultSpellSlotsByLevel(kind, draft.level);
@@ -939,8 +966,7 @@ Map<String, dynamic> _buildSeedFields({
         maxOut[k] = entry.value;
         remainingOut[k] = entry.value;
       }
-      out['spell_slots_by_level'] = maxOut;
-      out['spell_slots_remaining_by_level'] = remainingOut;
+      out['spell_slots'] = {'max': maxOut, 'remaining': remainingOut};
     }
   }
 
@@ -1205,7 +1231,7 @@ class _HigherLevelStartPanel extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: palette.featureCardBg,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: palette.cbr,
         border: Border.all(color: palette.featureCardBorder),
       ),
       child: Column(
@@ -1285,7 +1311,7 @@ class _PortraitTile extends StatelessWidget {
             decoration: BoxDecoration(
               color: palette.featureCardBg,
               border: Border.all(color: palette.featureCardBorder),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: palette.cbr,
             ),
             child: hasImage
                 ? Image.file(File(path), fit: BoxFit.cover)
@@ -1933,7 +1959,7 @@ class _ReviewStep extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: palette.featureCardBg,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: palette.chr,
             border: Border.all(color: palette.featureCardBorder),
           ),
           child: Text(t, style: const TextStyle(fontSize: 12)),

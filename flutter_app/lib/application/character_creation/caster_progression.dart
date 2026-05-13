@@ -196,7 +196,7 @@ const _pactSlots = <List<int>>[
 /// non-casters or sub-progression levels (Half before L2, Third before
 /// L3). Pact returns a single entry `{slotLevel: count}` because Warlock
 /// slots all share one level and recharge on a short rest — the caller
-/// must use `spell_slots_remaining_by_level` *and* know the recharge
+/// must use the `spell_slots.remaining` map *and* know the recharge
 /// cadence.
 Map<int, int> defaultSpellSlotsByLevel(CasterKind kind, int level) {
   if (level < 1) return const {};

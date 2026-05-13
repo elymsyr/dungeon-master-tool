@@ -641,18 +641,18 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
       );
     }
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxHeight: 180),
+      constraints: const BoxConstraints(maxHeight: 260),
       child: SingleChildScrollView(
-        child: Wrap(
-          spacing: 6,
-          runSpacing: 4,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             for (final e in feats)
-              _chip(
-                label: e.name,
+              _descOption(
+                name: e.name,
+                description: e.description,
                 selected: _featId == e.id,
-                disabled: false,
                 onTap: () => setState(() => _featId = e.id),
+                hint: hint,
               ),
           ],
         ),
@@ -680,19 +680,24 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
                 fontSize: 11, color: hint, fontStyle: FontStyle.italic),
           )
         else
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: [
-              for (final e in styles)
-                _chip(
-                  label: e.name,
-                  selected: _fightingStyleId == e.id,
-                  disabled: false,
-                  onTap: () =>
-                      setState(() => _fightingStyleId = e.id),
-                ),
-            ],
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 220),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final e in styles)
+                    _descOption(
+                      name: e.name,
+                      description: e.description,
+                      selected: _fightingStyleId == e.id,
+                      onTap: () =>
+                          setState(() => _fightingStyleId = e.id),
+                      hint: hint,
+                    ),
+                ],
+              ),
+            ),
           ),
       ],
     );
@@ -726,6 +731,82 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
       onSelected: disabled ? null : (_) => onTap(),
       labelStyle: const TextStyle(fontSize: 11),
       visualDensity: VisualDensity.compact,
+    );
+  }
+
+  /// Selectable row showing entity name + description. Used by feat /
+  /// fighting-style / spell pickers so the player sees what each option
+  /// does before committing.
+  Widget _descOption({
+    required String name,
+    required String description,
+    required bool selected,
+    required VoidCallback onTap,
+    required Color hint,
+  }) {
+    final palette = Theme.of(context).extension<DmToolColors>();
+    final borderColor = selected
+        ? (palette?.featureCardAccent ??
+            Theme.of(context).colorScheme.primary)
+        : (palette?.featureCardBorder ??
+            Theme.of(context).colorScheme.outline);
+    final radius = palette?.cbr ?? BorderRadius.circular(4);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: radius,
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: borderColor,
+                width: selected ? 2 : 1,
+              ),
+              borderRadius: radius,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  selected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  size: 16,
+                  color: selected ? borderColor : hint,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (description.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          description,
+                          style: TextStyle(fontSize: 11, color: hint),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -951,27 +1032,29 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
       );
     }
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxHeight: 180),
+      constraints: const BoxConstraints(maxHeight: 260),
       child: SingleChildScrollView(
-        child: Wrap(
-          spacing: 6,
-          runSpacing: 4,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             for (final e in spells)
-              _chip(
-                label: cantripOnly
+              _descOption(
+                name: cantripOnly
                     ? e.name
                     : 'L${e.fields['level']} · ${e.name}',
+                description: e.description,
                 selected: picked.contains(e.id),
-                disabled:
-                    !picked.contains(e.id) && picked.length >= cap,
-                onTap: () => setState(() {
-                  if (picked.contains(e.id)) {
-                    picked.remove(e.id);
-                  } else if (picked.length < cap) {
-                    picked.add(e.id);
-                  }
-                }),
+                onTap: () {
+                  if (!picked.contains(e.id) && picked.length >= cap) return;
+                  setState(() {
+                    if (picked.contains(e.id)) {
+                      picked.remove(e.id);
+                    } else if (picked.length < cap) {
+                      picked.add(e.id);
+                    }
+                  });
+                },
+                hint: hint,
               ),
           ],
         ),

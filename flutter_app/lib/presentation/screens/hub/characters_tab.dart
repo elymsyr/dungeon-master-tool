@@ -90,6 +90,16 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       visualDensity: VisualDensity.compact,
                     ),
                   ),
+                  const SizedBox(width: 4),
+                  OutlinedButton(
+                    onPressed: () => context.push('/character/new'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                      minimumSize: const Size(32, 32),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    child: const Icon(Icons.add, size: 16),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -217,29 +227,6 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                 ],
               ),
 
-              const SizedBox(height: 24),
-              Divider(color: palette.sidebarDivider),
-              const SizedBox(height: 16),
-
-              Text('Create New Character',
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: palette.tabActiveText)),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () => context.push('/character/new'),
-                  icon: const Icon(Icons.auto_awesome, size: 18),
-                  label: const Text('Create Character'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: palette.successBtnBg,
-                    foregroundColor: palette.successBtnText,
-                    minimumSize: const Size(0, 38),
-                  ),
-                ),
-              ),
             ],
           ),
         ),

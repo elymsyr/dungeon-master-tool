@@ -193,7 +193,7 @@ class _GrantedSection extends StatelessWidget {
                       horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: palette.featureCardBg,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: palette.chr,
                     border: Border.all(color: palette.featureCardBorder),
                   ),
                   child: Text(
@@ -346,7 +346,7 @@ class _OptionChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: palette.chr,
         border: Border.all(color: border),
       ),
       child: Row(
@@ -379,7 +379,7 @@ class _OptionChip extends StatelessWidget {
 
     return InkWell(
       onTap: disabled ? null : onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: palette.chr,
       child: chip,
     );
   }

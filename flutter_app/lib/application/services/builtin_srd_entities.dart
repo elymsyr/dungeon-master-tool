@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/entity.dart';
@@ -143,9 +142,9 @@ final wizardEntitiesProvider = Provider.autoDispose<Map<String, Entity>>((ref) {
   if (world.isEmpty) return builtin;
   final campaign = ref.watch(entityProvider);
   if (campaign.isEmpty) return builtin;
-  // Lazy view — O(1) construction, no 7 K-entry spread. Campaign wins on
-  // id collisions because it comes first in the lookup chain.
-  return UnmodifiableMapView<String, Entity>(
-    CombinedMapView<String, Entity>([campaign, builtin]),
-  );
+  // Materialize a real merged map. CombinedMapView.values concatenates
+  // without key-dedupe, so picker lists end up with two of each SRD
+  // entity when the campaign mirrors the bundled pack (same id in both).
+  // Campaign wins on collisions (placed last in the spread).
+  return Map<String, Entity>.unmodifiable({...builtin, ...campaign});
 });
