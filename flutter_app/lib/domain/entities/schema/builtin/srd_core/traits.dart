@@ -194,4 +194,251 @@ List<Map<String, dynamic>> srdTraits() => [
       _t(name: 'Ooze Cube', kind: 'Passive', description: 'The cube takes up its entire space. Other creatures can enter the space, but a creature that does so is subjected to the cube\'s Engulf and has Disadvantage on the saving throw. Creatures inside the cube can be seen but have Total Cover. A creature within 5 feet of the cube can take an action to pull a creature or object out, succeeding on a DC 12 Strength check. The cube can hold one Large creature or up to four Medium or smaller creatures.'),
       _t(name: 'Reflective Carapace', kind: 'Defensive', description: 'If the creature is targeted by a Magic Missile spell or a line spell, or if a spell attack roll is made against it, roll a d6. On a 1–5, the creature is unaffected. On a 6, the creature is unaffected and the effect is reflected back at the caster.'),
       _t(name: 'Tunneler', kind: 'Movement', description: 'The creature can burrow through solid rock, leaving a 10-foot-diameter tunnel in its wake.'),
+
+      // ─── Player Character species traits (SRD 5.2.1 pp. 83–86) ──────────
+      // Referenced from `species.dart` via `trait_refs`. Mechanically-typed
+      // grants (resistances, senses, languages) live on the species fields;
+      // these trait rows hold the narrative summary the editor cards render.
+      _t(
+        name: 'Dwarven Resilience',
+        kind: 'Defensive',
+        description:
+            'Advantage on saving throws against the Poisoned condition, and Resistance to Poison damage.',
+      ),
+      _t(
+        name: 'Stonecunning',
+        kind: 'Other',
+        description:
+            'As a Bonus Action you gain Tremorsense with a range of 60 feet for 10 minutes. You must be on a stone surface or touching one. Uses = Proficiency Bonus per Long Rest.',
+      ),
+      _t(
+        name: 'Forge Wise',
+        kind: 'Other',
+        description:
+            'You have proficiency with two of the following Artisan\'s Tools of your choice: Jeweler\'s Tools, Mason\'s Tools, Smith\'s Tools, or Tinker\'s Tools.',
+      ),
+      _t(
+        name: 'Trance',
+        kind: 'Defensive',
+        description:
+            'You don\'t need to sleep, and magic can\'t put you to sleep. You can finish a Long Rest in 4 hours of meditation. After a Trance you gain proficiency with one weapon or tool of your choice for the next 24 hours.',
+      ),
+      _t(
+        name: 'Keen Senses (Elf)',
+        kind: 'Sense',
+        description:
+            'You have proficiency in the Insight, Perception, or Survival skill (your choice).',
+      ),
+      _t(
+        name: 'Elven Lineage',
+        kind: 'Other',
+        description:
+            'You are part of an Elven lineage (Drow, High Elf, or Wood Elf), granting additional traits and innate spells.',
+      ),
+      _t(
+        name: 'Halfling Lucky',
+        kind: 'Passive',
+        description:
+            'When you roll a 1 on the d20 of a d20 Test, you can reroll the die and must use the new roll.',
+      ),
+      _t(
+        name: 'Naturally Stealthy',
+        kind: 'Passive',
+        description:
+            'You can take the Hide action when you have only a creature that is at least one size larger than you as cover.',
+      ),
+      _t(
+        name: 'Brave',
+        kind: 'Defensive',
+        description:
+            'You have Advantage on saving throws against being Frightened.',
+      ),
+      _t(
+        name: 'Halfling Nimbleness',
+        kind: 'Movement',
+        description:
+            'You can move through the space of any creature that is a size larger than you, though that space is Difficult Terrain for you.',
+      ),
+      _t(
+        name: 'Resourceful',
+        kind: 'Other',
+        description:
+            'You gain Heroic Inspiration whenever you finish a Long Rest.',
+      ),
+      _t(
+        name: 'Skilled (Human)',
+        kind: 'Other',
+        description:
+            'You gain proficiency in three skills of your choice.',
+      ),
+      _t(
+        name: 'Versatile (Human)',
+        kind: 'Other',
+        description:
+            'You gain an Origin feat of your choice (see Chapter 5: Feats).',
+      ),
+      _t(
+        name: 'Gnomish Cunning',
+        kind: 'Defensive',
+        description:
+            'You have Advantage on Intelligence, Wisdom, and Charisma saving throws.',
+      ),
+      _t(
+        name: 'Powerful Build',
+        kind: 'Passive',
+        description:
+            'You count as one size larger when determining your carrying capacity and the weight you can push, drag, or lift. You have Advantage on any ability check you make to end the Grappled condition.',
+      ),
+      _t(
+        name: 'Large Form',
+        kind: 'Other',
+        description:
+            'Starting at character level 5, you can change your size to Large as a Bonus Action if you are in a big enough space. For 10 minutes you have Advantage on Strength checks, and your Speed increases by 10 feet. Uses = PB per Long Rest.',
+      ),
+      _t(
+        name: 'Giant Ancestry',
+        kind: 'Other',
+        description:
+            'You are descended from giants. Choose one ancestry boon (Cloud / Fire / Frost / Hill / Stone / Storm) which grants you an additional special action or resistance.',
+      ),
+      _t(
+        name: 'Otherworldly Presence',
+        kind: 'Other',
+        description:
+            'You know the Thaumaturgy cantrip. When you cast it with this trait, the spell uses Charisma as the spellcasting ability.',
+      ),
+      _t(
+        name: 'Fiendish Legacy',
+        kind: 'Other',
+        description:
+            'You have a Fiendish Legacy (Abyssal, Chthonic, or Infernal), granting you damage resistance and innate spells keyed to that legacy.',
+      ),
+      _t(
+        name: 'Draconic Ancestry',
+        kind: 'Other',
+        description:
+            'Choose a kind of dragon ancestry (Black, Blue, Brass, Bronze, Copper, Gold, Green, Red, Silver, or White). Your Breath Weapon and Damage Resistance are determined by that ancestry.',
+      ),
+      _t(
+        name: 'Damage Resistance (Dragonborn)',
+        kind: 'Defensive',
+        description:
+            'You have Resistance to the damage type associated with your Draconic Ancestry.',
+      ),
+
+      // ─── Player Character class traits (passive features) ────────────────
+      _t(
+        name: 'Unarmored Defense (Barbarian)',
+        kind: 'Defensive',
+        description:
+            'While you are not wearing armor, your Armor Class equals 10 + your Dex modifier + your Con modifier. A Shield doesn\'t conflict with this trait.',
+      ),
+      _t(
+        name: 'Unarmored Defense (Monk)',
+        kind: 'Defensive',
+        description:
+            'While you are not wearing armor and not using a Shield, your AC equals 10 + your Dex modifier + your Wis modifier.',
+      ),
+      _t(
+        name: 'Reckless Attack',
+        kind: 'Passive',
+        description:
+            'When you make your first attack on your turn, you can decide to attack recklessly. You gain Advantage on melee Strength-based attack rolls during this turn, but attack rolls against you have Advantage until the start of your next turn.',
+      ),
+      _t(
+        name: 'Danger Sense',
+        kind: 'Defensive',
+        description:
+            'You have Advantage on Dex saving throws against effects you can see while you are not Incapacitated.',
+      ),
+      _t(
+        name: 'Weapon Mastery',
+        kind: 'Passive',
+        description:
+            'You can use the Mastery property of two kinds of Simple or Martial Melee weapons. You can swap one of your choices on a Long Rest.',
+      ),
+      _t(
+        name: 'Jack of All Trades',
+        kind: 'Passive',
+        description:
+            'You can add half your Proficiency Bonus (rounded down) to any ability check you make that doesn\'t already use your Proficiency Bonus.',
+      ),
+      _t(
+        name: 'Expertise',
+        kind: 'Passive',
+        description:
+            'Choose two of your skill proficiencies. Your Proficiency Bonus is doubled for ability checks using those skills.',
+      ),
+      _t(
+        name: 'Sneak Attack (Rogue)',
+        kind: 'Passive',
+        description:
+            'Once per turn, you can deal extra 1d6 damage to one creature you hit with a Finesse or Ranged weapon attack if you have Advantage on the roll, or if another enemy of the target is within 5 feet of it. Damage scales with Rogue level.',
+      ),
+      _t(
+        name: 'Cunning Action (Rogue)',
+        kind: 'Other',
+        description:
+            'On each of your turns, you can use a Bonus Action to take the Dash, Disengage, or Hide action.',
+      ),
+      _t(
+        name: 'Martial Arts',
+        kind: 'Passive',
+        description:
+            'Your practiced martial techniques give you the following benefits while you are unarmed or wielding only Monk weapons and not wearing armor or a Shield: you can use Dexterity instead of Strength for the attack and damage rolls; your unarmed strike die is a Martial Arts die (d6 at L1, scales up); you can make one Unarmed Strike as a Bonus Action when you take the Attack action.',
+      ),
+      _t(
+        name: 'Arcane Recovery',
+        kind: 'Spellcasting',
+        description:
+            'Once per day when you finish a Short Rest, you can recover expended spell slots whose combined level is no more than half your Wizard level (rounded up), and none of which can be 6th level or higher.',
+      ),
+      _t(
+        name: 'Spellcasting Focus',
+        kind: 'Spellcasting',
+        description:
+            'You can use a spellcasting focus (e.g. arcane focus, druidic focus, or holy symbol) in place of Material components.',
+      ),
+      _t(
+        name: 'Divine Order',
+        kind: 'Other',
+        description:
+            'You are committed to a divine role (Protector or Thaumaturge). Protector: gain training in Martial weapons + Heavy armor. Thaumaturge: gain Religion proficiency and learn one extra Cleric cantrip.',
+      ),
+      _t(
+        name: 'Druidic',
+        kind: 'Other',
+        description:
+            'You know Druidic, the secret language of druids. You can speak and write Druidic, and you can use it to leave hidden messages that automatically take 1 hour to discover.',
+      ),
+      _t(
+        name: 'Pact Magic',
+        kind: 'Spellcasting',
+        description:
+            'Your patron grants you the ability to cast spells. You know two cantrips and two 1st-level spells. You regain all expended Pact Magic spell slots after a Short or Long Rest.',
+      ),
+      _t(
+        name: 'Eldritch Invocations',
+        kind: 'Other',
+        description:
+            'You learn Eldritch Invocations — special magical secrets that augment your abilities. You learn additional Invocations and can replace one on each Warlock level-up.',
+      ),
+      _t(
+        name: 'Favored Enemy',
+        kind: 'Passive',
+        description:
+            'You always have Hunter\'s Mark prepared. You can cast it without expending a spell slot a number of times per Long Rest equal to your Proficiency Bonus, and use any spell slot to cast it at higher levels.',
+      ),
+      _t(
+        name: 'Lay on Hands (Pool)',
+        kind: 'Spellcasting',
+        description:
+            'You have a pool of healing power equal to your Paladin level × 5 HP. From the pool you can spend points to heal a willing creature you touch, or expend 5 points to end one disease or Poisoned condition. The pool refreshes on a Long Rest.',
+      ),
+      _t(
+        name: 'Innate Sorcery',
+        kind: 'Spellcasting',
+        description:
+            'Your innate magical talent grants you Sorcery Points equal to your Sorcerer level (refreshed on a Long Rest) and access to Metamagic options as you gain levels.',
+      ),
     ];

@@ -17,6 +17,13 @@ List<Map<String, dynamic>> srdSpecies() => [
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
+          'trait_refs': [
+            ref('trait', 'Draconic Ancestry'),
+            ref('trait', 'Damage Resistance (Dragonborn)'),
+          ],
+          'granted_action_refs': [
+            ref('creature-action', 'Breath Weapon (Dragonborn)'),
+          ],
           'subspecies_options': [
             {
               'name': 'Black',
@@ -82,6 +89,11 @@ List<Map<String, dynamic>> srdSpecies() => [
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
           'granted_damage_resistances': [lookup('damage-type', 'Poison')],
+          'trait_refs': [
+            ref('trait', 'Dwarven Resilience'),
+            ref('trait', 'Stonecunning'),
+            ref('trait', 'Forge Wise'),
+          ],
         },
       ),
       packEntity(
@@ -94,6 +106,12 @@ List<Map<String, dynamic>> srdSpecies() => [
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
+          'trait_refs': [
+            ref('trait', 'Fey Ancestry'),
+            ref('trait', 'Trance'),
+            ref('trait', 'Keen Senses (Elf)'),
+            ref('trait', 'Elven Lineage'),
+          ],
           'subspecies_options': [
             {
               'name': 'Drow',
@@ -128,6 +146,9 @@ List<Map<String, dynamic>> srdSpecies() => [
           'size_ref': lookup('size', 'Small'),
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
+          'trait_refs': [
+            ref('trait', 'Gnomish Cunning'),
+          ],
           'subspecies_options': [
             {
               'name': 'Forest Gnome',
@@ -153,12 +174,20 @@ List<Map<String, dynamic>> srdSpecies() => [
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 35,
+          'trait_refs': [
+            ref('trait', 'Powerful Build'),
+            ref('trait', 'Large Form'),
+            ref('trait', 'Giant Ancestry'),
+          ],
           'subspecies_options': [
             {
               'name': 'Cloud Giant',
               'description':
                   "Cloud's Jaunt — Bonus Action teleport 30 ft to an unoccupied space you can see; uses = PB per Long Rest.",
               'granted_modifiers': const <Map<String, dynamic>>[],
+              'granted_bonus_action_refs': [
+                ref('creature-action', "Cloud's Jaunt"),
+              ],
             },
             {
               'name': 'Fire Giant',
@@ -175,12 +204,18 @@ List<Map<String, dynamic>> srdSpecies() => [
               'description':
                   "Hill's Tumble — when you hit with a melee attack you can knock Large or smaller creatures Prone; uses = PB per Long Rest.",
               'granted_modifiers': const <Map<String, dynamic>>[],
+              'granted_reaction_refs': [
+                ref('creature-action', "Hill's Tumble"),
+              ],
             },
             {
               'name': 'Stone Giant',
               'description':
                   "Stone's Endurance — Reaction: roll d12 + Con mod, reduce damage taken by that amount; uses = PB per Long Rest.",
               'granted_modifiers': const <Map<String, dynamic>>[],
+              'granted_reaction_refs': [
+                ref('creature-action', "Stone's Endurance"),
+              ],
             },
             {
               'name': 'Storm Giant',
@@ -202,6 +237,12 @@ List<Map<String, dynamic>> srdSpecies() => [
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
           'size_ref': lookup('size', 'Small'),
           'speed_ft': 30,
+          'trait_refs': [
+            ref('trait', 'Halfling Lucky'),
+            ref('trait', 'Naturally Stealthy'),
+            ref('trait', 'Brave'),
+            ref('trait', 'Halfling Nimbleness'),
+          ],
         },
       ),
       packEntity(
@@ -213,6 +254,11 @@ List<Map<String, dynamic>> srdSpecies() => [
           'creature_type_ref': lookup('creature-type', 'Humanoid'),
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 30,
+          'trait_refs': [
+            ref('trait', 'Resourceful'),
+            ref('trait', 'Skilled (Human)'),
+            ref('trait', 'Versatile (Human)'),
+          ],
         },
       ),
       packEntity(
@@ -225,6 +271,15 @@ List<Map<String, dynamic>> srdSpecies() => [
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
+          'trait_refs': [
+            ref('trait', 'Powerful Build'),
+          ],
+          'granted_bonus_action_refs': [
+            ref('creature-action', 'Adrenaline Rush'),
+          ],
+          'granted_reaction_refs': [
+            ref('creature-action', 'Relentless Endurance'),
+          ],
         },
       ),
       packEntity(
@@ -237,6 +292,10 @@ List<Map<String, dynamic>> srdSpecies() => [
           'size_ref': lookup('size', 'Medium'),
           'speed_ft': 30,
           'granted_senses': [lookup('sense', 'Darkvision')],
+          'trait_refs': [
+            ref('trait', 'Otherworldly Presence'),
+            ref('trait', 'Fiendish Legacy'),
+          ],
           'subspecies_options': [
             {
               'name': 'Abyssal',
