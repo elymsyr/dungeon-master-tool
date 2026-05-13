@@ -31,6 +31,7 @@ import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_schema.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/import_package_dialog.dart';
 import '../../l10n/app_localizations.dart';
@@ -296,58 +297,99 @@ class _CharacterEditorScreenState
               saving: _saving,
               flushLocal: () => _save(silent: true),
             ),
-            // Import package / world — shared dialog.
-            IconButton(
-              icon: const Icon(Icons.inventory_2, size: 20),
-              tooltip: l10n.importPackage,
-              onPressed: () => ImportPackageDialog.show(context),
-            ),
-            // Theme
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.palette, size: 20),
-              tooltip: l10n.lblTheme,
-              onSelected: (name) =>
-                  ref.read(themeProvider.notifier).setTheme(name),
-              itemBuilder: (_) => themeNames
-                  .map((name) => PopupMenuItem(
-                        value: name,
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 14,
-                              height: 14,
-                              decoration: BoxDecoration(
-                                color: themePalettes[name]?.canvasBg,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white24),
+            // Phone: collapse infrequent actions into overflow menu
+            if (getScreenType(context) == ScreenType.phone) ...[
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 20),
+                onSelected: (action) {
+                  switch (action) {
+                    case 'import':
+                      ImportPackageDialog.show(context);
+                    case 'bug':
+                      BugReportDialog.show(context);
+                    default:
+                      if (action.startsWith('theme:')) {
+                        ref.read(themeProvider.notifier).setTheme(action.substring(6));
+                      }
+                      if (action.startsWith('lang:')) {
+                        ref.read(localeProvider.notifier).setLocale(action.substring(5));
+                      }
+                  }
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),
+                  const PopupMenuDivider(),
+                  ...themeNames.map((name) => PopupMenuItem(
+                    value: 'theme:$name',
+                    child: Row(children: [
+                      Container(width: 14, height: 14, decoration: BoxDecoration(color: themePalettes[name]?.canvasBg, shape: BoxShape.circle, border: Border.all(color: Colors.white24))),
+                      const SizedBox(width: 8),
+                      Text(name[0].toUpperCase() + name.substring(1)),
+                    ]),
+                  )),
+                  const PopupMenuDivider(),
+                  const PopupMenuItem(value: 'lang:en', child: Text('English')),
+                  const PopupMenuItem(value: 'lang:tr', child: Text('Türkçe')),
+                  const PopupMenuItem(value: 'lang:de', child: Text('Deutsch')),
+                  const PopupMenuItem(value: 'lang:fr', child: Text('Français')),
+                  const PopupMenuDivider(),
+                  const PopupMenuItem(value: 'bug', child: Row(children: [Icon(Icons.bug_report_outlined, size: 18), SizedBox(width: 8), Text('Report a Bug')])),
+                ],
+              ),
+            ] else ...[
+              // Import package / world — shared dialog.
+              IconButton(
+                icon: const Icon(Icons.inventory_2, size: 20),
+                tooltip: l10n.importPackage,
+                onPressed: () => ImportPackageDialog.show(context),
+              ),
+              // Theme
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.palette, size: 20),
+                tooltip: l10n.lblTheme,
+                onSelected: (name) =>
+                    ref.read(themeProvider.notifier).setTheme(name),
+                itemBuilder: (_) => themeNames
+                    .map((name) => PopupMenuItem(
+                          value: name,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: themePalettes[name]?.canvasBg,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white24),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(name[0].toUpperCase() + name.substring(1)),
-                          ],
-                        ),
-                      ))
-                  .toList(),
-            ),
-            // Language
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.language, size: 20),
-              tooltip: l10n.lblLanguage,
-              onSelected: (code) =>
-                  ref.read(localeProvider.notifier).setLocale(code),
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'en', child: Text('English')),
-                PopupMenuItem(value: 'tr', child: Text('Türkçe')),
-                PopupMenuItem(value: 'de', child: Text('Deutsch')),
-                PopupMenuItem(value: 'fr', child: Text('Français')),
-              ],
-            ),
-            // Bug report
-            IconButton(
-              icon: const Icon(Icons.bug_report_outlined, size: 20),
-              tooltip: 'Report a Bug',
-              onPressed: () => BugReportDialog.show(context),
-            ),
+                              const SizedBox(width: 8),
+                              Text(name[0].toUpperCase() + name.substring(1)),
+                            ],
+                          ),
+                        ))
+                    .toList(),
+              ),
+              // Language
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.language, size: 20),
+                tooltip: l10n.lblLanguage,
+                onSelected: (code) =>
+                    ref.read(localeProvider.notifier).setLocale(code),
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'en', child: Text('English')),
+                  PopupMenuItem(value: 'tr', child: Text('Türkçe')),
+                  PopupMenuItem(value: 'de', child: Text('Deutsch')),
+                  PopupMenuItem(value: 'fr', child: Text('Français')),
+                ],
+              ),
+              // Bug report
+              IconButton(
+                icon: const Icon(Icons.bug_report_outlined, size: 20),
+                tooltip: 'Report a Bug',
+                onPressed: () => BugReportDialog.show(context),
+              ),
+            ],
             const SizedBox(width: 4),
           ],
         ),

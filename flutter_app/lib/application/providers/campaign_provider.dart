@@ -347,6 +347,18 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
       state = null;
     }
   }
+
+  /// Hard delete — bypasses trash. Used when the user leaves an online
+  /// world (or gets kicked): the local mirror is wiped immediately, the
+  /// world disappears from the hub, and there is no `.trash/` entry to
+  /// restore from later.
+  Future<void> purge(String campaignName) async {
+    await _repo.purge(campaignName);
+    if (state == campaignName) {
+      _data = null;
+      state = null;
+    }
+  }
 }
 
 final activeCampaignProvider =

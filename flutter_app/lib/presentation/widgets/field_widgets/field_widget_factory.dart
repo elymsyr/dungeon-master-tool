@@ -1786,6 +1786,34 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
     final targetTypes = schema.validation.allowedTypes?.join(', ') ?? 'any';
     final showEquip = schema.hasEquip;
 
+    // Read-only mode collapses identical rows into a single entry with an
+    // "(×N)" suffix. Edit mode keeps each row separate so the close/equip
+    // buttons stay 1:1 with the underlying list. Grouping key is
+    // (id, equipped) — different equip state means different rows.
+    final List<({Map<String, dynamic> item, int count, int origIndex})>
+        displayEntries;
+    if (readOnly) {
+      final groups = <String, ({Map<String, dynamic> item, int count, int origIndex})>{};
+      final order = <String>[];
+      for (var i = 0; i < items.length; i++) {
+        final it = items[i];
+        final key = '${it['id']}|${it['equipped'] == true}';
+        final existing = groups[key];
+        if (existing == null) {
+          groups[key] = (item: it, count: 1, origIndex: i);
+          order.add(key);
+        } else {
+          groups[key] = (item: existing.item, count: existing.count + 1, origIndex: existing.origIndex);
+        }
+      }
+      displayEntries = [for (final k in order) groups[k]!];
+    } else {
+      displayEntries = [
+        for (var i = 0; i < items.length; i++)
+          (item: items[i], count: 1, origIndex: i),
+      ];
+    }
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: Padding(
@@ -1851,9 +1879,10 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                   ),
                 ),
               ),
-            ...items.asMap().entries.map((entry) {
-              final i = entry.key;
-              final item = entry.value;
+            ...displayEntries.map((entry) {
+              final i = entry.origIndex;
+              final item = entry.item;
+              final count = entry.count;
               final isEquipped = item['equipped'] == true;
               final itemId = item['id']?.toString() ?? '';
 
@@ -1919,7 +1948,9 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                               children: [
                                 Flexible(
                                   child: Text(
-                                    _resolveEntityName(itemId),
+                                    count > 1
+                                        ? '${_resolveEntityName(itemId)} (×$count)'
+                                        : _resolveEntityName(itemId),
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
