@@ -458,6 +458,12 @@ EntityCategorySchema _speciesCategory(String schemaId, String now, int orderInde
   fb.relation('granted_bonus_action_refs', 'Granted Bonus Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
   fb.relation('granted_reaction_refs', 'Granted Reactions', const ['creature-action'], isList: true, g: grpTraitsActions);
   fb.relation('granted_skill_proficiencies', 'Skill Proficiencies', const ['skill'], isList: true, g: grpTraitsActions);
+  // Innate spells / cantrips (Drow Dancing Lights, Tiefling Hellish Rebuke,
+  // High Elf Wizard cantrip etc.). Resolver folds into grantedSpellIds /
+  // grantedCantripIds on the EffectiveCharacter and tags with the species
+  // source for display.
+  fb.relation('granted_spell_refs', 'Innate Spells', const ['spell'], isList: true, g: grpTraitsActions);
+  fb.relation('granted_cantrip_refs', 'Innate Cantrips', const ['spell'], isList: true, g: grpTraitsActions);
   fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpTraitsActions);
   // Lineage / subspecies / ancestry options. Each row carries a name, a
   // narrative description, and (optionally) the same ref-list grant fields

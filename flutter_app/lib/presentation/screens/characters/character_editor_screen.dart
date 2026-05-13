@@ -656,12 +656,23 @@ class _CharacterEditorScreenState
       final list = fieldsByGroup[g.groupId] ?? const <FieldSchema>[];
       if (list.isEmpty) continue;
       if (widgets.isNotEmpty) widgets.add(const SizedBox(height: 16));
+      // Identity group splices in the subspecies / ancestry picker right
+      // after the species_ref tile so the lineage choice sits next to its
+      // parent species (no schema field needed — the resolver already
+      // reads `subspecies_id` from PC fields).
+      final children = <Widget>[];
+      for (final f in list) {
+        children.add(_fieldTile(f, character));
+        if (f.fieldKey == 'species_ref') {
+          children.add(_subspeciesPickerTile(character));
+        }
+      }
       widgets.add(EntityCardCollapsibleGroupCard(
         group: g,
         palette: palette,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: list.map((f) => _fieldTile(f, character)).toList(),
+          children: children,
         ),
       ));
     }
@@ -722,13 +733,47 @@ class _CharacterEditorScreenState
         ref.watch(effectiveCharacterProvider(character.entity.id));
     if (effective == null) return const [];
     final entities = _readEntitiesFor(character);
+    final remaining = _readGrantedPoolRemaining(character);
     return [
       ResolvedGrantsCard(
         effective: effective,
         entities: entities,
         palette: palette,
+        poolRemaining: remaining,
+        onPoolRemainingChanged: _writeGrantedPoolRemaining,
       ),
     ];
+  }
+
+  Map<String, int> _readGrantedPoolRemaining(Character character) {
+    final raw = character.entity.fields['granted_pool_uses_remaining'];
+    if (raw is! Map) return const {};
+    final out = <String, int>{};
+    raw.forEach((k, v) {
+      if (k is! String) return;
+      if (v is int) {
+        out[k] = v;
+      } else if (v is String) {
+        final n = int.tryParse(v);
+        if (n != null) out[k] = n;
+      }
+    });
+    return out;
+  }
+
+  void _writeGrantedPoolRemaining(Map<String, int> next) {
+    final w = _working;
+    if (w == null) return;
+    final fields = Map<String, dynamic>.from(w.entity.fields);
+    if (next.isEmpty) {
+      fields.remove('granted_pool_uses_remaining');
+    } else {
+      fields['granted_pool_uses_remaining'] = next;
+    }
+    setState(() {
+      _working = w.copyWith(entity: w.entity.copyWith(fields: fields));
+    });
+    _scheduleAutoSave();
   }
 
   /// Render a level-up progression table when the character has both a
@@ -771,6 +816,111 @@ class _CharacterEditorScreenState
         currentLevel: level,
       ),
     ];
+  }
+
+  /// Inline picker rendered in the Identity group right after `species_ref`.
+  /// Surfaces the chosen species's `subspecies_options` as a dropdown so
+  /// the player can flip between lineages (Drow / High Elf / Wood Elf,
+  /// Hill / Mountain Dwarf, …) without leaving the editor. Returns an
+  /// empty box when no species is picked or the species ships no
+  /// subspecies rows.
+  Widget _subspeciesPickerTile(Character character) {
+    final entities = _readEntitiesFor(character);
+    final ids = characterRaceClassIds(character);
+    final raceId = ids.raceId;
+    if (raceId == null) return const SizedBox.shrink();
+    final species = entities[raceId];
+    if (species == null) return const SizedBox.shrink();
+    final raw = species.fields['subspecies_options'];
+    if (raw is! List || raw.isEmpty) return const SizedBox.shrink();
+
+    final options = <String>[];
+    for (final r in raw) {
+      if (r is Map) {
+        final n = r['name'];
+        if (n is String && n.isNotEmpty && !options.contains(n)) {
+          options.add(n);
+        }
+      }
+    }
+    if (options.isEmpty) return const SizedBox.shrink();
+
+    final current = character.entity.fields['subspecies_id'];
+    final currentStr =
+        current is String && current.isNotEmpty ? current : null;
+    final palette = Theme.of(context).extension<DmToolColors>();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 140,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8, top: 1),
+              child: Text(
+                'Ancestry:',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: palette?.srdInk ??
+                      Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: _readOnly
+                ? Text(
+                    currentStr ?? '—',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: palette?.srdInk ??
+                          Theme.of(context).colorScheme.onSurface,
+                    ),
+                  )
+                : DropdownButtonFormField<String?>(
+                    initialValue:
+                        options.contains(currentStr) ? currentStr : null,
+                    isDense: true,
+                    isExpanded: true,
+                    iconSize: 18,
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 4,
+                      ),
+                    ),
+                    items: <DropdownMenuItem<String?>>[
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child:
+                            Text('(None)', overflow: TextOverflow.ellipsis),
+                      ),
+                      for (final o in options)
+                        DropdownMenuItem<String?>(
+                          value: o,
+                          child: Text(o, overflow: TextOverflow.ellipsis),
+                        ),
+                    ],
+                    onChanged: (v) {
+                      final updatedFields = {
+                        ...character.entity.fields,
+                        'subspecies_id': v ?? '',
+                      };
+                      final next = character.copyWith(
+                        entity: character.entity
+                            .copyWith(fields: updatedFields),
+                      );
+                      _mutate(next);
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _fieldTile(FieldSchema f, Character character) {
@@ -1303,7 +1453,8 @@ class _CharacterEditorScreenState
   }
 
   int _conModifier(Character character) {
-    final score = _asInt(character.entity.fields['con'], 10);
+    final scores = _readAbilityScores(character);
+    final score = scores['CON'] ?? 10;
     return ((score - 10) / 2).floor();
   }
 
@@ -1500,16 +1651,28 @@ class _CharacterEditorScreenState
   }
 
   Map<String, int> _readAbilityScores(Character character) {
+    // Prefer resolver-derived effective abilities so background ASI, species
+    // ability_score_bonus, and feat bumps surface in level-up + rest flows.
+    // The resolver only consults `base_abilities`, so for legacy characters
+    // that only carry `stat_block` (or top-level STR/DEX/... fields) we keep
+    // the original fallback chain to avoid regressing to all-10s.
+    final hasBaseAbilities =
+        character.entity.fields['base_abilities'] is Map &&
+            (character.entity.fields['base_abilities'] as Map).isNotEmpty;
+    final eff = hasBaseAbilities
+        ? ref.read(effectiveCharacterProvider(character.entity.id))
+        : null;
+    final resolved = eff?.effectiveAbilities ?? const <String, int>{};
     final out = <String, int>{};
     final stat = character.entity.fields['stat_block'];
     final statMap = stat is Map ? Map<String, dynamic>.from(stat) : null;
     for (final k in const ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']) {
       final lower = k.toLowerCase();
-      final v = character.entity.fields[lower] ??
+      final fallback = character.entity.fields[lower] ??
           character.entity.fields[k] ??
           statMap?[k] ??
           statMap?[lower];
-      out[k] = _asInt(v, 10);
+      out[k] = resolved[k] ?? _asInt(fallback, 10);
     }
     return out;
   }
