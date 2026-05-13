@@ -390,7 +390,26 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   /// Çağıran taraf önceden pushUndo() yapmalıdır.
   void addEntities(Map<String, Entity> entities) {
     state = {...state, ...entities};
-    _syncToCampaign();
+    // F13 follow-up: patch each entity individually instead of full
+    // re-serialization. Package import with N entities goes from O(N²)
+    // (full sync per call) to O(N) total work in the campaign blob.
+    // Bulk-patch then a single dirty mark so the autosave debounce
+    // fires once for the whole batch.
+    final data = _campaign.data;
+    if (data == null) return;
+    final raw = data['entities'];
+    final Map<String, dynamic> existing;
+    if (raw is Map<String, dynamic>) {
+      existing = raw;
+    } else {
+      existing = <String, dynamic>{};
+      data['entities'] = existing;
+    }
+    for (final entity in entities.values) {
+      if (_linkedCharacterIds.contains(entity.id)) continue;
+      existing[entity.id] = _entityToMap(entity);
+    }
+    _onDirty();
   }
 
   /// Mevcut entity map'inin bir kopyasını döndürür (import service için).

@@ -1439,7 +1439,12 @@ class _PortraitTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final hasImage = path.isNotEmpty && File(path).existsSync();
+    // Drop synchronous `File.existsSync()` from build path — matches the
+    // editor pattern: lean on `Image.file` errorBuilder to handle missing
+    // files without blocking the frame.
+    final hasImagePath = path.isNotEmpty;
+    final placeholder = Icon(Icons.add_a_photo_outlined,
+        color: palette.sidebarLabelSecondary);
     return Stack(
       children: [
         InkWell(
@@ -1453,10 +1458,13 @@ class _PortraitTile extends StatelessWidget {
               border: Border.all(color: palette.featureCardBorder),
               borderRadius: palette.cbr,
             ),
-            child: hasImage
-                ? Image.file(File(path), fit: BoxFit.cover)
-                : Icon(Icons.add_a_photo_outlined,
-                    color: palette.sidebarLabelSecondary),
+            child: hasImagePath
+                ? Image.file(
+                    File(path),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => placeholder,
+                  )
+                : placeholder,
           ),
         ),
         if (onClear != null)
