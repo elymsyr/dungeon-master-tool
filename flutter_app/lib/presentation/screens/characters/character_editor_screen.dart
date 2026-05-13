@@ -2136,8 +2136,12 @@ class _CharacterSaveSyncButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final hasCloud = SupabaseConfig.isConfigured;
-    final isOnline =
-        ref.watch(personalOnlineCharIdsProvider).contains(character.id);
+    // Select only this character's membership in the online set — without
+    // .select, every add/remove on any character (rebuilds the Set ref)
+    // rebuilds every open editor's app-bar button.
+    final isOnline = ref.watch(
+      personalOnlineCharIdsProvider.select((s) => s.contains(character.id)),
+    );
 
     final (icon, color) = _resolveIcon(palette, hasCloud, isOnline);
 

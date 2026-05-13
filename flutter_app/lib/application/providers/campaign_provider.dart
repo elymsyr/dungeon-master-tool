@@ -225,12 +225,18 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
         ? entitiesRaw
         : const <String, dynamic>{};
     await mirror.pushEntities(worldId: worldId, entitiesBlob: entitiesBlob);
+    // Entities already mirror through world_entities CDC; including them
+    // again inside state_json doubles bandwidth and processing on every
+    // bundle push. Strip them before encoding — the applier's
+    // _applyWorldsEvent already preserves the in-memory entities map.
+    final stateForPush = Map<String, dynamic>.from(bundled);
+    stateForPush.remove('entities');
     await mirror.pushWorldState(
       worldId: worldId,
       worldName: worldName,
       templateId: templateId,
       templateHash: templateHash,
-      stateJson: jsonEncode(bundled),
+      stateJson: jsonEncode(stateForPush),
     );
   }
 
