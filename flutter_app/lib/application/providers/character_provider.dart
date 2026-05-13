@@ -9,6 +9,7 @@ import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/services/character_resolver.dart';
+import '../services/builtin_srd_entities.dart';
 import 'entity_provider.dart';
 
 const _uuid = Uuid();
@@ -228,7 +229,17 @@ final effectiveCharacterProvider =
     Provider.family<EffectiveCharacter?, String>((ref, id) {
   final pc = ref.watch(characterByIdProvider(id));
   if (pc == null) return null;
-  final entities = ref.watch(entityProvider);
+  // Worldless characters resolve against the bundled SRD map. World-bound
+  // characters merge the campaign on top so authored overrides win, with
+  // builtin filling in any Tier-0 lookup the campaign hasn't seeded.
+  final builtin = ref.watch(builtinSrdEntitiesProvider);
+  final Map<String, Entity> entities;
+  if (pc.worldName.isEmpty) {
+    entities = builtin;
+  } else {
+    final campaign = ref.watch(entityProvider);
+    entities = campaign.isEmpty ? builtin : {...builtin, ...campaign};
+  }
   return CharacterResolver.resolve(pc, entities);
 });
 

@@ -307,6 +307,9 @@ class FieldWidgetFactory {
         value: value,
         readOnly: readOnly,
         onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+        entityFields: entityFields,
       ),
       FieldType.spellEffectList => SpellEffectListFieldWidget(
         schema: schema,

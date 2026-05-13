@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../application/character_creation/character_draft.dart';
@@ -174,11 +175,14 @@ class _SubclassRow extends StatelessWidget {
       ),
       subtitle: entity.description.isEmpty
           ? null
-          : Text(
-              entity.description,
-              style: locked
-                  ? TextStyle(color: Theme.of(context).disabledColor)
-                  : null,
+          : MarkdownBody(
+              data: entity.description,
+              styleSheet:
+                  MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                p: locked
+                    ? TextStyle(color: Theme.of(context).disabledColor)
+                    : null,
+              ),
             ),
     );
   }

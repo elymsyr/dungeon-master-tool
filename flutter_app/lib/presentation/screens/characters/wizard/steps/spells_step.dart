@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../application/character_creation/caster_progression.dart';
@@ -359,11 +360,15 @@ class _SpellRow extends StatelessWidget {
                   ),
                   if (description.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: palette.sidebarLabelSecondary,
+                    MarkdownBody(
+                      data: description,
+                      styleSheet:
+                          MarkdownStyleSheet.fromTheme(Theme.of(context))
+                              .copyWith(
+                        p: TextStyle(
+                          fontSize: 11,
+                          color: palette.sidebarLabelSecondary,
+                        ),
                       ),
                     ),
                   ],

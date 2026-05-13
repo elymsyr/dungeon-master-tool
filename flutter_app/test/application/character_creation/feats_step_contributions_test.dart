@@ -229,9 +229,37 @@ void main() {
       final bg = _bg(id: 'bg', originFeatId: 'feat-tb');
       const draft = CharacterDraft(backgroundId: 'bg');
       final entities = {'feat-tb': feat, 'bg': bg};
+      // Picks are now optional — under-picked groups no longer block the
+      // wizard. Validator only flags over-picks.
+      expect(validateFeatsStep(draft, entities), isNull);
+    });
+
+    test('errors when more than [pick] options selected', () {
+      final feat = _feat(
+        id: 'feat-tb',
+        name: 'Tavern Brawler',
+        effects: [
+          {
+            'kind': 'choice_group',
+            'payload': {
+              'group_id': 'asi',
+              'label': 'ASI',
+              'pick_kind': 'ability',
+              'pick': 1,
+              'ability_options': ['STR', 'CON'],
+            },
+          },
+        ],
+      );
+      final bg = _bg(id: 'bg', originFeatId: 'feat-tb');
+      const draft = CharacterDraft(
+        backgroundId: 'bg',
+        originFeatChoices: {'feat-tb:asi': 'STR,CON'},
+      );
+      final entities = {'feat-tb': feat, 'bg': bg};
       final err = validateFeatsStep(draft, entities);
       expect(err, isNotNull);
-      expect(err, contains('Tavern Brawler'));
+      expect(err, contains('at most 1'));
     });
 
     test('passes when chosen', () {
@@ -293,9 +321,9 @@ void main() {
       final bg = _bg(id: 'bg', originFeatId: 'feat-mi');
       const draft = CharacterDraft(backgroundId: 'bg');
       final entities = {'feat-mi': feat, 'bg': bg};
-      final err = validateFeatsStep(draft, entities);
-      // Upstream 'list' is unset → surfaces upstream error, not cantrips.
-      expect(err, contains('List'));
+      // Picks are now optional — an unset upstream list no longer errors.
+      // We only verify the validator doesn't crash on the nested case.
+      expect(validateFeatsStep(draft, entities), isNull);
     });
   });
 }

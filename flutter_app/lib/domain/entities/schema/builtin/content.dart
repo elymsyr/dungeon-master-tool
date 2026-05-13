@@ -437,7 +437,13 @@ EntityCategorySchema _speciesCategory(String schemaId, String now, int orderInde
   fb.relation('granted_languages', 'Granted Languages', const ['language'], isList: true);
   fb.relation('granted_senses', 'Granted Senses', const ['sense'], isList: true);
   fb.relation('granted_damage_resistances', 'Damage Resistances', const ['damage-type'], isList: true);
+  fb.relation('granted_damage_immunities', 'Damage Immunities', const ['damage-type'], isList: true);
+  fb.relation('granted_damage_vulnerabilities', 'Damage Vulnerabilities', const ['damage-type'], isList: true);
+  fb.relation('granted_condition_immunities', 'Condition Immunities', const ['condition'], isList: true);
   fb.relation('granted_skill_proficiencies', 'Skill Proficiencies', const ['skill'], isList: true);
+  fb.relation('granted_action_refs', 'Granted Actions', const ['creature-action'], isList: true);
+  fb.relation('granted_bonus_action_refs', 'Granted Bonus Actions', const ['creature-action'], isList: true);
+  fb.relation('granted_reaction_refs', 'Granted Reactions', const ['creature-action'], isList: true);
   // Lineage / subspecies / ancestry options. Each row carries a name, a
   // narrative description, and (optionally) the same ref-list grant fields
   // available at the species level — folded by CharacterResolver when the
