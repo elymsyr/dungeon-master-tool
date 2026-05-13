@@ -54,10 +54,19 @@ class _CharacterCreationWizardScreenState
   @override
   void initState() {
     super.initState();
-    // Default world is the bundled SRD package — empty `worldName` routes
-    // the wizard's entity reads to [builtinSrdEntitiesProvider]. Picking a
-    // campaign in the Identity step is opt-in and calls `_activateWorld`
-    // to load + bump revision.
+    // Pre-select the active campaign as the wizard's default world. When
+    // the user opens "create character" from inside a world (sidebar /
+    // characters tab), they expect that world to already be picked
+    // instead of having to re-select it from the dropdown. Falls back to
+    // the bundled SRD (empty `worldName`) when no campaign is active.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final activeWorld = ref.read(activeCampaignProvider);
+      if (activeWorld == null || activeWorld.isEmpty) return;
+      final draft = ref.read(characterDraftProvider);
+      if (draft.worldName.isNotEmpty) return;
+      ref.read(characterDraftProvider.notifier).setWorld(activeWorld);
+    });
   }
 
   /// Entity source the wizard reads from. Active campaign's entities when

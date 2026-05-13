@@ -144,22 +144,33 @@ class _BootstrapGateState extends State<_BootstrapGate> {
   Future<void> _bootstrap() async {
     try {
       _setMessage('Preparing file system...');
+
+      // UiState load doesn't depend on AppPaths (uses SharedPreferences) — fire
+      // it in parallel so the SharedPreferences disk read overlaps with the
+      // AppPaths bootstrap instead of waiting in series after.
+      final uiStateNotifier = UiStateNotifier();
+      final uiStateLoad = _initUiState(uiStateNotifier);
+
+      // SoLoud is lazy: only soundpad_engine.dart touches it, and that fires
+      // when the user opens the soundpad — well after first paint. Pushing it
+      // off the critical path saves up to 3s of cold-start when the audio
+      // device is slow to respond.
+      unawaited(_initSoLoud());
+
       await AppPaths.initialize();
 
       _setMessage('Initializing services...');
 
-      // Run independent initializers in parallel. Each has its own timeout +
-      // non-fatal fallback so a slow/broken subsystem can't block startup.
-      // AppPaths must complete first (everyone below uses on-disk paths);
-      // UiStateNotifier load is the only one on the critical path to render
-      // the real app — the others are best-effort.
-      final uiStateNotifier = UiStateNotifier();
-
+      // Critical path for first paint:
+      // - Supabase: AuthNotifier._init reads Supabase.instance during first
+      //   provider mount; router checks currentSession on initial route.
+      // - windowManager: native OS window must be configured + shown.
+      // - UiState: theme + locale must be loaded before render to avoid a
+      //   visible flicker as the app re-themes itself.
       await Future.wait<void>([
         _initSupabase(),
-        _initSoLoud(),
         _initWindowManager(),
-        _initUiState(uiStateNotifier),
+        uiStateLoad,
       ]);
 
       if (!mounted) return;

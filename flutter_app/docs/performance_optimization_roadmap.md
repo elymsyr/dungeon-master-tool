@@ -8,13 +8,13 @@ This document inventories the perf-relevant code paths, ranks them by expected i
 
 ## Status (2026-05-13)
 
-**F1, F2, F3, F4, F6, F7, F8, F11, F12, F13 shipped or confirmed
+**F1, F2, F3, F4, F6, F7, F8, F9, F11, F12, F13 shipped or confirmed
 optimal.** Companion deep-dive `performance_hotspots_wizard_editor_hub.md`
 covers the wizard/editor/hub surfaces (Phases A+B+C, 19 findings closed).
 See §7 below for the survey-level implementation log.
 
 Still open: F5 / F10 (Sliver migration — cross-axis center invasive,
-deferred), F9 (Bootstrap), F14 (DevX).
+deferred), F14 (DevX).
 
 ---
 
@@ -45,7 +45,7 @@ Fixing items 1–3 alone is expected to remove ~40–70 ms from typical interact
 | F6 | `.values.where(...).toList()` re-runs per build | [proficiencies_step.dart:58](../lib/presentation/screens/characters/wizard/steps/proficiencies_step.dart#L58), [entity_selector_dialog.dart:56](../lib/presentation/dialogs/entity_selector_dialog.dart#L56) | Med | S | **B** | ✅ done (W4 + F4) |
 | F7 | `prefer_const_constructors` lint disabled | [analysis_options.yaml:26](../analysis_options.yaml#L26) | Med | L | **B** | ✅ done (71 fixes / 25 files via `dart fix`) |
 | F8 | Characters tab full-list sort per rebuild | [characters_tab.dart:81-105](../lib/presentation/screens/hub/characters_tab.dart#L81) | Low | XS | **B** | ✅ done (`sortedCharactersProvider`) |
-| F9 | Bootstrap blocks UI on `UiState.load` (3 s timeout) | [main.dart:158-163](../lib/main.dart#L158) | Low | M | **C** | todo |
+| F9 | Bootstrap blocks UI on `UiState.load` (3 s timeout) | [main.dart:158-163](../lib/main.dart#L158) | Low | M | **C** | ✅ done (parallel UiState + AppPaths; SoLoud backgrounded) |
 | F10 | No `SliverList` anywhere; nested `ListView` w/ `shrinkWrap` | grep: 0 hits | Low | M | **C** | defer (cross-axis center) |
 | F11 | SRD pack built eagerly on first `builtinSrdEntitiesProvider` read | [builtin_srd_entities.dart:21-79](../lib/application/services/builtin_srd_entities.dart#L21) | Low | M | **C** | ✅ noop (Provider lazy by default; cold-cost paid once) |
 | F12 | `campaignRevisionProvider++` cascades `worldSchemaProvider` parse | [entity_provider.dart:40-86](../lib/application/providers/entity_provider.dart#L40) | Low | S | **C** | ✅ noop (identity cache already returns cached schema, no cascade) |
@@ -524,10 +524,31 @@ File: `lib/application/providers/entity_provider.dart`
   keystroke (via the editor's autosave path). Now just one entity's
   serialization.
 
+### Round 3 (2026-05-13) — F9
+
+#### F9 — Bootstrap critical path trimmed
+File: `lib/main.dart`
+- `UiStateNotifier()` now constructed at the top of `_bootstrap()` and
+  `notifier.load()` fires before `await AppPaths.initialize()`. The
+  SharedPreferences disk read overlaps with the AppPaths bootstrap
+  instead of running serially after it.
+- `_initSoLoud()` switched from `Future.wait` participant to
+  `unawaited(...)` — SoLoud is only touched by `soundpad_engine.dart`
+  when the user opens the soundpad, well after first paint. Removes its
+  3 s worst-case timeout from the cold-start critical path entirely.
+- Critical path now: `AppPaths.initialize()` then
+  `Future.wait([Supabase, windowManager, UiState])`. Supabase stays
+  awaited because `AuthNotifier._init` reads `Supabase.instance` during
+  the first provider mount and the router checks `currentSession` on
+  initial route. windowManager stays because the OS window must be
+  shown before render.
+- Net win: cold start ~ `max(AppPaths, UiState)` + `max(Supabase,
+  windowManager)` instead of `AppPaths + max(Supabase, SoLoud,
+  windowManager, UiState)`. Typical desktop save ~50-150 ms; pathological
+  audio-device-stuck save up to 3 s.
+
 ### Findings still open
 
-- **F9** — bootstrap (UiState load on critical path). Lives under a
-  different review track (startup latency).
 - **F14** — build artifact cache. DevX.
 - **F5 / F10** — Sliver migration. Deferred; needs `SliverCrossAxisGroup`
   + `SliverConstrainedCrossAxis` to preserve the maxWidth-500 centering.
