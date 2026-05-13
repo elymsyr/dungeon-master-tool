@@ -3,6 +3,8 @@
 // the character-creation wizard's Spells step. Kept dependency-free so
 // it can be unit-tested without Flutter/Riverpod.
 
+import '../../domain/entities/entity.dart';
+
 /// Caster classification per the class schema's `caster_kind` enum.
 /// Treats unknown / 'None' / 'Ritual' inputs as non-casters.
 enum CasterKind { none, full, half, third, pact }
@@ -190,6 +192,47 @@ const _pactSlots = <List<int>>[
   [4, 5],
   [4, 5],
 ];
+
+/// Read an author-supplied override `spell_slots_by_level` map at character
+/// level [level]. Shape: `Map<level, Map<spellLevel, count>>` with keys
+/// stringified for JSON. Returns null when the override is absent, malformed,
+/// or doesn't carry a row for [level]. Empty rows return an empty map so
+/// callers distinguish "override says zero" from "no override".
+Map<int, int>? slotsByLevelOverride(Object? raw, int level) {
+  if (raw is! Map) return null;
+  for (final entry in raw.entries) {
+    final k = entry.key;
+    final kInt = k is int ? k : int.tryParse(k.toString());
+    if (kInt != level) continue;
+    final row = entry.value;
+    if (row is! Map) return null;
+    final out = <int, int>{};
+    for (final cell in row.entries) {
+      final sl = cell.key is int
+          ? cell.key as int
+          : int.tryParse(cell.key.toString());
+      if (sl == null) continue;
+      final n = cell.value;
+      final count = n is int
+          ? n
+          : (n is num ? n.toInt() : int.tryParse(n.toString()));
+      if (count == null || count <= 0) continue;
+      out[sl] = count;
+    }
+    return out;
+  }
+  return null;
+}
+
+/// Class-aware slot lookup. Returns the author's `spell_slots_by_level`
+/// override when present; otherwise falls back to the SRD preset keyed off
+/// the class's `caster_kind`. Returns empty map for non-casters.
+Map<int, int> spellSlotsForClass(Entity? cls, int level) {
+  if (cls == null) return const {};
+  final override = slotsByLevelOverride(cls.fields['spell_slots_by_level'], level);
+  if (override != null) return override;
+  return defaultSpellSlotsByLevel(parseCasterKind(cls.fields['caster_kind']), level);
+}
 
 /// SRD §1.5 default spell-slot map at character level [level]. The result
 /// keys are spell levels (1..9), values are slot counts. Empty map for

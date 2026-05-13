@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/character_creation/caster_progression.dart';
+import '../../../application/character_creation/cr_calculator.dart';
 import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../domain/entities/entity.dart';
@@ -251,6 +253,13 @@ class FieldWidgetFactory {
         value: value,
         onChanged: onChanged,
       ),
+      FieldType.spellSlotProgression => _SpellSlotProgressionFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entityFields: entityFields,
+      ),
       FieldType.levelTable => _LevelTableFieldWidget(
         schema: schema,
         value: value,
@@ -341,6 +350,22 @@ class FieldWidgetFactory {
         readOnly: readOnly,
         onChanged: onChanged,
         entities: entities,
+        ref: ref,
+      ),
+      FieldType.subspeciesOptions => SubspeciesOptionsFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entities: entities,
+        ref: ref,
+      ),
+      FieldType.crCalculator => _CrCalculatorFieldWidget(
+        schema: schema,
+        value: value,
+        readOnly: readOnly,
+        onChanged: onChanged,
+        entityFields: entityFields,
       ),
       FieldType.featEffectList => FeatEffectListFieldWidget(
         schema: schema,
@@ -3829,6 +3854,452 @@ class _DiceFieldWidgetState extends State<_DiceFieldWidget> {
         ),
         onChanged: (v) => widget.onChanged(v),
       ),
+    );
+  }
+}
+
+// --- SPELL SLOT PROGRESSION — Class authored per-level override table ---
+/// 2D grid of slot counts indexed by `[characterLevel][spellLevel]`.
+/// Renders as a sparse 20-row table where the author can paste in a
+/// homebrew progression that differs from the SRD `caster_kind` preset.
+/// When the field is empty the runtime falls back to the SRD table
+/// (handled in `spellSlotsForClass`). An "Auto-fill from caster_kind"
+/// button seeds the grid with the SRD preset so the author can tweak
+/// just the rows that differ instead of typing 180 cells from scratch.
+///
+/// Storage shape: `Map<String level, Map<String spellLevel, int count>>`
+/// — keys stringified so the JSON round-trip preserves int semantics
+/// without falling back to `_$identityFromJson` casts.
+class _SpellSlotProgressionFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, dynamic>? entityFields;
+
+  const _SpellSlotProgressionFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    required this.entityFields,
+  });
+
+  static const int _kMaxLevel = 20;
+  static const int _kMaxSpellLevel = 9;
+
+  Map<int, Map<int, int>> _parse() {
+    final out = <int, Map<int, int>>{};
+    if (value is! Map) return out;
+    final m = value as Map;
+    for (final entry in m.entries) {
+      final lvl = entry.key is int
+          ? entry.key as int
+          : int.tryParse('${entry.key}');
+      if (lvl == null) continue;
+      final row = entry.value;
+      if (row is! Map) continue;
+      final cells = <int, int>{};
+      for (final cell in row.entries) {
+        final sl = cell.key is int
+            ? cell.key as int
+            : int.tryParse('${cell.key}');
+        if (sl == null) continue;
+        final n = cell.value;
+        final count = n is int
+            ? n
+            : (n is num ? n.toInt() : int.tryParse('${n ?? ''}'));
+        if (count == null) continue;
+        cells[sl] = count;
+      }
+      out[lvl] = cells;
+    }
+    return out;
+  }
+
+  void _write(Map<int, Map<int, int>> table) {
+    final out = <String, Map<String, int>>{};
+    for (final entry in table.entries) {
+      final row = <String, int>{};
+      for (final cell in entry.value.entries) {
+        if (cell.value <= 0) continue;
+        row[cell.key.toString()] = cell.value;
+      }
+      if (row.isNotEmpty) out[entry.key.toString()] = row;
+    }
+    onChanged(out);
+  }
+
+  Map<int, Map<int, int>> _srdPreset() {
+    final kind = parseCasterKind(entityFields?['caster_kind']);
+    final out = <int, Map<int, int>>{};
+    for (var lvl = 1; lvl <= _kMaxLevel; lvl++) {
+      final slots = defaultSpellSlotsByLevel(kind, lvl);
+      if (slots.isNotEmpty) out[lvl] = Map<int, int>.from(slots);
+    }
+    return out;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final table = _parse();
+    final preset = _srdPreset();
+    final kind = parseCasterKind(entityFields?['caster_kind']);
+    final hasOverride = table.isNotEmpty;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    schema.label,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (!readOnly) ...[
+                  TextButton.icon(
+                    icon: const Icon(Icons.auto_awesome, size: 14),
+                    label: const Text('Auto-fill SRD', style: TextStyle(fontSize: 11)),
+                    onPressed: kind == CasterKind.none
+                        ? null
+                        : () => _write(preset),
+                  ),
+                  if (hasOverride)
+                    TextButton.icon(
+                      icon: const Icon(Icons.clear_all, size: 14),
+                      label: const Text('Clear', style: TextStyle(fontSize: 11)),
+                      onPressed: () => _write(const {}),
+                    ),
+                ],
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                hasOverride
+                    ? 'Override active — runtime uses these counts; empty rows fall back to caster_kind preset.'
+                    : 'No override — runtime uses caster_kind="${entityFields?['caster_kind'] ?? 'None'}" SRD preset (shown as placeholder).',
+                style: TextStyle(fontSize: 10, color: palette.srdSubtitle),
+              ),
+            ),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowHeight: 28,
+                dataRowMinHeight: 28,
+                dataRowMaxHeight: 32,
+                columnSpacing: 12,
+                horizontalMargin: 8,
+                columns: [
+                  const DataColumn(label: Text('Lvl', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700))),
+                  for (var sl = 1; sl <= _kMaxSpellLevel; sl++)
+                    DataColumn(
+                      label: Text(
+                        '$sl',
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+                      ),
+                      numeric: true,
+                    ),
+                ],
+                rows: [
+                  for (var lvl = 1; lvl <= _kMaxLevel; lvl++)
+                    DataRow(
+                      cells: [
+                        DataCell(Text(
+                          '$lvl',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: palette.srdInk,
+                          ),
+                        )),
+                        for (var sl = 1; sl <= _kMaxSpellLevel; sl++)
+                          DataCell(
+                            _SlotCell(
+                              value: table[lvl]?[sl] ?? 0,
+                              hint: preset[lvl]?[sl] ?? 0,
+                              readOnly: readOnly,
+                              onChanged: (v) {
+                                final next = Map<int, Map<int, int>>.from(table);
+                                final row = Map<int, int>.from(next[lvl] ?? const {});
+                                if (v <= 0) {
+                                  row.remove(sl);
+                                } else {
+                                  row[sl] = v;
+                                }
+                                if (row.isEmpty) {
+                                  next.remove(lvl);
+                                } else {
+                                  next[lvl] = row;
+                                }
+                                _write(next);
+                              },
+                            ),
+                          ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SlotCell extends StatefulWidget {
+  final int value;
+  final int hint;
+  final bool readOnly;
+  final ValueChanged<int> onChanged;
+
+  const _SlotCell({
+    required this.value,
+    required this.hint,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  @override
+  State<_SlotCell> createState() => _SlotCellState();
+}
+
+class _SlotCellState extends State<_SlotCell> {
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.value > 0 ? '${widget.value}' : '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _SlotCell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final desired = widget.value > 0 ? '${widget.value}' : '';
+    if (_ctrl.text != desired) _ctrl.text = desired;
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final hintText = widget.hint > 0 ? '${widget.hint}' : '·';
+    return SizedBox(
+      width: 28,
+      child: TextField(
+        controller: _ctrl,
+        readOnly: widget.readOnly,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 11),
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+          border: const OutlineInputBorder(),
+          hintText: hintText,
+          hintStyle: TextStyle(
+            fontSize: 11,
+            color: palette.srdSubtitle.withValues(alpha: 0.5),
+          ),
+        ),
+        onChanged: (v) {
+          final n = int.tryParse(v) ?? 0;
+          widget.onChanged(n);
+        },
+      ),
+    );
+  }
+}
+
+// --- CR CALCULATOR — Monster Challenge Rating estimator panel ---
+/// Reads `ac` + `hp_average` from sibling fields (via `entityFields`) and
+/// stores `{atk_bonus, dpr_avg, save_dc}` as its own value. Renders
+/// defensive / offensive / suggested CR + XP. Authors copy the suggestion
+/// into the `cr` + `xp` fields by hand — field widgets don't write to
+/// sibling keys, so the helper is advisory rather than autoritative.
+class _CrCalculatorFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, dynamic>? entityFields;
+
+  const _CrCalculatorFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    required this.entityFields,
+  });
+
+  int _asInt(Object? raw, [int fallback = 0]) {
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    if (raw is String) return int.tryParse(raw) ?? fallback;
+    return fallback;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context);
+    final inputs = value is Map ? Map<String, dynamic>.from(value as Map) : <String, dynamic>{};
+    final atkBonus = _asInt(inputs['atk_bonus']);
+    final dprAvg = _asInt(inputs['dpr_avg']);
+
+    final ac = _asInt(entityFields?['ac']);
+    final hp = _asInt(entityFields?['hp_average']);
+
+    final defCr = (ac > 0 && hp > 0) ? defensiveCrFromAcHp(ac, hp) : '—';
+    final offCr = (dprAvg > 0) ? offensiveCrFromAtkDpr(atkBonus, dprAvg) : '—';
+    final suggested = (defCr != '—' && offCr != '—') ? combinedCr(defCr, offCr) : '—';
+    final xp = suggested == '—' ? 0 : xpForCr(suggested);
+
+    void write(String key, int? v) {
+      final next = Map<String, dynamic>.from(inputs);
+      if (v == null || v == 0) {
+        next.remove(key);
+      } else {
+        next[key] = v;
+      }
+      onChanged(next);
+    }
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              schema.label,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'AC $ac · HP $hp · DMG p.273-275 estimate. Copy the suggestion into CR + XP fields manually.',
+              style: TextStyle(fontSize: 10, color: palette.colorScheme.outline),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                SizedBox(
+                  width: 110,
+                  child: TextFormField(
+                    initialValue: atkBonus == 0 ? '' : '$atkBonus',
+                    readOnly: readOnly,
+                    style: const TextStyle(fontSize: 12),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Attack Bonus',
+                      isDense: true,
+                      labelStyle: TextStyle(fontSize: 11),
+                    ),
+                    onChanged: (s) => write('atk_bonus', int.tryParse(s.trim())),
+                  ),
+                ),
+                SizedBox(
+                  width: 110,
+                  child: TextFormField(
+                    initialValue: dprAvg == 0 ? '' : '$dprAvg',
+                    readOnly: readOnly,
+                    style: const TextStyle(fontSize: 12),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'DPR (avg)',
+                      isDense: true,
+                      labelStyle: TextStyle(fontSize: 11),
+                    ),
+                    onChanged: (s) => write('dpr_avg', int.tryParse(s.trim())),
+                  ),
+                ),
+                SizedBox(
+                  width: 100,
+                  child: TextFormField(
+                    initialValue: inputs['save_dc'] == null
+                        ? ''
+                        : '${inputs['save_dc']}',
+                    readOnly: readOnly,
+                    style: const TextStyle(fontSize: 12),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Save DC',
+                      isDense: true,
+                      labelStyle: TextStyle(fontSize: 11),
+                    ),
+                    onChanged: (s) => write('save_dc', int.tryParse(s.trim())),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: palette.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                children: [
+                  _crBadge('Defensive', defCr, Colors.blue),
+                  const SizedBox(width: 10),
+                  _crBadge('Offensive', offCr, Colors.deepOrange),
+                  const SizedBox(width: 10),
+                  _crBadge('Suggested', suggested, Colors.green, bold: true),
+                  const SizedBox(width: 16),
+                  Text(
+                    'XP: $xp',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _crBadge(String label, String cr, Color color, {bool bold = false}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
+        Text(
+          'CR $cr',
+          style: TextStyle(
+            fontSize: bold ? 14 : 12,
+            fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }

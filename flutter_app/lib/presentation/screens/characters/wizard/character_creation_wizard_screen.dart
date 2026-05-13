@@ -1082,8 +1082,7 @@ Map<String, dynamic> buildSeedFields({
   // `_SpellSlotGridFieldWidget` renders one row per spell level with
   // tappable pips for remaining slots.
   if (characterClass != null) {
-    final kind = parseCasterKind(characterClass.fields['caster_kind']);
-    final slots = defaultSpellSlotsByLevel(kind, draft.level);
+    final slots = spellSlotsForClass(characterClass, draft.level);
     if (slots.isNotEmpty) {
       final maxOut = <String, dynamic>{};
       final remainingOut = <String, dynamic>{};

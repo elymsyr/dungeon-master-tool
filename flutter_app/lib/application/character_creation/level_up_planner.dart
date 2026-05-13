@@ -231,37 +231,15 @@ const _asiOrFeatLevels = {4, 8, 12, 16, 19};
 /// when no entity map is available so the dialog still flags L5.
 const _extraAttackFallbackLevels = {5};
 
-/// Read the slot map at [level] from the class's `spell_slots_by_level`
-/// table when authored; fall back to the SRD default progression keyed
-/// off [kind]. Returns `null` for level 0 (so the planner can distinguish
-/// "below progression" from "no slots this tier").
-Map<int, int>? _slotsAt(Entity? classEntity, CasterKind kind, int level) {
+/// Slot map at [level] for [classEntity]. Delegates to the shared
+/// `spellSlotsForClass` helper, which checks the entity's authored
+/// `spell_slots_by_level` override first and falls back to the SRD
+/// preset keyed off the class's `caster_kind` when none is present.
+/// Returns the empty map for level 0 so the planner can distinguish
+/// "below progression" from "no slots this tier".
+Map<int, int>? _slotsAt(Entity? classEntity, int level) {
   if (level < 1) return const {};
-  final raw = classEntity?.fields['spell_slots_by_level'];
-  if (raw is Map) {
-    for (final entry in raw.entries) {
-      final k = entry.key;
-      final kInt = k is int ? k : int.tryParse(k.toString());
-      if (kInt != level) continue;
-      final v = entry.value;
-      if (v is Map) {
-        final out = <int, int>{};
-        for (final inner in v.entries) {
-          final spellLevel = inner.key is int
-              ? inner.key as int
-              : int.tryParse('${inner.key}');
-          if (spellLevel == null) continue;
-          final count = inner.value is int
-              ? inner.value as int
-              : int.tryParse('${inner.value}');
-          if (count == null || count <= 0) continue;
-          out[spellLevel] = count;
-        }
-        return out;
-      }
-    }
-  }
-  return defaultSpellSlotsByLevel(kind, level);
+  return spellSlotsForClass(classEntity, level);
 }
 
 List<String> _saveGrantsFromEffects(Object? effects) {
@@ -435,8 +413,8 @@ LevelUpPlan planLevelUp({
     maxSpell = maxPreparableSpellLevel(kind, clampedTo);
     // Authored class data takes precedence over the SRD default tables
     // so a homebrew class can ship its own slot progression.
-    prevSlots = _slotsAt(classEntity, kind, clampedFrom);
-    newSlots = _slotsAt(classEntity, kind, clampedTo);
+    prevSlots = _slotsAt(classEntity, clampedFrom);
+    newSlots = _slotsAt(classEntity, clampedTo);
   }
 
   return LevelUpPlan(
