@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/auth_provider.dart';
@@ -11,10 +10,10 @@ import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
 import '../../core/config/supabase_config.dart';
-import '../../domain/entities/online/world_invite.dart';
 import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../theme/dm_tool_colors.dart';
+import 'online_world_widgets.dart';
 
 /// Campaign settings dialog'unda yer alan "Online" bölümü.
 ///   - Worldu publish/unpublish etmek için toggle (DM).
@@ -78,7 +77,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
   Widget _onlineBody(DmToolColors palette) {
     final onlineStatusAsync =
         ref.watch(worldOnlineStatusProvider(widget.campaignId));
-    final roleAsync = ref.watch(currentWorldRoleProvider);
+    final roleAsync = ref.watch(worldRoleProvider(widget.campaignId));
 
     return onlineStatusAsync.when(
       loading: () => const Padding(
@@ -145,9 +144,6 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
   }
 
   Widget _dmManageOnline(DmToolColors palette) {
-    final invitesAsync = ref.watch(worldInvitesProvider(widget.campaignId));
-    final membersAsync = ref.watch(worldMembersProvider(widget.campaignId));
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -169,200 +165,49 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        // Members
-        _heading(palette, Icons.people, 'Members'),
-        const SizedBox(height: 6),
-        membersAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.all(8),
-            child: SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2)),
-          ),
-          error: (e, _) => Text('Error: $e', style: TextStyle(fontSize: 12, color: palette.dangerBtnBg)),
-          data: (members) => Column(
-            children: members.map((m) => _memberTile(palette, m)).toList(),
-          ),
-        ),
-        const SizedBox(height: 12),
-        // Invites
-        Row(
-          children: [
-            _heading(palette, Icons.vpn_key, 'Invite codes'),
-            const Spacer(),
-            OutlinedButton.icon(
-              onPressed: _busy ? null : _createInvite,
-              icon: const Icon(Icons.add, size: 14),
-              label: const Text('New invite'),
-              style: OutlinedButton.styleFrom(
-                  visualDensity: VisualDensity.compact),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        invitesAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.all(8),
-            child: SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2)),
-          ),
-          error: (e, _) => Text('Error: $e', style: TextStyle(fontSize: 12, color: palette.dangerBtnBg)),
-          data: (invites) => invites.isEmpty
-              ? Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Text('No active invites',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: palette.sidebarLabelSecondary)),
-                )
-              : Column(
-                  children:
-                      invites.map((i) => _inviteTile(palette, i)).toList(),
-                ),
+        const SizedBox(height: 16),
+        OnlineSectionLabel('Invite Code', palette),
+        const SizedBox(height: 8),
+        InviteCodeRow(palette: palette, worldId: widget.campaignId),
+        const SizedBox(height: 16),
+        OnlineSectionLabel('Members', palette),
+        const SizedBox(height: 8),
+        MembersList(
+          worldId: widget.campaignId,
+          palette: palette,
+          onRemoveMember: _busy ? null : _removeMember,
         ),
       ],
     );
   }
 
   Widget _playerInfo(DmToolColors palette) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: palette.featureCardBg,
-        borderRadius: palette.br,
-        border: Border.all(color: palette.featureCardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.person, size: 14, color: palette.tabActiveText),
-              const SizedBox(width: 6),
-              const Text('Joined as Player',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: _busy ? null : _leave,
-            icon: const Icon(Icons.exit_to_app, size: 14),
-            label: const Text('Leave World'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: palette.dangerBtnBg,
-              visualDensity: VisualDensity.compact,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _heading(DmToolColors palette, IconData icon, String text) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 14, color: palette.sidebarLabelSecondary),
-        const SizedBox(width: 6),
-        Text(text,
-            style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: palette.tabActiveText)),
-      ],
-    );
-  }
-
-  Widget _memberTile(DmToolColors palette, WorldMember m) {
-    final name = m.displayName ?? m.username ?? m.userId.substring(0, 8);
-    final isDm = m.role == WorldRole.dm;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Icon(isDm ? Icons.shield : Icons.person,
-              size: 14, color: palette.sidebarLabelSecondary),
-          const SizedBox(width: 6),
-          Expanded(child: Text(name, style: const TextStyle(fontSize: 12))),
-          if (isDm)
-            Text('DM',
-                style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: palette.tabIndicator)),
-          if (!isDm)
-            IconButton(
-              tooltip: 'Remove from world',
-              icon: Icon(Icons.delete_outline,
-                  size: 14, color: palette.dangerBtnBg),
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-              onPressed: _busy ? null : () => _removeMember(m),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _inviteTile(DmToolColors palette, WorldInvite i) {
-    final expires = i.expiresAt;
-    final expired = expires != null && expires.isBefore(DateTime.now());
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: palette.featureCardBg,
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: palette.featureCardBorder),
-            ),
-            child: Text(
-              i.code,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 14,
-                letterSpacing: 3,
-                fontWeight: FontWeight.w600,
+        Row(
+          children: [
+            Icon(Icons.person, size: 14, color: palette.tabActiveText),
+            const SizedBox(width: 6),
+            const Text('Joined as Player',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: _busy ? null : _leave,
+              icon: const Icon(Icons.exit_to_app, size: 14),
+              label: const Text('Leave World'),
+              style: TextButton.styleFrom(
+                foregroundColor: palette.dangerBtnBg,
+                visualDensity: VisualDensity.compact,
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '${i.usesLeft} use${i.usesLeft == 1 ? '' : 's'} left'
-              '${expired ? ' · expired' : ''}',
-              style: TextStyle(
-                  fontSize: 11,
-                  color: expired
-                      ? palette.dangerBtnBg
-                      : palette.sidebarLabelSecondary),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Copy code',
-            icon: Icon(Icons.copy, size: 14, color: palette.tabActiveText),
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-            onPressed: () => _copyCode(i.code),
-          ),
-          IconButton(
-            tooltip: 'Revoke',
-            icon: Icon(Icons.delete_outline,
-                size: 14, color: palette.dangerBtnBg),
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-            onPressed: _busy ? null : () => _revokeInvite(i.code),
-          ),
-        ],
-      ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        OnlineSectionLabel('Members', palette),
+        const SizedBox(height: 8),
+        MembersList(worldId: widget.campaignId, palette: palette),
+      ],
     );
   }
 
@@ -387,6 +232,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       ref.read(onlineWorldIdsProvider.notifier).add(widget.campaignId);
       ref.invalidate(worldOnlineStatusProvider(widget.campaignId));
       ref.invalidate(currentWorldRoleProvider);
+      ref.invalidate(worldRoleProvider(widget.campaignId));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('World is now online')),
@@ -425,46 +271,8 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       ref.read(onlineWorldIdsProvider.notifier).remove(widget.campaignId);
       ref.invalidate(worldOnlineStatusProvider(widget.campaignId));
       ref.invalidate(currentWorldRoleProvider);
+      ref.invalidate(worldRoleProvider(widget.campaignId));
       ref.invalidate(worldMembersProvider(widget.campaignId));
-      ref.invalidate(worldInvitesProvider(widget.campaignId));
-    } catch (e) {
-      _showError(e);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _createInvite() async {
-    setState(() => _busy = true);
-    try {
-      final code = await ref
-          .read(worldMembershipServiceProvider)
-          .createInvite(worldId: widget.campaignId);
-      ref.invalidate(worldInvitesProvider(widget.campaignId));
-      if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (ctx) => _InviteCodeShownDialog(code: code),
-      );
-    } catch (e) {
-      _showError(e);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _copyCode(String code) async {
-    await Clipboard.setData(ClipboardData(text: code));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Copied: $code')),
-    );
-  }
-
-  Future<void> _revokeInvite(String code) async {
-    setState(() => _busy = true);
-    try {
-      await ref.read(worldMembershipServiceProvider).revokeInvite(code);
       ref.invalidate(worldInvitesProvider(widget.campaignId));
     } catch (e) {
       _showError(e);
@@ -530,6 +338,7 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
           .leaveWorld(widget.campaignId);
       ref.read(onlineWorldIdsProvider.notifier).remove(widget.campaignId);
       ref.invalidate(currentWorldRoleProvider);
+      ref.invalidate(worldRoleProvider(widget.campaignId));
       ref.invalidate(worldOnlineStatusProvider(widget.campaignId));
     } catch (e) {
       _showError(e);
@@ -550,59 +359,3 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
   }
 }
 
-/// "Yeni invite oluşturuldu" sonrası kullanıcıya kodu kopyalamak için
-/// gösterilen küçük dialog.
-class _InviteCodeShownDialog extends StatelessWidget {
-  final String code;
-
-  const _InviteCodeShownDialog({required this.code});
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<DmToolColors>()!;
-    return AlertDialog(
-      title: const Text('Invite created'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('Share this code with your player:'),
-          const SizedBox(height: 16),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: palette.featureCardBg,
-              borderRadius: palette.br,
-              border: Border.all(color: palette.featureCardBorder),
-            ),
-            child: Text(
-              code,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 28,
-                letterSpacing: 8,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close')),
-        FilledButton.icon(
-          onPressed: () async {
-            await Clipboard.setData(ClipboardData(text: code));
-            if (!context.mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Copied to clipboard')),
-            );
-          },
-          icon: const Icon(Icons.copy, size: 16),
-          label: const Text('Copy'),
-        ),
-      ],
-    );
-  }
-}

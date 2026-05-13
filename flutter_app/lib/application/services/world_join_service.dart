@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/database/app_database.dart';
 import '../../data/network/world_membership_service.dart';
+import '../../domain/repositories/campaign_repository.dart';
 
 /// "Join with code" akışını koordine eder:
 ///   1. RPC redeem_world_invite → (worldId, worldName)
@@ -16,18 +19,20 @@ class WorldJoinService {
   final WorldMembershipService membership;
   final AppDatabase db;
   final SupabaseClient supabase;
+  final CampaignRepository repository;
 
   WorldJoinService({
     required this.membership,
     required this.db,
     required this.supabase,
+    required this.repository,
   });
 
   Future<({String worldId, String worldName})> joinWithCode(String code) async {
     final res = await membership.redeemInvite(code);
 
     // Initial state snapshot — campaigns mirror'ı.
-    String stateJson = '{}';
+    Map<String, dynamic>? parsed;
     try {
       final row = await supabase
           .from('worlds')
@@ -35,12 +40,16 @@ class WorldJoinService {
           .eq('id', res.worldId)
           .maybeSingle();
       final raw = row?['state_json'];
-      if (raw is String && raw.isNotEmpty) stateJson = raw;
+      if (raw is String && raw.isNotEmpty && raw != '{}') {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) parsed = Map<String, dynamic>.from(decoded);
+      }
     } catch (_) {
       // RLS ya da network: boş bırak, ileride sync tamamlar.
     }
 
     final now = DateTime.now().toUtc();
+    // Ensure a campaigns row exists; repository.save will fully populate it.
     final existing =
         await (db.select(db.campaigns)..where((t) => t.id.equals(res.worldId)))
             .getSingleOrNull();
@@ -49,17 +58,28 @@ class WorldJoinService {
             CampaignsCompanion.insert(
               id: res.worldId,
               worldName: res.worldName,
-              stateJson: Value(stateJson),
+              stateJson: const Value('{}'),
               createdAt: Value(now),
               updatedAt: Value(now),
             ),
           );
-    } else {
+    }
+
+    if (parsed != null) {
+      // Force id/name to match the invite — server snapshot is authoritative
+      // for content, but the local row keys off this id.
+      parsed['world_id'] = res.worldId;
+      parsed['world_name'] = res.worldName;
+      try {
+        await repository.save(res.worldName, parsed);
+      } catch (_) {
+        // Best-effort: bare campaigns row still allows later sync to fill in.
+      }
+    } else if (existing != null) {
       await (db.update(db.campaigns)
             ..where((t) => t.id.equals(res.worldId)))
           .write(CampaignsCompanion(
         worldName: Value(res.worldName),
-        stateJson: Value(stateJson),
         updatedAt: Value(now),
       ));
     }
