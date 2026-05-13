@@ -867,18 +867,20 @@ class _MainScreenState extends ConsumerState<MainScreen>
             )
           : null,
 
-      // Mobile bottom nav (portrait only — landscape uses burger menu overlay)
+      // Mobile bottom nav (portrait only — landscape uses burger menu overlay).
+      // Display order: database, session, mindmap, map, characters, soundmap,
+      // pdf. Horizontal scroll so labels don't compress at narrow widths.
       bottomNavigationBar: (screen == ScreenType.phone && !isLandscapePhone)
-          ? NavigationBar(
-              selectedIndex: _tabIndex,
-              onDestinationSelected: (i) { setState(() => _tabIndex = i); _persistUiState(); },
-              destinations: List.generate(
-                7,
-                (i) => NavigationDestination(
-                  icon: Icon(_tabIcons[i]),
-                  label: tabLabels[i],
-                ),
-              ),
+          ? _MobileBottomTabBar(
+              physicalOrder: const [0, 1, 2, 3, 6, 5, 4],
+              tabIcons: _tabIcons,
+              tabLabels: tabLabels,
+              selectedPhysicalIndex: _tabIndex,
+              onSelect: (i) {
+                setState(() => _tabIndex = i);
+                _persistUiState();
+              },
+              palette: palette,
             )
           : null,
     ),
@@ -1055,6 +1057,100 @@ class _DragHandle extends StatelessWidget {
               color: palette.sidebarDivider,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileBottomTabBar extends StatelessWidget {
+  final List<int> physicalOrder;
+  final List<IconData> tabIcons;
+  final List<String> tabLabels;
+  final int selectedPhysicalIndex;
+  final ValueChanged<int> onSelect;
+  final DmToolColors palette;
+
+  const _MobileBottomTabBar({
+    required this.physicalOrder,
+    required this.tabIcons,
+    required this.tabLabels,
+    required this.selectedPhysicalIndex,
+    required this.onSelect,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: palette.tabBg,
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final i in physicalOrder)
+                  _TabItem(
+                    icon: tabIcons[i],
+                    label: tabLabels[i],
+                    active: i == selectedPhysicalIndex,
+                    onTap: () => onSelect(i),
+                    palette: palette,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TabItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+  final DmToolColors palette;
+
+  const _TabItem({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? palette.tabIndicator : palette.tabText;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: 76,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 24, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                color: color,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../application/providers/character_provider.dart' show kPlayerCategorySlugs;
 import '../../application/providers/entity_provider.dart';
@@ -458,24 +457,6 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                         backgroundColor: palette.successBtnBg,
                         foregroundColor: palette.successBtnText,
                         minimumSize: const Size(0, 36),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => context.push('/character/new'),
-                      icon: const Icon(Icons.person_add, size: 16),
-                      label: const Text('Create Character',
-                          style: TextStyle(fontSize: 12)),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(0, 32),
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 8),
                       ),
                     ),
                   ),

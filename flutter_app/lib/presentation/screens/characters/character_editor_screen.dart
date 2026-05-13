@@ -955,7 +955,11 @@ class _CharacterEditorScreenState
       final prevSlots = prevSlotsOverride ??
           plan.prevSpellSlots ??
           const <int, int>{};
-      final prevRemainingRaw = updated['spell_slots_remaining_by_level'];
+      // Source of truth is `spell_slots` field with shape
+      // {max: {...}, remaining: {...}}. Read prev remaining from there.
+      final prevSlotsField = updated['spell_slots'];
+      final prevRemainingRaw =
+          prevSlotsField is Map ? prevSlotsField['remaining'] : null;
       int prevRem(int spellLevel) {
         if (prevRemainingRaw is Map) {
           final v = prevRemainingRaw[spellLevel.toString()] ??
@@ -979,8 +983,7 @@ class _CharacterEditorScreenState
         final base = prevRem(k);
         remainingOut[keyStr] = (base + delta).clamp(0, newMax);
       }
-      updated['spell_slots_by_level'] = maxOut;
-      updated['spell_slots_remaining_by_level'] = remainingOut;
+      updated['spell_slots'] = {'max': maxOut, 'remaining': remainingOut};
     }
 
     if (result.newProfBonus > 0) {
@@ -988,7 +991,8 @@ class _CharacterEditorScreenState
     }
 
     // New feat pick OR fighting-style pick — append to the resolver's
-    // `feat_ids` list (deduped). Resolver picks up effects on next render.
+    // `feat_ids` (effect side-channel) AND the visible `feats` relation list
+    // so the player sheet renders the new row.
     void appendFeatId(String? id) {
       if (id == null || id.isEmpty) return;
       final list = updated['feat_ids'];
@@ -997,6 +1001,18 @@ class _CharacterEditorScreenState
           : <String>[];
       if (!next.contains(id)) next.add(id);
       updated['feat_ids'] = next;
+
+      final featsRaw = updated['feats'];
+      final featsList = featsRaw is List
+          ? List<dynamic>.from(featsRaw)
+          : <dynamic>[];
+      final alreadyShown = featsList.any((row) {
+        if (row is String) return row == id;
+        if (row is Map) return row['id'] == id;
+        return false;
+      });
+      if (!alreadyShown) featsList.add(id);
+      updated['feats'] = featsList;
     }
 
     appendFeatId(result.newFeatId);
@@ -1054,12 +1070,13 @@ class _CharacterEditorScreenState
   /// Up, Short Rest, Long Rest — that wrap the longer-form dialogs so the
   /// player doesn't need to find the level field and bump it by hand.
   Widget _renderRestActions(DmToolColors palette, Character character) {
-    final readOnly = _readOnly;
+    // Player verbs — bypass edit-mode gate so mid-session level-up / rest
+    // doesn't require flipping to edit.
     return Row(
       children: [
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: readOnly ? null : () => _levelUp(character),
+            onPressed: () => _levelUp(character),
             icon: const Icon(Icons.arrow_upward, size: 16),
             label: const Text('Level Up'),
           ),
@@ -1067,7 +1084,7 @@ class _CharacterEditorScreenState
         const SizedBox(width: 8),
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: readOnly ? null : () => _shortRest(character),
+            onPressed: () => _shortRest(character),
             icon: const Icon(Icons.bedtime_outlined, size: 16),
             label: const Text('Short Rest'),
           ),
@@ -1075,7 +1092,7 @@ class _CharacterEditorScreenState
         const SizedBox(width: 8),
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: readOnly ? null : () => _longRest(character),
+            onPressed: () => _longRest(character),
             icon: const Icon(Icons.nightlight_round, size: 16),
             label: const Text('Long Rest'),
           ),

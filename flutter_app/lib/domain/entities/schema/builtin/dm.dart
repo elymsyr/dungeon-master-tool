@@ -158,6 +158,8 @@ class _FB {
       _base(key: k, label: l, type: FieldType.levelTable, groupId: g, gridSpan: 2);
   void slot(String k, String l, {String g = grpSpellcasting}) =>
       _base(key: k, label: l, type: FieldType.slot, groupId: g, gridSpan: 2);
+  void spellSlotGrid(String k, String l, {String g = grpSpellcasting}) =>
+      _base(key: k, label: l, type: FieldType.spellSlotGrid, groupId: g, gridSpan: 2);
   void dice(String k, String l, {bool required_ = false, String g = grpIdentity}) =>
       _base(key: k, label: l, type: FieldType.dice, required_: required_, groupId: g);
   void proficiencyTable(String k, String l, {String g = grpCombat, dynamic defaultValue}) =>
@@ -366,9 +368,9 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
   // grid lives in the same group; slot maxes auto-derive from class levels.
   fb.integer('spell_save_dc', 'Spell Save DC', min: 0, max: 30, g: grpSpells);
   fb.integer('spell_attack_bonus', 'Spell Attack Bonus', g: grpSpells);
+  fb.spellSlotGrid('spell_slots', 'Spell Slots', g: grpSpells);
   fb.relation('spells_known', 'Spells', const ['spell'],
       isList: true, hasEquip: true, g: grpSpells);
-  fb.slot('spell_slots', 'Spell Slots', g: grpSpells);
   fb.proficiencyTable('class_resources', 'Class Resources', g: grpFeatures);
   fb.relation('trinket_ref', 'Trinket', const ['trinket']);
   // Personality (PHB §1)

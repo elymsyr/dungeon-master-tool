@@ -246,6 +246,11 @@ class FieldWidgetFactory {
         onChanged: onChanged,
         entityFields: entityFields,
       ),
+      FieldType.spellSlotGrid => _SpellSlotGridFieldWidget(
+        schema: schema,
+        value: value,
+        onChanged: onChanged,
+      ),
       FieldType.levelTable => _LevelTableFieldWidget(
         schema: schema,
         value: value,
@@ -522,22 +527,22 @@ bool _isPipCounterKey(String key) =>
 class _PipCounter extends StatelessWidget {
   final int count;
   final int max;
-  final bool readOnly;
   final ValueChanged<int> onChanged;
 
   const _PipCounter({
     required this.count,
     required this.max,
-    required this.readOnly,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>();
-    final fillColor = palette?.tabIndicator ??
+    final fillColor = palette?.featureCardAccent ??
         Theme.of(context).colorScheme.primary;
-    final emptyColor = Theme.of(context).colorScheme.outline;
+    final emptyColor =
+        palette?.featureCardBorder ?? Theme.of(context).colorScheme.outline;
+    final borderRadius = palette?.cbr ?? BorderRadius.circular(4);
     final clamped = count.clamp(0, max);
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -546,14 +551,14 @@ class _PipCounter extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 4),
             child: InkWell(
-              onTap: readOnly
-                  ? null
-                  : () {
-                      final tapped = i + 1;
-                      final next = tapped == clamped ? clamped - 1 : tapped;
-                      onChanged(next.clamp(0, max));
-                    },
-              borderRadius: BorderRadius.circular(4),
+              // Pip counters drive death saves, inspiration etc. — tappable
+              // independent of edit mode.
+              onTap: () {
+                final tapped = i + 1;
+                final next = tapped == clamped ? clamped - 1 : tapped;
+                onChanged(next.clamp(0, max));
+              },
+              borderRadius: borderRadius,
               child: Container(
                 width: 18,
                 height: 18,
@@ -563,7 +568,7 @@ class _PipCounter extends StatelessWidget {
                     color: i < clamped ? fillColor : emptyColor,
                     width: 1.5,
                   ),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: borderRadius,
                 ),
               ),
             ),
@@ -922,7 +927,9 @@ class _IntegerFieldWidgetState extends State<_IntegerFieldWidget> {
 
     // Counter-style int fields: render N pips instead of a textbox. The pip
     // count is the field's max validation (default 3). Tap toggles to that
-    // index; tapping the currently-filled top pip clears one.
+    // index; tapping the currently-filled top pip clears one. Always
+    // tappable — view-mode taps are valid mid-session updates (death
+    // saves, inspiration charges).
     if (_isPipCounterKey(widget.schema.fieldKey)) {
       final maxPips =
           widget.schema.validation.maxValue?.toInt() ?? 3;
@@ -932,7 +939,6 @@ class _IntegerFieldWidgetState extends State<_IntegerFieldWidget> {
         child: _PipCounter(
           count: current,
           max: maxPips,
-          readOnly: widget.readOnly,
           onChanged: (v) => widget.onChanged(v),
         ),
       );
@@ -1767,15 +1773,14 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
-                Flexible(
-                  child: Text(
-                    '→ $targetTypes',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                // Category hint + add button cling to the right edge.
+                Text(
+                  '→ $targetTypes',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Theme.of(context).colorScheme.outline,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 if (!readOnly)
                   IconButton(
@@ -1827,8 +1832,9 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
               final linkedEntity = entities?[itemId];
               final description = linkedEntity?.description ?? '';
               // Indent description to align with the entity name (past the
-              // equip toggle, link icon, and spacers).
-              final descIndent = (showEquip ? 28.0 : 0.0) + 14 + 6;
+              // equip toggle only — name leads the row now that the link
+              // icon is gone).
+              final descIndent = showEquip ? 28.0 : 0.0;
 
               Widget itemRow = Padding(
                 padding: const EdgeInsets.only(bottom: 6),
@@ -1846,8 +1852,8 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                               icon: Icon(
                                 schema.fieldKey == 'spells_known'
                                     ? (isEquipped
-                                        ? Icons.check_box
-                                        : Icons.check_box_outline_blank)
+                                        ? Icons.auto_stories
+                                        : Icons.auto_stories_outlined)
                                     : (isEquipped
                                         ? Icons.shield
                                         : Icons.shield_outlined),
@@ -1859,24 +1865,22 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                               tooltip: schema.fieldKey == 'spells_known'
                                   ? (isEquipped ? 'Prepared' : 'Not prepared')
                                   : (isEquipped ? 'Equipped' : 'Not equipped'),
-                              onPressed: readOnly
-                                  ? null
-                                  : () {
-                                      items[i] = {
-                                        ...item,
-                                        'equipped': !isEquipped,
-                                      };
-                                      onChanged(
-                                        _serializeItems(items, showEquip),
-                                      );
-                                    },
+                              // Equip/prepare flag toggles independent of edit
+                              // mode — players juggle these mid-session.
+                              onPressed: () {
+                                items[i] = {
+                                  ...item,
+                                  'equipped': !isEquipped,
+                                };
+                                onChanged(
+                                  _serializeItems(items, showEquip),
+                                );
+                              },
                               visualDensity: VisualDensity.compact,
                               padding: EdgeInsets.zero,
                             ),
                           ),
                         ],
-                        const Icon(Icons.link, size: 14),
-                        const SizedBox(width: 6),
                         Expanded(
                           child: InkWell(
                             onTap: ref == null || linkedEntity == null
@@ -1891,18 +1895,11 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
-                                      decoration: showEquip && !isEquipped
-                                          ? TextDecoration.lineThrough
-                                          : (linkedEntity != null
-                                                ? TextDecoration.underline
-                                                : null),
+                                      decoration: linkedEntity != null
+                                          ? TextDecoration.underline
+                                          : null,
                                       decorationStyle:
                                           TextDecorationStyle.dotted,
-                                      color: showEquip && !isEquipped
-                                          ? Theme.of(
-                                              context,
-                                            ).colorScheme.outline
-                                          : null,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -2361,6 +2358,139 @@ class _SlotFieldWidget extends StatelessWidget {
                   ),
               ],
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Per-spell-level slot grid for PCs. Storage shape:
+///   `{max: {1: 4, 2: 3, ...}, remaining: {1: 4, 2: 2, ...}}`
+/// Maxes are auto-seeded by the wizard (caster_kind + level) and the
+/// level-up dialog. The user can only tap pips to expend/recover slots —
+/// not add/remove rows.
+class _SpellSlotGridFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final ValueChanged<dynamic> onChanged;
+
+  const _SpellSlotGridFieldWidget({
+    required this.schema,
+    required this.value,
+    required this.onChanged,
+  });
+
+  ({Map<int, int> max, Map<int, int> remaining}) _parse() {
+    final maxOut = <int, int>{};
+    final remOut = <int, int>{};
+    if (value is Map) {
+      final m = value as Map;
+      void readMap(Object? raw, Map<int, int> target) {
+        if (raw is! Map) return;
+        for (final entry in raw.entries) {
+          final k = entry.key;
+          final kInt = k is int ? k : int.tryParse(k.toString());
+          if (kInt == null) continue;
+          final v = entry.value;
+          final vInt = v is int ? v : int.tryParse(v.toString());
+          if (vInt == null) continue;
+          target[kInt] = vInt;
+        }
+      }
+
+      readMap(m['max'], maxOut);
+      readMap(m['remaining'], remOut);
+    }
+    return (max: maxOut, remaining: remOut);
+  }
+
+  void _toggle(Map<int, int> max, Map<int, int> remaining, int level, int i) {
+    final cap = max[level] ?? 0;
+    final cur = (remaining[level] ?? 0).clamp(0, cap);
+    final isFilled = i < cur;
+    final next = isFilled ? i : i + 1;
+    final newRemaining = <int, int>{...remaining, level: next.clamp(0, cap)};
+    onChanged({
+      'max': {for (final e in max.entries) e.key.toString(): e.value},
+      'remaining': {
+        for (final e in newRemaining.entries) e.key.toString(): e.value,
+      },
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final state = _parse();
+    final levels = state.max.keys.toList()..sort();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            schema.label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          if (levels.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                'No slots — non-caster or sub-progression level.',
+                style: TextStyle(fontSize: 11, color: palette.srdSubtitle),
+              ),
+            )
+          else
+            for (final lvl in levels)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 36,
+                      child: Text(
+                        'L$lvl',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: palette.srdInk,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: [
+                          for (var i = 0; i < (state.max[lvl] ?? 0); i++)
+                            _SlotPip(
+                              filled: i < (state.remaining[lvl] ?? 0),
+                              color: palette.featureCardAccent,
+                              borderRadius: palette.cbr,
+                              // Tappable independent of edit mode — slots
+                              // get burned mid-encounter.
+                              onTap: () => _toggle(
+                                        state.max,
+                                        state.remaining,
+                                        lvl,
+                                        i,
+                                      ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '${state.remaining[lvl] ?? 0}/${state.max[lvl] ?? 0}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: palette.srdSubtitle,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
         ],
       ),
     );

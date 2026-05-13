@@ -47,7 +47,6 @@ class CharactersSidebar extends ConsumerStatefulWidget {
 }
 
 class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
-  String? _selectedId;
   String? _openedId;
 
   @override
@@ -111,14 +110,16 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (_selectedId != null)
-                IconButton(
-                  icon: Icon(Icons.delete_outline,
-                      size: 16, color: palette.dangerBtnBg),
-                  tooltip: 'Remove from world (long-press a row to select)',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: _deleteSelected,
-                ),
+              IconButton(
+                tooltip: 'Create Character',
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                    minWidth: 28, minHeight: 28),
+                iconSize: 18,
+                onPressed: activeWorld == null ? null : _createCharacter,
+                icon: Icon(Icons.add, color: palette.tabActiveText),
+              ),
             ],
           ),
         ),
@@ -167,44 +168,41 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
                 separatorBuilder: (_, _) => const SizedBox(height: 4),
                 itemBuilder: (context, i) {
                   final c = scoped[i];
-                  final isSelected = c.id == _selectedId;
-                  return InkWell(
-                    borderRadius: palette.br,
-                    onTap: () => setState(() {
-                      _openedId = c.id;
-                    }),
-                    onLongPress: () => setState(() {
-                      _selectedId = isSelected ? null : c.id;
-                    }),
-                    child: Container(
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? palette.featureCardAccent
-                                .withValues(alpha: 0.1)
-                            : palette.featureCardBg,
-                        borderRadius: palette.br,
-                        border: Border.all(
-                          color: isSelected
-                              ? palette.featureCardAccent
-                              : palette.featureCardBorder,
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onSecondaryTapDown: (details) =>
+                        _showRowContextMenu(c, details.globalPosition, palette),
+                    onLongPressStart: (details) =>
+                        _showRowContextMenu(c, details.globalPosition, palette),
+                    child: InkWell(
+                      borderRadius: palette.br,
+                      onTap: () => setState(() {
+                        _openedId = c.id;
+                      }),
+                      child: Container(
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          color: palette.featureCardBg,
+                          borderRadius: palette.br,
+                          border: Border.all(color: palette.featureCardBorder),
                         ),
-                      ),
-                      child: MetadataListTile(
-                        icon: Icons.person,
-                        name: c.entity.name,
-                        subtitle: c.templateName,
-                        description: c.entity.description,
-                        tags: c.entity.tags,
-                        coverImagePath: c.entity.imagePath,
-                        isSelected: isSelected,
-                        palette: palette,
-                        layout: MetadataTileLayout.leftAvatar,
-                        onSettings: () => _showCharacterSettings(c.id, palette),
-                        infoChips: CharacterStatChips(
-                          lines: characterStatLines(c, entitiesFor(c)),
+                        child: MetadataListTile(
+                          icon: Icons.person,
+                          name: c.entity.name,
+                          subtitle: c.templateName,
+                          description: c.entity.description,
+                          tags: c.entity.tags,
+                          coverImagePath: c.entity.imagePath,
+                          isSelected: false,
                           palette: palette,
-                          compact: true,
+                          layout: MetadataTileLayout.leftAvatar,
+                          onSettings: () =>
+                              _showCharacterSettings(c.id, palette),
+                          infoChips: CharacterStatChips(
+                            lines: characterStatLines(c, entitiesFor(c)),
+                            palette: palette,
+                            compact: true,
+                          ),
                         ),
                       ),
                     ),
@@ -215,26 +213,6 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
           ),
         ),
 
-        // Footer actions
-        Divider(height: 1, color: palette.sidebarDivider),
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: activeWorld == null
-                  ? null
-                  : () => _createCharacter(),
-              icon: const Icon(Icons.auto_awesome, size: 18),
-              label: const Text('Create Character'),
-              style: FilledButton.styleFrom(
-                backgroundColor: palette.successBtnBg,
-                foregroundColor: palette.successBtnText,
-                minimumSize: const Size(0, 38),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -245,15 +223,43 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
     context.push('/character/new');
   }
 
-  Future<void> _deleteSelected() async {
-    final id = _selectedId;
-    if (id == null) return;
-    final list = ref.read(characterListProvider).valueOrNull ?? const [];
-    final c = list.where((x) => x.id == id).firstOrNull;
-    if (c == null) return;
-    final palette = widget.palette;
-    final worldName = c.worldName;
+  Future<void> _showRowContextMenu(
+    Character c,
+    Offset globalPosition,
+    DmToolColors palette,
+  ) async {
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox?;
+    if (overlay == null) return;
+    final selected = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        globalPosition.dx,
+        globalPosition.dy,
+        overlay.size.width - globalPosition.dx,
+        overlay.size.height - globalPosition.dy,
+      ),
+      items: [
+        PopupMenuItem<String>(
+          value: 'remove',
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline,
+                  size: 16, color: palette.dangerBtnBg),
+              const SizedBox(width: 8),
+              const Text('Remove from world'),
+            ],
+          ),
+        ),
+      ],
+    );
+    if (selected == 'remove') {
+      await _removeFromWorld(c, palette);
+    }
+  }
 
+  Future<void> _removeFromWorld(Character c, DmToolColors palette) async {
+    final worldName = c.worldName;
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -271,7 +277,6 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
               await ref
                   .read(characterListProvider.notifier)
                   .update(c.copyWith(worldName: ''));
-              if (mounted) setState(() => _selectedId = null);
             },
             style: FilledButton.styleFrom(
               backgroundColor: palette.dangerBtnBg,

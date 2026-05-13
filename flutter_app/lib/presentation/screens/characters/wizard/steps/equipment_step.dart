@@ -5,6 +5,7 @@ import '../../../../../application/character_creation/character_draft.dart';
 import '../../../../../application/character_creation/character_draft_notifier.dart';
 import '../../../../../application/services/builtin_srd_entities.dart';
 import '../../../../../domain/entities/entity.dart';
+import '../../../../theme/dm_tool_colors.dart';
 
 /// Aggregates `equipment_choice_groups` from the chosen class, subclass and
 /// background, then renders one card per group with selectable options.
@@ -193,23 +194,29 @@ class _OptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
     final label = option['label']?.toString() ?? 'Option';
     final goldGp = option['gold_gp'];
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 3),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: selected
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).dividerColor,
-            width: selected ? 2 : 1,
-          ),
-          borderRadius: BorderRadius.circular(6),
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: palette.cbr,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: palette.cbr,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: selected
+                    ? palette.featureCardAccent
+                    : palette.featureCardBorder,
+                width: selected ? 2 : 1,
+              ),
+              borderRadius: palette.cbr,
+            ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -249,6 +256,8 @@ class _OptionTile extends StatelessWidget {
               ),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );
