@@ -1156,12 +1156,25 @@ class GrantedModifiersFieldWidget extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// 5. equipmentChoiceGroups — read-only structured display.
+// 5. equipmentChoiceGroups — editable structured display.
 // Shape: List<{group_id, label, prompt, options:[{option_id, label,
 //   items:[{ref, quantity}], gold_gp?}]}>
-// Editor lives in the character creation wizard (equipment_step.dart);
-// this widget renders the groups so an entity card doesn't dump raw maps.
+// Authoring + read-only share this widget; in read-only mode the add/remove
+// affordances are hidden and inputs go disabled. The pickers reuse
+// `_MiniRelationField` so item refs go through `showEntitySelectorDialog`
+// just like every other relation field. Item-pickable categories match the
+// `default_inventory_refs` schema declaration so the dialog presents the
+// same item universe to authors and the runtime resolver.
 // ─────────────────────────────────────────────────────────────────────────
+
+const _kItemPickAllowedTypes = <String>[
+  'adventuring-gear',
+  'weapon',
+  'armor',
+  'tool',
+  'pack',
+  'ammunition',
+];
 
 class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
   final FieldSchema schema;
@@ -1169,6 +1182,7 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
   final bool readOnly;
   final ValueChanged<dynamic> onChanged;
   final Map<String, Entity>? entities;
+  final WidgetRef? ref;
 
   const EquipmentChoiceGroupsFieldWidget({
     super.key,
@@ -1177,6 +1191,7 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
     required this.readOnly,
     required this.onChanged,
     this.entities,
+    this.ref,
   });
 
   List<Map<String, dynamic>> _coerceGroups(dynamic raw) {
@@ -1187,23 +1202,21 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
     ];
   }
 
-  String _resolveRef(String? id) {
-    if (id == null || id.isEmpty) return '';
-    final e = entities?[id];
-    if (e != null) return e.name;
-    return id.length > 8 ? '${id.substring(0, 8)}…' : id;
+  /// `<prefix>-<unix-ms>` short ids — stable enough for round-trip and free
+  /// of `package:uuid` (kept out of the structured-list file to avoid
+  /// pulling another dep into a widget module).
+  String _genId(String prefix) =>
+      '$prefix-${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}';
+
+  void _writeGroups(List<Map<String, dynamic>> groups) {
+    onChanged(groups);
   }
 
   @override
   Widget build(BuildContext context) {
     final groups = _coerceGroups(value);
-    if (groups.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 4),
-        child: Text('—', style: TextStyle(color: Colors.grey)),
-      );
-    }
-    final theme = Theme.of(context);
+    final palette = Theme.of(context);
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: Padding(
@@ -1211,9 +1224,51 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    schema.label,
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                if (!readOnly)
+                  TextButton.icon(
+                    icon: const Icon(Icons.add, size: 14),
+                    label: const Text('Add Group',
+                        style: TextStyle(fontSize: 11)),
+                    onPressed: () {
+                      final next = [
+                        ...groups,
+                        {
+                          'group_id': _genId('grp'),
+                          'label': 'New Choice',
+                          'prompt': 'Choose one',
+                          'options': <Map<String, dynamic>>[],
+                        },
+                      ];
+                      _writeGroups(next);
+                    },
+                  ),
+              ],
+            ),
+            if (groups.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text(
+                  readOnly
+                      ? '—'
+                      : 'No groups — tap + Add Group to author a "Choose A or B" choice.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: palette.colorScheme.outline,
+                  ),
+                ),
+              ),
             for (var gi = 0; gi < groups.length; gi++) ...[
-              if (gi > 0) const Divider(height: 16),
-              _buildGroup(theme, groups[gi]),
+              if (gi > 0) const Divider(height: 14),
+              _buildGroup(context, groups, gi),
             ],
           ],
         ),
@@ -1221,66 +1276,259 @@ class EquipmentChoiceGroupsFieldWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildGroup(ThemeData theme, Map<String, dynamic> g) {
-    final label = (g['label'] ?? 'Choice').toString();
-    final prompt = (g['prompt'] ?? 'Choose one').toString();
-    final rawOpts = g['options'];
+  Widget _buildGroup(
+      BuildContext context, List<Map<String, dynamic>> groups, int gi) {
+    final group = groups[gi];
+    final rawOpts = group['options'];
     final options = rawOpts is List
         ? [for (final o in rawOpts) if (o is Map) Map<String, dynamic>.from(o)]
-        : const <Map<String, dynamic>>[];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-        if (prompt.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 2, bottom: 6),
-            child: Text(prompt, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
-          ),
-        for (final o in options) _buildOption(theme, o),
-      ],
-    );
-  }
+        : <Map<String, dynamic>>[];
 
-  Widget _buildOption(ThemeData theme, Map<String, dynamic> o) {
-    final optionId = (o['option_id'] ?? '').toString();
-    final optLabel = (o['label'] ?? '').toString();
-    final rawItems = o['items'];
-    final items = rawItems is List
-        ? [for (final i in rawItems) if (i is Map) Map<String, dynamic>.from(i)]
-        : const <Map<String, dynamic>>[];
-    final goldGp = o['gold_gp'];
+    void writeGroup(Map<String, dynamic> next) {
+      final list = [...groups];
+      list[gi] = next;
+      _writeGroups(list);
+    }
+
+    void removeGroup() {
+      final list = [...groups]..removeAt(gi);
+      _writeGroups(list);
+    }
+
     return Padding(
-      padding: const EdgeInsets.only(left: 8, top: 4, bottom: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            optionId.isEmpty ? optLabel : '$optionId. $optLabel',
-            style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          for (final it in items)
-            Padding(
-              padding: const EdgeInsets.only(left: 12, top: 2),
-              child: _buildItemLine(theme, it),
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant, width: 0.5),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _miniText(
+                  label: 'Label',
+                  value: (group['label'] ?? '').toString(),
+                  readOnly: readOnly,
+                  onChanged: (s) => writeGroup({...group, 'label': s}),
+                  width: 180,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _miniText(
+                    label: 'Prompt',
+                    value: (group['prompt'] ?? '').toString(),
+                    readOnly: readOnly,
+                    onChanged: (s) => writeGroup({...group, 'prompt': s}),
+                    width: 380,
+                  ),
+                ),
+                if (!readOnly)
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Delete group',
+                    onPressed: removeGroup,
+                  ),
+              ],
             ),
-          if (goldGp is num && goldGp > 0)
-            Padding(
-              padding: const EdgeInsets.only(left: 12, top: 2),
-              child: Text('• $goldGp gp',
-                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.amber.shade800)),
-            ),
-        ],
+            const SizedBox(height: 6),
+            for (var oi = 0; oi < options.length; oi++)
+              _buildOption(context, group, writeGroup, options, oi),
+            if (!readOnly)
+              Padding(
+                padding: const EdgeInsets.only(top: 4, left: 8),
+                child: TextButton.icon(
+                  icon: const Icon(Icons.add_circle_outline, size: 14),
+                  label: const Text('Add Option',
+                      style: TextStyle(fontSize: 11)),
+                  onPressed: () {
+                    final next = [
+                      ...options,
+                      {
+                        'option_id': _genId('opt'),
+                        'label': 'Option ${options.length + 1}',
+                        'items': <Map<String, dynamic>>[],
+                      },
+                    ];
+                    writeGroup({...group, 'options': next});
+                  },
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildItemLine(ThemeData theme, Map<String, dynamic> it) {
-    final refId = it['ref']?.toString();
-    final qty = it['quantity'];
-    final name = _resolveRef(refId);
-    final qtyStr = qty is int && qty > 1 ? ' × $qty' : '';
-    return Text('• $name$qtyStr', style: theme.textTheme.bodySmall);
+  Widget _buildOption(
+    BuildContext context,
+    Map<String, dynamic> group,
+    void Function(Map<String, dynamic>) writeGroup,
+    List<Map<String, dynamic>> options,
+    int oi,
+  ) {
+    final option = options[oi];
+    final rawItems = option['items'];
+    final items = rawItems is List
+        ? [for (final i in rawItems) if (i is Map) Map<String, dynamic>.from(i)]
+        : <Map<String, dynamic>>[];
+    final goldGp = option['gold_gp'];
+
+    void writeOption(Map<String, dynamic> next) {
+      final list = [...options];
+      list[oi] = next;
+      writeGroup({...group, 'options': list});
+    }
+
+    void removeOption() {
+      final list = [...options]..removeAt(oi);
+      writeGroup({...group, 'options': list});
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, top: 4, bottom: 4),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context)
+              .colorScheme
+              .surfaceContainerHighest
+              .withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        padding: const EdgeInsets.all(6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _miniText(
+                  label: 'ID',
+                  value: (option['option_id'] ?? '').toString(),
+                  readOnly: readOnly,
+                  onChanged: (s) =>
+                      writeOption({...option, 'option_id': s}),
+                  width: 80,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: _miniText(
+                    label: 'Label',
+                    value: (option['label'] ?? '').toString(),
+                    readOnly: readOnly,
+                    onChanged: (s) => writeOption({...option, 'label': s}),
+                    width: 280,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                _miniInt(
+                  label: 'Gold gp',
+                  value: goldGp is int
+                      ? goldGp
+                      : (goldGp is num ? goldGp.toInt() : null),
+                  readOnly: readOnly,
+                  onChanged: (n) {
+                    final next = Map<String, dynamic>.from(option);
+                    if (n == null || n <= 0) {
+                      next.remove('gold_gp');
+                    } else {
+                      next['gold_gp'] = n;
+                    }
+                    writeOption(next);
+                  },
+                  width: 70,
+                ),
+                if (!readOnly)
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 14),
+                    visualDensity: VisualDensity.compact,
+                    tooltip: 'Delete option',
+                    onPressed: removeOption,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            for (var ii = 0; ii < items.length; ii++)
+              _buildItem(option, writeOption, items, ii),
+            if (!readOnly)
+              Padding(
+                padding: const EdgeInsets.only(top: 2, left: 6),
+                child: TextButton.icon(
+                  icon: const Icon(Icons.add, size: 12),
+                  label: const Text('Add Item',
+                      style: TextStyle(fontSize: 10)),
+                  onPressed: () {
+                    final next = [
+                      ...items,
+                      {'ref': null, 'quantity': 1},
+                    ];
+                    writeOption({...option, 'items': next});
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItem(
+    Map<String, dynamic> option,
+    void Function(Map<String, dynamic>) writeOption,
+    List<Map<String, dynamic>> items,
+    int ii,
+  ) {
+    final item = items[ii];
+    final refId = item['ref'] is String ? item['ref'] as String : null;
+    final qty = item['quantity'];
+
+    void writeItem(Map<String, dynamic> next) {
+      final list = [...items];
+      list[ii] = next;
+      writeOption({...option, 'items': list});
+    }
+
+    void removeItem() {
+      final list = [...items]..removeAt(ii);
+      writeOption({...option, 'items': list});
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 6, top: 2, bottom: 2),
+      child: Row(
+        children: [
+          _MiniRelationField(
+            label: 'Item',
+            value: refId,
+            allowedTypes: _kItemPickAllowedTypes,
+            entities: entities,
+            ref: ref,
+            readOnly: readOnly,
+            onChanged: (v) => writeItem({...item, 'ref': v}),
+          ),
+          const SizedBox(width: 6),
+          _miniInt(
+            label: 'Qty',
+            value:
+                qty is int ? qty : (qty is num ? qty.toInt() : null),
+            readOnly: readOnly,
+            onChanged: (n) => writeItem({...item, 'quantity': n ?? 1}),
+            width: 60,
+          ),
+          if (!readOnly)
+            IconButton(
+              icon: const Icon(Icons.close, size: 12),
+              visualDensity: VisualDensity.compact,
+              tooltip: 'Delete item',
+              onPressed: removeItem,
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -1521,6 +1769,320 @@ class AutoGrantSourcesFieldWidget extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// subspeciesOptions — species lineage rows
+// Shape: List<{name, description, granted_senses, granted_damage_resistances,
+//   granted_damage_immunities, granted_damage_vulnerabilities,
+//   granted_condition_immunities, granted_languages,
+//   granted_skill_proficiencies, granted_action_refs,
+//   granted_bonus_action_refs, granted_reaction_refs, granted_trait_refs}>
+//
+// CharacterResolver matches rows by `name` (string) and folds the listed
+// grants. `granted_modifiers` (typed DSL) is supported by the resolver but
+// stays out of this MVP editor — authors needing the full DSL can drop to
+// JSON view; the modifier editor at the species level already covers it.
+// ─────────────────────────────────────────────────────────────────────────
+
+const _kSubspeciesGrantKeys = <(
+  String key,
+  String label,
+  List<String> allowedTypes,
+)>[
+  ('granted_senses', 'Senses', ['sense']),
+  ('granted_damage_resistances', 'Resistances', ['damage-type']),
+  ('granted_damage_immunities', 'Immunities', ['damage-type']),
+  ('granted_damage_vulnerabilities', 'Vulnerabilities', ['damage-type']),
+  ('granted_condition_immunities', 'Condition Imm.', ['condition']),
+  ('granted_languages', 'Languages', ['language']),
+  ('granted_skill_proficiencies', 'Skills', ['skill']),
+  ('granted_action_refs', 'Actions', ['creature-action']),
+  ('granted_bonus_action_refs', 'Bonus Actions', ['creature-action']),
+  ('granted_reaction_refs', 'Reactions', ['creature-action']),
+  ('granted_trait_refs', 'Traits', ['trait']),
+];
+
+class SubspeciesOptionsFieldWidget extends StatelessWidget {
+  final FieldSchema schema;
+  final dynamic value;
+  final bool readOnly;
+  final ValueChanged<dynamic> onChanged;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+
+  const SubspeciesOptionsFieldWidget({
+    super.key,
+    required this.schema,
+    required this.value,
+    required this.readOnly,
+    required this.onChanged,
+    this.entities,
+    this.ref,
+  });
+
+  List<Map<String, dynamic>> _coerceRows(dynamic raw) {
+    if (raw is! List) return const [];
+    return [
+      for (final r in raw)
+        if (r is Map) Map<String, dynamic>.from(r),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _coerceRows(value);
+    final palette = Theme.of(context);
+
+    void writeRows(List<Map<String, dynamic>> next) => onChanged(next);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    schema.label,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (!readOnly)
+                  TextButton.icon(
+                    icon: const Icon(Icons.add, size: 14),
+                    label: const Text('Add Lineage',
+                        style: TextStyle(fontSize: 11)),
+                    onPressed: () {
+                      writeRows([
+                        ...rows,
+                        {
+                          'name': 'New Lineage',
+                          'description': '',
+                        },
+                      ]);
+                    },
+                  ),
+              ],
+            ),
+            if (rows.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  readOnly ? '—' : 'No lineages — tap + Add Lineage.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: palette.colorScheme.outline,
+                  ),
+                ),
+              ),
+            for (var ri = 0; ri < rows.length; ri++)
+              _buildRow(context, rows, ri, writeRows),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRow(
+    BuildContext context,
+    List<Map<String, dynamic>> rows,
+    int ri,
+    ValueChanged<List<Map<String, dynamic>>> writeRows,
+  ) {
+    final row = rows[ri];
+
+    void writeRow(Map<String, dynamic> next) {
+      final list = [...rows];
+      list[ri] = next;
+      writeRows(list);
+    }
+
+    void removeRow() {
+      final list = [...rows]..removeAt(ri);
+      writeRows(list);
+    }
+
+    final name = (row['name'] ?? '').toString();
+    final description = (row['description'] ?? '').toString();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 8),
+        childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+        title: Text(
+          name.isEmpty ? '(unnamed lineage)' : name,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+        trailing: readOnly
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.delete_outline, size: 16),
+                visualDensity: VisualDensity.compact,
+                tooltip: 'Delete lineage',
+                onPressed: removeRow,
+              ),
+        children: [
+          Row(
+            children: [
+              _miniText(
+                label: 'Name',
+                value: name,
+                readOnly: readOnly,
+                onChanged: (s) => writeRow({...row, 'name': s}),
+                width: 200,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _miniText(
+                  label: 'Description',
+                  value: description,
+                  readOnly: readOnly,
+                  onChanged: (s) =>
+                      writeRow({...row, 'description': s}),
+                  width: 400,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          for (final spec in _kSubspeciesGrantKeys)
+            _RelationListChips(
+              key: ValueKey('lineage-$ri-${spec.$1}'),
+              label: spec.$2,
+              values: _readStringList(row[spec.$1]),
+              allowedTypes: spec.$3,
+              entities: entities,
+              ref: ref,
+              readOnly: readOnly,
+              onChanged: (next) {
+                final updated = Map<String, dynamic>.from(row);
+                if (next.isEmpty) {
+                  updated.remove(spec.$1);
+                } else {
+                  updated[spec.$1] = next;
+                }
+                writeRow(updated);
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  static List<String> _readStringList(Object? raw) {
+    if (raw is! List) return const [];
+    return [for (final v in raw) if (v is String) v];
+  }
+}
+
+/// Reusable label + chip strip + "+ Add" button for relation-list cells.
+/// Bridges single-value `_MiniRelationField` semantics into a multi-value
+/// editor without forcing callers to construct a synthetic `FieldSchema`
+/// for `_InlineRelationListFieldWidget`.
+class _RelationListChips extends StatelessWidget {
+  final String label;
+  final List<String> values;
+  final List<String> allowedTypes;
+  final Map<String, Entity>? entities;
+  final WidgetRef? ref;
+  final bool readOnly;
+  final ValueChanged<List<String>> onChanged;
+
+  const _RelationListChips({
+    super.key,
+    required this.label,
+    required this.values,
+    required this.allowedTypes,
+    required this.entities,
+    required this.ref,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (var i = 0; i < values.length; i++)
+                  Chip(
+                    label: Text(
+                      entities?[values[i]]?.name ?? values[i],
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    onDeleted: readOnly
+                        ? null
+                        : () {
+                            final next = [...values]..removeAt(i);
+                            onChanged(next);
+                          },
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize:
+                        MaterialTapTargetSize.shrinkWrap,
+                  ),
+                if (!readOnly)
+                  InkWell(
+                    onTap: () async {
+                      if (ref == null) return;
+                      final result = await showEntitySelectorDialog(
+                        context: context,
+                        ref: ref!,
+                        allowedTypes: allowedTypes,
+                        excludeIds: values,
+                      );
+                      if (result != null && result.isNotEmpty) {
+                        onChanged([...values, result.first]);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: const Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add, size: 12),
+                          SizedBox(width: 2),
+                          Text(
+                            'Add',
+                            style: TextStyle(fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

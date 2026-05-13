@@ -61,7 +61,10 @@ class CharacterResolver {
 
     // ── 3. Pass 2: class + subclass features by level ──────────────────
     final activeFeatures = <ResolvedFeatureRow>[];
-    final pendingFeatureEffects = <Map<String, dynamic>>[];
+    // Per row: the effect map plus a display source like
+    // `class:Barbarian` or `subclass:Berserker`. Pass 4 applies these via
+    // applyEffect so source-tagging flows through `noteSource`.
+    final pendingFeatureEffects = <({Map<String, dynamic> eff, String source})>[];
 
     for (final entry in classLevels.entries) {
       final classEntity = entitiesById[entry.key];
@@ -123,6 +126,31 @@ class CharacterResolver {
     final damageImmunities = <String>[];
     final damageVulnerabilities = <String>[];
     final conditionImmunities = <String>[];
+    // id → ordered list of source names (deduped). Populated everywhere a
+    // grant lands on senses/damageRes/damageImmunities/damageVulnerabilities/
+    // conditionImmunities so the sheet can render "<Grant> — <Source>".
+    final grantSources = <String, List<String>>{};
+    // Strip the `kind:` prefix that `applyEffect`-style call sites use
+    // (`species:Dwarf`, `feat:Magic Initiate`, `subspecies:Dwarf/Hill`) so
+    // the chip subtitle stays clean. Subspecies tags become "Hill Dwarf".
+    String cleanSource(String s) {
+      if (s.isEmpty) return s;
+      final colon = s.indexOf(':');
+      if (colon < 0) return s;
+      final rest = s.substring(colon + 1);
+      final slash = rest.indexOf('/');
+      if (slash > 0) {
+        return '${rest.substring(slash + 1)} ${rest.substring(0, slash)}';
+      }
+      return rest;
+    }
+    void noteSource(String id, String source) {
+      final clean = cleanSource(source);
+      if (clean.isEmpty) return;
+      final list = grantSources.putIfAbsent(id, () => <String>[]);
+      if (!list.contains(clean)) list.add(clean);
+    }
+
     final expertiseSkills = <String>[];
     final alwaysPreparedSpells = <String>[];
     final unarmoredFormulas = <Map<String, dynamic>>[];
@@ -277,27 +305,40 @@ class CharacterResolver {
           }
         case 'damage_resistance':
           final id = _refIdFor(eff, entitiesById);
-          if (id != null && !damageRes.contains(id)) damageRes.add(id);
+          if (id != null) {
+            if (!damageRes.contains(id)) damageRes.add(id);
+            noteSource(id, source);
+          }
         case 'damage_immunity':
           final id = _refIdFor(eff, entitiesById);
-          if (id != null && !damageImmunities.contains(id)) {
-            damageImmunities.add(id);
+          if (id != null) {
+            if (!damageImmunities.contains(id)) damageImmunities.add(id);
+            noteSource(id, source);
           }
         case 'damage_vulnerability':
           final id = _refIdFor(eff, entitiesById);
-          if (id != null && !damageVulnerabilities.contains(id)) {
-            damageVulnerabilities.add(id);
+          if (id != null) {
+            if (!damageVulnerabilities.contains(id)) {
+              damageVulnerabilities.add(id);
+            }
+            noteSource(id, source);
           }
         case 'condition_immunity_grant':
           final id = _refIdFor(eff, entitiesById);
-          if (id != null && !conditionImmunities.contains(id)) {
-            conditionImmunities.add(id);
+          if (id != null) {
+            if (!conditionImmunities.contains(id)) {
+              conditionImmunities.add(id);
+            }
+            noteSource(id, source);
           }
         case 'sense_grant':
         case 'truesight_grant':
         case 'blindsight_grant':
           final id = _refIdFor(eff, entitiesById);
-          if (id != null && !senses.contains(id)) senses.add(id);
+          if (id != null) {
+            if (!senses.contains(id)) senses.add(id);
+            noteSource(id, source);
+          }
         case 'expertise_grant':
           final id = _refIdFor(eff, entitiesById);
           if (id != null && !expertiseSkills.contains(id)) {
@@ -464,8 +505,8 @@ class CharacterResolver {
     }
 
     // ── 6. Pass 4: feature-row effects (from class/subclass walk) ──────
-    for (final eff in pendingFeatureEffects) {
-      applyEffect(eff, 'feature');
+    for (final row in pendingFeatureEffects) {
+      applyEffect(row.eff, row.source);
     }
 
     // ── 7. Pass 5: species + background grants ─────────────────────────
@@ -473,24 +514,30 @@ class CharacterResolver {
       final sp = entitiesById[raceId];
       if (sp != null) {
         speedBonus += 0; // species speed_ft is the BASE speed, not a bonus
+        final speciesSource = 'species:${sp.name}';
         final modifiers = _readMapList(sp.fields['granted_modifiers']);
         for (final m in modifiers) {
-          applyEffect(_modifierAsEffect(m), 'species:${sp.name}');
+          applyEffect(_modifierAsEffect(m), speciesSource);
         }
         for (final s in _readRefList(sp.fields['granted_senses'], entitiesById)) {
           if (!senses.contains(s)) senses.add(s);
+          noteSource(s, speciesSource);
         }
         for (final r in _readRefList(sp.fields['granted_damage_resistances'], entitiesById)) {
           if (!damageRes.contains(r)) damageRes.add(r);
+          noteSource(r, speciesSource);
         }
         for (final r in _readRefList(sp.fields['granted_damage_immunities'], entitiesById)) {
           if (!damageImmunities.contains(r)) damageImmunities.add(r);
+          noteSource(r, speciesSource);
         }
         for (final r in _readRefList(sp.fields['granted_damage_vulnerabilities'], entitiesById)) {
           if (!damageVulnerabilities.contains(r)) damageVulnerabilities.add(r);
+          noteSource(r, speciesSource);
         }
         for (final r in _readRefList(sp.fields['granted_condition_immunities'], entitiesById)) {
           if (!conditionImmunities.contains(r)) conditionImmunities.add(r);
+          noteSource(r, speciesSource);
         }
         for (final l in _readRefList(sp.fields['granted_languages'], entitiesById)) {
           if (!languages.contains(l)) languages.add(l);
@@ -507,33 +554,38 @@ class CharacterResolver {
           final options = _readMapList(sp.fields['subspecies_options']);
           for (final row in options) {
             if (row['name']?.toString() != subspeciesId) continue;
+            final subSource = 'subspecies:${sp.name}/$subspeciesId';
             final subMods = _readMapList(row['granted_modifiers']);
             for (final m in subMods) {
-              applyEffect(_modifierAsEffect(m),
-                  'subspecies:${sp.name}/$subspeciesId');
+              applyEffect(_modifierAsEffect(m), subSource);
             }
             for (final s in _readRefList(row['granted_senses'], entitiesById)) {
               if (!senses.contains(s)) senses.add(s);
+              noteSource(s, subSource);
             }
             for (final r in _readRefList(
                 row['granted_damage_resistances'], entitiesById)) {
               if (!damageRes.contains(r)) damageRes.add(r);
+              noteSource(r, subSource);
             }
             for (final r in _readRefList(
                 row['granted_damage_immunities'], entitiesById)) {
               if (!damageImmunities.contains(r)) damageImmunities.add(r);
+              noteSource(r, subSource);
             }
             for (final r in _readRefList(
                 row['granted_damage_vulnerabilities'], entitiesById)) {
               if (!damageVulnerabilities.contains(r)) {
                 damageVulnerabilities.add(r);
               }
+              noteSource(r, subSource);
             }
             for (final r in _readRefList(
                 row['granted_condition_immunities'], entitiesById)) {
               if (!conditionImmunities.contains(r)) {
                 conditionImmunities.add(r);
               }
+              noteSource(r, subSource);
             }
             for (final l in _readRefList(row['granted_languages'], entitiesById)) {
               if (!languages.contains(l)) languages.add(l);
@@ -682,6 +734,7 @@ class CharacterResolver {
       extraAttackCount: extraAttackCount,
       critRangeMin: critRangeMin,
       resourcePools: resourcePools,
+      grantSources: grantSources,
       warnings: warnings,
     );
   }
@@ -692,8 +745,12 @@ class CharacterResolver {
     Entity src,
     int level,
     List<ResolvedFeatureRow> out,
-    List<Map<String, dynamic>> pendingEffects,
+    List<({Map<String, dynamic> eff, String source})> pendingEffects,
   ) {
+    // `kind` mirrors the tags `applyEffect` callers already use elsewhere
+    // (`class:`, `subclass:`) so `cleanSource` strips them uniformly.
+    final kind = src.categorySlug == 'subclass' ? 'subclass' : 'class';
+    final source = '$kind:${src.name}';
     final rows = _readMapList(src.fields['features']);
     for (final r in rows) {
       final lvl = (r['level'] is int) ? r['level'] as int : 1;
@@ -707,7 +764,9 @@ class CharacterResolver {
       // during migration; new content delegates to `auto_granted_by` on the
       // ref'd feat/trait entity, picked up in Pass 4b.
       final effs = _readMapList(r['effects']);
-      pendingEffects.addAll(effs);
+      for (final e in effs) {
+        pendingEffects.add((eff: e, source: source));
+      }
     }
   }
 

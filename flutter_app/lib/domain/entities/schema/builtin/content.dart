@@ -207,6 +207,15 @@ class _FB {
   void levelTextTable(String k, String l, {String g = grpProgression}) =>
       _base(key: k, label: l, type: FieldType.levelTextTable, groupId: g, gridSpan: 2);
 
+  void spellSlotProgression(String k, String l, {String g = grpSpellcasting}) =>
+      _base(key: k, label: l, type: FieldType.spellSlotProgression, groupId: g, gridSpan: 2);
+
+  void subspeciesOptions(String k, String l, {String g = grpRules}) =>
+      _base(key: k, label: l, type: FieldType.subspeciesOptions, groupId: g, gridSpan: 2);
+
+  void crCalculator(String k, String l, {String g = grpMeta}) =>
+      _base(key: k, label: l, type: FieldType.crCalculator, groupId: g, gridSpan: 2);
+
   void classFeatures(String k, String l, {String g = grpFeatures}) =>
       _base(
         key: k,
@@ -364,7 +373,7 @@ EntityCategorySchema _classCategory(String schemaId, String now, int orderIndex)
   fb.classFeatures('features', 'Features by Level', g: grpFeatures);
   fb.levelTable('cantrips_known_by_level', 'Cantrips Known', g: grpSpellcasting);
   fb.levelTable('prepared_spells_by_level', 'Prepared Spells', g: grpSpellcasting);
-  fb.levelTable('spell_slots_by_level', 'Spell Slots', g: grpSpellcasting);
+  fb.spellSlotProgression('spell_slots_by_level', 'Spell Slots Override (per Level)');
   // Typed multiclass prereqs (SRD s.24): one or more abilities ≥ N to qualify.
   // PC must have *every* listed ability ≥ multiclass_prereq_min_score.
   fb.relation('multiclass_prereq_ability_refs', 'Multiclass Prereq Abilities',
@@ -425,34 +434,36 @@ EntityCategorySchema _subclassCategory(String schemaId, String now, int orderInd
 EntityCategorySchema _speciesCategory(String schemaId, String now, int orderIndex) {
   final catId = _uuid.v4();
   final fb = _FB(catId, now);
+  // Identity: lineage + size + lifespan flavor.
   fb.relation('size_ref', 'Size', const ['size'], required_: true);
-  fb.integer('speed_ft', 'Walking Speed (ft)', required_: true, min: 0, max: 120);
-  fb.integer('speed_burrow_ft', 'Burrow (ft)', min: 0, max: 120);
-  fb.integer('speed_climb_ft', 'Climb (ft)', min: 0, max: 120);
-  fb.integer('speed_fly_ft', 'Fly (ft)', min: 0, max: 120);
-  fb.integer('speed_swim_ft', 'Swim (ft)', min: 0, max: 120);
   fb.relation('creature_type_ref', 'Creature Type', const ['creature-type'], required_: true);
-  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
-  fb.relation('trait_refs', 'Traits', const ['trait'], isList: true, g: grpRules);
-  fb.relation('granted_languages', 'Granted Languages', const ['language'], isList: true);
-  fb.relation('granted_senses', 'Granted Senses', const ['sense'], isList: true);
-  fb.relation('granted_damage_resistances', 'Damage Resistances', const ['damage-type'], isList: true);
-  fb.relation('granted_damage_immunities', 'Damage Immunities', const ['damage-type'], isList: true);
-  fb.relation('granted_damage_vulnerabilities', 'Damage Vulnerabilities', const ['damage-type'], isList: true);
-  fb.relation('granted_condition_immunities', 'Condition Immunities', const ['condition'], isList: true);
-  fb.relation('granted_skill_proficiencies', 'Skill Proficiencies', const ['skill'], isList: true);
-  fb.relation('granted_action_refs', 'Granted Actions', const ['creature-action'], isList: true);
-  fb.relation('granted_bonus_action_refs', 'Granted Bonus Actions', const ['creature-action'], isList: true);
-  fb.relation('granted_reaction_refs', 'Granted Reactions', const ['creature-action'], isList: true);
+  fb.text('age', 'Typical Lifespan');
+  // Movement: base + 4 specialised speeds.
+  fb.integer('speed_ft', 'Walking Speed (ft)', required_: true, min: 0, max: 120, g: grpCombat);
+  fb.integer('speed_burrow_ft', 'Burrow (ft)', min: 0, max: 120, g: grpCombat);
+  fb.integer('speed_climb_ft', 'Climb (ft)', min: 0, max: 120, g: grpCombat);
+  fb.integer('speed_fly_ft', 'Fly (ft)', min: 0, max: 120, g: grpCombat);
+  fb.integer('speed_swim_ft', 'Swim (ft)', min: 0, max: 120, g: grpCombat);
+  // Senses & Languages.
+  fb.relation('granted_senses', 'Granted Senses', const ['sense'], isList: true, g: grpSensesLanguages);
+  fb.relation('granted_languages', 'Granted Languages', const ['language'], isList: true, g: grpSensesLanguages);
+  // Damage / condition resistance & immunity grid.
+  fb.relation('granted_damage_resistances', 'Damage Resistances', const ['damage-type'], isList: true, g: grpResistances);
+  fb.relation('granted_damage_immunities', 'Damage Immunities', const ['damage-type'], isList: true, g: grpResistances);
+  fb.relation('granted_damage_vulnerabilities', 'Damage Vulnerabilities', const ['damage-type'], isList: true, g: grpResistances);
+  fb.relation('granted_condition_immunities', 'Condition Immunities', const ['condition'], isList: true, g: grpResistances);
+  // Traits + actions + skill proficiency grants + the modifier DSL.
+  fb.relation('trait_refs', 'Traits', const ['trait'], isList: true, g: grpTraitsActions);
+  fb.relation('granted_action_refs', 'Granted Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
+  fb.relation('granted_bonus_action_refs', 'Granted Bonus Actions', const ['creature-action'], isList: true, g: grpTraitsActions);
+  fb.relation('granted_reaction_refs', 'Granted Reactions', const ['creature-action'], isList: true, g: grpTraitsActions);
+  fb.relation('granted_skill_proficiencies', 'Skill Proficiencies', const ['skill'], isList: true, g: grpTraitsActions);
+  fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpTraitsActions);
   // Lineage / subspecies / ancestry options. Each row carries a name, a
   // narrative description, and (optionally) the same ref-list grant fields
   // available at the species level — folded by CharacterResolver when the
-  // character entity declares a matching `subspecies_id`. The schema field
-  // is registered as markdown so the wire key is allowed; the actual rows
-  // are authored in code (SRD seed data).
-  fb.markdown('subspecies_options', 'Subspecies / Lineage Options',
-      g: grpRules);
-  fb.text('age', 'Typical Lifespan');
+  // character entity declares a matching `subspecies_id`.
+  fb.subspeciesOptions('subspecies_options', 'Subspecies / Lineage Options', g: grpRules);
 
   return _mk(
     schemaId: schemaId,
@@ -464,7 +475,11 @@ EntityCategorySchema _speciesCategory(String schemaId, String now, int orderInde
     fields: fb.out,
     groups: const [
       FieldGroup(groupId: grpIdentity, name: 'Identity', gridColumns: 2, orderIndex: 0),
-      FieldGroup(groupId: grpRules, name: 'Traits', gridColumns: 1, orderIndex: 1),
+      FieldGroup(groupId: grpCombat, name: 'Movement', gridColumns: 5, orderIndex: 1),
+      FieldGroup(groupId: grpSensesLanguages, name: 'Senses & Languages', gridColumns: 2, orderIndex: 2),
+      FieldGroup(groupId: grpResistances, name: 'Resistances & Immunities', gridColumns: 2, orderIndex: 3),
+      FieldGroup(groupId: grpTraitsActions, name: 'Traits & Actions', gridColumns: 1, orderIndex: 4),
+      FieldGroup(groupId: grpRules, name: 'Lineage Options', gridColumns: 1, orderIndex: 5),
     ],
     orderIndex: orderIndex,
     now: now,
@@ -981,6 +996,10 @@ EntityCategorySchema _monsterCategory(String schemaId, String now, int orderInde
       required_: true, g: grpMeta);
   fb.integer('xp', 'XP', required_: true, min: 0, g: grpMeta);
   fb.integer('proficiency_bonus', 'Proficiency Bonus', required_: true, min: 2, max: 9, g: grpMeta);
+  // DMG p.273-275 CR estimator. Reads `ac` + `hp_average` off the same
+  // entity and prompts the author for offensive inputs (attack bonus,
+  // average DPR). Renders defensive / offensive / suggested CR + XP.
+  fb.crCalculator('cr_helper', 'CR Helper');
   // Traits / actions — NPC parite (typed refs)
   fb.relation('trait_refs', 'Traits', const ['trait'], isList: true, g: grpTraitsActions);
   fb.relation('action_refs', 'Actions', const ['creature-action'], isList: true, required_: true, g: grpTraitsActions);

@@ -24,6 +24,13 @@ class ResolvedGrantsCard extends StatelessWidget {
 
   String _nameOf(String id) => entities[id]?.name ?? id;
 
+  String _chipLabel(String id) {
+    final name = _nameOf(id);
+    final sources = effective.grantSources[id];
+    if (sources == null || sources.isEmpty) return name;
+    return '$name — ${sources.join(', ')}';
+  }
+
   Widget _chipRow(
     String label,
     List<String> ids,
@@ -61,7 +68,7 @@ class ResolvedGrantsCard extends StatelessWidget {
                 ),
               ),
               child: Text(
-                _nameOf(id),
+                _chipLabel(id),
                 style: TextStyle(
                   fontSize: 12,
                   color: palette.srdInk,

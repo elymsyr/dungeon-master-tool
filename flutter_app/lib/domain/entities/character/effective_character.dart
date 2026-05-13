@@ -102,6 +102,12 @@ abstract class EffectiveCharacter with _$EffectiveCharacter {
     /// `current` separately on the character. Each entry: `{pool_ref, max,
     /// recharge}`.
     @Default([]) List<Map<String, dynamic>> resourcePools,
+    /// For each granted entity id (sense / damage_res / immunity / vuln /
+    /// condition_immunity), the list of human-readable source names that
+    /// produced it. Used by the sheet's `ResolvedGrantsCard` to render
+    /// chips like "Poison Resistance — Dwarf". Same id appearing from
+    /// multiple sources lists each source once, in apply order.
+    @Default({}) Map<String, List<String>> grantSources,
     @Default([]) List<String> warnings,
   }) = _EffectiveCharacter;
 

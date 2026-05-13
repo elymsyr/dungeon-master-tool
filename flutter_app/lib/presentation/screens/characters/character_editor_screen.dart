@@ -1133,7 +1133,13 @@ class _CharacterEditorScreenState
     // unlocked in the (fromLevel, toLevel] window and fold any ref-list
     // grants (resistances / immunities / senses / languages / feats) onto
     // the PC raw fields so they appear on the sheet immediately.
-    void absorbFeatureRowsInRange(Entity? src) {
+    //
+    // `fullWindow=true` walks every row at `level <= toLvl` instead of the
+    // delta-only slice. Used for the subclass entity so a first-time L3
+    // (or class-defined gate) subclass pick absorbs every previously gated
+    // row, not just the row whose level equals the new character level.
+    // Idempotency (`existing.contains(id)`) keeps repeat absorption safe.
+    void absorbFeatureRowsInRange(Entity? src, {bool fullWindow = false}) {
       if (src == null) return;
       final rows = src.fields['features'];
       if (rows is! List) return;
@@ -1141,7 +1147,8 @@ class _CharacterEditorScreenState
         if (row is! Map) continue;
         final lvl = row['level'];
         if (lvl is! int) continue;
-        if (lvl <= fromLvl || lvl > toLvl) continue;
+        if (lvl > toLvl) continue;
+        if (!fullWindow && lvl <= fromLvl) continue;
         void copyRow(String fromKey, List<String> toKeys) {
           final raw = row[fromKey];
           if (raw is! List) return;
@@ -1178,7 +1185,49 @@ class _CharacterEditorScreenState
     }
 
     absorbFeatureRowsInRange(classEntity);
-    absorbFeatureRowsInRange(subclassEntity);
+    absorbFeatureRowsInRange(subclassEntity, fullWindow: true);
+
+    // Top-level granted_* fields on the subclass entity (not per-feature
+    // rows) are normally applied once at wizard finalize via absorbGrants.
+    // When the subclass is picked AFTER creation — typical at L3 — those
+    // grants never landed. Re-run them here; the contains-check guards
+    // against duplicate adds on subsequent level-ups.
+    void absorbTopLevelGrants(Entity? src) {
+      if (src == null) return;
+      void copy(String fromKey, List<String> toKeys) {
+        final raw = src.fields[fromKey];
+        if (raw is! List) return;
+        final ids = raw.whereType<String>().toList();
+        if (ids.isEmpty) return;
+        for (final to in toKeys) {
+          final existing = (updated[to] is List)
+              ? List<String>.from(updated[to] as List)
+              : <String>[];
+          for (final id in ids) {
+            if (!existing.contains(id)) existing.add(id);
+          }
+          updated[to] = existing;
+          return;
+        }
+      }
+
+      copy('granted_damage_resistances',
+          const ['resistance_refs', 'damage_resistances']);
+      copy('granted_damage_immunities',
+          const ['damage_immunity_refs', 'damage_immunities']);
+      copy('granted_damage_vulnerabilities',
+          const ['vulnerability_refs', 'damage_vulnerabilities']);
+      copy('granted_condition_immunities',
+          const ['condition_immunity_refs', 'condition_immunities']);
+      copy('granted_senses', const ['senses']);
+      copy('granted_languages', const ['language_refs', 'languages']);
+      copy('granted_trait_refs', const ['trait_refs']);
+      copy('granted_action_refs', const ['action_refs']);
+      copy('granted_bonus_action_refs', const ['bonus_action_refs']);
+      copy('granted_reaction_refs', const ['reaction_refs']);
+    }
+
+    absorbTopLevelGrants(subclassEntity);
 
     _mutate(base.copyWith(
       entity: base.entity.copyWith(fields: updated),

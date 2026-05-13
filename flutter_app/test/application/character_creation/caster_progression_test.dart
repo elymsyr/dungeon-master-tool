@@ -1,5 +1,21 @@
 import 'package:dungeon_master_tool/application/character_creation/caster_progression.dart';
+import 'package:dungeon_master_tool/domain/entities/entity.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+Entity _cls(Map<String, dynamic> fields) => Entity(
+      id: 'cls',
+      name: 'TestClass',
+      categorySlug: 'class',
+      source: 'test',
+      description: '',
+      images: const [],
+      imagePath: '',
+      tags: const [],
+      dmNotes: '',
+      pdfs: const [],
+      locationId: null,
+      fields: fields,
+    );
 
 void main() {
   group('parseCasterKind', () {
@@ -90,6 +106,69 @@ void main() {
     });
     test('None → 0', () {
       expect(defaultPreparedSpells(CasterKind.none, 20), 0);
+    });
+  });
+
+  group('slotsByLevelOverride', () {
+    test('returns parsed row at requested level', () {
+      final raw = {
+        '1': {'1': 4},
+        '3': {'1': 4, '2': 2},
+      };
+      expect(slotsByLevelOverride(raw, 3), {1: 4, 2: 2});
+    });
+    test('int-keyed map round-trips', () {
+      final raw = {
+        1: {1: 2},
+        2: {1: 3},
+      };
+      expect(slotsByLevelOverride(raw, 2), {1: 3});
+    });
+    test('null / non-map → null', () {
+      expect(slotsByLevelOverride(null, 1), isNull);
+      expect(slotsByLevelOverride('nope', 1), isNull);
+    });
+    test('missing level → null', () {
+      expect(slotsByLevelOverride({'1': {'1': 2}}, 5), isNull);
+    });
+    test('drops zero / negative cells', () {
+      final raw = {
+        '1': {'1': 0, '2': 3, '3': -1},
+      };
+      expect(slotsByLevelOverride(raw, 1), {2: 3});
+    });
+  });
+
+  group('spellSlotsForClass', () {
+    test('falls back to caster_kind SRD preset when no override', () {
+      final cls = _cls({'caster_kind': 'Full'});
+      // Full caster L1 = {1: 2} per SRD §1.5.
+      expect(spellSlotsForClass(cls, 1), {1: 2});
+    });
+    test('override beats caster_kind preset', () {
+      final cls = _cls({
+        'caster_kind': 'Full',
+        'spell_slots_by_level': {
+          '1': {'1': 99},
+        },
+      });
+      expect(spellSlotsForClass(cls, 1), {1: 99});
+    });
+    test('override only applies at the row it defines', () {
+      final cls = _cls({
+        'caster_kind': 'Full',
+        'spell_slots_by_level': {
+          '1': {'1': 99},
+        },
+      });
+      // L2 has no override → falls back to SRD preset (Full L2 = {1: 3}).
+      expect(spellSlotsForClass(cls, 2), {1: 3});
+    });
+    test('null class → empty map', () {
+      expect(spellSlotsForClass(null, 5), <int, int>{});
+    });
+    test('non-caster with no override → empty', () {
+      expect(spellSlotsForClass(_cls({'caster_kind': 'None'}), 1), <int, int>{});
     });
   });
 }
