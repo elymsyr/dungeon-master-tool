@@ -222,7 +222,23 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
               const SizedBox(height: 32),
 
               // --- TRASH ---
-              Text(l10n.settingsTrash, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              ref.watch(trashListProvider).when(
+                data: (items) => Row(
+                  children: [
+                    Expanded(
+                      child: Text(l10n.settingsTrash, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+                    ),
+                    if (items.isNotEmpty)
+                      TextButton.icon(
+                        icon: Icon(Icons.delete_sweep, size: 18, color: palette.dangerBtnBg),
+                        label: Text(l10n.trashEmptyAll, style: TextStyle(color: palette.dangerBtnBg)),
+                        onPressed: () => _emptyTrash(context, ref, items, palette),
+                      ),
+                  ],
+                ),
+                loading: () => Text(l10n.settingsTrash, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+                error: (_, _) => Text(l10n.settingsTrash, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              ),
               const SizedBox(height: 12),
               ref.watch(trashListProvider).when(
                 data: (items) => items.isEmpty
@@ -337,6 +353,41 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
             },
             style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, foregroundColor: palette.successBtnText),
             child: Text(l10n.btnRestore),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _emptyTrash(BuildContext context, WidgetRef ref, List<TrashItem> items, DmToolColors palette) {
+    final l10n = L10n.of(context)!;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.trashEmptyAllTitle),
+        content: Text(l10n.trashEmptyAllBody(items.length)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.btnCancel)),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final messenger = ScaffoldMessenger.of(context);
+              final packageDs = ref.read(packageLocalDsProvider);
+              final campaignDs = ref.read(campaignLocalDsProvider);
+              for (final item in items) {
+                if (item.type == 'Package') {
+                  await packageDs.permanentlyDeleteFromTrash(item.directoryName);
+                } else {
+                  await campaignDs.permanentlyDeleteFromTrash(item.directoryName);
+                }
+              }
+              ref.invalidate(trashListProvider);
+              messenger.showSnackBar(
+                SnackBar(content: Text(l10n.trashEmptyAllSuccess(items.length))),
+              );
+            },
+            style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
+            child: Text(l10n.btnDelete),
           ),
         ],
       ),
