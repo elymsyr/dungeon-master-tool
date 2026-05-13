@@ -158,6 +158,9 @@ class _PackageAsCampaignRepo implements CampaignRepository {
   Future<void> delete(String name) async {}
 
   @override
+  Future<void> purge(String name) async {}
+
+  @override
   Future<String> create(String name, {WorldSchema? template}) async => name;
 }
 
@@ -343,21 +346,6 @@ class _PackageScreenContentState
             ),
           ),
           const SizedBox(width: 4),
-          // Media Gallery
-          IconButton(
-            icon: const Icon(Icons.photo_library_outlined, size: 18),
-            tooltip: 'Media Gallery',
-            onPressed: () {
-              final mediaDir = ref.read(mediaDirectoryProvider);
-              if (mediaDir.isNotEmpty) {
-                MediaGalleryDialog.show(
-                  context,
-                  mediaDir: mediaDir,
-                  campaignId: 'package:${widget.packageName}',
-                );
-              }
-            },
-          ),
           // Edit Mode toggle — disabled for built-in (read-only) packages.
           Builder(builder: (_) {
             final isBuiltin = widget.packageName == srdCorePackageName;
@@ -378,6 +366,50 @@ class _PackageScreenContentState
                   : () => setState(() => _editMode = !_editMode),
             );
           }),
+          // Phone: collapse infrequent actions into overflow menu.
+          // Desktop/Tablet: show inline.
+          if (getScreenType(context) == ScreenType.phone)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, size: 20),
+              onSelected: (action) {
+                if (action == 'media') {
+                  final mediaDir = ref.read(mediaDirectoryProvider);
+                  if (mediaDir.isNotEmpty) {
+                    MediaGalleryDialog.show(
+                      context,
+                      mediaDir: mediaDir,
+                      campaignId: 'package:${widget.packageName}',
+                    );
+                  }
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: 'media',
+                  child: Row(children: [
+                    Icon(Icons.photo_library_outlined, size: 18),
+                    SizedBox(width: 8),
+                    Text('Media Gallery'),
+                  ]),
+                ),
+              ],
+            )
+          else
+            // Media Gallery
+            IconButton(
+              icon: const Icon(Icons.photo_library_outlined, size: 18),
+              tooltip: 'Media Gallery',
+              onPressed: () {
+                final mediaDir = ref.read(mediaDirectoryProvider);
+                if (mediaDir.isNotEmpty) {
+                  MediaGalleryDialog.show(
+                    context,
+                    mediaDir: mediaDir,
+                    campaignId: 'package:${widget.packageName}',
+                  );
+                }
+              },
+            ),
           const SizedBox(width: 4),
         ],
       ),

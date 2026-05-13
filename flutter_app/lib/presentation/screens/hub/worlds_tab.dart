@@ -9,6 +9,7 @@ import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/online_worlds_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
+import '../../../application/providers/world_membership_provider.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../data/database/database_provider.dart';
@@ -340,32 +341,52 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
     if (_selectedIndex < 0 || _selectedIndex >= campaigns.length) return;
     final name = campaigns[_selectedIndex].name;
+    final worldId = campaigns[_selectedIndex].id;
+    // Online role decides the UX: a player "deleting" the world is really
+    // leaving it — server-side trigger releases their owned characters
+    // back into the claim pool, and the local mirror is purged directly
+    // (no `.trash/` indirection). DM keeps the existing soft-delete flow.
+    final role = ref.read(worldRoleProvider(worldId)).valueOrNull
+        ?? WorldRole.none;
+    final isPlayer = role == WorldRole.player;
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete World'),
+        title: Text(isPlayer ? 'Leave World' : 'Delete World'),
         content: Text(
-          'Are you sure you want to delete "$name"?\n\n'
-          'The world will be moved to trash and automatically deleted after 30 days.',
+          isPlayer
+              ? 'You will leave "$name" and any characters you owned will '
+                  'become claimable again. The local copy of this world '
+                  'will be deleted from this device. Your character copies '
+                  'remain in your library.'
+              : 'Are you sure you want to delete "$name"?\n\n'
+                  'The world will be moved to trash and automatically '
+                  'deleted after 30 days.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await ref.read(activeCampaignProvider.notifier).delete(name);
+              if (isPlayer) {
+                await _leaveOnlineAndPurge(worldId, name);
+              } else {
+                await ref.read(activeCampaignProvider.notifier).delete(name);
+                ref.invalidate(trashListProvider);
+              }
               ref.invalidate(campaignListProvider);
               ref.invalidate(campaignInfoListProvider);
-              ref.invalidate(trashListProvider);
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                  SnackBar(
                     content: Text(
-                      'World moved to trash. Cloud backup is still available '
-                      'under Cloud → Worlds.',
+                      isPlayer
+                          ? 'Left "$name". Local copy removed.'
+                          : 'World moved to trash. Cloud backup is still '
+                              'available under Cloud → Worlds.',
                     ),
-                    duration: Duration(seconds: 5),
+                    duration: const Duration(seconds: 5),
                   ),
                 );
               }
@@ -375,11 +396,30 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               backgroundColor: Theme.of(context).extension<DmToolColors>()!.dangerBtnBg,
               foregroundColor: Theme.of(context).extension<DmToolColors>()!.dangerBtnText,
             ),
-            child: const Text('Delete'),
+            child: Text(isPlayer ? 'Leave' : 'Delete'),
           ),
         ],
       ),
     );
+  }
+
+  /// Player-side "delete world" path: leave online membership (server-side
+  /// trigger releases owned characters back to the claim pool), then purge
+  /// the local mirror without going through `.trash/`.
+  Future<void> _leaveOnlineAndPurge(String worldId, String name) async {
+    try {
+      await ref
+          .read(worldMembershipServiceProvider)
+          .leaveWorld(worldId);
+    } catch (e) {
+      // Best effort — proceed with local purge even if leave call fails
+      // (e.g. already-removed by DM). Surface for diagnostics.
+      debugPrint('leaveWorld error: $e');
+    }
+    ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
+    ref.invalidate(currentWorldRoleProvider);
+    ref.invalidate(worldRoleProvider(worldId));
+    await ref.read(activeCampaignProvider.notifier).purge(name);
   }
 
   Future<void> _loadCampaign(String name) async {

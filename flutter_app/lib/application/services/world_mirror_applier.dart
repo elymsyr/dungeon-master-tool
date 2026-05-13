@@ -5,10 +5,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../domain/entities/online/world_role.dart';
 import '../providers/campaign_provider.dart';
 import '../providers/character_claim_provider.dart';
 import '../providers/character_provider.dart';
 import '../providers/entity_share_provider.dart';
+import '../providers/online_worlds_provider.dart';
+import '../providers/role_provider.dart';
+import '../providers/world_membership_provider.dart';
 import 'world_mirror_service.dart';
 import 'world_sync_service.dart';
 
@@ -89,7 +93,9 @@ class WorldMirrorApplier {
           ref.invalidate(worldEntitySharesProvider(e.worldId));
         case 'character_claim_pool':
           ref.invalidate(claimPoolProvider(e.worldId));
-        // world_members, mind_map_*: PR-O8'de dedicated invalidations.
+        case 'world_members':
+          await _applyMembersEvent(e);
+        // mind_map_*: PR-O8'de dedicated invalidations.
       }
     } catch (err, st) {
       debugPrint('WorldMirrorApplier error: $err\n$st');
@@ -133,6 +139,41 @@ class WorldMirrorApplier {
     // çünkü CharacterRepository file-based. Bir sonraki listele çağrısı disk
     // yerine Supabase'den seed olacak (TODO: PR-O7'de daha akıllı patch).
     ref.invalidate(characterListProvider);
+  }
+
+  /// world_members CDC: keep the roster + role caches live for everyone in
+  /// the world. On DELETE, double-check whether *this* client is still a
+  /// member — if not, the local mirror of the world is purged immediately
+  /// (no `.trash/` indirection). Covers both self-leave and DM-kick: each
+  /// member sees the same DELETE event over realtime.
+  Future<void> _applyMembersEvent(WorldSyncEvent e) async {
+    ref.invalidate(worldMembersProvider(e.worldId));
+    ref.invalidate(worldRoleProvider(e.worldId));
+    ref.invalidate(currentWorldRoleProvider);
+    if (e.eventType != PostgresChangeEvent.delete) return;
+    // Re-resolve our own role rather than trusting oldRecord — Supabase
+    // Realtime delete payloads only carry the primary-key columns unless
+    // REPLICA IDENTITY FULL is set, which it isn't on world_members.
+    try {
+      final role = await ref.read(worldRoleProvider(e.worldId).future);
+      if (role == WorldRole.none) {
+        await _purgeLocalWorld(e.worldId);
+      }
+    } catch (err, st) {
+      debugPrint('_applyMembersEvent role re-check error: $err\n$st');
+    }
+  }
+
+  Future<void> _purgeLocalWorld(String worldId) async {
+    final list = ref.read(campaignInfoListProvider).valueOrNull;
+    if (list == null) return;
+    final match = list.where((c) => c.id == worldId).firstOrNull;
+    if (match == null) return;
+    final notifier = ref.read(activeCampaignProvider.notifier);
+    await notifier.purge(match.name);
+    ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
+    ref.invalidate(campaignListProvider);
+    ref.invalidate(campaignInfoListProvider);
   }
 
   void _applyWorldsEvent(WorldSyncEvent e) {

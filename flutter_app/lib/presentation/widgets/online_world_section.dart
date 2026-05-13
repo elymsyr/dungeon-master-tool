@@ -319,7 +319,9 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       builder: (ctx) => AlertDialog(
         title: const Text('Leave world'),
         content: const Text(
-            'You will lose access to this world until the DM invites you again.'),
+            'You will lose access to this world. Characters you owned '
+            'become claimable again. The local copy of this world will '
+            'be deleted from this device (your character copies stay).'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -340,6 +342,21 @@ class _OnlineWorldSectionState extends ConsumerState<OnlineWorldSection> {
       ref.invalidate(currentWorldRoleProvider);
       ref.invalidate(worldRoleProvider(widget.campaignId));
       ref.invalidate(worldOnlineStatusProvider(widget.campaignId));
+      // Wipe the local mirror immediately — no `.trash/` entry. The
+      // realtime applier would do this on its own once the world_members
+      // DELETE event arrives, but we don't want to make the user stare at
+      // a dead settings dialog while waiting for round-trip.
+      await ref
+          .read(activeCampaignProvider.notifier)
+          .purge(widget.campaignName);
+      ref.invalidate(campaignListProvider);
+      ref.invalidate(campaignInfoListProvider);
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Left "${widget.campaignName}"')),
+        );
+      }
     } catch (e) {
       _showError(e);
     } finally {

@@ -105,6 +105,19 @@ class CampaignRepositoryImpl implements CampaignRepository {
   }
 
   @override
+  Future<void> purge(String campaignName) async {
+    final existing = await _db.campaignDao.getByName(campaignName);
+    // Hard wipe of any legacy MsgPack/JSON dir — no trash entry written.
+    final dir = Directory(p.join(AppPaths.worldsDir, campaignName));
+    if (await dir.exists()) {
+      await dir.delete(recursive: true);
+    }
+    if (existing != null) {
+      await _db.campaignDao.deleteCampaign(existing.id);
+    }
+  }
+
+  @override
   Future<String> create(String worldName, {domain.WorldSchema? template}) async {
     // Defensive: never insert a second row with the same worldName.
     // The Campaigns table currently has no unique constraint on

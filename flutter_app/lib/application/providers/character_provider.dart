@@ -8,12 +8,15 @@ import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
+import '../../domain/entities/online/world_role.dart';
 import '../../domain/services/character_resolver.dart';
 import '../services/builtin_srd_entities.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
+import 'character_claim_provider.dart';
 import 'entity_provider.dart';
 import 'online_worlds_provider.dart';
+import 'role_provider.dart';
 import 'world_mirror_provider.dart';
 
 const _uuid = Uuid();
@@ -76,6 +79,37 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       character: c,
       referencedEntityIds: const <String>{},
     );
+  }
+
+  /// DM-created character'larda push sonrası claim havuzuna ekler — yeni
+  /// karakter PlayerCharacterTab'da "Available for claim" listesinde
+  /// görünür. Order matters: önce world_characters insert (mirror push),
+  /// sonra character_claim_pool insert (FK depends on it).
+  Future<void> _mirrorPushAndMaybeClaim(Character c) async {
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) return;
+    final worldId = _worldIdFor(c.worldName);
+    if (worldId == null) return;
+    final onlineIds = _ref.read(onlineWorldIdsProvider);
+    if (!onlineIds.contains(worldId)) return;
+    await mirror.pushCharacter(
+      worldId: worldId,
+      character: c,
+      referencedEntityIds: const <String>{},
+    );
+    // DM-created → ownerId stays null (`_resolveOwnerIdForWorld` returns
+    // null when role=dm). Auto-list in claim pool so players see it the
+    // moment it's created, no DM follow-up click required.
+    if (c.ownerId != null) return;
+    final claim = _ref.read(characterClaimServiceProvider);
+    if (claim == null) return;
+    try {
+      await claim.markAvailable(characterId: c.id, worldId: worldId);
+    } catch (e) {
+      // RLS may reject (e.g. user is not actually DM) — best effort.
+      // ignore: avoid_print
+      // ignore: discarded_futures
+    }
   }
 
   void _mirrorDelete(String characterId, {String? worldName}) {
@@ -147,15 +181,19 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     );
     await _repo.save(character);
     state = AsyncValue.data([character, ...state.valueOrNull ?? const []]);
-    _mirrorPush(character);
+    // ignore: discarded_futures
+    _mirrorPushAndMaybeClaim(character);
     return character;
   }
 
-  /// Resolves the owner_id for a freshly created character. Online member
-  /// olduğumuz worldlerde auth.uid yazılır — RLS `Chars: player inserts
-  /// own` policy `owner_id = auth.uid()` ister, DM policy `is_world_dm`
-  /// üzerinden geçer (owner_id zarar vermez). Offline / non-member
-  /// dünyalarda null bırakılır.
+  /// Resolves the owner_id for a freshly created character.
+  ///
+  /// - Offline / non-member world → null (no online RLS to satisfy).
+  /// - Player in online world → own auth.uid (required by RLS
+  ///   `Chars: player inserts own` WITH CHECK).
+  /// - DM in online world → null. Keeping DM-created characters "unowned"
+  ///   is what lets them auto-flow into the claim pool — a player who
+  ///   claims one then takes ownership via the `claim_character` RPC.
   String? _resolveOwnerIdForWorld(String worldName) {
     final auth = _ref.read(authProvider);
     if (auth == null) return null;
@@ -163,6 +201,9 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     if (worldId == null) return null;
     final onlineIds = _ref.read(onlineWorldIdsProvider);
     if (!onlineIds.contains(worldId)) return null;
+    final role = _ref.read(worldRoleProvider(worldId)).valueOrNull
+        ?? _ref.read(currentWorldRoleProvider).valueOrNull;
+    if (role == WorldRole.dm) return null;
     return auth.uid;
   }
 
