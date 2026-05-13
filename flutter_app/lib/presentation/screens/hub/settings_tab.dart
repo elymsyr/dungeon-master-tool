@@ -34,19 +34,13 @@ class SettingsTab extends ConsumerStatefulWidget {
 }
 
 class _SettingsTabState extends ConsumerState<SettingsTab> {
-  @override
-  void initState() {
-    super.initState();
-    // Tab her açıldığında storage-ilgili provider'ları yenile:
-    // trash sayısı, beta cloud quota, sound library + toplam boyut.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ref.invalidate(trashListProvider);
-      ref.read(betaProvider.notifier).refresh();
-      ref.invalidate(soundpadLibraryProvider);
-      ref.invalidate(soundpadTotalSizeProvider);
-    });
-  }
+  // H4: tab açılışında provider invalidate akışı kaldırıldı. Storage
+  // istatistikleri (trash sayısı, sound library boyutu, beta quota) zaten
+  // ilgili provider'ların kendi lifecycle'ında refresh ediliyor; tab her
+  // açılışında diskten yeniden okumak performans regresyonu yaratıyordu
+  // (LazyIndexedStack tab'ı kalıcı tutuyor ama initState her sekme
+  // dönüşünde tetikleniyordu). Manuel refresh için scaffold üstündeki
+  // butonlar var.
 
   @override
   Widget build(BuildContext context) {

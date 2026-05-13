@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -15,6 +16,8 @@ import '../../../../application/providers/entity_provider.dart';
 import '../../../../application/providers/template_provider.dart';
 import '../../../../application/services/builtin_srd_entities.dart';
 import '../../../../domain/entities/entity.dart';
+import '../../../../domain/entities/schema/dnd5e_constants.dart'
+    show kDnd5eSkills, kDnd5eSavingThrows;
 import '../../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../../domain/entities/schema/world_schema.dart';
 import '../../../theme/dm_tool_colors.dart';
@@ -200,97 +203,134 @@ class _CharacterCreationWizardScreenState
                       title: const Text('Identity'),
                       isActive: _currentStep >= 0,
                       state: _stateFor(0, draft),
-                      content: _IdentityStep(
-                        draft: draft,
-                        notifier: notifier,
-                        worlds: worlds,
-                        templates: playerTemplates,
-                        alignments: _alignments,
-                        activatingWorld: _activatingWorld,
-                        onWorldPicked: _activateWorld,
+                      content: _StepBody(
+                        active: _currentStep == 0,
+                        child: _IdentityStep(
+                          draft: draft,
+                          notifier: notifier,
+                          worlds: worlds,
+                          templates: playerTemplates,
+                          alignments: _alignments,
+                          activatingWorld: _activatingWorld,
+                          onWorldPicked: _activateWorld,
+                        ),
                       ),
                     ),
                     Step(
                       title: const Text('Race / Species'),
                       isActive: _currentStep >= 1,
                       state: _stateFor(1, draft),
-                      content: _RaceStep(draft: draft, notifier: notifier),
+                      content: _StepBody(
+                        active: _currentStep == 1,
+                        child: _RaceStep(draft: draft, notifier: notifier),
+                      ),
                     ),
                     Step(
                       title: const Text('Class'),
                       isActive: _currentStep >= 2,
                       state: _stateFor(2, draft),
-                      content: _EntityPickStep(
-                        title: 'Class',
-                        slugs: const ['class'],
-                        selectedId: draft.classId,
-                        onChanged: notifier.setClass,
+                      content: _StepBody(
+                        active: _currentStep == 2,
+                        child: _EntityPickStep(
+                          title: 'Class',
+                          slugs: const ['class'],
+                          selectedId: draft.classId,
+                          onChanged: notifier.setClass,
+                        ),
                       ),
                     ),
                     Step(
                       title: const Text('Subclass'),
                       isActive: _currentStep >= 3,
                       state: _stateFor(3, draft),
-                      content:
-                          SubclassStep(draft: draft, notifier: notifier),
+                      content: _StepBody(
+                        active: _currentStep == 3,
+                        child:
+                            SubclassStep(draft: draft, notifier: notifier),
+                      ),
                     ),
                     Step(
                       title: const Text('Background'),
                       isActive: _currentStep >= 4,
                       state: _stateFor(4, draft),
-                      content: _EntityPickStep(
-                        title: 'Background',
-                        slugs: const ['background'],
-                        selectedId: draft.backgroundId,
-                        onChanged: notifier.setBackground,
-                        optional: true,
+                      content: _StepBody(
+                        active: _currentStep == 4,
+                        child: _EntityPickStep(
+                          title: 'Background',
+                          slugs: const ['background'],
+                          selectedId: draft.backgroundId,
+                          onChanged: notifier.setBackground,
+                          optional: true,
+                        ),
                       ),
                     ),
                     Step(
                       title: const Text('Feats'),
                       isActive: _currentStep >= 5,
                       state: _stateFor(5, draft),
-                      content: FeatsStep(draft: draft, notifier: notifier),
+                      content: _StepBody(
+                        active: _currentStep == 5,
+                        child: FeatsStep(draft: draft, notifier: notifier),
+                      ),
                     ),
                     Step(
                       title: const Text('Proficiencies & Languages'),
                       isActive: _currentStep >= 6,
                       state: _stateFor(6, draft),
-                      content: ProficienciesStep(
-                          draft: draft, notifier: notifier),
+                      content: _StepBody(
+                        active: _currentStep == 6,
+                        child: ProficienciesStep(
+                            draft: draft, notifier: notifier),
+                      ),
                     ),
                     Step(
                       title: const Text('Spells'),
                       isActive: _currentStep >= 7,
                       state: _stateFor(7, draft),
-                      content: SpellsStep(draft: draft, notifier: notifier),
+                      content: _StepBody(
+                        active: _currentStep == 7,
+                        child:
+                            SpellsStep(draft: draft, notifier: notifier),
+                      ),
                     ),
                     Step(
                       title: const Text('Equipment'),
                       isActive: _currentStep >= 8,
                       state: _stateFor(8, draft),
-                      content:
-                          EquipmentStep(draft: draft, notifier: notifier),
+                      content: _StepBody(
+                        active: _currentStep == 8,
+                        child:
+                            EquipmentStep(draft: draft, notifier: notifier),
+                      ),
                     ),
                     Step(
                       title: const Text('Abilities'),
                       isActive: _currentStep >= 9,
                       state: _stateFor(9, draft),
-                      content:
-                          _AbilitiesStep(draft: draft, notifier: notifier),
+                      content: _StepBody(
+                        active: _currentStep == 9,
+                        child:
+                            _AbilitiesStep(draft: draft, notifier: notifier),
+                      ),
                     ),
                     Step(
                       title: const Text('Personality & Flavor'),
                       isActive: _currentStep >= 10,
                       state: _stateFor(10, draft),
-                      content: PersonalityStep(
-                          draft: draft, notifier: notifier),
+                      content: _StepBody(
+                        active: _currentStep == 10,
+                        child: PersonalityStep(
+                            draft: draft, notifier: notifier),
+                      ),
                     ),
                     Step(
                       title: const Text('Review'),
                       isActive: _currentStep >= 11,
                       state: _stateFor(11, draft),
-                      content: _ReviewStep(draft: draft),
+                      content: _StepBody(
+                        active: _currentStep == 11,
+                        child: _ReviewStep(draft: draft),
+                      ),
                     ),
                   ],
                 ),
@@ -474,6 +514,7 @@ class _CharacterCreationWizardScreenState
         characterClass: lookup(draft.classId),
         background: lookup(draft.backgroundId),
         featContributions: featContributions,
+        entities: entities,
       );
 
       final created =
@@ -515,6 +556,7 @@ Map<String, dynamic> _buildSeedFields({
   required Entity? characterClass,
   required Entity? background,
   FeatChoiceContributions? featContributions,
+  Map<String, Entity> entities = const {},
 }) {
   final featBumps = featContributions?.abilityBumps ?? const <String, int>{};
   final stat = <String, int>{
@@ -668,14 +710,66 @@ Map<String, dynamic> _buildSeedFields({
     }
   }
 
-  appendIds(
-    const ['skill_proficiencies'],
-    [
-      ...draft.skillChoiceIds,
-      for (final id in featSkillIds)
-        if (!draft.skillChoiceIds.contains(id)) id,
-    ],
-  );
+  // Skill / save proficiency-table population. The flat `skill_proficiencies`
+  // and `saving_throw_proficiencies` ref fields no longer exist on the PC
+  // schema — the `skills` and `saving_throws` proficiency tables are the
+  // single source of truth, so flip their per-row `proficient` flags
+  // directly. Skill IDs from the draft resolve to entity names; class
+  // `saving_throw_refs` give the save-row names.
+  final skillEntityIdSet = <String>{
+    ...draft.skillChoiceIds,
+    for (final id in featSkillIds)
+      if (!draft.skillChoiceIds.contains(id)) id,
+    if (background?.fields['granted_skill_refs'] is List)
+      ...(background!.fields['granted_skill_refs'] as List).whereType<String>(),
+    if (race?.fields['granted_skill_proficiencies'] is List)
+      ...(race!.fields['granted_skill_proficiencies'] as List)
+          .whereType<String>(),
+  };
+  final skillNames = <String>{
+    for (final id in skillEntityIdSet)
+      if (entities[id] != null) entities[id]!.name,
+  };
+  if (fieldsByKey.containsKey('skills')) {
+    out['skills'] = {
+      'rows': [
+        for (final p in kDnd5eSkills)
+          {
+            'name': p.name,
+            'ability': p.ability,
+            'proficient': skillNames.contains(p.name),
+            'expertise': false,
+            'misc': 0,
+          },
+      ],
+    };
+  }
+  if (fieldsByKey.containsKey('saving_throws')) {
+    final saveNames = <String>{};
+    final raw = characterClass?.fields['saving_throw_refs'];
+    if (raw is List) {
+      for (final r in raw) {
+        if (r is Map && r['name'] is String) {
+          saveNames.add(r['name'] as String);
+        } else if (r is String) {
+          final e = entities[r];
+          if (e != null) saveNames.add(e.name);
+        }
+      }
+    }
+    out['saving_throws'] = {
+      'rows': [
+        for (final p in kDnd5eSavingThrows)
+          {
+            'name': p.name,
+            'ability': p.ability,
+            'proficient': saveNames.contains(p.name),
+            'expertise': false,
+            'misc': 0,
+          },
+      ],
+    };
+  }
   appendIds(
     const ['tool_proficiencies'],
     [
@@ -731,15 +825,8 @@ Map<String, dynamic> _buildSeedFields({
   out['flaws'] = draft.flaws;
   out['backstory'] = draft.backstory;
   out['trinket'] = draft.trinket;
-  // Background also has `granted_skill_refs` — fold those into the PC's
-  // skill list as well so the wizard's "no further user action needed"
-  // promise holds without the resolver running first.
-  if (background?.fields['granted_skill_refs'] is List) {
-    appendIds(
-      const ['skill_proficiencies'],
-      (background!.fields['granted_skill_refs'] as List).whereType<String>(),
-    );
-  }
+  // Background `granted_skill_refs` is already folded into [skillEntityIdSet]
+  // above and reflected in the populated `skills` proficiency table.
 
   // Materialise the equipment-choice selection. For each picked
   // {group_id: option_id} pair, walk the source entity's
@@ -832,8 +919,31 @@ Map<String, dynamic> _buildSeedFields({
     copyList('granted_senses', const ['senses']);
     copyList('granted_damage_resistances',
         const ['resistance_refs', 'damage_resistances']);
-    copyList('granted_skill_proficiencies', const ['skill_proficiencies']);
+    // `granted_skill_proficiencies` is folded into the `skills` table above.
   }
+
+  // Spell slots — derive from class caster_kind + level so a fresh
+  // character spawns with the correct slot maxes without the user touching
+  // the level-up dialog. Stored on `spell_slots_by_level` (max) and
+  // `spell_slots_remaining_by_level` (current pool), keyed by spell level
+  // string. The editor's runtime reads these maps; the schema's slot field
+  // is just the legacy display target.
+  if (characterClass != null) {
+    final kind = parseCasterKind(characterClass.fields['caster_kind']);
+    final slots = defaultSpellSlotsByLevel(kind, draft.level);
+    if (slots.isNotEmpty) {
+      final maxOut = <String, dynamic>{};
+      final remainingOut = <String, dynamic>{};
+      for (final entry in slots.entries) {
+        final k = entry.key.toString();
+        maxOut[k] = entry.value;
+        remainingOut[k] = entry.value;
+      }
+      out['spell_slots_by_level'] = maxOut;
+      out['spell_slots_remaining_by_level'] = remainingOut;
+    }
+  }
+
   return out;
 }
 
@@ -898,15 +1008,15 @@ class _IdentityStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextFormField(
+        _DebouncedTextField(
           initialValue: draft.name,
           decoration: const InputDecoration(
             labelText: 'Character Name *',
           ),
-          onChanged: notifier.setName,
+          onChangedDebounced: notifier.setName,
         ),
         const SizedBox(height: 12),
-        TextFormField(
+        _DebouncedTextField(
           initialValue: draft.description,
           minLines: 1,
           maxLines: 3,
@@ -914,7 +1024,7 @@ class _IdentityStep extends StatelessWidget {
             labelText: 'Short description',
             hintText: 'A weather-beaten ranger from the Northlands...',
           ),
-          onChanged: notifier.setDescription,
+          onChangedDebounced: notifier.setDescription,
         ),
         const SizedBox(height: 12),
         Row(
@@ -1210,15 +1320,7 @@ class _RaceStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final builtin = ref.watch(builtinSrdEntitiesProvider);
-    final campaign = draft.worldName.isEmpty
-        ? const <String, Entity>{}
-        : ref.watch(entityProvider);
-    final entities = mergeWithBuiltinSrd(
-      campaign,
-      builtin,
-      useCampaign: campaign.isNotEmpty,
-    );
+    final entities = ref.watch(wizardEntitiesProvider);
     final raceEntity =
         draft.raceId == null ? null : entities[draft.raceId];
     final options = _subspeciesOptions(raceEntity);
@@ -1299,15 +1401,7 @@ class _EntityPickStep extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final draft = ref.watch(characterDraftProvider);
-    final builtin = ref.watch(builtinSrdEntitiesProvider);
-    final campaign =
-        draft.worldName.isEmpty ? const <String, Entity>{} : ref.watch(entityProvider);
-    final entities = mergeWithBuiltinSrd(
-      campaign,
-      builtin,
-      useCampaign: campaign.isNotEmpty,
-    );
+    final entities = ref.watch(wizardEntitiesProvider);
     final candidates = entities.values
         .where((e) => slugs.contains(e.categorySlug))
         .toList()
@@ -1703,9 +1797,10 @@ class _AbilityRow extends StatelessWidget {
       AbilityScoreMethod.pointBuy => DropdownButtonFormField<int>(
           initialValue: base.clamp(8, 15),
           decoration: const InputDecoration(labelText: 'Base'),
-          items: List.generate(8, (i) => 8 + i)
-              .map((v) => DropdownMenuItem(value: v, child: Text('$v')))
-              .toList(),
+          // W10: items are state-independent — promoted to a static const
+          // list so the wizard doesn't reallocate 8 DropdownMenuItems per
+          // rebuild of every ability row.
+          items: _kPointBuyDropdownItems,
           onChanged: (v) {
             if (v != null) onBase(v);
           },
@@ -1750,14 +1845,7 @@ class _ReviewStep extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final builtin = ref.watch(builtinSrdEntitiesProvider);
-    final campaign =
-        draft.worldName.isEmpty ? const <String, Entity>{} : ref.watch(entityProvider);
-    final entities = mergeWithBuiltinSrd(
-      campaign,
-      builtin,
-      useCampaign: campaign.isNotEmpty,
-    );
+    final entities = ref.watch(wizardEntitiesProvider);
     String nameOf(String? id) =>
         id == null ? '—' : (entities[id]?.name ?? '—');
     String namesOf(Iterable<String> ids) {
@@ -1928,6 +2016,86 @@ class _ReviewStep extends ConsumerWidget {
           if (draft.trinket.isNotEmpty) row('Trinket', draft.trinket),
         ],
       ],
+    );
+  }
+}
+
+/// W2: collapses Stepper bodies for non-active steps. Material `Stepper`
+/// builds every `Step.content` widget on every screen rebuild — that
+/// means typing into the Identity step would re-run `build()` on 11
+/// other step widgets even though only one is visible. Wrapping each
+/// content in `_StepBody` short-circuits to `SizedBox.shrink` when the
+/// step is not the current one. The inner widget is still constructed
+/// (cheap allocation) but its build tree is never walked.
+class _StepBody extends StatelessWidget {
+  final bool active;
+  final Widget child;
+  const _StepBody({required this.active, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!active) return const SizedBox.shrink();
+    return child;
+  }
+}
+
+/// W10: stable list of `DropdownMenuItem<int>` for point-buy base scores
+/// (8–15). Used by every ability row's `_baseEditor`; promoting it to a
+/// top-level const avoids rebuilding 8 widgets × 6 abilities per frame.
+final List<DropdownMenuItem<int>> _kPointBuyDropdownItems = [
+  for (var v = 8; v <= 15; v++)
+    DropdownMenuItem<int>(value: v, child: Text('$v')),
+];
+
+/// W3: TextFormField wrapper that debounces 250 ms before pushing the
+/// new value into the notifier. Keeps per-keystroke fanout off the
+/// CharacterDraft graph. Wizard Next-button validators read the notifier
+/// state — 250 ms is below the inter-action latency budget, so the
+/// buffered write reliably flushes before validation runs.
+class _DebouncedTextField extends StatefulWidget {
+  final String initialValue;
+  final InputDecoration decoration;
+  final ValueChanged<String> onChangedDebounced;
+  final int minLines;
+  final int maxLines;
+
+  const _DebouncedTextField({
+    required this.initialValue,
+    required this.decoration,
+    required this.onChangedDebounced,
+    this.minLines = 1,
+    this.maxLines = 1,
+  });
+
+  @override
+  State<_DebouncedTextField> createState() => _DebouncedTextFieldState();
+}
+
+class _DebouncedTextFieldState extends State<_DebouncedTextField> {
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onChanged(String v) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
+      widget.onChangedDebounced(v);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      initialValue: widget.initialValue,
+      minLines: widget.minLines,
+      maxLines: widget.maxLines,
+      decoration: widget.decoration,
+      onChanged: _onChanged,
     );
   }
 }

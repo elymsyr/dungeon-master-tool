@@ -6,6 +6,16 @@
 
 This document inventories the perf-relevant code paths, ranks them by expected impact-vs-effort, and proposes concrete fixes with file:line references.
 
+## Status (2026-05-13)
+
+**F1, F2, F3, F4, F6, F7, F8, F11, F12, F13 shipped or confirmed
+optimal.** Companion deep-dive `performance_hotspots_wizard_editor_hub.md`
+covers the wizard/editor/hub surfaces (Phases A+B+C, 19 findings closed).
+See §7 below for the survey-level implementation log.
+
+Still open: F5 / F10 (Sliver migration — cross-axis center invasive,
+deferred), F9 (Bootstrap), F14 (DevX).
+
 ---
 
 ## TL;DR
@@ -25,22 +35,22 @@ Fixing items 1–3 alone is expected to remove ~40–70 ms from typical interact
 
 ## 1. Findings Ranked by Impact × Effort
 
-| # | Issue | File:Line | Impact | Effort | Score |
-|---|-------|-----------|--------|--------|-------|
-| F1 | `jsonEncode` deep-equality in `_mapEquals` | [entity_provider.dart:381](../lib/application/providers/entity_provider.dart#L381) | High | XS | **A** |
-| F2 | `ref.watch(entityProvider)` without `.select()` (9 sites) | see §2.2 | High | M | **A** |
-| F3 | `wizardEntitiesProvider` merges full map on every watch | [builtin_srd_entities.dart:117-123](../lib/application/services/builtin_srd_entities.dart#L117) | High | S | **A** |
-| F4 | Entity selector dialog: O(N) filter per keystroke, no debounce | [entity_selector_dialog.dart:56](../lib/presentation/dialogs/entity_selector_dialog.dart#L56) | Med | XS | **A** |
-| F5 | `Column` for unbounded lists (wizard / characters tab) | see §2.5 | Med | S | **B** |
-| F6 | `.values.where(...).toList()` re-runs per build | [proficiencies_step.dart:58](../lib/presentation/screens/characters/wizard/steps/proficiencies_step.dart#L58), [entity_selector_dialog.dart:56](../lib/presentation/dialogs/entity_selector_dialog.dart#L56) | Med | S | **B** |
-| F7 | `prefer_const_constructors` lint disabled | [analysis_options.yaml:26](../analysis_options.yaml#L26) | Med | L | **B** |
-| F8 | Characters tab full-list sort per rebuild | [characters_tab.dart:81-105](../lib/presentation/screens/hub/characters_tab.dart#L81) | Low | XS | **B** |
-| F9 | Bootstrap blocks UI on `UiState.load` (3 s timeout) | [main.dart:158-163](../lib/main.dart#L158) | Low | M | **C** |
-| F10 | No `SliverList` anywhere; nested `ListView` w/ `shrinkWrap` | grep: 0 hits | Low | M | **C** |
-| F11 | SRD pack built eagerly on first `builtinSrdEntitiesProvider` read | [builtin_srd_entities.dart:21-79](../lib/application/services/builtin_srd_entities.dart#L21) | Low | M | **C** |
-| F12 | `campaignRevisionProvider++` cascades `worldSchemaProvider` parse | [entity_provider.dart:40-86](../lib/application/providers/entity_provider.dart#L40) | Low | S | **C** |
-| F13 | `_syncToCampaign` rebuilds entire `entities` map blob | [entity_provider.dart:411-426](../lib/application/providers/entity_provider.dart#L411) | Low | M | **C** |
-| F14 | 3.7 GB build artifact cache + 97 MB `.dill` files | `build/` | DevX | XS | **C** |
+| # | Issue | File:Line | Impact | Effort | Score | Status |
+|---|-------|-----------|--------|--------|-------|--------|
+| F1 | `jsonEncode` deep-equality in `_mapEquals` | [entity_provider.dart:381](../lib/application/providers/entity_provider.dart#L381) | High | XS | **A** | ✅ done (E4) |
+| F2 | `ref.watch(entityProvider)` without `.select()` (9 sites) | see §2.2 | High | M | **A** | ✅ done (W1/E5/E1/H3/sidebar/EntityNameText) |
+| F3 | `wizardEntitiesProvider` merges full map on every watch | [builtin_srd_entities.dart:117-123](../lib/application/services/builtin_srd_entities.dart#L117) | High | S | **A** | ✅ done (W1) |
+| F4 | Entity selector dialog: O(N) filter per keystroke, no debounce | [entity_selector_dialog.dart:56](../lib/presentation/dialogs/entity_selector_dialog.dart#L56) | Med | XS | **A** | ✅ done (debounce + pre-filtered base) |
+| F5 | `Column` for unbounded lists (wizard / characters tab) | see §2.5 | Med | S | **B** | defer (cross-axis-center Sliver invasive) |
+| F6 | `.values.where(...).toList()` re-runs per build | [proficiencies_step.dart:58](../lib/presentation/screens/characters/wizard/steps/proficiencies_step.dart#L58), [entity_selector_dialog.dart:56](../lib/presentation/dialogs/entity_selector_dialog.dart#L56) | Med | S | **B** | ✅ done (W4 + F4) |
+| F7 | `prefer_const_constructors` lint disabled | [analysis_options.yaml:26](../analysis_options.yaml#L26) | Med | L | **B** | ✅ done (71 fixes / 25 files via `dart fix`) |
+| F8 | Characters tab full-list sort per rebuild | [characters_tab.dart:81-105](../lib/presentation/screens/hub/characters_tab.dart#L81) | Low | XS | **B** | ✅ done (`sortedCharactersProvider`) |
+| F9 | Bootstrap blocks UI on `UiState.load` (3 s timeout) | [main.dart:158-163](../lib/main.dart#L158) | Low | M | **C** | todo |
+| F10 | No `SliverList` anywhere; nested `ListView` w/ `shrinkWrap` | grep: 0 hits | Low | M | **C** | defer (cross-axis center) |
+| F11 | SRD pack built eagerly on first `builtinSrdEntitiesProvider` read | [builtin_srd_entities.dart:21-79](../lib/application/services/builtin_srd_entities.dart#L21) | Low | M | **C** | ✅ noop (Provider lazy by default; cold-cost paid once) |
+| F12 | `campaignRevisionProvider++` cascades `worldSchemaProvider` parse | [entity_provider.dart:40-86](../lib/application/providers/entity_provider.dart#L40) | Low | S | **C** | ✅ noop (identity cache already returns cached schema, no cascade) |
+| F13 | `_syncToCampaign` rebuilds entire `entities` map blob | [entity_provider.dart:411-426](../lib/application/providers/entity_provider.dart#L411) | Low | M | **C** | ✅ done (`_writeEntityToCampaign` / `_removeEntityFromCampaign` O(1)) |
+| F14 | 3.7 GB build artifact cache + 97 MB `.dill` files | `build/` | DevX | XS | **C** | todo (DevX) |
 
 Score guide: **A** = ship this sprint, **B** = next sprint, **C** = nice-to-have / DevX.
 
@@ -400,6 +410,130 @@ onChanged: (v) {
 
 ---
 
+## 7. Implementation log (2026-05-13)
+
+Survey-level fixes; per-surface detail lives in
+`performance_hotspots_wizard_editor_hub.md` §11-13.
+
+### F1 — `_mapEquals` swapped to `DeepCollectionEquality`
+File: `lib/application/providers/entity_provider.dart`
+- `_mapEquals` body is now a single `DeepCollectionEquality().equals(a, b)`
+  call. `dart:convert` import removed. `jsonEncode` allocation gone from
+  the editor's per-keystroke autosave path.
+
+### F2 — Full-map watches replaced with `.select` / scoped reads
+Sites closed:
+- `character_editor_screen.dart` — `_StatChipsHeader` uses
+  `entityProvider.select((m) => m[id]?.name)` for race / class name (E5).
+- `character_creation_wizard_screen.dart` — Race/Review/EntityPickStep
+  now route through `wizardEntitiesProvider` (W6).
+- `characters_sidebar.dart` — screen-level entity merge resolved once,
+  per-row `readCharacterEntities` replaced with local `entitiesFor(c)`.
+- `characters_tab.dart` — same pattern, applied under H3.
+- `entity_selector_dialog.dart` — `EntityNameText` uses
+  `entityProvider.select((m) => m[id]?.name)`.
+- `character_stat_chips.dart` — added
+  `characterStatLinesWithNames(...)` so callers with pre-resolved names
+  can skip the full-map dependency.
+
+### F3 — `wizardEntitiesProvider` narrowed + lazy merge
+- `ref.watch(characterDraftProvider.select((d) => d.worldName))` instead
+  of watching the whole draft.
+- Returns `UnmodifiableMapView<CombinedMapView<String, Entity>>([campaign,
+  builtin])` when both are non-empty; `builtin` directly otherwise. No
+  more 7K-entry spread per keystroke.
+
+### F4 — Entity selector dialog debounce + caching
+File: `lib/presentation/dialogs/entity_selector_dialog.dart`
+- 150 ms `Timer` debounce on `TextField.onChanged`.
+- `excludeIds` / `allowedTypes` converted to `Set` once in `initState`.
+- Base list (entities pre-filtered by exclude + allowedTypes, sorted by
+  name) cached in `_baseList`; per-keystroke filter is now a single
+  `.toLowerCase()` + a substring loop against the cached list.
+- `EntityNameText.build` switched to scoped `.select` watch (also closes
+  one F2 site).
+
+### F5 / F10 — Sliver migration of CharactersTab
+Deferred this round. The visible list (`characters_tab.dart:129`) sits
+inside `SingleChildScrollView > Column > ConstrainedBox(maxWidth: 500)
+> ListView.separated(shrinkWrap: true, NeverScrollable)`. Migrating to a
+true `SliverList` requires breaking the cross-axis centering out into
+`SliverCrossAxisGroup` + `SliverConstrainedCrossAxis` + filler slivers —
+invasive layout refactor with regression surface.
+
+After H3 the dominant per-tile cost (3 provider watches + 2-map spread)
+is gone, so the remaining win is purely virtualization (skip building
+off-screen rows). Worth revisiting once a real profile flags row build
+time as a hotspot, especially if list grows past ~500 rows or if the
+team is doing a redesign that allows breaking the maxWidth constraint
+pattern.
+
+### F6 — `entities.values.where(...)` re-runs replaced with cached families
+- `entitiesByCategoryProvider.family<List<Entity>, String>` lives in
+  `builtin_srd_entities.dart`. Wired into `spells_step`,
+  `proficiencies_step`, `subclass_step`, `feats_step` (the four worst
+  offenders).
+- `entity_selector_dialog.dart` precomputes `_baseList` once per dialog
+  open (see F4).
+
+### F8 — `sortedCharactersProvider`
+File: `lib/application/providers/character_provider.dart`
+- New `Provider<List<Character>>` caches the `updatedAt`-DESC order.
+- `CharactersTab` and its `_sortedList()` helper now read from this
+  provider — no more `[...all]..sort(...)` per rebuild.
+
+### Round 2 (same day) — F7, F11, F12, F13
+
+#### F7 — `prefer_const_constructors` enabled, 71 fixes / 25 files
+- Added `prefer_const_constructors`, `prefer_const_constructors_in_immutables`,
+  `prefer_const_declarations`, `prefer_const_literals_to_create_immutables`
+  to the lint rules in `analysis_options.yaml`.
+- `dart fix --apply` cleaned the resulting findings automatically — 71
+  fixes across 25 files (mostly `Icon(...)`, `EdgeInsets.symmetric(...)`,
+  `SizedBox(...)` literals being promoted to const). All 477 tests stay
+  green; analyzer report dropped from 20 issues to 3 (pre-existing
+  unused-element warnings unrelated to this work).
+- Lint stays on going forward — new code automatically gets the const
+  treatment without a follow-up pass.
+
+#### F11 — SRD pack already lazy
+- Confirmed `builtinSrdEntitiesProvider` is a regular `Provider`, so its
+  body runs only on first read. The cold-start cost is paid once and the
+  result is identity-stable for the rest of the app lifetime — downstream
+  watchers don't see invalidations. Treated as a noop; can revisit later
+  via the "background isolate + serialized blob" path in §2.11 if cold
+  start ever shows a > 100 ms spike.
+
+#### F12 — campaign-revision cascade already gated
+- The Provider body re-runs on every revision bump, but the identity
+  check at line 46 (`identical(rawSource, _cachedWorldSchemaSource)`)
+  returns the cached `WorldSchema` when the source map hasn't changed.
+  Riverpod's `==` comparison sees an identical reference → no cascade to
+  downstream listeners. Functionally already optimal. Treated as a noop.
+
+#### F13 — `_syncToCampaign` made incremental
+File: `lib/application/providers/entity_provider.dart`
+- New `_writeEntityToCampaign(Entity)` — patches a single key in the
+  campaign's `entities` blob and calls `_onDirty()`. O(1).
+- New `_removeEntityFromCampaign(String id)` — drops a single key. O(1).
+- `update(entity)`, `create(...)`, and `delete(id)` switched to these
+  helpers. The full-rebuild `_syncToCampaign()` is retained for
+  `undo` / `redo` / `setAll` / `addEntities` where the diff is unknown.
+- Replaces the previous O(N) full re-serialization per single-entity
+  edit. With a ~7 K-entry world that was ~7 K × ~20 fields of work per
+  keystroke (via the editor's autosave path). Now just one entity's
+  serialization.
+
+### Findings still open
+
+- **F9** — bootstrap (UiState load on critical path). Lives under a
+  different review track (startup latency).
+- **F14** — build artifact cache. DevX.
+- **F5 / F10** — Sliver migration. Deferred; needs `SliverCrossAxisGroup`
+  + `SliverConstrainedCrossAxis` to preserve the maxWidth-500 centering.
+
+---
+
 **Owner**: TBD
 **Review cadence**: end of each phase
-**Linked memories**: [[srd_fix_roadmap]], [[project_progress]]
+**Linked memories**: [[srd_fix_roadmap]], [[project_progress]], [[perf_hotspots_wizard_editor_hub]]

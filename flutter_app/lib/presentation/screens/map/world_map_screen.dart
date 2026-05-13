@@ -1324,7 +1324,7 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
   void _projectMap(DmToolColors palette) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Project Map: Player window not yet implemented'),
+        content: const Text('Project Map: Player window not yet implemented'),
         backgroundColor: palette.tabBg,
       ),
     );

@@ -201,11 +201,13 @@ void _showConversationContextMenu({
   ).then((value) {
     if (value == null) return;
     if (!context.mounted) return;
-    if (value == 'add_member')
+    if (value == 'add_member') {
       _addMemberFlow(context: context, ref: ref, conversation: conversation);
-    if (value == 'rename')
+    }
+    if (value == 'rename') {
       _renameGroupFlow(context: context, ref: ref, conversation: conversation);
-    if (value == 'leave')
+    }
+    if (value == 'leave') {
       _leaveGroupFlow(
         context: context,
         ref: ref,
@@ -213,20 +215,23 @@ void _showConversationContextMenu({
         myUserId: myUserId,
         onLeft: onLeft,
       );
-    if (value == 'delete_group')
+    }
+    if (value == 'delete_group') {
       _deleteGroupFlow(
         context: context,
         ref: ref,
         conversation: conversation,
         onLeft: onLeft,
       );
-    if (value.startsWith('kick:'))
+    }
+    if (value.startsWith('kick:')) {
       _kickMemberFlow(
         context: context,
         ref: ref,
         conversation: conversation,
         targetUserId: value.substring(5),
       );
+    }
   });
 }
 
@@ -416,8 +421,9 @@ Future<void> _renameGroupFlow({
   } finally {
     ctrl.dispose();
   }
-  if (newTitle == null || newTitle.isEmpty || newTitle == conversation.title)
+  if (newTitle == null || newTitle.isEmpty || newTitle == conversation.title) {
     return;
+  }
   try {
     await ref
         .read(messagesRemoteDsProvider)

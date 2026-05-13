@@ -27,18 +27,18 @@ class CharacterStatLine {
   });
 }
 
-List<CharacterStatLine> characterStatLines(
-  Character character,
-  Map<String, Entity> entities,
-) {
+/// Extracts the canonical race and class entity ids the stat-chip strip
+/// needs to resolve names. Pulled out so callers that prefer scoped
+/// `.select()` watches can resolve the two names without forcing a full
+/// entity-map watch (see E5 in performance_hotspots_wizard_editor_hub.md).
+class CharacterRaceClassIds {
+  final String? raceId;
+  final String? classId;
+  const CharacterRaceClassIds({this.raceId, this.classId});
+}
+
+CharacterRaceClassIds characterRaceClassIds(Character character) {
   final fields = character.entity.fields;
-
-  int asInt(Object? raw) {
-    if (raw is int) return raw;
-    if (raw is String) return int.tryParse(raw) ?? 0;
-    return 0;
-  }
-
   String? firstId(Iterable<String> keys) {
     for (final k in keys) {
       final v = fields[k];
@@ -52,6 +52,45 @@ List<CharacterStatLine> characterStatLines(
       }
     }
     return null;
+  }
+
+  return CharacterRaceClassIds(
+    raceId: firstId(const ['species_ref', 'race']),
+    classId: firstId(const ['class_refs', 'class_']),
+  );
+}
+
+List<CharacterStatLine> characterStatLines(
+  Character character,
+  Map<String, Entity> entities,
+) {
+  final ids = characterRaceClassIds(character);
+  final raceName =
+      ids.raceId == null ? '—' : (entities[ids.raceId]?.name ?? '—');
+  final className =
+      ids.classId == null ? '—' : (entities[ids.classId]?.name ?? '—');
+  return characterStatLinesWithNames(
+    character,
+    raceName: raceName,
+    className: className,
+  );
+}
+
+/// E5: alternate entry point used by surfaces that have already resolved
+/// the race/class names via `.select()`. Skips the full entity-map watch
+/// (which is the expensive part for character headers / list tiles that
+/// only need two strings).
+List<CharacterStatLine> characterStatLinesWithNames(
+  Character character, {
+  required String raceName,
+  required String className,
+}) {
+  final fields = character.entity.fields;
+
+  int asInt(Object? raw) {
+    if (raw is int) return raw;
+    if (raw is String) return int.tryParse(raw) ?? 0;
+    return 0;
   }
 
   // Most templates author hp / max_hp / ac / level inside the
@@ -73,10 +112,6 @@ List<CharacterStatLine> characterStatLines(
       ? '$ac'
       : (combatAc != null && combatAc > 0 ? '$combatAc' : '—');
 
-  final raceId = firstId(const ['species_ref', 'race']);
-  final classId = firstId(const ['class_refs', 'class_']);
-  final raceName = raceId == null ? '—' : (entities[raceId]?.name ?? '—');
-  final className = classId == null ? '—' : (entities[classId]?.name ?? '—');
   var level = asInt(fields['level']);
   if (level == 0 && combatLevel != null) level = combatLevel;
 

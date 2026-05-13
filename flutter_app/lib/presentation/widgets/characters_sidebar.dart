@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,8 +12,10 @@ import '../../application/providers/edit_mode_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/global_tags_provider.dart';
 import '../../application/providers/template_provider.dart';
+import '../../application/services/builtin_srd_entities.dart';
 import '../../application/services/tag_moderation.dart';
 import '../../domain/entities/character.dart';
+import '../../domain/entities/entity.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
@@ -64,6 +67,22 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
   Widget _buildList(DmToolColors palette) {
     final activeWorld = ref.watch(activeCampaignProvider);
     final charactersAsync = ref.watch(characterListProvider);
+    // F2 / H3-extension: single merged entity map for the sidebar list.
+    // Per-row `readCharacterEntities` was watching three providers and
+    // spreading two maps for every character tile. Now: 1 watch, lazy
+    // CombinedMapView, no per-row allocation.
+    final builtin = ref.watch(builtinSrdEntitiesProvider);
+    final campaign = ref.watch(entityProvider);
+    final merged = (activeWorld == null || campaign.isEmpty)
+        ? builtin
+        : UnmodifiableMapView<String, Entity>(
+            CombinedMapView<String, Entity>([campaign, builtin]),
+          );
+    Map<String, Entity> entitiesFor(Character c) {
+      if (c.worldName.isEmpty) return builtin;
+      if (c.worldName != activeWorld) return builtin;
+      return merged;
+    }
 
     return Column(
       children: [
@@ -183,8 +202,7 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
                         layout: MetadataTileLayout.leftAvatar,
                         onSettings: () => _showCharacterSettings(c.id, palette),
                         infoChips: CharacterStatChips(
-                          lines: characterStatLines(
-                              c, readCharacterEntities(ref, c)),
+                          lines: characterStatLines(c, entitiesFor(c)),
                           palette: palette,
                           compact: true,
                         ),

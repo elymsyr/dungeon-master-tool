@@ -198,6 +198,17 @@ final characterListProvider = StateNotifierProvider<CharacterListNotifier,
   return CharacterListNotifier(ref.watch(characterRepositoryProvider));
 });
 
+/// H3: characters tab "Recents-first" listesi. Sort `updatedAt` DESC
+/// üzerinde çalışır ve Riverpod identity-cache'i sayesinde
+/// `characterListProvider` değişmediği sürece aynı `List` instance'ı
+/// döner — `CharactersTab` her hub-rebuild'inde `[...all]..sort` yapmaz.
+final sortedCharactersProvider = Provider<List<Character>>((ref) {
+  final list =
+      ref.watch(characterListProvider).valueOrNull ?? const <Character>[];
+  final out = [...list]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+  return List<Character>.unmodifiable(out);
+});
+
 /// Tek bir karakteri ID ile döndürür — editor ekran için.
 final characterByIdProvider = Provider.family<Character?, String>((ref, id) {
   final list = ref.watch(characterListProvider).valueOrNull;

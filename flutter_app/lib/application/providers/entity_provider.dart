@@ -1,5 +1,4 @@
-import 'dart:convert';
-
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../core/utils/deep_copy.dart';
@@ -318,7 +317,9 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       source: 'Homebrew',
     );
     state = {...state, id: entity};
-    _syncToCampaign();
+    // F13: incremental write — set this entity's row in the campaign
+    // entities map instead of rebuilding the whole map.
+    _writeEntityToCampaign(entity);
     _eventBus.emit(EventEnvelope.now(
       EventTypes.entityCreated,
       {'entity_id': id, 'entity_type': categorySlug, 'name': name},
@@ -344,7 +345,8 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       );
     }
     state = {...state, next.id: next};
-    _syncToCampaign();
+    // F13: incremental write — O(1) instead of O(N) full re-serialize.
+    _writeEntityToCampaign(next);
     _eventBus.emit(EventEnvelope.now(
       EventTypes.entityUpdated,
       {'entity_id': next.id, 'changed_fields': const <String>[]},
@@ -374,14 +376,15 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     return true;
   }
 
-  bool _mapEquals(Map<String, dynamic> a, Map<String, dynamic> b) {
-    if (a.length != b.length) return false;
-    for (final key in a.keys) {
-      if (!b.containsKey(key)) return false;
-      if (jsonEncode(a[key]) != jsonEncode(b[key])) return false;
-    }
-    return true;
-  }
+  // E4 / F1: deep-equality via `DeepCollectionEquality` from
+  // package:collection. Replaces the previous per-key `jsonEncode`
+  // pairwise comparison — that was allocating two JSON strings for every
+  // field on every update. With 50-field characters this dominated CPU
+  // during description editing.
+  static const _kFieldEquality = DeepCollectionEquality();
+
+  bool _mapEquals(Map<String, dynamic> a, Map<String, dynamic> b) =>
+      _kFieldEquality.equals(a, b);
 
   /// Birden fazla entity'yi tek seferde ekle (paket import için).
   /// Çağıran taraf önceden pushUndo() yapmalıdır.
@@ -397,7 +400,9 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     final removed = state[entityId];
     pushUndo(state);
     state = Map.from(state)..remove(entityId);
-    _syncToCampaign();
+    // F13: incremental delete — drop the single key instead of
+    // rewriting the entire entities blob.
+    _removeEntityFromCampaign(entityId);
     _eventBus.emit(EventEnvelope.now(
       EventTypes.entityDeleted,
       {
@@ -408,13 +413,13 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     ));
   }
 
+  /// Full re-serialization fallback. Used by undo/redo/setAll/addEntities
+  /// where the diff is unknown. For single-entity edits prefer
+  /// [_writeEntityToCampaign] / [_removeEntityFromCampaign] — those are
+  /// O(1) where this is O(N).
   void _syncToCampaign() {
     final data = _campaign.data;
     if (data == null) return;
-
-    // Synchronously update in-memory campaign data.
-    // Linked karakterler disk'e `entities` altına yazılmaz — world sadece
-    // `linked_character_ids`'i tutar, veri hub'da kalır.
     final raw = <String, dynamic>{};
     for (final entry in state.entries) {
       final entity = entry.value;
@@ -423,6 +428,38 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     }
     data['entities'] = raw;
     _onDirty();
+  }
+
+  /// F13: incremental write. Serializes one entity and patches the
+  /// campaign's `entities` map in place. Linked characters are
+  /// intentionally not persisted to the world blob — they live on the
+  /// hub side and only their id is tracked via `linked_character_ids`.
+  void _writeEntityToCampaign(Entity entity) {
+    final data = _campaign.data;
+    if (data == null) return;
+    if (_linkedCharacterIds.contains(entity.id)) return;
+    final raw = data['entities'];
+    final Map<String, dynamic> entities;
+    if (raw is Map<String, dynamic>) {
+      entities = raw;
+    } else {
+      entities = <String, dynamic>{};
+      data['entities'] = entities;
+    }
+    entities[entity.id] = _entityToMap(entity);
+    _onDirty();
+  }
+
+  /// F13: incremental delete. Drops a single id from the campaign's
+  /// `entities` blob.
+  void _removeEntityFromCampaign(String entityId) {
+    final data = _campaign.data;
+    if (data == null) return;
+    final raw = data['entities'];
+    if (raw is Map<String, dynamic>) {
+      raw.remove(entityId);
+      _onDirty();
+    }
   }
 
   Map<String, dynamic> _entityToMap(Entity e) {

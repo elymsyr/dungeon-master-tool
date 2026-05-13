@@ -153,16 +153,14 @@ class CharacterResolver {
           return (classLevels[classId] ?? 0) >= needLvl;
         case 'equipped_armor_kind':
           // args: {value: 'none'|'light'|'medium'|'heavy'|'not_heavy'}
-          // Read PC's equipped_armor_ref → resolve → check armor's category.
-          // For now: 'none' is true iff no equipped_armor_ref set; 'not_heavy'
-          // is true unless the ref resolves to heavy. Light/medium/heavy each
-          // require the ref to resolve to the matching category.
+          // Walk the PC's inventory for an equipped armor entity (non-shield).
+          // 'none' is true iff no armor is equipped; 'not_heavy' is true
+          // unless the equipped armor resolves to heavy. Light/medium/heavy
+          // each require an equipped armor of the matching category.
           final want = argMap['value']?.toString() ?? '';
-          final armorRef = fields['equipped_armor_ref'];
-          final armorId = _resolveRef(armorRef, entitiesById);
-          if (armorId == null) return want == 'none' || want == 'not_heavy';
-          final armor = entitiesById[armorId];
-          final catRef = armor?.fields['armor_category_ref'];
+          final armor = _equippedArmor(fields, entitiesById);
+          if (armor == null) return want == 'none' || want == 'not_heavy';
+          final catRef = armor.fields['armor_category_ref'];
           final catId = _resolveRef(catRef, entitiesById);
           final cat = (catId != null) ? entitiesById[catId]?.name.toLowerCase() ?? '' : '';
           if (want == 'none') return false;
@@ -170,8 +168,7 @@ class CharacterResolver {
           return cat.contains(want);
         case 'equipped_shield':
           final want = argMap['value']?.toString() ?? 'any';
-          final shieldRef = fields['equipped_shield_ref'];
-          final has = _resolveRef(shieldRef, entitiesById) != null;
+          final has = _hasEquippedShield(fields, entitiesById);
           if (want == 'any') return true;
           if (want == 'true') return has;
           if (want == 'false') return !has;
@@ -698,6 +695,71 @@ class CharacterResolver {
       if (e.categorySlug == slug && e.name == name) return e.id;
     }
     return null;
+  }
+
+  /// Walk a PC's `inventory` field and return the first equipped armor
+  /// entity (category slug `armor`). Inventory rows are either bare ID
+  /// strings (no equip toggle) or `{id, equipped}` maps. Magic-item armor
+  /// counts too — we accept any equipped row whose target entity carries an
+  /// `armor_category_ref`.
+  static Entity? _equippedArmor(
+    Map<String, dynamic> fields,
+    Map<String, Entity> entitiesById,
+  ) {
+    for (final row in _iterEquippedInventory(fields)) {
+      final id = _resolveRef(row, entitiesById);
+      if (id == null) continue;
+      final e = entitiesById[id];
+      if (e == null) continue;
+      if (e.categorySlug == 'armor' || e.fields['armor_category_ref'] != null) {
+        // Treat shields as a separate concern (handled by _hasEquippedShield).
+        final catRef = e.fields['armor_category_ref'];
+        final catId = _resolveRef(catRef, entitiesById);
+        final catName = catId != null
+            ? (entitiesById[catId]?.name.toLowerCase() ?? '')
+            : '';
+        if (catName.contains('shield')) continue;
+        return e;
+      }
+    }
+    return null;
+  }
+
+  /// True iff the PC has an equipped shield in `inventory`. Shields are
+  /// armor-category entities whose `armor_category_ref` resolves to a name
+  /// containing "shield".
+  static bool _hasEquippedShield(
+    Map<String, dynamic> fields,
+    Map<String, Entity> entitiesById,
+  ) {
+    for (final row in _iterEquippedInventory(fields)) {
+      final id = _resolveRef(row, entitiesById);
+      if (id == null) continue;
+      final e = entitiesById[id];
+      if (e == null) continue;
+      final catRef = e.fields['armor_category_ref'];
+      final catId = _resolveRef(catRef, entitiesById);
+      final catName = catId != null
+          ? (entitiesById[catId]?.name.toLowerCase() ?? '')
+          : '';
+      if (catName.contains('shield')) return true;
+    }
+    return false;
+  }
+
+  /// Iterate inventory rows that are flagged as equipped. Yields the raw
+  /// ref payload (string ID or `{id, equipped}` map) so callers can resolve
+  /// it via [_resolveRef].
+  static Iterable<Object?> _iterEquippedInventory(
+    Map<String, dynamic> fields,
+  ) sync* {
+    final raw = fields['inventory'];
+    if (raw is! List) return;
+    for (final row in raw) {
+      if (row is Map) {
+        if (row['equipped'] == true) yield row['id'];
+      }
+    }
   }
 
   static String? _resolveRef(Object? raw, Map<String, Entity> all) {

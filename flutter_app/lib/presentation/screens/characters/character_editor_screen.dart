@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -446,12 +447,30 @@ class _CharacterEditorScreenState
   Widget _entityHeader(
       DmToolColors palette, Character c, WorldSchema template) {
     final entity = c.entity;
-    final hasImage =
-        entity.imagePath.isNotEmpty && File(entity.imagePath).existsSync();
+    // E2: drop synchronous `File.existsSync()` from the build path. The
+    // ImageProvider stat-cache + `errorBuilder` already handle the
+    // missing-file case without blocking the frame, and the `File`
+    // allocation per rebuild is gone.
+    final hasImagePath = entity.imagePath.isNotEmpty;
     final l10n = L10n.of(context)!;
     final subtitle = c.worldName.isEmpty
         ? '${template.name} · ${l10n.charWorldOrphan}'
         : '${template.name} · ${c.worldName}';
+
+    Widget portraitPlaceholder() => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.person,
+                size: 56, color: palette.sidebarLabelSecondary),
+            if (!_readOnly) ...[
+              const SizedBox(height: 4),
+              Text('Add photo',
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: palette.sidebarLabelSecondary)),
+            ],
+          ],
+        );
 
     const portraitSize = 200.0;
     return Row(
@@ -468,23 +487,13 @@ class _CharacterEditorScreenState
               borderRadius: BorderRadius.circular(4),
               border: Border.all(color: palette.featureCardBorder),
             ),
-            child: hasImage
-                ? Image.file(File(entity.imagePath), fit: BoxFit.cover)
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.person,
-                          size: 56,
-                          color: palette.sidebarLabelSecondary),
-                      if (!_readOnly) ...[
-                        const SizedBox(height: 4),
-                        Text('Add photo',
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: palette.sidebarLabelSecondary)),
-                      ],
-                    ],
-                  ),
+            child: hasImagePath
+                ? Image.file(
+                    File(entity.imagePath),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => portraitPlaceholder(),
+                  )
+                : portraitPlaceholder(),
           ),
         ),
         const SizedBox(width: 16),
@@ -569,10 +578,11 @@ class _CharacterEditorScreenState
                 },
               ),
               const SizedBox(height: 10),
-              CharacterStatChips(
-                lines: characterStatLines(c, _readEntitiesFor(c)),
-                palette: palette,
-              ),
+              // E5/E6: avoid watching the full entity map for the header.
+              // Resolve race/class names via `.select` so the strip only
+              // rebuilds when those two specific names flip. RepaintBoundary
+              // isolates the strip from descriptor edits above.
+              _StatChipsHeader(character: c, palette: palette),
             ],
           ),
         ),
@@ -1121,13 +1131,20 @@ class _CharacterEditorScreenState
   /// the bundled SRD map. World-bound characters get the active
   /// campaign's entities (merged with builtin so resolver lookups still
   /// find Tier-0 rows on a half-seeded world).
+  ///
+  /// E1: returns a lazy `CombinedMapView` instead of spreading both
+  /// maps into a fresh `{}` per call. Reads are O(1); 20+ field tiles
+  /// hitting this helper no longer allocate one 7 K-entry map each.
   Map<String, Entity> _readEntitiesFor(Character character) {
     final builtin = ref.watch(builtinSrdEntitiesProvider);
     if (character.worldName.isEmpty) return builtin;
     final activeCampaign = ref.watch(activeCampaignProvider);
     if (activeCampaign != character.worldName) return builtin;
     final campaign = ref.watch(entityProvider);
-    return mergeWithBuiltinSrd(campaign, builtin, useCampaign: true);
+    if (campaign.isEmpty) return builtin;
+    return UnmodifiableMapView<String, Entity>(
+      CombinedMapView<String, Entity>([campaign, builtin]),
+    );
   }
 
   Future<void> _levelUp(Character character) async {
@@ -2066,7 +2083,7 @@ class _CharacterStorageBar extends ConsumerWidget {
       data: (bytes) {
         final usedMb = bytes / (1024 * 1024);
         final totalMb = quotaBytes / (1024 * 1024);
-        final itemLimitMb = cloudBackupItemSizeLimit / (1024 * 1024);
+        const itemLimitMb = cloudBackupItemSizeLimit / (1024 * 1024);
         final ratio = (bytes / quotaBytes).clamp(0.0, 1.0);
         final remainingMb = totalMb - usedMb;
         return Column(
@@ -2116,6 +2133,48 @@ class _CharacterStorageBar extends ConsumerWidget {
       error: (_, _) => Text(
         'Could not load storage info',
         style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
+      ),
+    );
+  }
+}
+
+/// E5/E6: header stat-chip strip with scoped name watches. Watches the
+/// entity provider via `.select` so only the two resolved names trigger a
+/// rebuild — the rest of the editor frame doesn't repaint this strip.
+class _StatChipsHeader extends ConsumerWidget {
+  final Character character;
+  final DmToolColors palette;
+  const _StatChipsHeader({required this.character, required this.palette});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ids = characterRaceClassIds(character);
+    final useCampaign = character.worldName.isNotEmpty &&
+        ref.watch(activeCampaignProvider) == character.worldName;
+
+    String resolve(String? id) {
+      if (id == null) return '—';
+      if (useCampaign) {
+        final name =
+            ref.watch(entityProvider.select((m) => m[id]?.name));
+        if (name != null && name.isNotEmpty) return name;
+      }
+      final builtinName = ref.watch(
+        builtinSrdEntitiesProvider.select((m) => m[id]?.name),
+      );
+      return (builtinName != null && builtinName.isNotEmpty)
+          ? builtinName
+          : '—';
+    }
+
+    return RepaintBoundary(
+      child: CharacterStatChips(
+        lines: characterStatLinesWithNames(
+          character,
+          raceName: resolve(ids.raceId),
+          className: resolve(ids.classId),
+        ),
+        palette: palette,
       ),
     );
   }

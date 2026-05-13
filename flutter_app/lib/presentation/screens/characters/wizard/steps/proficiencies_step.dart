@@ -55,11 +55,9 @@ class ProficienciesStep extends ConsumerWidget {
       ..._stringList(race?.fields['granted_languages']),
     };
 
-    final languageEntities = entities.values
-        .where((e) => e.categorySlug == 'language')
-        .toList()
-      ..sort(
-          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    // W4: shared cached family — sorted at provider level, no re-filter
+    // per build.
+    final languageEntities = ref.watch(entitiesByCategoryProvider('language'));
 
     if (skillCap == 0 &&
         toolCap == 0 &&

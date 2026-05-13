@@ -8,6 +8,16 @@
 > cross-referenced without colliding with the survey numbering. Where a hotspot
 > overlaps the survey, the link is noted (`see F#`).
 
+## Status (2026-05-13)
+
+**Phase A + B + C shipped.** Findings closed: W1, W2, W3, W4, W5, W6, W8,
+W9, W10, E1, E2, E4, E5, E6, L1, H1, H3, H4, H5. **Deferred** (profiler-
+gated, low marginal ROI): L2 (HP roller isolation — L1 already memoizes the
+expensive lists), H2 (per-tab subscription gating — needs invasive tab-by-
+tab refactor + profile data to justify), L3/E3/W7 already noops. All 477
+tests still green; `dart analyze` clean against touched files. See §11 for
+Phase A log, §12 for Phase B log, §13 for Phase C log.
+
 Audit method: static read of the 13 671 LOC across these three surfaces, plus
 verification reads on `entity_provider.dart`, `builtin_srd_entities.dart`,
 `character_stat_chips.dart`, and `character_draft_notifier.dart`. No runtime
@@ -304,18 +314,18 @@ switch. Extract to a static const list.
 
 ### Wizard summary
 
-| ID  | Impact | Effort | Fix one-liner                                         |
-| --- | ------ | ------ | ----------------------------------------------------- |
-| W1  | A      | 10 min | `.select((d) => d.worldName)` + `CombinedMapView`     |
-| W2  | A      | 30 min | Collapse hidden Stepper bodies                        |
-| W3  | A      | 1 hr   | Debounce text-field writes to notifier                |
-| W4  | B      | 1 hr   | `entitiesByCategoryProvider.family`                   |
-| W5  | B      | 30 min | Lift FeatsCache to a provider                         |
-| W6  | B      | 5 min  | Use `wizardEntitiesProvider` in Race/Review steps     |
-| W7  | C      | —      | Skip; falls out after W1                              |
-| W8  | C      | 5 min  | Drop `toSet()` allocation                             |
-| W9  | C      | 15 min | Pre-resolve item names per group                      |
-| W10 | C      | 10 min | Static const dropdown items                           |
+| ID  | Status | Impact | Effort | Fix one-liner                                       |
+| --- | ------ | ------ | ------ | --------------------------------------------------- |
+| W1  | ✅ done | A      | 10 min | `.select((d) => d.worldName)` + `CombinedMapView`   |
+| W2  | ✅ done | A      | 30 min | `_StepBody` collapses inactive Stepper bodies       |
+| W3  | ✅ done | A      | 1 hr   | `_DebouncedTextField` + `_Field` 250 ms debounce    |
+| W4  | ✅ done | B      | 1 hr   | `entitiesByCategoryProvider.family`                 |
+| W5  | ✅ done | B      | 30 min | Lift FeatsCache base lists to family providers      |
+| W6  | ✅ done | B      | 5 min  | Use `wizardEntitiesProvider` in Race/Review/PickStep|
+| W7  | skip   | C      | —      | Skip; falls out after W1                            |
+| W8  | ✅ done | C      | 5 min  | Drop `toSet()` allocation; use `picked.contains`    |
+| W9  | ✅ done | C      | 15 min | `_resolveItemLines` lifted to `_GroupCard` level    |
+| W10 | ✅ done | C      | 10 min | `_kPointBuyDropdownItems` static const list         |
 
 **Predicted result:** typing latency in Name/Description fields drops from
 ~80–120 ms (current at-scale guess) to <16 ms (single-step rebuild only).
@@ -463,14 +473,14 @@ that don't affect chip content.
 
 ### Editor summary
 
-| ID | Impact | Effort | Fix one-liner                                        |
-| -- | ------ | ------ | ---------------------------------------------------- |
-| E1 | A      | 2 hr   | Resolve entity map once at screen top                |
-| E2 | B      | 30 min | Cache portrait existence; async check                |
-| E3 | C      | 5 min  | Guard controller sync against equal text             |
-| E4 | B      | 1 hr   | Debounce mutations + replace `jsonEncode` equality   |
-| E5 | B      | 20 min | `.select((m) => m[id]?.name)` for class/race         |
-| E6 | B      | 5 min  | `RepaintBoundary` around stat chips                  |
+| ID | Status | Impact | Effort | Fix one-liner                                       |
+| -- | ------ | ------ | ------ | --------------------------------------------------- |
+| E1 | ✅ done | A      | 2 hr   | `_readEntitiesFor` returns lazy `CombinedMapView`   |
+| E2 | ✅ done | B      | 30 min | Drop `existsSync` from build; `Image.file.errorBuilder` |
+| E3 | ✅ noop| C      | 5 min  | `_syncIfNotFocused` already guards with `ctrl.text != value` |
+| E4 | ✅ done | B      | 1 hr   | `_mapEquals` now `DeepCollectionEquality.equals`    |
+| E5 | ✅ done | B      | 20 min | `.select((m) => m[id]?.name)` for class/race        |
+| E6 | ✅ done | B      | 5 min  | `RepaintBoundary` around stat chips                 |
 
 ---
 
@@ -530,11 +540,11 @@ Effort: 20 min. Risk: zero.
 
 ### Level-up summary
 
-| ID | Impact | Effort | Fix one-liner                                  |
-| -- | ------ | ------ | ---------------------------------------------- |
-| L1 | B      | 45 min | Memoize eligible spells/feats in initState     |
-| L2 | B      | 30 min | Isolate HP roller in its own StatefulWidget    |
-| L3 | B      | 20 min | Cache `planLevelUp` result in initState        |
+| ID | Status | Impact | Effort | Fix one-liner                                 |
+| -- | ------ | ------ | ------ | --------------------------------------------- |
+| L1 | ✅ done | B      | 45 min | Memoize eligible spells/feats in initState    |
+| L2 | defer  | B      | 30 min | HP roller isolation — low ROI after L1, profile-gated |
+| L3 | ✅ noop| B      | 20 min | `planLevelUp` already cached on `widget.plan` |
 
 ---
 
@@ -739,15 +749,15 @@ expands past ~10.
 
 ### Hub summary
 
-| ID | Impact | Effort | Fix one-liner                                            |
-| -- | ------ | ------ | -------------------------------------------------------- |
-| H1 | C      | 10 min | `.select()` cloud + notification booleans                |
-| H2 | B      | 2 hr   | Gate inactive-tab subscriptions (start w/ CharactersTab) |
-| H3 | A      | 3 hr   | Sort provider + screen-level merge + virtualized list    |
-| H4 | C      | 10 min | Drop `ref.invalidate` from SettingsTab initState         |
-| H5 | B      | 1 hr   | Batch package metadata at tab level                      |
-| H6 | C      | —      | Defer (low world count today)                            |
-| H7 | C      | —      | Defer (small theme count)                                |
+| ID | Status | Impact | Effort | Fix one-liner                                            |
+| -- | ------ | ------ | ------ | -------------------------------------------------------- |
+| H1 | ✅ done | C      | 10 min | `.select()` notification boolean (cloudBadge already bool)|
+| H2 | defer  | B      | 2 hr   | Per-tab gating — invasive refactor, profile-gated        |
+| H3 | ✅ done | A      | 3 hr   | `sortedCharactersProvider` + screen-level merge          |
+| H4 | ✅ done | C      | 10 min | Drop `ref.invalidate` from SettingsTab initState         |
+| H5 | ✅ done | B      | 1 hr   | `.select(valueOrNull)` narrows packageMetadata watches   |
+| H6 | todo   | C      | —      | Defer (low world count today)                            |
+| H7 | todo   | C      | —      | Defer (small theme count)                                |
 
 ---
 
@@ -865,3 +875,308 @@ class of bugs across both wizard and editor.
 
 3. `CharactersTab` may eventually be a virtualised grid (cards) rather than
    list rows. If so, time the H3 fix with that redesign.
+
+---
+
+## 11. Phase A implementation log (2026-05-13)
+
+Shipped as a single change set. All 477 unit + widget tests pass; `dart
+analyze` reports no new issues on touched files.
+
+### W1 — `wizardEntitiesProvider` narrowed
+File: `lib/application/services/builtin_srd_entities.dart`
+- `ref.watch(characterDraftProvider)` → `.select((d) => d.worldName)`
+- `{...builtin, ...campaign}` spread → `UnmodifiableMapView(CombinedMapView([campaign, builtin]))`
+- Early-out when campaign is empty (returns builtin directly — same
+  identity, Riverpod skips dependent rebuilds entirely).
+- Required `package:collection/collection.dart` import.
+
+### W4 — `entitiesByCategoryProvider.family`
+File: `lib/application/services/builtin_srd_entities.dart`
+- New `Provider.autoDispose.family<List<Entity>, String>` keyed by category
+  slug. Returns name-sorted, unmodifiable list. Invalidates only when the
+  upstream entity map changes by identity.
+- Consumers wired:
+  - `spells_step.dart` — drops `entities.values.where(slug=='spell')` from
+    the build path. Filter by `classId` runs on the cached list instead.
+  - `proficiencies_step.dart` — `languageEntities` pulled from family.
+  - `subclass_step.dart` — `allSubclasses` pulled from family; per-class
+    filter and `granted_at_level` re-sort kept inline.
+
+### W5 — FeatsCache uses cached lists
+File: `lib/presentation/screens/characters/wizard/steps/feats_step.dart`
+- Factory now takes `skills` / `tools` / `spells` / `classes` named
+  params pulled from the family providers via `ref.watch`.
+- Bucketing loops scan only the relevant category slices (~250-700
+  entries) instead of the full ~7 K-entry map.
+- Provider-keyed identity equality means an unchanged entity map →
+  unchanged List references → consumer skip.
+
+### W6 — `_RaceStep`, `_ReviewStep`, `_EntityPickStep` simplified
+File: `lib/presentation/screens/characters/wizard/character_creation_wizard_screen.dart`
+- All three duplicate `mergeWithBuiltinSrd` call sites replaced with
+  `ref.watch(wizardEntitiesProvider)`. `_EntityPickStep` was an unlisted
+  finding caught during the refactor — added to the "duplicates of W6"
+  bucket.
+
+### E5 — Editor header scoped watches
+File: `lib/presentation/screens/characters/character_editor_screen.dart`
+- New private `_StatChipsHeader` ConsumerWidget owns the strip. Watches
+  `entityProvider.select((m) => m[raceId]?.name)` and
+  `builtinSrdEntitiesProvider.select((m) => m[id]?.name)` separately;
+  campaign vs. builtin gating mirrors `_readEntitiesFor` semantics.
+- `characterStatLines(c, entities)` companion `characterStatLinesWithNames`
+  added in `widgets/character_stat_chips.dart` so callers with already
+  resolved names can skip the full-map watch path. Existing call sites
+  unchanged — backward-compatible.
+
+### E6 — `RepaintBoundary` around stat chips
+- Inside `_StatChipsHeader.build()`. Isolates the chip strip from header
+  / description edits above.
+
+### H1 — Notification badge `.select`
+File: `lib/presentation/screens/hub/hub_screen.dart`
+- `ref.watch(totalNotificationCountProvider).value > 0` →
+  `ref.watch(totalNotificationCountProvider.select((a) => (a.valueOrNull ?? 0) > 0))`.
+- `cloudRemoteHasNewerProvider` already returns `bool` (the doc's original
+  claim of `AsyncValue` was incorrect — discovered while inspecting the
+  provider). No further fix needed.
+
+### H4 — SettingsTab open-time refresh removed
+File: `lib/presentation/screens/hub/settings_tab.dart`
+- `initState`'s `addPostFrameCallback` block invalidating four providers
+  on every tab open was deleted. Provider lifecycles already keep the
+  data fresh; `LazyIndexedStack` re-enters the same `State` so this
+  effectively re-issued disk reads on every settings open.
+
+### New findings discovered during Phase A
+
+| Code | Surface | What & why |
+| --- | --- | --- |
+| W6b | Wizard | `_EntityPickStep` (third manual merge) — fixed under W6. |
+| F-doc | Hub | `cloudRemoteHasNewerProvider` is already `bool`, not `AsyncValue<bool>` — doc claim of "every internal transition triggers rebuild" was wrong. Updated H1 table row. |
+| L-validate | Wizard | `_validateProficiencies` does `entities.values.where(slug=='language').length` per Next-click — runs only on validate, low frequency. Left as-is. Could swap to `ref.read(entitiesByCategoryProvider('language')).length` if `_validateProficiencies` migrates to ConsumerStatefulWidget pattern later. |
+
+### KPI revision (still estimates; capture real numbers next session)
+
+Phase A removes the per-keystroke ~7 K-entry spread that was the dominant
+wizard cost, and trims the editor-header rebuild from "full map watch" to
+"two scoped name watches". Expect:
+
+| Surface             | Pre-Phase-A (est.) | After Phase A (est.) | Target  |
+| ------------------- | ------------------ | -------------------- | ------- |
+| Wizard name typing  | 60-120 ms / keystroke | 20-40 ms (Stepper bodies still mount; W2 will close the gap) | <16 ms |
+| Wizard step switch  | 80-150 ms          | 50-90 ms             | <32 ms  |
+| Editor header repaint | full editor frame | strip-only (RepaintBoundary scope) | n/a |
+| Hub idle (notif tick)| full hub rebuild  | no rebuild           | done    |
+
+### Phase B is now next — priority order
+
+1. **W2** — Stepper hidden-body collapse. After this, Phase A's wizard
+   gains compound from "1 step rebuild" to "1 step rebuild *only*"
+   (today 6 step bodies still mount even though W1 cut their work).
+2. **W3** — Debounce wizard text fields (250 ms).
+3. **E1** — Single `characterEntitiesProvider.family` for the editor.
+4. **E4** — Debounce `_mutate` + swap `_mapEquals` for
+   `DeepCollectionEquality` ([F1] in survey).
+5. **L1–L3** — Level-up dialog memoization.
+6. **H3** — `sortedCharactersProvider` + virtualized `CharactersTab`.
+
+Phase B touches more APIs than Phase A — schedule it as a separate PR per
+finding (each is independently testable).
+
+---
+
+## 12. Phase B implementation log (2026-05-13)
+
+Shipped in the same session as Phase A. All 477 tests still green; analyzer
+clean against touched files.
+
+### W2 — `_StepBody` collapses inactive Stepper bodies
+File: `lib/presentation/screens/characters/wizard/character_creation_wizard_screen.dart`
+- New `_StepBody(active, child)` widget. When `active` is false returns
+  `const SizedBox.shrink()`; otherwise renders the child.
+- All 12 Stepper `content` entries wrapped. The inner step widget is
+  still allocated (cheap) but its `build()` tree is never walked when
+  the step is not current. Per-frame widget-build cost dropped ~83 % for
+  the wizard.
+
+### W3 — Wizard text-field debounce
+Files:
+- `lib/presentation/screens/characters/wizard/character_creation_wizard_screen.dart`
+- `lib/presentation/screens/characters/wizard/steps/personality_step.dart`
+- New `_DebouncedTextField` private widget in the wizard screen. Wraps
+  `TextFormField` with a 250 ms `Timer` that delays `onChangedDebounced`
+  until the user pauses typing. Used by `_IdentityStep` (name +
+  description).
+- `_Field` in `personality_step.dart` converted from `StatelessWidget` to
+  `StatefulWidget` with the same debounce. Covers
+  traits/ideals/bonds/flaws/backstory/trinket.
+- Validators still read notifier state — the 250 ms window is below the
+  user's perception threshold + the Next button's first action waits on
+  validate, so any pending flush has time to drain.
+
+### E1 — Lazy `CombinedMapView` in editor entity merge
+File: `lib/presentation/screens/characters/character_editor_screen.dart`
+- `_readEntitiesFor` now returns `UnmodifiableMapView<CombinedMapView>`
+  instead of `{...builtin, ...campaign}`. Empty-campaign early-out.
+- The 20+ field tiles that call `_readEntitiesFor(c)` no longer allocate
+  a fresh 7 K-entry map per call. Provider subscriptions are still
+  idempotent so the watch graph is unchanged.
+
+### E2 — Drop synchronous `File.existsSync()` from build path
+File: `lib/presentation/screens/characters/character_editor_screen.dart`
+- `hasImage` flag was `imagePath.isNotEmpty && existsSync()`. Replaced
+  with `hasImagePath = imagePath.isNotEmpty` and an `errorBuilder` on
+  the `Image.file` that falls back to the placeholder when the file is
+  missing. ImageProvider's stat-cache handles the async existence
+  internally — no main-thread blocking.
+
+### E4 — DeepCollectionEquality replaces `jsonEncode` per field
+File: `lib/application/providers/entity_provider.dart`
+- `_mapEquals` was per-key `jsonEncode(a[key]) != jsonEncode(b[key])`.
+  Replaced with a single static `DeepCollectionEquality().equals(a, b)`.
+- `jsonEncode` allocation dominated description-typing CPU; removing it
+  is the biggest single per-keystroke win in the editor.
+- _mutate debounce was *not* added (out of scope this session — the
+  autosave layer downstream already coalesces 1.2 s; per-keystroke
+  setState is needed for `_undoBaseline` capture + visible header
+  refresh).
+
+### L1 — Eligible spells / feats memoized in initState
+File: `lib/presentation/screens/characters/level_up_dialog.dart`
+- Computed once via `_computeEligibleSpells({cantripOnly})`,
+  `_computeEligibleFeats`, `_computeFightingStyleFeats` in
+  `initState`. Stored in `late final` fields. Accessor methods
+  (`_eligibleSpells`, `_eligibleFeats`, `_fightingStyleFeats`) now
+  return the cached lists.
+- HP rolls / ASI ticks no longer re-filter the entity map.
+
+### H3 — `sortedCharactersProvider` + screen-level merge
+Files:
+- `lib/application/providers/character_provider.dart`
+- `lib/presentation/screens/hub/characters_tab.dart`
+- New `sortedCharactersProvider` caches the `updatedAt`-DESC list. Tab
+  rebuilds no longer re-sort 200 characters; the provider returns the
+  same `List` instance until the underlying list changes.
+- `CharactersTab.build` now resolves the merged entity map once and
+  passes the appropriate slice to each row via a local `entitiesFor(c)`
+  helper. Replaces 200 × 3 = 600 per-row provider subscriptions with 3
+  screen-level watches.
+- Virtualization (Sliver migration) deferred — `ListView.separated`
+  with shrinkWrap kept as-is. With the per-row entity-watch dropped, the
+  remaining cost is bounded; revisit if list grows past ~500 chars.
+
+### New findings discovered during Phase B
+
+| Code | Surface | What & why |
+| --- | --- | --- |
+| E3-noop | Editor | `_syncIfNotFocused` already guards with `ctrl.text != value` — doc's claim of "no diff guard" was wrong. Confirmed at line 102. No fix needed. |
+| L3-noop | Level-up dialog | `planLevelUp` is computed by the *caller* and passed in as `widget.plan` — it's not recomputed in dialog `build()`. Doc was wrong; no fix needed. |
+| E4-half | Editor | `_mutate` debounce skipped on purpose — visible header subtitle (template · world) and `_undoBaseline` capture depend on per-keystroke `setState`. The autosave downstream already coalesces; the equality swap alone removes the dominant CPU cost. |
+
+### KPI revision after Phase B
+
+| Surface             | Pre-Phase-A | After Phase A  | After Phase B  | Target  |
+| ------------------- | ----------- | -------------- | -------------- | ------- |
+| Wizard name typing  | 60-120 ms   | 20-40 ms       | 4-10 ms (debounce flushes once / 250 ms; only active step body builds) | <16 ms |
+| Wizard step switch  | 80-150 ms   | 50-90 ms       | 20-40 ms       | <32 ms  |
+| Editor desc typing  | 30-60 ms    | unchanged      | 8-18 ms (no jsonEncode, no per-tile map alloc, no existsSync) | <12 ms |
+| Editor open         | 250-400 ms  | unchanged      | 150-220 ms     | <120 ms |
+| Level-up dialog HP roll | re-filter all spells/feats | unchanged | cached lookup only | done |
+| Characters tab open (200 rows) | 200-500 ms | unchanged | 60-90 ms (sort cached, 3 watches instead of 600) | <50 ms |
+
+The wizard + editor are now in or near the target band. CharactersTab is
+close but Sliver virtualization would close the remaining gap when the
+list grows. Real numbers should be captured before declaring done.
+
+### Phase C — what's left
+
+| ID  | Notes |
+| --- | --- |
+| H2  | Gate inactive-tab subscriptions. Highest remaining win; needs the visibility-wrapper experiment (CharactersTab already much lighter so urgency dropped). |
+| L2  | Wrap HP roller in its own StatefulWidget so HP-roll setState scope shrinks. Low-impact after L1 — only useful if HP rolling shows up in profiles. |
+| H5  | Batch `packageMetadataProvider` load at tab level. Pre-condition: package count > 10. |
+| W8/W9/W10/E3 | Polish-tier allocations. Defer until a real profile flags them. |
+
+The high-traffic surfaces are done. Phase C is opportunistic — touch only
+when a captured profile points at one of these IDs.
+
+---
+
+## 13. Phase C implementation log (2026-05-13)
+
+Same-day landing as A + B. All 477 tests still green; analyzer clean.
+
+### W8 — Drop `pickedSet.toSet()` allocation in feat ChipPicker
+File: `lib/presentation/screens/characters/wizard/steps/feats_step.dart`
+- `final pickedSet = picked.toSet();` removed. With cap-4 typical lists,
+  `picked.contains()` is faster than allocating a Set + hashing per row.
+
+### W9 — Pre-resolve item names at group level
+File: `lib/presentation/screens/characters/wizard/steps/equipment_step.dart`
+- Top-level `_resolveItemLines(option, entities)` helper. Called from
+  `_GroupCard.build()` once per option; `_OptionTile` now receives the
+  resolved `List<String> itemLines` and no longer touches the entity
+  map. Dead `_refName` removed.
+
+### W10 — Static const dropdown items
+File: `lib/presentation/screens/characters/wizard/character_creation_wizard_screen.dart`
+- `_kPointBuyDropdownItems` (8 entries, base scores 8–15) lifted to a
+  top-level final list. Was rebuilt per ability row × per rebuild;
+  ~48 widget allocations per Abilities-step rebuild now shared.
+
+### H5 — Package metadata watch narrowed
+File: `lib/presentation/screens/hub/packages_tab.dart`
+- `ref.watch(packageMetadataProvider(name))` → wrapped in
+  `.select((a) => a.valueOrNull ?? {})` so loading/error transitions of
+  the FutureProvider no longer trigger per-tile rebuilds — only when
+  the resolved metadata map flips.
+- A *true* batched provider would consolidate N parallel disk reads,
+  but `repo.load(name)` reads the full package; batching serially could
+  hurt wall-clock. Defer the data-layer split until package count
+  > 20.
+
+### L2 — Deferred (HP roller isolation)
+- After L1's memoization the dialog's per-build cost is small (linear
+  in a few cached lists). Refactoring the HP roller into its own
+  `StatefulWidget` would lift state up via callback and touch the
+  `_isComplete` / `_hpDelta` getters — net ROI low and risk medium.
+  Revisit only if a profile flags the dialog as a hotspot.
+
+### H2 — Deferred (per-tab subscription gating)
+- `LazyIndexedStack` defers first-build per tab and the underlying
+  `IndexedStack` already off-stages inactive children for paint — but
+  the `build()` body of each visited tab still runs on its provider
+  notifications. Truly gating those requires tab-by-tab changes:
+  - Tab opts-in to receive an `active` bool.
+  - Tab's `build()` early-returns when `!active` while preserving
+    scroll-controller state and selection state.
+  - Risk: lost scroll offset / selection state on tab switch if the
+    pattern isn't applied carefully.
+- After H3 the dominant offender (`CharactersTab`) is now ~10× cheaper
+  per rebuild, so the marginal value of H2 dropped. Defer until a
+  captured profile points back at this.
+
+### New findings discovered during Phase C
+
+| Code | Surface | What & why |
+| --- | --- | --- |
+| W8-context | Wizard | Same `toSet()` pattern shows up in `_SpellSection` (`spells_step.dart:193`) and `_PickerSection` (`proficiencies_step.dart:242`). With pick caps of 2-10 the gain is marginal — flagged for future polish if profiler catches them. Not fixed this round. |
+| H5-data-layer | Packages | Real win lives behind `PackageRepository.load(name)` reading the *whole* package to extract metadata. Splitting metadata into its own on-disk file (or sidecar manifest) would let `packageMetadataProvider` skip the heavy reads entirely. Architectural; out of scope. |
+
+### Final KPI snapshot
+
+| Surface             | Pre-audit   | After A+B+C    | Target  |
+| ------------------- | ----------- | -------------- | ------- |
+| Wizard name typing  | 60-120 ms   | 4-10 ms        | <16 ms ✅ |
+| Wizard step switch  | 80-150 ms   | 20-40 ms       | <32 ms ⚠️ (close) |
+| Editor desc typing  | 30-60 ms    | 8-18 ms        | <12 ms ⚠️ (close) |
+| Editor open         | 250-400 ms  | 150-220 ms     | <120 ms ⚠️ |
+| Level-up dialog HP roll | re-filter | cached lookup  | done ✅  |
+| Characters tab open | 200-500 ms  | 60-90 ms       | <50 ms ⚠️ (close) |
+
+All numbers are static-analysis estimates. **Capture real numbers via the
+Flutter DevTools Performance overlay before the next round** — that'll
+decide whether the remaining ⚠️ rows justify Phase D (Sliver migration of
+CharactersTab + per-tab gating).

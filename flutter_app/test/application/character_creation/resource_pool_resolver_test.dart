@@ -43,7 +43,7 @@ Map<String, dynamic> _poolGrant({
       'payload': {
         'pool_ref': {'slug': 'resource-pool', 'name': pool},
         'recharge': recharge,
-        if (count != null) 'count': count,
+        'count': ?count,
       },
       if (scalesTable != null)
         'scales_with': {

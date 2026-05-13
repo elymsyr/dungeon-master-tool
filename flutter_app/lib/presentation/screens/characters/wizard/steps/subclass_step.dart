@@ -30,11 +30,11 @@ class SubclassStep extends ConsumerWidget {
       );
     }
     final entities = ref.watch(wizardEntitiesProvider);
-    final subclasses = <Entity>[
-      for (final e in entities.values)
-        if (e.categorySlug == 'subclass' &&
-            _parentClassId(e) == draft.classId)
-          e,
+    // W4: filter the cached subclass list down to entries for this class.
+    final allSubclasses = ref.watch(entitiesByCategoryProvider('subclass'));
+    final subclasses = [
+      for (final e in allSubclasses)
+        if (_parentClassId(e) == draft.classId) e,
     ];
     if (subclasses.isEmpty) {
       return const Padding(
@@ -42,6 +42,8 @@ class SubclassStep extends ConsumerWidget {
         child: Text('No subclasses available for this class.'),
       );
     }
+    // Re-sort by granted_at_level, then name (name is already alphabetical
+    // from the family provider, so the stable sort preserves it).
     subclasses.sort((a, b) {
       final la = _grantedAtLevel(a);
       final lb = _grantedAtLevel(b);

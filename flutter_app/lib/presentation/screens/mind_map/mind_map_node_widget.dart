@@ -394,9 +394,9 @@ class _MindMapNodeWidgetState extends ConsumerState<MindMapNodeWidget> {
         _nodeStartPos = null;
         widget.notifier.commitDragOverride(n.id);
       },
-      child: MouseRegion(
+      child: const MouseRegion(
         cursor: SystemMouseCursors.move,
-        child: const SizedBox.expand(),
+        child: SizedBox.expand(),
       ),
     );
   }

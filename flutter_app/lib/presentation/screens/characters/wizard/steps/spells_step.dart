@@ -57,13 +57,13 @@ class SpellsStep extends ConsumerWidget {
         defaultPreparedSpells(kind, draft.level);
     final maxSpellLevel = maxPreparableSpellLevel(kind, draft.level);
 
-    final spells = entities.values
-        .where((e) => e.categorySlug == 'spell')
-        .where((e) => _classRefs(e).contains(draft.classId))
-        .toList();
-    final cantrips = spells.where((e) => _level(e) == 0).toList()
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    final leveled = spells
+    // W4: pull the slug-filtered + name-sorted list from the cached family
+    // instead of re-running `entities.values.where(...)` per build.
+    final allSpells = ref.watch(entitiesByCategoryProvider('spell'));
+    final classSpells =
+        allSpells.where((e) => _classRefs(e).contains(draft.classId));
+    final cantrips = classSpells.where((e) => _level(e) == 0).toList();
+    final leveled = classSpells
         .where((e) => _level(e) >= 1 && _level(e) <= maxSpellLevel)
         .toList()
       ..sort((a, b) {

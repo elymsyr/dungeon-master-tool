@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,9 +6,12 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/cloud_backup_provider.dart';
+import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
+import '../../../application/services/builtin_srd_entities.dart';
 import '../../../domain/entities/character.dart';
+import '../../../domain/entities/entity.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/character_stat_chips.dart';
@@ -33,6 +37,23 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
+    // H3: single screen-level entity merge instead of per-row
+    // readCharacterEntities calls. 200 rows × 3 provider watches → 3
+    // watches total. Lazy CombinedMapView so reads stay O(1) per id.
+    final builtin = ref.watch(builtinSrdEntitiesProvider);
+    final activeWorld = ref.watch(activeCampaignProvider) ?? '';
+    final campaign = ref.watch(entityProvider);
+    final merged = (activeWorld.isEmpty || campaign.isEmpty)
+        ? builtin
+        : UnmodifiableMapView<String, Entity>(
+            CombinedMapView<String, Entity>([campaign, builtin]),
+          );
+    Map<String, Entity> entitiesFor(Character c) {
+      if (c.worldName.isEmpty) return builtin;
+      if (c.worldName != activeWorld) return builtin;
+      return merged;
+    }
+
     final charactersAsync = ref.watch(characterListProvider);
 
     return SingleChildScrollView(
@@ -80,9 +101,11 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
 
               charactersAsync.when(
                 data: (all) {
-                  // Sort by updatedAt DESC — last edited/opened first.
-                  final sorted = [...all]
-                    ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+                  // H3: sort hoisted to provider — cached until the list
+                  // identity changes. `all` parameter retained to keep
+                  // the AsyncValue.when type contract; we use the
+                  // provider's cached result instead.
+                  final sorted = ref.watch(sortedCharactersProvider);
                   if (sorted.isEmpty) {
                     return Container(
                       padding: const EdgeInsets.all(24),
@@ -146,7 +169,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                                   _showCharacterSettings(c.id, palette),
                               infoChips: CharacterStatChips(
                                 lines: characterStatLines(
-                                    c, readCharacterEntities(ref, c)),
+                                    c, entitiesFor(c)),
                                 palette: palette,
                                 compact: true,
                               ),
@@ -244,10 +267,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     context.push('/character/${c.id}');
   }
 
-  List<Character> _sortedList() {
-    final all = ref.read(characterListProvider).valueOrNull ?? const [];
-    return [...all]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-  }
+  List<Character> _sortedList() => ref.read(sortedCharactersProvider);
 
   String _subInfo(Character c, L10n l10n) {
     final parts = <String>[c.templateName];

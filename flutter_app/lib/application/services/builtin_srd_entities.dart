@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/entity.dart';
@@ -114,10 +115,37 @@ const kBuiltinSrdWorldSentinel = '';
 /// campaign's entities on top so authored content overrides bundled rows.
 /// All wizard step widgets should `ref.watch(wizardEntitiesProvider)`
 /// instead of touching `entityProvider` directly.
+/// Memoized name-sorted list of entities matching a single category slug
+/// (e.g. `'spell'`, `'language'`, `'subclass'`). Wizard/editor steps that
+/// repeatedly filter the ~7 K-entry entity map should `ref.watch` this
+/// instead of doing `entities.values.where(...).toList()..sort(...)` per
+/// build — the family caches per-slug and only invalidates when the
+/// upstream `wizardEntitiesProvider` map changes by identity (rare).
+final entitiesByCategoryProvider =
+    Provider.autoDispose.family<List<Entity>, String>((ref, slug) {
+  final all = ref.watch(wizardEntitiesProvider);
+  final out = <Entity>[];
+  for (final e in all.values) {
+    if (e.categorySlug == slug) out.add(e);
+  }
+  out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  return List<Entity>.unmodifiable(out);
+});
+
 final wizardEntitiesProvider = Provider.autoDispose<Map<String, Entity>>((ref) {
-  final draft = ref.watch(characterDraftProvider);
+  // Narrow the draft watch to just the field we need (W1) — otherwise
+  // every keystroke into name/description/backstory invalidates this
+  // provider and spreads ~7 K entries downstream.
+  final world = ref.watch(
+    characterDraftProvider.select((d) => d.worldName),
+  );
   final builtin = ref.watch(builtinSrdEntitiesProvider);
-  if (draft.worldName.isEmpty) return builtin;
+  if (world.isEmpty) return builtin;
   final campaign = ref.watch(entityProvider);
-  return mergeWithBuiltinSrd(campaign, builtin, useCampaign: true);
+  if (campaign.isEmpty) return builtin;
+  // Lazy view — O(1) construction, no 7 K-entry spread. Campaign wins on
+  // id collisions because it comes first in the lookup chain.
+  return UnmodifiableMapView<String, Entity>(
+    CombinedMapView<String, Entity>([campaign, builtin]),
+  );
 });

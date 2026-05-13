@@ -15,7 +15,7 @@ void main() {
     });
 
     test('copyWith preserves unchanged fields', () {
-      final mapData = MapData(
+      const mapData = MapData(
         imagePath: '/maps/world.png',
         pins: [
           {'name': 'Tavern', 'x': 10.0, 'y': 20.0},
@@ -34,7 +34,7 @@ void main() {
     });
 
     test('toJson / fromJson roundtrip', () {
-      final mapData = MapData(
+      const mapData = MapData(
         imagePath: '/maps/forest.png',
         pins: [
           {'name': 'Cave Entrance', 'x': 100.0, 'y': 200.0},
@@ -72,7 +72,7 @@ void main() {
     });
 
     test('copyWith preserves unchanged fields', () {
-      final campaign = Campaign(
+      const campaign = Campaign(
         worldName: 'Forgotten Realms',
         entities: {
           'npc-1': {'name': 'Elminster', 'type': 'npc'},
@@ -91,7 +91,7 @@ void main() {
     });
 
     test('toJson / fromJson roundtrip', () {
-      final campaign = Campaign(
+      const campaign = Campaign(
         worldName: 'Greyhawk',
         entities: {
           'npc-1': {'name': 'Mordenkainen', 'level': 20},
@@ -138,7 +138,7 @@ void main() {
       const campaignNoSchema = Campaign(worldName: 'No Schema World');
       expect(campaignNoSchema.worldSchema, isNull);
 
-      final campaignWithSchema = Campaign(
+      const campaignWithSchema = Campaign(
         worldName: 'Schema World',
         worldSchema: WorldSchema(
           schemaId: 'ws-1',
@@ -153,7 +153,7 @@ void main() {
     });
 
     test('toJson / fromJson roundtrip with worldSchema', () {
-      final campaign = Campaign(
+      const campaign = Campaign(
         worldName: 'Schema World',
         worldSchema: WorldSchema(
           schemaId: 'ws-1',
@@ -180,7 +180,7 @@ void main() {
     });
 
     test('populated entities and sessions', () {
-      final campaign = Campaign(
+      const campaign = Campaign(
         worldName: 'Dark Sun',
         entities: {
           'npc-1': {'name': 'Rikus', 'class': 'gladiator', 'level': 15},

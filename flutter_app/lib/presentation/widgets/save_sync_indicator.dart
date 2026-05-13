@@ -607,7 +607,7 @@ class _StorageUsageBar extends ConsumerWidget {
       data: (bytes) {
         final usedMb = bytes / (1024 * 1024);
         final totalMb = quotaBytes / (1024 * 1024);
-        final itemLimitMb = cloudBackupItemSizeLimit / (1024 * 1024);
+        const itemLimitMb = cloudBackupItemSizeLimit / (1024 * 1024);
         final ratio = (bytes / quotaBytes).clamp(0.0, 1.0);
         final remainingMb = totalMb - usedMb;
 

@@ -7,7 +7,7 @@ void main() {
 
   group('AssetRef', () {
     test('cloud URI parses to r2Key and round-trips via formatCloudUri', () {
-      final key = 'user-uuid/world-1/$validSha.png';
+      const key = 'user-uuid/world-1/$validSha.png';
       final ref = AssetRef(AssetRef.formatCloudUri(key));
       expect(ref.isCloud, isTrue);
       expect(ref.isLocal, isFalse);

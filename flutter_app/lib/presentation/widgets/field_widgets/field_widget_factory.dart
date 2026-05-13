@@ -433,8 +433,6 @@ _StepperMode _stepperModeForKey(String key) {
   switch (key) {
     case 'level':
     case 'ac':
-    case 'xp':
-    case 'proficiency_bonus':
       return _StepperMode.editOnly;
     default:
       return _StepperMode.none;
@@ -509,6 +507,70 @@ int _clampInt(int v, num? min, num? max) {
   if (min != null && v < min) return min.toInt();
   if (max != null && v > max) return max.toInt();
   return v;
+}
+
+/// Int fields that render as a row of N checkbox pips rather than a textbox.
+/// Death saves and heroic inspiration are 0..3 counters that read more
+/// naturally as pips on a character sheet.
+bool _isPipCounterKey(String key) =>
+    key == 'death_saves_successes' ||
+    key == 'death_saves_failures' ||
+    key == 'heroic_inspiration';
+
+/// Row of [max] tappable pips. Tap pip i to set count to i+1; tap the
+/// currently-filled top pip to decrement by one.
+class _PipCounter extends StatelessWidget {
+  final int count;
+  final int max;
+  final bool readOnly;
+  final ValueChanged<int> onChanged;
+
+  const _PipCounter({
+    required this.count,
+    required this.max,
+    required this.readOnly,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>();
+    final fillColor = palette?.tabIndicator ??
+        Theme.of(context).colorScheme.primary;
+    final emptyColor = Theme.of(context).colorScheme.outline;
+    final clamped = count.clamp(0, max);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < max; i++)
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: InkWell(
+              onTap: readOnly
+                  ? null
+                  : () {
+                      final tapped = i + 1;
+                      final next = tapped == clamped ? clamped - 1 : tapped;
+                      onChanged(next.clamp(0, max));
+                    },
+              borderRadius: BorderRadius.circular(4),
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: i < clamped ? fillColor : Colors.transparent,
+                  border: Border.all(
+                    color: i < clamped ? fillColor : emptyColor,
+                    width: 1.5,
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 // --- TEXT ---
@@ -854,8 +916,27 @@ class _IntegerFieldWidgetState extends State<_IntegerFieldWidget> {
     final showStepper =
         mode == _StepperMode.always ||
         (mode == _StepperMode.editOnly && !widget.readOnly);
-    if (effectiveReadOnly && !hasValue && !showStepper)
+    if (effectiveReadOnly && !hasValue && !showStepper) {
       return const SizedBox.shrink();
+    }
+
+    // Counter-style int fields: render N pips instead of a textbox. The pip
+    // count is the field's max validation (default 3). Tap toggles to that
+    // index; tapping the currently-filled top pip clears one.
+    if (_isPipCounterKey(widget.schema.fieldKey)) {
+      final maxPips =
+          widget.schema.validation.maxValue?.toInt() ?? 3;
+      final current = int.tryParse(raw?.toString() ?? '') ?? 0;
+      return _LabeledFieldRow(
+        label: widget.schema.label,
+        child: _PipCounter(
+          count: current,
+          max: maxPips,
+          readOnly: widget.readOnly,
+          onChanged: (v) => widget.onChanged(v),
+        ),
+      );
+    }
 
     final valueChild = effectiveReadOnly
         ? Text(
@@ -1435,7 +1516,7 @@ class _CombatStatsFieldWidgetState extends State<_CombatStatsFieldWidget> {
                       readOnly: widget.readOnly,
                       maxLines: widget.readOnly ? null : 3,
                       textStyle: TextStyle(fontSize: 13, color: p?.htmlText),
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         hintText: '@ to mention entities',
                         isDense: true,
                         alignLabelWithHint: true,
@@ -1756,21 +1837,28 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                   children: [
                     Row(
                       children: [
-                        // Equip toggle
+                        // Equip toggle — for spells the toggle marks the row
+                        // as "prepared" instead of "equipped".
                         if (showEquip) ...[
                           SizedBox(
                             width: 28,
                             child: IconButton(
                               icon: Icon(
-                                isEquipped
-                                    ? Icons.shield
-                                    : Icons.shield_outlined,
+                                schema.fieldKey == 'spells_known'
+                                    ? (isEquipped
+                                        ? Icons.check_box
+                                        : Icons.check_box_outline_blank)
+                                    : (isEquipped
+                                        ? Icons.shield
+                                        : Icons.shield_outlined),
                                 size: 16,
                                 color: isEquipped
                                     ? Theme.of(context).colorScheme.primary
                                     : Theme.of(context).colorScheme.outline,
                               ),
-                              tooltip: isEquipped ? 'Equipped' : 'Not equipped',
+                              tooltip: schema.fieldKey == 'spells_known'
+                                  ? (isEquipped ? 'Prepared' : 'Not prepared')
+                                  : (isEquipped ? 'Equipped' : 'Not equipped'),
                               onPressed: readOnly
                                   ? null
                                   : () {
@@ -1826,8 +1914,9 @@ class _ReferenceListFieldWidgetState extends State<_ReferenceListFieldWidget> {
                                       final sub = _relationSubtitle(
                                         linkedEntity,
                                       );
-                                      if (sub == null)
+                                      if (sub == null) {
                                         return const SizedBox.shrink();
+                                      }
                                       return Text(
                                         '· $sub',
                                         style: TextStyle(
@@ -2710,8 +2799,9 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
 
   List<String> get _images {
     if (widget.value is List) return List<String>.from(widget.value as List);
-    if (widget.value is String && (widget.value as String).isNotEmpty)
+    if (widget.value is String && (widget.value as String).isNotEmpty) {
       return [widget.value as String];
+    }
     return [];
   }
 
@@ -2779,8 +2869,9 @@ class _ImageFieldWidgetState extends ConsumerState<_ImageFieldWidget> {
   @override
   Widget build(BuildContext context) {
     final images = _images;
-    if (_currentIndex >= images.length)
+    if (_currentIndex >= images.length) {
       _currentIndex = images.isEmpty ? 0 : images.length - 1;
+    }
 
     final palette = Theme.of(context).extension<DmToolColors>();
 
