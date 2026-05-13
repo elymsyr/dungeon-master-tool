@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -17,15 +16,17 @@ import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/role_provider.dart';
 import '../../application/providers/world_membership_provider.dart';
 import '../../application/providers/world_online_status_provider.dart';
-import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
+import '../../data/network/network_providers.dart';
 import '../../data/repositories/cloud_backup_repository_impl.dart';
 import '../../domain/entities/cloud_backup_meta.dart';
+import '../../application/services/media_bundler.dart';
 import '../theme/dm_tool_colors.dart';
+import 'online_world_widgets.dart';
 import 'save_info_section.dart';
 
 /// AppBar'da save + cloud sync durumunu gösteren unified indicator.
@@ -229,14 +230,6 @@ class _SaveSyncDialog extends ConsumerWidget {
                         (s) => s.copyWith(autoLocalSave: v)),
                     palette: palette,
                   ),
-                  if (hasCloud)
-                    _SettingsCheckbox(
-                      label: 'Auto cloud save (debounced)',
-                      value: uiState.autoCloudSave,
-                      onChanged: (v) => ref.read(uiStateProvider.notifier).update(
-                          (s) => s.copyWith(autoCloudSave: v)),
-                      palette: palette,
-                    ),
                   const SizedBox(height: 16),
 
                   // ── Actions (full mode only) ──
@@ -561,7 +554,6 @@ class _OnlineWorldPanel extends ConsumerWidget {
     if (!onlineIds.contains(worldId)) return const SizedBox.shrink();
     final role =
         ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
-    final membersAsync = ref.watch(worldMembersProvider(worldId));
 
     return Padding(
       padding: const EdgeInsets.only(top: 20),
@@ -569,228 +561,22 @@ class _OnlineWorldPanel extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (role == WorldRole.dm) ...[
-            _SectionLabel('Invite Code', palette),
+            OnlineSectionLabel('Invite Code', palette),
             const SizedBox(height: 8),
-            _InviteCodeRow(palette: palette, worldId: worldId),
+            InviteCodeRow(palette: palette, worldId: worldId),
             const SizedBox(height: 16),
           ],
-          _SectionLabel('Members', palette),
+          OnlineSectionLabel('Members', palette),
           const SizedBox(height: 8),
-          membersAsync.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-            error: (e, _) => Text(
-              'Could not load members: $e',
-              style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
-            ),
-            data: (members) {
-              if (members.isEmpty) {
-                return Text(
-                  'No members yet.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: palette.sidebarLabelSecondary,
-                  ),
-                );
-              }
-              return Column(
-                children: [
-                  for (final m in members)
-                    _MemberRow(member: m, palette: palette),
-                ],
-              );
-            },
-          ),
+          MembersList(worldId: worldId, palette: palette),
         ],
       ),
     );
   }
 }
 
-class _InviteCodeRow extends ConsumerStatefulWidget {
-  final DmToolColors palette;
-  final String worldId;
-  const _InviteCodeRow({required this.palette, required this.worldId});
-
-  @override
-  ConsumerState<_InviteCodeRow> createState() => _InviteCodeRowState();
-}
-
-class _InviteCodeRowState extends ConsumerState<_InviteCodeRow> {
-  bool _busy = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = widget.palette;
-    final codeAsync =
-        ref.watch(worldActiveInviteCodeProvider(widget.worldId));
-    return codeAsync.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
-      error: (e, _) => Text(
-        'Could not load invite: $e',
-        style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
-      ),
-      data: (code) {
-        if (code == null) {
-          return Text(
-            'No invite available.',
-            style:
-                TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary),
-          );
-        }
-        return Row(
-            children: [
-              Expanded(
-                child: SelectableText(
-                  code,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 4,
-                    color: palette.tabActiveText,
-                  ),
-                ),
-              ),
-              IconButton(
-                tooltip: 'Copy',
-                icon: const Icon(Icons.copy, size: 16),
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints:
-                    const BoxConstraints(minWidth: 28, minHeight: 28),
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: code));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invite code copied')),
-                  );
-                },
-              ),
-              IconButton(
-                tooltip: 'Regenerate (invalidates old code)',
-                icon: const Icon(Icons.refresh, size: 16),
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints:
-                    const BoxConstraints(minWidth: 28, minHeight: 28),
-                onPressed: _busy ? null : _regenerate,
-              ),
-            ],
-        );
-      },
-    );
-  }
-
-  Future<void> _regenerate() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Regenerate invite?'),
-        content: const Text(
-            'This invalidates the current code. Anyone using the old code '
-            'will need the new one to join.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Regenerate')),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    setState(() => _busy = true);
-    try {
-      await ref
-          .read(worldMembershipServiceProvider)
-          .regenerateInvite(widget.worldId);
-      ref.invalidate(worldActiveInviteCodeProvider(widget.worldId));
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invite code regenerated')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Regenerate failed: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-}
-
-class _MemberRow extends StatelessWidget {
-  final WorldMember member;
-  final DmToolColors palette;
-  const _MemberRow({required this.member, required this.palette});
-
-  @override
-  Widget build(BuildContext context) {
-    final name = member.displayName?.isNotEmpty == true
-        ? member.displayName!
-        : (member.username?.isNotEmpty == true
-            ? '@${member.username}'
-            : member.userId.substring(0, 8));
-    final isDm = member.role == WorldRole.dm;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 12,
-            backgroundColor: palette.featureCardAccent.withValues(alpha: 0.2),
-            backgroundImage: (member.avatarUrl?.isNotEmpty == true)
-                ? NetworkImage(member.avatarUrl!)
-                : null,
-            child: (member.avatarUrl?.isEmpty ?? true)
-                ? Icon(Icons.person, size: 12, color: palette.tabActiveText)
-                : null,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              name,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: palette.tabActiveText),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: isDm
-                  ? palette.featureCardAccent.withValues(alpha: 0.2)
-                  : palette.sidebarDivider,
-              borderRadius: palette.br,
-            ),
-            child: Text(
-              isDm ? 'DM' : 'PLAYER',
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1,
-                color: isDm ? palette.tabIndicator : palette.tabActiveText,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// _InviteCodeRow / _MemberRow extracted to online_world_widgets.dart so the
+// world-settings online panel can render the same shape.
 
 /// Actions panel — world açıkken "Save Locally" + "Make Online" (toggle);
 /// package açıkken klasik "Save Locally" + "Backup to Cloud" + "Sync from
@@ -947,14 +733,41 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
   }
 
   Future<void> _makeOnline(String campaignName, String worldId) async {
+    // Beta-only: online multiplayer only for beta members.
+    if (!ref.read(betaProvider).isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Online worlds are beta-only. Open Settings → Subscriptions to join the free beta.',
+          ),
+        ),
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       final repo = ref.read(campaignRepositoryProvider);
       final data = await repo.load(campaignName);
-      final stateJson = jsonEncode(data);
+      // Bundle media → R2 upload + rewrite local paths to `dmt-asset://` so
+      // players (and re-opens on other devices) can fetch images.
+      Map<String, dynamic> bundled = data;
+      final assetSvc = ref.read(assetServiceProvider);
+      if (assetSvc != null) {
+        try {
+          final res = await MediaBundler(assetSvc).bundleWorldMedia(
+            worldName: campaignName,
+            worldId: worldId,
+            data: data,
+          );
+          bundled = res.data;
+        } catch (e) {
+          debugPrint('makeOnline media bundle error: $e');
+        }
+      }
+      final stateJson = jsonEncode(bundled);
       final templateId =
-          (data['world_schema'] as Map?)?['schemaId'] as String?;
-      final templateHash = data['template_hash'] as String?;
+          (bundled['world_schema'] as Map?)?['schemaId'] as String?;
+      final templateHash = bundled['template_hash'] as String?;
       await ref.read(worldMembershipServiceProvider).publishWorld(
             worldId: worldId,
             worldName: campaignName,

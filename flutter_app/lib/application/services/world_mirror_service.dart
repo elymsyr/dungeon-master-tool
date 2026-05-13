@@ -168,14 +168,15 @@ class WorldMirrorService {
     required String stateJson,
   }) async {
     _stamp(worldId);
+    // publish_world RPC (SECURITY DEFINER, row_security off) upsert eder ve
+    // owner_id'yi auth.uid()'den çeker — UPSERT/RLS gürültüsünü engeller.
     try {
-      await client.from('worlds').upsert({
-        'id': worldId,
-        'world_name': worldName,
-        'template_id': templateId,
-        'template_hash': templateHash,
-        'state_json': stateJson,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      await client.rpc('publish_world', params: {
+        'p_world_id': worldId,
+        'p_world_name': worldName,
+        'p_template_id': templateId,
+        'p_template_hash': templateHash,
+        'p_state_json': stateJson,
       });
     } catch (e) {
       debugPrint('pushWorldState error: $e');

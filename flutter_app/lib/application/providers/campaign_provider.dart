@@ -11,11 +11,14 @@ import '../../data/repositories/campaign_repository_impl.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
+import '../../data/network/network_providers.dart';
 import '../services/campaign_import_service.dart';
+import '../services/media_bundler.dart';
+import '../services/world_mirror_service.dart';
 import 'online_worlds_provider.dart';
-import 'role_provider.dart';
 import 'world_mirror_provider.dart';
-import '../../domain/entities/online/world_role.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/config/supabase_config.dart';
 
 final campaignLocalDsProvider = Provider((_) => CampaignLocalDataSource());
 
@@ -160,30 +163,74 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     // Offline world → mirror push'u atla (RLS gürültüsünü engeller).
     final onlineIds = _ref.read(onlineWorldIdsProvider);
     if (!onlineIds.contains(worldId)) return;
-    // Entity + world state'i sadece DM yazar; player'ın push girişimi
-    // RLS tarafından reddedilir, hata logunu engellemek için erken çık.
-    final role =
-        _ref.read(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
-    if (role != WorldRole.dm) return;
-    final entitiesRaw = data['entities'];
-    final entitiesBlob = entitiesRaw is Map<String, dynamic>
-        ? entitiesRaw
-        : const <String, dynamic>{};
-    // ignore: discarded_futures
-    mirror.pushEntities(worldId: worldId, entitiesBlob: entitiesBlob);
-
+    final worldName = state ?? '';
     final schemaMap = data['world_schema'];
     final templateId = schemaMap is Map ? schemaMap['schemaId'] as String? : null;
     final templateHash = data['template_hash'] as String?;
-    // Üst-düzey state (sessions, combat, vs.) — entities dahil çünkü server
-    // RLS ayrıştırması yapmıyor; state_json sadece DM açısından truth.
+    // Media'yı R2'ye yükleyip `dmt-asset://` ref'lerine rewrite et;
+    // sonra entity + state push. Bundle SHA-dedupe sayesinde repeat
+    // save'ler ucuz. AssetService yoksa (worker URL define yok) raw data.
     // ignore: discarded_futures
-    mirror.pushWorldState(
+    _bundleAndPush(
+      mirror: mirror,
       worldId: worldId,
-      worldName: state ?? '',
+      worldName: worldName,
       templateId: templateId,
       templateHash: templateHash,
-      stateJson: jsonEncode(data),
+      data: data,
+    );
+  }
+
+  Future<void> _bundleAndPush({
+    required WorldMirrorService mirror,
+    required String worldId,
+    required String worldName,
+    String? templateId,
+    String? templateHash,
+    required Map<String, dynamic> data,
+  }) async {
+    // Player rolündeki user world_entities/worlds tablolarına yazamaz (RLS).
+    // Async lookup — circular dep'i önlemek için doğrudan Supabase.
+    if (SupabaseConfig.isConfigured) {
+      final auth = Supabase.instance.client.auth.currentUser;
+      if (auth == null) return;
+      try {
+        final row = await Supabase.instance.client
+            .from('world_members')
+            .select('role')
+            .eq('world_id', worldId)
+            .eq('user_id', auth.id)
+            .maybeSingle();
+        if (row == null || row['role'] != 'dm') return;
+      } catch (_) {
+        return;
+      }
+    }
+    final assetSvc = _ref.read(assetServiceProvider);
+    Map<String, dynamic> bundled = data;
+    if (assetSvc != null) {
+      try {
+        final res = await MediaBundler(assetSvc).bundleWorldMedia(
+          worldName: worldName,
+          worldId: worldId,
+          data: data,
+        );
+        bundled = res.data;
+      } catch (e, st) {
+        debugPrint('online mirror media bundle error: $e\n$st');
+      }
+    }
+    final entitiesRaw = bundled['entities'];
+    final entitiesBlob = entitiesRaw is Map<String, dynamic>
+        ? entitiesRaw
+        : const <String, dynamic>{};
+    await mirror.pushEntities(worldId: worldId, entitiesBlob: entitiesBlob);
+    await mirror.pushWorldState(
+      worldId: worldId,
+      worldName: worldName,
+      templateId: templateId,
+      templateHash: templateHash,
+      stateJson: jsonEncode(bundled),
     );
   }
 

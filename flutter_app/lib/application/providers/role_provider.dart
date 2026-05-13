@@ -57,3 +57,28 @@ final currentWorldRoleProvider = FutureProvider<WorldRole>((ref) async {
 /// dallanma için tüketir.
 WorldRole readCurrentRole(WidgetRef ref) =>
     ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
+
+/// Belirli bir worldId için rol — aktif campaign'e bağlı değil. Hub'daki
+/// world settings dialog'u (campaign load edilmeden açılır) tüketir.
+final worldRoleProvider =
+    FutureProvider.family<WorldRole, String>((ref, worldId) async {
+  if (!SupabaseConfig.isConfigured) return WorldRole.none;
+  final auth = ref.watch(authProvider);
+  if (auth == null) return WorldRole.none;
+  try {
+    final row = await Supabase.instance.client
+        .from('world_members')
+        .select('role')
+        .eq('world_id', worldId)
+        .eq('user_id', auth.uid)
+        .maybeSingle();
+    if (row == null) return WorldRole.none;
+    return switch (row['role'] as String?) {
+      'dm' => WorldRole.dm,
+      'player' => WorldRole.player,
+      _ => WorldRole.none,
+    };
+  } catch (_) {
+    return WorldRole.none;
+  }
+});
