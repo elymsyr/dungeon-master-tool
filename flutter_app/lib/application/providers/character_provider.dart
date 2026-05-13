@@ -10,6 +10,7 @@ import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/services/character_resolver.dart';
 import '../services/builtin_srd_entities.dart';
+import 'auth_provider.dart';
 import 'campaign_provider.dart';
 import 'entity_provider.dart';
 import 'online_worlds_provider.dart';
@@ -108,6 +109,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     List<String> tags = const [],
     String portraitPath = '',
     Map<String, dynamic> seedFields = const {},
+    String? ownerId,
   }) async {
     final playerCategory = findPlayerCategory(template);
     if (playerCategory == null) {
@@ -128,12 +130,18 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       tags: tags,
       fields: fields,
     );
+    // Online player rolünde owner_id zorunlu (RLS `Chars: player inserts
+    // own` policy `owner_id = auth.uid()` ister). DM rolünde owner_id
+    // null bırakılır (DM-owned implicit, DM policy zaten `is_world_dm`
+    // ile geçer). Auth yoksa null kalır → offline akış değişmez.
+    final effectiveOwnerId = ownerId ?? _resolveOwnerIdForWorld(worldName);
     final character = Character(
       id: _uuid.v4(),
       templateId: template.schemaId,
       templateName: template.name,
       entity: entity,
       worldName: worldName,
+      ownerId: effectiveOwnerId,
       createdAt: now,
       updatedAt: now,
     );
@@ -141,6 +149,21 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     state = AsyncValue.data([character, ...state.valueOrNull ?? const []]);
     _mirrorPush(character);
     return character;
+  }
+
+  /// Resolves the owner_id for a freshly created character. Online member
+  /// olduğumuz worldlerde auth.uid yazılır — RLS `Chars: player inserts
+  /// own` policy `owner_id = auth.uid()` ister, DM policy `is_world_dm`
+  /// üzerinden geçer (owner_id zarar vermez). Offline / non-member
+  /// dünyalarda null bırakılır.
+  String? _resolveOwnerIdForWorld(String worldName) {
+    final auth = _ref.read(authProvider);
+    if (auth == null) return null;
+    final worldId = _worldIdFor(worldName);
+    if (worldId == null) return null;
+    final onlineIds = _ref.read(onlineWorldIdsProvider);
+    if (!onlineIds.contains(worldId)) return null;
+    return auth.uid;
   }
 
   /// Bir world'de template güncellenince o world'e bağlı karakterlerin

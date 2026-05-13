@@ -24,13 +24,17 @@ import '../theme/dm_tool_colors.dart';
 
 /// Paket / karakter import dialogu — aktif dünyaya paket veya karakter
 /// import etmek için. Üstteki segmented control ile kaynak seçilir.
+///
+/// `viewOnly: true` ile import/remove butonları gizlenir, kaynak seçici de
+/// kaldırılır — sadece kurulu paketleri listeler. Player rolünde kullanılır.
 class ImportPackageDialog extends ConsumerStatefulWidget {
-  const ImportPackageDialog({super.key});
+  final bool viewOnly;
+  const ImportPackageDialog({super.key, this.viewOnly = false});
 
-  static Future<void> show(BuildContext context) {
+  static Future<void> show(BuildContext context, {bool viewOnly = false}) {
     return showDialog(
       context: context,
-      builder: (_) => const ImportPackageDialog(),
+      builder: (_) => ImportPackageDialog(viewOnly: viewOnly),
     );
   }
 
@@ -72,21 +76,23 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     final compatService = TemplateCompatibilityService();
 
     return AlertDialog(
-      title: Text(l10n.importPackageTitle),
+      title: Text(widget.viewOnly ? 'Packages' : l10n.importPackageTitle),
       content: SizedBox(
         width: 500,
         height: 480,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _ImportSourcePillTabs(
-              source: _source,
-              palette: palette,
-              disabled: _importing,
-              onChanged: (s) => setState(() => _source = s),
-              l10n: l10n,
-            ),
-            const SizedBox(height: 12),
+            if (!widget.viewOnly) ...[
+              _ImportSourcePillTabs(
+                source: _source,
+                palette: palette,
+                disabled: _importing,
+                onChanged: (s) => setState(() => _source = s),
+                l10n: l10n,
+              ),
+              const SizedBox(height: 12),
+            ],
             Expanded(
               child: switch (_source) {
                 _ImportSource.packages =>
@@ -131,6 +137,7 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
               l10n: l10n,
               importing: _importing,
               alreadyInstalled: _installedPackageNames.contains(info.name),
+              viewOnly: widget.viewOnly,
               onImport: () => _importPackage(info, worldSchema),
               onRemove: () => _removePackage(info),
             );
@@ -389,6 +396,7 @@ class _PackageImportCard extends StatefulWidget {
   final L10n l10n;
   final bool importing;
   final bool alreadyInstalled;
+  final bool viewOnly;
   final VoidCallback onImport;
   final VoidCallback onRemove;
 
@@ -402,6 +410,7 @@ class _PackageImportCard extends StatefulWidget {
     required this.alreadyInstalled,
     required this.onImport,
     required this.onRemove,
+    this.viewOnly = false,
   });
 
   @override
@@ -536,7 +545,9 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                     ],
                   ),
                   const SizedBox(width: 8),
-                  if (widget.alreadyInstalled)
+                  if (widget.viewOnly)
+                    const SizedBox.shrink()
+                  else if (widget.alreadyInstalled)
                     SizedBox(
                       height: 28,
                       child: OutlinedButton.icon(

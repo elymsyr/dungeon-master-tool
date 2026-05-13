@@ -42,10 +42,14 @@ class PlayerCharacterTab extends ConsumerWidget {
                 ),
               ),
               data: (all) {
+                // ownerId == auth.uid → player's own characters
+                // ownerId == null → legacy local characters created before
+                // the ownerId backfill; player tab is local-only so showing
+                // them here is safe (each device has its own DB).
                 final scoped = all
                     .where((c) =>
                         c.worldName == activeWorld &&
-                        c.ownerId == auth?.uid)
+                        (c.ownerId == auth?.uid || c.ownerId == null))
                     .toList()
                   ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
                 return ListView(

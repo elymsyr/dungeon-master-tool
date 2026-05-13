@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/database/app_database.dart';
@@ -44,20 +45,45 @@ class WorldJoinService {
         final decoded = jsonDecode(raw);
         if (decoded is Map) parsed = Map<String, dynamic>.from(decoded);
       }
-    } catch (_) {
-      // RLS ya da network: boş bırak, ileride sync tamamlar.
+    } catch (e, st) {
+      debugPrint('joinWithCode snapshot fetch error: $e\n$st');
     }
 
     final now = DateTime.now().toUtc();
-    // Ensure a campaigns row exists; repository.save will fully populate it.
-    final existing =
+    // Resolve local name — repository.save keys by worldName, so if the
+    // player already has a different campaign with the same name we must
+    // pick a unique local label to avoid overwriting their local data.
+    final existingById =
         await (db.select(db.campaigns)..where((t) => t.id.equals(res.worldId)))
             .getSingleOrNull();
-    if (existing == null) {
+    String localName = existingById?.worldName ?? res.worldName;
+    if (existingById == null) {
+      final clash =
+          await (db.select(db.campaigns)..where((t) => t.worldName.equals(localName)))
+              .getSingleOrNull();
+      if (clash != null) {
+        // Suffix until unique.
+        var attempt = 2;
+        while (true) {
+          final candidate = '$localName ($attempt)';
+          final c = await (db.select(db.campaigns)
+                ..where((t) => t.worldName.equals(candidate)))
+              .getSingleOrNull();
+          if (c == null) {
+            localName = candidate;
+            break;
+          }
+          attempt++;
+          if (attempt > 99) {
+            localName = '$localName-${res.worldId.substring(0, 8)}';
+            break;
+          }
+        }
+      }
       await db.into(db.campaigns).insert(
             CampaignsCompanion.insert(
               id: res.worldId,
-              worldName: res.worldName,
+              worldName: localName,
               stateJson: const Value('{}'),
               createdAt: Value(now),
               updatedAt: Value(now),
@@ -66,23 +92,17 @@ class WorldJoinService {
     }
 
     if (parsed != null) {
-      // Force id/name to match the invite — server snapshot is authoritative
-      // for content, but the local row keys off this id.
+      // Force id/name to match the resolved local label — server snapshot is
+      // authoritative for content, but the local row keys off this id/name.
       parsed['world_id'] = res.worldId;
-      parsed['world_name'] = res.worldName;
+      parsed['world_name'] = localName;
       try {
-        await repository.save(res.worldName, parsed);
-      } catch (_) {
-        // Best-effort: bare campaigns row still allows later sync to fill in.
+        await repository.save(localName, parsed);
+      } catch (e, st) {
+        debugPrint('joinWithCode local save error: $e\n$st');
+        rethrow;
       }
-    } else if (existing != null) {
-      await (db.update(db.campaigns)
-            ..where((t) => t.id.equals(res.worldId)))
-          .write(CampaignsCompanion(
-        worldName: Value(res.worldName),
-        updatedAt: Value(now),
-      ));
     }
-    return res;
+    return (worldId: res.worldId, worldName: localName);
   }
 }

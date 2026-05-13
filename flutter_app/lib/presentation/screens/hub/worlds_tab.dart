@@ -6,10 +6,13 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
+import '../../../application/providers/online_worlds_provider.dart';
+import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../core/config/app_paths.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../data/database/database_provider.dart';
+import '../../../domain/entities/online/world_role.dart';
 import '../../../domain/entities/schema/world_schema.dart';
 import '../../dialogs/join_world_dialog.dart';
 import '../../l10n/app_localizations.dart';
@@ -134,6 +137,20 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                               ref.watch(campaignMetadataProvider(info.name));
                           final meta =
                               metaAsync.valueOrNull ?? const <String, dynamic>{};
+                          // Online + role indicator: user joined this world
+                          // either as DM (publisher) or player. Both cases
+                          // land in `onlineWorldIds`; role decides which
+                          // icon we render.
+                          final onlineIds =
+                              ref.watch(onlineWorldIdsProvider);
+                          final isOnlineMember =
+                              onlineIds.contains(info.id);
+                          final role = isOnlineMember
+                              ? (ref
+                                      .watch(worldRoleProvider(info.id))
+                                      .valueOrNull ??
+                                  WorldRole.none)
+                              : WorldRole.none;
                           return InkWell(
                             borderRadius: palette.br,
                             onTap: () => setState(() => _selectedIndex = index),
@@ -163,6 +180,14 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                                 layout: MetadataTileLayout.topBanner,
                                 onSettings: () =>
                                     _showCampaignSettings(info.name, palette),
+                                topRightOverlay: isOnlineMember
+                                    ? [
+                                        _OnlineRoleBadge(
+                                          role: role,
+                                          palette: palette,
+                                        ),
+                                      ]
+                                    : const [],
                               ),
                             ),
                           );
@@ -597,5 +622,42 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     if (success && mounted) {
       context.go('/main');
     }
+  }
+}
+
+/// Small pill rendered on the top-right of an online world card. Shows a
+/// cloud glyph plus a role-specific icon (shield for DM, person for player).
+/// Colors come from the active theme palette so it adapts across themes.
+class _OnlineRoleBadge extends StatelessWidget {
+  final WorldRole role;
+  final DmToolColors palette;
+  const _OnlineRoleBadge({required this.role, required this.palette});
+
+  @override
+  Widget build(BuildContext context) {
+    final (IconData roleIcon, String tooltip) = switch (role) {
+      WorldRole.dm => (Icons.shield, 'Online · DM'),
+      WorldRole.player => (Icons.person, 'Online · Player'),
+      WorldRole.none => (Icons.help_outline, 'Online'),
+    };
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        decoration: BoxDecoration(
+          color: palette.tabBg.withValues(alpha: 0.85),
+          borderRadius: palette.chr,
+          border: Border.all(color: palette.featureCardAccent),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud, size: 12, color: palette.featureCardAccent),
+            const SizedBox(width: 4),
+            Icon(roleIcon, size: 12, color: palette.tabActiveText),
+          ],
+        ),
+      ),
+    );
   }
 }
