@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -183,6 +184,42 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   }
 
   Future<void> refresh() => _load();
+
+  /// Granular insert/update from realtime mirror. Persists to disk and
+  /// patches the in-memory list in place — avoids the
+  /// `invalidate(characterListProvider)` storm which would `loadAll()` from
+  /// disk on every CDC event.
+  Future<void> applyMirror(Character c) async {
+    try {
+      await _repo.save(c);
+    } catch (e) {
+      debugPrint('applyMirror save error: $e');
+      return;
+    }
+    final list = [...(state.valueOrNull ?? const <Character>[])];
+    final idx = list.indexWhere((x) => x.id == c.id);
+    if (idx >= 0) {
+      list[idx] = c;
+    } else {
+      list.insert(0, c);
+    }
+    list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    state = AsyncValue.data(list);
+  }
+
+  /// Granular delete from realtime mirror — disk + state in one shot, no
+  /// full-list reload.
+  Future<void> removeMirror(String id) async {
+    final list = state.valueOrNull ?? const <Character>[];
+    final existing = list.where((c) => c.id == id).firstOrNull;
+    if (existing == null) return;
+    try {
+      await _repo.delete(id, displayName: existing.entity.name);
+    } catch (e) {
+      debugPrint('removeMirror delete error: $e');
+    }
+    state = AsyncValue.data(list.where((c) => c.id != id).toList());
+  }
 
   Future<Character> create({
     required String name,

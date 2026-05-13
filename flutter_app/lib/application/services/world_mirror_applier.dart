@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/online/world_role.dart';
+import '../providers/auth_provider.dart';
 import '../providers/campaign_provider.dart';
 import '../providers/character_claim_provider.dart';
 import '../providers/character_provider.dart';
@@ -141,24 +142,28 @@ class WorldMirrorApplier {
     ref.invalidate(characterListProvider);
   }
 
-  /// world_members CDC: keep the roster + role caches live for everyone in
-  /// the world. On DELETE, double-check whether *this* client is still a
-  /// member — if not, the local mirror of the world is purged immediately
-  /// (no `.trash/` indirection). Covers both self-leave and DM-kick: each
-  /// member sees the same DELETE event over realtime.
+  /// world_members CDC: roster always refreshes. Role + hub world-list
+  /// caches only refresh when the event is about *this* user — other-user
+  /// joins/leaves don't change my role or my world list, so the previous
+  /// unconditional invalidate cascade was wasted work that fanned out into
+  /// `visibleEntityProvider` / sidebar rebuilds on every players-tab
+  /// activity. Personal channel covers self-on-other-device events.
   Future<void> _applyMembersEvent(WorldSyncEvent e) async {
     ref.invalidate(worldMembersProvider(e.worldId));
-    ref.invalidate(worldRoleProvider(e.worldId));
-    ref.invalidate(currentWorldRoleProvider);
-    // INSERT/DELETE: Worlds tab rows reflect online state + role badges;
-    // refresh the hub list so other clients see the new/lost member
-    // immediately rather than waiting for a manual reload.
-    ref.invalidate(campaignInfoListProvider);
-    ref.invalidate(campaignListProvider);
+    // world_members PK is (world_id, user_id) — so DELETE oldRecord carries
+    // user_id under default REPLICA IDENTITY. Safe to use without FULL.
+    final eventUid =
+        (e.newRecord['user_id'] ?? e.oldRecord['user_id']) as String?;
+    final selfUid = ref.read(authProvider)?.uid;
+    final isSelf = selfUid != null && eventUid == selfUid;
+    if (isSelf) {
+      ref.invalidate(worldRoleProvider(e.worldId));
+      ref.invalidate(currentWorldRoleProvider);
+      ref.invalidate(campaignInfoListProvider);
+      ref.invalidate(campaignListProvider);
+    }
     if (e.eventType != PostgresChangeEvent.delete) return;
-    // Re-resolve our own role rather than trusting oldRecord — Supabase
-    // Realtime delete payloads only carry the primary-key columns unless
-    // REPLICA IDENTITY FULL is set, which it isn't on world_members.
+    if (!isSelf) return;
     try {
       final role = await ref.read(worldRoleProvider(e.worldId).future);
       if (role == WorldRole.none) {

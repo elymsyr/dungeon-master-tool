@@ -37,6 +37,7 @@ class PersonalMirrorApplier {
   final WorldMirrorApplier? worldApplier;
 
   StreamSubscription<PersonalSyncEvent>? _sub;
+  String? _bootstrappedFor;
 
   PersonalMirrorApplier({
     required this.ref,
@@ -52,14 +53,18 @@ class PersonalMirrorApplier {
   Future<void> stop() async {
     await _sub?.cancel();
     _sub = null;
+    _bootstrappedFor = null;
   }
 
   /// Subscribe sonrası local state'i sunucu ile aynı hizaya getirir.
   /// `personal_characters` / `personal_packages` satırlarını full pull eder
-  /// — yeni cihaza ilk giriş için bootstrap.
+  /// — yeni cihaza ilk giriş için bootstrap. Aynı uid için idempotent;
+  /// auth değişmediği sürece tekrar SELECT yapmaz.
   Future<void> bootstrap() async {
     final auth = ref.read(authProvider);
     if (auth == null) return;
+    if (_bootstrappedFor == auth.uid) return;
+    _bootstrappedFor = auth.uid;
     final client = Supabase.instance.client;
     try {
       final rows = await client
@@ -67,19 +72,15 @@ class PersonalMirrorApplier {
           .select('id, payload_json')
           .eq('owner_id', auth.uid);
       final list = rows as List;
-      final ids = <String>{};
       for (final raw in list) {
         final row = raw as Map;
         final id = row['id'] as String?;
         if (id == null) continue;
-        ids.add(id);
         final payload = row['payload_json'];
         if (payload is String && payload.isNotEmpty) {
+          // _writeCharacterFromPayload now applies granularly (no full reload).
           await _writeCharacterFromPayload(payload);
         }
-      }
-      if (ids.isNotEmpty) {
-        ref.invalidate(characterListProvider);
       }
     } catch (e) {
       debugPrint('PersonalMirrorApplier bootstrap chars error: $e');
@@ -132,13 +133,8 @@ class PersonalMirrorApplier {
         ref
             .read(personalOnlineCharIdsProvider.notifier)
             .remove(id);
-        try {
-          final repo = ref.read(characterRepositoryProvider);
-          await repo.delete(id);
-        } catch (err) {
-          debugPrint('personal_char delete local error: $err');
-        }
-        ref.invalidate(characterListProvider);
+        // Granular delete — repo + state in one notifier call, no full reload.
+        await ref.read(characterListProvider.notifier).removeMirror(id);
       case PostgresChangeEvent.insert:
       case PostgresChangeEvent.update:
         final id = e.newRecord['id'] as String?;
@@ -148,7 +144,6 @@ class PersonalMirrorApplier {
         final payload = e.newRecord['payload_json'];
         if (payload is! String || payload.isEmpty) return;
         await _writeCharacterFromPayload(payload);
-        ref.invalidate(characterListProvider);
       default:
         return;
     }
@@ -158,8 +153,10 @@ class PersonalMirrorApplier {
     try {
       final map = jsonDecode(payload) as Map<String, dynamic>;
       final character = Character.fromJson(map);
-      final repo = ref.read(characterRepositoryProvider);
-      await repo.save(character);
+      // applyMirror persists to disk AND patches the in-memory state in
+      // place, replacing the previous `repo.save + invalidate` pattern that
+      // forced a full `loadAll()` from disk per CDC event.
+      await ref.read(characterListProvider.notifier).applyMirror(character);
     } catch (e) {
       debugPrint('_writeCharacterFromPayload error: $e');
     }

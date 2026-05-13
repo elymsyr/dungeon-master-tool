@@ -21,6 +21,7 @@ class PersonalSyncService {
 
   RealtimeChannel? _channel;
   String? _activeUid;
+  Future<void>? _starting;
 
   final _events = StreamController<PersonalSyncEvent>.broadcast();
   Stream<PersonalSyncEvent> get events => _events.stream;
@@ -30,7 +31,21 @@ class PersonalSyncService {
 
   /// Idempotent — aynı uid için tekrar çağrı no-op.
   /// Farklı uid (auth switch) → eski kanalı kapatıp yenisini açar.
-  Future<void> start(String uid) async {
+  Future<void> start(String uid) {
+    if (_activeUid == uid && _channel != null) {
+      return Future<void>.value();
+    }
+    // Coalesce concurrent start() calls for the same uid — without this,
+    // a provider re-eval during the async channel setup could enter start()
+    // a second time and trigger duplicate bootstrap callbacks.
+    final inFlight = _starting;
+    if (inFlight != null) return inFlight;
+    final future = _doStart(uid);
+    _starting = future.whenComplete(() => _starting = null);
+    return _starting!;
+  }
+
+  Future<void> _doStart(String uid) async {
     if (_activeUid == uid && _channel != null) return;
     await stop();
 
