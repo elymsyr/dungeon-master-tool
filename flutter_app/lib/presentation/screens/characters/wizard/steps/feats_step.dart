@@ -74,10 +74,19 @@ class FeatsStep extends ConsumerWidget {
       );
     }
 
-    // Materialize entity buckets once per build instead of per group. Skill
-    // and tool lists are needed across `skill_or_tool` + `tool_category`
-    // groups; spell lookups bucket by `(className, level)`.
-    final cache = _FeatsCache.from(entities, featGroups.values);
+    // Materialize entity buckets once per build instead of per group. The
+    // skill / tool / spell base lists are pulled from the cached family
+    // provider (sorted, identity-stable until the entity map changes), so
+    // the factory below only has to bucket what each feat needs — no full
+    // 7 K-entry scan per render (W5).
+    final cache = _FeatsCache.from(
+      entities,
+      featGroups.values,
+      skills: ref.watch(entitiesByCategoryProvider('skill')),
+      tools: ref.watch(entitiesByCategoryProvider('tool')),
+      spells: ref.watch(entitiesByCategoryProvider('spell')),
+      classes: ref.watch(entitiesByCategoryProvider('class')),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -158,8 +167,12 @@ class _FeatsCache {
 
   factory _FeatsCache.from(
     Map<String, Entity> entities,
-    Iterable<List<Map<String, dynamic>>> allGroups,
-  ) {
+    Iterable<List<Map<String, dynamic>>> allGroups, {
+    required List<Entity> skills,
+    required List<Entity> tools,
+    required List<Entity> spells,
+    required List<Entity> classes,
+  }) {
     // Collect requested filter axes so we only bucket what the renderer
     // actually needs — keeps the scan O(N) instead of O(N × groups).
     final toolCategoryNames = <String>{};
@@ -196,65 +209,51 @@ class _FeatsCache {
       }
     }
 
-    final skills = <Entity>[];
-    final tools = <Entity>[];
+    // Skills / tools / spells / classes already arrive sorted by name from
+    // the family providers — no full entity-map scan needed.
+    final scopedSkills = needSkillsOrTools ? skills : const <Entity>[];
+    final scopedTools = needSkillsOrTools ? tools : const <Entity>[];
+
     final toolsByCat = <String, List<Entity>>{
       for (final n in toolCategoryNames) n: <Entity>[],
     };
-    final spellsByKey = <String, List<Entity>>{};
-    final classIdsByName = <String, String>{};
-
-    if (spellListNames.isNotEmpty) {
-      for (final e in entities.values) {
-        if (e.categorySlug == 'class' && spellListNames.contains(e.name)) {
-          classIdsByName[e.name] = e.id;
+    if (toolCategoryNames.isNotEmpty) {
+      for (final e in tools) {
+        final catRef = e.fields['category_ref'];
+        final cat = catRef is String ? entities[catRef] : null;
+        final name = cat?.name;
+        if (name != null && toolsByCat.containsKey(name)) {
+          toolsByCat[name]!.add(e);
         }
       }
     }
 
-    for (final e in entities.values) {
-      switch (e.categorySlug) {
-        case 'skill':
-          if (needSkillsOrTools) skills.add(e);
-        case 'tool':
-          if (needSkillsOrTools) tools.add(e);
-          if (toolCategoryNames.isNotEmpty) {
-            final catRef = e.fields['category_ref'];
-            final cat = catRef is String ? entities[catRef] : null;
-            final name = cat?.name;
-            if (name != null && toolsByCat.containsKey(name)) {
-              toolsByCat[name]!.add(e);
-            }
-          }
-        case 'spell':
-          if (classIdsByName.isEmpty || spellLevels.isEmpty) continue;
-          final lvl = e.fields['level'];
-          if (lvl is! int || !spellLevels.contains(lvl)) continue;
-          final refs = e.fields['class_refs'];
-          if (refs is! List) continue;
-          for (final entry in classIdsByName.entries) {
-            if (!refs.contains(entry.value)) continue;
-            spellsByKey
-                .putIfAbsent('${entry.key}|$lvl', () => <Entity>[])
-                .add(e);
-          }
+    final classIdsByName = <String, String>{};
+    if (spellListNames.isNotEmpty) {
+      for (final e in classes) {
+        if (spellListNames.contains(e.name)) classIdsByName[e.name] = e.id;
       }
     }
 
-    int byName(Entity a, Entity b) =>
-        a.name.toLowerCase().compareTo(b.name.toLowerCase());
-    skills.sort(byName);
-    tools.sort(byName);
-    for (final l in toolsByCat.values) {
-      l.sort(byName);
-    }
-    for (final l in spellsByKey.values) {
-      l.sort(byName);
+    final spellsByKey = <String, List<Entity>>{};
+    if (classIdsByName.isNotEmpty && spellLevels.isNotEmpty) {
+      for (final e in spells) {
+        final lvl = e.fields['level'];
+        if (lvl is! int || !spellLevels.contains(lvl)) continue;
+        final refs = e.fields['class_refs'];
+        if (refs is! List) continue;
+        for (final entry in classIdsByName.entries) {
+          if (!refs.contains(entry.value)) continue;
+          spellsByKey
+              .putIfAbsent('${entry.key}|$lvl', () => <Entity>[])
+              .add(e);
+        }
+      }
     }
 
     return _FeatsCache._(
-      skills: skills,
-      tools: tools,
+      skills: scopedSkills,
+      tools: scopedTools,
       toolsByCategoryName: toolsByCat,
       spellsByClassAndLevel: spellsByKey,
     );
@@ -644,7 +643,9 @@ class _ChipPicker extends StatelessWidget {
         ),
       );
     }
-    final pickedSet = picked.toSet();
+    // W8: skip `toSet()` — `picked` is the user's selection list (cap
+    // ~4). Linear `contains` on a tiny list is cheaper than allocating
+    // a Set + hashing per row.
     final atCap = picked.length >= pick;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -653,8 +654,8 @@ class _ChipPicker extends StatelessWidget {
           _OptionRow(
             label: o.label,
             description: o.description,
-            selected: pickedSet.contains(o.id),
-            disabled: atCap && !pickedSet.contains(o.id),
+            selected: picked.contains(o.id),
+            disabled: atCap && !picked.contains(o.id),
             onTap: () => onToggle(o.id),
             palette: palette,
           ),

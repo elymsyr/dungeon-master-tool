@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/entity_provider.dart';
+import '../../domain/entities/entity.dart';
 import '../theme/dm_tool_colors.dart';
 
 /// Entity seçici dialog — relation field'larda kullanılır.
@@ -46,20 +49,51 @@ class _EntitySelectorDialog extends StatefulWidget {
 class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
   String _search = '';
   final Set<String> _selected = {};
+  Timer? _searchDebounce;
+
+  // F4: pre-converted Set lookups + sorted base list. The base list
+  // (entities filtered by excludeIds + allowedTypes) only changes when
+  // the dialog opens; only the search predicate runs per-keystroke.
+  late final Set<String> _excludeSet = widget.excludeIds.toSet();
+  late final Set<String>? _allowedSet = widget.allowedTypes?.toSet();
+  late final List<Entity> _baseList = _buildBaseList();
+
+  List<Entity> _buildBaseList() {
+    final entities = widget.ref.read(entityProvider);
+    final out = <Entity>[];
+    for (final e in entities.values) {
+      if (_excludeSet.contains(e.id)) continue;
+      if (_allowedSet != null && !_allowedSet.contains(e.categorySlug)) {
+        continue;
+      }
+      out.add(e);
+    }
+    out.sort((a, b) => a.name.compareTo(b.name));
+    return List<Entity>.unmodifiable(out);
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
-    final entities = widget.ref.read(entityProvider);
 
-    // Filtrele
-    final filtered = entities.values.where((e) {
-      if (widget.excludeIds.contains(e.id)) return false;
-      if (widget.allowedTypes != null && !widget.allowedTypes!.contains(e.categorySlug)) return false;
-      if (_search.isNotEmpty && !e.name.toLowerCase().contains(_search.toLowerCase())) return false;
-      return true;
-    }).toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
+    // F4: search filter only — base list pre-filtered once in initState.
+    // Lowercase the query once instead of per item.
+    final List<Entity> filtered;
+    if (_search.isEmpty) {
+      filtered = _baseList;
+    } else {
+      final q = _search.toLowerCase();
+      filtered = [
+        for (final e in _baseList)
+          if (e.name.toLowerCase().contains(q)) e,
+      ];
+    }
 
     return AlertDialog(
       title: Text(
@@ -71,15 +105,23 @@ class _EntitySelectorDialogState extends State<_EntitySelectorDialog> {
         height: 400,
         child: Column(
           children: [
-            // Arama
+            // Arama — F4: 150 ms debounce before re-running the filter.
             TextField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Search...',
-                prefixIcon: const Icon(Icons.search, size: 18),
+                prefixIcon: Icon(Icons.search, size: 18),
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 8),
               ),
-              onChanged: (v) => setState(() => _search = v),
+              onChanged: (v) {
+                _searchDebounce?.cancel();
+                _searchDebounce =
+                    Timer(const Duration(milliseconds: 150), () {
+                  if (!mounted) return;
+                  setState(() => _search = v);
+                });
+              },
             ),
             const SizedBox(height: 8),
             // Liste
@@ -142,10 +184,11 @@ class EntityNameText extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entities = ref.watch(entityProvider);
-    final entity = entities[entityId];
+    // F2: scoped to the one entity's name. Avoids full-map watch — the
+    // text only rebuilds when this specific entity's name flips.
+    final name = ref.watch(entityProvider.select((m) => m[entityId]?.name));
     return Text(
-      entity?.name ?? entityId,
+      name ?? entityId,
       style: style,
       overflow: TextOverflow.ellipsis,
     );

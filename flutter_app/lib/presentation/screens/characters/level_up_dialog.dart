@@ -137,12 +137,26 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
   final Set<String> _pickedCantrips = <String>{};
   final Set<String> _pickedSpells = <String>{};
 
+  // L1: dialog inputs (entities, classId, plan, existing*) are immutable
+  // for the dialog's lifetime, so the eligible-* lists only need to be
+  // computed once. The previous per-build sort+filter was re-running on
+  // every HP roll / ASI tap / spell tick, which dominated the dialog's
+  // CPU once the spell list grew past ~50 entries.
+  late final List<Entity> _allEligibleCantrips;
+  late final List<Entity> _allEligibleLeveledSpells;
+  late final List<Entity> _baseEligibleFeats;
+  late final List<Entity> _baseFightingStyleFeats;
+
   @override
   void initState() {
     super.initState();
     _hpMode = _HpMode.average;
     _hpRollTotal = widget.plan.hpDelta;
     _rollFaces = const [];
+    _allEligibleCantrips = _computeEligibleSpells(cantripOnly: true);
+    _allEligibleLeveledSpells = _computeEligibleSpells(cantripOnly: false);
+    _baseEligibleFeats = _computeEligibleFeats();
+    _baseFightingStyleFeats = _computeFightingStyleFeats();
   }
 
   void _rollHp() {
@@ -225,10 +239,17 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
     return true;
   }
 
+  /// L1: cached-list accessor — returns the appropriate pre-computed
+  /// list. The actual filter/sort happens once in [initState] via
+  /// [_computeEligibleSpells]; this lookup is now O(1).
+  List<Entity> _eligibleSpells({required bool cantripOnly}) =>
+      cantripOnly ? _allEligibleCantrips : _allEligibleLeveledSpells;
+
   /// Spells (or cantrips) eligible for this level-up: same class as the
   /// character, level in range, not already known. Returns const-empty
   /// when no class id was passed in — the dialog then hides the picker.
-  List<Entity> _eligibleSpells({required bool cantripOnly}) {
+  /// Called once in initState; result memoized.
+  List<Entity> _computeEligibleSpells({required bool cantripOnly}) {
     if (widget.entities.isEmpty) return const [];
     final classId = widget.classId;
     if (classId == null || classId.isEmpty) return const [];
@@ -255,7 +276,7 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
       if (byLevel != 0) return byLevel;
       return a.name.toLowerCase().compareTo(b.name.toLowerCase());
     });
-    return out;
+    return List<Entity>.unmodifiable(out);
   }
 
   bool _canBump(String key, int by) {
@@ -263,7 +284,13 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
     return (cur + by) <= _abilityCap;
   }
 
-  List<Entity> _eligibleFeats() {
+  /// L1: cached. See [_computeEligibleFeats].
+  List<Entity> _eligibleFeats() => _baseEligibleFeats;
+
+  /// L1: cached. See [_computeFightingStyleFeats].
+  List<Entity> _fightingStyleFeats() => _baseFightingStyleFeats;
+
+  List<Entity> _computeEligibleFeats() {
     if (widget.entities.isEmpty) return const [];
     final out = <Entity>[];
     for (final e in widget.entities.values) {
@@ -283,10 +310,10 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
       out.add(e);
     }
     out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    return out;
+    return List<Entity>.unmodifiable(out);
   }
 
-  List<Entity> _fightingStyleFeats() {
+  List<Entity> _computeFightingStyleFeats() {
     if (widget.entities.isEmpty) return const [];
     final out = <Entity>[];
     for (final e in widget.entities.values) {
@@ -296,7 +323,7 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
       out.add(e);
     }
     out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    return out;
+    return List<Entity>.unmodifiable(out);
   }
 
   bool _isFightingStyleFeat(Entity e) {

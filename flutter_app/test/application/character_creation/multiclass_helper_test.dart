@@ -15,7 +15,7 @@ Entity _classEntity({
       name: name,
       categorySlug: 'class',
       fields: {
-        if (casterKind != null) 'caster_kind': casterKind,
+        'caster_kind': ?casterKind,
         'multiclass_prereq_ability_refs': [
           for (final a in prereqAbilities) {'slug': 'ability', 'name': a},
         ],
@@ -94,11 +94,11 @@ void main() {
     });
 
     test('class with no multiclass refs is allowed unconditionally', () {
-      final cls = Entity(
+      const cls = Entity(
         id: 'class-x',
         name: 'X',
         categorySlug: 'class',
-        fields: const {},
+        fields: {},
       );
       final res = checkMulticlassPrereq(
         classEntity: cls,

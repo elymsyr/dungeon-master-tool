@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../../application/character_creation/character_draft.dart';
@@ -144,7 +146,13 @@ class PersonalityStep extends StatelessWidget {
   }
 }
 
-class _Field extends StatelessWidget {
+/// W3: text-field writes are debounced 250 ms before reaching the
+/// notifier so typing doesn't fan out a full draft-graph rebuild per
+/// keystroke. The Next-button validators still operate on the
+/// notifier's current state; the debounce window is below human
+/// perception (~250 ms) so by the time a user clicks Next, the buffered
+/// write has flushed.
+class _Field extends StatefulWidget {
   final String label;
   final String hint;
   final String initialValue;
@@ -164,20 +172,41 @@ class _Field extends StatelessWidget {
   });
 
   @override
+  State<_Field> createState() => _FieldState();
+}
+
+class _FieldState extends State<_Field> {
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onChanged(String v) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
+      widget.onChanged(v);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: TextFormField(
-        key: fieldKey,
-        initialValue: initialValue,
-        minLines: minLines,
-        maxLines: maxLines,
+        key: widget.fieldKey,
+        initialValue: widget.initialValue,
+        minLines: widget.minLines,
+        maxLines: widget.maxLines,
         decoration: InputDecoration(
-          labelText: label.isEmpty ? null : label,
-          hintText: hint,
+          labelText: widget.label.isEmpty ? null : widget.label,
+          hintText: widget.hint,
           isDense: true,
         ),
-        onChanged: onChanged,
+        onChanged: _onChanged,
       ),
     );
   }

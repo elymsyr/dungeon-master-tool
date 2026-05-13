@@ -74,7 +74,7 @@ void main() {
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-tb');
-      final draft = CharacterDraft(
+      const draft = CharacterDraft(
         backgroundId: 'bg',
         originFeatChoices: {'feat-tb:asi': 'CON'},
       );
@@ -102,7 +102,7 @@ void main() {
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-skl');
-      final draft = CharacterDraft(
+      const draft = CharacterDraft(
         backgroundId: 'bg',
         originFeatChoices: {'feat-skl:picks': 'sk-1,tl-1,sk-2'},
       );
@@ -158,7 +158,7 @@ void main() {
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-mi');
-      final draft = CharacterDraft(
+      const draft = CharacterDraft(
         backgroundId: 'bg',
         originFeatChoices: {
           'feat-mi:list': 'Cleric',
@@ -196,7 +196,7 @@ void main() {
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-tb');
-      final draft = CharacterDraft(backgroundId: 'bg');
+      const draft = CharacterDraft(backgroundId: 'bg');
       final entities = {'feat-tb': feat, 'bg': bg};
 
       final out = deriveFeatChoiceContributions(draft, entities);
@@ -227,7 +227,7 @@ void main() {
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-tb');
-      final draft = CharacterDraft(backgroundId: 'bg');
+      const draft = CharacterDraft(backgroundId: 'bg');
       final entities = {'feat-tb': feat, 'bg': bg};
       final err = validateFeatsStep(draft, entities);
       expect(err, isNotNull);
@@ -252,7 +252,7 @@ void main() {
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-tb');
-      final draft = CharacterDraft(
+      const draft = CharacterDraft(
         backgroundId: 'bg',
         originFeatChoices: {'feat-tb:asi': 'STR'},
       );
@@ -291,7 +291,7 @@ void main() {
         ],
       );
       final bg = _bg(id: 'bg', originFeatId: 'feat-mi');
-      final draft = CharacterDraft(backgroundId: 'bg');
+      const draft = CharacterDraft(backgroundId: 'bg');
       final entities = {'feat-mi': feat, 'bg': bg};
       final err = validateFeatsStep(draft, entities);
       // Upstream 'list' is unset → surfaces upstream error, not cantrips.

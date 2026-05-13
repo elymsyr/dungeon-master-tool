@@ -77,6 +77,7 @@ class _FB {
     String groupId = grpIdentity,
     int gridSpan = 1,
     bool isList = false,
+    bool hasEquip = false,
     FieldValidation validation = const FieldValidation(),
     String? helpText,
     dynamic defaultValue,
@@ -94,6 +95,7 @@ class _FB {
       groupId: groupId,
       gridColumnSpan: gridSpan,
       isList: isList,
+      hasEquip: hasEquip,
       validation: validation,
       helpText: helpText ?? '',
       defaultValue: defaultValue,
@@ -137,13 +139,18 @@ class _FB {
         groupId: g,
         validation: FieldValidation(allowedValues: vals),
       );
-  void relation(String k, String l, List<String> allowed, {bool isList = false, bool required_ = false, String g = grpIdentity}) =>
+  void relation(String k, String l, List<String> allowed,
+          {bool isList = false,
+          bool required_ = false,
+          bool hasEquip = false,
+          String g = grpIdentity}) =>
       _base(
         key: k,
         label: l,
         type: FieldType.relation,
         isList: isList,
         required_: required_,
+        hasEquip: hasEquip,
         groupId: g,
         validation: FieldValidation(allowedTypes: allowed),
       );
@@ -311,20 +318,18 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
   fb.relation('tool_proficiencies', 'Tool Proficiencies', const ['tool'], isList: true);
   fb.relation('weapon_proficiency_categories', 'Weapon Category Proficiencies',
       const ['weapon-category'], isList: true);
-  fb.relation('weapon_proficiency_specifics', 'Specific Weapon Proficiencies',
-      const ['weapon'], isList: true);
   fb.relation('armor_trainings', 'Armor Trainings', const ['armor-category'], isList: true);
-  fb.relation('skill_proficiencies', 'Skill Proficiencies', const ['skill'], isList: true);
-  fb.relation('expertise_skills', 'Expertise Skills', const ['skill'], isList: true);
-  fb.relation('saving_throw_proficiencies', 'Save Proficiencies', const ['ability'], isList: true, required_: true);
   // Combat
   fb.statBlock('stat_block', 'Ability Scores');
   fb.combatStats('combat_stats', 'Combat Stats');
-  fb.integer('temp_hp', 'Temp HP', required_: true, min: 0, defaultValue: 0, g: grpCombat);
-  fb.integer('death_saves_successes', 'Death Save Successes', required_: true, min: 0, max: 3, defaultValue: 0, g: grpCombat);
-  fb.integer('death_saves_failures', 'Death Save Failures', required_: true, min: 0, max: 3, defaultValue: 0, g: grpCombat);
-  fb.boolean('heroic_inspiration', 'Heroic Inspiration', required_: true, defaultValue: false, g: grpCombat);
-  fb.proficiencyTable('hit_dice_remaining', 'Hit Dice Remaining', g: grpCombat);
+  // 0..3 successes / failures rendered as 3-checkbox widget. Heroic
+  // inspiration: 0..3 charges, rendered as 3 checkboxes.
+  fb.integer('death_saves_successes', 'Death Save Successes',
+      required_: true, min: 0, max: 3, defaultValue: 0, g: grpCombat);
+  fb.integer('death_saves_failures', 'Death Save Failures',
+      required_: true, min: 0, max: 3, defaultValue: 0, g: grpCombat);
+  fb.integer('heroic_inspiration', 'Heroic Inspiration',
+      required_: true, min: 0, max: 3, defaultValue: 0, g: grpCombat);
   // Saves & Skills (full preset rows so the card is ready out-of-box)
   fb.proficiencyTable('saving_throws', 'Saving Throws',
       defaultValue: proficiencyTableDefault(kDnd5eSavingThrows));
@@ -335,18 +340,14 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
   fb.integer('passive_perception', 'Passive Perception', min: 0, max: 30, defaultValue: 10, g: grpSensesLanguages);
   fb.integer('passive_insight', 'Passive Insight', min: 0, max: 30, defaultValue: 10, g: grpSensesLanguages);
   fb.integer('passive_investigation', 'Passive Investigation', min: 0, max: 30, defaultValue: 10, g: grpSensesLanguages);
-  // Inventory & Resources
-  fb.relation('inventory', 'Inventory', const ['weapon', 'armor', 'adventuring-gear', 'magic-item'], isList: true, g: grpProperties);
-  fb.relation('attuned_items', 'Attuned Items (max 3)', const ['magic-item'], isList: true, g: grpProperties);
-  // Equipped state — drives AC, attack, and don/doff actions.
-  fb.relation('equipped_armor_ref', 'Equipped Armor', const ['armor', 'magic-item'], g: grpProperties);
-  fb.relation('equipped_shield_ref', 'Equipped Shield', const ['armor', 'magic-item'], g: grpProperties);
-  fb.relation('held_weapons', 'Held Weapons (max 2)', const ['weapon', 'magic-item'], isList: true, g: grpProperties);
-  // Equipped magic items (wearables — head/neck/finger/etc.). Resolver groups
-  // by each item's body_slot_ref and enforces body-slot.max_equipped.
-  // Armor + shield + held_weapons live in their own dedicated fields.
-  fb.relation('equipped_magic_items', 'Equipped Magic Items', const ['magic-item'],
-      isList: true, g: grpProperties);
+  // Inventory — `hasEquip: true` adds an equipped toggle per row. Armor,
+  // shields, held weapons, attuned items, and wearable magic items are all
+  // tracked via this single flag. AC computation reads the equipped armor
+  // entity; predicates (equipped_armor_kind / equipped_shield) walk the
+  // same list.
+  fb.relation('inventory', 'Inventory',
+      const ['weapon', 'armor', 'adventuring-gear', 'magic-item'],
+      isList: true, hasEquip: true, g: grpProperties);
   // Downtime
   fb.relation('current_lifestyle_ref', 'Current Lifestyle', const ['lifestyle'], g: grpProperties);
   // Currency
@@ -355,22 +356,19 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
   fb.integer('ep', 'Electrum (ep)', min: 0, defaultValue: 0, g: grpCostWeight);
   fb.integer('gp', 'Gold (gp)', min: 0, defaultValue: 0, g: grpCostWeight);
   fb.integer('pp', 'Platinum (pp)', min: 0, defaultValue: 0, g: grpCostWeight);
-  // Defenses (parallel NPC/Monster — resistance/vulnerability/immunity tracking)
+  // Defenses
   fb.relation('resistance_refs', 'Resistances', const ['damage-type'], isList: true, g: grpResistances);
   fb.relation('vulnerability_refs', 'Vulnerabilities', const ['damage-type'], isList: true, g: grpResistances);
   fb.relation('damage_immunity_refs', 'Damage Immunities', const ['damage-type'], isList: true, g: grpResistances);
   fb.relation('condition_immunity_refs', 'Condition Immunities', const ['condition'], isList: true, g: grpResistances);
   fb.relation('current_conditions', 'Current Conditions', const ['applied-condition'], isList: true, g: grpResistances);
-  // Spells
-  fb.relation('casting_ability_ref', 'Casting Ability', const ['ability'], g: grpSpellcasting);
-  fb.integer('spell_save_dc', 'Spell Save DC', min: 0, max: 30, g: grpSpellcasting);
-  fb.integer('spell_attack_bonus', 'Spell Attack Bonus', g: grpSpellcasting);
-  fb.relation('concentration_spell_ref', 'Concentrating On', const ['spell'], g: grpSpellcasting);
-  fb.integer('concentration_remaining_rounds', 'Concentration Rounds Left', min: 0, max: 10000, g: grpSpellcasting);
-  fb.relation('spells_known', 'Spells Known', const ['spell'], isList: true, g: grpSpells);
-  fb.relation('prepared_spells', 'Prepared Spells', const ['spell'], isList: true, g: grpSpells);
-  fb.slot('spell_slots', 'Spell Slots', g: grpSpellcasting);
-  fb.slot('pact_magic_slots', 'Pact Magic Slots', g: grpSpellcasting);
+  // Spells — single list with a per-row "prepared" toggle (hasEquip). Slot
+  // grid lives in the same group; slot maxes auto-derive from class levels.
+  fb.integer('spell_save_dc', 'Spell Save DC', min: 0, max: 30, g: grpSpells);
+  fb.integer('spell_attack_bonus', 'Spell Attack Bonus', g: grpSpells);
+  fb.relation('spells_known', 'Spells', const ['spell'],
+      isList: true, hasEquip: true, g: grpSpells);
+  fb.slot('spell_slots', 'Spell Slots', g: grpSpells);
   fb.proficiencyTable('class_resources', 'Class Resources', g: grpFeatures);
   fb.relation('trinket_ref', 'Trinket', const ['trinket']);
   // Personality (PHB §1)
@@ -405,9 +403,8 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
       FieldGroup(groupId: grpProperties, name: 'Inventory', gridColumns: 1, orderIndex: 4),
       FieldGroup(groupId: grpResistances, name: 'Defenses', gridColumns: 1, orderIndex: 5),
       FieldGroup(groupId: grpSpells, name: 'Spells', gridColumns: 1, orderIndex: 6),
-      FieldGroup(groupId: grpSpellcasting, name: 'Slots', gridColumns: 1, orderIndex: 7),
-      FieldGroup(groupId: grpFeatures, name: 'Class Resources', gridColumns: 1, orderIndex: 8),
-      FieldGroup(groupId: grpRules, name: 'Roleplay', gridColumns: 1, orderIndex: 9),
+      FieldGroup(groupId: grpFeatures, name: 'Class Resources', gridColumns: 1, orderIndex: 7),
+      FieldGroup(groupId: grpRules, name: 'Roleplay', gridColumns: 1, orderIndex: 8),
     ],
     orderIndex: orderIndex,
     now: now,

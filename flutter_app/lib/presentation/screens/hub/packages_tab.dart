@@ -124,10 +124,14 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                           final info = packages[index];
                           final isSelected = index == _selectedIndex;
                           final isBuiltin = info.name == srdCorePackageName;
-                          final metaAsync =
-                              ref.watch(packageMetadataProvider(info.name));
-                          final meta =
-                              metaAsync.valueOrNull ?? const <String, dynamic>{};
+                          // H5: narrow watch to `valueOrNull` only. The
+                          // loading/error transitions of the metadata
+                          // future no longer trigger a tile rebuild —
+                          // only when the resolved metadata map flips.
+                          final meta = ref.watch(
+                            packageMetadataProvider(info.name)
+                                .select((a) => a.valueOrNull ?? const <String, dynamic>{}),
+                          );
                           final subtitle = isBuiltin
                               ? 'Built-in · ${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}'
                               : '${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}';

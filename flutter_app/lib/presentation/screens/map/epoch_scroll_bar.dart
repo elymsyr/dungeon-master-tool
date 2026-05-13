@@ -214,8 +214,8 @@ class _EpochScrollBarState extends State<EpochScrollBar> {
           controller: ctrl,
           autofocus: true,
           style: TextStyle(fontSize: 12, color: p.uiFloatingText),
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
             isDense: true,
           ),
         ),

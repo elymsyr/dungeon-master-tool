@@ -86,7 +86,7 @@ MulticlassPrereq checkMulticlassPrereq({
   }
 
   if (missing.isEmpty) {
-    return MulticlassPrereq(
+    return const MulticlassPrereq(
       met: true,
       reason: 'Prerequisite met.',
     );

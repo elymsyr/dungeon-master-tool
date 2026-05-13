@@ -1025,7 +1025,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                     child: Container(
                       width: 26,
                       height: 26,
-                      decoration: BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
+                      decoration: const BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
                       child: const Icon(Icons.chevron_left, color: Colors.white, size: 18),
                     ),
                   ),
@@ -1044,7 +1044,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                     child: Container(
                       width: 26,
                       height: 26,
-                      decoration: BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
+                      decoration: const BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
                       child: const Icon(Icons.chevron_right, color: Colors.white, size: 18),
                     ),
                   ),
@@ -1079,7 +1079,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                   child: Container(
                     width: 26,
                     height: 26,
-                    decoration: BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
+                    decoration: const BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
                     child: const Icon(Icons.add_photo_alternate, color: Colors.white, size: 14),
                   ),
                 ),
@@ -1095,7 +1095,7 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                   child: Container(
                     width: 26,
                     height: 26,
-                    decoration: BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
+                    decoration: const BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
                     child: Icon(Icons.close, color: widget.palette.dangerBtnBg, size: 14),
                   ),
                 ),

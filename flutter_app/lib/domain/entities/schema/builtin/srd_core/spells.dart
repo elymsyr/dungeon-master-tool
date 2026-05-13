@@ -92,13 +92,13 @@ Map<String, dynamic> _spell({
       'casting_time_unit_ref': lookup('casting-time-unit', castUnit),
       'is_ritual': ritual,
       'range_type': rangeType,
-      if (rangeFt != null) 'range_ft': rangeFt,
+      'range_ft': ?rangeFt,
       'components': [for (final c in components) lookup('casting-component', c)],
-      if (material != null) 'material_description': material,
-      if (materialCostGp != null) 'material_cost_gp': materialCostGp,
+      'material_description': ?material,
+      'material_cost_gp': ?materialCostGp,
       if (material != null) 'material_consumed': materialConsumed,
       'duration_unit_ref': lookup('duration-unit', durUnit),
-      if (durAmount != null) 'duration_amount': durAmount,
+      'duration_amount': ?durAmount,
       'requires_concentration': concentration,
       'description': description,
       'class_refs': [for (final c in classes) ref('class', c)],
@@ -108,7 +108,7 @@ Map<String, dynamic> _spell({
         ],
       if (saveAbility != null)
         'save_ability_ref': lookup('ability', saveAbility),
-      if (attackType != null) 'attack_type': attackType,
+      'attack_type': ?attackType,
       if (conditions.isNotEmpty)
         'applied_condition_refs': [
           for (final c in conditions) lookup('condition', c)

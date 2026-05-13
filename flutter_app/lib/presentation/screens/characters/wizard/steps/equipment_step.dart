@@ -133,10 +133,14 @@ class _GroupCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
+            // W9: pre-resolve item names once per group instead of inside
+            // each _OptionTile.build(). For an 8-option group this drops
+            // ~32 map lookups per rebuild to ~0 — re-uses the cached lines
+            // until the entities map identity changes.
             for (final o in group.options)
               _OptionTile(
                 option: o,
-                entities: entities,
+                itemLines: _resolveItemLines(o, entities),
                 selected: o['option_id']?.toString() == selectedOptionId,
                 onTap: () => onPicked(o['option_id']?.toString() ?? ''),
               ),
@@ -147,15 +151,42 @@ class _GroupCard extends StatelessWidget {
   }
 }
 
+/// W9: resolves an option's `items` list into the pre-formatted strings
+/// the option tile renders. Called from `_GroupCard.build()` so we pay
+/// the map lookups once per option, not once per tile rebuild.
+List<String> _resolveItemLines(
+  Map<String, dynamic> option,
+  Map<String, Entity> entities,
+) {
+  final items = option['items'];
+  if (items is! List) return const [];
+  final out = <String>[];
+  for (final i in items) {
+    if (i is! Map) continue;
+    final ref = i['ref'];
+    final qty = i['quantity'] is int ? i['quantity'] as int : 1;
+    String? name;
+    if (ref is Map && ref['name'] is String) {
+      name = ref['name'] as String;
+    } else if (ref is String) {
+      name = entities[ref]?.name;
+    }
+    if (name != null) {
+      out.add(qty > 1 ? '$qty× $name' : name);
+    }
+  }
+  return out;
+}
+
 class _OptionTile extends StatelessWidget {
   final Map<String, dynamic> option;
-  final Map<String, Entity> entities;
+  final List<String> itemLines;
   final bool selected;
   final VoidCallback onTap;
 
   const _OptionTile({
     required this.option,
-    required this.entities,
+    required this.itemLines,
     required this.selected,
     required this.onTap,
   });
@@ -164,19 +195,6 @@ class _OptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = option['label']?.toString() ?? 'Option';
     final goldGp = option['gold_gp'];
-    final items = option['items'];
-    final itemLines = <String>[];
-    if (items is List) {
-      for (final i in items) {
-        if (i is! Map) continue;
-        final ref = i['ref'];
-        final qty = i['quantity'] is int ? i['quantity'] as int : 1;
-        final name = _refName(ref);
-        if (name != null) {
-          itemLines.add(qty > 1 ? '$qty× $name' : name);
-        }
-      }
-    }
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
@@ -236,12 +254,4 @@ class _OptionTile extends StatelessWidget {
     );
   }
 
-  String? _refName(Object? ref) {
-    if (ref is Map && ref['name'] is String) return ref['name'] as String;
-    if (ref is String) {
-      final e = entities[ref];
-      if (e != null) return e.name;
-    }
-    return null;
-  }
 }

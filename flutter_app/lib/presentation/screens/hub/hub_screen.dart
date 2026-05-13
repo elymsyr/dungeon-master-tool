@@ -246,9 +246,14 @@ class _HubScreenState extends ConsumerState<HubScreen> {
         if (i != _settingsTabIndex) i,
     ];
     // Multi-device hint — another device uploaded changes we haven't pulled.
+    // Already a bool — no `.select` needed.
     final cloudBadge = ref.watch(cloudRemoteHasNewerProvider);
-    // Unread messages — badge on Social tab.
-    final hasUnread = (ref.watch(totalNotificationCountProvider).value ?? 0) > 0;
+    // Unread messages — badge on Social tab. H1: select the boolean
+    // outcome so loading/error transitions of the FutureProvider don't
+    // re-render the entire hub frame; only flipping unread→read does.
+    final hasUnread = ref.watch(
+      totalNotificationCountProvider.select((a) => (a.valueOrNull ?? 0) > 0),
+    );
 
     // Redirect to landing on sign-out when Supabase is configured.
     ref.listen(authProvider, (prev, next) async {
@@ -297,13 +302,13 @@ class _HubScreenState extends ConsumerState<HubScreen> {
               )
             : null,
         automaticallyImplyLeading: false,
-        title: Row(
+        title: const Row(
           children: [
-            const AppIconImage(size: 22),
-            const SizedBox(width: 8),
+            AppIconImage(size: 22),
+            SizedBox(width: 8),
             Flexible(
               child: Text('Dungeon Master Tool',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis,
               ),
             ),

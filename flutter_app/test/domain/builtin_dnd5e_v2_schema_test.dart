@@ -320,14 +320,39 @@ void main() {
       final pc = schema.categories.firstWhere((c) => c.slug == 'player-character');
       final keys = pc.fields.map((f) => f.fieldKey).toSet();
       expect(keys, containsAll({
-        'spell_slots', 'pact_magic_slots',
+        'spell_slots',
         'death_saves_successes', 'death_saves_failures',
-        'heroic_inspiration', 'temp_hp', 'inventory',
+        'heroic_inspiration', 'inventory',
         'current_conditions',
       }));
+      // Inventory carries hasEquip=true — armor, shields, attuned items, and
+      // held weapons all live in this single list with a per-row equipped
+      // flag instead of dedicated fields.
       final inv = pc.fields.firstWhere((f) => f.fieldKey == 'inventory');
       expect(inv.validation.allowedTypes,
           ['weapon', 'armor', 'adventuring-gear', 'magic-item']);
+      expect(inv.hasEquip, true);
+      // Spells_known carries hasEquip=true — the "equipped" flag is the
+      // prepared marker for spells.
+      final spells = pc.fields.firstWhere((f) => f.fieldKey == 'spells_known');
+      expect(spells.hasEquip, true);
+      // Removed redundant fields — proficiency tables now own these.
+      expect(keys, isNot(contains('skill_proficiencies')));
+      expect(keys, isNot(contains('expertise_skills')));
+      expect(keys, isNot(contains('saving_throw_proficiencies')));
+      expect(keys, isNot(contains('weapon_proficiency_specifics')));
+      expect(keys, isNot(contains('temp_hp')));
+      expect(keys, isNot(contains('hit_dice_remaining')));
+      expect(keys, isNot(contains('attuned_items')));
+      expect(keys, isNot(contains('equipped_armor_ref')));
+      expect(keys, isNot(contains('equipped_shield_ref')));
+      expect(keys, isNot(contains('held_weapons')));
+      expect(keys, isNot(contains('equipped_magic_items')));
+      expect(keys, isNot(contains('prepared_spells')));
+      expect(keys, isNot(contains('concentration_spell_ref')));
+      expect(keys, isNot(contains('concentration_remaining_rounds')));
+      expect(keys, isNot(contains('casting_ability_ref')));
+      expect(keys, isNot(contains('pact_magic_slots')));
       final cc = pc.fields.firstWhere((f) => f.fieldKey == 'current_conditions');
       expect(cc.validation.allowedTypes, ['applied-condition']);
     });
