@@ -17,7 +17,13 @@ import 'role_provider.dart';
 ///
 /// Liste UI ve database tab bu provider'ı tüketmeli; entityProvider raw
 /// kalır ve mirror push DM-only path'inde kullanılır.
-final visibleEntityProvider = Provider<Map<String, Entity>>((ref) {
+final visibleEntityProvider = Provider<Map<String, Entity>>(
+  dependencies: [
+    entityProvider,
+    currentWorldRoleProvider,
+    activeCampaignIdProvider,
+  ],
+  (ref) {
   final all = ref.watch(entityProvider);
   final role = ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
   if (role != WorldRole.player) return all;
@@ -44,4 +50,5 @@ final visibleEntityProvider = Provider<Map<String, Entity>>((ref) {
   if (allowedIds.isEmpty) return const <String, Entity>{};
 
   return {for (final e in all.entries) if (allowedIds.contains(e.key)) e.key: e.value};
-});
+  },
+);

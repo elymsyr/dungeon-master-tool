@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/cloud_remote_check_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
+import '../../../application/providers/personal_sync_provider.dart';
 import '../../../application/providers/social_providers.dart';
 import '../../../application/providers/profile_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
@@ -231,6 +232,11 @@ class _HubScreenState extends ConsumerState<HubScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Personal multi-device sync (characters + packages + own world_members).
+    // Watching here keeps the realtime channel alive whenever the hub is in
+    // the widget tree — i.e. across the whole post-login session.
+    ref.watch(personalSyncAutoSubscribeProvider);
+
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
     final socialSubTab = ref.watch(socialSubTabProvider);

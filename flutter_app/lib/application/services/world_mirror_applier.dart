@@ -150,6 +150,11 @@ class WorldMirrorApplier {
     ref.invalidate(worldMembersProvider(e.worldId));
     ref.invalidate(worldRoleProvider(e.worldId));
     ref.invalidate(currentWorldRoleProvider);
+    // INSERT/DELETE: Worlds tab rows reflect online state + role badges;
+    // refresh the hub list so other clients see the new/lost member
+    // immediately rather than waiting for a manual reload.
+    ref.invalidate(campaignInfoListProvider);
+    ref.invalidate(campaignListProvider);
     if (e.eventType != PostgresChangeEvent.delete) return;
     // Re-resolve our own role rather than trusting oldRecord — Supabase
     // Realtime delete payloads only carry the primary-key columns unless
@@ -157,14 +162,17 @@ class WorldMirrorApplier {
     try {
       final role = await ref.read(worldRoleProvider(e.worldId).future);
       if (role == WorldRole.none) {
-        await _purgeLocalWorld(e.worldId);
+        await purgeLocalWorld(e.worldId);
       }
     } catch (err, st) {
       debugPrint('_applyMembersEvent role re-check error: $err\n$st');
     }
   }
 
-  Future<void> _purgeLocalWorld(String worldId) async {
+  /// Public so the per-user sync applier can purge a world when the
+  /// `world_members` DELETE event arrives via the personal channel (e.g.
+  /// the user is logged in on another device and got kicked there).
+  Future<void> purgeLocalWorld(String worldId) async {
     final list = ref.read(campaignInfoListProvider).valueOrNull;
     if (list == null) return;
     final match = list.where((c) => c.id == worldId).firstOrNull;
