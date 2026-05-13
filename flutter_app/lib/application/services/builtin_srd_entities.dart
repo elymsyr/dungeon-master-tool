@@ -142,9 +142,24 @@ final wizardEntitiesProvider = Provider.autoDispose<Map<String, Entity>>((ref) {
   if (world.isEmpty) return builtin;
   final campaign = ref.watch(entityProvider);
   if (campaign.isEmpty) return builtin;
-  // Materialize a real merged map. CombinedMapView.values concatenates
-  // without key-dedupe, so picker lists end up with two of each SRD
-  // entity when the campaign mirrors the bundled pack (same id in both).
-  // Campaign wins on collisions (placed last in the spread).
-  return Map<String, Entity>.unmodifiable({...builtin, ...campaign});
+  // Dedupe by (categorySlug, name): when a world was created by importing
+  // the bundled SRD pack, every imported entity got a fresh v4 UUID
+  // (PackageImportService line 47). Plain id-based merge then keeps both
+  // copies — the user sees every race / spell / background twice.
+  // Suppress the builtin row whenever the campaign already supplies one
+  // with matching (slug, lowercased name); campaign wins for true
+  // overrides too.
+  final campaignKeys = <String>{};
+  for (final e in campaign.values) {
+    campaignKeys.add('${e.categorySlug}::${e.name.toLowerCase()}');
+  }
+  final merged = <String, Entity>{};
+  for (final entry in builtin.entries) {
+    final e = entry.value;
+    final key = '${e.categorySlug}::${e.name.toLowerCase()}';
+    if (campaignKeys.contains(key)) continue;
+    merged[entry.key] = e;
+  }
+  merged.addAll(campaign);
+  return Map<String, Entity>.unmodifiable(merged);
 });
