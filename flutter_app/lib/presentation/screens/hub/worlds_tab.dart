@@ -8,11 +8,14 @@ import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../core/config/app_paths.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../domain/entities/schema/world_schema.dart';
+import '../../dialogs/join_world_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/marketplace_panel.dart';
+import '../../widgets/online_world_section.dart';
 import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
@@ -71,6 +74,20 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                       visualDensity: VisualDensity.compact,
                     ),
                   ),
+                  if (SupabaseConfig.isConfigured) ...[
+                    const SizedBox(width: 4),
+                    OutlinedButton.icon(
+                      onPressed: () => JoinWorldDialog.show(context),
+                      icon: const Icon(Icons.login, size: 16),
+                      label: const Text('Join'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        minimumSize: const Size(0, 32),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  ],
                   const SizedBox(width: 4),
                   OutlinedButton(
                     onPressed: _openCreateWorldDialog,
@@ -517,6 +534,13 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 itemType: 'world',
                 localId: campaignName,
                 title: campaignName,
+              ),
+              const SizedBox(height: 12),
+              Divider(height: 1, color: palette.featureCardBorder),
+              const SizedBox(height: 12),
+              OnlineWorldSection(
+                campaignId: worldId,
+                campaignName: campaignName,
               ),
               const SizedBox(height: 12),
               Divider(height: 1, color: palette.featureCardBorder),

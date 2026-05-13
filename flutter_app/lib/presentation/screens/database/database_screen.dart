@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
+import '../../../application/providers/visible_entity_provider.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/resizable_split.dart';
@@ -88,7 +89,7 @@ class _DatabaseScreenState extends ConsumerState<DatabaseScreen> {
       return;
     }
 
-    final entities = ref.read(entityProvider);
+    final entities = ref.read(visibleEntityProvider);
     final entity = entities[entityId];
     final schema = ref.read(worldSchemaProvider);
 

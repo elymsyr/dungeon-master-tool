@@ -21,6 +21,9 @@ import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
+import '../../application/providers/role_provider.dart';
+import '../../application/providers/world_mirror_provider.dart';
+import '../../domain/entities/online/world_role.dart';
 import '../../core/utils/screen_type.dart';
 import '../../application/providers/media_provider.dart';
 import '../dialogs/bug_report_dialog.dart';
@@ -40,6 +43,7 @@ import '../widgets/soundmap_sidebar.dart';
 import 'database/database_screen.dart';
 import 'map/world_map_screen.dart';
 import 'mind_map/mind_map_screen.dart';
+import 'player/player_main_screen.dart';
 import 'session/session_screen.dart';
 
 /// Ana ekran — Python ui/main_root.py karşılığı.
@@ -298,6 +302,15 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Online player ise tamamen ayrı, sade shell. role henüz resolve
+    // olmadıysa DM görünümü ile başlar; resolve sonrası rebuild ile
+    // PlayerMainScreen'e geçer.
+    final role =
+        ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
+    if (role == WorldRole.player) {
+      return const PlayerMainScreen();
+    }
+
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final campaignName = ref.read(activeCampaignProvider) ?? '';
@@ -306,6 +319,9 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // when the active campaign loads. Picks up new SRD pack content on
     // app restart without the user opening Packages settings.
     ref.watch(activeCampaignSyncProvider);
+    // Online: aktif world Supabase'e abone olur + initial state seed olur.
+    // Offline veya member değilse no-op.
+    ref.watch(worldSyncAutoSubscribeProvider);
     final screen = getScreenType(context);
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;

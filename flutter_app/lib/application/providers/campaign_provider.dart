@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'dart:convert';
+
 import '../../core/utils/deep_copy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,6 +12,10 @@ import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
 import '../services/campaign_import_service.dart';
+import 'online_worlds_provider.dart';
+import 'role_provider.dart';
+import 'world_mirror_provider.dart';
+import '../../domain/entities/online/world_role.dart';
 
 final campaignLocalDsProvider = Provider((_) => CampaignLocalDataSource());
 
@@ -139,7 +145,46 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   Future<void> save() async {
     if (state != null && _data != null) {
       await _repo.save(state!, _data!);
+      _mirrorAfterSave();
     }
+  }
+
+  /// World online ise lokal save sonrası Supabase mirror'a push eder.
+  /// Best-effort: mirror null veya RLS reddederse sessizce geç.
+  void _mirrorAfterSave() {
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    final data = _data;
+    if (mirror == null || data == null) return;
+    final worldId = data['world_id'] as String?;
+    if (worldId == null) return;
+    // Offline world → mirror push'u atla (RLS gürültüsünü engeller).
+    final onlineIds = _ref.read(onlineWorldIdsProvider);
+    if (!onlineIds.contains(worldId)) return;
+    // Entity + world state'i sadece DM yazar; player'ın push girişimi
+    // RLS tarafından reddedilir, hata logunu engellemek için erken çık.
+    final role =
+        _ref.read(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
+    if (role != WorldRole.dm) return;
+    final entitiesRaw = data['entities'];
+    final entitiesBlob = entitiesRaw is Map<String, dynamic>
+        ? entitiesRaw
+        : const <String, dynamic>{};
+    // ignore: discarded_futures
+    mirror.pushEntities(worldId: worldId, entitiesBlob: entitiesBlob);
+
+    final schemaMap = data['world_schema'];
+    final templateId = schemaMap is Map ? schemaMap['schemaId'] as String? : null;
+    final templateHash = data['template_hash'] as String?;
+    // Üst-düzey state (sessions, combat, vs.) — entities dahil çünkü server
+    // RLS ayrıştırması yapmıyor; state_json sadece DM açısından truth.
+    // ignore: discarded_futures
+    mirror.pushWorldState(
+      worldId: worldId,
+      worldName: state ?? '',
+      templateId: templateId,
+      templateHash: templateHash,
+      stateJson: jsonEncode(data),
+    );
   }
 
   /// Re-reads the active campaign from disk, replaces [_data] in place

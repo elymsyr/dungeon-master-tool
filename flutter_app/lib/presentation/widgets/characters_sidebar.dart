@@ -7,15 +7,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/character_claim_provider.dart';
 import '../../application/providers/character_provider.dart';
 import '../../application/providers/edit_mode_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/global_tags_provider.dart';
+import '../../application/providers/role_provider.dart';
 import '../../application/providers/template_provider.dart';
+import '../../application/providers/world_membership_provider.dart';
 import '../../application/services/builtin_srd_entities.dart';
 import '../../application/services/tag_moderation.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/entity.dart';
+import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
@@ -66,6 +70,17 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
   Widget _buildList(DmToolColors palette) {
     final activeWorld = ref.watch(activeCampaignProvider);
     final charactersAsync = ref.watch(characterListProvider);
+    // Bump trigger so linked_character_ids changes (import/unlink) cause
+    // the sidebar to recompute scoped list.
+    ref.watch(campaignRevisionProvider);
+    final linkedIds = activeWorld == null
+        ? const <String>{}
+        : ((ref.read(activeCampaignProvider.notifier).data?[
+                    'linked_character_ids']
+                as List?)
+                ?.whereType<String>()
+                .toSet() ??
+            const <String>{});
     // F2 / H3-extension: single merged entity map for the sidebar list.
     // Per-row `readCharacterEntities` was watching three providers and
     // spreading two maps for every character tile. Now: 1 watch, lazy
@@ -142,7 +157,9 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
               final scoped = activeWorld == null
                   ? const <Character>[]
                   : (all
-                          .where((c) => c.worldName == activeWorld)
+                          .where((c) =>
+                              c.worldName == activeWorld ||
+                              linkedIds.contains(c.id))
                           .toList()
                         ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt)));
               if (scoped.isEmpty) {
@@ -231,6 +248,9 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
     final overlay =
         Overlay.of(context).context.findRenderObject() as RenderBox?;
     if (overlay == null) return;
+    final role =
+        ref.read(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
+    final isDmOnline = role == WorldRole.dm;
     final selected = await showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
@@ -240,6 +260,30 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
         overlay.size.height - globalPosition.dy,
       ),
       items: [
+        if (isDmOnline)
+          PopupMenuItem<String>(
+            value: 'assign',
+            child: Row(
+              children: [
+                Icon(Icons.person_pin,
+                    size: 16, color: palette.tabActiveText),
+                const SizedBox(width: 8),
+                const Text('Assign to player...'),
+              ],
+            ),
+          ),
+        if (isDmOnline)
+          PopupMenuItem<String>(
+            value: 'pool',
+            child: Row(
+              children: [
+                Icon(Icons.inventory_2,
+                    size: 16, color: palette.tabActiveText),
+                const SizedBox(width: 8),
+                const Text('Make available for claim'),
+              ],
+            ),
+          ),
         PopupMenuItem<String>(
           value: 'remove',
           child: Row(
@@ -255,6 +299,84 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
     );
     if (selected == 'remove') {
       await _removeFromWorld(c, palette);
+    } else if (selected == 'assign') {
+      await _assignToPlayerDialog(c, palette);
+    } else if (selected == 'pool') {
+      await _markAvailableForClaim(c, palette);
+    }
+  }
+
+  Future<void> _assignToPlayerDialog(Character c, DmToolColors palette) async {
+    final worldId = ref.read(activeCampaignIdProvider).valueOrNull;
+    if (worldId == null) return;
+    final membersAsync = await ref
+        .read(worldMembersProvider(worldId).future);
+    final players = membersAsync
+        .where((m) => m.role == WorldRole.player)
+        .toList();
+    if (!mounted) return;
+    if (players.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No players have joined yet')),
+      );
+      return;
+    }
+    final selectedUserId = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text('Assign "${c.entity.name}" to'),
+        children: players
+            .map((m) => SimpleDialogOption(
+                  onPressed: () => Navigator.pop(ctx, m.userId),
+                  child: Text(m.displayName ??
+                      m.username ??
+                      m.userId.substring(0, 8)),
+                ))
+            .toList(),
+      ),
+    );
+    if (selectedUserId == null) return;
+    try {
+      final svc = ref.read(characterClaimServiceProvider);
+      if (svc == null) return;
+      await svc.assignToPlayer(
+          characterId: c.id, userId: selectedUserId);
+      // Local karakteri de owner_id ile güncelle (mirror echo gerek yok).
+      await ref
+          .read(characterListProvider.notifier)
+          .update(c.copyWith(ownerId: selectedUserId));
+      ref.invalidate(claimPoolProvider(worldId));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Assigned to player')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
+    }
+  }
+
+  Future<void> _markAvailableForClaim(
+      Character c, DmToolColors palette) async {
+    final worldId = ref.read(activeCampaignIdProvider).valueOrNull;
+    if (worldId == null) return;
+    try {
+      final svc = ref.read(characterClaimServiceProvider);
+      if (svc == null) return;
+      await svc.markAvailable(characterId: c.id, worldId: worldId);
+      ref.invalidate(claimPoolProvider(worldId));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('"${c.entity.name}" is now available for claim')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
     }
   }
 
