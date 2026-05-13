@@ -10,23 +10,19 @@ import 'package:go_router/go_router.dart';
 
 import '../../../application/character_creation/level_up_planner.dart';
 import '../../../application/character_creation/multiclass_helper.dart';
-import '../../../application/providers/beta_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/entity_provider.dart';
-import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/locale_provider.dart';
+import '../../../application/providers/personal_online_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../application/services/builtin_srd_entities.dart';
 import '../../widgets/character_stat_chips.dart';
 import 'level_up_dialog.dart';
 import '../../../core/config/supabase_config.dart';
-import '../../../data/datasources/remote/cloud_backup_remote_ds.dart';
-import '../../../data/repositories/cloud_backup_repository_impl.dart';
 import '../../../domain/entities/character.dart';
-import '../../../domain/entities/cloud_backup_meta.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_schema.dart';
@@ -2140,22 +2136,22 @@ class _CharacterSaveSyncButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final hasCloud = SupabaseConfig.isConfigured;
-    final opState = ref.watch(cloudBackupOperationProvider);
-    final busy = saving ||
-        opState.type == CloudBackupOpType.uploading ||
-        opState.type == CloudBackupOpType.downloading;
+    final isOnline =
+        ref.watch(personalOnlineCharIdsProvider).contains(character.id);
 
-    final (icon, color) = _resolveIcon(palette, hasCloud, opState);
+    final (icon, color) = _resolveIcon(palette, hasCloud, isOnline);
 
     return IconButton(
-      icon: busy
+      icon: saving
           ? SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(strokeWidth: 2, color: color),
             )
           : Icon(icon, size: 20, color: color),
-      tooltip: _tooltip(opState, saving),
+      tooltip: saving
+          ? 'Saving...'
+          : (isOnline ? 'Online · Save & Sync' : 'Save & Sync'),
       onPressed: () => showDialog<void>(
         context: context,
         builder: (ctx) => _CharacterSaveSyncDialog(
@@ -2169,33 +2165,15 @@ class _CharacterSaveSyncButton extends ConsumerWidget {
   (IconData, Color) _resolveIcon(
     DmToolColors palette,
     bool hasCloud,
-    CloudBackupOperationState op,
+    bool isOnline,
   ) {
     if (!hasCloud) {
       return (Icons.save, palette.sidebarLabelSecondary);
     }
-    if (op.errorMessage != null) {
-      return (Icons.cloud_off, palette.dangerBtnBg);
+    if (isOnline) {
+      return (Icons.cloud_done, palette.successBtnBg);
     }
-    return switch (op.type) {
-      CloudBackupOpType.uploading ||
-      CloudBackupOpType.downloading =>
-        (Icons.cloud_sync, palette.featureCardAccent),
-      _ => op.result != null
-          ? (Icons.cloud_done, palette.successBtnBg)
-          : (Icons.cloud_queue, palette.sidebarLabelSecondary),
-    };
-  }
-
-  String _tooltip(CloudBackupOperationState op, bool saving) {
-    if (saving) return 'Saving...';
-    if (op.errorMessage != null) return 'Cloud error';
-    return switch (op.type) {
-      CloudBackupOpType.uploading => 'Backing up...',
-      CloudBackupOpType.downloading => 'Restoring...',
-      CloudBackupOpType.deleting => 'Deleting...',
-      _ => 'Save & Sync',
-    };
+    return (Icons.cloud_outlined, palette.sidebarLabelSecondary);
   }
 }
 
@@ -2212,9 +2190,6 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final hasCloud = SupabaseConfig.isConfigured;
-    final opState = ref.watch(cloudBackupOperationProvider);
-    final isUploading = opState.type == CloudBackupOpType.uploading;
-    final isDownloading = opState.type == CloudBackupOpType.downloading;
 
     DateTime? updatedAt;
     try {
@@ -2297,33 +2272,17 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
                         }
                       },
                     ),
-                    if (hasCloud)
-                      _actionButton(
-                        palette,
-                        icon: Icons.cloud_upload_outlined,
-                        label: isUploading ? 'Syncing...' : 'Backup to Cloud',
-                        onPressed: isUploading
-                            ? null
-                            : () => _backupToCloud(context, ref),
-                      ),
-                    if (hasCloud)
-                      _actionButton(
-                        palette,
-                        icon: Icons.cloud_download_outlined,
-                        label: isDownloading ? 'Restoring...' : 'Sync from Cloud',
-                        onPressed: isDownloading
-                            ? null
-                            : () => _syncFromCloud(context, ref),
-                      ),
                   ],
                 ),
 
-                // Storage
                 if (hasCloud) ...[
                   const SizedBox(height: 16),
-                  _sectionLabel(palette, 'Storage'),
+                  _sectionLabel(palette, 'Online'),
                   const SizedBox(height: 8),
-                  _CharacterStorageBar(palette: palette),
+                  _CharacterOnlineToggle(
+                    character: character,
+                    flushLocal: flushLocal,
+                  ),
                 ],
               ],
             ),
@@ -2360,171 +2319,148 @@ class _CharacterSaveSyncDialog extends ConsumerWidget {
         ),
       );
 
-  Future<void> _backupToCloud(BuildContext context, WidgetRef ref) async {
-    if (!ref.read(betaProvider).isActive) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Cloud save is beta-only. Open Settings → Subscriptions to join the free beta.',
-          ),
-        ),
-      );
-      return;
-    }
-    // Flush local edits first so the cloud copy matches disk.
-    await flushLocal();
-    final ok = await withLoading(
-      ref.read(globalLoadingProvider.notifier),
-      'character-backup-cloud',
-      'Backing up "${character.entity.name}" to cloud...',
-      () => ref
-          .read(cloudBackupOperationProvider.notifier)
-          .uploadCharacter(character),
-    );
-    if (!context.mounted) return;
-    final fresh = ref.read(cloudBackupOperationProvider);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok
-            ? 'Cloud backup complete'
-            : 'Cloud backup failed: ${fresh.errorMessage ?? ''}'),
-      ),
-    );
-  }
+}
 
-  Future<void> _syncFromCloud(BuildContext context, WidgetRef ref) async {
-    final remoteDs = CloudBackupRemoteDataSource();
-    final loading = ref.read(globalLoadingProvider.notifier);
-    const fetchTaskId = 'character-sync-fetch';
-    loading.start(LoadingTask(
-      id: fetchTaskId,
-      message: 'Looking up cloud backup for "${character.entity.name}"...',
-    ));
-    CloudBackupMeta? meta;
-    try {
-      meta = await remoteDs.fetchByItem(character.id, 'character');
-    } catch (e) {
-      debugPrint('character fetchByItem failed: $e');
-    } finally {
-      loading.end(fetchTaskId);
-    }
-    if (!context.mounted) return;
-    if (meta == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'No cloud backup found for "${character.entity.name}".'),
-        ),
-      );
-      return;
-    }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Restore "${character.entity.name}" from cloud?'),
-        content: const Text(
-          'This will OVERWRITE the local character with the cloud backup. '
-          'Any unsaved changes since the last cloud backup will be lost.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+/// Karakter "Make Online" toggle'ı — Save & Sync dialog'unun online
+/// bölümünde gösterilir. Worlds tab'taki `OnlineWorldSection`'un
+/// karakter-ölçekli karşılığı: tek tıklama, davet/üyelik yok.
+class _CharacterOnlineToggle extends ConsumerStatefulWidget {
+  final Character character;
+  final Future<void> Function() flushLocal;
+
+  const _CharacterOnlineToggle({
+    required this.character,
+    required this.flushLocal,
+  });
+
+  @override
+  ConsumerState<_CharacterOnlineToggle> createState() =>
+      _CharacterOnlineToggleState();
+}
+
+class _CharacterOnlineToggleState
+    extends ConsumerState<_CharacterOnlineToggle> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final ids = ref.watch(personalOnlineCharIdsProvider);
+    final isOnline = ids.contains(widget.character.id);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: palette.featureCardBg,
+        borderRadius: palette.br,
+        border: Border.all(color: palette.featureCardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isOnline ? Icons.cloud_done : Icons.cloud_outlined,
+                size: 16,
+                color: isOnline
+                    ? palette.successBtnBg
+                    : palette.tabActiveText,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                isOnline ? 'Online' : 'Local only',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Restore'),
+          const SizedBox(height: 4),
+          Text(
+            isOnline
+                ? 'Auto-syncing to your other devices in real time.'
+                : 'Make this character online to sync it to your other '
+                    'devices automatically.',
+            style: TextStyle(
+              fontSize: 12,
+              color: palette.sidebarLabelSecondary,
+            ),
           ),
+          const SizedBox(height: 10),
+          isOnline
+              ? TextButton.icon(
+                  onPressed: _busy ? null : _makeOffline,
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.cloud_off, size: 14),
+                  label: const Text('Make Offline'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: palette.dangerBtnBg,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                )
+              : FilledButton.icon(
+                  onPressed: _busy ? null : _makeOnline,
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.cloud_upload, size: 16),
+                  label: const Text('Make Online'),
+                ),
         ],
       ),
     );
-    if (confirmed != true) return;
-
-    final ok = await withLoading(
-      ref.read(globalLoadingProvider.notifier),
-      'character-sync-restore',
-      'Restoring "${character.entity.name}"...',
-      () => ref
-          .read(cloudBackupOperationProvider.notifier)
-          .restoreBackup(meta!),
-    );
-    if (!context.mounted) return;
-    final fresh = ref.read(cloudBackupOperationProvider);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok
-            ? 'Restored "${character.entity.name}" from cloud.'
-            : 'Restore failed: ${fresh.errorMessage ?? ''}'),
-      ),
-    );
   }
-}
 
-class _CharacterStorageBar extends ConsumerWidget {
-  final DmToolColors palette;
-  const _CharacterStorageBar({required this.palette});
+  Future<void> _makeOnline() async {
+    setState(() => _busy = true);
+    try {
+      // Flush so the published payload matches the latest edits on disk.
+      await widget.flushLocal();
+      await ref
+          .read(characterListProvider.notifier)
+          .makeOnline(widget.character.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Character is now online')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final storageAsync = ref.watch(cloudStorageUsedProvider);
-    final quotaBytes = ref.watch(betaProvider).quotaBytes;
-
-    return storageAsync.when(
-      data: (bytes) {
-        final usedMb = bytes / (1024 * 1024);
-        final totalMb = quotaBytes / (1024 * 1024);
-        const itemLimitMb = cloudBackupItemSizeLimit / (1024 * 1024);
-        final ratio = (bytes / quotaBytes).clamp(0.0, 1.0);
-        final remainingMb = totalMb - usedMb;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: ratio,
-                      minHeight: 8,
-                      backgroundColor: palette.featureCardBorder,
-                      color: ratio > 0.9
-                          ? palette.dangerBtnBg
-                          : palette.featureCardAccent,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  '${usedMb.toStringAsFixed(1)} / ${totalMb.toStringAsFixed(0)} MB',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: palette.tabActiveText,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '${remainingMb.toStringAsFixed(1)} MB remaining  |  Max ${itemLimitMb.toStringAsFixed(0)} MB per item',
-              style: TextStyle(
-                fontSize: 11,
-                color: palette.sidebarLabelSecondary,
-              ),
-            ),
-          ],
-        );
-      },
-      loading: () => const SizedBox(
-        height: 8,
-        child: LinearProgressIndicator(),
-      ),
-      error: (_, _) => Text(
-        'Could not load storage info',
-        style: TextStyle(fontSize: 11, color: palette.dangerBtnBg),
-      ),
-    );
+  Future<void> _makeOffline() async {
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(characterListProvider.notifier)
+          .makeOffline(widget.character.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Character is now offline')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 }
 

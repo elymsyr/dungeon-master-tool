@@ -16,6 +16,7 @@ import 'campaign_provider.dart';
 import 'character_claim_provider.dart';
 import 'entity_provider.dart';
 import 'online_worlds_provider.dart';
+import 'personal_online_provider.dart';
 import 'role_provider.dart';
 import 'world_mirror_provider.dart';
 
@@ -68,17 +69,28 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   void _mirrorPush(Character c) {
     final mirror = _ref.read(worldMirrorServiceProvider);
     if (mirror == null) return;
+    // World mirror — sadece char online bir world'e bağlıysa.
     final worldId = _worldIdFor(c.worldName);
-    if (worldId == null) return;
-    // Offline world → push'u atla (RLS gürültüsünü engeller).
-    final onlineIds = _ref.read(onlineWorldIdsProvider);
-    if (!onlineIds.contains(worldId)) return;
-    // ignore: discarded_futures
-    mirror.pushCharacter(
-      worldId: worldId,
-      character: c,
-      referencedEntityIds: const <String>{},
-    );
+    if (worldId != null) {
+      final onlineIds = _ref.read(onlineWorldIdsProvider);
+      if (onlineIds.contains(worldId)) {
+        // ignore: discarded_futures
+        mirror.pushCharacter(
+          worldId: worldId,
+          character: c,
+          referencedEntityIds: const <String>{},
+        );
+      }
+    }
+    // Personal mirror — char "Make Online" yapıldıysa kendi cihazlarına
+    // sync. World mirror'dan bağımsız çalışır; ikisi birlikte de aktif
+    // olabilir (örn. online world'de olup ayrıca personal sync isteyen
+    // karakter — DM yapısında nadir, oyuncu için yaygın).
+    final personalIds = _ref.read(personalOnlineCharIdsProvider);
+    if (personalIds.contains(c.id)) {
+      // ignore: discarded_futures
+      mirror.pushPersonalCharacter(c);
+    }
   }
 
   /// DM-created character'larda push sonrası claim havuzuna ekler — yeni
@@ -117,12 +129,49 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     if (mirror == null) return;
     if (worldName != null) {
       final worldId = _worldIdFor(worldName);
-      if (worldId == null) return;
-      final onlineIds = _ref.read(onlineWorldIdsProvider);
-      if (!onlineIds.contains(worldId)) return;
+      if (worldId != null) {
+        final onlineIds = _ref.read(onlineWorldIdsProvider);
+        if (onlineIds.contains(worldId)) {
+          // ignore: discarded_futures
+          mirror.deleteCharacter(characterId: characterId);
+        }
+      }
     }
-    // ignore: discarded_futures
-    mirror.deleteCharacter(characterId: characterId);
+    final personalIds = _ref.read(personalOnlineCharIdsProvider);
+    if (personalIds.contains(characterId)) {
+      // ignore: discarded_futures
+      mirror.unpublishPersonalCharacter(characterId);
+      _ref
+          .read(personalOnlineCharIdsProvider.notifier)
+          .remove(characterId);
+    }
+  }
+
+  /// "Make Online" — bu karakteri Supabase `personal_characters`'a publish
+  /// eder. Mevcut local state'i (örn. son düzenleme) push payload olarak
+  /// kullanır; cross-device sync bundan sonra `update()` hook'u ile her
+  /// yazımda devam eder.
+  Future<void> makeOnline(String id) async {
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) {
+      throw StateError('Sign in and configure Supabase to enable sync.');
+    }
+    final list = state.valueOrNull ?? const <Character>[];
+    final c = list.where((x) => x.id == id).firstOrNull;
+    if (c == null) {
+      throw StateError('Character not found.');
+    }
+    await mirror.pushPersonalCharacter(c);
+    _ref.read(personalOnlineCharIdsProvider.notifier).add(id);
+  }
+
+  /// "Make Offline" — `personal_characters` satırını siler. Local karakter
+  /// dosyası kalır; sadece cloud kopyası ve cross-device sync durdurulur.
+  Future<void> makeOffline(String id) async {
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) return;
+    await mirror.unpublishPersonalCharacter(id);
+    _ref.read(personalOnlineCharIdsProvider.notifier).remove(id);
   }
 
   Future<void> _load() async {

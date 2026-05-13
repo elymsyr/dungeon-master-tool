@@ -17,6 +17,8 @@ import '../services/package_sync_service.dart';
 import '../services/srd_core_package_bootstrap.dart';
 import 'campaign_provider.dart'
     show activeCampaignProvider, campaignRevisionProvider;
+import 'personal_online_provider.dart';
+import 'world_mirror_provider.dart';
 
 final packageLocalDsProvider = Provider((_) => PackageLocalDataSource());
 
@@ -183,7 +185,52 @@ class ActivePackageNotifier extends StateNotifier<String?> {
   Future<void> save() async {
     if (state != null && _data != null) {
       await _repo.save(state!, _data!);
+      _mirrorPushPersonal();
     }
+  }
+
+  /// Aktif paket "Make Online" yapıldıysa `personal_packages`'a push eder.
+  /// Offline'sa no-op (RLS gürültüsü olmaz).
+  void _mirrorPushPersonal() {
+    final name = state;
+    final data = _data;
+    if (name == null || data == null) return;
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) return;
+    final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
+    if (!onlineNames.contains(name)) return;
+    // ignore: discarded_futures
+    mirror.pushPersonalPackage(packageName: name, state: data);
+  }
+
+  /// "Make Online" — aktif paketi `personal_packages`'a publish eder ve
+  /// online listesine ekler. Bundan sonra her `save()` otomatik sync olur.
+  Future<void> makeOnline() async {
+    final name = state;
+    final data = _data;
+    if (name == null || data == null) {
+      throw StateError('No package open.');
+    }
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) {
+      throw StateError('Sign in and configure Supabase to enable sync.');
+    }
+    await mirror.pushPersonalPackage(packageName: name, state: data);
+    _ref
+        .read(personalOnlinePackageNamesProvider.notifier)
+        .add(name);
+  }
+
+  /// "Make Offline" — bulut kopyayı kaldırır. Local paket dosyası kalır.
+  Future<void> makeOffline() async {
+    final name = state;
+    if (name == null) return;
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) return;
+    await mirror.unpublishPersonalPackage(name);
+    _ref
+        .read(personalOnlinePackageNamesProvider.notifier)
+        .remove(name);
   }
 
   /// Replaces the in-memory package data with [newData] and persists
@@ -201,6 +248,7 @@ class ActivePackageNotifier extends StateNotifier<String?> {
         ..addAll(newData);
     }
     await _repo.save(name, _data!);
+    _mirrorPushPersonal();
     _bumpRevision();
   }
 
@@ -210,10 +258,20 @@ class ActivePackageNotifier extends StateNotifier<String?> {
   }
 
   Future<void> delete(String packageName) async {
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
+    final wasOnline = onlineNames.contains(packageName);
     await _repo.delete(packageName);
     if (state == packageName) {
       _data = null;
       state = null;
+    }
+    if (wasOnline && mirror != null) {
+      // ignore: discarded_futures
+      mirror.unpublishPersonalPackage(packageName);
+      _ref
+          .read(personalOnlinePackageNamesProvider.notifier)
+          .remove(packageName);
     }
   }
 
@@ -230,6 +288,7 @@ class ActivePackageNotifier extends StateNotifier<String?> {
     _data!.remove('template_dismissed_hash');
     _data!.remove('template_updates_muted');
     await _repo.save(state!, _data!);
+    _mirrorPushPersonal();
     _bumpRevision();
   }
 

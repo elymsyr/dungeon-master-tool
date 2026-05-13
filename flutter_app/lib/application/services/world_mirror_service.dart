@@ -222,4 +222,69 @@ class WorldMirrorService {
     if (id == null) return false;
     return _isEcho(id);
   }
+
+  /// Personal sync applier'ından çağrılır. Aynı `_lastPushedAt` map'i
+  /// paylaşırız böylece push → CDC → echo döngüsü filtrelenir.
+  bool isEchoOfId(String id) => _isEcho(id);
+
+  // ── Personal (per-user) sync — characters ──────────────────────────
+
+  Future<void> pushPersonalCharacter(Character character) async {
+    _stamp(character.id);
+    try {
+      await client.rpc('publish_personal_character', params: {
+        'p_id': character.id,
+        'p_payload_json': jsonEncode(character.toJson()),
+      });
+    } catch (e) {
+      debugPrint('pushPersonalCharacter error: $e');
+    }
+  }
+
+  Future<void> unpublishPersonalCharacter(String characterId) async {
+    _stamp(characterId);
+    try {
+      await client.rpc('unpublish_personal_character', params: {
+        'p_id': characterId,
+      });
+    } catch (e) {
+      debugPrint('unpublishPersonalCharacter error: $e');
+    }
+  }
+
+  // ── Personal (per-user) sync — packages ────────────────────────────
+  //
+  // Package key UUID değil string (paket adı). Entity UUID'leriyle
+  // collision olmaması için echo stamp'i `pkg:<name>` prefix'i ile alırız.
+
+  static String _packageEchoKey(String packageName) => 'pkg:$packageName';
+
+  Future<void> pushPersonalPackage({
+    required String packageName,
+    required Map<String, dynamic> state,
+  }) async {
+    _stamp(_packageEchoKey(packageName));
+    try {
+      await client.rpc('publish_personal_package', params: {
+        'p_package_name': packageName,
+        'p_state_json': jsonEncode(state),
+      });
+    } catch (e) {
+      debugPrint('pushPersonalPackage error: $e');
+    }
+  }
+
+  Future<void> unpublishPersonalPackage(String packageName) async {
+    _stamp(_packageEchoKey(packageName));
+    try {
+      await client.rpc('unpublish_personal_package', params: {
+        'p_package_name': packageName,
+      });
+    } catch (e) {
+      debugPrint('unpublishPersonalPackage error: $e');
+    }
+  }
+
+  bool isEchoOfPackage(String packageName) =>
+      _isEcho(_packageEchoKey(packageName));
 }

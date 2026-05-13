@@ -11,8 +11,10 @@ import '../../application/providers/event_bus_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/media_provider.dart';
 import '../../application/providers/package_provider.dart';
+import '../../application/providers/personal_online_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
+import '../../core/config/supabase_config.dart';
 import '../../application/services/srd_core_package_bootstrap.dart';
 import '../../core/config/app_paths.dart';
 import '../../domain/entities/schema/world_schema.dart';
@@ -346,6 +348,11 @@ class _PackageScreenContentState
             ),
           ),
           const SizedBox(width: 4),
+          // Online toggle — personal multi-device sync. Built-in pack
+          // can't be made online (read-only on every device).
+          if (SupabaseConfig.isConfigured &&
+              widget.packageName != srdCorePackageName)
+            _PackageOnlineButton(packageName: widget.packageName),
           // Edit Mode toggle — disabled for built-in (read-only) packages.
           Builder(builder: (_) {
             final isBuiltin = widget.packageName == srdCorePackageName;
@@ -511,5 +518,83 @@ class _PackageScreenContentState
         ),
       ),
     );
+  }
+}
+
+/// Paket "Make Online" toggle butonu — `OnlineWorldSection`'un paket
+/// karşılığı. Tek tıklama, davet/üyelik yok; sahip kendi cihazları
+/// arasında sync. Built-in SRD packı kullanıcıya read-only olduğu için
+/// bu buton parent'ta gizlenir.
+class _PackageOnlineButton extends ConsumerStatefulWidget {
+  final String packageName;
+
+  const _PackageOnlineButton({required this.packageName});
+
+  @override
+  ConsumerState<_PackageOnlineButton> createState() =>
+      _PackageOnlineButtonState();
+}
+
+class _PackageOnlineButtonState
+    extends ConsumerState<_PackageOnlineButton> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final isOnline = ref
+        .watch(personalOnlinePackageNamesProvider)
+        .contains(widget.packageName);
+
+    return IconButton(
+      icon: _busy
+          ? SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: palette.tabActiveText,
+              ),
+            )
+          : Icon(
+              isOnline ? Icons.cloud_done : Icons.cloud_outlined,
+              size: 18,
+              color: isOnline
+                  ? palette.successBtnBg
+                  : palette.tabActiveText,
+            ),
+      tooltip: isOnline
+          ? 'Online — tap to make offline'
+          : 'Make Online (sync to your other devices)',
+      onPressed: _busy ? null : () => _toggle(isOnline),
+    );
+  }
+
+  Future<void> _toggle(bool currentlyOnline) async {
+    setState(() => _busy = true);
+    try {
+      final notifier = ref.read(activePackageProvider.notifier);
+      if (currentlyOnline) {
+        await notifier.makeOffline();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Package is now offline')),
+        );
+      } else {
+        await notifier.save();
+        await notifier.makeOnline();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Package is now online')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 }

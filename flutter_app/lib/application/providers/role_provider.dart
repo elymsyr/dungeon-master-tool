@@ -9,13 +9,16 @@ import 'campaign_provider.dart';
 /// Aktif worlddeki campaign id (UUID). [activeCampaignProvider] world adı
 /// döner; Supabase mirror id ile çalıştığı için bu derived provider
 /// `campaignInfoListProvider` üzerinden mapping yapar.
-final activeCampaignIdProvider = FutureProvider<String?>((ref) async {
-  final name = ref.watch(activeCampaignProvider);
-  if (name == null) return null;
-  final list = await ref.watch(campaignInfoListProvider.future);
-  final match = list.where((c) => c.name == name).firstOrNull;
-  return match?.id;
-});
+final activeCampaignIdProvider = FutureProvider<String?>(
+  dependencies: [activeCampaignProvider],
+  (ref) async {
+    final name = ref.watch(activeCampaignProvider);
+    if (name == null) return null;
+    final list = await ref.watch(campaignInfoListProvider.future);
+    final match = list.where((c) => c.name == name).firstOrNull;
+    return match?.id;
+  },
+);
 
 /// Aktif worlddeki kullanıcı rolü.
 ///
@@ -27,8 +30,10 @@ final activeCampaignIdProvider = FutureProvider<String?>((ref) async {
 /// - Üye değilse → none (worlds tablosunda yok = offline world)
 ///
 /// Sonuç stream'i: campaign veya auth değişince invalidate.
-final currentWorldRoleProvider = FutureProvider<WorldRole>((ref) async {
-  if (!SupabaseConfig.isConfigured) return WorldRole.none;
+final currentWorldRoleProvider = FutureProvider<WorldRole>(
+  dependencies: [activeCampaignIdProvider],
+  (ref) async {
+    if (!SupabaseConfig.isConfigured) return WorldRole.none;
   final auth = ref.watch(authProvider);
   if (auth == null) return WorldRole.none;
   final campaignId = await ref.watch(activeCampaignIdProvider.future);
@@ -51,7 +56,8 @@ final currentWorldRoleProvider = FutureProvider<WorldRole>((ref) async {
     // Network/permission hatası: lokal davran (offline edit modu).
     return WorldRole.none;
   }
-});
+  },
+);
 
 /// Convenience: senkron access (rebuild olunca güncel). UI rol-bazlı
 /// dallanma için tüketir.
