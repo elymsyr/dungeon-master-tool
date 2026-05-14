@@ -130,12 +130,25 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     // kullanıcıya ek toggle gerektirmeden kendi cihazlarına sync olur.
     final personalIds = _ref.read(personalOnlineCharIdsProvider);
     final autoOnline = _shouldAutoOnline(c);
-    if (personalIds.contains(c.id) || autoOnline) {
-      // ignore: discarded_futures
-      mirror.pushPersonalCharacter(c);
-      if (autoOnline && !personalIds.contains(c.id)) {
-        _ref.read(personalOnlineCharIdsProvider.notifier).add(c.id);
+    final inPersonalSet = personalIds.contains(c.id);
+    if (!inPersonalSet && !autoOnline) return;
+    final auth = _ref.read(authProvider);
+    if (auth == null || c.ownerId != auth.uid) {
+      // Ownership flip (e.g. DM import drops it to null, world release
+      // transfers it). Personal sync must mirror only self-owned chars
+      // or we leak an ownerless payload to `personal_characters` and
+      // every other device of this user.
+      if (inPersonalSet) {
+        _ref.read(personalOnlineCharIdsProvider.notifier).remove(c.id);
+        // ignore: discarded_futures
+        mirror.unpublishPersonalCharacter(c.id);
       }
+      return;
+    }
+    // ignore: discarded_futures
+    mirror.pushPersonalCharacter(c);
+    if (autoOnline && !inPersonalSet) {
+      _ref.read(personalOnlineCharIdsProvider.notifier).add(c.id);
     }
   }
 
@@ -232,11 +245,15 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   /// own-only char tab filter they would otherwise vanish once the user
   /// signs in. World-bound orphan chars are left alone: they may belong
   /// to other players or live in the DM-owned pool of an online world.
+  ///
+  /// Adopted rows are also mirror-pushed so the user's other devices
+  /// receive them — without this, signing in on a new device produced an
+  /// empty char tab even though the first device just claimed the rows.
   Future<void> _backfillWorldlessOwnership(String uid) async {
     final list = state.valueOrNull;
     if (list == null || list.isEmpty) return;
     final out = [...list];
-    var changed = false;
+    final adopted = <Character>[];
     for (var i = 0; i < out.length; i++) {
       final c = out[i];
       if (c.ownerId != null) continue;
@@ -249,9 +266,13 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         continue;
       }
       out[i] = patched;
-      changed = true;
+      adopted.add(patched);
     }
-    if (changed) state = AsyncValue.data(out);
+    if (adopted.isEmpty) return;
+    state = AsyncValue.data(out);
+    for (final c in adopted) {
+      _mirrorPush(c);
+    }
   }
 
   Future<void> refresh() => _load();
