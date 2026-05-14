@@ -381,6 +381,12 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
       isList: true, hasEquip: true, g: grpSpells);
   fb.proficiencyTable('class_resources', 'Class Resources', g: grpFeatures);
   fb.relation('trinket_ref', 'Trinket', const ['trinket']);
+  // Free-text trinket — the wizard's personality step writes the rolled or
+  // typed string here (the SRD d100 trinket table ships as flavor text, not
+  // entity rows, so trinket_ref stays empty for most freshly-created PCs).
+  // Without a schema entry the editor's schema-driven tile renderer skipped
+  // the value entirely and the trinket vanished from the character card.
+  fb.markdown('trinket', 'Trinket (text)', g: grpRules);
   // Personality (PHB §1)
   fb.markdown('personality_traits', 'Personality Traits', g: grpRules);
   fb.markdown('ideals', 'Ideals', g: grpRules);

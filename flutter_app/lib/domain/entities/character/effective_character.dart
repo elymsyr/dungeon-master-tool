@@ -62,6 +62,12 @@ abstract class EffectiveCharacter with _$EffectiveCharacter {
     Map<String, int> effectiveAbilities,
     @Default(ResolvedProficiencies()) ResolvedProficiencies proficiencies,
     @Default(0) int acBonus,
+    /// Computed armor class: armored = base_ac + Dex (capped) + shield + acBonus;
+    /// unarmored = max(10 + Dex, unarmored_ac_formula payloads) + shield (when
+    /// allowed) + acBonus. The sheet's AC chip prefers this over the manually
+    /// authored `combat_stats.ac` field so re-equipping armor refreshes the
+    /// display without manual edits.
+    @Default(10) int armorClass,
     @Default(0) int speedBonus,
     /// Non-walking speeds in feet, keyed by mode (`fly`, `swim`, `climb`,
     /// `burrow`). Populated by effects like `climb_speed_equals_speed`
@@ -150,6 +156,22 @@ abstract class EffectiveCharacter with _$EffectiveCharacter {
     /// chips like "Poison Resistance — Dwarf". Same id appearing from
     /// multiple sources lists each source once, in apply order.
     @Default({}) Map<String, List<String>> grantSources,
+    /// Spells the PC can cast a fixed number of times per rest without
+    /// expending a slot. Populated from PC `free_cast_spell_ids` (Wizard
+    /// Spell Mastery L18, Mystic Arcanum, Signature Spells free recasts).
+    /// Each entry is a spell entity id; pairing with a use-tracker (resource
+    /// pool) is the consumer's job.
+    @Default([]) List<String> freeCastSpellIds,
+    /// Spells the PC has copied into their ritual book — castable as a
+    /// ritual without expending a slot. Populated from PC
+    /// `ritual_book_spell_ids` (Ritual Caster feat, Wizard Ritual Adept).
+    @Default([]) List<String> ritualBookSpellIds,
+    /// Conditions currently affecting the PC at sheet-read time. Populated
+    /// from PC `active_conditions`. Writers / clearers are runtime affordances
+    /// (Restoring Touch clears one; rest pipeline clears Exhaustion ticks).
+    /// Sheet surfaces them as chips so the player sees their status at a
+    /// glance; combat tracker drives state-conditional grants off this list.
+    @Default([]) List<String> activeConditionIds,
     @Default([]) List<String> warnings,
   }) = _EffectiveCharacter;
 

@@ -790,6 +790,21 @@ class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
           );
       ref.read(onlineWorldIdsProvider.notifier).add(worldId);
       ref.invalidate(worldOnlineStatusProvider(worldId));
+      // First-publish path: the invite-code FutureProvider had already
+      // resolved to null while the world was offline (NoOp branch /
+      // ensureInvite RPC errored against the not-yet-created row). The
+      // Riverpod cache held that null indefinitely so the panel showed
+      // "members but no code" after the world flipped online. Force a
+      // fresh ensure_world_invite RPC + invalidate so the panel surfaces
+      // the code on the same screen tick the publish succeeds.
+      try {
+        await ref
+            .read(worldMembershipServiceProvider)
+            .ensureInvite(worldId);
+      } catch (e) {
+        debugPrint('makeOnline ensureInvite error: $e');
+      }
+      ref.invalidate(worldActiveInviteCodeProvider(worldId));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('World is now online')),

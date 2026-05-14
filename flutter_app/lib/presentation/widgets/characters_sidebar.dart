@@ -16,6 +16,7 @@ import '../../domain/entities/online/world_role.dart';
 import 'package:go_router/go_router.dart';
 
 import '../l10n/app_localizations.dart';
+import '../screens/characters/character_editor_screen.dart';
 import '../theme/dm_tool_colors.dart';
 import 'character_stat_chips.dart';
 import 'marketplace_panel.dart';
@@ -29,17 +30,94 @@ import 'save_info_section.dart';
 /// buttons).
 class CharactersSidebar extends ConsumerStatefulWidget {
   final DmToolColors palette;
+  /// Optional callback invoked when the user taps a character whose
+  /// `worldName` matches the active campaign. MainScreen wires this to
+  /// surface the character inline (Database tab + selected entity) so
+  /// the sheet opens inside the world view instead of pushing the
+  /// editor as a fullscreen go_router route. Hub-level callers leave
+  /// this null and get the legacy push behavior.
+  final void Function(String characterId)? onOpenCharacter;
 
-  const CharactersSidebar({super.key, required this.palette});
+  const CharactersSidebar({
+    super.key,
+    required this.palette,
+    this.onOpenCharacter,
+  });
 
   @override
   ConsumerState<CharactersSidebar> createState() => _CharactersSidebarState();
 }
 
 class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
+  /// When non-null, the sidebar swaps its list view for an embedded
+  /// CharacterEditorScreen pinned to this character. Tapping a row in
+  /// the list assigns this; an in-pane "back" button clears it. The
+  /// goal is the user's request: opening a character from the world
+  /// sidebar should surface the sheet inside the sidebar pane, not
+  /// push a fullscreen route over the world view.
+  String? _inlineCharacterId;
+
   @override
   Widget build(BuildContext context) {
+    if (_inlineCharacterId != null) {
+      return _buildInlineEditor(widget.palette, _inlineCharacterId!);
+    }
     return _buildList(widget.palette);
+  }
+
+  Widget _buildInlineEditor(DmToolColors palette, String id) {
+    return Column(
+      children: [
+        Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: palette.tabBg,
+            border: Border(bottom: BorderSide(color: palette.sidebarDivider)),
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                tooltip: 'Back to character list',
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 28, minHeight: 28),
+                iconSize: 18,
+                onPressed: () => setState(() => _inlineCharacterId = null),
+                icon: Icon(Icons.arrow_back, color: palette.tabActiveText),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  'Character',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: palette.tabActiveText,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              IconButton(
+                tooltip: 'Open fullscreen',
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 28, minHeight: 28),
+                iconSize: 18,
+                onPressed: () => context.push('/character/$id'),
+                icon: Icon(Icons.open_in_full,
+                    color: palette.tabActiveText),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: CharacterEditorScreen(characterId: id),
+        ),
+      ],
+    );
   }
 
   Widget _buildList(DmToolColors palette) {
@@ -269,6 +347,24 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
       }
     }
     if (!mounted) return;
+    // Embed the sheet inside the sidebar pane when this row belongs to
+    // the open world (matches the user's request: opening a world
+    // character from the sidebar should stay in the sidebar). Cross-
+    // world / orphan rows still push the fullscreen route. An external
+    // `onOpenCharacter` callback wins when supplied so MainScreen can
+    // override the embed target later if needed.
+    final inline = widget.onOpenCharacter;
+    final active = ref.read(activeCampaignProvider);
+    final shouldEmbed =
+        c.worldName.isNotEmpty && c.worldName == active;
+    if (inline != null && shouldEmbed) {
+      inline(c.id);
+      return;
+    }
+    if (shouldEmbed) {
+      setState(() => _inlineCharacterId = c.id);
+      return;
+    }
     context.push('/character/${c.id}');
   }
 

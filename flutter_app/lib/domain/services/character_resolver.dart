@@ -989,6 +989,13 @@ class CharacterResolver {
         armorCategoryIds: armorCats,
       ),
       acBonus: acBonus,
+      armorClass: _computeArmorClass(
+        fields: fields,
+        entitiesById: entitiesById,
+        abilities: abilities,
+        acBonus: acBonus,
+        unarmoredFormulas: unarmoredFormulas,
+      ),
       speedBonus: speedBonus,
       extraSpeeds: extraSpeeds,
       hpBonusFlat: hpBonusFlat,
@@ -1018,6 +1025,9 @@ class CharacterResolver {
       critRangeMin: critRangeMin,
       resourcePools: resourcePools,
       grantSources: grantSources,
+      freeCastSpellIds: _readStringList(fields['free_cast_spell_ids']),
+      ritualBookSpellIds: _readStringList(fields['ritual_book_spell_ids']),
+      activeConditionIds: _readStringList(fields['active_conditions']),
       warnings: warnings,
     );
   }
@@ -1062,6 +1072,61 @@ class CharacterResolver {
       if (e.categorySlug == slug && e.name == name) return e.id;
     }
     return null;
+  }
+
+  /// Compute the PC's armor class from equipped armor + Dex (capped by
+  /// armor row), shield bonus, generic `ac_bonus` effects, and any
+  /// `unarmored_ac_formula` effects whose predicates already resolved.
+  /// Mirrors SRD §1 Armor Class rules. Surfaced on EffectiveCharacter so
+  /// the sheet's AC chip refreshes whenever inventory equip flags change
+  /// without forcing the player to retype the value into combat_stats.
+  static int _computeArmorClass({
+    required Map<String, dynamic> fields,
+    required Map<String, Entity> entitiesById,
+    required Map<String, int> abilities,
+    required int acBonus,
+    required List<Map<String, dynamic>> unarmoredFormulas,
+  }) {
+    final dex = ((abilities['DEX'] ?? 10) - 10) >> 1;
+    final hasShield = _hasEquippedShield(fields, entitiesById);
+    final armor = _equippedArmor(fields, entitiesById);
+    if (armor != null) {
+      final base = _intOf(armor.fields['base_ac']);
+      final addsDex = armor.fields['adds_dex'] == true;
+      final dexCapRaw = armor.fields['dex_cap'];
+      int dexContrib;
+      if (!addsDex) {
+        dexContrib = 0;
+      } else if (dexCapRaw is int) {
+        dexContrib = dex > dexCapRaw ? dexCapRaw : dex;
+      } else {
+        dexContrib = dex;
+      }
+      return base + dexContrib + (hasShield ? 2 : 0) + acBonus;
+    }
+    // Unarmored: SRD default 10 + Dex; replaced by the highest matching
+    // unarmored_ac_formula (Barbarian, Monk, Draconic Sorcerer). Shield is
+    // additive when the formula allows it (Barbarian yes, Monk no).
+    var best = 10 + dex + (hasShield ? 2 : 0);
+    for (final f in unarmoredFormulas) {
+      final payload = f['payload'];
+      if (payload is! Map) continue;
+      final baseRaw = payload['base'];
+      final base = baseRaw is int ? baseRaw : 10;
+      final mods = payload['ability_mods'];
+      var sum = base;
+      if (mods is List) {
+        for (final m in mods) {
+          if (m is String) {
+            sum += ((abilities[m] ?? 10) - 10) >> 1;
+          }
+        }
+      }
+      final shieldAllowed = payload['shield_allowed'] == true;
+      final withShield = sum + (hasShield && shieldAllowed ? 2 : 0);
+      if (withShield > best) best = withShield;
+    }
+    return best + acBonus;
   }
 
   /// Walk a PC's `inventory` field and return the first equipped armor

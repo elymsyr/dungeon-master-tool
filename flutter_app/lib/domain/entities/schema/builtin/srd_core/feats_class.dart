@@ -2167,7 +2167,7 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         effects: [
           effect('spell_always_prepared',
               targetKind: 'spell',
-              targetRef: lookup('spell', 'Summon Dragon')),
+              targetRef: ref('spell', 'Summon Dragon')),
           effect('resource_pool_grant',
               payload: {
                 'pool_ref': _pool('pool:dragon_companion'),

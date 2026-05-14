@@ -62,8 +62,9 @@ CharacterRaceClassIds characterRaceClassIds(Character character) {
 
 List<CharacterStatLine> characterStatLines(
   Character character,
-  Map<String, Entity> entities,
-) {
+  Map<String, Entity> entities, {
+  int? effectiveAc,
+}) {
   final ids = characterRaceClassIds(character);
   final raceName =
       ids.raceId == null ? '—' : (entities[ids.raceId]?.name ?? '—');
@@ -73,6 +74,7 @@ List<CharacterStatLine> characterStatLines(
     character,
     raceName: raceName,
     className: className,
+    effectiveAc: effectiveAc,
   );
 }
 
@@ -84,6 +86,7 @@ List<CharacterStatLine> characterStatLinesWithNames(
   Character character, {
   required String raceName,
   required String className,
+  int? effectiveAc,
 }) {
   final fields = character.entity.fields;
 
@@ -107,10 +110,22 @@ List<CharacterStatLine> characterStatLinesWithNames(
     if (combat['ac'] != null) combatAc = asInt(combat['ac']);
     if (combat['level'] != null) combatLevel = asInt(combat['level']);
   }
+  // Prefer the resolver-computed AC (armor + Dex + shield + acBonus +
+  // unarmored formulas) so equipping armor/shield refreshes the chip
+  // without manual edits to combat_stats. Fall back to the manually
+  // authored field when no resolver value is supplied (sidebar/list tiles
+  // that don't invoke the effective provider).
   final ac = asInt(fields['ac']);
-  final acDisplay = ac > 0
-      ? '$ac'
-      : (combatAc != null && combatAc > 0 ? '$combatAc' : '—');
+  final String acDisplay;
+  if (effectiveAc != null && effectiveAc > 0) {
+    acDisplay = '$effectiveAc';
+  } else if (ac > 0) {
+    acDisplay = '$ac';
+  } else if (combatAc != null && combatAc > 0) {
+    acDisplay = '$combatAc';
+  } else {
+    acDisplay = '—';
+  }
 
   var level = asInt(fields['level']);
   if (level == 0 && combatLevel != null) level = combatLevel;
