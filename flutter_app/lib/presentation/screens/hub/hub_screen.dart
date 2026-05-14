@@ -312,10 +312,11 @@ class _HubScreenState extends ConsumerState<HubScreen> {
           children: [
             AppIconImage(size: 22),
             SizedBox(width: 8),
-            Flexible(
+            Expanded(
               child: Text('Dungeon Master Tool',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                overflow: TextOverflow.fade,
               ),
             ),
           ],
@@ -324,11 +325,14 @@ class _HubScreenState extends ConsumerState<HubScreen> {
           const VersionIndicatorButton(),
           const SaveSyncIndicator(compact: true),
           HelpIconButton(title: help.title, body: help.body),
-          IconButton(
-            tooltip: 'Report a Bug',
-            icon: const Icon(Icons.bug_report_outlined),
-            onPressed: () => BugReportDialog.show(context),
-          ),
+          // Bug report duplicates the entry inside the profile menu — keep
+          // the desktop/tablet shortcut, hide on phone where space is tight.
+          if (screen != ScreenType.phone)
+            IconButton(
+              tooltip: 'Report a Bug',
+              icon: const Icon(Icons.bug_report_outlined),
+              onPressed: () => BugReportDialog.show(context),
+            ),
           // Profile menu — avatar + username with popup actions
           const ProfileMenuButton(),
           const SizedBox(width: 4),

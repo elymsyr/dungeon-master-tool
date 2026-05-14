@@ -241,6 +241,26 @@ class _MainScreenState extends ConsumerState<MainScreen>
     );
   }
 
+  /// Phone overflow-menu projection toggle. Mirrors [ProjectionStatusIcon]:
+  /// deactivate when active, otherwise activate the first available output
+  /// (screencast picker on mobile, second window on desktop layouts).
+  Future<void> _togglePhoneProjection() async {
+    final controller = ref.read(projectionControllerProvider.notifier);
+    final state = ref.read(projectionControllerProvider);
+    if (state.isActive) {
+      controller.deactivateOutput();
+      return;
+    }
+    final available = ref.read(availableProjectionOutputsProvider);
+    if (available.isEmpty) return;
+    final mode = available.first;
+    if (mode == ProjectionOutputMode.screencast) {
+      await _openScreencastPicker(controller);
+    } else {
+      await controller.activateOutput(mode);
+    }
+  }
+
   void _showLandscapeNavSheet(List<String> tabLabels, DmToolColors palette) {
     showModalBottomSheet(
       context: context,
@@ -469,11 +489,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
           children: [
             const AppIconImage(size: 22),
             const SizedBox(width: 8),
-            Flexible(
+            Expanded(
               child: Text(
                 campaignName,
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                overflow: TextOverflow.fade,
               ),
             ),
           ],
@@ -496,14 +517,18 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 .read(editModeProvider.notifier)
                 .update((s) => !s),
           ),
-          // Player window status — always visible, jumps to projection panel
-          const ProjectionStatusIcon(),
+          // Player window status — desktop/tablet only. Phone collapses it
+          // into the overflow menu below ("Player Window") to save AppBar
+          // real estate.
+          if (screen != ScreenType.phone) const ProjectionStatusIcon(),
           // Phone: collapse infrequent actions into overflow menu
           if (screen == ScreenType.phone) ...[
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, size: 20),
               onSelected: (action) {
                 switch (action) {
+                  case 'projection':
+                    _togglePhoneProjection();
                   case 'media':
                     final mediaDir = ref.read(mediaDirectoryProvider);
                     final campaignId = ref.read(mediaCampaignIdProvider);
@@ -529,7 +554,31 @@ class _MainScreenState extends ConsumerState<MainScreen>
                     }
                 }
               },
-              itemBuilder: (_) => [
+              itemBuilder: (_) {
+                final projState = ref.read(projectionControllerProvider);
+                final projAvail = ref.read(availableProjectionOutputsProvider);
+                final projLabel = projState.isActive
+                    ? 'Close Player Window'
+                    : 'Open Player Window';
+                final canProject = projState.isActive || projAvail.isNotEmpty;
+                return [
+                  if (canProject)
+                    PopupMenuItem(
+                      value: 'projection',
+                      child: Row(children: [
+                        Icon(
+                          projState.isActive
+                              ? Icons.cast_connected
+                              : Icons.cast,
+                          size: 18,
+                          color: projState.isActive
+                              ? palette.tokenBorderActive
+                              : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(projLabel),
+                      ]),
+                    ),
                 const PopupMenuItem(value: 'media', child: Row(children: [Icon(Icons.photo_library_outlined, size: 18), SizedBox(width: 8), Text('Media Gallery')])),
                 PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),
                 const PopupMenuDivider(),
@@ -548,7 +597,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 const PopupMenuItem(value: 'lang:fr', child: Text('Français')),
                 const PopupMenuDivider(),
                 const PopupMenuItem(value: 'bug', child: Row(children: [Icon(Icons.bug_report_outlined, size: 18), SizedBox(width: 8), Text('Report a Bug')])),
-              ],
+                ];
+              },
             ),
           ] else ...[
             // Desktop/Tablet: show all buttons

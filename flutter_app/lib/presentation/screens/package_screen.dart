@@ -222,6 +222,34 @@ class _PackageScreenContentState
     if (mounted) context.go('/hub');
   }
 
+  /// Phone overflow-menu sync toggle. Mirrors [_PackageOnlineButton]:
+  /// flushes local then flips the personal-online flag, surfacing snackbar
+  /// feedback for both directions.
+  Future<void> _togglePackageOnline(bool currentlyOnline) async {
+    try {
+      final notifier = ref.read(activePackageProvider.notifier);
+      if (currentlyOnline) {
+        await notifier.makeOffline();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Package is now offline')),
+        );
+      } else {
+        await notifier.save();
+        await notifier.makeOnline();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Package is now online')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
+    }
+  }
+
   bool _handleGlobalKey(KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) return false;
     final ctrl = HardwareKeyboard.instance.isControlPressed ||
@@ -276,10 +304,14 @@ class _PackageScreenContentState
           children: [
             Icon(Icons.inventory_2, size: 20, color: palette.tabIndicator),
             const SizedBox(width: 8),
-            Text(
-              widget.packageName,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            Expanded(
+              child: Text(
+                widget.packageName,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                softWrap: false,
+                overflow: TextOverflow.fade,
+              ),
             ),
           ],
         ),
@@ -349,9 +381,11 @@ class _PackageScreenContentState
           ),
           const SizedBox(width: 4),
           // Online toggle — personal multi-device sync. Built-in pack
-          // can't be made online (read-only on every device).
+          // can't be made online (read-only on every device). Phone
+          // collapses this into the overflow menu below.
           if (SupabaseConfig.isConfigured &&
-              widget.packageName != srdCorePackageName)
+              widget.packageName != srdCorePackageName &&
+              getScreenType(context) != ScreenType.phone)
             _PackageOnlineButton(packageName: widget.packageName),
           // Edit Mode toggle — disabled for built-in (read-only) packages.
           Builder(builder: (_) {
@@ -376,31 +410,58 @@ class _PackageScreenContentState
           // Phone: collapse infrequent actions into overflow menu.
           // Desktop/Tablet: show inline.
           if (getScreenType(context) == ScreenType.phone)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, size: 20),
-              onSelected: (action) {
-                if (action == 'media') {
-                  final mediaDir = ref.read(mediaDirectoryProvider);
-                  if (mediaDir.isNotEmpty) {
-                    MediaGalleryDialog.show(
-                      context,
-                      mediaDir: mediaDir,
-                      campaignId: 'package:${widget.packageName}',
-                    );
+            Builder(builder: (popupCtx) {
+              final canSync = SupabaseConfig.isConfigured &&
+                  widget.packageName != srdCorePackageName;
+              final isOnline = canSync &&
+                  ref
+                      .watch(personalOnlinePackageNamesProvider)
+                      .contains(widget.packageName);
+              return PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 20),
+                onSelected: (action) async {
+                  switch (action) {
+                    case 'sync':
+                      await _togglePackageOnline(isOnline);
+                    case 'media':
+                      final mediaDir = ref.read(mediaDirectoryProvider);
+                      if (mediaDir.isNotEmpty) {
+                        MediaGalleryDialog.show(
+                          context,
+                          mediaDir: mediaDir,
+                          campaignId: 'package:${widget.packageName}',
+                        );
+                      }
                   }
-                }
-              },
-              itemBuilder: (_) => const [
-                PopupMenuItem(
-                  value: 'media',
-                  child: Row(children: [
-                    Icon(Icons.photo_library_outlined, size: 18),
-                    SizedBox(width: 8),
-                    Text('Media Gallery'),
-                  ]),
-                ),
-              ],
-            )
+                },
+                itemBuilder: (_) => [
+                  if (canSync)
+                    PopupMenuItem(
+                      value: 'sync',
+                      child: Row(children: [
+                        Icon(
+                          isOnline ? Icons.cloud_done : Icons.cloud_outlined,
+                          size: 18,
+                          color: isOnline ? palette.successBtnBg : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(isOnline
+                            ? 'Online — tap to make offline'
+                            : 'Save & Sync (Make Online)'),
+                      ]),
+                    ),
+                  if (canSync) const PopupMenuDivider(),
+                  const PopupMenuItem(
+                    value: 'media',
+                    child: Row(children: [
+                      Icon(Icons.photo_library_outlined, size: 18),
+                      SizedBox(width: 8),
+                      Text('Media Gallery'),
+                    ]),
+                  ),
+                ],
+              );
+            })
           else
             // Media Gallery
             IconButton(

@@ -246,22 +246,33 @@ class _CharacterEditorScreenState
               const SizedBox(width: 4),
               const AppIconImage(size: 22),
               const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  character.entity.name.isEmpty
-                      ? 'Character'
-                      : character.entity.name,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 15),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                template.name,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: palette.sidebarLabelSecondary,
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        character.entity.name.isEmpty
+                            ? 'Character'
+                            : character.entity.name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15),
+                        softWrap: false,
+                        overflow: TextOverflow.fade,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        template.name,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: palette.sidebarLabelSecondary,
+                        ),
+                        softWrap: false,
+                        overflow: TextOverflow.fade,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -290,18 +301,28 @@ class _CharacterEditorScreenState
               iconSize: 18,
               visualDensity: VisualDensity.compact,
             ),
-            // Cloud save & sync — same UI/behaviour as worlds' Save & Sync.
-            _CharacterSaveSyncButton(
-              character: character,
-              saving: _saving,
-              flushLocal: () => _save(silent: true),
-            ),
+            // Cloud save & sync — desktop/tablet only. On phone the entry
+            // moves into the overflow menu below to free AppBar space.
+            if (getScreenType(context) != ScreenType.phone)
+              _CharacterSaveSyncButton(
+                character: character,
+                saving: _saving,
+                flushLocal: () => _save(silent: true),
+              ),
             // Phone: collapse infrequent actions into overflow menu
             if (getScreenType(context) == ScreenType.phone) ...[
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, size: 20),
                 onSelected: (action) {
                   switch (action) {
+                    case 'sync':
+                      showDialog<void>(
+                        context: context,
+                        builder: (ctx) => _CharacterSaveSyncDialog(
+                          character: character,
+                          flushLocal: () => _save(silent: true),
+                        ),
+                      );
                     case 'import':
                       ImportPackageDialog.show(context);
                     case 'bug':
@@ -316,6 +337,12 @@ class _CharacterEditorScreenState
                   }
                 },
                 itemBuilder: (_) => [
+                  PopupMenuItem(value: 'sync', child: Row(children: [
+                    Icon(_saving ? Icons.cloud_upload : Icons.cloud_done, size: 18, color: palette.sidebarLabelSecondary),
+                    const SizedBox(width: 8),
+                    Text(_saving ? 'Saving...' : 'Save & Sync'),
+                  ])),
+                  const PopupMenuDivider(),
                   PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),
                   const PopupMenuDivider(),
                   ...themeNames.map((name) => PopupMenuItem(
@@ -2750,6 +2777,11 @@ class _StatChipsHeader extends ConsumerWidget {
           : '—';
     }
 
+    // On phone the header is squeezed by the 200-px portrait, so the chip
+    // strip routinely overflowed when the full-size font wrapped onto extra
+    // rows. Render the compact variant and allow horizontal scroll so chips
+    // can extend off-screen instead of pushing layout around.
+    final isPhone = getScreenType(context) == ScreenType.phone;
     return RepaintBoundary(
       child: CharacterStatChips(
         lines: characterStatLinesWithNames(
@@ -2758,6 +2790,8 @@ class _StatChipsHeader extends ConsumerWidget {
           className: resolve(ids.classId),
         ),
         palette: palette,
+        compact: isPhone,
+        scrollHorizontally: isPhone,
       ),
     );
   }
