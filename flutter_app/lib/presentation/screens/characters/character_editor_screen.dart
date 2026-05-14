@@ -2954,6 +2954,8 @@ class _CharacterOnlineToggleState
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final ids = ref.watch(personalOnlineCharIdsProvider);
     final isOnline = ids.contains(widget.character.id);
+    final autoOnline =
+        ref.watch(autoOnlineForCharacterProvider(widget.character.id));
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -2968,15 +2970,19 @@ class _CharacterOnlineToggleState
           Row(
             children: [
               Icon(
-                isOnline ? Icons.cloud_done : Icons.cloud_outlined,
+                (isOnline || autoOnline)
+                    ? Icons.cloud_done
+                    : Icons.cloud_outlined,
                 size: 16,
-                color: isOnline
+                color: (isOnline || autoOnline)
                     ? palette.successBtnBg
                     : palette.tabActiveText,
               ),
               const SizedBox(width: 6),
               Text(
-                isOnline ? 'Online' : 'Local only',
+                autoOnline
+                    ? 'Online · linked to world'
+                    : (isOnline ? 'Online' : 'Local only'),
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -2986,43 +2992,48 @@ class _CharacterOnlineToggleState
           ),
           const SizedBox(height: 4),
           Text(
-            isOnline
-                ? 'Auto-syncing to your other devices in real time.'
-                : 'Make this character online to sync it to your other '
-                    'devices automatically.',
+            autoOnline
+                ? 'This character belongs to an online world — sync is automatic. '
+                    'Move it out of the world or leave the world to disable.'
+                : (isOnline
+                    ? 'Auto-syncing to your other devices in real time.'
+                    : 'Make this character online to sync it to your other '
+                        'devices automatically.'),
             style: TextStyle(
               fontSize: 12,
               color: palette.sidebarLabelSecondary,
             ),
           ),
-          const SizedBox(height: 10),
-          isOnline
-              ? TextButton.icon(
-                  onPressed: _busy ? null : _makeOffline,
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.cloud_off, size: 14),
-                  label: const Text('Make Offline'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: palette.dangerBtnBg,
-                    visualDensity: VisualDensity.compact,
+          if (!autoOnline) ...[
+            const SizedBox(height: 10),
+            isOnline
+                ? TextButton.icon(
+                    onPressed: _busy ? null : _makeOffline,
+                    icon: _busy
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.cloud_off, size: 14),
+                    label: const Text('Make Offline'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: palette.dangerBtnBg,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  )
+                : FilledButton.icon(
+                    onPressed: _busy ? null : _makeOnline,
+                    icon: _busy
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.cloud_upload, size: 16),
+                    label: const Text('Make Online'),
                   ),
-                )
-              : FilledButton.icon(
-                  onPressed: _busy ? null : _makeOnline,
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.cloud_upload, size: 16),
-                  label: const Text('Make Online'),
-                ),
+          ],
         ],
       ),
     );

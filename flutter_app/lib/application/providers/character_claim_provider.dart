@@ -10,15 +10,3 @@ final characterClaimServiceProvider = Provider<CharacterClaimService?>((ref) {
   if (ref.watch(authProvider) == null) return null;
   return CharacterClaimService(Supabase.instance.client);
 });
-
-/// Verilen worldün "available for claim" karakterleri.
-final claimPoolProvider =
-    FutureProvider.family<List<ClaimPoolRow>, String>((ref, worldId) async {
-  final svc = ref.watch(characterClaimServiceProvider);
-  if (svc == null) return const [];
-  try {
-    return await svc.listAvailable(worldId);
-  } catch (_) {
-    return const [];
-  }
-});
