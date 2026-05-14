@@ -2,6 +2,7 @@ import '../../domain/entities/entity.dart';
 import 'caster_progression.dart';
 import 'extra_attack_resolver.dart';
 import 'resource_pool_resolver.dart';
+import 'weapon_mastery_resolver.dart';
 
 /// One feature granted at [level] by [source] (class or subclass name).
 class LevelGain {
@@ -49,6 +50,13 @@ class LevelUpPlan {
   final bool isAsiOrFeatLevel;
   final bool isExtraAttackLevel;
   final bool isFightingStyleLevel;
+
+  /// Set when the (clampedFrom, clampedTo] window contains the level where
+  /// the class grants a subclass selection. Detected by feature-name match
+  /// (SRD class features named `<Class> Subclass` or `Subclass feature`).
+  /// The editor uses this to queue a `PendingChoiceKind.subclass` when no
+  /// subclass is selected yet.
+  final bool isSubclassLevel;
   final CasterKind casterKind;
   final int? cantripsKnownAtNewLevel;
   final int? cantripsKnownAtPrevLevel;
@@ -76,6 +84,12 @@ class LevelUpPlan {
   final int prevExtraAttackCount;
   final int newExtraAttackCount;
 
+  /// Weapon Mastery count cap (SRD §1.7) at each level — sum of
+  /// `weapon_mastery_count_bonus` effects on auto-granted class feats. The
+  /// editor uses the delta to queue a `PendingChoiceKind.weaponMastery`.
+  final int prevWeaponMasteryCount;
+  final int newWeaponMasteryCount;
+
   const LevelUpPlan({
     required this.fromLevel,
     required this.toLevel,
@@ -87,6 +101,7 @@ class LevelUpPlan {
     required this.isAsiOrFeatLevel,
     required this.isExtraAttackLevel,
     required this.isFightingStyleLevel,
+    required this.isSubclassLevel,
     required this.casterKind,
     required this.cantripsKnownAtNewLevel,
     required this.cantripsKnownAtPrevLevel,
@@ -99,6 +114,8 @@ class LevelUpPlan {
     required this.newResourcePools,
     required this.prevExtraAttackCount,
     required this.newExtraAttackCount,
+    required this.prevWeaponMasteryCount,
+    required this.newWeaponMasteryCount,
   });
 
   /// New cantrips the player must pick on this level-up. Zero for
@@ -139,6 +156,13 @@ class LevelUpPlan {
   /// three times").
   int get extraAttackCountDelta {
     final diff = newExtraAttackCount - prevExtraAttackCount;
+    return diff > 0 ? diff : 0;
+  }
+
+  /// Increase in Weapon Mastery picks unlocked this level-up (clamped ≥ 0).
+  /// Editor uses this to queue a `PendingChoiceKind.weaponMastery`.
+  int get weaponMasteryCountDelta {
+    final diff = newWeaponMasteryCount - prevWeaponMasteryCount;
     return diff > 0 ? diff : 0;
   }
 
@@ -358,6 +382,33 @@ LevelUpPlan planLevelUp({
     }
   }
 
+  // Subclass: SRD 2024 grants every class its subclass at L3. Detect by
+  // feature-name "Subclass" so authored content driving its own naming
+  // still triggers (e.g. "<Class> Subclass" or "Subclass feature").
+  var subclass = false;
+  for (final f in newFeatures) {
+    if (f.source == (classEntity?.name ?? '') &&
+        f.name.toLowerCase().contains('subclass')) {
+      subclass = true;
+      break;
+    }
+  }
+
+  // Weapon Mastery cap shifts when a new auto-granted class feat's
+  // `weapon_mastery_count_bonus` value exceeds the prior level's max.
+  final prevMastery = resolveWeaponMasteryCountAt(
+    classEntity: classEntity,
+    subclassEntity: subclassEntity,
+    level: clampedFrom,
+    entities: entities,
+  );
+  final newMastery = resolveWeaponMasteryCountAt(
+    classEntity: classEntity,
+    subclassEntity: subclassEntity,
+    level: clampedTo,
+    entities: entities,
+  );
+
   // Fighting Style grant is class-driven. Detect either:
   //   - any new feature whose name mentions "Fighting Style", OR
   //   - the class entity's `grants_fighting_style_at_levels` table contains
@@ -428,6 +479,7 @@ LevelUpPlan planLevelUp({
     isAsiOrFeatLevel: asi,
     isExtraAttackLevel: extra,
     isFightingStyleLevel: fightingStyle,
+    isSubclassLevel: subclass,
     casterKind: kind,
     cantripsKnownAtNewLevel: cantripCap,
     cantripsKnownAtPrevLevel: cantripPrev,
@@ -450,5 +502,7 @@ LevelUpPlan planLevelUp({
     ),
     prevExtraAttackCount: prevExtra,
     newExtraAttackCount: newExtra,
+    prevWeaponMasteryCount: prevMastery,
+    newWeaponMasteryCount: newMastery,
   );
 }

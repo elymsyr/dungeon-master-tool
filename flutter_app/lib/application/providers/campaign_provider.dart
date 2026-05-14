@@ -15,6 +15,7 @@ import '../../data/network/network_providers.dart';
 import '../services/campaign_import_service.dart';
 import '../services/media_bundler.dart';
 import '../services/world_mirror_service.dart';
+import 'character_provider.dart';
 import 'online_worlds_provider.dart';
 import 'world_mirror_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -358,7 +359,31 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// world (or gets kicked): the local mirror is wiped immediately, the
   /// world disappears from the hub, and there is no `.trash/` entry to
   /// restore from later.
+  ///
+  /// Before wiping, walks every local character bound to this world and
+  /// rewrites their SRD-derived entity refs (species/class/trait/action/…)
+  /// from this world's UUIDs to the bundled builtin-SRD stable UUIDs. The
+  /// world's SRD copies share (slug, name) with the builtin pack, so the
+  /// stable v5 id derived from that pair re-anchors the character's refs
+  /// to a map that survives the purge. Custom DM-authored entities have
+  /// no builtin counterpart and are left as unresolvable orphans.
   Future<void> purge(String campaignName) async {
+    try {
+      Map<String, dynamic>? data;
+      if (state == campaignName && _data != null) {
+        data = _data;
+      } else {
+        data = await _repo.load(campaignName);
+      }
+      final entitiesRaw = data?['entities'];
+      if (entitiesRaw is Map<String, dynamic>) {
+        await _ref
+            .read(characterListProvider.notifier)
+            .orphanForWorld(campaignName, entitiesRaw);
+      }
+    } catch (e, st) {
+      debugPrint('orphan-before-purge error: $e\n$st');
+    }
     await _repo.purge(campaignName);
     if (state == campaignName) {
       _data = null;

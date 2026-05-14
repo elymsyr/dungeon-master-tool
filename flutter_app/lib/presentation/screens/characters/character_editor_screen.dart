@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../application/character_creation/level_up_planner.dart';
 import '../../../application/character_creation/multiclass_helper.dart';
+import '../../../application/character_creation/pending_choices.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/entity_provider.dart';
@@ -21,6 +22,7 @@ import '../../../application/providers/theme_provider.dart';
 import '../../../application/services/builtin_srd_entities.dart';
 import '../../widgets/character_stat_chips.dart';
 import 'level_up_dialog.dart';
+import 'pending_choice_resolver_dialog.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/entity.dart';
@@ -37,6 +39,7 @@ import '../../widgets/app_icon_image.dart';
 import '../../widgets/class_level_up_table.dart';
 import '../../widgets/field_widgets/field_widget_factory.dart';
 import '../../widgets/markdown_text_area.dart';
+import '../../widgets/pending_choices_badge.dart';
 import '../../widgets/resolved_grants_card.dart';
 import '../../widgets/save_info_section.dart';
 import '../database/entity_card.dart';
@@ -483,6 +486,27 @@ class _CharacterEditorScreenState
     );
   }
 
+  /// Resolves the world label shown in headers/settings.
+  ///
+  /// `c.worldName` wins when non-empty (canonical owner). When empty,
+  /// falls back to the active campaign's name iff the character is in
+  /// its `linked_character_ids` — pre-fix linked-only chars otherwise
+  /// claimed "No world assigned" while clearly belonging to the world
+  /// that imported them.
+  String _displayWorldLabelFor(Character c, L10n l10n) {
+    if (c.worldName.isNotEmpty) return c.worldName;
+    final activeWorld = ref.read(activeCampaignProvider);
+    if (activeWorld != null && activeWorld.isNotEmpty) {
+      final data = ref.read(activeCampaignProvider.notifier).data;
+      final linked =
+          (data?['linked_character_ids'] as List?)?.whereType<String>();
+      if (linked != null && linked.contains(c.id)) {
+        return activeWorld;
+      }
+    }
+    return l10n.charWorldOrphan;
+  }
+
   /// EntityCard-style header — square portrait left, big serif red name +
   /// italic subtitle (template · world) + red rule + markdown description +
   /// tags row on the right.
@@ -495,9 +519,8 @@ class _CharacterEditorScreenState
     // allocation per rebuild is gone.
     final hasImagePath = entity.imagePath.isNotEmpty;
     final l10n = L10n.of(context)!;
-    final subtitle = c.worldName.isEmpty
-        ? '${template.name} · ${l10n.charWorldOrphan}'
-        : '${template.name} · ${c.worldName}';
+    final subtitle =
+        '${template.name} · ${_displayWorldLabelFor(c, l10n)}';
 
     Widget portraitPlaceholder() => Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -515,28 +538,41 @@ class _CharacterEditorScreenState
         );
 
     const portraitSize = 200.0;
+    final pendingCount =
+        readPendingChoices(entity.fields['pending_choices']).length;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        InkWell(
-          onTap: _readOnly ? null : _pickPortrait,
-          child: Container(
-            width: portraitSize,
-            height: 260,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: palette.featureCardBg,
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: palette.featureCardBorder),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            InkWell(
+              onTap: _readOnly ? null : _pickPortrait,
+              child: Container(
+                width: portraitSize,
+                height: 260,
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  color: palette.featureCardBg,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: palette.featureCardBorder),
+                ),
+                child: hasImagePath
+                    ? Image.file(
+                        File(entity.imagePath),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => portraitPlaceholder(),
+                      )
+                    : portraitPlaceholder(),
+              ),
             ),
-            child: hasImagePath
-                ? Image.file(
-                    File(entity.imagePath),
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => portraitPlaceholder(),
-                  )
-                : portraitPlaceholder(),
-          ),
+            if (pendingCount > 0)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: pendingChoicesBadge(context, pendingCount),
+              ),
+          ],
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -814,6 +850,196 @@ class _CharacterEditorScreenState
     _scheduleAutoSave();
   }
 
+  /// Pending level-up decisions that should attach a `!` badge to the
+  /// given schema field's tile. Returns an empty list when the character
+  /// has no pending decisions matching that field key.
+  List<PendingChoice> _pendingChoicesForField(
+      Character character, String fieldKey) {
+    final raw = character.entity.fields['pending_choices'];
+    final list = readPendingChoices(raw);
+    if (list.isEmpty) return const [];
+    return list
+        .where((p) => pendingChoiceFieldHints(p.kind).contains(fieldKey))
+        .toList();
+  }
+
+  Future<void> _resolvePendingChoice(
+      Character character, PendingChoice choice) async {
+    final entities = _readEntitiesFor(character);
+
+    final abilityScores = <String, int>{};
+    final statBlock = character.entity.fields['stat_block'];
+    final statBlockMap =
+        statBlock is Map ? Map<String, dynamic>.from(statBlock) : null;
+    for (final k in const ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']) {
+      final lower = k.toLowerCase();
+      final v = character.entity.fields[lower] ??
+          character.entity.fields[k] ??
+          statBlockMap?[k] ??
+          statBlockMap?[lower];
+      abilityScores[k] = _asInt(v, 10).clamp(1, 30);
+    }
+
+    final existingFeatIds = <String>{};
+    final rawFeats = character.entity.fields['feat_ids'];
+    if (rawFeats is List) {
+      for (final id in rawFeats) {
+        if (id is String && id.isNotEmpty) existingFeatIds.add(id);
+      }
+    }
+    final existingSpellIds = <String>{};
+    void collectSpells(Object? raw) {
+      if (raw is List) {
+        for (final id in raw) {
+          if (id is String && id.isNotEmpty) existingSpellIds.add(id);
+        }
+      }
+    }
+    collectSpells(character.entity.fields['spells_known']);
+    collectSpells(character.entity.fields['prepared_spells']);
+
+    final resolution = await showPendingChoiceResolver(
+      context,
+      choice: choice,
+      entities: entities,
+      abilityScores: abilityScores,
+      existingFeatIds: existingFeatIds,
+      existingSpellIds: existingSpellIds,
+    );
+    if (!mounted || resolution == null) return;
+
+    _applyPendingResolution(character, choice, resolution);
+  }
+
+  void _applyPendingResolution(
+    Character character,
+    PendingChoice choice,
+    PendingChoiceResolution resolution,
+  ) {
+    final updated = Map<String, dynamic>.from(character.entity.fields);
+
+    // Ability bumps — write to per-ability keys + stat_block (when present).
+    final bumps = resolution.abilityBumps;
+    if (bumps.isNotEmpty) {
+      final statBlock = updated['stat_block'];
+      final nextStat = statBlock is Map
+          ? Map<String, dynamic>.from(statBlock)
+          : null;
+      for (final entry in bumps.entries) {
+        final code = entry.key;
+        final lower = code.toLowerCase();
+        if (updated.containsKey(lower)) {
+          updated[lower] = _asInt(updated[lower]) + entry.value;
+        } else if (updated.containsKey(code)) {
+          updated[code] = _asInt(updated[code]) + entry.value;
+        } else {
+          updated[lower] = (_asInt(updated[lower], 10)) + entry.value;
+        }
+        if (nextStat != null) {
+          final at = nextStat[code] ?? nextStat[lower];
+          if (at != null) {
+            if (nextStat.containsKey(code)) {
+              nextStat[code] = _asInt(at) + entry.value;
+            } else {
+              nextStat[lower] = _asInt(at) + entry.value;
+            }
+          }
+        }
+      }
+      if (nextStat != null) updated['stat_block'] = nextStat;
+    }
+
+    // Feat / Fighting Style — append to feat_ids + visible feats list.
+    final featId = resolution.featId;
+    if (featId != null && featId.isNotEmpty) {
+      final list = updated['feat_ids'];
+      final next = list is List
+          ? List<String>.from(list.whereType<String>())
+          : <String>[];
+      if (!next.contains(featId)) next.add(featId);
+      updated['feat_ids'] = next;
+
+      final featsRaw = updated['feats'];
+      final featsList = featsRaw is List
+          ? List<dynamic>.from(featsRaw)
+          : <dynamic>[];
+      final shown = featsList.any((row) {
+        if (row is String) return row == featId;
+        if (row is Map) return row['id'] == featId;
+        return false;
+      });
+      if (!shown) featsList.add(featId);
+      updated['feats'] = featsList;
+    }
+
+    // Spell ids — append to spells_known.
+    if (resolution.spellIds.isNotEmpty) {
+      final list = updated['spells_known'];
+      final next = list is List
+          ? List<String>.from(list.whereType<String>())
+          : <String>[];
+      for (final id in resolution.spellIds) {
+        if (id.isEmpty) continue;
+        if (!next.contains(id)) next.add(id);
+      }
+      updated['spells_known'] = next;
+    }
+
+    // Subclass id — append to subclass_refs (multiclass supports many
+    // entries; pick keeps prior subclasses for other classes intact).
+    final subId = resolution.subclassId;
+    if (subId != null && subId.isNotEmpty) {
+      final list = updated['subclass_refs'];
+      final next = list is List
+          ? List<String>.from(list.whereType<String>())
+          : <String>[];
+      if (!next.contains(subId)) next.add(subId);
+      updated['subclass_refs'] = next;
+    }
+
+    // Weapon mastery ids — append to weapon_masteries.
+    if (resolution.weaponMasteryIds.isNotEmpty) {
+      final list = updated['weapon_masteries'];
+      final next = list is List
+          ? List<String>.from(list.whereType<String>())
+          : <String>[];
+      for (final id in resolution.weaponMasteryIds) {
+        if (id.isEmpty) continue;
+        if (!next.contains(id)) next.add(id);
+      }
+      updated['weapon_masteries'] = next;
+    }
+
+    _removePendingFromMap(updated, choice.id);
+    _mutate(character.copyWith(
+      entity: character.entity.copyWith(fields: updated),
+    ));
+  }
+
+  void _removePendingChoice(Character character, String id) {
+    final updated = Map<String, dynamic>.from(character.entity.fields);
+    _removePendingFromMap(updated, id);
+    _mutate(character.copyWith(
+      entity: character.entity.copyWith(fields: updated),
+    ));
+  }
+
+  void _removePendingFromMap(Map<String, dynamic> fields, String id) {
+    final raw = fields['pending_choices'];
+    if (raw is! List) return;
+    final next = <Map<String, dynamic>>[];
+    for (final entry in raw) {
+      if (entry is! Map) continue;
+      if (entry['id'] == id) continue;
+      next.add(Map<String, dynamic>.from(entry));
+    }
+    if (next.isEmpty) {
+      fields.remove('pending_choices');
+    } else {
+      fields['pending_choices'] = next;
+    }
+  }
+
   /// Render a level-up progression table when the character has both a
   /// class and a subclass resolved in the active campaign. Returns empty
   /// list otherwise (no header so the rest of the layout is unaffected).
@@ -967,7 +1193,7 @@ class _CharacterEditorScreenState
     // character) or the bundled SRD map (worldless character). Either
     // path returns a non-null map so feat / class / race chips render.
     final entities = _readEntitiesFor(character);
-    return FieldWidgetFactory.create(
+    final tile = FieldWidgetFactory.create(
       schema: f,
       value: value,
       readOnly: _readOnly,
@@ -992,6 +1218,19 @@ class _CharacterEditorScreenState
       entities: entities,
       entityFields: character.entity.fields,
       ref: ref,
+    );
+
+    // Inline `!` badges for any pending level-up decisions that map to
+    // this schema field. Tap-to-resolve works in view mode too — the
+    // resolver is the player's only entry point now that the post-level
+    // panel is gone.
+    final pending = _pendingChoicesForField(character, f.fieldKey);
+    if (pending.isEmpty) return tile;
+    return _PendingBadgeRow(
+      tile: tile,
+      pending: pending,
+      onResolve: (p) => _resolvePendingChoice(character, p),
+      onDiscard: (p) => _removePendingChoice(character, p.id),
     );
   }
 
@@ -1057,11 +1296,10 @@ class _CharacterEditorScreenState
     );
     if (!plan.isLevelUp) return;
 
-    // Snapshot ability scores + feat list so the dialog's ASI/Feat picker
-    // can enforce caps and skip non-repeatable feats the character already
-    // has. Falls back to the stat_block map when individual `str` keys
-    // aren't populated.
-    final scoresEntries = <String, int>{};
+    // CON snapshot — needed so the dialog's auto HP delta folds in the
+    // CON modifier consistently with SRD §1.5. We no longer need the full
+    // ability map / feat list / spell list because the dialog dropped its
+    // interactive pickers; everything else becomes a pending choice.
     final statBlock = base.entity.fields['stat_block'];
     final statBlockMap =
         statBlock is Map ? Map<String, dynamic>.from(statBlock) : null;
@@ -1071,80 +1309,23 @@ class _CharacterEditorScreenState
       return 0;
     }
 
-    for (final k in const ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']) {
-      final lower = k.toLowerCase();
-      final v = base.entity.fields[lower] ??
-          base.entity.fields[k] ??
-          statBlockMap?[k] ??
-          statBlockMap?[lower];
-      scoresEntries[k] = asInt(v).clamp(1, 30);
-    }
-    final existingFeatIds = <String>{};
-    final rawFeats = base.entity.fields['feat_ids'];
-    if (rawFeats is List) {
-      for (final id in rawFeats) {
-        if (id is String && id.isNotEmpty) existingFeatIds.add(id);
-      }
-    }
-
-    // Spells already on the sheet — cantrips + leveled spells are both
-    // stored in `spells_known`; merging `prepared_spells` keeps the
-    // picker from re-offering a prepared-but-not-yet-known spell.
-    final existingSpellIds = <String>{};
-    void collectSpells(Object? raw) {
-      if (raw is List) {
-        for (final id in raw) {
-          if (id is String && id.isNotEmpty) existingSpellIds.add(id);
-        }
-      }
-    }
-    collectSpells(base.entity.fields['spells_known']);
-    collectSpells(base.entity.fields['prepared_spells']);
+    final conRaw = base.entity.fields['con'] ??
+        base.entity.fields['CON'] ??
+        statBlockMap?['CON'] ??
+        statBlockMap?['con'];
+    final currentCon = asInt(conRaw).clamp(1, 30);
 
     final result = await LevelUpDialog.show(
       context,
       plan,
-      entities: entities,
-      abilityScores: scoresEntries,
-      existingFeatIds: existingFeatIds,
       classId: classId,
-      existingSpellIds: existingSpellIds,
+      classLabel: classEntity?.name,
+      currentCon: currentCon,
+      hasSubclass: subclassId != null,
     );
     if (!mounted || result == null || !result.applied) return;
 
     final updated = Map<String, dynamic>.from(base.entity.fields);
-
-    // Apply ASI bumps to per-ability keys + stat_block (when present)
-    // before recomputing derived HP so Constitution increases stack into
-    // the HP delta consistently with SRD §1.
-    final bumps = result.abilityBumps;
-    if (bumps.isNotEmpty) {
-      final nextStat = statBlockMap == null
-          ? null
-          : Map<String, dynamic>.from(statBlockMap);
-      for (final entry in bumps.entries) {
-        final code = entry.key;
-        final lower = code.toLowerCase();
-        if (updated.containsKey(lower)) {
-          updated[lower] = asInt(updated[lower]) + entry.value;
-        } else if (updated.containsKey(code)) {
-          updated[code] = asInt(updated[code]) + entry.value;
-        }
-        if (nextStat != null) {
-          final at = nextStat[code] ?? nextStat[lower];
-          if (at != null) {
-            if (nextStat.containsKey(code)) {
-              nextStat[code] = asInt(at) + entry.value;
-            } else {
-              nextStat[lower] = asInt(at) + entry.value;
-            }
-          } else {
-            nextStat[code] = (scoresEntries[code] ?? 10) + entry.value;
-          }
-        }
-      }
-      if (nextStat != null) updated['stat_block'] = nextStat;
-    }
 
     if (result.hpDelta > 0) {
       updated['max_hp'] = asInt(updated['max_hp']) + result.hpDelta;
@@ -1245,44 +1426,20 @@ class _CharacterEditorScreenState
       updated['proficiency_bonus'] = result.newProfBonus;
     }
 
-    // New feat pick OR fighting-style pick — append to the resolver's
-    // `feat_ids` (effect side-channel) AND the visible `feats` relation list
-    // so the player sheet renders the new row.
-    void appendFeatId(String? id) {
-      if (id == null || id.isEmpty) return;
-      final list = updated['feat_ids'];
-      final next = list is List
-          ? List<String>.from(list.whereType<String>())
-          : <String>[];
-      if (!next.contains(id)) next.add(id);
-      updated['feat_ids'] = next;
-
-      final featsRaw = updated['feats'];
-      final featsList = featsRaw is List
-          ? List<dynamic>.from(featsRaw)
-          : <dynamic>[];
-      final alreadyShown = featsList.any((row) {
-        if (row is String) return row == id;
-        if (row is Map) return row['id'] == id;
-        return false;
-      });
-      if (!alreadyShown) featsList.add(id);
-      updated['feats'] = featsList;
-    }
-
-    appendFeatId(result.newFeatId);
-    appendFeatId(result.newFightingStyleId);
-
-    if (result.newSpellIds.isNotEmpty) {
-      final list = updated['spells_known'];
-      final next = list is List
-          ? List<String>.from(list.whereType<String>())
-          : <String>[];
-      for (final id in result.newSpellIds) {
-        if (id.isEmpty) continue;
-        if (!next.contains(id)) next.add(id);
+    // Interactive picks (ASI/Feat, Fighting Style, cantrip/spell selection)
+    // are no longer applied here — they're queued onto `pending_choices`
+    // and resolved later from the editor's pending-choices panel.
+    if (result.pendingChoices.isNotEmpty) {
+      final existing = updated['pending_choices'];
+      final next = existing is List
+          ? List<Map<String, dynamic>>.from(
+              existing.whereType<Map>().map(Map<String, dynamic>.from),
+            )
+          : <Map<String, dynamic>>[];
+      for (final p in result.pendingChoices) {
+        next.add(p.toMap());
       }
-      updated['spells_known'] = next;
+      updated['pending_choices'] = next;
     }
 
     // SRD §1.5: class resource pool maxes (Rage, Ki, Bardic Inspiration,
@@ -1832,6 +1989,102 @@ class _CharacterEditorScreenState
     _autoSaveTimer?.cancel();
     await _save(silent: true);
     if (context.mounted) context.pop();
+  }
+}
+
+/// Wraps a schema field tile with a row of orange `!` chips — one per
+/// pending level-up decision attached to this field. Tapping a chip opens
+/// the resolver; long-press discards without applying. The chips render
+/// regardless of editor read-only mode so the player can resolve from the
+/// view tab too.
+class _PendingBadgeRow extends StatelessWidget {
+  final Widget tile;
+  final List<PendingChoice> pending;
+  final void Function(PendingChoice) onResolve;
+  final void Function(PendingChoice) onDiscard;
+
+  const _PendingBadgeRow({
+    required this.tile,
+    required this.pending,
+    required this.onResolve,
+    required this.onDiscard,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 6, bottom: 4),
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              for (final p in pending)
+                _PendingChip(
+                  label: pendingChoiceLabel(p),
+                  onTap: () => onResolve(p),
+                  onLongPress: () => onDiscard(p),
+                ),
+            ],
+          ),
+        ),
+        tile,
+      ],
+    );
+  }
+}
+
+class _PendingChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+
+  const _PendingChip({
+    required this.label,
+    required this.onTap,
+    required this.onLongPress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        borderRadius: BorderRadius.circular(14),
+        child: Tooltip(
+          message: 'Tap to resolve · Long-press to discard',
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.12),
+              border: Border.all(color: Colors.orange, width: 1.2),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.priority_high,
+                    size: 14, color: Colors.orange),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.orange,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

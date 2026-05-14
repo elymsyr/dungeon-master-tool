@@ -240,7 +240,7 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     if (c.worldName.isNotEmpty) {
       final active = ref.read(activeCampaignProvider);
       if (active != c.worldName) {
-        await withLoading(
+        final ok = await withLoading(
           ref.read(globalLoadingProvider.notifier),
           'open-world-${c.worldName}',
           'Opening world "${c.worldName}"...',
@@ -248,6 +248,16 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
               .read(activeCampaignProvider.notifier)
               .load(c.worldName),
         );
+        if (!mounted) return;
+        if (!ok) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  'World "${c.worldName}" not found on disk — character cannot open.'),
+            ),
+          );
+          return;
+        }
       }
     }
     if (!mounted) return;
@@ -258,8 +268,26 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
 
   String _subInfo(Character c, L10n l10n) {
     final parts = <String>[c.templateName];
-    parts.add(c.worldName.isEmpty ? l10n.charWorldOrphan : c.worldName);
+    parts.add(_worldLabel(c, l10n));
     return parts.join(' · ');
+  }
+
+  /// Resolves the world label for the tab. Falls back to the active
+  /// campaign when the character is referenced only via that world's
+  /// `linked_character_ids` (pre-fix linked-only chars); otherwise
+  /// shows the localized orphan string so unclaimed chars stay clear.
+  String _worldLabel(Character c, L10n l10n) {
+    if (c.worldName.isNotEmpty) return c.worldName;
+    final activeWorld = ref.read(activeCampaignProvider);
+    if (activeWorld != null && activeWorld.isNotEmpty) {
+      final data = ref.read(activeCampaignProvider.notifier).data;
+      final linked =
+          (data?['linked_character_ids'] as List?)?.whereType<String>();
+      if (linked != null && linked.contains(c.id)) {
+        return activeWorld;
+      }
+    }
+    return l10n.charWorldOrphan;
   }
 
   Future<void> _deleteSelected() async {
@@ -361,9 +389,14 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          c.worldName.isEmpty
-                              ? L10n.of(context)!.charWorldOrphan
-                              : 'World: ${c.worldName}',
+                          () {
+                            final label =
+                                _worldLabel(c, L10n.of(context)!);
+                            return c.worldName.isEmpty &&
+                                    label == L10n.of(context)!.charWorldOrphan
+                                ? label
+                                : 'World: $label';
+                          }(),
                           style: TextStyle(
                               fontSize: 13, color: palette.tabActiveText),
                         ),

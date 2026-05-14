@@ -10,6 +10,7 @@ import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/online/world_role.dart';
+import '../../domain/entities/schema/builtin/srd_core/srd_core_pack.dart';
 import '../../domain/services/character_resolver.dart';
 import '../services/builtin_srd_entities.dart';
 import 'auth_provider.dart';
@@ -366,6 +367,64 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       ),
     );
     await update(patched);
+  }
+
+  /// Player a world'den ayrıldığında (leave / kick / DM-delete) çağrılır:
+  /// world'ün entity blob'unu okur, her char ref'ini builtin SRD'nin stable
+  /// UUID'sine çevirir (slug+name eşleşmesiyle), worldName'i temizler ve
+  /// karakteri kaydeder. Böylece world purge sonrası orphan karakterlerin
+  /// Species/Class/Trait/Action refleri builtin SRD üzerinden çözülür.
+  ///
+  /// [worldEntitiesRaw]: campaign data'sının `entities` alt-map'i. Boşsa
+  /// (`{}` veya null) no-op.
+  Future<void> orphanForWorld(
+    String worldName,
+    Map<String, dynamic> worldEntitiesRaw,
+  ) async {
+    if (worldName.isEmpty) return;
+    final list = state.valueOrNull ?? const <Character>[];
+    final affected = list.where((c) => c.worldName == worldName).toList();
+    if (affected.isEmpty) return;
+
+    final builtin = _ref.read(builtinSrdEntitiesProvider);
+    final remap = <String, String>{};
+    worldEntitiesRaw.forEach((worldId, raw) {
+      if (raw is! Map) return;
+      final slug = (raw['type'] as String?)?.trim();
+      final name = (raw['name'] as String?)?.trim();
+      if (slug == null || slug.isEmpty) return;
+      if (name == null || name.isEmpty) return;
+      final stableId = srdStableEntityId(slug, name);
+      if (builtin.containsKey(stableId)) {
+        remap[worldId] = stableId;
+      }
+    });
+
+    for (final c in affected) {
+      final rewritten =
+          _rewriteRefs(c.entity.fields, remap) as Map<String, dynamic>;
+      final patched = c.copyWith(
+        worldName: '',
+        entity: c.entity.copyWith(fields: rewritten),
+      );
+      await update(patched);
+    }
+  }
+
+  static dynamic _rewriteRefs(dynamic value, Map<String, String> remap) {
+    if (remap.isEmpty) return value;
+    if (value is String) return remap[value] ?? value;
+    if (value is Map) {
+      final out = <String, dynamic>{};
+      value.forEach((k, v) {
+        out[k.toString()] = _rewriteRefs(v, remap);
+      });
+      return out;
+    }
+    if (value is List) {
+      return value.map((e) => _rewriteRefs(e, remap)).toList();
+    }
+    return value;
   }
 
   Future<void> delete(String id) async {

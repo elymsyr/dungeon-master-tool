@@ -485,6 +485,7 @@ class _PackageScreenContentState
         final screen = getScreenType(context);
         if (screen == ScreenType.phone) {
           return FloatingActionButton.small(
+            heroTag: 'package_screen_entity_sidebar_fab',
             onPressed: _showMobileSidebar,
             child: const Icon(Icons.list),
           );

@@ -320,6 +320,7 @@ EntityCategorySchema _playerCharacterCategory(String schemaId, String now, int o
   fb.relation('tool_proficiencies', 'Tool Proficiencies', const ['tool'], isList: true);
   fb.relation('weapon_proficiency_categories', 'Weapon Category Proficiencies',
       const ['weapon-category'], isList: true);
+  fb.relation('weapon_masteries', 'Weapon Masteries', const ['weapon'], isList: true);
   fb.relation('armor_trainings', 'Armor Trainings', const ['armor-category'], isList: true);
   // Combat
   fb.statBlock('stat_block', 'Ability Scores');

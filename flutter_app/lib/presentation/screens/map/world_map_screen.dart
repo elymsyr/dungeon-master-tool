@@ -52,14 +52,18 @@ class _WorldMapScreenState extends ConsumerState<WorldMapScreen> {
 
   @override
   void deactivate() {
-    // ref `dispose()` içinde geçersiz olur — sync'i widget tree'den
-    // çıkarken (`deactivate`) yap.
-    try {
-      ref.read(worldMapProvider.notifier).syncToCampaignData();
-      ref.read(saveStateProvider.notifier).markDirty();
-    } catch (_) {
-      // best-effort: widget hayatı boyunca container kapanmış olabilir
-    }
+    // Provider mutation during deactivate fails Riverpod's "modify while
+    // building" assertion when the parent rebuild is still in flight.
+    // Capture notifiers (provider singletons outlive this widget) and run
+    // the sync after the current frame.
+    final mapNotifier = ref.read(worldMapProvider.notifier);
+    final saveNotifier = ref.read(saveStateProvider.notifier);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        mapNotifier.syncToCampaignData();
+        saveNotifier.markDirty();
+      } catch (_) {}
+    });
     super.deactivate();
   }
 
