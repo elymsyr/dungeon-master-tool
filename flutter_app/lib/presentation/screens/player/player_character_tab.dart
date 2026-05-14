@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,18 +9,19 @@ import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_claim_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/role_provider.dart';
+import '../../../application/providers/world_characters_provider.dart';
 import '../../../core/utils/screen_type.dart';
-import '../../../data/network/character_claim_service.dart';
 import '../../../domain/entities/character.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../widgets/online_world_widgets.dart';
 
-/// Player character tab. Flow:
-/// 1. If the player hasn't claimed a character yet, the screen leads with
-///    the "Available to claim" list of DM-published characters.
-/// 2. Once claimed, the player's own character(s) move to the top as
-///    editable cards; the claim pool stays visible below as long as it has
-///    entries (so a player can claim additional characters if the DM
-///    publishes more).
+/// Player character tab. World'deki tüm karakterler 3 bölümde:
+///   1. **Your Characters** — owner_id == self.uid, editable.
+///   2. **Available to Claim** — owner_id == null, claim button.
+///   3. **Other Players' Characters** — owner_id != null && != self.uid,
+///      read-only tile (RLS izin verir, edit policy player'ı engeller).
+///
+/// Roster yukarıda yatay strip olarak görünür → join/leave anlık.
 class PlayerCharacterTab extends ConsumerWidget {
   const PlayerCharacterTab({super.key});
 
@@ -26,8 +29,9 @@ class PlayerCharacterTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final activeWorld = ref.watch(activeCampaignProvider);
+    final worldId = ref.watch(activeCampaignIdProvider).valueOrNull;
     final auth = ref.watch(authProvider);
-    final charactersAsync = ref.watch(characterListProvider);
+    final selfUid = auth?.uid;
     final screen = getScreenType(context);
     final maxWidth = switch (screen) {
       ScreenType.desktop => 720.0,
@@ -40,65 +44,129 @@ class PlayerCharacterTab extends ConsumerWidget {
       child: Column(
         children: [
           _Header(palette: palette, activeWorld: activeWorld),
+          if (worldId != null)
+            MembersStrip(worldId: worldId, palette: palette),
           Expanded(
-            child: charactersAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text('Error: $e',
-                      style: TextStyle(color: palette.dangerBtnBg)),
-                ),
-              ),
-              data: (all) {
-                // ownerId == auth.uid → player's own characters.
-                // ownerId == null is intentionally excluded here — those
-                // are DM-created characters that show up under the
-                // "Available to claim" pool until a player claims them.
-                final mine = all
-                    .where((c) =>
-                        c.worldName == activeWorld &&
-                        auth?.uid != null &&
-                        c.ownerId == auth!.uid)
-                    .toList()
-                  ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-                return Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: maxWidth),
-                    child: ListView(
-                      padding: EdgeInsets.all(
-                          screen == ScreenType.phone ? 12 : 20),
-                      children: [
-                        if (mine.isNotEmpty) ...[
-                          _SectionHeader(
-                            palette: palette,
-                            icon: Icons.person,
-                            title: 'Your Character${mine.length > 1 ? 's' : ''}',
-                          ),
-                          const SizedBox(height: 8),
-                          for (final c in mine) ...[
-                            _CharacterRow(palette: palette, character: c),
-                            const SizedBox(height: 8),
-                          ],
-                          const SizedBox(height: 16),
-                        ],
-                        const _AvailableForClaimSection(),
-                        if (mine.isEmpty)
-                          _EmptyState(
-                            palette: palette,
-                            poolMayBeEmpty: true,
-                          ),
-                      ],
-                    ),
+            child: worldId == null
+                ? _EmptyState(palette: palette, message: 'Open a world to see characters.')
+                : _CharacterList(
+                    palette: palette,
+                    worldId: worldId,
+                    selfUid: selfUid,
+                    maxWidth: maxWidth,
+                    screen: screen,
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CharacterList extends ConsumerWidget {
+  final DmToolColors palette;
+  final String worldId;
+  final String? selfUid;
+  final double maxWidth;
+  final ScreenType screen;
+  const _CharacterList({
+    required this.palette,
+    required this.worldId,
+    required this.selfUid,
+    required this.maxWidth,
+    required this.screen,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final worldCharsAsync = ref.watch(worldCharactersProvider(worldId));
+    return worldCharsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text('Error: $e',
+              style: TextStyle(color: palette.dangerBtnBg)),
+        ),
+      ),
+      data: (rows) {
+        final mine = <WorldCharacterRow>[];
+        final unclaimed = <WorldCharacterRow>[];
+        final others = <WorldCharacterRow>[];
+        for (final r in rows) {
+          if (r.ownerId == null) {
+            unclaimed.add(r);
+          } else if (selfUid != null && r.ownerId == selfUid) {
+            mine.add(r);
+          } else {
+            others.add(r);
+          }
+        }
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: ListView(
+              padding: EdgeInsets.all(screen == ScreenType.phone ? 12 : 20),
+              children: [
+                if (mine.isNotEmpty) ...[
+                  _SectionHeader(
+                    palette: palette,
+                    icon: Icons.person,
+                    title: 'Your Character${mine.length > 1 ? 's' : ''}',
+                  ),
+                  const SizedBox(height: 8),
+                  for (final r in mine) ...[
+                    _OwnedRow(palette: palette, row: r),
+                    const SizedBox(height: 8),
+                  ],
+                  const SizedBox(height: 16),
+                ],
+                if (unclaimed.isNotEmpty) ...[
+                  _SectionHeader(
+                    palette: palette,
+                    icon: Icons.inventory_2,
+                    title: 'Available to Claim',
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 26, bottom: 8, top: 4),
+                    child: Text(
+                      'Unclaimed characters in this world. Claim one to make it yours.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: palette.sidebarLabelSecondary,
+                      ),
+                    ),
+                  ),
+                  for (final r in unclaimed) ...[
+                    _ClaimCard(row: r, palette: palette),
+                    const SizedBox(height: 8),
+                  ],
+                  const SizedBox(height: 16),
+                ],
+                if (others.isNotEmpty) ...[
+                  _SectionHeader(
+                    palette: palette,
+                    icon: Icons.group,
+                    title: "Other Players' Characters",
+                  ),
+                  const SizedBox(height: 8),
+                  for (final r in others) ...[
+                    _OtherRow(palette: palette, row: r),
+                    const SizedBox(height: 8),
+                  ],
+                ],
+                if (rows.isEmpty)
+                  _EmptyState(
+                    palette: palette,
+                    message:
+                        'No characters in this world yet. The DM can publish one to share, or create your own.',
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -177,21 +245,13 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-/// Shown when player has not claimed anything. The pool may also be empty —
-/// in that case, prompt the player to ask the DM to publish a character.
-class _EmptyState extends ConsumerWidget {
+class _EmptyState extends StatelessWidget {
   final DmToolColors palette;
-  final bool poolMayBeEmpty;
-  const _EmptyState({required this.palette, required this.poolMayBeEmpty});
+  final String message;
+  const _EmptyState({required this.palette, required this.message});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final worldId = ref.watch(activeCampaignIdProvider).valueOrNull;
-    final poolAsync = worldId == null
-        ? const AsyncValue<List<ClaimPoolRow>>.data([])
-        : ref.watch(claimPoolProvider(worldId));
-    final poolEmpty = poolAsync.valueOrNull?.isEmpty ?? true;
-    if (!poolMayBeEmpty || !poolEmpty) return const SizedBox.shrink();
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Center(
@@ -201,19 +261,10 @@ class _EmptyState extends ConsumerWidget {
             Icon(Icons.person_add_alt_1,
                 size: 56, color: palette.sidebarLabelSecondary),
             const SizedBox(height: 12),
-            Text(
-              'No characters yet',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: palette.tabActiveText,
-              ),
-            ),
-            const SizedBox(height: 6),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'Ask your DM to make a character available for claim, or create a new one of your own.',
+                message,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
@@ -228,55 +279,131 @@ class _EmptyState extends ConsumerWidget {
   }
 }
 
-/// Available-to-claim section. DM-published characters show up here; the
-/// player can claim them to take ownership and unlock editing.
-class _AvailableForClaimSection extends ConsumerWidget {
-  const _AvailableForClaimSection();
+String _displayNameFor(WorldCharacterRow row) {
+  try {
+    final decoded = jsonDecode(row.payloadJson);
+    if (decoded is Map<String, dynamic>) {
+      final entity = decoded['entity'];
+      if (entity is Map && entity['name'] is String) {
+        final n = entity['name'] as String;
+        if (n.isNotEmpty) return n;
+      }
+      final flat = decoded['name'];
+      if (flat is String && flat.isNotEmpty) return flat;
+    }
+  } catch (_) {}
+  return row.templateName.isNotEmpty ? row.templateName : '(Unnamed)';
+}
+
+class _OwnedRow extends StatelessWidget {
+  final DmToolColors palette;
+  final WorldCharacterRow row;
+  const _OwnedRow({required this.palette, required this.row});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final palette = Theme.of(context).extension<DmToolColors>()!;
-    final worldId =
-        ref.watch(activeCampaignIdProvider).valueOrNull;
-    if (worldId == null) return const SizedBox.shrink();
-    final poolAsync = ref.watch(claimPoolProvider(worldId));
-    return poolAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
-      data: (pool) {
-        if (pool.isEmpty) return const SizedBox.shrink();
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) {
+    final name = _displayNameFor(row);
+    return InkWell(
+      borderRadius: palette.br,
+      onTap: () => context.push('/character/${row.id}'),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: palette.featureCardBg,
+          borderRadius: palette.br,
+          border: Border.all(color: palette.featureCardBorder),
+        ),
+        child: Row(
           children: [
-            _SectionHeader(
-              palette: palette,
-              icon: Icons.inventory_2,
-              title: 'Available to claim',
+            CircleAvatar(
+              radius: 22,
+              backgroundColor:
+                  palette.featureCardAccent.withValues(alpha: 0.2),
+              child: Icon(Icons.person,
+                  color: palette.tabActiveText, size: 22),
             ),
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.only(left: 26, bottom: 8),
-              child: Text(
-                'Your DM has published these characters. Claim one to make it yours.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: palette.sidebarLabelSecondary,
-                ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: palette.tabActiveText,
+                      )),
+                  const SizedBox(height: 2),
+                  Text(row.templateName,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: palette.sidebarLabelSecondary,
+                      )),
+                ],
               ),
             ),
-            for (final row in pool) ...[
-              _ClaimCard(row: row, palette: palette),
-              const SizedBox(height: 8),
-            ],
+            Icon(Icons.chevron_right,
+                color: palette.sidebarLabelSecondary, size: 20),
           ],
-        );
-      },
+        ),
+      ),
+    );
+  }
+}
+
+class _OtherRow extends StatelessWidget {
+  final DmToolColors palette;
+  final WorldCharacterRow row;
+  const _OtherRow({required this.palette, required this.row});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = _displayNameFor(row);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: palette.featureCardBg.withValues(alpha: 0.6),
+        borderRadius: palette.br,
+        border: Border.all(color: palette.featureCardBorder),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: palette.sidebarDivider,
+            child: Icon(Icons.lock_outline,
+                color: palette.sidebarLabelSecondary, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: palette.tabActiveText,
+                    )),
+                const SizedBox(height: 2),
+                Text(
+                  '${row.templateName} · Owned by another player',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: palette.sidebarLabelSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _ClaimCard extends ConsumerStatefulWidget {
-  final ClaimPoolRow row;
+  final WorldCharacterRow row;
   final DmToolColors palette;
   const _ClaimCard({required this.row, required this.palette});
 
@@ -292,9 +419,38 @@ class _ClaimCardState extends ConsumerState<_ClaimCard> {
     try {
       final svc = ref.read(characterClaimServiceProvider);
       if (svc == null) return;
-      await svc.claim(widget.row.characterId);
-      ref.invalidate(claimPoolProvider(widget.row.worldId));
-      ref.invalidate(characterListProvider);
+      final selfUid = ref.read(authProvider)?.uid;
+      final result = await svc.claim(widget.row.id);
+      // CDC update_at bump tüm client'lara owner_id değişimini yayar; bu
+      // client'ta optimistik patch atalım — UI hemen "Your" section'a kayar.
+      ref
+          .read(worldCharactersProvider(result.worldId).notifier)
+          .applyMirror(widget.row.copyWith(
+            ownerId: selfUid,
+            updatedAt: DateTime.now(),
+          ));
+      // Local Drift'i seed et — payload world_characters.payload_json'da
+      // duruyor, parse edip ownerId güncelle. Sonrasında applyMirror disk
+      // + state'i atomik patch eder, _mirrorPush online-world implicit
+      // sync'ini tetikler (kullanıcı tarafına ek "Make Online" gerek yok).
+      try {
+        final decoded = jsonDecode(widget.row.payloadJson);
+        if (decoded is Map<String, dynamic>) {
+          final character = Character.fromJson(decoded).copyWith(
+            ownerId: selfUid,
+            updatedAt: DateTime.now().toUtc().toIso8601String(),
+          );
+          await ref
+              .read(characterListProvider.notifier)
+              .applyMirror(character);
+          // Char artık self-owned + online world → personal sync push.
+          await ref
+              .read(characterListProvider.notifier)
+              .ensureOnline(character.id);
+        }
+      } catch (e) {
+        debugPrint('claim local seed error: $e');
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Character claimed')),
@@ -312,12 +468,7 @@ class _ClaimCardState extends ConsumerState<_ClaimCard> {
   @override
   Widget build(BuildContext context) {
     final palette = widget.palette;
-    var displayName = widget.row.templateName;
-    try {
-      final payload = widget.row.payloadJson;
-      final nameMatch = RegExp(r'"name":\s*"([^"]+)"').firstMatch(payload);
-      if (nameMatch != null) displayName = nameMatch.group(1)!;
-    } catch (_) {}
+    final displayName = _displayNameFor(widget.row);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -329,7 +480,8 @@ class _ClaimCardState extends ConsumerState<_ClaimCard> {
         children: [
           CircleAvatar(
             radius: 22,
-            backgroundColor: palette.featureCardAccent.withValues(alpha: 0.2),
+            backgroundColor:
+                palette.featureCardAccent.withValues(alpha: 0.2),
             child: Icon(Icons.person_outline,
                 color: palette.tabActiveText, size: 22),
           ),
@@ -374,62 +526,6 @@ class _ClaimCardState extends ConsumerState<_ClaimCard> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CharacterRow extends StatelessWidget {
-  final DmToolColors palette;
-  final Character character;
-  const _CharacterRow({required this.palette, required this.character});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: palette.br,
-      onTap: () => context.push('/character/${character.id}'),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: palette.featureCardBg,
-          borderRadius: palette.br,
-          border: Border.all(color: palette.featureCardBorder),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: palette.featureCardAccent.withValues(alpha: 0.2),
-              child: Icon(Icons.person,
-                  color: palette.tabActiveText, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(character.entity.name.isEmpty
-                      ? '(Unnamed)'
-                      : character.entity.name,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: palette.tabActiveText,
-                      )),
-                  const SizedBox(height: 2),
-                  Text(character.templateName,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: palette.sidebarLabelSecondary,
-                      )),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right,
-                color: palette.sidebarLabelSecondary, size: 20),
-          ],
-        ),
       ),
     );
   }

@@ -1,31 +1,16 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// public.character_claim_pool + claim_character RPC için thin transport.
+import '../../application/providers/world_characters_provider.dart';
+
+/// `world_characters` + `claim_character` RPC için thin transport.
+///
+/// Pool tablosu (`character_claim_pool`) modeli 034 migration ile bırakıldı:
+/// `owner_id IS NULL` = claim edilebilir. UI bu yüzden artık world satırına
+/// bakar, ayrı pool tablosuna değil. Eski `markAvailable` / `removeFromPool`
+/// API'leri kaldırıldı.
 class CharacterClaimService {
   final SupabaseClient client;
   CharacterClaimService(this.client);
-
-  /// DM: karakteri claim havuzuna ekle (available=true).
-  Future<void> markAvailable({
-    required String characterId,
-    required String worldId,
-  }) async {
-    await client.from('character_claim_pool').upsert({
-      'character_id': characterId,
-      'world_id': worldId,
-      'available': true,
-      'claimed_by': null,
-      'claimed_at': null,
-    });
-  }
-
-  /// DM: karakteri claim havuzundan çıkar.
-  Future<void> removeFromPool(String characterId) async {
-    await client
-        .from('character_claim_pool')
-        .delete()
-        .eq('character_id', characterId);
-  }
 
   /// DM: karakteri direkt bir oyuncuya ata. world_characters.owner_id update.
   Future<void> assignToPlayer({
@@ -36,12 +21,10 @@ class CharacterClaimService {
         .from('world_characters')
         .update({'owner_id': userId})
         .eq('id', characterId);
-    // Bu kullanıcıya atandığı için pool'dan da çıkar (varsa).
-    await removeFromPool(characterId);
   }
 
-  /// Player: RPC ile claim et. Atomic — owner_id ve pool.available aynı
-  /// transaction'da set edilir.
+  /// Player: RPC ile claim et. Atomic — RPC `owner_id IS NULL` kilitler ve
+  /// `auth.uid()`'a set eder.
   Future<({String characterId, String worldId})> claim(
       String characterId) async {
     final rows = await client.rpc('claim_character', params: {
@@ -57,40 +40,29 @@ class CharacterClaimService {
     );
   }
 
-  /// Pool listesi (member görür).
-  Future<List<ClaimPoolRow>> listAvailable(String worldId) async {
+  /// `world_characters` tüm satırlarını listeler (RLS gereği member olduğun
+  /// world'leri görürsün). Bootstrap'te bir kez çağrılır; sonrasında CDC
+  /// granular patch.
+  Future<List<WorldCharacterRow>> listWorldCharacters(String worldId) async {
     final rows = await client
-        .from('character_claim_pool')
-        .select('character_id, world_id, available, claimed_by, claimed_at, '
-            'world_characters:character_id(payload_json, template_name)')
-        .eq('world_id', worldId)
-        .eq('available', true);
-    final out = <ClaimPoolRow>[];
+        .from('world_characters')
+        .select(
+            'id, world_id, owner_id, template_id, template_name, payload_json, updated_at')
+        .eq('world_id', worldId);
+    final out = <WorldCharacterRow>[];
     for (final r in rows as List) {
       final m = r as Map<String, dynamic>;
-      final wc = m['world_characters'] as Map<String, dynamic>?;
-      out.add(ClaimPoolRow(
-        characterId: m['character_id'] as String,
+      out.add(WorldCharacterRow(
+        id: m['id'] as String,
         worldId: m['world_id'] as String,
-        templateName: wc?['template_name'] as String? ?? '',
-        payloadJson: wc?['payload_json'] as String? ?? '{}',
+        ownerId: m['owner_id'] as String?,
+        templateId: (m['template_id'] as String?) ?? '',
+        templateName: (m['template_name'] as String?) ?? '',
+        payloadJson: (m['payload_json'] as String?) ?? '{}',
+        updatedAt: DateTime.tryParse(m['updated_at'] as String? ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0),
       ));
     }
     return out;
   }
-}
-
-/// Pool listesi için lightweight projection.
-class ClaimPoolRow {
-  final String characterId;
-  final String worldId;
-  final String templateName;
-  final String payloadJson;
-
-  const ClaimPoolRow({
-    required this.characterId,
-    required this.worldId,
-    required this.templateName,
-    required this.payloadJson,
-  });
 }

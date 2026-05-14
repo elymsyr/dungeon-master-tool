@@ -15,7 +15,6 @@ import '../../domain/services/character_resolver.dart';
 import '../services/builtin_srd_entities.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
-import 'character_claim_provider.dart';
 import 'entity_provider.dart';
 import 'online_worlds_provider.dart';
 import 'personal_online_provider.dart';
@@ -51,10 +50,31 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   CharacterListNotifier(this._repo, this._ref)
       : super(const AsyncValue.loading()) {
     _load();
+    // Bir world online'a alındığında o world'e bağlı self-owned karakterleri
+    // otomatik personal sync'e dahil et — kullanıcının "Make Online"
+    // tuşlamasına gerek kalmasın.
+    _ref.listen<Set<String>>(onlineWorldIdsProvider, (prev, next) {
+      final added = next.difference(prev ?? const <String>{});
+      if (added.isEmpty) return;
+      // ignore: discarded_futures
+      _autoPublishForOnlineWorlds(added);
+    });
   }
 
   final CharacterRepository _repo;
   final Ref _ref;
+
+  Future<void> _autoPublishForOnlineWorlds(Set<String> newWorldIds) async {
+    final list = state.valueOrNull;
+    if (list == null || list.isEmpty) return;
+    for (final c in list) {
+      final worldId = _worldIdFor(c.worldName);
+      if (worldId == null) continue;
+      if (!newWorldIds.contains(worldId)) continue;
+      if (!_shouldAutoOnline(c)) continue;
+      _mirrorPush(c);
+    }
+  }
 
   /// World name → world id (UUID) eşlemesi. campaignInfoListProvider'dan
   /// senkron okur; henüz yüklenmediyse null döner ve push skip edilir.
@@ -66,6 +86,18 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         .where((c) => c.name == worldName)
         .firstOrNull
         ?.id;
+  }
+
+  /// Char self-owned + online bir world'e bağlıysa otomatik olarak personal
+  /// sync'e dahildir. Kullanıcının ayrıca "Make Online" tuşlamasına gerek
+  /// yok; online-world membership implicit online demek.
+  bool _shouldAutoOnline(Character c) {
+    final auth = _ref.read(authProvider);
+    if (auth == null) return false;
+    if (c.ownerId == null || c.ownerId != auth.uid) return false;
+    final worldId = _worldIdFor(c.worldName);
+    if (worldId == null) return false;
+    return _ref.read(onlineWorldIdsProvider).contains(worldId);
   }
 
   void _mirrorPush(Character c) {
@@ -84,45 +116,17 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
         );
       }
     }
-    // Personal mirror — char "Make Online" yapıldıysa kendi cihazlarına
-    // sync. World mirror'dan bağımsız çalışır; ikisi birlikte de aktif
-    // olabilir (örn. online world'de olup ayrıca personal sync isteyen
-    // karakter — DM yapısında nadir, oyuncu için yaygın).
+    // Personal mirror — explicit "Make Online" set'i veya implicit
+    // online-world membership. Online world'e bağlı self-owned karakter
+    // kullanıcıya ek toggle gerektirmeden kendi cihazlarına sync olur.
     final personalIds = _ref.read(personalOnlineCharIdsProvider);
-    if (personalIds.contains(c.id)) {
+    final autoOnline = _shouldAutoOnline(c);
+    if (personalIds.contains(c.id) || autoOnline) {
       // ignore: discarded_futures
       mirror.pushPersonalCharacter(c);
-    }
-  }
-
-  /// DM-created character'larda push sonrası claim havuzuna ekler — yeni
-  /// karakter PlayerCharacterTab'da "Available for claim" listesinde
-  /// görünür. Order matters: önce world_characters insert (mirror push),
-  /// sonra character_claim_pool insert (FK depends on it).
-  Future<void> _mirrorPushAndMaybeClaim(Character c) async {
-    final mirror = _ref.read(worldMirrorServiceProvider);
-    if (mirror == null) return;
-    final worldId = _worldIdFor(c.worldName);
-    if (worldId == null) return;
-    final onlineIds = _ref.read(onlineWorldIdsProvider);
-    if (!onlineIds.contains(worldId)) return;
-    await mirror.pushCharacter(
-      worldId: worldId,
-      character: c,
-      referencedEntityIds: const <String>{},
-    );
-    // DM-created → ownerId stays null (`_resolveOwnerIdForWorld` returns
-    // null when role=dm). Auto-list in claim pool so players see it the
-    // moment it's created, no DM follow-up click required.
-    if (c.ownerId != null) return;
-    final claim = _ref.read(characterClaimServiceProvider);
-    if (claim == null) return;
-    try {
-      await claim.markAvailable(characterId: c.id, worldId: worldId);
-    } catch (e) {
-      // RLS may reject (e.g. user is not actually DM) — best effort.
-      // ignore: avoid_print
-      // ignore: discarded_futures
+      if (autoOnline && !personalIds.contains(c.id)) {
+        _ref.read(personalOnlineCharIdsProvider.notifier).add(c.id);
+      }
     }
   }
 
@@ -174,6 +178,33 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     if (mirror == null) return;
     await mirror.unpublishPersonalCharacter(id);
     _ref.read(personalOnlineCharIdsProvider.notifier).remove(id);
+  }
+
+  /// Idempotent: char online-world implicit kuralından geçiyorsa veya
+  /// personal set'te ise personal_characters'a push eder. Claim akışı
+  /// gibi yerlerde "user toggle gerekmesin" demek için kullanılır.
+  Future<void> ensureOnline(String id) async {
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) return;
+    final list = state.valueOrNull ?? const <Character>[];
+    final c = list.where((x) => x.id == id).firstOrNull;
+    if (c == null) return;
+    final personalIds = _ref.read(personalOnlineCharIdsProvider);
+    final autoOnline = _shouldAutoOnline(c);
+    if (!personalIds.contains(id) && !autoOnline) return;
+    await mirror.pushPersonalCharacter(c);
+    if (!personalIds.contains(id)) {
+      _ref.read(personalOnlineCharIdsProvider.notifier).add(id);
+    }
+  }
+
+  /// Char online-world membership kuralından otomatik online sayılıyor mu?
+  /// UI Make Online/Offline toggle'ını bu chars için gizleyebilmek için.
+  bool isAutoOnline(String id) {
+    final list = state.valueOrNull ?? const <Character>[];
+    final c = list.where((x) => x.id == id).firstOrNull;
+    if (c == null) return false;
+    return _shouldAutoOnline(c);
   }
 
   Future<void> _load() async {
@@ -268,8 +299,7 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
     );
     await _repo.save(character);
     state = AsyncValue.data([character, ...state.valueOrNull ?? const []]);
-    // ignore: discarded_futures
-    _mirrorPushAndMaybeClaim(character);
+    _mirrorPush(character);
     return character;
   }
 
@@ -466,6 +496,27 @@ final sortedCharactersProvider = Provider<List<Character>>((ref) {
       ref.watch(characterListProvider).valueOrNull ?? const <Character>[];
   final out = [...list]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
   return List<Character>.unmodifiable(out);
+});
+
+/// Bir karakter, online bir world'e bağlı self-owned ise implicit auto-online
+/// kabul edilir. UI bu provider'a bakıp Make Online/Offline tuşlarını
+/// gizler — kullanıcıya manuel toggle ihtiyacı kalmaz.
+final autoOnlineForCharacterProvider =
+    Provider.family<bool, String>((ref, id) {
+  final list = ref.watch(characterListProvider).valueOrNull;
+  if (list == null) return false;
+  final c = list.where((x) => x.id == id).firstOrNull;
+  if (c == null) return false;
+  final auth = ref.watch(authProvider);
+  if (auth == null) return false;
+  if (c.ownerId == null || c.ownerId != auth.uid) return false;
+  if (c.worldName.isEmpty) return false;
+  final infos =
+      ref.watch(campaignInfoListProvider).valueOrNull ?? const [];
+  final worldId =
+      infos.where((i) => i.name == c.worldName).firstOrNull?.id;
+  if (worldId == null) return false;
+  return ref.watch(onlineWorldIdsProvider).contains(worldId);
 });
 
 /// Tek bir karakteri ID ile döndürür — editor ekran için.

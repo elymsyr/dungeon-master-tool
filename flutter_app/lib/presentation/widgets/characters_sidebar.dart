@@ -12,6 +12,7 @@ import '../../application/providers/world_membership_provider.dart';
 import '../../application/services/builtin_srd_entities.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/entity.dart';
+import '../../domain/entities/online/world_member.dart';
 import '../../domain/entities/online/world_role.dart';
 import 'package:go_router/go_router.dart';
 
@@ -400,18 +401,6 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
               ],
             ),
           ),
-        if (isDmOnline)
-          PopupMenuItem<String>(
-            value: 'pool',
-            child: Row(
-              children: [
-                Icon(Icons.inventory_2,
-                    size: 16, color: palette.tabActiveText),
-                const SizedBox(width: 8),
-                const Text('Make available for claim'),
-              ],
-            ),
-          ),
         PopupMenuItem<String>(
           value: 'remove',
           child: Row(
@@ -429,16 +418,18 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
       await _removeFromWorld(c, palette);
     } else if (selected == 'assign') {
       await _assignToPlayerDialog(c, palette);
-    } else if (selected == 'pool') {
-      await _markAvailableForClaim(c, palette);
     }
   }
 
   Future<void> _assignToPlayerDialog(Character c, DmToolColors palette) async {
     final worldId = ref.read(activeCampaignIdProvider).valueOrNull;
     if (worldId == null) return;
-    final membersAsync = await ref
-        .read(worldMembersProvider(worldId).future);
+    final notifier =
+        ref.read(worldMembersProvider(worldId).notifier);
+    await notifier.bootstrap();
+    final membersAsync =
+        ref.read(worldMembersProvider(worldId)).valueOrNull ??
+            const <WorldMember>[];
     final players = membersAsync
         .where((m) => m.role == WorldRole.player)
         .toList();
@@ -473,32 +464,11 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
       await ref
           .read(characterListProvider.notifier)
           .update(c.copyWith(ownerId: selectedUserId));
-      ref.invalidate(claimPoolProvider(worldId));
+      // World mirror granular notifier CDC ile güncellenir (RLS DM full,
+      // event tüm üyelere broadcast). Optimistik patch'e gerek yok.
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Assigned to player')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
-    }
-  }
-
-  Future<void> _markAvailableForClaim(
-      Character c, DmToolColors palette) async {
-    final worldId = ref.read(activeCampaignIdProvider).valueOrNull;
-    if (worldId == null) return;
-    try {
-      final svc = ref.read(characterClaimServiceProvider);
-      if (svc == null) return;
-      await svc.markAvailable(characterId: c.id, worldId: worldId);
-      ref.invalidate(claimPoolProvider(worldId));
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('"${c.entity.name}" is now available for claim')),
       );
     } catch (e) {
       if (!mounted) return;

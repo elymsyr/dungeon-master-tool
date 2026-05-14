@@ -8,11 +8,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/online/world_role.dart';
 import '../providers/auth_provider.dart';
 import '../providers/campaign_provider.dart';
-import '../providers/character_claim_provider.dart';
-import '../providers/character_provider.dart';
 import '../providers/entity_share_provider.dart';
 import '../providers/online_worlds_provider.dart';
 import '../providers/role_provider.dart';
+import '../providers/world_characters_provider.dart';
 import '../providers/world_membership_provider.dart';
 import 'world_mirror_service.dart';
 import 'world_sync_service.dart';
@@ -75,7 +74,12 @@ class WorldMirrorApplier {
     }
 
     if (snapshot.characters.isNotEmpty) {
-      ref.invalidate(characterListProvider);
+      final notifier =
+          ref.read(worldCharactersProvider(worldId).notifier);
+      for (final row in snapshot.characters) {
+        final mapped = _charRowFromCdc(row, fallbackWorldId: worldId);
+        if (mapped != null) notifier.applyMirror(mapped);
+      }
     }
     _bumpRevision();
   }
@@ -92,8 +96,6 @@ class WorldMirrorApplier {
           _applyWorldsEvent(e);
         case 'entity_shares':
           ref.invalidate(worldEntitySharesProvider(e.worldId));
-        case 'character_claim_pool':
-          ref.invalidate(claimPoolProvider(e.worldId));
         case 'world_members':
           await _applyMembersEvent(e);
         // mind_map_*: PR-O8'de dedicated invalidations.
@@ -136,10 +138,41 @@ class WorldMirrorApplier {
   }
 
   void _applyCharacterEvent(WorldSyncEvent e) {
-    // Karakter listesini tamamen invalidate et — granular patch yapmıyoruz
-    // çünkü CharacterRepository file-based. Bir sonraki listele çağrısı disk
-    // yerine Supabase'den seed olacak (TODO: PR-O7'de daha akıllı patch).
-    ref.invalidate(characterListProvider);
+    final notifier =
+        ref.read(worldCharactersProvider(e.worldId).notifier);
+    switch (e.eventType) {
+      case PostgresChangeEvent.delete:
+        final id = e.oldRecord['id'] as String?;
+        if (id == null) return;
+        notifier.removeMirror(id);
+      case PostgresChangeEvent.insert:
+      case PostgresChangeEvent.update:
+        final row = _charRowFromCdc(e.newRecord, fallbackWorldId: e.worldId);
+        if (row != null) notifier.applyMirror(row);
+      default:
+        return;
+    }
+  }
+
+  WorldCharacterRow? _charRowFromCdc(
+    Map<String, dynamic> row, {
+    required String fallbackWorldId,
+  }) {
+    final id = row['id'] as String?;
+    if (id == null) return null;
+    final updatedRaw = row['updated_at'] as String?;
+    return WorldCharacterRow(
+      id: id,
+      worldId: (row['world_id'] as String?) ?? fallbackWorldId,
+      ownerId: row['owner_id'] as String?,
+      templateId: (row['template_id'] as String?) ?? '',
+      templateName: (row['template_name'] as String?) ?? '',
+      payloadJson: (row['payload_json'] as String?) ?? '{}',
+      updatedAt: updatedRaw == null
+          ? DateTime.fromMillisecondsSinceEpoch(0)
+          : DateTime.tryParse(updatedRaw) ??
+              DateTime.fromMillisecondsSinceEpoch(0),
+    );
   }
 
   /// world_members CDC: roster always refreshes. Role + hub world-list
@@ -149,11 +182,22 @@ class WorldMirrorApplier {
   /// `visibleEntityProvider` / sidebar rebuilds on every players-tab
   /// activity. Personal channel covers self-on-other-device events.
   Future<void> _applyMembersEvent(WorldSyncEvent e) async {
-    ref.invalidate(worldMembersProvider(e.worldId));
     // world_members PK is (world_id, user_id) — so DELETE oldRecord carries
-    // user_id under default REPLICA IDENTITY. Safe to use without FULL.
+    // user_id under default REPLICA IDENTITY.
     final eventUid =
         (e.newRecord['user_id'] ?? e.oldRecord['user_id']) as String?;
+    final notifier =
+        ref.read(worldMembersProvider(e.worldId).notifier);
+    switch (e.eventType) {
+      case PostgresChangeEvent.insert:
+      case PostgresChangeEvent.update:
+        // ignore: discarded_futures
+        notifier.applyJoin(e.newRecord);
+      case PostgresChangeEvent.delete:
+        if (eventUid != null) notifier.applyLeave(eventUid);
+      default:
+        break;
+    }
     final selfUid = ref.read(authProvider)?.uid;
     final isSelf = selfUid != null && eventUid == selfUid;
     if (isSelf) {
