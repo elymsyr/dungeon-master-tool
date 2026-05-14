@@ -16,8 +16,8 @@ void screencastMain() {
   debugPrint('SCREENCAST: screencastMain() entry point started');
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
-    ProviderScope(
-      child: const _ScreencastApp(),
+    const ProviderScope(
+      child: _ScreencastApp(),
     ),
   );
 }

@@ -5,7 +5,7 @@ import 'package:dungeon_master_tool/domain/entities/entity.dart';
 void main() {
   group('Entity', () {
     test('creates with defaults', () {
-      final entity = Entity(id: 'test-1', categorySlug: 'npc');
+      const entity = Entity(id: 'test-1', categorySlug: 'npc');
       expect(entity.id, 'test-1');
       expect(entity.name, 'New Record');
       expect(entity.categorySlug, 'npc');
@@ -16,7 +16,7 @@ void main() {
     });
 
     test('copyWith preserves unchanged fields', () {
-      final entity = Entity(
+      const entity = Entity(
         id: 'test-2',
         categorySlug: 'monster',
         name: 'Goblin',
@@ -32,7 +32,7 @@ void main() {
     });
 
     test('toJson / fromJson roundtrip', () {
-      final entity = Entity(
+      const entity = Entity(
         id: 'test-3',
         categorySlug: 'spell',
         name: 'Fireball',

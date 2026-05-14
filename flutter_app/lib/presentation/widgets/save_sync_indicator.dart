@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -7,17 +9,24 @@ import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/cloud_backup_provider.dart';
 import '../../application/providers/cloud_sync_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
+import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/save_state_provider.dart';
-import '../../application/providers/template_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
+import '../../application/providers/role_provider.dart';
+import '../../application/providers/world_membership_provider.dart';
+import '../../application/providers/world_online_status_provider.dart';
+import '../../domain/entities/online/world_role.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/utils/error_format.dart';
 import '../../data/database/database_provider.dart';
 import '../../data/datasources/remote/cloud_backup_remote_ds.dart';
+import '../../data/network/network_providers.dart';
 import '../../data/repositories/cloud_backup_repository_impl.dart';
 import '../../domain/entities/cloud_backup_meta.dart';
+import '../../application/services/media_bundler.dart';
 import '../theme/dm_tool_colors.dart';
+import 'online_world_widgets.dart';
 import 'save_info_section.dart';
 
 /// AppBar'da save + cloud sync durumunu gösteren unified indicator.
@@ -166,7 +175,7 @@ class _SaveSyncDialog extends ConsumerWidget {
     final syncState = hasCloud ? ref.watch(cloudSyncProvider) : null;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: palette.cbr),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420, maxHeight: 560),
         child: SingleChildScrollView(
@@ -221,60 +230,22 @@ class _SaveSyncDialog extends ConsumerWidget {
                         (s) => s.copyWith(autoLocalSave: v)),
                     palette: palette,
                   ),
-                  if (hasCloud)
-                    _SettingsCheckbox(
-                      label: 'Auto cloud save (debounced)',
-                      value: uiState.autoCloudSave,
-                      onChanged: (v) => ref.read(uiStateProvider.notifier).update(
-                          (s) => s.copyWith(autoCloudSave: v)),
-                      palette: palette,
-                    ),
                   const SizedBox(height: 16),
 
                   // ── Actions (full mode only) ──
                   _SectionLabel('Actions', palette),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _ActionButton(
-                        icon: Icons.save,
-                        label: saveStatus == SaveStatus.saving
-                            ? 'Saving...'
-                            : 'Save Locally',
-                        onPressed: saveStatus == SaveStatus.saving
-                            ? null
-                            : () => withLoading(
-                                  ref.read(globalLoadingProvider.notifier),
-                                  'manual-save-local',
-                                  'Saving locally...',
-                                  () => ref
-                                      .read(saveStateProvider.notifier)
-                                      .saveNow(),
-                                ),
-                        palette: palette,
-                      ),
-                      if (hasCloud)
-                        _ActionButton(
-                          icon: Icons.cloud_upload_outlined,
-                          label: syncState?.status == CloudSyncStatus.syncing
-                              ? 'Syncing...'
-                              : 'Backup to Cloud',
-                          onPressed: syncState?.status == CloudSyncStatus.syncing
-                              ? null
-                              : () => _backupToCloud(context, ref),
-                          palette: palette,
-                        ),
-                      if (hasCloud)
-                        _ActionButton(
-                          icon: Icons.cloud_download_outlined,
-                          label: 'Sync from Cloud',
-                          onPressed: () => _syncFromCloud(context, ref),
-                          palette: palette,
-                        ),
-                    ],
+                  _ActionsRow(
+                    palette: palette,
+                    saveStatus: saveStatus,
+                    syncState: syncState,
+                    hasCloud: hasCloud,
+                    onBackup: () => _backupToCloud(context, ref),
+                    onSync: () => _syncFromCloud(context, ref),
                   ),
+
+                  // ── Online world panel: invite code + members ──
+                  _OnlineWorldPanel(palette: palette),
                 ],
 
                 // ── Backups (compact mode: show list above storage) ──
@@ -326,11 +297,10 @@ class _SaveSyncDialog extends ConsumerWidget {
     // message instead of silently doing nothing.
     final hasCampaign = ref.read(activeCampaignProvider) != null;
     final hasPackage = ref.read(activePackageProvider) != null;
-    final hasTemplate = ref.read(activeTemplateProvider) != null;
-    if (!hasCampaign && !hasPackage && !hasTemplate) {
+    if (!hasCampaign && !hasPackage) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Open a world, package or template first to back up to cloud.'),
+          content: Text('Open a world or package first to back up to cloud.'),
         ),
       );
       return;
@@ -386,7 +356,6 @@ class _SaveSyncDialog extends ConsumerWidget {
     // 1. Resolve the active item (world, package or template).
     final campaignName = ref.read(activeCampaignProvider);
     final packageName = ref.read(activePackageProvider);
-    final templateId = ref.read(activeTemplateProvider);
     String? itemName;
     String? itemId;
     String? type;
@@ -402,19 +371,12 @@ class _SaveSyncDialog extends ConsumerWidget {
           (data?['world_id'] as String?) ??
           packageName;
       type = 'package';
-    } else if (templateId != null) {
-      final schema = ref.read(activeTemplateProvider.notifier).schema;
-      if (schema != null) {
-        itemName = schema.name;
-        itemId = schema.schemaId;
-        type = 'template';
-      }
     }
 
     if (itemName == null || itemId == null || type == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Open a world, package or template first to sync from cloud.'),
+          content: Text('Open a world or package first to sync from cloud.'),
         ),
       );
       return;
@@ -488,18 +450,10 @@ class _SaveSyncDialog extends ConsumerWidget {
             await ref
                 .read(activeCampaignProvider.notifier)
                 .replaceWithData(data);
-          } else if (type == 'template') {
-            await ref
-                .read(activeTemplateProvider.notifier)
-                .replaceWithData(data);
-            ref.invalidate(allTemplatesProvider);
           } else {
             await ref
                 .read(activePackageProvider.notifier)
                 .replaceWithData(data);
-            // PackageScreen wraps its own activeCampaignProvider inside
-            // a nested ProviderScope — invalidate the downstream providers
-            // so entity/schema views re-read the restored data.
             ref.invalidate(cloudBackupListProvider);
           }
         },
@@ -557,7 +511,7 @@ class _SettingsCheckbox extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => onChanged(!value),
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: palette.br,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
@@ -581,6 +535,328 @@ class _SettingsCheckbox extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Online world panel — invite code (copy + regenerate) ve member listesini
+/// gösterir. World offline iken hiçbir şey render etmez.
+class _OnlineWorldPanel extends ConsumerWidget {
+  final DmToolColors palette;
+  const _OnlineWorldPanel({required this.palette});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final campaignName = ref.watch(activeCampaignProvider);
+    if (campaignName == null) return const SizedBox.shrink();
+    final data = ref.read(activeCampaignProvider.notifier).data;
+    final worldId = (data?['world_id'] as String?) ?? campaignName;
+    final onlineIds = ref.watch(onlineWorldIdsProvider);
+    if (!onlineIds.contains(worldId)) return const SizedBox.shrink();
+    final role =
+        ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (role == WorldRole.dm) ...[
+            OnlineSectionLabel('Invite Code', palette),
+            const SizedBox(height: 8),
+            InviteCodeRow(palette: palette, worldId: worldId),
+            const SizedBox(height: 16),
+          ],
+          OnlineSectionLabel('Members', palette),
+          const SizedBox(height: 8),
+          MembersList(worldId: worldId, palette: palette),
+        ],
+      ),
+    );
+  }
+}
+
+// _InviteCodeRow / _MemberRow extracted to online_world_widgets.dart so the
+// world-settings online panel can render the same shape.
+
+/// Actions panel — world açıkken "Save Locally" + "Make Online" (toggle);
+/// package açıkken klasik "Save Locally" + "Backup to Cloud" + "Sync from
+/// Cloud". Worldler online olunca otomatik sync olur, manuel backup/restore
+/// gerekmez.
+class _ActionsRow extends ConsumerWidget {
+  final DmToolColors palette;
+  final SaveStatus saveStatus;
+  final CloudSyncState? syncState;
+  final bool hasCloud;
+  final VoidCallback onBackup;
+  final VoidCallback onSync;
+
+  const _ActionsRow({
+    required this.palette,
+    required this.saveStatus,
+    required this.syncState,
+    required this.hasCloud,
+    required this.onBackup,
+    required this.onSync,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final campaignName = ref.watch(activeCampaignProvider);
+    final isWorld = campaignName != null;
+
+    final saveBtn = _ActionButton(
+      icon: Icons.save,
+      label: saveStatus == SaveStatus.saving ? 'Saving...' : 'Save Locally',
+      onPressed: saveStatus == SaveStatus.saving
+          ? null
+          : () => withLoading(
+                ref.read(globalLoadingProvider.notifier),
+                'manual-save-local',
+                'Saving locally...',
+                () => ref.read(saveStateProvider.notifier).saveNow(),
+              ),
+      palette: palette,
+    );
+
+    if (isWorld) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          saveBtn,
+          if (hasCloud) _MakeOnlineButton(palette: palette),
+        ],
+      );
+    }
+
+    // Package context — keep cloud backup/sync.
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        saveBtn,
+        if (hasCloud)
+          _ActionButton(
+            icon: Icons.cloud_upload_outlined,
+            label: syncState?.status == CloudSyncStatus.syncing
+                ? 'Syncing...'
+                : 'Backup to Cloud',
+            onPressed: syncState?.status == CloudSyncStatus.syncing
+                ? null
+                : onBackup,
+            palette: palette,
+          ),
+        if (hasCloud)
+          _ActionButton(
+            icon: Icons.cloud_download_outlined,
+            label: 'Sync from Cloud',
+            onPressed: onSync,
+            palette: palette,
+          ),
+      ],
+    );
+  }
+}
+
+/// Active world için online toggle. Online ise yeşil "Online · Auto-sync"
+/// pill + sağında "Make Offline" küçük ikon. Offline ise "Make Online" CTA.
+class _MakeOnlineButton extends ConsumerStatefulWidget {
+  final DmToolColors palette;
+  const _MakeOnlineButton({required this.palette});
+
+  @override
+  ConsumerState<_MakeOnlineButton> createState() => _MakeOnlineButtonState();
+}
+
+class _MakeOnlineButtonState extends ConsumerState<_MakeOnlineButton> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = widget.palette;
+    final campaignName = ref.watch(activeCampaignProvider);
+    if (campaignName == null) return const SizedBox.shrink();
+    final data = ref.read(activeCampaignProvider.notifier).data;
+    final worldId = (data?['world_id'] as String?) ?? campaignName;
+    final onlineIds = ref.watch(onlineWorldIdsProvider);
+    final isOnline = onlineIds.contains(worldId);
+    final role =
+        ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
+    final isDm = role == WorldRole.dm;
+
+    if (isOnline) {
+      final label = isDm ? 'Online · Auto-sync' : 'Online · Player';
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: palette.successBtnBg.withValues(alpha: 0.15),
+              borderRadius: palette.br,
+              border: Border.all(color: palette.successBtnBg),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.cloud_done,
+                    size: 14, color: palette.successBtnBg),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: palette.successBtnBg,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Make Offline yalnızca DM'e açık — player unpublishing yapamaz
+          // (RLS reddediyor). Buton player'a görünmüyor.
+          if (isDm) ...[
+            const SizedBox(width: 4),
+            IconButton(
+              tooltip: 'Make Offline',
+              icon: const Icon(Icons.cloud_off, size: 16),
+              onPressed: _busy ? null : () => _confirmOffline(worldId),
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints:
+                  const BoxConstraints(minWidth: 28, minHeight: 28),
+            ),
+          ],
+        ],
+      );
+    }
+
+    // Offline world → sadece DM "Make Online" yapabilir. Player rolündeki
+    // user offline world görmemeli (joined world her zaman online'dır),
+    // ama defansif olarak: sadece DM/none için butonu render et.
+    if (role == WorldRole.player) return const SizedBox.shrink();
+
+    return _ActionButton(
+      icon: Icons.cloud_upload,
+      label: _busy ? 'Publishing...' : 'Make Online',
+      onPressed: _busy ? null : () => _makeOnline(campaignName, worldId),
+      palette: palette,
+    );
+  }
+
+  Future<void> _makeOnline(String campaignName, String worldId) async {
+    // Beta-only: online multiplayer only for beta members.
+    if (!ref.read(betaProvider).isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Online worlds are beta-only. Open Settings → Subscriptions to join the free beta.',
+          ),
+        ),
+      );
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      final repo = ref.read(campaignRepositoryProvider);
+      final data = await repo.load(campaignName);
+      // Bundle media → R2 upload + rewrite local paths to `dmt-asset://` so
+      // players (and re-opens on other devices) can fetch images.
+      Map<String, dynamic> bundled = data;
+      final assetSvc = ref.read(assetServiceProvider);
+      if (assetSvc != null) {
+        try {
+          final res = await MediaBundler(assetSvc).bundleWorldMedia(
+            worldName: campaignName,
+            worldId: worldId,
+            data: data,
+          );
+          bundled = res.data;
+        } catch (e) {
+          debugPrint('makeOnline media bundle error: $e');
+        }
+      }
+      final stateJson = jsonEncode(bundled);
+      final templateId =
+          (bundled['world_schema'] as Map?)?['schemaId'] as String?;
+      final templateHash = bundled['template_hash'] as String?;
+      await ref.read(worldMembershipServiceProvider).publishWorld(
+            worldId: worldId,
+            worldName: campaignName,
+            templateId: templateId,
+            templateHash: templateHash,
+            stateJson: stateJson,
+          );
+      ref.read(onlineWorldIdsProvider.notifier).add(worldId);
+      ref.invalidate(worldOnlineStatusProvider(worldId));
+      // First-publish path: the invite-code FutureProvider had already
+      // resolved to null while the world was offline (NoOp branch /
+      // ensureInvite RPC errored against the not-yet-created row). The
+      // Riverpod cache held that null indefinitely so the panel showed
+      // "members but no code" after the world flipped online. Force a
+      // fresh ensure_world_invite RPC + invalidate so the panel surfaces
+      // the code on the same screen tick the publish succeeds.
+      try {
+        await ref
+            .read(worldMembershipServiceProvider)
+            .ensureInvite(worldId);
+      } catch (e) {
+        debugPrint('makeOnline ensureInvite error: $e');
+      }
+      ref.invalidate(worldActiveInviteCodeProvider(worldId));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('World is now online')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Publish failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _confirmOffline(String worldId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Make Offline'),
+        content: const Text(
+            'This removes the world and all member data from the cloud. '
+            'Local data is preserved. Continue?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Make Offline')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(worldMembershipServiceProvider)
+          .unpublishWorld(worldId);
+      ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
+      ref.invalidate(worldOnlineStatusProvider(worldId));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('World is now offline')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unpublish failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 }
 
@@ -625,7 +901,7 @@ class _StorageUsageBar extends ConsumerWidget {
       data: (bytes) {
         final usedMb = bytes / (1024 * 1024);
         final totalMb = quotaBytes / (1024 * 1024);
-        final itemLimitMb = cloudBackupItemSizeLimit / (1024 * 1024);
+        const itemLimitMb = cloudBackupItemSizeLimit / (1024 * 1024);
         final ratio = (bytes / quotaBytes).clamp(0.0, 1.0);
         final remainingMb = totalMb - usedMb;
 
@@ -636,7 +912,7 @@ class _StorageUsageBar extends ConsumerWidget {
               children: [
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: palette.br,
                     child: LinearProgressIndicator(
                       value: ratio,
                       minHeight: 8,
@@ -758,20 +1034,6 @@ class _ActiveItemSaveInfoState extends ConsumerState<_ActiveItemSaveInfo> {
         updatedAt: row?.updatedAt,
       );
     }
-    final templateId = ref.read(activeTemplateProvider);
-    if (templateId != null) {
-      final schema = ref.read(activeTemplateProvider.notifier).schema;
-      if (schema != null) {
-        DateTime? localUpdatedAt;
-        try { localUpdatedAt = DateTime.parse(schema.updatedAt); } catch (_) {}
-        return (
-          name: schema.name,
-          id: schema.schemaId,
-          type: 'template',
-          updatedAt: localUpdatedAt,
-        );
-      }
-    }
     return null;
   }
 
@@ -832,7 +1094,7 @@ class _ResultRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
           color: palette.featureCardBg,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: palette.cbr,
           border: Border.all(color: palette.featureCardBorder),
         ),
         child: Row(
@@ -910,7 +1172,7 @@ class _CompactBackupList extends ConsumerWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: palette.featureCardBg,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: palette.cbr,
               border: Border.all(color: palette.featureCardBorder),
             ),
             child: Row(
@@ -932,7 +1194,7 @@ class _CompactBackupList extends ConsumerWidget {
           child: Container(
             decoration: BoxDecoration(
               color: palette.featureCardBg,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: palette.cbr,
               border: Border.all(color: palette.featureCardBorder),
             ),
             child: ListView.separated(

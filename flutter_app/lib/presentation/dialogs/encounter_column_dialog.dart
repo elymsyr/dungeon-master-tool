@@ -128,7 +128,7 @@ class _EncounterColumnDialogState extends State<EncounterColumnDialog> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       child: Row(
                         children: [
-                          Icon(Icons.drag_handle, size: 18, color: Colors.grey),
+                          const Icon(Icons.drag_handle, size: 18, color: Colors.grey),
                           const SizedBox(width: 4),
                           Checkbox(
                             value: entry.enabled,
@@ -212,9 +212,9 @@ class _EncounterColumnDialogState extends State<EncounterColumnDialog> {
                             child: Text(f.$2, style: const TextStyle(fontSize: 13)),
                           ))
                       .toList(),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Icon(Icons.add, size: 16),
                       SizedBox(width: 4),
                       Text('Add Column', style: TextStyle(fontSize: 13)),

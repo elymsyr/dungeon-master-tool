@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 const _key = 'ui_state';
 
 /// Which right sidebar is currently open (mutually exclusive).
-enum RightSidebar { none, pdf, soundmap }
+enum RightSidebar { none, pdf, soundmap, characters }
 
 /// Kalıcı UI state — PyQt'deki closeEvent/restoreState karşılığı.
 /// SharedPreferences ile kaydedilir, uygulama açılışında restore edilir.
@@ -23,6 +23,9 @@ class UiState {
   final List<String> dbOpenRight;
   final int dbActiveLeft;
   final int dbActiveRight;
+  /// Persisted category-filter selection for the database sidebar.
+  /// Empty list = "show all" (no filter applied).
+  final List<String> dbFilterSlugs;
 
   // Session
   final double sessionMainSplitterRatio;
@@ -59,6 +62,7 @@ class UiState {
     this.dbOpenRight = const [],
     this.dbActiveLeft = -1,
     this.dbActiveRight = -1,
+    this.dbFilterSlugs = const [],
     this.sessionMainSplitterRatio = 0.35,
     this.sessionRightSplitterRatio = 0.4,
     this.sessionBottomTab = 0,
@@ -84,6 +88,7 @@ class UiState {
     List<String>? dbOpenRight,
     int? dbActiveLeft,
     int? dbActiveRight,
+    List<String>? dbFilterSlugs,
     double? sessionMainSplitterRatio,
     double? sessionRightSplitterRatio,
     int? sessionBottomTab,
@@ -108,6 +113,7 @@ class UiState {
       dbOpenRight: dbOpenRight ?? this.dbOpenRight,
       dbActiveLeft: dbActiveLeft ?? this.dbActiveLeft,
       dbActiveRight: dbActiveRight ?? this.dbActiveRight,
+      dbFilterSlugs: dbFilterSlugs ?? this.dbFilterSlugs,
       sessionMainSplitterRatio: sessionMainSplitterRatio ?? this.sessionMainSplitterRatio,
       sessionRightSplitterRatio: sessionRightSplitterRatio ?? this.sessionRightSplitterRatio,
       sessionBottomTab: sessionBottomTab ?? this.sessionBottomTab,
@@ -134,6 +140,7 @@ class UiState {
     'dbOpenRight': dbOpenRight,
     'dbActiveLeft': dbActiveLeft,
     'dbActiveRight': dbActiveRight,
+    'dbFilterSlugs': dbFilterSlugs,
     'sessionMainSplitterRatio': sessionMainSplitterRatio,
     'sessionRightSplitterRatio': sessionRightSplitterRatio,
     'sessionBottomTab': sessionBottomTab,
@@ -169,6 +176,8 @@ class UiState {
       dbOpenRight: (json['dbOpenRight'] as List?)?.cast<String>() ?? const [],
       dbActiveLeft: json['dbActiveLeft'] as int? ?? -1,
       dbActiveRight: json['dbActiveRight'] as int? ?? -1,
+      dbFilterSlugs:
+          (json['dbFilterSlugs'] as List?)?.cast<String>() ?? const [],
       sessionMainSplitterRatio: (json['sessionMainSplitterRatio'] as num?)?.toDouble() ?? 0.35,
       sessionRightSplitterRatio: (json['sessionRightSplitterRatio'] as num?)?.toDouble() ?? 0.4,
       sessionBottomTab: json['sessionBottomTab'] as int? ?? 0,
@@ -224,6 +233,12 @@ final uiStateProvider = StateNotifierProvider<UiStateNotifier, UiState>((ref) {
 /// Set this to an entity ID to navigate to the Database tab and open that entity.
 /// Consumers should reset to null after handling.
 final entityNavigationProvider = StateProvider<String?>((ref) => null);
+
+/// Optional panel hint paired with [entityNavigationProvider]. 'left',
+/// 'right', or 'opposite' (open in the panel that doesn't already host
+/// the source card). null = default (left).
+final entityNavigationTargetPanelProvider =
+    StateProvider<String?>((ref) => null);
 
 /// Set this to a PDF file path to open it in the PDF sidebar.
 /// Consumers should reset to null after handling.

@@ -6,7 +6,7 @@ import 'world_schema.dart';
 
 /// Computes a deterministic content hash of a [WorldSchema] over the fields
 /// that affect gameplay/runtime behavior:
-///   - categories (entity field definitions, rules, groups)
+///   - categories (entity field definitions, groups)
 ///   - encounterConfig (combat config)
 ///   - encounterLayouts
 ///   - metadata

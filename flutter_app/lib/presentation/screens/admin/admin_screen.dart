@@ -11,7 +11,6 @@ import '../../theme/dm_tool_colors.dart';
 import '../../widgets/pill_tab_bar.dart';
 import 'audit_log_tab.dart';
 import 'bug_reports_tab.dart';
-import 'builtins_tab.dart';
 import 'content_moderation_tab.dart';
 import 'restricted_users_tab.dart';
 
@@ -62,7 +61,6 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
           const PillTab(id: 'dashboard', icon: Icons.dashboard_outlined, label: 'Dashboard'),
           const PillTab(id: 'users', icon: Icons.people_outline, label: 'Users'),
           const PillTab(id: 'content', icon: Icons.forum_outlined, label: 'Content'),
-          const PillTab(id: 'builtins', icon: Icons.star_border, label: 'Built-ins'),
           const PillTab(id: 'reports', icon: Icons.bug_report_outlined, label: 'Reports'),
           const PillTab(id: 'banned', icon: Icons.block_outlined, label: 'Banned'),
           const PillTab(id: 'restricted', icon: Icons.lock_outline, label: 'Restricted'),
@@ -85,9 +83,6 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
             break;
           case 'content':
             content = const ContentModerationTab();
-            break;
-          case 'builtins':
-            content = const BuiltinsTab();
             break;
           case 'reports':
             content = const BugReportsTab();
@@ -153,37 +148,13 @@ class _DashboardTab extends StatelessWidget {
               Icon(Icons.shield, size: 24, color: palette.featureCardAccent),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Admin mode active',
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
-                    Text('You can publish updates to built-in templates.',
-                        style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
-                  ],
-                ),
+                child: Text('Admin mode active',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: palette.tabActiveText)),
               ),
             ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(
-            color: palette.featureCardBg,
-            border: Border.all(color: palette.featureCardBorder),
-            borderRadius: palette.cbr,
-          ),
-          child: ListTile(
-            leading: const Icon(Icons.description_outlined),
-            title: const Text('Built-in template editor'),
-            subtitle: const Text('Edit and publish updates to the built-in D&D 5e template'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Open via Templates tab → built-in template card')),
-              );
-            },
           ),
         ),
       ],

@@ -7,7 +7,10 @@ import '../../core/utils/deep_copy.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
+import '../../application/services/srd_core_bootstrap.dart';
+import '../../application/services/srd_core_package_bootstrap.dart';
 import '../../core/config/app_paths.dart';
+import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
 import '../../domain/entities/schema/world_schema.dart' as domain;
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
@@ -102,6 +105,19 @@ class CampaignRepositoryImpl implements CampaignRepository {
   }
 
   @override
+  Future<void> purge(String campaignName) async {
+    final existing = await _db.campaignDao.getByName(campaignName);
+    // Hard wipe of any legacy MsgPack/JSON dir — no trash entry written.
+    final dir = Directory(p.join(AppPaths.worldsDir, campaignName));
+    if (await dir.exists()) {
+      await dir.delete(recursive: true);
+    }
+    if (existing != null) {
+      await _db.campaignDao.deleteCampaign(existing.id);
+    }
+  }
+
+  @override
   Future<String> create(String worldName, {domain.WorldSchema? template}) async {
     // Defensive: never insert a second row with the same worldName.
     // The Campaigns table currently has no unique constraint on
@@ -167,6 +183,23 @@ class CampaignRepositoryImpl implements CampaignRepository {
       templateOriginalHash: Value(originalHash),
     ));
 
+    // Bootstrap built-in SRD content for v2 D&D 5e campaigns. Seeds Tier-0
+    // lookup rows + the hand-authored SRD 5.2.1 content pack.
+    //
+    // Order matters: ensure the SRD `Packages` row exists FIRST so
+    // `SrdCoreBootstrap` can tag every seeded entity with the right
+    // `packageId` + `packageEntityId` and write an `installed_packages`
+    // row. Without this, a fresh world creates 2057 untagged rows that
+    // `PackageSyncService.sync` later treats as missing — re-inserting
+    // every pack entity and doubling the world's entity count.
+    if (schema.schemaId == builtinDnd5eV2SchemaId) {
+      await SrdCorePackageBootstrap(_db).ensureInstalled();
+      await SrdCoreBootstrap(_db).ensureImported(
+        campaignId: campaignId,
+        build: generateBuiltinDnd5eV2Schema(),
+      );
+    }
+
     return worldName;
   }
 
@@ -197,6 +230,11 @@ class CampaignRepositoryImpl implements CampaignRepository {
         'pdfs': jsonDecode(e.pdfsJson),
         'location_id': e.locationId,
         'attributes': jsonDecode(e.fieldsJson),
+        // Package linkage must round-trip through load→save or autosave
+        // strips it and uninstall later finds nothing to delete.
+        if (e.packageId != null) 'package_id': e.packageId,
+        if (e.packageEntityId != null) 'package_entity_id': e.packageEntityId,
+        if (e.linked) 'linked': true,
       };
     }
 
@@ -320,6 +358,9 @@ class CampaignRepositoryImpl implements CampaignRepository {
             pdfsJson: Value(jsonEncode(m['pdfs'] ?? [])),
             locationId: Value(m['location_id'] as String?),
             fieldsJson: Value(jsonEncode(m['attributes'] ?? {})),
+            packageId: Value(m['package_id'] as String?),
+            packageEntityId: Value(m['package_entity_id'] as String?),
+            linked: Value((m['linked'] as bool?) ?? false),
           );
         }).toList();
         await _db.entityDao.insertAll(companions);

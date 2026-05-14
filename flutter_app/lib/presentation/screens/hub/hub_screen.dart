@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/cloud_remote_check_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
+import '../../../application/providers/personal_sync_provider.dart';
 import '../../../application/providers/social_providers.dart';
 import '../../../application/providers/profile_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
@@ -216,7 +217,11 @@ class _HubScreenState extends ConsumerState<HubScreen> {
       case 2:
         return (title: l10n.helpWorldsTitle, body: l10n.helpWorldsBody);
       case 3:
-        return (title: 'Characters', body: 'Your characters, across all templates. Create new characters from any template that has a Player category.');
+        return (
+          title: 'Characters',
+          body:
+              'View, edit, and delete every character across your worlds. Create new characters from inside a world via the Characters sidebar.',
+        );
       case 4:
         return (title: l10n.helpTemplatesTitle, body: l10n.helpTemplatesBody);
       case 5:
@@ -227,6 +232,11 @@ class _HubScreenState extends ConsumerState<HubScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Personal multi-device sync (characters + packages + own world_members).
+    // Watching here keeps the realtime channel alive whenever the hub is in
+    // the widget tree — i.e. across the whole post-login session.
+    ref.watch(personalSyncAutoSubscribeProvider);
+
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final l10n = L10n.of(context)!;
     final socialSubTab = ref.watch(socialSubTabProvider);
@@ -242,9 +252,14 @@ class _HubScreenState extends ConsumerState<HubScreen> {
         if (i != _settingsTabIndex) i,
     ];
     // Multi-device hint — another device uploaded changes we haven't pulled.
+    // Already a bool — no `.select` needed.
     final cloudBadge = ref.watch(cloudRemoteHasNewerProvider);
-    // Unread messages — badge on Social tab.
-    final hasUnread = (ref.watch(totalNotificationCountProvider).value ?? 0) > 0;
+    // Unread messages — badge on Social tab. H1: select the boolean
+    // outcome so loading/error transitions of the FutureProvider don't
+    // re-render the entire hub frame; only flipping unread→read does.
+    final hasUnread = ref.watch(
+      totalNotificationCountProvider.select((a) => (a.valueOrNull ?? 0) > 0),
+    );
 
     // Redirect to landing on sign-out when Supabase is configured.
     ref.listen(authProvider, (prev, next) async {
@@ -293,14 +308,15 @@ class _HubScreenState extends ConsumerState<HubScreen> {
               )
             : null,
         automaticallyImplyLeading: false,
-        title: Row(
+        title: const Row(
           children: [
-            const AppIconImage(size: 22),
-            const SizedBox(width: 8),
-            Flexible(
+            AppIconImage(size: 22),
+            SizedBox(width: 8),
+            Expanded(
               child: Text('Dungeon Master Tool',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                softWrap: false,
+                overflow: TextOverflow.fade,
               ),
             ),
           ],
@@ -309,11 +325,14 @@ class _HubScreenState extends ConsumerState<HubScreen> {
           const VersionIndicatorButton(),
           const SaveSyncIndicator(compact: true),
           HelpIconButton(title: help.title, body: help.body),
-          IconButton(
-            tooltip: 'Report a Bug',
-            icon: const Icon(Icons.bug_report_outlined),
-            onPressed: () => BugReportDialog.show(context),
-          ),
+          // Bug report duplicates the entry inside the profile menu — keep
+          // the desktop/tablet shortcut, hide on phone where space is tight.
+          if (screen != ScreenType.phone)
+            IconButton(
+              tooltip: 'Report a Bug',
+              icon: const Icon(Icons.bug_report_outlined),
+              onPressed: () => BugReportDialog.show(context),
+            ),
           // Profile menu — avatar + username with popup actions
           const ProfileMenuButton(),
           const SizedBox(width: 4),

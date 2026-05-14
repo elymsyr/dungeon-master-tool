@@ -1,16 +1,27 @@
 import 'package:flutter/foundation.dart';
 
+import 'dart:convert';
+
 import '../../core/utils/deep_copy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/database/database_provider.dart';
-import '../../data/datasources/local/campaign_local_ds.dart' show CampaignLocalDataSource, TrashItem;
+import '../../data/datasources/local/campaign_local_ds.dart'
+    show CampaignLocalDataSource, TrashItem;
 import '../../data/repositories/campaign_repository_impl.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/campaign_repository.dart';
+import '../../data/network/network_providers.dart';
 import '../services/campaign_import_service.dart';
-import '../services/template_sync_service.dart';
+import '../services/media_bundler.dart';
+import '../services/world_mirror_service.dart';
+import 'builtin_package_provider.dart';
+import 'character_provider.dart';
+import 'online_worlds_provider.dart';
+import 'world_mirror_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/config/supabase_config.dart';
 
 final campaignLocalDsProvider = Provider((_) => CampaignLocalDataSource());
 
@@ -59,15 +70,19 @@ class CampaignInfo {
 }
 
 /// Kampanya listesi + template bilgileri.
-final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((ref) async {
+final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((
+  ref,
+) async {
   final db = ref.watch(appDatabaseProvider);
   final rows = await db.campaignDao.getCampaignInfoList();
   return rows
-      .map((r) => CampaignInfo(
-            id: r.id,
-            name: r.worldName,
-            templateName: r.templateName,
-          ))
+      .map(
+        (r) => CampaignInfo(
+          id: r.id,
+          name: r.worldName,
+          templateName: r.templateName,
+        ),
+      )
       .toList();
 });
 
@@ -75,15 +90,22 @@ final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((ref) async 
 /// Campaign blob'undan `metadata` alanını okur. List UI bu provider'ı
 /// watch ederek cover/desc/tags gösterimi için kullanır.
 final campaignMetadataProvider =
-    FutureProvider.family<Map<String, dynamic>, String>((ref, campaignName) async {
-  try {
-    final data = await ref.read(campaignRepositoryProvider).load(campaignName);
-    final meta = data['metadata'];
-    return meta is Map ? Map<String, dynamic>.from(meta) : <String, dynamic>{};
-  } catch (_) {
-    return <String, dynamic>{};
-  }
-});
+    FutureProvider.family<Map<String, dynamic>, String>((
+      ref,
+      campaignName,
+    ) async {
+      try {
+        final data = await ref
+            .read(campaignRepositoryProvider)
+            .load(campaignName);
+        final meta = data['metadata'];
+        return meta is Map
+            ? Map<String, dynamic>.from(meta)
+            : <String, dynamic>{};
+      } catch (_) {
+        return <String, dynamic>{};
+      }
+    });
 
 /// Campaign metadata writer — sadece metadata'yı değiştirir, diğer verilere
 /// dokunmaz. Ayarlar dialog'undan çağrılır.
@@ -120,23 +142,6 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     try {
       _data = await _repo.load(name);
       state = name;
-      // Lazy template-sync drift check — surfaces a prompt for the UI to
-      // show when the source template has been edited since this campaign
-      // was last synced. Failures here MUST NOT block the load.
-      try {
-        final result = await _ref
-            .read(templateSyncServiceProvider)
-            .checkDrift(campaignName: name, campaignData: _data!);
-        if (result.healedHash != null) {
-          // Non-semantic hash drift — store the fresh hash so the next
-          // open matches cleanly, no prompt shown.
-          _data!['template_hash'] = result.healedHash!;
-          await _repo.save(name, _data!);
-        }
-        _ref.read(pendingTemplateUpdateProvider.notifier).state = result.prompt;
-      } catch (e, st) {
-        debugPrint('Template sync drift check failed: $e\n$st');
-      }
       return true;
     } catch (e, st) {
       debugPrint('Campaign load error: $e\n$st');
@@ -157,7 +162,106 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   Future<void> save() async {
     if (state != null && _data != null) {
       await _repo.save(state!, _data!);
+      _mirrorAfterSave();
     }
+  }
+
+  /// World online ise lokal save sonrası Supabase mirror'a push eder.
+  /// Best-effort: mirror null veya RLS reddederse sessizce geç.
+  void _mirrorAfterSave() {
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    final data = _data;
+    if (mirror == null || data == null) return;
+    final worldId = data['world_id'] as String?;
+    if (worldId == null) return;
+    // Offline world → mirror push'u atla (RLS gürültüsünü engeller).
+    final onlineIds = _ref.read(onlineWorldIdsProvider);
+    if (!onlineIds.contains(worldId)) return;
+    final worldName = state ?? '';
+    final schemaMap = data['world_schema'];
+    final templateId = schemaMap is Map
+        ? schemaMap['schemaId'] as String?
+        : null;
+    final templateHash = data['template_hash'] as String?;
+    // Media'yı R2'ye yükleyip `dmt-asset://` ref'lerine rewrite et;
+    // sonra entity + state push. Bundle SHA-dedupe sayesinde repeat
+    // save'ler ucuz. AssetService yoksa (worker URL define yok) raw data.
+    // ignore: discarded_futures
+    _bundleAndPush(
+      mirror: mirror,
+      worldId: worldId,
+      worldName: worldName,
+      templateId: templateId,
+      templateHash: templateHash,
+      data: data,
+    );
+  }
+
+  Future<void> _bundleAndPush({
+    required WorldMirrorService mirror,
+    required String worldId,
+    required String worldName,
+    String? templateId,
+    String? templateHash,
+    required Map<String, dynamic> data,
+  }) async {
+    // Player rolündeki user world_entities/worlds tablolarına yazamaz (RLS).
+    // Async lookup — circular dep'i önlemek için doğrudan Supabase.
+    if (SupabaseConfig.isConfigured) {
+      final auth = Supabase.instance.client.auth.currentUser;
+      if (auth == null) return;
+      try {
+        final row = await Supabase.instance.client
+            .from('world_members')
+            .select('role')
+            .eq('world_id', worldId)
+            .eq('user_id', auth.id)
+            .maybeSingle();
+        if (row == null || row['role'] != 'dm') return;
+      } catch (_) {
+        return;
+      }
+    }
+    final assetSvc = _ref.read(assetServiceProvider);
+    Map<String, dynamic> bundled = data;
+    if (assetSvc != null) {
+      try {
+        final res = await MediaBundler(
+          assetSvc,
+        ).bundleWorldMedia(worldName: worldName, worldId: worldId, data: data);
+        bundled = res.data;
+      } catch (e, st) {
+        debugPrint('online mirror media bundle error: $e\n$st');
+      }
+    }
+    final entitiesRaw = bundled['entities'];
+    final entitiesBlob = entitiesRaw is Map<String, dynamic>
+        ? entitiesRaw
+        : const <String, dynamic>{};
+    String? builtinPackageId;
+    try {
+      builtinPackageId = await _ref.read(builtinPackageIdProvider.future);
+    } catch (_) {
+      /* bootstrap pending → null, OK */
+    }
+    await mirror.pushEntities(
+      worldId: worldId,
+      entitiesBlob: entitiesBlob,
+      builtinPackageId: builtinPackageId,
+    );
+    // Entities already mirror through world_entities CDC; including them
+    // again inside state_json doubles bandwidth and processing on every
+    // bundle push. Strip them before encoding — the applier's
+    // _applyWorldsEvent already preserves the in-memory entities map.
+    final stateForPush = Map<String, dynamic>.from(bundled);
+    stateForPush.remove('entities');
+    await mirror.pushWorldState(
+      worldId: worldId,
+      worldName: worldName,
+      templateId: templateId,
+      templateHash: templateHash,
+      stateJson: jsonEncode(stateForPush),
+    );
   }
 
   /// Re-reads the active campaign from disk, replaces [_data] in place
@@ -227,9 +331,17 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   Future<void> applyTemplateUpdate(WorldSchema newTemplate) async {
     if (state == null || _data == null) return;
     final currentHash = computeWorldSchemaContentHash(newTemplate);
-    _data!['world_schema'] = deepCopyJson(newTemplate.toJson());
-    _data!['template_id'] = newTemplate.schemaId;
-    _data!['template_hash'] = currentHash;
+    final prevHash = _data!['template_hash'];
+    final prevTemplateId = _data!['template_id'];
+    // Hash gate: skip the expensive deepCopyJson(toJson()) when the schema
+    // is already at this exact version. Bookkeeping (dismiss/mute clear) +
+    // save still run so the caller's intent — "user accepted this template" —
+    // is honoured even on a no-op content match.
+    if (prevHash != currentHash || prevTemplateId != newTemplate.schemaId) {
+      _data!['world_schema'] = deepCopyJson(newTemplate.toJson());
+      _data!['template_id'] = newTemplate.schemaId;
+      _data!['template_hash'] = currentHash;
+    }
     if (newTemplate.originalHash != null) {
       _data!['template_original_hash'] = newTemplate.originalHash;
     }
@@ -259,7 +371,65 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   }
 
   Future<void> delete(String campaignName) async {
+    // Karakter bağını kopar: world trash'e atılmadan önce bu world'e bağlı
+    // karakterleri orphan'a çevir (worldName boş + built-in SRD remap).
+    // Aksi halde world silindikten sonra karakter `worldName` set kalır,
+    // Hub Characters tab'da role-aware delete check world'ü bulamayıp
+    // "World-bound character" tooltip'i ile silmeyi engeller. Trash restore
+    // sırasında bağ tekrar kurulmaz — DM gerekirse yeniden link eder.
+    try {
+      Map<String, dynamic>? data;
+      if (state == campaignName && _data != null) {
+        data = _data;
+      } else {
+        data = await _repo.load(campaignName);
+      }
+      final entitiesRaw = data?['entities'];
+      if (entitiesRaw is Map<String, dynamic>) {
+        await _ref
+            .read(characterListProvider.notifier)
+            .orphanForWorld(campaignName, entitiesRaw);
+      }
+    } catch (e, st) {
+      debugPrint('orphan-before-delete error: $e\n$st');
+    }
     await _repo.delete(campaignName);
+    if (state == campaignName) {
+      _data = null;
+      state = null;
+    }
+  }
+
+  /// Hard delete — bypasses trash. Used when the user leaves an online
+  /// world (or gets kicked): the local mirror is wiped immediately, the
+  /// world disappears from the hub, and there is no `.trash/` entry to
+  /// restore from later.
+  ///
+  /// Before wiping, walks every local character bound to this world and
+  /// rewrites their SRD-derived entity refs (species/class/trait/action/…)
+  /// from this world's UUIDs to the bundled builtin-SRD stable UUIDs. The
+  /// world's SRD copies share (slug, name) with the builtin pack, so the
+  /// stable v5 id derived from that pair re-anchors the character's refs
+  /// to a map that survives the purge. Custom DM-authored entities have
+  /// no builtin counterpart and are left as unresolvable orphans.
+  Future<void> purge(String campaignName) async {
+    try {
+      Map<String, dynamic>? data;
+      if (state == campaignName && _data != null) {
+        data = _data;
+      } else {
+        data = await _repo.load(campaignName);
+      }
+      final entitiesRaw = data?['entities'];
+      if (entitiesRaw is Map<String, dynamic>) {
+        await _ref
+            .read(characterListProvider.notifier)
+            .orphanForWorld(campaignName, entitiesRaw);
+      }
+    } catch (e, st) {
+      debugPrint('orphan-before-purge error: $e\n$st');
+    }
+    await _repo.purge(campaignName);
     if (state == campaignName) {
       _data = null;
       state = null;
@@ -269,8 +439,8 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
 
 final activeCampaignProvider =
     StateNotifierProvider<ActiveCampaignNotifier, String?>((ref) {
-  return ActiveCampaignNotifier(ref.watch(campaignRepositoryProvider), ref);
-});
+      return ActiveCampaignNotifier(ref.watch(campaignRepositoryProvider), ref);
+    });
 
 /// Trash'teki silinen kampanyalar.
 final trashListProvider = FutureProvider<List<TrashItem>>((ref) {

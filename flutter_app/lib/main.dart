@@ -16,7 +16,6 @@ import 'application/services/projection_ipc.dart';
 import 'core/config/app_paths.dart';
 import 'core/config/supabase_config.dart';
 import 'core/constants.dart' show appVersion;
-import 'core/migrations/legacy_builtin_seed.dart';
 import 'core/services/log_buffer.dart';
 import 'presentation/screens/player_window/player_window_main.dart';
 import 'presentation/screens/player_window/screencast_main.dart'
@@ -145,70 +144,111 @@ class _BootstrapGateState extends State<_BootstrapGate> {
   Future<void> _bootstrap() async {
     try {
       _setMessage('Preparing file system...');
-      await AppPaths.initialize();
-      await seedLegacyBuiltinTemplateIfNeeded();
 
-      if (SupabaseConfig.isConfigured) {
-        _setMessage('Connecting to cloud...');
-        try {
-          await Supabase.initialize(
-            url: SupabaseConfig.url,
-            anonKey: SupabaseConfig.anonKey,
-          );
-          // Fire-and-forget: updates profiles.last_active_at + app_version +
-          // platform (migration 023). beta_participants.last_active_at also
-          // bumped if user is in beta.
-          if (Supabase.instance.client.auth.currentUser != null) {
-            unawaited(
-              Supabase.instance.client
-                  .rpc('user_heartbeat', params: {
-                    'p_app_version': appVersion,
-                    'p_platform': kIsWeb ? 'web' : Platform.operatingSystem,
-                  })
-                  .then<void>((_) {})
-                  .catchError((_) {}),
-            );
-          }
-        } catch (e, st) {
-          LogBuffer.instance.recordError(e, st, context: 'Supabase.init');
-          debugPrint('Supabase init failed – online features disabled: $e');
-        }
-      }
-
-      _setMessage('Loading audio engine...');
-      try {
-        await SoLoud.instance.init();
-      } catch (e, st) {
-        LogBuffer.instance.recordError(e, st, context: 'SoLoud.init');
-        debugPrint('SoLoud init failed – audio disabled: $e');
-      }
-
-      if (!kIsWeb &&
-          (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
-        _setMessage('Setting up window...');
-        await windowManager.ensureInitialized();
-        await windowManager.waitUntilReadyToShow(
-          const WindowOptions(
-            minimumSize: Size(900, 800),
-            title: 'Dungeon Master Tool',
-            titleBarStyle: TitleBarStyle.normal,
-          ),
-          () async {
-            await windowManager.show();
-            await windowManager.focus();
-          },
-        );
-      }
-
-      _setMessage('Loading settings...');
+      // UiState load doesn't depend on AppPaths (uses SharedPreferences) — fire
+      // it in parallel so the SharedPreferences disk read overlaps with the
+      // AppPaths bootstrap instead of waiting in series after.
       final uiStateNotifier = UiStateNotifier();
-      await uiStateNotifier.load();
+      final uiStateLoad = _initUiState(uiStateNotifier);
+
+      // SoLoud is lazy: only soundpad_engine.dart touches it, and that fires
+      // when the user opens the soundpad — well after first paint. Pushing it
+      // off the critical path saves up to 3s of cold-start when the audio
+      // device is slow to respond.
+      unawaited(_initSoLoud());
+
+      await AppPaths.initialize();
+
+      _setMessage('Initializing services...');
+
+      // Critical path for first paint:
+      // - Supabase: AuthNotifier._init reads Supabase.instance during first
+      //   provider mount; router checks currentSession on initial route.
+      // - windowManager: native OS window must be configured + shown.
+      // - UiState: theme + locale must be loaded before render to avoid a
+      //   visible flicker as the app re-themes itself.
+      await Future.wait<void>([
+        _initSupabase(),
+        _initWindowManager(),
+        uiStateLoad,
+      ]);
 
       if (!mounted) return;
       setState(() => _uiStateNotifier = uiStateNotifier);
     } catch (e, st) {
       LogBuffer.instance.recordError(e, st, context: 'Bootstrap');
       if (mounted) setState(() => _error = e);
+    }
+  }
+
+  Future<void> _initSupabase() async {
+    if (!SupabaseConfig.isConfigured) return;
+    try {
+      await Supabase.initialize(
+        url: SupabaseConfig.url,
+        anonKey: SupabaseConfig.anonKey,
+      ).timeout(const Duration(seconds: 3));
+      // Fire-and-forget: updates profiles.last_active_at + app_version +
+      // platform (migration 023). beta_participants.last_active_at also
+      // bumped if user is in beta.
+      if (Supabase.instance.client.auth.currentUser != null) {
+        unawaited(
+          Supabase.instance.client
+              .rpc('user_heartbeat', params: {
+                'p_app_version': appVersion,
+                'p_platform': kIsWeb ? 'web' : Platform.operatingSystem,
+              })
+              .then<void>((_) {})
+              .catchError((_) {}),
+        );
+      }
+    } catch (e, st) {
+      LogBuffer.instance.recordError(e, st, context: 'Supabase.init');
+      debugPrint('Supabase init failed – online features disabled: $e');
+    }
+  }
+
+  Future<void> _initSoLoud() async {
+    try {
+      await SoLoud.instance.init().timeout(const Duration(seconds: 3));
+    } catch (e, st) {
+      LogBuffer.instance.recordError(e, st, context: 'SoLoud.init');
+      debugPrint('SoLoud init failed – audio disabled: $e');
+    }
+  }
+
+  Future<void> _initWindowManager() async {
+    if (kIsWeb ||
+        !(Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+      return;
+    }
+    try {
+      await windowManager.ensureInitialized().timeout(
+            const Duration(seconds: 3),
+          );
+      await windowManager.waitUntilReadyToShow(
+        const WindowOptions(
+          minimumSize: Size(900, 800),
+          title: 'Dungeon Master Tool',
+          titleBarStyle: TitleBarStyle.normal,
+        ),
+        () async {
+          await windowManager.show();
+          await windowManager.focus();
+        },
+      );
+    } catch (e, st) {
+      LogBuffer.instance.recordError(e, st, context: 'windowManager.init');
+      debugPrint('windowManager init failed: $e');
+    }
+  }
+
+  Future<void> _initUiState(UiStateNotifier notifier) async {
+    try {
+      await notifier.load().timeout(const Duration(seconds: 3));
+    } catch (e, st) {
+      LogBuffer.instance.recordError(e, st, context: 'UiState.load');
+      debugPrint('UiState load failed – using defaults: $e');
     }
   }
 

@@ -9,7 +9,12 @@ import '../../application/providers/entity_provider.dart';
 import '../../application/providers/package_provider.dart';
 import '../../application/providers/template_provider.dart';
 import '../../application/services/package_import_service.dart';
+import '../../application/services/package_sync_service.dart';
 import '../../application/services/template_compatibility_service.dart';
+import '../../data/database/database_provider.dart';
+import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
+import 'package:drift/drift.dart' hide Column, Table;
+import '../../data/database/app_database.dart' show InstalledPackagesCompanion;
 import '../../domain/entities/character.dart';
 import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/template_compatibility.dart';
@@ -19,13 +24,17 @@ import '../theme/dm_tool_colors.dart';
 
 /// Paket / karakter import dialogu — aktif dünyaya paket veya karakter
 /// import etmek için. Üstteki segmented control ile kaynak seçilir.
+///
+/// `viewOnly: true` ile import/remove butonları gizlenir, kaynak seçici de
+/// kaldırılır — sadece kurulu paketleri listeler. Player rolünde kullanılır.
 class ImportPackageDialog extends ConsumerStatefulWidget {
-  const ImportPackageDialog({super.key});
+  final bool viewOnly;
+  const ImportPackageDialog({super.key, this.viewOnly = false});
 
-  static Future<void> show(BuildContext context) {
+  static Future<void> show(BuildContext context, {bool viewOnly = false}) {
     return showDialog(
       context: context,
-      builder: (_) => const ImportPackageDialog(),
+      builder: (_) => ImportPackageDialog(viewOnly: viewOnly),
     );
   }
 
@@ -39,6 +48,25 @@ enum _ImportSource { packages, characters }
 class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
   bool _importing = false;
   _ImportSource _source = _ImportSource.packages;
+  Set<String> _installedPackageNames = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInstalled();
+  }
+
+  Future<void> _loadInstalled() async {
+    final db = ref.read(appDatabaseProvider);
+    final campaignId =
+        ref.read(activeCampaignProvider.notifier).data?['world_id'] as String?;
+    if (campaignId == null) return;
+    final rows = await db.installedPackageDao.listForCampaign(campaignId);
+    if (!mounted) return;
+    setState(() {
+      _installedPackageNames = rows.map((r) => r.packageName).toSet();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,21 +76,23 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     final compatService = TemplateCompatibilityService();
 
     return AlertDialog(
-      title: Text(l10n.importPackageTitle),
+      title: Text(widget.viewOnly ? 'Packages' : l10n.importPackageTitle),
       content: SizedBox(
         width: 500,
         height: 480,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _ImportSourcePillTabs(
-              source: _source,
-              palette: palette,
-              disabled: _importing,
-              onChanged: (s) => setState(() => _source = s),
-              l10n: l10n,
-            ),
-            const SizedBox(height: 12),
+            if (!widget.viewOnly) ...[
+              _ImportSourcePillTabs(
+                source: _source,
+                palette: palette,
+                disabled: _importing,
+                onChanged: (s) => setState(() => _source = s),
+                l10n: l10n,
+              ),
+              const SizedBox(height: 12),
+            ],
             Expanded(
               child: switch (_source) {
                 _ImportSource.packages =>
@@ -106,7 +136,10 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
               palette: palette,
               l10n: l10n,
               importing: _importing,
+              alreadyInstalled: _installedPackageNames.contains(info.name),
+              viewOnly: widget.viewOnly,
               onImport: () => _importPackage(info, worldSchema),
+              onRemove: () => _removePackage(info),
             );
           },
         );
@@ -155,45 +188,137 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     );
   }
 
+  Future<void> _removePackage(PackageInfo info) async {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Remove "${info.name}" from this world?'),
+        content: const Text(
+          'Linked entities from this package will be deleted. '
+          'User-edited copies are kept as homebrew.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _importing = true);
+    try {
+      final db = ref.read(appDatabaseProvider);
+      final pkgRow = await db.packageDao.getByName(info.name);
+      final activeNotifier = ref.read(activeCampaignProvider.notifier);
+      final campaignId = activeNotifier.data?['world_id'] as String?;
+      if (pkgRow == null || campaignId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cannot remove: missing context')),
+          );
+        }
+        return;
+      }
+      final result = await PackageSyncService(db).uninstall(
+        campaignId: campaignId,
+        packageId: pkgRow.id,
+      );
+      await activeNotifier.reload();
+      await _loadInstalled();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Removed "${info.name}": ${result.removed} deleted, ${result.detachedSurvived} kept as homebrew.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Remove failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _importing = false);
+    }
+  }
+
   Future<void> _importPackage(
       PackageInfo info, WorldSchema worldSchema) async {
     setState(() => _importing = true);
 
     try {
-      final packageData =
-          await ref.read(packageRepositoryProvider).load(info.name);
-
-      final schemaMap = packageData['world_schema'] as Map<String, dynamic>?;
-      if (schemaMap == null) {
+      final db = ref.read(appDatabaseProvider);
+      final pkgRow = await db.packageDao.getByName(info.name);
+      if (pkgRow == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Package has no template')),
+            const SnackBar(content: Text('Package not found')),
           );
         }
-        setState(() => _importing = false);
         return;
       }
 
-      final packageSchema =
-          WorldSchema.fromJson(Map<String, dynamic>.from(schemaMap));
-      final packageEntities =
-          packageData['entities'] as Map<String, dynamic>? ?? {};
+      final activeNotifier = ref.read(activeCampaignProvider.notifier);
+      final campaignId = activeNotifier.data?['world_id'] as String?;
+      if (campaignId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No active world')),
+          );
+        }
+        return;
+      }
 
-      final importService = PackageImportService();
-      final entityNotifier = ref.read(entityProvider.notifier);
+      // Live-link install: register the package, then sync. New pack rows
+      // come in as linked entities — pack updates propagate, user edits
+      // detach to homebrew.
+      await db.installedPackageDao.upsert(InstalledPackagesCompanion.insert(
+        campaignId: campaignId,
+        packageId: pkgRow.id,
+        packageName: Value(pkgRow.name),
+      ));
 
-      final count = importService.importPackage(
-        packageEntities: packageEntities,
-        packageSchema: packageSchema,
-        worldSchema: worldSchema,
-        entityNotifier: entityNotifier,
+      // Build Tier-0 (slug,name) → uuid index from this campaign's seeded
+      // entities so pack-side `_lookup` placeholders resolve.
+      final build = generateBuiltinDnd5eV2Schema();
+      final tier0Slugs = build.seedRows.keys.toSet();
+      final tier0Rows = await (db.select(db.entities)
+            ..where((t) =>
+                t.campaignId.equals(campaignId) &
+                t.categorySlug.isIn(tier0Slugs)))
+          .get();
+      final tier0Index = <String, Map<String, String>>{};
+      for (final r in tier0Rows) {
+        tier0Index
+            .putIfAbsent(r.categorySlug, () => <String, String>{})[r.name] =
+            r.id;
+      }
+
+      final result = await PackageSyncService(db).sync(
+        campaignId: campaignId,
+        packageId: pkgRow.id,
+        resolveAttrs: (attrs) =>
+            PackageImportService.resolveLookupPlaceholder(attrs, tier0Index)
+                as Map<String, dynamic>,
       );
+      // Reload campaign so the entity provider picks up the new rows.
+      await activeNotifier.reload();
 
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(L10n.of(context)!.importSuccess(count))),
+              content: Text(L10n.of(context)!.importSuccess(result.added))),
         );
       }
     } catch (e) {
@@ -207,17 +332,28 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     }
   }
 
-  /// Karakter import'u **kopya değil, link** kurar. Aktif world'ün
-  /// `linked_character_ids` listesine karakter id'si eklenir. Karakter
-  /// hub'da tek kaynak olarak yaşar — hub'da yapılan her edit, linked
-  /// world'de de görünür (EntityNotifier `characterListProvider`'ı
-  /// dinliyor ve otomatik reload yapıyor).
+  /// Karakter import'u **kopya değil, link** kurar.
+  ///
+  /// İki yol:
+  ///   - Karakter orphan (`worldName == ''`) ise: aktif world'ün adını
+  ///     karakterin `worldName`'ine yazar. Karakter artık o world'e
+  ///     "ait" — sidebar/editor/hub-tab başlığı doğru world adını
+  ///     gösterir, hala hub'da tek kopya olarak yaşar.
+  ///   - Karakter zaten başka bir world'de ise: world'ün
+  ///     `linked_character_ids` listesine eklenir (cross-link).
+  ///     Karakterin canonical `worldName`'i değişmez; iki world
+  ///     ondan referans tutar.
+  ///
+  /// Önceki davranış her zaman `linked_character_ids`'e ekliyordu —
+  /// böylece orphan karakter import'unda subtitle "No world assigned"
+  /// olarak kalıyordu, çünkü kimse `worldName` yazmıyordu.
   Future<void> _importCharacter(Character c) async {
     setState(() => _importing = true);
     try {
       final activeNotifier = ref.read(activeCampaignProvider.notifier);
+      final activeWorldName = ref.read(activeCampaignProvider);
       final data = activeNotifier.data;
-      if (data == null) {
+      if (data == null || activeWorldName == null || activeWorldName.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No active world')),
@@ -228,7 +364,9 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
       final existing =
           (data['linked_character_ids'] as List?)?.whereType<String>().toList() ??
               <String>[];
-      if (existing.contains(c.id)) {
+      final alreadyLinked = existing.contains(c.id);
+      final alreadyOwned = c.worldName == activeWorldName;
+      if (alreadyLinked || alreadyOwned) {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -237,8 +375,20 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
         }
         return;
       }
-      data['linked_character_ids'] = [...existing, c.id];
-      await activeNotifier.save();
+      if (c.worldName.isEmpty) {
+        // Orphan karakter: world'ü canonical "owner" yap. Sidebar/editor
+        // subtitle ve hub-tab başlığı "World: X" gösterir, "No world
+        // assigned" yerine.
+        await ref
+            .read(characterListProvider.notifier)
+            .update(c.copyWith(worldName: activeWorldName));
+      } else {
+        // Cross-link: karakter zaten başka world'de yaşıyor. World'ün
+        // referans listesine ekle ki sidebar'da görünsün; canonical
+        // world değişmez.
+        data['linked_character_ids'] = [...existing, c.id];
+        await activeNotifier.save();
+      }
       // Bump revision → EntityNotifier `_loadFromCampaign()` çalışır,
       // linked karakter world görünümüne enjekte olur.
       ref.read(campaignRevisionProvider.notifier).state++;
@@ -270,7 +420,10 @@ class _PackageImportCard extends StatefulWidget {
   final DmToolColors palette;
   final L10n l10n;
   final bool importing;
+  final bool alreadyInstalled;
+  final bool viewOnly;
   final VoidCallback onImport;
+  final VoidCallback onRemove;
 
   const _PackageImportCard({
     required this.info,
@@ -279,7 +432,10 @@ class _PackageImportCard extends StatefulWidget {
     required this.palette,
     required this.l10n,
     required this.importing,
+    required this.alreadyInstalled,
     required this.onImport,
+    required this.onRemove,
+    this.viewOnly = false,
   });
 
   @override
@@ -331,28 +487,30 @@ class _PackageImportCardState extends State<_PackageImportCard> {
 
     final (IconData icon, Color color, String label) = _loading
         ? (Icons.hourglass_empty, palette.sidebarLabelSecondary, '...')
-        : switch (_compat?.level) {
-            CompatibilityLevel.perfect => (
-                Icons.check_circle,
-                palette.successBtnBg,
-                l10n.importCompatPerfect,
-              ),
-            CompatibilityLevel.compatible => (
-                Icons.warning_amber,
-                palette.uiAutosaveTextEditing,
-                l10n.importCompatWarning,
-              ),
-            CompatibilityLevel.incompatible => (
-                Icons.cancel,
-                palette.dangerBtnBg,
-                l10n.importCompatIncompatible,
-              ),
-            null => (
-                Icons.help_outline,
-                palette.sidebarLabelSecondary,
-                'Unknown',
-              ),
-          };
+        : widget.alreadyInstalled
+            ? (Icons.check_circle, palette.successBtnBg, 'Imported')
+            : switch (_compat?.level) {
+                CompatibilityLevel.perfect => (
+                    Icons.check_circle,
+                    palette.successBtnBg,
+                    l10n.importCompatPerfect,
+                  ),
+                CompatibilityLevel.compatible => (
+                    Icons.warning_amber,
+                    palette.uiAutosaveTextEditing,
+                    l10n.importCompatWarning,
+                  ),
+                CompatibilityLevel.incompatible => (
+                    Icons.cancel,
+                    palette.dangerBtnBg,
+                    l10n.importCompatIncompatible,
+                  ),
+                null => (
+                    Icons.help_outline,
+                    palette.sidebarLabelSecondary,
+                    'Unknown',
+                  ),
+              };
 
     final isIncompatible = _compat?.level == CompatibilityLevel.incompatible;
     final canImport = !_loading && !widget.importing && _compat != null;
@@ -412,32 +570,51 @@ class _PackageImportCardState extends State<_PackageImportCard> {
                     ],
                   ),
                   const SizedBox(width: 8),
-                  SizedBox(
-                    height: 28,
-                    child: isIncompatible
-                        ? OutlinedButton(
-                            onPressed: canImport
-                                ? () => _confirmForceImport(context)
-                                : null,
-                            style: OutlinedButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              textStyle: const TextStyle(fontSize: 12),
-                              foregroundColor: palette.dangerBtnBg,
-                              side: BorderSide(color: palette.dangerBtnBg),
+                  if (widget.viewOnly)
+                    const SizedBox.shrink()
+                  else if (widget.alreadyInstalled)
+                    SizedBox(
+                      height: 28,
+                      child: OutlinedButton.icon(
+                        onPressed: widget.importing ? null : widget.onRemove,
+                        icon: const Icon(Icons.delete_outline, size: 14),
+                        label: const Text('Remove'),
+                        style: OutlinedButton.styleFrom(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 10),
+                          textStyle: const TextStyle(fontSize: 12),
+                          foregroundColor: palette.dangerBtnBg,
+                          side: BorderSide(color: palette.dangerBtnBg),
+                        ),
+                      ),
+                    )
+                  else
+                    SizedBox(
+                      height: 28,
+                      child: isIncompatible
+                          ? OutlinedButton(
+                              onPressed: canImport
+                                  ? () => _confirmForceImport(context)
+                                  : null,
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12),
+                                textStyle: const TextStyle(fontSize: 12),
+                                foregroundColor: palette.dangerBtnBg,
+                                side: BorderSide(color: palette.dangerBtnBg),
+                              ),
+                              child: const Text('Force'),
+                            )
+                          : FilledButton(
+                              onPressed: canImport ? widget.onImport : null,
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12),
+                                textStyle: const TextStyle(fontSize: 12),
+                              ),
+                              child: Text(l10n.btnImport),
                             ),
-                            child: const Text('Force'),
-                          )
-                        : FilledButton(
-                            onPressed: canImport ? widget.onImport : null,
-                            style: FilledButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              textStyle: const TextStyle(fontSize: 12),
-                            ),
-                            child: Text(l10n.btnImport),
-                          ),
-                  ),
+                    ),
                   if (hasDetails)
                     Icon(
                       _expanded

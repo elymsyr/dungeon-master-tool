@@ -7,7 +7,7 @@ import 'package:dungeon_master_tool/domain/entities/session.dart';
 void main() {
   group('Encounter', () {
     test('creates with defaults', () {
-      final enc = Encounter(id: 'enc-1', name: 'Test Encounter');
+      const enc = Encounter(id: 'enc-1', name: 'Test Encounter');
       expect(enc.id, 'enc-1');
       expect(enc.name, 'Test Encounter');
       expect(enc.combatants, isEmpty);
@@ -16,7 +16,7 @@ void main() {
     });
 
     test('toJson / fromJson roundtrip', () {
-      final enc = Encounter(
+      const enc = Encounter(
         id: 'enc-1',
         name: 'Boss Fight',
         round: 3,
@@ -49,7 +49,7 @@ void main() {
 
   group('Combatant', () {
     test('creates with defaults', () {
-      final c = Combatant(id: 'c-1', name: 'Fighter');
+      const c = Combatant(id: 'c-1', name: 'Fighter');
       expect(c.id, 'c-1');
       expect(c.name, 'Fighter');
       expect(c.hp, 10);
@@ -60,7 +60,7 @@ void main() {
     });
 
     test('copyWith modifies specific fields', () {
-      final c = Combatant(id: 'c-1', name: 'Fighter', hp: 40, maxHp: 40);
+      const c = Combatant(id: 'c-1', name: 'Fighter', hp: 40, maxHp: 40);
       final damaged = c.copyWith(hp: 25);
       expect(damaged.hp, 25);
       expect(damaged.maxHp, 40);
@@ -68,7 +68,7 @@ void main() {
     });
 
     test('conditions can be added', () {
-      final c = Combatant(
+      const c = Combatant(
         id: 'c-1',
         name: 'Fighter',
         conditions: [
@@ -86,13 +86,13 @@ void main() {
 
   group('CombatCondition', () {
     test('creates with defaults', () {
-      final cond = CombatCondition(name: 'Blinded');
+      const cond = CombatCondition(name: 'Blinded');
       expect(cond.name, 'Blinded');
       expect(cond.duration, isNull);
     });
 
     test('toJson / fromJson roundtrip', () {
-      final cond = CombatCondition(name: 'Frightened', duration: 3);
+      const cond = CombatCondition(name: 'Frightened', duration: 3);
       final json = cond.toJson();
       final restored = CombatCondition.fromJson(json);
       expect(restored.name, 'Frightened');
@@ -102,13 +102,13 @@ void main() {
 
   group('Session', () {
     test('creates with defaults', () {
-      final session = Session(id: 's-1', name: 'Session 1');
+      const session = Session(id: 's-1', name: 'Session 1');
       expect(session.id, 's-1');
       expect(session.name, 'Session 1');
     });
 
     test('toJson / fromJson roundtrip', () {
-      final session = Session(
+      const session = Session(
         id: 's-1',
         name: 'Epic Battle',
         notes: 'The party entered the dungeon',

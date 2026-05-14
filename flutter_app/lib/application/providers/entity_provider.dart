@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../core/utils/deep_copy.dart';
@@ -8,6 +9,7 @@ import '../../domain/entities/entity.dart';
 import '../../domain/entities/events/event_envelope.dart';
 import '../../domain/entities/events/event_types.dart';
 import '../../domain/entities/schema/default_dnd5e_schema.dart';
+import '../../domain/entities/schema/entity_category_schema.dart';
 import '../../domain/entities/schema/field_schema.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../services/event_bus.dart';
@@ -16,6 +18,7 @@ import 'campaign_provider.dart';
 import 'character_provider.dart';
 import 'event_bus_provider.dart';
 import 'save_state_provider.dart';
+import 'world_mirror_provider.dart';
 
 const _uuid = Uuid();
 
@@ -47,10 +50,20 @@ final worldSchemaProvider = Provider<WorldSchema>((ref) {
 
   if (rawSource is Map) {
     try {
-      final schema = WorldSchema.fromJson(
+      var schema = WorldSchema.fromJson(
         Map<String, dynamic>.from(rawSource),
       );
-      _cachedWorldSchemaSource = rawSource;
+      final migrated = _migrateStaleEnumRelations(schema);
+      if (migrated != null) {
+        schema = migrated;
+        if (data != null) {
+          final serialized = deepCopyJson(schema.toJson());
+          data['world_schema'] = serialized;
+          _cachedWorldSchemaSource = serialized;
+        }
+      } else {
+        _cachedWorldSchemaSource = rawSource;
+      }
       _cachedWorldSchema = schema;
       return schema;
     } catch (e) {
@@ -71,6 +84,48 @@ final worldSchemaProvider = Provider<WorldSchema>((ref) {
   }
   return schema;
 });
+
+/// Fix legacy campaigns whose stored `world_schema` left these keys as
+/// `FieldType.enum_` after the code migrated them to `relation`. The
+/// stored entity values are already real Tier-0 UUIDs (resolved at SRD
+/// import time), so flipping the schema type makes the relation widget
+/// render names instead of raw UUIDs. Returns a new schema if any field
+/// was patched, otherwise null.
+const Map<String, List<String>> _staleEnumToRelation = {
+  'weapon_proficiency_categories': ['weapon-category'],
+  'armor_training_refs': ['armor-category'],
+  'armor_trainings': ['armor-category'],
+  'weapon_proficiency_specifics': ['weapon'],
+};
+
+WorldSchema? _migrateStaleEnumRelations(WorldSchema schema) {
+  var dirty = false;
+  final newCats = <EntityCategorySchema>[];
+  for (final cat in schema.categories) {
+    var catDirty = false;
+    final newFields = <FieldSchema>[];
+    for (final f in cat.fields) {
+      final expectedTypes = _staleEnumToRelation[f.fieldKey];
+      if (expectedTypes != null && f.fieldType == FieldType.enum_) {
+        newFields.add(f.copyWith(
+          fieldType: FieldType.relation,
+          isList: true,
+          validation: f.validation.copyWith(
+            allowedTypes: List<String>.from(expectedTypes),
+            allowedValues: null,
+          ),
+        ));
+        catDirty = true;
+        dirty = true;
+      } else {
+        newFields.add(f);
+      }
+    }
+    newCats.add(catDirty ? cat.copyWith(fields: newFields) : cat);
+  }
+  if (!dirty) return null;
+  return schema.copyWith(categories: newCats);
+}
 
 /// Aktif kampanyadaki entity'lerin reactive state'i.
 class EntityNotifier extends StateNotifier<Map<String, Entity>>
@@ -101,9 +156,24 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     });
     // Linked karakter edit'leri hub'dan geldiğinde world görünümünü
     // otomatik tazele — kopya olmadığı için güncellemeler anında
-    // yansımalı.
-    _ref.listen(characterListProvider, (_, _) {
-      if (_linkedCharacterIds.isNotEmpty) _loadFromCampaign();
+    // yansımalı. Sadece linked karakter entity'lerinin diff'ini enjekte
+    // et; tüm map'i yeniden parse etme — aksi halde aktif kart Open'ken
+    // entity referansı her hub güncellemesinde değişir ve UI flicker'lar.
+    _ref.listen(characterListProvider, (_, next) {
+      if (_linkedCharacterIds.isEmpty) return;
+      final list = next.valueOrNull;
+      if (list == null) return;
+      var changed = false;
+      final patched = Map<String, Entity>.from(state);
+      for (final c in list) {
+        if (!_linkedCharacterIds.contains(c.id)) continue;
+        final existing = patched[c.entity.id];
+        if (!identical(existing, c.entity)) {
+          patched[c.entity.id] = c.entity;
+          changed = true;
+        }
+      }
+      if (changed) state = patched;
     });
   }
 
@@ -132,6 +202,9 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
           pdfs: _toStringList(map['pdfs']),
           locationId: map['location_id'] as String?,
           fields: _extractFields(map),
+          packageId: map['package_id'] as String?,
+          packageEntityId: map['package_entity_id'] as String?,
+          linked: (map['linked'] as bool?) ?? false,
         );
       } catch (e) {
         debugPrint('Entity parse error for ${entry.key}: $e');
@@ -153,6 +226,21 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       for (final c in chars) {
         if (_linkedCharacterIds.contains(c.id)) {
           entities[c.entity.id] = c.entity;
+        }
+      }
+    }
+
+    // Preserve identity of unchanged entities so widgets like EntityCard
+    // that watch via `.select((map) => map[id])` don't rebuild when a
+    // background reload (e.g. PackageSync auto-trigger) re-parses the
+    // exact same content. New instances would otherwise propagate to
+    // every open card and discard their cached subtitle / schema layout.
+    final prev = state;
+    if (prev.isNotEmpty) {
+      for (final entry in entities.entries) {
+        final existing = prev[entry.key];
+        if (existing != null && existing == entry.value) {
+          entities[entry.key] = existing;
         }
       }
     }
@@ -209,6 +297,12 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
               FieldType.combatStats => {'hp': '', 'max_hp': '', 'ac': '', 'speed': '', 'cr': '', 'xp': '', 'initiative': ''},
               FieldType.dice => '',
               FieldType.proficiencyTable => const {'rows': <dynamic>[]},
+              FieldType.classFeatures => const <Map<String, dynamic>>[],
+              FieldType.spellEffectList => const <Map<String, dynamic>>[],
+              FieldType.rangedSenseList => const <Map<String, dynamic>>[],
+              FieldType.grantedModifiers => const <Map<String, dynamic>>[],
+              FieldType.equipmentChoiceGroups => const <Map<String, dynamic>>[],
+              FieldType.featEffectList => const <Map<String, dynamic>>[],
               _ => null,
             };
           }
@@ -221,9 +315,12 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       name: name,
       categorySlug: categorySlug,
       fields: defaultFields,
+      source: 'Homebrew',
     );
     state = {...state, id: entity};
-    _syncToCampaign();
+    // F13: incremental write — set this entity's row in the campaign
+    // entities map instead of rebuilding the whole map.
+    _writeEntityToCampaign(entity);
     _eventBus.emit(EventEnvelope.now(
       EventTypes.entityCreated,
       {'entity_id': id, 'entity_type': categorySlug, 'name': name},
@@ -235,20 +332,85 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
   void update(Entity entity) {
     if (identical(state[entity.id], entity)) return;
     pushUndo(state);
-    state = {...state, entity.id: entity};
-    _syncToCampaign();
+    // Detach-on-edit: any content change marks the entity as homebrew.
+    // Linked pack entities break the link; pack-side row is unaffected.
+    // Manual source edits (source field changed in this update) are
+    // preserved — only auto-stamp Homebrew when the user didn't set one.
+    final prev = state[entity.id];
+    var next = entity;
+    if (prev != null && _isContentChanged(prev, entity)) {
+      final userEditedSource = entity.source != prev.source;
+      next = entity.copyWith(
+        linked: false,
+        source: userEditedSource ? entity.source : 'Homebrew',
+      );
+    }
+    state = {...state, next.id: next};
+    // F13: incremental write — O(1) instead of O(N) full re-serialize.
+    _writeEntityToCampaign(next);
     _eventBus.emit(EventEnvelope.now(
       EventTypes.entityUpdated,
-      {'entity_id': entity.id, 'changed_fields': const <String>[]},
+      {'entity_id': next.id, 'changed_fields': const <String>[]},
       campaignId: _campaignId,
     ));
   }
+
+  /// True when [next] differs from [prev] in any user-editable surface.
+  /// Pack-link metadata changes alone don't trigger detach.
+  bool _isContentChanged(Entity prev, Entity next) {
+    return prev.name != next.name ||
+        prev.description != next.description ||
+        prev.imagePath != next.imagePath ||
+        prev.dmNotes != next.dmNotes ||
+        prev.locationId != next.locationId ||
+        !_listEquals(prev.images, next.images) ||
+        !_listEquals(prev.tags, next.tags) ||
+        !_listEquals(prev.pdfs, next.pdfs) ||
+        !_mapEquals(prev.fields, next.fields);
+  }
+
+  bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  // E4 / F1: deep-equality via `DeepCollectionEquality` from
+  // package:collection. Replaces the previous per-key `jsonEncode`
+  // pairwise comparison — that was allocating two JSON strings for every
+  // field on every update. With 50-field characters this dominated CPU
+  // during description editing.
+  static const _kFieldEquality = DeepCollectionEquality();
+
+  bool _mapEquals(Map<String, dynamic> a, Map<String, dynamic> b) =>
+      _kFieldEquality.equals(a, b);
 
   /// Birden fazla entity'yi tek seferde ekle (paket import için).
   /// Çağıran taraf önceden pushUndo() yapmalıdır.
   void addEntities(Map<String, Entity> entities) {
     state = {...state, ...entities};
-    _syncToCampaign();
+    // F13 follow-up: patch each entity individually instead of full
+    // re-serialization. Package import with N entities goes from O(N²)
+    // (full sync per call) to O(N) total work in the campaign blob.
+    // Bulk-patch then a single dirty mark so the autosave debounce
+    // fires once for the whole batch.
+    final data = _campaign.data;
+    if (data == null) return;
+    final raw = data['entities'];
+    final Map<String, dynamic> existing;
+    if (raw is Map<String, dynamic>) {
+      existing = raw;
+    } else {
+      existing = <String, dynamic>{};
+      data['entities'] = existing;
+    }
+    for (final entity in entities.values) {
+      if (_linkedCharacterIds.contains(entity.id)) continue;
+      existing[entity.id] = _entityToMap(entity);
+    }
+    _onDirty();
   }
 
   /// Mevcut entity map'inin bir kopyasını döndürür (import service için).
@@ -258,7 +420,9 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     final removed = state[entityId];
     pushUndo(state);
     state = Map.from(state)..remove(entityId);
-    _syncToCampaign();
+    // F13: incremental delete — drop the single key instead of
+    // rewriting the entire entities blob.
+    _removeEntityFromCampaign(entityId);
     _eventBus.emit(EventEnvelope.now(
       EventTypes.entityDeleted,
       {
@@ -267,15 +431,24 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       },
       campaignId: _campaignId,
     ));
+    // Remote mirror — RLS DM dışı için reddeder, best-effort yeterli.
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror != null) {
+      // ignore: discarded_futures
+      mirror.deleteEntity(
+        worldId: _campaignId ?? '',
+        entityId: entityId,
+      );
+    }
   }
 
+  /// Full re-serialization fallback. Used by undo/redo/setAll/addEntities
+  /// where the diff is unknown. For single-entity edits prefer
+  /// [_writeEntityToCampaign] / [_removeEntityFromCampaign] — those are
+  /// O(1) where this is O(N).
   void _syncToCampaign() {
     final data = _campaign.data;
     if (data == null) return;
-
-    // Synchronously update in-memory campaign data.
-    // Linked karakterler disk'e `entities` altına yazılmaz — world sadece
-    // `linked_character_ids`'i tutar, veri hub'da kalır.
     final raw = <String, dynamic>{};
     for (final entry in state.entries) {
       final entity = entry.value;
@@ -284,6 +457,38 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
     }
     data['entities'] = raw;
     _onDirty();
+  }
+
+  /// F13: incremental write. Serializes one entity and patches the
+  /// campaign's `entities` map in place. Linked characters are
+  /// intentionally not persisted to the world blob — they live on the
+  /// hub side and only their id is tracked via `linked_character_ids`.
+  void _writeEntityToCampaign(Entity entity) {
+    final data = _campaign.data;
+    if (data == null) return;
+    if (_linkedCharacterIds.contains(entity.id)) return;
+    final raw = data['entities'];
+    final Map<String, dynamic> entities;
+    if (raw is Map<String, dynamic>) {
+      entities = raw;
+    } else {
+      entities = <String, dynamic>{};
+      data['entities'] = entities;
+    }
+    entities[entity.id] = _entityToMap(entity);
+    _onDirty();
+  }
+
+  /// F13: incremental delete. Drops a single id from the campaign's
+  /// `entities` blob.
+  void _removeEntityFromCampaign(String entityId) {
+    final data = _campaign.data;
+    if (data == null) return;
+    final raw = data['entities'];
+    if (raw is Map<String, dynamic>) {
+      raw.remove(entityId);
+      _onDirty();
+    }
   }
 
   Map<String, dynamic> _entityToMap(Entity e) {
@@ -299,6 +504,9 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       'pdfs': e.pdfs,
       'location_id': e.locationId,
       'attributes': e.fields,
+      if (e.packageId != null) 'package_id': e.packageId,
+      if (e.packageEntityId != null) 'package_entity_id': e.packageEntityId,
+      if (e.linked) 'linked': true,
     };
   }
 

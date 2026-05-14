@@ -6,15 +6,14 @@ import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
 import '../../../application/providers/package_provider.dart';
+import '../../../application/services/srd_core_package_bootstrap.dart';
 import '../../../data/database/database_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
-import '../../../application/services/template_sync_service.dart';
 import '../../../domain/entities/schema/world_schema.dart';
-import '../../../domain/entities/schema/world_schema_hash.dart';
-import '../../../core/utils/deep_copy.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
+import '../../dialogs/export_package_dialog.dart';
 import '../../widgets/marketplace_panel.dart';
 import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
@@ -65,6 +64,18 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                             color: palette.tabActiveText)),
                   ),
                   OutlinedButton.icon(
+                    onPressed: _openExportDialog,
+                    icon: const Icon(Icons.upload_file, size: 16),
+                    label: const Text('Export'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      minimumSize: const Size(0, 32),
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  OutlinedButton.icon(
                     onPressed: () {
                       ref.read(socialSubTabProvider.notifier).state = 'marketplace';
                       ref.read(hubTabIndexProvider.notifier).state = 0;
@@ -75,7 +86,19 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       minimumSize: const Size(0, 32),
                       visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
+                  ),
+                  const SizedBox(width: 4),
+                  OutlinedButton(
+                    onPressed: _openCreatePackageDialog,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                      minimumSize: const Size(32, 32),
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Icon(Icons.add, size: 16),
                   ),
                 ],
               ),
@@ -113,10 +136,18 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                         itemBuilder: (context, index) {
                           final info = packages[index];
                           final isSelected = index == _selectedIndex;
-                          final metaAsync =
-                              ref.watch(packageMetadataProvider(info.name));
-                          final meta =
-                              metaAsync.valueOrNull ?? const <String, dynamic>{};
+                          final isBuiltin = info.name == srdCorePackageName;
+                          // H5: narrow watch to `valueOrNull` only. The
+                          // loading/error transitions of the metadata
+                          // future no longer trigger a tile rebuild —
+                          // only when the resolved metadata map flips.
+                          final meta = ref.watch(
+                            packageMetadataProvider(info.name)
+                                .select((a) => a.valueOrNull ?? const <String, dynamic>{}),
+                          );
+                          final subtitle = isBuiltin
+                              ? 'Built-in · ${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}'
+                              : '${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}';
                           return InkWell(
                             borderRadius: palette.br,
                             onTap: () =>
@@ -137,10 +168,11 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                                 ),
                               ),
                               child: MetadataListTile(
-                                icon: Icons.inventory_2,
+                                icon: isBuiltin
+                                    ? Icons.auto_stories
+                                    : Icons.inventory_2,
                                 name: info.name,
-                                subtitle:
-                                    '${info.templateName} · ${l10n.packageEntityCount(info.entityCount)}',
+                                subtitle: subtitle,
                                 description:
                                     (meta['description'] as String?) ?? '',
                                 tags: ((meta['tags'] as List?) ?? const [])
@@ -185,9 +217,16 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                     ),
                   ),
                   const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: _selectedIndex >= 0 ? _copyPackage : null,
+                    icon: const Icon(Icons.content_copy, size: 18),
+                    label: const Text('Copy'),
+                  ),
+                  const SizedBox(width: 8),
                   FilledButton.icon(
-                    onPressed:
-                        _selectedIndex >= 0 ? () => _deletePackage() : null,
+                    onPressed: _selectedIndex >= 0 && !_isBuiltinSelected()
+                        ? () => _deletePackage()
+                        : null,
                     icon: const Icon(Icons.delete_outline, size: 18),
                     label: Text(l10n.btnDelete),
                     style: FilledButton.styleFrom(
@@ -198,120 +237,201 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                 ],
               ),
 
-              const SizedBox(height: 24),
-              Divider(color: palette.sidebarDivider),
-              const SizedBox(height: 16),
-
-              // Yeni paket oluşturma
-              Text(l10n.packageCreate,
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: palette.tabActiveText)),
-              const SizedBox(height: 8),
-              ref.watch(allTemplatesProvider).when(
-                data: (templates) {
-                  if (templates.isEmpty) {
-                    // No template → paket oluşturulamaz. Kullanıcıyı
-                    // Marketplace'e yönlendir.
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: palette.featureCardBg,
-                        borderRadius: palette.br,
-                        border: Border.all(color: palette.featureCardBorder),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('No templates installed',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
-                          const SizedBox(height: 6),
-                          Text('You need at least one template to create a package. Visit the Marketplace to install one.',
-                              style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
-                          const SizedBox(height: 12),
-                          OutlinedButton.icon(
-                            onPressed: () {
-                              ref.read(socialSubTabProvider.notifier).state = 'marketplace';
-                              ref.read(hubTabIndexProvider.notifier).state = 0;
-                            },
-                            icon: const Icon(Icons.storefront, size: 16),
-                            label: const Text('Go to Marketplace'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  final seen = <String>{};
-                  final uniqueTemplates =
-                      templates.where((t) => seen.add(t.schemaId)).toList();
-                  final matched = uniqueTemplates
-                      .where(
-                          (t) => t.schemaId == _selectedTemplate?.schemaId)
-                      .firstOrNull;
-                  _selectedTemplate = matched ?? uniqueTemplates.first;
-                  final finalId = _selectedTemplate!.schemaId;
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      DropdownButtonFormField<String>(
-                        key: ValueKey('pkg_tmpl_${uniqueTemplates.length}'),
-                        initialValue: finalId,
-                        decoration:
-                            const InputDecoration(labelText: 'Template'),
-                        items: uniqueTemplates
-                            .map((t) => DropdownMenuItem(
-                                  value: t.schemaId,
-                                  child: Text(
-                                      '${t.name}  (${t.categories.length} cat)',
-                                      style: const TextStyle(fontSize: 12)),
-                                ))
-                            .toList(),
-                        onChanged: (id) {
-                          if (id == null) return;
-                          for (final t in templates) {
-                            if (t.schemaId == id) {
-                              _selectedTemplate = t;
-                              break;
-                            }
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _nameController,
-                              decoration:
-                                  InputDecoration(hintText: l10n.packageName),
-                              onSubmitted: (_) => _createPackage(),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          FilledButton.icon(
-                            onPressed: _createPackage,
-                            icon: const Icon(Icons.add, size: 18),
-                            label: Text(l10n.btnCreate),
-                            style: FilledButton.styleFrom(
-                                backgroundColor: palette.successBtnBg,
-                                foregroundColor: palette.successBtnText),
-                          ),
-                        ],
-                      ),
-                    ],
-                  );
-                },
-                loading: () => const LinearProgressIndicator(),
-                error: (e, _) => Text('Error: $e'),
-              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _openCreatePackageDialog() async {
+    final l10n = L10n.of(context)!;
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final templates = await ref.read(allTemplatesProvider.future);
+    if (!mounted) return;
+    if (templates.isEmpty) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('No templates installed'),
+          content: const Text(
+              'You need at least one template to create a package. Visit the Marketplace to install one.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel')),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                ref.read(socialSubTabProvider.notifier).state = 'marketplace';
+                ref.read(hubTabIndexProvider.notifier).state = 0;
+              },
+              icon: const Icon(Icons.storefront, size: 16),
+              label: const Text('Go to Marketplace'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    final seen = <String>{};
+    final uniqueTemplates =
+        templates.where((t) => seen.add(t.schemaId)).toList();
+    final matched = uniqueTemplates
+        .where((t) => t.schemaId == _selectedTemplate?.schemaId)
+        .firstOrNull;
+    _selectedTemplate = matched ?? uniqueTemplates.first;
+    _nameController.clear();
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: Text(l10n.packageCreate),
+          content: SizedBox(
+            width: 380,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedTemplate!.schemaId,
+                  decoration: const InputDecoration(labelText: 'Template'),
+                  items: uniqueTemplates
+                      .map((t) => DropdownMenuItem(
+                            value: t.schemaId,
+                            child: Text(
+                                '${t.name}  (${t.categories.length} cat)',
+                                style: const TextStyle(fontSize: 12)),
+                          ))
+                      .toList(),
+                  onChanged: (id) {
+                    if (id == null) return;
+                    for (final t in uniqueTemplates) {
+                      if (t.schemaId == id) {
+                        setLocal(() => _selectedTemplate = t);
+                        break;
+                      }
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _nameController,
+                  autofocus: true,
+                  decoration: InputDecoration(hintText: l10n.packageName),
+                  onSubmitted: (_) async {
+                    Navigator.pop(ctx);
+                    await _createPackage();
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel')),
+            FilledButton.icon(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await _createPackage();
+              },
+              icon: const Icon(Icons.add, size: 16),
+              label: Text(l10n.btnCreate),
+              style: FilledButton.styleFrom(
+                  backgroundColor: palette.successBtnBg,
+                  foregroundColor: palette.successBtnText),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openExportDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => const ExportPackageDialog(),
+    );
+  }
+
+  Future<void> _copyPackage() async {
+    final packages = ref.read(packageListProvider).valueOrNull ?? [];
+    if (_selectedIndex < 0 || _selectedIndex >= packages.length) return;
+    final source = packages[_selectedIndex].name;
+
+    // Suggest a unique destination name. For the built-in pack the convention
+    // is "<name> (Copy)"; on collisions append " (Copy 2)", " (Copy 3)", …
+    String dest = source == srdCorePackageName
+        ? '$source (Copy)'
+        : '$source (Copy)';
+    final existingNames =
+        packages.map((p) => p.name).toSet();
+    var n = 2;
+    while (existingNames.contains(dest)) {
+      dest = '$source (Copy $n)';
+      n++;
+    }
+
+    final controller = TextEditingController(text: dest);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Copy Package'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'New package name'),
+          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Copy'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (newName == null || newName.isEmpty) return;
+    if (existingNames.contains(newName)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Package "$newName" already exists')),
+        );
+      }
+      return;
+    }
+
+    try {
+      await ref.read(packageRepositoryProvider).copy(
+            sourceName: source,
+            destinationName: newName,
+          );
+      ref.invalidate(packageListProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Copied "$source" → "$newName"')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Copy failed: $e')),
+        );
+      }
+    }
+  }
+
+  bool _isBuiltinSelected() {
+    final packages = ref.read(packageListProvider).valueOrNull ?? [];
+    if (_selectedIndex < 0 || _selectedIndex >= packages.length) return false;
+    return packages[_selectedIndex].name == srdCorePackageName;
   }
 
   void _deletePackage() {
@@ -387,20 +507,6 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
         data['world_id'] as String? ??
         packageName;
 
-    TemplateUpdatePrompt? drift;
-    try {
-      final result = await ref.read(templateSyncServiceProvider).checkDrift(
-        campaignName: packageName,
-        campaignData: data,
-        ignoreDismissed: true,
-      );
-      drift = result.prompt;
-      if (result.healedHash != null) {
-        data['template_hash'] = result.healedHash!;
-        await ref.read(packageRepositoryProvider).save(packageName, data);
-      }
-    } catch (_) {}
-
     if (!mounted) return;
 
     final schemaMap = data['world_schema'] as Map<String, dynamic>?;
@@ -467,46 +573,6 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
                 localId: packageName,
                 title: packageName,
               ),
-              const SizedBox(height: 12),
-              Divider(height: 1, color: palette.featureCardBorder),
-              const SizedBox(height: 12),
-              if (drift == null)
-                Row(
-                  children: [
-                    Icon(Icons.check_circle, size: 16, color: palette.successBtnBg),
-                    const SizedBox(width: 6),
-                    Text(l10n.templateDriftUpToDate,
-                        style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
-                  ],
-                )
-              else ...[
-                Row(
-                  children: [
-                    Icon(Icons.info_outline, size: 16, color: palette.featureCardAccent),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(l10n.templateDriftBody(drift.templateName),
-                          style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
-                    ),
-                  ],
-                ),
-                if (drift.diffSummary.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(l10n.templateDriftChanges,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                  const SizedBox(height: 4),
-                  ...drift.diffSummary.map((line) => Padding(
-                    padding: const EdgeInsets.only(left: 8, bottom: 3),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('\u2022 ', style: TextStyle(fontSize: 12)),
-                        Expanded(child: Text(line, style: const TextStyle(fontSize: 12))),
-                      ],
-                    ),
-                  )),
-                ],
-              ],
             ],
           ),
           ),
@@ -516,14 +582,6 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(l10n.btnCancel),
           ),
-          if (drift != null)
-            FilledButton(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                await _applyPackageTemplateUpdate(packageName, data, drift!);
-              },
-              child: Text(l10n.templateDriftUpdate),
-            ),
           FilledButton(
             onPressed: () async {
               await updatePackageMetadata(ref, packageName, workingMeta);
@@ -537,44 +595,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
     );
   }
 
-  Future<void> _applyPackageTemplateUpdate(
-    String packageName,
-    Map<String, dynamic> data,
-    TemplateUpdatePrompt drift,
-  ) async {
-    try {
-      final activeName = ref.read(activePackageProvider);
-      if (activeName == packageName) {
-        await ref
-            .read(activePackageProvider.notifier)
-            .applyTemplateUpdate(drift.newTemplate);
-      } else {
-        // Non-active package — mutate data map directly and save.
-        data['world_schema'] = deepCopyJson(drift.newTemplate.toJson());
-        data['template_id'] = drift.newTemplate.schemaId;
-        data['template_hash'] = computeWorldSchemaContentHash(drift.newTemplate);
-        if (drift.newTemplate.originalHash != null) {
-          data['template_original_hash'] = drift.newTemplate.originalHash;
-        }
-        data.remove('template_dismissed_hash');
-        await ref.read(packageRepositoryProvider).save(packageName, data);
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Package template updated to "${drift.templateName}"')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Template update failed: $e')),
-        );
-      }
-    }
-  }
-
   Future<void> _loadPackage(String name) async {
-    // 1. Load (with global loading overlay)
     final success = await withLoading(
       ref.read(globalLoadingProvider.notifier),
       'open-package-$name',
@@ -582,108 +603,7 @@ class _PackagesTabState extends ConsumerState<PackagesTab> {
       () => ref.read(activePackageProvider.notifier).load(name),
     );
     if (!success || !mounted) return;
-
-    // 2. Template drift check
-    final data = ref.read(activePackageProvider.notifier).data;
-    if (data != null) {
-      try {
-        final result = await ref.read(templateSyncServiceProvider).checkDrift(
-          campaignName: name,
-          campaignData: data,
-        );
-        if (result.healedHash != null) {
-          data['template_hash'] = result.healedHash!;
-          await ref.read(packageRepositoryProvider).save(name, data);
-        }
-        final drift = result.prompt;
-        if (drift != null && mounted) {
-          final action = await _showPreOpenTemplateDialog(drift);
-          if (!mounted) return;
-          if (action == 'update') {
-            await ref.read(activePackageProvider.notifier).applyTemplateUpdate(drift.newTemplate);
-          } else if (action == 'mute') {
-            await ref.read(activePackageProvider.notifier).muteTemplateUpdates();
-          } else {
-            await ref.read(activePackageProvider.notifier).dismissTemplateUpdate(drift.newHash);
-          }
-        }
-      } catch (_) {}
-    }
-
-    // 3. Navigate
     if (mounted) context.go('/package');
-  }
-
-  Future<String?> _showPreOpenTemplateDialog(TemplateUpdatePrompt prompt) {
-    bool doNotShowAgain = false;
-    final l10n = L10n.of(context)!;
-    return showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(l10n.templateDriftTitle),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.templateDriftBody(prompt.templateName)),
-                if (prompt.diffSummary.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(l10n.templateDriftChanges,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  ...prompt.diffSummary.map((line) => Padding(
-                    padding: const EdgeInsets.only(left: 8, bottom: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('\u2022 ',
-                            style: TextStyle(fontSize: 13)),
-                        Expanded(
-                            child: Text(line,
-                                style: const TextStyle(fontSize: 13))),
-                      ],
-                    ),
-                  )),
-                ],
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: Checkbox(
-                        value: doNotShowAgain,
-                        onChanged: (v) =>
-                            setDialogState(() => doNotShowAgain = v ?? false),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(l10n.templateDriftDoNotShowAgain,
-                          style: const TextStyle(fontSize: 13)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.pop(ctx, doNotShowAgain ? 'mute' : 'ignore'),
-              child: Text(l10n.templateDriftIgnore),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, 'update'),
-              child: Text(l10n.templateDriftUpdate),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _createPackage() async {

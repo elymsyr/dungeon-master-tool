@@ -1,7 +1,9 @@
+import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/deep_copy.dart';
+import '../../data/database/app_database.dart' show InstalledPackagesCompanion;
 import '../../data/database/database_provider.dart';
 import '../../data/datasources/local/package_local_ds.dart';
 import '../../data/repositories/package_repository_impl.dart';
@@ -9,7 +11,14 @@ import '../../domain/entities/package_info.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
 import '../../domain/repositories/package_repository.dart';
-import 'campaign_provider.dart' show campaignRevisionProvider;
+import '../../domain/entities/schema/builtin/builtin_dnd5e_v2_schema.dart';
+import '../services/package_import_service.dart';
+import '../services/package_sync_service.dart';
+import '../services/srd_core_package_bootstrap.dart';
+import 'campaign_provider.dart'
+    show activeCampaignProvider, campaignRevisionProvider;
+import 'personal_online_provider.dart';
+import 'world_mirror_provider.dart';
 
 final packageLocalDsProvider = Provider((_) => PackageLocalDataSource());
 
@@ -20,8 +29,99 @@ final packageRepositoryProvider = Provider<PackageRepository>(
   ),
 );
 
+/// Built-in SRD content pack auto-install gate. Runs once per app session;
+/// materialises the hand-authored SRD 5.2.1 pack as a real Packages row so
+/// the Packages tab can list it like any user package.
+final srdCorePackageBootstrapProvider = FutureProvider<void>((ref) async {
+  final db = ref.watch(appDatabaseProvider);
+  await SrdCorePackageBootstrap(db).ensureInstalled();
+});
+
+/// Live-link sync for the active campaign. After SRD pack refresh, walks
+/// `installed_packages` rows for the campaign and applies each pack's
+/// current state to linked entities (add/update/remove). Runs once per
+/// (campaign, app session) — campaign switches re-trigger.
+final activeCampaignSyncProvider = FutureProvider<int>((ref) async {
+  await ref.watch(srdCorePackageBootstrapProvider.future);
+  final campaign = ref.watch(activeCampaignProvider);
+  if (campaign == null) return 0;
+  final db = ref.read(appDatabaseProvider);
+  final notifier = ref.read(activeCampaignProvider.notifier);
+  final campaignId = notifier.data?['world_id'] as String?;
+  if (campaignId == null) return 0;
+
+  // Migrate orphans: campaigns created before installed_packages existed
+  // may have entities with packageId set but no matching install row.
+  // Detect those and create install rows so sync can repair them (e.g.
+  // rewrite spell.class_refs from pack-side UUIDs to campaign-side).
+  final installedNow =
+      await db.installedPackageDao.listForCampaign(campaignId);
+  final installedIds = installedNow.map((r) => r.packageId).toSet();
+  final orphanRows = await (db.select(db.entities)
+        ..where((t) =>
+            t.campaignId.equals(campaignId) & t.packageId.isNotNull()))
+      .get();
+  final orphanPackageIds = <String>{};
+  for (final row in orphanRows) {
+    final pid = row.packageId;
+    if (pid != null && !installedIds.contains(pid)) {
+      orphanPackageIds.add(pid);
+    }
+  }
+  for (final pid in orphanPackageIds) {
+    final pkg = await db.packageDao.getById(pid);
+    await db.installedPackageDao.upsert(InstalledPackagesCompanion.insert(
+      campaignId: campaignId,
+      packageId: pid,
+      packageName: Value(pkg?.name ?? ''),
+    ));
+  }
+
+  final installed =
+      await db.installedPackageDao.listForCampaign(campaignId);
+  if (installed.isEmpty) return 0;
+
+  // Build Tier-0 (slug,name) → uuid index from the destination campaign so
+  // pack-side `_lookup` placeholders resolve to this campaign's IDs.
+  final build = generateBuiltinDnd5eV2Schema();
+  final tier0Slugs = build.seedRows.keys.toSet();
+  final tier0Rows = await (db.select(db.entities)
+        ..where((t) =>
+            t.campaignId.equals(campaignId) &
+            t.categorySlug.isIn(tier0Slugs)))
+      .get();
+  final tier0Index = <String, Map<String, String>>{};
+  for (final row in tier0Rows) {
+    tier0Index
+        .putIfAbsent(row.categorySlug, () => <String, String>{})[row.name] =
+        row.id;
+  }
+  Map<String, dynamic> resolveAttrs(Map<String, dynamic> attrs) {
+    return PackageImportService.resolveLookupPlaceholder(attrs, tier0Index)
+        as Map<String, dynamic>;
+  }
+
+  final sync = PackageSyncService(db);
+  var total = 0;
+  for (final pkg in installed) {
+    final result = await sync.sync(
+      campaignId: campaignId,
+      packageId: pkg.packageId,
+      resolveAttrs: resolveAttrs,
+    );
+    total += result.total;
+  }
+  if (total > 0) {
+    // Reload campaign so the entity provider picks up the synced rows.
+    await notifier.reload();
+  }
+  return total;
+});
+
 /// Paket listesi — hub ekranında gösterim için.
-final packageListProvider = FutureProvider<List<PackageInfo>>((ref) {
+/// SRD content pack startup'ta install edilir, sonra listing fetch edilir.
+final packageListProvider = FutureProvider<List<PackageInfo>>((ref) async {
+  await ref.watch(srdCorePackageBootstrapProvider.future);
   return ref.watch(packageRepositoryProvider).getPackageInfoList();
 });
 
@@ -85,7 +185,52 @@ class ActivePackageNotifier extends StateNotifier<String?> {
   Future<void> save() async {
     if (state != null && _data != null) {
       await _repo.save(state!, _data!);
+      _mirrorPushPersonal();
     }
+  }
+
+  /// Aktif paket "Make Online" yapıldıysa `personal_packages`'a push eder.
+  /// Offline'sa no-op (RLS gürültüsü olmaz).
+  void _mirrorPushPersonal() {
+    final name = state;
+    final data = _data;
+    if (name == null || data == null) return;
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) return;
+    final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
+    if (!onlineNames.contains(name)) return;
+    // ignore: discarded_futures
+    mirror.pushPersonalPackage(packageName: name, state: data);
+  }
+
+  /// "Make Online" — aktif paketi `personal_packages`'a publish eder ve
+  /// online listesine ekler. Bundan sonra her `save()` otomatik sync olur.
+  Future<void> makeOnline() async {
+    final name = state;
+    final data = _data;
+    if (name == null || data == null) {
+      throw StateError('No package open.');
+    }
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) {
+      throw StateError('Sign in and configure Supabase to enable sync.');
+    }
+    await mirror.pushPersonalPackage(packageName: name, state: data);
+    _ref
+        .read(personalOnlinePackageNamesProvider.notifier)
+        .add(name);
+  }
+
+  /// "Make Offline" — bulut kopyayı kaldırır. Local paket dosyası kalır.
+  Future<void> makeOffline() async {
+    final name = state;
+    if (name == null) return;
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    if (mirror == null) return;
+    await mirror.unpublishPersonalPackage(name);
+    _ref
+        .read(personalOnlinePackageNamesProvider.notifier)
+        .remove(name);
   }
 
   /// Replaces the in-memory package data with [newData] and persists
@@ -103,6 +248,7 @@ class ActivePackageNotifier extends StateNotifier<String?> {
         ..addAll(newData);
     }
     await _repo.save(name, _data!);
+    _mirrorPushPersonal();
     _bumpRevision();
   }
 
@@ -112,10 +258,20 @@ class ActivePackageNotifier extends StateNotifier<String?> {
   }
 
   Future<void> delete(String packageName) async {
+    final mirror = _ref.read(worldMirrorServiceProvider);
+    final onlineNames = _ref.read(personalOnlinePackageNamesProvider);
+    final wasOnline = onlineNames.contains(packageName);
     await _repo.delete(packageName);
     if (state == packageName) {
       _data = null;
       state = null;
+    }
+    if (wasOnline && mirror != null) {
+      // ignore: discarded_futures
+      mirror.unpublishPersonalPackage(packageName);
+      _ref
+          .read(personalOnlinePackageNamesProvider.notifier)
+          .remove(packageName);
     }
   }
 
@@ -132,6 +288,7 @@ class ActivePackageNotifier extends StateNotifier<String?> {
     _data!.remove('template_dismissed_hash');
     _data!.remove('template_updates_muted');
     await _repo.save(state!, _data!);
+    _mirrorPushPersonal();
     _bumpRevision();
   }
 

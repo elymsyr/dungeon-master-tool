@@ -52,14 +52,14 @@ class WelcomeDialog {
                 InkWell(
                   onTap: () =>
                       launchUrl(Uri.parse(githubUrl), mode: LaunchMode.externalApplication),
-                  child: Row(
+                  child: const Row(
                     children: [
-                      const Icon(Icons.code, size: 16),
-                      const SizedBox(width: 6),
+                      Icon(Icons.code, size: 16),
+                      SizedBox(width: 6),
                       Flexible(
                         child: Text(
                           githubUrl,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             decoration: TextDecoration.underline,
                           ),
