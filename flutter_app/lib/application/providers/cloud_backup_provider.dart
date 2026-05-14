@@ -26,7 +26,6 @@ import 'character_provider.dart';
 import 'cloud_remote_check_provider.dart';
 import 'package_provider.dart';
 import 'save_state_provider.dart';
-import 'template_provider.dart';
 
 // ── Repository ──────────────────────────────────────────────────────
 
@@ -257,24 +256,6 @@ class CloudBackupOperationNotifier
           );
           _ref.invalidate(campaignListProvider);
           _ref.invalidate(campaignInfoListProvider);
-
-        case 'template':
-          final schemaJson = Map<String, dynamic>.from(
-              data['world_schema'] as Map<String, dynamic>? ?? data);
-          // Unpack cover from schema metadata if bundled.
-          final sMeta = schemaJson['metadata'];
-          if (sMeta is Map) {
-            final mutable = Map<String, dynamic>.from(sMeta);
-            await CoverImageBundler.restore(
-              metadata: mutable,
-              destDir: AppPaths.cacheDir,
-              itemId: meta.itemId,
-            );
-            schemaJson['metadata'] = mutable;
-          }
-          final schema = WorldSchema.fromJson(schemaJson);
-          await _ref.read(templateLocalDsProvider).save(schema);
-          _ref.invalidate(allTemplatesProvider);
 
         case 'package':
           await _restoreMetadataCover(

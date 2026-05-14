@@ -701,6 +701,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             right: 16,
             bottom: 16,
             child: FloatingActionButton(
+              heroTag: 'session_screen_dice_fab',
               mini: true,
               onPressed: () => _showDiceBottomSheet(palette),
               child: const Icon(Icons.casino),
@@ -1018,6 +1019,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final schema = ref.read(worldSchemaProvider);
     final cfg = schema.encounterConfig;
 
+    // Resolve condition sub-fields ONCE per list build (was running
+    // per-item, O(N · categories · fields) under combat updates).
+    List<Map<String, String>>? condSubFields;
+    for (final cat in schema.categories) {
+      for (final f in cat.fields) {
+        if (f.fieldKey == cfg.conditionStatsFieldKey) {
+          condSubFields = f.subFields;
+          break;
+        }
+      }
+      if (condSubFields != null) break;
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 4),
       itemCount: enc.combatants.length,
@@ -1026,18 +1040,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         final entity = c.entityId != null ? entities[c.entityId] : null;
         final combatStats = entity?.fields[cfg.combatStatsFieldKey];
         final statsMap = combatStats is Map ? Map<String, dynamic>.from(combatStats) : <String, dynamic>{};
-
-        // Resolve condition sub-fields once per list build
-        List<Map<String, String>>? condSubFields;
-        for (final cat in schema.categories) {
-          for (final f in cat.fields) {
-            if (f.fieldKey == cfg.conditionStatsFieldKey) {
-              condSubFields = f.subFields;
-              break;
-            }
-          }
-          if (condSubFields != null) break;
-        }
 
         return _MobileCombatCard(
           key: ValueKey(c.id),

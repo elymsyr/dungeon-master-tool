@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
+import '../../application/services/srd_core_package_bootstrap.dart';
 import '../../core/utils/deep_copy.dart';
 import 'package:uuid/uuid.dart';
 
@@ -49,6 +50,12 @@ class PackageRepositoryImpl implements PackageRepository {
 
   @override
   Future<void> save(String packageName, Map<String, dynamic> data) async {
+    if (packageName == srdCorePackageName) {
+      // Built-in pack is regenerated from code on every app start.
+      // Silently swallow saves so accidental "Save" presses can't corrupt
+      // the canonical content.
+      return;
+    }
     final existing = await _db.packageDao.getByName(packageName);
     if (existing != null) {
       await _saveToDb(existing.id, data);
@@ -65,6 +72,11 @@ class PackageRepositoryImpl implements PackageRepository {
 
   @override
   Future<void> delete(String packageName) async {
+    if (packageName == srdCorePackageName) {
+      // Built-in pack — protected. UI also blocks Delete; this is the
+      // belt-and-suspenders fallback for any non-UI caller.
+      return;
+    }
     final existing = await _db.packageDao.getByName(packageName);
     Map<String, dynamic>? data;
     if (existing != null) {
@@ -117,6 +129,41 @@ class PackageRepositoryImpl implements PackageRepository {
     }
 
     return packageName;
+  }
+
+  @override
+  Future<String> copy({
+    required String sourceName,
+    required String destinationName,
+  }) async {
+    if (destinationName == srdCorePackageName) {
+      throw StateError('Cannot overwrite the built-in package');
+    }
+    final existing = await _db.packageDao.getByName(destinationName);
+    if (existing != null) {
+      throw StateError('Package already exists: $destinationName');
+    }
+    final src = await _db.packageDao.getByName(sourceName);
+    if (src == null) {
+      throw StateError('Source package not found: $sourceName');
+    }
+
+    final srcData = await _loadFromDb(src.id);
+    final newId = _uuid.v4();
+
+    // Strip identity so `_saveToDb` writes a fresh row keyed by newId.
+    srcData['package_id'] = newId;
+    srcData['package_name'] = destinationName;
+    // Reset cloud provenance — the new copy has no upstream binding.
+    srcData.remove('marketplace_listing_id');
+    srcData.remove('marketplace_version');
+
+    await _db.packageDao.createPackage(PackagesCompanion.insert(
+      id: newId,
+      name: destinationName,
+    ));
+    await _saveToDb(newId, srcData);
+    return destinationName;
   }
 
   // --- Internal helpers ---

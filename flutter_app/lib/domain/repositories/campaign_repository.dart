@@ -13,8 +13,13 @@ abstract class CampaignRepository {
   /// Kampanya verisini kaydet.
   Future<void> save(String campaignName, Map<String, dynamic> data);
 
-  /// Kampanyayı sil.
+  /// Kampanyayı sil (soft delete — `.trash/`'a taşır).
   Future<void> delete(String campaignName);
+
+  /// Kampanyayı kalıcı olarak sil — trash'a taşımaz, doğrudan siler.
+  /// Online world leave/kick akışı tarafından kullanılır: oyuncu cihazından
+  /// world'ün lokal kopyasını anında temizler.
+  Future<void> purge(String campaignName);
 
   /// Yeni kampanya oluştur, template ile.
   Future<String> create(String worldName, {WorldSchema? template});

@@ -11,8 +11,11 @@ import '../../application/providers/event_bus_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/media_provider.dart';
 import '../../application/providers/package_provider.dart';
+import '../../application/providers/personal_online_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
+import '../../core/config/supabase_config.dart';
+import '../../application/services/srd_core_package_bootstrap.dart';
 import '../../core/config/app_paths.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/repositories/campaign_repository.dart';
@@ -157,6 +160,9 @@ class _PackageAsCampaignRepo implements CampaignRepository {
   Future<void> delete(String name) async {}
 
   @override
+  Future<void> purge(String name) async {}
+
+  @override
   Future<String> create(String name, {WorldSchema? template}) async => name;
 }
 
@@ -216,6 +222,34 @@ class _PackageScreenContentState
     if (mounted) context.go('/hub');
   }
 
+  /// Phone overflow-menu sync toggle. Mirrors [_PackageOnlineButton]:
+  /// flushes local then flips the personal-online flag, surfacing snackbar
+  /// feedback for both directions.
+  Future<void> _togglePackageOnline(bool currentlyOnline) async {
+    try {
+      final notifier = ref.read(activePackageProvider.notifier);
+      if (currentlyOnline) {
+        await notifier.makeOffline();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Package is now offline')),
+        );
+      } else {
+        await notifier.save();
+        await notifier.makeOnline();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Package is now online')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
+    }
+  }
+
   bool _handleGlobalKey(KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) return false;
     final ctrl = HardwareKeyboard.instance.isControlPressed ||
@@ -270,10 +304,14 @@ class _PackageScreenContentState
           children: [
             Icon(Icons.inventory_2, size: 20, color: palette.tabIndicator),
             const SizedBox(width: 8),
-            Text(
-              widget.packageName,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            Expanded(
+              child: Text(
+                widget.packageName,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                softWrap: false,
+                overflow: TextOverflow.fade,
+              ),
             ),
           ],
         ),
@@ -342,30 +380,104 @@ class _PackageScreenContentState
             ),
           ),
           const SizedBox(width: 4),
-          // Media Gallery
-          IconButton(
-            icon: const Icon(Icons.photo_library_outlined, size: 18),
-            tooltip: 'Media Gallery',
-            onPressed: () {
-              final mediaDir = ref.read(mediaDirectoryProvider);
-              if (mediaDir.isNotEmpty) {
-                MediaGalleryDialog.show(
-                  context,
-                  mediaDir: mediaDir,
-                  campaignId: 'package:${widget.packageName}',
-                );
-              }
-            },
-          ),
-          // Edit Mode toggle
-          IconButton(
-            icon: Icon(
-              _editMode ? Icons.lock_open : Icons.lock,
-              color: _editMode ? palette.tokenBorderActive : null,
+          // Online toggle — personal multi-device sync. Built-in pack
+          // can't be made online (read-only on every device). Phone
+          // collapses this into the overflow menu below.
+          if (SupabaseConfig.isConfigured &&
+              widget.packageName != srdCorePackageName &&
+              getScreenType(context) != ScreenType.phone)
+            _PackageOnlineButton(packageName: widget.packageName),
+          // Edit Mode toggle — disabled for built-in (read-only) packages.
+          Builder(builder: (_) {
+            final isBuiltin = widget.packageName == srdCorePackageName;
+            return IconButton(
+              icon: Icon(
+                isBuiltin
+                    ? Icons.visibility_off_outlined
+                    : (_editMode ? Icons.edit : Icons.visibility),
+                color: _editMode && !isBuiltin
+                    ? palette.tokenBorderActive
+                    : null,
+              ),
+              tooltip: isBuiltin
+                  ? 'Built-in package — read only. Use "Copy" from the Packages tab to make an editable clone.'
+                  : (_editMode ? 'View mode' : 'Edit mode'),
+              onPressed: isBuiltin
+                  ? null
+                  : () => setState(() => _editMode = !_editMode),
+            );
+          }),
+          // Phone: collapse infrequent actions into overflow menu.
+          // Desktop/Tablet: show inline.
+          if (getScreenType(context) == ScreenType.phone)
+            Builder(builder: (popupCtx) {
+              final canSync = SupabaseConfig.isConfigured &&
+                  widget.packageName != srdCorePackageName;
+              final isOnline = canSync &&
+                  ref
+                      .watch(personalOnlinePackageNamesProvider)
+                      .contains(widget.packageName);
+              return PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 20),
+                onSelected: (action) async {
+                  switch (action) {
+                    case 'sync':
+                      await _togglePackageOnline(isOnline);
+                    case 'media':
+                      final mediaDir = ref.read(mediaDirectoryProvider);
+                      if (mediaDir.isNotEmpty) {
+                        MediaGalleryDialog.show(
+                          context,
+                          mediaDir: mediaDir,
+                          campaignId: 'package:${widget.packageName}',
+                        );
+                      }
+                  }
+                },
+                itemBuilder: (_) => [
+                  if (canSync)
+                    PopupMenuItem(
+                      value: 'sync',
+                      child: Row(children: [
+                        Icon(
+                          isOnline ? Icons.cloud_done : Icons.cloud_outlined,
+                          size: 18,
+                          color: isOnline ? palette.successBtnBg : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(isOnline
+                            ? 'Online — tap to make offline'
+                            : 'Save & Sync (Make Online)'),
+                      ]),
+                    ),
+                  if (canSync) const PopupMenuDivider(),
+                  const PopupMenuItem(
+                    value: 'media',
+                    child: Row(children: [
+                      Icon(Icons.photo_library_outlined, size: 18),
+                      SizedBox(width: 8),
+                      Text('Media Gallery'),
+                    ]),
+                  ),
+                ],
+              );
+            })
+          else
+            // Media Gallery
+            IconButton(
+              icon: const Icon(Icons.photo_library_outlined, size: 18),
+              tooltip: 'Media Gallery',
+              onPressed: () {
+                final mediaDir = ref.read(mediaDirectoryProvider);
+                if (mediaDir.isNotEmpty) {
+                  MediaGalleryDialog.show(
+                    context,
+                    mediaDir: mediaDir,
+                    campaignId: 'package:${widget.packageName}',
+                  );
+                }
+              },
             ),
-            tooltip: 'Edit Mode',
-            onPressed: () => setState(() => _editMode = !_editMode),
-          ),
           const SizedBox(width: 4),
         ],
       ),
@@ -434,6 +546,7 @@ class _PackageScreenContentState
         final screen = getScreenType(context);
         if (screen == ScreenType.phone) {
           return FloatingActionButton.small(
+            heroTag: 'package_screen_entity_sidebar_fab',
             onPressed: _showMobileSidebar,
             child: const Icon(Icons.list),
           );
@@ -467,5 +580,83 @@ class _PackageScreenContentState
         ),
       ),
     );
+  }
+}
+
+/// Paket "Make Online" toggle butonu — `OnlineWorldSection`'un paket
+/// karşılığı. Tek tıklama, davet/üyelik yok; sahip kendi cihazları
+/// arasında sync. Built-in SRD packı kullanıcıya read-only olduğu için
+/// bu buton parent'ta gizlenir.
+class _PackageOnlineButton extends ConsumerStatefulWidget {
+  final String packageName;
+
+  const _PackageOnlineButton({required this.packageName});
+
+  @override
+  ConsumerState<_PackageOnlineButton> createState() =>
+      _PackageOnlineButtonState();
+}
+
+class _PackageOnlineButtonState
+    extends ConsumerState<_PackageOnlineButton> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final isOnline = ref
+        .watch(personalOnlinePackageNamesProvider)
+        .contains(widget.packageName);
+
+    return IconButton(
+      icon: _busy
+          ? SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: palette.tabActiveText,
+              ),
+            )
+          : Icon(
+              isOnline ? Icons.cloud_done : Icons.cloud_outlined,
+              size: 18,
+              color: isOnline
+                  ? palette.successBtnBg
+                  : palette.tabActiveText,
+            ),
+      tooltip: isOnline
+          ? 'Online — tap to make offline'
+          : 'Make Online (sync to your other devices)',
+      onPressed: _busy ? null : () => _toggle(isOnline),
+    );
+  }
+
+  Future<void> _toggle(bool currentlyOnline) async {
+    setState(() => _busy = true);
+    try {
+      final notifier = ref.read(activePackageProvider.notifier);
+      if (currentlyOnline) {
+        await notifier.makeOffline();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Package is now offline')),
+        );
+      } else {
+        await notifier.save();
+        await notifier.makeOnline();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Package is now online')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 }

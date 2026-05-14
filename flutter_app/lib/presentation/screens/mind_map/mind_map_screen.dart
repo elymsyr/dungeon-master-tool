@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/campaign_provider.dart';
+import '../../../application/providers/mind_map_id_provider.dart';
 import '../../../application/providers/save_state_provider.dart';
 import '../../../domain/entities/mind_map.dart';
 import '../../theme/dm_tool_colors.dart';
@@ -40,21 +41,28 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
     final data = ref.read(activeCampaignProvider.notifier).data;
     if (data == null) return;
     final mindMaps = data['mind_maps'] as Map? ?? {};
-    final defaultMap = Map<String, dynamic>.from(
-      mindMaps['default'] as Map? ?? {},
+    final mapId = ref.read(currentMindMapIdProvider);
+    final scoped = Map<String, dynamic>.from(
+      mindMaps[mapId] as Map? ?? {},
     );
-    _notifier.init(defaultMap);
+    _notifier.init(scoped);
   }
 
   @override
   void deactivate() {
-    // ref `dispose()` içinde geçersiz — widget tree'den çıkarken sync et.
-    try {
-      _notifier.syncToCampaignData();
-      ref.read(saveStateProvider.notifier).markDirty();
-    } catch (_) {
-      // best-effort
-    }
+    // Mutating provider state during deactivate raises Riverpod's
+    // "modify provider while widget tree was building" assertion when the
+    // parent rebuild that's tearing this widget down is still in flight.
+    // Capture notifiers (provider singletons survive widget unmount) and
+    // run the sync after the current frame.
+    final mapNotifier = _notifier;
+    final saveNotifier = ref.read(saveStateProvider.notifier);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        mapNotifier.syncToCampaignData();
+        saveNotifier.markDirty();
+      } catch (_) {}
+    });
     super.deactivate();
   }
 

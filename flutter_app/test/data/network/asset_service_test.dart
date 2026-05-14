@@ -7,19 +7,19 @@ void main() {
         'abc123def456abc123def456abc123def456abc123def456abc123def456abcd';
 
     test('extracts sha from standard key', () {
-      final key = 'user-uuid/campaign-1/$validSha.png';
+      const key = 'user-uuid/campaign-1/$validSha.png';
       expect(AssetService.extractShaFromKey(key), validSha);
     });
 
     test('lowercases mixed-case hash', () {
       const mixed =
           'ABC123def456ABC123def456ABC123def456ABC123def456ABC123def456abcd';
-      final key = 'u/c/$mixed.jpg';
+      const key = 'u/c/$mixed.jpg';
       expect(AssetService.extractShaFromKey(key), validSha);
     });
 
     test('accepts key without extension', () {
-      final key = 'u/c/$validSha';
+      const key = 'u/c/$validSha';
       expect(AssetService.extractShaFromKey(key), validSha);
     });
 

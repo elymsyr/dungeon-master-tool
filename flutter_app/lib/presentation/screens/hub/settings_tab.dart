@@ -14,7 +14,6 @@ import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/package_provider.dart';
 import '../../../application/providers/soundpad_provider.dart';
-import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/ui_state_provider.dart';
 import '../../../application/services/campaign_import_service.dart';
@@ -35,19 +34,13 @@ class SettingsTab extends ConsumerStatefulWidget {
 }
 
 class _SettingsTabState extends ConsumerState<SettingsTab> {
-  @override
-  void initState() {
-    super.initState();
-    // Tab her açıldığında storage-ilgili provider'ları yenile:
-    // trash sayısı, beta cloud quota, sound library + toplam boyut.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ref.invalidate(trashListProvider);
-      ref.read(betaProvider.notifier).refresh();
-      ref.invalidate(soundpadLibraryProvider);
-      ref.invalidate(soundpadTotalSizeProvider);
-    });
-  }
+  // H4: tab açılışında provider invalidate akışı kaldırıldı. Storage
+  // istatistikleri (trash sayısı, sound library boyutu, beta quota) zaten
+  // ilgili provider'ların kendi lifecycle'ında refresh ediliyor; tab her
+  // açılışında diskten yeniden okumak performans regresyonu yaratıyordu
+  // (LazyIndexedStack tab'ı kalıcı tutuyor ama initState her sekme
+  // dönüşünde tetikleniyordu). Manuel refresh için scaffold üstündeki
+  // butonlar var.
 
   @override
   Widget build(BuildContext context) {
@@ -229,7 +222,23 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
               const SizedBox(height: 32),
 
               // --- TRASH ---
-              Text(l10n.settingsTrash, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              ref.watch(trashListProvider).when(
+                data: (items) => Row(
+                  children: [
+                    Expanded(
+                      child: Text(l10n.settingsTrash, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+                    ),
+                    if (items.isNotEmpty)
+                      TextButton.icon(
+                        icon: Icon(Icons.delete_sweep, size: 18, color: palette.dangerBtnBg),
+                        label: Text(l10n.trashEmptyAll, style: TextStyle(color: palette.dangerBtnBg)),
+                        onPressed: () => _emptyTrash(context, ref, items, palette),
+                      ),
+                  ],
+                ),
+                loading: () => Text(l10n.settingsTrash, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+                error: (_, _) => Text(l10n.settingsTrash, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.tabActiveText)),
+              ),
               const SizedBox(height: 12),
               ref.watch(trashListProvider).when(
                 data: (items) => items.isEmpty
@@ -315,12 +324,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              if (item.type == 'Template') {
-                await ref.read(templateLocalDsProvider).restoreFromTrash(item.directoryName);
-                ref.invalidate(trashListProvider);
-                ref.invalidate(customTemplatesProvider);
-                ref.invalidate(allTemplatesProvider);
-              } else if (item.type == 'Package') {
+              if (item.type == 'Package') {
                 final ds = ref.read(packageLocalDsProvider);
                 final restoredData = await ds.restoreFromTrash(item.directoryName);
                 if (restoredData != null) {
@@ -349,6 +353,41 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
             },
             style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, foregroundColor: palette.successBtnText),
             child: Text(l10n.btnRestore),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _emptyTrash(BuildContext context, WidgetRef ref, List<TrashItem> items, DmToolColors palette) {
+    final l10n = L10n.of(context)!;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.trashEmptyAllTitle),
+        content: Text(l10n.trashEmptyAllBody(items.length)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.btnCancel)),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final messenger = ScaffoldMessenger.of(context);
+              final packageDs = ref.read(packageLocalDsProvider);
+              final campaignDs = ref.read(campaignLocalDsProvider);
+              for (final item in items) {
+                if (item.type == 'Package') {
+                  await packageDs.permanentlyDeleteFromTrash(item.directoryName);
+                } else {
+                  await campaignDs.permanentlyDeleteFromTrash(item.directoryName);
+                }
+              }
+              ref.invalidate(trashListProvider);
+              messenger.showSnackBar(
+                SnackBar(content: Text(l10n.trashEmptyAllSuccess(items.length))),
+              );
+            },
+            style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
+            child: Text(l10n.btnDelete),
           ),
         ],
       ),

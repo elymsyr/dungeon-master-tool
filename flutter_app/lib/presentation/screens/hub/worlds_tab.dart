@@ -1,26 +1,30 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/utils/deep_copy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../application/providers/campaign_provider.dart';
-import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
+import '../../../application/providers/online_worlds_provider.dart';
+import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
-import '../../../application/services/template_sync_service.dart';
+import '../../../application/providers/world_membership_provider.dart';
 import '../../../core/config/app_paths.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../../data/database/database_provider.dart';
+import '../../../domain/entities/online/world_role.dart';
 import '../../../domain/entities/schema/world_schema.dart';
-import '../../../domain/entities/schema/world_schema_hash.dart';
+import '../../dialogs/join_world_dialog.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/marketplace_panel.dart';
+import '../../widgets/online_world_section.dart';
 import 'social_tab.dart';
 import '../../widgets/metadata_editor_section.dart';
 import '../../widgets/metadata_list_tile.dart';
 import '../../widgets/save_info_section.dart';
+import '../../widgets/world_packages_section.dart';
 
 
 class WorldsTab extends ConsumerStatefulWidget {
@@ -72,7 +76,34 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       minimumSize: const Size(0, 32),
                       visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
+                  ),
+                  if (SupabaseConfig.isConfigured) ...[
+                    const SizedBox(width: 4),
+                    OutlinedButton.icon(
+                      onPressed: () => JoinWorldDialog.show(context),
+                      icon: const Icon(Icons.login, size: 16),
+                      label: const Text('Join'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        minimumSize: const Size(0, 32),
+                        visualDensity: VisualDensity.compact,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(width: 4),
+                  OutlinedButton(
+                    onPressed: _openCreateWorldDialog,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                      minimumSize: const Size(32, 32),
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Icon(Icons.add, size: 16),
                   ),
                 ],
               ),
@@ -110,6 +141,20 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                               ref.watch(campaignMetadataProvider(info.name));
                           final meta =
                               metaAsync.valueOrNull ?? const <String, dynamic>{};
+                          // Online + role indicator: user joined this world
+                          // either as DM (publisher) or player. Both cases
+                          // land in `onlineWorldIds`; role decides which
+                          // icon we render.
+                          final onlineIds =
+                              ref.watch(onlineWorldIdsProvider);
+                          final isOnlineMember =
+                              onlineIds.contains(info.id);
+                          final role = isOnlineMember
+                              ? (ref
+                                      .watch(worldRoleProvider(info.id))
+                                      .valueOrNull ??
+                                  WorldRole.none)
+                              : WorldRole.none;
                           return InkWell(
                             borderRadius: palette.br,
                             onTap: () => setState(() => _selectedIndex = index),
@@ -139,6 +184,14 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                                 layout: MetadataTileLayout.topBanner,
                                 onSettings: () =>
                                     _showCampaignSettings(info.name, palette),
+                                topRightOverlay: isOnlineMember
+                                    ? [
+                                        _OnlineRoleBadge(
+                                          role: role,
+                                          palette: palette,
+                                        ),
+                                      ]
+                                    : const [],
                               ),
                             ),
                           );
@@ -178,109 +231,110 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                 ],
               ),
 
-              const SizedBox(height: 24),
-              Divider(color: palette.sidebarDivider),
-              const SizedBox(height: 16),
-
-              // Yeni kampanya
-              Text('Create New World', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
-              const SizedBox(height: 8),
-              ref.watch(allTemplatesProvider).when(
-                data: (templates) {
-                  if (templates.isEmpty) {
-                    // No template → a world cannot be created without one.
-                    // Redirect the user to the marketplace instead of silently
-                    // falling back to a built-in default template.
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: palette.featureCardBg,
-                        borderRadius: palette.br,
-                        border: Border.all(color: palette.featureCardBorder),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('No templates installed',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: palette.tabActiveText)),
-                          const SizedBox(height: 6),
-                          Text('You need at least one template to create a world. Visit the Marketplace to install one.',
-                              style: TextStyle(fontSize: 12, color: palette.sidebarLabelSecondary)),
-                          const SizedBox(height: 12),
-                          OutlinedButton.icon(
-                            onPressed: () {
-                              ref.read(socialSubTabProvider.notifier).state = 'marketplace';
-                              ref.read(hubTabIndexProvider.notifier).state = 0;
-                            },
-                            icon: const Icon(Icons.storefront, size: 16),
-                            label: const Text('Go to Marketplace'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  // Deduplicate by schemaId to avoid DropdownButton assertion.
-                  final seen = <String>{};
-                  final uniqueTemplates = templates.where((t) => seen.add(t.schemaId)).toList();
-                  // ALWAYS refresh `_selectedTemplate` to the matching object
-                  // from the freshly-fetched list. The schemaId stays stable
-                  // across template edits, so the old "only swap when the id
-                  // disappears" check kept us pointing at a stale in-memory
-                  // copy whenever the user edited a template — and the new
-                  // campaign would then be created from pre-edit columns
-                  // (e.g., the removed `lvl` column would reappear).
-                  final matched = uniqueTemplates
-                      .where((t) => t.schemaId == _selectedTemplate?.schemaId)
-                      .firstOrNull;
-                  _selectedTemplate = matched ?? uniqueTemplates.first;
-                  final finalId = _selectedTemplate!.schemaId;
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      DropdownButtonFormField<String>(
-                        key: ValueKey('tmpl_${uniqueTemplates.length}'),
-                        initialValue: finalId,
-                        decoration: const InputDecoration(labelText: 'Template'),
-                        items: uniqueTemplates.map((t) => DropdownMenuItem(
-                          value: t.schemaId,
-                          child: Text('${t.name}  (${t.categories.length} cat)', style: const TextStyle(fontSize: 12)),
-                        )).toList(),
-                        onChanged: (id) {
-                          if (id == null) return;
-                          for (final t in templates) {
-                            if (t.schemaId == id) { _selectedTemplate = t; break; }
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _nameController,
-                              decoration: const InputDecoration(hintText: 'World name'),
-                              onSubmitted: (_) => _createCampaign(),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          FilledButton.icon(
-                            onPressed: _createCampaign,
-                            icon: const Icon(Icons.add, size: 18),
-                            label: const Text('Create'),
-                            style: FilledButton.styleFrom(backgroundColor: palette.successBtnBg, foregroundColor: palette.successBtnText),
-                          ),
-                        ],
-                      ),
-                    ],
-                  );
-                },
-                loading: () => const LinearProgressIndicator(),
-                error: (e, _) => Text('Error: $e'),
-              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openCreateWorldDialog() async {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final templatesAsync = await ref.read(allTemplatesProvider.future);
+    if (!mounted) return;
+    if (templatesAsync.isEmpty) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('No templates installed'),
+          content: const Text(
+              'You need at least one template to create a world. Visit the Marketplace to install one.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                ref.read(socialSubTabProvider.notifier).state = 'marketplace';
+                ref.read(hubTabIndexProvider.notifier).state = 0;
+              },
+              icon: const Icon(Icons.storefront, size: 16),
+              label: const Text('Go to Marketplace'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    final seen = <String>{};
+    final uniqueTemplates =
+        templatesAsync.where((t) => seen.add(t.schemaId)).toList();
+    final matched = uniqueTemplates
+        .where((t) => t.schemaId == _selectedTemplate?.schemaId)
+        .firstOrNull;
+    _selectedTemplate = matched ?? uniqueTemplates.first;
+    _nameController.clear();
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Create New World'),
+          content: SizedBox(
+            width: 380,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedTemplate!.schemaId,
+                  decoration: const InputDecoration(labelText: 'Template'),
+                  items: uniqueTemplates
+                      .map((t) => DropdownMenuItem(
+                            value: t.schemaId,
+                            child: Text(
+                                '${t.name}  (${t.categories.length} cat)',
+                                style: const TextStyle(fontSize: 12)),
+                          ))
+                      .toList(),
+                  onChanged: (id) {
+                    if (id == null) return;
+                    for (final t in uniqueTemplates) {
+                      if (t.schemaId == id) {
+                        setLocal(() => _selectedTemplate = t);
+                        break;
+                      }
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _nameController,
+                  autofocus: true,
+                  decoration: const InputDecoration(hintText: 'World name'),
+                  onSubmitted: (_) async {
+                    Navigator.pop(ctx);
+                    await _createCampaign();
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel')),
+            FilledButton.icon(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await _createCampaign();
+              },
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text('Create'),
+              style: FilledButton.styleFrom(
+                  backgroundColor: palette.successBtnBg,
+                  foregroundColor: palette.successBtnText),
+            ),
+          ],
         ),
       ),
     );
@@ -290,32 +344,52 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final campaigns = ref.read(campaignInfoListProvider).valueOrNull ?? [];
     if (_selectedIndex < 0 || _selectedIndex >= campaigns.length) return;
     final name = campaigns[_selectedIndex].name;
+    final worldId = campaigns[_selectedIndex].id;
+    // Online role decides the UX: a player "deleting" the world is really
+    // leaving it — server-side trigger releases their owned characters
+    // back into the claim pool, and the local mirror is purged directly
+    // (no `.trash/` indirection). DM keeps the existing soft-delete flow.
+    final role = ref.read(worldRoleProvider(worldId)).valueOrNull
+        ?? WorldRole.none;
+    final isPlayer = role == WorldRole.player;
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete World'),
+        title: Text(isPlayer ? 'Leave World' : 'Delete World'),
         content: Text(
-          'Are you sure you want to delete "$name"?\n\n'
-          'The world will be moved to trash and automatically deleted after 30 days.',
+          isPlayer
+              ? 'You will leave "$name" and any characters you owned will '
+                  'become claimable again. The local copy of this world '
+                  'will be deleted from this device. Your character copies '
+                  'remain in your library.'
+              : 'Are you sure you want to delete "$name"?\n\n'
+                  'The world will be moved to trash and automatically '
+                  'deleted after 30 days.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await ref.read(activeCampaignProvider.notifier).delete(name);
+              if (isPlayer) {
+                await _leaveOnlineAndPurge(worldId, name);
+              } else {
+                await ref.read(activeCampaignProvider.notifier).delete(name);
+                ref.invalidate(trashListProvider);
+              }
               ref.invalidate(campaignListProvider);
               ref.invalidate(campaignInfoListProvider);
-              ref.invalidate(trashListProvider);
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                  SnackBar(
                     content: Text(
-                      'World moved to trash. Cloud backup is still available '
-                      'under Cloud → Worlds.',
+                      isPlayer
+                          ? 'Left "$name". Local copy removed.'
+                          : 'World moved to trash. Cloud backup is still '
+                              'available under Cloud → Worlds.',
                     ),
-                    duration: Duration(seconds: 5),
+                    duration: const Duration(seconds: 5),
                   ),
                 );
               }
@@ -325,11 +399,30 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               backgroundColor: Theme.of(context).extension<DmToolColors>()!.dangerBtnBg,
               foregroundColor: Theme.of(context).extension<DmToolColors>()!.dangerBtnText,
             ),
-            child: const Text('Delete'),
+            child: Text(isPlayer ? 'Leave' : 'Delete'),
           ),
         ],
       ),
     );
+  }
+
+  /// Player-side "delete world" path: leave online membership (server-side
+  /// trigger releases owned characters back to the claim pool), then purge
+  /// the local mirror without going through `.trash/`.
+  Future<void> _leaveOnlineAndPurge(String worldId, String name) async {
+    try {
+      await ref
+          .read(worldMembershipServiceProvider)
+          .leaveWorld(worldId);
+    } catch (e) {
+      // Best effort — proceed with local purge even if leave call fails
+      // (e.g. already-removed by DM). Surface for diagnostics.
+      debugPrint('leaveWorld error: $e');
+    }
+    ref.read(onlineWorldIdsProvider.notifier).remove(worldId);
+    ref.invalidate(currentWorldRoleProvider);
+    ref.invalidate(worldRoleProvider(worldId));
+    await ref.read(activeCampaignProvider.notifier).purge(name);
   }
 
   Future<void> _loadCampaign(String name) async {
@@ -343,31 +436,11 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     );
 
     if (!success || !mounted) return;
-
-    // 4. Template drift check — uyarı dialogu göster (loading sonrası)
-    final drift = ref.read(pendingTemplateUpdateProvider);
-    if (drift != null) {
-      ref.read(pendingTemplateUpdateProvider.notifier).state = null;
-      final action = await _showPreOpenTemplateDialog(drift);
-      if (!mounted) return;
-      if (action == 'update') {
-        await ref.read(activeCampaignProvider.notifier).applyTemplateUpdate(drift.newTemplate);
-        await ref.read(characterListProvider.notifier).applyTemplateUpdate(
-              worldName: drift.campaignName,
-              newTemplate: drift.newTemplate,
-            );
-      } else if (action == 'mute') {
-        await ref.read(activeCampaignProvider.notifier).muteTemplateUpdates();
-      } else {
-        await ref.read(activeCampaignProvider.notifier).dismissTemplateUpdate(drift.newHash);
-      }
-    }
-
-    // 5. Navigate
     if (mounted) context.go('/main');
   }
 
-  Future<String?> _showPreOpenTemplateDialog(TemplateUpdatePrompt prompt) {
+  // ignore: unused_element
+  Future<String?> _showPreOpenTemplateDialogDead(dynamic prompt) {
     bool doNotShowAgain = false;
     final l10n = L10n.of(context)!;
     return showDialog<String>(
@@ -463,22 +536,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     final localUpdatedAt = campaignRow?.updatedAt;
     final worldId = data['world_id'] as String? ?? campaignName;
 
-    TemplateUpdatePrompt? drift;
-    try {
-      final result = await ref.read(templateSyncServiceProvider).checkDrift(
-        campaignName: campaignName,
-        campaignData: data,
-        ignoreDismissed: true,
-      );
-      drift = result.prompt;
-      if (result.healedHash != null) {
-        data['template_hash'] = result.healedHash!;
-        await ref.read(campaignRepositoryProvider).save(campaignName, data);
-      }
-    } catch (_) {
-      // Best-effort — show the dialog without drift info.
-    }
-
     if (!mounted) return;
 
     final schemaMap = data['world_schema'] as Map<String, dynamic>?;
@@ -549,43 +606,14 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
               const SizedBox(height: 12),
               Divider(height: 1, color: palette.featureCardBorder),
               const SizedBox(height: 12),
-              if (drift == null)
-                Row(
-                  children: [
-                    Icon(Icons.check_circle, size: 16, color: palette.successBtnBg),
-                    const SizedBox(width: 6),
-                    Text(l10n.templateDriftUpToDate,
-                        style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
-                  ],
-                )
-              else ...[
-                Row(
-                  children: [
-                    Icon(Icons.info_outline, size: 16, color: palette.featureCardAccent),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(l10n.templateDriftBody(drift.templateName),
-                          style: TextStyle(fontSize: 13, color: palette.tabActiveText)),
-                    ),
-                  ],
-                ),
-                if (drift.diffSummary.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(l10n.templateDriftChanges,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                  const SizedBox(height: 4),
-                  ...drift.diffSummary.map((line) => Padding(
-                    padding: const EdgeInsets.only(left: 8, bottom: 3),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('\u2022 ', style: TextStyle(fontSize: 12)),
-                        Expanded(child: Text(line, style: const TextStyle(fontSize: 12))),
-                      ],
-                    ),
-                  )),
-                ],
-              ],
+              OnlineWorldSection(
+                campaignId: worldId,
+                campaignName: campaignName,
+              ),
+              const SizedBox(height: 12),
+              Divider(height: 1, color: palette.featureCardBorder),
+              const SizedBox(height: 12),
+              WorldPackagesSection(campaignId: worldId),
             ],
           ),
           ),
@@ -595,14 +623,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(l10n.btnCancel),
           ),
-          if (drift != null)
-            FilledButton(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                await _applyTemplateFromSettings(campaignName, data, drift!);
-              },
-              child: Text(l10n.templateDriftUpdate),
-            ),
           FilledButton(
             onPressed: () async {
               await updateCampaignMetadata(ref, campaignName, workingMeta);
@@ -614,54 +634,6 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
       ),
       ),
     );
-  }
-
-  /// Applies a template update from the settings dialog. Handles both the
-  /// active campaign (uses the notifier) and non-active campaigns (direct
-  /// repo save).
-  Future<void> _applyTemplateFromSettings(
-    String campaignName,
-    Map<String, dynamic> data,
-    TemplateUpdatePrompt drift,
-  ) async {
-    try {
-      final activeName = ref.read(activeCampaignProvider);
-      if (activeName == campaignName) {
-        await ref
-            .read(activeCampaignProvider.notifier)
-            .applyTemplateUpdate(drift.newTemplate);
-        await ref.read(characterListProvider.notifier).applyTemplateUpdate(
-              worldName: campaignName,
-              newTemplate: drift.newTemplate,
-            );
-      } else {
-        // Non-active campaign — mutate data map directly and save.
-        data['world_schema'] = deepCopyJson(drift.newTemplate.toJson());
-        data['template_id'] = drift.newTemplate.schemaId;
-        data['template_hash'] = computeWorldSchemaContentHash(drift.newTemplate);
-        if (drift.newTemplate.originalHash != null) {
-          data['template_original_hash'] = drift.newTemplate.originalHash;
-        }
-        data.remove('template_dismissed_hash');
-        await ref.read(campaignRepositoryProvider).save(campaignName, data);
-        await ref.read(characterListProvider.notifier).applyTemplateUpdate(
-              worldName: campaignName,
-              newTemplate: drift.newTemplate,
-            );
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(L10n.of(context)!.templateDriftUpdated)),
-        );
-      }
-    } catch (e, st) {
-      debugPrint('Template apply from settings failed: $e\n$st');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Update failed: $e')),
-        );
-      }
-    }
   }
 
   Future<void> _createCampaign() async {
@@ -693,5 +665,42 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
     if (success && mounted) {
       context.go('/main');
     }
+  }
+}
+
+/// Small pill rendered on the top-right of an online world card. Shows a
+/// cloud glyph plus a role-specific icon (shield for DM, person for player).
+/// Colors come from the active theme palette so it adapts across themes.
+class _OnlineRoleBadge extends StatelessWidget {
+  final WorldRole role;
+  final DmToolColors palette;
+  const _OnlineRoleBadge({required this.role, required this.palette});
+
+  @override
+  Widget build(BuildContext context) {
+    final (IconData roleIcon, String tooltip) = switch (role) {
+      WorldRole.dm => (Icons.shield, 'Online · DM'),
+      WorldRole.player => (Icons.person, 'Online · Player'),
+      WorldRole.none => (Icons.help_outline, 'Online'),
+    };
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        decoration: BoxDecoration(
+          color: palette.tabBg.withValues(alpha: 0.85),
+          borderRadius: palette.chr,
+          border: Border.all(color: palette.featureCardAccent),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud, size: 12, color: palette.featureCardAccent),
+            const SizedBox(width: 4),
+            Icon(roleIcon, size: 12, color: palette.tabActiveText),
+          ],
+        ),
+      ),
+    );
   }
 }

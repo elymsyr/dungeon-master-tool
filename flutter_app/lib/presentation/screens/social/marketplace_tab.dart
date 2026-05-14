@@ -71,8 +71,6 @@ class _MarketplaceFeed extends ConsumerWidget {
         padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 24),
         children: [
           _FilterBar(filters: filters, palette: palette),
-          const SizedBox(height: 8),
-          _BuiltinFilterChip(filters: filters, palette: palette),
           const SizedBox(height: 12),
           _SecondaryFilterRow(filters: filters, palette: palette),
           const SizedBox(height: 20),
@@ -159,70 +157,6 @@ class _FilterBar extends ConsumerWidget {
                 fontWeight: FontWeight.w500,
                 color: isActive ? Colors.white : palette.tabText,
               ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _BuiltinFilterChip extends ConsumerWidget {
-  final MarketplaceFilters filters;
-  final DmToolColors palette;
-  const _BuiltinFilterChip({required this.filters, required this.palette});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // 3 state: null (all) / true (builtin only) / false (user only).
-    final options = <(bool?, IconData, String)>[
-      (null, Icons.all_inclusive, 'All'),
-      (true, Icons.star, 'Built-ins'),
-      (false, Icons.people_outline, 'Community'),
-    ];
-    return Wrap(
-      spacing: 6,
-      children: options.map((o) {
-        final isActive = o.$1 == filters.builtinOnly;
-        return InkWell(
-          borderRadius: palette.br,
-          onTap: () {
-            ref.read(marketplaceFiltersProvider.notifier).state =
-                filters.copyWith(builtinOnly: o.$1);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? palette.featureCardAccent.withValues(alpha: 0.18)
-                  : Colors.transparent,
-              border: Border.all(
-                color: isActive
-                    ? palette.featureCardAccent
-                    : palette.featureCardBorder,
-              ),
-              borderRadius: palette.br,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(o.$2,
-                    size: 14,
-                    color: isActive
-                        ? palette.featureCardAccent
-                        : palette.sidebarLabelSecondary),
-                const SizedBox(width: 4),
-                Text(
-                  o.$3,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isActive
-                        ? palette.featureCardAccent
-                        : palette.tabText,
-                  ),
-                ),
-              ],
             ),
           ),
         );

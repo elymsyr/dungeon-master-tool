@@ -18,6 +18,9 @@ class Entities extends Table {
   TextColumn get pdfsJson => text().withDefault(const Constant('[]'))();
   TextColumn get locationId => text().nullable()();
   TextColumn get fieldsJson => text().withDefault(const Constant('{}'))();
+  TextColumn get packageId => text().nullable()();
+  TextColumn get packageEntityId => text().nullable()();
+  BoolColumn get linked => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 

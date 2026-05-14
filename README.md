@@ -1,11 +1,9 @@
 # Dungeon Master Tool
 
 <p align="center">
-  <img src="flutter_app/assets/app_icon.png" width="128" height="128" alt="Dungeon Master Tool" />
-  <br>
   <b>A portable, offline-first DM tool built with Flutter.</b>
   <br>
-  <i>Manage combat, track timelines, and project a rich campaign wiki seamlessly.</i>
+  <i>Manage combat, build characters, run online worlds, and project a rich campaign wiki seamlessly.</i>
   <br><br>
   <a href="https://elymsyr.github.io/">Project Website</a>
   <br><br>
@@ -26,7 +24,7 @@
   </a>
   <br><br>
   <img src="https://img.shields.io/badge/Status-Beta-blue" />
-  <img src="https://img.shields.io/badge/Version-v2.0.3-blueviolet" />
+  <img src="https://img.shields.io/badge/Version-v6.0.0--beta-blueviolet" />
   <img src="https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey" />
   <img src="https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter" />
   <img src="https://img.shields.io/badge/Dart-3.11-0175C2?logo=dart" />
@@ -35,6 +33,20 @@
   <br>
   <b>Languages:</b> English | Turkish | German | French
 </p>
+
+---
+
+## Roadmap
+
+Planned for upcoming releases — order not final, scope may shift between patch and minor versions.
+
+- **Better battle map system** — Smoother large-grid performance, snap-to-grid tokens with stat-block previews, line-of-sight + dynamic vision, measurement modes (cone/line/sphere), and animated AoE overlays.
+- **Second screen for online play** — Dedicated player-screen view for online worlds: every member's client can act as the projected view, so remote players see the same battle map, entity cards, and reveals the in-person table sees.
+- **Built-in D&D 5e package visuals** — Cover art, monster/species/class portraits, equipment icons, and spell glyphs bundled with the SRD core pack so default content stops looking like raw text.
+- **More online storage for users** — Larger per-account quota for personal cloud sync (characters, worlds, templates, packages) and selectable retention tiers; current beta cap is intentionally conservative.
+- **Deeper D&D 5e implementation** — Close remaining SRD gaps (Drow 120ft superior darkvision, Berserker condition immunities, Lore Bard L3 extra skills, missing `auto_granted_by` metadata), automate more class/subclass effects, and finish bidirectional sync of mechanical resolutions across devices.
+- **Full custom-content editors** — WYSIWYG editors for schemas, templates, and packages so creators stop hand-editing JSON.
+- **Bidirectional personal sync** — Push edits from Device A back to Device B without a manual pull.
 
 ---
 
@@ -54,6 +66,23 @@
 - **PDF Viewer** -- Integrated viewer with page navigation and zoom.
 - **Dice Roller** -- d4, d6, d8, d10, d12, d20, d100.
 - **Customization** -- 11 themes (dark and light variants) and 4-language localization.
+
+### Characters & SRD
+
+- **Character Creation Wizard** -- SRD-driven character builder covering species, class, background, ability scores (point-buy, standard array, roll, manual), skills, equipment, and starting traits.
+- **Level-Up Planner** -- Auto-applies non-interactive deltas (HP, proficiency bonus, hit dice) and queues interactive picks (ASI/feat, fighting styles, subclass, divine order, weapon mastery, spell choices) as **Pending Choices** you resolve inline in the character editor.
+- **Multiclass Support** -- Full SRD multiclass prerequisite checks (AND/OR ability gates) with human-readable rejection reasons and multiclass caster spell-slot math.
+- **Weapon Mastery** -- Auto-grants mastery slot counts per class/subclass features, taking the maximum across feats that overlap.
+- **Pending Choices Panel** -- Existing characters keep working; the editor reveals a panel for every choice the SRD says you owe yourself.
+
+### Online Worlds & Multiplayer
+
+- **Share a World** -- Publish a campaign online so other players can join and see live character, member, and entity updates.
+- **Invite Codes** -- One active invite per world; generate, regenerate, copy, and revoke from the world panel.
+- **Roles** -- Player and DM roles with row-level security; only the DM can publish, manage members, or delete characters that aren't owned by anyone.
+- **Realtime Sync** -- Character, member, and world-entity changes stream to every connected client via change-data-capture; offline edits reconcile on reconnect.
+- **Character Ownership** -- Claim a world character to make it yours, release it back to the world, or delete it (if you're the DM and nobody owns it).
+- **Personal Cloud Sync** -- Back up your own characters, worlds, templates, and packages to your account so you can pick them up on another device.
 
 ### Social & Community
 
@@ -127,21 +156,6 @@ flutter run
 ```
 
 See [flutter_app/README.md](flutter_app/README.md) for full developer documentation and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
-
----
-
-## Gallery
-
-*Images are from PyQT version, will be updated soon...*
-
-<p align="center">
-  <img src="media/main_0.png" width="48%" alt="Main Interface" />
-  <img src="media/battlemap.png" width="48%" alt="Battle Map" />
-</p>
-<p align="center">
-  <img src="media/mind_0.png" width="48%" alt="Mind Map" />
-  <img src="media/session_0.png" width="48%" alt="Session Log" />
-</p>
 
 ---
 

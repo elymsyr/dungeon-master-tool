@@ -357,10 +357,10 @@ class _MarkdownTextAreaState extends ConsumerState<MarkdownTextArea> {
       textAlignVertical: widget.textAlignVertical,
       style: widget.textStyle,
       decoration: widget.decoration ??
-          InputDecoration(
+          const InputDecoration(
             hintText: 'Use @ to mention entities. Markdown supported.',
             isDense: true,
-            border: const OutlineInputBorder(),
+            border: OutlineInputBorder(),
           ),
       onChanged: _onTextChanged,
       onSubmitted: widget.onSubmitted,

@@ -21,8 +21,6 @@ class MarketplaceListing {
     required this.createdAt,
     this.ownerUsername,
     this.coverImageB64,
-    this.isBuiltin = false,
-    this.builtinMarkedAt,
   });
 
   final String id;
@@ -52,18 +50,9 @@ class MarketplaceListing {
   /// preview without extra fetches. Null when the local item had no cover.
   final String? coverImageB64;
 
-  /// Admin tarafından built-in olarak işaretlendi mi. True ise sahibi
-  /// listing'i silemez; marketplace'te "Built-ins" bölümünde listelenir.
-  final bool isBuiltin;
-
-  /// Admin built-in işaretini koyduğu an. Null ise hiç işaretlenmemiş.
-  final DateTime? builtinMarkedAt;
-
   MarketplaceListing copyWith({
     int? downloadCount,
     String? ownerUsername,
-    bool? isBuiltin,
-    DateTime? builtinMarkedAt,
   }) {
     return MarketplaceListing(
       id: id,
@@ -81,8 +70,6 @@ class MarketplaceListing {
       createdAt: createdAt,
       ownerUsername: ownerUsername ?? this.ownerUsername,
       coverImageB64: coverImageB64,
-      isBuiltin: isBuiltin ?? this.isBuiltin,
-      builtinMarkedAt: builtinMarkedAt ?? this.builtinMarkedAt,
     );
   }
 }

@@ -93,9 +93,22 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
   final Color featureCardBorder;
   final Color featureCardAccent;   // Sol kenarlık (tek renk, tema accent)
 
+  // --- SRD Paper Look (entity card) ---
+  final Color srdParchment;     // page bg behind entity card
+  final Color srdInk;           // body text ink
+  final Color srdHeadingRed;    // title + section heads
+  final Color srdRule;          // thin divider line under headings
+  final Color srdSubtitle;      // italic subtitle muted ink
+
+  // --- Entity Card Style Flags (per-theme look) ---
+  final bool cardHeadingUppercase;   // section heads uppercase + letter-spaced
+  final bool cardShowRule;           // 1px rule under headings (SRD) vs hidden
+  final bool cardBorderlessInputs;   // schema field inputs no border/fill
+
   // --- Style Parameters (tema-spesifik görünüm) ---
   final double borderRadius;
   final double cardBorderRadius;
+  final double chipBorderRadius;
   final double buttonPaddingH;
   final double buttonPaddingV;
   final bool useBorders;
@@ -174,8 +187,17 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     required this.featureCardBg,
     required this.featureCardBorder,
     required this.featureCardAccent,
-    this.borderRadius = 4,
-    this.cardBorderRadius = 8,
+    this.srdParchment = const Color(0xFF1F1F1F),
+    this.srdInk = const Color(0xFFE0E0E0),
+    this.srdHeadingRed = const Color(0xFF42A5F5),
+    this.srdRule = const Color(0xFF42A5F5),
+    this.srdSubtitle = const Color(0xFF9CA3AF),
+    this.cardHeadingUppercase = false,
+    this.cardShowRule = true,
+    this.cardBorderlessInputs = true,
+    this.borderRadius = 2,
+    this.cardBorderRadius = 4,
+    this.chipBorderRadius = 6,
     this.buttonPaddingH = 10,
     this.buttonPaddingV = 4,
     this.useBorders = true,
@@ -193,6 +215,7 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
 
   BorderRadius get br => BorderRadius.circular(borderRadius);
   BorderRadius get cbr => BorderRadius.circular(cardBorderRadius);
+  BorderRadius get chr => BorderRadius.circular(chipBorderRadius);
 
   @override
   ThemeExtension<DmToolColors> copyWith({
@@ -256,8 +279,17 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
     Color? featureCardBg,
     Color? featureCardBorder,
     Color? featureCardAccent,
+    Color? srdParchment,
+    Color? srdInk,
+    Color? srdHeadingRed,
+    Color? srdRule,
+    Color? srdSubtitle,
+    bool? cardHeadingUppercase,
+    bool? cardShowRule,
+    bool? cardBorderlessInputs,
     double? borderRadius,
     double? cardBorderRadius,
+    double? chipBorderRadius,
     double? buttonPaddingH,
     double? buttonPaddingV,
     bool? useBorders,
@@ -333,8 +365,17 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       featureCardBg: featureCardBg ?? this.featureCardBg,
       featureCardBorder: featureCardBorder ?? this.featureCardBorder,
       featureCardAccent: featureCardAccent ?? this.featureCardAccent,
+      srdParchment: srdParchment ?? this.srdParchment,
+      srdInk: srdInk ?? this.srdInk,
+      srdHeadingRed: srdHeadingRed ?? this.srdHeadingRed,
+      srdRule: srdRule ?? this.srdRule,
+      srdSubtitle: srdSubtitle ?? this.srdSubtitle,
+      cardHeadingUppercase: cardHeadingUppercase ?? this.cardHeadingUppercase,
+      cardShowRule: cardShowRule ?? this.cardShowRule,
+      cardBorderlessInputs: cardBorderlessInputs ?? this.cardBorderlessInputs,
       borderRadius: borderRadius ?? this.borderRadius,
       cardBorderRadius: cardBorderRadius ?? this.cardBorderRadius,
+      chipBorderRadius: chipBorderRadius ?? this.chipBorderRadius,
       buttonPaddingH: buttonPaddingH ?? this.buttonPaddingH,
       buttonPaddingV: buttonPaddingV ?? this.buttonPaddingV,
       useBorders: useBorders ?? this.useBorders,
@@ -415,8 +456,17 @@ class DmToolColors extends ThemeExtension<DmToolColors> {
       featureCardBg: Color.lerp(featureCardBg, other.featureCardBg, t)!,
       featureCardBorder: Color.lerp(featureCardBorder, other.featureCardBorder, t)!,
       featureCardAccent: Color.lerp(featureCardAccent, other.featureCardAccent, t)!,
+      srdParchment: Color.lerp(srdParchment, other.srdParchment, t)!,
+      srdInk: Color.lerp(srdInk, other.srdInk, t)!,
+      srdHeadingRed: Color.lerp(srdHeadingRed, other.srdHeadingRed, t)!,
+      srdRule: Color.lerp(srdRule, other.srdRule, t)!,
+      srdSubtitle: Color.lerp(srdSubtitle, other.srdSubtitle, t)!,
+      cardHeadingUppercase: t < 0.5 ? cardHeadingUppercase : other.cardHeadingUppercase,
+      cardShowRule: t < 0.5 ? cardShowRule : other.cardShowRule,
+      cardBorderlessInputs: t < 0.5 ? cardBorderlessInputs : other.cardBorderlessInputs,
       borderRadius: t < 0.5 ? borderRadius : other.borderRadius,
       cardBorderRadius: t < 0.5 ? cardBorderRadius : other.cardBorderRadius,
+      chipBorderRadius: t < 0.5 ? chipBorderRadius : other.chipBorderRadius,
       buttonPaddingH: t < 0.5 ? buttonPaddingH : other.buttonPaddingH,
       buttonPaddingV: t < 0.5 ? buttonPaddingV : other.buttonPaddingV,
       useBorders: t < 0.5 ? useBorders : other.useBorders,

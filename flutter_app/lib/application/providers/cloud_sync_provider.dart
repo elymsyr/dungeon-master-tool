@@ -13,7 +13,6 @@ import 'campaign_provider.dart';
 import 'cloud_backup_provider.dart';
 import 'cloud_remote_check_provider.dart';
 import 'package_provider.dart';
-import 'template_provider.dart';
 
 // ── Sync result types ───────────────────────────────────────────────
 
@@ -151,17 +150,6 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
             packageName;
         _dirtyItems['package:$packageId'] =
             (name: packageName, type: 'package', id: packageId);
-        await syncNow();
-        return true;
-      }
-    }
-
-    final templateId = _ref.read(activeTemplateProvider);
-    if (templateId != null) {
-      final schema = _ref.read(activeTemplateProvider.notifier).schema;
-      if (schema != null) {
-        _dirtyItems['template:${schema.schemaId}'] =
-            (name: schema.name, type: 'template', id: schema.schemaId);
         await syncNow();
         return true;
       }
@@ -320,8 +308,6 @@ class CloudSyncNotifier extends StateNotifier<CloudSyncState> {
           return await _ref.read(campaignRepositoryProvider).load(itemName);
         case 'package':
           return await _ref.read(packageRepositoryProvider).load(itemName);
-        case 'template':
-          return _ref.read(activeTemplateProvider.notifier).data;
         default:
           return null;
       }

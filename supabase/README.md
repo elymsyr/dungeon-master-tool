@@ -10,6 +10,7 @@ ve operasyonel komutları içerir.
 | 001 | `migrations/001_cloud_backups.sql` | Sprint 8 — cloud backup metadata |
 | 002 | `migrations/002_community_assets.sql` | Sprint 10 — R2 asset metadata + storage RPC'leri |
 | 003 | `migrations/003_social.sql` | Sprint 11 / v3.0.0-beta — sosyal özellikler |
+| 026 | `migrations/026_online_worlds.sql` | Online multiplayer foundation — paylaşılan world + invite + realtime mirror |
 
 Her migration **idempotent** yazılmıştır (`IF NOT EXISTS`, `DROP POLICY IF
 EXISTS`, `CREATE OR REPLACE`). Sırayla Supabase Dashboard > SQL Editor > New

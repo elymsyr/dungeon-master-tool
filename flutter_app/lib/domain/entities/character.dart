@@ -24,6 +24,10 @@ abstract class Character with _$Character {
     /// Karakterin bağlı olduğu world (campaign) adı. Boş ise orphan:
     /// kullanıcı editorde world seçene kadar bazı özellikler kapalı kalır.
     @Default('') String worldName,
+    /// Karakterin sahibi olan user'ın Supabase uid'si. DM tarafından
+    /// oluşturulan karakterler için null bırakılır (DM-owned implicit).
+    /// User-side flow eklendiğinde creator'ın uid'si yazılır.
+    @Default(null) String? ownerId,
     required String createdAt,
     required String updatedAt,
   }) = _Character;

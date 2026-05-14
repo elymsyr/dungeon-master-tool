@@ -14,7 +14,6 @@ import '../../domain/entities/character.dart';
 import '../../domain/entities/marketplace_listing.dart';
 import '../../domain/entities/marketplace_source.dart';
 import '../../domain/entities/payload_hash.dart';
-import '../../domain/entities/schema/world_schema.dart';
 import 'auth_provider.dart';
 import 'campaign_provider.dart';
 import 'character_provider.dart';
@@ -263,9 +262,6 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
       case 'world':
         final data = await _ref.read(campaignRepositoryProvider).load(localId);
         return _coverFromCampaignData(data);
-      case 'template':
-        final tpl = await _ref.read(templateLocalDsProvider).loadById(localId);
-        return tpl?.metadata['cover_image_path'] as String?;
       case 'package':
         final data = await _ref.read(packageRepositoryProvider).load(localId);
         return _coverFromCampaignData(data);
@@ -309,10 +305,6 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
     switch (itemType) {
       case 'world':
         return _ref.read(campaignRepositoryProvider).load(localId);
-      case 'template':
-        final tpl = await _ref.read(templateLocalDsProvider).loadById(localId);
-        if (tpl == null) throw StateError('Template not found: $localId');
-        return {'world_schema': tpl.toJson()};
       case 'package':
         return _ref.read(packageRepositoryProvider).load(localId);
       case 'character':
@@ -341,14 +333,6 @@ class MarketplaceListingNotifier extends StateNotifier<AsyncValue<void>> {
         final name = await _uniquePackageName(title);
         await _ref.read(packageRepositoryProvider).save(name, payload);
         return name;
-      case 'template':
-        final raw = payload['world_schema'];
-        if (raw is! Map<String, dynamic>) {
-          throw StateError('Invalid template payload: world_schema missing');
-        }
-        final schema = WorldSchema.fromJson(raw);
-        await _ref.read(templateLocalDsProvider).save(schema);
-        return schema.schemaId;
       case 'character':
         final raw = payload['character'];
         if (raw is! Map<String, dynamic>) {

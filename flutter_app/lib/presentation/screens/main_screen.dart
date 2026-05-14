@@ -7,9 +7,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/providers/beta_provider.dart';
 import '../../application/providers/campaign_provider.dart';
+import '../../application/providers/edit_mode_provider.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
 import '../../application/providers/locale_provider.dart';
+import '../../application/providers/package_provider.dart';
 import '../../application/providers/projection_output_provider.dart';
 import '../../application/providers/projection_provider.dart';
 import '../../domain/entities/projection/projection_output_mode.dart';
@@ -19,7 +21,9 @@ import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/save_state_provider.dart';
 import '../../application/providers/soundpad_provider.dart';
 import '../../application/providers/undo_redo_provider.dart';
-import '../../application/services/template_sync_service.dart';
+import '../../application/providers/role_provider.dart';
+import '../../application/providers/world_mirror_provider.dart';
+import '../../domain/entities/online/world_role.dart';
 import '../../core/utils/screen_type.dart';
 import '../../application/providers/media_provider.dart';
 import '../dialogs/bug_report_dialog.dart';
@@ -29,6 +33,7 @@ import '../l10n/app_localizations.dart';
 import '../theme/dm_tool_colors.dart';
 import '../theme/palettes.dart';
 import '../widgets/app_icon_image.dart';
+import '../widgets/characters_sidebar.dart';
 import '../widgets/entity_sidebar.dart';
 import '../widgets/lazy_indexed_stack.dart';
 import '../widgets/pdf_sidebar.dart';
@@ -38,6 +43,7 @@ import '../widgets/soundmap_sidebar.dart';
 import 'database/database_screen.dart';
 import 'map/world_map_screen.dart';
 import 'mind_map/mind_map_screen.dart';
+import 'player/player_main_screen.dart';
 import 'session/session_screen.dart';
 
 /// Ana ekran — Python ui/main_root.py karşılığı.
@@ -53,8 +59,8 @@ class MainScreen extends ConsumerStatefulWidget {
 class _MainScreenState extends ConsumerState<MainScreen>
     with WidgetsBindingObserver {
   int _tabIndex = 0;
-  bool _editMode = false;
   String? _selectedEntityId;
+  String? _selectedEntityPanel;
 
   // Left sidebar state
   bool _sidebarOpen = true;
@@ -235,6 +241,26 @@ class _MainScreenState extends ConsumerState<MainScreen>
     );
   }
 
+  /// Phone overflow-menu projection toggle. Mirrors [ProjectionStatusIcon]:
+  /// deactivate when active, otherwise activate the first available output
+  /// (screencast picker on mobile, second window on desktop layouts).
+  Future<void> _togglePhoneProjection() async {
+    final controller = ref.read(projectionControllerProvider.notifier);
+    final state = ref.read(projectionControllerProvider);
+    if (state.isActive) {
+      controller.deactivateOutput();
+      return;
+    }
+    final available = ref.read(availableProjectionOutputsProvider);
+    if (available.isEmpty) return;
+    final mode = available.first;
+    if (mode == ProjectionOutputMode.screencast) {
+      await _openScreencastPicker(controller);
+    } else {
+      await controller.activateOutput(mode);
+    }
+  }
+
   void _showLandscapeNavSheet(List<String> tabLabels, DmToolColors palette) {
     showModalBottomSheet(
       context: context,
@@ -246,7 +272,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Wrap(
             alignment: WrapAlignment.center,
-            children: List.generate(6, (i) {
+            children: List.generate(7, (i) {
               final isActive = i == _tabIndex;
               return InkWell(
                 onTap: () {
@@ -291,13 +317,31 @@ class _MainScreenState extends ConsumerState<MainScreen>
     Icons.map,              // Map
     Icons.picture_as_pdf,   // PDF (mobile/tablet only)
     Icons.music_note,       // Soundmap (mobile/tablet only)
+    Icons.people,           // Characters (mobile/tablet only)
   ];
 
   @override
   Widget build(BuildContext context) {
+    // Online player ise tamamen ayrı, sade shell. role henüz resolve
+    // olmadıysa DM görünümü ile başlar; resolve sonrası rebuild ile
+    // PlayerMainScreen'e geçer.
+    final role =
+        ref.watch(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
+    if (role == WorldRole.player) {
+      return const PlayerMainScreen();
+    }
+
     final l10n = L10n.of(context)!;
     final palette = Theme.of(context).extension<DmToolColors>()!;
     final campaignName = ref.read(activeCampaignProvider) ?? '';
+
+    // Fire-and-forget: trigger live-link sync against installed packages
+    // when the active campaign loads. Picks up new SRD pack content on
+    // app restart without the user opening Packages settings.
+    ref.watch(activeCampaignSyncProvider);
+    // Online: aktif world Supabase'e abone olur + initial state seed olur.
+    // Offline veya member değilse no-op.
+    ref.watch(worldSyncAutoSubscribeProvider);
     final screen = getScreenType(context);
     final isLandscapePhone = screen == ScreenType.phone &&
         MediaQuery.orientationOf(context) == Orientation.landscape;
@@ -309,17 +353,21 @@ class _MainScreenState extends ConsumerState<MainScreen>
       l10n.tabMap,
       l10n.tabPdf,
       l10n.tabSoundmap,
+      'Characters',
     ];
 
     // Listen for entity navigation requests from anywhere in the app
     ref.listen<String?>(entityNavigationProvider, (_, entityId) {
       if (entityId != null) {
+        final panel = ref.read(entityNavigationTargetPanelProvider);
         setState(() {
           _selectedEntityId = entityId;
+          _selectedEntityPanel = panel;
           _tabIndex = 0;
         });
         _persistUiState();
         ref.read(entityNavigationProvider.notifier).state = null;
+        ref.read(entityNavigationTargetPanelProvider.notifier).state = null;
       }
     });
 
@@ -347,6 +395,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
     ref.watch(projectionBattleMapSyncProvider);
     ref.watch(projectionEntitySyncProvider);
 
+    final editMode = ref.watch(editModeProvider);
+
     // Listen for projection panel navigation requests
     ref.listen<bool?>(projectionPanelNavigationProvider, (_, value) {
       if (value == true) {
@@ -356,18 +406,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
             );
         ref.read(projectionPanelNavigationProvider.notifier).state = null;
       }
-    });
-
-    // Lazy template-sync drift prompt — fired by the campaign loader when
-    // the active campaign was created from a template that has since been
-    // edited. Offers the user a one-click "Update" or "Skip for now".
-    ref.listen<TemplateUpdatePrompt?>(pendingTemplateUpdateProvider,
-        (_, prompt) {
-      if (prompt == null) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _showTemplateUpdatePrompt(prompt);
-      });
     });
 
     // Desktop'ta tab index 4/5 geçersiz — guard
@@ -384,13 +422,14 @@ class _MainScreenState extends ConsumerState<MainScreen>
       index: _tabIndex,
       children: [
         DatabaseScreen(
-          editMode: _editMode,
+          editMode: editMode,
           selectedEntityId: _selectedEntityId,
+          selectedEntityPanel: _selectedEntityPanel,
           onEntitySelected: (id) => setState(() => _selectedEntityId = id),
         ),
         const SessionScreen(),
         MindMapScreen(
-          editMode: _editMode,
+          editMode: editMode,
           onOpenEntity: (entityId) {
             setState(() {
               _selectedEntityId = entityId;
@@ -419,6 +458,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
         ),
         // Soundmap tab (mobile/tablet only — desktop uses overlay sidebar)
         SoundmapSidebar(palette: palette),
+        // Characters tab (mobile/tablet only — desktop uses overlay sidebar)
+        CharactersSidebar(palette: palette),
       ],
     );
 
@@ -448,11 +489,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
           children: [
             const AppIconImage(size: 22),
             const SizedBox(width: 8),
-            Flexible(
+            Expanded(
               child: Text(
                 campaignName,
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                overflow: TextOverflow.fade,
               ),
             ),
           ],
@@ -467,20 +509,26 @@ class _MainScreenState extends ConsumerState<MainScreen>
           // Edit Mode toggle
           IconButton(
             icon: Icon(
-              _editMode ? Icons.lock_open : Icons.lock,
-              color: _editMode ? palette.tokenBorderActive : null,
+              editMode ? Icons.edit : Icons.visibility,
+              color: editMode ? palette.tokenBorderActive : null,
             ),
-            tooltip: 'Edit Mode',
-            onPressed: () => setState(() => _editMode = !_editMode),
+            tooltip: editMode ? 'Edit mode' : 'View mode',
+            onPressed: () => ref
+                .read(editModeProvider.notifier)
+                .update((s) => !s),
           ),
-          // Player window status — always visible, jumps to projection panel
-          const ProjectionStatusIcon(),
+          // Player window status — desktop/tablet only. Phone collapses it
+          // into the overflow menu below ("Player Window") to save AppBar
+          // real estate.
+          if (screen != ScreenType.phone) const ProjectionStatusIcon(),
           // Phone: collapse infrequent actions into overflow menu
           if (screen == ScreenType.phone) ...[
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, size: 20),
               onSelected: (action) {
                 switch (action) {
+                  case 'projection':
+                    _togglePhoneProjection();
                   case 'media':
                     final mediaDir = ref.read(mediaDirectoryProvider);
                     final campaignId = ref.read(mediaCampaignIdProvider);
@@ -506,7 +554,31 @@ class _MainScreenState extends ConsumerState<MainScreen>
                     }
                 }
               },
-              itemBuilder: (_) => [
+              itemBuilder: (_) {
+                final projState = ref.read(projectionControllerProvider);
+                final projAvail = ref.read(availableProjectionOutputsProvider);
+                final projLabel = projState.isActive
+                    ? 'Close Player Window'
+                    : 'Open Player Window';
+                final canProject = projState.isActive || projAvail.isNotEmpty;
+                return [
+                  if (canProject)
+                    PopupMenuItem(
+                      value: 'projection',
+                      child: Row(children: [
+                        Icon(
+                          projState.isActive
+                              ? Icons.cast_connected
+                              : Icons.cast,
+                          size: 18,
+                          color: projState.isActive
+                              ? palette.tokenBorderActive
+                              : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(projLabel),
+                      ]),
+                    ),
                 const PopupMenuItem(value: 'media', child: Row(children: [Icon(Icons.photo_library_outlined, size: 18), SizedBox(width: 8), Text('Media Gallery')])),
                 PopupMenuItem(value: 'import', child: Row(children: [const Icon(Icons.inventory_2, size: 18), const SizedBox(width: 8), Text(l10n.importPackage)])),
                 const PopupMenuDivider(),
@@ -525,7 +597,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 const PopupMenuItem(value: 'lang:fr', child: Text('Français')),
                 const PopupMenuDivider(),
                 const PopupMenuItem(value: 'bug', child: Row(children: [Icon(Icons.bug_report_outlined, size: 18), SizedBox(width: 8), Text('Report a Bug')])),
-              ],
+                ];
+              },
             ),
           ] else ...[
             // Desktop/Tablet: show all buttons
@@ -737,6 +810,19 @@ class _MainScreenState extends ConsumerState<MainScreen>
                                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                                 padding: const EdgeInsets.symmetric(horizontal: 8),
                               ),
+                              // Characters sidebar toggle
+                              IconButton(
+                                icon: Icon(
+                                  _rightSidebar == RightSidebar.characters ? Icons.people : Icons.people_outline,
+                                  size: 18,
+                                ),
+                                tooltip: _rightSidebar == RightSidebar.characters ? 'Close Characters' : 'Open Characters',
+                                color: _rightSidebar == RightSidebar.characters ? palette.tabIndicator : palette.tabText,
+                                onPressed: () { setState(() => _rightSidebar = _rightSidebar == RightSidebar.characters ? RightSidebar.none : RightSidebar.characters); _persistUiState(); },
+                                iconSize: 18,
+                                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                              ),
                             ],
                           ),
                         ),
@@ -786,16 +872,19 @@ class _MainScreenState extends ConsumerState<MainScreen>
                             ),
                           ],
                         ),
-                        child: _rightSidebar == RightSidebar.pdf
-                            ? PdfSidebar(
-                                openPaths: _pdfOpenPaths,
-                                activeIndex: _pdfActiveIndex,
-                                palette: palette,
-                                onTabSelect: (i) { setState(() => _pdfActiveIndex = i); _persistUiState(); },
-                                onTabClose: _closePdfTab,
-                                onOpenFile: _openPdfTab,
-                              )
-                            : SoundmapSidebar(palette: palette),
+                        child: switch (_rightSidebar) {
+                          RightSidebar.pdf => PdfSidebar(
+                              openPaths: _pdfOpenPaths,
+                              activeIndex: _pdfActiveIndex,
+                              palette: palette,
+                              onTabSelect: (i) { setState(() => _pdfActiveIndex = i); _persistUiState(); },
+                              onTabClose: _closePdfTab,
+                              onOpenFile: _openPdfTab,
+                            ),
+                          RightSidebar.soundmap => SoundmapSidebar(palette: palette),
+                          RightSidebar.characters => CharactersSidebar(palette: palette),
+                          RightSidebar.none => const SizedBox.shrink(),
+                        },
                       ),
                     ),
                   ],
@@ -816,7 +905,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                       onDestinationSelected: (i) { setState(() => _tabIndex = i); _persistUiState(); },
                       labelType: NavigationRailLabelType.selected,
                       destinations: List.generate(
-                        6,
+                        7,
                         (i) => NavigationRailDestination(
                           icon: Icon(_tabIcons[i]),
                           label: Text(tabLabels[i]),
@@ -839,110 +928,30 @@ class _MainScreenState extends ConsumerState<MainScreen>
       // FAB for mobile/tablet entity sidebar
       floatingActionButton: (screen != ScreenType.desktop && _tabIndex == 0)
           ? FloatingActionButton.small(
+              heroTag: 'main_screen_entity_sidebar_fab',
               onPressed: _showMobileSidebar,
               child: const Icon(Icons.list),
             )
           : null,
 
-      // Mobile bottom nav (portrait only — landscape uses burger menu overlay)
+      // Mobile bottom nav (portrait only — landscape uses burger menu overlay).
+      // Display order: database, session, mindmap, map, characters, soundmap,
+      // pdf. Horizontal scroll so labels don't compress at narrow widths.
       bottomNavigationBar: (screen == ScreenType.phone && !isLandscapePhone)
-          ? NavigationBar(
-              selectedIndex: _tabIndex,
-              onDestinationSelected: (i) { setState(() => _tabIndex = i); _persistUiState(); },
-              destinations: List.generate(
-                6,
-                (i) => NavigationDestination(
-                  icon: Icon(_tabIcons[i]),
-                  label: tabLabels[i],
-                ),
-              ),
+          ? _MobileBottomTabBar(
+              physicalOrder: const [0, 1, 2, 3, 6, 5, 4],
+              tabIcons: _tabIcons,
+              tabLabels: tabLabels,
+              selectedPhysicalIndex: _tabIndex,
+              onSelect: (i) {
+                setState(() => _tabIndex = i);
+                _persistUiState();
+              },
+              palette: palette,
             )
           : null,
     ),
     );
-  }
-
-  /// Surfaces the lazy template-sync drift prompt when a campaign was loaded
-  /// against a stale template hash. The user picks Update (apply the new
-  /// template) or Ignore (dismiss until the template changes again).
-  Future<void> _showTemplateUpdatePrompt(TemplateUpdatePrompt prompt) async {
-    final l10n = L10n.of(context)!;
-    final pendingNotifier = ref.read(pendingTemplateUpdateProvider.notifier);
-    final result = await showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.templateDriftTitle),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.templateDriftBody(prompt.templateName)),
-              if (prompt.diffSummary.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(l10n.templateDriftChanges,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                ...prompt.diffSummary.map((line) => Padding(
-                  padding: const EdgeInsets.only(left: 8, bottom: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('\u2022 ',
-                          style: TextStyle(fontSize: 13)),
-                      Expanded(
-                          child:
-                              Text(line, style: const TextStyle(fontSize: 13))),
-                    ],
-                  ),
-                )),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, 'ignore'),
-            child: Text(l10n.templateDriftIgnore),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, 'update'),
-            child: Text(l10n.templateDriftUpdate),
-          ),
-        ],
-      ),
-    );
-
-    pendingNotifier.state = null;
-
-    if (result == 'ignore') {
-      await ref
-          .read(activeCampaignProvider.notifier)
-          .dismissTemplateUpdate(prompt.newHash);
-      return;
-    }
-    if (result != 'update') return;
-
-    try {
-      await ref
-          .read(activeCampaignProvider.notifier)
-          .applyTemplateUpdate(prompt.newTemplate);
-      ref.invalidate(worldSchemaProvider);
-      ref.invalidate(entityProvider);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.templateDriftUpdated)),
-        );
-      }
-    } catch (e, st) {
-      debugPrint('Template apply failed: $e\n$st');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Update failed: $e')),
-        );
-      }
-    }
   }
 
   bool _handleGlobalKey(KeyEvent event) {
@@ -960,7 +969,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
     // Ctrl+E: always toggle edit mode (even when a text field has focus)
     if (event.logicalKey == LogicalKeyboardKey.keyE) {
-      setState(() => _editMode = !_editMode);
+      ref.read(editModeProvider.notifier).update((s) => !s);
       return true;
     }
 
@@ -995,6 +1004,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
     // Ctrl+M: toggle Soundmap sidebar
     if (event.logicalKey == LogicalKeyboardKey.keyM) {
       setState(() => _rightSidebar = _rightSidebar == RightSidebar.soundmap ? RightSidebar.none : RightSidebar.soundmap);
+      _persistUiState();
+      return true;
+    }
+
+    // Ctrl+H: toggle Characters sidebar
+    if (event.logicalKey == LogicalKeyboardKey.keyH) {
+      setState(() => _rightSidebar = _rightSidebar == RightSidebar.characters ? RightSidebar.none : RightSidebar.characters);
       _persistUiState();
       return true;
     }
@@ -1108,6 +1124,100 @@ class _DragHandle extends StatelessWidget {
               color: palette.sidebarDivider,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileBottomTabBar extends StatelessWidget {
+  final List<int> physicalOrder;
+  final List<IconData> tabIcons;
+  final List<String> tabLabels;
+  final int selectedPhysicalIndex;
+  final ValueChanged<int> onSelect;
+  final DmToolColors palette;
+
+  const _MobileBottomTabBar({
+    required this.physicalOrder,
+    required this.tabIcons,
+    required this.tabLabels,
+    required this.selectedPhysicalIndex,
+    required this.onSelect,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: palette.tabBg,
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final i in physicalOrder)
+                  _TabItem(
+                    icon: tabIcons[i],
+                    label: tabLabels[i],
+                    active: i == selectedPhysicalIndex,
+                    onTap: () => onSelect(i),
+                    palette: palette,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TabItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+  final DmToolColors palette;
+
+  const _TabItem({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? palette.tabIndicator : palette.tabText;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: 76,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 24, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                color: color,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
         ),
       ),
     );

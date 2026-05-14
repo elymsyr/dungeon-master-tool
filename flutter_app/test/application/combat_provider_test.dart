@@ -48,8 +48,8 @@ void main() {
     });
 
     test('activeEncounter returns null when id does not match', () {
-      final s = CombatState(
-        encounters: const [Encounter(id: 'e1', name: 'Enc 1')],
+      const s = CombatState(
+        encounters: [Encounter(id: 'e1', name: 'Enc 1')],
         activeEncounterId: 'non-existent',
       );
       expect(s.activeEncounter, isNull);
@@ -58,8 +58,8 @@ void main() {
     test('activeEncounter returns the correct encounter', () {
       const enc1 = Encounter(id: 'e1', name: 'Enc 1');
       const enc2 = Encounter(id: 'e2', name: 'Enc 2');
-      final s = CombatState(
-        encounters: const [enc1, enc2],
+      const s = CombatState(
+        encounters: [enc1, enc2],
         activeEncounterId: 'e2',
       );
       expect(s.activeEncounter, enc2);

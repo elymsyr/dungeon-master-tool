@@ -33,6 +33,15 @@ class MetadataListTile extends StatelessWidget {
   /// Ek header badge'leri — "Built-in" gibi metadata'ya bağlı olmayan flag'ler.
   final List<Widget> trailingBadges;
 
+  /// Optional chip strip rendered *in place of* the tag wrap. Character
+  /// tiles pass the HP/Species/Class/Level/AC/User stat chips here so the
+  /// row shows live combat info instead of authored tags.
+  final Widget? infoChips;
+
+  /// Small icons overlaid on the top-right corner of the card cover area.
+  /// Used for role/online status indicators on world cards.
+  final List<Widget> topRightOverlay;
+
   const MetadataListTile({
     super.key,
     required this.icon,
@@ -46,6 +55,8 @@ class MetadataListTile extends StatelessWidget {
     required this.onSettings,
     this.layout = MetadataTileLayout.leftAvatar,
     this.trailingBadges = const [],
+    this.infoChips,
+    this.topRightOverlay = const [],
   });
 
   bool get _hasImage =>
@@ -90,7 +101,21 @@ class MetadataListTile extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _topCover(),
+        topRightOverlay.isEmpty
+            ? _topCover()
+            : Stack(
+                children: [
+                  _topCover(),
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: topRightOverlay,
+                    ),
+                  ),
+                ],
+              ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
           child: Row(
@@ -203,7 +228,10 @@ class MetadataListTile extends StatelessWidget {
             style: TextStyle(fontSize: 11, color: palette.tabText),
           ),
         ],
-        if (tags.isNotEmpty) ...[
+        if (infoChips != null) ...[
+          const SizedBox(height: 4),
+          infoChips!,
+        ] else if (tags.isNotEmpty) ...[
           const SizedBox(height: 4),
           Wrap(
             spacing: 4,
@@ -215,7 +243,7 @@ class MetadataListTile extends StatelessWidget {
                           horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
                         color: palette.sidebarFilterBg,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: palette.chr,
                       ),
                       child: Text(t,
                           style: TextStyle(
