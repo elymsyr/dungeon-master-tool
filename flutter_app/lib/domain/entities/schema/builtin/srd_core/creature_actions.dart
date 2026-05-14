@@ -2022,4 +2022,10 @@ List<Map<String, dynamic>> srdCreatureActions() => [
         description:
             'Take one of the following: Sleight of Hand (Dex check to pick a lock or disarm a trap with Thieves\' Tools or pick a pocket); or Use an Object (take the Utilize action, or take the Magic action to use a magic item that requires that action).',
       ),
+      _a(
+        name: 'Cunning Action',
+        actionType: 'Bonus Action',
+        description:
+            'Take the Dash, Disengage, or Hide action as a Bonus Action.',
+      ),
     ];

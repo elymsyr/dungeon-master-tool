@@ -63,6 +63,13 @@ abstract class EffectiveCharacter with _$EffectiveCharacter {
     @Default(ResolvedProficiencies()) ResolvedProficiencies proficiencies,
     @Default(0) int acBonus,
     @Default(0) int speedBonus,
+    /// Non-walking speeds in feet, keyed by mode (`fly`, `swim`, `climb`,
+    /// `burrow`). Populated by effects like `climb_speed_equals_speed`
+    /// (Spider Climb, Second-Story Work) and explicit `fly_speed` payloads
+    /// (Dragon Wings). The sheet renders one row per mode. A `0` value is a
+    /// no-op — the resolver only writes positive entries. When two sources
+    /// supply the same mode, the larger value wins.
+    @Default({}) Map<String, int> extraSpeeds,
     @Default(0) int hpBonusFlat,
     @Default(0) int hpBonusPerLevel,
     @Default(0) int initiativeBonus,
@@ -71,10 +78,32 @@ abstract class EffectiveCharacter with _$EffectiveCharacter {
     @Default([]) List<ResolvedFeatureRow> activeFeatures,
     @Default([]) List<ResolvedInventoryItem> inventory,
     @Default([]) List<String> senseEntityIds,
+    /// Per-sense range overrides in feet, keyed by sense entity id. Populated
+    /// by `sense_grant` / `truesight_grant` / `blindsight_grant` effects that
+    /// carry a `range_ft` payload (Drow Superior Darkvision 120ft, Boon of
+    /// Truesight 60ft). When two sources grant the same sense the larger
+    /// range wins. Senses without an explicit range stay out of this map —
+    /// the sheet falls back to the sense entity's intrinsic default.
+    @Default({}) Map<String, int> senseRanges,
     @Default([]) List<String> damageResistanceIds,
     @Default([]) List<String> damageImmunityIds,
     @Default([]) List<String> damageVulnerabilityIds,
     @Default([]) List<String> conditionImmunityIds,
+    /// Grants that only apply while the character is in a runtime state
+    /// (Raging, Wild Shape, Aura active, etc.). Resolver routes effect rows
+    /// here when the `has_state` predicate is the only failing predicate.
+    /// Each entry: `{state: String, kind: String, ids: [String], source:
+    /// String}` — `kind` matches the original effect kind (`damage_resistance`,
+    /// `condition_immunity_grant`, ...). Sheet renders these as gated chips
+    /// alongside the always-on lists; combat tracker flips them on/off when
+    /// the state engages.
+    @Default([]) List<Map<String, dynamic>> conditionalGrants,
+    /// Sources that grant temp HP via a trigger (rest, attack hit, kill,
+    /// etc.). Resolver collects every `temp_hp_grant` effect row that passes
+    /// non-state predicates and stores the source + raw effect map for the
+    /// sheet to render as text. The actual write to `temp_hp` happens
+    /// runtime — combat tracker / button press — not here.
+    @Default([]) List<Map<String, dynamic>> tempHpGrants,
     @Default([]) List<String> expertiseSkillIds,
     @Default([]) List<String> alwaysPreparedSpellIds,
     /// Feat IDs auto-granted by class level / species / background that the

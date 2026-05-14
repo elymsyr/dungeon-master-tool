@@ -925,6 +925,26 @@ class _CharacterEditorScreenState
     collectSpells(character.entity.fields['spells_known']);
     collectSpells(character.entity.fields['prepared_spells']);
 
+    final existingSkillNames = <String>{};
+    final expertiseSkillNames = <String>{};
+    final rawSkills = character.entity.fields['skills'];
+    if (rawSkills is Map) {
+      final rows = rawSkills['rows'];
+      if (rows is List) {
+        for (final row in rows) {
+          if (row is! Map) continue;
+          final isExp = row['expertise'] == true;
+          if (row['proficient'] == true || isExp) {
+            final n = row['name'];
+            if (n is String && n.isNotEmpty) {
+              existingSkillNames.add(n);
+              if (isExp) expertiseSkillNames.add(n);
+            }
+          }
+        }
+      }
+    }
+
     final resolution = await showPendingChoiceResolver(
       context,
       choice: choice,
@@ -932,6 +952,8 @@ class _CharacterEditorScreenState
       abilityScores: abilityScores,
       existingFeatIds: existingFeatIds,
       existingSpellIds: existingSpellIds,
+      existingSkillNames: existingSkillNames,
+      expertiseSkillNames: expertiseSkillNames,
     );
     if (!mounted || resolution == null) return;
 
@@ -978,6 +1000,9 @@ class _CharacterEditorScreenState
 
     // Feat / Fighting Style — append to feat_ids + visible feats list.
     final featId = resolution.featId;
+    PendingChoice? followOnFeatSkillPick;
+    PendingChoice? followOnFeatExpertisePick;
+    PendingChoice? followOnFeatAsi;
     if (featId != null && featId.isNotEmpty) {
       final list = updated['feat_ids'];
       final next = list is List
@@ -997,6 +1022,47 @@ class _CharacterEditorScreenState
       });
       if (!shown) featsList.add(featId);
       updated['feats'] = featsList;
+      // Scan chosen feat for follow-on `bonus_skill_pick_count` (e.g. Skill
+      // Expert). Queue a skillProficiency pending choice when present so the
+      // player picks the N skills on the spot — mirrors the subclass-pick
+      // hook used for Lore L3.
+      final ents = _readEntitiesFor(character);
+      final featEntity = ents[featId];
+      final skillPickCount =
+          _asInt(featEntity?.fields['bonus_skill_pick_count']);
+      if (skillPickCount > 0) {
+        followOnFeatSkillPick = newPendingChoice(
+          kind: PendingChoiceKind.skillProficiency,
+          level: choice.level,
+          classId: choice.classId,
+          classLabel: choice.classLabel,
+          count: skillPickCount,
+        );
+      }
+      final expertisePickCount =
+          _asInt(featEntity?.fields['bonus_expertise_pick_count']);
+      if (expertisePickCount > 0) {
+        followOnFeatExpertisePick = newPendingChoice(
+          kind: PendingChoiceKind.expertise,
+          level: choice.level,
+          classId: choice.classId,
+          classLabel: choice.classLabel,
+          count: expertisePickCount,
+        );
+      }
+      // Feat-side ASI sub-pick. Triggers for any feat with `asi_amount > 0`
+      // when taken via the asiOrFeat resolution path — Resilient (also grants
+      // save prof), Skill Expert, Epic Boons, and most General feats.
+      final featAsiAmount = _asInt(featEntity?.fields['asi_amount']);
+      if (featAsiAmount > 0) {
+        followOnFeatAsi = newPendingChoice(
+          kind: PendingChoiceKind.featAsi,
+          level: choice.level,
+          classId: choice.classId,
+          classLabel: choice.classLabel,
+          sourceEntityId: featId,
+        );
+      }
     }
 
     // Spell ids — append to spells_known.
@@ -1015,6 +1081,7 @@ class _CharacterEditorScreenState
     // Subclass id — append to subclass_refs (multiclass supports many
     // entries; pick keeps prior subclasses for other classes intact).
     final subId = resolution.subclassId;
+    PendingChoice? followOnSkillPick;
     if (subId != null && subId.isNotEmpty) {
       final list = updated['subclass_refs'];
       final next = list is List
@@ -1022,6 +1089,21 @@ class _CharacterEditorScreenState
           : <String>[];
       if (!next.contains(subId)) next.add(subId);
       updated['subclass_refs'] = next;
+      // Bonus Proficiencies surface: if the chosen subclass declares
+      // `bonus_skill_pick_count`, queue a follow-on skillProficiency choice
+      // so the player picks the N skills the feature promises (Lore L3).
+      final ents = _readEntitiesFor(character);
+      final subEntity = ents[subId];
+      final pickCount = _asInt(subEntity?.fields['bonus_skill_pick_count']);
+      if (pickCount > 0) {
+        followOnSkillPick = newPendingChoice(
+          kind: PendingChoiceKind.skillProficiency,
+          level: choice.level,
+          classId: choice.classId,
+          classLabel: choice.classLabel,
+          count: pickCount,
+        );
+      }
     }
 
     // Weapon mastery ids — append to weapon_masteries.
@@ -1037,7 +1119,99 @@ class _CharacterEditorScreenState
       updated['weapon_masteries'] = next;
     }
 
+    // Skill ids — flip `skills.rows[i].proficient` to true for each picked
+    // skill, looked up by skill entity name against the row's `name`.
+    if (resolution.skillIds.isNotEmpty ||
+        resolution.expertiseSkillIds.isNotEmpty) {
+      final ents = _readEntitiesFor(character);
+      final profNames = <String>{
+        for (final id in resolution.skillIds) ?ents[id]?.name,
+      }..removeWhere((n) => n.isEmpty);
+      final expNames = <String>{
+        for (final id in resolution.expertiseSkillIds) ?ents[id]?.name,
+      }..removeWhere((n) => n.isEmpty);
+      if (profNames.isNotEmpty || expNames.isNotEmpty) {
+        final skillsRaw = updated['skills'];
+        final skills =
+            skillsRaw is Map ? Map<String, dynamic>.from(skillsRaw) : <String, dynamic>{};
+        final rowsRaw = skills['rows'];
+        final rows = rowsRaw is List
+            ? List<dynamic>.from(rowsRaw)
+            : <dynamic>[];
+        for (var i = 0; i < rows.length; i++) {
+          final row = rows[i];
+          if (row is! Map) continue;
+          final name = row['name'];
+          if (name is! String) continue;
+          final hitProf = profNames.contains(name);
+          final hitExp = expNames.contains(name);
+          if (!hitProf && !hitExp) continue;
+          final next = Map<String, dynamic>.from(row);
+          if (hitProf) next['proficient'] = true;
+          if (hitExp) {
+            next['proficient'] = true;
+            next['expertise'] = true;
+          }
+          rows[i] = next;
+        }
+        skills['rows'] = rows;
+        updated['skills'] = skills;
+      }
+    }
+
+    // Save-throw ability picks (Resilient via featAsi). Match on row's
+    // `ability` field (full name) — translate abbrevs to long names.
+    if (resolution.saveProfAbilityAbbrevs.isNotEmpty) {
+      const abbrevToName = <String, String>{
+        'STR': 'Strength',
+        'DEX': 'Dexterity',
+        'CON': 'Constitution',
+        'INT': 'Intelligence',
+        'WIS': 'Wisdom',
+        'CHA': 'Charisma',
+      };
+      final pickedNames = <String>{
+        for (final a in resolution.saveProfAbilityAbbrevs)
+          ?abbrevToName[a],
+      };
+      final savesRaw = updated['saving_throws'];
+      final saves = savesRaw is Map
+          ? Map<String, dynamic>.from(savesRaw)
+          : <String, dynamic>{};
+      final rowsRaw = saves['rows'];
+      final rows = rowsRaw is List ? List<dynamic>.from(rowsRaw) : <dynamic>[];
+      for (var i = 0; i < rows.length; i++) {
+        final row = rows[i];
+        if (row is! Map) continue;
+        final ability = row['ability'];
+        if (ability is! String) continue;
+        if (!pickedNames.contains(ability)) continue;
+        final next = Map<String, dynamic>.from(row);
+        next['proficient'] = true;
+        rows[i] = next;
+      }
+      saves['rows'] = rows;
+      updated['saving_throws'] = saves;
+    }
+
     _removePendingFromMap(updated, choice.id);
+    final followOns = <PendingChoice>[
+      ?followOnSkillPick,
+      ?followOnFeatSkillPick,
+      ?followOnFeatExpertisePick,
+      ?followOnFeatAsi,
+    ];
+    if (followOns.isNotEmpty) {
+      final raw = updated['pending_choices'];
+      final next = raw is List
+          ? List<Map<String, dynamic>>.from(
+              raw.whereType<Map>().map((m) => Map<String, dynamic>.from(m)))
+          : <Map<String, dynamic>>[];
+      for (final p in followOns) {
+        next.add(p.toMap());
+      }
+      updated['pending_choices'] = next;
+    }
     _mutate(character.copyWith(
       entity: character.entity.copyWith(fields: updated),
     ));

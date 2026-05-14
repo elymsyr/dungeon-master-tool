@@ -82,13 +82,13 @@ Body, Pounce, Charge, Siege Monster, Blood Frenzy, Undead Fortitude.
 
 | Feat | Field impact | Status | Fix |
 |------|--------------|--------|-----|
-| Tough | `hpBonusPerLevel` +2 | **MISSING** | one-line `hp_bonus_per_level: 2` |
+| Tough | `hpBonusPerLevel` +2 | ✓ SHIPPED 2026-05-14 | `hp_bonus_per_level: 2` |
 | Magic Initiate | cantrip + spell lists | **OK** | choice_group resolved |
 | Skilled | skill list | **OK** | |
 | Crafter | tool list | **OK** | (discount/speed out-of-scope) |
 | Musician | tool list | **OK** | (inspiration out-of-scope) |
 | Tavern Brawler | ASI | **OK** | (d4 unarmed die has no PC field — OUT until unarmed-strike die field added) |
-| Lucky | `resourcePools` (PB Luck Points/day) | **MISSING** | declare `resource_pool_grant` |
+| Lucky | `resourcePools` (PB Luck Points/day) | ✓ SHIPPED 2026-05-14 | `resource_pool_grant` w/ `pool:luck_points` + `count_formula: 'pb'`; resolver `_evalCountFormula` resolves PB |
 | Healer | (no field impact — Hit-Die reroll out-of-scope) | OUT | — |
 | Alert | (no field — initiative formula uses `initiativeBonus`, but Alert's +PB is roll-time) | OUT | — |
 | Savage Attacker | (reroll dmg, no field) | OUT | — |
@@ -99,17 +99,17 @@ ASI typed fields wire on every general feat. Non-ASI field impact only:
 
 | Feat | Field impact | Status |
 |------|--------------|--------|
-| Resilient | adds save proficiency | **MISSING** (post-pick `proficiency_grant: saving_throw`) |
-| Lightly Armored | adds Light armor cat to `armorCategoryIds` | **MISSING** |
-| Moderately Armored | adds Medium armor + Shield | **MISSING** |
-| Heavy Armor Master | adds Heavy armor proficiency | **MISSING** (the dmg reduction part is out-of-scope) |
-| Skill Expert | adds 1 skill + 1 expertise | **MISSING** (post-pick `proficiency_grant: skill` + `expertise_grant`) |
-| Fey-Touched | +1 INT/WIS/CHA + Misty Step + 1 L1 divination/enchantment always prepared | **PARTIAL** (ASI works; spell adds missing) |
-| Shadow-Touched | +1 INT/WIS/CHA + Invisibility + 1 L1 illusion/necromancy always prepared | **PARTIAL** (same) |
-| Telekinetic | +1 INT/WIS/CHA + Mage Hand cantrip | **PARTIAL** (cantrip add missing) |
-| Telepathic | +1 INT/WIS/CHA + Detect Thoughts always prepared | **PARTIAL** (spell add missing) |
+| Resilient | adds save proficiency | ✓ SHIPPED 2026-05-14 — `grants_save_prof_from_asi: true` triggers `featAsi` pending; resolution writes `saving_throws.rows[i].proficient = true` |
+| Lightly Armored | adds Light armor cat to `armorCategoryIds` | ✓ SHIPPED 2026-05-14 — `proficiency_grant` w/ target_kind `armor_category` (Light) |
+| Moderately Armored | adds Medium armor + Shield | ✓ SHIPPED 2026-05-14 — `proficiency_grant` Medium armor_category + Shield |
+| Heavy Armor Master | adds Heavy armor proficiency | OUT — SRD prereq already requires heavy armor proficiency; remaining dmg reduction is roll-time |
+| Skill Expert | adds 1 skill + 1 expertise | ✓ SHIPPED 2026-05-14 — both sides via `bonus_skill_pick_count: 1` + `bonus_expertise_pick_count: 1`; new `skillProficiency` + `expertise` pending choice kinds + dialog bodies |
+| Fey-Touched | +1 INT/WIS/CHA + Misty Step + 1 L1 divination/enchantment always prepared | ◐ Misty Step `spell_always_prepared` shipped; second L1 div/ench picker still open |
+| Shadow-Touched | +1 INT/WIS/CHA + Invisibility + 1 L1 illusion/necromancy always prepared | ◐ Invisibility `spell_always_prepared` shipped; second L1 illusion/necromancy picker still open |
+| Telekinetic | +1 INT/WIS/CHA + Mage Hand cantrip | ✓ SHIPPED — `cantrip_grant` Mage Hand wired |
+| Telepathic | +1 INT/WIS/CHA + Detect Thoughts always prepared | ✓ SHIPPED — `spell_always_prepared` Detect Thoughts wired |
 | Ritual Caster | adds rituals to spellbook (field) | **MISSING** (`spell_grant` rows for chosen list) |
-| Inspiring Leader | grants temp HP to N allies after rest | **STUB** (temp_hp_grant no-op; PC `temp_hp` field exists) |
+| Inspiring Leader | grants temp HP to N allies after rest | ✓ SHIPPED 2026-05-14 (`temp_hp_grant` declared, surfaced in Temp HP Grants chips; auto-apply UX pending) |
 | Elemental Adept | adds a damage-type tag to PC (no current field) | OUT (no PC-side field stores this) |
 | Martial Adept | adds maneuvers (no current field) | OUT (no maneuver-list field yet) |
 
@@ -122,8 +122,8 @@ Sniper, War Caster, Weapon Master, Athlete.
 
 | Style | Field impact | Status | Fix |
 |-------|--------------|--------|-----|
-| Defense | `acBonus +1` while armored | **MISSING** | declare `ac_bonus 1` with `equipped_armor_kind: not_none` predicate (predicate already supported) |
-| Blind Fighting | adds blindsight 10ft to senses | **MISSING** | declare `blindsight_grant` (sense entity needed) |
+| Defense | `acBonus +1` while armored | ✓ SHIPPED 2026-05-14 | `ac_bonus 1` w/ `equipped_armor_kind: not_none` predicate |
+| Blind Fighting | adds blindsight 10ft to senses | ✓ SHIPPED 2026-05-14 | `blindsight_grant` → `sense:Blindsight` w/ `range_ft: 10`; resolver writes max-wins to `senseRanges` |
 
 Out-of-scope (roll-time): Archery, Dueling, Great Weapon Fighting, Two-Weapon Fighting,
 Interception, Protection, Thrown Weapon Fighting, Unarmed Fighting.
@@ -132,8 +132,8 @@ Interception, Protection, Thrown Weapon Fighting, Unarmed Fighting.
 
 | Boon | Field impact | Status |
 |------|--------------|--------|
-| Boon of Truesight | senses list + truesight 60ft | **MISSING** — declare `truesight_grant` |
-| Boon of Night Spirit | conditional resistance addition | **STUB** (state-conditional, see §6 Tier 2) |
+| Boon of Truesight | senses list + truesight 60ft | ✓ SHIPPED 2026-05-14 — `truesight_grant` references Truesight 60ft sense entity |
+| Boon of Night Spirit | conditional resistance addition | ✓ SHIPPED 2026-05-14 — 11 damage_resistance rows w/ `has_state state:in_dim_or_darkness`; routed to `conditionalGrants`, surfaced in Conditional Grants block |
 
 Dropped (no field surface): Dimensional Travel, Spell Recall (no slot-recall pool yet), Fate, Combat Prowess, Irresistible Offense.
 
@@ -143,19 +143,19 @@ Field-impacting gaps only:
 
 | Feat | Field impact | Status |
 |------|--------------|--------|
-| Rage (Barbarian) | adds damage_resistance entries while raging | **PARTIAL** — predicate `has_state` returns false at resolve time, list never lights up |
-| Mindless Rage (Berserker L6) | adds `Charmed`/`Frightened` condition immunity while raging | **MISSING** — needs predicated entry + state predicate evaluator |
-| Cunning Action (Rogue) | adds 3 bonus-action refs to `grantedBonusActionIds` | **MISSING** — declare `granted_bonus_action_refs` for Dash/Disengage/Hide |
-| Slippery Mind (Rogue L15) | adds Wisdom + Charisma save prof | **PARTIAL** — verify both `proficiency_grant: saving_throw` rows ship |
-| Second-Story Work (Thief) | adds climb speed = walk | **STUB** (`climb_speed_equals_speed` no-op) |
-| Acrobatic Movement (Monk L9) | climb + swim = walk | **STUB** (same) |
-| Roving (Ranger L3) | adds +5 speed + climb + swim | **PARTIAL** — `speed_bonus` wired, swim/climb stubs |
-| Draconic Resilience (Sorcerer Sub) | `hp_max_bonus_total` + unarmored AC formula | **PARTIAL** — HP works, AC formula stored but not always evaluated |
-| Dragon Wings (Sorcerer Sub L14) | fly speed = walk | **STUB** (`fly_speed` no-op) |
+| Rage (Barbarian) | adds damage_resistance entries while raging | ✓ SHIPPED 2026-05-14 — state-conditional split routes BPS resistances to `conditionalGrants` w/ `state:raging` |
+| Mindless Rage (Berserker L6) | adds `Charmed`/`Frightened` condition immunity while raging | ✓ SHIPPED 2026-05-14 — 2× `condition_immunity_grant` w/ `state:raging` predicate |
+| Cunning Action (Rogue) | adds 3 bonus-action refs to `grantedBonusActionIds` | ✓ SHIPPED 2026-05-14 — `granted_bonus_action_grant` declared → Cunning Action creature-action |
+| Slippery Mind (Rogue L15) | adds Wisdom + Charisma save prof | ✓ VERIFIED 2026-05-14 — both `proficiency_grant: saving_throw` rows shipped (WIS + CHA) |
+| Second-Story Work (Thief) | adds climb speed = walk | ✓ SHIPPED 2026-05-14 — `climb_speed_equals_speed` resolves to walk speed at post-pass, chipped under Extra Speeds |
+| Acrobatic Movement (Monk L9) | walk_on_liquid + vertical surface movement | ✓ SHIPPED — `walk_on_liquid` w/ armor + shield predicates (RAW: no climb-speed grant in 2024 SRD) |
+| Roving (Ranger L3) | adds +5 speed + climb + swim | ✓ SHIPPED 2026-05-14 — speed_bonus +5, plus climb_speed_equals_speed + swim_speed_equals_speed routed through Extra Speeds |
+| Draconic Resilience (Sorcerer Sub) | `hp_max_bonus_total` + unarmored AC formula | ◐ HP works; AC formula now surfaced via new `Unarmored AC` row on `ResolvedGrantsCard` (sheet's AC field still manual — auto-set blocked on equipment-context evaluation) |
+| Dragon Wings (Sorcerer Sub L14) | fly speed = walk | ✓ SHIPPED 2026-05-14 — `fly_speed` declared, post-pass resolves to walk speed, chipped under Extra Speeds |
 | Aura of Courage (Paladin L10) | adds `Frightened` immunity while in aura | OUT (aura predicate runtime) |
-| Dark One's Blessing (Fiend Warlock) | writes to PC `temp_hp` | **STUB** (`temp_hp_grant` no-op) |
-| Divine Smite (Paladin L2) | adds Smite spell to `alwaysPreparedSpellIds` | **PARTIAL** (declared, verify presence) |
-| Hunter's Mark (Ranger Favored Enemy) | always-prepared spell | **PARTIAL** |
+| Dark One's Blessing (Fiend Warlock) | writes to PC `temp_hp` | ✓ SHIPPED 2026-05-14 — `temp_hp_grant` declared (`CHA_mod + warlock_level (min 1)`, trigger `on_reduce_creature_to_0_hp`); surfaced in Temp HP Grants chips |
+| Divine Smite (Paladin L2) | adds Smite spell to `alwaysPreparedSpellIds` | ✓ VERIFIED 2026-05-14 — `spell_always_prepared` Divine Smite present (feats_class.dart:906) |
+| Hunter's Mark (Ranger Favored Enemy) | always-prepared spell + free casts | ✓ VERIFIED 2026-05-14 — `spell_always_prepared` Hunter's Mark + `resource_pool_grant` pool:hunters_mark_no_slot_uses (wis_mod_min_1, long_rest) |
 | Signature Spells (Wizard L20) | always-prepared L3 spells + 1/short rest pool | **PARTIAL** |
 | Mystic Arcanum (Warlock) | adds L6–L9 spells + 1/long rest cast | **OK** (caster progression) |
 
@@ -172,13 +172,13 @@ passive regen (no HP-regen field stored).
 
 | Source | Field impact | Status |
 |--------|--------------|--------|
-| Drow | senses list — Superior Darkvision 120ft (range overrides default 60ft) | **STUB** — `sense_grant` has no `range_ft` payload; sheet renders single line |
+| Drow | senses list — Superior Darkvision 120ft (range overrides default 60ft) | ✓ SHIPPED 2026-05-14 — Drow subspecies `sense_grant` carries `range_ft: 120`; resolver writes max-wins to `senseRanges`; sheet senses chip shows range overlay |
 | High Elf | cantrip list — "a Wizard cantrip" of player choice | **MISSING** — declare `choice_group` with cantrip-from-list payload |
 | Goliath | `size` field at L5 (Large Form) | **MISSING** — no `size_override` effect kind; PC `size` field exists but never gets written |
 | Wood Elf | speed +5 + base = 35 | **OK** |
 | Stout Halfling | poison resistance | **OK** |
 | Mountain Dwarf | +2 flat HP | **OK** (via `hp_bonus_flat`) |
-| Hill Dwarf | Insight skill prof | **OK** |
+| Hill Dwarf | Insight skill prof + Dwarven Toughness (+1 HP/level) | ✓ SHIPPED 2026-05-14 — `granted_modifiers` now carries `hp_bonus_per_level: 1`; Insight prof already wired |
 | Lightfoot Halfling | Stealth skill prof | **OK** |
 | Half-Orc legacy | Intimidation prof | **OK** |
 | Standard Human legacy | +1 to all six abilities | **OK** |
@@ -199,76 +199,79 @@ already declared in trait).
 Only items missing/partial; OK rows omitted.
 
 ### Barbarian
-- **Rage (L1)** — `damage_resistance` rows w/ state predicate: **PARTIAL** (predicate
-  drops at resolve). Fix: emit `conditionalDamageResistances` on EffectiveCharacter so
-  sheet can render gated entries.
-- **Primal Champion (L20)** — STR/CON cap raised to 24. **MISSING** — needs ability cap
-  override path (currently hardcoded to 20 in `applyEffect`).
+- **Rage (L1)** — `damage_resistance` rows w/ state predicate: ✓ SHIPPED 2026-05-14 — state-predicate split routes BPS resistances to `EffectiveCharacter.conditionalGrants` w/ `state:raging`; sheet's `_conditionalGrantsBlock` renders them.
+- **Primal Champion (L20)** — STR/CON cap raised to 24: ✓ SHIPPED 2026-05-14 — STR/CON +4 max:25 declared.
 
 ### Bard
-- **Bardic Inspiration (L1)** — `resource_pool_grant` max OK. Pool current value
-  decrement on use is field mutation — **PARTIAL** (no spend UI).
+- **Bardic Inspiration (L1)** — pool max ✓ VERIFIED — `resource_pool_grant pool:bardic_inspiration` w/ `count_formula: cha_mod_min_1`. Pool current value decrement on use Tier 4 (no spend UI). Die-size scaling (d6→d8→d10→d12) is roll-time, OUT.
 - **Magical Secrets (L10)** — adds spells from any list to `grantedSpellIds`.
   **MISSING** (`choice_group` not authored).
 
 ### Cleric
-- **Divine Order (L1)** — Protector adds Martial weapon cat + heavy armor; Thaumaturge
-  adds a cantrip + spell-save bonus to one cantrip cast/turn. Field impact:
-  proficiency lists OR cantrip list. **MISSING** (no pending choice + no post-pick
-  effect rows).
-- **Channel Divinity (L2)** — pool max **OK**; current-value spend **PARTIAL**.
+- **Divine Order (L1)** — Protector adds Martial weapon cat + Heavy armor; Thaumaturge
+  adds a cantrip + spell-save bonus to one cantrip cast/turn. ✓ SHIPPED 2026-05-14 —
+  new `PendingChoiceKind.divineOrder` (plumbed through `LevelUpPlan.isDivineOrderLevel`,
+  pendingChoicesFromPlan emission, resolver dialog body, seed-on-creation in wizard's
+  `buildSeedFields`). Two pickable feats authored under new `feat-category: Divine Order`:
+  Protector emits `proficiency_grant` rows for Martial weapons + Heavy armor; Thaumaturge
+  declares `cantrip_count_bonus: 1` (free-pick cantrip surface still pending — kind is
+  recognized as no-op by resolver today).
+- **Channel Divinity (L2)** — pool max ✓ SHIPPED 2026-05-14 — switched from hardcoded 2 to `scales_with` Cleric-level table `[(2,2),(6,3),(18,4)]`; current-value spend Tier 4.
+- **Divine Intervention (L10)** — pool max ✓ SHIPPED 2026-05-14 — `resource_pool_grant pool:divine_intervention` (1/long_rest). Spend UX Tier 4.
 
 ### Druid
 - **Wild Companion (L2)** — slot→Find Familiar conversion mutates current slot map.
   **STUB** (no current-slot-decrement consumer; field exists).
 
 ### Fighter
-- **Second Wind (L1)** — pool max **OK**; spend **PARTIAL**.
-- **Action Surge (L2)** — pool max **OK**; spend **PARTIAL**.
-- **Indomitable (L9)** — pool max **PARTIAL**.
+- **Second Wind (L1)** — pool max ✓ VERIFIED — `scales_with` Fighter `[(1,2),(4,3),(10,4)]`. Spend Tier 4.
+- **Action Surge (L2)** — pool max ✓ VERIFIED — `scales_with` Fighter `[(2,1),(17,2)]`. Spend Tier 4.
+- **Indomitable (L9)** — pool max ✓ SHIPPED 2026-05-14 — `resource_pool_grant pool:indomitable_uses` w/ `scales_with` Fighter-level table `[(9,1),(13,2),(17,3)]`, long_rest recharge. Spend UI deferred to Tier 4.
 
 ### Monk
-- **Unarmored Defense (L1)** — `unarmored_ac_formula` stored; sheet evaluation
-  inconsistent. **PARTIAL**.
-- **Monk's Focus (L2)** — Ki pool **PARTIAL**.
-- **Acrobatic Movement (L9)** — climb/swim = walk. **STUB**.
+- **Unarmored Defense (L1)** — `unarmored_ac_formula` stored; surfaced as text formula via `ResolvedGrantsCard._unarmoredFormulasBlock`. Sheet's AC field still manual; auto-set requires equipment-context evaluation. ◐ partial.
+- **Monk's Focus (L2)** — Focus pool ✓ VERIFIED 2026-05-14 — `resource_pool_grant pool:focus_points` (monk_level, short_rest); spend UI Tier 4.
+- **Acrobatic Movement (L9)** — walk_on_liquid + vertical surface movement: ✓ SHIPPED — `walk_on_liquid` w/ armor + shield predicates. (RAW 2024: not a climb-speed grant.)
 
 ### Paladin
-- **Lay on Hands (L1)** — pool max **OK**; spend **PARTIAL**.
-- **Divine Smite (L2)** — `spell_always_prepared` Smite spell. **PARTIAL** (declared,
-  verify).
+- **Lay on Hands (L1)** — pool max ✓ VERIFIED — `resource_pool_grant pool:lay_on_hands_hp` w/ `count_formula: paladin_level_x5`. Spend Tier 4.
+- **Divine Smite (L2)** — `spell_always_prepared` Smite spell. ✓ VERIFIED 2026-05-14.
+- **Channel Divinity (Paladin L3)** — pool max ✓ SHIPPED 2026-05-14 — upgraded to `scales_with` Paladin-level table `[(3,2),(11,3)]` on dedicated `pool:paladin_channel_divinity` (separate from Cleric's pool to keep multiclass max independent).
+- **Abjure Foes (L9)** — pool max ✓ SHIPPED 2026-05-14 — `resource_pool_grant pool:abjure_foes` (1/long_rest). Spend UX Tier 4.
+- **Holy Nimbus (Devotion L20)** — pool max ✓ SHIPPED 2026-05-14 — `resource_pool_grant pool:holy_nimbus` (1/long_rest). Spend UX Tier 4. Aura damage emission still combat-tracker territory (OUT).
 - **Restoring Touch (L14)** — removes condition ids from PC `active_conditions` list via pool spend. **STUB** (consumer not wired).
 
 ### Ranger
-- **Favored Enemy (L1)** — Hunter's Mark always prepared + free casts/day (pool). 
-  **PARTIAL** (always prepared OK, pool of free casts not declared).
-- **Roving (L3)** — speed +5 + swim/climb. **PARTIAL** (speed_bonus OK, others stub).
-- **Tireless (L10)** — temp HP. **STUB**.
+- **Favored Enemy (L1)** — Hunter's Mark always prepared + free casts/day (pool): ✓ VERIFIED 2026-05-14 — both rows present.
+- **Roving (L3)** — speed +5 + swim/climb: ✓ SHIPPED 2026-05-14 — speed_bonus +5, plus `climb_speed_equals_speed` + `swim_speed_equals_speed` routed through Extra Speeds.
+- **Tireless (L10)** — temp HP: ✓ SHIPPED 2026-05-14 — `resource_pool_grant` (pool:tireless_temp_hp_uses, wis_mod_min_1, long_rest) + `temp_hp_grant` (1d8 + WIS_mod, magic_action_self) declared.
 - **Nature's Veil (L14)** — Invisibility status on PC. OUT (no `active_conditions` writer wired; runtime).
 
 ### Rogue
-- **Cunning Action (L2)** — `granted_bonus_action_refs` for Dash/Disengage/Hide.
-  **MISSING** (declare three bonus-action refs).
-- **Slippery Mind (L15)** — adds WIS + CHA save prof. **PARTIAL**.
+- **Cunning Action (L2)** — bonus-action grant: ✓ SHIPPED 2026-05-14 — `granted_bonus_action_grant` → "Cunning Action" creature-action (Bonus Action). SRD 2024 packs Dash/Disengage/Hide as a single bonus-action option, so a single creature-action covers it.
+- **Slippery Mind (L15)** — adds WIS + CHA save prof: ✓ VERIFIED 2026-05-14 — both `proficiency_grant: saving_throw` rows present.
+- **Stroke of Luck (L20)** — pool max ✓ SHIPPED 2026-05-14 — `resource_pool_grant pool:stroke_of_luck` (1/short_rest). Spend UX Tier 4.
 
 ### Sorcerer
+- **Innate Sorcery (L1)** — pool max ✓ SHIPPED 2026-05-14 — `resource_pool_grant pool:innate_sorcery_uses` w/ `cha_mod_min_1` formula, long_rest recharge. Spend UX Tier 4.
 - **Font of Magic (L2)** — Sorcery Points pool max **OK**; SP↔slot conversion mutates
   current slots/SP fields. **STUB**.
 - **Metamagic (L2)** — pick 2 from list; stores chosen metamagic ids on PC.
   **MISSING** (no PC field for chosen metamagics; need schema add + `choice_group`).
-- **Sorcerous Restoration (L5)** — SP regain on short rest. Pool current = field 
-  mutation. **STUB**.
+- **Sorcerous Restoration (L5)** — pool max ✓ SHIPPED 2026-05-14 — `resource_pool_grant pool:sorcerous_restoration_per_short_rest` (1/short_rest). SP regain spend UX deferred to Tier 4.
 
 ### Warlock
 - **Eldritch Invocations (L1, cumulative)** — adds invocation ids to PC field.
   **MISSING** (no PC field, no choice_group).
 - **Pact Boon (L3)** — Tome → +3 cantrips (`granted_cantrip_refs`); Chain → Find Familiar in `alwaysPreparedSpellIds`; Blade → bonded-weapon (needs new PC `pact_blade_weapon_id` field, Tier-3). **MISSING** — needs `choice_group` + per-option grant rows.
-- **Magical Cunning (L2)** — short-rest pact slot regain. Current-slot field. **STUB**.
+- **Magical Cunning (L2)** — pool max ✓ SHIPPED 2026-05-14 — `resource_pool_grant pool:magical_cunning_per_day` (1/long_rest). Short-rest pact-slot recovery spend UX deferred to Tier 4 #34.
+- **Mystic Arcanum (L11/13/15/17)** — pool max ✓ SHIPPED 2026-05-14 — per-level `resource_pool_grant pool:mystic_arcanum_{6..9}` (1/long_rest each). Spend UX Tier 4.
+- **Eldritch Master (L13)** — pool max ✓ SHIPPED 2026-05-14 — `resource_pool_grant pool:eldritch_master` (1/long_rest). Spend UX Tier 4.
 
 ### Wizard
 - **Ritual Adept (L1)** — adds rituals from any class to spellbook. **MISSING**
   (extend `spell_grant` ingestion to mark them ritual-only).
-- **Arcane Recovery (L1)** — short-rest slot recovery formula. **STUB**.
+- **Arcane Recovery (L1)** — pool max ✓ VERIFIED — `resource_pool_grant pool:arcane_recovery_per_day` (1/long_rest). Short-rest slot-recovery spend UX deferred to Tier 4 #33.
 - **Spell Mastery (L18)** — adds 1×L1 + 1×L2 spell to free-cast list. **MISSING** — needs PC `free_cast_spell_ids` field (Tier-3).
 - **Signature Spells (L20)** — always-prepared L3 + 1/short rest each. **PARTIAL**.
 
@@ -278,19 +281,21 @@ Only items missing/partial; OK rows omitted.
 
 | Subclass | Feature | Field impact | Status |
 |----------|---------|--------------|--------|
-| Berserker | Mindless Rage (L6) | conditional `Charmed`/`Frightened` immunity while raging | **MISSING** — needs state-predicate evaluator + conditional surface |
-| College of Lore | Bonus Proficiencies (L3) | adds 3 skill proficiencies | **MISSING** — needs `PendingChoiceKind.skillProficiency` dialog body |
-| Life Domain | Preserve Life (L3) | pool max | **PARTIAL** (pool tracked) |
-| Hunter (Ranger) | Hunter's Prey (L3) / Defensive Tactics (L7) / Multiattack (L11) | writes chosen-option id to PC `subclass_option_picks` map | **MISSING** — needs PC field (Tier-3) + subclass-pick `choice_group` resolver |
-| Thief | Fast Hands (L3) | adds bonus-action refs (Sleight of Hand / Use Object / Tools) | **MISSING** — declare `granted_bonus_action_refs` |
-| Thief | Second-Story Work (L3) | climb speed | **STUB** |
+| Berserker | Mindless Rage (L6) | conditional `Charmed`/`Frightened` immunity while raging | ✓ SHIPPED 2026-05-14 — 2× `condition_immunity_grant` w/ `state:raging` predicate; routed to `conditionalGrants` |
+| College of Lore | Bonus Proficiencies (L3) | adds 3 skill proficiencies | ✓ SHIPPED 2026-05-14 — declared `bonus_skill_pick_count: 3`; subclass-pick scans field + emits follow-on `skillProficiency` pending |
+| Life Domain | Preserve Life (L3) | pool max | ✓ OK — Channel Divinity option (spends Cleric `pool:channel_divinity`); no separate pool needed |
+| Hunter (Ranger) | Hunter's Prey (L3) / Defensive Tactics (L7) / Multiattack (L11) / Superior Hunter's Defense (L11) | writes chosen-option id to PC `feat_ids` via generic featureOption picker | ✓ SHIPPED 2026-05-14 — new `PendingChoiceKind.featureOption` + `LevelUpPlan.featureOptionPicks`; 11 option feats authored under `feat-category: Feature Option: <name>` (Colossus Slayer / Horde Breaker / Hunter's Lore Option / Escape the Horde / Multiattack Defense / Steel Will / Volley / Whirlwind Attack / Evasion / Stand Against the Tide / Uncanny Dodge); effect bodies still narrative pending Tier 3 combat tracker |
+| Thief | Fast Hands (L3) | adds bonus-action refs (Sleight of Hand / Use Object / Tools) | ✓ SHIPPED 2026-05-14 — `granted_bonus_action_grant` → "Fast Hands" creature-action |
+| Thief | Second-Story Work (L3) | climb speed | ✓ SHIPPED 2026-05-14 — `climb_speed_equals_speed`, post-pass resolves to walk speed |
 | Thief | Use Magic Device (L13) | (no current field for magic-item attune list) | OUT |
 | Draconic Sorcery | Draconic Resilience (L3) | HP max + AC formula | **PARTIAL** |
 | Draconic Sorcery | Draconic Spells (L3) | always-prepared spell list by element | **PARTIAL** — verify `spell_always_prepared` rows ship |
-| Draconic Sorcery | Dragon Wings (L14) | fly speed | **STUB** |
-| Draconic Sorcery | Dragon Companion (L18) | Summon Dragon → `alwaysPreparedSpellIds` + 1/long rest pool | **MISSING** — declare `spell_always_prepared` + `resource_pool_grant` |
-| Fiend | Dark One's Blessing (L3) | temp HP field | **STUB** |
+| Draconic Sorcery | Dragon Wings (L14) | fly speed + 1/long_rest pool | ✓ SHIPPED 2026-05-14 — `fly_speed` declared, post-pass resolves to walk speed, chipped under Extra Speeds. Added `resource_pool_grant pool:dragon_wings` (1/long_rest). |
+| Draconic Sorcery | Dragon Companion (L18) | Summon Dragon → `alwaysPreparedSpellIds` + 1/long rest pool | ✓ SHIPPED 2026-05-14 — new `_sf Dragon Companion` declares `spell_always_prepared` (Summon Dragon) + `resource_pool_grant pool:dragon_companion` (1/long_rest) |
+| Fiend | Dark One's Blessing (L3) | temp HP field | ✓ SHIPPED 2026-05-14 — `temp_hp_grant` declared (CHA_mod + warlock_level (min 1), trigger `on_reduce_creature_to_0_hp`); surfaced in Temp HP Grants chips |
+| Fiend | Dark One's Own Luck (L6) | 1/short_rest pool | ✓ SHIPPED 2026-05-14 — `resource_pool_grant pool:dark_ones_own_luck` (1/short_rest) |
 | Fiend | Fiendish Resilience (L10) | adds chosen damage resistance after rest | **MISSING** — daily-pick choice_group writing to `damageResistanceIds` |
+| Fiend | Hurl Through Hell (L14) | 1/long_rest pool | ✓ SHIPPED 2026-05-14 — `resource_pool_grant pool:hurl_through_hell` (1/long_rest) |
 | Evoker | (sculpt/potent/empowered/overchannel all roll-time) | — | OUT |
 
 ---
@@ -301,31 +306,31 @@ Only items missing/partial; OK rows omitted.
 
 Each <10 min, no resolver change:
 
-1. **Tough** → declare `hp_bonus_per_level: 2`.
-2. **Defense (Fighting Style)** → declare `ac_bonus: 1` with `equipped_armor_kind: not_none` predicate.
-3. **Resilient** → wire post-choice `proficiency_grant: saving_throw`.
-4. **Lightly / Moderately / Heavy Armored** → declare armor-category `proficiency_grant`.
-5. **Skill Expert** → post-choice `proficiency_grant: skill` + `expertise_grant`.
-6. **Boon of Truesight** → declare `truesight_grant` referencing Truesight 60ft sense entity.
-7. **College of Lore — Bonus Proficiencies (L3)** → declare `choice_group` of 3× `proficiency_grant: skill`.
-8. **Cleric — Divine Order (L1)** → declare both Protector and Thaumaturge as a `choice_group`; each option emits its `proficiency_grant` / `cantrip_grant`.
-9. **Rogue — Cunning Action (L2)** → declare three `granted_bonus_action_refs` (Dash, Disengage, Hide).
-10. **Thief — Fast Hands (L3)** → declare three `granted_bonus_action_refs`.
-11. **Innate Spellcasting (player-facing variants only)** → replace narrative text with `granted_spell_refs` / `granted_cantrip_refs` / `granted_spells_at_level` rows on the trait.
-12. **Fey-Touched / Shadow-Touched / Telekinetic / Telepathic** → declare the `cantrip_grant` / `spell_grant` / `spell_always_prepared` rows already promised by the feat description.
+1. ✓ **Tough** → `hp_bonus_per_level: 2`. **SHIPPED 2026-05-14.**
+2. ✓ **Defense (Fighting Style)** → `ac_bonus: 1` with `equipped_armor_kind: not_none` predicate. **SHIPPED 2026-05-14.** Resolver `equipped_armor_kind` extended with `not_none` arm.
+3. ✓ **Resilient** → new `PendingChoiceKind.featAsi` covers feat-side ASI sub-picker. Feat schema gains `grants_save_prof_from_asi: bool`; Resilient declares true. `featAsi` resolution payload carries `abilityBumps` + `saveProfAbilityAbbrevs`. Editor flips `saving_throws.rows[i].proficient` for the chosen ability. Honors feat's `asi_max_score` (also fixes Epic Boon ASI cap 30). **SHIPPED 2026-05-14.**
+4. ✓ **Lightly / Moderately Armored** → armor-category `proficiency_grant`. **SHIPPED 2026-05-14.** Resolver `proficiency_grant` extended with `armor_category` + `weapon_category` target_kinds. Heavy Armor Master skipped — SRD prereq already requires heavy armor proficiency (feat itself grants damage reduction, which is roll-time).
+5. ✓ **Skill Expert** → both sides shipped. Skill side via `bonus_skill_pick_count: 1` → follow-on `skillProficiency` pending choice. Expertise side via new `bonus_expertise_pick_count: 1` + new `PendingChoiceKind.expertise` + dialog body filtered to PC's currently proficient skills lacking expertise. Editor applies both: `skills.rows[i].proficient = true` for skill picks, `expertise = true` for expertise picks. **SHIPPED 2026-05-14.**
+6. ✓ **Boon of Truesight** → `truesight_grant` referencing Truesight 60ft sense entity. **SHIPPED 2026-05-14.**
+7. ✓ **College of Lore — Bonus Proficiencies (L3)** → encoded as `bonus_skill_pick_count: 3` on the subclass entity. Subclass-pick resolution scans this field and queues a follow-on `skillProficiency` pending choice. **SHIPPED 2026-05-14.**
+8. ✓ **Cleric — Divine Order (L1)** → SHIPPED 2026-05-14. Two pickable feats (`Divine Order: Protector`, `Divine Order: Thaumaturge`) under new `feat-category: Divine Order`. Picker plumbed through new `PendingChoiceKind.divineOrder` + `LevelUpPlan.isDivineOrderLevel` (feature-name match on "Divine Order"). Editor + wizard both seed/emit the pending; resolution writes feat id to `feat_ids`. Protector folds Martial weapon + Heavy armor proficiency_grants. Thaumaturge declares `cantrip_count_bonus: 1` (free-pick cantrip surface still TBD).
+9. ✓ **Rogue — Cunning Action (L2)** → resolver gains three new effect kinds (`granted_action_grant`, `granted_bonus_action_grant`, `granted_reaction_grant`). New `Cunning Action` creature-action entity describes the bonus-action form; feat declares `granted_bonus_action_grant` → that entity. **SHIPPED 2026-05-14.**
+10. ✓ **Thief — Fast Hands (L3)** → references existing `Fast Hands` creature-action entity via `granted_bonus_action_grant`. **SHIPPED 2026-05-14.**
+11. ~~**Innate Spellcasting (player-facing variants only)**~~ → PC species (Drow, High Elf, Wood Elf, Tieflings) already encode `granted_cantrip_refs` + `granted_spells_at_level` on subspecies — not on the shared trait. **N/A.**
+12. ✓ **Fey-Touched / Shadow-Touched / Telekinetic / Telepathic** → fixed-spell rows declared (Misty Step / Invisibility / Mage Hand / Detect Thoughts). **SHIPPED 2026-05-14.** The "pick 1 L1 spell from school X" portion still blocks on Tier 2 #15 (cumulative pick).
 
 ### Tier 2 — small resolver / planner extensions
 
-13. **Pending choice: `skillProficiency` dialog body** — surfaces Tier 1 #7 + any other "pick N skills" rows.
-14. **Pending choice: generic subclass-option picker** — closes Hunter (Prey/Defensive/Multiattack), Fiend Fiendish Resilience daily-pick, Draconic Companion option, Cleric Divine Order interactive resolve.
-15. **Pending choice: cumulative pick (Metamagic / Pact Boon / Eldritch Invocations)** — needs PC schema fields for the chosen lists first (`metamagic_ids`, `pact_boon_id`, `invocation_ids`).
-16. **`sense_grant` range payload** — add `range_ft` and resolver pass that keeps max range per sense id. Closes Drow 120ft.
-17. **State-conditional grants surface** — when an effect carries a `has_state` predicate, instead of dropping it, emit a parallel list on `EffectiveCharacter` (e.g. `conditionalDamageResistances: [{state: 'Raging', ids: [...]}]`). Closes Rage, Mindless Rage, Boon of Night Spirit.
-18. **Wire `temp_hp_grant`** — write to PC `temp_hp` field; rest pipeline clears on long rest. Closes Inspiring Leader, Dark One's Blessing, Tireless, Ranger Tireless.
-19. **Wire `climb_speed_equals_speed`, `swim_speed_equals_speed`, `fly_speed`** — add `extraSpeeds: Map<String, int>` to EffectiveCharacter; sheet renders each. Closes Spider Climb, Second-Story Work, Acrobatic Movement, Roving, Dragon Wings.
-20. **Wire `cantrip_count_bonus`** — applies to cantrips_known cap. Used by some boons / feats.
-21. **`size_override` effect kind + Goliath Large Form** — extend `applyEffect`, add `size` to EffectiveCharacter.
-22. **`ability_score_cap_override`** — Primal Champion (24), Epic Boon ASI (30). Today the cap is hardcoded.
+13. ✓ **Pending choice: `skillProficiency` dialog body** — surfaces Tier 1 #7 + any other "pick N skills" rows. **SHIPPED 2026-05-14.** Dialog renders skill picker filtered to skills the PC isn't already proficient in. Resolution flips `skills.rows[i].proficient = true` on the matching row. Emission hooks: subclass-pick (Lore L3 via `bonus_skill_pick_count`) + feat-pick (Skill Expert via `bonus_skill_pick_count`). Resilient covered by parallel `featAsi` pending (grants_save_prof_from_asi).
+14. ✓ **Pending choice: generic subclass-option picker** — Cleric Divine Order (dedicated `PendingChoiceKind.divineOrder`, 2026-05-14) + Hunter Ranger pickers + Pact Boon + Draconic Spells + Fiendish Resilience (generic `PendingChoiceKind.featureOption`, 2026-05-14) shipped. The featureOption kind carries `featureName` on the pending; dialog filters feats by category `Feature Option: <name>`. Planner `featureOptionPicks: List<String>` populated via feature-name trigger set in `level_up_planner.dart`. **SHIPPED 2026-05-14** for Pact Boon (3 options: Blade/Chain/Tome), Draconic Spells (5 ancestries: Acid/Cold/Fire/Lightning/Poison) and Fiendish Resilience (12 damage-type options; recurring rest-bound re-pick is still narrative — single emission at L10). To add a new picker: append the feature name to `featureOptionTriggers` + author 2-N option feats under `feat-category: Feature Option: <name>`.
+15. ✓ **Pending choice: cumulative pick (Metamagic / Eldritch Invocations)** — **SHIPPED 2026-05-14** via new `_cumulativePickProgression` table in `level_up_planner.dart` keyed by class name + feature name → `{level: picksGained}`. Sorcerer Metamagic emits 2 picks at L2, +1 at L10, +1 at L17. Warlock Eldritch Invocations emits 2 picks at L1, +1 at L5/7/9/12/15/18. Each pick is a separate `featureOption` pending; dialog filters by feat category and excludes already-picked option feats so consecutive pendings yield distinct options. Authored 10 Metamagic feats (Careful/Distant/Empowered/Extended/Heightened/Quickened/Seeking/Subtle/Transmuted/Twinned) + 12 core Invocation feats (Agonizing Blast / Armor of Shadows / Devil's Sight / Eldritch Mind / Eldritch Sight / Eldritch Spear / Fiendish Vigor / Gaze of Two Minds / Mask of Many Faces / Misty Visions / One with Shadows / Repelling Blast). Pact Boon went through #14 instead. Battle Master Maneuvers blocked on Battle Master subclass content (not yet authored). PC field for chosen list = existing `feat_ids` (no new schema needed). Effect bodies for Metamagic/Invocations remain narrative — pure roll-time mechanics, surfaces in combat tracker (Tier 3).
+16. ✓ **`sense_grant` range payload** — `range_ft` accepted on `sense_grant` / `truesight_grant` / `blindsight_grant` payloads (or top-level). Resolver tracks per-sense-id max range in new `EffectiveCharacter.senseRanges: Map<String,int>`. Drow subspecies declares Superior Darkvision via `granted_modifiers` → `sense_grant Darkvision` payload `range_ft: 120`. Sheet's `ResolvedGrantsCard` renders the range suffix on every sense chip (`Darkvision 120 ft`). **SHIPPED 2026-05-14.**
+17. ✓ **State-conditional grants surface** — `EffectiveCharacter.conditionalGrants: List<Map>` added. Resolver splits state predicates from non-state predicates; eligible kinds (`damage_resistance`, `damage_immunity`, `damage_vulnerability`, `condition_immunity_grant`) gated by `has_state` / `has_condition` / `target_has_condition` are routed to this list when the non-state predicates all pass. Mindless Rage now declares the two `condition_immunity_grant` rows for Charmed + Frightened with Raging predicate. Rage damage resistances flow automatically (already authored). Boon of the Night Spirit declares 11 `damage_resistance` rows (every damage type except Psychic + Radiant) gated on new `state:in_dim_or_darkness` tier-0 character-state. Sheet's `ResolvedGrantsCard` buckets entries by `(kind, state)` and renders one chip row per bucket labelled `Resistances (while raging)` / `Resistances (while in_dim_or_darkness)` etc. **SHIPPED 2026-05-14.**
+18. ◐ **Wire `temp_hp_grant`** — minimal surface shipped. Resolver collects `temp_hp_grant` rows into `EffectiveCharacter.tempHpGrants: List<Map>` (entries `{source, formula, trigger, activation}`). Sheet's `ResolvedGrantsCard` renders a "Temp HP Grants" row of pink chips. Inspiring Leader (+character_level + CHA_mod after speech), Ranger Tireless (1d8 + WIS_mod, Magic action), and Dark One's Blessing (CHA_mod + warlock_level (min 1), on reduce to 0 HP) declare the effect. **SHIPPED 2026-05-14.** Auto-apply to PC `temp_hp` still requires runtime trigger UX (button + rest pipeline).
+19. ✓ **Wire `climb_speed_equals_speed`, `swim_speed_equals_speed`, `fly_speed`** — `extraSpeeds: Map<String, int>` added to EffectiveCharacter; resolver writes per mode, post-pass resolves `-1` sentinel to walking speed (species `speed_ft` + `speedBonus`). Roving (already wired), Second-Story Work (already wired), Dragon Wings now declare `fly_speed`. Sheet's `ResolvedGrantsCard` renders an "Extra Speeds" row with `mode N ft` chips. **SHIPPED 2026-05-14.** Spider Climb monster traits still narrative only.
+20. ~~**Wire `cantrip_count_bonus`**~~ — no SRD content currently authors this kind. **N/A.** Revisit if a feat/boon needs it.
+21. **`size_override` effect kind + Goliath Large Form** — deferred. Goliath's Large Form is a runtime bonus-action toggle, not a permanent grant; needs runtime trigger UX before the effect kind matters.
+22. ✓ **`ability_score_cap_override`** — resolver `ability_score_bonus` honors `eff.max`. Primal Champion declares STR +4 max:25 + CON +4 max:25. Epic Boon ASI cap of 30 fixed via the new `featAsi` pending — dialog reads feat's `asi_max_score` and gates the bump accordingly. **SHIPPED 2026-05-14.**
 
 ### Tier 3 — needs new PC schema fields
 
@@ -340,12 +345,10 @@ Each <10 min, no resolver change:
 
 ### Tier 4 — pool-spending UX (field mutation; pool max already wired)
 
-31. Lay on Hands point spend (writes `granted_pool_uses_remaining`).
-32. Channel Divinity option spend (same field).
-33. Bardic Inspiration / Second Wind / Action Surge / Indomitable / Preserve Life / Monk Focus pool spend (same field).
-34. Sorcery Points ↔ slot conversion (mutates SP pool + current slot map).
-35. Wizard Arcane Recovery (mutates current slot map).
-36. Warlock Magical Cunning + Wild Companion (current slot map mutation).
+31. ✓ Class-pool counters wired on the sheet via `ResolvedGrantsCard._grantedPoolEntries` + `_displayPoolName` (`pool:rage_uses` → "Rage Uses"). `PC.granted_pool_uses_remaining` already persists per-pool current value. Resolver gained a `count_formula` evaluator (`_evalCountFormula`) covering `<ability>_mod`, `<ability>_mod_min_1`, `<class>_level`, `paladin_level_x5`, `character_level` — closes pools whose max was previously unresolved (Lay on Hands HP = `paladin_level_x5`, Tireless temp-HP uses = `wis_mod_min_1`, Sorcery Points = `sorcerer_level`, etc.). Pool entries with non-positive max are filtered out so unresolved formulas no longer pollute the sheet. **SHIPPED 2026-05-14.**
+32. Sorcery Points ↔ slot conversion (mutates SP pool + current slot map). **Deferred.**
+33. Wizard Arcane Recovery (mutates current slot map). **Deferred.**
+34. Warlock Magical Cunning + Wild Companion (current slot map mutation). **Deferred.**
 
 All reduce pool current or restore slot — pure field deltas, no combat resolution.
 

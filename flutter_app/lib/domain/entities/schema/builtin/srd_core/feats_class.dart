@@ -86,6 +86,32 @@ Map<String, String> _pool(String name) => lookup('resource-pool', name);
 Map<String, String> _cond(String name) => lookup('condition', name);
 Map<String, String> _sense(String name) => lookup('sense', name);
 
+/// Compact builder for feature-option feats. Each option is a non-chooseable
+/// feat under category `Feature Option: <featureName>`. The
+/// `PendingChoiceKind.featureOption` dialog filters by that category and
+/// writes the chosen feat id to PC `feat_ids`.
+Map<String, dynamic> _opt({
+  required String name,
+  required String featureName,
+  required String description,
+  String? benefits,
+  String? prerequisite,
+  List<Map<String, dynamic>> effects = const [],
+}) =>
+    packEntity(
+      slug: 'feat',
+      name: name,
+      description: description,
+      attributes: {
+        'category_ref': lookup('feat-category', 'Feature Option: $featureName'),
+        'prerequisite': ?prerequisite,
+        'chooseable': false,
+        'repeatable': false,
+        'effects': effects,
+        'benefits': benefits ?? description,
+      },
+    );
+
 List<Map<String, dynamic>> srdClassFeats() => [
       // ─── BARBARIAN ───────────────────────────────────────────────────────
       _cf(
@@ -321,6 +347,20 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 20,
         description:
             'Your Strength and Constitution increase by 4. Your maximum for those scores becomes 25.',
+        effects: [
+          {
+            'kind': 'ability_score_bonus',
+            'ability': 'STR',
+            'value': 4,
+            'max': 25,
+          },
+          {
+            'kind': 'ability_score_bonus',
+            'ability': 'CON',
+            'value': 4,
+            'max': 25,
+          },
+        ],
       ),
 
       // ─── BARD ────────────────────────────────────────────────────────────
@@ -435,12 +475,58 @@ List<Map<String, dynamic>> srdClassFeats() => [
         description:
             'You know cantrips and prepare spells from the Cleric spell list. Wisdom is your spellcasting ability; you can use a Holy Symbol as a spellcasting focus.',
       ),
+      // Divine Order — Cleric L1 mutex pick. Both feats are pickable via
+      // `PendingChoiceKind.divineOrder`; the picker writes the chosen feat
+      // id to PC `feat_ids`.
+      packEntity(
+        slug: 'feat',
+        name: 'Divine Order: Protector',
+        description:
+            'You gain proficiency with Martial weapons and Heavy armor training.',
+        attributes: {
+          'category_ref': lookup('feat-category', 'Divine Order'),
+          'prerequisite': 'Cleric — Divine Order Feature',
+          'chooseable': false,
+          'repeatable': false,
+          'effects': [
+            effect('proficiency_grant',
+                targetKind: 'weapon_category',
+                targetRef: lookup('weapon-category', 'Martial')),
+            effect('proficiency_grant',
+                targetKind: 'armor_category',
+                targetRef: lookup('armor-category', 'Heavy')),
+          ],
+          'benefits':
+              '**Martial Weapons.** Gain proficiency with Martial weapons.\n\n'
+              '**Heavy Armor Training.** Gain Heavy Armor training.',
+        },
+      ),
+      packEntity(
+        slug: 'feat',
+        name: 'Divine Order: Thaumaturge',
+        description:
+            'You learn one Wizard cantrip of your choice. When you cast a Cleric cantrip that deals damage, add your Wisdom modifier to the damage roll on one hit per turn.',
+        attributes: {
+          'category_ref': lookup('feat-category', 'Divine Order'),
+          'prerequisite': 'Cleric — Divine Order Feature',
+          'chooseable': false,
+          'repeatable': false,
+          'effects': [
+            // +1 cantrip slot from the Wizard list. The actual cantrip pick
+            // is left to the existing cantrips pending flow.
+            effect('cantrip_count_bonus', value: 1),
+          ],
+          'benefits':
+              '**Wizard Cantrip.** You learn one Wizard cantrip of your choice (pick from the cantrip picker).\n\n'
+              '**Cleric Cantrip Damage Rider.** Once on each of your turns, when you cast a Cleric cantrip that deals damage, add your Wisdom modifier to the damage roll on one hit.',
+        },
+      ),
       _cf(
         name: 'Channel Divinity',
         className: 'Cleric',
         atLevel: 2,
         description:
-            'You gain Divine Spark and Turn Undead as Channel Divinity options. You have 2 uses, regained on a Short or Long Rest.',
+            'You gain Divine Spark and Turn Undead as Channel Divinity options. Uses scale: 2 at L2, 3 at L6, 4 at L18; regained on Short or Long Rest.',
         activation: activation(
           actionType: 'action',
           uses: {
@@ -453,8 +539,12 @@ List<Map<String, dynamic>> srdClassFeats() => [
               payload: {
                 'pool_ref': _pool('pool:channel_divinity'),
                 'recharge': 'short_rest',
-                'count': 2,
-              }),
+              },
+              scalesWith: scalesByClass('Cleric', const [
+                [2, 2],
+                [6, 3],
+                [18, 4],
+              ])),
         ],
       ),
       _cf(
@@ -485,6 +575,14 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 10,
         description:
             'As a Magic action, choose any Cleric spell of level 5 or lower; you cast it without expending a spell slot. 1/Long Rest.',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:divine_intervention'),
+                'recharge': 'long_rest',
+                'count': 1,
+              }),
+        ],
       ),
       _cf(
         name: 'Improved Blessed Strikes',
@@ -654,6 +752,25 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 9,
         description:
             'When you Second Wind you can move up to half your Speed without provoking Opportunity Attacks.',
+      ),
+      _cf(
+        name: 'Indomitable',
+        className: 'Fighter',
+        atLevel: 9,
+        description:
+            'If you fail a saving throw, you can reroll it with a bonus equal to your Fighter level. Once per Long Rest at L9; two uses at L13; three at L17.',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:indomitable_uses'),
+                'recharge': 'long_rest',
+              },
+              scalesWith: scalesByClass('Fighter', const [
+                [9, 1],
+                [13, 2],
+                [17, 3],
+              ])),
+        ],
       ),
       _cf(
         name: 'Two Extra Attacks',
@@ -897,14 +1014,17 @@ List<Map<String, dynamic>> srdClassFeats() => [
         className: 'Paladin',
         atLevel: 3,
         description:
-            'You gain Channel Divinity options from your Oath. 2 uses, regained on a Short or Long Rest.',
+            'You gain Channel Divinity options from your Oath. Uses scale: 2 at L3, 3 at L11. Regained on Short or Long Rest.',
         effects: [
           effect('resource_pool_grant',
               payload: {
-                'pool_ref': _pool('pool:channel_divinity'),
+                'pool_ref': _pool('pool:paladin_channel_divinity'),
                 'recharge': 'short_rest',
-                'count': 2,
-              }),
+              },
+              scalesWith: scalesByClass('Paladin', const [
+                [3, 2],
+                [11, 3],
+              ])),
         ],
       ),
       _cf(
@@ -936,6 +1056,14 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 9,
         description:
             'As a Magic action, force creatures of your choice within 60 feet to make a Wisdom save or be Frightened of you until the end of your next turn (1/Long Rest).',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:abjure_foes'),
+                'recharge': 'long_rest',
+                'count': 1,
+              }),
+        ],
       ),
       _cf(
         name: 'Radiant Strikes',
@@ -1049,6 +1177,12 @@ List<Map<String, dynamic>> srdClassFeats() => [
                 'recharge': 'long_rest',
                 'count_formula': 'wis_mod_min_1',
               }),
+          effect('temp_hp_grant',
+              payload: {
+                'formula': '1d8 + WIS_mod',
+                'trigger': 'magic_action_self',
+                'pool_ref_text': 'pool:tireless_temp_hp_uses',
+              }),
         ],
       ),
       _cf(
@@ -1122,6 +1256,11 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'You can take the Dash, Disengage, or Hide action as a Bonus Action.',
+        effects: [
+          effect('granted_bonus_action_grant',
+              targetKind: 'creature-action',
+              targetRef: ref('creature-action', 'Cunning Action')),
+        ],
       ),
       _cf(
         name: 'Steady Aim',
@@ -1200,6 +1339,14 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 20,
         description:
             'When you miss an attack roll or fail an ability check you can turn it into a hit or treat the d20 as a 20. 1/Short or Long Rest.',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:stroke_of_luck'),
+                'recharge': 'short_rest',
+                'count': 1,
+              }),
+        ],
       ),
 
       // ─── SORCERER ────────────────────────────────────────────────────────
@@ -1222,6 +1369,14 @@ List<Map<String, dynamic>> srdClassFeats() => [
           uses: {'recharge': 'long_rest', 'count_formula': 'cha_mod_min_1'},
           triggersStateRef: 'state:innate_sorcery_active',
         ),
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:innate_sorcery_uses'),
+                'recharge': 'long_rest',
+                'count_formula': 'cha_mod_min_1',
+              }),
+        ],
       ),
       _cf(
         name: 'Font of Magic',
@@ -1244,6 +1399,14 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 5,
         description:
             'When you finish a Short Rest, you regain 4 expended Sorcery Points. 1/Short Rest.',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:sorcerous_restoration_per_short_rest'),
+                'recharge': 'short_rest',
+                'count': 1,
+              }),
+        ],
       ),
       _cf(
         name: 'Sorcery Incarnate',
@@ -1282,6 +1445,14 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 2,
         description:
             'When you finish a Short Rest you can regain expended Pact Magic spell slots equal to half your maximum (rounded up). 1/Long Rest.',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:magical_cunning_per_day'),
+                'recharge': 'long_rest',
+                'count': 1,
+              }),
+        ],
       ),
       _cf(
         name: 'Mystic Arcanum (Level 6 Spell)',
@@ -1289,6 +1460,14 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 11,
         description:
             'You learn one level 6 Warlock spell as a Mystic Arcanum. You can cast it once without a slot per Long Rest.',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:mystic_arcanum_6'),
+                'recharge': 'long_rest',
+                'count': 1,
+              }),
+        ],
       ),
       _cf(
         name: 'Mystic Arcanum (Level 7 Spell)',
@@ -1296,6 +1475,14 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 13,
         description:
             'You learn one level 7 Warlock spell as a Mystic Arcanum (1/Long Rest, no slot).',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:mystic_arcanum_7'),
+                'recharge': 'long_rest',
+                'count': 1,
+              }),
+        ],
       ),
       _cf(
         name: 'Mystic Arcanum (Level 8 Spell)',
@@ -1303,6 +1490,14 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 15,
         description:
             'You learn one level 8 Warlock spell as a Mystic Arcanum (1/Long Rest, no slot).',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:mystic_arcanum_8'),
+                'recharge': 'long_rest',
+                'count': 1,
+              }),
+        ],
       ),
       _cf(
         name: 'Mystic Arcanum (Level 9 Spell)',
@@ -1310,6 +1505,14 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 17,
         description:
             'You learn one level 9 Warlock spell as a Mystic Arcanum (1/Long Rest, no slot).',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:mystic_arcanum_9'),
+                'recharge': 'long_rest',
+                'count': 1,
+              }),
+        ],
       ),
       _cf(
         name: 'Eldritch Master',
@@ -1317,6 +1520,14 @@ List<Map<String, dynamic>> srdClassFeats() => [
         atLevel: 13,
         description:
             'You can take 1 minute to plead with your patron and regain all expended Pact Magic spell slots. 1/Long Rest.',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:eldritch_master'),
+                'recharge': 'long_rest',
+                'count': 1,
+              }),
+        ],
       ),
       _cf(
         name: 'Eldritch Resilience',
@@ -1395,6 +1606,16 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 6,
         description:
             'You can\'t be Charmed or Frightened while raging. If you are Charmed or Frightened when you enter your Rage, that condition ends.',
+        effects: [
+          effect('condition_immunity_grant',
+              targetKind: 'condition',
+              targetRef: _cond('Charmed'),
+              predicates: [predicate('has_state', {'ref': 'state:raging'})]),
+          effect('condition_immunity_grant',
+              targetKind: 'condition',
+              targetRef: _cond('Frightened'),
+              predicates: [predicate('has_state', {'ref': 'state:raging'})]),
+        ],
       ),
       _sf(
         name: 'Retaliation',
@@ -1613,7 +1834,15 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         subclassName: 'Oath of Devotion',
         atLevel: 20,
         description:
-            'As a Bonus Action you emanate divine light. Hostile creatures that start their turn in your Aura of Protection take 10 Radiant damage; you have Advantage on saving throws against spells cast by Fiends or Undead.',
+            'As a Bonus Action you emanate divine light for 10 minutes. Hostile creatures that start their turn in your Aura of Protection take 10 Radiant damage; you have Advantage on saving throws against spells cast by Fiends or Undead. 1/Long Rest.',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:holy_nimbus'),
+                'recharge': 'long_rest',
+                'count': 1,
+              }),
+        ],
       ),
 
       // ─── Hunter (Ranger) ─────────────────────────────────────────────────
@@ -1659,6 +1888,183 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         description:
             'Each Hunter\'s Prey, Defensive Tactics, and Multiattack option is now available to you (no choice required).',
       ),
+      // ── Hunter Ranger feature-option picks ──
+      // Each option is a pickable feat under category `Feature Option:
+      // <feature name>`. The PendingChoiceKind.featureOption dialog filters
+      // by that category and writes the chosen feat id to feat_ids — no
+      // auto-grant, no class/subclass binding.
+      packEntity(
+        slug: 'feat',
+        name: "Colossus Slayer",
+        description:
+            "When you hit a creature with a weapon attack and the target is missing any of its HP, the target takes an extra 1d8 damage of the weapon's damage type (1/turn).",
+        attributes: {
+          'category_ref': lookup('feat-category', "Feature Option: Hunter's Prey"),
+          'prerequisite': 'Hunter Ranger — Hunter\'s Prey',
+          'chooseable': false,
+          'repeatable': false,
+          'effects': const [],
+          'benefits':
+              "Once per turn, when you hit a damaged creature with a weapon attack, add 1d8 damage of the weapon's type.",
+        },
+      ),
+      packEntity(
+        slug: 'feat',
+        name: 'Horde Breaker',
+        description:
+            'Once on each of your turns, when you make an attack with a weapon, you can make another attack with the same weapon against a different creature within 5 feet of the original target and within range of your weapon.',
+        attributes: {
+          'category_ref': lookup('feat-category', "Feature Option: Hunter's Prey"),
+          'prerequisite': 'Hunter Ranger — Hunter\'s Prey',
+          'chooseable': false,
+          'repeatable': false,
+          'effects': const [],
+          'benefits':
+              'Once per turn, after attacking with a weapon, make a second attack with the same weapon vs. a different creature within 5 ft. of the first target.',
+        },
+      ),
+      packEntity(
+        slug: 'feat',
+        name: "Hunter's Lore Option",
+        description:
+            "Whenever you finish a Short or Long Rest, choose one creature you've seen in the past 24 hours; you learn whether it has any damage immunities, resistances, or vulnerabilities (and which ones).",
+        attributes: {
+          'category_ref': lookup('feat-category', "Feature Option: Hunter's Prey"),
+          'prerequisite': 'Hunter Ranger — Hunter\'s Prey',
+          'chooseable': false,
+          'repeatable': false,
+          'effects': const [],
+          'benefits':
+              'Pick a creature on Short/Long Rest; learn its damage immunities, resistances, vulnerabilities.',
+        },
+      ),
+      packEntity(
+        slug: 'feat',
+        name: 'Escape the Horde',
+        description:
+            'Opportunity Attacks against you are made with Disadvantage.',
+        attributes: {
+          'category_ref':
+              lookup('feat-category', 'Feature Option: Defensive Tactics'),
+          'prerequisite': 'Hunter Ranger — Defensive Tactics',
+          'chooseable': false,
+          'repeatable': false,
+          'effects': const [],
+          'benefits':
+              'Opportunity Attacks against you are made with Disadvantage.',
+        },
+      ),
+      packEntity(
+        slug: 'feat',
+        name: 'Multiattack Defense',
+        description:
+            'When a creature hits you with an attack roll, that creature has Disadvantage on all other attack rolls against you this turn.',
+        attributes: {
+          'category_ref':
+              lookup('feat-category', 'Feature Option: Defensive Tactics'),
+          'prerequisite': 'Hunter Ranger — Defensive Tactics',
+          'chooseable': false,
+          'repeatable': false,
+          'effects': const [],
+          'benefits':
+              'After being hit, the attacker has Disadvantage on the rest of its attacks against you that turn.',
+        },
+      ),
+      packEntity(
+        slug: 'feat',
+        name: 'Steel Will',
+        description:
+            'You have Advantage on saving throws against being Frightened.',
+        attributes: {
+          'category_ref':
+              lookup('feat-category', 'Feature Option: Defensive Tactics'),
+          'prerequisite': 'Hunter Ranger — Defensive Tactics',
+          'chooseable': false,
+          'repeatable': false,
+          'effects': const [],
+          'benefits': 'Advantage on saves vs. Frightened.',
+        },
+      ),
+      packEntity(
+        slug: 'feat',
+        name: 'Volley',
+        description:
+            'As a Magic-style ranged attack action, choose a 10-foot-radius area within range of your ranged weapon and make a ranged weapon attack against each creature within it.',
+        attributes: {
+          'category_ref':
+              lookup('feat-category', 'Feature Option: Multiattack'),
+          'prerequisite': 'Hunter Ranger — Multiattack',
+          'chooseable': false,
+          'repeatable': false,
+          'effects': const [],
+          'benefits':
+              'Ranged AoE — attack each creature in a 10-ft. radius within ranged-weapon range.',
+        },
+      ),
+      packEntity(
+        slug: 'feat',
+        name: 'Whirlwind Attack',
+        description:
+            'As an Attack action, you can make a melee attack against any number of creatures within 5 feet of you, each attack roll made separately.',
+        attributes: {
+          'category_ref':
+              lookup('feat-category', 'Feature Option: Multiattack'),
+          'prerequisite': 'Hunter Ranger — Multiattack',
+          'chooseable': false,
+          'repeatable': false,
+          'effects': const [],
+          'benefits':
+              'Melee AoE — attack any number of creatures within 5 ft.',
+        },
+      ),
+      packEntity(
+        slug: 'feat',
+        name: 'Evasion',
+        description:
+            "When you're subjected to an effect that allows you to make a Dexterity saving throw to take half damage, you instead take no damage if you succeed and only half damage if you fail.",
+        attributes: {
+          'category_ref': lookup(
+              'feat-category', "Feature Option: Superior Hunter's Defense"),
+          'prerequisite': "Hunter Ranger — Superior Hunter's Defense",
+          'chooseable': false,
+          'repeatable': false,
+          'effects': const [],
+          'benefits':
+              'Dex saves vs. half-damage effects: no damage on success, half on fail.',
+        },
+      ),
+      packEntity(
+        slug: 'feat',
+        name: 'Stand Against the Tide',
+        description:
+            'As a Reaction when a hostile creature misses you with a melee attack, you can force that creature to repeat the attack against another creature (other than itself) of your choice within the attack\'s range.',
+        attributes: {
+          'category_ref': lookup(
+              'feat-category', "Feature Option: Superior Hunter's Defense"),
+          'prerequisite': "Hunter Ranger — Superior Hunter's Defense",
+          'chooseable': false,
+          'repeatable': false,
+          'effects': const [],
+          'benefits':
+              "Reaction: redirect an enemy's missed melee attack to another creature.",
+        },
+      ),
+      packEntity(
+        slug: 'feat',
+        name: 'Uncanny Dodge',
+        description:
+            'As a Reaction when an attacker you can see hits you with an attack roll, you halve the attack\'s damage.',
+        attributes: {
+          'category_ref': lookup(
+              'feat-category', "Feature Option: Superior Hunter's Defense"),
+          'prerequisite': "Hunter Ranger — Superior Hunter's Defense",
+          'chooseable': false,
+          'repeatable': false,
+          'effects': const [],
+          'benefits':
+              'Reaction: halve the damage of an attack that hits you.',
+        },
+      ),
 
       // ─── Thief (Rogue) ───────────────────────────────────────────────────
       _sf(
@@ -1667,6 +2073,11 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 3,
         description:
             'You can use the Bonus Action granted by Cunning Action to make a Sleight of Hand check, use Thieves\' Tools, or take the Use an Object action.',
+        effects: [
+          effect('granted_bonus_action_grant',
+              targetKind: 'creature-action',
+              targetRef: ref('creature-action', 'Fast Hands')),
+        ],
       ),
       _sf(
         name: 'Second-Story Work',
@@ -1737,6 +2148,33 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 14,
         description:
             'As a Bonus Action you sprout dragon wings, gaining a Fly Speed equal to your Speed for 1 hour. 1/Long Rest.',
+        effects: [
+          effect('fly_speed'),
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:dragon_wings'),
+                'recharge': 'long_rest',
+                'count': 1,
+              }),
+        ],
+      ),
+      _sf(
+        name: 'Dragon Companion',
+        subclassName: 'Draconic Sorcery',
+        atLevel: 18,
+        description:
+            'You always have Summon Dragon prepared. You can also cast it once without expending a spell slot; the cast doesn\'t require Concentration if you spend 3 Sorcery Points on it. 1/Long Rest.',
+        effects: [
+          effect('spell_always_prepared',
+              targetKind: 'spell',
+              targetRef: lookup('spell', 'Summon Dragon')),
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:dragon_companion'),
+                'recharge': 'long_rest',
+                'count': 1,
+              }),
+        ],
       ),
       _sf(
         name: 'Draconic Presence',
@@ -1753,6 +2191,13 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 3,
         description:
             'When you reduce a creature to 0 HP, you gain Temporary HP equal to your Charisma modifier + your Warlock level (min 1).',
+        effects: [
+          effect('temp_hp_grant',
+              payload: {
+                'formula': 'CHA_mod + warlock_level (min 1)',
+                'trigger': 'on_reduce_creature_to_0_hp',
+              }),
+        ],
       ),
       _sf(
         name: 'Fiendish Vigor',
@@ -1769,6 +2214,14 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 6,
         description:
             'When you make an ability check or saving throw, you can roll 1d10 and add it to the result. 1/Short or Long Rest.',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:dark_ones_own_luck'),
+                'recharge': 'short_rest',
+                'count': 1,
+              }),
+        ],
       ),
       _sf(
         name: 'Fiendish Resilience',
@@ -1783,6 +2236,14 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 14,
         description:
             'When you hit a creature with an attack, you can banish it through the lower planes. The creature disappears and re-appears at the start of its next turn, taking 8d10 Psychic damage. 1/Long Rest.',
+        effects: [
+          effect('resource_pool_grant',
+              payload: {
+                'pool_ref': _pool('pool:hurl_through_hell'),
+                'recharge': 'long_rest',
+                'count': 1,
+              }),
+        ],
       ),
 
       // ─── Evoker (Wizard) ─────────────────────────────────────────────────
@@ -1820,5 +2281,329 @@ List<Map<String, dynamic>> srdSubclassFeats() => [
         atLevel: 14,
         description:
             'When you cast a wizard spell of levels 1–5 that deals damage, you can deal maximum damage. The first time you do this between rests is free; each subsequent use deals 2d12 Necrotic damage to you per level of the spell that you can\'t reduce.',
+      ),
+
+      // ─── Metamagic options (Sorcerer) ────────────────────────────────────
+      _opt(
+        name: 'Careful Spell',
+        featureName: 'Metamagic',
+        prerequisite: 'Sorcerer — Metamagic',
+        description:
+            'Spend 1 SP when casting a spell that forces a saving throw: chosen creatures (up to your CHA mod, min 1) auto-succeed on their saves.',
+      ),
+      _opt(
+        name: 'Distant Spell',
+        featureName: 'Metamagic',
+        prerequisite: 'Sorcerer — Metamagic',
+        description:
+            'Spend 1 SP to double the range of a spell. Touch spells become 30-ft range.',
+      ),
+      _opt(
+        name: 'Empowered Spell',
+        featureName: 'Metamagic',
+        prerequisite: 'Sorcerer — Metamagic',
+        description:
+            'Spend 1 SP to reroll up to CHA-mod damage dice on a spell (use the new rolls).',
+      ),
+      _opt(
+        name: 'Extended Spell',
+        featureName: 'Metamagic',
+        prerequisite: 'Sorcerer — Metamagic',
+        description:
+            'Spend 1 SP to double the duration of a spell (max 24 hours).',
+      ),
+      _opt(
+        name: 'Heightened Spell',
+        featureName: 'Metamagic',
+        prerequisite: 'Sorcerer — Metamagic',
+        description:
+            'Spend 2 SP when casting a spell that forces a saving throw: one target rolls its first save with Disadvantage.',
+      ),
+      _opt(
+        name: 'Quickened Spell',
+        featureName: 'Metamagic',
+        prerequisite: 'Sorcerer — Metamagic',
+        description:
+            'Spend 2 SP to change a spell with a casting time of 1 Action to a Bonus Action.',
+      ),
+      _opt(
+        name: 'Seeking Spell',
+        featureName: 'Metamagic',
+        prerequisite: 'Sorcerer — Metamagic',
+        description:
+            'Spend 2 SP to reroll a missed attack roll on a spell.',
+      ),
+      _opt(
+        name: 'Subtle Spell',
+        featureName: 'Metamagic',
+        prerequisite: 'Sorcerer — Metamagic',
+        description:
+            'Spend 1 SP to cast a spell without verbal or somatic components.',
+      ),
+      _opt(
+        name: 'Transmuted Spell',
+        featureName: 'Metamagic',
+        prerequisite: 'Sorcerer — Metamagic',
+        description:
+            'Spend 1 SP to swap a spell\'s damage type for Acid, Cold, Fire, Lightning, Poison, or Thunder.',
+      ),
+      _opt(
+        name: 'Twinned Spell',
+        featureName: 'Metamagic',
+        prerequisite: 'Sorcerer — Metamagic',
+        description:
+            'Spend SP equal to the spell\'s level (min 1) to target a second creature with a single-target spell.',
+      ),
+
+      // ─── Eldritch Invocations (Warlock) ──────────────────────────────────
+      _opt(
+        name: 'Agonizing Blast',
+        featureName: 'Eldritch Invocations',
+        prerequisite: 'Warlock; Eldritch Blast cantrip',
+        description:
+            'Add your CHA mod to each Eldritch Blast damage roll.',
+      ),
+      _opt(
+        name: 'Armor of Shadows',
+        featureName: 'Eldritch Invocations',
+        prerequisite: 'Warlock',
+        description: 'Cast Mage Armor on yourself at will, without a slot.',
+      ),
+      _opt(
+        name: 'Devil\'s Sight',
+        featureName: 'Eldritch Invocations',
+        prerequisite: 'Warlock',
+        description:
+            'See normally in magical and nonmagical darkness within 120 ft.',
+      ),
+      _opt(
+        name: 'Eldritch Mind',
+        featureName: 'Eldritch Invocations',
+        prerequisite: 'Warlock',
+        description: 'Advantage on Constitution saving throws to maintain Concentration.',
+      ),
+      _opt(
+        name: 'Eldritch Sight',
+        featureName: 'Eldritch Invocations',
+        prerequisite: 'Warlock',
+        description: 'Cast Detect Magic at will, without a slot.',
+      ),
+      _opt(
+        name: 'Eldritch Spear',
+        featureName: 'Eldritch Invocations',
+        prerequisite: 'Warlock; Eldritch Blast cantrip',
+        description: 'Eldritch Blast range increases to 300 ft.',
+      ),
+      _opt(
+        name: 'Fiendish Vigor',
+        featureName: 'Eldritch Invocations',
+        prerequisite: 'Warlock',
+        description: 'Cast False Life on yourself at will at L1 (max value 5+4=9 temp HP).',
+      ),
+      _opt(
+        name: 'Gaze of Two Minds',
+        featureName: 'Eldritch Invocations',
+        prerequisite: 'Warlock',
+        description:
+            'Touch a willing creature; perceive through its senses for up to 1 hour while on the same plane.',
+      ),
+      _opt(
+        name: 'Mask of Many Faces',
+        featureName: 'Eldritch Invocations',
+        prerequisite: 'Warlock',
+        description: 'Cast Disguise Self at will, without a slot.',
+      ),
+      _opt(
+        name: 'Misty Visions',
+        featureName: 'Eldritch Invocations',
+        prerequisite: 'Warlock',
+        description: 'Cast Silent Image at will, without a slot.',
+      ),
+      _opt(
+        name: 'One with Shadows',
+        featureName: 'Eldritch Invocations',
+        prerequisite: 'Warlock 5',
+        description:
+            'In an area of Dim Light or Darkness, action: become Invisible until you move or take an action/reaction.',
+      ),
+      _opt(
+        name: 'Repelling Blast',
+        featureName: 'Eldritch Invocations',
+        prerequisite: 'Warlock; Eldritch Blast cantrip',
+        description:
+            'When you hit a Large or smaller creature with Eldritch Blast, push it up to 10 ft.',
+      ),
+
+      // ─── Pact Boon (Warlock) ─────────────────────────────────────────────
+      _opt(
+        name: 'Pact of the Blade',
+        featureName: 'Pact Boon',
+        prerequisite: 'Warlock 3',
+        description:
+            'Conjure a pact weapon (Bonus Action). Use CHA for attack and damage rolls; the weapon counts as Magical.',
+      ),
+      _opt(
+        name: 'Pact of the Chain',
+        featureName: 'Pact Boon',
+        prerequisite: 'Warlock 3',
+        description:
+            'Learn Find Familiar; cast as a Magic action without expending a slot. Familiar can take an Imp/Pseudodragon/Quasit/Sprite form.',
+      ),
+      _opt(
+        name: 'Pact of the Tome',
+        featureName: 'Pact Boon',
+        prerequisite: 'Warlock 3',
+        description:
+            'Gain a Book of Shadows — add three cantrips from any spell list to your spells known.',
+      ),
+
+      // ─── Draconic Spells (Draconic Sorcery) ──────────────────────────────
+      _opt(
+        name: 'Draconic Ancestor — Acid',
+        featureName: 'Draconic Spells',
+        prerequisite: 'Draconic Sorcery 3',
+        description:
+            'Acid ancestry: bonus prepared spells include Acid Splash, Grease, Melf\'s Acid Arrow, Stinking Cloud, Vitriolic Sphere.',
+      ),
+      _opt(
+        name: 'Draconic Ancestor — Cold',
+        featureName: 'Draconic Spells',
+        prerequisite: 'Draconic Sorcery 3',
+        description:
+            'Cold ancestry: bonus prepared spells include Ray of Frost, Armor of Agathys, Snilloc\'s Snowball Swarm, Sleet Storm, Cone of Cold.',
+      ),
+      _opt(
+        name: 'Draconic Ancestor — Fire',
+        featureName: 'Draconic Spells',
+        prerequisite: 'Draconic Sorcery 3',
+        description:
+            'Fire ancestry: bonus prepared spells include Fire Bolt, Burning Hands, Scorching Ray, Fireball, Wall of Fire.',
+      ),
+      _opt(
+        name: 'Draconic Ancestor — Lightning',
+        featureName: 'Draconic Spells',
+        prerequisite: 'Draconic Sorcery 3',
+        description:
+            'Lightning ancestry: bonus prepared spells include Shocking Grasp, Thunderwave, Gust of Wind, Lightning Bolt, Storm Sphere.',
+      ),
+      _opt(
+        name: 'Draconic Ancestor — Poison',
+        featureName: 'Draconic Spells',
+        prerequisite: 'Draconic Sorcery 3',
+        description:
+            'Poison ancestry: bonus prepared spells include Poison Spray, Ray of Sickness, Dragon\'s Breath, Stinking Cloud, Cloudkill.',
+      ),
+
+      // ─── Fiendish Resilience (Fiend Warlock) ─────────────────────────────
+      // One option per damage type (excluding Force per SRD). Each declares
+      // a damage_resistance row so picking the option folds the resistance
+      // into EffectiveCharacter at resolve time.
+      _opt(
+        name: 'Fiendish Resilience — Acid',
+        featureName: 'Fiendish Resilience',
+        prerequisite: 'Fiend Warlock 10',
+        description: 'Resistance to Acid damage.',
+        effects: [
+          {'kind': 'damage_resistance', 'target_ref': _dt('Acid')},
+        ],
+      ),
+      _opt(
+        name: 'Fiendish Resilience — Bludgeoning',
+        featureName: 'Fiendish Resilience',
+        prerequisite: 'Fiend Warlock 10',
+        description: 'Resistance to Bludgeoning damage.',
+        effects: [
+          {'kind': 'damage_resistance', 'target_ref': _dt('Bludgeoning')},
+        ],
+      ),
+      _opt(
+        name: 'Fiendish Resilience — Cold',
+        featureName: 'Fiendish Resilience',
+        prerequisite: 'Fiend Warlock 10',
+        description: 'Resistance to Cold damage.',
+        effects: [
+          {'kind': 'damage_resistance', 'target_ref': _dt('Cold')},
+        ],
+      ),
+      _opt(
+        name: 'Fiendish Resilience — Fire',
+        featureName: 'Fiendish Resilience',
+        prerequisite: 'Fiend Warlock 10',
+        description: 'Resistance to Fire damage.',
+        effects: [
+          {'kind': 'damage_resistance', 'target_ref': _dt('Fire')},
+        ],
+      ),
+      _opt(
+        name: 'Fiendish Resilience — Lightning',
+        featureName: 'Fiendish Resilience',
+        prerequisite: 'Fiend Warlock 10',
+        description: 'Resistance to Lightning damage.',
+        effects: [
+          {'kind': 'damage_resistance', 'target_ref': _dt('Lightning')},
+        ],
+      ),
+      _opt(
+        name: 'Fiendish Resilience — Necrotic',
+        featureName: 'Fiendish Resilience',
+        prerequisite: 'Fiend Warlock 10',
+        description: 'Resistance to Necrotic damage.',
+        effects: [
+          {'kind': 'damage_resistance', 'target_ref': _dt('Necrotic')},
+        ],
+      ),
+      _opt(
+        name: 'Fiendish Resilience — Piercing',
+        featureName: 'Fiendish Resilience',
+        prerequisite: 'Fiend Warlock 10',
+        description: 'Resistance to Piercing damage.',
+        effects: [
+          {'kind': 'damage_resistance', 'target_ref': _dt('Piercing')},
+        ],
+      ),
+      _opt(
+        name: 'Fiendish Resilience — Poison',
+        featureName: 'Fiendish Resilience',
+        prerequisite: 'Fiend Warlock 10',
+        description: 'Resistance to Poison damage.',
+        effects: [
+          {'kind': 'damage_resistance', 'target_ref': _dt('Poison')},
+        ],
+      ),
+      _opt(
+        name: 'Fiendish Resilience — Psychic',
+        featureName: 'Fiendish Resilience',
+        prerequisite: 'Fiend Warlock 10',
+        description: 'Resistance to Psychic damage.',
+        effects: [
+          {'kind': 'damage_resistance', 'target_ref': _dt('Psychic')},
+        ],
+      ),
+      _opt(
+        name: 'Fiendish Resilience — Radiant',
+        featureName: 'Fiendish Resilience',
+        prerequisite: 'Fiend Warlock 10',
+        description: 'Resistance to Radiant damage.',
+        effects: [
+          {'kind': 'damage_resistance', 'target_ref': _dt('Radiant')},
+        ],
+      ),
+      _opt(
+        name: 'Fiendish Resilience — Slashing',
+        featureName: 'Fiendish Resilience',
+        prerequisite: 'Fiend Warlock 10',
+        description: 'Resistance to Slashing damage.',
+        effects: [
+          {'kind': 'damage_resistance', 'target_ref': _dt('Slashing')},
+        ],
+      ),
+      _opt(
+        name: 'Fiendish Resilience — Thunder',
+        featureName: 'Fiendish Resilience',
+        prerequisite: 'Fiend Warlock 10',
+        description: 'Resistance to Thunder damage.',
+        effects: [
+          {'kind': 'damage_resistance', 'target_ref': _dt('Thunder')},
+        ],
       ),
     ];

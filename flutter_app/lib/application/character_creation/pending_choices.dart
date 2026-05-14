@@ -13,7 +13,11 @@ enum PendingChoiceKind {
   spells('spells'),
   subclass('subclass'),
   weaponMastery('weapon_mastery'),
-  skillProficiency('skill_proficiency');
+  skillProficiency('skill_proficiency'),
+  expertise('expertise'),
+  featAsi('feat_asi'),
+  divineOrder('divine_order'),
+  featureOption('feature_option');
 
   final String wire;
   const PendingChoiceKind(this.wire);
@@ -44,6 +48,15 @@ class PendingChoice {
   /// Spells only — SRD cap on spell level at the new character level.
   final int maxSpellLevel;
 
+  /// Optional source entity id (e.g. the feat that triggered this follow-on
+  /// choice). The dialog reads the entity to pull kind-specific options like
+  /// `asi_ability_options` and `asi_max_score` for `featAsi`.
+  final String? sourceEntityId;
+
+  /// Feature name carried for `featureOption` picks. Drives both the badge
+  /// label and the feat-category filter ("Feature Option: $featureName").
+  final String? featureName;
+
   const PendingChoice({
     required this.id,
     required this.kind,
@@ -52,6 +65,8 @@ class PendingChoice {
     this.classLabel,
     this.count = 1,
     this.maxSpellLevel = 0,
+    this.sourceEntityId,
+    this.featureName,
   });
 
   Map<String, dynamic> toMap() => <String, dynamic>{
@@ -62,6 +77,8 @@ class PendingChoice {
         if (classLabel != null) 'class_label': classLabel,
         if (count != 1) 'count': count,
         if (maxSpellLevel != 0) 'max_spell_level': maxSpellLevel,
+        if (sourceEntityId != null) 'source_entity_id': sourceEntityId,
+        if (featureName != null) 'feature_name': featureName,
       };
 
   static PendingChoice? fromMap(Object? raw) {
@@ -82,6 +99,8 @@ class PendingChoice {
       classLabel: raw['class_label']?.toString(),
       count: countRaw is int ? countRaw : 1,
       maxSpellLevel: maxSpellRaw is int ? maxSpellRaw : 0,
+      sourceEntityId: raw['source_entity_id']?.toString(),
+      featureName: raw['feature_name']?.toString(),
     );
   }
 }
@@ -109,6 +128,30 @@ String _newId() {
   final t = DateTime.now().microsecondsSinceEpoch;
   return 'pc_${t.toRadixString(36)}_${n.toRadixString(36)}';
 }
+
+/// Construct a single ad-hoc pending choice with a fresh id. Used by sources
+/// that emit a follow-on decision outside the level-up planner — e.g. when a
+/// subclass pick yields "now choose N skills" (Lore L3 Bonus Proficiencies).
+PendingChoice newPendingChoice({
+  required PendingChoiceKind kind,
+  required int level,
+  String? classId,
+  String? classLabel,
+  int count = 1,
+  int maxSpellLevel = 0,
+  String? sourceEntityId,
+  String? featureName,
+}) => PendingChoice(
+      id: _newId(),
+      kind: kind,
+      level: level,
+      classId: classId,
+      classLabel: classLabel,
+      count: count,
+      maxSpellLevel: maxSpellLevel,
+      sourceEntityId: sourceEntityId,
+      featureName: featureName,
+    );
 
 /// Translate a level-up [plan] into the set of pending decisions the
 /// player will need to make later. Callers pass [classId]/[classLabel]
@@ -146,6 +189,25 @@ List<PendingChoice> pendingChoicesFromPlan({
       level: lvl,
       classId: classId,
       classLabel: classLabel,
+    ));
+  }
+  if (plan.isDivineOrderLevel) {
+    out.add(PendingChoice(
+      id: _newId(),
+      kind: PendingChoiceKind.divineOrder,
+      level: lvl,
+      classId: classId,
+      classLabel: classLabel,
+    ));
+  }
+  for (final name in plan.featureOptionPicks) {
+    out.add(PendingChoice(
+      id: _newId(),
+      kind: PendingChoiceKind.featureOption,
+      level: lvl,
+      classId: classId,
+      classLabel: classLabel,
+      featureName: name,
     ));
   }
   final cantripDelta = plan.cantripsKnownDelta;
@@ -204,6 +266,15 @@ String pendingChoiceLabel(PendingChoice p) {
       return '$prefix · Pick ${p.count} weapon master${p.count == 1 ? 'y' : 'ies'}';
     case PendingChoiceKind.skillProficiency:
       return '$prefix · Pick ${p.count} skill proficienc${p.count == 1 ? 'y' : 'ies'}';
+    case PendingChoiceKind.expertise:
+      return '$prefix · Pick ${p.count} skill expertise';
+    case PendingChoiceKind.featAsi:
+      return '$prefix · Feat ASI · pick ability';
+    case PendingChoiceKind.divineOrder:
+      return '$prefix · Divine Order';
+    case PendingChoiceKind.featureOption:
+      final name = p.featureName ?? 'Feature option';
+      return '$prefix · $name';
   }
 }
 
@@ -225,6 +296,12 @@ Set<String> pendingChoiceFieldHints(PendingChoiceKind kind) {
     case PendingChoiceKind.weaponMastery:
       return const {'weapon_masteries'};
     case PendingChoiceKind.skillProficiency:
+    case PendingChoiceKind.expertise:
       return const {'skills'};
+    case PendingChoiceKind.featAsi:
+      return const {'stat_block', 'saving_throws'};
+    case PendingChoiceKind.divineOrder:
+    case PendingChoiceKind.featureOption:
+      return const {'feats'};
   }
 }

@@ -22,6 +22,8 @@ import '../../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../../domain/entities/schema/world_schema.dart';
 import '../../../theme/dm_tool_colors.dart';
 import '../../../../application/character_creation/caster_progression.dart';
+import '../../../../application/character_creation/level_up_planner.dart';
+import '../../../../application/character_creation/pending_choices.dart';
 import 'steps/equipment_step.dart';
 import 'steps/feats_step.dart';
 import 'steps/personality_step.dart';
@@ -1089,6 +1091,44 @@ Map<String, dynamic> buildSeedFields({
 
   absorbFeatureRows(characterClass);
   absorbFeatureRows(subclassEntity);
+
+  // Seed pending choices from class+level progression. Mirrors the level-up
+  // dialog's emission so a freshly-created Cleric (Divine Order at L1) or any
+  // other class flagged for a mandatory pick lands in the editor with a
+  // resolvable `!` badge. From-level 0 captures every grant at or below the
+  // draft level.
+  if (characterClass != null) {
+    final creationPlan = planLevelUp(
+      fromLevel: 0,
+      toLevel: draft.level,
+      classEntity: characterClass,
+      subclassEntity: subclassEntity,
+      entities: entities,
+    );
+    final pending = pendingChoicesFromPlan(
+      plan: creationPlan,
+      classId: characterClass.id,
+      classLabel: characterClass.name,
+      hasSubclass: subclassEntity != null,
+    );
+    // Filter to kinds the wizard doesn't already resolve inline. subclass /
+    // asiOrFeat / fightingStyle / cantrips / spells are handled by the
+    // wizard's own steps; queueing them here would double-emit.
+    const wizardSeedKinds = <PendingChoiceKind>{
+      PendingChoiceKind.divineOrder,
+      PendingChoiceKind.featureOption,
+    };
+    final seededPending = pending
+        .where((p) => wizardSeedKinds.contains(p.kind))
+        .map((p) => p.toMap())
+        .toList();
+    if (seededPending.isNotEmpty) {
+      final existing = out['pending_choices'];
+      final list = existing is List ? List<dynamic>.from(existing) : <dynamic>[];
+      list.addAll(seededPending);
+      out['pending_choices'] = list;
+    }
+  }
 
   // Spell slots — derive from class caster_kind + level so a fresh
   // character spawns with the correct slot maxes without the user touching

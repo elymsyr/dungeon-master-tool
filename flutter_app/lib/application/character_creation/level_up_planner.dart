@@ -57,6 +57,17 @@ class LevelUpPlan {
   /// The editor uses this to queue a `PendingChoiceKind.subclass` when no
   /// subclass is selected yet.
   final bool isSubclassLevel;
+
+  /// Set when (clampedFrom, clampedTo] window includes the level a Cleric
+  /// gains Divine Order (L1). Detected by feature-name match ("Divine Order").
+  /// Editor queues a `PendingChoiceKind.divineOrder` pending pick.
+  final bool isDivineOrderLevel;
+
+  /// Feature names crossed in (clampedFrom, clampedTo] that present a 1-of-N
+  /// option pick to the player (e.g. Hunter's Prey, Defensive Tactics). Each
+  /// name produces a `PendingChoiceKind.featureOption` badge; option feats
+  /// live under category `Feature Option: <name>`.
+  final List<String> featureOptionPicks;
   final CasterKind casterKind;
   final int? cantripsKnownAtNewLevel;
   final int? cantripsKnownAtPrevLevel;
@@ -102,6 +113,8 @@ class LevelUpPlan {
     required this.isExtraAttackLevel,
     required this.isFightingStyleLevel,
     required this.isSubclassLevel,
+    required this.isDivineOrderLevel,
+    required this.featureOptionPicks,
     required this.casterKind,
     required this.cantripsKnownAtNewLevel,
     required this.cantripsKnownAtPrevLevel,
@@ -247,6 +260,21 @@ int fixedHpFor(String? hitDie) {
 /// class's `features` text so the dialog flag works even when the schema
 /// row omits the ASI feature entry.
 const _asiOrFeatLevels = {4, 8, 12, 16, 19};
+
+/// Cumulative feature-option pickers. Each (class, feature) maps level →
+/// number of picks gained at that level. Drives Sorcerer Metamagic and
+/// Warlock Eldritch Invocations: multiple `featureOption` pendings emit on
+/// the same level-up. Option feats live under `feat-category: Feature
+/// Option: <featureName>`; the dialog filters by category and excludes
+/// already-picked option feats so each pending picks a distinct option.
+const _cumulativePickProgression = <String, Map<String, Map<int, int>>>{
+  'Sorcerer': {
+    'Metamagic': {2: 2, 10: 1, 17: 1},
+  },
+  'Warlock': {
+    'Eldritch Invocations': {1: 2, 5: 1, 7: 1, 9: 1, 12: 1, 15: 1, 18: 1},
+  },
+};
 
 /// SRD §1: Extra Attack lands at L5 for most martials, with Fighter
 /// scaling to 3 at L11 and 4 at L20. The planner derives the count
@@ -394,6 +422,57 @@ LevelUpPlan planLevelUp({
     }
   }
 
+  // Divine Order (Cleric L1) — feature-name match against the Cleric's L1
+  // feature row. Triggers a `PendingChoiceKind.divineOrder` pick.
+  var divineOrder = false;
+  for (final f in newFeatures) {
+    if (f.name == 'Divine Order') {
+      divineOrder = true;
+      break;
+    }
+  }
+
+  // Feature-option pickers — generic 1-of-N subclass-feature picks (Hunter
+  // Ranger Hunter's Prey, Defensive Tactics, Multiattack, Superior Hunter's
+  // Defense; Fiend Warlock Fiendish Resilience; Warlock Pact Boon; Draconic
+  // Sorcerer Draconic Spells). Adding a feature name here also requires
+  // authoring the option feats under `feat-category: Feature Option: <name>`
+  // in feats_class.dart.
+  const featureOptionTriggers = <String>{
+    "Hunter's Prey",
+    'Defensive Tactics',
+    'Multiattack',
+    "Superior Hunter's Defense",
+    'Pact Boon',
+    'Draconic Spells',
+    'Fiendish Resilience',
+  };
+  final featureOptionPicks = <String>[];
+  for (final f in newFeatures) {
+    if (featureOptionTriggers.contains(f.name) &&
+        !featureOptionPicks.contains(f.name)) {
+      featureOptionPicks.add(f.name);
+    }
+  }
+
+  // Cumulative pickers — features that grant N picks per level (Sorcerer
+  // Metamagic 2/1/1, Warlock Eldritch Invocations 2/1/1/1/1/1/1). Driven
+  // directly off class name + level (the feature row may be named
+  // "Metamagic (extra)" at L10, so name-matching is unreliable). Each pick
+  // emits one PendingChoiceKind.featureOption; dialog filters feats by
+  // `Feature Option: <name>` and excludes already-picked option feats.
+  final cumulativeProg = _cumulativePickProgression[classEntity?.name];
+  if (cumulativeProg != null) {
+    for (final entry in cumulativeProg.entries) {
+      for (var l = clampedFrom + 1; l <= clampedTo; l++) {
+        final n = entry.value[l] ?? 0;
+        for (var i = 0; i < n; i++) {
+          featureOptionPicks.add(entry.key);
+        }
+      }
+    }
+  }
+
   // Weapon Mastery cap shifts when a new auto-granted class feat's
   // `weapon_mastery_count_bonus` value exceeds the prior level's max.
   final prevMastery = resolveWeaponMasteryCountAt(
@@ -480,6 +559,8 @@ LevelUpPlan planLevelUp({
     isExtraAttackLevel: extra,
     isFightingStyleLevel: fightingStyle,
     isSubclassLevel: subclass,
+    isDivineOrderLevel: divineOrder,
+    featureOptionPicks: featureOptionPicks,
     casterKind: kind,
     cantripsKnownAtNewLevel: cantripCap,
     cantripsKnownAtPrevLevel: cantripPrev,

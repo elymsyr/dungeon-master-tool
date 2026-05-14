@@ -34,8 +34,30 @@ class ResolvedGrantsCard extends StatelessWidget {
 
   String _nameOf(String id) => entities[id]?.name ?? id;
 
-  String _chipLabel(String id) {
+  /// Pretty display name for resource-pool entities whose canonical names use
+  /// snake_case `pool:` prefixes (e.g. `pool:rage_uses` → "Rage Uses"). Other
+  /// entity types (innate spells) pass through untouched.
+  String _displayPoolName(String raw) {
+    if (!raw.startsWith('pool:')) return raw;
+    final core = raw.substring(5).replaceAll('_', ' ');
+    return core
+        .split(' ')
+        .where((s) => s.isNotEmpty)
+        .map((w) => w[0].toUpperCase() + w.substring(1))
+        .join(' ');
+  }
+
+  /// Optional range suffix for sense chips (`Darkvision 120 ft`). Returns the
+  /// raw name when no override is present so other chip kinds stay untouched.
+  String _nameWithRange(String id) {
     final name = _nameOf(id);
+    final r = effective.senseRanges[id];
+    if (r == null || r <= 0) return name;
+    return '$name $r ft';
+  }
+
+  String _chipLabel(String id, {bool withRange = false}) {
+    final name = withRange ? _nameWithRange(id) : _nameOf(id);
     final sources = effective.grantSources[id];
     if (sources == null || sources.isEmpty) return name;
     return '$name — ${sources.join(', ')}';
@@ -44,8 +66,9 @@ class ResolvedGrantsCard extends StatelessWidget {
   Widget _chipRow(
     String label,
     List<String> ids,
-    Color chipColor,
-  ) {
+    Color chipColor, {
+    bool withRange = false,
+  }) {
     if (ids.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -78,7 +101,7 @@ class ResolvedGrantsCard extends StatelessWidget {
                 ),
               ),
               child: Text(
-                _chipLabel(id),
+                _chipLabel(id, withRange: withRange),
                 style: TextStyle(
                   fontSize: 12,
                   color: palette.srdInk,
@@ -90,13 +113,249 @@ class ResolvedGrantsCard extends StatelessWidget {
     );
   }
 
-  /// Pool entries whose `pool_ref` resolves to a granted entity id (innate
-  /// spells). Class pools use a Map for `pool_ref` and are skipped here.
+  /// Extra-speed row (fly/swim/climb/burrow). Renders as text chips of
+  /// `mode N ft` since speeds aren't entity ids.
+  Widget _extraSpeedsRow(Map<String, int> speeds, Color chipColor) {
+    if (speeds.isEmpty) return const SizedBox.shrink();
+    final entries = speeds.entries.where((e) => e.value > 0).toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    if (entries.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(
+              'Extra Speeds',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: palette.sidebarLabelSecondary,
+              ),
+            ),
+          ),
+          for (final e in entries)
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: chipColor.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: chipColor.withValues(alpha: 0.4),
+                  width: 0.5,
+                ),
+              ),
+              child: Text(
+                '${e.key} ${e.value} ft',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: palette.srdInk,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Render temp-HP grant sources as text rows — `source — formula (trigger)`.
+  /// No counter buttons since these are runtime triggers, not stored pools;
+  /// the actual write to PC `temp_hp` happens through the combat tracker or
+  /// a dedicated trigger UI (future work).
+  Widget _tempHpGrantsBlock(List<Map<String, dynamic>> grants) {
+    if (grants.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(
+              'Temp HP Grants',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: palette.sidebarLabelSecondary,
+              ),
+            ),
+          ),
+          for (final g in grants)
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.pink.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Colors.pink.withValues(alpha: 0.4),
+                  width: 0.5,
+                ),
+              ),
+              child: Text(
+                () {
+                  final src = g['source']?.toString() ?? '';
+                  final formula = g['formula']?.toString();
+                  final trigger = g['trigger']?.toString();
+                  final parts = <String>[
+                    if (src.isNotEmpty) src,
+                    if (formula != null && formula.isNotEmpty) formula,
+                    if (trigger != null && trigger.isNotEmpty) '($trigger)',
+                  ];
+                  return parts.join(' · ');
+                }(),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: palette.srdInk,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Render unarmored AC formula entries (Barbarian/Monk/Sorcerer Draconic
+  /// Resilience). Sheet's AC field is manual — this row surfaces the formula
+  /// so the player knows what to set it to when not wearing armor.
+  Widget _unarmoredFormulasBlock(List<Map<String, dynamic>> formulas) {
+    if (formulas.isEmpty) return const SizedBox.shrink();
+    String describe(Map<String, dynamic> eff) {
+      final payload = eff['payload'];
+      if (payload is! Map) return 'Unarmored AC';
+      final base = payload['base'];
+      final mods = payload['ability_mods'];
+      final shield = payload['shield_allowed'] == true;
+      final parts = <String>[];
+      if (base != null) parts.add('$base');
+      if (mods is List) {
+        for (final m in mods) {
+          parts.add('${m.toString()}_mod');
+        }
+      }
+      final formula = parts.join(' + ');
+      return shield ? '$formula (+shield)' : formula;
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(
+              'Unarmored AC',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: palette.sidebarLabelSecondary,
+              ),
+            ),
+          ),
+          for (final eff in formulas)
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Colors.blueGrey.withValues(alpha: 0.4),
+                  width: 0.5,
+                ),
+              ),
+              child: Text(
+                describe(eff),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: palette.srdInk,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Render each conditionalGrants entry as a chip prefixed by the gating
+  /// state. Groups entries by `kind` so the player sees one labelled row per
+  /// (kind, state) bucket. Uses the kind's normal chip colour.
+  Widget _conditionalGrantsBlock(List<Map<String, dynamic>> grants) {
+    if (grants.isEmpty) return const SizedBox.shrink();
+    const colourForKind = <String, Color>{
+      'damage_resistance': Colors.green,
+      'damage_immunity': Colors.blue,
+      'damage_vulnerability': Colors.deepOrange,
+      'condition_immunity_grant': Colors.purple,
+    };
+    const labelForKind = <String, String>{
+      'damage_resistance': 'Resistances',
+      'damage_immunity': 'Immunities',
+      'damage_vulnerability': 'Vulnerabilities',
+      'condition_immunity_grant': 'Condition Imm.',
+    };
+    // Bucket by (kind, state) → ordered id list.
+    final buckets = <String, List<String>>{};
+    final order = <String>[];
+    for (final g in grants) {
+      final kind = g['kind']?.toString() ?? '';
+      final state = g['state']?.toString() ?? '';
+      final ids = g['ids'];
+      if (ids is! List) continue;
+      final key = '$kind|$state';
+      final list = buckets.putIfAbsent(key, () {
+        order.add(key);
+        return <String>[];
+      });
+      for (final id in ids) {
+        if (id is String && !list.contains(id)) list.add(id);
+      }
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final key in order)
+          () {
+            final parts = key.split('|');
+            final kind = parts[0];
+            final state = parts.length > 1 ? parts[1] : '';
+            final label = labelForKind[kind] ?? kind;
+            final stateLabel = state.replaceFirst('state:', '');
+            final fullLabel =
+                stateLabel.isEmpty ? label : '$label (while $stateLabel)';
+            return _chipRow(
+              fullLabel,
+              buckets[key]!,
+              colourForKind[kind] ?? Colors.grey,
+            );
+          }(),
+      ],
+    );
+  }
+
+  /// Pool entries whose `pool_ref` resolves to a known entity id. Covers both
+  /// innate-spell pools (pool_ref = spell id) and class pools (pool_ref =
+  /// resource-pool Tier-0 id like `pool:rage_uses`). `_displayPoolName`
+  /// pretty-prints the `pool:` prefix on render.
   List<Map<String, dynamic>> _grantedPoolEntries() {
     final out = <Map<String, dynamic>>[];
     for (final p in effective.resourcePools) {
       final ref = p['pool_ref'];
-      if (ref is String && entities.containsKey(ref)) out.add(p);
+      if (ref is! String) continue;
+      if (!entities.containsKey(ref)) continue;
+      final maxRaw = p['max'];
+      final max = maxRaw is int ? maxRaw : int.tryParse('$maxRaw') ?? 0;
+      if (max <= 0) continue;
+      out.add(p);
     }
     return out;
   }
@@ -106,7 +365,8 @@ class ResolvedGrantsCard extends StatelessWidget {
     final maxRaw = entry['max'];
     final max = maxRaw is int ? maxRaw : int.tryParse('$maxRaw') ?? 1;
     final cur = poolRemaining[id] ?? max;
-    final name = _nameOf(id);
+    final rawName = _nameOf(id);
+    final name = _displayPoolName(rawName);
     final sources = effective.grantSources[id] ?? const <String>[];
     final sourceTxt = sources.isEmpty ? '' : ' — ${sources.join(', ')}';
     final readOnly = onPoolRemainingChanged == null;
@@ -190,6 +450,10 @@ class ResolvedGrantsCard extends StatelessWidget {
     final bonusActions = effective.grantedBonusActionIds;
     final reactions = effective.grantedReactionIds;
     final pools = _grantedPoolEntries();
+    final extraSpeeds = effective.extraSpeeds;
+    final conditional = effective.conditionalGrants;
+    final tempHpGrants = effective.tempHpGrants;
+    final unarmoredFormulas = effective.unarmoredFormulas;
     if (senses.isEmpty &&
         res.isEmpty &&
         imm.isEmpty &&
@@ -199,7 +463,11 @@ class ResolvedGrantsCard extends StatelessWidget {
         actions.isEmpty &&
         bonusActions.isEmpty &&
         reactions.isEmpty &&
-        pools.isEmpty) {
+        pools.isEmpty &&
+        extraSpeeds.isEmpty &&
+        conditional.isEmpty &&
+        tempHpGrants.isEmpty &&
+        unarmoredFormulas.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -221,15 +489,19 @@ class ResolvedGrantsCard extends StatelessWidget {
               leadingIcon: Icons.shield_outlined,
             ),
             const SizedBox(height: 8),
-            _chipRow('Senses', senses, Colors.indigo),
+            _chipRow('Senses', senses, Colors.indigo, withRange: true),
+            _extraSpeedsRow(extraSpeeds, Colors.lightBlue),
             _chipRow('Resistances', res, Colors.green),
             _chipRow('Immunities', imm, Colors.blue),
             _chipRow('Vulnerabilities', vuln, Colors.deepOrange),
             _chipRow('Condition Imm.', cimm, Colors.purple),
+            _conditionalGrantsBlock(conditional),
             _chipRow('Traits', traits, Colors.teal),
             _chipRow('Actions', actions, Colors.red),
             _chipRow('Bonus Actions', bonusActions, Colors.amber),
             _chipRow('Reactions', reactions, Colors.cyan),
+            _tempHpGrantsBlock(tempHpGrants),
+            _unarmoredFormulasBlock(unarmoredFormulas),
             if (pools.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
