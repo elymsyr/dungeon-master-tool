@@ -21,12 +21,30 @@ class PendingChoiceResolution {
   /// `PendingChoiceKind.weaponMastery`. Editor writes to `weapon_masteries`.
   final List<String> weaponMasteryIds;
 
+  /// Skill entity IDs — populated only when resolving
+  /// `PendingChoiceKind.skillProficiency`. Editor flips the matching
+  /// `skills.rows[i].proficient` cells to true.
+  final List<String> skillIds;
+
+  /// Skill entity IDs — populated only when resolving
+  /// `PendingChoiceKind.expertise`. Editor flips the matching
+  /// `skills.rows[i].expertise` cells to true.
+  final List<String> expertiseSkillIds;
+
+  /// Saving-throw ability abbreviations the editor should flip to proficient
+  /// (e.g. `{'CON'}`). Used by `featAsi` resolution when the source feat
+  /// declares `grants_save_prof_from_asi: true` (Resilient).
+  final Set<String> saveProfAbilityAbbrevs;
+
   const PendingChoiceResolution({
     this.abilityBumps = const {},
     this.featId,
     this.spellIds = const [],
     this.subclassId,
     this.weaponMasteryIds = const [],
+    this.skillIds = const [],
+    this.expertiseSkillIds = const [],
+    this.saveProfAbilityAbbrevs = const {},
   });
 
   bool get isEmpty =>
@@ -34,7 +52,10 @@ class PendingChoiceResolution {
       featId == null &&
       spellIds.isEmpty &&
       subclassId == null &&
-      weaponMasteryIds.isEmpty;
+      weaponMasteryIds.isEmpty &&
+      skillIds.isEmpty &&
+      expertiseSkillIds.isEmpty &&
+      saveProfAbilityAbbrevs.isEmpty;
 }
 
 /// Open the picker UI for a single deferred level-up decision. Returns
@@ -49,6 +70,8 @@ Future<PendingChoiceResolution?> showPendingChoiceResolver(
   required Map<String, int> abilityScores,
   required Set<String> existingFeatIds,
   required Set<String> existingSpellIds,
+  Set<String> existingSkillNames = const {},
+  Set<String> expertiseSkillNames = const {},
 }) {
   return showDialog<PendingChoiceResolution>(
     context: context,
@@ -58,6 +81,8 @@ Future<PendingChoiceResolution?> showPendingChoiceResolver(
       abilityScores: abilityScores,
       existingFeatIds: existingFeatIds,
       existingSpellIds: existingSpellIds,
+      existingSkillNames: existingSkillNames,
+      expertiseSkillNames: expertiseSkillNames,
     ),
   );
 }
@@ -68,6 +93,8 @@ class _ResolverDialog extends StatefulWidget {
   final Map<String, int> abilityScores;
   final Set<String> existingFeatIds;
   final Set<String> existingSpellIds;
+  final Set<String> existingSkillNames;
+  final Set<String> expertiseSkillNames;
 
   const _ResolverDialog({
     required this.choice,
@@ -75,6 +102,8 @@ class _ResolverDialog extends StatefulWidget {
     required this.abilityScores,
     required this.existingFeatIds,
     required this.existingSpellIds,
+    required this.existingSkillNames,
+    required this.expertiseSkillNames,
   });
 
   @override
@@ -105,6 +134,14 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   // Fighting Style state
   String? _fightingStyleId;
 
+  // Divine Order state — mutex pick between Protector and Thaumaturge.
+  String? _divineOrderId;
+
+  // Feature-option state — generic single-feat pick for subclass features
+  // (Hunter's Prey, Defensive Tactics, etc.). Filter category derived from
+  // `widget.choice.featureName` at runtime.
+  String? _featureOptionId;
+
   // Spell picker state (used by cantrip + leveled spell kinds)
   final Set<String> _pickedSpells = <String>{};
 
@@ -114,11 +151,22 @@ class _ResolverDialogState extends State<_ResolverDialog> {
   // Weapon mastery state — set of weapon entity ids when kind == weaponMastery.
   final Set<String> _pickedWeaponMasteries = <String>{};
 
+  // Skill proficiency state — set of skill entity ids when kind ==
+  // skillProficiency.
+  final Set<String> _pickedSkills = <String>{};
+
+  // Expertise state — set of skill entity ids when kind == expertise.
+  final Set<String> _pickedExpertise = <String>{};
+
   List<Entity> _eligibleFeats = const [];
   List<Entity> _fightingStyleFeats = const [];
+  List<Entity> _divineOrderFeats = const [];
+  List<Entity> _featureOptionFeats = const [];
   List<Entity> _eligibleSpells = const [];
   List<Entity> _eligibleSubclasses = const [];
   List<Entity> _eligibleWeapons = const [];
+  List<Entity> _eligibleSkills = const [];
+  List<Entity> _eligibleExpertise = const [];
 
   @override
   void initState() {
@@ -128,6 +176,10 @@ class _ResolverDialogState extends State<_ResolverDialog> {
         _eligibleFeats = _computeEligibleFeats();
       case PendingChoiceKind.fightingStyle:
         _fightingStyleFeats = _computeFightingStyleFeats();
+      case PendingChoiceKind.divineOrder:
+        _divineOrderFeats = _computeDivineOrderFeats();
+      case PendingChoiceKind.featureOption:
+        _featureOptionFeats = _computeFeatureOptionFeats();
       case PendingChoiceKind.cantrips:
         _eligibleSpells = _computeEligibleSpells(cantripOnly: true);
       case PendingChoiceKind.spells:
@@ -137,14 +189,121 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       case PendingChoiceKind.weaponMastery:
         _eligibleWeapons = _computeEligibleWeapons();
       case PendingChoiceKind.skillProficiency:
-        // Not yet wired — falls through with empty pickers.
-        break;
+        _eligibleSkills = _computeEligibleSkills();
+      case PendingChoiceKind.expertise:
+        _eligibleExpertise = _computeEligibleExpertise();
+      case PendingChoiceKind.featAsi:
+        _initFeatAsi();
     }
   }
 
-  bool _canBump(String key, int by) {
+  // ───────── featAsi (Resilient, Epic Boon, etc.) ─────────
+
+  /// Feat that triggered this ASI follow-on. Read once from `sourceEntityId`.
+  Entity? _featAsiSource;
+  List<String> _featAsiAbilityOptions = const [];
+  int _featAsiAmount = 1;
+  int _featAsiMaxScore = 20;
+  String? _featAsiPickedAbility;
+
+  void _initFeatAsi() {
+    final srcId = widget.choice.sourceEntityId;
+    if (srcId == null) return;
+    final e = widget.entities[srcId];
+    if (e == null) return;
+    _featAsiSource = e;
+    final opts = e.fields['asi_ability_options'];
+    if (opts is List) {
+      _featAsiAbilityOptions = [
+        for (final o in opts)
+          if (_asiOptionToAbbrev(o, widget.entities) case final a? when a.isNotEmpty)
+            a,
+      ];
+    }
+    if (_featAsiAbilityOptions.isEmpty) {
+      _featAsiAbilityOptions = const ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+    }
+    final amt = e.fields['asi_amount'];
+    if (amt is int && amt > 0) _featAsiAmount = amt;
+    final max = e.fields['asi_max_score'];
+    if (max is int && max > 0) _featAsiMaxScore = max;
+  }
+
+  /// Accept either a full ability name ("Strength"), an abbreviation
+  /// ("STR"), or an entity ref map / id pointing at an ability entity.
+  static String? _asiOptionToAbbrev(Object? o, Map<String, Entity> entities) {
+    if (o is String) {
+      // Could be abbreviation or entity id.
+      final e = entities[o];
+      if (e != null) return _abilityNameToAbbrev(e.name);
+      return _abilityNameToAbbrev(o);
+    }
+    if (o is Map) {
+      final id = o['id']?.toString();
+      if (id != null) {
+        final e = entities[id];
+        if (e != null) return _abilityNameToAbbrev(e.name);
+      }
+      final name = o['name']?.toString();
+      if (name != null) return _abilityNameToAbbrev(name);
+    }
+    return null;
+  }
+
+  static String? _abilityNameToAbbrev(String raw) {
+    final s = raw.toUpperCase();
+    const valid = {'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'};
+    if (valid.contains(s)) return s;
+    switch (raw.toLowerCase()) {
+      case 'strength':
+        return 'STR';
+      case 'dexterity':
+        return 'DEX';
+      case 'constitution':
+        return 'CON';
+      case 'intelligence':
+        return 'INT';
+      case 'wisdom':
+        return 'WIS';
+      case 'charisma':
+        return 'CHA';
+    }
+    return null;
+  }
+
+  /// Skills the PC is currently proficient in but doesn't yet have expertise
+  /// in. Source set passed from the editor.
+  List<Entity> _computeEligibleExpertise() {
+    if (widget.entities.isEmpty) return const [];
+    final out = <Entity>[];
+    for (final e in widget.entities.values) {
+      if (e.categorySlug != 'skill') continue;
+      if (!widget.existingSkillNames.contains(e.name)) continue;
+      if (widget.expertiseSkillNames.contains(e.name)) continue;
+      out.add(e);
+    }
+    out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return List<Entity>.unmodifiable(out);
+  }
+
+  /// All skill entities in the campaign that the PC isn't already proficient
+  /// in. Existing-proficiency filter uses skill *names* because the PC stores
+  /// proficiency in the `skills` structured field keyed by name, not by id.
+  List<Entity> _computeEligibleSkills() {
+    if (widget.entities.isEmpty) return const [];
+    final out = <Entity>[];
+    for (final e in widget.entities.values) {
+      if (e.categorySlug != 'skill') continue;
+      if (widget.existingSkillNames.contains(e.name)) continue;
+      out.add(e);
+    }
+    out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return List<Entity>.unmodifiable(out);
+  }
+
+  bool _canBump(String key, int by, {int? cap}) {
     final cur = widget.abilityScores[key] ?? 10;
-    return (cur + by) <= _abilityCap;
+    return (cur + by) <= (cap ?? _abilityCap);
   }
 
   Map<String, int> get _abilityBumps {
@@ -220,6 +379,45 @@ class _ResolverDialogState extends State<_ResolverDialog> {
     if (catRef is! String) return false;
     final cat = widget.entities[catRef];
     return cat?.name == 'Fighting Style';
+  }
+
+  /// Feats authored under category `Feature Option: <featureName>`. The
+  /// feature name comes from the pending choice itself so the same dialog
+  /// state handles every subclass-feature picker (Hunter's Prey, Defensive
+  /// Tactics, etc.) without a per-feature switch.
+  List<Entity> _computeFeatureOptionFeats() {
+    if (widget.entities.isEmpty) return const [];
+    final featureName = widget.choice.featureName;
+    if (featureName == null || featureName.isEmpty) return const [];
+    final targetCategory = 'Feature Option: $featureName';
+    final out = <Entity>[];
+    for (final e in widget.entities.values) {
+      if (e.categorySlug != 'feat') continue;
+      final catRef = e.fields['category_ref'];
+      if (catRef is! String) continue;
+      final cat = widget.entities[catRef];
+      if (cat?.name != targetCategory) continue;
+      if (widget.existingFeatIds.contains(e.id)) continue;
+      out.add(e);
+    }
+    out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return List<Entity>.unmodifiable(out);
+  }
+
+  List<Entity> _computeDivineOrderFeats() {
+    if (widget.entities.isEmpty) return const [];
+    final out = <Entity>[];
+    for (final e in widget.entities.values) {
+      if (e.categorySlug != 'feat') continue;
+      final catRef = e.fields['category_ref'];
+      if (catRef is! String) continue;
+      final cat = widget.entities[catRef];
+      if (cat?.name != 'Divine Order') continue;
+      if (widget.existingFeatIds.contains(e.id)) continue;
+      out.add(e);
+    }
+    out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return List<Entity>.unmodifiable(out);
   }
 
   /// All subclass entities whose `parent_class_ref` matches the choice's
@@ -302,6 +500,10 @@ class _ResolverDialogState extends State<_ResolverDialog> {
         return _asiValid;
       case PendingChoiceKind.fightingStyle:
         return true;
+      case PendingChoiceKind.divineOrder:
+        return _divineOrderId != null;
+      case PendingChoiceKind.featureOption:
+        return _featureOptionId != null;
       case PendingChoiceKind.cantrips:
       case PendingChoiceKind.spells:
         return _pickedSpells.length <= widget.choice.count;
@@ -310,7 +512,12 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       case PendingChoiceKind.weaponMastery:
         return _pickedWeaponMasteries.length <= widget.choice.count;
       case PendingChoiceKind.skillProficiency:
-        return true;
+        return _pickedSkills.length <= widget.choice.count;
+      case PendingChoiceKind.expertise:
+        return _pickedExpertise.length <= widget.choice.count;
+      case PendingChoiceKind.featAsi:
+        return _featAsiPickedAbility != null &&
+            _canBump(_featAsiPickedAbility!, _featAsiAmount, cap: _featAsiMaxScore);
     }
   }
 
@@ -323,6 +530,10 @@ class _ResolverDialogState extends State<_ResolverDialog> {
         );
       case PendingChoiceKind.fightingStyle:
         return PendingChoiceResolution(featId: _fightingStyleId);
+      case PendingChoiceKind.divineOrder:
+        return PendingChoiceResolution(featId: _divineOrderId);
+      case PendingChoiceKind.featureOption:
+        return PendingChoiceResolution(featId: _featureOptionId);
       case PendingChoiceKind.cantrips:
       case PendingChoiceKind.spells:
         return PendingChoiceResolution(
@@ -335,7 +546,22 @@ class _ResolverDialogState extends State<_ResolverDialog> {
           weaponMasteryIds: _pickedWeaponMasteries.toList(growable: false),
         );
       case PendingChoiceKind.skillProficiency:
-        return const PendingChoiceResolution();
+        return PendingChoiceResolution(
+          skillIds: _pickedSkills.toList(growable: false),
+        );
+      case PendingChoiceKind.expertise:
+        return PendingChoiceResolution(
+          expertiseSkillIds: _pickedExpertise.toList(growable: false),
+        );
+      case PendingChoiceKind.featAsi:
+        final picked = _featAsiPickedAbility;
+        if (picked == null) return const PendingChoiceResolution();
+        final saveProf =
+            _featAsiSource?.fields['grants_save_prof_from_asi'] == true;
+        return PendingChoiceResolution(
+          abilityBumps: {picked: _featAsiAmount},
+          saveProfAbilityAbbrevs: saveProf ? {picked} : const {},
+        );
     }
   }
 
@@ -379,6 +605,10 @@ class _ResolverDialogState extends State<_ResolverDialog> {
         return _asiBody(hint);
       case PendingChoiceKind.fightingStyle:
         return _fightingStyleBody(hint);
+      case PendingChoiceKind.divineOrder:
+        return _divineOrderBody(hint);
+      case PendingChoiceKind.featureOption:
+        return _featureOptionBody(hint);
       case PendingChoiceKind.cantrips:
         return _spellPickerBody(hint, cantripOnly: true);
       case PendingChoiceKind.spells:
@@ -388,11 +618,144 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       case PendingChoiceKind.weaponMastery:
         return _weaponMasteryBody(hint);
       case PendingChoiceKind.skillProficiency:
-        return Text(
-          'Skill proficiency picker is not yet implemented — Dismiss to clear this badge.',
-          style: TextStyle(fontSize: 11, color: hint),
-        );
+        return _skillProficiencyBody(hint);
+      case PendingChoiceKind.expertise:
+        return _expertiseBody(hint);
+      case PendingChoiceKind.featAsi:
+        return _featAsiBody(hint);
     }
+  }
+
+  Widget _featAsiBody(Color hint) {
+    if (_featAsiSource == null) {
+      return Text(
+        'Source feat not found in this campaign.',
+        style:
+            TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
+      );
+    }
+    final keys = _featAsiAbilityOptions;
+    final saveProf =
+        _featAsiSource!.fields['grants_save_prof_from_asi'] == true;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '+$_featAsiAmount to chosen ability (cap $_featAsiMaxScore).'
+          '${saveProf ? ' Also grants saving-throw proficiency for the chosen ability.' : ''}',
+          style: TextStyle(fontSize: 11, color: hint),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          children: [
+            for (final k in keys)
+              _chip(
+                label:
+                    '${_abilityLabels[k] ?? k} (${widget.abilityScores[k] ?? '—'})',
+                selected: _featAsiPickedAbility == k,
+                disabled: !_canBump(k, _featAsiAmount, cap: _featAsiMaxScore),
+                onTap: () => setState(() => _featAsiPickedAbility = k),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _expertiseBody(Color hint) {
+    if (_eligibleExpertise.isEmpty) {
+      return Text(
+        'No eligible skills — PC has no proficient skills without expertise.',
+        style:
+            TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
+      );
+    }
+    final cap = widget.choice.count;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Pick up to $cap (selected ${_pickedExpertise.length}). Eligible skills are ones you\'re already proficient in.',
+          style: TextStyle(fontSize: 11, color: hint),
+        ),
+        const SizedBox(height: 6),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 360),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final e in _eligibleExpertise)
+                  _descOption(
+                    name: e.name,
+                    description: e.description,
+                    selected: _pickedExpertise.contains(e.id),
+                    onTap: () {
+                      setState(() {
+                        if (_pickedExpertise.contains(e.id)) {
+                          _pickedExpertise.remove(e.id);
+                        } else if (_pickedExpertise.length < cap) {
+                          _pickedExpertise.add(e.id);
+                        }
+                      });
+                    },
+                    hint: hint,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _skillProficiencyBody(Color hint) {
+    if (_eligibleSkills.isEmpty) {
+      return Text(
+        'No skills available — PC already proficient in every skill in the campaign.',
+        style:
+            TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
+      );
+    }
+    final cap = widget.choice.count;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Pick up to $cap (selected ${_pickedSkills.length}).',
+          style: TextStyle(fontSize: 11, color: hint),
+        ),
+        const SizedBox(height: 6),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 360),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final e in _eligibleSkills)
+                  _descOption(
+                    name: e.name,
+                    description: e.description,
+                    selected: _pickedSkills.contains(e.id),
+                    onTap: () {
+                      setState(() {
+                        if (_pickedSkills.contains(e.id)) {
+                          _pickedSkills.remove(e.id);
+                        } else if (_pickedSkills.length < cap) {
+                          _pickedSkills.add(e.id);
+                        }
+                      });
+                    },
+                    hint: hint,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _subclassBody(Color hint) {
@@ -557,6 +920,39 @@ class _ResolverDialogState extends State<_ResolverDialog> {
       hint,
       (id) => _fightingStyleId = id,
       () => _fightingStyleId,
+    );
+  }
+
+  Widget _divineOrderBody(Color hint) {
+    if (_divineOrderFeats.isEmpty) {
+      return Text(
+        'No Divine Order feats in the active campaign yet.',
+        style:
+            TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
+      );
+    }
+    return _featList(
+      _divineOrderFeats,
+      hint,
+      (id) => _divineOrderId = id,
+      () => _divineOrderId,
+    );
+  }
+
+  Widget _featureOptionBody(Color hint) {
+    final name = widget.choice.featureName ?? 'this feature';
+    if (_featureOptionFeats.isEmpty) {
+      return Text(
+        'No options authored for $name in the active campaign yet.',
+        style:
+            TextStyle(fontSize: 11, color: hint, fontStyle: FontStyle.italic),
+      );
+    }
+    return _featList(
+      _featureOptionFeats,
+      hint,
+      (id) => _featureOptionId = id,
+      () => _featureOptionId,
     );
   }
 

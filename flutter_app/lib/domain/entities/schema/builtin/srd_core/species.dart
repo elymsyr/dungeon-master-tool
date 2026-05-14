@@ -106,8 +106,10 @@ List<Map<String, dynamic>> srdSpecies() => [
             {
               'name': 'Hill Dwarf',
               'description':
-                  'Hill Dwarf — keen Insight from highland wisdom. (SRD 5.1 legacy ancestry)',
-              'granted_modifiers': const <Map<String, dynamic>>[],
+                  'Hill Dwarf — keen Insight from highland wisdom plus Dwarven Toughness (+1 HP per level). (SRD 5.1 legacy ancestry)',
+              'granted_modifiers': [
+                {'kind': 'hp_bonus_per_level', 'value': 1},
+              ],
               'granted_skill_proficiencies': [lookup('skill', 'Insight')],
             },
             {
@@ -142,7 +144,14 @@ List<Map<String, dynamic>> srdSpecies() => [
               'name': 'Drow',
               'description':
                   'Superior Darkvision (120 ft. — replaces base Darkvision). Innate spells: Dancing Lights (L1), Faerie Fire (L3, 1/day), Darkness (L5, 1/day).',
-              'granted_modifiers': const <Map<String, dynamic>>[],
+              'granted_modifiers': [
+                {
+                  'kind': 'sense_grant',
+                  'target_kind': 'sense',
+                  'target_ref': lookup('sense', 'Darkvision'),
+                  'payload': {'range_ft': 120},
+                },
+              ],
               'granted_cantrip_refs': [ref('spell', 'Dancing Lights')],
               'granted_spells_at_level': [
                 {'spell_ref': ref('spell', 'Faerie Fire'), 'at_level': 3, 'uses_per_long_rest': 1},

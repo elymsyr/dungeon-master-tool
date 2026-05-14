@@ -114,6 +114,7 @@ class CharacterResolver {
         : baseAbilities);
     var acBonus = 0;
     var speedBonus = 0;
+    final extraSpeeds = <String, int>{};
     var hpBonusFlat = 0;
     var hpBonusPerLevel = 0;
     var initiativeBonus = 0;
@@ -122,6 +123,9 @@ class CharacterResolver {
     final grantedSpellIds = <String>[];
     final grantedCantripIds = <String>[];
     final senses = <String>[];
+    final senseRanges = <String, int>{};
+    final conditionalGrants = <Map<String, dynamic>>[];
+    final tempHpGrants = <Map<String, dynamic>>[];
     final damageRes = <String>[];
     final damageImmunities = <String>[];
     final damageVulnerabilities = <String>[];
@@ -186,11 +190,12 @@ class CharacterResolver {
           if (classId == null) return false;
           return (classLevels[classId] ?? 0) >= needLvl;
         case 'equipped_armor_kind':
-          // args: {value: 'none'|'light'|'medium'|'heavy'|'not_heavy'}
+          // args: {value: 'none'|'light'|'medium'|'heavy'|'not_heavy'|'not_none'}
           // Walk the PC's inventory for an equipped armor entity (non-shield).
           // 'none' is true iff no armor is equipped; 'not_heavy' is true
-          // unless the equipped armor resolves to heavy. Light/medium/heavy
-          // each require an equipped armor of the matching category.
+          // unless the equipped armor resolves to heavy. 'not_none' is true
+          // iff any armor is equipped. Light/medium/heavy each require an
+          // equipped armor of the matching category.
           final want = argMap['value']?.toString() ?? '';
           final armor = _equippedArmor(fields, entitiesById);
           if (armor == null) return want == 'none' || want == 'not_heavy';
@@ -198,6 +203,7 @@ class CharacterResolver {
           final catId = _resolveRef(catRef, entitiesById);
           final cat = (catId != null) ? entitiesById[catId]?.name.toLowerCase() ?? '' : '';
           if (want == 'none') return false;
+          if (want == 'not_none') return true;
           if (want == 'not_heavy') return !cat.contains('heavy');
           return cat.contains(want);
         case 'equipped_shield':
@@ -232,6 +238,39 @@ class CharacterResolver {
       return true;
     }
 
+    /// Split a predicate list into state-gated refs vs non-state predicates.
+    /// Returns null when no state predicate is present, otherwise the unique
+    /// state refs and the residual non-state predicate list. State predicates
+    /// always fail at resolve time but the resolver can still surface the
+    /// effect as a conditional grant when the non-state predicates pass.
+    ({List<String> stateRefs, List<Map<String, dynamic>> rest})? splitStatePredicates(
+        Object? rawPredicates) {
+      if (rawPredicates is! List) return null;
+      final states = <String>[];
+      final rest = <Map<String, dynamic>>[];
+      for (final p in rawPredicates) {
+        if (p is! Map) continue;
+        final map = Map<String, dynamic>.from(p);
+        final kind = map['kind'];
+        if (kind == 'has_state' ||
+            kind == 'has_condition' ||
+            kind == 'target_has_condition') {
+          final args = map['args'];
+          final ref = (args is Map)
+              ? (args['ref'] ?? args['state_ref'] ?? args['condition_ref'])
+              : null;
+          final tag = ref?.toString();
+          if (tag != null && tag.isNotEmpty && !states.contains(tag)) {
+            states.add(tag);
+          }
+        } else {
+          rest.add(map);
+        }
+      }
+      if (states.isEmpty) return null;
+      return (stateRefs: states, rest: rest);
+    }
+
     /// Resolve a `scales_with` table down to a single value for the current
     /// character context. Returns null if the table doesn't apply.
     Object? evalScalesWith(Object? rawScales) {
@@ -261,7 +300,43 @@ class CharacterResolver {
       return best;
     }
 
+    /// Subset of effect kinds that can meaningfully surface as a conditional
+    /// grant when state-gated. Roll-time kinds (advantage_on, extra damage)
+    /// are excluded — they live in the combat tracker layer.
+    const conditionalKinds = <String>{
+      'damage_resistance',
+      'damage_immunity',
+      'damage_vulnerability',
+      'condition_immunity_grant',
+    };
+
     void applyEffect(Map<String, dynamic> eff, String source) {
+      // Split state predicates out before the main predicate gate. If a
+      // `has_state` predicate is present and the non-state predicates all
+      // pass, route eligible effect kinds to `conditionalGrants` so the
+      // sheet can render them as gated chips. Otherwise the regular
+      // predicate gate runs (state predicates always fail at resolve time,
+      // so the effect drops if any remain in that path).
+      final split = splitStatePredicates(eff['predicates']);
+      if (split != null) {
+        final kind = eff['kind']?.toString() ?? '';
+        if (conditionalKinds.contains(kind)) {
+          // All non-state predicates must pass for the gated grant to apply.
+          for (final p in split.rest) {
+            if (!evalPredicate(p)) return;
+          }
+          final id = _refIdFor(eff, entitiesById);
+          if (id == null) return;
+          conditionalGrants.add(<String, dynamic>{
+            'state': split.stateRefs.first,
+            'kind': kind,
+            'ids': <String>[id],
+            'source': source,
+          });
+          return;
+        }
+        // Fall through to default gate — non-conditional kinds drop.
+      }
       // Row-level predicate gate.
       if (!predicatesPass(eff['predicates'])) return;
       switch (eff['kind']) {
@@ -304,6 +379,10 @@ class CharacterResolver {
             case 'saving_throw':
             case 'ability':
               if (!saves.contains(id)) saves.add(id);
+            case 'armor_category':
+              if (!armorCats.contains(id)) armorCats.add(id);
+            case 'weapon_category':
+              if (!weaponCats.contains(id)) weaponCats.add(id);
           }
         case 'language_grant':
           final id = _refIdFor(eff, entitiesById);
@@ -358,11 +437,52 @@ class CharacterResolver {
           if (id != null) {
             if (!senses.contains(id)) senses.add(id);
             noteSource(id, source);
+            // Optional range_ft payload — when present, keep the max range per
+            // sense id. Drow Superior Darkvision = 120 overrides base 60.
+            final payload = eff['payload'];
+            int? range;
+            if (payload is Map && payload['range_ft'] is int) {
+              range = payload['range_ft'] as int;
+            } else if (eff['range_ft'] is int) {
+              range = eff['range_ft'] as int;
+            }
+            if (range != null && range > 0) {
+              final prior = senseRanges[id] ?? 0;
+              if (range > prior) senseRanges[id] = range;
+            }
           }
         case 'expertise_grant':
           final id = _refIdFor(eff, entitiesById);
           if (id != null && !expertiseSkills.contains(id)) {
             expertiseSkills.add(id);
+          }
+        case 'temp_hp_grant':
+          // Surface the grant for the sheet to render — actual write to PC
+          // `temp_hp` is a runtime trigger (rest, kill, attack hit), not a
+          // resolve-time decision.
+          tempHpGrants.add(<String, dynamic>{
+            'source': source,
+            'formula': eff['payload'] is Map ? (eff['payload'] as Map)['formula'] : eff['formula'],
+            'trigger': eff['payload'] is Map ? (eff['payload'] as Map)['trigger'] : eff['trigger'],
+            'activation': eff['activation'],
+          });
+        case 'granted_action_grant':
+          final id = _refIdFor(eff, entitiesById);
+          if (id != null && !grantedActionIds.contains(id)) {
+            grantedActionIds.add(id);
+            noteSource(id, source);
+          }
+        case 'granted_bonus_action_grant':
+          final id = _refIdFor(eff, entitiesById);
+          if (id != null && !grantedBonusActionIds.contains(id)) {
+            grantedBonusActionIds.add(id);
+            noteSource(id, source);
+          }
+        case 'granted_reaction_grant':
+          final id = _refIdFor(eff, entitiesById);
+          if (id != null && !grantedReactionIds.contains(id)) {
+            grantedReactionIds.add(id);
+            noteSource(id, source);
           }
         case 'unarmored_ac_formula':
           unarmoredFormulas.add(Map<String, dynamic>.from(eff));
@@ -380,9 +500,15 @@ class CharacterResolver {
               ? Map<String, dynamic>.from(eff['payload'] as Map)
               : <String, dynamic>{};
           final scaledMax = evalScalesWith(eff['scales_with']);
+          final formulaMax = _evalCountFormula(
+            payload['count_formula']?.toString(),
+            abilities: abilities,
+            classLevels: classLevels,
+            entitiesById: entitiesById,
+          );
           final entry = <String, dynamic>{
             'pool_ref': payload['pool_ref'] ?? eff['target_ref'],
-            'max': scaledMax ?? payload['count'] ?? eff['value'],
+            'max': scaledMax ?? formulaMax ?? payload['count'] ?? eff['value'],
             'recharge': payload['recharge'] ?? eff['recharge'],
           };
           resourcePools.add(entry);
@@ -412,8 +538,20 @@ class CharacterResolver {
         case 'reliable_talent':
         case 'min_die_value':
         case 'swim_speed_equals_speed':
+          // Marker — resolved post-pass to walking speed.
+          extraSpeeds['swim'] = -1;
         case 'climb_speed_equals_speed':
+          extraSpeeds['climb'] = -1;
         case 'fly_speed':
+          // payload: {value_ft: int} for explicit speeds, otherwise equals walk.
+          final payload = eff['payload'];
+          final v = (payload is Map) ? _intOf(payload['value_ft']) : _intOf(eff['value']);
+          if (v > 0) {
+            final cur = extraSpeeds['fly'] ?? 0;
+            if (v > cur) extraSpeeds['fly'] = v;
+          } else {
+            extraSpeeds['fly'] = -1;
+          }
         case 'walk_on_liquid':
         case 'magical_unarmed_strikes':
         case 'damage_type_override':
@@ -423,7 +561,6 @@ class CharacterResolver {
         case 'weapon_mastery_grant':
         case 'weapon_mastery_count_bonus':
         case 'expertise_count':
-        case 'temp_hp_grant':
         case 'choice_group':
           // Recognized kinds reserved for later passes (combat tracker, choice
           // resolution, weapon-specific attack pipeline). Silently accept here
@@ -822,6 +959,21 @@ class CharacterResolver {
       if (bg != null) mergeChoiceGroups(bg, 'background:${bg.name}');
     }
 
+    // Resolve `extraSpeeds` sentinels (-1 = "equals walking speed"). Walk
+    // speed = species `speed_ft` (default 30 ft if unauthored) + speedBonus.
+    if (extraSpeeds.containsValue(-1)) {
+      var walkBase = 30;
+      if (raceId != null) {
+        final sp = entitiesById[raceId];
+        final raw = sp?.fields['speed_ft'];
+        if (raw is int) walkBase = raw;
+      }
+      final walk = walkBase + speedBonus;
+      for (final mode in extraSpeeds.keys.toList()) {
+        if (extraSpeeds[mode] == -1) extraSpeeds[mode] = walk;
+      }
+    }
+
     return EffectiveCharacter(
       characterId: pc.id,
       classLevels: classLevels,
@@ -838,6 +990,7 @@ class CharacterResolver {
       ),
       acBonus: acBonus,
       speedBonus: speedBonus,
+      extraSpeeds: extraSpeeds,
       hpBonusFlat: hpBonusFlat,
       hpBonusPerLevel: hpBonusPerLevel,
       initiativeBonus: initiativeBonus,
@@ -846,6 +999,9 @@ class CharacterResolver {
       activeFeatures: activeFeatures,
       inventory: inventory,
       senseEntityIds: senses,
+      senseRanges: senseRanges,
+      conditionalGrants: conditionalGrants,
+      tempHpGrants: tempHpGrants,
       damageResistanceIds: damageRes,
       damageImmunityIds: damageImmunities,
       damageVulnerabilityIds: damageVulnerabilities,
@@ -987,6 +1143,92 @@ class CharacterResolver {
 
   static String? _refIdFor(Map<String, dynamic> eff, Map<String, Entity> all) {
     return _resolveRef(eff['target_ref'], all);
+  }
+
+  /// Resolve a `count_formula` token (e.g. `wis_mod_min_1`, `monk_level`,
+  /// `paladin_level_x5`) to an integer using the PC's abilities and class
+  /// levels. Returns null when the token is unknown so the caller can fall
+  /// back to other count sources (scaled tables, raw payload count).
+  static int? _evalCountFormula(
+    String? token, {
+    required Map<String, int> abilities,
+    required Map<String, int> classLevels,
+    required Map<String, Entity> entitiesById,
+  }) {
+    if (token == null || token.isEmpty) return null;
+    int mod(String ab) => ((abilities[ab] ?? 10) - 10) >> 1;
+    int classLevel(String name) {
+      for (final entry in classLevels.entries) {
+        final e = entitiesById[entry.key];
+        if (e == null) continue;
+        if (e.name.toLowerCase() == name.toLowerCase()) return entry.value;
+      }
+      return 0;
+    }
+
+    switch (token.toLowerCase()) {
+      case 'str_mod':
+        return mod('STR');
+      case 'dex_mod':
+        return mod('DEX');
+      case 'con_mod':
+        return mod('CON');
+      case 'int_mod':
+        return mod('INT');
+      case 'wis_mod':
+        return mod('WIS');
+      case 'cha_mod':
+        return mod('CHA');
+      case 'str_mod_min_1':
+        return mod('STR') < 1 ? 1 : mod('STR');
+      case 'dex_mod_min_1':
+        return mod('DEX') < 1 ? 1 : mod('DEX');
+      case 'con_mod_min_1':
+        return mod('CON') < 1 ? 1 : mod('CON');
+      case 'int_mod_min_1':
+        return mod('INT') < 1 ? 1 : mod('INT');
+      case 'wis_mod_min_1':
+        return mod('WIS') < 1 ? 1 : mod('WIS');
+      case 'cha_mod_min_1':
+        return mod('CHA') < 1 ? 1 : mod('CHA');
+      case 'barbarian_level':
+        return classLevel('Barbarian');
+      case 'bard_level':
+        return classLevel('Bard');
+      case 'cleric_level':
+        return classLevel('Cleric');
+      case 'druid_level':
+        return classLevel('Druid');
+      case 'fighter_level':
+        return classLevel('Fighter');
+      case 'monk_level':
+        return classLevel('Monk');
+      case 'paladin_level':
+        return classLevel('Paladin');
+      case 'paladin_level_x5':
+        return classLevel('Paladin') * 5;
+      case 'ranger_level':
+        return classLevel('Ranger');
+      case 'rogue_level':
+        return classLevel('Rogue');
+      case 'sorcerer_level':
+        return classLevel('Sorcerer');
+      case 'warlock_level':
+        return classLevel('Warlock');
+      case 'wizard_level':
+        return classLevel('Wizard');
+      case 'character_level':
+        return classLevels.values.fold<int>(0, (a, b) => a + b);
+      case 'pb':
+      case 'proficiency_bonus':
+        final lvl = classLevels.values.fold<int>(0, (a, b) => a + b);
+        if (lvl >= 17) return 6;
+        if (lvl >= 13) return 5;
+        if (lvl >= 9) return 4;
+        if (lvl >= 5) return 3;
+        return 2;
+    }
+    return null;
   }
 
   static Map<String, dynamic> _modifierAsEffect(Map<String, dynamic> m) {

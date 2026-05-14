@@ -411,6 +411,7 @@ EntityCategorySchema _subclassCategory(String schemaId, String now, int orderInd
   final fb = _FB(catId, now);
   fb.relation('parent_class_ref', 'Parent Class', const ['class'], required_: true);
   fb.integer('granted_at_level', 'Granted at Level', required_: true, min: 1, max: 20);
+  fb.integer('bonus_skill_pick_count', 'Bonus Skill Picks at Grant', min: 0, max: 6);
   fb.classFeatures('features', 'Features by Level', g: grpFeatures);
   fb.markdown('flavor_description', 'Flavor', g: grpFeatures);
 
@@ -560,6 +561,18 @@ EntityCategorySchema _featCategory(String schemaId, String now, int orderIndex) 
   fb.relation('asi_ability_options', 'ASI Ability Options', const ['ability'], isList: true, g: grpRules);
   fb.integer('asi_amount', 'ASI Amount', min: 0, max: 2, defaultValue: 0, g: grpRules);
   fb.integer('asi_max_score', 'ASI Max Score Cap', min: 1, max: 30, defaultValue: 20, g: grpRules);
+  // Number of skill proficiencies the player picks on the spot when the feat
+  // is acquired (Skill Expert: 1). Editor queues a `skillProficiency` pending
+  // choice via the resolver dialog when the feat is taken post-creation.
+  fb.integer('bonus_skill_pick_count', 'Bonus Skill Picks on Take', min: 0, max: 4, g: grpRules);
+  // Number of expertise picks queued when the feat is acquired (Skill Expert
+  // ships with 1). Eligible skills are restricted to the PC's currently
+  // proficient set — dialog filters automatically.
+  fb.integer('bonus_expertise_pick_count', 'Bonus Expertise Picks on Take', min: 0, max: 4, g: grpRules);
+  // Resilient pattern — feat's ASI also grants saving-throw proficiency for
+  // the chosen ability. Editor's `featAsi` pending resolution reads this and
+  // flips `saving_throws.rows[i].proficient` for the bumped ability.
+  fb.boolean('grants_save_prof_from_asi', 'Grants Save Prof from ASI Ability', g: grpRules);
   // Typed effect DSL — applied by CharacterResolver. Covers level grants,
   // proficiency / language / spell / cantrip grants, AC / speed / HP / initiative
   // / attack bonuses, extra-attack bumps, and choice-group sub-pickers.

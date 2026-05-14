@@ -1499,6 +1499,20 @@ Tier0CategoryBuild _featCategoryCategory(String schemaId, String now) =>
       rows: const [
         'Origin', 'General', 'Fighting Style', 'Epic Boon',
         'Class Feature', 'Subclass Feature', 'Species Feature',
+        'Divine Order',
+        // Feature-option pickers — generic mechanism for subclass features
+        // whose SRD prose presents a 1-of-N choice (Hunter Ranger picks,
+        // Fiend Warlock options, etc.). Filtered by category name in
+        // PendingChoiceKind.featureOption dialog.
+        "Feature Option: Hunter's Prey",
+        'Feature Option: Defensive Tactics',
+        'Feature Option: Multiattack',
+        "Feature Option: Superior Hunter's Defense",
+        'Feature Option: Metamagic',
+        'Feature Option: Eldritch Invocations',
+        'Feature Option: Pact Boon',
+        'Feature Option: Draconic Spells',
+        'Feature Option: Fiendish Resilience',
       ],
     );
 
@@ -1660,6 +1674,8 @@ Tier0CategoryBuild _characterStateCategory(String schemaId, String now) =>
         // Feat-driven
         'state:luck_points_remaining',
         'state:superiority_dice_remaining',
+        // Environmental — gates conditional grants (Boon of Night Spirit etc.)
+        'state:in_dim_or_darkness',
       ],
     );
 
@@ -1695,6 +1711,19 @@ Tier0CategoryBuild _resourcePoolCategory(String schemaId, String now) =>
         'pool:divine_intervention',
         'pool:eldritch_master',
         'pool:lay_on_hands_uses_per_long_rest',
+        'pool:indomitable_uses',
+        'pool:magical_cunning_per_day',
+        'pool:sorcerous_restoration_per_short_rest',
+        'pool:dark_ones_own_luck',
+        'pool:hurl_through_hell',
+        'pool:abjure_foes',
+        'pool:stroke_of_luck',
+        'pool:dragon_wings',
+        'pool:dragon_companion',
+        'pool:innate_sorcery_uses',
+        'pool:paladin_channel_divinity',
+        'pool:holy_nimbus',
+        'pool:legendary_resistance',
         // Feat
         'pool:luck_points',
         'pool:superiority_dice',

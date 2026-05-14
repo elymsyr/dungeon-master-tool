@@ -64,6 +64,9 @@ List<Map<String, dynamic>> srdSubclasses() => [
         attributes: {
           'parent_class_ref': ref('class', 'Bard'),
           'granted_at_level': 3,
+          // Bonus Proficiencies (L3) — picked when the subclass is granted.
+          // Surfaces as a `skillProficiency` pending choice on subclass pick.
+          'bonus_skill_pick_count': 3,
           'flavor_description':
               'Bards of the College of Lore know something about most things. Their wit is as sharp as their wisdom is broad.',
           'features': [
