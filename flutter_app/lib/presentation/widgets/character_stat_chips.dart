@@ -172,16 +172,23 @@ Map<String, Entity> readCharacterEntities(WidgetRef ref, Character character) {
 
 /// Compact chip strip rendering [characterStatLines]. Used by the editor
 /// header (full size) and the sidebar / characters tab tile (compact).
+///
+/// `scrollHorizontally` swaps the default [Wrap] for a single-line
+/// horizontally-scrollable [Row]. Used by the editor header on phones where
+/// a long species/class name would otherwise force a chip wider than the
+/// portrait column and trigger a RenderFlex overflow.
 class CharacterStatChips extends StatelessWidget {
   final List<CharacterStatLine> lines;
   final DmToolColors palette;
   final bool compact;
+  final bool scrollHorizontally;
 
   const CharacterStatChips({
     super.key,
     required this.lines,
     required this.palette,
     this.compact = false,
+    this.scrollHorizontally = false,
   });
 
   @override
@@ -189,34 +196,53 @@ class CharacterStatChips extends StatelessWidget {
     // Icon-only grid laid directly onto the card (no background, no border).
     // Hover/long-press surfaces the label via Tooltip so users can still
     // disambiguate the icons.
-    final fontSize = compact ? 13.0 : 16.0;
-    final iconSize = compact ? 14.0 : 18.0;
-    final gap = compact ? 4.0 : 6.0;
-    return Wrap(
-      spacing: compact ? 12 : 18,
-      runSpacing: compact ? 4 : 8,
-      children: [
-        for (final l in lines)
-          Tooltip(
-            message: l.label,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(l.icon,
-                    size: iconSize, color: palette.sidebarLabelSecondary),
-                SizedBox(width: gap),
-                Text(
-                  l.value,
-                  style: TextStyle(
-                    fontSize: fontSize,
-                    fontWeight: FontWeight.w600,
-                    color: palette.tabActiveText,
-                  ),
+    final fontSize = compact ? 12.0 : 16.0;
+    final iconSize = compact ? 13.0 : 18.0;
+    final gap = compact ? 3.0 : 6.0;
+    final spacing = compact ? 10.0 : 18.0;
+    final chips = [
+      for (final l in lines)
+        Tooltip(
+          message: l.label,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(l.icon,
+                  size: iconSize, color: palette.sidebarLabelSecondary),
+              SizedBox(width: gap),
+              Text(
+                l.value,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.fade,
+                style: TextStyle(
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w600,
+                  color: palette.tabActiveText,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-      ],
+        ),
+    ];
+    if (scrollHorizontally) {
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < chips.length; i++) ...[
+              if (i > 0) SizedBox(width: spacing),
+              chips[i],
+            ],
+          ],
+        ),
+      );
+    }
+    return Wrap(
+      spacing: spacing,
+      runSpacing: compact ? 4 : 8,
+      children: chips,
     );
   }
 }

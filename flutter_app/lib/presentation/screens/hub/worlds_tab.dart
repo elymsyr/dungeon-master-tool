@@ -76,6 +76,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       minimumSize: const Size(0, 32),
                       visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
                   if (SupabaseConfig.isConfigured) ...[
@@ -89,6 +90,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                             horizontal: 10, vertical: 4),
                         minimumSize: const Size(0, 32),
                         visualDensity: VisualDensity.compact,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
                   ],
@@ -99,6 +101,7 @@ class _WorldsTabState extends ConsumerState<WorldsTab> {
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                       minimumSize: const Size(32, 32),
                       visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: const Icon(Icons.add, size: 16),
                   ),
