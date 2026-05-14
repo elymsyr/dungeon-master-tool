@@ -580,6 +580,11 @@ EntityCategorySchema _featCategory(String schemaId, String now, int orderIndex) 
   // Legacy typed bonus DSL — narrower than `effects` but still rendered.
   // Resolver consumes both; new content should prefer `effects`.
   fb.grantedModifiers('granted_modifiers', 'Granted Modifiers (typed)', g: grpRules);
+  // Typed activation block — feats that grant a usable ability (Rage,
+  // Action Surge, Channel Divinity) carry `{actionType, duration, uses,
+  // triggersStateRef, endConditions}`. Resolver reads the map directly;
+  // schema declares the key so attribute-key integrity passes.
+  fb.markdown('activation', 'Activation (typed)', g: grpRules);
   fb.markdown('benefits', 'Flavor / Edge Cases (narrative)', g: grpRules);
 
   return _mk(

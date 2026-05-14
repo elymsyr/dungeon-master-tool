@@ -57,6 +57,13 @@ class PendingChoice {
   /// label and the feat-category filter ("Feature Option: $featureName").
   final String? featureName;
 
+  /// Soft-dismissed marker. Long-pressing a `!` badge flips this true and
+  /// the field tile stops showing the chip, but the Upgrades panel above
+  /// the level-up action bar still surfaces the choice so the player can
+  /// resurrect it later (user-requested: dismissed upgrades must stay
+  /// visible in a dedicated place).
+  final bool dismissed;
+
   const PendingChoice({
     required this.id,
     required this.kind,
@@ -67,6 +74,7 @@ class PendingChoice {
     this.maxSpellLevel = 0,
     this.sourceEntityId,
     this.featureName,
+    this.dismissed = false,
   });
 
   Map<String, dynamic> toMap() => <String, dynamic>{
@@ -79,6 +87,7 @@ class PendingChoice {
         if (maxSpellLevel != 0) 'max_spell_level': maxSpellLevel,
         if (sourceEntityId != null) 'source_entity_id': sourceEntityId,
         if (featureName != null) 'feature_name': featureName,
+        if (dismissed) 'dismissed': true,
       };
 
   static PendingChoice? fromMap(Object? raw) {
@@ -101,6 +110,7 @@ class PendingChoice {
       maxSpellLevel: maxSpellRaw is int ? maxSpellRaw : 0,
       sourceEntityId: raw['source_entity_id']?.toString(),
       featureName: raw['feature_name']?.toString(),
+      dismissed: raw['dismissed'] == true,
     );
   }
 }

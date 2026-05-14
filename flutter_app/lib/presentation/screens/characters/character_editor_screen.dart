@@ -286,18 +286,21 @@ class _CharacterEditorScreenState
               onPressed: () => setState(() => _readOnly = !_readOnly),
               visualDensity: VisualDensity.compact,
             ),
-            // Undo / Redo
+            // Undo / Redo — available in view mode too, since pending
+            // upgrade resolution + dismiss/restore bypass the edit gate
+            // and the user explicitly asked for those mutations to be
+            // undoable/redoable from anywhere.
             IconButton(
               icon: const Icon(Icons.undo, size: 18),
               tooltip: 'Undo',
-              onPressed: _readOnly || !_canUndo ? null : _undo,
+              onPressed: !_canUndo ? null : _undo,
               iconSize: 18,
               visualDensity: VisualDensity.compact,
             ),
             IconButton(
               icon: const Icon(Icons.redo, size: 18),
               tooltip: 'Redo',
-              onPressed: _readOnly || !_canRedo ? null : _redo,
+              onPressed: !_canRedo ? null : _redo,
               iconSize: 18,
               visualDensity: VisualDensity.compact,
             ),
@@ -835,6 +838,7 @@ class _CharacterEditorScreenState
     if (effective == null) return const [];
     final entities = _readEntitiesFor(character);
     final remaining = _readGrantedPoolRemaining(character);
+    final (slotsMax, slotsRemaining) = _readSpellSlotsState(character);
     return [
       ResolvedGrantsCard(
         effective: effective,
@@ -842,8 +846,54 @@ class _CharacterEditorScreenState
         palette: palette,
         poolRemaining: remaining,
         onPoolRemainingChanged: _writeGrantedPoolRemaining,
+        spellSlotsMax: slotsMax,
+        spellSlotsRemaining: slotsRemaining,
+        onSpellSlotsRemainingChanged: _writeSpellSlotsRemaining,
       ),
     ];
+  }
+
+  /// Reads the PC's `spell_slots` field into (max, remaining) maps. Returns
+  /// `(null, null)` when the field is missing or malformed so the Font of
+  /// Magic conversion button stays hidden for non-casters.
+  (Map<int, int>?, Map<int, int>?) _readSpellSlotsState(Character character) {
+    final raw = character.entity.fields['spell_slots'];
+    if (raw is! Map) return (null, null);
+    Map<int, int>? readSide(Object? side) {
+      if (side is! Map) return null;
+      final out = <int, int>{};
+      side.forEach((k, v) {
+        final ki = k is int ? k : int.tryParse('$k');
+        if (ki == null) return;
+        final vi = v is int ? v : int.tryParse('$v');
+        if (vi == null) return;
+        out[ki] = vi;
+      });
+      return out.isEmpty ? null : out;
+    }
+
+    return (readSide(raw['max']), readSide(raw['remaining']));
+  }
+
+  void _writeSpellSlotsRemaining(Map<int, int> nextRemaining) {
+    final w = _working;
+    if (w == null) return;
+    final fields = Map<String, dynamic>.from(w.entity.fields);
+    final raw = fields['spell_slots'];
+    final maxOut = <String, int>{};
+    if (raw is Map && raw['max'] is Map) {
+      (raw['max'] as Map).forEach((k, v) {
+        if (v is int) maxOut[k.toString()] = v;
+      });
+    }
+    final remOut = <String, int>{
+      for (final e in nextRemaining.entries) e.key.toString(): e.value,
+    };
+    fields['spell_slots'] = {'max': maxOut, 'remaining': remOut};
+    setState(() {
+      _working = w.copyWith(entity: w.entity.copyWith(fields: fields));
+    });
+    _scheduleAutoSave();
   }
 
   Map<String, int> _readGrantedPoolRemaining(Character character) {
@@ -886,7 +936,9 @@ class _CharacterEditorScreenState
     final list = readPendingChoices(raw);
     if (list.isEmpty) return const [];
     return list
-        .where((p) => pendingChoiceFieldHints(p.kind).contains(fieldKey))
+        .where((p) =>
+            !p.dismissed &&
+            pendingChoiceFieldHints(p.kind).contains(fieldKey))
         .toList();
   }
 
@@ -1065,15 +1117,32 @@ class _CharacterEditorScreenState
       }
     }
 
-    // Spell ids — append to spells_known.
+    // Spell ids — append to spells_known. Existing rows may be either
+    // plain ID strings or `{id, prepared, …}` maps (the spells field
+    // widget round-trips the richer shape). Preserve every prior entry as
+    // its original type, then append any new ids whose id isn't already
+    // represented. Previously we did `List<String>.from(whereType<String>())`
+    // which silently dropped all Map rows — the user's "level-up spells
+    // wiped my prepared list" regression.
     if (resolution.spellIds.isNotEmpty) {
       final list = updated['spells_known'];
-      final next = list is List
-          ? List<String>.from(list.whereType<String>())
-          : <String>[];
+      final next = <dynamic>[];
+      final existingIds = <String>{};
+      if (list is List) {
+        for (final row in list) {
+          next.add(row);
+          if (row is String) {
+            existingIds.add(row);
+          } else if (row is Map) {
+            final id = row['id'];
+            if (id is String) existingIds.add(id);
+          }
+        }
+      }
       for (final id in resolution.spellIds) {
-        if (id.isEmpty) continue;
-        if (!next.contains(id)) next.add(id);
+        if (id.isEmpty || existingIds.contains(id)) continue;
+        next.add(id);
+        existingIds.add(id);
       }
       updated['spells_known'] = next;
     }
@@ -1218,11 +1287,36 @@ class _CharacterEditorScreenState
   }
 
   void _removePendingChoice(Character character, String id) {
+    // Soft-dismiss instead of removing entirely. The Upgrades panel still
+    // surfaces dismissed pendings with a Restore action, per the user's
+    // request that "if I dismiss an upgrade it should still continue to
+    // appear in this section". `_dropPendingChoice` is the hard-delete
+    // variant used by the resolver after a pick is committed.
     final updated = Map<String, dynamic>.from(character.entity.fields);
-    _removePendingFromMap(updated, id);
+    _setPendingDismissedInMap(updated, id, true);
     _mutate(character.copyWith(
       entity: character.entity.copyWith(fields: updated),
     ));
+  }
+
+  void _setPendingDismissedInMap(
+      Map<String, dynamic> fields, String id, bool dismissed) {
+    final raw = fields['pending_choices'];
+    if (raw is! List) return;
+    final next = <Map<String, dynamic>>[];
+    for (final entry in raw) {
+      if (entry is! Map) continue;
+      final m = Map<String, dynamic>.from(entry);
+      if (m['id'] == id) {
+        if (dismissed) {
+          m['dismissed'] = true;
+        } else {
+          m.remove('dismissed');
+        }
+      }
+      next.add(m);
+    }
+    fields['pending_choices'] = next;
   }
 
   void _removePendingFromMap(Map<String, dynamic> fields, String id) {
@@ -1785,7 +1879,15 @@ class _CharacterEditorScreenState
   /// player doesn't need to find the level field and bump it by hand.
   Widget _renderRestActions(DmToolColors palette, Character character) {
     // Player verbs — bypass edit-mode gate so mid-session level-up / rest
-    // doesn't require flipping to edit.
+    // doesn't require flipping to edit. Pending upgrades surface in their
+    // own panel below this row so the player has a single place to act on
+    // them (the field-tile `!` badges still work; this panel is the
+    // additive entry point requested by the user).
+    // Pending upgrades surface inside the Level-Up class-picker dialog
+    // (next dialog the user sees after pressing Level Up), not under
+    // these buttons. Keeps the editor body short and gives the user one
+    // place to act on past-level pendings before committing to a new
+    // class advance.
     return Row(
       children: [
         Expanded(
@@ -2006,6 +2108,11 @@ class _CharacterEditorScreenState
         classLevels: classLevels,
         entities: entities,
         abilityScores: _readAbilityScores(character),
+        character: character,
+        onResolvePending: (p) {
+          Navigator.of(ctx).pop();
+          _resolvePendingChoice(character, p);
+        },
       ),
     );
     return picked;
@@ -2213,6 +2320,16 @@ class _PendingBadgeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Distinguish duplicate same-name pendings (Warlock L1 Eldritch
+    // Invocations → 2 picks): suffix "(N/M)" when more than one chip
+    // shares (kind, level, featureName). Without this the user sees two
+    // identical chips and can't tell which one they just resolved.
+    final groupCount = <String, int>{};
+    for (final p in pending) {
+      final key = '${p.kind}|${p.level}|${p.featureName ?? ''}';
+      groupCount[key] = (groupCount[key] ?? 0) + 1;
+    }
+    final groupOrdinal = <String, int>{};
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -2224,7 +2341,15 @@ class _PendingBadgeRow extends StatelessWidget {
             children: [
               for (final p in pending)
                 _PendingChip(
-                  label: pendingChoiceLabel(p),
+                  label: () {
+                    final key =
+                        '${p.kind}|${p.level}|${p.featureName ?? ''}';
+                    final total = groupCount[key] ?? 1;
+                    if (total <= 1) return pendingChoiceLabel(p);
+                    final idx = (groupOrdinal[key] ?? 0) + 1;
+                    groupOrdinal[key] = idx;
+                    return '${pendingChoiceLabel(p)} ($idx/$total)';
+                  }(),
                   onTap: () => onResolve(p),
                   onLongPress: () => onDiscard(p),
                 ),
@@ -2313,15 +2438,24 @@ class _LevelUpClassPicker extends StatelessWidget {
   final Map<String, int> classLevels;
   final Map<String, Entity> entities;
   final Map<String, int> abilityScores;
+  /// Character whose pending upgrades render at the top of this dialog.
+  /// Every pending choice — including dismissed ones — appears as an
+  /// actionable Resolve chip. Dismiss only hides the field-tile `!`
+  /// badge; it does not remove the upgrade from this list.
+  final Character character;
+  final void Function(PendingChoice) onResolvePending;
 
   const _LevelUpClassPicker({
     required this.classLevels,
     required this.entities,
     required this.abilityScores,
+    required this.character,
+    required this.onResolvePending,
   });
 
   @override
   Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>();
     final rows = <Widget>[];
     classLevels.forEach((classId, level) {
       final entity = entities[classId];
@@ -2354,10 +2488,25 @@ class _LevelUpClassPicker extends StatelessWidget {
 
     return AlertDialog(
       title: const Text('Level Up — Choose Class'),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 380, maxHeight: 420),
-        child: SingleChildScrollView(
-          child: Column(mainAxisSize: MainAxisSize.min, children: rows),
+      content: SizedBox(
+        width: 380,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 480),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (palette != null)
+                  _UpgradesPanel(
+                    character: character,
+                    palette: palette,
+                    onResolve: onResolvePending,
+                  ),
+                ...rows,
+              ],
+            ),
+          ),
         ),
       ),
       actions: [
@@ -2956,16 +3105,92 @@ class _StatChipsHeader extends ConsumerWidget {
     // rows. Render the compact variant and allow horizontal scroll so chips
     // can extend off-screen instead of pushing layout around.
     final isPhone = getScreenType(context) == ScreenType.phone;
+    // Pull the resolver-computed AC via .select so the chip strip rebuilds
+    // whenever inventory equip flags / acBonus / Dex shift — not on every
+    // unrelated effective-character mutation.
+    final effectiveAc = ref.watch(
+      effectiveCharacterProvider(character.entity.id)
+          .select((e) => e?.armorClass),
+    );
     return RepaintBoundary(
       child: CharacterStatChips(
         lines: characterStatLinesWithNames(
           character,
           raceName: resolve(ids.raceId),
           className: resolve(ids.classId),
+          effectiveAc: effectiveAc,
         ),
         palette: palette,
         compact: isPhone,
         scrollHorizontally: isPhone,
+      ),
+    );
+  }
+}
+
+/// Pending upgrades panel shown at the top of the level-up class
+/// picker dialog. Every pending choice (including dismissed ones) is
+/// rendered as an actionable Resolve chip. Dismiss only hides the `!`
+/// badge on card field tiles — it never removes an upgrade from this
+/// list. Pendings disappear here only when actually resolved.
+class _UpgradesPanel extends StatelessWidget {
+  final Character character;
+  final DmToolColors palette;
+  final void Function(PendingChoice) onResolve;
+
+  const _UpgradesPanel({
+    required this.character,
+    required this.palette,
+    required this.onResolve,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final raw = character.entity.fields['pending_choices'];
+    final all = readPendingChoices(raw);
+    if (all.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.06),
+          border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.upgrade, size: 14, color: Colors.orange),
+                const SizedBox(width: 6),
+                Text(
+                  'Upgrades · ${all.length} pending',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.orange,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final p in all)
+                  ActionChip(
+                    label: Text(pendingChoiceLabel(p)),
+                    avatar: const Icon(Icons.priority_high,
+                        size: 14, color: Colors.orange),
+                    onPressed: () => onResolve(p),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/character_provider.dart' show kPlayerCategorySlugs;
+import '../../core/utils/screen_type.dart';
 import '../../application/providers/entity_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/visible_entity_provider.dart';
@@ -44,18 +47,27 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   final Set<String> _selectedSources = <String>{};
   _SortMode _sortMode = _SortMode.name;
   int _visibleLimit = _kPageSize;
+  /// Debounces search-text writes into `_searchQuery` so each keystroke
+  /// doesn't fan out a setState → full filter+sort over the entire
+  /// (~7 K) entity map. 200 ms is fast enough that the UI feels live
+  /// and slow enough that bulk typing only triggers one rebuild.
+  Timer? _searchDebounce;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
     _searchController.addListener(() {
-      if (_searchQuery != _searchController.text) {
+      if (_searchQuery == _searchController.text) return;
+      _searchDebounce?.cancel();
+      _searchDebounce = Timer(const Duration(milliseconds: 200), () {
+        if (!mounted) return;
+        if (_searchQuery == _searchController.text) return;
         setState(() {
           _searchQuery = _searchController.text;
           _visibleLimit = _kPageSize;
         });
-      }
+      });
     });
     _scrollController = ScrollController()..addListener(_onScroll);
     // Restore the persisted category-filter selection on the next frame
@@ -76,6 +88,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -823,76 +836,105 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     final cat = catMap[entity.categorySlug];
     final color =
         cat != null ? _parseColor(cat.color) : palette.tabText;
+    // On phone the regular Draggable swallowed vertical drags so the
+    // database list refused to scroll — fingers landing on an entity
+    // row triggered a drag instead of a scroll. Switch to long-press
+    // initiation on phones so a plain swipe scrolls the list and only
+    // a deliberate long-press picks up an entity. Desktop keeps the
+    // immediate drag for the existing mouse workflow.
+    final isPhone = getScreenType(context) == ScreenType.phone;
+    final feedback = Material(
+      elevation: 2,
+      borderRadius: palette.cbr,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+            color: palette.featureCardBg, borderRadius: palette.cbr),
+        child: Text(entity.name,
+            style:
+                TextStyle(fontSize: 12, color: palette.tabActiveText)),
+      ),
+    );
+    final childWhenDragging = Opacity(
+      opacity: 0.3,
+      child: InkWell(
+        child: Padding(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          child: Text(entity.name,
+              style: TextStyle(fontSize: 13, color: palette.tabText)),
+        ),
+      ),
+    );
+    final inner = _entityRowInner(
+      entity,
+      color,
+      cat?.name ?? entity.categorySlug,
+      palette,
+    );
     return Opacity(
       opacity: dimmed ? 0.5 : 1.0,
-      child: Draggable<String>(
-        key: ValueKey(entity.id),
-        data: entity.id,
-        dragAnchorStrategy: pointerDragAnchorStrategy,
-        feedback: Material(
-          elevation: 2,
-          borderRadius: palette.cbr,
-          child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-                color: palette.featureCardBg,
-                borderRadius: palette.cbr),
-            child: Text(entity.name,
+      child: isPhone
+          ? LongPressDraggable<String>(
+              key: ValueKey(entity.id),
+              data: entity.id,
+              dragAnchorStrategy: pointerDragAnchorStrategy,
+              feedback: feedback,
+              childWhenDragging: childWhenDragging,
+              child: inner,
+            )
+          : Draggable<String>(
+              key: ValueKey(entity.id),
+              data: entity.id,
+              dragAnchorStrategy: pointerDragAnchorStrategy,
+              feedback: feedback,
+              childWhenDragging: childWhenDragging,
+              child: inner,
+            ),
+    );
+  }
+
+  Widget _entityRowInner(
+    ({String id, String name, String categorySlug, String source,
+        List<String> tags}) entity,
+    Color color,
+    String categoryLabel,
+    DmToolColors palette,
+  ) {
+    return InkWell(
+      onTap: () => widget.onEntitySelected?.call(entity.id),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        child: Row(
+          children: [
+            Container(
+                width: 8,
+                height: 8,
+                decoration:
+                    BoxDecoration(color: color, shape: BoxShape.circle)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(entity.name,
+                      style: TextStyle(
+                          fontSize: 13, color: palette.tabActiveText),
+                      overflow: TextOverflow.ellipsis),
+                  if (entity.source.isNotEmpty)
+                    Text(entity.source,
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: palette.sidebarLabelSecondary),
+                        overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            Text(categoryLabel,
                 style: TextStyle(
-                    fontSize: 12, color: palette.tabActiveText)),
-          ),
-        ),
-        childWhenDragging: Opacity(
-          opacity: 0.3,
-          child: InkWell(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 8, vertical: 5),
-              child: Text(entity.name,
-                  style:
-                      TextStyle(fontSize: 13, color: palette.tabText)),
-            ),
-          ),
-        ),
-        child: InkWell(
-          onTap: () => widget.onEntitySelected?.call(entity.id),
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            child: Row(
-              children: [
-                Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                        color: color, shape: BoxShape.circle)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(entity.name,
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: palette.tabActiveText),
-                          overflow: TextOverflow.ellipsis),
-                      if (entity.source.isNotEmpty)
-                        Text(entity.source,
-                            style: TextStyle(
-                                fontSize: 10,
-                                color: palette.sidebarLabelSecondary),
-                            overflow: TextOverflow.ellipsis),
-                    ],
-                  ),
-                ),
-                Text(cat?.name ?? entity.categorySlug,
-                    style: TextStyle(
-                        fontSize: 10,
-                        color: palette.sidebarLabelSecondary)),
-              ],
-            ),
-          ),
+                    fontSize: 10,
+                    color: palette.sidebarLabelSecondary)),
+          ],
         ),
       ),
     );

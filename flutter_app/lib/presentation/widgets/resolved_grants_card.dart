@@ -23,6 +23,16 @@ class ResolvedGrantsCard extends StatelessWidget {
   /// map (sparse — only non-default entries kept).
   final ValueChanged<Map<String, int>>? onPoolRemainingChanged;
 
+  /// Current spell-slot state (remaining counts by spell level). Optional —
+  /// when present the Sorcerer Font-of-Magic conversion button surfaces on
+  /// the `pool:sorcery_points` row.
+  final Map<int, int>? spellSlotsRemaining;
+  final Map<int, int>? spellSlotsMax;
+
+  /// Fires when Font of Magic conversion mutates the slot map. Receives the
+  /// full updated remaining map.
+  final ValueChanged<Map<int, int>>? onSpellSlotsRemainingChanged;
+
   const ResolvedGrantsCard({
     super.key,
     required this.effective,
@@ -30,6 +40,9 @@ class ResolvedGrantsCard extends StatelessWidget {
     required this.palette,
     this.poolRemaining = const {},
     this.onPoolRemainingChanged,
+    this.spellSlotsRemaining,
+    this.spellSlotsMax,
+    this.onSpellSlotsRemainingChanged,
   });
 
   String _nameOf(String id) => entities[id]?.name ?? id;
@@ -433,8 +446,144 @@ class ResolvedGrantsCard extends StatelessWidget {
             onPressed: readOnly || cur >= max ? null : () => emit(max),
             icon: const Icon(Icons.bedtime_outlined),
           ),
+          if (id == 'pool:sorcery_points' &&
+              spellSlotsMax != null &&
+              spellSlotsRemaining != null &&
+              onSpellSlotsRemainingChanged != null &&
+              !readOnly)
+            Builder(
+              builder: (context) => IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 28, minHeight: 28),
+                iconSize: 18,
+                tooltip: 'Font of Magic — convert',
+                onPressed: () => _openFontOfMagic(context, id, cur, max),
+                icon: const Icon(Icons.swap_horiz),
+              ),
+            ),
         ],
       ),
+    );
+  }
+
+  // SRD §2.4 Sorcerer Font of Magic conversion table. Index = slot level.
+  static const _spToSlotCost = <int, int>{1: 2, 2: 3, 3: 5, 4: 6, 5: 7};
+
+  Future<void> _openFontOfMagic(
+    BuildContext context,
+    String poolId,
+    int spCurrent,
+    int spMax,
+  ) async {
+    final maxBySlot = Map<int, int>.from(spellSlotsMax!);
+    final remBySlot = Map<int, int>.from(spellSlotsRemaining!);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            void convertSlotToSp(int lvl) {
+              final cur = remBySlot[lvl] ?? 0;
+              if (cur <= 0) return;
+              if (spCurrent + lvl > spMax) return;
+              remBySlot[lvl] = cur - 1;
+              spCurrent += lvl;
+              onSpellSlotsRemainingChanged!(Map<int, int>.from(remBySlot));
+              final updated = Map<String, int>.from(poolRemaining);
+              if (spCurrent == spMax) {
+                updated.remove(poolId);
+              } else {
+                updated[poolId] = spCurrent;
+              }
+              onPoolRemainingChanged!(updated);
+              setState(() {});
+            }
+
+            void convertSpToSlot(int lvl) {
+              final cost = _spToSlotCost[lvl];
+              if (cost == null) return;
+              if (spCurrent < cost) return;
+              final cap = maxBySlot[lvl] ?? 0;
+              final cur = remBySlot[lvl] ?? 0;
+              if (cur >= cap) return;
+              spCurrent -= cost;
+              remBySlot[lvl] = cur + 1;
+              onSpellSlotsRemainingChanged!(Map<int, int>.from(remBySlot));
+              final updated = Map<String, int>.from(poolRemaining);
+              if (spCurrent == spMax) {
+                updated.remove(poolId);
+              } else {
+                updated[poolId] = spCurrent;
+              }
+              onPoolRemainingChanged!(updated);
+              setState(() {});
+            }
+
+            return AlertDialog(
+              title: const Text('Font of Magic'),
+              content: SizedBox(
+                width: 360,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Sorcery Points: $spCurrent / $spMax'),
+                    const SizedBox(height: 12),
+                    const Text('Slot → SP (refund slot for SP equal to slot level):',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final lvl
+                            in (maxBySlot.keys.toList()..sort()))
+                          ElevatedButton(
+                            onPressed: ((remBySlot[lvl] ?? 0) > 0 &&
+                                    spCurrent + lvl <= spMax)
+                                ? () => convertSlotToSp(lvl)
+                                : null,
+                            child: Text(
+                                'L$lvl → +$lvl SP (${remBySlot[lvl] ?? 0}/${maxBySlot[lvl] ?? 0})'),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('SP → Slot (spend SP to create a slot):',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final entry in _spToSlotCost.entries)
+                          if (maxBySlot.containsKey(entry.key))
+                            ElevatedButton(
+                              onPressed: (spCurrent >= entry.value &&
+                                      (remBySlot[entry.key] ?? 0) <
+                                          (maxBySlot[entry.key] ?? 0))
+                                  ? () => convertSpToSlot(entry.key)
+                                  : null,
+                              child: Text(
+                                  '${entry.value} SP → L${entry.key} slot'),
+                            ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Done'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -454,6 +603,9 @@ class ResolvedGrantsCard extends StatelessWidget {
     final conditional = effective.conditionalGrants;
     final tempHpGrants = effective.tempHpGrants;
     final unarmoredFormulas = effective.unarmoredFormulas;
+    final freeCast = effective.freeCastSpellIds;
+    final ritualBook = effective.ritualBookSpellIds;
+    final activeConditions = effective.activeConditionIds;
     if (senses.isEmpty &&
         res.isEmpty &&
         imm.isEmpty &&
@@ -467,7 +619,10 @@ class ResolvedGrantsCard extends StatelessWidget {
         extraSpeeds.isEmpty &&
         conditional.isEmpty &&
         tempHpGrants.isEmpty &&
-        unarmoredFormulas.isEmpty) {
+        unarmoredFormulas.isEmpty &&
+        freeCast.isEmpty &&
+        ritualBook.isEmpty &&
+        activeConditions.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -502,6 +657,9 @@ class ResolvedGrantsCard extends StatelessWidget {
             _chipRow('Reactions', reactions, Colors.cyan),
             _tempHpGrantsBlock(tempHpGrants),
             _unarmoredFormulasBlock(unarmoredFormulas),
+            _chipRow('Free Casts', freeCast, Colors.deepPurple),
+            _chipRow('Ritual Book', ritualBook, Colors.brown),
+            _chipRow('Active Conditions', activeConditions, Colors.redAccent),
             if (pools.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(

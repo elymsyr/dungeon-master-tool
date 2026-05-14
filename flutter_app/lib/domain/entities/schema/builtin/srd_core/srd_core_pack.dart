@@ -7,6 +7,7 @@ import 'backgrounds.dart';
 import 'classes.dart';
 import 'creature_actions.dart';
 import 'feats.dart';
+import 'feats_class.dart';
 import 'gear.dart';
 import 'magic_items.dart';
 import 'monsters.dart';
@@ -72,8 +73,19 @@ Map<String, List<Map<String, dynamic>>> _rawRowsBySlug() => {
       'vehicle': srdVehicles(),
       // First-tier dependencies (refs gear/weapons/armor).
       'pack': srdPacks(),
-      // Identity-content groups.
-      'feat': srdFeats(),
+      // Identity-content groups. Class/subclass auto-grant feats + per-
+      // feature option feats (Metamagic, Eldritch Invocations, Pact Boon,
+      // Draconic Spells, Fiendish Resilience, Hunter Ranger picks) are
+      // authored in feats_class.dart and folded into the same 'feat' slug
+      // so resolver Pass 4b sees the auto_granted_by entries and the
+      // PendingChoiceKind.featureOption dialog filter finds the options.
+      // srdSubclassFeats() also holds every Feature-Option feat at the
+      // tail of its list — without it the option dialog renders empty.
+      'feat': [
+        ...srdFeats(),
+        ...srdClassFeats(),
+        ...srdSubclassFeats(),
+      ],
       'species': srdSpecies(),
       'background': srdBackgrounds(),
       // Spells reference classes for `class_refs`, so spells need classes

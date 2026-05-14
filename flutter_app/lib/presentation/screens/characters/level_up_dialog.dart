@@ -35,6 +35,11 @@ class LevelUpResult {
   );
 }
 
+/// Width of the level-up dialog. Fixed (not a max constraint) so the
+/// layout doesn't shrink to its tightest child when one of the optional
+/// sections (caster block, resource pools, new features) is empty.
+const double _kLevelUpDialogWidth = 520;
+
 /// Stateful modal that confirms a level transition. Auto-applies every
 /// non-interactive delta (HP, PB, hit dice, slots, resource pools, feature
 /// rows) and *queues* every interactive decision (ASI / Feat / Fighting
@@ -131,16 +136,34 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
         rolledTotal: _hpMode == _HpMode.manual ? _hpRollTotal : null,
       );
 
+  LevelUpResult get _applyResult => LevelUpResult(
+        applied: true,
+        hpDelta: _hpDelta,
+        newProfBonus: widget.plan.newProfBonus,
+        pendingChoices: _pending,
+      );
+
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>();
     final hint = palette?.sidebarLabelSecondary ?? Theme.of(context).hintColor;
     final plan = widget.plan;
 
-    return AlertDialog(
+    // Any exit path (barrier tap, system back, X icon) commits the level
+    // up — the user explicitly requested "dialog kapandığında ya da
+    // apply denildiğinde direkt uygulansın" and asked for the Skip
+    // button to go away. PopScope synthesizes the pop with the apply
+    // result so a back-gesture matches the Apply button.
+    return PopScope<LevelUpResult>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        Navigator.of(context).pop(_applyResult);
+      },
+      child: AlertDialog(
       title: Text('Level Up: ${plan.fromLevel} → ${plan.toLevel}'),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
+      content: SizedBox(
+        width: _kLevelUpDialogWidth,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -218,21 +241,12 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () =>
-              Navigator.of(context).pop(LevelUpResult.skipped),
-          child: const Text('Skip'),
-        ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(LevelUpResult(
-            applied: true,
-            hpDelta: _hpDelta,
-            newProfBonus: widget.plan.newProfBonus,
-            pendingChoices: _pending,
-          )),
+          onPressed: () => Navigator.of(context).pop(_applyResult),
           child: const Text('Apply'),
         ),
       ],
+      ),
     );
   }
 

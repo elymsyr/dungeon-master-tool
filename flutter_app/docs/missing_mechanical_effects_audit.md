@@ -334,21 +334,21 @@ Each <10 min, no resolver change:
 
 ### Tier 3 — needs new PC schema fields
 
-23. **PC `metamagic_ids: List<String>`** + Sorcerer Metamagic picker.
-24. **PC `invocation_ids: List<String>`** + Warlock Invocations picker.
-25. **PC `pact_boon_id: String?`** + `pact_blade_weapon_id: String?` + Warlock Pact Boon picker (Tome cantrips, Chain familiar, Blade bonded-weapon).
-26. **PC `maneuver_ids: List<String>`** — unblocks Battle Master + Martial Adept feat.
-27. **PC `free_cast_spell_ids: List<String>`** — Wizard Spell Mastery, Sorcerer Restoration, Warlock Mystic Arcanum free casts.
-28. **PC `ritual_book_spell_ids: List<String>`** — Ritual Caster feat, Wizard Ritual Adept.
-29. **PC `subclass_option_picks: Map<String,String>`** — Hunter Prey/Defensive/Multiattack, Fiendish Resilience daily-pick, Cleric Divine Order choice.
-30. **PC `active_conditions: List<String>` writer/clearer** — Restoring Touch removes; rest pipeline / Nature's Veil add.
+23. ~~PC `metamagic_ids`~~ — **SUPERSEDED 2026-05-14.** Metamagic options ride existing `feat_ids` via `featureOption` picker (Tier 2 #15).
+24. ~~PC `invocation_ids`~~ — **SUPERSEDED 2026-05-14.** Same — Invocations are feat_ids entries under `Feature Option: Eldritch Invocations`.
+25. ~~PC `pact_boon_id`~~ — **SUPERSEDED 2026-05-14.** Pact Boon = a featureOption feat under `Feature Option: Pact Boon`; chosen id sits in `feat_ids`. Pact-Blade bonded weapon (`pact_blade_weapon_id`) still **DEFERRED** — needs runtime weapon-bond UI before the field matters.
+26. **PC `maneuver_ids`** — **DEFERRED.** Battle Master subclass not authored yet; the Martial Adept feat has no entity surface to attach a picker to. When BM lands, the same featureOption pattern (cumulative pick under `Feature Option: Combat Superiority`) covers it without a new PC field.
+27. ✓ **PC `free_cast_spell_ids: List<String>`** — **SHIPPED 2026-05-14.** Added to `EffectiveCharacter.freeCastSpellIds`; resolver reads PC field directly. `ResolvedGrantsCard` renders a "Free Casts" chip row. Wizard Spell Mastery / Mystic Arcanum / Signature Spells consumers can now write to this list once their pickers ship.
+28. ✓ **PC `ritual_book_spell_ids: List<String>`** — **SHIPPED 2026-05-14.** `EffectiveCharacter.ritualBookSpellIds` mirror + "Ritual Book" chip row in sheet. Ritual Caster feat / Wizard Ritual Adept can append here.
+29. ~~PC `subclass_option_picks: Map<String,String>`~~ — **SUPERSEDED 2026-05-14.** All entries (Hunter picks, Fiendish Resilience daily-pick, Divine Order) ride `feat_ids` + featureOption picker.
+30. ✓ **PC `active_conditions: List<String>`** — **SHIPPED 2026-05-14.** `EffectiveCharacter.activeConditionIds` mirror + "Active Conditions" chip row. Writers/clearers (Restoring Touch clear-one, rest pipeline Exhaustion tick, Nature's Veil Invisibility add) remain runtime affordances pending combat tracker.
 
 ### Tier 4 — pool-spending UX (field mutation; pool max already wired)
 
 31. ✓ Class-pool counters wired on the sheet via `ResolvedGrantsCard._grantedPoolEntries` + `_displayPoolName` (`pool:rage_uses` → "Rage Uses"). `PC.granted_pool_uses_remaining` already persists per-pool current value. Resolver gained a `count_formula` evaluator (`_evalCountFormula`) covering `<ability>_mod`, `<ability>_mod_min_1`, `<class>_level`, `paladin_level_x5`, `character_level` — closes pools whose max was previously unresolved (Lay on Hands HP = `paladin_level_x5`, Tireless temp-HP uses = `wis_mod_min_1`, Sorcery Points = `sorcerer_level`, etc.). Pool entries with non-positive max are filtered out so unresolved formulas no longer pollute the sheet. **SHIPPED 2026-05-14.**
-32. Sorcery Points ↔ slot conversion (mutates SP pool + current slot map). **Deferred.**
-33. Wizard Arcane Recovery (mutates current slot map). **Deferred.**
-34. Warlock Magical Cunning + Wild Companion (current slot map mutation). **Deferred.**
+32. ✓ **Sorcery Points ↔ slot conversion (Font of Magic)** — **SHIPPED 2026-05-14.** `ResolvedGrantsCard` gains optional slot props (`spellSlotsMax`, `spellSlotsRemaining`, `onSpellSlotsRemainingChanged`). When the pool row is `pool:sorcery_points` and slot props are wired, a Convert button (swap_horiz icon) opens a Font of Magic dialog with two action groups: Slot→SP (refund slot for SP equal to slot level) and SP→Slot (SRD §2.4 cost table: L1=2 / L2=3 / L3=5 / L4=6 / L5=7). Character editor pipes the PC's `spell_slots` field through; conversion writes both `granted_pool_uses_remaining` (SP current) and `spell_slots.remaining` in one user action.
+33. Wizard Arcane Recovery (mutates current slot map). **Deferred** — same dialog pattern would work; needs separate pool (`pool:arcane_recovery_per_day`) → slot-level-sum cap (½ Wizard level rounded up, no slot > L5).
+34. Warlock Magical Cunning + Wild Companion (current slot map mutation). **Deferred** — Magical Cunning regains a single pact slot on short rest (1/long_rest gate); Wild Companion converts a slot into Find Familiar.
 
 All reduce pool current or restore slot — pure field deltas, no combat resolution.
 

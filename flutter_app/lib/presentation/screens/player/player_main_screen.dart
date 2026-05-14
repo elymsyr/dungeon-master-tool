@@ -14,6 +14,7 @@ import '../../../application/providers/save_state_provider.dart';
 import '../../../application/providers/theme_provider.dart';
 import '../../../application/providers/undo_redo_provider.dart';
 import '../../../application/providers/world_mirror_provider.dart';
+import '../../../core/utils/screen_type.dart';
 import '../../dialogs/bug_report_dialog.dart';
 import '../../dialogs/import_package_dialog.dart';
 import '../../l10n/app_localizations.dart';
@@ -118,6 +119,9 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
 
     final editMode = ref.watch(editModeProvider);
     final schema = ref.read(worldSchemaProvider);
+    final screen = getScreenType(context);
+    final isLandscapePhone = screen == ScreenType.phone &&
+        MediaQuery.orientationOf(context) == Orientation.landscape;
 
     final tabLabels = [
       l10n.tabDatabase,
@@ -154,12 +158,17 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          titleSpacing: 8,
+          titleSpacing: isLandscapePhone ? 0 : 8,
           automaticallyImplyLeading: false,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, size: 22),
-            tooltip: 'Back to hub',
-            onPressed: _exitToHub,
+            icon: Icon(
+              isLandscapePhone ? Icons.menu : Icons.arrow_back,
+              size: 22,
+            ),
+            tooltip: isLandscapePhone ? 'Menu' : 'Back to hub',
+            onPressed: isLandscapePhone
+                ? () => _showLandscapeNavSheet(tabLabels, palette)
+                : _exitToHub,
           ),
           title: Row(
             children: [
@@ -275,10 +284,76 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
           ],
         ),
         body: RepaintBoundary(
-          child: Stack(
-            children: [
-              Row(
+          child: switch (screen) {
+            ScreenType.desktop => _buildDesktopBody(
+                palette: palette,
+                schema: schema,
+                tabStack: tabStack,
+                tabLabels: tabLabels,
+              ),
+            ScreenType.tablet => Row(
                 children: [
+                  SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: MediaQuery.sizeOf(context).height -
+                            kToolbarHeight -
+                            MediaQuery.paddingOf(context).top,
+                      ),
+                      child: IntrinsicHeight(
+                        child: NavigationRail(
+                          selectedIndex: _tabIndex,
+                          onDestinationSelected: (i) =>
+                              setState(() => _tabIndex = i),
+                          labelType: NavigationRailLabelType.selected,
+                          destinations: List.generate(
+                            tabLabels.length,
+                            (i) => NavigationRailDestination(
+                              icon: Icon(_tabIcons[i]),
+                              label: Text(tabLabels[i]),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const VerticalDivider(width: 1),
+                  Expanded(child: tabStack),
+                ],
+              ),
+            ScreenType.phone => tabStack,
+          },
+        ),
+        floatingActionButton: (screen != ScreenType.desktop && _tabIndex == 0)
+            ? FloatingActionButton.small(
+                heroTag: 'player_main_screen_entity_sidebar_fab',
+                onPressed: _showMobileSidebar,
+                child: const Icon(Icons.list),
+              )
+            : null,
+        bottomNavigationBar: (screen == ScreenType.phone && !isLandscapePhone)
+            ? _PlayerBottomTabBar(
+                tabIcons: _tabIcons,
+                tabLabels: tabLabels,
+                selectedIndex: _tabIndex,
+                onSelect: (i) => setState(() => _tabIndex = i),
+                palette: palette,
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildDesktopBody({
+    required DmToolColors palette,
+    required dynamic schema,
+    required Widget tabStack,
+    required List<String> tabLabels,
+  }) {
+    return Stack(
+          children: [
+            Row(
+              children: [
                   // Left sidebar — collapsible + resizable
                   if (_sidebarOpen)
                     ValueListenableBuilder<double>(
@@ -530,6 +605,84 @@ class _PlayerMainScreenState extends ConsumerState<PlayerMainScreen> {
                   ),
                 ),
             ],
+          );
+  }
+
+  void _showMobileSidebar() {
+    final schema = ref.read(worldSchemaProvider);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.3,
+        expand: false,
+        builder: (_, scrollController) => EntitySidebar(
+          schema: schema,
+          onEntitySelected: (id) {
+            Navigator.pop(ctx);
+            setState(() {
+              _selectedEntityId = id;
+              _tabIndex = 0;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showLandscapeNavSheet(List<String> tabLabels, DmToolColors palette) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            children: List.generate(tabLabels.length, (i) {
+              final isActive = i == _tabIndex;
+              return InkWell(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() => _tabIndex = i);
+                },
+                child: SizedBox(
+                  width: 90,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(_tabIcons[i],
+                            size: 24,
+                            color: isActive
+                                ? palette.tabIndicator
+                                : palette.tabText),
+                        const SizedBox(height: 4),
+                        Text(tabLabels[i],
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isActive
+                                  ? palette.tabIndicator
+                                  : palette.tabText,
+                              fontWeight: isActive
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                            ),
+                            overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
           ),
         ),
       ),
@@ -725,6 +878,98 @@ class _DragHandle extends StatelessWidget {
               color: palette.sidebarDivider,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlayerBottomTabBar extends StatelessWidget {
+  final List<IconData> tabIcons;
+  final List<String> tabLabels;
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+  final DmToolColors palette;
+
+  const _PlayerBottomTabBar({
+    required this.tabIcons,
+    required this.tabLabels,
+    required this.selectedIndex,
+    required this.onSelect,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: palette.tabBg,
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < tabLabels.length; i++)
+                  _TabItem(
+                    icon: tabIcons[i],
+                    label: tabLabels[i],
+                    active: i == selectedIndex,
+                    onTap: () => onSelect(i),
+                    palette: palette,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TabItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+  final DmToolColors palette;
+
+  const _TabItem({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? palette.tabIndicator : palette.tabText;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: 80,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 24, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                color: color,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
         ),
       ),
     );
