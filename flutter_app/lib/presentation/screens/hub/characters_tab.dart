@@ -381,7 +381,18 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
       // Player keeps ownership (and RLS `owner_id = auth.uid()` requires
       // it). DM drops ownership on import — char becomes claimable in the
       // world and disappears from the DM's own-only char tab.
-      final newOwnerId = role == WorldRole.player ? selfUid : null;
+      final isPlayer = role == WorldRole.player;
+      final newOwnerId = isPlayer ? selfUid : null;
+      if (!isPlayer) {
+        // Unpublish personal sync BEFORE the update so `_mirrorPush` won't
+        // re-publish an ownerless payload to `personal_characters`. Char
+        // tab visibility on other devices stays consistent.
+        try {
+          await ref.read(characterListProvider.notifier).makeOffline(c.id);
+        } catch (e) {
+          debugPrint('import makeOffline error: $e');
+        }
+      }
       final patched = c.copyWith(
         worldName: worldName,
         ownerId: newOwnerId,
@@ -502,11 +513,19 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
         .deleteBackupByItem(c.id, 'character');
   }
 
-  /// Releases ownership of a world-bound character. Online world: uses
-  /// the `release_character` RPC so the world row's `owner_id` flips
-  /// atomically under RLS. The local char then drops out of the own-only
-  /// char tab. Offline world: clears `ownerId` locally and stops
-  /// publishing personal sync — char stays in the local world data.
+  /// Releases ownership of a world-bound character.
+  ///
+  /// Online world: `world_characters` is the canonical store. The
+  /// `release_character` RPC flips `owner_id` to null atomically under
+  /// RLS; CDC broadcasts to every member, and we drop the local mirror
+  /// so the char disappears from this user's own-only char tab without
+  /// waiting on the echo.
+  ///
+  /// Offline world: the local row IS the canonical store (the world's
+  /// `linked_character_ids` points at this id). We clear `ownerId` in
+  /// place — the row stays so the world keeps its character — and stop
+  /// personal sync. The char tab filter hides ownerless-with-auth rows
+  /// so it leaves the tab on its own.
   Future<void> _releaseWorldBound(Character c) async {
     final infoList =
         ref.read(campaignInfoListProvider).valueOrNull ?? const [];
@@ -514,29 +533,31 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
     final onlineIds = ref.read(onlineWorldIdsProvider);
     final isOnline = info != null && onlineIds.contains(info.id);
 
-    if (isOnline) {
-      final svc = ref.read(characterClaimServiceProvider);
-      if (svc != null) {
-        await svc.release(c.id);
-      }
-    }
-    // World mirror CDC broadcasts the owner flip; do the local removal
-    // explicitly so the char disappears from the char tab without a
-    // round-trip wait. The world's `linked_character_ids` still
-    // references the row (or, for the online path, world_characters
-    // keeps it ownerless), satisfying "stays in world" per spec.
     try {
       await ref.read(characterListProvider.notifier).makeOffline(c.id);
     } catch (e) {
       debugPrint('release makeOffline error: $e');
     }
-    await ref.read(characterListProvider.notifier).removeMirror(c.id);
-    try {
+
+    if (isOnline) {
+      final svc = ref.read(characterClaimServiceProvider);
+      if (svc != null) {
+        await svc.release(c.id);
+      }
+      await ref.read(characterListProvider.notifier).removeMirror(c.id);
+      try {
+        await ref
+            .read(cloudBackupOperationProvider.notifier)
+            .deleteBackupByItem(c.id, 'character');
+      } catch (e) {
+        debugPrint('release cloud backup cleanup error: $e');
+      }
+    } else {
+      // Offline: keep the row, just clear `ownerId`. World's
+      // `linked_character_ids` still resolves to this character.
       await ref
-          .read(cloudBackupOperationProvider.notifier)
-          .deleteBackupByItem(c.id, 'character');
-    } catch (e) {
-      debugPrint('release cloud backup cleanup error: $e');
+          .read(characterListProvider.notifier)
+          .update(c.copyWith(ownerId: null));
     }
   }
 
