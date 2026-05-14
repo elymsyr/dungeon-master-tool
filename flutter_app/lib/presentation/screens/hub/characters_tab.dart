@@ -9,6 +9,8 @@ import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/hub_tab_provider.dart';
+import '../../../application/providers/role_provider.dart';
+import '../../../domain/entities/online/world_role.dart';
 import '../../../application/services/builtin_srd_entities.dart';
 import '../../../domain/entities/character.dart';
 import '../../../domain/entities/entity.dart';
@@ -199,41 +201,68 @@ class _CharactersTabState extends ConsumerState<CharactersTab> {
 
               const SizedBox(height: 12),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _selectedIndex >= 0
-                          ? () {
-                              final list = _sortedList();
-                              if (_selectedIndex < list.length) {
-                                _openCharacter(list[_selectedIndex]);
-                              }
-                            }
-                          : null,
-                      icon: const Icon(Icons.folder_open, size: 18),
-                      label: const Text('Open Character'),
-                    ),
+              Builder(builder: (context) {
+                final sorted = ref.watch(sortedCharactersProvider);
+                final selected =
+                    (_selectedIndex >= 0 && _selectedIndex < sorted.length)
+                        ? sorted[_selectedIndex]
+                        : null;
+                final blockedReason =
+                    selected == null ? null : _deleteBlockedReason(selected);
+                final canDelete = selected != null && blockedReason == null;
+                final deleteButton = FilledButton.icon(
+                  onPressed: canDelete ? _deleteSelected : null,
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: const Text('Delete'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: palette.dangerBtnBg,
+                    foregroundColor: palette.dangerBtnText,
                   ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed:
-                        _selectedIndex >= 0 ? _deleteSelected : null,
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    label: const Text('Delete'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: palette.dangerBtnBg,
-                      foregroundColor: palette.dangerBtnText,
+                );
+                return Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: selected != null
+                            ? () => _openCharacter(selected)
+                            : null,
+                        icon: const Icon(Icons.folder_open, size: 18),
+                        label: const Text('Open Character'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 8),
+                    if (blockedReason != null && blockedReason.isNotEmpty)
+                      Tooltip(message: blockedReason, child: deleteButton)
+                    else
+                      deleteButton,
+                  ],
+                );
+              }),
 
             ],
           ),
         ),
       ),
     );
+  }
+
+  /// Player rolünde dünyaya bağlı karakter silmek yasak. Null = silinebilir,
+  /// String = neden mesajı (tooltip). Boş string = sebep verme (loading).
+  String? _deleteBlockedReason(Character c) {
+    if (c.worldName.isEmpty) return null;
+    final infoList =
+        ref.watch(campaignInfoListProvider).valueOrNull ?? const [];
+    final info = infoList.where((w) => w.name == c.worldName).firstOrNull;
+    if (info == null) {
+      return 'World-bound character. Open the world to manage it.';
+    }
+    final asyncRole = ref.watch(worldRoleProvider(info.id));
+    if (asyncRole.isLoading) return '';
+    final role = asyncRole.valueOrNull ?? WorldRole.none;
+    // DM her zaman silebilir. `none` = offline / lokal-only world (Supabase
+    // membership yok) → owner kendi karakterini siler.
+    if (role == WorldRole.dm || role == WorldRole.none) return null;
+    return 'World-bound characters can only be deleted by the DM. Release it first.';
   }
 
   /// Loads the character's world (so entityProvider populates and relation

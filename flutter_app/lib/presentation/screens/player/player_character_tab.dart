@@ -8,10 +8,12 @@ import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_claim_provider.dart';
 import '../../../application/providers/character_provider.dart';
+import '../../../application/providers/cloud_backup_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/world_characters_provider.dart';
 import '../../../core/utils/screen_type.dart';
 import '../../../domain/entities/character.dart';
+import '../characters/character_editor_screen.dart';
 import '../../theme/dm_tool_colors.dart';
 import '../../widgets/online_world_widgets.dart';
 
@@ -22,12 +24,38 @@ import '../../widgets/online_world_widgets.dart';
 ///      read-only tile (RLS izin verir, edit policy player'ı engeller).
 ///
 /// Roster yukarıda yatay strip olarak görünür → join/leave anlık.
-class PlayerCharacterTab extends ConsumerWidget {
+///
+/// Karakter detay açma: tab içinde **inline** swap. Karakter tile'a basınca
+/// `_openCharacterId` set olur → `CharacterEditorScreen` tab'ın gövdesine
+/// embed edilir, üstte back bar listeye döner. Fullscreen route push YOK.
+class PlayerCharacterTab extends ConsumerStatefulWidget {
   const PlayerCharacterTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PlayerCharacterTab> createState() => _PlayerCharacterTabState();
+}
+
+class _PlayerCharacterTabState extends ConsumerState<PlayerCharacterTab> {
+  String? _openCharacterId;
+
+  void _open(String characterId) {
+    setState(() => _openCharacterId = characterId);
+  }
+
+  void _closeInline() {
+    setState(() => _openCharacterId = null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<DmToolColors>()!;
+    if (_openCharacterId != null) {
+      return _InlineEditor(
+        palette: palette,
+        characterId: _openCharacterId!,
+        onBack: _closeInline,
+      );
+    }
     final activeWorld = ref.watch(activeCampaignProvider);
     final worldId = ref.watch(activeCampaignIdProvider).valueOrNull;
     final auth = ref.watch(authProvider);
@@ -55,7 +83,69 @@ class PlayerCharacterTab extends ConsumerWidget {
                     selfUid: selfUid,
                     maxWidth: maxWidth,
                     screen: screen,
+                    onOpen: _open,
                   ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InlineEditor extends StatelessWidget {
+  final DmToolColors palette;
+  final String characterId;
+  final VoidCallback onBack;
+  const _InlineEditor({
+    required this.palette,
+    required this.characterId,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: palette.tabBg,
+      child: Column(
+        children: [
+          Container(
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: palette.tabBg,
+              border: Border(
+                bottom: BorderSide(color: palette.sidebarDivider),
+              ),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  tooltip: 'Back to character list',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
+                  iconSize: 20,
+                  onPressed: onBack,
+                  icon: Icon(Icons.arrow_back, color: palette.tabActiveText),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'Character',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: palette.tabActiveText,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: CharacterEditorScreen(characterId: characterId),
           ),
         ],
       ),
@@ -69,12 +159,14 @@ class _CharacterList extends ConsumerWidget {
   final String? selfUid;
   final double maxWidth;
   final ScreenType screen;
+  final ValueChanged<String> onOpen;
   const _CharacterList({
     required this.palette,
     required this.worldId,
     required this.selfUid,
     required this.maxWidth,
     required this.screen,
+    required this.onOpen,
   });
 
   @override
@@ -117,7 +209,7 @@ class _CharacterList extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   for (final r in mine) ...[
-                    _OwnedRow(palette: palette, row: r),
+                    _OwnedRow(palette: palette, row: r, onOpen: onOpen),
                     const SizedBox(height: 8),
                   ],
                   const SizedBox(height: 16),
@@ -295,17 +387,108 @@ String _displayNameFor(WorldCharacterRow row) {
   return row.templateName.isNotEmpty ? row.templateName : '(Unnamed)';
 }
 
-class _OwnedRow extends StatelessWidget {
+class _OwnedRow extends ConsumerStatefulWidget {
   final DmToolColors palette;
   final WorldCharacterRow row;
-  const _OwnedRow({required this.palette, required this.row});
+  final ValueChanged<String> onOpen;
+  const _OwnedRow({
+    required this.palette,
+    required this.row,
+    required this.onOpen,
+  });
+
+  @override
+  ConsumerState<_OwnedRow> createState() => _OwnedRowState();
+}
+
+class _OwnedRowState extends ConsumerState<_OwnedRow> {
+  bool _busy = false;
+
+  Future<void> _confirmAndRelease() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Release character?'),
+        content: const Text(
+          'You will give up ownership. Anyone in this world can claim it again.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: widget.palette.dangerBtnBg,
+              foregroundColor: widget.palette.dangerBtnText,
+            ),
+            child: const Text('Release'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _release();
+  }
+
+  Future<void> _release() async {
+    setState(() => _busy = true);
+    try {
+      final svc = ref.read(characterClaimServiceProvider);
+      if (svc == null) return;
+      await svc.release(widget.row.id);
+      // Optimistik patch — owner_id NULL, row "Available to Claim" bölümüne kayar.
+      ref
+          .read(worldCharactersProvider(widget.row.worldId).notifier)
+          .applyMirror(widget.row.copyWith(
+            ownerId: null,
+            updatedAt: DateTime.now(),
+          ));
+      // Claim'in tersi: personal_characters'tan unpublish + local Drift'ten
+      // sil. `removeMirror` lokal-only delete (world_characters'a dokunmaz).
+      try {
+        await ref
+            .read(characterListProvider.notifier)
+            .makeOffline(widget.row.id);
+      } catch (e) {
+        debugPrint('release makeOffline error: $e');
+      }
+      try {
+        await ref
+            .read(characterListProvider.notifier)
+            .removeMirror(widget.row.id);
+      } catch (e) {
+        debugPrint('release removeMirror error: $e');
+      }
+      try {
+        await ref
+            .read(cloudBackupOperationProvider.notifier)
+            .deleteBackupByItem(widget.row.id, 'character');
+      } catch (e) {
+        debugPrint('release cloud backup cleanup error: $e');
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Character released')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final name = _displayNameFor(row);
+    final palette = widget.palette;
+    final name = _displayNameFor(widget.row);
     return InkWell(
       borderRadius: palette.br,
-      onTap: () => context.push('/character/${row.id}'),
+      onTap: _busy ? null : () => widget.onOpen(widget.row.id),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -334,7 +517,7 @@ class _OwnedRow extends StatelessWidget {
                         color: palette.tabActiveText,
                       )),
                   const SizedBox(height: 2),
-                  Text(row.templateName,
+                  Text(widget.row.templateName,
                       style: TextStyle(
                         fontSize: 12,
                         color: palette.sidebarLabelSecondary,
@@ -342,6 +525,26 @@ class _OwnedRow extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: _busy ? null : _confirmAndRelease,
+              icon: _busy
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.logout, size: 14),
+              label: const Text('Release'),
+              style: OutlinedButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+            const SizedBox(width: 4),
             Icon(Icons.chevron_right,
                 color: palette.sidebarLabelSecondary, size: 20),
           ],

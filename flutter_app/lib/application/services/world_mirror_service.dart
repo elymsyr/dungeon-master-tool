@@ -49,16 +49,28 @@ class WorldMirrorService {
   /// Lokal `data['entities']` blob'undan world_entities'e bulk upsert.
   /// updated_at trigger ile idempotent. Deletion EntityNotifier.delete →
   /// [deleteEntity] üzerinden ayrı path'te yapılır; bu push sadece upsert.
+  ///
+  /// [builtinPackageId] verildiğinde, entity'nin `package_id == builtinPackageId
+  /// && linked == true` koşulu world_entities.is_builtin = true olarak yazılır.
+  /// Player tarafında otomatik görünürlüğü tetikler.
   Future<void> pushEntities({
     required String worldId,
     required Map<String, dynamic> entitiesBlob,
+    String? builtinPackageId,
   }) async {
     if (entitiesBlob.isEmpty) return;
     final rows = <Map<String, dynamic>>[];
     for (final entry in entitiesBlob.entries) {
       final m = entry.value;
       if (m is! Map) continue;
-      rows.add(_entityRow(worldId, entry.key, Map<String, dynamic>.from(m)));
+      rows.add(
+        _entityRow(
+          worldId,
+          entry.key,
+          Map<String, dynamic>.from(m),
+          builtinPackageId,
+        ),
+      );
       _stamp(entry.key);
     }
     if (rows.isEmpty) return;
@@ -74,12 +86,13 @@ class WorldMirrorService {
     required String worldId,
     required String entityId,
     required Map<String, dynamic> entityMap,
+    String? builtinPackageId,
   }) async {
     _stamp(entityId);
     try {
       await client
           .from('world_entities')
-          .upsert(_entityRow(worldId, entityId, entityMap));
+          .upsert(_entityRow(worldId, entityId, entityMap, builtinPackageId));
     } catch (e) {
       debugPrint('pushEntity error: $e');
     }
@@ -98,7 +111,18 @@ class WorldMirrorService {
   }
 
   Map<String, dynamic> _entityRow(
-      String worldId, String entityId, Map<String, dynamic> m) {
+    String worldId,
+    String entityId,
+    Map<String, dynamic> m, [
+    String? builtinPackageId,
+  ]) {
+    final pkgId = m['package_id'] as String?;
+    final linked = (m['linked'] as bool?) ?? false;
+    final isBuiltin =
+        builtinPackageId != null &&
+        pkgId != null &&
+        pkgId == builtinPackageId &&
+        linked;
     return {
       'id': entityId,
       'world_id': worldId,
@@ -113,9 +137,10 @@ class WorldMirrorService {
       'pdfs_json': jsonEncode(m['pdfs'] ?? const []),
       'location_id': m['location_id'],
       'fields_json': jsonEncode(m['attributes'] ?? m['fields'] ?? const {}),
-      'package_id': m['package_id'],
+      'package_id': pkgId,
       'package_entity_id': m['package_entity_id'],
-      'linked': (m['linked'] as bool?) ?? false,
+      'linked': linked,
+      'is_builtin': isBuiltin,
     };
   }
 
@@ -171,13 +196,16 @@ class WorldMirrorService {
     // publish_world RPC (SECURITY DEFINER, row_security off) upsert eder ve
     // owner_id'yi auth.uid()'den çeker — UPSERT/RLS gürültüsünü engeller.
     try {
-      await client.rpc('publish_world', params: {
-        'p_world_id': worldId,
-        'p_world_name': worldName,
-        'p_template_id': templateId,
-        'p_template_hash': templateHash,
-        'p_state_json': stateJson,
-      });
+      await client.rpc(
+        'publish_world',
+        params: {
+          'p_world_id': worldId,
+          'p_world_name': worldName,
+          'p_template_id': templateId,
+          'p_template_hash': templateHash,
+          'p_state_json': stateJson,
+        },
+      );
     } catch (e) {
       debugPrint('pushWorldState error: $e');
     }
@@ -186,8 +214,13 @@ class WorldMirrorService {
   // ── Initial fetch on subscribe ─────────────────────────────────────
 
   /// World'e abone olunduğunda lokal Drift'i seed'lemek için pull.
-  Future<({List<Map<String, dynamic>> entities, List<Map<String, dynamic>> characters})>
-      fetchInitialState(String worldId) async {
+  Future<
+    ({
+      List<Map<String, dynamic>> entities,
+      List<Map<String, dynamic>> characters,
+    })
+  >
+  fetchInitialState(String worldId) async {
     try {
       final entitiesRaw = await client
           .from('world_entities')
@@ -197,10 +230,10 @@ class WorldMirrorService {
           .from('world_characters')
           .select()
           .eq('world_id', worldId);
-      final List<Map<String, dynamic>> entities =
-          (entitiesRaw as List).cast<Map<String, dynamic>>();
-      final List<Map<String, dynamic>> characters =
-          (charactersRaw as List).cast<Map<String, dynamic>>();
+      final List<Map<String, dynamic>> entities = (entitiesRaw as List)
+          .cast<Map<String, dynamic>>();
+      final List<Map<String, dynamic>> characters = (charactersRaw as List)
+          .cast<Map<String, dynamic>>();
       return (entities: entities, characters: characters);
     } catch (e) {
       debugPrint('fetchInitialState error: $e');
@@ -232,10 +265,13 @@ class WorldMirrorService {
   Future<void> pushPersonalCharacter(Character character) async {
     _stamp(character.id);
     try {
-      await client.rpc('publish_personal_character', params: {
-        'p_id': character.id,
-        'p_payload_json': jsonEncode(character.toJson()),
-      });
+      await client.rpc(
+        'publish_personal_character',
+        params: {
+          'p_id': character.id,
+          'p_payload_json': jsonEncode(character.toJson()),
+        },
+      );
     } catch (e) {
       debugPrint('pushPersonalCharacter error: $e');
     }
@@ -244,9 +280,10 @@ class WorldMirrorService {
   Future<void> unpublishPersonalCharacter(String characterId) async {
     _stamp(characterId);
     try {
-      await client.rpc('unpublish_personal_character', params: {
-        'p_id': characterId,
-      });
+      await client.rpc(
+        'unpublish_personal_character',
+        params: {'p_id': characterId},
+      );
     } catch (e) {
       debugPrint('unpublishPersonalCharacter error: $e');
     }
@@ -265,10 +302,13 @@ class WorldMirrorService {
   }) async {
     _stamp(_packageEchoKey(packageName));
     try {
-      await client.rpc('publish_personal_package', params: {
-        'p_package_name': packageName,
-        'p_state_json': jsonEncode(state),
-      });
+      await client.rpc(
+        'publish_personal_package',
+        params: {
+          'p_package_name': packageName,
+          'p_state_json': jsonEncode(state),
+        },
+      );
     } catch (e) {
       debugPrint('pushPersonalPackage error: $e');
     }
@@ -277,9 +317,10 @@ class WorldMirrorService {
   Future<void> unpublishPersonalPackage(String packageName) async {
     _stamp(_packageEchoKey(packageName));
     try {
-      await client.rpc('unpublish_personal_package', params: {
-        'p_package_name': packageName,
-      });
+      await client.rpc(
+        'unpublish_personal_package',
+        params: {'p_package_name': packageName},
+      );
     } catch (e) {
       debugPrint('unpublishPersonalPackage error: $e');
     }

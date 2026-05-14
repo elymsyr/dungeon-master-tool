@@ -6,7 +6,8 @@ import '../../core/utils/deep_copy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/database/database_provider.dart';
-import '../../data/datasources/local/campaign_local_ds.dart' show CampaignLocalDataSource, TrashItem;
+import '../../data/datasources/local/campaign_local_ds.dart'
+    show CampaignLocalDataSource, TrashItem;
 import '../../data/repositories/campaign_repository_impl.dart';
 import '../../domain/entities/schema/world_schema.dart';
 import '../../domain/entities/schema/world_schema_hash.dart';
@@ -15,6 +16,7 @@ import '../../data/network/network_providers.dart';
 import '../services/campaign_import_service.dart';
 import '../services/media_bundler.dart';
 import '../services/world_mirror_service.dart';
+import 'builtin_package_provider.dart';
 import 'character_provider.dart';
 import 'online_worlds_provider.dart';
 import 'world_mirror_provider.dart';
@@ -68,15 +70,19 @@ class CampaignInfo {
 }
 
 /// Kampanya listesi + template bilgileri.
-final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((ref) async {
+final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((
+  ref,
+) async {
   final db = ref.watch(appDatabaseProvider);
   final rows = await db.campaignDao.getCampaignInfoList();
   return rows
-      .map((r) => CampaignInfo(
-            id: r.id,
-            name: r.worldName,
-            templateName: r.templateName,
-          ))
+      .map(
+        (r) => CampaignInfo(
+          id: r.id,
+          name: r.worldName,
+          templateName: r.templateName,
+        ),
+      )
       .toList();
 });
 
@@ -84,15 +90,22 @@ final campaignInfoListProvider = FutureProvider<List<CampaignInfo>>((ref) async 
 /// Campaign blob'undan `metadata` alanını okur. List UI bu provider'ı
 /// watch ederek cover/desc/tags gösterimi için kullanır.
 final campaignMetadataProvider =
-    FutureProvider.family<Map<String, dynamic>, String>((ref, campaignName) async {
-  try {
-    final data = await ref.read(campaignRepositoryProvider).load(campaignName);
-    final meta = data['metadata'];
-    return meta is Map ? Map<String, dynamic>.from(meta) : <String, dynamic>{};
-  } catch (_) {
-    return <String, dynamic>{};
-  }
-});
+    FutureProvider.family<Map<String, dynamic>, String>((
+      ref,
+      campaignName,
+    ) async {
+      try {
+        final data = await ref
+            .read(campaignRepositoryProvider)
+            .load(campaignName);
+        final meta = data['metadata'];
+        return meta is Map
+            ? Map<String, dynamic>.from(meta)
+            : <String, dynamic>{};
+      } catch (_) {
+        return <String, dynamic>{};
+      }
+    });
 
 /// Campaign metadata writer — sadece metadata'yı değiştirir, diğer verilere
 /// dokunmaz. Ayarlar dialog'undan çağrılır.
@@ -166,7 +179,9 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     if (!onlineIds.contains(worldId)) return;
     final worldName = state ?? '';
     final schemaMap = data['world_schema'];
-    final templateId = schemaMap is Map ? schemaMap['schemaId'] as String? : null;
+    final templateId = schemaMap is Map
+        ? schemaMap['schemaId'] as String?
+        : null;
     final templateHash = data['template_hash'] as String?;
     // Media'yı R2'ye yükleyip `dmt-asset://` ref'lerine rewrite et;
     // sonra entity + state push. Bundle SHA-dedupe sayesinde repeat
@@ -211,11 +226,9 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     Map<String, dynamic> bundled = data;
     if (assetSvc != null) {
       try {
-        final res = await MediaBundler(assetSvc).bundleWorldMedia(
-          worldName: worldName,
-          worldId: worldId,
-          data: data,
-        );
+        final res = await MediaBundler(
+          assetSvc,
+        ).bundleWorldMedia(worldName: worldName, worldId: worldId, data: data);
         bundled = res.data;
       } catch (e, st) {
         debugPrint('online mirror media bundle error: $e\n$st');
@@ -225,7 +238,17 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     final entitiesBlob = entitiesRaw is Map<String, dynamic>
         ? entitiesRaw
         : const <String, dynamic>{};
-    await mirror.pushEntities(worldId: worldId, entitiesBlob: entitiesBlob);
+    String? builtinPackageId;
+    try {
+      builtinPackageId = await _ref.read(builtinPackageIdProvider.future);
+    } catch (_) {
+      /* bootstrap pending → null, OK */
+    }
+    await mirror.pushEntities(
+      worldId: worldId,
+      entitiesBlob: entitiesBlob,
+      builtinPackageId: builtinPackageId,
+    );
     // Entities already mirror through world_entities CDC; including them
     // again inside state_json doubles bandwidth and processing on every
     // bundle push. Strip them before encoding — the applier's
@@ -394,8 +417,8 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
 
 final activeCampaignProvider =
     StateNotifierProvider<ActiveCampaignNotifier, String?>((ref) {
-  return ActiveCampaignNotifier(ref.watch(campaignRepositoryProvider), ref);
-});
+      return ActiveCampaignNotifier(ref.watch(campaignRepositoryProvider), ref);
+    });
 
 /// Trash'teki silinen kampanyalar.
 final trashListProvider = FutureProvider<List<TrashItem>>((ref) {
