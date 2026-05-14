@@ -371,6 +371,28 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   }
 
   Future<void> delete(String campaignName) async {
+    // Karakter bağını kopar: world trash'e atılmadan önce bu world'e bağlı
+    // karakterleri orphan'a çevir (worldName boş + built-in SRD remap).
+    // Aksi halde world silindikten sonra karakter `worldName` set kalır,
+    // Hub Characters tab'da role-aware delete check world'ü bulamayıp
+    // "World-bound character" tooltip'i ile silmeyi engeller. Trash restore
+    // sırasında bağ tekrar kurulmaz — DM gerekirse yeniden link eder.
+    try {
+      Map<String, dynamic>? data;
+      if (state == campaignName && _data != null) {
+        data = _data;
+      } else {
+        data = await _repo.load(campaignName);
+      }
+      final entitiesRaw = data?['entities'];
+      if (entitiesRaw is Map<String, dynamic>) {
+        await _ref
+            .read(characterListProvider.notifier)
+            .orphanForWorld(campaignName, entitiesRaw);
+      }
+    } catch (e, st) {
+      debugPrint('orphan-before-delete error: $e\n$st');
+    }
     await _repo.delete(campaignName);
     if (state == campaignName) {
       _data = null;

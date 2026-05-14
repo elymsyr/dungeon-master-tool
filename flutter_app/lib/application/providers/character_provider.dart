@@ -59,6 +59,15 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
       // ignore: discarded_futures
       _autoPublishForOnlineWorlds(added);
     });
+    // Auth transition (offline → signed in): pre-existing worldless chars
+    // had `ownerId == null` and would otherwise become invisible under the
+    // own-only char tab filter. Adopt them on first auth.
+    _ref.listen(authProvider, (prev, next) {
+      if (prev == null && next != null) {
+        // ignore: discarded_futures
+        _backfillWorldlessOwnership(next.uid);
+      }
+    });
   }
 
   final CharacterRepository _repo;
@@ -210,9 +219,39 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
   Future<void> _load() async {
     try {
       state = AsyncValue.data(await _repo.loadAll());
+      final auth = _ref.read(authProvider);
+      if (auth != null) {
+        await _backfillWorldlessOwnership(auth.uid);
+      }
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
+  }
+
+  /// Adopt pre-existing worldless chars that have no `ownerId`. Under the
+  /// own-only char tab filter they would otherwise vanish once the user
+  /// signs in. World-bound orphan chars are left alone: they may belong
+  /// to other players or live in the DM-owned pool of an online world.
+  Future<void> _backfillWorldlessOwnership(String uid) async {
+    final list = state.valueOrNull;
+    if (list == null || list.isEmpty) return;
+    final out = [...list];
+    var changed = false;
+    for (var i = 0; i < out.length; i++) {
+      final c = out[i];
+      if (c.ownerId != null) continue;
+      if (c.worldName.isNotEmpty) continue;
+      final patched = c.copyWith(ownerId: uid);
+      try {
+        await _repo.save(patched);
+      } catch (e) {
+        debugPrint('backfill ownership save error: $e');
+        continue;
+      }
+      out[i] = patched;
+      changed = true;
+    }
+    if (changed) state = AsyncValue.data(out);
   }
 
   Future<void> refresh() => _load();
@@ -305,19 +344,24 @@ class CharacterListNotifier extends StateNotifier<AsyncValue<List<Character>>> {
 
   /// Resolves the owner_id for a freshly created character.
   ///
-  /// - Offline / non-member world → null (no online RLS to satisfy).
-  /// - Player in online world → own auth.uid (required by RLS
-  ///   `Chars: player inserts own` WITH CHECK).
-  /// - DM in online world → null. Keeping DM-created characters "unowned"
-  ///   is what lets them auto-flow into the claim pool — a player who
-  ///   claims one then takes ownership via the `claim_character` RPC.
+  /// - No auth (pure offline) → null.
+  /// - Worldless (char tab create): creator becomes owner (auth.uid). Char
+  ///   tab visibility is own-only, so the creator must hold ownership to
+  ///   keep seeing their character there.
+  /// - Online world + player → auth.uid (RLS `Chars: player inserts own`
+  ///   WITH CHECK requires it).
+  /// - Online world + DM → null. DM-created world chars stay unowned so
+  ///   any player can claim them.
+  /// - Offline world (local-only campaign) → auth.uid when authenticated,
+  ///   else null. The creator still sees the char in their tab.
   String? _resolveOwnerIdForWorld(String worldName) {
     final auth = _ref.read(authProvider);
     if (auth == null) return null;
+    if (worldName.isEmpty) return auth.uid;
     final worldId = _worldIdFor(worldName);
-    if (worldId == null) return null;
+    if (worldId == null) return auth.uid;
     final onlineIds = _ref.read(onlineWorldIdsProvider);
-    if (!onlineIds.contains(worldId)) return null;
+    if (!onlineIds.contains(worldId)) return auth.uid;
     final role = _ref.read(worldRoleProvider(worldId)).valueOrNull
         ?? _ref.read(currentWorldRoleProvider).valueOrNull;
     if (role == WorldRole.dm) return null;
