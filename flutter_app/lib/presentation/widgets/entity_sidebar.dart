@@ -3,11 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/providers/character_provider.dart' show kPlayerCategorySlugs;
+import '../../application/providers/builtin_package_provider.dart';
+import '../../application/providers/character_provider.dart'
+    show kPlayerCategorySlugs;
 import '../../core/utils/screen_type.dart';
 import '../../application/providers/entity_provider.dart';
+import '../../application/providers/entity_share_provider.dart';
+import '../../application/providers/role_provider.dart';
 import '../../application/providers/ui_state_provider.dart';
 import '../../application/providers/visible_entity_provider.dart';
+import '../../domain/entities/online/world_role.dart';
 import '../../domain/entities/schema/builtin/content.dart' show tier1Slugs;
 import '../../domain/entities/schema/builtin/lookups.dart' show tier0Slugs;
 import '../../domain/entities/schema/entity_category_schema.dart';
@@ -35,18 +40,39 @@ class EntitySidebar extends ConsumerStatefulWidget {
 
 enum _SortMode { name, category, source }
 
+/// DM-only sharing filter modes. Empty selection = show all.
+enum _ShareFilter { builtin, shared, notShared }
+
+/// Sidebar list row için kompakt entity tuple'ı. `visibleEntityProvider`
+/// select'inden gelen alanlarla aynı şekilde.
+typedef _EntitySummary = ({
+  String id,
+  String name,
+  String categorySlug,
+  String source,
+  List<String> tags,
+  String? packageId,
+  bool linked,
+});
+
 const int _kPageSize = 50;
 
 class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   late final TextEditingController _searchController;
   late final ScrollController _scrollController;
   String _searchQuery = '';
+
   /// Selected category slugs. Empty = show all.
   final Set<String> _selectedSlugs = <String>{};
+
   /// Selected source labels. Empty = show all.
   final Set<String> _selectedSources = <String>{};
+
+  /// Selected sharing-state modes (DM-only). Empty = show all.
+  final Set<_ShareFilter> _selectedShareModes = <_ShareFilter>{};
   _SortMode _sortMode = _SortMode.name;
   int _visibleLimit = _kPageSize;
+
   /// Debounces search-text writes into `_searchQuery` so each keystroke
   /// doesn't fan out a setState → full filter+sort over the entire
   /// (~7 K) entity map. 200 ms is fast enough that the UI feels live
@@ -103,9 +129,9 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   }
 
   void _persistFilter() {
-    ref.read(uiStateProvider.notifier).update(
-          (s) => s.copyWith(dbFilterSlugs: _selectedSlugs.toList()),
-        );
+    ref
+        .read(uiStateProvider.notifier)
+        .update((s) => s.copyWith(dbFilterSlugs: _selectedSlugs.toList()));
   }
 
   /// Map slug → tier number (0/1/2) using the canonical built-in slug lists.
@@ -129,18 +155,58 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     // Watch only the sidebar-relevant fields — avoids rebuild when entity
     // fields (description, dmNotes, custom fields etc.) change.
-    final summaries = ref.watch(visibleEntityProvider.select((map) =>
-      map.values.map((e) => (
-        id: e.id,
-        name: e.name,
-        categorySlug: e.categorySlug,
-        source: e.source,
-        tags: e.tags,
-      )).toList(),
-    ));
-    final categories = widget.schema?.categories
-            .where((c) =>
-                !c.isArchived && !kPlayerCategorySlugs.contains(c.slug))
+    final summaries = ref.watch(
+      visibleEntityProvider.select(
+        (map) => map.values
+            .map(
+              (e) => (
+                id: e.id,
+                name: e.name,
+                categorySlug: e.categorySlug,
+                source: e.source,
+                tags: e.tags,
+                packageId: e.packageId,
+                linked: e.linked,
+              ),
+            )
+            .toList(),
+      ),
+    );
+
+    // DM-only sharing filter context. Player için chip render edilmez ve
+    // filter aktif değilse pass-through.
+    final isDm =
+        ref.watch(currentWorldRoleProvider).valueOrNull == WorldRole.dm;
+    final worldIdForShares = ref.watch(activeCampaignIdProvider).valueOrNull;
+    final builtinPackId = ref.watch(builtinPackageIdProvider).valueOrNull;
+    final Set<String> sharedEntityIds;
+    if (isDm && worldIdForShares != null) {
+      final sharesAsync = ref.watch(
+        worldEntitySharesProvider(worldIdForShares),
+      );
+      sharedEntityIds = <String>{
+        for (final s in (sharesAsync.valueOrNull ?? const [])) s.entityId,
+      };
+    } else {
+      sharedEntityIds = const <String>{};
+    }
+    _ShareFilter classifyShareMode(
+      String? pkgId,
+      bool linked,
+      String entityId,
+    ) {
+      if (builtinPackId != null && linked && pkgId == builtinPackId) {
+        return _ShareFilter.builtin;
+      }
+      if (sharedEntityIds.contains(entityId)) return _ShareFilter.shared;
+      return _ShareFilter.notShared;
+    }
+
+    final categories =
+        widget.schema?.categories
+            .where(
+              (c) => !c.isArchived && !kPlayerCategorySlugs.contains(c.slug),
+            )
             .toList() ??
         [];
 
@@ -156,31 +222,33 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       if (e.source.isNotEmpty) allSources.add(e.source);
     }
 
-    // Pass 1 — apply category + source filters.
+    // Pass 1 — apply category + source + (DM) sharing filters.
     final filtered = summaries.where((e) {
       if (_selectedSlugs.isNotEmpty &&
           !_selectedSlugs.contains(e.categorySlug)) {
         return false;
       }
-      if (_selectedSources.isNotEmpty &&
-          !_selectedSources.contains(e.source)) {
+      if (_selectedSources.isNotEmpty && !_selectedSources.contains(e.source)) {
         return false;
+      }
+      if (isDm && _selectedShareModes.isNotEmpty) {
+        final mode = classifyShareMode(e.packageId, e.linked, e.id);
+        if (!_selectedShareModes.contains(mode)) return false;
       }
       return true;
     }).toList();
 
-    int cmp(({String id, String name, String categorySlug, String source,
-        List<String> tags}) a,
-        ({String id, String name, String categorySlug, String source,
-        List<String> tags}) b) {
+    int cmp(_EntitySummary a, _EntitySummary b) {
       return switch (_sortMode) {
         _SortMode.name => a.name.compareTo(b.name),
-        _SortMode.category => a.categorySlug.compareTo(b.categorySlug) != 0
-            ? a.categorySlug.compareTo(b.categorySlug)
-            : a.name.compareTo(b.name),
-        _SortMode.source => a.source.compareTo(b.source) != 0
-            ? a.source.compareTo(b.source)
-            : a.name.compareTo(b.name),
+        _SortMode.category =>
+          a.categorySlug.compareTo(b.categorySlug) != 0
+              ? a.categorySlug.compareTo(b.categorySlug)
+              : a.name.compareTo(b.name),
+        _SortMode.source =>
+          a.source.compareTo(b.source) != 0
+              ? a.source.compareTo(b.source)
+              : a.name.compareTo(b.name),
       };
     }
 
@@ -192,20 +260,16 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
     //               (so user still sees matches across all categories,
     //               just dimmed below the in-filter block).
     final query = _searchQuery.trim().toLowerCase();
-    final matched = <({String id, String name, String categorySlug,
-        String source, List<String> tags})>[];
-    final others = <({String id, String name, String categorySlug,
-        String source, List<String> tags})>[];
+    final matched = <_EntitySummary>[];
+    final others = <_EntitySummary>[];
     if (query.isEmpty) {
       matched.addAll(filtered);
     } else {
-      bool hits(({String id, String name, String categorySlug, String source,
-          List<String> tags}) e) =>
+      bool hits(_EntitySummary e) =>
           e.name.toLowerCase().contains(query) ||
           e.source.toLowerCase().contains(query) ||
           e.tags.any((t) => t.toLowerCase().contains(query));
-      bool isInFilter(({String id, String name, String categorySlug,
-          String source, List<String> tags}) e) {
+      bool isInFilter(_EntitySummary e) {
         if (_selectedSlugs.isNotEmpty &&
             !_selectedSlugs.contains(e.categorySlug)) {
           return false;
@@ -214,8 +278,13 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
             !_selectedSources.contains(e.source)) {
           return false;
         }
+        if (isDm && _selectedShareModes.isNotEmpty) {
+          final mode = classifyShareMode(e.packageId, e.linked, e.id);
+          if (!_selectedShareModes.contains(mode)) return false;
+        }
         return true;
       }
+
       for (final e in summaries) {
         if (!hits(e)) continue;
         (isInFilter(e) ? matched : others).add(e);
@@ -243,7 +312,10 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                     ),
               border: const OutlineInputBorder(),
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
             ),
           ),
         ),
@@ -260,41 +332,48 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                   child: OutlinedButton.icon(
                     onPressed: () => _openFilterDialog(categories),
                     icon: const Icon(Icons.filter_list, size: 16),
-                    label: Builder(builder: (_) {
-                      final summary = _selectedSlugs.isEmpty
-                          ? 'All Categories'
-                          : '${_selectedSlugs.length}/${categories.length}';
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              summary,
-                              style: const TextStyle(fontSize: 12),
-                              overflow: TextOverflow.ellipsis,
+                    label: Builder(
+                      builder: (_) {
+                        final summary = _selectedSlugs.isEmpty
+                            ? 'All Categories'
+                            : '${_selectedSlugs.length}/${categories.length}';
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                summary,
+                                style: const TextStyle(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          if (_selectedSlugs.isNotEmpty) ...[
-                            const SizedBox(width: 6),
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _selectedSlugs.clear();
-                                  _visibleLimit = _kPageSize;
-                                });
-                                _persistFilter();
-                              },
-                              child: Icon(Icons.close, size: 14,
-                                  color: palette.sidebarLabelSecondary),
-                            ),
+                            if (_selectedSlugs.isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedSlugs.clear();
+                                    _visibleLimit = _kPageSize;
+                                  });
+                                  _persistFilter();
+                                },
+                                child: Icon(
+                                  Icons.close,
+                                  size: 14,
+                                  color: palette.sidebarLabelSecondary,
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
-                      );
-                    }),
+                        );
+                      },
+                    ),
                     style: OutlinedButton.styleFrom(
                       visualDensity: VisualDensity.compact,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       minimumSize: const Size(0, 32),
                       alignment: Alignment.centerLeft,
                     ),
@@ -307,45 +386,105 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                         ? null
                         : () => _openSourceFilterDialog(allSources),
                     icon: const Icon(Icons.label_outline, size: 16),
-                    label: Builder(builder: (_) {
-                      final summary = _selectedSources.isEmpty
-                          ? 'All Sources'
-                          : '${_selectedSources.length}/${allSources.length}';
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              summary,
-                              style: const TextStyle(fontSize: 12),
-                              overflow: TextOverflow.ellipsis,
+                    label: Builder(
+                      builder: (_) {
+                        final summary = _selectedSources.isEmpty
+                            ? 'All Sources'
+                            : '${_selectedSources.length}/${allSources.length}';
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                summary,
+                                style: const TextStyle(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          if (_selectedSources.isNotEmpty) ...[
-                            const SizedBox(width: 6),
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _selectedSources.clear();
-                                  _visibleLimit = _kPageSize;
-                                });
-                              },
-                              child: Icon(Icons.close, size: 14,
-                                  color: palette.sidebarLabelSecondary),
-                            ),
+                            if (_selectedSources.isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedSources.clear();
+                                    _visibleLimit = _kPageSize;
+                                  });
+                                },
+                                child: Icon(
+                                  Icons.close,
+                                  size: 14,
+                                  color: palette.sidebarLabelSecondary,
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
-                      );
-                    }),
+                        );
+                      },
+                    ),
                     style: OutlinedButton.styleFrom(
                       visualDensity: VisualDensity.compact,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       minimumSize: const Size(0, 32),
                       alignment: Alignment.centerLeft,
                     ),
                   ),
                 ),
+                if (isDm) ...[
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _openShareFilterDialog,
+                      icon: const Icon(Icons.share_outlined, size: 16),
+                      label: Builder(
+                        builder: (_) {
+                          final summary = _selectedShareModes.isEmpty
+                              ? 'All Sharing'
+                              : '${_selectedShareModes.length}/3';
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  summary,
+                                  style: const TextStyle(fontSize: 12),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (_selectedShareModes.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedShareModes.clear();
+                                      _visibleLimit = _kPageSize;
+                                    });
+                                  },
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 14,
+                                    color: palette.sidebarLabelSecondary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          );
+                        },
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        minimumSize: const Size(0, 32),
+                        alignment: Alignment.centerLeft,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -360,25 +499,53 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                     ? '${matched.length} entities'
                     : '${matched.length} match · ${others.length} other',
                 style: TextStyle(
-                    fontSize: 10, color: palette.sidebarLabelSecondary),
+                  fontSize: 10,
+                  color: palette.sidebarLabelSecondary,
+                ),
               ),
               const Spacer(),
               PopupMenuButton<_SortMode>(
                 initialValue: _sortMode,
                 onSelected: (v) => setState(() => _sortMode = v),
                 itemBuilder: (_) => const [
-                  PopupMenuItem(value: _SortMode.name, child: Text('Sort by Name', style: TextStyle(fontSize: 12))),
-                  PopupMenuItem(value: _SortMode.category, child: Text('Sort by Category', style: TextStyle(fontSize: 12))),
-                  PopupMenuItem(value: _SortMode.source, child: Text('Sort by Source', style: TextStyle(fontSize: 12))),
+                  PopupMenuItem(
+                    value: _SortMode.name,
+                    child: Text('Sort by Name', style: TextStyle(fontSize: 12)),
+                  ),
+                  PopupMenuItem(
+                    value: _SortMode.category,
+                    child: Text(
+                      'Sort by Category',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: _SortMode.source,
+                    child: Text(
+                      'Sort by Source',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
                 ],
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.sort, size: 14, color: palette.sidebarLabelSecondary),
+                    Icon(
+                      Icons.sort,
+                      size: 14,
+                      color: palette.sidebarLabelSecondary,
+                    ),
                     const SizedBox(width: 2),
                     Text(
-                      switch (_sortMode) { _SortMode.name => 'Name', _SortMode.category => 'Category', _SortMode.source => 'Source' },
-                      style: TextStyle(fontSize: 10, color: palette.sidebarLabelSecondary),
+                      switch (_sortMode) {
+                        _SortMode.name => 'Name',
+                        _SortMode.category => 'Category',
+                        _SortMode.source => 'Source',
+                      },
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: palette.sidebarLabelSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -400,58 +567,73 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                     style: TextStyle(color: palette.sidebarLabelSecondary),
                   ),
                 )
-              : Builder(builder: (_) {
-                  // Flatten into a single index space:
-                  //   [matched...] [optional header] [others...] [optional more-row]
-                  // Cap rendered rows by _visibleLimit; bumped on scroll near
-                  // the bottom by [_onScroll].
-                  final fullTotal = matched.length + others.length;
-                  final cap = _visibleLimit.clamp(0, fullTotal);
-                  final visMatched =
-                      matched.length <= cap ? matched.length : cap;
-                  final remaining = cap - visMatched;
-                  final visOthers = remaining < 0
-                      ? 0
-                      : (others.length <= remaining ? others.length : remaining);
-                  final hasOthers = visOthers > 0;
-                  final headerIndex = hasOthers ? visMatched : -1;
-                  final hasMore = fullTotal > cap;
-                  final total = visMatched +
-                      (hasOthers ? 1 + visOthers : 0) +
-                      (hasMore ? 1 : 0);
-                  return ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 4, vertical: 2),
-                    itemCount: total,
-                    cacheExtent: 500,
-                    itemBuilder: (context, index) {
-                      if (hasMore && index == total - 1) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Center(
-                            child: Text(
-                              'Loading more… (${fullTotal - cap} left)',
-                              style: TextStyle(
+              : Builder(
+                  builder: (_) {
+                    // Flatten into a single index space:
+                    //   [matched...] [optional header] [others...] [optional more-row]
+                    // Cap rendered rows by _visibleLimit; bumped on scroll near
+                    // the bottom by [_onScroll].
+                    final fullTotal = matched.length + others.length;
+                    final cap = _visibleLimit.clamp(0, fullTotal);
+                    final visMatched = matched.length <= cap
+                        ? matched.length
+                        : cap;
+                    final remaining = cap - visMatched;
+                    final visOthers = remaining < 0
+                        ? 0
+                        : (others.length <= remaining
+                              ? others.length
+                              : remaining);
+                    final hasOthers = visOthers > 0;
+                    final headerIndex = hasOthers ? visMatched : -1;
+                    final hasMore = fullTotal > cap;
+                    final total =
+                        visMatched +
+                        (hasOthers ? 1 + visOthers : 0) +
+                        (hasMore ? 1 : 0);
+                    return ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
+                      itemCount: total,
+                      cacheExtent: 500,
+                      itemBuilder: (context, index) {
+                        if (hasMore && index == total - 1) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Center(
+                              child: Text(
+                                'Loading more… (${fullTotal - cap} left)',
+                                style: TextStyle(
                                   fontSize: 10,
-                                  color: palette.sidebarLabelSecondary),
+                                  color: palette.sidebarLabelSecondary,
+                                ),
+                              ),
                             ),
-                          ),
+                          );
+                        }
+                        if (index == headerIndex) {
+                          return _OtherEntitiesHeader(
+                            count: others.length,
+                            palette: palette,
+                          );
+                        }
+                        final isOther = hasOthers && index > headerIndex;
+                        final entity = isOther
+                            ? others[index - headerIndex - 1]
+                            : matched[index];
+                        return _entityRow(
+                          entity,
+                          catMap,
+                          palette,
+                          dimmed: isOther,
                         );
-                      }
-                      if (index == headerIndex) {
-                        return _OtherEntitiesHeader(
-                            count: others.length, palette: palette);
-                      }
-                      final isOther = hasOthers && index > headerIndex;
-                      final entity = isOther
-                          ? others[index - headerIndex - 1]
-                          : matched[index];
-                      return _entityRow(
-                          entity, catMap, palette, dimmed: isOther);
-                    },
-                  );
-                }),
+                      },
+                    );
+                  },
+                ),
         ),
 
         // Yeni entity ekleme
@@ -494,141 +676,318 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
         final mq = MediaQuery.of(ctx);
         final width = mq.size.width.clamp(280.0, 420.0);
         final height = (mq.size.height * 0.7).clamp(320.0, 560.0);
-        return StatefulBuilder(builder: (ctx, setDialogState) {
-          return Dialog(
-            insetPadding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: SizedBox(
-              width: width,
-              height: height,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
-                    child: Row(
-                      children: [
-                        Icon(Icons.label_outline,
-                            size: 18, color: palette.tabActiveText),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Filter Sources',
-                          style: TextStyle(
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 32,
+              ),
+              child: SizedBox(
+                width: width,
+                height: height,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.label_outline,
+                            size: 18,
+                            color: palette.tabActiveText,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Filter Sources',
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: palette.tabActiveText),
-                        ),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: () =>
-                              setDialogState(working.clear),
-                          child: const Text('Clear',
-                              style: TextStyle(fontSize: 12)),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 18),
-                          onPressed: () => Navigator.pop(ctx),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Divider(height: 1, color: palette.sidebarDivider),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: sorted.length,
-                      itemBuilder: (_, i) {
-                        final src = sorted[i];
-                        final on = working.contains(src);
-                        return InkWell(
-                          onTap: () => setDialogState(() {
-                            if (on) {
-                              working.remove(src);
-                            } else {
-                              working.add(src);
-                            }
-                          }),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 4),
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: Checkbox(
-                                    value: on,
-                                    visualDensity: const VisualDensity(
-                                        horizontal: -4, vertical: -4),
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    onChanged: (_) => setDialogState(() {
-                                      if (on) {
-                                        working.remove(src);
-                                      } else {
-                                        working.add(src);
-                                      }
-                                    }),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(src,
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: palette.tabActiveText),
-                                      overflow: TextOverflow.ellipsis),
-                                ),
-                              ],
+                              color: palette.tabActiveText,
                             ),
                           ),
-                        );
-                      },
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () => setDialogState(working.clear),
+                            child: const Text(
+                              'Clear',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 18),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Divider(height: 1, color: palette.sidebarDivider),
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Row(
-                      children: [
-                        Text(
-                          working.isEmpty
-                              ? 'All sources shown'
-                              : '${working.length} of ${sorted.length} selected',
-                          style: TextStyle(
+                    Divider(height: 1, color: palette.sidebarDivider),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: sorted.length,
+                        itemBuilder: (_, i) {
+                          final src = sorted[i];
+                          final on = working.contains(src);
+                          return InkWell(
+                            onTap: () => setDialogState(() {
+                              if (on) {
+                                working.remove(src);
+                              } else {
+                                working.add(src);
+                              }
+                            }),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: Checkbox(
+                                      value: on,
+                                      visualDensity: const VisualDensity(
+                                        horizontal: -4,
+                                        vertical: -4,
+                                      ),
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      onChanged: (_) => setDialogState(() {
+                                        if (on) {
+                                          working.remove(src);
+                                        } else {
+                                          working.add(src);
+                                        }
+                                      }),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      src,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: palette.tabActiveText,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    Divider(height: 1, color: palette.sidebarDivider),
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        children: [
+                          Text(
+                            working.isEmpty
+                                ? 'All sources shown'
+                                : '${working.length} of ${sorted.length} selected',
+                            style: TextStyle(
                               fontSize: 11,
-                              color: palette.sidebarLabelSecondary),
-                        ),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text('Cancel'),
-                        ),
-                        const SizedBox(width: 4),
-                        FilledButton(
-                          onPressed: () {
-                            setState(() {
-                              _selectedSources
-                                ..clear()
-                                ..addAll(working);
-                              _visibleLimit = _kPageSize;
-                            });
-                            Navigator.pop(ctx);
-                          },
-                          child: const Text('Apply'),
-                        ),
-                      ],
+                              color: palette.sidebarLabelSecondary,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancel'),
+                          ),
+                          const SizedBox(width: 4),
+                          FilledButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedSources
+                                  ..clear()
+                                  ..addAll(working);
+                                _visibleLimit = _kPageSize;
+                              });
+                              Navigator.pop(ctx);
+                            },
+                            child: const Text('Apply'),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-        });
+            );
+          },
+        );
       },
     );
   }
 
-  Future<void> _openFilterDialog(
-      List<EntityCategorySchema> categories) async {
+  Future<void> _openShareFilterDialog() async {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final working = Set<_ShareFilter>.from(_selectedShareModes);
+
+    const labels = <_ShareFilter, String>{
+      _ShareFilter.builtin: 'Built-in (auto-shared)',
+      _ShareFilter.shared: 'Shared with players',
+      _ShareFilter.notShared: 'Not shared',
+    };
+    const order = <_ShareFilter>[
+      _ShareFilter.builtin,
+      _ShareFilter.shared,
+      _ShareFilter.notShared,
+    ];
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        final mq = MediaQuery.of(ctx);
+        final width = mq.size.width.clamp(280.0, 420.0);
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 32,
+              ),
+              child: SizedBox(
+                width: width,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.share_outlined,
+                            size: 18,
+                            color: palette.tabActiveText,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Filter Sharing',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: palette.tabActiveText,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () => setDialogState(working.clear),
+                            child: const Text(
+                              'Clear',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 18),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Divider(height: 1, color: palette.sidebarDivider),
+                    for (final mode in order)
+                      InkWell(
+                        onTap: () => setDialogState(() {
+                          if (working.contains(mode)) {
+                            working.remove(mode);
+                          } else {
+                            working.add(mode);
+                          }
+                        }),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: Checkbox(
+                                  value: working.contains(mode),
+                                  visualDensity: const VisualDensity(
+                                    horizontal: -4,
+                                    vertical: -4,
+                                  ),
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  onChanged: (_) => setDialogState(() {
+                                    if (working.contains(mode)) {
+                                      working.remove(mode);
+                                    } else {
+                                      working.add(mode);
+                                    }
+                                  }),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  labels[mode]!,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: palette.tabActiveText,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    Divider(height: 1, color: palette.sidebarDivider),
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        children: [
+                          Text(
+                            working.isEmpty
+                                ? 'All entities shown'
+                                : '${working.length} of 3 selected',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: palette.sidebarLabelSecondary,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancel'),
+                          ),
+                          const SizedBox(width: 4),
+                          FilledButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedShareModes
+                                  ..clear()
+                                  ..addAll(working);
+                                _visibleLimit = _kPageSize;
+                              });
+                              Navigator.pop(ctx);
+                            },
+                            child: const Text('Apply'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _openFilterDialog(List<EntityCategorySchema> categories) async {
     final palette = Theme.of(context).extension<DmToolColors>()!;
     // Local working set so the dialog can apply or cancel atomically.
     final working = Set<String>.from(_selectedSlugs);
@@ -643,118 +1002,128 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
         final width = mq.size.width.clamp(320.0, 720.0);
         final height = (mq.size.height * 0.7).clamp(360.0, 600.0);
 
-        return StatefulBuilder(builder: (ctx, setDialogState) {
-          return Dialog(
-            insetPadding: const EdgeInsets.symmetric(
-                horizontal: 24, vertical: 32),
-            child: SizedBox(
-              width: width,
-              height: height,
-              child: Column(
-                children: [
-                  // Title + close
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
-                    child: Row(
-                      children: [
-                        Icon(Icons.filter_list, size: 18,
-                            color: palette.tabActiveText),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Filter Categories',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return Dialog(
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 32,
+              ),
+              child: SizedBox(
+                width: width,
+                height: height,
+                child: Column(
+                  children: [
+                    // Title + close
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.filter_list,
+                            size: 18,
                             color: palette.tabActiveText,
                           ),
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 18),
-                          onPressed: () => Navigator.pop(ctx),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Text(
+                            'Filter Categories',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: palette.tabActiveText,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 18),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Divider(height: 1, color: palette.sidebarDivider),
-                  Expanded(
-                    child: _CategoryFilterPanel(
-                      categories: categories,
-                      selected: working,
-                      tierFor: _tierFor,
-                      tierLabels: _tierLabels,
-                      tierShort: _tierShort,
-                      palette: palette,
-                      onToggleSlug: (slug) {
-                        setDialogState(() {
-                          if (working.contains(slug)) {
-                            working.remove(slug);
-                          } else {
-                            working.add(slug);
-                          }
-                        });
-                      },
-                      onToggleTier: (tier, allSelected) {
-                        setDialogState(() {
-                          final tierSlugs = categories
-                              .where((c) => _tierFor(c.slug) == tier)
-                              .map((c) => c.slug);
-                          if (allSelected) {
-                            working.removeAll(tierSlugs);
-                          } else {
-                            working.addAll(tierSlugs);
-                          }
-                        });
-                      },
-                      onClearAll: () => setDialogState(working.clear),
+                    Divider(height: 1, color: palette.sidebarDivider),
+                    Expanded(
+                      child: _CategoryFilterPanel(
+                        categories: categories,
+                        selected: working,
+                        tierFor: _tierFor,
+                        tierLabels: _tierLabels,
+                        tierShort: _tierShort,
+                        palette: palette,
+                        onToggleSlug: (slug) {
+                          setDialogState(() {
+                            if (working.contains(slug)) {
+                              working.remove(slug);
+                            } else {
+                              working.add(slug);
+                            }
+                          });
+                        },
+                        onToggleTier: (tier, allSelected) {
+                          setDialogState(() {
+                            final tierSlugs = categories
+                                .where((c) => _tierFor(c.slug) == tier)
+                                .map((c) => c.slug);
+                            if (allSelected) {
+                              working.removeAll(tierSlugs);
+                            } else {
+                              working.addAll(tierSlugs);
+                            }
+                          });
+                        },
+                        onClearAll: () => setDialogState(working.clear),
+                      ),
                     ),
-                  ),
-                  Divider(height: 1, color: palette.sidebarDivider),
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Row(
-                      children: [
-                        Text(
-                          working.isEmpty
-                              ? 'All categories shown'
-                              : '${working.length} of ${categories.length} selected',
-                          style: TextStyle(
+                    Divider(height: 1, color: palette.sidebarDivider),
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        children: [
+                          Text(
+                            working.isEmpty
+                                ? 'All categories shown'
+                                : '${working.length} of ${categories.length} selected',
+                            style: TextStyle(
                               fontSize: 11,
-                              color: palette.sidebarLabelSecondary),
-                        ),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text('Cancel'),
-                        ),
-                        const SizedBox(width: 4),
-                        FilledButton(
-                          onPressed: () {
-                            setState(() {
-                              _selectedSlugs
-                                ..clear()
-                                ..addAll(working);
-                              _visibleLimit = _kPageSize;
-                            });
-                            _persistFilter();
-                            Navigator.pop(ctx);
-                          },
-                          child: const Text('Apply'),
-                        ),
-                      ],
+                              color: palette.sidebarLabelSecondary,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancel'),
+                          ),
+                          const SizedBox(width: 4),
+                          FilledButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedSlugs
+                                  ..clear()
+                                  ..addAll(working);
+                                _visibleLimit = _kPageSize;
+                              });
+                              _persistFilter();
+                              Navigator.pop(ctx);
+                            },
+                            child: const Text('Apply'),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-        });
+            );
+          },
+        );
       },
     );
   }
 
   void _showCreateDialog(
-      BuildContext context, List<EntityCategorySchema> categories) {
+    BuildContext context,
+    List<EntityCategorySchema> categories,
+  ) {
     final nameController = TextEditingController(text: 'New Record');
     String selectedSlug = categories.isNotEmpty ? categories.first.slug : 'npc';
 
@@ -781,10 +1150,9 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
                 border: OutlineInputBorder(),
               ),
               items: categories
-                  .map((c) => DropdownMenuItem(
-                        value: c.slug,
-                        child: Text(c.name),
-                      ))
+                  .map(
+                    (c) => DropdownMenuItem(value: c.slug, child: Text(c.name)),
+                  )
                   .toList(),
               onChanged: (v) => selectedSlug = v ?? selectedSlug,
             ),
@@ -799,10 +1167,9 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
             onPressed: () {
               final name = nameController.text.trim();
               if (name.isNotEmpty) {
-                final id = ref.read(entityProvider.notifier).create(
-                      selectedSlug,
-                      name: name,
-                    );
+                final id = ref
+                    .read(entityProvider.notifier)
+                    .create(selectedSlug, name: name);
                 Navigator.pop(ctx);
                 widget.onEntitySelected?.call(id);
               }
@@ -827,15 +1194,13 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   /// "Other entities" section shown below the matches when a search query
   /// is active — opacity 0.5 so the matched block visually leads.
   Widget _entityRow(
-    ({String id, String name, String categorySlug, String source,
-        List<String> tags}) entity,
+    _EntitySummary entity,
     Map<String, EntityCategorySchema> catMap,
     DmToolColors palette, {
     required bool dimmed,
   }) {
     final cat = catMap[entity.categorySlug];
-    final color =
-        cat != null ? _parseColor(cat.color) : palette.tabText;
+    final color = cat != null ? _parseColor(cat.color) : palette.tabText;
     // On phone the regular Draggable swallowed vertical drags so the
     // database list refused to scroll — fingers landing on an entity
     // row triggered a drag instead of a scroll. Switch to long-press
@@ -849,20 +1214,24 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-            color: palette.featureCardBg, borderRadius: palette.cbr),
-        child: Text(entity.name,
-            style:
-                TextStyle(fontSize: 12, color: palette.tabActiveText)),
+          color: palette.featureCardBg,
+          borderRadius: palette.cbr,
+        ),
+        child: Text(
+          entity.name,
+          style: TextStyle(fontSize: 12, color: palette.tabActiveText),
+        ),
       ),
     );
     final childWhenDragging = Opacity(
       opacity: 0.3,
       child: InkWell(
         child: Padding(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          child: Text(entity.name,
-              style: TextStyle(fontSize: 13, color: palette.tabText)),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          child: Text(
+            entity.name,
+            style: TextStyle(fontSize: 13, color: palette.tabText),
+          ),
         ),
       ),
     );
@@ -895,8 +1264,7 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
   }
 
   Widget _entityRowInner(
-    ({String id, String name, String categorySlug, String source,
-        List<String> tags}) entity,
+    _EntitySummary entity,
     Color color,
     String categoryLabel,
     DmToolColors palette,
@@ -908,32 +1276,42 @@ class _EntitySidebarState extends ConsumerState<EntitySidebar> {
         child: Row(
           children: [
             Container(
-                width: 8,
-                height: 8,
-                decoration:
-                    BoxDecoration(color: color, shape: BoxShape.circle)),
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(entity.name,
-                      style: TextStyle(
-                          fontSize: 13, color: palette.tabActiveText),
-                      overflow: TextOverflow.ellipsis),
+                  Text(
+                    entity.name,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: palette.tabActiveText,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   if (entity.source.isNotEmpty)
-                    Text(entity.source,
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: palette.sidebarLabelSecondary),
-                        overflow: TextOverflow.ellipsis),
+                    Text(
+                      entity.source,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: palette.sidebarLabelSecondary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                 ],
               ),
             ),
-            Text(categoryLabel,
-                style: TextStyle(
-                    fontSize: 10,
-                    color: palette.sidebarLabelSecondary)),
+            Text(
+              categoryLabel,
+              style: TextStyle(
+                fontSize: 10,
+                color: palette.sidebarLabelSecondary,
+              ),
+            ),
           ],
         ),
       ),
@@ -1025,9 +1403,7 @@ class _CategoryFilterPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (final tier in const [0, 1, 2]) ...[
-            Expanded(
-              child: _tierColumn(tier, byTier[tier] ?? const []),
-            ),
+            Expanded(child: _tierColumn(tier, byTier[tier] ?? const [])),
             if (tier != 2)
               VerticalDivider(
                 width: 1,
@@ -1045,8 +1421,7 @@ class _CategoryFilterPanel extends StatelessWidget {
   /// expanded filter panel.
   Widget _tierColumn(int tier, List<EntityCategorySchema> tierCats) {
     final tierSlugs = tierCats.map((c) => c.slug).toSet();
-    final selectedInTier =
-        tierSlugs.where((s) => selected.contains(s)).length;
+    final selectedInTier = tierSlugs.where((s) => selected.contains(s)).length;
     final allSelected =
         selectedInTier == tierSlugs.length && tierSlugs.isNotEmpty;
     final partial = selectedInTier > 0 && !allSelected;
@@ -1080,7 +1455,9 @@ class _CategoryFilterPanel extends StatelessWidget {
               Text(
                 '$selectedInTier/${tierSlugs.length}',
                 style: TextStyle(
-                    fontSize: 9, color: palette.sidebarLabelSecondary),
+                  fontSize: 9,
+                  color: palette.sidebarLabelSecondary,
+                ),
               ),
             ],
           ),
@@ -1121,14 +1498,15 @@ class _CategoryFilterPanel extends StatelessWidget {
               width: 7,
               height: 7,
               decoration: BoxDecoration(
-                  color: _parseColor(cat.color), shape: BoxShape.circle),
+                color: _parseColor(cat.color),
+                shape: BoxShape.circle,
+              ),
             ),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
                 cat.name,
-                style: TextStyle(
-                    fontSize: 11, color: palette.tabActiveText),
+                style: TextStyle(fontSize: 11, color: palette.tabActiveText),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -1162,4 +1540,3 @@ class _CategoryFilterPanel extends StatelessWidget {
     );
   }
 }
-

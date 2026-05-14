@@ -40,6 +40,23 @@ class CharacterClaimService {
     );
   }
 
+  /// Player: kendi karakterini world'de bırakır. `claim` simetriği —
+  /// `owner_id`'yi NULL'a çeker, atomic. Mevcut owner değilse `42501`.
+  Future<({String characterId, String worldId})> release(
+      String characterId) async {
+    final rows = await client.rpc('release_character', params: {
+      'p_character_id': characterId,
+    });
+    if (rows is! List || rows.isEmpty) {
+      throw StateError('release_character returned empty result');
+    }
+    final first = rows.first as Map<String, dynamic>;
+    return (
+      characterId: first['character_id'] as String,
+      worldId: first['world_id'] as String,
+    );
+  }
+
   /// `world_characters` tüm satırlarını listeler (RLS gereği member olduğun
   /// world'leri görürsün). Bootstrap'te bir kez çağrılır; sonrasında CDC
   /// granular patch.

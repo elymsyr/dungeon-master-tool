@@ -5,12 +5,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/builtin_package_provider.dart';
 import '../../../application/providers/entity_provider.dart';
+import '../../../application/providers/entity_share_provider.dart';
 import '../../../application/providers/media_provider.dart';
 import '../../../application/providers/projection_provider.dart';
 import '../../../application/providers/role_provider.dart';
 import '../../../domain/entities/online/world_role.dart';
-import '../../dialogs/share_entity_dialog.dart';
 import '../../../domain/entities/entity.dart';
 import '../../../domain/entities/schema/entity_category_schema.dart';
 import '../../../domain/entities/schema/field_group.dart';
@@ -46,8 +47,11 @@ final Expando<_SchemaFieldCache> _schemaCache = Expando();
 /// Key: identity of the field-list (stable from _SchemaFieldCache).
 final Expando<List<List<FieldSchema>>> _gridRowsCache = Expando();
 
-List<List<FieldSchema>> _splitRows(List<FieldSchema> fields, int gridColumns,
-    {bool useCache = true}) {
+List<List<FieldSchema>> _splitRows(
+  List<FieldSchema> fields,
+  int gridColumns, {
+  bool useCache = true,
+}) {
   if (useCache) {
     final cached = _gridRowsCache[fields];
     if (cached != null) return cached;
@@ -104,10 +108,9 @@ bool _isFieldVisibleInReadOnly(FieldSchema f, dynamic v) {
 _SchemaFieldCache _getSchemaCache(EntityCategorySchema cat) {
   final cached = _schemaCache[cat];
   if (cached != null) return cached;
-  final visible = cat.fields
-      .where((f) => f.visibility != FieldVisibility.private_)
-      .toList()
-    ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+  final visible =
+      cat.fields.where((f) => f.visibility != FieldVisibility.private_).toList()
+        ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
   final ungrouped = visible.where((f) => f.groupId == null).toList();
   final grouped = <String, List<FieldSchema>>{};
   for (final f in visible) {
@@ -133,6 +136,7 @@ class EntityCard extends ConsumerStatefulWidget {
   final String entityId;
   final EntityCategorySchema? categorySchema;
   final bool readOnly;
+
   /// Hint passed down to relation widgets so a tap on a referenced entity
   /// opens it in the OPPOSITE panel rather than replacing the current
   /// card. Null = no hint, navigation goes to the default panel.
@@ -204,13 +208,21 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       // Re-read current entity and sync from controllers
       final entity = ref.read(entityProvider)[widget.entityId];
       if (entity == null) return;
-      ref.read(entityProvider.notifier).update(entity.copyWith(
-        name: _nameController.text,
-        description: _descController.text,
-        source: _sourceController.text,
-        dmNotes: _dmNotesController.text,
-        tags: _tagsController.text.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList(),
-      ));
+      ref
+          .read(entityProvider.notifier)
+          .update(
+            entity.copyWith(
+              name: _nameController.text,
+              description: _descController.text,
+              source: _sourceController.text,
+              dmNotes: _dmNotesController.text,
+              tags: _tagsController.text
+                  .split(',')
+                  .map((t) => t.trim())
+                  .where((t) => t.isNotEmpty)
+                  .toList(),
+            ),
+          );
     }
   }
 
@@ -233,7 +245,11 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 
   /// Sync controller text only when the field is not focused (to avoid
   /// overwriting user input mid-keystroke).
-  void _syncIfNotFocused(TextEditingController ctrl, FocusNode focus, String newValue) {
+  void _syncIfNotFocused(
+    TextEditingController ctrl,
+    FocusNode focus,
+    String newValue,
+  ) {
     if (!focus.hasFocus && ctrl.text != newValue) {
       ctrl.text = newValue;
     }
@@ -268,10 +284,10 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final cat = widgetCat != null && widgetCat.slug == entity.categorySlug
         ? widgetCat
         : ref
-            .read(worldSchemaProvider)
-            .categories
-            .where((c) => c.slug == entity.categorySlug)
-            .firstOrNull;
+              .read(worldSchemaProvider)
+              .categories
+              .where((c) => c.slug == entity.categorySlug)
+              .firstOrNull;
 
     // Controller sync — only update when the field is not focused
     _syncIfNotFocused(_nameController, _nameFocus, entity.name);
@@ -303,15 +319,16 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       _cachedBorderlessFlag = palette.cardBorderlessInputs;
       _cachedCardTheme = palette.cardBorderlessInputs
           ? baseTheme.copyWith(
-              inputDecorationTheme:
-                  baseTheme.inputDecorationTheme.copyWith(
+              inputDecorationTheme: baseTheme.inputDecorationTheme.copyWith(
                 filled: false,
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 4, vertical: 6),
+                  horizontal: 4,
+                  vertical: 6,
+                ),
               ),
             )
           : baseTheme;
@@ -321,239 +338,266 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     final children = <Widget>[
       // === HEADER: portrait (top-left) | name + subtitle + desc + source/tags (right) ===
       Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (hasPortrait || !widget.readOnly) ...[
+            _PortraitGallery(
+              images: [
+                if (entity.imagePath.isNotEmpty) entity.imagePath,
+                ...entity.images,
+              ],
+              entityName: entity.name,
+              readOnly: widget.readOnly,
+              palette: palette,
+              onImagesChanged: (newImages) {
+                ref
+                    .read(entityProvider.notifier)
+                    .update(entity.copyWith(imagePath: '', images: newImages));
+              },
+            ),
+            const SizedBox(width: 16),
+          ],
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (hasPortrait || !widget.readOnly) ...[
-                  _PortraitGallery(
-                    images: [
-                      if (entity.imagePath.isNotEmpty) entity.imagePath,
-                      ...entity.images,
-                    ],
-                    entityName: entity.name,
-                    readOnly: widget.readOnly,
-                    palette: palette,
-                    onImagesChanged: (newImages) {
-                      ref.read(entityProvider.notifier).update(
-                        entity.copyWith(imagePath: '', images: newImages),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 16),
-                ],
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Name + project button row
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: widget.readOnly
-                                ? Text(
-                                    entity.name.isEmpty ? '(Unnamed)' : entity.name,
-                                    style: TextStyle(
-                                      fontFamily: palette.useSerif ? 'Georgia' : null,
-                                      fontSize: 30,
-                                      fontWeight: FontWeight.bold,
-                                      color: palette.srdHeadingRed,
-                                      height: 1.1,
-                                      letterSpacing: palette.cardHeadingUppercase ? 1.2 : 0,
-                                    ),
-                                  )
-                                : TextFormField(
-                                    controller: _nameController,
-                                    focusNode: _nameFocus,
-                                    style: TextStyle(
-                                      fontFamily: palette.useSerif ? 'Georgia' : null,
-                                      fontSize: 30,
-                                      fontWeight: FontWeight.bold,
-                                      color: palette.srdHeadingRed,
-                                      letterSpacing: palette.cardHeadingUppercase ? 1.2 : 0,
-                                    ),
-                                    decoration: const InputDecoration(
-                                      hintText: 'Entity Name',
-                                      border: InputBorder.none,
-                                      isDense: true,
-                                      filled: false,
-                                      contentPadding: EdgeInsets.zero,
-                                    ),
-                                    onChanged: (v) => _debouncedProviderUpdate(
-                                      () => ref.read(entityProvider)[widget.entityId]!.copyWith(name: v),
-                                    ),
-                                  ),
-                          ),
-                          IconButton(
-                            tooltip: 'Project entity card to player screen',
-                            icon: Icon(Icons.cast, size: 18, color: palette.srdHeadingRed),
-                            visualDensity: VisualDensity.compact,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            padding: EdgeInsets.zero,
-                            onPressed: () {
-                              ref
-                                  .read(projectionControllerProvider.notifier)
-                                  .addEntityCard(entityId: widget.entityId);
-                              ScaffoldMessenger.of(context)
-                                ..hideCurrentSnackBar()
-                                ..showSnackBar(
-                                  const SnackBar(
-                                    duration: Duration(seconds: 2),
-                                    content: Text('Entity card projected to player screen'),
-                                  ),
-                                );
-                            },
-                          ),
-                          if (ref.watch(currentWorldRoleProvider).valueOrNull ==
-                              WorldRole.dm)
-                            Builder(builder: (ctx) {
-                              final worldId = ref
-                                  .watch(activeCampaignIdProvider)
-                                  .valueOrNull;
-                              if (worldId == null) return const SizedBox.shrink();
-                              return IconButton(
-                                tooltip: 'Share with players',
-                                icon: Icon(Icons.share,
-                                    size: 18, color: palette.srdHeadingRed),
-                                visualDensity: VisualDensity.compact,
-                                constraints: const BoxConstraints(
-                                    minWidth: 32, minHeight: 32),
-                                padding: EdgeInsets.zero,
-                                onPressed: () => ShareEntityDialog.show(
-                                  ctx,
-                                  entityId: widget.entityId,
-                                  entityName: entity.name,
-                                  worldId: worldId,
-                                ),
-                              );
-                            }),
-                        ],
+                // Name + project button row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: widget.readOnly
+                          ? Text(
+                              entity.name.isEmpty ? '(Unnamed)' : entity.name,
+                              style: TextStyle(
+                                fontFamily: palette.useSerif ? 'Georgia' : null,
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                                color: palette.srdHeadingRed,
+                                height: 1.1,
+                                letterSpacing: palette.cardHeadingUppercase
+                                    ? 1.2
+                                    : 0,
+                              ),
+                            )
+                          : TextFormField(
+                              controller: _nameController,
+                              focusNode: _nameFocus,
+                              style: TextStyle(
+                                fontFamily: palette.useSerif ? 'Georgia' : null,
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                                color: palette.srdHeadingRed,
+                                letterSpacing: palette.cardHeadingUppercase
+                                    ? 1.2
+                                    : 0,
+                              ),
+                              decoration: const InputDecoration(
+                                hintText: 'Entity Name',
+                                border: InputBorder.none,
+                                isDense: true,
+                                filled: false,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              onChanged: (v) => _debouncedProviderUpdate(
+                                () => ref
+                                    .read(entityProvider)[widget.entityId]!
+                                    .copyWith(name: v),
+                              ),
+                            ),
+                    ),
+                    IconButton(
+                      tooltip: 'Project entity card to player screen',
+                      icon: Icon(
+                        Icons.cast,
+                        size: 18,
+                        color: palette.srdHeadingRed,
                       ),
-                      // Subtitle (italic muted) — e.g. "Level 2 Evocation (Wizard)"
-                      if (subtitle.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            fontFamily: palette.useSerif ? 'Georgia' : null,
-                            fontSize: 15,
-                            fontStyle: FontStyle.italic,
-                            color: palette.srdSubtitle,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 6),
-                      if (palette.cardShowRule)
-                        Container(height: 1, color: palette.srdRule),
-                      const SizedBox(height: 10),
-                      // Description (bigger ink)
-                      MarkdownTextArea(
-                        controller: _descController,
-                        focusNode: _descFocus,
-                        readOnly: widget.readOnly,
-                        minLines: widget.readOnly ? null : 3,
-                        textStyle: TextStyle(fontSize: 16, color: palette.srdInk, height: 1.45),
-                        decoration: InputDecoration(
-                          hintText: 'Markdown supported... (@ to mention)',
-                          border: InputBorder.none,
-                          isDense: true,
-                          filled: false,
-                          contentPadding: EdgeInsets.zero,
-                          hintStyle: TextStyle(color: palette.srdSubtitle, fontStyle: FontStyle.italic),
-                        ),
-                        onChanged: (v) => _debouncedProviderUpdate(
-                          () => ref.read(entityProvider)[widget.entityId]!.copyWith(description: v),
-                        ),
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
                       ),
-                      const SizedBox(height: 10),
-                      // Source + Tags (link icon prefix when entity is
-                      // linked to a package)
-                      _SourceTagsRow(
-                        sourceController: _sourceController,
-                        sourceFocus: _sourceFocus,
-                        tagsController: _tagsController,
-                        tagsFocus: _tagsFocus,
-                        readOnly: widget.readOnly,
-                        palette: palette,
-                        linked: entity.linked,
-                        onSourceChanged: (v) => _debouncedProviderUpdate(
-                          () => ref.read(entityProvider)[widget.entityId]!.copyWith(source: v),
-                        ),
-                        onTagsChanged: (v) {
-                          final tags = v.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
-                          _debouncedProviderUpdate(
-                            () => ref.read(entityProvider)[widget.entityId]!.copyWith(tags: tags),
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        ref
+                            .read(projectionControllerProvider.notifier)
+                            .addEntityCard(entityId: widget.entityId);
+                        ScaffoldMessenger.of(context)
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            const SnackBar(
+                              duration: Duration(seconds: 2),
+                              content: Text(
+                                'Entity card projected to player screen',
+                              ),
+                            ),
                           );
-                        },
-                      ),
-                    ],
+                      },
+                    ),
+                    if (ref.watch(currentWorldRoleProvider).valueOrNull ==
+                        WorldRole.dm)
+                      _ShareToggle(entityId: widget.entityId, entity: entity),
+                  ],
+                ),
+                // Subtitle (italic muted) — e.g. "Level 2 Evocation (Wizard)"
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontFamily: palette.useSerif ? 'Georgia' : null,
+                      fontSize: 15,
+                      fontStyle: FontStyle.italic,
+                      color: palette.srdSubtitle,
+                    ),
                   ),
+                ],
+                const SizedBox(height: 6),
+                if (palette.cardShowRule)
+                  Container(height: 1, color: palette.srdRule),
+                const SizedBox(height: 10),
+                // Description (bigger ink)
+                MarkdownTextArea(
+                  controller: _descController,
+                  focusNode: _descFocus,
+                  readOnly: widget.readOnly,
+                  minLines: widget.readOnly ? null : 3,
+                  textStyle: TextStyle(
+                    fontSize: 16,
+                    color: palette.srdInk,
+                    height: 1.45,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Markdown supported... (@ to mention)',
+                    border: InputBorder.none,
+                    isDense: true,
+                    filled: false,
+                    contentPadding: EdgeInsets.zero,
+                    hintStyle: TextStyle(
+                      color: palette.srdSubtitle,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  onChanged: (v) => _debouncedProviderUpdate(
+                    () => ref
+                        .read(entityProvider)[widget.entityId]!
+                        .copyWith(description: v),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Source + Tags (link icon prefix when entity is
+                // linked to a package)
+                _SourceTagsRow(
+                  sourceController: _sourceController,
+                  sourceFocus: _sourceFocus,
+                  tagsController: _tagsController,
+                  tagsFocus: _tagsFocus,
+                  readOnly: widget.readOnly,
+                  palette: palette,
+                  linked: entity.linked,
+                  onSourceChanged: (v) => _debouncedProviderUpdate(
+                    () => ref
+                        .read(entityProvider)[widget.entityId]!
+                        .copyWith(source: v),
+                  ),
+                  onTagsChanged: (v) {
+                    final tags = v
+                        .split(',')
+                        .map((t) => t.trim())
+                        .where((t) => t.isNotEmpty)
+                        .toList();
+                    _debouncedProviderUpdate(
+                      () => ref
+                          .read(entityProvider)[widget.entityId]!
+                          .copyWith(tags: tags),
+                    );
+                  },
                 ),
               ],
             ),
+          ),
+        ],
+      ),
 
-            const SizedBox(height: 16),
+      const SizedBox(height: 16),
 
-            // === SCHEMA-DRIVEN FIELDS ===
-            if (cat != null) ..._buildSchemaFields(entity, cat, palette),
+      // === SCHEMA-DRIVEN FIELDS ===
+      if (cat != null) ..._buildSchemaFields(entity, cat, palette),
 
-            const SizedBox(height: 8),
+      const SizedBox(height: 8),
 
-            // === DM NOTES — heading + rule, no boxed border ===
-            EntityCardSectionHeading(title: 'DM Notes', palette: palette, leadingIcon: Icons.lock),
-            const SizedBox(height: 6),
-            MarkdownTextArea(
-              controller: _dmNotesController,
-              focusNode: _dmNotesFocus,
-              readOnly: widget.readOnly,
-              maxLines: widget.readOnly ? null : 4,
-              textStyle: TextStyle(fontSize: 13, color: palette.srdInk, height: 1.4),
-              decoration: InputDecoration(
-                hintText: 'Private DM notes... (@ to mention)',
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-                filled: false,
-                hintStyle: TextStyle(color: palette.sidebarLabelSecondary),
-              ),
-              onChanged: (v) => _debouncedProviderUpdate(
-                () => ref.read(entityProvider)[widget.entityId]!.copyWith(dmNotes: v),
+      // === DM NOTES — heading + rule, no boxed border ===
+      EntityCardSectionHeading(
+        title: 'DM Notes',
+        palette: palette,
+        leadingIcon: Icons.lock,
+      ),
+      const SizedBox(height: 6),
+      MarkdownTextArea(
+        controller: _dmNotesController,
+        focusNode: _dmNotesFocus,
+        readOnly: widget.readOnly,
+        maxLines: widget.readOnly ? null : 4,
+        textStyle: TextStyle(fontSize: 13, color: palette.srdInk, height: 1.4),
+        decoration: InputDecoration(
+          hintText: 'Private DM notes... (@ to mention)',
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.zero,
+          filled: false,
+          hintStyle: TextStyle(color: palette.sidebarLabelSecondary),
+        ),
+        onChanged: (v) => _debouncedProviderUpdate(
+          () => ref.read(entityProvider)[widget.entityId]!.copyWith(dmNotes: v),
+        ),
+      ),
+
+      // === DELETE BUTTON ===
+      if (!widget.readOnly) ...[
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FilledButton.icon(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Delete Entity'),
+                    content: Text(
+                      'Are you sure you want to delete "${entity.name}"?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        onPressed: () {
+                          ref.read(entityProvider.notifier).delete(entity.id);
+                          Navigator.pop(ctx);
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: palette.dangerBtnBg,
+                          foregroundColor: palette.dangerBtnText,
+                        ),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              icon: const Icon(Icons.delete_outline, size: 16),
+              label: const Text('Delete'),
+              style: FilledButton.styleFrom(
+                backgroundColor: palette.dangerBtnBg,
+                foregroundColor: palette.dangerBtnText,
               ),
             ),
-
-            // === DELETE BUTTON ===
-            if (!widget.readOnly) ...[
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  FilledButton.icon(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Delete Entity'),
-                          content: Text('Are you sure you want to delete "${entity.name}"?'),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-                            FilledButton(
-                              onPressed: () {
-                                ref.read(entityProvider.notifier).delete(entity.id);
-                                Navigator.pop(ctx);
-                              },
-                              style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
-                              child: const Text('Delete'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.delete_outline, size: 16),
-                    label: const Text('Delete'),
-                    style: FilledButton.styleFrom(backgroundColor: palette.dangerBtnBg, foregroundColor: palette.dangerBtnText),
-                  ),
-                ],
-              ),
-            ],
+          ],
+        ),
+      ],
     ];
 
     return Theme(
@@ -583,6 +627,7 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       if (id.isEmpty) return '';
       return entities[id]?.name ?? '';
     }
+
     List<String> relNames(String key) {
       final v = f[key];
       if (v is! List) return const [];
@@ -605,7 +650,10 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       final cls = classes.isEmpty ? '' : ' (${classes.join(', ')})';
       return '$base$cls${ritual ? ' (Ritual)' : ''}';
     }
-    if (slug == 'monsters' || slug == 'monster' || slug == 'npcs' || slug == 'npc') {
+    if (slug == 'monsters' ||
+        slug == 'monster' ||
+        slug == 'npcs' ||
+        slug == 'npc') {
       final size = relName('size_ref');
       final type = relName('creature_type_ref');
       final align = relName('alignment_ref');
@@ -616,7 +664,10 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       if (align.isNotEmpty) parts.add(align);
       return parts.join(', ');
     }
-    if (slug == 'items' || slug == 'magic_items' || slug == 'magic_item' || slug == 'item') {
+    if (slug == 'items' ||
+        slug == 'magic_items' ||
+        slug == 'magic_item' ||
+        slug == 'item') {
       final magicCat = relName('magic_category_ref');
       final rarity = relName('rarity_ref');
       final attune = f['requires_attunement'] == true;
@@ -631,12 +682,21 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     return cat.name;
   }
 
-  Widget _buildFieldWidget(FieldSchema field, Entity entity, DmToolColors palette, {bool compact = false}) {
+  Widget _buildFieldWidget(
+    FieldSchema field,
+    Entity entity,
+    DmToolColors palette, {
+    bool compact = false,
+  }) {
     final fieldValue = entity.fields[field.fieldKey];
 
     // Inline relation lists in multi-column groups — keep equip-tracked lists
     // (inventory/spells/etc.) in their full Card form regardless of compact.
-    final useCompact = compact && field.isList && field.fieldType == FieldType.relation && !field.hasEquip;
+    final useCompact =
+        compact &&
+        field.isList &&
+        field.fieldType == FieldType.relation &&
+        !field.hasEquip;
 
     return FieldWidgetFactory.create(
       schema: field,
@@ -651,13 +711,21 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     );
   }
 
-  Widget _buildGroupGrid(List<FieldSchema> fields, int gridColumns, Entity entity, DmToolColors palette, {bool cached = true}) {
+  Widget _buildGroupGrid(
+    List<FieldSchema> fields,
+    int gridColumns,
+    Entity entity,
+    DmToolColors palette, {
+    bool cached = true,
+  }) {
     final compactRow = gridColumns > 1;
 
     if (gridColumns <= 1) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: fields.map((f) => _buildFieldWidget(f, entity, palette)).toList(),
+        children: fields
+            .map((f) => _buildFieldWidget(f, entity, palette))
+            .toList(),
       );
     }
 
@@ -675,10 +743,17 @@ class _EntityCardState extends ConsumerState<EntityCard> {
           if (i > 0) children.add(const SizedBox(width: 8));
           final span = rowFields[i].gridColumnSpan.clamp(1, gridColumns);
           totalSpan += span;
-          children.add(Expanded(
-            flex: span,
-            child: _buildFieldWidget(rowFields[i], entity, palette, compact: compactRow),
-          ));
+          children.add(
+            Expanded(
+              flex: span,
+              child: _buildFieldWidget(
+                rowFields[i],
+                entity,
+                palette,
+                compact: compactRow,
+              ),
+            ),
+          );
         }
         // Pad short rows with a flex spacer so a partially-filled row keeps
         // each cell at the column width it would occupy if the row were full.
@@ -686,10 +761,12 @@ class _EntityCardState extends ConsumerState<EntityCard> {
         // the whole width and breaks vertical alignment with neighbouring rows.
         if (totalSpan < gridColumns) {
           children.add(const SizedBox(width: 8));
-          children.add(Expanded(
-            flex: gridColumns - totalSpan,
-            child: const SizedBox.shrink(),
-          ));
+          children.add(
+            Expanded(
+              flex: gridColumns - totalSpan,
+              child: const SizedBox.shrink(),
+            ),
+          );
         }
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -699,7 +776,11 @@ class _EntityCardState extends ConsumerState<EntityCard> {
     );
   }
 
-  List<Widget> _buildSchemaFields(Entity entity, EntityCategorySchema cat, DmToolColors palette) {
+  List<Widget> _buildSchemaFields(
+    Entity entity,
+    EntityCategorySchema cat,
+    DmToolColors palette,
+  ) {
     final cache = _getSchemaCache(cat);
     final readOnly = widget.readOnly;
     final fullUngrouped = cache.ungrouped;
@@ -718,14 +799,18 @@ class _EntityCardState extends ConsumerState<EntityCard> {
 
     // Ungrouped fields — render under "Properties" heading, no boxed chrome.
     if (ungrouped.isNotEmpty) {
-      widgets.add(EntityCardSectionHeading(title: 'Properties', palette: palette));
+      widgets.add(
+        EntityCardSectionHeading(title: 'Properties', palette: palette),
+      );
       widgets.add(const SizedBox(height: 8));
-      widgets.add(Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: ungrouped
-            .map((f) => _buildFieldWidget(f, entity, palette))
-            .toList(),
-      ));
+      widgets.add(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: ungrouped
+              .map((f) => _buildFieldWidget(f, entity, palette))
+              .toList(),
+        ),
+      );
     }
 
     // Grouped fields — collapsible, no boxed chrome, optional centered.
@@ -741,12 +826,20 @@ class _EntityCardState extends ConsumerState<EntityCard> {
       // Cache row-split only when rendering the unfiltered list (edit mode).
       final useCache = identical(groupFields, fullGroupFields);
 
-      widgets.add(EntityCardCollapsibleGroupCard(
-        group: group,
-        palette: palette,
-        centered: centered,
-        child: _buildGroupGrid(groupFields, group.gridColumns, entity, palette, cached: useCache),
-      ));
+      widgets.add(
+        EntityCardCollapsibleGroupCard(
+          group: group,
+          palette: palette,
+          centered: centered,
+          child: _buildGroupGrid(
+            groupFields,
+            group.gridColumns,
+            entity,
+            palette,
+            cached: useCache,
+          ),
+        ),
+      );
     }
 
     return widgets;
@@ -855,7 +948,8 @@ class _SourceTagsRow extends StatelessWidget {
     if (readOnly) {
       final src = sourceController.text;
       final tags = tagsController.text;
-      if (src.isEmpty && tags.isEmpty && !linked) return const SizedBox.shrink();
+      if (src.isEmpty && tags.isEmpty && !linked)
+        return const SizedBox.shrink();
       final parts = <String>[
         if (src.isNotEmpty) 'Source: $src',
         if (tags.isNotEmpty) 'Tags: $tags',
@@ -888,7 +982,10 @@ class _SourceTagsRow extends StatelessWidget {
             decoration: const InputDecoration(
               labelText: 'Source',
               hintText: 'e.g. D&D 5e SRD',
-              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 10,
+              ),
             ),
             onChanged: onSourceChanged,
           ),
@@ -902,7 +999,10 @@ class _SourceTagsRow extends StatelessWidget {
             decoration: const InputDecoration(
               labelText: 'Tags',
               hintText: 'comma separated',
-              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 10,
+              ),
             ),
             onChanged: onTagsChanged,
           ),
@@ -977,7 +1077,8 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
   @override
   Widget build(BuildContext context) {
     // Index clamp
-    if (_currentIndex >= widget.images.length) _currentIndex = widget.images.length - 1;
+    if (_currentIndex >= widget.images.length)
+      _currentIndex = widget.images.length - 1;
     if (_currentIndex < 0) _currentIndex = 0;
 
     final br = BorderRadius.circular(widget.palette.cardBorderRadius);
@@ -1020,115 +1121,158 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
                 );
               },
         child: Container(
-        width: 200,
-        height: 260,
-        decoration: BoxDecoration(
-          borderRadius: br,
-          border: Border.all(color: widget.palette.featureCardBorder),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Resim veya placeholder
-            widget.images.isNotEmpty
-                ? _buildImage(widget.images[_currentIndex])
-                : _buildPlaceholder(),
+          width: 200,
+          height: 260,
+          decoration: BoxDecoration(
+            borderRadius: br,
+            border: Border.all(color: widget.palette.featureCardBorder),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Resim veya placeholder
+              widget.images.isNotEmpty
+                  ? _buildImage(widget.images[_currentIndex])
+                  : _buildPlaceholder(),
 
-            // Hover: hafif overlay (desktop only)
-            if (_hovered && !(Platform.isAndroid || Platform.isIOS) && widget.images.isNotEmpty)
-              Container(color: Colors.black.withValues(alpha: 0.08)),
+              // Hover: hafif overlay (desktop only)
+              if (_hovered &&
+                  !(Platform.isAndroid || Platform.isIOS) &&
+                  widget.images.isNotEmpty)
+                Container(color: Colors.black.withValues(alpha: 0.08)),
 
-            // Nav: Sol ok
-            if (_showControls && widget.images.length > 1 && _currentIndex > 0)
-              Positioned(
-                left: 4,
-                top: 0,
-                bottom: 0,
-                child: Center(
+              // Nav: Sol ok
+              if (_showControls &&
+                  widget.images.length > 1 &&
+                  _currentIndex > 0)
+                Positioned(
+                  left: 4,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _currentIndex--),
+                      child: Container(
+                        width: 26,
+                        height: 26,
+                        decoration: const BoxDecoration(
+                          color: Colors.black26,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.chevron_left,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Nav: Sağ ok
+              if (_showControls &&
+                  widget.images.length > 1 &&
+                  _currentIndex < widget.images.length - 1)
+                Positioned(
+                  right: 4,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _currentIndex++),
+                      child: Container(
+                        width: 26,
+                        height: 26,
+                        decoration: const BoxDecoration(
+                          color: Colors.black26,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Sayaç
+              if (widget.images.length > 1)
+                Positioned(
+                  bottom: 6,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black38,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${_currentIndex + 1}/${widget.images.length}',
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Edit: üstte ekle
+              if (!widget.readOnly && _showControls)
+                Positioned(
+                  top: 4,
+                  right: 4,
                   child: GestureDetector(
-                    onTap: () => setState(() => _currentIndex--),
+                    onTap: _pickImage,
                     child: Container(
                       width: 26,
                       height: 26,
-                      decoration: const BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
-                      child: const Icon(Icons.chevron_left, color: Colors.white, size: 18),
+                      decoration: const BoxDecoration(
+                        color: Colors.black26,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.add_photo_alternate,
+                        color: Colors.white,
+                        size: 14,
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-            // Nav: Sağ ok
-            if (_showControls && widget.images.length > 1 && _currentIndex < widget.images.length - 1)
-              Positioned(
-                right: 4,
-                top: 0,
-                bottom: 0,
-                child: Center(
+              // Edit: altta sil
+              if (!widget.readOnly && _showControls && widget.images.isNotEmpty)
+                Positioned(
+                  top: 4,
+                  left: 4,
                   child: GestureDetector(
-                    onTap: () => setState(() => _currentIndex++),
+                    onTap: _removeCurrentImage,
                     child: Container(
                       width: 26,
                       height: 26,
-                      decoration: const BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
-                      child: const Icon(Icons.chevron_right, color: Colors.white, size: 18),
+                      decoration: const BoxDecoration(
+                        color: Colors.black26,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.close,
+                        color: widget.palette.dangerBtnBg,
+                        size: 14,
+                      ),
                     ),
                   ),
                 ),
-              ),
-
-            // Sayaç
-            if (widget.images.length > 1)
-              Positioned(
-                bottom: 6,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: Colors.black38, borderRadius: BorderRadius.circular(10)),
-                    child: Text(
-                      '${_currentIndex + 1}/${widget.images.length}',
-                      style: const TextStyle(fontSize: 9, color: Colors.white70),
-                    ),
-                  ),
-                ),
-              ),
-
-            // Edit: üstte ekle
-            if (!widget.readOnly && _showControls)
-              Positioned(
-                top: 4,
-                right: 4,
-                child: GestureDetector(
-                  onTap: _pickImage,
-                  child: Container(
-                    width: 26,
-                    height: 26,
-                    decoration: const BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
-                    child: const Icon(Icons.add_photo_alternate, color: Colors.white, size: 14),
-                  ),
-                ),
-              ),
-
-            // Edit: altta sil
-            if (!widget.readOnly && _showControls && widget.images.isNotEmpty)
-              Positioned(
-                top: 4,
-                left: 4,
-                child: GestureDetector(
-                  onTap: _removeCurrentImage,
-                  child: Container(
-                    width: 26,
-                    height: 26,
-                    decoration: const BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
-                    child: Icon(Icons.close, color: widget.palette.dangerBtnBg, size: 14),
-                  ),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -1155,9 +1299,16 @@ class _PortraitGalleryState extends ConsumerState<_PortraitGallery> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.person_outline, size: 48, color: widget.palette.srdSubtitle.withValues(alpha: 0.4)),
+          Icon(
+            Icons.person_outline,
+            size: 48,
+            color: widget.palette.srdSubtitle.withValues(alpha: 0.4),
+          ),
           const SizedBox(height: 4),
-          Text('No Image', style: TextStyle(fontSize: 10, color: widget.palette.srdSubtitle)),
+          Text(
+            'No Image',
+            style: TextStyle(fontSize: 10, color: widget.palette.srdSubtitle),
+          ),
         ],
       ),
     );
@@ -1180,10 +1331,12 @@ class EntityCardCollapsibleGroupCard extends StatefulWidget {
   });
 
   @override
-  State<EntityCardCollapsibleGroupCard> createState() => EntityCardCollapsibleGroupCardState();
+  State<EntityCardCollapsibleGroupCard> createState() =>
+      EntityCardCollapsibleGroupCardState();
 }
 
-class EntityCardCollapsibleGroupCardState extends State<EntityCardCollapsibleGroupCard> {
+class EntityCardCollapsibleGroupCardState
+    extends State<EntityCardCollapsibleGroupCard> {
   late bool _collapsed;
 
   @override
@@ -1247,5 +1400,105 @@ class EntityCardCollapsibleGroupCardState extends State<EntityCardCollapsibleGro
           ),
       ],
     );
+  }
+}
+
+/// DM-only quick share toggle. Built-in pack entity'leri için static
+/// "always visible" badge gösterir; custom entity'ler için world-wide
+/// share state'i tek tıkla on/off.
+class _ShareToggle extends ConsumerStatefulWidget {
+  final String entityId;
+  final Entity entity;
+  const _ShareToggle({required this.entityId, required this.entity});
+
+  @override
+  ConsumerState<_ShareToggle> createState() => _ShareToggleState();
+}
+
+class _ShareToggleState extends ConsumerState<_ShareToggle> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<DmToolColors>()!;
+    final worldId = ref.watch(activeCampaignIdProvider).valueOrNull;
+    if (worldId == null) return const SizedBox.shrink();
+
+    final builtinPackId = ref.watch(builtinPackageIdProvider).valueOrNull;
+    final isBuiltin =
+        builtinPackId != null &&
+        widget.entity.linked &&
+        widget.entity.packageId == builtinPackId;
+
+    if (isBuiltin) {
+      return Tooltip(
+        message: 'Built-in (always visible to players)',
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Icon(
+            Icons.public,
+            size: 16,
+            color: palette.srdHeadingRed.withValues(alpha: 0.55),
+          ),
+        ),
+      );
+    }
+
+    final sharesAsync = ref.watch(worldEntitySharesProvider(worldId));
+    final shares = sharesAsync.valueOrNull ?? const [];
+    final isShared = shares.any(
+      (s) => s.entityId == widget.entityId && s.isWorldWide,
+    );
+
+    return IconButton(
+      tooltip: isShared
+          ? 'Stop sharing with players'
+          : 'Share with all players',
+      icon: Icon(
+        isShared ? Icons.share : Icons.share_outlined,
+        size: 18,
+        color: isShared
+            ? palette.srdHeadingRed
+            : palette.srdHeadingRed.withValues(alpha: 0.45),
+      ),
+      visualDensity: VisualDensity.compact,
+      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      padding: EdgeInsets.zero,
+      onPressed: _busy ? null : () => _toggle(worldId, isShared),
+    );
+  }
+
+  Future<void> _toggle(String worldId, bool currentlyShared) async {
+    setState(() => _busy = true);
+    try {
+      final svc = ref.read(entityShareServiceProvider);
+      if (svc == null) return;
+      if (currentlyShared) {
+        await svc.unshareAll(entityId: widget.entityId, worldId: worldId);
+      } else {
+        await svc.shareWithAll(entityId: widget.entityId, worldId: worldId);
+      }
+      ref.invalidate(worldEntitySharesProvider(worldId));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 2),
+            content: Text(
+              currentlyShared
+                  ? 'Stopped sharing with players'
+                  : 'Shared with all players',
+            ),
+          ),
+        );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('Share error: $e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 }
