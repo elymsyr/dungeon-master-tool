@@ -50,13 +50,19 @@ class _MindMapScreenState extends ConsumerState<MindMapScreen> {
 
   @override
   void deactivate() {
-    // ref `dispose()` içinde geçersiz — widget tree'den çıkarken sync et.
-    try {
-      _notifier.syncToCampaignData();
-      ref.read(saveStateProvider.notifier).markDirty();
-    } catch (_) {
-      // best-effort
-    }
+    // Mutating provider state during deactivate raises Riverpod's
+    // "modify provider while widget tree was building" assertion when the
+    // parent rebuild that's tearing this widget down is still in flight.
+    // Capture notifiers (provider singletons survive widget unmount) and
+    // run the sync after the current frame.
+    final mapNotifier = _notifier;
+    final saveNotifier = ref.read(saveStateProvider.notifier);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        mapNotifier.syncToCampaignData();
+        saveNotifier.markDirty();
+      } catch (_) {}
+    });
     super.deactivate();
   }
 

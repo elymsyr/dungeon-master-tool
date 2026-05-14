@@ -332,17 +332,28 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
     }
   }
 
-  /// Karakter import'u **kopya değil, link** kurar. Aktif world'ün
-  /// `linked_character_ids` listesine karakter id'si eklenir. Karakter
-  /// hub'da tek kaynak olarak yaşar — hub'da yapılan her edit, linked
-  /// world'de de görünür (EntityNotifier `characterListProvider`'ı
-  /// dinliyor ve otomatik reload yapıyor).
+  /// Karakter import'u **kopya değil, link** kurar.
+  ///
+  /// İki yol:
+  ///   - Karakter orphan (`worldName == ''`) ise: aktif world'ün adını
+  ///     karakterin `worldName`'ine yazar. Karakter artık o world'e
+  ///     "ait" — sidebar/editor/hub-tab başlığı doğru world adını
+  ///     gösterir, hala hub'da tek kopya olarak yaşar.
+  ///   - Karakter zaten başka bir world'de ise: world'ün
+  ///     `linked_character_ids` listesine eklenir (cross-link).
+  ///     Karakterin canonical `worldName`'i değişmez; iki world
+  ///     ondan referans tutar.
+  ///
+  /// Önceki davranış her zaman `linked_character_ids`'e ekliyordu —
+  /// böylece orphan karakter import'unda subtitle "No world assigned"
+  /// olarak kalıyordu, çünkü kimse `worldName` yazmıyordu.
   Future<void> _importCharacter(Character c) async {
     setState(() => _importing = true);
     try {
       final activeNotifier = ref.read(activeCampaignProvider.notifier);
+      final activeWorldName = ref.read(activeCampaignProvider);
       final data = activeNotifier.data;
-      if (data == null) {
+      if (data == null || activeWorldName == null || activeWorldName.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No active world')),
@@ -353,7 +364,9 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
       final existing =
           (data['linked_character_ids'] as List?)?.whereType<String>().toList() ??
               <String>[];
-      if (existing.contains(c.id)) {
+      final alreadyLinked = existing.contains(c.id);
+      final alreadyOwned = c.worldName == activeWorldName;
+      if (alreadyLinked || alreadyOwned) {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -362,8 +375,20 @@ class _ImportPackageDialogState extends ConsumerState<ImportPackageDialog> {
         }
         return;
       }
-      data['linked_character_ids'] = [...existing, c.id];
-      await activeNotifier.save();
+      if (c.worldName.isEmpty) {
+        // Orphan karakter: world'ü canonical "owner" yap. Sidebar/editor
+        // subtitle ve hub-tab başlığı "World: X" gösterir, "No world
+        // assigned" yerine.
+        await ref
+            .read(characterListProvider.notifier)
+            .update(c.copyWith(worldName: activeWorldName));
+      } else {
+        // Cross-link: karakter zaten başka world'de yaşıyor. World'ün
+        // referans listesine ekle ki sidebar'da görünsün; canonical
+        // world değişmez.
+        data['linked_character_ids'] = [...existing, c.id];
+        await activeNotifier.save();
+      }
       // Bump revision → EntityNotifier `_loadFromCampaign()` çalışır,
       // linked karakter world görünümüne enjekte olur.
       ref.read(campaignRevisionProvider.notifier).state++;

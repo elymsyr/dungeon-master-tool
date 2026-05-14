@@ -698,6 +698,7 @@ class MessagesTab extends ConsumerWidget {
           bottom: 16,
           child: Builder(
             builder: (fabCtx) => FloatingActionButton(
+              heroTag: 'messages_tab_compose_fab',
               tooltip: l10n.messagesComposeTooltip,
               backgroundColor: palette.featureCardAccent,
               foregroundColor: Colors.white,

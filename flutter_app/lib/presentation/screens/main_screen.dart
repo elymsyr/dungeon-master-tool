@@ -878,6 +878,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
       // FAB for mobile/tablet entity sidebar
       floatingActionButton: (screen != ScreenType.desktop && _tabIndex == 0)
           ? FloatingActionButton.small(
+              heroTag: 'main_screen_entity_sidebar_fab',
               onPressed: _showMobileSidebar,
               child: const Icon(Icons.list),
             )
