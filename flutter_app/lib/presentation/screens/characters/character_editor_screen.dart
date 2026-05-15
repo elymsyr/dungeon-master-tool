@@ -137,7 +137,10 @@ class _CharacterEditorScreenState
         _redoStack.clear();
       }
       _undoBaseline = null;
-      setState(() {});
+      // No setState — `_canUndo` is invariant across the baseline → stack
+      // transition (true before AND after), so no visible state changes.
+      // Dropping the full-editor rebuild that used to fire 400 ms after
+      // every keystroke.
     });
     _scheduleAutoSave();
   }
@@ -505,9 +508,13 @@ class _CharacterEditorScreenState
           padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
           child: Align(
             alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
-              child: Column(
+            child: LayoutBuilder(builder: (ctx, c) {
+              final isPhone = c.maxWidth < 600;
+              return ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isPhone ? c.maxWidth : 760,
+                ),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _entityHeader(palette, character, template),
@@ -551,7 +558,8 @@ class _CharacterEditorScreenState
                   ),
                 ],
               ),
-            ),
+              );
+            }),
           ),
         ),
       ),
@@ -2111,7 +2119,12 @@ class _CharacterEditorScreenState
     final activeWorldId =
         ref.watch(activeCampaignIdProvider).valueOrNull;
     if (activeWorldId != character.worldId) return builtin;
-    final campaign = ref.watch(entityProvider);
+    // Subscribe only to add/remove (length changes). Per-keystroke field
+    // edits mutate values in place without changing map.length, so this
+    // helper no longer triggers a 20+ tile rebuild cascade. Linked-entity
+    // value freshness handled at the specific tile level if needed.
+    ref.watch(entityProvider.select((m) => m.length));
+    final campaign = ref.read(entityProvider);
     if (campaign.isEmpty) return builtin;
     return UnmodifiableMapView<String, Entity>(
       CombinedMapView<String, Entity>([campaign, builtin]),
