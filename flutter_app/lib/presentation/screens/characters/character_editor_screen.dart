@@ -11,14 +11,17 @@ import 'package:go_router/go_router.dart';
 import '../../../application/character_creation/level_up_planner.dart';
 import '../../../application/character_creation/multiclass_helper.dart';
 import '../../../application/character_creation/pending_choices.dart';
+import '../../../application/providers/auth_provider.dart';
 import '../../../application/providers/campaign_provider.dart';
 import '../../../application/providers/character_provider.dart';
 import '../../../application/providers/entity_provider.dart';
 import '../../../application/providers/global_loading_provider.dart';
 import '../../../application/providers/locale_provider.dart';
 import '../../../application/providers/personal_online_provider.dart';
+import '../../../application/providers/role_provider.dart';
 import '../../../application/providers/template_provider.dart';
 import '../../../application/providers/theme_provider.dart';
+import '../../../domain/entities/online/world_role.dart';
 import '../../../application/services/builtin_srd_entities.dart';
 import '../../widgets/character_stat_chips.dart';
 import 'level_up_dialog.dart';
@@ -46,10 +49,21 @@ import '../database/entity_card.dart';
 
 /// Standalone character editor. Hub-level Characters tab'dan push edilir.
 /// Bir Character'ı template'inin Player kategorisine göre render eder.
+///
+/// When `onClose` is non-null the screen is rendered embedded (player tab /
+/// world sidebar). The AppBar collapses to back + name + view/edit + undo/redo
+/// + save-sync and the back arrow calls `onClose` instead of popping the
+/// route. Global actions (theme/language/import/bug) drop since the host
+/// shell already exposes them.
 class CharacterEditorScreen extends ConsumerStatefulWidget {
   final String characterId;
+  final VoidCallback? onClose;
 
-  const CharacterEditorScreen({super.key, required this.characterId});
+  const CharacterEditorScreen({
+    super.key,
+    required this.characterId,
+    this.onClose,
+  });
 
   @override
   ConsumerState<CharacterEditorScreen> createState() =>
@@ -128,6 +142,22 @@ class _CharacterEditorScreenState
 
   bool get _canUndo => _undoStack.isNotEmpty || _undoBaseline != null;
   bool get _canRedo => _redoStack.isNotEmpty;
+
+  /// 039 model edit permission: owner VEYA world DM. Auth yoksa true (pure
+  /// offline). World-bound karakterde DM role lookup `worldId` (canonical) ile
+  /// yapılır; eski `worldName` set ama `worldId` null durumunda DM gate
+  /// kapalıdır — kullanıcı bir kez save edip worldId hidratasyonu olunca açılır.
+  bool get _canEdit {
+    final c = _working;
+    if (c == null) return false;
+    final selfUid = ref.read(authProvider)?.uid;
+    if (selfUid == null) return true;
+    if (c.ownerId == selfUid) return true;
+    final wid = c.worldId;
+    if (wid == null) return false;
+    final role = ref.read(worldRoleProvider(wid)).valueOrNull;
+    return role == WorldRole.dm;
+  }
 
   void _undo() {
     // Commit any pending baseline first so the user's in-progress edit
@@ -226,6 +256,7 @@ class _CharacterEditorScreenState
   ) {
     final character = _working!;
     final l10n = L10n.of(context)!;
+    final embedded = widget.onClose != null;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -244,8 +275,8 @@ class _CharacterEditorScreenState
                 visualDensity: VisualDensity.compact,
               ),
               const SizedBox(width: 4),
-              const AppIconImage(size: 22),
-              const SizedBox(width: 8),
+              if (!embedded) const AppIconImage(size: 22),
+              if (!embedded) const SizedBox(width: 8),
               Expanded(
                 child: Row(
                   children: [
@@ -278,12 +309,20 @@ class _CharacterEditorScreenState
             ],
           ),
           actions: [
-            // View / Edit toggle — mirrors EntityCard's read-only default.
+            // View / Edit toggle — gated by _canEdit (owner VEYA world DM).
+            // Yetki yoksa görüntü-only zorla, toggle disable.
+            if (!_canEdit && !_readOnly) ...[
+              const SizedBox.shrink(),
+            ],
             IconButton(
               icon: Icon(_readOnly ? Icons.edit : Icons.visibility,
                   size: 20),
-              tooltip: _readOnly ? 'Edit' : 'View',
-              onPressed: () => setState(() => _readOnly = !_readOnly),
+              tooltip: _canEdit
+                  ? (_readOnly ? 'Edit' : 'View')
+                  : 'Read-only (not owner)',
+              onPressed: !_canEdit
+                  ? null
+                  : () => setState(() => _readOnly = !_readOnly),
               visualDensity: VisualDensity.compact,
             ),
             // Undo / Redo — available in view mode too, since pending
@@ -312,8 +351,9 @@ class _CharacterEditorScreenState
                 saving: _saving,
                 flushLocal: () => _save(silent: true),
               ),
-            // Phone: collapse infrequent actions into overflow menu
-            if (getScreenType(context) == ScreenType.phone) ...[
+            // Embedded mode (player tab / world sidebar host): drop global
+            // actions — host shell already surfaces them.
+            if (!embedded && getScreenType(context) == ScreenType.phone) ...[
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, size: 20),
                 onSelected: (action) {
@@ -365,7 +405,7 @@ class _CharacterEditorScreenState
                   const PopupMenuItem(value: 'bug', child: Row(children: [Icon(Icons.bug_report_outlined, size: 18), SizedBox(width: 8), Text('Report a Bug')])),
                 ],
               ),
-            ] else ...[
+            ] else if (!embedded) ...[
               // Import package / world — shared dialog.
               IconButton(
                 icon: const Icon(Icons.inventory_2, size: 20),
@@ -518,22 +558,10 @@ class _CharacterEditorScreenState
 
   /// Resolves the world label shown in headers/settings.
   ///
-  /// `c.worldName` wins when non-empty (canonical owner). When empty,
-  /// falls back to the active campaign's name iff the character is in
-  /// its `linked_character_ids` — pre-fix linked-only chars otherwise
-  /// claimed "No world assigned" while clearly belonging to the world
-  /// that imported them.
+  /// 039 model: world label canonical `worldName` (PR5'te `worldId` lookup).
+  /// Boş = orphan. `linked_character_ids` fallback retired.
   String _displayWorldLabelFor(Character c, L10n l10n) {
     if (c.worldName.isNotEmpty) return c.worldName;
-    final activeWorld = ref.read(activeCampaignProvider);
-    if (activeWorld != null && activeWorld.isNotEmpty) {
-      final data = ref.read(activeCampaignProvider.notifier).data;
-      final linked =
-          (data?['linked_character_ids'] as List?)?.whereType<String>();
-      if (linked != null && linked.contains(c.id)) {
-        return activeWorld;
-      }
-    }
     return l10n.charWorldOrphan;
   }
 
@@ -1617,6 +1645,9 @@ class _CharacterEditorScreenState
       classLabel: classEntity?.name,
       currentCon: currentCon,
       hasSubclass: subclassId != null,
+      existingPending: readPendingChoices(
+        base.entity.fields['pending_choices'],
+      ),
     );
     if (!mounted || result == null || !result.applied) return;
 
@@ -2276,6 +2307,10 @@ class _CharacterEditorScreenState
     final w = _working;
     if (w == null) return;
     if (_saving) return;
+    // 039 edit permission gate: yetki yoksa save sessiz fail eder. RLS UPDATE
+    // policy zaten server-side reddederdi, ama client-side fail-fast hem
+    // network'ten kaçınır hem de yanlış uyarı snackbar'ı engeller.
+    if (!_canEdit) return;
     setState(() => _saving = true);
     try {
       await ref.read(characterListProvider.notifier).update(w);
@@ -2296,7 +2331,13 @@ class _CharacterEditorScreenState
   Future<void> _saveAndClose(BuildContext context) async {
     _autoSaveTimer?.cancel();
     await _save(silent: true);
-    if (context.mounted) context.pop();
+    if (!context.mounted) return;
+    final onClose = widget.onClose;
+    if (onClose != null) {
+      onClose();
+    } else {
+      context.pop();
+    }
   }
 }
 
@@ -3130,6 +3171,7 @@ class _StatChipsHeader extends ConsumerWidget {
           raceName: resolve(ids.raceId),
           className: resolve(ids.classId),
           effectiveAc: effectiveAc,
+          ownerLabel: resolveCharacterOwnerLabel(ref, character),
         ),
         palette: palette,
         compact: isPhone,

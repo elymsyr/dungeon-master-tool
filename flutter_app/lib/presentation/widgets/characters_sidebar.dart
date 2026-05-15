@@ -1,42 +1,30 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/character_claim_provider.dart';
 import '../../application/providers/character_provider.dart';
-import '../../application/providers/entity_provider.dart';
 import '../../application/providers/global_loading_provider.dart';
+import '../../application/providers/online_worlds_provider.dart';
 import '../../application/providers/role_provider.dart';
-import '../../application/providers/world_membership_provider.dart';
-import '../../application/services/builtin_srd_entities.dart';
 import '../../domain/entities/character.dart';
-import '../../domain/entities/entity.dart';
-import '../../domain/entities/online/world_member.dart';
-import '../../domain/entities/online/world_role.dart';
-import 'package:go_router/go_router.dart';
-
-import '../l10n/app_localizations.dart';
 import '../screens/characters/character_editor_screen.dart';
 import '../theme/dm_tool_colors.dart';
-import 'character_stat_chips.dart';
-import 'marketplace_panel.dart';
-import 'metadata_editor_section.dart';
-import 'metadata_list_tile.dart';
-import 'save_info_section.dart';
+import 'character_add_menu.dart';
+import 'world_characters_view.dart';
 
-/// Right-sidebar character workspace. Lists characters scoped to the active
-/// world and routes to [CharacterEditorScreen] on tap so the open experience
-/// matches the Characters hub tab (full header, stat chips, level-up + rest
-/// buttons).
+/// Right-sidebar character workspace. Mirrors the player tab layout: 3
+/// sections (Your / Available to Claim / Other) for online worlds via
+/// [WorldCharactersView] with `dmMode: true`. Offline / solo worlds keep
+/// the legacy local-list fallback. Tap → embeds [CharacterEditorScreen] in
+/// the sidebar pane.
 class CharactersSidebar extends ConsumerStatefulWidget {
   final DmToolColors palette;
+
   /// Optional callback invoked when the user taps a character whose
   /// `worldName` matches the active campaign. MainScreen wires this to
-  /// surface the character inline (Database tab + selected entity) so
-  /// the sheet opens inside the world view instead of pushing the
-  /// editor as a fullscreen go_router route. Hub-level callers leave
-  /// this null and get the legacy push behavior.
+  /// surface the character inline (Database tab + selected entity).
   final void Function(String characterId)? onOpenCharacter;
 
   const CharactersSidebar({
@@ -50,282 +38,66 @@ class CharactersSidebar extends ConsumerStatefulWidget {
 }
 
 class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
-  /// When non-null, the sidebar swaps its list view for an embedded
-  /// CharacterEditorScreen pinned to this character. Tapping a row in
-  /// the list assigns this; an in-pane "back" button clears it. The
-  /// goal is the user's request: opening a character from the world
-  /// sidebar should surface the sheet inside the sidebar pane, not
-  /// push a fullscreen route over the world view.
   String? _inlineCharacterId;
+
+  void _openInline(String id) {
+    final inline = widget.onOpenCharacter;
+    if (inline != null) {
+      inline(id);
+      return;
+    }
+    setState(() => _inlineCharacterId = id);
+  }
+
+  void _closeInline() {
+    setState(() => _inlineCharacterId = null);
+  }
 
   @override
   Widget build(BuildContext context) {
     if (_inlineCharacterId != null) {
-      return _buildInlineEditor(widget.palette, _inlineCharacterId!);
+      return CharacterEditorScreen(
+        characterId: _inlineCharacterId!,
+        onClose: _closeInline,
+      );
     }
-    return _buildList(widget.palette);
+    return _build(widget.palette);
   }
 
-  Widget _buildInlineEditor(DmToolColors palette, String id) {
-    return Column(
-      children: [
-        Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: palette.tabBg,
-            border: Border(bottom: BorderSide(color: palette.sidebarDivider)),
-          ),
-          child: Row(
-            children: [
-              IconButton(
-                tooltip: 'Back to character list',
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints:
-                    const BoxConstraints(minWidth: 28, minHeight: 28),
-                iconSize: 18,
-                onPressed: () => setState(() => _inlineCharacterId = null),
-                icon: Icon(Icons.arrow_back, color: palette.tabActiveText),
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  'Character',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: palette.tabActiveText,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              IconButton(
-                tooltip: 'Open fullscreen',
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints:
-                    const BoxConstraints(minWidth: 28, minHeight: 28),
-                iconSize: 18,
-                onPressed: () => context.push('/character/$id'),
-                icon: Icon(Icons.open_in_full,
-                    color: palette.tabActiveText),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: CharacterEditorScreen(characterId: id),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildList(DmToolColors palette) {
+  Widget _build(DmToolColors palette) {
     final activeWorld = ref.watch(activeCampaignProvider);
-    final charactersAsync = ref.watch(characterListProvider);
-    // Bump trigger so linked_character_ids changes (import/unlink) cause
-    // the sidebar to recompute scoped list.
-    ref.watch(campaignRevisionProvider);
-    final linkedIds = activeWorld == null
-        ? const <String>{}
-        : ((ref.read(activeCampaignProvider.notifier).data?[
-                    'linked_character_ids']
-                as List?)
-                ?.whereType<String>()
-                .toSet() ??
-            const <String>{});
-    // F2 / H3-extension: single merged entity map for the sidebar list.
-    // Per-row `readCharacterEntities` was watching three providers and
-    // spreading two maps for every character tile. Now: 1 watch, lazy
-    // CombinedMapView, no per-row allocation.
-    final builtin = ref.watch(builtinSrdEntitiesProvider);
-    final campaign = ref.watch(entityProvider);
-    final merged = (activeWorld == null || campaign.isEmpty)
-        ? builtin
-        : UnmodifiableMapView<String, Entity>(
-            CombinedMapView<String, Entity>([campaign, builtin]),
-          );
-    Map<String, Entity> entitiesFor(Character c) {
-      if (c.worldName.isEmpty) return builtin;
-      if (c.worldName != activeWorld) return builtin;
-      return merged;
-    }
+    final worldId = ref.watch(activeCampaignIdProvider).valueOrNull;
+    final onlineIds = ref.watch(onlineWorldIdsProvider);
+    final isOnline = worldId != null && onlineIds.contains(worldId);
 
     return Column(
       children: [
-        // Header
-        Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: palette.tabBg,
-            border: Border(bottom: BorderSide(color: palette.sidebarDivider)),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.people, size: 16, color: palette.tabActiveText),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  activeWorld == null
-                      ? 'Characters'
-                      : 'Characters · $activeWorld',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: palette.tabActiveText,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              IconButton(
-                tooltip: 'Create Character',
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                    minWidth: 28, minHeight: 28),
-                iconSize: 18,
-                onPressed: activeWorld == null ? null : _createCharacter,
-                icon: Icon(Icons.add, color: palette.tabActiveText),
-              ),
-            ],
-          ),
+        _SidebarHeader(
+          palette: palette,
+          activeWorld: activeWorld,
         ),
-
-        // Body
         Expanded(
-          child: charactersAsync.when(
-            loading: () =>
-                const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Error: $e',
-                  style: TextStyle(color: palette.dangerBtnBg),
+          child: isOnline
+              ? WorldCharactersView(
+                  palette: palette,
+                  worldId: worldId,
+                  dmMode: true,
+                  onOpen: _openInline,
+                  padding: const EdgeInsets.all(8),
+                )
+              : _OfflineCharacterList(
+                  palette: palette,
+                  activeWorld: activeWorld,
+                  onOpen: _openLocalCharacter,
                 ),
-              ),
-            ),
-            data: (all) {
-              final scoped = activeWorld == null
-                  ? const <Character>[]
-                  : (all
-                          .where((c) =>
-                              c.worldName == activeWorld ||
-                              linkedIds.contains(c.id))
-                          .toList()
-                        ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt)));
-              if (scoped.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      activeWorld == null
-                          ? 'Open a world to see its characters.'
-                          : 'No characters in this world yet.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: palette.sidebarLabelSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                );
-              }
-              final l10n = L10n.of(context)!;
-              return ListView.separated(
-                padding: const EdgeInsets.all(8),
-                itemCount: scoped.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 6),
-                itemBuilder: (context, i) {
-                  final c = scoped[i];
-                  // Legacy linked-only chars (pre-fix) live in this world's
-                  // `linked_character_ids` with their own `worldName` empty.
-                  // Display the active world so the row stops claiming
-                  // "No world assigned" while plainly sitting in that world.
-                  final worldLabel = c.worldName.isNotEmpty
-                      ? c.worldName
-                      : (activeWorld != null && linkedIds.contains(c.id)
-                          ? activeWorld
-                          : l10n.charWorldOrphan);
-                  return GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onSecondaryTapDown: (details) =>
-                        _showRowContextMenu(c, details.globalPosition, palette),
-                    onLongPressStart: (details) =>
-                        _showRowContextMenu(c, details.globalPosition, palette),
-                    child: InkWell(
-                      borderRadius: palette.br,
-                      onTap: () => _openCharacter(c),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(minHeight: 140),
-                        child: Container(
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(
-                            color: palette.featureCardBg,
-                            borderRadius: palette.br,
-                            border:
-                                Border.all(color: palette.featureCardBorder),
-                          ),
-                          child: MetadataListTile(
-                            icon: Icons.person,
-                            name: c.entity.name,
-                            subtitle: '${c.templateName} · $worldLabel',
-                            description: c.entity.description,
-                            tags: c.entity.tags,
-                            coverImagePath: c.entity.imagePath,
-                            isSelected: false,
-                            palette: palette,
-                            layout: MetadataTileLayout.leftAvatar,
-                            onSettings: () =>
-                                _showCharacterSettings(c.id, palette),
-                            infoChips: CharacterStatChips(
-                              lines: characterStatLines(c, entitiesFor(c)),
-                              palette: palette,
-                              compact: true,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
         ),
-
       ],
     );
   }
 
-  void _createCharacter() {
-    // Wizard auto-prefills the active world; after creation it navigates
-    // to the editor screen.
-    context.push('/character/new');
-  }
-
-  /// Label used in the settings dialog's "Public" row. Falls back to
-  /// the active campaign when the character is referenced only via that
-  /// world's `linked_character_ids` (pre-fix linked-only chars). Returns
-  /// the localized orphan string when nothing claims the character.
-  String _settingsWorldLabel(Character c) {
-    final l10n = L10n.of(context)!;
-    if (c.worldName.isNotEmpty) return 'World: ${c.worldName}';
-    final activeWorld = ref.read(activeCampaignProvider);
-    if (activeWorld != null && activeWorld.isNotEmpty) {
-      final data = ref.read(activeCampaignProvider.notifier).data;
-      final linked =
-          (data?['linked_character_ids'] as List?)?.whereType<String>();
-      if (linked != null && linked.contains(c.id)) {
-        return 'World: $activeWorld';
-      }
-    }
-    return l10n.charWorldOrphan;
-  }
-
-  Future<void> _openCharacter(Character c) async {
+  /// Offline path: keep the legacy load-cross-world behavior so picking a
+  /// linked character from another world still opens correctly.
+  Future<void> _openLocalCharacter(Character c) async {
     if (c.worldName.isNotEmpty) {
       final active = ref.read(activeCampaignProvider);
       if (active != c.worldName) {
@@ -348,156 +120,189 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
       }
     }
     if (!mounted) return;
-    // Embed the sheet inside the sidebar pane when this row belongs to
-    // the open world (matches the user's request: opening a world
-    // character from the sidebar should stay in the sidebar). Cross-
-    // world / orphan rows still push the fullscreen route. An external
-    // `onOpenCharacter` callback wins when supplied so MainScreen can
-    // override the embed target later if needed.
-    final inline = widget.onOpenCharacter;
     final active = ref.read(activeCampaignProvider);
     final shouldEmbed =
         c.worldName.isNotEmpty && c.worldName == active;
-    if (inline != null && shouldEmbed) {
-      inline(c.id);
-      return;
-    }
     if (shouldEmbed) {
-      setState(() => _inlineCharacterId = c.id);
+      _openInline(c.id);
       return;
     }
     context.push('/character/${c.id}');
   }
+}
 
-  Future<void> _showRowContextMenu(
-    Character c,
-    Offset globalPosition,
-    DmToolColors palette,
-  ) async {
-    final overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox?;
-    if (overlay == null) return;
-    final role =
-        ref.read(currentWorldRoleProvider).valueOrNull ?? WorldRole.none;
-    final isDmOnline = role == WorldRole.dm;
-    final selected = await showMenu<String>(
-      context: context,
-      position: RelativeRect.fromLTRB(
-        globalPosition.dx,
-        globalPosition.dy,
-        overlay.size.width - globalPosition.dx,
-        overlay.size.height - globalPosition.dy,
+class _SidebarHeader extends StatelessWidget {
+  final DmToolColors palette;
+  final String? activeWorld;
+  const _SidebarHeader({
+    required this.palette,
+    required this.activeWorld,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: palette.tabBg,
+        border: Border(bottom: BorderSide(color: palette.sidebarDivider)),
       ),
-      items: [
-        if (isDmOnline)
-          PopupMenuItem<String>(
-            value: 'assign',
-            child: Row(
-              children: [
-                Icon(Icons.person_pin,
-                    size: 16, color: palette.tabActiveText),
-                const SizedBox(width: 8),
-                const Text('Assign to player...'),
-              ],
+      child: Row(
+        children: [
+          Icon(Icons.people, size: 16, color: palette.tabActiveText),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              activeWorld == null
+                  ? 'Characters'
+                  : 'Characters · $activeWorld',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: palette.tabActiveText,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-        PopupMenuItem<String>(
-          value: 'remove',
-          child: Row(
-            children: [
-              Icon(Icons.delete_outline,
-                  size: 16, color: palette.dangerBtnBg),
-              const SizedBox(width: 8),
-              const Text('Remove from world'),
-            ],
+          CharacterAddButton(
+            palette: palette,
+            activeWorld: activeWorld,
+            dense: true,
           ),
-        ),
-      ],
-    );
-    if (selected == 'remove') {
-      await _removeFromWorld(c, palette);
-    } else if (selected == 'assign') {
-      await _assignToPlayerDialog(c, palette);
-    }
-  }
-
-  Future<void> _assignToPlayerDialog(Character c, DmToolColors palette) async {
-    final worldId = ref.read(activeCampaignIdProvider).valueOrNull;
-    if (worldId == null) return;
-    final notifier =
-        ref.read(worldMembersProvider(worldId).notifier);
-    await notifier.bootstrap();
-    final membersAsync =
-        ref.read(worldMembersProvider(worldId)).valueOrNull ??
-            const <WorldMember>[];
-    final players = membersAsync
-        .where((m) => m.role == WorldRole.player)
-        .toList();
-    if (!mounted) return;
-    if (players.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No players have joined yet')),
-      );
-      return;
-    }
-    final selectedUserId = await showDialog<String>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text('Assign "${c.entity.name}" to'),
-        children: players
-            .map((m) => SimpleDialogOption(
-                  onPressed: () => Navigator.pop(ctx, m.userId),
-                  child: Text(m.displayName ??
-                      m.username ??
-                      m.userId.substring(0, 8)),
-                ))
-            .toList(),
+        ],
       ),
     );
-    if (selectedUserId == null) return;
+  }
+}
+
+/// Offline / solo-world fallback. No `world_characters` mirror — pull from
+/// the local `characterListProvider` filtered to this world. Renders the
+/// same compact-row + hamburger UI as [WorldCharactersView] so the DM
+/// sidebar looks identical regardless of online state.
+///
+/// Hamburger menu offline-context items: Remove from world, Delete. (No
+/// claim/unclaim — claim is an online concept.)
+class _OfflineCharacterList extends ConsumerWidget {
+  final DmToolColors palette;
+  final String? activeWorld;
+  final ValueChanged<Character> onOpen;
+  const _OfflineCharacterList({
+    required this.palette,
+    required this.activeWorld,
+    required this.onOpen,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final charactersAsync = ref.watch(characterListProvider);
+    ref.watch(campaignRevisionProvider);
+    // 039 model: world linkage kanon `worldId` (cloud `world_characters.world_id`
+    // veya local Campaigns.id). Legacy `linked_character_ids` side-band kaldı —
+    // sadece `worldName`/`worldId` üzerinden filter.
+    final activeWorldId =
+        ref.watch(activeCampaignIdProvider).valueOrNull;
+
+    return charactersAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            'Error: $e',
+            style: TextStyle(color: palette.dangerBtnBg),
+          ),
+        ),
+      ),
+      data: (all) {
+        final scoped = activeWorld == null
+            ? const <Character>[]
+            : (all
+                    .where((c) =>
+                        (activeWorldId != null && c.worldId == activeWorldId) ||
+                        c.worldName == activeWorld)
+                    .toList()
+                  ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt)));
+        if (scoped.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                activeWorld == null
+                    ? 'Open a world to see its characters.'
+                    : 'No characters in this world yet.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: palette.sidebarLabelSecondary,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(8),
+          itemCount: scoped.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 6),
+          itemBuilder: (context, i) {
+            final c = scoped[i];
+            return _OfflineCharacterRow(
+              palette: palette,
+              character: c,
+              onOpen: () => onOpen(c),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _OfflineCharacterRow extends ConsumerStatefulWidget {
+  final DmToolColors palette;
+  final Character character;
+  final VoidCallback onOpen;
+  const _OfflineCharacterRow({
+    required this.palette,
+    required this.character,
+    required this.onOpen,
+  });
+
+  @override
+  ConsumerState<_OfflineCharacterRow> createState() =>
+      _OfflineCharacterRowState();
+}
+
+class _OfflineCharacterRowState
+    extends ConsumerState<_OfflineCharacterRow> {
+  bool _busy = false;
+
+  Future<void> _runBusy(Future<void> Function() body) async {
+    setState(() => _busy = true);
     try {
-      final svc = ref.read(characterClaimServiceProvider);
-      if (svc == null) return;
-      await svc.assignToPlayer(
-          characterId: c.id, userId: selectedUserId);
-      // Local karakteri de owner_id ile güncelle (mirror echo gerek yok).
-      await ref
-          .read(characterListProvider.notifier)
-          .update(c.copyWith(ownerId: selectedUserId));
-      // World mirror granular notifier CDC ile güncellenir (RLS DM full,
-      // event tüm üyelere broadcast). Optimistik patch'e gerek yok.
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Assigned to player')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
+      await body();
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
-  Future<void> _removeFromWorld(Character c, DmToolColors palette) async {
-    final worldName = c.worldName;
-    await showDialog<void>(
+  Future<void> _removeFromWorld() async {
+    final c = widget.character;
+    final palette = widget.palette;
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove from World'),
+        title: const Text('Remove from world?'),
         content: Text(
-            'Remove "${c.entity.name}" from "$worldName"? '
-            'The character itself is kept and can be reattached to a world later.'),
+          '"${c.entity.name}" leaves "${c.worldName}". The character itself is kept and can be attached to another world later.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await ref
-                  .read(characterListProvider.notifier)
-                  .update(c.copyWith(worldName: ''));
-            },
+            onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
               backgroundColor: palette.dangerBtnBg,
               foregroundColor: palette.dangerBtnText,
@@ -507,130 +312,111 @@ class _CharactersSidebarState extends ConsumerState<CharactersSidebar> {
         ],
       ),
     );
+    if (confirmed != true) return;
+    await _runBusy(() async {
+      // 039 model: world linkage canonical `world_characters` row. `remove_from_world`
+      // RPC server-side branch'i halleder:
+      //   - owner varsa → world_id NULL (UPDATE event)
+      //   - owner yoksa → DELETE event (CHECK violation olurdu)
+      // CDC echo'su local Character'ın worldId/worldName'ini patch eder.
+      // Auth-always invariant altında `svc != null`; gerçek offline'da
+      // (Supabase config yok) manuel patch.
+      final svc = ref.read(characterClaimServiceProvider);
+      if (svc != null) {
+        try {
+          await svc.removeFromWorld(c.id);
+        } catch (e) {
+          // RPC fail ederse manuel patch'e düş — örn. row hâlâ migrate olmamış
+          // legacy local-only karakter.
+        }
+      }
+      await ref
+          .read(characterListProvider.notifier)
+          .update(c.copyWith(worldName: '', worldId: null));
+    });
   }
 
-  Future<void> _showCharacterSettings(
-      String characterId, DmToolColors palette) async {
-    final list = ref.read(characterListProvider).valueOrNull ?? const [];
-    final c = list.where((x) => x.id == characterId).firstOrNull;
-    if (c == null) return;
-
-    DateTime? updatedAt;
-    try {
-      updatedAt = DateTime.parse(c.updatedAt);
-    } catch (_) {}
-
-    var workingName = c.entity.name;
-    var workingDescription = c.entity.description;
-    var workingTags = [...c.entity.tags];
-    var workingCover = c.entity.imagePath;
-
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text('${c.entity.name} — Settings'),
-          content: SizedBox(
-            width: 440,
-            child: SingleChildScrollView(
+  @override
+  Widget build(BuildContext context) {
+    final palette = widget.palette;
+    final c = widget.character;
+    return InkWell(
+      borderRadius: palette.br,
+      onTap: _busy ? null : widget.onOpen,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: palette.featureCardBg,
+          borderRadius: palette.br,
+          border: Border.all(color: palette.featureCardBorder),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor:
+                  palette.featureCardAccent.withValues(alpha: 0.2),
+              child: Icon(Icons.person,
+                  color: palette.tabActiveText, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  MetadataEditorSection(
-                    name: workingName,
-                    description: workingDescription,
-                    tags: workingTags,
-                    coverImagePath: workingCover,
-                    onNameChanged: (v) => workingName = v,
-                    onDescriptionChanged: (v) => workingDescription = v,
-                    onTagsChanged: (v) =>
-                        setDialogState(() => workingTags = v),
-                    onCoverChanged: (v) =>
-                        setDialogState(() => workingCover = v),
-                  ),
-                  const SizedBox(height: 16),
-                  Divider(height: 1, color: palette.featureCardBorder),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(Icons.description,
-                          size: 16, color: palette.sidebarLabelSecondary),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text('Template: ${c.templateName}',
-                            style: TextStyle(
-                                fontSize: 13,
-                                color: palette.tabActiveText)),
+                  Text(c.entity.name,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: palette.tabActiveText,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(Icons.public,
-                          size: 16, color: palette.sidebarLabelSecondary),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          _settingsWorldLabel(c),
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: palette.tabActiveText),
-                        ),
+                      overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text(c.templateName,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: palette.sidebarLabelSecondary,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (updatedAt != null)
-                    Row(
-                      children: [
-                        Icon(Icons.access_time,
-                            size: 16,
-                            color: palette.sidebarLabelSecondary),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Last edited: ${updatedAt.toLocal().toString().split('.').first}',
-                          style: TextStyle(
-                              fontSize: 12, color: palette.tabActiveText),
-                        ),
-                      ],
-                    ),
-                  const SizedBox(height: 12),
-                  SaveInfoSection(
-                    itemName: c.entity.name,
-                    itemId: c.id,
-                    type: 'character',
-                    localUpdatedAt: updatedAt,
-                  ),
-                  const SizedBox(height: 12),
-                  MarketplacePanel(
-                    itemType: 'character',
-                    localId: c.id,
-                    title: c.entity.name,
-                  ),
+                      overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                await ref.read(characterListProvider.notifier).updateMetadata(
-                      id: c.id,
-                      name: workingName,
-                      description: workingDescription,
-                      tags: workingTags,
-                      coverImagePath: workingCover,
-                    );
-                if (ctx.mounted) Navigator.pop(ctx);
-              },
-              child: const Text('Save'),
-            ),
+            const SizedBox(width: 8),
+            if (_busy)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            else
+              PopupMenuButton<String>(
+                tooltip: 'Actions',
+                icon: Icon(Icons.more_vert,
+                    size: 18, color: palette.sidebarLabelSecondary),
+                padding: EdgeInsets.zero,
+                splashRadius: 18,
+                onSelected: (v) async {
+                  switch (v) {
+                    case 'remove':
+                      await _removeFromWorld();
+                  }
+                },
+                itemBuilder: (_) => [
+                  if (c.worldName.isNotEmpty)
+                    PopupMenuItem(
+                      value: 'remove',
+                      child: Row(children: [
+                        Icon(Icons.exit_to_app,
+                            size: 16, color: palette.dangerBtnBg),
+                        const SizedBox(width: 8),
+                        const Text('Remove from world'),
+                    ]),
+                  ),
+                ],
+              ),
           ],
         ),
       ),

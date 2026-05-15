@@ -151,6 +151,16 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
 
   Future<bool> create(String worldName, {WorldSchema? template}) async {
     try {
+      // Defense-in-depth: an earlier `delete()` may have failed to orphan
+      // chars (entity load error swallowed). Without scrubbing here, those
+      // stale rows with `worldName == X` get adopted by the new world.
+      try {
+        await _ref
+            .read(characterListProvider.notifier)
+            .orphanForWorld(worldName);
+      } catch (e, st) {
+        debugPrint('orphan-before-create error: $e\n$st');
+      }
       await _repo.create(worldName, template: template);
       return load(worldName);
     } catch (e, st) {
@@ -375,21 +385,31 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
     // karakterleri orphan'a çevir (worldName boş + built-in SRD remap).
     // Aksi halde world silindikten sonra karakter `worldName` set kalır,
     // Hub Characters tab'da role-aware delete check world'ü bulamayıp
-    // "World-bound character" tooltip'i ile silmeyi engeller. Trash restore
-    // sırasında bağ tekrar kurulmaz — DM gerekirse yeniden link eder.
+    // "World-bound character" tooltip'i ile silmeyi engeller. Aynı isimli
+    // yeni bir world yaratılırsa hub filtresi (`c.worldName == activeWorld`)
+    // bu eski karakterleri yeni world'e yapıştırır — orphan adımı bunu önler.
+    // Trash restore sırasında bağ tekrar kurulmaz — DM gerekirse yeniden link
+    // eder.
+    Map<String, dynamic>? data;
     try {
-      Map<String, dynamic>? data;
       if (state == campaignName && _data != null) {
         data = _data;
       } else {
         data = await _repo.load(campaignName);
       }
-      final entitiesRaw = data?['entities'];
-      if (entitiesRaw is Map<String, dynamic>) {
-        await _ref
-            .read(characterListProvider.notifier)
-            .orphanForWorld(campaignName, entitiesRaw);
-      }
+    } catch (e, st) {
+      debugPrint('orphan-before-delete load error: $e\n$st');
+    }
+    // Entities load başarısız olsa bile orphan zorunlu — yoksa eski chars
+    // worldName=X kalır, aynı isimli yeni world onları sahiplenir.
+    final entitiesRaw = data?['entities'];
+    final entitiesMap = entitiesRaw is Map<String, dynamic>
+        ? entitiesRaw
+        : (entitiesRaw is Map ? Map<String, dynamic>.from(entitiesRaw) : null);
+    try {
+      await _ref
+          .read(characterListProvider.notifier)
+          .orphanForWorld(campaignName, entitiesMap);
     } catch (e, st) {
       debugPrint('orphan-before-delete error: $e\n$st');
     }
@@ -413,19 +433,24 @@ class ActiveCampaignNotifier extends StateNotifier<String?> {
   /// to a map that survives the purge. Custom DM-authored entities have
   /// no builtin counterpart and are left as unresolvable orphans.
   Future<void> purge(String campaignName) async {
+    Map<String, dynamic>? data;
     try {
-      Map<String, dynamic>? data;
       if (state == campaignName && _data != null) {
         data = _data;
       } else {
         data = await _repo.load(campaignName);
       }
-      final entitiesRaw = data?['entities'];
-      if (entitiesRaw is Map<String, dynamic>) {
-        await _ref
-            .read(characterListProvider.notifier)
-            .orphanForWorld(campaignName, entitiesRaw);
-      }
+    } catch (e, st) {
+      debugPrint('orphan-before-purge load error: $e\n$st');
+    }
+    final entitiesRaw = data?['entities'];
+    final entitiesMap = entitiesRaw is Map<String, dynamic>
+        ? entitiesRaw
+        : (entitiesRaw is Map ? Map<String, dynamic>.from(entitiesRaw) : null);
+    try {
+      await _ref
+          .read(characterListProvider.notifier)
+          .orphanForWorld(campaignName, entitiesMap);
     } catch (e, st) {
       debugPrint('orphan-before-purge error: $e\n$st');
     }

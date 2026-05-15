@@ -21,12 +21,21 @@ abstract class Character with _$Character {
     /// character metadata bu alanlarda saklanır, böylece entity_card ile
     /// aynı field'ları paylaşırız.
     required Entity entity,
-    /// Karakterin bağlı olduğu world (campaign) adı. Boş ise orphan:
-    /// kullanıcı editorde world seçene kadar bazı özellikler kapalı kalır.
+    /// Karakterin bağlı olduğu world (campaign) adı. DEPRECATED — PR3/PR4'te
+    /// `worldId` ile değiştirilecek. Şimdilik UI ve mevcut filter'lar için
+    /// paralel tutuluyor; cloud `world_characters.world_id` ile name lookup
+    /// arasındaki tutarsızlık (world rename'i sessizce kopuyor) `worldId`
+    /// üzerine taşındığında düzelir.
     @Default('') String worldName,
-    /// Karakterin sahibi olan user'ın Supabase uid'si. DM tarafından
-    /// oluşturulan karakterler için null bırakılır (DM-owned implicit).
-    /// User-side flow eklendiğinde creator'ın uid'si yazılır.
+    /// Karakterin bağlı olduğu world id'si (Supabase `world_characters.world_id`
+    /// + local `Campaigns.id`). NULL = orphan (worldsuz). 039 migration sonrası
+    /// kanon link bu alandır. `worldName` paralel set edilir (PR2 deprecation
+    /// window).
+    @Default(null) String? worldId,
+    /// Karakterin sahibi olan user'ın Supabase uid'si. NULL = unclaimed
+    /// (world içinde DM tarafından oluşturulup release edilmiş veya leave/kick
+    /// trigger'la düşmüş). Auth-always invariant altında orphan karakterler
+    /// her zaman owner'lıdır — `(NULL, NULL)` durumu DB-level CHECK ile yasak.
     @Default(null) String? ownerId,
     required String createdAt,
     required String updatedAt,

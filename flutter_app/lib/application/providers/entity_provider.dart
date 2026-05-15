@@ -17,6 +17,7 @@ import '../services/undo_redo_mixin.dart';
 import 'campaign_provider.dart';
 import 'character_provider.dart';
 import 'event_bus_provider.dart';
+import 'role_provider.dart';
 import 'save_state_provider.dart';
 import 'world_mirror_provider.dart';
 
@@ -211,22 +212,24 @@ class EntityNotifier extends StateNotifier<Map<String, Entity>>
       }
     }
 
-    // Linked karakterleri enjekte et: hub'daki karakterin entity'sini aynı
-    // id ile map'e koyarız. Böylece world görünümü hub'taki canlı veriyi
-    // gösterir; edit'lerde `characterListProvider` listen'i ile anında
-    // reload yapılır.
-    _linkedCharacterIds
-      ..clear()
-      ..addAll(
-        (data['linked_character_ids'] as List?)?.whereType<String>() ??
-            const [],
-      );
-    if (_linkedCharacterIds.isNotEmpty) {
-      final chars = _ref.read(characterListProvider).valueOrNull ?? const [];
-      for (final c in chars) {
-        if (_linkedCharacterIds.contains(c.id)) {
-          entities[c.entity.id] = c.entity;
-        }
+    // 039 model: hub-level karakterlerin entity'sini world'e enjekte et.
+    // Kanon link `Character.worldId == activeWorldId` (legacy fallback
+    // `worldName == activeCampaign`). Eski `linked_character_ids` side-band
+    // list 039 ile birlikte retire edildi; aynı semantik tek kolonla.
+    _linkedCharacterIds.clear();
+    final activeWorldId =
+        _ref.read(activeCampaignIdProvider).valueOrNull;
+    final activeWorldName = _ref.read(activeCampaignProvider);
+    final chars = _ref.read(characterListProvider).valueOrNull ?? const [];
+    for (final c in chars) {
+      final matchesById =
+          activeWorldId != null && c.worldId == activeWorldId;
+      final matchesByName = activeWorldName != null &&
+          activeWorldName.isNotEmpty &&
+          c.worldName == activeWorldName;
+      if (matchesById || matchesByName) {
+        entities[c.entity.id] = c.entity;
+        _linkedCharacterIds.add(c.entity.id);
       }
     }
 

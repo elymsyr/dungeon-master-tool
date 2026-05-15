@@ -1,8 +1,11 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/auth_provider.dart';
 import '../../application/providers/campaign_provider.dart';
 import '../../application/providers/entity_provider.dart';
+import '../../application/providers/world_membership_provider.dart';
 import '../../application/services/builtin_srd_entities.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/entity.dart';
@@ -64,6 +67,7 @@ List<CharacterStatLine> characterStatLines(
   Character character,
   Map<String, Entity> entities, {
   int? effectiveAc,
+  String? ownerLabel,
 }) {
   final ids = characterRaceClassIds(character);
   final raceName =
@@ -75,6 +79,7 @@ List<CharacterStatLine> characterStatLines(
     raceName: raceName,
     className: className,
     effectiveAc: effectiveAc,
+    ownerLabel: ownerLabel,
   );
 }
 
@@ -87,6 +92,7 @@ List<CharacterStatLine> characterStatLinesWithNames(
   required String raceName,
   required String className,
   int? effectiveAc,
+  String? ownerLabel,
 }) {
   final fields = character.entity.fields;
 
@@ -166,12 +172,46 @@ List<CharacterStatLine> characterStatLinesWithNames(
       label: 'AC',
       value: acDisplay,
     ),
-    const CharacterStatLine(
+    CharacterStatLine(
       icon: Icons.person_outline,
       label: 'User',
-      value: '—',
+      value: ownerLabel ?? '—',
     ),
   ];
+}
+
+/// Resolves the human-readable owner label for [character]'s `User` chip.
+/// Returns `'You'` when the signed-in user owns it, otherwise looks up the
+/// owner in the active world's member roster for a display name / @username,
+/// falls back to a truncated uid, and finally `'—'` when no owner is set.
+///
+/// Cheap when the character is offline / pre-auth — no member-roster watch
+/// is established unless the character actually has a world id.
+String resolveCharacterOwnerLabel(WidgetRef ref, Character character) {
+  final ownerId = character.ownerId;
+  if (ownerId == null || ownerId.isEmpty) return '—';
+  final auth = ref.watch(authProvider);
+  if (auth != null && auth.uid == ownerId) return 'You';
+  if (character.worldName.isNotEmpty) {
+    final infos = ref.watch(campaignInfoListProvider).valueOrNull;
+    final worldId =
+        infos?.firstWhereOrNull((w) => w.name == character.worldName)?.id;
+    if (worldId != null) {
+      final members = ref.watch(worldMembersProvider(worldId)).valueOrNull;
+      if (members != null) {
+        final m = members.firstWhereOrNull((m) => m.userId == ownerId);
+        if (m != null) {
+          if (m.displayName != null && m.displayName!.isNotEmpty) {
+            return m.displayName!;
+          }
+          if (m.username != null && m.username!.isNotEmpty) {
+            return '@${m.username!}';
+          }
+        }
+      }
+    }
+  }
+  return ownerId.length >= 8 ? ownerId.substring(0, 8) : ownerId;
 }
 
 /// Reads the right entity map for [character]: campaign-bound entities
@@ -240,7 +280,13 @@ class CharacterStatChips extends StatelessWidget {
           ),
         ),
     ];
-    if (scrollHorizontally) {
+    // Compact surfaces (sidebar/list tiles) and explicit scroll requests
+    // both use a single-row horizontal scroll viewport. Lets long species /
+    // owner / ancestry strings extend past the parent width without
+    // triggering a RenderFlex overflow — the user can swipe/scroll to see
+    // hidden chips. Wrap is reserved for the editor's full-size header
+    // where multi-row layout is intentional.
+    if (compact || scrollHorizontally) {
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(

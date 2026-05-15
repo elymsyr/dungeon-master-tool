@@ -1097,6 +1097,11 @@ Map<String, dynamic> buildSeedFields({
   // other class flagged for a mandatory pick lands in the editor with a
   // resolvable `!` badge. From-level 0 captures every grant at or below the
   // draft level.
+  //
+  // Wizard steps don't gate progression on filling caps — the player may
+  // skip cantrip/spell/feat picks and finalize anyway. Anything still
+  // unresolved at finalize is persisted as a pending choice so the level-up
+  // dialog and the editor's pending-choices panel can surface it later.
   if (characterClass != null) {
     final creationPlan = planLevelUp(
       fromLevel: 0,
@@ -1111,17 +1116,69 @@ Map<String, dynamic> buildSeedFields({
       classLabel: characterClass.name,
       hasSubclass: subclassEntity != null,
     );
-    // Filter to kinds the wizard doesn't already resolve inline. subclass /
-    // asiOrFeat / fightingStyle / cantrips / spells are handled by the
-    // wizard's own steps; queueing them here would double-emit.
-    const wizardSeedKinds = <PendingChoiceKind>{
-      PendingChoiceKind.divineOrder,
-      PendingChoiceKind.featureOption,
-    };
-    final seededPending = pending
-        .where((p) => wizardSeedKinds.contains(p.kind))
-        .map((p) => p.toMap())
-        .toList();
+    // Caps the wizard validated against — used to compute remaining picks
+    // for cantrip/spell pending choices.
+    final kind = parseCasterKind(characterClass.fields['caster_kind']);
+    final cantripCap = kind == CasterKind.none
+        ? 0
+        : (levelTableValue(
+                characterClass.fields['cantrips_known_by_level'], draft.level) ??
+            defaultCantripsKnown(kind, draft.level));
+    final preparedCap = kind == CasterKind.none
+        ? 0
+        : (levelTableValue(
+                characterClass.fields['prepared_spells_by_level'], draft.level) ??
+            defaultPreparedSpells(kind, draft.level));
+    final cantripRemaining =
+        (cantripCap - draft.cantripIds.length).clamp(0, cantripCap);
+    final spellRemaining =
+        (preparedCap - draft.preparedSpellIds.length).clamp(0, preparedCap);
+
+    final seededPending = <Map<String, dynamic>>[];
+    for (final p in pending) {
+      switch (p.kind) {
+        case PendingChoiceKind.subclass:
+          // Wizard's subclass step resolves it inline when the user picks
+          // one; only persist if the user skipped it.
+          if (subclassEntity == null) seededPending.add(p.toMap());
+        case PendingChoiceKind.cantrips:
+          if (cantripRemaining > 0) {
+            seededPending.add(
+              newPendingChoice(
+                kind: p.kind,
+                level: p.level,
+                classId: p.classId,
+                classLabel: p.classLabel,
+                count: cantripRemaining,
+              ).toMap(),
+            );
+          }
+        case PendingChoiceKind.spells:
+          if (spellRemaining > 0) {
+            seededPending.add(
+              newPendingChoice(
+                kind: p.kind,
+                level: p.level,
+                classId: p.classId,
+                classLabel: p.classLabel,
+                count: spellRemaining,
+                maxSpellLevel: p.maxSpellLevel,
+              ).toMap(),
+            );
+          }
+        case PendingChoiceKind.asiOrFeat:
+        case PendingChoiceKind.fightingStyle:
+        case PendingChoiceKind.weaponMastery:
+        case PendingChoiceKind.divineOrder:
+        case PendingChoiceKind.featureOption:
+        case PendingChoiceKind.skillProficiency:
+        case PendingChoiceKind.expertise:
+        case PendingChoiceKind.featAsi:
+          // Wizard has no inline resolver for these — always persist so the
+          // pending panel + level-up dialog can surface them.
+          seededPending.add(p.toMap());
+      }
+    }
     if (seededPending.isNotEmpty) {
       final existing = out['pending_choices'];
       final list = existing is List ? List<dynamic>.from(existing) : <dynamic>[];

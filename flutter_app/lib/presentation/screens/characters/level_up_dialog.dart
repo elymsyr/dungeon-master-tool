@@ -58,6 +58,13 @@ class LevelUpDialog extends StatefulWidget {
   /// the subclass pending-choice that would otherwise queue at L3.
   final bool hasSubclass;
 
+  /// Pending choices already sitting on the character (from creation or
+  /// earlier level-ups). Surfaced in the dialog's pending section so the
+  /// player sees unfinished upgrades alongside the ones this level adds.
+  /// Read-only — they remain on the character regardless of the dialog
+  /// outcome.
+  final List<PendingChoice> existingPending;
+
   const LevelUpDialog({
     super.key,
     required this.plan,
@@ -65,6 +72,7 @@ class LevelUpDialog extends StatefulWidget {
     this.classLabel,
     this.currentCon = 10,
     this.hasSubclass = false,
+    this.existingPending = const [],
   });
 
   static Future<LevelUpResult?> show(
@@ -74,6 +82,7 @@ class LevelUpDialog extends StatefulWidget {
     String? classLabel,
     int currentCon = 10,
     bool hasSubclass = false,
+    List<PendingChoice> existingPending = const [],
   }) {
     return showDialog<LevelUpResult>(
       context: context,
@@ -83,6 +92,7 @@ class LevelUpDialog extends StatefulWidget {
         classLabel: classLabel,
         currentCon: currentCon,
         hasSubclass: hasSubclass,
+        existingPending: existingPending,
       ),
     );
   }
@@ -194,6 +204,7 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
                 ),
               if (plan.casterKind != CasterKind.none) _casterBlock(hint),
               _resourcePoolBlock(hint),
+              _pendingChoicesBlock(hint),
               const SizedBox(height: 12),
               const Text(
                 'New Features',
@@ -452,6 +463,53 @@ class _LevelUpDialogState extends State<LevelUpDialog> {
           ),
           for (final l in lines)
             Text('• $l', style: TextStyle(fontSize: 12, color: hint)),
+        ],
+      ),
+    );
+  }
+
+  /// Renders the combined pending-choice list — entries already on the
+  /// character ("carried over") plus the ones this level adds ("new"). Both
+  /// sections share the same `pendingChoiceLabel` formatting so the player
+  /// reads them as one queue. The dialog only *displays* existing entries;
+  /// they stay on the character regardless of the apply outcome and are
+  /// resolvable from the editor's pending-choices panel.
+  Widget _pendingChoicesBlock(Color hint) {
+    final existing = widget.existingPending;
+    if (existing.isEmpty && _pending.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Pending Choices',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          if (existing.isNotEmpty) ...[
+            Text(
+              'Carried over (resolve in the editor):',
+              style: TextStyle(fontSize: 11, color: hint),
+            ),
+            for (final p in existing)
+              Text(
+                '• ${pendingChoiceLabel(p)}',
+                style: TextStyle(fontSize: 12, color: hint),
+              ),
+            if (_pending.isNotEmpty) const SizedBox(height: 4),
+          ],
+          if (_pending.isNotEmpty) ...[
+            Text(
+              'Added at this level:',
+              style: TextStyle(fontSize: 11, color: hint),
+            ),
+            for (final p in _pending)
+              Text(
+                '• ${pendingChoiceLabel(p)}',
+                style: const TextStyle(fontSize: 12),
+              ),
+          ],
         ],
       ),
     );
